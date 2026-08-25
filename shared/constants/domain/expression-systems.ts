@@ -9,7 +9,7 @@
  */
 
 import type { QuestionOption } from '../../types/intelligence-questions.js';
-import type { DomainEntry } from './index.js';
+import { toQuestionOptions as sharedToQuestionOptions, type DomainEntry } from './types.js';
 
 export type ExpressionSystem =
   | 'cho'
@@ -96,5 +96,5 @@ export const EXPRESSION_SYSTEMS: DomainEntry<ExpressionSystem>[] = [
 
 /** Convert EXPRESSION_SYSTEMS to QuestionOption[] for use in intelligence question flows. */
 export function toQuestionOptions(): QuestionOption[] {
-  return EXPRESSION_SYSTEMS.map((e) => ({ value: e.value, label: e.label, description: e.description }));
+  return sharedToQuestionOptions(EXPRESSION_SYSTEMS);
 }

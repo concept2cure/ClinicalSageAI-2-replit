@@ -49,6 +49,22 @@ export interface UseFetchJsonOptions {
 const DEFAULT_INIT: RequestInit = { credentials: 'include' };
 
 /**
+ * Auth headers every /api call needs: the global gate accepts a Bearer JWT
+ * only (server/auth.ts authMiddleware) and reads tenant scope from
+ * x-organization-id — cookies alone 401. Exported so mutation hooks (raw
+ * fetch) attach the exact same headers as the read path instead of each
+ * re-deriving (or, historically, forgetting) them.
+ */
+export function buildAuthHeaders(): Record<string, string> {
+  const authToken = getAuthToken();
+  const orgId = getOrgId();
+  const headers: Record<string, string> = {};
+  if (authToken) headers.Authorization = `Bearer ${authToken}`;
+  if (orgId) headers['x-organization-id'] = orgId;
+  return headers;
+}
+
+/**
  * Fetch a JSON payload of type `T` from `url`. Pass `null` to disable
  * the fetch (returns idle state). Re-runs whenever `url` changes or
  * `refresh()` is called. Cancels via AbortController on unmount or
@@ -79,17 +95,9 @@ export function useFetchJson<T>(
     let cancelled = false;
     setState((s) => ({ ...s, loading: true, error: null }));
 
-    // The c2c/mdx/intelligence routes sit behind the global /api auth gate,
-    // which accepts a Bearer JWT only (server/auth.ts authMiddleware) and reads
-    // tenant scope from x-organization-id. The token lives in
-    // trialsage_access_token (not a cookie), so credentials:'include' alone
-    // 401s — attach the same headers queryClient uses. Without this the c2c
-    // surfaces silently fall back to fixtures and never show live data.
-    const authToken = getAuthToken();
-    const orgId = getOrgId();
-    const authHeaders: Record<string, string> = {};
-    if (authToken) authHeaders.Authorization = `Bearer ${authToken}`;
-    if (orgId) authHeaders['x-organization-id'] = orgId;
+    // Without these headers the c2c surfaces silently fall back to fixtures
+    // and never show live data — see buildAuthHeaders.
+    const authHeaders = buildAuthHeaders();
 
     fetch(url, {
       ...DEFAULT_INIT,

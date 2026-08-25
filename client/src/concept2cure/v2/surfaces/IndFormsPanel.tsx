@@ -17,7 +17,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
+import type { FireToast } from '../toast';
+import { downloadBlob } from '../download';
 
 interface BuildResult { formId?: string; missingRequired?: string[]; fields?: Record<string, unknown> | Array<unknown>; }
 
@@ -33,16 +35,17 @@ const FORM_LABELS: Record<string, string> = {
 
 const PHASES = ['Phase 1', 'Phase 2', 'Phase 3'];
 
-/** The open program's numeric project id, or null when absent / non-numeric.
- *  Mirrors the convention used by the other v2 surfaces (Dossier, EctdCompile). */
-function readNumericProjectId(): number | null {
+/** The open program's identifier — a regulatory_programs UUID, a program code,
+ *  or a legacy numeric project id (a `proj_` prefix on a numeric id is
+ *  stripped). The SERVER resolves whichever it is, org-scoped; this panel never
+ *  demands a numeric id (window.C2C_PROJECT.id is a program UUID). */
+function readProjectIdent(): string | null {
   const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
-  const raw = String(p?.id ?? '').replace(/^proj_/, '');
-  const n = Number(raw);
-  return Number.isInteger(n) && n > 0 ? n : null;
+  const raw = String(p?.id ?? '').trim().replace(/^proj_(?=\d+$)/, '');
+  return raw !== '' ? raw : null;
 }
 
-export function IndFormsPanel({ note }: { note: (m: string) => void }) {
+export function IndFormsPanel({ note }: { note: FireToast }) {
   const [forms, setForms] = useState<string[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'forbidden' | 'error'>('loading');
   const [meta, setMeta] = useState({ sponsorName: '', drugName: '', indNumber: '', studyPhase: 'Phase 1', indication: '', serialNumber: '' });
@@ -73,8 +76,14 @@ export function IndFormsPanel({ note }: { note: (m: string) => void }) {
     try {
       const res = await apiRequest('POST', `/api/ind-forms/${formId}/build`, metadataBody());
       const json = (await res.json().catch(() => null)) as BuildResult | BuildResult[] | null;
-      if (res.status === 401 || res.status === 403) { note('Building forms requires the regulatory-author role.'); return; }
-      if (!res.ok || !json) { note(`Couldn’t build form ${formId} (HTTP ${res.status}).`); return; }
+      if (res.status === 401 || res.status === 403) { note('Building forms requires the regulatory-author role.', 'error'); return; }
+      // The server's own sentence when it sent one — filtered, so a code or a
+      // driver message degrades to the panel's own copy rather than reaching the
+      // note line.
+      if (!res.ok || !json) {
+        note(serverMessage(json) ?? `Couldn’t build form ${formId} (HTTP ${res.status}).`, 'error');
+        return;
+      }
       // 1572 returns one build per investigator; summarize the first.
       const result = Array.isArray(json) ? (json[0] ?? {}) : json;
       setChecks((c) => ({ ...c, [formId]: result }));
@@ -87,18 +96,17 @@ export function IndFormsPanel({ note }: { note: (m: string) => void }) {
     setBusy('pdf-' + formId);
     try {
       const res = await apiRequest('POST', `/api/ind-forms/${formId}/pdf`, metadataBody());
-      if (res.status === 401 || res.status === 403) { note('Rendering forms requires the regulatory-author role.'); return; }
+      if (res.status === 401 || res.status === 403) { note('Rendering forms requires the regulatory-author role.', 'error'); return; }
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        note(`Couldn’t render form ${formId} — ` + ((json as any)?.error ?? `HTTP ${res.status}`) + '.');
+        // `json.error` was read raw: an enum token printed as itself, and an
+        // object-shaped error printed as "[object Object]". serverMessage takes
+        // the sentence beside the code, and nothing at all when there is none.
+        const detail = serverMessage(json) ?? `the render was refused (HTTP ${res.status})`;
+        note(`Couldn’t render form ${formId} — ` + detail + '.', 'error');
         return;
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = `FDA-${formId}.pdf`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(`FDA-${formId}.pdf`, await res.blob());
       // Say honestly WHAT was rendered: the official FDA template, a faithful
       // reconstruction (dynamic-XFA forms have no official page to fill), or the
       // labeled draft (no template installed). A tester must never mistake a
@@ -117,23 +125,42 @@ export function IndFormsPanel({ note }: { note: (m: string) => void }) {
   }, [metadataBody, note]);
 
   // Persist the form as a GOVERNED artifact the platform records (not just a
-  // downloaded file). Needs the open program's project id — without it we do NOT
-  // guess; we tell the user to open a project.
+  // downloaded file). Needs the open program's identity — without it we do NOT
+  // guess; we tell the user to open a project. A legacy numeric id takes the
+  // governed-artifact path; a program UUID/code takes the server's
+  // audited-unplaced path (the artifact registry has no program mapping yet)
+  // and the note says exactly which of the two happened.
   const save = useCallback(async (formId: string) => {
-    const projectId = readNumericProjectId();
-    if (projectId == null) {
-      note('Open a project first — a governed artifact must be saved to a project’s dossier.');
+    const ident = readProjectIdent();
+    if (ident == null) {
+      note('Open a project first — a governed artifact must be saved to a project’s dossier.', 'error');
       return;
     }
     setBusy('save-' + formId);
     try {
-      const res = await apiRequest('POST', `/api/ind-forms/${formId}/artifact`, { ...metadataBody(), projectId });
+      const idBody = /^\d+$/.test(ident) ? { projectId: Number(ident) } : { projectIdent: ident };
+      const res = await apiRequest('POST', `/api/ind-forms/${formId}/artifact`, { ...metadataBody(), ...idBody });
       const json = await res.json().catch(() => null);
-      if (res.status === 401 || res.status === 403) { note('Saving a governed artifact requires the regulatory-author role.'); return; }
-      if (res.status === 404) { note('Couldn’t save — the open project isn’t in your organization.'); return; }
-      if (!res.ok || !json?.artifactId) { note(`Couldn’t save form ${formId} — ` + ((json as any)?.error?.message ?? `HTTP ${res.status}`) + '.'); return; }
-      const missing = Array.isArray(json.missingRequired) ? json.missingRequired.length : 0;
-      note(`FDA ${formId} saved to the dossier as a governed artifact${json.ready ? ' (ready)' : missing ? ` (draft · ${missing} required field(s) missing)` : ' (draft)'}.`);
+      if (res.status === 401 || res.status === 403) { note('Saving a governed artifact requires the regulatory-author role.', 'error'); return; }
+      if (res.status === 404) { note('Couldn’t save — the open project isn’t in your organization.', 'error'); return; }
+      const missing = Array.isArray(json?.missingRequired) ? json.missingRequired.length : 0;
+      const readiness = json?.ready ? ' (ready)' : missing ? ` (draft · ${missing} required field(s) missing)` : ' (draft)';
+      if (res.ok && json?.artifactId) {
+        note(`FDA ${formId} saved to the dossier as a governed artifact${readiness}.`);
+        return;
+      }
+      if (res.ok && json?.audited === true && json?.governed === false) {
+        // Honest degradation, in the server's terms: the form was built and
+        // audit-logged with its content hash, but NOT placed in the dossier
+        // registry — this program has no legacy project row for it yet.
+        note(`FDA ${formId} built and audit-logged (content hash recorded)${readiness} — not placed in the dossier registry: this program has no legacy project row for the registry yet.`);
+        return;
+      }
+      // This read only `error.message`, so a server that put its sentence in
+      // `message` or `detail` degraded to a bare status. serverMessage reads all
+      // three in order and rejects codes and infrastructure text.
+      const detail = serverMessage(json) ?? `the save was refused (HTTP ${res.status})`;
+      note(`Couldn’t save form ${formId} — ` + detail + '.', 'error');
     } finally { setBusy(null); }
   }, [metadataBody, note]);
 
@@ -143,7 +170,7 @@ export function IndFormsPanel({ note }: { note: (m: string) => void }) {
   }
   if (state === 'error') {
     return <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t reach the IND forms engine"
-      hint="GET /api/ind-forms didn’t respond. Sign in to your tenant and retry." />;
+      hint="The IND forms engine didn’t respond. Sign in to your tenant and retry." />;
   }
   if (state === 'loading') {
     return <EmptyState icon={I.fileText} title="Loading the forms engine…" />;

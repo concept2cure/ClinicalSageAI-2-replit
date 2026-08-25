@@ -31,6 +31,7 @@ import type {
   DefensibilityScore,
 } from './types';
 import { generateReviewerQuestions } from './reviewer-question-engine';
+import { stableStringify } from '../../../shared/canonical-json.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -83,13 +84,11 @@ export interface SimulatorResult {
 // Deterministic input hash
 // ─────────────────────────────────────────────────────────────────────────────
 
-function stableStringify(value: unknown): string {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
-  const obj = value as Record<string, unknown>;
-  const keys = Object.keys(obj).sort();
-  return `{${keys.map(k => `${JSON.stringify(k)}:${stableStringify(obj[k])}`).join(',')}}`;
-}
+/**
+ * Digest of the simulation payload. Computed per call and returned, never
+ * compared against a stored value — free to re-point
+ * (docs/CANONICALIZATION_MIGRATION_2026-08.md).
+ */
 
 function computeInputsHash(
   req: SimulatorRequest,

@@ -12,6 +12,8 @@ import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason, requireAccessTokenReason } from './tokenType';
 import { enforceOrgMembership, invalidateOrgMembershipCache } from './orgMembership';
 import { establishRequestTenantScope } from './establishRequestTenantScope';
+import { enforceTenantLifecycle } from './tenantLifecycleGuard';
+import { enforceStorageQuota } from './storageQuotaGuard';
 
 // SECURITY FIX: isDev variable removed — no more dev-mode auth bypasses.
 
@@ -166,7 +168,19 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     // RLS_ENFORCE=on. Revoked/indeterminate members are answered by
     // enforceOrgMembership and never reach this callback. Idempotent; honours
     // the SYSTEM carve-outs. See establishRequestTenantScope.
-    enforceOrgMembership(req, res, () => establishRequestTenantScope(req, res, next));
+    //
+    // The lifecycle guard runs LAST, once the tenant scope exists, because its
+    // posture lookup is itself a tenant-scoped query. Order matters in the other
+    // direction too: membership answers "is this user still in this org", the
+    // guard answers "is this org still entitled to operate". Both must hold.
+    //
+    // The storage quota guard runs LAST, and only on content-bearing writes. A
+    // suspended tenant must be told it is suspended, not that it is out of disk.
+    enforceOrgMembership(req, res, () =>
+      establishRequestTenantScope(req, res, () =>
+        enforceTenantLifecycle(req, res, () => enforceStorageQuota(req, res, next))
+      )
+    );
   } catch (error) {
     return res.status(401).json({
       error: { code: 'AUTH_002', message: 'Invalid or expired token' },

@@ -25,7 +25,8 @@
 
 /**
  * File-size limits for uploads. 100 MB is the FDA ESG per-file ceiling used for
- * regulatory-submission uploads (see server/routes/document-routes.ts).
+ * regulatory-submission uploads (document-routes.ts, since deleted as an
+ * unreachable parallel path).
  */
 export const FILE_LIMITS = {
   /** Maximum bytes accepted for a single document upload (100 MB, FDA ESG). */

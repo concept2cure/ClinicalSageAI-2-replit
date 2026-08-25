@@ -2,13 +2,18 @@
  *  ProtocolDev.tsx -- protocol development hub (C2C-17 + C2C-18..22)
  *  Ported from protocol-dev.jsx IIFE to typed React module.
  * ------------------------------------------------------------------ */
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import * as PG from './ProtocolGov';
 import type { PdevDoc } from '../fixtures/protocol-data';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { ProtocolRegisterForm, type RegisterKind } from './ProtocolRegisterForms';
+import { apiRequest } from '@/lib/queryClient';
+import { downloadBlob, downloadText, safeFileName } from '../download';
+import { C2CForm } from '../C2CForm';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import { C2CToast, useToast } from '../toast';
 
 const Ic = PG.Ic;
 
@@ -113,10 +118,11 @@ export function Outline({ doc, activeSec, onSec, onFinalize }: OutlineProps) {
    and the static render was always what shipped. The branch is gone rather than
    fixed, because there was nothing to fix it to.
 
-   The live `DocCanvas` is a different thing that happens to share the name: a
-   real React component exported from `surfaces/EditorCanvas.tsx` and rendered by
-   `DocumentAuthoring` behind ENABLE_RICH_SECTION_EDITOR. It reaches its host by
-   `import`, not by `window`, and was never reachable from this surface. */
+   `DocCanvas` was later a different thing that happened to share the name: a
+   real React component in `surfaces/EditorCanvas.tsx`, rendered by
+   `DocumentAuthoring` behind the ENABLE_RICH_SECTION_EDITOR flag and never
+   reachable from this surface. Both are gone now — the one section editor is
+   `v2/editor/RichSectionEditor`, and this tab remains a read-only render. */
 export function DocumentTab({ doc, sec, onGenerate }: DocumentTabProps) {
   // `content` is absent on a protocol whose sections exist but whose body has
   // never been drafted; the not-started branch below is already that state.
@@ -176,7 +182,22 @@ export function EligibilityTab({ doc, onAdd }: ListTabProps) {
 }
 
 /* ---- Schedule of assessments ---- */
-export function SoaTab({ doc }: DocOnlyProps) {
+
+/* Every tick used to be local-only: the grid and the per-visit totals updated,
+   the schedule of assessments looked authored, and a reload lost all of it with
+   no warning. POST /api/protocol-soa/cells and /cells/clear existed the entire
+   time and had no caller.
+
+   The governed router requires a reason of at least 8 characters on every cell
+   write, and prompting per tick would be unusable — so the reason is stated
+   ONCE for the editing session and the grid stays read-only until it is given.
+   Each cell still writes its own audited row carrying that reason, which is
+   what the regulation asks for; what it does not ask for is the same sentence
+   retyped forty times.
+
+   A tick is applied optimistically and REVERTED if the server refuses, so the
+   grid never shows a cell the record does not have. */
+export function SoaTab({ doc, canWrite, onError }: DocOnlyProps & { canWrite?: boolean; onError?: (m: string) => void }) {
   // The whole SoA, and each of its three parts, is absent until a schedule is
   // built — an empty grid is the honest render of a protocol that has no visits.
   const soa = doc.soa || {};
@@ -186,13 +207,70 @@ export function SoaTab({ doc }: DocOnlyProps) {
     const m: Record<string, Set<string>> = {}; const seeded = soa.cells || {};
     assessments.forEach((a: any) => { m[a.id] = new Set(seeded[a.id] || []); }); return m;
   });
-  const toggle = (aid: string, vid: string) => setCells(prev => {
-    const n = { ...prev }; const s = new Set(n[aid]); s.has(vid) ? s.delete(vid) : s.add(vid); n[aid] = s; return n;
+  const [reason, setReason] = useState('');
+  const [saving, setSaving] = useState<string | null>(null);
+  const editable = Boolean(canWrite) && reason.trim().length >= 8;
+
+  const flip = (aid: string, vid: string) => setCells(prev => {
+    const n = { ...prev }; const set = new Set(n[aid]); set.has(vid) ? set.delete(vid) : set.add(vid); n[aid] = set; return n;
   });
-  const visitTotal = (vid: string) => assessments.reduce((acc: number, a: any) => acc + (cells[a.id].has(vid) ? 1 : 0), 0);
+
+  const toggle = async (aid: string, vid: string) => {
+    if (!editable || saving) return;
+    const wasOn = cells[aid]?.has(vid) ?? false;
+    const assessmentId = Number(aid);
+    const visitId = Number(vid);
+    if (!Number.isInteger(assessmentId) || !Number.isInteger(visitId)) {
+      onError?.('This row has no governed id, so the cell cannot be written.');
+      return;
+    }
+    const key = aid + ':' + vid;
+    setSaving(key);
+    flip(aid, vid); // optimistic
+    try {
+      const res = await apiRequest(
+        'POST',
+        wasOn ? '/api/protocol-soa/cells/clear' : '/api/protocol-soa/cells',
+        wasOn
+          ? { assessmentId, visitId, reason: reason.trim() }
+          : { assessmentId, visitId, required: true, reason: reason.trim() },
+      );
+      if (!res.ok) {
+        flip(aid, vid); // the record did not change, so neither does the grid
+        const j = await res.json().catch(() => null);
+        onError?.(
+          'The cell was not saved — ' +
+            ((j as any)?.error?.message ?? (j as any)?.error?.code ?? `HTTP ${res.status}`) +
+            '. The schedule is unchanged.',
+        );
+      }
+    } catch (e) {
+      flip(aid, vid);
+      onError?.('The cell was not saved — ' + (e instanceof Error ? e.message : String(e)) + '. The schedule is unchanged.');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const visitTotal = (vid: string) => assessments.reduce((acc: number, a: any) => acc + (cells[a.id]?.has(vid) ? 1 : 0), 0);
   return (
     <div className="pd-pane">
       <PaneHead title="Schedule of assessments" sub={assessments.length + ' assessments × ' + visits.length + ' visits'} />
+      {canWrite ? (
+        <label className="pd-soa-reason">
+          <span>Reason for change (governed) — required before the grid can be edited</span>
+          <input
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Why the schedule is being changed — written to the audit trail with every cell"
+            aria-label="Reason for change, required before editing the schedule of assessments"
+          />
+        </label>
+      ) : (
+        <div className="scaf-note" style={{ margin: '0 0 10px' }}>
+          This protocol has no governed document id, so the schedule is read-only here.
+        </div>
+      )}
       <div className="pd-soa-wrap">
         <table className="pd-soa">
           <thead><tr>
@@ -205,8 +283,19 @@ export function SoaTab({ doc }: DocOnlyProps) {
           <tbody>{assessments.map((a: any) => (
             <tr key={a.id}>
               <th className="pd-soa-rh"><span className="pd-soa-rl">{a.label}</span><span className="pd-soa-rc">{a.cat}</span></th>
-              {visits.map((v: any) => { const on = cells[a.id].has(v.id); return (
-                <td key={v.id} className={'pd-soa-cell' + (on ? ' on' : '')} onClick={() => toggle(a.id, v.id)} role="checkbox" aria-checked={on} title={a.label + ' · ' + v.label}>
+              {visits.map((v: any) => { const on = cells[a.id]?.has(v.id) ?? false; return (
+                <td
+                  key={v.id}
+                  className={'pd-soa-cell' + (on ? ' on' : '') + (editable ? '' : ' ro')}
+                  onClick={() => toggle(a.id, v.id)}
+                  onKeyDown={(e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(a.id, v.id); } }}
+                  role="checkbox"
+                  aria-checked={on}
+                  aria-disabled={!editable}
+                  aria-busy={saving === a.id + ':' + v.id}
+                  tabIndex={editable ? 0 : -1}
+                  title={a.label + ' · ' + v.label + (editable ? '' : ' — enter a reason for change to edit')}
+                >
                   {on ? <span className="pd-soa-x">{'✕'}</span> : null}
                 </td>); })}
             </tr>))}</tbody>
@@ -379,7 +468,13 @@ export function DeviationsTab({ doc, onAdd }: ListTabProps) {
       {deviations.map((d: any) => (
         <div key={d.id} className="pd-card">
           <div className="pd-card-h">
-            <span className="pg-badge" data-tone={d.sev === 'major' ? 'err' : 'warn'}>{PG.labelize(d.sev)}</span>
+            {/* Was `d.sev === 'major' ? 'err' : 'warn'`, which put CRITICAL — the
+                most severe value the column allows — into the amber bucket while
+                major got red, inverting the two grades that decide 3-day versus
+                10-day reporting. `PG.SEV_TONE` is the canonical map, already
+                correct (`critical: 'err'`), and already used by the comment
+                badge thirty lines below; this one hand-rolled its own. */}
+            <span className="pg-badge" data-tone={PG.SEV_TONE[d.sev] || 'warn'}>{PG.labelize(d.sev)}</span>
             <span className="pd-card-t">{d.title}</span>
             {d.reportable && <span className="pg-badge" data-tone="err">Reportable</span>}
             <PG.StatusBadge status={d.status} />
@@ -474,6 +569,76 @@ export function ProtocolWorkspace({ onAsk }: SurfaceViewProps) {
   // refetches and the register renders the server's row (nothing local).
   const [reloadKey, setReloadKey] = useState(0);
   const { rows, loading, error, empty } = useLiveRows<PdevDoc>('/api/protocol-dev', ['/api/protocol-dev', reloadKey]);
+
+  /* What AnA can see of this screen. Published from the OUTER component, above
+     the three honest-state early returns, because a hook after an early return
+     is a conditional hook — and because two of those states ("no protocol in
+     development" and "the store did not answer") are exactly what a user would
+     ask about. Its two live asks are "review this protocol for completeness"
+     and "draft <section> from the linked evidence", neither answerable without
+     the section list and the completeness findings. */
+  const protoDoc = rows[0];
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: 'The protocol is still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The protocol authoring store could not be read, so no protocol is on screen because of a ' +
+          'failure, not because none is in development.',
+        availableActions: ['Retry the protocol read'],
+      };
+    }
+    if (empty || !protoDoc) {
+      return {
+        summary: 'Protocol development: this organisation has no protocol in development yet, so there is nothing to author here.',
+        availableActions: ['Start a clinical protocol'],
+      };
+    }
+    const secs = Array.isArray(protoDoc.sections) ? protoDoc.sections : [];
+    const objs = Array.isArray(protoDoc.objectives) ? protoDoc.objectives : [];
+    const len = (v: unknown) => (Array.isArray(v) ? v.length : 0);
+    const done = secs.filter((sec) => sec.status === 'complete').length;
+    return {
+      summary:
+        `Protocol development: "${protoDoc.shortTitle}" (${protoDoc.title}) v${protoDoc.version}, status ` +
+        `${protoDoc.status}, ${protoDoc.completeness}% complete — ${done} of ${secs.length} ` +
+        `section(s) complete. ${len(protoDoc.risks)} risk(s), ${len(protoDoc.amendments)} amendment(s), ` +
+        `${len(protoDoc.deviations)} deviation(s), ${len(protoDoc.completenessFindings)} completeness finding(s).`,
+      facts: {
+        protocolId: protoDoc.id,
+        shortTitle: protoDoc.shortTitle,
+        title: protoDoc.title,
+        kind: protoDoc.kind,
+        version: protoDoc.version,
+        status: protoDoc.status,
+        sponsor: protoDoc.sponsor,
+        principalInvestigator: protoDoc.pi,
+        completenessPercent: protoDoc.completeness,
+        openSection: protoDoc.openSection,
+        sections: secs.map((sec) => ({
+          number: sec.num, title: sec.title, status: sec.status, required: sec.required,
+        })),
+        objectives: objs.map((o) => ({ type: o.type, text: o.text, endpoint: o.endpoint })),
+        completenessFindings: Array.isArray(protoDoc.completenessFindings) ? protoDoc.completenessFindings : [],
+        registerCounts: {
+          risks: len(protoDoc.risks),
+          milestones: len(protoDoc.milestones),
+          amendments: len(protoDoc.amendments),
+          deviations: len(protoDoc.deviations),
+          reviews: len(protoDoc.reviews),
+        },
+      },
+      availableActions: [
+        'Open a protocol section to read or draft it',
+        'Add a risk, milestone, amendment or deviation to the governed registers (a real persisted write)',
+        'Review the protocol for completeness against its recorded findings',
+      ],
+    };
+  }, [loading, error, empty, protoDoc]);
+  usePublishSurfaceContext('protocol-dev', anaContext);
+
   if (loading) {
     return <div className="pd-wrap"><div className="scaf-note" style={{ margin: 16 }}>Loading protocol…</div></div>;
   }
@@ -501,23 +666,20 @@ export function ProtocolWorkspace({ onAsk }: SurfaceViewProps) {
 function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk: (msg: string) => void; onChanged?: () => void }) {
   const [tab, setTab] = useState('document');
   const [activeSec, setActiveSec] = useState(doc.openSection);
-  const [gov, setGov] = useState<any>(null);
+  // Which governed form is open — the four registers plus the three actions
+  // that used to route through a dialog whose onConfirm was `() => {}`.
+  const [exporting, setExporting] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   // Which register create-form is open (risk/milestone/amendment/deviation) —
   // these POST to the real protocol-* routers, replacing the former reason-only
   // governed dialog whose onConfirm was a no-op.
   const [reg, setReg] = useState<RegisterKind | null>(null);
-  const [toast, setToast] = useState('');
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fireToast = useCallback((m: string) => {
-    setToast(m);
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(''), 4200);
-  }, []);
+  const [toast, fireToast] = useToast();
   // The write routers key on the numeric c2c_protocol_dev id.
   const numericDocId = Number(doc.id);
   const canWrite = Number.isInteger(numericDocId) && numericDocId > 0;
   const openReg = (kind: RegisterKind) => {
-    if (!canWrite) { fireToast('This protocol row has no numeric document id — register writes need the governed store.'); return; }
+    if (!canWrite) { fireToast('This protocol row has no numeric document id — governed writes need the governed store.', 'error'); return; }
     setReg(kind);
   };
   // A protocol row whose `sections` column is null is a well-formed row of a
@@ -529,21 +691,64 @@ function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk: 
   const sec = sections.find((s: any) => s.id === activeSec) || sections[0];
   const onSec = (s: any) => { setActiveSec(s.id); setTab(s.tab || 'document'); };
   const generate = (s: any) => onAsk('Draft ' + s.title + ' for ' + doc.shortTitle + ' from the linked evidence.');
-  // Every action routed through here opened a 21 CFR Part 11 e-signature
-  // dialog whose onConfirm below is `() => {}`, and the dialog then toasted
-  // "<Action> recorded · AUD-9100" from a client-side counter. Nothing was
-  // written, and the audit id referred to nothing. The fabricated id is gone
-  // (see ProtocolGov.tsx); the dialog is kept because reason-for-change capture
-  // is the right shape, but the intent line now states plainly that the action
-  // is not persisted, so no one signs believing something was filed.
-  const NOT_PERSISTED = ' — NOTE: this action is not yet connected to the record; nothing is written or audited.';
-  const govAct = (cfg: any) =>
-    setGov({ ...cfg, intent: (cfg?.intent ?? '') + NOT_PERSISTED, esign: false });
+  /* ── Export: the assembled protocol, rendered ─────────────────────────────
+     The header's Export button opened the same dead dialog. The assembly has
+     always existed — GET /api/protocol-export/:id returns the governed document
+     plus its Markdown — and had no caller on this surface. What downloads is
+     that assembly: Markdown straight through, or handed to the DOCX/PDF
+     renderer. Nothing is re-derived on the client and nothing AnA wrote is
+     substituted for the record. */
+  const runExport = async (v: Record<string, string>) => {
+    const format = (v.format || 'docx') as 'docx' | 'pdf' | 'markdown';
+    if (!canWrite) { fireToast('This protocol row has no numeric document id, so it cannot be assembled for export.', 'error'); return; }
+    setExporting(true);
+    try {
+      const res = await apiRequest('GET', `/api/protocol-export/${numericDocId}`);
+      const j = (await res.json().catch(() => null)) as { markdown?: string } | null;
+      if (!res.ok || !j?.markdown) {
+        fireToast(
+          'The protocol was not exported — ' +
+            ((j as any)?.error?.message ?? (j as any)?.error?.code ?? `HTTP ${res.status}`) +
+            '. No file was produced.',
+          'error',
+        );
+        return;
+      }
+      const base = safeFileName(doc.shortTitle || doc.title || 'protocol', 'protocol') + '-v' + (doc.version || '0');
+      if (format === 'markdown') {
+        const ok = downloadText(base + '.md', j.markdown, 'text/markdown;charset=utf-8');
+        fireToast(ok ? 'Markdown downloaded — the assembled protocol as the server rendered it.' : 'The browser refused the download.', ok ? 'ok' : 'error');
+        setExportOpen(false);
+        return;
+      }
+      const r2 = await apiRequest('POST', `/api/concept2cure/artifacts/export-${format}`, {
+        title: doc.title || doc.shortTitle || 'Protocol',
+        content: j.markdown,
+      });
+      if (!r2.ok) {
+        const b = await r2.json().catch(() => null);
+        fireToast(
+          'The protocol was not exported — ' +
+            ((b as any)?.error?.message ?? (b as any)?.error ?? `HTTP ${r2.status}`) +
+            '. No file was produced.',
+          'error',
+        );
+        return;
+      }
+      const ok = downloadBlob(base + '.' + format, await r2.blob());
+      fireToast(ok ? format.toUpperCase() + ' downloaded — the assembled protocol.' : 'The file was produced but the browser refused the download.', ok ? 'ok' : 'error');
+      setExportOpen(false);
+    } catch (e) {
+      fireToast('The protocol was not exported — ' + (e instanceof Error ? e.message : String(e)) + '. No file was produced.', 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
   const body = (() => {
     switch (tab) {
-      case 'objectives':  return <ObjectivesTab doc={doc} onAdd={() => govAct({ title: 'Add objective', intent: 'Add a study objective and its endpoint.', basis: 'ICH M11 — Objectives & Endpoints' })} />;
-      case 'eligibility': return <EligibilityTab doc={doc} onAdd={() => govAct({ title: 'Add eligibility criterion', intent: 'Add an inclusion or exclusion criterion.', basis: 'ICH M11 — Study Population' })} />;
-      case 'soa':         return <SoaTab doc={doc} />;
+      case 'objectives':  return <ObjectivesTab doc={doc} onAdd={() => openReg('objective')} />;
+      case 'eligibility': return <EligibilityTab doc={doc} onAdd={() => openReg('eligibility')} />;
+      case 'soa':         return <SoaTab doc={doc} canWrite={canWrite} onError={(m) => fireToast(m, 'error')} />;
       case 'risks':       return <RiskTab doc={doc} onAdd={() => openReg('risk')} />;
       case 'milestones':  return <MilestonesTab doc={doc} onAdd={() => openReg('milestone')} />;
       case 'budget':      return <BudgetTab doc={doc} />;
@@ -574,33 +779,51 @@ function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk: 
               /api/protocol-dev. */}
           <span className="pd-autosave">{'v' + (doc.version || '—') + (doc.updated ? ' · updated ' + doc.updated : '')}</span>
           <PG.Btn icon="sparkles" variant="outline" onClick={() => onAsk('Review ' + doc.shortTitle + ' for completeness and list what blocks finalization.')}>Ask AnA</PG.Btn>
-          <PG.Btn icon="fileText" variant="outline" onClick={() => govAct({ title: 'Export protocol', intent: 'Render the assembled protocol to DOCX / PDF.', esign: false })}>Export</PG.Btn>
+          <PG.Btn icon="fileText" variant="outline" onClick={() => setExportOpen(true)}>{exporting ? 'Exporting…' : 'Export'}</PG.Btn>
         </div>
       </div>
       <div className="pd-tabs">{TABS.map(t => (
         <button key={t.id} className={'pd-tab' + (tab === t.id ? ' on' : '')} onClick={() => setTab(t.id)}>
           <Ic n={t.icon} s={14} />{t.label}</button>))}</div>
       <div className="pd-grid">
-        <Outline doc={doc} activeSec={activeSec} onSec={onSec} onFinalize={() => govAct({
-          title: 'Finalize protocol', intent: 'Finalize this protocol version. Required sections must be complete; bumps to v' + pdevNextMajor(doc.version) + '.',
-          basis: 'Deterministic completeness gate · 21 CFR Part 11 e-signature', esign: true })} />
+        <Outline doc={doc} activeSec={activeSec} onSec={onSec} onFinalize={() => openReg('finalize')} />
         <div className="pd-work">{body}</div>
       </div>
-      <PG.GovernedActionDialog open={!!gov} onClose={() => setGov(null)} onConfirm={() => {}} {...(gov || {})} />
+      {exportOpen && (
+        <C2CForm
+          config={{
+            eyebrow: 'Protocol · export',
+            title: 'Export protocol',
+            sub: 'Assembled server-side from the governed document (GET /api/protocol-export). Read-only — nothing about the protocol changes.',
+            submitLabel: exporting ? 'Exporting…' : 'Export',
+            fields: [
+              { key: 'format', label: 'Format', type: 'seg', options: ['docx', 'pdf', 'markdown'], default: 'docx' },
+            ],
+          }}
+          onCancel={() => setExportOpen(false)}
+          onSubmit={runExport}
+        />
+      )}
       {reg && canWrite && (
         <ProtocolRegisterForm
           kind={reg}
           protocolDocumentId={numericDocId}
           onCancel={() => setReg(null)}
-          onDone={(kind) => {
+          onDone={(kind, result) => {
             setReg(null);
-            fireToast('Recorded — the ' + kind + ' was written to the governed register.');
+            fireToast(
+              kind === 'finalize'
+                ? 'Protocol finalized' +
+                    ((result as { version?: string } | null)?.version ? ' — now v' + (result as { version?: string }).version : '') +
+                    '. The completeness gate passed and the action is in the audit trail.'
+                : 'Recorded — the ' + kind + ' was written to the governed register.',
+            );
             onChanged?.();
           }}
-          onError={(m) => fireToast(m)}
+          onError={(m) => fireToast(m, 'error')}
         />
       )}
-      {toast && <div className="de-toast"><span className="ico">{I.checkCircle}</span>{toast}</div>}
+      <C2CToast msg={toast} />
     </div>);
 }
 

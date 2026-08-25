@@ -54,6 +54,7 @@ const SUBMISSION_TOOLS = [
   'assess_qms',
   'list_regulatory_capabilities',
   'assess_dispatch_readiness',
+  'place_into_sequence',
 ];
 
 describe('submission-center AnA tools — registration', () => {
@@ -266,6 +267,28 @@ describe('submission AI tasks — tenant + input guards', () => {
     const handler = getToolHandler('trace_provenance')!;
     const out = JSON.parse(await handler({ submission_id: 1, target_section_code: '2.7' }, {} as ToolContext));
     expect(out.error).toMatch(/tenant context/);
+  });
+  it('place_into_sequence refuses without org/user context (upsertLeaf is tenant-scoped)', async () => {
+    const handler = getToolHandler('place_into_sequence')!;
+    const out = JSON.parse(
+      await handler({ sequence_id: 1, section_code: '2.7.3', title: 'Summary' }, {} as ToolContext),
+    );
+    expect(out.error).toMatch(/tenant context/);
+  });
+  it('place_into_sequence validates required inputs before touching the core', async () => {
+    const handler = getToolHandler('place_into_sequence')!;
+    const noSeq = JSON.parse(
+      await handler({ section_code: '2.7.3', title: 'Summary' }, { organizationId: 1, userId: 2 } as ToolContext),
+    );
+    expect(noSeq.error).toMatch(/sequence_id/);
+    const noSection = JSON.parse(
+      await handler({ sequence_id: 1, title: 'Summary' }, { organizationId: 1, userId: 2 } as ToolContext),
+    );
+    expect(noSection.error).toMatch(/section_code/);
+    const noTitle = JSON.parse(
+      await handler({ sequence_id: 1, section_code: '2.7.3' }, { organizationId: 1, userId: 2 } as ToolContext),
+    );
+    expect(noTitle.error).toMatch(/title/);
   });
   it('check_consistency validates required inputs', async () => {
     const handler = getToolHandler('check_consistency')!;

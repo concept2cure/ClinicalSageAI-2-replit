@@ -31,6 +31,7 @@ import type {
   SubmissionPathway,
 } from '../../../shared/schema/evidence-sufficiency';
 import { pillarsForPathway, type Pillar, type PillarCode } from './pillars';
+import { stableStringify } from '../../../shared/canonical-json.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Inputs
@@ -144,13 +145,11 @@ function isQuantitative(ev: EvidenceObject): boolean {
   return false;
 }
 
-function stableStringify(value: unknown): string {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
-  const obj = value as Record<string, unknown>;
-  const keys = Object.keys(obj).sort();
-  return `{${keys.map(k => `${JSON.stringify(k)}:${stableStringify(obj[k])}`).join(',')}}`;
-}
+/**
+ * Digest of the assessment payload. Computed per call and returned, never
+ * compared against a stored value — free to re-point
+ * (docs/CANONICALIZATION_MIGRATION_2026-08.md).
+ */
 
 function computeInputsHash(req: AssessRequest, evidenceCount: number): string {
   const payload = {

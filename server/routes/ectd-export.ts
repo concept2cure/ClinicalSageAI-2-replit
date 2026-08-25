@@ -2,7 +2,12 @@
  * eCTD Export API Route
  *
  * Provides endpoints for generating and downloading eCTD submission packages
- * as ZIP archives following the ICH M8 v4.0 structure.
+ * as ZIP archives. Package generation runs on the CANONICAL generator —
+ * `ectd/assemble-from-core` over the submission spine (submissions →
+ * ectd_sequences → submission_leaves), driving the real regional packager
+ * (ICH backbone, MD5 manifest, rendered PDF leaves). `:submissionId` is the
+ * canonical submissions.id; a submission with no sequence or no placed leaves
+ * is an honest refusal, never a placeholder package.
  *
  * Endpoints:
  *   POST /api/ectd/export/:submissionId        — Generate & download eCTD package
@@ -14,16 +19,14 @@
  *                                                  via preflightRouter (see exports).
  *
  * @module server/routes/ectd-export
- * @compliance ICH M8 v4.0
+ * @compliance ICH eCTD v3.2.2
  */
 
 import { Router, Request, Response } from 'express';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
-import { generateEctdPackage, validateEctdPackage } from '../services/ectdExportService';
-// Import the error class from its source module (not re-exported via
-// ectdExportService) so `instanceof` still resolves in tests that vi.mock the
-// export service.
+import { assembleSubmissionEctd } from '../services/ectd/assemble-from-core';
+import { validateEctdPackage } from '../services/submission-gateways/ectd-structural-validator';
 import { EctdCompletenessError } from '../services/ectd/completeness';
 import {
   validatePackage as validateEctdLeafPackage,
@@ -93,19 +96,29 @@ function classifyError(error: unknown): {
   message: string;
 } {
   const raw = error instanceof Error ? error.message : String(error);
-  // Region-unsupported is thrown by resolveEctdRegion with a stable prefix.
-  if (/does not support region/i.test(raw)) {
+  // Region-unsupported is thrown by the canonical region mapper with a stable
+  // prefix (core-to-packager toPackagerRegion).
+  if (/does not support region|Unsupported region/i.test(raw)) {
     return {
       status: 400,
       code: 'REGION_UNSUPPORTED',
       message: 'Requested eCTD region is not supported',
     };
   }
+  // A caller-requested region contradicting the sequence's recorded region is
+  // refused by assembleSubmissionEctd — an actionable conflict, not a 500.
+  if (/does not match the sequence's recorded region/i.test(raw)) {
+    return {
+      status: 409,
+      code: 'REGION_MISMATCH',
+      message: raw,
+    };
+  }
   if (/not found|no such|does not exist/i.test(raw)) {
     return {
       status: 404,
       code: 'SUBMISSION_NOT_FOUND',
-      message: 'Submission not found for the current organization',
+      message: 'Submission (or its eCTD sequence) not found for the current organization',
     };
   }
   return {
@@ -113,6 +126,18 @@ function classifyError(error: unknown): {
     code: 'INTERNAL_ERROR',
     message: 'eCTD operation failed',
   };
+}
+
+/**
+ * The acting user's numeric id from the JWT principal — required for the
+ * canonical assembler's audit attribution. Callers run after requireTenant, so
+ * a principal exists; a principal without a usable id falls back to 0 (the
+ * audit row still carries the org).
+ */
+function actingUserId(req: Request): number {
+  const user = (req as any).user;
+  const n = Number(user?.id ?? user?.userId);
+  return Number.isFinite(n) ? n : 0;
 }
 
 /**
@@ -162,21 +187,21 @@ async function auditEctdAccess(
   // by resourceType without colliding with real submissions.
   resourceType: 'ectd_submission' | 'ectd_preflight' = 'ectd_submission',
 ): Promise<void> {
-  try {
-    const user = (req as any).user;
-    await auditService.logAction({
-      tenantId: organizationId,
-      userId: user?.id ?? user?.userId,
-      action,
-      resourceType,
-      resourceId: String(submissionId),
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'] as string | undefined,
-      details,
-    });
-  } catch (err) {
+  const user = (req as any).user;
+
+  const ectdAudit = await auditService.logAction({
+    tenantId: organizationId,
+    userId: user?.id ?? user?.userId,
+    action,
+    resourceType,
+    resourceId: String(submissionId),
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'] as string | undefined,
+    details,
+  });
+  if (!ectdAudit.persisted) {
     log.warn('eCTD audit write failed (non-fatal)', {
-      err: err instanceof Error ? err.message : String(err),
+      err: ectdAudit.error ?? 'no durable store accepted the row',
       action,
       submissionId,
     });
@@ -303,20 +328,23 @@ function validateExportGovernance(req: Request, res: Response) {
 // POST /api/ectd/export/:submissionId — Generate & download eCTD package
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Body schema for the export route. `region` was previously accepted as a
-// free string and forwarded to resolveEctdRegion(), which threw on unknown
-// regions and surfaced as a 500. The /validate and /preflight routes both
-// already use this enum; aligning the export route closes the contract gap.
+// Body schema for the export route. The canonical core records the sequence's
+// region and the submission's application type, so both are OPTIONAL here:
+// `region` is a cross-check (a value contradicting the sequence's recorded
+// region is refused with 409, never silently honored or ignored), and
+// `submissionType` is accepted for wire-compat but the recorded application
+// type is what the packager emits. `sequenceNumber` selects a specific
+// sequence; omitted, the submission's latest sequence is exported.
 const exportBodySchema = z
   .object({
-    region: z.enum(['FDA', 'EMA', 'PMDA']).default('FDA'),
-    submissionType: z.string().default('initial'),
-    sequenceNumber: z.string().default('0000'),
+    region: z.enum(['FDA', 'EMA', 'PMDA']).optional(),
+    submissionType: z.string().optional(),
+    sequenceNumber: z.string().optional(),
     applicationNumber: z.string().optional(),
     validateAfter: z.boolean().default(true),
     // Submission-grade gate: when true, the build is rejected (422) instead of
-    // assembling a package that still contains placeholder ("PENDING") leaves or
-    // no content — so a substantively-empty dossier can never be filed.
+    // assembling a package with unmaterialized leaves or no content — so a
+    // substantively-empty dossier can never be filed.
     requireComplete: z.boolean().default(false),
   })
   .passthrough(); // governance + future fields ride through untouched
@@ -344,7 +372,7 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       details: parsedBody.error.flatten(),
     });
   }
-  const { region, submissionType, sequenceNumber, applicationNumber, validateAfter, requireComplete } =
+  const { region, sequenceNumber, applicationNumber, validateAfter, requireComplete } =
     parsedBody.data;
 
   if (!validateExportGovernance(req, res)) return;
@@ -352,12 +380,14 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
   try {
     console.log(
       `[eCTD Export] Generating package for submission ${submissionId}, ` +
-        `org ${organizationId}, region ${region}`
+        `org ${organizationId}${region ? `, requested region ${region}` : ''}`
     );
 
-    const result = await generateEctdPackage(submissionId, organizationId, {
+    const result = await assembleSubmissionEctd({
+      submissionId,
+      organizationId,
+      userId: actingUserId(req),
       region,
-      submissionType,
       sequenceNumber,
       applicationNumber,
       requireComplete,
@@ -371,7 +401,7 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
 
     console.log(
       `[eCTD Export] Package generated: ${result.filename} ` +
-        `(${result.stats.totalFiles} files, ${result.stats.totalGranules} granules)` +
+        `(${result.stats.totalFiles} files, ${result.stats.totalGranules} rendered leaves)` +
         (validation ? ` — valid: ${validation.valid}` : '')
     );
 
@@ -381,6 +411,9 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
     res.setHeader('X-ECTD-Total-Modules', String(result.stats.totalModules));
     res.setHeader('X-ECTD-Total-Files', String(result.stats.totalFiles));
     res.setHeader('X-ECTD-Generated-At', result.stats.generatedAt);
+    // Recorded identity of what was actually packaged (the core is authoritative).
+    res.setHeader('X-ECTD-Sequence', result.sequenceNumber);
+    res.setHeader('X-ECTD-Region', result.region);
     // Surface submission-completeness on every export (draft builds included) so
     // callers can see how much of the dossier is still placeholder content.
     const comp = result.stats.completeness;
@@ -430,7 +463,8 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
     // generation is the §11.10(e) event we need to record.
     await auditEctdAccess(req, organizationId, submissionId, 'ectd_export_generated', {
       packageSizeBytes: result.buffer?.length,
-      region,
+      region: result.region,
+      sequenceNumber: result.sequenceNumber,
     });
 
     return res.send(result.buffer);
@@ -466,7 +500,7 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
 // POST /api/ectd/export/:submissionId/validate — Validate an uploaded package
 //
 // Phase 1 surface extension: now runs BOTH the ZIP-level structural validator
-// (ectdExportService.validateEctdPackage) and the leaf-level validator
+// (ectd-structural-validator.validateEctdPackage) and the leaf-level validator
 // (ectd4-validator.validatePackage) and merges their findings into a single
 // response.
 //
@@ -477,7 +511,8 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
 //     When `leaves` is present, leaf-level validation runs. When
 //     `zipBufferBase64` is present, ZIP-level validation runs against the
 //     decoded buffer. When neither is present, the route generates a fresh
-//     package via generateEctdPackage and validates it (legacy behavior).
+//     package via the canonical assembler (assembleSubmissionEctd) and
+//     validates it (legacy behavior).
 //   • anything else → raw bytes streamed and treated as a ZIP buffer (legacy
 //     behavior). Leaf-level validator is skipped in this mode because the
 //     leaves payload is not available.
@@ -555,7 +590,11 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
         // Preserve the old generate-then-validate behavior WITHOUT running
         // the strict zod parse, so callers who post incidental metadata
         // (e.g. `{ region: 'foo' }` or `{}`) do not regress to a 400.
-        const result = await generateEctdPackage(submissionId, organizationId);
+        const result = await assembleSubmissionEctd({
+          submissionId,
+          organizationId,
+          userId: actingUserId(req),
+        });
         zipValidation = await validateEctdPackage(result.buffer);
         generatedStats = result.stats;
         mode = 'json-generated-then-validated-legacy';
@@ -572,7 +611,7 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
 
         // 1. Leaf-level validation. `leaves` being PRESENT (even empty) is
         //    an explicit request to run leaf validation; previously
-        //    `leaves: []` silently escalated to a full generateEctdPackage
+        //    `leaves: []` silently escalated to a full package assembly
         //    which was both expensive and surprising. An empty array now
         //    runs the validator on [] and returns its (likely "missing
         //    required sections") findings.
@@ -605,7 +644,11 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
             : 'json-user-supplied-buffer';
         } else if (!leafValidation) {
           // No leaves AND no buffer → preserve legacy generate-then-validate.
-          const result = await generateEctdPackage(submissionId, organizationId);
+          const result = await assembleSubmissionEctd({
+            submissionId,
+            organizationId,
+            userId: actingUserId(req),
+          });
           zipValidation = await validateEctdPackage(result.buffer);
           generatedStats = result.stats;
           mode = 'json-generated-then-validated';
@@ -662,9 +705,12 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
 
       if (zipBuffer.length === 0) {
         // Top-level requireTenant() already enforced the org context for
-        // this branch; we can safely invoke generateEctdPackage with the
-        // resolved organizationId.
-        const result = await generateEctdPackage(submissionId, organizationId);
+        // this branch; we can safely assemble with the resolved organizationId.
+        const result = await assembleSubmissionEctd({
+          submissionId,
+          organizationId,
+          userId: actingUserId(req),
+        });
         zipValidation = await validateEctdPackage(result.buffer);
         generatedStats = result.stats;
         mode = 'generated-then-validated';
@@ -892,10 +938,11 @@ router.get('/:submissionId/preview', async (req: Request, res: Response) => {
   if (organizationId == null) return;
 
   // Validate the optional ?region= query against the supported enum so an
-  // unsupported region returns 400 from this route rather than 500 from
-  // resolveEctdRegion deep inside the service.
-  const regionQuery = (req.query.region as string) || 'FDA';
-  const regionParsed = z.enum(['FDA', 'EMA', 'PMDA']).safeParse(regionQuery);
+  // unsupported region returns 400 from this route. The sequence's recorded
+  // region is authoritative — a provided value is a cross-check (409 on
+  // mismatch via classifyError), never a selector.
+  const regionQuery = req.query.region as string | undefined;
+  const regionParsed = z.enum(['FDA', 'EMA', 'PMDA']).optional().safeParse(regionQuery);
   if (!regionParsed.success) {
     return res.status(400).json({
       error: 'Unsupported region',
@@ -905,7 +952,10 @@ router.get('/:submissionId/preview', async (req: Request, res: Response) => {
   }
 
   try {
-    const result = await generateEctdPackage(submissionId, organizationId, {
+    const result = await assembleSubmissionEctd({
+      submissionId,
+      organizationId,
+      userId: actingUserId(req),
       region: regionParsed.data,
     });
 
@@ -921,7 +971,8 @@ router.get('/:submissionId/preview', async (req: Request, res: Response) => {
       .sort();
 
     await auditEctdAccess(req, organizationId, submissionId, 'ectd_export_previewed', {
-      region: regionParsed.data,
+      region: result.region,
+      sequenceNumber: result.sequenceNumber,
       fileCount: files.length,
     });
 

@@ -44,6 +44,12 @@
 .c2c-v2 .landing-segctx-prog{display:flex;align-items:center;justify-content:center;gap:7px;font-size:13px;font-weight:600;color:var(--text-100);text-align:center;flex-wrap:wrap;}
 .c2c-v2 .landing-segctx-prog .ico{font-size:14px;width:14px;height:14px;flex-shrink:0;color:var(--text-400);display:inline-flex;align-items:center;}
 .c2c-v2 .landing-segctx-prog .ico svg{width:14px;height:14px;}
+/* The lead-programme line is a BUTTON when a real programme loaded (it opens the
+   portfolio) and a plain div in the loading / empty / error states. Neutralize
+   the UA button chrome so both render identically; only the interactive form
+   takes a pointer and an underline on hover. */
+.c2c-v2 button.landing-segctx-prog{background:none;border:0;padding:0;font:inherit;color:var(--text-100);cursor:pointer;}
+.c2c-v2 button.landing-segctx-prog:hover{text-decoration:underline;}
 .c2c-v2 .landing-segctx-paths{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;}
 .c2c-v2 .landing-segctx-path{font-size:11px;font-weight:500;color:var(--text-300);background:var(--bg-100);border:1px solid var(--border);border-radius:999px;padding:3px 10px;}
 .c2c-v2 .landing-newproj{display:inline-flex;align-items:center;gap:7px;margin-top:4px;padding:9px 16px;border-radius:var(--radius-lg);background:var(--accent-100);color:#fff;font-size:13px;font-weight:600;transition:background .15s;}
@@ -83,7 +89,7 @@
 /* metrics */
 .c2c-v2 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
 .c2c-v2 .metric{border:1px solid var(--border);border-radius:var(--radius-xl);padding:14px 16px;background:var(--bg-050);}
-.c2c-v2 .metric-l{font-size:11px;color:var(--text-400);font-weight:500;}
+.c2c-v2 .metric-l{font-size:11px;color:var(--text-300);font-weight:500;}
 .c2c-v2 .metric-n{font-size:26px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:4px;}
 .c2c-v2 .metric[data-tone="err"] .metric-n{color:var(--error);}
 .c2c-v2 .metric[data-tone="ok"] .metric-n{color:var(--success);}
@@ -99,7 +105,10 @@
 /* split list/detail */
 .c2c-v2 .split{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start;}
 .c2c-v2 .split-list{display:flex;flex-direction:column;gap:8px;}
-.c2c-v2 .lrow{border:1px solid var(--border);border-radius:var(--radius-xl);padding:13px 14px;background:var(--bg-050);transition:all var(--dur);}
+/* Named properties rather than `all`: the only things that actually change on
+   :hover and [data-on] are paint-only (see the two rules below), and `all`
+   would silently start animating whatever property is added here next. */
+.c2c-v2 .lrow{border:1px solid var(--border);border-radius:var(--radius-xl);padding:13px 14px;background:var(--bg-050);transition:border-color var(--dur),background var(--dur),box-shadow var(--dur);}
 .c2c-v2 .lrow:hover{border-color:var(--border-strong);background:var(--bg-000);}
 .c2c-v2 .lrow[data-on="true"]{border-color:var(--accent-100);box-shadow:0 0 0 1px var(--accent-100);background:var(--bg-000);}
 .c2c-v2 .lrow-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
@@ -202,7 +211,7 @@
 .c2c-v2 .vt-row .l{flex:1;}
 .c2c-v2 .vt-row .n{font-size:10px;font-family:var(--font-mono);color:var(--text-400);}
 .c2c-v2 .vault-main{min-width:0;}
-.c2c-v2 .vault-search{display:flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:var(--radius-lg);padding:8px 12px;background:var(--bg-000);margin-bottom:12px;}
+.c2c-v2 .vault-search{display:flex;align-items:center;gap:9px;border:1px solid var(--border-control);border-radius:var(--radius-lg);padding:8px 12px;background:var(--bg-000);margin-bottom:12px;}
 .c2c-v2 .vault-search .ico{font-size:15px;color:var(--text-400);}
 .c2c-v2 .vault-search input{flex:1;font-size:13px;}
 .c2c-v2 .ctable{border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;background:var(--bg-050);}
@@ -247,14 +256,18 @@
 .c2c-v2 .rv-doc-prov{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-400);border-top:1px dashed var(--border);padding-top:10px;}
 .c2c-v2 .rv-doc-prov svg{width:12px;height:12px;flex-shrink:0;}
 .c2c-v2 .rv-reject{margin:14px 20px 0;border:1px solid var(--warning);border-radius:var(--radius-lg);background:var(--warning-muted);padding:12px;}
-.c2c-v2 .rv-reject-ta{width:100%;min-height:62px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);padding:9px 11px;font-family:var(--font-sans);font-size:13px;line-height:1.5;color:var(--text-100);resize:vertical;box-sizing:border-box;}
+.c2c-v2 .rv-reject-ta{width:100%;min-height:62px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);padding:9px 11px;font-family:var(--font-sans);font-size:13px;line-height:1.5;color:var(--text-100);resize:vertical;box-sizing:border-box;}
 /* Session-only disclosure under the change-request box. The placeholder used to
    claim the request was "recorded against the document + author notified"; it is
    neither, so the truth is stated where the user is about to act on it. */
 .c2c-v2 .rv-reject-note{margin-top:7px;font-size:11.5px;line-height:1.5;color:var(--text-300);}
 .c2c-v2 .rv-reject-row{display:flex;justify-content:flex-end;gap:8px;margin-top:9px;}
+/* The review-decision modal now writes, so it can be refused — the refusal is
+   announced where the reviewer is looking. */
+.c2c-v2 .esign-err{margin-top:8px;font-size:12px;line-height:1.5;color:var(--error);background:var(--error-muted,transparent);border-radius:var(--radius-md);padding:7px 9px;}
+.c2c-v2 .esign-field textarea{width:100%;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);padding:8px 10px;font-family:var(--font-sans);font-size:13px;line-height:1.5;color:var(--text-100);resize:vertical;box-sizing:border-box;}
 .c2c-v2 .rv-reply{display:flex;gap:8px;align-items:center;padding:0 20px 20px;}
-.c2c-v2 .rv-reply-in{flex:1;height:36px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);padding:0 12px;font:inherit;font-size:13px;color:var(--text-100);}
+.c2c-v2 .rv-reply-in{flex:1;height:36px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);padding:0 12px;font:inherit;font-size:13px;color:var(--text-100);}
 .c2c-v2 .rv-reply-in:focus{outline:none;border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
 .c2c-v2 .thread{display:flex;flex-direction:column;gap:10px;padding:0 20px 20px;}
 .c2c-v2 .cmt{border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;background:var(--bg-000);}
@@ -268,9 +281,21 @@
 .c2c-v2 .cmt-when{color:var(--text-500);}
 .c2c-v2 .cmt-body{font-size:12.5px;line-height:1.55;color:var(--text-200);}
 .c2c-v2 .cmt-actions{display:flex;gap:6px;margin-top:9px;}
+/* Threaded replies: indented under the head comment, joined by a rail line so
+   a thread reads as one conversation, not adjacent guestbook entries. */
+.c2c-v2 .cmt-replies{margin:8px 0 2px 9px;padding-left:12px;border-left:2px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+.c2c-v2 .cmt-resolution{font-size:11.5px;color:var(--text-400);margin:2px 0 4px;}
+.c2c-v2 .cmt-reply .cmt-meta{margin-bottom:3px;}
 
-/* kanban */
-.c2c-v2 .kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:start;}
+/* The `.c2c-v2 .kanban` rule that stood here is deleted, not moved. Nothing in
+   the v2 tree renders that class — the task board is `.tb-kanban`, which takes
+   its track count from a `data-cols` attribute precisely so it cannot drift.
+   The only element this rule could still reach was the MDX workbench board, in
+   a different sheet, at identical specificity (0,2,0). While that sheet also
+   declared `grid-template-columns` the collision was invisible; the moment it
+   stopped, `repeat(4,1fr)` and `align-items:start` from here took over a
+   five-column board and sized its tracks to 99px. One capability, one
+   implementation — the parallel path goes rather than gets a tie-break. */
 .c2c-v2 .kcol{background:var(--bg-100);border-radius:var(--radius-xl);padding:10px;}
 .c2c-v2 .kcol-h{display:flex;align-items:center;gap:8px;padding:4px 6px 10px;font-size:12px;font-weight:600;}
 .c2c-v2 .kdot{width:7px;height:7px;border-radius:50%;}

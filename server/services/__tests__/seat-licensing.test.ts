@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 
-import { evaluateSeats } from '../seat-licensing';
+import { evaluateSeats, isSeatEnforcementOn } from '../seat-licensing';
 
 describe('evaluateSeats', () => {
   it('is unlimited (always allowed) when no seats are purchased', () => {
@@ -42,5 +42,49 @@ describe('evaluateSeats', () => {
     expect(d.available).toBe(0);
     expect(d.allowed).toBe(false); // adding 0 still can't be allowed while over
     expect(d.utilizationPct).toBe(140);
+  });
+});
+
+describe('isSeatEnforcementOn — production default', () => {
+  // This control shipped inert for its whole life: the check was
+  // `=== 'enforce'` and no deployment manifest set the variable, so an
+  // organization could add the (N+1)th member to an N-seat contract with
+  // nothing between it and the database. The default now follows the same
+  // doctrine as db/rlsEnforcement.ts — safe in production, convenient elsewhere.
+
+  it('ENFORCES in production when the variable is unset', () => {
+    expect(isSeatEnforcementOn({ NODE_ENV: 'production' } as NodeJS.ProcessEnv)).toBe(true);
+  });
+
+  it('is report-only outside production when the variable is unset', () => {
+    expect(isSeatEnforcementOn({ NODE_ENV: 'development' } as NodeJS.ProcessEnv)).toBe(false);
+    expect(isSeatEnforcementOn({} as NodeJS.ProcessEnv)).toBe(false);
+  });
+
+  it("honours an explicit 'report' opt-out in production", () => {
+    // The migration-window escape hatch, spelled out so it is greppable in a
+    // deployment manifest rather than being the accidental default.
+    expect(
+      isSeatEnforcementOn({ NODE_ENV: 'production', SEAT_LIMIT_ENFORCEMENT: 'report' } as NodeJS.ProcessEnv)
+    ).toBe(false);
+  });
+
+  it("honours an explicit 'enforce' outside production", () => {
+    expect(
+      isSeatEnforcementOn({ NODE_ENV: 'test', SEAT_LIMIT_ENFORCEMENT: 'enforce' } as NodeJS.ProcessEnv)
+    ).toBe(true);
+  });
+
+  it('falls back to the environment default on a typo rather than silently disabling', () => {
+    // A misspelled value must not switch a revenue control off in production.
+    expect(
+      isSeatEnforcementOn({ NODE_ENV: 'production', SEAT_LIMIT_ENFORCEMENT: 'enfroce' } as NodeJS.ProcessEnv)
+    ).toBe(true);
+  });
+
+  it('is case- and whitespace-insensitive', () => {
+    expect(
+      isSeatEnforcementOn({ NODE_ENV: 'test', SEAT_LIMIT_ENFORCEMENT: '  ENFORCE ' } as NodeJS.ProcessEnv)
+    ).toBe(true);
   });
 });

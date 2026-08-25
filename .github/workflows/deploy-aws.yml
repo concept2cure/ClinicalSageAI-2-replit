@@ -7,10 +7,8 @@ on:
         description: 'Deploy API service'
         type: boolean
         default: true
-      deploy_worker:
-        description: 'Deploy Worker service'
-        type: boolean
-        default: true
+      # NOTE: there is deliberately no `deploy_worker` input — this repo builds
+      # no worker image. See the "No worker image" block under `env:` below.
       deploy_frontend:
         description: 'Deploy frontend to S3/CloudFront'
         type: boolean
@@ -31,19 +29,48 @@ permissions:
 env:
   AWS_REGION: us-east-1
   ECR_API_REPO: c2c-prod-api
-  ECR_WORKER_REPO: c2c-prod-worker
   ECS_CLUSTER: c2c-production
   ECS_API_SERVICE: c2c-production-api
-  ECS_WORKER_SERVICE: c2c-production-worker
-  # Task definition families and container names for the digest-pinned
-  # register-then-deploy path in deploy-api / deploy-worker. The container
-  # names must match the names in the existing task definitions so the
-  # patch step modifies the right container's image and not a sibling
-  # (e.g. a fluent-bit log router or a datadog sidecar).
+  # ── No worker image ────────────────────────────────────────────────────────
+  # This workflow used to build `-f worker/Dockerfile` and roll a
+  # c2c-production-worker ECS service. `worker/` has never existed in this
+  # repository (no commit in history adds it), so that build step could not
+  # succeed and every tag-triggered production deploy failed at build-push —
+  # which also blocked `migrate`, `deploy-api` and `deploy-frontend`, since they
+  # all hang off it.
+  #
+  # The path was removed rather than a Dockerfile invented, because there is no
+  # worker to put in one:
+  #   • `npm run build` (scripts/build-server.mjs) emits exactly ONE artifact,
+  #     dist/index.js, from server/index.ts. There is no second entrypoint.
+  #   • Every background job — driftSentinel, auditChainIntegrity,
+  #     corpusIngestion, regulatoryHorizon, externalIntelligence,
+  #     scheduleOfEvents, taskDue (server/jobs/*) — is started IN-PROCESS by
+  #     server/index.ts. There is no queue consumer to run separately.
+  #   • The ECS worker task definition (terraform/modules/ecs-fargate/main.tf)
+  #     sets no `command`, so a container built from the app image would run the
+  #     app's CMD (`npm run start`) — a SECOND copy of the API, with a SECOND
+  #     copy of every scheduler. Duplicated retention deletes and audit sweeps
+  #     are worse than no worker, so pointing the "worker" build at
+  #     Dockerfile.optimized would have been an actively harmful fix.
+  #
+  # The Python Celery worker that lived under services/ (services/worker.Dockerfile)
+  # was a different stack entirely — exercised only by its own E2E harness and
+  # never the NODE_ENV=production image this ECS service expects. It was deleted
+  # (D9, 2026-08-13) along with docker-compose.e2e.yml and its workflows.
+  #
+  # TODO(infra): the `c2c-production-worker` ECS service + `worker` ECR repo are
+  # still declared in terraform/ with nothing to deploy into them. Remove them
+  # there (out of scope for this workflow) or land a real worker entrypoint and
+  # restore this path alongside it.
+  #
+  # Task definition family and container name for the digest-pinned
+  # register-then-deploy path in deploy-api. The container name must match the
+  # name in the existing task definition so the patch step modifies the right
+  # container's image and not a sibling (e.g. a fluent-bit log router or a
+  # datadog sidecar).
   ECS_API_TASK_FAMILY: c2c-production-api
-  ECS_WORKER_TASK_FAMILY: c2c-production-worker
   ECS_API_CONTAINER_NAME: api
-  ECS_WORKER_CONTAINER_NAME: worker
   # Family for the one-off schema-migration task (see the `migrate` job). It is
   # registered fresh on every deploy by deriving it from the API task def, so it
   # inherits the same DATABASE_URL secret, execution role and log config without
@@ -59,10 +86,10 @@ jobs:
     name: Pre-deploy Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -85,10 +112,10 @@ jobs:
     name: Pre-deploy Security Gate (SAST + Trivy + governance)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -115,7 +142,7 @@ jobs:
 
       - name: Trivy filesystem scan (deps + secrets)
         # Blocking: HIGH/CRITICAL findings fail the deploy gate.
-        uses: aquasecurity/trivy-action@v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -124,7 +151,7 @@ jobs:
           format: table
 
       - name: Trivy config scan (Dockerfile/IaC)
-        uses: aquasecurity/trivy-action@v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: config
           scan-ref: .
@@ -138,18 +165,17 @@ jobs:
     name: Build & Push to ECR
     needs: [test, security-gate]
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.deploy_api == 'true' || github.event.inputs.deploy_worker == 'true' || startsWith(github.ref, 'refs/tags/v') }}
+    if: ${{ github.event.inputs.deploy_api == 'true' || startsWith(github.ref, 'refs/tags/v') }}
     outputs:
       image_tag: ${{ steps.meta.outputs.tag }}
-      # Image content digests captured at push time so deploy-api / deploy-worker
-      # can register task-def revisions pinned to @sha256:<digest>. Without this
-      # the deploys would --force-new-deployment whatever the current task def
-      # references and rollback would not be deterministic. See deploy-api.
+      # Image content digest captured at push time so deploy-api can register a
+      # task-def revision pinned to @sha256:<digest>. Without this the deploy
+      # would --force-new-deployment whatever the current task def references
+      # and rollback would not be deterministic. See deploy-api.
       api_digest: ${{ steps.api-push.outputs.digest }}
-      worker_digest: ${{ steps.worker-push.outputs.digest }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
@@ -159,7 +185,7 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2
 
       - name: Determine image tag
         id: meta
@@ -201,27 +227,11 @@ jobs:
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
           echo "API image pushed: $ECR_REGISTRY/$ECR_API_REPO:$IMAGE_TAG @ $DIGEST"
 
-      - name: Build & push Worker image
-        id: worker-push
-        if: ${{ github.event.inputs.deploy_worker != 'false' }}
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ steps.meta.outputs.tag }}
-        # See API push step. Same digest-capture pattern so deploy-worker
-        # pins by @sha256:<digest>.
-        run: |
-          docker build -f worker/Dockerfile \
-            -t "$ECR_REGISTRY/$ECR_WORKER_REPO:$IMAGE_TAG" \
-            .
-          docker push "$ECR_REGISTRY/$ECR_WORKER_REPO:$IMAGE_TAG"
-          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' \
-            "$ECR_REGISTRY/$ECR_WORKER_REPO:$IMAGE_TAG" | cut -d'@' -f2)
-          if [[ -z "$DIGEST" || "$DIGEST" != sha256:* ]]; then
-            echo "::error::Could not capture sha256 digest for pushed Worker image"
-            exit 1
-          fi
-          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
-          echo "Worker image pushed: $ECR_REGISTRY/$ECR_WORKER_REPO:$IMAGE_TAG @ $DIGEST"
+      # NOTE: the "Build & push Worker image" step that lived here built
+      # `-f worker/Dockerfile`, a path that has never existed in this repo, so it
+      # failed every production deploy. It was removed rather than repaired —
+      # see the "No worker image" block under `env:` at the top of this file for
+      # why there is no worker artifact to build.
 
   # ── Migrate the database BEFORE any service rolls ─────────────────────────
   #
@@ -239,9 +249,8 @@ jobs:
   # RDS subnets (terraform/modules/rds), so a GitHub-hosted runner cannot reach
   # it and running the migration from the runner is not an option.
   #
-  # deploy-api and deploy-worker both `needs: migrate`, so a failed or halted
-  # migration blocks the rollout instead of shipping code onto a schema that
-  # cannot serve it.
+  # deploy-api `needs: migrate`, so a failed or halted migration blocks the
+  # rollout instead of shipping code onto a schema that cannot serve it.
   migrate:
     name: Migrate Database (one-off ECS task)
     needs: build-push
@@ -257,7 +266,7 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2
 
       - name: Register migration task definition (pinned to the deploying image)
         id: register-migrate-td
@@ -456,7 +465,84 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2
+
+      - name: Preflight — task definition must carry the production boot contract
+        # The app fails CLOSED on a missing production env var: it exits at boot
+        # rather than serving degraded. Rolling a task def that omits one turns a
+        # config gap into a crash-loop that ECS reports as "deployment failed"
+        # minutes later, with the real cause buried in CloudWatch. Assert the
+        # names are present (in `environment` or `secrets`) BEFORE registering a
+        # revision, so the deploy stops with the missing variable named.
+        #
+        # Values are never read here — only names. The env set is derived from
+        # the boot-time assertions in the app and mirrors the CI production boot
+        # smoke in ci.yml ("Boot in production mode and require /readyz=200"):
+        #   RLS_ENFORCE              server/db/rlsEnforcement.ts — production
+        #                            accepts ONLY the literal `on`.
+        #   DATABASE_URL             server/startup/env.ts — owner role; migrations.
+        #   APP_DATABASE_URL         server/db/getDatabaseUrl.ts — the non-superuser
+        #                            runtime role. Under RLS_ENFORCE=on the boot
+        #                            posture probe (server/index.ts →
+        #                            assertRlsCatalogPosture) refuses a superuser
+        #                            or BYPASSRLS runtime role, so falling back to
+        #                            DATABASE_URL is not a viable production shape.
+        #   JWT_SECRET               server/config/environment.ts (>=32 chars).
+        #   REFRESH_TOKEN_SECRET     server/config/environment.ts — required in
+        #                            staging/prod, >=32, must differ from JWT_SECRET.
+        #   MFA_ENCRYPTION_KEY       server/config/environment.ts (>=32 chars).
+        #   AUDIT_HMAC_KEY           server/services/audit/auditSealPosture.ts.
+        #   AUDIT_HMAC_SECRET        server/lib/tamper-proof-audit.ts.
+        #   CONNECTOR_ENCRYPTION_KEY server/services/connectors/connector-registry.ts
+        #                            — module-level throw in production.
+        run: |
+          set -euo pipefail
+
+          aws ecs describe-task-definition \
+            --task-definition "$ECS_API_TASK_FAMILY" \
+            --no-cli-pager \
+            --query 'taskDefinition' > /tmp/api-td-preflight.json
+
+          PRESENT=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | ((.environment // []) + (.secrets // [])) | map(.name) | .[]
+          ' /tmp/api-td-preflight.json | sort -u)
+
+          MISSING=""
+          for VAR in RLS_ENFORCE DATABASE_URL APP_DATABASE_URL JWT_SECRET \
+                     REFRESH_TOKEN_SECRET MFA_ENCRYPTION_KEY AUDIT_HMAC_KEY \
+                     AUDIT_HMAC_SECRET CONNECTOR_ENCRYPTION_KEY; do
+            if ! grep -qx "$VAR" <<< "$PRESENT"; then MISSING="$MISSING $VAR"; fi
+          done
+
+          # NODE_ENV must be exactly `production` and RLS_ENFORCE exactly `on`;
+          # both are plain (non-secret) values, so their values are checkable.
+          NODE_ENV_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | (.environment // []) | map(select(.name == "NODE_ENV")) | .[0].value // ""
+          ' /tmp/api-td-preflight.json)
+          RLS_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | (.environment // []) | map(select(.name == "RLS_ENFORCE")) | .[0].value // ""
+          ' /tmp/api-td-preflight.json)
+
+          FAIL=0
+          if [[ -n "$MISSING" ]]; then
+            echo "::error::Task definition $ECS_API_TASK_FAMILY (container $ECS_API_CONTAINER_NAME) is missing required production env:$MISSING"
+            echo "::error::The app refuses to boot without each of these. Add them to the task definition (terraform/environments/production) before deploying."
+            FAIL=1
+          fi
+          if [[ "$NODE_ENV_VALUE" != "production" ]]; then
+            echo "::error::NODE_ENV must be exactly 'production' in the task definition; got '${NODE_ENV_VALUE:-<unset>}'."
+            FAIL=1
+          fi
+          if [[ "$RLS_VALUE" != "on" ]]; then
+            echo "::error::RLS_ENFORCE must be exactly 'on' in the task definition; got '${RLS_VALUE:-<unset>}'. Aliases (true/1/enforce) are rejected by the production kill-switch."
+            FAIL=1
+          fi
+          [[ "$FAIL" -eq 0 ]] || exit 1
+
+          echo "Production boot contract satisfied by $ECS_API_TASK_FAMILY."
 
       - name: Register pinned task definition revision (API)
         id: register-api-td
@@ -530,82 +616,12 @@ jobs:
             --services "$ECS_API_SERVICE"
 
   # ── Deploy Worker to ECS ──────────────────────────────────────────────────
-  deploy-worker:
-    name: Deploy Worker → ECS
-    # Same hard gate as deploy-api. The worker reads the same schema, so a failed
-    # migration must block it too.
-    needs: [build-push, migrate]
-    runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.deploy_worker != 'false' }}
-    environment: production
-
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
-        with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Register pinned task definition revision (Worker)
-        id: register-worker-td
-        env:
-          IMAGE_TAG: ${{ needs.build-push.outputs.image_tag }}
-          IMAGE_DIGEST: ${{ needs.build-push.outputs.worker_digest }}
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        # Mirrors deploy-api: describe current TD → patch worker container
-        # image to <repo>@sha256:<digest> → register new revision →
-        # update-service by the new revision ARN. --force-new-deployment is
-        # gone for the same reason. See deploy-api step.
-        run: |
-          if [[ -z "$IMAGE_DIGEST" || "$IMAGE_DIGEST" != sha256:* ]]; then
-            echo "::error::Worker image digest missing or malformed: '$IMAGE_DIGEST'. Refusing to deploy without a pinned digest."
-            exit 1
-          fi
-
-          PINNED_IMAGE="$ECR_REGISTRY/$ECR_WORKER_REPO@$IMAGE_DIGEST"
-          echo "Pinning Worker task def to: $PINNED_IMAGE"
-
-          aws ecs describe-task-definition \
-            --task-definition "$ECS_WORKER_TASK_FAMILY" \
-            --no-cli-pager \
-            --query 'taskDefinition' > /tmp/worker-td.json
-
-          jq --arg img "$PINNED_IMAGE" \
-             --arg worker_container "$ECS_WORKER_CONTAINER_NAME" \
-             '
-             {family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions, volumes, placementConstraints, requiresCompatibilities, cpu, memory, runtimePlatform, ipcMode, pidMode, proxyConfiguration, inferenceAccelerators, ephemeralStorage}
-             | with_entries(select(.value != null))
-             | .containerDefinitions = (.containerDefinitions | map(if .name == $worker_container then .image = $img else . end))
-             ' /tmp/worker-td.json > /tmp/worker-td-patched.json
-
-          NEW_TD_ARN=$(aws ecs register-task-definition \
-            --cli-input-json file:///tmp/worker-td-patched.json \
-            --no-cli-pager \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text)
-
-          echo "Registered Worker task def: $NEW_TD_ARN"
-          echo "task_def_arn=$NEW_TD_ARN" >> "$GITHUB_OUTPUT"
-
-      - name: Deploy pinned task def revision (Worker)
-        env:
-          NEW_TD_ARN: ${{ steps.register-worker-td.outputs.task_def_arn }}
-        run: |
-          aws ecs update-service \
-            --cluster "$ECS_CLUSTER" \
-            --service "$ECS_WORKER_SERVICE" \
-            --task-definition "$NEW_TD_ARN" \
-            --no-cli-pager
-
-      - name: Wait for Worker deployment stability
-        run: |
-          aws ecs wait services-stable \
-            --cluster "$ECS_CLUSTER" \
-            --services "$ECS_WORKER_SERVICE"
+  # REMOVED. The `deploy-worker` job registered a digest-pinned revision of the
+  # c2c-production-worker task definition from an image that this repo cannot
+  # build (see the "No worker image" block under `env:` at the top of this
+  # file). It could only ever run after build-push succeeded, which it never
+  # did. Nothing downstream depended on it — `smoke-test` needs deploy-api and
+  # deploy-frontend only.
 
   # ── Deploy frontend to S3 + CloudFront ────────────────────────────────────
   deploy-frontend:
@@ -616,10 +632,10 @@ jobs:
     environment: production
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: 'npm'

@@ -17,9 +17,8 @@ import { danger, warn, fail, message, markdown } from 'danger';
 // └─────────────────────────────────────────────────────────────────────────────┘
 
 const CONFIG = {
-  // PR size thresholds
-  PR_SIZE_WARN: 500, // Lines changed before warning
-  PR_SIZE_FAIL: 1000, // Lines changed before failure
+  // NOTE: the PR_SIZE_WARN / PR_SIZE_FAIL thresholds and the checkPRSize rule
+  // they drove were removed deliberately. See the note above checkCriticalPathChanges.
 
   // File thresholds
   LARGE_FILE_WARN: 500, // Single file lines before warning
@@ -63,58 +62,23 @@ const getLinesChanged = () => {
   return (pr.additions || 0) + (pr.deletions || 0);
 };
 
-const hasLargePROverride = () => {
-  const pr = danger.github.pr;
-  const title = (pr.title || '').toLowerCase();
-  const labels = pr.labels || [];
-  const labelNames = labels.map(label => (label?.name || '').toLowerCase());
-  const headRef = (pr.head?.ref || '').toLowerCase();
-
-  return (
-    labelNames.includes('override-large-pr') ||
-    labelNames.includes('hotfix') ||
-    headRef === 'concept2cure-v2' ||
-    title.startsWith('revert') ||
-    title.startsWith('hotfix')
-  );
-};
-
-// ┌─────────────────────────────────────────────────────────────────────────────┐
-// │                           RULE: PR SIZE                                      │
-// └─────────────────────────────────────────────────────────────────────────────┘
-
-const checkPRSize = () => {
-  const linesChanged = getLinesChanged();
-
-  if (linesChanged > CONFIG.PR_SIZE_FAIL) {
-    if (hasLargePROverride()) {
-      warn(
-        `⚠️ **Large PR (Override)**: This PR changes ${linesChanged} lines.\n\n` +
-          `An override was detected (label or title). Please ensure reviewers are aware and the scope is justified.\n\n` +
-          `**Suggested approach:**\n` +
-          `- Separate refactoring from feature changes\n` +
-          `- Split by module or feature area\n` +
-          `- Create a PR stack with dependencies`
-      );
-      return;
-    }
-
-    fail(
-      `🚨 **Extremely Large PR**: This PR changes ${linesChanged} lines.\n\n` +
-        `PRs over ${CONFIG.PR_SIZE_FAIL} lines are difficult to review thoroughly. ` +
-        `Please consider breaking this into smaller, focused PRs.\n\n` +
-        `**Suggested approach:**\n` +
-        `- Separate refactoring from feature changes\n` +
-        `- Split by module or feature area\n` +
-        `- Create a PR stack with dependencies`
-    );
-  } else if (linesChanged > CONFIG.PR_SIZE_WARN) {
-    warn(
-      `⚠️ **Large PR**: This PR changes ${linesChanged} lines.\n\n` +
-        `Consider whether this could be split into smaller PRs for easier review.`
-    );
-  }
-};
+// ── REMOVED: the PR-size rule ────────────────────────────────────────────────
+// `checkPRSize` failed any PR over 1,000 changed lines and warned over 500, with
+// an `override-large-pr` label as the escape hatch.
+//
+// Removed at the product owner's direction. The rule was a proxy for
+// reviewability, and it measured the wrong thing here: this repository's house
+// style is comment-dense (the tenancy control modules run about a third prose),
+// and tests and documentation counted toward the same total as logic — so a
+// well-tested, well-documented change scored worse than a bare one. It also cut
+// against a change that is only correct as a unit: a state machine and the guard
+// that enforces it cannot be landed separately without shipping, in the interim,
+// exactly the class of defect the change exists to fix.
+//
+// Reviewability is still worth protecting; it is just not a line count. The
+// checks that actually carry it remain in force below — critical-path scrutiny,
+// schema-change review, test-coverage expectations, and the Part 11 checklist.
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ┌─────────────────────────────────────────────────────────────────────────────┐
 // │                           RULE: CRITICAL PATH CHANGES                        │
@@ -510,7 +474,6 @@ const runDanger = async () => {
   generateSummary();
 
   // Run all checks
-  checkPRSize();
   checkPRDescription();
   checkCriticalPathChanges();
   checkSchemaChanges();

@@ -10,7 +10,7 @@
  */
 
 import type { QuestionOption } from '../../types/intelligence-questions.js';
-import type { DomainEntry } from './index.js';
+import { toQuestionOptions as sharedToQuestionOptions, type DomainEntry } from './types.js';
 
 export type ManufacturingProcess =
   | 'chemical_synthesis'
@@ -154,5 +154,5 @@ export const MANUFACTURING_PROCESSES: DomainEntry<ManufacturingProcess>[] = [
 
 /** Convert MANUFACTURING_PROCESSES to QuestionOption[] for use in intelligence question flows. */
 export function toQuestionOptions(): QuestionOption[] {
-  return MANUFACTURING_PROCESSES.map((e) => ({ value: e.value, label: e.label, description: e.description }));
+  return sharedToQuestionOptions(MANUFACTURING_PROCESSES);
 }

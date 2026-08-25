@@ -6,15 +6,17 @@
  * The connective map that ties the ~30 scattered biopharma surfaces into
  * one legible arc for the active program.
  *
- * Segment-aware: biotech -> BX-301 BLA 351(a), pharma -> BX-204 NDA 212345.
+ * Segment-aware: the biotech and pharma records the org actually holds, read
+ * from GET /api/program-journey (never a sample programme).
  * A persistent intelligence column carries CTD-module readiness, the review
  * clock, predicted HAQs, cross-module contradictions and open blockers --
  * every row routes into the deep surface that owns it.
  */
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { getSurfaceMeta } from '../registryModel';
 import { useLiveRows, EmptyState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -109,24 +111,17 @@ interface PjBlocker {
   due: string;
 }
 
-/* ── Program identity (segment-aware) ── */
-
-export const PJ_PROGRAMS: Record<string, PjProgram> = {
-  biotech: {
-    code: 'BX-301', name: '', app: 'BLA · 351(a)',
-    modality: 'Biologic (BLA)', indication: 'Relapsed multiple myeloma',
-    pathway: 'BLA · 351(a)', sponsor: 'Concept2Cure', agency: 'FDA',
-    readiness: 64, current: 'assemble',
-    target: { label: 'Filing readiness', v: 'BLA assembly · 64% ready', agency: 'FDA · 351(a)' },
-  },
-  pharma: {
-    code: 'BX-204', name: '', app: 'NDA 212345',
-    modality: 'Small molecule · 505(b)(1)', indication: 'Oncology · pivotal ORR 38.6%, OS HR 0.62',
-    pathway: 'NDA · 505(b)(1)', sponsor: 'Concept2Cure', agency: 'FDA',
-    readiness: 88, current: 'review',
-    target: { label: 'PDUFA target action', v: '04 Apr 2027', agency: 'FDA · 41 days out' },
-  },
-};
+/* ── Program identity ──
+ *
+ * `PJ_PROGRAMS` used to live here: two invented programmes (BX-301 "Relapsed
+ * multiple myeloma · 64% ready" and BX-204 "pivotal ORR 38.6%, OS HR 0.62")
+ * keyed by segment. The surface itself was migrated to GET /api/program-journey
+ * some time ago and stopped reading it — but the constant stayed exported, so
+ * the fabricated identity still shipped in the bundle and was one import away
+ * from being rendered again. It is deleted rather than left dormant: the only
+ * source of a programme's code, indication, readiness and target action is the
+ * org's own record from the live read below. `PjProgram` remains as the type
+ * that record is asserted to. */
 
 /* ── The 9-stage lifecycle ── */
 
@@ -136,49 +131,49 @@ const PJ_STAGES: PjStage[] = [
     what: 'Candidate selection and the target product profile. AnA scans precedent approvals and the competitive landscape to shape the development and regulatory strategy before any agency contact.',
     deliv: [['Target product profile', 1], ['Candidate nomination package', 1], ['Regulatory strategy memo', 1], ['Competitive & precedent landscape', 1]],
     caps: ['pdev', 'precedent-intelligence', 'deep-research', 'orphan', 'projects'],
-    interactions: [['TPP', 'Target product profile locked', 'Q1 -- internal']],
+    interactions: [['TPP', 'Target product profile locked', 'Q1 — internal']],
     ana: 'Draft the regulatory strategy memo from the target product profile and closest precedents' },
   { id: 'preind', num: 'Stage 2', label: 'Pre-IND / enabling', icon: 'beaker',
     gate: 'Pre-IND (Type B) meeting · IND-enabling package agreed',
     what: 'IND-enabling GLP toxicology, CMC for the first GMP lots, and the pivotal trial design. The Pre-IND meeting aligns the agency on nonclinical scope, starting dose and the Phase 1 protocol.',
-    deliv: [['GLP tox study reports', 1], ['Module 3 -- first GMP lots', 1], ['Pre-IND briefing book', 1], ['Phase 1 protocol & starting dose', 0]],
+    deliv: [['GLP tox study reports', 1], ['Module 3 — first GMP lots', 1], ['Pre-IND briefing book', 1], ['Phase 1 protocol & starting dose', 0]],
     caps: ['pdev', 'agency-meetings', 'cmc', 'nonclinical', 'biostatistics', 'pediatric'],
-    interactions: [['Type B', 'Pre-IND meeting -- minutes filed', 'Complete'], ['Q-sub', 'Nonclinical scope aligned', 'Complete']],
+    interactions: [['Type B', 'Pre-IND meeting — minutes filed', 'Complete'], ['Q-sub', 'Nonclinical scope aligned', 'Complete']],
     ana: 'Assemble the Pre-IND briefing book and pre-empt likely agency questions on starting dose' },
   { id: 'ind', num: 'Stage 3', label: 'IND / CTA active', icon: 'clipboardList',
     gate: '30-day safe-to-proceed · IND maintained (amendments, annual report)',
     what: 'The active IND: initial application, safe-to-proceed clearance, then a living file of protocol amendments, safety reports (SUSAR 7/15-day) and the annual report. Forms 1571/1572/3674 stay current.',
     deliv: [['IND initial (Forms 1571/1572/3674)', 1], ['Safe-to-proceed clearance', 1], ['Protocol amendments', 1], ['Annual report / DSUR', 0]],
     caps: ['ind-checklist', 'document-authoring', 'agency-meetings', 'safety-narrative'],
-    interactions: [['IND', 'Safe-to-proceed (day 30)', 'Complete'], ['Amend', 'Protocol amendment 04 -- active', 'Drafting'], ['Safety', 'SUSAR 7-day form', 'Open']],
+    interactions: [['IND', 'Safe-to-proceed (day 30)', 'Complete'], ['Amend', 'Protocol amendment 04 — active', 'Drafting'], ['Safety', 'SUSAR 7-day form', 'Open']],
     ana: 'Run the IND amendment readiness check and draft the next annual report from study status' },
   { id: 'clinical', num: 'Stage 4', label: 'Clinical development', icon: 'sigma',
     gate: 'End-of-Phase-2 meeting · pivotal readout · DSMB clearances',
     what: 'Phase 1->3 execution: dose-finding, the pivotal trial, risk-based monitoring and interim DSMB reviews. The End-of-Phase-2 meeting fixes the pivotal design and endpoints that the whole submission will rest on.',
-    deliv: [['Phase 1/2 CSRs', 1], ['EOP2 meeting alignment', 1], ['Pivotal trial -- enrolled', 1], ['Pivotal topline & CSR', 0]],
+    deliv: [['Phase 1/2 CSRs', 1], ['EOP2 meeting alignment', 1], ['Pivotal trial — enrolled', 1], ['Pivotal topline & CSR', 0]],
     caps: ['rbm', 'clinical-ops', 'biostatistics', 'csr-workflow', 'protocol-dev', 'safety-narrative'],
-    interactions: [['Type B', 'End-of-Phase-2 meeting', 'Complete'], ['DSMB', 'Interim review 3 -- continue', 'Complete'], ['Pivotal', 'BX204-301 · database lock', 'Upcoming']],
-    ana: 'Summarize pivotal readiness -- enrollment, DSMB history, and the gap to database lock' },
+    interactions: [['Type B', 'End-of-Phase-2 meeting', 'Complete'], ['DSMB', 'Interim review 3 — continue', 'Complete'], ['Pivotal', 'Pivotal trial database lock', 'Upcoming']],
+    ana: 'Summarize pivotal readiness — enrollment, DSMB history, and the gap to database lock' },
   { id: 'presub', num: 'Stage 5', label: 'Pre-submission', icon: 'messageSquare',
     gate: 'Pre-NDA / Pre-BLA meeting · filing plan & format agreed',
     what: 'The Pre-NDA/Pre-BLA meeting: agree the content, format and review division expectations, confirm the dataset package and any rolling-review plan, and lock the submission timeline and the orchestration gates before assembly begins.',
     deliv: [['Pre-NDA/BLA briefing book', 1], ['Filing plan & timeline', 1], ['Dataset package plan (define.xml, ADRG)', 0], ['Rolling review agreement', 0]],
     caps: ['agency-meetings', 'nda-cockpit', 'dossier', 'orchestration'],
-    interactions: [['Type B', 'Pre-BLA meeting -- questions filed', 'Drafting'], ['Plan', 'Rolling review -- CMC first', 'Upcoming']],
+    interactions: [['Type B', 'Pre-BLA meeting — questions filed', 'Drafting'], ['Plan', 'Rolling review — CMC first', 'Upcoming']],
     ana: 'Build the Pre-BLA briefing book and the filing readiness plan with the day-74 risk view' },
   { id: 'assemble', num: 'Stage 6', label: 'Submission assembly', icon: 'gitBranch',
     gate: 'CTD Module 1--5 complete · eValidator pass · publish-ready',
     what: 'Assemble the application: CTD Modules 1--5, the Module 1 administrative set (Form 356h), prescribing information, then format -> assemble -> validate the eCTD backbone. This is where readiness, contradictions and blockers must all clear.',
-    deliv: [['Module 2 CTD summaries', 0], ['Module 3 CMC -- comparability closed', 0], ['Prescribing information (PLLR · SPL)', 0], ['eCTD backbone validated', 0]],
+    deliv: [['Module 2 CTD summaries', 0], ['Module 3 CMC — comparability closed', 0], ['Prescribing information (PLLR · SPL)', 0], ['eCTD backbone validated', 0]],
     caps: ['nda-cockpit', 'dossier', 'ectd-coauthor', 'cmc', 'nonclinical', 'labeling-pi', 'submission-center'],
-    interactions: [['Assemble', 'eCTD backbone -- 84% mapped', 'Active'], ['Validate', 'eValidator -- 1 define.xml error', 'Open']],
+    interactions: [['Assemble', 'eCTD backbone — 84% mapped', 'Active'], ['Validate', 'eValidator — 1 define.xml error', 'Open']],
     ana: 'Run the filing readiness diagnostic across Modules 1--5 and stage the eCTD backbone' },
   { id: 'review', num: 'Stage 7', label: 'Agency review & HAQ', icon: 'globe',
     gate: 'Day-74 filing / RTF · mid- & late-cycle · AdComm · action date',
     what: 'Post-submission review: the day-74 filing decision (Refuse-to-File risk), information requests / HAQs, mid- and late-cycle communications, a possible advisory committee, and the PDUFA action date. AnA pre-drafts responses from prior submissions.',
     deliv: [['Filing decision (day 74 / RTF)', 0], ['Information request responses', 0], ['Advisory committee package', 0], ['Action letter', 0]],
     caps: ['submission-center', 'haq-manager', 'nda-cockpit', 'labeling-pi'],
-    interactions: [['Filing', 'Day-74 filing review', 'Upcoming'], ['HAQ', '3 predicted -- pre-draftable', 'Predicted'], ['AdComm', 'If convened (~day 270)', 'Upcoming']],
+    interactions: [['Filing', 'Day-74 filing review', 'Upcoming'], ['HAQ', '3 predicted — pre-draftable', 'Predicted'], ['AdComm', 'If convened (~day 270)', 'Upcoming']],
     ana: 'Pre-draft responses to the 3 predicted HAQs anchored on the locked CSR and prior submissions' },
   { id: 'approval', num: 'Stage 8', label: 'Approval & launch', icon: 'rocket',
     gate: 'Action letter · labeling negotiation closed · registration active',
@@ -192,7 +187,7 @@ const PJ_STAGES: PjStage[] = [
     what: 'Post-approval lifecycle: periodic safety reports (PSUR/PADER), signal management, CMC and labeling variations/supplements with change-impact determinations, regulatory-change horizon scanning, and market-authorization renewals.',
     deliv: [['PSUR / PADER schedule', 0], ['Signal management & RMP', 0], ['Variations / supplements', 0], ['MA renewals', 0]],
     caps: ['pharmacovigilance', 'lifecycle-mgmt', 'reg-change', 'change-assessment', 'registrations', 'pediatric'],
-    interactions: [['PV', 'First PSUR -- data lock point', 'Upcoming'], ['Var', 'Post-approval CMC change', 'Upcoming']],
+    interactions: [['PV', 'First PSUR — data lock point', 'Upcoming'], ['Var', 'Post-approval CMC change', 'Upcoming']],
     ana: 'Set up the PSUR schedule and assess the impact of the next planned CMC change' },
 ];
 
@@ -261,6 +256,60 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
     setSel(null);
   };
 
+  /* WHAT ANA SEES HERE — published above the honest-state early returns so one
+     call covers every branch. Two never-fabricate rules this surface holds: no
+     per-deliverable status exists on the record, and no agency-interaction
+     outcomes do — neither is published. */
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: 'The program journey is still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The program journey could not be loaded — the program-journey store did not respond. A failed read, not an empty portfolio.',
+      };
+    }
+    if (empty) {
+      return {
+        summary:
+          'Program journey: no program journey data yet — once a program is provisioned for this organization, its end-to-end regulatory arc appears here.',
+      };
+    }
+    const bySegCtx: Record<string, PjRecord> = {};
+    for (const r of rows) bySegCtx[r.seg] = r;
+    const rec = bySegCtx[seg] ?? rows[0];
+    const overlay = rec.overlay ?? {};
+    const done = PJ_STAGES.filter((s) => (overlay[s.id] ?? ['upcoming', 0])[0] === 'done').length;
+    return {
+      summary:
+        `Program journey (${seg}): ${rec.code} — ${rec.name} (${rec.app}), ${done} of 9 stages complete` +
+        (typeof rec.readiness === 'number' ? `, ${rec.readiness}% ready` : '') +
+        `. Current stage: ${rec.current}.`,
+      facts: {
+        program: {
+          code: rec.code,
+          name: rec.name,
+          app: rec.app,
+          modality: rec.modality,
+          indication: rec.indication,
+          pathway: rec.pathway,
+          agency: rec.agency,
+        },
+        // typeof, not truthiness: 0% ready is a real readiness.
+        ...(typeof rec.readiness === 'number' ? { readiness: rec.readiness } : {}),
+        ...(rec.target ? { target: rec.target } : {}),
+        currentStage: rec.current,
+        doneCount: done,
+        stagesTotal: 9,
+        segment: seg,
+        ...(sel ? { selectedStage: sel } : {}),
+      },
+      availableActions: ['Switch the biotech/pharma segment view; select a stage'],
+    };
+  }, [loading, error, empty, rows, seg, sel]);
+  usePublishSurfaceContext('program-journey', anaContext);
+
   if (loading) {
     return (
       <div className="pj">
@@ -320,8 +369,8 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
       <div className="pj-head">
         <div>
           <div className="pj-eyebrow">{seg === 'pharma' ? 'Pharma' : 'Biotech'} {I.dot} program lifecycle</div>
-          <h1 className="pj-title">Program journey -- concept to submission</h1>
-          <p className="pj-intro">The end-to-end regulatory arc for {prog.code}, from candidate selection to approval and lifecycle. Each stage carries its agency gate, deliverables and the tools that serve it -- and every intelligence signal routes into the surface that owns it.</p>
+          <h1 className="pj-title">Program journey — concept to submission</h1>
+          <p className="pj-intro">The end-to-end regulatory arc for {prog.code}, from candidate selection to approval and lifecycle. Each stage carries its agency gate, deliverables and the tools that serve it — and every intelligence signal routes into the surface that owns it.</p>
         </div>
         <div className="pj-switch">
           <button className="pj-seg" data-on={seg === 'biotech' || undefined} onClick={() => setSeg('biotech')}>{I.atom} Biotech {I.dot} BLA</button>
@@ -402,13 +451,33 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
 
             <p className="pj-what">{stage.what}</p>
 
+            {/* ── The tick marks were a constant, not this programme's state ──
+                Each row rendered a green check or a clock from `d[1]`, a
+                hardcoded 1/0 in the PJ_STAGES catalog — e.g. 'IND initial
+                (Forms 1571/1572/3674)', 1. Every tenant on every programme saw
+                the same deliverables reported complete, and a regulatory lead
+                reading "Safe-to-proceed clearance ✓" was reading a literal in
+                this file, not their filing.
+
+                PJ_STAGES is deliberately definitional — the header above says
+                so — and the per-programme status arrives in `rec.overlay`,
+                which is real and IS applied to the stage itself (st/pct). There
+                is no per-DELIVERABLE status in the record, so there is nothing
+                to overlay here.
+
+                So the list says what the stage requires, which is true and
+                useful, and claims nothing about whether this programme has done
+                it. The stage's own progress above remains the live signal. */}
             <div className="pj-seclbl">Key deliverables</div>
             <div className="pj-deliv">
               {stage.deliv.map((d, i) => (
-                <div key={i} className="pj-deliv-row" data-done={d[1] ? true : undefined}>
-                  <span className="dot">{d[1] ? I.checkCircle : I.clock}</span>{d[0]}
+                <div key={i} className="pj-deliv-row">
+                  <span className="dot">{I.circle || I.clock}</span>{d[0]}
                 </div>
               ))}
+            </div>
+            <div className="pj-deliv-note">
+              What this stage requires. Per-deliverable status is not tracked on the programme record — the stage progress above is the live signal.
             </div>
 
             <div className="pj-seclbl">Capabilities that serve this stage</div>
@@ -423,15 +492,33 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
               })}
             </div>
 
-            <div className="pj-seclbl">Agency interactions</div>
+            {/* The KIND and the description are definitional — Stage 2 is where a
+                Type B Pre-IND meeting happens, and that is true of anyone. The
+                OUTCOME was not, and the outcome is what this block really showed.
+
+                `PjRecord` carries no `interactions` field, so nothing could ever
+                override the literals: every organization was told its Pre-IND
+                minutes were filed, its 30-day safe-to-proceed was Complete and a
+                DSMB had said continue — under a header built from its own live
+                programme code. That is fabricated regulatory history, and it is
+                the most dangerous sentence this surface could show a customer.
+
+                The interactions stay listed, because knowing Stage 3 turns on a
+                30-day safe-to-proceed is genuinely useful. The status chip goes
+                until a record backs it; Agency meetings owns that, and the row
+                still routes there. Same call the deliverables above just got. */}
+            <div className="pj-seclbl">Agency interactions at this stage</div>
             <div className="pj-interact">
               {stage.interactions.map((x, i) => (
                 <button key={i} className="pj-int" onClick={() => open('agency-meetings')}>
                   <span className="pj-int-kind">{x[0]}</span>
                   <div className="pj-int-b"><div className="pj-int-t">{x[1]}</div></div>
-                  <span className="pj-chip" data-t={x[2] === 'Complete' ? 'done' : x[2] === 'Upcoming' ? 'upcoming' : 'active'}>{x[2]}</span>
+                  <span className="go">{I.right}</span>
                 </button>
               ))}
+            </div>
+            <div className="pj-deliv-note">
+              Which agency interactions this stage involves. Their outcomes are not tracked on the programme record — Agency meetings holds the real history.
             </div>
 
             <button className="pj-ana" onClick={() => ask(stage.ana)}>{I.sparkles} {stage.ana}</button>

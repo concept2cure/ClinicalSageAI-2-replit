@@ -22,6 +22,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState, hasKeys, isRowsWith, type ShapeGuard } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 
@@ -169,6 +170,67 @@ export function PublishingCenter(_props: SurfaceViewProps) {
     return list.codes.filter((c) => lower(c.code).includes(q) || lower(c.description).includes(q));
   }, [list, filter]);
 
+  /* WHAT ANA SEES HERE. The NAME is the trap: "Publishing Center" reads as the
+     place that transmits, and it is not — three GETs, no writes. Every branch
+     says so, because "can I publish from here?" is the question this context
+     will be asked to answer. */
+  const anaContext = useMemo(() => {
+    const readOnly =
+      'eCTD publishing reference — spec versions and controlled vocabularies, read-only; nothing on this screen publishes, transmits, or freezes a sequence.';
+    // True in every state — a fact about the surface, not about the fetch.
+    const disclaimer =
+      'Sequence assembly, validation runs and transmission live on their own surfaces (compile, submission center, gateway) — nothing here performs them.';
+    // readJson collapses "no response" and "wrong shape" into one branch; the
+    // summary must not claim to know which.
+    if (loadState === 'error') {
+      return {
+        summary: `${readOnly} The spec-version register and vocabulary listing did not load or answered in an unreadable shape — nothing is shown, which is a failed read, not an empty register.`,
+        facts: { disclaimer },
+      };
+    }
+    if (loadState !== 'ready') {
+      // 'idle' is the pre-effect first render — the same unsettled read as 'loading'.
+      return { summary: `${readOnly} Spec versions and vocabularies are still loading.`, facts: { disclaimer } };
+    }
+    if (specRows.length === 0) {
+      return {
+        summary: `${readOnly} No spec versions are recorded for ${version}.`,
+        facts: { version, disclaimer },
+      };
+    }
+    // v3.2.2 has no per-list codes endpoint — the code browser is v4.0-only, so
+    // its facts are published only when that pane is actually on screen.
+    const codeListState = listState === 'ready' ? 'ready' : listState === 'error' ? 'error' : 'loading';
+    return {
+      summary:
+        `${readOnly} Showing ${version}: ${specRows.length} qualified specification(s).` +
+        (version === 'v3.2.2'
+          ? ' The per-list code browser applies to v4.0 lists only; v3.2.2 coded-attribute lists are shown with counts.'
+          : codeListState === 'loading'
+            ? ` The "${selectedList}" code list is still loading.`
+            : codeListState === 'error'
+              ? ` The "${selectedList}" code list did not load or was unreadable.`
+              : ` Browsing "${selectedList}": ${filteredCodes.length} code(s)${filter.trim() ? ` matching "${filter.trim()}"` : ''}.`),
+      facts: {
+        version,
+        ...(version === 'v4.0' && listing?.regionalIgOid ? { regionalIgOid: listing.regionalIgOid } : {}),
+        specRowCount: specRows.length,
+        ...(version === 'v4.0'
+          ? {
+              selectedList,
+              codeListState,
+              ...(filter.trim() ? { filter: filter.trim() } : {}),
+              // A count while loading/errored would be a guessed 0 — absent beats guessed.
+              ...(codeListState === 'ready' ? { filteredCodeCount: filteredCodes.length } : {}),
+            }
+          : {}),
+        disclaimer,
+      },
+      availableActions: ['Switch eCTD version, pick a vocabulary list, filter its codes — all view-only'],
+    };
+  }, [loadState, listState, version, specs, listing, selectedList, filter, filteredCodes]);
+  usePublishSurfaceContext('ectd-publishing', anaContext);
+
   return (
     <div className="cm-body">
       {/* ── Header: version selector ── */}
@@ -201,7 +263,7 @@ export function PublishingCenter(_props: SurfaceViewProps) {
           {loadState === 'loading' ? (
             <div style={{ padding: 16 }}><EmptyState icon={I.book} title="Loading spec versions…" /></div>
           ) : loadState === 'error' ? (
-            <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load spec versions" hint="GET /api/ectd/qualification/spec-versions didn’t respond, or answered in a shape this panel can’t read. Sign in to your tenant and retry." /></div>
+            <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load spec versions" hint="The specification-version register didn’t respond, or answered in a shape this panel can’t read. Sign in to your tenant and retry." /></div>
           ) : specRows.length === 0 ? (
             <div style={{ padding: 16 }}><EmptyState icon={I.book} title="No spec versions" /></div>
           ) : (
@@ -253,7 +315,7 @@ export function PublishingCenter(_props: SurfaceViewProps) {
               {listState === 'loading' ? (
                 <EmptyState icon={I.book} title="Loading codes…" />
               ) : listState === 'error' ? (
-                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load this code list" hint="GET /api/ectd/controlled-vocab/:listId didn’t respond, or answered in a shape this panel can’t read." />
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load this code list" hint="The controlled-vocabulary service didn’t respond, or answered in a shape this panel can’t read." />
               ) : !list || filteredCodes.length === 0 ? (
                 <EmptyState icon={I.book} title={filter ? 'No codes match your filter' : 'No codes'} />
               ) : (

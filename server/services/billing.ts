@@ -12,6 +12,12 @@
 
 import Stripe from 'stripe';
 import { pool } from '../db.js';
+// Every write to organizations.payment_status below changes whether the tenant
+// may operate. The lifecycle guard caches that posture for 60s, so each writer
+// drops the cached entry to make the change take effect immediately on this
+// instance instead of after the TTL. See services/tenant/tenant-lifecycle.ts.
+import { invalidateTenantPosture } from './tenant/tenant-lifecycle';
+import { writeModuleGrant } from './entitlements/module-grants';
 
 /**
  * The amount to charge per billing interval, in cents.
@@ -473,6 +479,18 @@ export async function createCheckoutSession(params: CreateCheckoutParams): Promi
 // DTC CHECKOUT — Self-service signup with optional free trial
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * A free-tier activation refused because the organization already holds a paid
+ * plan. A distinct type so the route can answer 409 with the reason instead of
+ * a 500 that says nothing and invites a retry that can never succeed.
+ */
+export class FreeTierNotAvailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'FreeTierNotAvailableError';
+  }
+}
+
 export interface DTCCheckoutParams {
   organizationId: number;
   tier: string;
@@ -487,22 +505,58 @@ export interface DTCCheckoutParams {
  * Includes trial period for paid tiers. No per-seat pricing.
  */
 export async function createDTCCheckoutSession(params: DTCCheckoutParams): Promise<{ url: string; sessionId: string }> {
-  const stripe = getStripe();
   const { organizationId, tier, billingCycle, successUrl, cancelUrl, currency } = params;
 
   const dtcTier = DTC_PRICING.find(p => p.tier === tier);
   if (!dtcTier) throw new Error(`Invalid DTC tier: ${tier}`);
   if (dtcTier.baseMonthly === 0 && tier !== 'free') throw new Error('Enterprise tier requires custom pricing');
 
-  // Free tier — no checkout needed
+  // Free tier — no checkout needed.
+  //
+  // This is an ACTIVATION path, not a plan-change path. The route carries no
+  // role check, so without this guard any authenticated member could POST
+  // { tier: 'free' } and rewrite their organization's tier and payment_status —
+  // silently downgrading a paying tenant with one request and no audit of a
+  // decision anyone made. An org that already holds a paid plan (a Stripe
+  // subscription, or a paid tier that is live/trialing) is REFUSED here and
+  // told where the change belongs; downgrading is what the Stripe customer
+  // portal (POST /portal) exists for.
   if (tier === 'free') {
+    const currentRes = await pool.query(
+      `SELECT tier, payment_status, stripe_subscription_id FROM organizations WHERE id = $1`,
+      [organizationId]
+    );
+    if (currentRes.rows.length === 0) throw new Error(`Organization ${organizationId} not found`);
+    const current = currentRes.rows[0] as {
+      tier: string | null;
+      payment_status: string | null;
+      stripe_subscription_id: string | null;
+    };
+    const currentTier = (current.tier ?? '').toLowerCase();
+    const paidTier = ['standard', 'professional', 'enterprise'].includes(currentTier);
+    const liveStatus = ['active', 'trialing', 'past_due'].includes(
+      (current.payment_status ?? '').toLowerCase()
+    );
+    if (current.stripe_subscription_id || (paidTier && liveStatus)) {
+      throw new FreeTierNotAvailableError(
+        `This organization is already on the ${currentTier || 'paid'} plan. ` +
+          'Changing an active plan to Free is a billing change — make it from the billing portal, not from workspace activation.'
+      );
+    }
     await pool.query(
       `UPDATE organizations SET tier = 'free', payment_status = 'active', updated_at = NOW() WHERE id = $1`,
       [organizationId]
     );
+    invalidateTenantPosture(organizationId);
     await provisionModulesForTier(organizationId, 'free');
     return { url: successUrl, sessionId: 'free' };
   }
+
+  // Stripe is resolved only once a PAID tier is known to be in play. It used to
+  // be the first line of this function, which made an unconfigured Stripe key
+  // fail the free tier too — a plan with nothing to charge cannot need a
+  // payment processor to be provisioned.
+  const stripe = getStripe();
 
   // Look up org
   const orgResult = await pool.query(
@@ -795,6 +849,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Pro
   // Auto-provision modules for new tier
   await provisionModulesForTier(parseInt(organizationId, 10), tier);
 
+  invalidateTenantPosture(organizationId);
   console.log(`[Billing] Subscription updated: org=${organizationId}, tier=${tier}, status=${paymentStatus}`);
 }
 
@@ -812,6 +867,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Pro
     [parseInt(organizationId, 10)]
   );
 
+  invalidateTenantPosture(organizationId);
   console.log(`[Billing] Subscription canceled for org ${organizationId}`);
 }
 
@@ -831,6 +887,8 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice): Promise<void> {
      WHERE id = $2`,
     [new Date(getSubscriptionPeriodEnd(sub) * 1000), parseInt(organizationId, 10)]
   );
+
+  invalidateTenantPosture(organizationId);
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
@@ -849,6 +907,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
     [parseInt(organizationId, 10)]
   );
 
+  invalidateTenantPosture(organizationId);
   console.warn(`[Billing] Payment failed for org ${organizationId}`);
 }
 
@@ -899,13 +958,22 @@ async function provisionModulesForTier(organizationId: number, tier: string): Pr
       || requiredTiers.some((t: string) => orgLevel >= (tierLevel[t] ?? 99));
 
     if (qualifies) {
-      await pool.query(
-        `INSERT INTO module_subscriptions (organization_id, module_id, enabled, enabled_at)
-         VALUES ($1, $2, true, NOW())
-         ON CONFLICT (organization_id, module_id)
-         DO UPDATE SET enabled = true, enabled_at = NOW()`,
-        [organizationId, mod.module_id]
-      );
+      /* One canonical grant writer — services/entitlements/module-grants.ts.
+         This ran at checkout and on the subscription webhook, and did not touch
+         `expires_at`. So a customer whose trial of a module had lapsed and who
+         then BOUGHT a plan that includes it got `enabled = true` written beside
+         the stale past date — an instantly-expired grant. The purchase
+         completed, the payment cleared, and the module stayed locked.
+
+         `expiresAt: null` is what clears that date: a module the paid plan
+         includes is granted perpetually. */
+      await writeModuleGrant({
+        organizationId,
+        moduleId: mod.module_id,
+        enabled: true,
+        actorEmail: null,
+        expiresAt: null,
+      });
     }
   }
 }

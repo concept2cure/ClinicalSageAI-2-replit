@@ -19,7 +19,7 @@ import { documentVersions, documents, submissions } from '../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import crypto from 'crypto';
 import auditService from './auditService';
-import { buildVersionBindingDigest } from './part11/version-binding';
+import { buildVersionBindingDigest, evaluateBindingVerification } from './part11/version-binding';
 
 interface AuditTrailInput {
   organizationId: number;
@@ -230,6 +230,31 @@ class Part11ComplianceService {
   }
 
   /**
+   * Re-derive the §11.70 content-binding digest for a specific stored version.
+   * Returns null when the version row or its content is absent, so the caller can
+   * report the binding as UNVERIFIABLE rather than silently valid.
+   */
+  async computeVersionBindingDigest(versionId: number): Promise<string | null> {
+    const [version] = await this.getDb()
+      .select({
+        id: documentVersions.id,
+        documentId: documentVersions.documentId,
+        versionNumber: documentVersions.versionNumber,
+        content: documentVersions.content,
+      })
+      .from(documentVersions)
+      .where(eq(documentVersions.id, versionId))
+      .limit(1);
+    if (!version || version.content == null || version.content === '') return null;
+    return buildVersionBindingDigest({
+      documentId: version.documentId,
+      versionId: version.id,
+      versionNumber: version.versionNumber,
+      content: version.content,
+    });
+  }
+
+  /**
    * Validate electronic signature
    */
   async validateElectronicSignature(signatureId: number, documentId: number) {
@@ -276,8 +301,24 @@ class Part11ComplianceService {
         };
       }
 
+      // §11.70 record binding: re-derive the content digest of the SIGNED version
+      // and confirm it still matches what was signed. This is what detects a
+      // post-signing content change — the guarantee the signature exists to make.
+      // versionId is nullable since D6 (governed-target rows anchor via
+      // signed_target and never reach here — the documentId match above already
+      // rejected them); a null version cannot be re-derived, so it reports as
+      // unverifiable rather than silently valid.
+      const bound = (signature as { boundPayloadDigest?: string | null }).boundPayloadDigest;
+      const current = bound && bound.length > 0 && signature.versionId != null
+        ? await this.computeVersionBindingDigest(signature.versionId)
+        : null;
+      const binding = evaluateBindingVerification(bound, current);
+      if (!binding.valid) {
+        return { valid: false, bindingVerified: false, reason: binding.reason };
+      }
       return {
         valid: true,
+        bindingVerified: binding.bindingVerified,
         signedBy: signature.signerId,
         signedAt: signature.signedAt,
         reason: signature.signaturePurpose,

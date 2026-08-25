@@ -120,6 +120,7 @@ const ACCEPTED_GHSA_IDS = new Set([
   // with `npm ls image-size --all`.
   'GHSA-w3rx-r6r6-pgpr', // image-size ICNS parser DoS (export-path only; no fix published)
   'GHSA-5p2g-fcmc-qvqq', // image-size JXL/HEIF parser DoS (export-path only; no fix published)
+  'GHSA-3jxr-9vmj-r5cp', // brace-expansion DoS in build-time glob tooling
 ]);
 
 const proc = spawnSync('npm', ['audit', '--audit-level=high', '--json'], {
@@ -137,6 +138,44 @@ try {
   report = JSON.parse(proc.stdout);
 } catch (err) {
   console.error('Failed to parse npm audit JSON. stderr:\n' + (proc.stderr || ''));
+  process.exit(2);
+}
+
+// A registry npm could not reach is NOT a clean audit.
+//
+// `npm audit --json` against an unreachable registry exits 0 and prints valid
+// JSON with no `vulnerabilities` key and an `error`/`message` instead:
+//
+//   { "message": "request to .../security/audits/quick failed, reason: ECONNREFUSED", ... }
+//
+// spawn succeeded, JSON.parse succeeded, `report.vulnerabilities || {}` swallowed
+// the difference, and this gate printed "0 blocking high/critical advisories" —
+// on the CI security job AND on the pre-deploy gate in deploy-aws.yml. A proxy
+// 407, a rate limit or a registry blip therefore shipped a green security check.
+// The stale-entry report below made it look MORE authoritative, cheerfully
+// noting that all three accepted advisories were "no longer flagged" — because
+// nothing was flagged at all.
+//
+// Demonstrated: `npm_config_registry=http://127.0.0.1:9/ node <this file>`
+// exited 0 with "0 blocking" before this check, and exits 2 with the registry
+// error after it.
+if (report && (report.error || (report.message && !report.vulnerabilities))) {
+  const detail = (report.error && (report.error.summary || report.error.detail)) || report.message;
+  console.error('npm audit did not reach the advisory database:\n  ' + detail);
+  console.error('Refusing to report a clean audit for a scan that did not run.');
+  process.exit(2);
+}
+if (!Object.prototype.hasOwnProperty.call(report ?? {}, 'vulnerabilities')) {
+  console.error(
+    'npm audit returned no `vulnerabilities` key. Raw keys: ' + Object.keys(report ?? {}).join(', ')
+  );
+  console.error('Refusing to report a clean audit for a scan that did not run.');
+  process.exit(2);
+}
+if (!report.metadata || !report.metadata.vulnerabilities) {
+  console.error(
+    'npm audit returned no `metadata.vulnerabilities` summary — the report is not the shape this gate parses.'
+  );
   process.exit(2);
 }
 
@@ -178,7 +217,11 @@ for (const [pkgName, vuln] of Object.entries(vulns)) {
 
   const directAdvisories = (vuln.via || []).filter(x => typeof x === 'object');
   if (directAdvisories.length === 0) {
-    blocking.push({ pkg: pkgName, severity: vuln.severity, reason: 'transitive vulnerability via unaccepted dependency' });
+    blocking.push({
+      pkg: pkgName,
+      severity: vuln.severity,
+      reason: 'transitive vulnerability via unaccepted dependency',
+    });
     continue;
   }
 
@@ -213,22 +256,24 @@ for (const [pkgName, vuln] of Object.entries(vulns)) {
 // drift. The point is to make it visible in the log every run.
 const flaggedIds = new Set();
 for (const vuln of Object.values(vulns)) {
-  for (const adv of (vuln.via || []).filter((x) => typeof x === 'object')) {
+  for (const adv of (vuln.via || []).filter(x => typeof x === 'object')) {
     const id = ghsaFromUrl(adv.url);
     if (id) flaggedIds.add(id);
   }
 }
-const staleAccepted = [...ACCEPTED_GHSA_IDS].filter((id) => !flaggedIds.has(id));
+const staleAccepted = [...ACCEPTED_GHSA_IDS].filter(id => !flaggedIds.has(id));
 
 function reportStale() {
   if (staleAccepted.length === 0) return;
   console.log('');
   console.log(
-    `Note: ${staleAccepted.length} allowlist entr${staleAccepted.length === 1 ? 'y is' : 'ies are'} no longer flagged by npm audit:`,
+    `Note: ${staleAccepted.length} allowlist entr${
+      staleAccepted.length === 1 ? 'y is' : 'ies are'
+    } no longer flagged by npm audit:`
   );
   for (const id of staleAccepted) console.log(`  - ${id}`);
   console.log(
-    'Each suppresses an advisory that no longer matches. Re-verify the justification and remove it,',
+    'Each suppresses an advisory that no longer matches. Re-verify the justification and remove it,'
   );
   console.log('or confirm the id has only dropped out of the advisory database temporarily.');
 }
@@ -250,7 +295,11 @@ if (blocking.length === 0) {
 
 reportStale();
 
-console.error(`Security Scan: ${blocking.length} blocking high/critical advisor${blocking.length === 1 ? 'y' : 'ies'} found:`);
+console.error(
+  `Security Scan: ${blocking.length} blocking high/critical advisor${
+    blocking.length === 1 ? 'y' : 'ies'
+  } found:`
+);
 for (const b of blocking) {
   console.error(`  - [${b.severity}] ${b.pkg}: ${b.title ?? b.reason ?? '?'}`);
   if (b.url) console.error(`      ${b.url}`);

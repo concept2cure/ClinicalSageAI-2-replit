@@ -174,7 +174,7 @@ Master §3 names `pdev-ectd-compile.ts` (175 lines) as the compile foundation, b
 ZIP/packaging capability is spread across at least:
 
 - `server/src/services/ectd.ts`
-- `server/services/ectdExportService.ts` *(referenced by strategy material)*
+- ~~`server/services/ectdExportService.ts`~~ *(RETIRED in the slice-5b consolidation — callers migrated to `ectd/assemble-from-core.ts` + `submission-gateways/regional-packager.ts`, the one canonical generator)*
 - `server/services/submission-gateways/regional-packager.ts`
 - `server/services/pathway-engines/mdr-ivdr/technical-file-packager.ts`
 - `server/services/docx/masterDocumentBuilder.ts`

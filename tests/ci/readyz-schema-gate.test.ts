@@ -13,6 +13,7 @@ import express from 'express';
 import request from 'supertest';
 import { mountFastPathHealthEndpoints } from '../../server/startup/inline-endpoints';
 import { setSchemaReadiness } from '../../server/startup/readiness-state';
+import { setAnaReadiness } from '../../server/startup/ana-readiness-state';
 
 // A pool stub whose `query` always resolves — isolates the schema gate from
 // actual connectivity so the test asserts only the schema dimension.
@@ -25,7 +26,13 @@ function appWithHealth() {
 }
 
 describe('/readyz schema-readiness gate', () => {
-  beforeEach(() => setSchemaReadiness('unknown'));
+  beforeEach(() => {
+    setSchemaReadiness('unknown');
+    // /readyz also gates on AnA's AI provider (startup/ana-readiness-state),
+    // which defaults to 'unknown' and fails closed. Pin it healthy so these
+    // cases isolate the schema dimension, which is what this file is about.
+    setAnaReadiness('ready', 'test fixture — AnA provider pinned healthy');
+  });
 
   it('returns 503 and names schema when the boot check found missing tables', async () => {
     setSchemaReadiness('missing', 'missing tables: organizations, users');

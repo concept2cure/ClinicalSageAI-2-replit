@@ -11,7 +11,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 
-vi.mock('@/lib/queryClient', () => ({ apiRequest: vi.fn() }));
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest: vi.fn(),
+}));
 vi.mock('@/utils/authToken', () => ({ getAuthToken: () => 'test-token' }));
 
 import { apiRequest } from '@/lib/queryClient';

@@ -30,7 +30,7 @@ import React from 'react';
 import { I } from '../icons';
 import { AnswerLead } from '../AnswerLead';
 import { useLiveRows, useLiveData, EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { C2CForm } from '../C2CForm';
 import {
   CC_SOURCE_TYPES,
@@ -39,7 +39,9 @@ import {
   CC_CLOSURE,
 } from '../fixtures/commcenter';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/commcenter-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ── Display rows, aligned to the REAL backend columns actually returned ── */
 
@@ -187,11 +189,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
   const [tab, setTab] = React.useState('inbox');
   const [owner, setOwner] = React.useState<'all' | 'mine'>('all');
   const [form, setForm] = React.useState(false);
-  const [toast, setToast] = React.useState('');
-  const fire = (m: string) => {
-    setToast(m);
-    setTimeout(() => setToast(''), 2800);
-  };
+  const [toast, fire] = useToast();
 
   const projectId = currentProjectId();
 
@@ -236,6 +234,100 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
     : null;
   const profState = useLiveRows<AuthProfileRow>(profPath);
 
+  /* What AnA can see of this screen.
+     Four independent reads, two of them project-scoped. NO PROJECT is its own
+     state and is published as itself: the agency inbox and the authority
+     profiles are empty for want of a project id, not because the regulator has
+     sent nothing — and "you have no open agency correspondence" is a claim a
+     user would act on.
+
+     `responseRequired` with a due date is the fact worth carrying: it is what
+     turns this screen from a list into a clock. */
+  const anaContext = React.useMemo(() => {
+    const inbox = !commsPath
+      ? { state: 'no-project' as const }
+      : liveComms.loading
+        ? { state: 'loading' as const }
+        : liveComms.error
+          ? { state: 'unreadable' as const }
+          : { state: 'ready' as const };
+    const inboxLine =
+      inbox.state === 'no-project'
+        ? 'no project is selected, so the agency inbox is not scoped to anything'
+        : inbox.state === 'loading'
+          ? 'the agency inbox is still loading'
+          : inbox.state === 'unreadable'
+            ? 'the agency inbox could not be read'
+            : `${comms.length} agency communication(s), ${open.length} open, ${responseDue.length} awaiting a response, ${critical.length} critical`;
+    return {
+      summary:
+        `Communication centre, "${tab}" tab (${owner === 'mine' ? 'my items' : 'all owners'}): ${inboxLine}.` +
+        (inbox.state === 'ready' && soonest
+          ? ` The soonest response is due ${soonest.dueDate}.`
+          : '') +
+        ' ' +
+        (interState.loading
+          ? 'Health-authority interactions are still loading.'
+          : interState.error
+            ? 'Health-authority interactions could not be read.'
+            : `${interState.rows.length} health-authority interaction(s).`) +
+        ' ' +
+        (commitState.loading
+          ? 'Commitments are still loading.'
+          : commitState.error
+            ? 'Commitments could not be read.'
+            : `${commitments.length} commitment(s).`),
+      facts: {
+        openTab: tab,
+        ownerFilter: owner,
+        projectScoped: Boolean(projectId),
+        agencyInboxState: inbox.state,
+        agencyInbox: inbox.state === 'ready'
+          ? {
+              total: comms.length,
+              open: open.length,
+              awaitingResponse: responseDue.length,
+              critical: critical.length,
+              soonestDue: soonest ? { id: soonest.id, type: soonest.communicationType, due: soonest.dueDate, urgency: soonest.urgency } : null,
+              items: comms.slice(0, 10).map((c) => ({
+                id: c.id, type: c.communicationType, channel: c.sourceChannel,
+                received: c.receivedDate, due: c.dueDate ?? null, urgency: c.urgency,
+                responseRequired: c.responseRequired, issues: c.extractedIssues,
+                reviewStatus: c.humanReviewStatus, closureStatus: c.closureStatus,
+              })),
+            }
+          : null,
+        interactions: interState.loading || interState.error
+          ? null
+          : interState.rows.slice(0, 10).map((r) => ({
+              id: r.id, type: r.interaction_type, agency: r.agency, title: r.title,
+              status: r.status, requested: r.requested_date, scheduled: r.scheduled_date, held: r.held_date,
+            })),
+        commitments: commitState.loading || commitState.error
+          ? null
+          : commitments.slice(0, 10).map((c) => ({
+              id: c.id, type: c.commitment_type, description: c.description,
+              regulatoryBasis: c.regulatory_basis, due: c.due_date,
+              status: c.status, effectiveStatus: c.effectiveStatus, fulfilled: c.fulfilled_date,
+            })),
+        authorityProfiles: profState.loading || profState.error
+          ? null
+          : profState.rows.map((pr) => ({
+              authority: pr.authority, centerOrDivision: pr.centerOrDivision,
+              channel: pr.channelType, transport: pr.submissionTransport,
+              acceptedFormats: pr.acceptedFormats ?? [],
+            })),
+      },
+      availableActions: [
+        'Log an agency communication (a governed write — persists the event, auto-creates a response task when one is required, and writes the audit entry)',
+        'Switch tab between the inbox, interactions, commitments and authority profiles',
+        'Filter to my items or all owners',
+        'Read a communication\u2019s extracted issues, urgency and response due date',
+      ],
+    };
+  }, [commsPath, liveComms.loading, liveComms.error, comms, open.length, responseDue.length, critical.length, soonest, tab, owner, projectId, interState.loading, interState.error, interState.rows, commitState.loading, commitState.error, commitments, profState.loading, profState.error, profState.rows]);
+  usePublishSurfaceContext('communication-center', anaContext);
+
   // logComm — REAL, audited write. POSTs to
   // /api/concept2cure/projects/:pid/agency-communications, which persists the
   // event, auto-creates a response task + notification when a response is
@@ -265,7 +357,13 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       const res = await apiRequest('POST', commsPath, body);
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.success) {
-        fire('Couldn’t save the communication — ' + (json?.error || `HTTP ${res.status}`) + '. Nothing was persisted.');
+        // `json.error` was read first, so a refusal shaped
+        // { error: 'PENDING_STORE', message: '<a real sentence>' } rendered the
+        // enum token; and a bare `HTTP 500` is not user copy on its own, so the
+        // fallback is a sentence that carries the status instead.
+        const detail =
+          serverMessage(json) ?? `the store did not accept it (HTTP ${res.status})`;
+        fire('Couldn’t save the communication — ' + detail + '. Nothing was persisted.');
         return;
       }
       const saved = json.data as CommRow & { generatedTaskId?: number };
@@ -282,28 +380,70 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
           : 'Saved to the governed store · audit entry written',
       );
     } catch (e) {
-      fire('Couldn’t save the communication — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was persisted.');
+      // `String(e)` put whatever was thrown on screen, including a browser
+      // "Failed to fetch" and any non-Error value. Only ApiRequestError has been
+      // through the envelope reduction and is safe to show.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const detail =
+        known && (e as Error).message ? (e as Error).message : 'the service could not be reached';
+      fire('Couldn’t save the communication — ' + detail + '. Nothing was persisted.');
     }
   };
 
-  // triage — FLAG (deferred): there is no mounted PATCH for agency-communication
-  // review/closure status, so this only flips the row in the CURRENT view. The
-  // toast states that plainly; the change is not persisted and reverts on reload
-  // once the live read re-seeds. No false claim of a saved status transition.
-  const triage = (id: string) => {
-    setComms((cs) =>
-      cs.map((c) =>
-        c.id === id
-          ? {
-              ...c,
-              humanReviewStatus:
-                c.humanReviewStatus === 'pending_review' ? 'triaged' : 'actioned',
-              closureStatus: c.closureStatus === 'open' ? 'in_progress' : 'closed',
-            }
-          : c,
-      ),
-    );
-    fire('Updated in this view only — status changes aren’t persisted yet (no server endpoint).');
+  /* ── Triage now persists ──────────────────────────────────────────────────
+     This flipped the row in React state and told the user so in a toast:
+     "status changes aren't persisted yet (no server endpoint)". Honest, but it
+     meant the only action on this surface did nothing durable — a triage
+     vanished on reload, and a second reviewer opening the same queue saw it
+     untouched. On a screen whose whole job is tracking what the agency asked
+     and whether anyone answered, that is a record-keeping failure.
+
+     PATCH .../agency-communications/:eventId/advance now exists (added in this
+     change, beside the GET and POST that already read and wrote these columns).
+     The server computes the transition from the STORED status, so a card cannot
+     skip triage on its way to actioned, and it writes an audit entry naming the
+     from/to. The row is adopted from the server's response rather than guessed,
+     so what the screen shows is what was stored. */
+  const triage = async (id: string) => {
+    if (!projectId) return;
+    try {
+      const res = await apiRequest(
+        'PATCH',
+        `/api/concept2cure/projects/${encodeURIComponent(projectId)}/agency-communications/${encodeURIComponent(id)}/advance`,
+      );
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        fire(
+          'Not advanced — ' +
+            (serverMessage(body) ?? `the server refused the change (HTTP ${res.status})`) +
+            '. Nothing was stored.',
+          'error',
+        );
+        return;
+      }
+      const row = (body as { data?: { humanReviewStatus?: string; closureStatus?: string } } | null)?.data;
+      if (!row?.humanReviewStatus) {
+        fire('Not advanced — the server did not confirm the new status.', 'error');
+        return;
+      }
+      setComms((cs) =>
+        cs.map((c) =>
+          c.id === id
+            ? {
+                ...c,
+                humanReviewStatus: row.humanReviewStatus as typeof c.humanReviewStatus,
+                closureStatus: (row.closureStatus ?? c.closureStatus) as typeof c.closureStatus,
+              }
+            : c,
+        ),
+      );
+      fire(`Advanced to ${String(row.humanReviewStatus).replace('_', ' ')} — recorded with an audit entry.`);
+    } catch (e) {
+      fire(
+        'Not advanced — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was stored.',
+        'error',
+      );
+    }
   };
 
   const shown = owner === 'mine' ? open.filter((c) => c.responseRequired) : comms;
@@ -332,6 +472,14 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
             <>Open a project to load its agency communications.</>
           ) : liveComms.error ? (
             <>Couldn't load this project's agency communications.</>
+          ) : liveComms.loading ? (
+            /* The ternary had an `error` arm and no `loading` one, so while the
+               read was in flight `critical` and `responseDue` were both empty
+               and it fell through to the final arm — an authoritative all-clear
+               on IR and CRL response clocks, under the eyebrow "What the FDA is
+               waiting on from you". Transient, but it is the first thing on the
+               surface and it is the one sentence a user acts on. */
+            <>Reading this project's agency communications…</>
           ) : critical.length ? (
             <>
               The FDA issued a <b>{critical[0].communicationType}</b>
@@ -570,7 +718,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                         </button>
                       )}
                       {c.closureStatus !== 'closed' && (
-                        <button className="cc-btn sm" onClick={() => triage(c.id)}>
+                        <button className="cc-btn sm" onClick={() => void triage(c.id)}>
                           {c.humanReviewStatus === 'pending_review' ? 'Triage' : 'Advance'}
                         </button>
                       )}
@@ -593,7 +741,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
         <>
           <div className="pj-seclbl">
             Health-authority interactions{' '}
-            <span className="s">· /api/ha-interactions · org-scoped</span>
+            <span className="s">· org-scoped</span>
           </div>
           <StateGuard
             loading={interState.loading}
@@ -648,7 +796,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
           </StateGuard>
           <div className="pj-seclbl">
             Regulatory commitments{' '}
-            <span className="s">· PMR / PMC / REMS · /api/ha-interactions/commitments</span>
+            <span className="s">· PMR / PMC / REMS</span>
           </div>
           <StateGuard
             loading={commitState.loading}
@@ -839,11 +987,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
         />
       )}
 
-      {toast && (
-        <div className="pdev-toast">
-          {I.check} {toast}
-        </div>
-      )}
+      <C2CToast msg={toast} />
     </div>
   );
 }

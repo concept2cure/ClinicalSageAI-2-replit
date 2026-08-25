@@ -34,6 +34,7 @@ import { startCorpusIngestionSchedule } from './jobs/corpusIngestionSweep';
 import { startRegulatoryHorizonSchedule } from './jobs/regulatoryHorizonScan';
 import { startExternalIntelligenceSchedule } from './jobs/externalIntelligenceSweep';
 import { startScheduleOfEventsSweep } from './jobs/scheduleOfEventsSweep';
+import { startTaskDueSweep } from './jobs/taskDueSweep';
 import { errorHandler } from './src/mw/observability.js';
 
 // Audit + RBAC side-effect imports (initialize tables + cache on require).
@@ -67,7 +68,6 @@ import {
   initializeEarlyServices,
   initializeParallelServices,
   mountApiCatchAll,
-  startPythonBackend,
 } from './startup/services';
 import { setupFrontendServing } from './startup/frontend';
 
@@ -92,11 +92,9 @@ const pool = getPool();
 
 // ── Shutdown wiring (must run before any async work that could crash) ──────
 let httpServer: HttpServer | null = null;
-let pythonProcess: { kill: (signal: string) => void } | null = null;
 
 registerShutdownHandlers({
   getHttpServer: () => httpServer,
-  getPythonProcess: () => pythonProcess,
   pool,
 });
 
@@ -177,6 +175,15 @@ async function startServer() {
   {
     const { runStartupInvariants } = await import('./lib/startup-invariants');
     const invariantReport = await runStartupInvariants();
+
+    // AnA's verdict gets its own banner, immediately, before any of the
+    // remaining startup noise. The invariant panel already recorded it — but
+    // the whole reason AnA was once found completely dead on a "healthy" boot
+    // is that her failure looked exactly like every other log line. It does
+    // not any more. See startup/ana-readiness-state.ts.
+    const { logAnaReadinessBanner } = await import('./startup/ana-readiness-state');
+    logAnaReadinessBanner();
+
     if (
       invariantReport.criticalFailures > 0 &&
       process.env.STRICT_STARTUP_INVARIANTS === 'true'
@@ -201,10 +208,6 @@ async function startServer() {
     );
     startSecurityHealthScheduler(pool);
   }
-
-  debugLog('Initializing Python backend...');
-  pythonProcess = await startPythonBackend();
-  debugLog('Python backend initialization complete');
 
   debugLog('Mounting startup route families...');
   await registerPostStartRoutes(routeCtx);
@@ -261,6 +264,11 @@ async function startServer() {
     // and flagging goals. Self-guards in tests; disable with
     // SCHEDULE_OF_EVENTS_SWEEP_DISABLED=true.
     startScheduleOfEventsSweep();
+
+    // Tasking: notify assignees once at due-soon (48h) and once at overdue —
+    // idempotent via task metadata markers. Self-guards in tests; disable with
+    // TASK_DUE_SWEEP_DISABLED=true.
+    startTaskDueSweep();
   });
 }
 

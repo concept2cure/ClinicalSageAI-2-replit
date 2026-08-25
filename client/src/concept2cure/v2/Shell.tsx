@@ -25,8 +25,14 @@ import {
   SR_ONLY_STYLE,
 } from '../hooks/useChatUpload';
 import { I } from './icons';
-import { SampleTag, connected } from './dataConnect';
+import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
+import { AnaActivity, type AnaActivityProps } from './AnaActivity';
+import { stashNavParamsForTarget } from './navParams';
+import { listDemoScripts } from '@shared/navigation/demo-scripts';
+import { applySurfaceAction, validateDriveAction } from './surfaceActions';
+import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
+import { CrlPremortemPanel, type CrlPremortemArtifact } from '../components/ana/CrlPremortemPanel';
 import { SignoffList } from './SignoffList';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
 import type { AnaChatAction } from '../components/ana/useAnaChat';
@@ -49,6 +55,13 @@ import {
   type AnaContext,
 } from './registryModel';
 import { isClinicalRegulatoryGraphEnabled } from './clinicalRegulatoryGraphFlag';
+import {
+  isLocked,
+  lockShortReason,
+  useNavEntitlements,
+  type NavSurfaceEntitlement,
+} from './navEntitlements';
+import { NavUnlockPanel } from './NavUnlockPanel';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 
 export interface ShellSurfaceRef {
@@ -68,6 +81,58 @@ export interface AnaMessage {
   executedActions?: AnaChatAction[];
   /** Governed commands ANA proposed that are blocked on a Part 11 e-signature. */
   pendingSignoffs?: PendingSignoff[];
+  /**
+   * What ANA is doing / did this turn — the live work record rendered by
+   * {@link AnaActivity}. Every field is something the turn genuinely reported;
+   * see that module for why the rail used to show none of it.
+   */
+  activity?: AnaActivityProps;
+  /**
+   * Caveats about THIS answer — a degraded-mode signal from the server, or a
+   * timeout that cut the turn short. Deliberately not part of `activity`: the
+   * work record is about how the answer was reached and lives behind a
+   * disclosure, whereas a caveat qualifies the answer itself and has to be read
+   * without going looking for it.
+   */
+  warnings?: string[];
+  /**
+   * Steers the human sent mid-run that AnA accepted, in order. `useAnaChat`
+   * has recorded these since run control shipped and nothing rendered them:
+   * a steer you cannot see afterwards is one you cannot tell was taken.
+   */
+  interjections?: string[];
+  /**
+   * The server's evidence verdict for this answer. Emitted as `grounding_strip`
+   * and stored by `useAnaChat` since that pipeline shipped; nothing rendered it.
+   */
+  evidence?: AnaGroundingEvidence;
+  /**
+   * The CRL/RTF pre-mortem decision artifact, when the turn assembled one.
+   * `CrlPremortemPanel` has existed, and been tested, since E14 with ZERO mount
+   * sites — a board-ready artifact the product could not show anyone.
+   */
+  crlPremortem?: CrlPremortemArtifact;
+}
+
+/**
+ * Does this viewer hold an organization-administrator role?
+ *
+ * One implementation, because two entry points now consume it. It began inline
+ * in `Rail` — the account menu offers Admin and Licensing only to admins — and
+ * ⌘K needs the same answer: both open {@link NavUnlockPanel} for a locked
+ * destination, and that panel's copy branches on it (an admin is offered the
+ * Apps catalog or workspace setup; a member is told to ask an administrator).
+ * A second copy of this role list would let one customer get two different next
+ * steps for one lock depending on whether they came from the rail or the
+ * palette, which is exactly the inconsistency the panel exists to prevent.
+ *
+ * `String(r)` rather than trusting the declared `string[]`: roles arrive from a
+ * JWT claim, and a numeric or null entry there must not throw inside the shell.
+ */
+function isOrgAdminRole(roles: readonly string[] | undefined): boolean {
+  return (roles ?? []).some((r) =>
+    ['admin', 'owner', 'super_admin', 'platform_admin', 'business_admin'].includes(String(r).toLowerCase()),
+  );
 }
 
 /* ── Left rail ─────────────────────────────────────────────────────────── */
@@ -88,13 +153,19 @@ export function Rail({
 }) {
   const { user, logout } = useAuth();
   const [acct, setAcct] = React.useState(false);
+  /* Live licence verdicts for this organization. Until the server answers —
+     and permanently if it cannot — `verdictFor` returns null for everything and
+     the rail renders exactly as it did before: a lock badge is a claim about a
+     customer's contract, and inventing one from a failed fetch is the failure
+     mode worth avoiding here, not an unlocked rail. */
+  const { verdictFor } = useNavEntitlements();
+  /** The locked destination the human just activated, if any. */
+  const [lockedFor, setLockedFor] = React.useState<NavSurfaceEntitlement | null>(null);
   const name = user?.displayName || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Signed in';
   const initials =
     (user?.firstName?.[0] ?? '') + (user?.lastName?.[0] ?? '') || name.slice(0, 2).toUpperCase();
   const role = user?.roles?.[0] ?? '';
-  const isOrgAdmin = (user?.roles ?? []).some((r) =>
-    ['admin', 'owner', 'super_admin', 'platform_admin', 'business_admin'].includes(String(r).toLowerCase()),
-  );
+  const isOrgAdmin = isOrgAdminRole(user?.roles);
   const acctGo = (id?: string) => {
     setAcct(false);
     if (id) onNav(id);
@@ -105,6 +176,16 @@ export function Rail({
     // itself renders a non-leaky denied state, but we hide the entry entirely
     // for non-admins to mirror Claude exactly.
     ...(isOrgAdmin ? [{ label: 'Admin', ic: 'shieldCheck', to: 'admin-console' }] : []),
+    // Licensing control sits beside Admin, same gate. The surface itself
+    // re-checks platform-admin server-side on every read and write; this only
+    // decides whether the entry is offered.
+    ...(isOrgAdmin ? [{ label: 'Licensing', ic: 'checkSquare', to: 'master-licensing' }] : []),
+    /* Where a member's request for a locked module lands. Without this entry the
+       lock panel's one instruction — "ask an administrator" — points at nobody:
+       the request is recorded, and the person who can approve it has no way to
+       find it. The queue is org-scoped server-side; this only decides whether
+       the entry is offered. */
+    ...(isOrgAdmin ? [{ label: 'Access requests', ic: 'clipboardList', to: 'access-requests' }] : []),
     { label: 'Usage & limits', ic: 'barChart', to: 'usage' },
     { label: 'Billing', ic: 'creditCard', to: 'billing' },
     { sep: true },
@@ -124,18 +205,43 @@ export function Rail({
     s.id === 'crl-library' ? isClinicalRegulatoryGraphEnabled() : true;
   const navItem = (s: { id: string; label: string; icon: string; badge?: string; count?: number; target?: string }) => {
     const target = s.target ?? s.id;
+    /* Entitlement is keyed on the DESTINATION, not the rail entry: "Recent
+       Documents" and "Starred Items" are shortcuts onto document-authoring and
+       projects, so they inherit those modules' verdicts rather than looking up
+       ids the catalog has never heard of. */
+    const verdict = verdictFor(target);
+    const locked = isLocked(verdict);
     return (
       <button
         key={s.id}
         type="button"
         className="nav-item"
         data-on={activeId === target || undefined}
+        /* Locked is a data attribute, not `disabled`. A disabled control is
+           unreachable by keyboard and explains nothing — the entitlements spec
+           requires a locked destination to stay an activatable, labelled
+           affordance that opens an honest panel. */
+        data-locked={locked || undefined}
         aria-current={activeId === target ? 'page' : undefined}
-        onClick={() => onNav(target)}
-        title={s.label}
+        onClick={() => (locked && verdict ? setLockedFor(verdict) : onNav(target))}
+        /* The lock reaches assistive tech through the accessible name, not the
+           icon: the icon is decorative and the colour shift is never the only
+           channel. The reason is the SERVER'S reason, per verdict — this used
+           to hard-code "not included in your plan" for all three, which is only
+           true of a tier gap: a module an admin switched off needs nothing
+           bought, and one outside the workspace's industry mode is not fixed by
+           any plan. Hover and screen-reader users were getting a different, and
+           wrong, reason from the one the panel gave them on activation. */
+        aria-label={locked && verdict ? `${s.label} — ${lockShortReason(verdict)}` : undefined}
+        title={locked && verdict ? `${s.label} — ${lockShortReason(verdict)}` : s.label}
       >
         <span className="ico">{I[s.icon] ?? I.grid}</span>
         <span className="lbl">{s.label}</span>
+        {locked && (
+          <span className="nav-lic" data-lic="off" aria-hidden="true">
+            {I.lock}
+          </span>
+        )}
         {s.badge && <span className="nav-badge">{s.badge}</span>}
         {s.count != null && <span className="nav-count">{s.count}</span>}
       </button>
@@ -248,6 +354,14 @@ export function Rail({
           </>
         )}
       </div>
+      {lockedFor && (
+        <NavUnlockPanel
+          verdict={lockedFor}
+          isOrgAdmin={isOrgAdmin}
+          onClose={() => setLockedFor(null)}
+          onNav={onNav}
+        />
+      )}
     </nav>
   );
 }
@@ -258,11 +372,15 @@ export function TopBar({
   onPalette,
   segment,
   onSegment,
+  onNav,
+  onAsk,
 }: {
   surface: ShellSurfaceRef;
   onPalette: () => void;
   segment: string;
   onSegment: (id: string) => void;
+  onNav?: (id: string) => void;
+  onAsk?: (text: string) => void;
 }) {
   const tenant = useTenant();
   const orgName = tenant?.currentOrganization?.name ?? 'Organization';
@@ -345,21 +463,28 @@ export function TopBar({
         <span className="lbl">Search, jump, or run a command</span>
         <span className="kbd">⌘K</span>
       </button>
+      {/* New task / Collaborate open the universal launcher with the current
+          surface's context; the tray is the live "what needs me" slide-over. */}
       <button
         type="button"
         className="tb-task"
-        title="New task — assign & track from this screen (lands with the tasks surface port)"
+        title="New task — assign & track from this screen"
+        onClick={() => { try { (window as any).C2C?.open?.('task'); } catch (_e) { /* launcher not mounted */ } }}
       >
         <span className="ico">{I.checkSquare ?? I.plus}</span>
         <span className="tb-task-lbl">Task</span>
       </button>
-      <button type="button" className="tb-btn" title="Collaborate — message, @mention, route (lands with the collaboration port)">
+      <button
+        type="button"
+        className="tb-btn"
+        title="Collaborate — message a colleague about this screen"
+        aria-label="Collaborate"
+        onClick={() => { try { (window as any).C2C?.open?.('collab'); } catch (_e) { /* launcher not mounted */ } }}
+      >
         {I.messageSquare}
       </button>
-      <button type="button" className="tb-btn" title="Notifications">
-        {I.bell}
-      </button>
-      <button type="button" className="tb-btn" title="Help">
+      <TaskTray onNav={onNav} onAsk={onAsk} />
+      <button type="button" className="tb-btn" title="Help" aria-label="Help">
         {I.help}
       </button>
     </header>
@@ -396,6 +521,13 @@ export function AnaRail({
   onDismissWelcome,
   onNav,
   projectId = null,
+  runStatus = null,
+  streaming = false,
+  onPause,
+  onResume,
+  onStop,
+  onSteer,
+  liveDrive,
 }: {
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -410,13 +542,50 @@ export function AnaRail({
    *  a conversation or dismissed it — the rail only renders it when present. */
   welcome?: OnboardingWelcome | null;
   onDismissWelcome?: () => void;
+  /**
+   * Mid-run control. The server has supported pause / resume / cancel /
+   * interject at the agentic loop's round boundaries since run control
+   * shipped, and `useAnaChat` exposes all four — the rail offered none of
+   * them, so a human watching AnA work a question the wrong way could only
+   * wait for her to finish. Absent handlers simply hide the affordance.
+   */
+  runStatus?: 'running' | 'paused' | 'cancelled' | null;
+  streaming?: boolean;
+  onPause?: () => void;
+  onResume?: () => void;
+  onStop?: () => void;
+  /** Splices a steer into the next round. Capped server-side at 2000 chars. */
+  onSteer?: (message: string) => void;
   /** Lets a welcome starter open a real surface (e.g. the upload flow). */
   onNav?: (id: string) => void;
   /** Scopes chat uploads so extracted text lands in that project's memory.
    *  Null is valid — the file still uploads, it is just not project-scoped. */
   projectId?: string | number | null;
+  /**
+   * AnA Live Drive toggle (V2App owns the state machine). `locked` carries the
+   * server's honest entitlement deny from the last attempted turn — the
+   * control stays enabled with the real required tier named, never a
+   * disabled, reasonless button (the platform's Locked-never-dead rule).
+   */
+  liveDrive?: {
+    on: boolean;
+    locked: { reason: string; requiredTier?: string | null } | null;
+    setOn: (v: boolean) => void;
+    /** One-click guided tour: enables Live Drive and (once the toggle has
+     *  actually committed) sends the tour ask. Owned by the shell — see the
+     *  race note at the menu button. */
+    onStartTour?: () => void;
+    /** One-click demonstration (training/sales, from the shared script
+     *  registry): enables Live Drive in demo mode and sends the demo ask —
+     *  same commit-then-send sequencing as the tour. */
+    onStartDemo?: (demoId: string, title: string) => void;
+  };
 }) {
   const [draft, setDraft] = React.useState('');
+  /* The steer field is separate from `draft` on purpose: a steer joins the
+     RUNNING turn, a draft starts the next one, and sharing one buffer would
+     make it ambiguous which a half-typed sentence was about to do. */
+  const [steer, setSteer] = React.useState('');
   const [agent, setAgent] = React.useState(false);
   const [plusOpen, setPlusOpen] = React.useState(false);
   const [modeOpen, setModeOpen] = React.useState(false);
@@ -446,7 +615,7 @@ export function AnaRail({
   const failedAttachments = attachments.filter((a) => a.status === 'error');
   const model = ANA_MODES.find((m) => m.id === mode)?.model ?? 'Balanced';
   const co = getCoauthor(segment);
-  /* AnA's per-surface context is local, and says so.
+  /* AnA's per-surface context is local, and no longer claims otherwise.
    *
    * This used to fetch `GET /api/coauthor?surface=…&segment=…` under a comment
    * calling it a HARD RULE that bound AnA to "the real co-author endpoint".
@@ -455,13 +624,18 @@ export function AnaRail({
    * that request 404'd on every render of every surface, forever, and the result
    * was discarded into the same fixture fallback used when it was never issued.
    *
-   * The `sample` flag is what the user actually sees, and it was being derived
-   * from a call that could not succeed. Deriving it from `connected()` alone is
-   * the same answer honestly obtained. If per-surface AnA context becomes a real
-   * server concern, add the endpoint and restore the merge — do not reinstate a
-   * fetch against a route that does not exist. */
+   * The header also carried a `<SampleTag>` whose "Sample data" state meant
+   * "backend not reachable — showing sample data from the codebase fixture
+   * shape". That was true while the co-author fixture supplied an invented
+   * programme, a readiness percentage and an activity feed. Those fields are
+   * gone (registryModel.ts), and everything the block still renders — the module
+   * label, what AnA is attached to here, the CTD section for authoring surfaces,
+   * the action prompts — is reference config, identical for every tenant and
+   * every connection state. A pill announcing "sample data" over config would be
+   * a new inaccuracy in the opposite direction, so it is removed rather than
+   * re-labelled. If per-surface AnA context becomes a real server concern, add
+   * the endpoint and the provenance signal together. */
   const ac: AnaContext = getAnaContext(surface.id, segment);
-  const anaSample = !connected();
   const suggestions = ac.suggestions?.length ? ac.suggestions : [];
   const send = () => {
     const t = draft.trim();
@@ -522,7 +696,14 @@ export function AnaRail({
           </button>
         </div>
       </div>
-      <div className="ana-body" aria-live="polite">
+      {/* NOT aria-live. It was, and that made the entire growing transcript a
+          live region: every streamed token, every new tool row and round
+          heading was a mutation inside it, so a screen-reader user got the
+          whole subtree re-read instead of a status message — and any narrow
+          region nested inside was undefined behaviour on top. Status is
+          announced by the narrow, always-mounted regions that own it:
+          AnaActivity for what AnA is doing, and the upload region below. */}
+      <div className="ana-body">
         {welcome && (
           <div className="ana-welcome">
             <div className="ana-welcome-greet">
@@ -561,7 +742,6 @@ export function AnaRail({
                 <div className="ana-ctx-module-k">Working in</div>
                 <div className="ana-ctx-module-v">{ac.module}</div>
               </div>
-              <SampleTag sample={anaSample} />
             </div>
             <div className="ana-ctx-here">{ac.here}</div>
             {ac.program && (
@@ -574,21 +754,35 @@ export function AnaRail({
               <span className="ana-ctx-k">{ac.section ? 'Current section' : 'Focus'}</span>
               <span className="ana-ctx-section">{ac.focus}</span>
             </div>
-            <div className="ana-ctx-grid">
-              <div className="ana-ctx-cell">
-                <span className="ana-ctx-k">Stage</span>
-                <span className="ana-ctx-stage">{ac.stage}</span>
+            {/* Stage + readiness render only when a surface's own context
+                actually supplies them. They used to be unconditional, filled
+                from the per-segment co-author FIXTURE — so every surface showed
+                "Draft · 72% ready" about a programme that did not exist. With
+                the fixture retired these are usually absent, and an absent
+                readiness must show nothing rather than a confident "0%": in a
+                regulated tool a fabricated completeness number is worse than no
+                number at all. */}
+            {(ac.stage || typeof ac.readiness === 'number') && (
+              <div className="ana-ctx-grid">
+                {ac.stage && (
+                  <div className="ana-ctx-cell">
+                    <span className="ana-ctx-k">Stage</span>
+                    <span className="ana-ctx-stage">{ac.stage}</span>
+                  </div>
+                )}
+                {typeof ac.readiness === 'number' && (
+                  <div className="ana-ctx-cell">
+                    <span className="ana-ctx-k">Readiness</span>
+                    <span className="ana-ctx-ready">
+                      <span className="ana-ctx-bar">
+                        <span style={{ width: `${ac.readiness}%` }} />
+                      </span>
+                      {ac.readiness}%
+                    </span>
+                  </div>
+                )}
               </div>
-              <div className="ana-ctx-cell">
-                <span className="ana-ctx-k">Readiness</span>
-                <span className="ana-ctx-ready">
-                  <span className="ana-ctx-bar">
-                    <span style={{ width: `${ac.readiness ?? 0}%` }} />
-                  </span>
-                  {ac.readiness}%
-                </span>
-              </div>
-            </div>
+            )}
             {ac.evidence && (
               <div className="ana-ctx-cell">
                 <span className="ana-ctx-k">Linked evidence</span>
@@ -651,6 +845,51 @@ export function AnaRail({
                 </div>
               )}
               <div className="bd">{m.body}</div>
+              {/* Caveats sit directly under the answer they qualify, above the
+                  work record and never inside it. `useAnaChat` records a
+                  server degraded-mode signal, and a timeout, on the message —
+                  and on timeout it KEEPS whatever text had already streamed.
+                  Nothing rendered these, so a turn cut off mid-answer showed
+                  its truncated text with no sign it was truncated: an
+                  incomplete result presented as a complete one. */}
+              {/* The pre-mortem artifact, when this turn assembled one. No
+                  `onExport` is passed: the rail has no DOCX route for it, and
+                  the panel now disables that action and says where export lives
+                  rather than offering a button that does nothing. */}
+              {m.role === 'ana' && m.crlPremortem && (
+                <div className="ana-premortem">
+                  <CrlPremortemPanel artifact={m.crlPremortem} />
+                </div>
+              )}
+              {/* How well-grounded the answer is. Above the caveats and the
+                  work record on purpose: those say what went wrong and how she
+                  got here, this says how far the answer can be trusted, which
+                  is read first. */}
+              {m.role === 'ana' && <AnaGrounding evidence={m.evidence} />}
+              {/* Steers AnA accepted for this turn. Shown because a steer you
+                  cannot see afterwards is one you cannot tell was taken — and
+                  the server has already written it into the decision lineage. */}
+              {m.role === 'ana' && Array.isArray(m.interjections) && m.interjections.length > 0 && (
+                <div className="ana-steers">
+                  {m.interjections.map((t, si) => (
+                    <div key={si} className="ana-steer">
+                      <span className="ana-steer-ic" aria-hidden="true">{I.chevRight}</span>
+                      <span><span className="ana-steer-k">You steered AnA:</span> {t}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {m.role === 'ana' && Array.isArray(m.warnings) && m.warnings.length > 0 && (
+                <div className="ana-msg-warnings" role="note">
+                  {m.warnings.map((w, wi) => (
+                    <div key={wi} className="ana-msg-warning">
+                      <span className="ana-msg-warning-ic" aria-hidden="true">{I.alertTriangle}</span>
+                      <span>{w}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} />}
               {m.role === 'ana' && Array.isArray(m.actions) && m.actions.length > 0 && (
                 <div className="ana-msg-actions">
                   {m.actions.map((id) => {
@@ -674,7 +913,52 @@ export function AnaRail({
                 Array.isArray(m.executedActions) &&
                 m.executedActions.length > 0 && (
                   <div className="ana-msg-executed">
-                    {m.executedActions.map((a, i) => (
+                    {m.executedActions.map((a, i) =>
+                      /* A navigation target AnA resolved is the one executed
+                         action you can act on: it is an offer, not a report, so
+                         it renders as a button. Everything else is a record of
+                         what already happened and stays inert. Guarded on
+                         `targetId` as well as the type, because a chip that
+                         cannot say where it goes must not look like it can. */
+                      a.actionType === 'navigate' && a.targetId && onNav ? (
+                        <button
+                          key={i}
+                          type="button"
+                          className="ana-exec-chip is-nav"
+                          onClick={() => {
+                            /* The directive's registry-validated params ride
+                               the navParams channel so the destination opens
+                               on the named tab/section; a param-less chip
+                               clears any stale entry instead of inheriting. */
+                            stashNavParamsForTarget(a.targetId as string, a.params);
+                            onNav(a.targetId as string);
+                          }}
+                        >
+                          {I.arrowRight} {a.label}
+                        </button>
+                      ) : a.actionType === 'surface_action' && a.actionId && onNav ? (
+                        <button
+                          key={i}
+                          type="button"
+                          className="ana-exec-chip is-nav"
+                          onClick={() => {
+                            /* Performed through the ONE surface-action bus,
+                               re-validated against the shared registry first —
+                               the chip's payload never executes as-is. If the
+                               action's screen is not mounted the bus stashes
+                               one-shot and navigates there (the tap is the
+                               consent), performing on the surface's mount. */
+                            const d = validateDriveAction({
+                              actionType: 'surface_action',
+                              actionId: a.actionId,
+                              params: a.params,
+                            });
+                            if (d) applySurfaceAction(d, onNav);
+                          }}
+                        >
+                          {I.zap} {a.label}
+                        </button>
+                      ) : (
                       <span
                         key={i}
                         className={`ana-exec-chip${a.executed ? ' is-done' : ''}${a.error ? ' is-err' : ''}`}
@@ -707,6 +991,72 @@ export function AnaRail({
                   {a.label}
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+        {/* Mid-run control.
+            Every action here lands at a ROUND BOUNDARY, not instantly — the
+            loop checks between rounds — so the copy says "after this step"
+            rather than implying the tool in flight stops dead. Steering is the
+            reason this exists: a reviewer watching AnA work a question the
+            wrong way could previously only wait for her to finish, while the
+            server has spliced steers into the next round, and recorded them in
+            the decision lineage, all along. */}
+        {streaming && (onPause || onStop || onSteer) && (
+          <div className="ana-runctl" role="group" aria-label="Control this run">
+            <span className="ana-runctl-state">
+              <span
+                className={runStatus === 'paused' ? 'ana-runctl-dot is-paused' : 'ana-runctl-dot'}
+                aria-hidden="true"
+              >
+                {runStatus === 'paused' ? I.pause : I.dot}
+              </span>
+              {runStatus === 'paused' ? 'Paused after this step' : 'Working'}
+            </span>
+
+            {onSteer && (
+              <form
+                className="ana-runctl-steer"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const v = steer.trim();
+                  if (!v) return;
+                  onSteer(v);
+                  setSteer('');
+                }}
+              >
+                <input
+                  type="text"
+                  className="ana-runctl-input"
+                  value={steer}
+                  maxLength={2000}
+                  onChange={(e) => setSteer(e.target.value)}
+                  placeholder="Steer this run…"
+                  aria-label="Steer this run"
+                />
+                <button type="submit" className="ana-runctl-go" disabled={!steer.trim()}>
+                  Steer
+                </button>
+              </form>
+            )}
+
+            <div className="ana-runctl-actions">
+              {runStatus === 'paused'
+                ? onResume && (
+                    <button type="button" className="ana-runctl-btn" onClick={onResume}>
+                      Resume
+                    </button>
+                  )
+                : onPause && (
+                    <button type="button" className="ana-runctl-btn" onClick={onPause}>
+                      Pause
+                    </button>
+                  )}
+              {onStop && (
+                <button type="button" className="ana-runctl-btn is-stop" onClick={onStop}>
+                  Stop
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -966,6 +1316,69 @@ export function AnaRail({
               >
                 <span className="ico">{I.wand}</span>Agent<span className="mh">AnA takes governed actions</span>
               </button>
+              {liveDrive && (
+                <button
+                  type="button"
+                  className="ana-menu-item"
+                  data-on={liveDrive.on || undefined}
+                  onClick={() => {
+                    liveDrive.setOn(!liveDrive.on);
+                    setModeOpen(false);
+                  }}
+                >
+                  <span className="ico">{I.play}</span>Live Drive
+                  <span className="mh">
+                    {liveDrive.locked
+                      ? liveDrive.locked.requiredTier
+                        ? `Requires the ${liveDrive.locked.requiredTier} plan`
+                        : 'Not available for this workspace'
+                      : 'AnA navigates the screens; you watch and can take over'}
+                  </span>
+                </button>
+              )}
+              {liveDrive && !liveDrive.locked && liveDrive.onStartTour && (
+                <button
+                  type="button"
+                  className="ana-menu-item"
+                  onClick={() => {
+                    /* The one-click support story: consent (the toggle turns
+                       on, visibly — same switch, same take-over rights) and
+                       the ask in one gesture. The shell owns the sequencing
+                       (onStartTour) because sending in the same tick as the
+                       toggle flip would race the state commit and the tour
+                       turn would stream without live_drive — the exact trap
+                       useAnaChat documents for toolsOverride. */
+                    setModeOpen(false);
+                    liveDrive.onStartTour?.();
+                  }}
+                >
+                  <span className="ico">{I.rocket}</span>Show me around
+                  <span className="mh">AnA gives a live tour, driving the screens</span>
+                </button>
+              )}
+              {liveDrive && !liveDrive.locked && liveDrive.onStartDemo && (
+                <>
+                  <div className="ana-menu-sec">Demonstrations</div>
+                  {listDemoScripts().map((d) => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      className="ana-menu-item"
+                      onClick={() => {
+                        /* Same commit-then-send sequencing as the tour — the
+                           shell queues the ask and flips toggle + demo mode in
+                           one click's batch (see queueDriveAsk in V2App). */
+                        setModeOpen(false);
+                        liveDrive.onStartDemo?.(d.id, d.title);
+                      }}
+                    >
+                      <span className="ico">{d.kind === 'sales' ? I.barChart : I.book}</span>
+                      {d.title}
+                      <span className="mh">{`≈${d.minutes} min · ${d.steps} stops · AnA drives, you can interrupt`}</span>
+                    </button>
+                  ))}
+                </>
+              )}
               <div className="ana-menu-sec">Engine</div>
               {ANA_MODES.map((m) => (
                 <button
@@ -988,6 +1401,16 @@ export function AnaRail({
               governed actions. Changes require your e-signature.
             </div>
           )}
+          {liveDrive?.on && (
+            <div className="ana-agent-note">
+              <span className="ico">{I.play}</span>
+              {liveDrive.locked
+                ? liveDrive.locked.requiredTier
+                  ? `Live Drive requires the ${liveDrive.locked.requiredTier} plan — AnA will offer destinations as chips instead.`
+                  : 'Live Drive is not available for this workspace — AnA will offer destinations as chips instead.'
+                : 'Live Drive — AnA navigates your screens as she works. Take over any time (Esc).'}
+            </div>
+          )}
         </div>
       </div>
     </aside>
@@ -1001,6 +1424,18 @@ interface CmdKItem {
   label: string;
   hint?: string;
   icon?: string;
+  /**
+   * The licence verdict for a `nav` result, carried ONLY when the server
+   * returned a refusal for that destination.
+   *
+   * One optional field rather than a `locked` boolean beside a nullable
+   * verdict, because that pair has an unrepresentable-but-writable state: a row
+   * marked locked with no verdict to explain it — a dead end with no reason and
+   * no next step. Absent here covers all three "render it exactly as before"
+   * cases at once: the fetch has not resolved, the fetch failed, or the catalog
+   * carries no row for the id (navEntitlements.tsx rules 1 and 2).
+   */
+  lock?: NavSurfaceEntitlement;
 }
 
 export function CmdK({
@@ -1019,10 +1454,27 @@ export function CmdK({
   const [q, setQ] = React.useState('');
   const [sel, setSel] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
+  /* The SAME verdict set the rail reads. The provider is mounted once above the
+     whole shell (V2App), so this is a context read, not a second fetch: two
+     fetches could disagree about whether a destination is locked, and the rail
+     and the palette would then describe one contract two ways. Until it answers
+     — and permanently if it cannot — `verdictFor` returns null for everything
+     and the palette behaves exactly as it did before this gate existed. */
+  const { verdictFor } = useNavEntitlements();
+  const isOrgAdmin = isOrgAdminRole(user?.roles);
+  /** The locked destination the human just activated from the palette. */
+  const [lockedFor, setLockedFor] = React.useState<NavSurfaceEntitlement | null>(null);
   React.useEffect(() => {
     if (open) {
       setQ('');
       setSel(0);
+      /* Reopening the palette dismisses an explanation left over from an
+         earlier activation. Activating a locked result closes the palette and
+         opens the panel, so the two are never meant to be stacked; without this
+         a ⌘K pressed while the panel is up would put the palette underneath a
+         dialog the human has not answered yet. */
+      setLockedFor(null);
       setTimeout(() => inputRef.current?.focus(), 0);
     }
   }, [open]);
@@ -1031,19 +1483,45 @@ export function CmdK({
   const isCmd = q.startsWith('>');
 
   const items = React.useMemo<CmdKItem[]>(() => {
+    /**
+     * Every navigation result is built here, so the palette's two branches —
+     * the empty-query "Jump to" list and a search hit — cannot drift on
+     * entitlement. They did not merely drift before: NEITHER checked, so ⌘K
+     * handed a customer a one-keystroke route into a destination the rail had
+     * greyed out and explained. The rail's gate is only wayfinding, and a
+     * second door past it means the explanation never reaches them.
+     */
+    const navResult = (s: { id: string; label: string; icon?: string }): CmdKItem => {
+      const verdict = verdictFor(s.id);
+      /* `isLocked` is already false for both null cases; the explicit null test
+         is what carries the verdict into the branch for TypeScript, and it
+         makes the "no verdict ⇒ no lock" rule readable at the call site. */
+      const lock = verdict !== null && isLocked(verdict) ? verdict : undefined;
+      return {
+        id: s.id,
+        kind: 'nav',
+        label: s.label,
+        /* The hint column normally carries the destination's domain group. For
+           a locked one it carries the REASON instead: once the row cannot be
+           opened, which domain it belongs to is the less useful of the two
+           facts, and the reason has to be visible without hovering. It is the
+           server's own reason per verdict — never a blanket "upgrade", which
+           would be wrong for a module an admin switched off (nothing to buy)
+           or one outside the workspace's industry mode (no plan fixes it). */
+        hint: lock
+          ? lockShortReason(lock)
+          : NAV_TIERS_V2.find((t) => t.id === (NAV_GROUP_OF[s.id] ?? 'biopharma'))?.label,
+        icon: s.icon,
+        lock,
+      };
+    };
     // NOTE(Phase 3): the kit also searches filings, documents, conversations,
     // pathways, people and templates from its fixture files — those categories
     // join as their surface families port.
     if (!q.trim()) {
       return [
         { id: '_hd_jump', kind: 'header', label: 'Jump to' },
-        ...UI_SURFACES.slice(0, 8).map((s) => ({
-          id: s.id,
-          kind: 'nav',
-          label: s.label,
-          hint: NAV_TIERS_V2.find((t) => t.id === (NAV_GROUP_OF[s.id] ?? 'biopharma'))?.label,
-          icon: s.icon,
-        })),
+        ...UI_SURFACES.slice(0, 8).map(navResult),
         { id: '_hd_actions', kind: 'header', label: 'Quick actions' },
         { id: 'run_validation', kind: 'action', label: 'Run validation', hint: 'Action', icon: 'zap' },
         { id: 'export_document', kind: 'action', label: 'Export document', hint: 'Action · e-sign', icon: 'zap' },
@@ -1078,15 +1556,7 @@ export function CmdK({
     }).slice(0, 25);
     if (navs.length) {
       results.push({ id: '_hd_surfaces', kind: 'header', label: 'Surfaces' });
-      navs.forEach((s) =>
-        results.push({
-          id: s.id,
-          kind: 'nav',
-          label: s.label,
-          hint: NAV_TIERS_V2.find((t) => t.id === (NAV_GROUP_OF[s.id] ?? 'biopharma'))?.label,
-          icon: s.icon,
-        })
-      );
+      navs.forEach((s) => results.push(navResult(s)));
     }
     const acts = AI_ACTIONS.filter((a) => a.label.toLowerCase().includes(term)).slice(0, 3);
     if (acts.length) {
@@ -1112,13 +1582,26 @@ export function CmdK({
       });
     }
     return results;
-  }, [q, term, isCmd]);
+    /* `verdictFor` is memoised by the provider on the payload, so this list
+       rebuilds once — when the verdicts land — and not on every render. */
+  }, [q, term, isCmd, verdictFor]);
 
   const selectable = React.useMemo(() => items.filter((it) => it.kind !== 'header'), [items]);
 
   const run = React.useCallback(
     (it?: CmdKItem) => {
       if (!it || it.kind === 'header') return;
+      /* A locked destination never navigates — from here any more than from the
+         rail. Routing there would 403, or worse render an empty surface that
+         reads as "there is nothing here" rather than "your organization has not
+         licensed this". Instead the palette closes and hands over to the one
+         panel that explains the verdict and offers the step that resolves THAT
+         reason, so both entry points give the customer one answer. */
+      if (it.lock) {
+        setLockedFor(it.lock);
+        onClose();
+        return;
+      }
       if (it.kind === 'nav') onNav(it.id);
       else if (it.kind === 'action') onAct(it.id);
       else onAsk(q.trim());
@@ -1148,9 +1631,26 @@ export function CmdK({
     return () => window.removeEventListener('keydown', onKey);
   }, [open, selectable, sel, onClose, run]);
 
-  if (!open) return null;
+  /* Rendered OUTSIDE the `open` branch on purpose. Activating a locked result
+     closes the palette, so a panel mounted inside that branch would unmount in
+     the same commit as the activation that asked for it — the customer would
+     see the palette vanish and nothing take its place, which reads as the
+     product swallowing their keystroke. CmdK itself stays mounted whether or
+     not it is showing (V2App renders it unconditionally), so this is the one
+     place the explanation can outlive the palette. */
+  const unlock = lockedFor ? (
+    <NavUnlockPanel
+      verdict={lockedFor}
+      isOrgAdmin={isOrgAdmin}
+      onClose={() => setLockedFor(null)}
+      onNav={onNav}
+    />
+  ) : null;
+
+  if (!open) return unlock;
   let selIdx = -1;
   return (
+    <>
     <div className="cmdk-bd" onClick={onClose}>
       <div className="cmdk" role="dialog" aria-modal="true" aria-label="Command palette" onClick={(e) => e.stopPropagation()}>
         <div className="cmdk-in">
@@ -1194,11 +1694,31 @@ export function CmdK({
                 key={it.id}
                 type="button"
                 className={`cmdk-item${sel === si ? ' on' : ''}`}
+                /* Locked is a data attribute, never `disabled` — the same
+                   decision the rail made, for the same reason. A disabled row
+                   drops out of the arrow-key cursor and out of `selectable`
+                   here, so the one result a customer most needs an answer about
+                   would be the one result they could not reach or interrogate.
+                   It stays an ordinary row that Enter activates; only its
+                   destination changes. */
+                data-locked={it.lock ? true : undefined}
                 onMouseEnter={() => setSel(si)}
                 onClick={() => run(it)}
+                /* The reason reaches assistive tech through the accessible
+                   NAME, exactly as in the rail: the lock glyph is decorative
+                   and the muted row is never the only channel. Title carries
+                   the same sentence so a hover and a screen reader are never
+                   told two different things about one row. */
+                aria-label={it.lock ? `${it.label} — ${lockShortReason(it.lock)}` : undefined}
+                title={it.lock ? `${it.label} — ${lockShortReason(it.lock)}` : undefined}
               >
                 <span className="ico">{(it.icon && I[it.icon]) || I.arrowRight}</span>
                 <span className="lbl">{it.label}</span>
+                {it.lock && (
+                  <span className="nav-lic" data-lic="off" aria-hidden="true">
+                    {I.lock}
+                  </span>
+                )}
                 <span className="hint">{it.hint ?? ''}</span>
               </button>
             );
@@ -1213,5 +1733,7 @@ export function CmdK({
         </div>
       </div>
     </div>
+    {unlock}
+    </>
   );
 }

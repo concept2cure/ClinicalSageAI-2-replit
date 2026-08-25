@@ -23,9 +23,10 @@
  *
  * Strategy: mount the real routers (router + preflightRouter) behind a thin
  * supertest harness. Per-request auth injection lets us drive the tenant
- * paths without standing up the JWT middleware. ectdExportService /
- * auditService / exportGovernance / db are mocked so no service body or
- * Postgres connection is exercised.
+ * paths without standing up the JWT middleware. The canonical assembler
+ * (ectd/assemble-from-core.assembleSubmissionEctd), the ZIP structural
+ * validator, auditService, exportGovernance and db are mocked so no service
+ * body or Postgres connection is exercised.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
@@ -37,24 +38,35 @@ import request from 'supertest';
 
 const hoisted = vi.hoisted(() => {
   return {
-    generateEctdPackage: vi.fn(),
+    assembleSubmissionEctd: vi.fn(),
     validateEctdPackage: vi.fn(),
     registerExportGovernanceQuick: vi.fn(),
     auditLogAction: vi.fn(),
     reset() {
-      this.generateEctdPackage.mockReset();
+      this.assembleSubmissionEctd.mockReset();
       this.validateEctdPackage.mockReset();
       this.registerExportGovernanceQuick.mockReset();
       this.auditLogAction.mockReset();
       // Sensible defaults — individual tests can override.
-      this.generateEctdPackage.mockResolvedValue({
+      this.assembleSubmissionEctd.mockResolvedValue({
         buffer: Buffer.from('FAKE-ZIP-BYTES'),
-        filename: 'submission-0000.zip',
+        filename: 'SEQ-1-0000-fda.zip',
+        sequenceId: 1,
+        sequenceNumber: '0000',
+        region: 'fda',
+        sha256: 'a'.repeat(64),
+        materialized: 9,
+        unresolvedLeaves: [],
+        skipped: [],
         stats: {
           totalModules: 5,
           totalFiles: 12,
           totalGranules: 9,
           generatedAt: '2026-06-29T00:00:00.000Z',
+          completeness: {
+            totalLeaves: 9, completeLeaves: 9, placeholderLeaves: 0,
+            unfinalizedLeaves: 0, completenessPct: 100, complete: true, incompleteSections: [],
+          },
         },
       });
       this.validateEctdPackage.mockResolvedValue({
@@ -69,15 +81,19 @@ const hoisted = vi.hoisted(() => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MOCK ectdExportService — generateEctdPackage / validateEctdPackage
+// MOCK the canonical assembler + ZIP structural validator
 //
-// The route imports from '../services/ectdExportService' (no extension), so
-// mock that specifier. The service itself transitively imports server/db and
-// shared schema; mocking the whole module short-circuits all of that.
+// The route imports assembleSubmissionEctd from ectd/assemble-from-core and
+// validateEctdPackage from submission-gateways/ectd-structural-validator.
+// The assembler transitively imports server/db and shared schema; mocking the
+// modules short-circuits all of that.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-vi.mock('../../server/services/ectdExportService', () => ({
-  generateEctdPackage: (...args: unknown[]) => hoisted.generateEctdPackage(...args),
+vi.mock('../../server/services/ectd/assemble-from-core', () => ({
+  assembleSubmissionEctd: (...args: unknown[]) => hoisted.assembleSubmissionEctd(...args),
+}));
+
+vi.mock('../../server/services/submission-gateways/ectd-structural-validator', () => ({
   validateEctdPackage: (...args: unknown[]) => hoisted.validateEctdPackage(...args),
 }));
 
@@ -228,9 +244,12 @@ describe('POST /api/ectd/export/:submissionId/validate', () => {
     expect(res.body.leafValidation).toBeUndefined();
     expect(res.body.zipValidation).toEqual({ valid: true, errors: [], warnings: [] });
 
-    // Service contract: the legacy path MUST have generated then validated.
-    expect(hoisted.generateEctdPackage).toHaveBeenCalledTimes(1);
-    expect(hoisted.generateEctdPackage).toHaveBeenCalledWith(42, 100);
+    // Service contract: the legacy path MUST have generated then validated —
+    // through the CANONICAL assembler, keyed by the submission spine.
+    expect(hoisted.assembleSubmissionEctd).toHaveBeenCalledTimes(1);
+    expect(hoisted.assembleSubmissionEctd).toHaveBeenCalledWith(
+      expect.objectContaining({ submissionId: 42, organizationId: 100 }),
+    );
     expect(hoisted.validateEctdPackage).toHaveBeenCalledTimes(1);
   });
 
@@ -267,7 +286,7 @@ describe('POST /api/ectd/export/:submissionId/validate', () => {
     expect(regional!.severity).toBe('error');
 
     // Leaf-only path: the ZIP path must NOT have been invoked.
-    expect(hoisted.generateEctdPackage).not.toHaveBeenCalled();
+    expect(hoisted.assembleSubmissionEctd).not.toHaveBeenCalled();
     expect(hoisted.validateEctdPackage).not.toHaveBeenCalled();
   });
 
@@ -332,7 +351,7 @@ describe('POST /api/ectd/validate/preflight', () => {
     }
 
     // No ZIP work is done in preflight.
-    expect(hoisted.generateEctdPackage).not.toHaveBeenCalled();
+    expect(hoisted.assembleSubmissionEctd).not.toHaveBeenCalled();
     expect(hoisted.validateEctdPackage).not.toHaveBeenCalled();
   });
 

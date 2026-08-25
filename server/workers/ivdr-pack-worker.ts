@@ -27,30 +27,27 @@ import { renderHtmlToPdfTracked } from '../export/renderers';
 import { putBytes, isVaultAvailable } from '../services/vaultService';
 import archiver from 'archiver';
 import { runWithSystemTenantScope, runWithTenantScope } from '../db/tenantStore';
+import { shouldProcessTenantInBackground } from '../services/tenant/tenant-lifecycle.js';
+import { stableStringify as sharedStableStringify } from '../../shared/canonical-json.js';
 
 // ── Stable stringify (in-line to avoid import issues in worker context) ──────
 
+/**
+ * Deterministic serialization for the pack's manifest and snapshot hashes.
+ *
+ * Delegates to the one canonicalizer (ledger L46). This module and
+ * `ivdr-pack-worker.ts` carried byte-identical private copies of it and hash
+ * the SAME manifest from the service and the worker, so they are re-pointed in
+ * one commit — a split migration would make the two halves of one pack disagree,
+ * which is the failure the row is about.
+ *
+ * Free to re-point: `manifest_sha256` is written and read back for display, and
+ * nothing recomputes it to compare. A regenerated pack gets a different hash
+ * than it would have before, which is a discontinuity in a displayed value, not
+ * a broken check.
+ */
 function stableStringify(value: unknown): string {
-  if (value === null || value === undefined) return 'null';
-  if (typeof value === 'boolean' || typeof value === 'number') {
-    if (typeof value === 'number' && !isFinite(value)) return 'null';
-    return String(value);
-  }
-  if (typeof value === 'string') return JSON.stringify(value);
-  if (Array.isArray(value)) return '[' + value.map(stableStringify).join(',') + ']';
-  if (typeof value === 'object') {
-    if (typeof (value as any).toJSON === 'function')
-      return stableStringify((value as any).toJSON());
-    const keys = Object.keys(value as Record<string, unknown>).sort();
-    const pairs: string[] = [];
-    for (const key of keys) {
-      const v = (value as Record<string, unknown>)[key];
-      if (v === undefined) continue;
-      pairs.push(JSON.stringify(key) + ':' + stableStringify(v));
-    }
-    return '{' + pairs.join(',') + '}';
-  }
-  return 'null';
+  return sharedStableStringify(value);
 }
 
 function sha256(input: string): string {
@@ -192,6 +189,18 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
   const projectId = job.project_id;
   const packType = job.pack_type;
   const userId = job.requested_by_user_id || 'system';
+
+  // TENANT LIFECYCLE. This worker claims queued jobs system-wide and then does
+  // real per-tenant work — document assembly, evidence collation, PDF
+  // generation. It runs on no transport, so the HTTP lifecycle guard never saw
+  // it, and a job queued before a suspension would still build and bill after
+  // it. Refusing here is a REFUSAL, not a skip: the job was claimed, so it must
+  // reach a terminal state rather than silently vanish from the queue.
+  if (!(await shouldProcessTenantInBackground(orgId))) {
+    throw new Error(
+      `IVDR_TENANT_NOT_ENTITLED: organization ${orgId} is not entitled to background processing`
+    );
+  }
 
   // ── Step 1: Validate readiness ─────────────────────────────────────────
 

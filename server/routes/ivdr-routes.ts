@@ -160,25 +160,12 @@ export default function createIVDRRoutes(pool: Pool): Router {
     });
   }
 
-  // ── GSPR table init guard (avoids DDL on every request) ──────────────────
-  let gsprTableInitialized = false;
-  async function ensureGsprTable(): Promise<void> {
-    if (gsprTableInitialized) return;
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS ivdr_gspr_assessments (
-        id SERIAL PRIMARY KEY,
-        organization_id INTEGER NOT NULL,
-        project_id TEXT NOT NULL,
-        device_name TEXT NOT NULL,
-        classification TEXT,
-        requirements JSONB NOT NULL DEFAULT '[]',
-        created_by TEXT NOT NULL DEFAULT 'system',
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
-    gsprTableInitialized = true;
-  }
+  /* ivdr_gspr_assessments used to be created HERE, lazily, on the request
+     pool — runtime DDL the non-superuser runtime role must refuse, and a
+     second source of truth for the table's shape. The D11d IVDR consolidation
+     moved the one definition to migrations/20260813c_ivdr_schema_
+     reconciliation.sql (on the durable deploy path). An unmigrated database
+     now fails closed: 42P01 → 503 IVDR_NOT_PROVISIONED via safeError. */
 
   // ═══════════════════════════════════════════════════════════════════════════
   // ANNEX VIII CLASSIFICATION
@@ -240,12 +227,16 @@ export default function createIVDRRoutes(pool: Pool): Router {
       const classResult = classification.classification;
       const ruleTrace = classification.ruleTrace;
 
-      // Persist classification result
+      // Persist classification result — CANONICAL columns only (D11d IVDR
+      // consolidation): ivdr_class / companion_diagnostic / self_test /
+      // near_patient_test are the one vocabulary; the legacy shape-1 names
+      // (classification / is_cdx / ...) are deprecated and unwritten.
       const insertResult = await pool.query(
         `INSERT INTO ivdr_classifications
-         (device_name, intended_purpose, classification, is_cdx, is_self_test,
-          is_near_patient, rule_trace, analytes, organization_id, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+         (device_name, intended_purpose, ivdr_class, companion_diagnostic,
+          self_test, near_patient_test, notified_body_required, rule_trace,
+          analytes, organization_id, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
          RETURNING *`,
         [
           deviceName,
@@ -254,6 +245,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           isCompanionDiagnostic || false,
           isSelfTest || false,
           isNearPatient || false,
+          classification.notifiedBodyRequired,
           JSON.stringify(ruleTrace),
           JSON.stringify(analytes),
           orgId,
@@ -280,39 +272,14 @@ export default function createIVDRRoutes(pool: Pool): Router {
     }
   });
 
-  /**
-   * GET /api/ivdr/classifications
-   * List all classification records
-   */
-  router.get('/classifications', async (req: Request, res: Response) => {
-    try {
-      const orgId = getServerOrgId(req);
-      /* Optional narrowing to one diagnostic programme. Without it the IVD
-         workbench showed every classification in the organisation while its
-         header named a single programme — so a user reading "Class C, Rule 3"
-         could attribute another assay's classification to the device in front
-         of them. program_id is guaranteed present by 20260524_ivdr_cdx.sql,
-         which adds it idempotently regardless of which of the three competing
-         CREATE TABLE definitions for this table won on a given deployment. */
-      const programId = parseProgramId(req);
-      if (programId === INVALID) return res.status(422).json({ error: 'program_id must be a UUID' });
-
-      const scoped = programId !== undefined;
-      const result = await pool.query(
-        `SELECT id, device_name, intended_purpose, classification, is_cdx, is_self_test, is_near_patient, rule_trace, analytes, organization_id, created_at
-           FROM ivdr_classifications
-          WHERE organization_id = $1${scoped ? ' AND program_id = $2' : ''}
-          ORDER BY created_at DESC`,
-        scoped ? [orgId, programId] : [orgId]
-      );
-      return res.json({
-        classifications: result.rows,
-        meta: { scope: scoped ? 'program' : 'organization' },
-      });
-    } catch (error: any) {
-      return safeError(res, error, 'IVDR_LIST_CLASS_ERROR', 'List classifications');
-    }
-  });
+  /* GET /classifications was DELETED in the D11d IVDR consolidation: it was a
+     second list API over the same store as GET /api/mdx/ivdr/classifications,
+     reading the deprecated shape-1 column names. The mdx router is the ONE
+     classification list/CRUD API (canonical columns, program_id + ivdr_class
+     filters, soft-delete aware); the client hook useIvdClassifications now
+     calls it. This router keeps what is unique to the IVDR module: the Annex
+     VIII rule engine (POST /classify), the governed report export, and the
+     validation / clinical-evidence / CDx / GSPR lifecycles. */
 
   /**
    * GET /api/ivdr/classify/:id/report
@@ -322,8 +289,10 @@ export default function createIVDRRoutes(pool: Pool): Router {
     try {
       const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
+      /* Canonical columns (D11d consolidation) — the report's OUTPUT keys are
+         unchanged; only the source vocabulary converged. */
       const result = await pool.query(
-        `SELECT id, device_name, intended_purpose, classification, is_cdx, is_self_test, is_near_patient, rule_trace, analytes, organization_id, created_at FROM ivdr_classifications WHERE id = $1 AND organization_id = $2`,
+        `SELECT id, device_name, intended_purpose, ivdr_class, companion_diagnostic, self_test, near_patient_test, rule_trace, analytes, organization_id, created_at FROM ivdr_classifications WHERE id = $1 AND organization_id = $2`,
         [id, orgId]
       );
       if (result.rows.length === 0) {
@@ -342,14 +311,14 @@ export default function createIVDRRoutes(pool: Pool): Router {
           analytes: record.analytes,
         },
         classification: {
-          class: record.classification,
-          isCDx: record.is_cdx,
-          isSelfTest: record.is_self_test,
-          isNearPatient: record.is_near_patient,
+          class: record.ivdr_class,
+          isCDx: record.companion_diagnostic,
+          isSelfTest: record.self_test,
+          isNearPatient: record.near_patient_test,
         },
         ruleTrace,
         matchedRules: (ruleTrace || []).filter((r: any) => r.matched),
-        regulatoryPath: getClassPath(record.classification),
+        regulatoryPath: getClassPath(record.ivdr_class),
         metadata: {
           recordId: record.id,
           organizationId: record.organization_id,
@@ -433,9 +402,12 @@ export default function createIVDRRoutes(pool: Pool): Router {
          portfolio view; adding the programme predicate necessarily excludes
          those rows when scoping, which is correct — a validation with no
          classification cannot be claimed for a programme. */
+      /* Joined columns come from the CANONICAL names (D11d consolidation);
+         the response keys keep their historical spelling via aliases so the
+         API contract is unchanged. */
       const scoped = programId !== undefined;
       const result = await pool.query(
-        `SELECT v.*, c.classification, c.is_cdx
+        `SELECT v.*, c.ivdr_class AS classification, c.companion_diagnostic AS is_cdx
          FROM ivdr_analytical_validations v
          LEFT JOIN ivdr_classifications c ON v.classification_id = c.id
          WHERE v.organization_id = $1${scoped ? ' AND c.program_id = $2' : ''}
@@ -676,7 +648,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
          exactly the numbers a user must not read off the wrong assay. */
       const scoped = programId !== undefined;
       const result = await pool.query(
-        `SELECT e.*, c.device_name, c.classification, c.is_cdx
+        `SELECT e.*, c.device_name, c.ivdr_class AS classification, c.companion_diagnostic AS is_cdx
          FROM ivdr_clinical_evidence e
          LEFT JOIN ivdr_classifications c ON e.classification_id = c.id
          WHERE e.organization_id = $1${scoped ? ' AND c.program_id = $2' : ''}
@@ -887,7 +859,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
     try {
       const orgId = getServerOrgId(req);
       const result = await pool.query(
-        `SELECT w.*, c.device_name, c.classification
+        `SELECT w.*, c.device_name, c.ivdr_class AS classification
          FROM ivdr_cdx_workflows w
          LEFT JOIN ivdr_classifications c ON w.classification_id = c.id
          WHERE w.organization_id = $1
@@ -989,7 +961,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
 
       const [classResults, validResults, evidResults, cdxResults] = await Promise.all([
         pool.query(
-          `SELECT classification, COUNT(*) as count FROM ivdr_classifications WHERE organization_id = $1 GROUP BY classification`,
+          `SELECT ivdr_class AS classification, COUNT(*) as count FROM ivdr_classifications WHERE organization_id = $1 GROUP BY ivdr_class`,
           [orgId]
         ),
         pool.query(
@@ -1084,8 +1056,6 @@ export default function createIVDRRoutes(pool: Pool): Router {
         return res.status(400).json({ error: 'projectId and deviceName are required' });
       }
 
-      await ensureGsprTable();
-
       // Check for existing assessment
       const existing = await pool.query(
         `SELECT id FROM ivdr_gspr_assessments WHERE project_id = $1 AND organization_id = $2`,
@@ -1130,8 +1100,6 @@ export default function createIVDRRoutes(pool: Pool): Router {
     try {
       const orgId = getServerOrgId(req);
       const { projectId } = req.params;
-
-      await ensureGsprTable();
 
       const result = await pool.query(
         `SELECT * FROM ivdr_gspr_assessments WHERE project_id = $1 AND organization_id = $2`,
@@ -1301,6 +1269,14 @@ export default function createIVDRRoutes(pool: Pool): Router {
   // ═══════════════════════════════════════════════════════════════════════════
 
   // In-memory store for submission package generation status (with TTL cleanup)
+  //
+  // TODO(phase-2): move job tracking to a durable store. The binder build
+  // queue (ivdr_pack_build_jobs) is NOT a clean fit: ivdr-pack-worker claims
+  // any QUEUED row via FOR UPDATE SKIP LOCKED with no pack_type filter and
+  // runs a binder pack build on it, so parking submission-package jobs there
+  // would hand them to the wrong worker. Until the Phase-2 rebuild lands,
+  // jobs are lost on process restart and every response declares
+  // jobDurability: 'ephemeral' so callers cannot mistake this for a queue.
   const submissionJobs: Record<string, { status: string; startedAt: string; completedAt?: string; manifest?: any; error?: string }> = {};
 
   // Periodically clean up completed/failed jobs older than 1 hour
@@ -1319,41 +1295,125 @@ export default function createIVDRRoutes(pool: Pool): Router {
 
   /**
    * POST /api/ivdr/submission-package/:projectId
-   * Generate a submission package gathering all IVDR data for the project
+   * Generate a submission package gathering the project's IVDR data.
+   *
+   * :projectId is the regulatory programme UUID. Classifications carry it
+   * directly (program_id — canonical shape, guaranteed on every path by
+   * 20260813c_ivdr_schema_reconciliation.sql); validations, clinical evidence
+   * and CDx workflows reach it through their classification, mirroring the
+   * scoped list endpoints above. Rows with no programme assignment (legacy
+   * shape-1 data) are excluded and counted — never silently attributed to the
+   * requested project.
    */
   router.post('/submission-package/:projectId', async (req: Request, res: Response) => {
     try {
       const orgId = getServerOrgId(req);
-      const { projectId } = req.params;
+      const { projectId } = req.params as { projectId: string };
       const userId = (req as any).userId || 'system';
       const jobKey = `${orgId}-${projectId}`;
 
-      // Mark job as in-progress
+      /* A malformed project id is rejected rather than ignored — silently
+         falling back to an org-wide gather is exactly the defect this
+         endpoint had (every project's data in every project's package). */
+      if (!UUID_RE.test(projectId)) {
+        return res.status(422).json({
+          error: 'projectId must be a regulatory programme UUID',
+          code: 'IVDR_SUBMISSION_BAD_PROJECT',
+        });
+      }
+
+      /* Fail closed on ownership: the programme must exist in this
+         organisation before anything is gathered (same convention as
+         ownsProgram in mdx-ivdr.ts). A cross-tenant probe gets 404 —
+         never data, and never a 403 that confirms the project exists. */
+      const ownership = await pool.query(
+        `SELECT 1 FROM regulatory_programs
+          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
+          LIMIT 1`,
+        [projectId, orgId]
+      );
+      if (ownership.rows.length === 0) {
+        return res.status(404).json({
+          error: 'Project not found in this organization',
+          code: 'IVDR_SUBMISSION_PROJECT_NOT_FOUND',
+        });
+      }
+
+      // Mark job as in-progress (ephemeral — see TODO(phase-2) at the Map)
       submissionJobs[jobKey] = { status: 'generating', startedAt: new Date().toISOString() };
 
-      // Gather all IVDR data for the project in parallel
-      const [classifications, validations, evidence, cdxWorkflows, gsprAssessment] = await Promise.all([
+      // Gather the project's IVDR data in parallel
+      const [classifications, validations, evidence, cdxWorkflows, gsprAssessment, unassignedResult] = await Promise.all([
         pool.query(
-          `SELECT * FROM ivdr_classifications WHERE organization_id = $1 ORDER BY created_at DESC`,
-          [orgId]
+          `SELECT * FROM ivdr_classifications
+            WHERE organization_id = $1 AND program_id = $2
+            ORDER BY created_at DESC`,
+          [orgId, projectId]
         ).catch(() => ({ rows: [] })),
         pool.query(
-          `SELECT * FROM ivdr_analytical_validations WHERE organization_id = $1 ORDER BY created_at DESC`,
-          [orgId]
+          `SELECT v.* FROM ivdr_analytical_validations v
+            LEFT JOIN ivdr_classifications c ON v.classification_id = c.id
+            WHERE v.organization_id = $1 AND c.program_id = $2
+            ORDER BY v.created_at DESC`,
+          [orgId, projectId]
         ).catch(() => ({ rows: [] })),
         pool.query(
-          `SELECT * FROM ivdr_clinical_evidence WHERE organization_id = $1 ORDER BY created_at DESC`,
-          [orgId]
+          `SELECT e.* FROM ivdr_clinical_evidence e
+            LEFT JOIN ivdr_classifications c ON e.classification_id = c.id
+            WHERE e.organization_id = $1 AND c.program_id = $2
+            ORDER BY e.created_at DESC`,
+          [orgId, projectId]
         ).catch(() => ({ rows: [] })),
         pool.query(
-          `SELECT * FROM ivdr_cdx_workflows WHERE organization_id = $1 ORDER BY created_at DESC`,
-          [orgId]
+          `SELECT w.* FROM ivdr_cdx_workflows w
+            LEFT JOIN ivdr_classifications c ON w.classification_id = c.id
+            WHERE w.organization_id = $1 AND c.program_id = $2
+            ORDER BY w.created_at DESC`,
+          [orgId, projectId]
         ).catch(() => ({ rows: [] })),
         pool.query(
           `SELECT * FROM ivdr_gspr_assessments WHERE project_id = $1 AND organization_id = $2`,
           [projectId, orgId]
         ).catch(() => ({ rows: [] })),
+        /* Rows this organisation owns that cannot be attributed to ANY
+           programme — no classification link, or a classification whose
+           program_id is NULL (the legacy 001-shape). They are excluded from
+           every project's package; count them so the exclusion is visible,
+           not silent. */
+        pool.query(
+          `SELECT
+             (SELECT COUNT(*)::int FROM ivdr_classifications
+               WHERE organization_id = $1 AND program_id IS NULL) AS classifications,
+             (SELECT COUNT(*)::int FROM ivdr_analytical_validations v
+               LEFT JOIN ivdr_classifications c ON v.classification_id = c.id
+               WHERE v.organization_id = $1 AND c.program_id IS NULL) AS validations,
+             (SELECT COUNT(*)::int FROM ivdr_clinical_evidence e
+               LEFT JOIN ivdr_classifications c ON e.classification_id = c.id
+               WHERE e.organization_id = $1 AND c.program_id IS NULL) AS evidence,
+             (SELECT COUNT(*)::int FROM ivdr_cdx_workflows w
+               LEFT JOIN ivdr_classifications c ON w.classification_id = c.id
+               WHERE w.organization_id = $1 AND c.program_id IS NULL) AS cdx`,
+          [orgId]
+        ).catch(() => null),
       ]);
+
+      /* Honest empty state: null means the counts could not be computed
+         (e.g. table missing), NOT that nothing was excluded. */
+      const unassignedRow = unassignedResult?.rows?.[0] ?? null;
+      const unassigned = unassignedRow
+        ? {
+            classifications: Number(unassignedRow.classifications) || 0,
+            analyticalValidations: Number(unassignedRow.validations) || 0,
+            clinicalEvidence: Number(unassignedRow.evidence) || 0,
+            companionDiagnostics: Number(unassignedRow.cdx) || 0,
+          }
+        : null;
+      const unassignedTotal = unassigned
+        ? unassigned.classifications +
+          unassigned.analyticalValidations +
+          unassigned.clinicalEvidence +
+          unassigned.companionDiagnostics
+        : null;
 
       // Build the structured manifest
       const manifest = {
@@ -1364,6 +1424,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           projectId,
           organizationId: orgId,
           regulatoryFramework: 'IVDR EU 2017/746',
+          scope: 'project',
         },
         sections: {
           classification: {
@@ -1386,6 +1447,14 @@ export default function createIVDRRoutes(pool: Pool): Router {
             available: gsprAssessment.rows.length > 0,
             assessment: gsprAssessment.rows[0] || null,
           },
+        },
+        exclusions: {
+          unassignedRecordsExcluded: unassignedTotal,
+          bySection: unassigned,
+          message:
+            unassignedTotal === null
+              ? 'Unassigned-record counts unavailable'
+              : `${unassignedTotal} unassigned records excluded (no program assignment)`,
         },
         completeness: {
           hasClassification: classifications.rows.length > 0,
@@ -1412,6 +1481,8 @@ export default function createIVDRRoutes(pool: Pool): Router {
       return res.status(201).json({
         status: 'completed',
         projectId,
+        jobDurability: 'ephemeral',
+        unassignedRecordsExcluded: unassignedTotal,
         manifest,
       });
     } catch (error: any) {
@@ -1438,9 +1509,13 @@ export default function createIVDRRoutes(pool: Pool): Router {
 
       const job = submissionJobs[jobKey];
       if (!job) {
+        /* Jobs live in process memory only (see TODO(phase-2) at the Map):
+           a restart forgets them, so "not found" may mean "lost". Declare
+           the durability so callers can tell the two apart. */
         return res.status(404).json({
           error: 'No submission package job found for this project',
           code: 'IVDR_SUBMISSION_NOT_FOUND',
+          jobDurability: 'ephemeral',
         });
       }
 
@@ -1451,6 +1526,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
         completedAt: job.completedAt || null,
         hasManifest: !!job.manifest,
         error: job.error || null,
+        jobDurability: 'ephemeral',
       });
     } catch (error: any) {
       return safeError(res, error, 'IVDR_SUBMISSION_STATUS_ERROR', 'Submission package status');
@@ -1528,20 +1604,20 @@ export default function createIVDRRoutes(pool: Pool): Router {
           registrationStatus: 'not_registered',
         },
         classification: {
-          riskClass: classification?.classification || 'Not classified',
+          riskClass: classification?.ivdr_class || 'Not classified',
           classificationRule: classification?.rule_trace ? 'Annex VIII' : null,
           ruleTrace: classification?.rule_trace || [],
           intendedPurpose: classification?.intended_purpose || null,
         },
-        riskClass: classification?.classification || 'Not classified',
+        riskClass: classification?.ivdr_class || 'Not classified',
         companionDiagnostic: {
           isCDx: cdx ? true : false,
           linkedMedicinalProduct: cdx?.therapeutic_area || null,
           cdxStatus: cdx?.status || null,
         },
         certificates: {
-          euDeclarationOfConformity: classification?.classification === 'A' ? 'self-declaration' : 'notified_body_required',
-          notifiedBodyRequired: classification?.classification !== 'A',
+          euDeclarationOfConformity: classification?.ivdr_class === 'A' ? 'self-declaration' : 'notified_body_required',
+          notifiedBodyRequired: classification?.ivdr_class !== 'A',
           // No certificate record is tracked here; do not fabricate a status.
           certificateStatus: null,
         },
@@ -1557,7 +1633,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
         },
         postMarketSurveillance: {
           pmsPlanRequired: true,
-          psurFrequency: classification?.classification === 'D' || classification?.classification === 'C' ? 'annual' : 'biennial',
+          psurFrequency: classification?.ivdr_class === 'D' || classification?.ivdr_class === 'C' ? 'annual' : 'biennial',
           vigilanceSystem: 'required',
         },
       };

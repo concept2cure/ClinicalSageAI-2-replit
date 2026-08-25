@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { downloadBlob, safeFileName } from '../download';
 import { getOrgId } from '@/utils/authToken';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/insights-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ── Entitlement tiers (mdx-entitlements) ── */
 
@@ -42,14 +44,14 @@ const RO_FAMILY: Record<string, { label: string; region?: string }> = {
   readiness: { label: 'Readiness' },
   evidence_provenance: { label: 'Evidence & provenance' },
   compliance_audit: { label: 'Compliance & audit' },
-  usa_fda_pma: { label: 'FDA -- PMA', region: 'USA' },
-  usa_fda_510k: { label: 'FDA -- 510(k)', region: 'USA' },
-  usa_fda_response: { label: 'FDA -- deficiency response', region: 'USA' },
-  ema_maa: { label: 'EMA -- MAA', region: 'EU' },
-  ema_post_market: { label: 'EMA -- post-market', region: 'EU' },
-  china_nmpa_ctd: { label: 'NMPA -- CTD gap', region: 'CN' },
-  china_nmpa_registration: { label: 'NMPA -- registration', region: 'CN' },
-  china_nmpa_response: { label: 'NMPA -- deficiency', region: 'CN' },
+  usa_fda_pma: { label: 'FDA — PMA', region: 'USA' },
+  usa_fda_510k: { label: 'FDA — 510(k)', region: 'USA' },
+  usa_fda_response: { label: 'FDA — deficiency response', region: 'USA' },
+  ema_maa: { label: 'EMA — MAA', region: 'EU' },
+  ema_post_market: { label: 'EMA — post-market', region: 'EU' },
+  china_nmpa_ctd: { label: 'NMPA — CTD gap', region: 'CN' },
+  china_nmpa_registration: { label: 'NMPA — registration', region: 'CN' },
+  china_nmpa_response: { label: 'NMPA — deficiency', region: 'CN' },
   fcoi_compliance: { label: 'Financial disclosure' },
   ha_commitment: { label: 'HA interactions & commitments' },
   iacuc_governance: { label: 'IACUC' },
@@ -245,11 +247,11 @@ interface Preset {
 
 const RO_PRESETS: Record<string, Preset[]> = {
   pharma: [
-    { id: 'preapproval', label: 'Pre-approval command pack', types: ['readiness.executive_digest', 'prediction.crl_rtf_premortem', 'ema.rmp_psur_signal_alignment', 'compliance.audit_assurance_pack'], why: 'Your NDA is in agency review -- this pack pairs the readiness digest with a CRL/RTF pre-mortem, safety-signal alignment and the audit assurance you will need at the action date.' },
-    { id: 'globalfile', label: 'Global filing harmonization', types: ['ema.maa_readiness_assessment', 'china_nmpa.ctd_module_gap_analysis', 'provenance.evidence_trace_report'], why: 'Reuse the US dossier across EMA and NMPA -- the gap analyses show what each region still needs.' },
+    { id: 'preapproval', label: 'Pre-approval command pack', types: ['readiness.executive_digest', 'prediction.crl_rtf_premortem', 'ema.rmp_psur_signal_alignment', 'compliance.audit_assurance_pack'], why: 'Your NDA is in agency review — this pack pairs the readiness digest with a CRL/RTF pre-mortem, safety-signal alignment and the audit assurance you will need at the action date.' },
+    { id: 'globalfile', label: 'Global filing harmonization', types: ['ema.maa_readiness_assessment', 'china_nmpa.ctd_module_gap_analysis', 'provenance.evidence_trace_report'], why: 'Reuse the US dossier across EMA and NMPA — the gap analyses show what each region still needs.' },
   ],
   biotech: [
-    { id: 'blaassembly', label: 'BLA assembly pack', types: ['readiness.executive_digest', 'prediction.regulatory_forecast', 'provenance.evidence_trace_report', 'fcoi.disclosure_register'], why: 'Your BLA is mid-assembly -- this pack tracks readiness, forecasts the review trajectory, and closes the evidence and financial-disclosure gaps before filing.' },
+    { id: 'blaassembly', label: 'BLA assembly pack', types: ['readiness.executive_digest', 'prediction.regulatory_forecast', 'provenance.evidence_trace_report', 'fcoi.disclosure_register'], why: 'Your BLA is mid-assembly — this pack tracks readiness, forecasts the review trajectory, and closes the evidence and financial-disclosure gaps before filing.' },
     { id: 'nonclin', label: 'Nonclinical & CMC readiness', types: ['nonclinical.study_send_register', 'compliance.audit_assurance_pack'], why: 'Confirm Module 4 / SEND datasets and the audit trail are submission-grade.' },
   ],
   medtech: [
@@ -280,7 +282,7 @@ function roPresetsForSeg(seg: string): Preset[] {
    file — and "narrates and explains" describes a language model doing work that
    a `switch` is doing. The half that was true, and the half that matters, is
    that no metric on this surface originates here. */
-const RO_GUARDRAIL = 'This pane routes your request to a governed report type and runs it -- it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.';
+const RO_GUARDRAIL = 'This pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.';
 
 /* ── Resolve type from free text ── */
 function roResolveType(utterance: string, seg: string): ReportType | null {
@@ -363,7 +365,7 @@ function roSuggestForClient(p: ProgramCtx, seg: string) {
     : `${p.code} is ${p.readiness}% ready`;
   const pduBit = p.pdufa ? ` with a target action date of ${p.pdufa}` : '';
   return {
-    headline: 'Build any governed report or dashboard -- describe what you need.',
+    headline: 'Build any governed report or dashboard — describe what you need.',
     body: `${rBit}${pduBit}. The ${preset.label} is the standard starting pack for ${SEG_LABEL[seg] || seg} -- it is not picked from the readiness figure above.`,
     preset,
     prompts: [
@@ -470,7 +472,7 @@ function roRouteReply(utterance: string, seg: string, tier: string, ctx: { progr
   const name = route.matched ? route.name! : (route.candidates && route.candidates[0]) || 'generate_report';
   const p = ctx.program;
   function cap(s: string) { return (RO_TIERS.find(t => t.id === s) || { label: s }).label; }
-  const lockMsg = (feature: string, typeLabel: string): AnaReply => ({ tool: name, text: `"${typeLabel}" needs the ${cap(RO_FEATURE_TIER[feature])} plan -- it is a ${RO_FEATURE_LABEL[feature]} capability. No estimated result is shown on a plan that has not unlocked the governed model. What it includes, and how to unlock it:`, locked: { feature, requiredTier: RO_FEATURE_TIER[feature], typeLabel }, report: null, dashboard: null });
+  const lockMsg = (feature: string, typeLabel: string): AnaReply => ({ tool: name, text: `"${typeLabel}" needs the ${cap(RO_FEATURE_TIER[feature])} plan — it is a ${RO_FEATURE_LABEL[feature]} capability. No estimated result is shown on a plan that has not unlocked the governed model. What it includes, and how to unlock it:`, locked: { feature, requiredTier: RO_FEATURE_TIER[feature], typeLabel }, report: null, dashboard: null });
   const entitledFor = (t: ReportType) => roDecide(t.typeId, t.family, tier);
 
   if (name === 'portfolio_readiness') {
@@ -480,7 +482,7 @@ function roRouteReply(utterance: string, seg: string, tier: string, ctx: { progr
     // entitled or has none; show an honest empty, never a fabricated board.
     const rows = ctx.portfolio.programs ? roPortfolioFrom(ctx.portfolio.programs) : [];
     if (rows.length === 0) return { tool: name, text: `Your plan unlocks the portfolio rollup, but there are no governed programs to roll up yet. Once a program with a readiness run exists in your organization, its board view appears here.`, report: null, dashboard: null };
-    return { tool: name, text: `Readiness across your ${rows.length} program${rows.length > 1 ? 's' : ''}. The numbers are the governed readiness scores, ranked -- not recomputed here.`, dashboard: { kind: 'portfolio', label: 'Portfolio readiness', why: 'Board view across all programs', rows }, report: null };
+    return { tool: name, text: `Readiness across your ${rows.length} program${rows.length > 1 ? 's' : ''}. The numbers are the governed readiness scores, ranked — not recomputed here.`, dashboard: { kind: 'portfolio', label: 'Portfolio readiness', why: 'Board view across all programs', rows }, report: null };
   }
   if (name === 'compare_regions') {
     const markets = roMarketsIn(utterance);
@@ -498,12 +500,12 @@ function roRouteReply(utterance: string, seg: string, tier: string, ctx: { progr
     const t = RO_TYPES.find(x => x.typeId === (isPre ? 'prediction.crl_rtf_premortem' : 'prediction.regulatory_forecast'))!;
     const dec = entitledFor(t);
     if (!dec.entitled) return lockMsg(dec.feature, t.label);
-    return { tool: name, text: `Running the ${t.label} for ${p.code}. It is advisory -- the model is not validated, so every projected value carries a disclosure and the result is held at partial, never final.`, report: null, reportType: t, dashboard: null };
+    return { tool: name, text: `Running the ${t.label} for ${p.code}. It is advisory — the model is not validated, so every projected value carries a disclosure and the result is held at partial, never final.`, report: null, reportType: t, dashboard: null };
   }
   const resolved = roResolveType(utterance, seg);
   if (name === 'list_report_types' || !resolved) {
     const cands = roFilterForSegment(RO_TYPES, seg).slice(0, 6);
-    return { tool: 'list_report_types', question: true, text: `For ${p.code}${p.filing ? ` (${p.filing})` : ''}, any of these can be run -- or describe what you need in your own words and it is matched to the closest governed report type.`, chips: cands.map(t => [t.label, `Generate the ${t.label} for ${p.code}`]), report: null, dashboard: null };
+    return { tool: 'list_report_types', question: true, text: `For ${p.code}${p.filing ? ` (${p.filing})` : ''}, any of these can be run — or describe what you need in your own words and it is matched to the closest governed report type.`, chips: cands.map(t => [t.label, `Generate the ${t.label} for ${p.code}`]), report: null, dashboard: null };
   }
   const dec = entitledFor(resolved);
   if (!dec.entitled) return lockMsg(dec.feature, resolved.label);
@@ -511,17 +513,6 @@ function roRouteReply(utterance: string, seg: string, tier: string, ctx: { progr
 }
 
 /* ── Inline helpers ── */
-
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 2400); };
-  return [msg, fire];
-}
-
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
-}
 
 /* ── Provenance string ── */
 function roProv(refs?: { sourceTable: string; sourceField?: string; recordId?: string; transformation?: string }[]): string | undefined {
@@ -586,7 +577,7 @@ function ROChart({ chartType, spec }: { chartType: string; spec: Record<string, 
   if (chartType === 'bar' || chartType === 'stacked_bar') {
     const rows = Array.isArray(s.data) ? (s.data as { label: string; value: number }[]) : [];
     const max = Math.max(1, ...rows.map(r => Number(r.value) || 0));
-    if (!rows.length) return <div className="ro-svg-cap">No series data -- connect the live provider.</div>;
+    if (!rows.length) return <div className="ro-svg-cap">No series data — connect the live provider.</div>;
     return <div className="ro-bars">{rows.map((r, i) => (<div key={i} className="ro-bar-row"><span className="ro-bar-lbl">{r.label}</span><span className="ro-bar-track"><span className="ro-bar-fill" style={{ width: ((Number(r.value) || 0) / max * 100) + '%' }} /></span><span className="ro-bar-val">{r.value}</span></div>))}</div>;
   }
   return <div className="ro-svg-cap">Chart -- {chartType}</div>;
@@ -678,7 +669,7 @@ function ROReport({ report, onExport, compact }: { report: RenderedReport; onExp
           <span className="ro-gen">generated {new Date(report.generatedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
         </div>
         {report.truthfulness && report.truthfulness.reasons && report.truthfulness.reasons.length ?
-          <div className="ro-truth">{I.shield || I.info} Truthfulness gate -- held at <b>{report.status}</b>: {report.truthfulness.reasons.join('; ')}.</div> : null}
+          <div className="ro-truth">{I.shield || I.info} Truthfulness gate — held at <b>{report.status}</b>: {report.truthfulness.reasons.join('; ')}.</div> : null}
       </div>
       {sections.map(sec => (
         <section key={sec.id} className="ro-sec">
@@ -706,7 +697,7 @@ function RODashboard({ dashboard, tier, onRun }: { dashboard: DashboardData; tie
     const avg = rows.reduce((a, r) => a + r.readiness, 0) / Math.max(1, rows.length);
     return (
       <div className="ro-dash">
-        <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Portfolio -- board view</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta"><span>{rows.length} programs</span><span className="ro-status st-ok">avg readiness {Math.round(avg)}%</span></div></div></div>
+        <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Portfolio — board view</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta"><span>{rows.length} programs</span><span className="ro-status st-ok">avg readiness {Math.round(avg)}%</span></div></div></div>
         <div className="ro-port-grid">
           {rows.map((r, i) => (
             <div key={i} className="ro-port-card">
@@ -715,7 +706,7 @@ function RODashboard({ dashboard, tier, onRun }: { dashboard: DashboardData; tie
             </div>
           ))}
         </div>
-        <div className="ro-dash-note">{I.info} Readiness values are the governed scores per program -- AnA ranks and frames them, it does not recompute them.</div>
+        <div className="ro-dash-note">{I.info} Readiness values are the governed scores per program — AnA ranks and frames them, it does not recompute them.</div>
       </div>
     );
   }
@@ -723,15 +714,32 @@ function RODashboard({ dashboard, tier, onRun }: { dashboard: DashboardData; tie
   if (dashboard.kind === 'compare') {
     const m = dashboard.markets || [];
     const prog = dashboard.program || {} as ProgramCtx;
-    const tRows: [string, string | null][] = [['Submission readiness', prog.readiness != null ? prog.readiness + '%' : null], ['Dossier standard', 'eCTD'], ['Module completeness', null], ['Region-specific gaps', null]];
+    /* ── Every cell in the first two rows was the same value ────────────────
+       The cell expression printed `r[1]` under EVERY market column for rows 0
+       and 1, so a single PROGRAMME-level readiness score appeared beneath FDA,
+       EMA, PMDA and the rest as though each agency had been assessed
+       separately — and "eCTD" was asserted as the dossier standard for all of
+       them. A reader asked this screen to compare markets and it answered by
+       repeating one number and inventing agreement.
+
+       Readiness is real, so it is stated ONCE, as what it is: a
+       programme-level figure. The per-market grid keeps only the rows the
+       governed record could actually fill per market, and they are all empty,
+       which is the honest answer until the regional providers are connected. */
+    const tRows: [string, string | null][] = [['Module completeness', null], ['Region-specific gaps', null]];
     return (
       <div className="ro-dash">
         <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Global harmonization</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta"><span>{m.length} markets</span></div></div></div>
+        {prog.readiness != null && (
+          <div className="ro-dash-progline">
+            Submission readiness <b>{prog.readiness}%</b> — a programme-level figure, not assessed per market.
+          </div>
+        )}
         <div className="ro-table">
           <div className="ro-thead" style={{ gridTemplateColumns: `minmax(0,1.4fr) repeat(${m.length}, minmax(0,1fr))` }}><span>Requirement</span>{m.map(x => <span key={x}>{x}</span>)}</div>
-          {tRows.map((r, ri) => (<div key={ri} className="ro-trow" style={{ gridTemplateColumns: `minmax(0,1.4fr) repeat(${m.length}, minmax(0,1fr))` }}><span>{r[0]}</span>{m.map((_, ci) => <span key={ci}>{ci === 0 && r[1] != null ? r[1] : (r[1] != null && ri < 2 ? r[1] : '--')}</span>)}</div>))}
+          {tRows.map((r, ri) => (<div key={ri} className="ro-trow" style={{ gridTemplateColumns: `minmax(0,1.4fr) repeat(${m.length}, minmax(0,1fr))` }}><span>{r[0]}</span>{m.map((_, ci) => <span key={ci}>{r[1] ?? '--'}</span>)}</div>))}
         </div>
-        <div className="ro-dash-note">{I.info} Where a market value is not in the governed record it shows as "--". Connect the live regional providers to populate the deltas.</div>
+        <div className="ro-dash-note">{I.info} No per-market assessment is in the governed record, so every market cell reads "--". Connect the live regional providers to populate the deltas.</div>
       </div>
     );
   }
@@ -833,7 +841,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
           ? `"${type.label}" needs a higher plan${body?.requiredTier ? ` (${body.requiredTier})` : ''} — I won't show an estimated result on a plan that hasn't unlocked the governed model.`
           : res.status === 404
             ? `"${type.label}" isn't in your governed report registry, so I can't run it against real data — I won't fabricate one.`
-            : `Couldn't run "${type.label}" — ${(body?.error?.message || body?.error) ?? `HTTP ${res.status}`}.`;
+            : `Couldn't run "${type.label}" — ${serverMessage(body) ?? 'the server did not say why'}.`;
         setThread(t => [...t, { role: 'ana', text: msg, tool: 'generate_report' }]);
         return;
       }
@@ -897,7 +905,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
      server bulk-run endpoint exists). Each tile runs its real report on click. */
   const buildPreset = (preset: Preset) => {
     if (!preset) return;
-    setThread(t => [...t, { role: 'user', text: `Build the ${preset.label}` }, { role: 'ana', text: `Building the ${preset.label}. ${preset.why} Each tile runs a governed report against the live record -- pick any one to run it. Anything the plan has not unlocked shows as locked, never as an estimate.`, tool: 'preset' }]);
+    setThread(t => [...t, { role: 'user', text: `Build the ${preset.label}` }, { role: 'ana', text: `Building the ${preset.label}. ${preset.why} Each tile runs a governed report against the live record — pick any one to run it. Anything the plan has not unlocked shows as locked, never as an estimate.`, tool: 'preset' }]);
     setDashboard({ kind: 'pack', label: preset.label, why: preset.why, types: preset.types });
     setReport(null);
     setReportRunId(null);
@@ -910,30 +918,92 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     void runReport(type);
   };
 
-  /* Seal the displayed governed run — POST /api/report-os/runs/:id/finalize locks
-     it to 'final' and returns a SealedRecord (sha256 content hash + provenance
-     atoms, aiDisclosed, sealedAt). A report the truthfulness gate holds below
-     final returns 409 and is NOT sealed — stated honestly. A re-shown report
-     with no run id cannot be sealed. This is the run's real integrity seal, not
-     a claimed event I did not create. */
+  /* ── "Export report" now exports a report ─────────────────────────────────
+     The control carries a download icon and the word Export, and its entire
+     effect was POST /runs/:id/finalize plus a toast. The run was sealed; no
+     file was ever produced, so the one thing the word Export promises — a
+     document the user can keep, attach or file — could not be done from this
+     surface at all.
+
+     Two acts, in order, both real:
+       1. POST /api/report-os/runs/:id/finalize — the run's integrity seal
+          (sha256 content hash + provenance atoms). A report the truthfulness
+          gate holds below final returns 409 and is NOT sealed.
+       2. GET  /api/report-os/runs/:id/export.pdf — the governed PDF the server
+          renders from the STORED run (createRunPdf: type, scope, status,
+          confidence, dependency providers, blockers). It is entitlement-gated
+          server-side exactly like the run itself, so a downgraded plan is
+          refused there rather than handed a document it has not paid for.
+
+     The seal is attempted first because sealing changes what the PDF states
+     (the run's status), and the download runs EVEN WHEN the seal is refused: a
+     partial report is still a real report, and withholding the file over a
+     status the gate is entitled to hold would be a second, invented refusal.
+     The toast states both outcomes separately — sealed or held, saved or not —
+     so neither is ever implied by the other. The file itself goes through the
+     canonical `downloadBlob` (v2/download.ts); its `false` return (no DOM, a
+     sandboxed frame) is reported as a failure to save, never swallowed. */
   const exportRep = async (rep: RenderedReport) => {
-    if (reportRunId == null) { fireToast('Only a freshly-run governed report can be sealed — run one first.'); return; }
+    if (reportRunId == null) { fireToast('Only a freshly-run governed report can be exported — run one first.', 'error'); return; }
+    const runId = reportRunId;
+
+    // ── 1. Seal ──
+    let sealNote: string;
     try {
-      const res = await apiRequest('POST', `/api/report-os/runs/${reportRunId}/finalize`);
+      const res = await apiRequest('POST', `/api/report-os/runs/${runId}/finalize`);
       const body = await res.json().catch(() => null);
       if (res.status === 409) {
-        const reasons = Array.isArray(body?.reasons) ? body.reasons.join('; ') : (body?.error || 'the truthfulness gate holds it below final');
-        fireToast(`Not sealed — "${rep.reportTypeLabel}" is held below final: ${reasons}.`);
-        return;
+        const reasons = Array.isArray(body?.reasons)
+          ? body.reasons.join('; ')
+          : (serverMessage(body) || 'the truthfulness gate holds it below final');
+        sealNote = `Not sealed — held below final: ${reasons}`;
+      } else if (!res.ok) {
+        sealNote = `Not sealed — ${serverMessage(body) ?? 'the server did not say why'}`;
+      } else {
+        const seal = body?.data?.seal;
+        const hash = typeof seal?.contentHash === 'string' ? seal.contentHash.slice(0, 12) : null;
+        setReport(r => (r ? { ...r, status: 'final' } : r));
+        sealNote = `Sealed · ${seal?.algorithm || 'sha256'}${hash ? ' ' + hash + '…' : ''} · ${seal?.atomCount ?? 0} provenance atoms · run locked final`;
       }
-      if (!res.ok) { fireToast(`Couldn't seal — ${(body?.error) ?? `HTTP ${res.status}`}.`); return; }
-      const seal = body?.data?.seal;
-      const hash = typeof seal?.contentHash === 'string' ? seal.contentHash.slice(0, 12) : null;
-      setReport(r => (r ? { ...r, status: 'final' } : r));
-      fireToast(`Sealed · ${seal?.algorithm || 'sha256'}${hash ? ' ' + hash + '…' : ''} · ${seal?.atomCount ?? 0} provenance atoms · run locked final`);
     } catch (e) {
-      fireToast(`Couldn't seal — ${e instanceof Error ? e.message : String(e)}.`);
+      // `apiRequest` THROWS for every non-OK status except 401, so in the real
+      // app the 409 above is reached HERE, not by the `res.status` branch. The
+      // gate's own reasons live on the thrown error's payload; read
+      // STRUCTURALLY rather than via `instanceof ApiRequestError` — several
+      // suites mock '@/lib/queryClient' with a factory exporting only
+      // `apiRequest`, which binds the class to undefined and makes
+      // `e instanceof undefined` throw inside the catch (dataConnect's
+      // `failureFrom` documents the same hazard and takes the same precaution).
+      const err = e as { status?: unknown; payload?: { reasons?: unknown } } | null;
+      const reasons =
+        err && err.status === 409 && Array.isArray(err.payload?.reasons)
+          ? (err.payload!.reasons as unknown[]).join('; ')
+          : null;
+      sealNote = reasons
+        ? `Not sealed — held below final: ${reasons}`
+        : `Not sealed — ${e instanceof Error ? e.message : String(e)}`;
     }
+
+    // ── 2. The file ──
+    let fileNote: string;
+    try {
+      const res = await apiRequest('GET', `/api/report-os/runs/${runId}/export.pdf`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        fileNote = `no file saved — ${serverMessage(body) ?? 'the export service did not say why'}`;
+      } else {
+        const blob = await res.blob();
+        const filename = `${safeFileName(rep.reportTypeLabel || rep.reportTypeId, 'report')}_run${runId}.pdf`;
+        fileNote = downloadBlob(filename, blob)
+          ? `saved ${filename}`
+          : 'no file saved — this browser refused the download';
+      }
+    } catch (e) {
+      fileNote = `no file saved — ${e instanceof Error ? e.message : String(e)}`;
+    }
+
+    const failed = fileNote.startsWith('no file saved') || sealNote.startsWith('Not sealed');
+    fireToast(`${sealNote} · ${fileNote}.`, failed ? 'error' : undefined);
   };
 
   // Four-state render: loading → honest error → honest empty (no flagship

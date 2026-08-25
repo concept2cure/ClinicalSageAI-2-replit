@@ -116,7 +116,16 @@ function createInsertSchemaOmit<
   TOmit extends OmitConfig<z.infer<ReturnType<typeof createInsertSchema<TTable>>>>,
 >(table: TTable, omitFields: TOmit) {
   const schema = createInsertSchema(table);
-  return schema.omit(omitFields as any);
+  /* The runtime cast stays (drizzle-zod's BuildSchema mask typing), but the
+     RETURN must not: `.omit(mask as any)` resolved zod's Mask generic to
+     `any`, so the returned object's TS shape collapsed to `{}` — and the
+     first caller to `.omit()` AGAIN (server/api/cmc/routes.ts, omitting
+     organizationId after this omitted id/timestamps) got every key typed
+     `never`. Assert the true shape instead: the insert schema's shape minus
+     exactly the omitted keys, which is what the runtime object is. */
+  return schema.omit(omitFields as any) as unknown as z.ZodObject<
+    Omit<ReturnType<typeof createInsertSchema<TTable>>['shape'], keyof TOmit & string>
+  >;
 }
 
 // Custom pgvector type definition
@@ -1956,12 +1965,24 @@ export const electronicSignatures = pgTable(
   'electronic_signatures',
   {
     id: serial('id').primaryKey(),
-    documentId: integer('document_id')
-      .notNull()
-      .references(() => documents.id),
-    versionId: integer('version_id')
-      .notNull()
-      .references(() => documentVersions.id),
+    // ── Phase 4 D6 (single e-signature write path) ─────────────────────────
+    // documentId/versionId became NULLABLE: governed sign actions
+    // (/api/c2c/actions/sign) sign typed targets (ectd-sequence:<id>,
+    // document:<id>, …) that are not documents/document_versions rows; those
+    // rows anchor via signedTarget instead. Migration
+    // 20260813d_esignature_governed_unification.sql also installs a CHECK
+    // (inexpressible in drizzle) requiring (document_id AND version_id) OR
+    // signed_target — no anchorless signature row can exist. All document
+    // signing paths still always populate both columns (route-enforced).
+    documentId: integer('document_id').references(() => documents.id),
+    versionId: integer('version_id').references(() => documentVersions.id),
+    // Governed typed target pointer (e.g. 'ectd-sequence:42') for signatures
+    // born from the governed sign action. NULL on document-anchored rows.
+    signedTarget: text('signed_target'),
+    // EXPLICIT provenance of boundPayloadDigest — see
+    // server/services/part11/signature-persistence.ts BINDING_BASIS. NULL on
+    // historical rows; every new write sets it.
+    bindingBasis: text('binding_basis'),
     // Signature Details
     signatureType: varchar('signature_type', { length: 50 }).notNull(),
     // approval, review, witness, acknowledgment
@@ -2025,6 +2046,13 @@ export const electronicSignatures = pgTable(
     signatureOrgPayloadDigestIdx: index('electronic_signatures_org_payload_digest_idx').on(
       table.organizationId,
       table.boundPayloadDigest,
+    ),
+    // Inspector/verification lookup for governed signatures: "every signature
+    // applied to this governed target in this org". (Partial WHERE signed_target
+    // IS NOT NULL lives in the raw SQL migration, as above.)
+    signatureOrgSignedTargetIdx: index('electronic_signatures_org_signed_target_idx').on(
+      table.organizationId,
+      table.signedTarget,
     ),
   })
 );
@@ -5284,6 +5312,21 @@ export const projects = pgTable(
     // token size of the project knowledge corpus drives the selection.
     retrievalMode: text('retrieval_mode'),
     knowledgeTokenEstimate: integer('knowledge_token_estimate').default(0).notNull(),
+    /**
+     * Anchor to `regulatory_programs.id` (uuid) — the Document Identity
+     * Contract's C1 bridge between the uuid program spine every v2 surface uses
+     * and this integer PM spine, which `concept2cure_artifacts.project_id` FKs
+     * to. NULL means "not anchored to a regulatory program", a valid and common
+     * state; nothing is required to be anchored.
+     *
+     * Deliberately NOT `.references()`: `regulatory_programs` lives in
+     * shared/schema/programs.ts, which this module does not re-export, so
+     * drizzle-kit push does not create it — the FK would name a table push has
+     * never heard of. The raw migration
+     * (migrations/20260814_projects_regulatory_program_anchor.sql) declines the
+     * FK for the same reason plus a stronger one, and states both.
+     */
+    regulatoryProgramId: uuid('regulatory_program_id'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -5292,6 +5335,9 @@ export const projects = pgTable(
     pathIdx: index('projects_path_idx').on(table.path),
     depthIdx: index('projects_depth_idx').on(table.depth),
     idx_projects_org: index('idx_projects_org').on(table.organizationId),
+    // Same NAME and same (non-partial) shape as the migration's index, so a
+    // pushed database and a migrated one carry one index, not two shapes.
+    regulatoryProgramIdx: index('projects_regulatory_program_idx').on(table.regulatoryProgramId),
     parentFk: foreignKey({ columns: [table.parentProjectId], foreignColumns: [table.id] }),
   })
 );
@@ -5741,6 +5787,11 @@ export const conversationWorkingMemory = pgTable(
       onDelete: 'cascade',
     }),
     threadId: text('thread_id'), // For legacy chat_threads integration
+    // Project attribution recorded at write time so the nightly consolidation
+    // job can promote thread-keyed rows (conversation_id NULL — the live AnA
+    // chat path) into project_memory_entries. Nullable: surfaces with no
+    // project in scope write NULL and stay excluded from promotion.
+    projectId: integer('project_id').references(() => projects.id),
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
@@ -5765,6 +5816,7 @@ export const conversationWorkingMemory = pgTable(
   table => ({
     convIdx: index('cwm_conv_idx').on(table.conversationId),
     threadIdx: index('cwm_thread_idx').on(table.threadId),
+    projectIdx: index('cwm_project_idx').on(table.projectId),
     orgIdx: index('cwm_org_idx').on(table.organizationId),
     generatedAtIdx: index('cwm_generated_at_idx').on(table.generatedAt),
   })
@@ -7126,6 +7178,12 @@ export const unifiedTasks = pgTable(
     lastModifiedBy: integer('last_modified_by').references(() => users.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+
+    // Soft delete (20260807_unified_tasks_soft_delete.sql). NULL = live.
+    // Tasks are never hard-deleted over HTTP — Part 11 retention (D24).
+    // No FK on deletedBy: the tombstone must outlive the account.
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    deletedBy: integer('deleted_by'),
   },
   table => ({
     taskIdIdx: index('unified_task_id_idx').on(table.taskId),
@@ -7173,11 +7231,43 @@ export type InsertUnifiedTask = z.infer<typeof insertUnifiedTaskSchema>;
  *
  * Tracks relationships and dependencies between tasks across different modules.
  */
+/**
+ * Durable collaborative section locks (20260807_collab_section_locks.sql).
+ * Replaces the process-local lock Map in realtime-collab: shared across
+ * replicas, TTL-expired via expires_at, takeover is explicit and audited.
+ * lock_key is the tenant-prefixed address (t<tenant>:<doc>[:<section>]).
+ */
+export const collabSectionLocks = pgTable(
+  'collab_section_locks',
+  {
+    id: serial('id').primaryKey(),
+    tenantId: integer('tenant_id').notNull(),
+    documentId: text('document_id').notNull(),
+    sectionId: text('section_id'),
+    lockKey: text('lock_key').notNull().unique(),
+    lockedBy: text('locked_by').notNull(),
+    lockedByLabel: text('locked_by_label').notNull(),
+    lockType: text('lock_type').default('advisory').notNull(),
+    reason: text('reason'),
+    lockedAt: timestamp('locked_at', { withTimezone: true }).defaultNow().notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  table => ({
+    tenantDocIdx: index('collab_locks_tenant_doc_idx').on(table.tenantId, table.documentId),
+    expiresIdx: index('collab_locks_expires_idx').on(table.expiresAt),
+  })
+);
+export type CollabSectionLock = InferSelectModel<typeof collabSectionLocks>;
+
 export const crossModuleTaskLinks = pgTable(
   'cross_module_task_links',
   {
     id: serial('id').primaryKey(),
     linkId: text('link_id').notNull().unique(),
+
+    // Owning tenant (20260807_task_graph_org_columns.sql) — see the note on
+    // taskDependencies.organizationId.
+    organizationId: integer('organization_id'),
 
     // Source Task
     sourceTaskId: text('source_task_id')
@@ -7553,6 +7643,12 @@ export const taskDependencies = pgTable(
   {
     id: serial('id').primaryKey(),
     dependencyId: text('dependency_id').notNull().unique(),
+
+    // Owning tenant (20260807_task_graph_org_columns.sql). Nullable: legacy
+    // rows whose endpoints validated same-org at write time are backfilled
+    // from the predecessor task; endpoint-id scoping remains the primary
+    // isolation (assessment D20 — this is defense in depth).
+    organizationId: integer('organization_id'),
 
     // Task References
     predecessorTaskId: text('predecessor_task_id')
@@ -14775,7 +14871,10 @@ export const fda510kSubmissionPackages = pgTable(
     fdaAcknowledgmentNumber: text('fda_acknowledgment_number'),
 
     // Package Status
-    status: text('status').default('draft'), // draft, ready, submitted, accepted, rejected
+    // draft, ready, submitted, accepted, rejected, simulated
+    // ('simulated' = local dev/test dry run — NOTHING was transmitted to FDA;
+    // it must never be promoted to a status implying a real transmission)
+    status: text('status').default('draft'),
     isLocked: boolean('is_locked').default(false),
     lockedAt: timestamp('locked_at'),
 
@@ -18786,6 +18885,14 @@ export const ivdrClassifications = pgTable(
     ivdrClass:               text('ivdr_class').notNull(),
     classificationRule:      text('classification_rule'),
     rationale:               text('rationale'),
+    /* Module columns written by the Annex VIII rule engine (ivdr-routes.ts).
+       Canonical additions from the D11d IVDR consolidation (2026-08-13) —
+       the legacy shape-1 names (classification / is_cdx / is_self_test /
+       is_near_patient) are deprecated, backfilled by
+       migrations/20260813c_ivdr_schema_reconciliation.sql, and unwritten. */
+    intendedPurpose:         text('intended_purpose'),
+    ruleTrace:               jsonb('rule_trace').default('[]'),
+    analytes:                jsonb('analytes').default('[]'),
     companionDiagnostic:     boolean('companion_diagnostic').default(false),
     selfTest:                boolean('self_test').default(false),
     nearPatientTest:         boolean('near_patient_test').default(false),

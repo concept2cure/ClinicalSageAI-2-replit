@@ -8,7 +8,6 @@
  *  - Auth table column bootstrap (idempotent)
  *  - Feature toggle bootstrap (UNIFIED_REGULATORY_SUBMISSIONS)
  *  - AnA Capability Registry seeding (delayed, non-blocking)
- *  - Python backend stub (disabled, kept for future)
  *  - Parallel startup services (chain monitor, pattern registry,
  *    socket server, scheduled jobs, hocuspocus)
  *
@@ -26,11 +25,12 @@ import { ensureCoreTables } from '../db/ensureCoreTables';
 import { setSchemaReadiness } from './readiness-state';
 import { runWithSystemTenantScope } from '../db/tenantStore';
 
-/** Python backend is currently disabled (size optimization). Kept as a stub
- * so the graceful-shutdown handler can address it if it gets re-enabled. */
-export function startPythonBackend(): Promise<null> {
-  return Promise.resolve(null);
-}
+// NOTE (D9, 2026-08-13): the `startPythonBackend()` stub that lived here (and
+// always resolved null) was removed together with the dead Python stack under
+// services/ (api.py / celery_app.py / ectd_generator.py — no Node caller, never
+// deployed; see .github/workflows/deploy-aws.yml worker note). The only live
+// Node→Python bridge is workers/artifact-compute (docx runtimes), which spawns
+// per-invocation processes and needs no startup/shutdown hook.
 
 /**
  * Tables classified "important" by ensureCoreTables that are nonetheless
@@ -360,6 +360,23 @@ export async function initializeEarlyServices(): Promise<void> {
         console.warn('⚠️ AnA Capability Registry seeding failed (non-blocking):', err?.message);
       });
   }, 3000);
+
+  // Seed the global regulatory template store when it is missing seed rows
+  // (fire-and-forget, count-guarded — a normal boot is one SELECT). Without
+  // this the store only ever filled via a manual authed POST, so every fresh
+  // estate's "Start from" picker offered nothing but a blank document.
+  setTimeout(() => {
+    import('../services/intelligence/template-seeds.js')
+      .then(({ seedTemplatesIfMissing }) => seedTemplatesIfMissing())
+      .then((r) => {
+        if (r.ran) {
+          console.log(`✅ Regulatory templates seeded (${r.inserted} new, ${r.updated} refreshed, ${r.sections} sections)`);
+        }
+      })
+      .catch((err: any) => {
+        console.warn('⚠️ Regulatory template seeding failed (non-blocking):', err?.message);
+      });
+  }, 3000);
 }
 
 /**
@@ -443,6 +460,27 @@ export async function initializeParallelServices(httpServer: Server, pool: Pool)
       }
     } catch (err: any) {
       console.warn('⚠️ Automation engine initialization failed (non-blocking):', err?.message);
+    }
+    // Without Redis the Bull queue never came up, and with it went the 7 AM
+    // proactive digest — the platform's ONLY unprompted surface. That used to
+    // be one debug-adjacent warn and then silence (mounting is not readiness,
+    // L66). Say what it means, and start the plain-interval heartbeat so the
+    // digest still reaches users.
+    try {
+      if (!scheduledJobs.value.isSchedulerQueueActive?.()) {
+        console.warn(
+          '⚠️ Redis is not configured: every Bull-scheduled job is off, including the proactive ' +
+            "digest — AnA's only unprompted surface. Starting the digest heartbeat fallback " +
+            '(plain interval, weekdays from 07:00 UTC) so users are still reached.'
+        );
+        const heartbeat = await import('../services/digest/digest-heartbeat.js');
+        const started = heartbeat.startDigestHeartbeat();
+        if (started) {
+          console.log('✅ Proactive digest heartbeat started (Redis-free fallback)');
+        }
+      }
+    } catch (err: any) {
+      console.warn('⚠️ Digest heartbeat fallback failed to start (non-blocking):', err?.message);
     }
   } else {
     console.warn('⚠️ Automation engine failed to load:', scheduledJobs.reason);

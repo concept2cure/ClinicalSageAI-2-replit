@@ -17,6 +17,11 @@
   --warning: #c87d2e; --warning-muted: #f8e9d0;
   --error: #b93a3a;   --error-muted: #f5dfdd;
   --border: #e3e1d7; --border-strong: #d1cfc0;
+  /* Control boundary — mirrors design-system/colors_and_type.css. This kit
+     previews standalone (index.html loads no canonical stylesheet), so the
+     token is re-declared here per design-system/CLAUDE.md. 3.91:1 on
+     --bg-000: WCAG 2.2 SC 1.4.11 for input/select/textarea boundaries. */
+  --border-control: #7f7d75;
 
   --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px;
   --radius-xl: 12px; --radius-2xl: 16px;
@@ -52,6 +57,7 @@
   --warning-muted: rgba(200, 125, 46, 0.18);
   --error-muted: rgba(185, 58, 58, 0.18);
   --border: #3d3d3a; --border-strong: #4a4a46;
+  --border-control: #8a8a82;
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.30);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.35), 0 1px 2px -1px rgb(0 0 0 / 0.35);
   --shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.40), 0 2px 4px -2px rgb(0 0 0 / 0.40);
@@ -1665,7 +1671,7 @@ svg { display: block; }
 .ed-claude-input textarea {
   width: 100%; box-sizing: border-box;
   padding: 8px 10px;
-  background: var(--bg-000); border: 1px solid var(--border);
+  background: var(--bg-000); border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
   font-family: var(--font-sans);
   font-size: 12.5px; line-height: 1.5;

@@ -33,7 +33,15 @@ export interface AuthoringFilingBarProps {
   docStatus: string;
   /** Refetch hook so the host adopts the server's post-write document status. */
   onChanged: () => void;
-  fireToast: (m: string) => void;
+  /* BP-W0-6, and this is the sharpest instance of it. This component owns
+     Freeze and the §11.50 electronic signature. Its prop type erased the tone
+     the host's useToast accepts, so every call here defaulted to 'ok' — and a
+     REJECTED PIN rendered with the green success tick, aria-live="polite" and
+     the same 4.2s dwell as "Document signed". On the one action in the product
+     that is a legally binding attestation, failure was indistinguishable from
+     success. C2CForm is fire-and-forget and the dialog stays open on failure
+     with no inline error, so the toast is the ONLY signal there is. */
+  fireToast: (m: string, tone?: 'ok' | 'error') => void;
 }
 
 type Dialog = 'freeze' | 'esign' | null;
@@ -63,7 +71,10 @@ const ESIGN_FORM = (title: string): C2CFormConfig => ({
       { value: 'AUTHOR', label: 'Authorship' }, { value: 'REVIEWER', label: 'Review' }, { value: 'APPROVER', label: 'Approval' },
     ], required: true, default: 'REVIEWER' },
     { key: 'intent', label: 'Intent / declaration', type: 'textarea', required: true, placeholder: 'e.g. I have reviewed this document and confirm it is complete and accurate.' },
-    { key: 'pin', label: 'Signing PIN', type: 'password', required: true, placeholder: 'Your electronic-signature PIN' },
+    // First-time signers set the PIN in the Signatures rail (SigningPinPanel);
+    // until that shipped this field was unsatisfiable — required, verified
+    // server-side, and creatable nowhere in the product.
+    { key: 'pin', label: 'Signing PIN', type: 'password', required: true, placeholder: 'Your electronic-signature PIN — no PIN yet? Set it in the Signatures rail first' },
   ],
 });
 
@@ -79,7 +90,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        fireToast('Couldn’t freeze the document — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was sealed.');
+        fireToast('Couldn’t freeze the document — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was sealed.', 'error');
         return;
       }
       const hash = (json as { contentHash?: string })?.contentHash;
@@ -87,7 +98,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
       setDialog(null);
       onChanged();
     } catch (e) {
-      fireToast('Couldn’t freeze the document — ' + (e instanceof Error ? e.message : String(e)) + '.');
+      fireToast('Couldn’t freeze the document — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
   };
 
@@ -99,9 +110,9 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
         intent: v.intent,
       });
       const json = await res.json().catch(() => null);
-      if (res.status === 401) { fireToast('Signature rejected — the PIN was not verified. Nothing was signed.'); return; }
+      if (res.status === 401) { fireToast('Signature rejected — the PIN was not verified. Nothing was signed.', 'error'); return; }
       if (!res.ok) {
-        fireToast('Couldn’t sign the document — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was signed.');
+        fireToast('Couldn’t sign the document — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was signed.', 'error');
         return;
       }
       const hash = (json as { documentHash?: string })?.documentHash;
@@ -110,7 +121,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
       setDialog(null);
       onChanged();
     } catch (e) {
-      fireToast('Couldn’t sign the document — ' + (e instanceof Error ? e.message : String(e)) + '.');
+      fireToast('Couldn’t sign the document — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
   };
 

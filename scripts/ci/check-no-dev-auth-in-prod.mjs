@@ -31,6 +31,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { requireScanRoots } from './lib/scan-roots.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
@@ -61,12 +62,40 @@ const SCAN_ROOTS = [
   path.join(repoRoot, 'server'),
 ];
 
+// A missing root is a broken scan, not a clean one. See lib/scan-roots.mjs.
+requireScanRoots('[ci:no-dev-auth-in-prod]', SCAN_ROOTS);
+
 const ALLOWLIST_RELATIVE = new Set([
   // The helper itself documents the rule.
   'server/auth/dev-auth-policy.ts',
 ]);
 
-const FORBIDDEN_PATTERN = /process\.env\.NODE_ENV\s*!==\s*['"]production['"]/g;
+/**
+ * BOTH spellings of a single-factor environment gate, not just the negative one.
+ *
+ * This guard originally matched only `NODE_ENV !== 'production'`. server/routes/
+ * sso.ts wrote the equivalent gate the other way round —
+ * `const isDev = process.env.NODE_ENV === 'development'` — and the guard
+ * reported "OK — no leaky dev-auth gates found" over it for as long as it
+ * existed.
+ *
+ * What sat behind that gate: `GET /api/auth/sso/:provider/callback` signed a
+ * genuine 24-hour JWT (userId 1, organizationId 2, role client_user) with the
+ * production secret, WITHOUT verifying the `code` query parameter at all. Any
+ * deployment whose NODE_ENV was 'development' — a preview box, a Replit
+ * container, a staging service whose env drifted — served credentials to
+ * unauthenticated callers.
+ *
+ * `=== 'development'` is narrower than `!== 'production'`, which is presumably
+ * why it read as safe. It is still ONE variable, and the whole point of
+ * isDevAuthAllowed() is that one variable is not enough: it requires
+ * NODE_ENV=development AND an explicit ALLOW_DEV_AUTH=1 precisely "so staging,
+ * beta, e2e, and production ... cannot enable these paths by accident".
+ *
+ * A guard that names one spelling of a rule enforces spelling, not the rule.
+ */
+const FORBIDDEN_PATTERN =
+  /process\.env\.NODE_ENV\s*(?:!==?\s*['"]production['"]|===?\s*['"]development['"])/g;
 
 function walk(dir, recurse = true) {
   const out = [];
@@ -85,9 +114,32 @@ function walk(dir, recurse = true) {
   return out;
 }
 
-function isAuthFile(relPath) {
+/**
+ * A file that MINTS A TOKEN is an authentication file, whatever it is called.
+ *
+ * The name patterns above are necessary but were not sufficient: they scope the
+ * scan to paths spelled `auth*` or `founder*`, and server/routes/sso.ts — which
+ * signs a 24-hour JWT bearing userId, organizationId and role — matched none of
+ * them, so it was never read. It carried a single-factor
+ * `NODE_ENV === 'development'` gate in front of an unauthenticated
+ * credential-minting callback while this guard printed "OK".
+ *
+ * Auditing the tree for that mistake found it was not one file: of the ten
+ * modules under server/ that sign tokens, SEVEN were outside the name patterns
+ * (sso, users, setup, mfaService, csrf, jwtVerify, mdx-pending-actions).
+ *
+ * So scope is now derived from BEHAVIOUR as well as name. Any file containing a
+ * token-issuing call is in scope automatically, which means the next one added
+ * is covered the day it is written rather than the day someone remembers to
+ * extend a list. Detection is textual and deliberately generous: a false
+ * positive costs one allowlist entry, a false negative costs what sso.ts cost.
+ */
+const TOKEN_ISSUING_PATTERN = /\b(?:jwt\.sign|signJwt|generateToken)\s*\(/;
+
+function isAuthFile(relPath, text) {
   const normalized = relPath.replaceAll(path.sep, '/');
-  return AUTH_FILE_PATTERNS.some(pattern => pattern.test(normalized));
+  if (AUTH_FILE_PATTERNS.some(pattern => pattern.test(normalized))) return true;
+  return typeof text === 'string' && TOKEN_ISSUING_PATTERN.test(text);
 }
 
 const findings = [];
@@ -101,10 +153,12 @@ for (const root of SCAN_ROOTS) {
     if (seen.has(file)) continue;
     seen.add(file);
     const rel = path.relative(repoRoot, file).replaceAll(path.sep, '/');
-    if (!isAuthFile(rel)) continue;
     if (ALLOWLIST_RELATIVE.has(rel)) continue;
 
+    // Read before the scope test: token-issuing files are recognised by their
+    // CONTENT, not their path (see isAuthFile).
     const text = fs.readFileSync(file, 'utf8');
+    if (!isAuthFile(rel, text)) continue;
     const lines = text.split('\n');
 
     // Reset and iterate matches with line numbers.

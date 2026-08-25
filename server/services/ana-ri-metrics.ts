@@ -55,10 +55,21 @@ interface AnaRiMetricsState {
     orchestration: Histogram;
     context: Histogram;
     gateway: Histogram;
+    firstToken: Histogram;
   };
   semanticSearchHistogram: Histogram;
   memoryLayerOutcomes: Record<LayerName, Record<LayerOutcome, number>>;
+  workingMemoryModes: Record<WorkingMemoryMode, number>;
 }
+
+/**
+ * HOW working memory was recalled. The layer outcome alone reported 'ok' for
+ * a semantic hit and a recency fallback identically, so a semantic-recall
+ * pilot produced no evidence it was actually running semantically —
+ * 'recency_fallback' (flag on, semantic cleared nothing) is the state a pilot
+ * must be able to see.
+ */
+export type WorkingMemoryMode = 'semantic' | 'recency_fallback' | 'recency' | 'none';
 
 const state: AnaRiMetricsState = {
   turnsTotal: { stream: 0, chat: 0 },
@@ -68,6 +79,7 @@ const state: AnaRiMetricsState = {
     orchestration: makeHistogram(PHASE_BUCKETS_MS),
     context: makeHistogram(PHASE_BUCKETS_MS),
     gateway: makeHistogram(PHASE_BUCKETS_MS),
+    firstToken: makeHistogram(PHASE_BUCKETS_MS),
   },
   semanticSearchHistogram: makeHistogram(SEMANTIC_BUCKETS_MS),
   memoryLayerOutcomes: {
@@ -75,6 +87,7 @@ const state: AnaRiMetricsState = {
     clientMemory: { ok: 0, empty: 0, timeout: 0, error: 0, skipped: 0 },
     projectMemory: { ok: 0, empty: 0, timeout: 0, error: 0, skipped: 0 },
   },
+  workingMemoryModes: { semantic: 0, recency_fallback: 0, recency: 0, none: 0 },
 };
 
 export interface RecordTurnInput {
@@ -83,12 +96,14 @@ export interface RecordTurnInput {
     orchestrationMs?: number;
     contextMs?: number;
     gatewayMs?: number;
+    firstTokenMs?: number;
   };
   cache?: {
     hit?: boolean | undefined;
   };
   memory?: {
     layerOutcomes?: Partial<Record<LayerName, LayerOutcome>>;
+    workingMemoryMode?: WorkingMemoryMode;
     semanticSearchMs?: number;
   };
   thinkingEnabled?: boolean;
@@ -114,6 +129,9 @@ export function recordAnaTurn(input: RecordTurnInput): void {
   if (typeof p.gatewayMs === 'number') {
     observeHistogram(state.phaseHistograms.gateway, PHASE_BUCKETS_MS, p.gatewayMs);
   }
+  if (typeof p.firstTokenMs === 'number') {
+    observeHistogram(state.phaseHistograms.firstToken, PHASE_BUCKETS_MS, p.firstTokenMs);
+  }
 
   if (input.memory) {
     if (typeof input.memory.semanticSearchMs === 'number') {
@@ -130,6 +148,10 @@ export function recordAnaTurn(input: RecordTurnInput): void {
         state.memoryLayerOutcomes[layer][outcome] =
           (state.memoryLayerOutcomes[layer][outcome] || 0) + 1;
       }
+    }
+    const mode = input.memory.workingMemoryMode;
+    if (mode && mode in state.workingMemoryModes) {
+      state.workingMemoryModes[mode] += 1;
     }
   }
 }
@@ -198,12 +220,29 @@ export function renderAnaRiMetrics(): string[] {
   );
   lines.push(
     ...renderHistogram(
+      'ana_ri_time_to_first_token',
+      'Wall clock from stream start to the first model output delta',
+      state.phaseHistograms.firstToken,
+      PHASE_BUCKETS_MS
+    )
+  );
+  lines.push(
+    ...renderHistogram(
       'ana_ri_memory_semantic_search',
       'Wall clock for parallel client+project semantic search',
       state.semanticSearchHistogram,
       SEMANTIC_BUCKETS_MS
     )
   );
+
+  lines.push(
+    '# HELP ana_ri_working_memory_mode_total How working memory was recalled per turn ' +
+      '(semantic hit vs recency fallback vs recency default vs nothing)'
+  );
+  lines.push('# TYPE ana_ri_working_memory_mode_total counter');
+  for (const mode of Object.keys(state.workingMemoryModes) as WorkingMemoryMode[]) {
+    lines.push(`ana_ri_working_memory_mode_total{mode="${mode}"} ${state.workingMemoryModes[mode]}`);
+  }
 
   lines.push('# HELP ana_ri_memory_layer_outcomes_total Per-layer outcome of memory assembly');
   lines.push('# TYPE ana_ri_memory_layer_outcomes_total counter');
@@ -241,4 +280,5 @@ export function resetAnaRiMetrics(): void {
       skipped: 0,
     };
   }
+  state.workingMemoryModes = { semantic: 0, recency_fallback: 0, recency: 0, none: 0 };
 }

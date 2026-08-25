@@ -33,6 +33,15 @@ export const PART11_GOVERNED_COMMANDS: ReadonlySet<string> = new Set<string>([
   'sign_document',
   'submit_document',
   'create_submission_package',
+  // Transmitting a 510(k) package to the FDA ESG. The MOST consequential entry
+  // here: it puts bytes on a real agency endpoint and nothing in this platform
+  // can un-send them. Membership makes POST /api/ana-ri/governed-action the only
+  // dispatch that can carry it (that route refuses any command not in this set),
+  // which is what supplies the server-verified re-authentication the submission
+  // gateway demands. The handler additionally requires the verified sign-off
+  // UNCONDITIONALLY — it does not consult the tenant's anaPart11Enforce flag,
+  // because a tenant opt-out must not be able to un-gate an agency transmission.
+  'k510_workflow.transmit',
   // Applying AnA's onboarding proposals writes the organization profile on the
   // client's behalf, so it is governed: a reason-for-change is required and the
   // action is recorded. It is deliberately NOT in the e-sign set below — it
@@ -42,6 +51,20 @@ export const PART11_GOVERNED_COMMANDS: ReadonlySet<string> = new Set<string>([
   // escalates it centrally; the onboarding route consults that policy and fails
   // closed rather than continuing on a weaker path.
   'onboarding.apply_proposals',
+  // NOT here, deliberately: `update_task`. It mutates unified_tasks — the
+  // canonical regulated task record — so adding it looks right, but membership
+  // of this set is coupled by an anti-drift guard
+  // (__tests__/command-rbac.test.ts, "every dispatchable Part 11 governed
+  // command is a manager-tier write") to `minRole: 'manager'` plus
+  // requiresReasonForChange. `update_task` is `minRole: 'member'`
+  // (command-rbac.ts), matching the HTTP route, where members transition their
+  // own tasks. Promoting it would stop a member marking their own task done
+  // through AnA — a real permissions change, not a compliance tightening.
+  // The Part 11 obligation is met where it belongs instead: the mirror in
+  // command-executor.ts writes an unconditional `task.transition` ledger entry
+  // and enforces the status state machine, whatever tier the caller holds.
+  // Escalate this only as a deliberate RBAC decision, with the tier changed in
+  // the same commit.
 ]);
 
 /**
@@ -59,6 +82,7 @@ export const PART11_ESIGN_COMMANDS: ReadonlySet<string> = new Set<string>([
   'sign_document',
   'submit_document',
   'create_submission_package',
+  'k510_workflow.transmit',
 ]);
 
 /** Minimum meaningful reason-for-change length (trimmed). */
@@ -78,6 +102,18 @@ export interface Part11Signoff {
   signatureId?: number;
   /** §11.50 signature meaning (authorship/review/approval/responsibility/release). */
   signaturePurpose?: string;
+  /**
+   * The instant the server VERIFIED the signer's re-authentication for THIS
+   * dispatch. Stamped by the route at the moment verification succeeded, never
+   * by a handler and never by the client.
+   *
+   * Handlers that hand a human gate onward — the FDA ESG transmit handler
+   * passes it to the submission gateway as `reauthVerifiedAt` — need the actual
+   * verification time, not "now". Synthesising it inside the handler would put
+   * a fabricated governance timestamp on an irreversible agency transmission,
+   * so those handlers fail closed when it is absent.
+   */
+  verifiedAt?: Date;
 }
 
 /** Does this command require a Part 11 sign-off (at least a reason-for-change)? */
@@ -171,6 +207,55 @@ export function buildSignatureRequiredResult(
       reasonRequired: true,
       signatureRequired,
       code: validation.code,
+      retry: { command, params: params ?? {} },
+    },
+  };
+}
+
+/**
+ * The result an agent gets when it asks for something only a person may do.
+ *
+ * Reuses the SAME envelope as buildSignatureRequiredResult — `openModal:'esign'`
+ * plus a `retry` payload — because the client already knows how to handle it:
+ * GovernedActionSignoff opens, collects the reason (and the signature for the
+ * e-sign tier), and re-submits through POST /api/ana-ri/governed-action, which
+ * is the one route that stamps humanConfirmed. Inventing a second
+ * propose-then-confirm channel would leave two flows to keep in step, and the
+ * one that drifted would be the one nobody was watching.
+ *
+ * The distinct `error` code is what lets the UI say the honest thing: this is
+ * not "you are missing a signature", it is "an assistant cannot take this
+ * action for you".
+ */
+export function buildHumanConfirmationRequiredResult(
+  command: string,
+  params?: Record<string, unknown>
+): {
+  success: false;
+  action: string;
+  error: string;
+  message: string;
+  openModal: 'esign';
+  data: {
+    reasonRequired: true;
+    signatureRequired: boolean;
+    proposedByAgent: true;
+    retry: { command: string; params: Record<string, unknown> };
+  };
+} {
+  return {
+    success: false,
+    action: command,
+    error: 'HUMAN_CONFIRMATION_REQUIRED',
+    message:
+      'This action changes the official record, so it has to be taken by a person rather ' +
+      'than on your behalf. Review it and confirm to continue — your reason for the change ' +
+      'is recorded with it.',
+    openModal: 'esign',
+    data: {
+      reasonRequired: true,
+      signatureRequired: requiresEsignature(command),
+      proposedByAgent: true,
       retry: { command, params: params ?? {} },
     },
   };

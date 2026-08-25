@@ -540,11 +540,11 @@ ALTER TABLE cortex.federated_learning_state ENABLE ROW LEVEL SECURITY;
 -- Learning experiences: org-isolated write, sanitized global read for distillation
 DROP POLICY IF EXISTS learning_exp_write ON cortex.learning_experiences;
 CREATE POLICY learning_exp_write ON cortex.learning_experiences
-    FOR INSERT WITH CHECK (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id));
+    FOR INSERT WITH CHECK (org_id = COALESCE(identity.current_org_id(), org_id));
 
 DROP POLICY IF EXISTS learning_exp_read ON cortex.learning_experiences;
 CREATE POLICY learning_exp_read ON cortex.learning_experiences
-    FOR SELECT USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id));
+    FOR SELECT USING (org_id = COALESCE(identity.current_org_id(), org_id));
 
 -- Distilled insights: global read (these are privacy-safe)
 DROP POLICY IF EXISTS insights_read ON cortex.distilled_insights;

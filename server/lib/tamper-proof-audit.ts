@@ -26,6 +26,35 @@
 import { Pool, PoolClient } from 'pg';
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
+import { isIP } from 'node:net';
+
+/**
+ * `audit.tamper_proof_log.ip_address` is INET, and callers routinely supply a
+ * SENTINEL STRING rather than an address:
+ *
+ *   server/routes/authoring.router.ts:520  `req.ip || req.connection?.remoteAddress || 'unknown'`
+ *   server/routes/authoring.router.ts:641  `ip: 'legacy-call'` (internal, non-HTTP call)
+ *
+ * Postgres rejects those with 22P02 `invalid input syntax for type inet`, and
+ * because every write here is best-effort behind a catch, the whole Part 11
+ * tamper-proof entry was discarded — silently — for any audit event that had no
+ * real client IP. The first sentinel is the general case: it fires whenever
+ * `req.ip` is absent, not just on the legacy path.
+ *
+ * NULL is the honest encoding of "this action had no client address", and INET
+ * accepts it. Anything that is not a real IP becomes NULL.
+ *
+ * Normalised ONCE, before the content hash is computed, and the same value is
+ * used for the hash and the column — otherwise the verifier (which rebuilds the
+ * hash from the stored row, ip_address included) would compare a hash over
+ * 'unknown' against a stored NULL and report tampering on a row nobody touched.
+ */
+export function normalizeInetOrNull(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  // X-Forwarded-For style lists arrive as "client, proxy1, proxy2".
+  const first = value.split(',')[0]!.trim();
+  return isIP(first) === 0 ? null : first;
+}
 
 // =============================================================================
 // Types
@@ -108,6 +137,23 @@ export interface VerificationResult {
 // Tamper-Proof Audit Log Service
 // =============================================================================
 
+/**
+ * Advisory-lock key serializing appends to the Part 11 hash chain.
+ *
+ * A fixed, arbitrary constant inside int64 range: any writer taking the same
+ * key serializes against the others, and it collides with no other advisory
+ * lock in the codebase. Transaction-scoped (pg_advisory_xact_lock), so it is
+ * released by COMMIT or ROLLBACK and a crashed writer cannot hold it.
+ *
+ * Held as a decimal STRING, not a BigInt, on purpose: node-postgres sends text
+ * parameters and PostgreSQL coerces to bigint from pg_advisory_xact_lock's
+ * signature — the exact form tests/db/part11-audit-store.dbtest.ts executes
+ * against a real server. A BigInt would lean on the driver's serialization of
+ * a type it has no dedicated handling for, which is a dependency this Part 11
+ * path does not need.
+ */
+const AUDIT_CHAIN_LOCK_KEY = '8213001100000001';
+
 export class TamperProofAuditLog {
   private pool: Pool;
   private readonly hmacSecret: string;
@@ -142,69 +188,59 @@ export class TamperProofAuditLog {
   }
 
   /**
-   * Initialize the audit log table with hash chain support
+   * Verify the tamper-proof store is present and usable. Does NOT create it.
+   *
+   * ── Why this stopped creating the table ──────────────────────────────────
+   * This method used to run CREATE SCHEMA / CREATE TABLE / CREATE TRIGGER on the
+   * request pool. On a correctly least-privileged deployment that can never
+   * succeed: the runtime connects as the non-superuser `app_service` role, and
+   * the `audit` schema is granted append-only (SELECT, INSERT — see
+   * SCHEMA_PRIVILEGE_OVERRIDES in scripts/db/provision-app-role.mjs) precisely
+   * so a compromised application process cannot rewrite the audit trail. DDL
+   * there is exactly what must be refused, and it was: `permission denied for
+   * schema audit`, which the caller logged "(non-fatal)" and swallowed, falling
+   * back to a console writer.
+   *
+   * The result, verified by booting the production build against a database
+   * provisioned by install-fresh + deploy-migrate: the table did not exist, the
+   * Part 11 store a QA unit audits first was silently absent, and the platform
+   * reported itself healthy. A control that reports success while doing nothing
+   * is worse than an absent one — so the table is now owned by
+   * db/migrations/20260813_audit_tamper_proof_log.sql (applied by the OWNER via
+   * deploy-migrate), and this method's only job is to say plainly whether it is
+   * there.
+   *
+   * @throws when the store is absent or unwritable, with the remedy named.
    */
   async initialize(): Promise<void> {
-    await this.pool.query(`
-      CREATE TABLE IF NOT EXISTS audit.tamper_proof_log (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        sequence_number BIGSERIAL UNIQUE NOT NULL,
-        event_type TEXT NOT NULL,
-        event_timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    const presence = await this.pool.query(
+      `SELECT to_regclass('audit.tamper_proof_log') IS NOT NULL AS present`,
+    );
 
-        -- Actor identification
-        user_id UUID,
-        user_name TEXT,
-        session_id UUID,
-        correlation_id TEXT,
-
-        -- Resource identification
-        resource_type TEXT,
-        resource_id TEXT,
-
-        -- Event details
-        action TEXT NOT NULL,
-        details JSONB NOT NULL DEFAULT '{}',
-
-        -- Hash chain (tamper detection)
-        previous_hash TEXT NOT NULL,
-        content_hash TEXT NOT NULL,
-        chain_hash TEXT NOT NULL,
-
-        -- Digital signature (optional, for high-security)
-        signature TEXT,
-
-        -- Client context
-        ip_address INET,
-        user_agent TEXT,
-
-        -- Immutability protection
-        CONSTRAINT prevent_updates CHECK (TRUE)
+    if (!presence.rows[0]?.present) {
+      throw new Error(
+        '[AuditLog] audit.tamper_proof_log does not exist. The 21 CFR Part 11 ' +
+          'tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql ' +
+          'and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the ' +
+          'database OWNER. The runtime role is deliberately append-only on the audit ' +
+          'schema and cannot create it. Run the deploy migration.',
       );
+    }
 
-      -- Index for efficient chain verification
-      CREATE INDEX IF NOT EXISTS idx_audit_sequence ON audit.tamper_proof_log(sequence_number);
-      CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit.tamper_proof_log(event_timestamp);
-      CREATE INDEX IF NOT EXISTS idx_audit_user ON audit.tamper_proof_log(user_id);
-      CREATE INDEX IF NOT EXISTS idx_audit_resource ON audit.tamper_proof_log(resource_type, resource_id);
-      CREATE INDEX IF NOT EXISTS idx_audit_correlation ON audit.tamper_proof_log(correlation_id);
-
-      -- Trigger to prevent updates/deletes
-      CREATE OR REPLACE FUNCTION audit.prevent_log_mutation()
-      RETURNS TRIGGER AS $$
-      BEGIN
-        RAISE EXCEPTION 'Audit log is immutable. Modifications are not allowed.';
-      END;
-      $$ LANGUAGE plpgsql;
-
-      DROP TRIGGER IF EXISTS trg_prevent_audit_mutation ON audit.tamper_proof_log;
-      CREATE TRIGGER trg_prevent_audit_mutation
-        BEFORE UPDATE OR DELETE ON audit.tamper_proof_log
-        FOR EACH ROW
-        EXECUTE FUNCTION audit.prevent_log_mutation();
-    `);
-
-    console.log('[AuditLog] Tamper-proof audit log table initialized');
+    // Presence is not usability: the role also needs INSERT. Checking it here
+    // means a misconfigured grant surfaces at startup with the remedy named,
+    // rather than as a failed audit write during a regulated action.
+    const writable = await this.pool.query(
+      `SELECT current_user AS role,
+              has_table_privilege(current_user, 'audit.tamper_proof_log', 'INSERT') AS can_insert`,
+    );
+    if (!writable.rows[0]?.can_insert) {
+      throw new Error(
+        `[AuditLog] role "${writable.rows[0]?.role}" cannot INSERT into ` +
+          'audit.tamper_proof_log. Re-run scripts/db/provision-app-role.mjs (or ' +
+          'deploy-migrate, which refreshes grants) to restore the append-only grant.',
+      );
+    }
   }
 
   /**
@@ -230,10 +266,32 @@ export class TamperProofAuditLog {
     try {
       await client.query('BEGIN');
 
+      // Serialize chain writes with a transaction-scoped advisory lock.
+      //
+      // This replaced `... ORDER BY sequence_number DESC LIMIT 1 FOR UPDATE`,
+      // which was wrong twice over:
+      //
+      //  1. It did not serialize anything on an EMPTY table. `FOR UPDATE` locks
+      //     the rows it returns, and on the first writes there are none — so two
+      //     concurrent writers both read zero rows, both chained onto GENESIS,
+      //     and the chain forked. Under RLS the same fork recurs per tenant,
+      //     while the daily sweep verifies globally.
+      //  2. Row locking requires the UPDATE privilege. The runtime role is
+      //     granted SELECT + INSERT only on the audit schema — deliberately, so
+      //     a compromised application process cannot rewrite the trail — so
+      //     every attributed write failed with "permission denied for table
+      //     tamper_proof_log" once the append-only grant was actually in force.
+      //     The boot security self-test surfaced exactly that.
+      //
+      // An advisory lock has neither problem: it is independent of whether any
+      // row exists, and it needs no table privilege. `pg_advisory_xact_lock`
+      // releases at COMMIT/ROLLBACK, so a failed write cannot strand it.
+      await client.query('SELECT pg_advisory_xact_lock($1)', [AUDIT_CHAIN_LOCK_KEY]);
+
       // Get the previous entry's chain hash (for hash chain)
       const prevResult = await client.query(
         `SELECT chain_hash, sequence_number FROM audit.tamper_proof_log
-         ORDER BY sequence_number DESC LIMIT 1 FOR UPDATE`
+         ORDER BY sequence_number DESC LIMIT 1`
       );
 
       const previousHash = prevResult.rows[0]?.chain_hash || this.GENESIS_HASH;
@@ -242,6 +300,9 @@ export class TamperProofAuditLog {
       // Create content hash (hash of the audit data)
       const entryId = uuidv4();
       const timestamp = new Date();
+      // Resolved once so the hashed value and the stored column can never
+      // disagree — see normalizeInetOrNull.
+      const ipAddress = normalizeInetOrNull(context?.ipAddress);
       const contentHash = this.computeHash(
         TamperProofAuditLog.stringifyForHash(
           TamperProofAuditLog.buildContentData({
@@ -255,7 +316,7 @@ export class TamperProofAuditLog {
             correlationId: context?.correlationId,
             resourceType: context?.resourceType,
             resourceId: context?.resourceId,
-            ipAddress: context?.ipAddress,
+            ipAddress,
             userAgent: context?.userAgent,
           }),
         ),
@@ -291,7 +352,7 @@ export class TamperProofAuditLog {
           contentHash,
           chainHash,
           signature,
-          context?.ipAddress,
+          ipAddress,
           context?.userAgent,
         ]
       );

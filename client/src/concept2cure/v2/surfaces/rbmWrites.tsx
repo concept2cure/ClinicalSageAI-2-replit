@@ -13,6 +13,7 @@
  *
  * @module concept2cure/v2/surfaces/rbmWrites
  */
+import { serverMessage } from '@/lib/queryClient';
 import React, { useCallback, useState } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
@@ -41,13 +42,9 @@ export async function rbmWrite<T>(
     | { data?: unknown; error?: unknown; meta?: unknown }
     | null;
   if (!res.ok) {
-    const raw = payload?.error;
-    const msg = typeof raw === 'string'
-      ? raw
-      : (raw && typeof raw === 'object' && typeof (raw as { message?: unknown }).message === 'string')
-        ? (raw as { message: string }).message
-        : null;
-    throw new Error(msg || `The change was not saved (HTTP ${res.status}).`);
+    // `serverMessage` decides whether a string is user copy: a bare `error`
+    // used to win here, so an RBM refusal rendered as its enum token.
+    throw new Error(serverMessage(payload) || `The change was not saved (HTTP ${res.status}).`);
   }
   return (payload?.data ?? payload) as T;
 }
@@ -63,9 +60,7 @@ export async function rbmWriteWithMeta<T>(
     | { data?: unknown; error?: unknown; meta?: unknown }
     | null;
   if (!res.ok) {
-    const raw = payload?.error;
-    const msg = typeof raw === 'string' ? raw : null;
-    throw new Error(msg || `The change was not saved (HTTP ${res.status}).`);
+    throw new Error(serverMessage(payload) || `The change was not saved (HTTP ${res.status}).`);
   }
   const meta = (payload?.meta && typeof payload.meta === 'object')
     ? payload.meta as Record<string, unknown>
@@ -77,7 +72,7 @@ export interface RbmMutation {
   /** True while a write is in flight — controls are disabled so a slow save
    *  can't be double-submitted. */
   busy: boolean;
-  /** The server's failure message, or null. Rendered by <RbmWriteError>. */
+  /** The server's failure message, or null. Rendered by <ErrorState>. */
   error: string | null;
   clearError: () => void;
   /** Last successful write's confirmation line, for surfaces that report what
@@ -120,19 +115,12 @@ export function useRbmMutation(onReload?: () => void): RbmMutation {
   return { busy, error, clearError: () => setError(null), note, run };
 }
 
-/** The honest failure banner: what the server said, and that nothing changed. */
-export function RbmWriteError({ error, onDismiss }: { error: string | null; onDismiss?: () => void }) {
-  if (!error) return null;
-  return (
-    <div className="rbm-run" data-tone="err" role="alert">
-      <div className="rbm-run-h">{I.shieldAlert}The change was not saved</div>
-      <div className="rbm-run-m">
-        {error}
-        {onDismiss ? <button className="rbm-linkbtn" onClick={onDismiss} style={{ marginLeft: 8 }}>Dismiss</button> : null}
-      </div>
-    </div>
-  );
-}
+/* `RbmWriteError` lived here and is DELETED, not deprecated. It was one of four
+   parallel error surfaces in this client; the shared <ErrorState> in
+   v2/dataConnect.tsx replaced it, and its nine call sites now render that
+   directly. It offered a dismiss but no retry, rendered whatever string it was
+   handed, and was styled from this feature's own stylesheet — so an RBM write
+   failure looked and behaved unlike every other failure in the product. */
 
 /** The confirmation line for a completed server-side run. */
 export function RbmWriteNote({ note }: { note: string | null }) {

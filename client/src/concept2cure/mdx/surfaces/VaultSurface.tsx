@@ -31,6 +31,8 @@ import {
 } from '../data/vault';
 import { useVault, useVaultVersions } from '../hooks/useVault';
 import { SampleDataBanner } from '../components/SampleDataBanner';
+import { useVaultUpload } from '../../v2/useVaultUpload';
+import { ErrorState } from '../../v2/dataConnect';
 import type { Program } from '../data/programs';
 import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
@@ -86,14 +88,40 @@ function fileToDoc(f: VaultFile): KitDocument {
 export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfaceProps) {
   const [folder, setFolder] = React.useState('root');
   const [selected, setSelected] = React.useState<string | null>(null);
+  const fileRef = React.useRef<HTMLInputElement>(null);
+  /* The shared ingest path, not a second copy of it — see ../../v2/useVaultUpload. */
+  const { uploading, note, clearNote, upload } = useVaultUpload(program?.id ?? null);
 
+  /* THE GATE, and why it is `useSampleRows` and not a truthiness check.
+   *
+   * This read was `const usingSample = !live.files || live.files.length === 0`,
+   * which is not a sample-mode gate at all — it is the `live ?? FIXTURE`
+   * pattern `../lib/useSampleRows` exists to eliminate, spelled differently.
+   * It fires on exactly the occasions a user cannot detect: an empty tenant, an
+   * expired token, a 500, a fetch that has not started.
+   *
+   * On this surface that mattered more than on most. `VAULT_FILES` carries
+   * `hash: 'a91e…4f02'` and `esig: true` on 14 rows; `fileToDoc` above turns
+   * `esig` into `esigState: 'signed'` plus a `signedBy` assembled from the
+   * fixture's author and date, and the detail pane renders `{sel.hash}` under
+   * the literal label SHA-256 — all of it beneath a page subtitle that reads
+   * "21 CFR Part 11 audit trail · SHA-256 chained". So a tenant with an empty
+   * vault, or one whose token had expired, was shown fourteen invented
+   * documents with invented content hashes and invented signatures, in the one
+   * surface whose entire claim is that those three things are real.
+   *
+   * `useSampleRows` returns the fixture only when the user has explicitly
+   * turned sample mode on — impossible in a production build — and otherwise
+   * returns the live rows or an honest empty. `SampleDataBanner` below still
+   * marks the sample case; the banner was never the missing piece. */
   const live = useVault(program?.id ?? null);
-  const usingSample = !live.files || live.files.length === 0;
-  const allFiles = usingSample ? VAULT_FILES : (live.files as VaultFile[]);
-  const folders = usingSample
-    ? vaultFoldersForFiles(VAULT_FILES)
-    : (live.folders ?? vaultFoldersForFiles(allFiles));
-  const kpis = usingSample ? vaultKpisForFiles(VAULT_FILES) : (live.kpis ?? vaultKpisForFiles(allFiles));
+  const liveFiles = live.files && live.files.length ? (live.files as VaultFile[]) : null;
+  const allFiles = useSampleRows<VaultFile>(liveFiles, VAULT_FILES);
+  const usingSample = liveFiles === null && allFiles.length > 0;
+  const folders = liveFiles
+    ? (live.folders ?? vaultFoldersForFiles(allFiles))
+    : vaultFoldersForFiles(allFiles);
+  const kpis = liveFiles ? (live.kpis ?? vaultKpisForFiles(allFiles)) : vaultKpisForFiles(allFiles);
 
   /* Selection validates at render — a folder id absent from the current
      data set (live ↔ sample flip, live program switch) reads as 'root'. */
@@ -103,11 +131,12 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
   const docs = filteredFiles.map(fileToDoc);
   const sel = allFiles.find(f => f.id === selected) || filteredFiles[0];
 
-  /* Live version history for the selected artifact; fixture fallback. The
-     provenance flag derives from the SAME value that picks the list. */
-  const liveVersionsQuery = useVaultVersions(!usingSample && sel ? sel.id : null);
+  /* Live version history for the selected artifact. Same boundary: the fixture
+     is reachable only through sample mode, and `VAULT_VERSIONS` is Part 11
+     version history — the record whose value is that nobody authored it. */
+  const liveVersionsQuery = useVaultVersions(liveFiles && sel ? sel.id : null);
   const liveVersions =
-    !usingSample && liveVersionsQuery.versions && liveVersionsQuery.versions.length
+    liveFiles && liveVersionsQuery.versions && liveVersionsQuery.versions.length
       ? liveVersionsQuery.versions
       : null;
   const versions: VaultVersion[] = useSampleRows(liveVersions, VAULT_VERSIONS);
@@ -135,18 +164,59 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
           >
             {I.download} Export manifest
           </button>
+          {/* A REAL upload.
+              This button used to call `onAskAna('Upload an artifact to the
+              vault. …')` — it opened a chat prompt describing an upload
+              instead of performing one, on the surface whose own subtitle two
+              lines above promises a SHA-256-chained Part 11 audit trail. There
+              was no file input anywhere in the MDX lane, so a device team could
+              not put a document into their vault at all. The bytes now go to
+              POST /api/vault/ingest, which hashes them, stores them and writes
+              the audit row. */}
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            accept=".pdf,.docx,.doc,.txt,.rtf,.xlsx,.xls,.csv,.md"
+            style={{ display: 'none' }}
+            onChange={async (e) => {
+              const picked = e.target.files;
+              e.target.value = '';
+              const outcome = await upload(picked);
+              /* Re-read from the server rather than splicing the row in
+                 locally: what the vault shows has to be what the server
+                 actually stored, hash and all. */
+              if (outcome.succeeded.length) live.refresh();
+            }}
+          />
           <button
             className="btn primary small"
-            onClick={() =>
-              onAskAna(
-                'Upload an artifact to the vault. Confirm program, section, document type, version, and e-signature requirement, then file it with hash + audit entry.',
-              )
+            disabled={uploading || !program?.id}
+            title={
+              program?.id
+                ? 'File a document into this program’s vault'
+                : 'Uploading is available once a program is open'
             }
+            onClick={() => fileRef.current?.click()}
           >
-            {I.upload} Upload
+            {I.upload} {uploading ? 'Uploading…' : 'Upload'}
           </button>
         </div>
       </div>
+
+      {/* The outcome of the last upload, success or refusal, in the caller's
+          own words. A failed governed write is never silent. */}
+      {note &&
+        (note.tone === 'error' ? (
+          <ErrorState
+            variant="inline"
+            title="Some documents were not filed"
+            message={note.text}
+            onDismiss={clearNote}
+          />
+        ) : (
+          <div className="banner-ok" role="status">{note.text}</div>
+        ))}
 
       <SampleDataBanner show={usingSample} loading={live.loading} label="vault artifacts" />
 

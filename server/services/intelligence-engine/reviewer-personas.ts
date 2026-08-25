@@ -13,6 +13,7 @@
  * (21 CFR, FDA guidance titles, MDR/IVDR articles, ICH, ISO standards).
  */
 
+import { isIvdFamily } from '../../../shared/constants/domain/product-types.js';
 import type {
   ReviewerPersonaCode,
   ReviewerQuestion,
@@ -355,7 +356,8 @@ const ivdrPerformanceEvaluator: ReviewerPersona = {
   code: 'ivdr_performance_evaluator',
   name: 'IVDR Performance Evaluator',
   scope: 'Analytical, clinical, and scientific validity for IVDs',
-  appliesTo: p => p.isIvd === true || p.productType === 'ivd',
+  // `cdx` too: a companion diagnostic is an IVD and gets the IVDR reviewer.
+  appliesTo: p => p.isIvd === true || isIvdFamily(p.productType),
   rules: () => [
     q(
       'ivdr_performance_evaluator',

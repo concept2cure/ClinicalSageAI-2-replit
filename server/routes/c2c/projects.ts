@@ -27,6 +27,11 @@ import {
   scaffoldProjectDocuments,
   type ScaffoldResult,
 } from '../../services/c2c/scaffold-project-documents.js';
+import { createSubmissionTx } from '../../services/submission-service/submission-service.js';
+import {
+  ensureProgramProjectAnchor,
+  type AnchorResult,
+} from '../../services/c2c/program-project-anchor.js';
 import {
   canCreateProgram,
   canMutateProgram,
@@ -43,8 +48,89 @@ import {
   type VaultViewId,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, completeStatusSqlList } from '../../services/c2c/section-content.js';
+import {
+  listProductTypes,
+  productTypeForFilingType,
+  DEVICE_FAMILY_PRODUCT_TYPES,
+  workstreamSqlCase,
+} from '../../../shared/constants/domain/product-types.js';
+import {
+  devicePathFor,
+  normalizeDeviceClassification,
+  usesDeviceClassification,
+} from '../../../shared/constants/domain/device-classification.js';
+/* Every 5xx on this router goes through the canonical helper. Its job here is
+   the one the MDX UAT (item A1) proved was missing: it logs the failure keyed
+   by the SAME `X-Request-Id` the user is shown as "Reference <id>", and echoes
+   that id back in the body. Before this, the catch ran `console.error` with no
+   correlation id at all, so the three reference ids the UAT captured for the
+   create failure could not be looked up in the logs — the reference the UI
+   invited the user to quote pointed at nothing. */
+import { serverError } from '../../lib/api-response.js';
 
 const router = Router();
+
+/**
+ * A 42P01 (undefined_table) as an actionable 503 — actionable for the OPERATOR,
+ * opaque to the client.
+ *
+ * ── Two failed attempts precede this one ─────────────────────────────────────
+ * Every PENDING_STORE site in this file first answered `{ error: 'PENDING_STORE' }`
+ * and nothing else: a correct status and an unactionable outage, because the
+ * caller learned that a store was missing but not which one. `POST /` alone
+ * touches the quota tables, the program row, the submission spine and the
+ * PM-spine anchor, so "some store is missing" narrows it to four candidates.
+ *
+ * The correction put the relation name into the client-facing `message`, on the
+ * reasoning that naming a schema object to an authenticated operator is not a
+ * disclosure. That reasoning is wrong about who receives it. The response is
+ * rendered by the browser, to whoever is holding the session — and in a
+ * regulated product the schema shape of the governed store is exactly the kind
+ * of internal that must not appear on a screen. It is an information-disclosure
+ * finding, not a cosmetic one.
+ *
+ * ── What this does instead ───────────────────────────────────────────────────
+ * The relation and the step go to the LOG, keyed by the request id the
+ * `requestId` middleware already sets and echoes as `X-Request-Id`
+ * (server/middleware/enterprise-security.ts). The client gets a sentence, the
+ * machine-readable code, and that same id. The operator question — "which store
+ * do I provision?" — is answered by one log lookup on an id the user can read
+ * off the screen and quote, so nothing is lost except the disclosure.
+ */
+function pendingStore(
+  err: unknown,
+  step: string,
+  req: Request,
+): { error: string; step: string; message: string; correlationId: string } {
+  const raw = (err as { message?: string })?.message ?? '';
+  const match = /relation "([^"]+)" does not exist/i.exec(raw);
+  const store = match ? match[1] : null;
+  const correlationId = (req as unknown as { requestId?: string }).requestId || randomUUID();
+
+  logger.error('Store not provisioned — request failed closed', {
+    correlationId,
+    step,
+    store,
+    code: (err as { code?: string })?.code ?? null,
+    route: req.originalUrl,
+  });
+
+  return {
+    error: 'PENDING_STORE',
+    step,
+    // "failed" rather than "cannot complete": `step` is sometimes a gerund
+    // phrase ("creating the project") and sometimes a noun phrase ("the
+    // licensed-program quota check"), and only "failed" reads naturally after
+    // both. And NOT "contact your administrator" — this fires on an unapplied
+    // migration, which no in-product admin role can act on; naming the wrong
+    // actor sends the user on a second hop that also dead-ends.
+    message:
+      `This environment is not fully set up, so ${step} failed. ` +
+      'Share the reference below with your system administrator or Concept2Cure support.',
+    correlationId,
+  };
+}
+
 const logger = createScopedLogger('c2c-projects');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -218,12 +304,7 @@ function allowProgramMutation(
  *  Case-insensitive: the store holds mixed casing ('510K', 'BLA', 'nda'), so
  *  match on lower() — otherwise every real row falls through to the ELSE branch
  *  and none bucket into MDX / Biotech / Pharma (the surface's filter tabs). */
-const WS_CASE = `CASE
-         WHEN lower(p.program_type) IN ('510k','de_novo','pma','ivd','device','cer','ide') THEN 'MDX'
-         WHEN lower(p.program_type) IN ('ind','bla','biologic') THEN 'Biotech'
-         WHEN lower(p.program_type) IN ('nda','maa','jnda','anda') THEN 'Pharma'
-         ELSE initcap(replace(p.program_type, '_', ' '))
-       END`;
+const WS_CASE = workstreamSqlCase('p.program_type');
 
 /** Canonical program / product types accepted by the create endpoint. Program
  *  types line up with WS_CASE above; product types match the store's CHECK-free
@@ -241,14 +322,121 @@ const VALID_PROGRAM_TYPES = new Set([
   // land on. Backed by real packs as of migrations/20260810b.
   'mdr', 'ivdr',
 ]);
-const VALID_PRODUCT_TYPES = new Set(['drug', 'biologic', 'device', 'ivd']);
+const VALID_PRODUCT_TYPES = new Set<string>(listProductTypes());
 
-/** Derive a product_type when the client omits it, from the program_type. */
-function productTypeForProgram(programType: string): string {
-  if (['510k', 'de_novo', 'pma', 'device', 'cer', 'ide'].includes(programType)) return 'device';
-  if (programType === 'ivd') return 'ivd';
-  if (['ind', 'bla', 'biologic'].includes(programType)) return 'biologic';
-  return 'drug';
+/**
+ * Program types whose intake must also create the canonical `submissions` row —
+ * the spine every canonical-core surface reads (IndLifecycle checklist,
+ * NdaCockpit, SubmissionCenter sequences, DispatchReadiness). Value = the
+ * canonical submissions.application_type. Only concrete drug/biologic
+ * APPLICATION types map; 'biologic' is a product class with no named
+ * application, and inventing one ('bla'?) would fabricate a filing identity the
+ * customer never declared, so it is deliberately absent. Device/IVD program
+ * types (510k/pma/mdr/…) run on their own pathway stores, not this spine.
+ */
+const DRUG_APPLICATION_TYPES: Record<string, string> = {
+  ind: 'ind',
+  cta: 'cta',
+  nda: 'nda',
+  bla: 'bla',
+  maa: 'maa',
+  jnda: 'jnda',
+  anda: 'anda',
+};
+
+/** productType (validated: drug|biologic|device|ivd) → canonical clientType. */
+const CLIENT_TYPE_BY_PRODUCT: Record<string, string> = {
+  drug: 'pharma',
+  biologic: 'biotech',
+  device: 'mdx',
+  ivd: 'ivd',
+};
+
+/** Wizard agency values → canonical submissions.primary_region. */
+const AGENCY_TO_REGION: Record<string, string> = {
+  FDA: 'fda',
+  EMA: 'eu',
+  PMDA: 'jp',
+  MHRA: 'uk',
+  HEALTH_CANADA: 'ca',
+  TGA: 'au',
+  NMPA: 'cn',
+  SWISSMEDIC: 'ch',
+  ANVISA: 'br',
+  CDSCO: 'in',
+  MFDS: 'kr',
+  HSA: 'sg',
+};
+
+/** Region each application type files in when the agency doesn't say. Total
+ *  over DRUG_APPLICATION_TYPES, so a region always resolves deterministically. */
+const REGION_BY_APPLICATION: Record<string, string> = {
+  ind: 'fda',
+  nda: 'fda',
+  bla: 'fda',
+  anda: 'fda',
+  cta: 'eu', // CTR 536/2014 — the cta rule pack is cta:ema
+  maa: 'eu',
+  jnda: 'jp',
+};
+
+/**
+ * Ensure the canonical submission spine for a drug-program intake, INSIDE the
+ * caller's transaction.
+ *
+ * Idempotent by the SAME identity convention the ind-checklist-view-assembler
+ * uses to match program ↔ submission (product_name / title, case-insensitive,
+ * per application type): when a matching submission already exists in the org
+ * it is linked rather than duplicated, so re-creating a program for the same
+ * product never forks a second spine. When none exists, the row is created via
+ * the canonical submission-service insert on this client — commit and rollback
+ * are atomic with the program.
+ *
+ * Fail-closed: any error propagates so the whole transaction rolls back — a
+ * drug program without its submission spine is exactly the permanently-empty
+ * canonical core this exists to end.
+ */
+async function ensureSubmissionSpine(params: {
+  client: PoolClient;
+  orgId: number;
+  userId: number;
+  /** Program name → submissions.title (assembler identity key). */
+  name: string;
+  /** Program product_name → submissions.product_name (assembler identity key). */
+  productName: string;
+  applicationType: string;
+  productType: string;
+  primaryAgency: string;
+}): Promise<{ id: number; created: boolean }> {
+  const { client, orgId, userId, name, productName, applicationType } = params;
+  const identityKeys = [...new Set([productName, name].map((v) => v.trim().toLowerCase()).filter(Boolean))];
+  const existing = await client.query(
+    `SELECT id FROM submissions
+      WHERE organization_id = $1 AND deleted_at IS NULL
+        AND lower(application_type) = $2
+        AND (lower(coalesce(product_name, '')) = ANY($3) OR lower(title) = ANY($3))
+      ORDER BY updated_at DESC NULLS LAST, id DESC
+      LIMIT 1`,
+    [orgId, applicationType, identityKeys],
+  );
+  if (existing.rows.length > 0) {
+    return { id: Number((existing.rows[0] as { id: number | string }).id), created: false };
+  }
+  const region =
+    AGENCY_TO_REGION[params.primaryAgency.toUpperCase().replace(/\s+/g, '_')] ??
+    REGION_BY_APPLICATION[applicationType];
+  const row = await createSubmissionTx(
+    client,
+    {
+      title: name,
+      productName,
+      applicationType,
+      clientType: CLIENT_TYPE_BY_PRODUCT[params.productType],
+      primaryRegion: region,
+    },
+    { organizationId: orgId, userId },
+  );
+  return { id: Number(row.id), created: true };
 }
 
 /** A tester-friendly, org-unique program code derived from the product/name. */
@@ -337,8 +525,7 @@ router.get('/', async (req: Request, res: Response) => {
         meta: { count: 0, limit, offset, hasMore: false, pendingStore: true },
       });
     }
-    console.error('[c2c/projects] GET /', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'listing the projects', err);
   }
 });
 
@@ -348,6 +535,15 @@ router.get('/', async (req: Request, res: Response) => {
 // `regulatory_programs` — the SAME table the portfolio list reads — so a
 // tester's new project appears live immediately and survives reload, instead of
 // the old client-only `window.C2C_PROJECT` stub that vanished on refresh.
+// Drug program types (DRUG_APPLICATION_TYPES) additionally create/link the
+// canonical `submissions` row in the same transaction — the spine the
+// IndLifecycle checklist, NdaCockpit, SubmissionCenter and DispatchReadiness
+// surfaces read. Every program type additionally ensures a PM-spine `projects`
+// row carrying `regulatory_program_id` (Document Identity Contract slice C1),
+// which is what lets governed exports be registry-placed and the Vault be
+// filtered by program — WHERE the workspace is unambiguous; see
+// services/c2c/program-project-anchor.ts for why a skip is the honest outcome
+// otherwise, and meta.projectAnchorSkipped for how a skip is surfaced.
 //
 // Body (from the wizard): { name, productName?, programType, productType?,
 // primaryAgency?, submissionTypeId?, indication?, targetSubmissionDate?,
@@ -389,10 +585,34 @@ router.post('/', async (req: Request, res: Response) => {
   if (!VALID_PROGRAM_TYPES.has(programType)) {
     return send400(res, `programType must be one of: ${[...VALID_PROGRAM_TYPES].join(', ')}`);
   }
+  // The product class. Derived from the FILING TYPE when the client omits it —
+  // a 510(k) is a device submission, an EU IVDR technical file is about an IVD,
+  // and neither can be about a drug. The old derivation ended in a bare
+  // `return 'drug'`, so `mdr` and `ivdr` — absent from every branch — persisted
+  // EU device and IVD technical files as drug programmes.
   let productType = str(body.productType).toLowerCase();
-  if (!productType) productType = productTypeForProgram(programType);
+  if (!productType) productType = productTypeForFilingType(programType) ?? '';
   if (!VALID_PRODUCT_TYPES.has(productType)) {
     return send400(res, `productType must be one of: ${[...VALID_PRODUCT_TYPES].join(', ')}`);
+  }
+
+  // A device or IVD filing may not be recorded as a medicinal product, whatever
+  // the client sent. This is the defect the MDX UAT found — the wizard derived
+  // the product class from the UI segment, so a 510(k) started while the
+  // Pharma & Biotech tab was open was submitted as `productType: 'biologic'`
+  // and the server accepted it over its own correct derivation. The filing type
+  // is a regulatory fact; the client does not get to contradict it.
+  const impliedClass = productTypeForFilingType(programType);
+  if (
+    impliedClass &&
+    DEVICE_FAMILY_PRODUCT_TYPES.includes(impliedClass) &&
+    !DEVICE_FAMILY_PRODUCT_TYPES.includes(productType as never)
+  ) {
+    return send400(
+      res,
+      `A ${programType} filing is a device submission and cannot be recorded as ` +
+        `"${productType}". Use one of: ${DEVICE_FAMILY_PRODUCT_TYPES.join(', ')}.`,
+    );
   }
 
   // Licensed program count. The org's `max_projects` entitlement was sold and
@@ -416,7 +636,7 @@ router.post('/', async (req: Request, res: Response) => {
     // documented PENDING_STORE contract rather than reporting a missing table
     // as a billing refusal.
     if ((e as { code?: string })?.code === '42P01') {
-      return res.status(503).json({ error: 'PENDING_STORE' });
+      return res.status(503).json(pendingStore(e, 'the licensed-program quota check', req));
     }
     throw e;
   }
@@ -436,11 +656,35 @@ router.post('/', async (req: Request, res: Response) => {
     );
   }
 
+  /* The device taxonomy a 510(k) turns on. regulatory_programs already had
+     columns for most of it and nothing wrote them, so a device programme was
+     created with an oncology therapeutic area and no product code. Validated
+     rather than trusted: an unparseable value is dropped and named, never
+     coerced into something that reads as data. */
+  const deviceCls = normalizeDeviceClassification((req.body ?? {}).deviceClassification);
+  if (deviceCls.rejected.length && !usesDeviceClassification(productType)) {
+    // A pharma filing sent device fields — ignore them rather than 400.
+    deviceCls.rejected.length = 0;
+  }
+  if (deviceCls.rejected.length) {
+    return res.status(400).json({
+      error: 'INVALID_DEVICE_CLASSIFICATION',
+      message: deviceCls.rejected.join('; '),
+    });
+  }
+  const dc = deviceCls.value;
+
   const targetAgencies = JSON.stringify([primaryAgency]);
   const metadata = JSON.stringify({
     createdVia: 'v2-new-project-wizard',
     ...(submissionTypeId ? { submissionTypeId } : {}),
     ...(teamMembers.length ? { teamMemberNames: teamMembers } : {}),
+    /* Review panel and the device flags have no column of their own. The flags
+       are load-bearing — each one adds a statutory section, so they drive the
+       required-content model rather than describing the product. */
+    ...(dc.reviewPanel ? { reviewPanel: dc.reviewPanel } : {}),
+    ...(dc.regulationNumber ? { regulationNumber: dc.regulationNumber } : {}),
+    ...(dc.flags?.length ? { deviceFlags: dc.flags } : {}),
   });
   const createdBy = userId != null ? String(userId) : 'system';
 
@@ -457,14 +701,24 @@ router.post('/', async (req: Request, res: Response) => {
          (organization_id, name, code, program_type, product_type, primary_agency,
           target_agencies, product_name, indication, status, phase, priority,
           target_submission_date, progress_percent, lead_user_id, team_members,
-          metadata, created_by, updated_by)
+          metadata, created_by, updated_by,
+          device_class, regulatory_path, product_code, intended_use, predicate_devices)
        VALUES ($1, $2, $3, $4, $5, $6, $7::json, $8, $9, 'active', 'planning', $10,
-               $11::timestamp, 0, $12, $13::json, $14::json, $15, $15)
+               $11::timestamp, 0, $12, $13::json, $14::json, $15, $15,
+               $16, $17, $18, $19, $20::json)
        RETURNING id`,
       [
         orgId, name, code, programType, productType, primaryAgency,
         targetAgencies, productName, indication, priority,
         targetSubmissionDate, userId, JSON.stringify(teamMembers), metadata, createdBy,
+        dc.deviceClass ?? null,
+        /* The US premarket route, derived from the filing type the user picked
+           — not asked for twice. FILING_TYPE_PRODUCT_CLASS already knows a
+           510(k) from a De Novo. */
+        devicePathFor(programType),
+        dc.productCode ?? null,
+        dc.intendedUse ?? null,
+        JSON.stringify(dc.predicateK ? [{ kNumber: dc.predicateK }] : []),
       ],
     );
 
@@ -474,6 +728,11 @@ router.post('/', async (req: Request, res: Response) => {
   // audit row below records what was written, not what was first attempted.
   let createdCode = base;
   let scaffold: ScaffoldResult = { documentId: null, sectionCount: 0 };
+  // Canonical application type for drug programs; null for device/CER/MDR
+  // program types, which create no submission spine.
+  const applicationType = DRUG_APPLICATION_TYPES[programType] ?? null;
+  let submissionSpine: { id: number; created: boolean } | null = null;
+  let projectAnchor: AnchorResult = { projectId: null, created: false };
   try {
     try {
       await client.query('BEGIN');
@@ -505,6 +764,40 @@ router.post('/', async (req: Request, res: Response) => {
         programType, primaryAgency, productName,
       });
 
+      // Canonical submission spine, SAME transaction. Intake wrote
+      // regulatory_programs + the document scaffold but never a `submissions`
+      // row, so every canonical-core surface (IndLifecycle checklist,
+      // NdaCockpit, SubmissionCenter, DispatchReadiness) stayed permanently
+      // empty for self-serve drug programs. Drug application types only;
+      // device/CER/MDR programs run on their own pathway stores. Title and
+      // product_name are set from the program's name/product_name so the
+      // ind-checklist-view-assembler's identity match (program ↔ submission by
+      // product_name/title) holds by construction. A failure here rolls the
+      // whole creation back — no program without its spine.
+      if (applicationType) {
+        submissionSpine = await ensureSubmissionSpine({
+          client, orgId, userId, name, productName, applicationType, productType, primaryAgency,
+        });
+      }
+
+      // PM-spine anchor, SAME transaction (Document Identity Contract, slice
+      // C1). `concept2cure_artifacts.project_id` is an integer FK to
+      // `projects.id`, so without a projects row carrying this program's uuid
+      // the governed artifact registry has nowhere to put a 510(k)/CER export
+      // and the Vault cannot be filtered by program at all. Mirrors
+      // ensureSubmissionSpine exactly: caller-owned transaction, idempotent,
+      // and any error propagates so the whole creation rolls back — never a
+      // program with a half-written anchor.
+      //
+      // A SKIP is not an error. `projects.client_workspace_id` is NOT NULL and
+      // nothing in program data names a workspace, so the anchor is created
+      // only where the org has exactly one (the unambiguous case). Otherwise
+      // the program is created without it and the reason is reported — in the
+      // 201 body and in the sealed audit payload below.
+      projectAnchor = await ensureProgramProjectAnchor({
+        client, orgId, userId, programId: newId, name, code: createdCode, priority,
+      });
+
       // Domain audit row for the creation, in the SAME transaction as the
       // insert: a created program that left no audit trace is not a record a
       // regulated tenant can defend, and rolling back the program is the only
@@ -525,6 +818,29 @@ router.post('/', async (req: Request, res: Response) => {
         product_type: productType,
         primary_agency: primaryAgency,
         created_via: 'v2-new-project-wizard',
+        // The audit row covers EVERY creation this transaction performed: the
+        // linked canonical submission is part of the record, whether newly
+        // created here or matched to an existing spine by identity.
+        ...(submissionSpine
+          ? {
+              submission_id: submissionSpine.id,
+              submission_created: submissionSpine.created,
+              submission_application_type: applicationType,
+            }
+          : {}),
+        // The PM-spine anchor, present or absent, is part of the record. An
+        // absent one is recorded WITH its reason: a regulated tenant asking
+        // later why this program's exports were never registry-placed gets the
+        // answer from the audit row rather than from a support ticket.
+        ...(projectAnchor.projectId !== null
+          ? {
+              project_anchor_id: projectAnchor.projectId,
+              project_anchor_created: projectAnchor.created,
+            }
+          : {
+              project_anchor_id: null,
+              project_anchor_skipped: projectAnchor.skipped ?? null,
+            }),
       };
       const payloadHash = hashPayload(auditDetails);
       const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client, {
@@ -581,14 +897,28 @@ router.post('/', async (req: Request, res: Response) => {
         documentId: scaffold.documentId,
         scaffoldedSections: scaffold.sectionCount,
         ...(scaffold.skipped ? { scaffoldSkipped: scaffold.skipped, scaffoldDetail: scaffold.detail } : {}),
+        // Surfaced so the spine linkage is never silent: present for drug
+        // programs (submissionCreated=false means an existing spine was
+        // matched by identity), absent for device/CER/MDR program types.
+        ...(submissionSpine
+          ? { submissionId: submissionSpine.id, submissionCreated: submissionSpine.created }
+          : {}),
+        // Never silent, same idiom as the scaffold skip above: either the
+        // anchor id, or the reason there is none.
+        ...(projectAnchor.projectId !== null
+          ? { projectAnchorId: projectAnchor.projectId, projectAnchorCreated: projectAnchor.created }
+          : {
+              projectAnchorId: null,
+              projectAnchorSkipped: projectAnchor.skipped,
+              projectAnchorDetail: projectAnchor.detail,
+            }),
       },
     });
   } catch (err: unknown) {
     if ((err as { code?: string })?.code === '42P01') {
-      return res.status(503).json({ error: 'PENDING_STORE' });
+      return res.status(503).json(pendingStore(err, 'creating the project', req));
     }
-    console.error('[c2c/projects] POST /', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'creating the project', err);
   }
 });
 
@@ -623,8 +953,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     if (rows.length === 0) return send404(res);
     return res.json(rows[0]);
   } catch (err: unknown) {
-    console.error('[c2c/projects] GET /:id', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the project', err, { programId: String(req.params.id) });
   }
 });
 
@@ -673,8 +1002,7 @@ router.get('/:id/workstreams', async (req: Request, res: Response) => {
 
     return res.json({ workstreams: rows });
   } catch (err: unknown) {
-    console.error('[c2c/projects] GET /:id/workstreams', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the workstreams', err, { programId: String(req.params.id) });
   }
 });
 
@@ -712,8 +1040,7 @@ router.get('/:id/drafts', async (req: Request, res: Response) => {
 
     return res.json({ drafts: rows });
   } catch (err: unknown) {
-    console.error('[c2c/projects] GET /:id/drafts', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the recent drafts', err, { programId: String(req.params.id) });
   }
 });
 
@@ -791,12 +1118,7 @@ router.get('/:id/team', async (req: Request, res: Response) => {
     if ((err as { code?: string })?.code === '42P01') {
       return res.json({ team: [] });
     }
-    logger.error('GET /:id/team failed', {
-      programId: String(req.params.id),
-      error: err instanceof Error ? err.message : String(err),
-      code: (err as { code?: string })?.code ?? null,
-    });
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the project team', err, { programId: String(req.params.id) });
   }
 });
 
@@ -829,14 +1151,9 @@ router.get('/:id/evidence', async (req: Request, res: Response) => {
     // cannot distinguish "no pinned evidence" from "the query failed".
     if ((err as { code?: string })?.code === '42P01') {
       // c2c_project_pinned_evidence may not exist in all environments yet.
-      return res.status(503).json({ error: 'PENDING_STORE' });
+      return res.status(503).json(pendingStore(err, 'reading pinned evidence', req));
     }
-    logger.error('GET /:id/evidence failed', {
-      programId: String(req.params.id),
-      error: err instanceof Error ? err.message : String(err),
-      code: (err as { code?: string })?.code ?? null,
-    });
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the pinned evidence', err, { programId: String(req.params.id) });
   }
 });
 
@@ -883,8 +1200,7 @@ router.post('/:id/evidence', async (req: Request, res: Response) => {
 
     return res.status(201).json(rows[0] ?? { message: 'already pinned' });
   } catch (err: unknown) {
-    console.error('[c2c/projects] POST /:id/evidence', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'pinning the evidence', err, { programId: String(req.params.id) });
   }
 });
 
@@ -910,8 +1226,7 @@ router.delete('/:id/evidence/:evId', async (req: Request, res: Response) => {
     if (del.rows.length === 0) return send404(res);
     return res.status(204).send();
   } catch (err: unknown) {
-    console.error('[c2c/projects] DELETE /:id/evidence/:evId', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'unpinning the evidence', err, { programId: String(req.params.id) });
   }
 });
 
@@ -955,14 +1270,9 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
     // The activity feed is an audit-log read; a caught failure must not render
     // as an empty feed (indistinguishable from a project with no activity).
     if ((err as { code?: string })?.code === '42P01') {
-      return res.status(503).json({ error: 'PENDING_STORE' });
+      return res.status(503).json(pendingStore(err, 'reading the activity feed', req));
     }
-    logger.error('GET /:id/activity failed', {
-      programId: String(req.params.id),
-      error: err instanceof Error ? err.message : String(err),
-      code: (err as { code?: string })?.code ?? null,
-    });
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the project activity', err, { programId: String(req.params.id) });
   }
 });
 
@@ -1089,8 +1399,7 @@ router.get('/:id/vault-structure', async (req: Request, res: Response) => {
       documents,
     });
   } catch (err: unknown) {
-    console.error('[c2c/projects] GET /:id/vault-structure', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the Vault structure', err, { programId: String(req.params.id) });
   }
 });
 
@@ -1176,8 +1485,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
       unscoped: unscoped.map(shape),
     });
   } catch (err: unknown) {
-    console.error('[c2c/projects] GET /:id/sources', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the sources', err, { programId: String(req.params.id) });
   }
 });
 
@@ -1215,8 +1523,7 @@ router.get('/:id/source-changes', async (req: Request, res: Response) => {
 
     return res.json({ projectId: String(req.params.id), changes, count: changes.length });
   } catch (err: unknown) {
-    console.error('[c2c/projects] GET /:id/source-changes', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the source changes', err, { programId: String(req.params.id) });
   }
 });
 

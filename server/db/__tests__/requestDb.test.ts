@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 
-import { MissingRequestDbContextError, requestDb } from '../requestDb';
+import { MissingRequestDbContextError, requestDb, requestPgClient } from '../requestDb';
 
 function fakeReq(dbClient?: unknown): any {
   return { dbClient };
@@ -41,5 +41,18 @@ describe('requestDb', () => {
     const b = requestDb(req);
     expect(a).toBe(b);
     expect((req as any).__requestDb).toBe(a);
+  });
+});
+
+describe('requestPgClient (raw-SQL sibling for tables without a Drizzle schema)', () => {
+  it('hands back the request-scoped client itself', () => {
+    const fakeClient = { query: vi.fn(() => Promise.resolve({ rows: [] })) };
+    const req = fakeReq(fakeClient);
+    expect(requestPgClient(req)).toBe(fakeClient);
+  });
+
+  it('fails closed with the same typed error when context is missing', () => {
+    expect(() => requestPgClient(fakeReq(undefined))).toThrow(MissingRequestDbContextError);
+    expect(() => requestPgClient(fakeReq({}))).toThrow(MissingRequestDbContextError);
   });
 });

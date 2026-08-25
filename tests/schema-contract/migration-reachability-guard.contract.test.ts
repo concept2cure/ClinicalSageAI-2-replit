@@ -27,7 +27,21 @@
  * parsing cannot regress without a red test.
  */
 import { describe, it, expect } from 'vitest';
-import { tablesIn, qualify, NOT_A_RELATION, sqlishSegments } from '../../scripts/ci/check-migration-reachability.mjs';
+import {
+  tablesIn,
+  qualify,
+  NOT_A_RELATION,
+  sqlishSegments,
+  REF_RE,
+} from '../../scripts/ci/check-migration-reachability.mjs';
+
+/** Every relation name REF_RE finds in one SQL segment, qualified as the guard does. */
+function refsIn(sql: string): string[] {
+  REF_RE.lastIndex = 0;
+  return [...sql.matchAll(REF_RE)]
+    .filter((m) => !NOT_A_RELATION.has((m[2] || '').toLowerCase()))
+    .map((m) => qualify(m[1], m[2]));
+}
 
 describe('C-35: table identity is schema-aware', () => {
   it('normalizes public and unqualified names to the same identity', () => {
@@ -115,6 +129,32 @@ describe('C-39: the reference scan reads SQL, not English', () => {
     for (const t of ['authoring_documents', 'templates', 'doc_checklist', 'cer_jobs']) {
       expect(joined, `lost the query referencing ${t}`).toContain(t);
     }
+  });
+});
+
+describe('a qualified name whose object half is composed at runtime', () => {
+  // `FROM regulatory_intel.${table}` in services/precedent-engine.ts. The
+  // schema-qualified branch cannot match `${…}`, so the engine used to fall back
+  // to the unqualified branch and capture the SCHEMA — `regulatory_intel` — as
+  // though it were a table. It resolved against no relation on the live
+  // provisioned database and failed the blank-db job as a NEW absence: a
+  // phantom named after its schema, which is exactly what C-35 fixed for the
+  // static case, arriving again through the dynamic-name door.
+  it('is skipped, not reported as a table named after its schema', () => {
+    const sql = 'SELECT * FROM regulatory_intel.${table} WHERE organization_id = ANY($1)';
+    expect(refsIn(sql)).toEqual([]);
+  });
+
+  it('does not settle for a shorter name to satisfy the rejection', () => {
+    // The first fix rejected the match and the engine answered by backtracking
+    // to `regulatory_inte` — one character short, still a phantom, still red.
+    expect(refsIn('SELECT * FROM regulatory_intel.${table}').join(',')).not.toMatch(/regulatory_int/);
+  });
+
+  it('still reads the same schema when the object half is written out', () => {
+    expect(refsIn('SELECT * FROM regulatory_intel.crl_trigger_patterns WHERE id = $1')).toEqual([
+      'regulatory_intel.crl_trigger_patterns',
+    ]);
   });
 });
 

@@ -49,8 +49,17 @@ export interface RealTimeStabilityResult {
   interceptValue: number;
   /** Percent change per unit time relative to the initial value. */
   percentChangePerUnitTime: number;
-  /** Time at which the value first reaches the spec limit (the shelf-life claim). */
-  shelfLife: number;
+  /**
+   * Time at which the value first reaches the spec limit (the shelf-life claim),
+   * or null when the fitted slope is zero and the limit is therefore never
+   * reached. Null, not Infinity: `JSON.stringify(Infinity)` is `null` regardless,
+   * so returning Infinity puts the same wire value there while asserting a type
+   * that is not true — and a stability claim of `null` beside `success: true`
+   * reads as a failed computation rather than "no measurable degradation".
+   * The caller distinguishes the two from `slopePerUnitTime`, which is zero
+   * exactly when this is null.
+   */
+  shelfLife: number | null;
   /** Whether the product remained within spec across the observed window. */
   withinSpecAcrossWindow: boolean;
   method: 'CLSI EP25 real-time stability (linear degradation)';
@@ -80,7 +89,7 @@ export function assessRealTimeStability(args: RealTimeStabilityArgs): RealTimeSt
   // Absolute change allowed before out of spec.
   const allowedDelta = Math.abs(initial) * (maxPercentChange / 100);
   // Time to reach the spec limit in the direction of drift.
-  const shelfLife = slope === 0 ? Infinity : Math.abs(allowedDelta / slope);
+  const shelfLife = slope === 0 ? null : Math.abs(allowedDelta / slope);
 
   const lastTime = Math.max(...x);
   const observedDelta = Math.abs(slope) * lastTime;
@@ -90,7 +99,7 @@ export function assessRealTimeStability(args: RealTimeStabilityArgs): RealTimeSt
     slopePerUnitTime: round(slope),
     interceptValue: round(initial),
     percentChangePerUnitTime: round(percentChangePerUnitTime),
-    shelfLife: Number.isFinite(shelfLife) ? round(shelfLife, 2) : Infinity,
+    shelfLife: shelfLife === null ? null : round(shelfLife, 2),
     withinSpecAcrossWindow,
     method: 'CLSI EP25 real-time stability (linear degradation)',
   };
@@ -120,8 +129,14 @@ export interface AcceleratedStabilityResult {
   activationEnergyKJ: number;
   /** Predicted rate constant at the storage temperature. */
   predictedRateAtStorage: number;
-  /** Predicted shelf-life (same time unit as the rate constants). */
-  predictedShelfLife: number;
+  /**
+   * Predicted shelf-life (same time unit as the rate constants), or null when
+   * the extrapolated storage-temperature rate constant underflows to zero — the
+   * Arrhenius fit is then predicting no degradation at all, which is a statement
+   * about the extrapolation rather than a number. Same reasoning as
+   * {@link RealTimeStabilityResult.shelfLife}: null, never Infinity.
+   */
+  predictedShelfLife: number | null;
   /** Goodness of the Arrhenius linear fit (R²). */
   rSquared: number;
   method: 'Arrhenius accelerated stability';
@@ -159,7 +174,7 @@ export function assessAcceleratedStability(
 
   // First-order: t = -ln(1 - threshold) / k  (zero-order fallback if preferred
   // is out of scope; first-order is the conventional default).
-  const predictedShelfLife = kStorage > 0 ? -Math.log(1 - degradationThreshold) / kStorage : Infinity;
+  const predictedShelfLife = kStorage > 0 ? -Math.log(1 - degradationThreshold) / kStorage : null;
 
   // R² of the Arrhenius fit.
   const meanY = y.reduce((a, b) => a + b, 0) / y.length;
@@ -175,7 +190,7 @@ export function assessAcceleratedStability(
   return {
     activationEnergyKJ: round(eaJ / 1000, 2),
     predictedRateAtStorage: round(kStorage, 6),
-    predictedShelfLife: Number.isFinite(predictedShelfLife) ? round(predictedShelfLife, 2) : Infinity,
+    predictedShelfLife: predictedShelfLife === null ? null : round(predictedShelfLife, 2),
     rSquared: round(rSquared),
     method: 'Arrhenius accelerated stability',
   };

@@ -26,11 +26,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { requireScanRoots } from './lib/scan-roots.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
 
 const SCAN_ROOTS = [path.join(repoRoot, 'server'), path.join(repoRoot, 'client', 'src')];
+
+// A missing root is a broken scan, not a clean one. See lib/scan-roots.mjs.
+requireScanRoots('[ci:jwt-verify-pinned]', SCAN_ROOTS);
 
 function isTestPath(rel) {
   if (rel.includes('/__tests__/')) return true;

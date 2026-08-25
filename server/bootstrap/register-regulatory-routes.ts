@@ -13,29 +13,25 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // SECURITY: every regulatory route family is tenant-scoped. FDA 510(k)
   // payloads, CER reports, manufacturing batch records, PV case files,
   // clinical operations data — all per-org. None should reach the
-  // public internet unauthenticated. The two "no path" mounts
-  // (documentOrchestration, esgSubmission) attach to the root router,
-  // so they get auth applied at app.use() level.
+  // public internet unauthenticated. The "no path" mount
+  // (documentOrchestration) attaches to the root router,
+  // so it gets auth applied at app.use() level.
   // ── FDA/CERV2/Device regulatory routes (parallelized) ──
   {
     const regulatoryRouteResults = await Promise.allSettled([
-      import('../routes/fda510k-unified.js'),
       import('../routes/510k-estar-routes'),
+      import('../routes/510k-device-routes'),
       import('../routes/cerv2-export-routes'),
       import('../routes/cerv2-ai-routes'),
       import('../routes/documentOrchestrationRoutes.js'),
-      import('../routes/esgSubmissionRoutes.js'),
-      import('../routes/medical-device-routes.js'),
     ]);
 
     const routeMap = [
-      { path: '/api/fda510k-unified', label: 'FDA 510(k) Unified' },
       { path: '/api/510k/estar', label: 'FDA 510(k) eSTAR' },
+      { path: '/api/510k/device', label: 'FDA 510(k) device profile' },
       { path: '/api/cerv2/export', label: 'CERV2 Export' },
       { path: '/api/cerv2/ai', label: 'CERV2 AI' },
       { path: null, label: 'Doc Orchestration' },
-      { path: null, label: 'ESG Submission' },
-      { path: '/api/medical-devices', label: 'Medical Device' },
     ];
 
     regulatoryRouteResults.forEach((result, i) => {

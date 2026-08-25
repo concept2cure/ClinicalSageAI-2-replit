@@ -8,8 +8,16 @@
  *   • the eCTD backbone tree is the org's REAL coauthor documents
  *     (GET /api/coauthor/documents), bucketed into ICH M4 modules M1--5 by each
  *     document's moduleNumber — never a codebase tree;
- *   • the artifact renders the SELECTED document's real persisted content
- *     (coauthor_documents.content, HTML) through the audited DOMPurify path;
+ *   • the artifact IS the ONE canonical editor (v2/editor/RichSectionEditor)
+ *     over the selected document's persisted content
+ *     (coauthor_documents.content, HTML), saving through the store's own
+ *     PUT /api/coauthor/documents/:id. A surface named "Co-Author" rendered
+ *     that content read-only through dangerouslySetInnerHTML until this — its
+ *     own empty state told the author to go draft "in the authoring editor",
+ *     an admission the surface could not do its job. Save is explicit
+ *     (Cmd/Ctrl-S or the footer control); every keystroke is device-cached and
+ *     offered back on return, and stale validation/compliance reports are
+ *     cleared on save because they described the previous content;
  *   • structural validation (POST …/validate) and ICH M4 compliance
  *     (GET …/compliance) are computed on the server from that document and its
  *     sections;
@@ -37,14 +45,20 @@
  * they were typed into, and a governed command comes back as the real §11.50
  * sign-off rather than vanishing.
  */
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { I } from '../icons';
 import { connected, liveGetOrNull, liveMutateOrNull, EmptyState } from '../dataConnect';
-import { sanitizeChatHtml } from '../../components/ana/renderSafeMarkdown';
+import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
 import { useAnaChat } from '../../components/ana/useAnaChat';
+import { useChatUpload, attachmentReadLabel } from '../../hooks/useChatUpload';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import { AnswerLead } from '../AnswerLead';
+import {
+  advertisedScreenActions,
+  notifySurfaceActionReady,
+  useSurfaceActionHandlers,
+} from '../surfaceActions';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/ectd-v2.css';
@@ -189,14 +203,21 @@ function readProjectId(): string | undefined {
 
 /* ---- Component ---- */
 
-export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
+export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
   const live = connected();
 
   const [docs, setDocs] = useState<CoauthorDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<number | null>(null);
+  // The mounted editor's unsaved-buffer flag (its onDirtyChange). The canvas is
+  // keyed by document id, so any switch is an unmount that destroys the buffer
+  // — this flag is what lets an AnA-driven switch refuse instead of discard.
+  const [editorDirty, setEditorDirty] = useState(false);
   const [openModules, setOpenModules] = useState<Record<string, boolean>>({});
+  // Tree search — a real client-side filter over the loaded documents
+  // (title / eCTD section number), never a dead input.
+  const [treeQuery, setTreeQuery] = useState('');
   const [treeCollapsed, setTreeCollapsed] = useState(false);
   const [focus, setFocus] = useState(false);
   const [tab, setTab] = useState<'document' | 'validation' | 'compliance'>('document');
@@ -248,19 +269,29 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
 
   /* The pane's own named conversation — the REAL streaming assistant, grounded
      on the document the user has open so "tighten this" means this section. */
-  const moduleContext = useMemo(
-    () => ({
+  const moduleContext = useMemo(() => {
+    const base: Record<string, unknown> = {
       surface: 'ectd-coauthor',
       coauthorDocumentId: activeDoc?.id ?? null,
       moduleNumber: activeDoc?.moduleNumber ?? null,
       documentTitle: activeDoc?.title ?? null,
-    }),
-    [activeDoc?.id, activeDoc?.moduleNumber, activeDoc?.title],
-  );
+    };
+    /* The screen's OPERABLE vocabulary from the shared surface-action registry,
+       folded exactly as the shell folds it for railed surfaces (V2App) — this
+       surface owns its conversation, so its own chat must advertise what the
+       rail would have. Omitted entirely when empty, never an empty claim. */
+    const screenActions = advertisedScreenActions('ectd-coauthor');
+    return screenActions.length > 0 ? { ...base, screen_actions: screenActions } : base;
+  }, [activeDoc?.id, activeDoc?.moduleNumber, activeDoc?.title]);
   const anaChat = useAnaChat({
     screenName: 'ectd-coauthor',
     projectId: readProjectId(),
     moduleContext,
+    /* Live Drive bridge — same opt-in and shell-level apply machine as the
+       rail's turns (see SurfaceViewProps.liveDrive). */
+    liveDrive: liveDrive?.on,
+    onDriveEvent: liveDrive?.onDriveEvent,
+    onArtifactSaved: liveDrive?.onWorkSaved,
   });
   const turns = anaChat.messages;
 
@@ -271,7 +302,39 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
     setCompliance(null);
     setValidationUnavailable(false);
     setComplianceUnavailable(false);
+    // The dirty flag belongs to the editor mount that is going away; the new
+    // mount re-reports its own state through onDirtyChange.
+    setEditorDirty(false);
   }, [activeId]);
+
+  /* ── The one save path (canonical editor → this store's own PUT) ──
+     Awaited and adopted: the tree, readiness and the next validation run all
+     read the server's row, never a local echo. Throwing on a refused write is
+     the contract the editor's footer renders truthfully ("Save failed — kept
+     on this device"). A save also clears the validation/compliance reports:
+     they were computed from the PREVIOUS content, and a stale "Valid" over
+     new text is a false claim. */
+  const editorRef = useRef<RichSectionEditorHandle | null>(null);
+  const saveContent = useCallback(
+    async (serialized: string) => {
+      if (!activeDoc) throw new Error('No document open');
+      const r = await liveMutateOrNull<{ document?: CoauthorDoc }>(
+        'PUT',
+        '/api/coauthor/documents/' + activeDoc.id,
+        { content: serialized },
+      );
+      const saved = r.data?.document;
+      if (!saved) {
+        throw new Error(r.error || 'The server did not confirm the write.');
+      }
+      setDocs((ds) => ds.map((d) => (d.id === activeDoc.id ? { ...d, ...saved } : d)));
+      setValidation(null);
+      setCompliance(null);
+      setValidationUnavailable(false);
+      setComplianceUnavailable(false);
+    },
+    [activeDoc],
+  );
 
   /* eCTD backbone: real documents bucketed into ICH M4 modules, M1..M5 first
      then any unassigned. */
@@ -292,6 +355,129 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
       docs: byMod.get(k)!,
     }));
   }, [docs]);
+
+  /* The tree the sidebar renders: all modules, or — while searching — only the
+     modules holding a document whose title or section number matches. */
+  const treeFilter = treeQuery.trim().toLowerCase();
+  const visibleModules = useMemo(() => {
+    if (!treeFilter) return treeModules;
+    return treeModules
+      .map((mod) => ({
+        ...mod,
+        docs: mod.docs.filter(
+          (d) =>
+            (d.title || '').toLowerCase().includes(treeFilter) ||
+            (d.moduleNumber || '').toLowerCase().includes(treeFilter),
+        ),
+      }))
+      .filter((mod) => mod.docs.length > 0);
+  }, [treeModules, treeFilter]);
+
+  /* ── AnA's hands on this screen — the surface-action bus ──────────────────
+     Registered under this surface's own surfaceViews id ('ectd-coauthor', an
+     identity mapping in the registry). Both handlers drive the SAME state the
+     human's own controls drive — setTreeQuery for the search; the tree row's
+     setActiveId/setTab pair for opening — never a second path. search-tree
+     keeps deliberately NO loading guard: the query is pure view state over
+     whatever the read delivers (vault.search's rule), and zero matches is a
+     truthful outcome the tree already renders honestly. open-document DOES
+     guard: the canvas is keyed by document id, so a switch is an unmount —
+     unsaved edits refuse (AnA never discards typing), a running governed
+     check refuses, and a still-loading read holds for the ready signal below
+     instead of failing. */
+  useSurfaceActionHandlers('ectd-coauthor', {
+    'ectd-coauthor.search-tree': (params) => {
+      const query = (params.query ?? '').trim();
+      if (!query) return { ok: false, reason: 'No search term given.' };
+      if (error) return { ok: false, reason: 'The eCTD documents could not be read.' };
+      setTreeQuery(query);
+      return { ok: true, detail: `Filtering the eCTD tree for "${query}"` };
+    },
+    'ectd-coauthor.open-tab': (params) => {
+      const target =
+        params.tab === 'validation'
+          ? ('validation' as const)
+          : params.tab === 'compliance'
+            ? ('compliance' as const)
+            : ('document' as const);
+      if (tab === target) return { ok: true, detail: `Already on the ${target} tab` };
+      if (target !== 'document' && editorDirty && activeDoc) {
+        return {
+          ok: false,
+          reason:
+            `There are unsaved edits in §${activeDoc.moduleNumber || '—'} ${activeDoc.title} — ` +
+            'the editor unmounts on a tab switch; save first (Cmd/Ctrl-S).',
+        };
+      }
+      /* View only, deliberately: the human tab buttons auto-run a missing
+         validation/compliance check on switch — a server check AnA must not
+         start uninvited. She opens the tab; the panel's idle state and the
+         detail say the run is still a human click. */
+      setTab(target);
+      const unrun =
+        activeDoc &&
+        ((target === 'validation' && !validation) || (target === 'compliance' && !compliance));
+      return {
+        ok: true,
+        detail:
+          `Opened the ${target} tab` +
+          (unrun ? ` — no ${target} report has been run yet; running one stays a human click` : ''),
+      };
+    },
+    'ectd-coauthor.open-document': (params) => {
+      const raw = (params.document ?? '').trim();
+      if (!raw) return { ok: false, reason: 'No document named.' };
+      if (editorDirty && activeDoc) {
+        return {
+          ok: false,
+          reason:
+            `There are unsaved edits in §${activeDoc.moduleNumber || '—'} ${activeDoc.title} — ` +
+            "save them first (Cmd/Ctrl-S or the editor's Save).",
+        };
+      }
+      if (busy !== '') {
+        return {
+          ok: false,
+          reason: `A ${busy} check is running against the open document — let it finish first.`,
+        };
+      }
+      if (loading) return { ok: false, reason: 'The eCTD documents are still loading.', retry: true };
+      if (error) return { ok: false, reason: 'The eCTD documents could not be read.' };
+      /* Resolution over the flat rows on the tree filter's own fields (title /
+         module number): normalized exact first, then containment — multiple
+         containment hits are an honest refusal, never a guess. */
+      const norm = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
+      const want = norm(raw);
+      const exact = docs.filter(
+        (d) => norm(d.title) === want || (d.moduleNumber || '').toLowerCase() === want,
+      );
+      const pool =
+        exact.length > 0
+          ? exact
+          : docs.filter(
+              (d) =>
+                norm(d.title).includes(want) ||
+                (d.moduleNumber || '').toLowerCase().includes(want),
+            );
+      if (pool.length === 0) return { ok: false, reason: `No eCTD document matching "${raw}".` };
+      if (pool.length > 1) {
+        return { ok: false, reason: `"${raw}" matches ${pool.length} documents — name one exactly.` };
+      }
+      const match = pool[0];
+      if (match.id === activeId) return { ok: true, detail: 'Already open' };
+      setActiveId(match.id);
+      setTab('document');
+      setOpenModules((m) => ({ ...m, [moduleOf(match)]: true }));
+      return { ok: true, detail: `Opened §${match.moduleNumber || '—'} ${match.title}` };
+    },
+  });
+  /* The bus's ready signal: search-tree itself never answers not-ready, but a
+     directive stashed across the navigate→mount gap still gets its re-attempt
+     the moment the read settles. Safe to fire on every settle; a no-op when
+     nothing is pending. */
+  useEffect(() => {
+    if (!loading) notifySurfaceActionReady('ectd-coauthor');
+  }, [loading]);
 
   /* KPIs derived from the REAL rows only (never hardcoded). Readiness weights
      approved/finalized fully and review/in-progress at half. */
@@ -323,14 +509,44 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
     });
   };
 
+  /* ── "Sources" was a paperclip that could not be clicked ──────────────────
+     It rendered as `<span className="ec-chip">{I.paperclip} Sources</span>` —
+     a paperclip icon and an action word, in a composer, with no handler and no
+     file input anywhere on the surface. On the eCTD co-authoring screen, where
+     citing a source document is the entire job.
+
+     Wired to `useChatUpload`, the same /api/chat/upload path the shell composer
+     and ProjectHome use: the file is OCR'd and its text written into this
+     project's memory, so AnA can cite from it rather than being told a filename
+     it cannot open. */
+  const attachRef = useRef<HTMLInputElement>(null);
+  const {
+    attachments: ecAttachments,
+    addFiles: ecAddFiles,
+    removeAttachment: ecRemoveAttachment,
+    clear: ecClearAttachments,
+    statusMessage: ecStatusMessage,
+  } = useChatUpload({ projectId: readProjectId() ?? null });
+  const ecReady = ecAttachments.filter((a) => a.status === 'ready');
+  const ecUploading = ecAttachments.filter((a) => a.status === 'uploading');
+
   const send = () => {
     const q = draft.trim();
-    if (!q || anaChat.isStreaming) return;
+    // An attachment alone is a legitimate turn ("read this"), and an in-flight
+    // upload must block send or AnA answers about bytes the server has not
+    // finished reading.
+    if (anaChat.isStreaming || ecUploading.length > 0) return;
+    if (!q && ecReady.length === 0) return;
     // Answered HERE, in the pane it was typed into. The turn streams from
     // /api/ana-ri/stream with this document as module context; nothing is
     // manufactured locally and no completed tool chip is invented.
+    const names = ecReady.map((a) => a.name);
+    const line = names.length ? `Attached: ${names.join(', ')}` : '';
+    const scoped = q ? q + (activeRef ? ' (eCTD §' + activeRef + ')' : '') : '';
+    const body = scoped && line ? `${scoped}\n\n${line}` : scoped || line;
     setDraft('');
-    void anaChat.send(q + (activeRef ? ' (eCTD §' + activeRef + ')' : ''));
+    ecClearAttachments();
+    void anaChat.send(body);
   };
 
   /* Keep the newest turn in view as tokens arrive. */
@@ -369,22 +585,24 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
       {/* eCTD tree */}
       <aside className="ec-tree">
         <div className="ec-tree-head"><b>eCTD backbone</b><span className="mono">M1--5</span></div>
-        <div className="ec-tree-search">{I.search}<input aria-label="Find a section" placeholder="Find section..." onChange={() => { /* noop */ }} /></div>
+        <div className="ec-tree-search">{I.search}<input aria-label="Find a section" placeholder="Find section..." value={treeQuery} onChange={(e) => setTreeQuery(e.target.value)} /></div>
         {loading ? (
           <div className="ec-empty">Loading eCTD documents…</div>
         ) : error ? (
           <div className="ec-empty sp-tone-warn">Couldn't load eCTD documents.</div>
         ) : docs.length === 0 ? (
           <div className="ec-empty">No eCTD documents yet.</div>
+        ) : visibleModules.length === 0 ? (
+          <div className="ec-empty">No sections match "{treeQuery.trim()}". Clear the search to see the full backbone.</div>
         ) : (
-          treeModules.map((mod) => (
+          visibleModules.map((mod) => (
             <div key={mod.m} className="ec-tree-mod">
               <button className="ec-tree-row" onClick={() => toggleModule(mod.m)}>
-                <span className="ec-caret" data-open={!!openModules[mod.m]}>{I.chevronRight || '›'}</span>
+                <span className="ec-caret" data-open={treeFilter ? true : !!openModules[mod.m]}>{I.chevronRight || '›'}</span>
                 <span className="ec-tnum">M{mod.m}</span>
                 <span className="ec-tlabel">{mod.title}</span>
               </button>
-              {openModules[mod.m] && (
+              {(treeFilter ? true : openModules[mod.m]) && (
                 <div className="ec-tree-children">
                   {mod.docs.map((d) => (
                     <button key={d.id} className="ec-tree-row" data-active={activeId === d.id} onClick={() => { setActiveId(d.id); setTab('document'); }}>
@@ -445,12 +663,52 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
         </div>
         <div className="ec-intel-foot">
           <div className="ec-composer">
-            <textarea rows={1} aria-label="Filter capabilities" placeholder={'Ask AnA to draft, tighten, or cite ' + (activeRef ? '§' + activeRef : 'a section') + '...'} value={draft}
+            {/* Was aria-label="Filter capabilities" — a copy-paste from another
+                pane. A screen-reader user was told this composer was a filter. */}
+            <textarea rows={1} aria-label="Ask AnA about this section" placeholder={'Ask AnA to draft, tighten, or cite ' + (activeRef ? '§' + activeRef : 'a section') + '...'} value={draft}
               onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
+            {ecAttachments.length > 0 && (
+              <div className="ec-atts">
+                {ecAttachments.map((a) => (
+                  <span key={a.id} className="ec-att-chip" data-status={a.status}>
+                    {I.paperclip} {a.name}
+                    {a.status === 'uploading' && <em> · reading…</em>}
+                    {a.status === 'ready' && <em> · {attachmentReadLabel(a.extractionMethod, a.extractionWords) ?? 'read'}</em>}
+                    {a.status === 'error' && <em> · {a.error ?? 'failed'}</em>}
+                    <button type="button" className="ec-att-x" aria-label={`Remove ${a.name}`} onClick={() => ecRemoveAttachment(a.id)}>×</button>
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="ec-composer-row">
-              <span className="ec-chip">{I.paperclip || I.plus} Sources</span>
-              <button className="ec-send" aria-label="Send message to AnA" disabled={!draft.trim() || anaChat.isStreaming} onClick={send}>{I.arrowUp || I.arrowRight || '→'}</button>
+              <input
+                ref={attachRef}
+                type="file"
+                multiple
+                className="ana-hidden-input"
+                aria-label="Attach a source document for AnA to cite"
+                onChange={(e) => { ecAddFiles(e.target.files); if (attachRef.current) attachRef.current.value = ''; }}
+                data-testid="ec-attach-input"
+              />
+              <button
+                type="button"
+                className="ec-chip"
+                onClick={() => attachRef.current?.click()}
+                title="Attach a source document for AnA to read and cite"
+                data-testid="ec-attach-button"
+              >
+                {I.paperclip || I.plus} Sources
+              </button>
+              <button
+                className="ec-send"
+                aria-label="Send message to AnA"
+                disabled={anaChat.isStreaming || ecUploading.length > 0 || (!draft.trim() && ecReady.length === 0)}
+                onClick={send}
+              >
+                {I.arrowUp || I.arrowRight || '→'}
+              </button>
             </div>
+            <span className="sr-only" aria-live="polite">{ecStatusMessage}</span>
           </div>
         </div>
       </section>
@@ -486,8 +744,7 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
                   title="No eCTD documents yet"
                   hint={
                     <>
-                      Create a co-author document to draft it against the eCTD backbone — persisted via{' '}
-                      <span className="mono">POST /api/coauthor/documents</span> — or ask AnA to start one.
+                      Create a co-author document to draft it against the eCTD backbone — it is persisted as a governed document — or ask AnA to start one.
                     </>
                   }
                 />
@@ -500,19 +757,44 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
                     body={<>Run eCTD structural validation and ICH M4 compliance against the live backbone as you write — both are computed on the server from this document and its sections.</>}
                     reassure="I keep each check traced to the persisted document and re-run eCTD structure and ICH M4 as it changes."
                     action={{ label: 'Run eCTD validation', onClick: runValidate }}
-                    secondary="Or keep drafting -- the artifact reflects the saved document."
+                    secondary="Or keep drafting — the artifact reflects the saved document."
                   />
                   <h1 className="ec-doc-h1">{activeDoc.title}</h1>
                   <div className="ec-doc-num">&sect;{activeDoc.moduleNumber || '—'}{activeDoc.moduleName ? ' -- ' + activeDoc.moduleName : ''}</div>
-                  {activeDoc.content && activeDoc.content.trim() ? (
-                    <div className="ec-doc-body" dangerouslySetInnerHTML={{ __html: sanitizeChatHtml(activeDoc.content) }} />
-                  ) : (
-                    <EmptyState
-                      icon={I.fileText || I.file}
-                      title="This document has no content yet"
-                      hint={<>Draft §{activeDoc.moduleNumber || 'this section'} in the authoring editor, or ask AnA to start it. The body renders the saved document content.</>}
+                  {/* The canonical editor over the persisted document. An
+                      empty document is the editor's placeholder plus its
+                      Draft-with-AnA affordance — not a dead end telling the
+                      author to go find a different editor. */}
+                  <div
+                    style={{
+                      minHeight: 420,
+                      border: '1px solid var(--c2c-line,#e4e7ec)',
+                      borderRadius: 10,
+                      overflow: 'hidden',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <RichSectionEditor
+                      key={activeDoc.id}
+                      ref={editorRef}
+                      value={activeDoc.content ?? ''}
+                      format="html"
+                      onSave={saveContent}
+                      onDirtyChange={setEditorDirty}
+                      autosaveMs={null}
+                      storageKey={'coauthor:' + activeDoc.id}
+                      ariaLabel={'§' + (activeDoc.moduleNumber || '—') + ' ' + activeDoc.title}
+                      placeholder={
+                        'Write §' +
+                        (activeDoc.moduleNumber || 'this section') +
+                        ' here. Cmd/Ctrl-S saves the document; validation and compliance re-run against what is saved.'
+                      }
+                      onAsk={(p) => {
+                        void anaChat.send(p);
+                      }}
                     />
-                  )}
+                  </div>
                 </>
               )}
             </div>
@@ -523,7 +805,7 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
           <div className="ec-art-panel">
             <div className="ec-doc-inner">
               <div className="ec-panel-head">
-                <div><div className="ec-panel-t">eCTD structural validation</div><div className="ec-panel-s">POST /api/coauthor/documents/{activeDoc ? activeDoc.id : '…'}/validate -- ICH M4 eCTD rules {live ? '-- live' : ''}</div></div>
+                <div><div className="ec-panel-t">eCTD structural validation</div><div className="ec-panel-s">ICH M4 eCTD structural rules {live ? '-- live' : ''}</div></div>
                 <button className="ec-topbtn primary" onClick={runValidate} disabled={!activeDoc}>{busy === 'validate' ? 'Validating...' : <>{I.refresh || I.check} Re-validate</>}</button>
               </div>
               {!activeDoc ? (
@@ -563,7 +845,7 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
           <div className="ec-art-panel">
             <div className="ec-doc-inner">
               <div className="ec-panel-head">
-                <div><div className="ec-panel-t">ICH M4 compliance</div><div className="ec-panel-s">GET /api/coauthor/documents/{activeDoc ? activeDoc.id : '…'}/compliance {live ? '-- live' : ''}</div></div>
+                <div><div className="ec-panel-t">ICH M4 compliance</div><div className="ec-panel-s">Checked against ICH M4 {live ? '-- live' : ''}</div></div>
                 <button className="ec-topbtn primary" onClick={runCompliance} disabled={!activeDoc}>{busy === 'compliance' ? 'Checking...' : <>{I.refresh || I.check} Re-check</>}</button>
               </div>
               {!activeDoc ? (

@@ -8,7 +8,7 @@
  */
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 
 // The rail's co-author context read — keep it offline/empty so the rail renders
 // without a backend (the messages under test are passed as props).
@@ -26,7 +26,12 @@ afterEach(() => cleanup());
 
 const surface = { id: 'cmc', label: 'CMC' };
 
-function renderRail(messages: AnaMessage[], onAct = vi.fn(), onSend = vi.fn()) {
+function renderRail(
+  messages: AnaMessage[],
+  onAct = vi.fn(),
+  onSend = vi.fn(),
+  onNav = vi.fn(),
+) {
   render(
     <AnaRail
       open
@@ -38,9 +43,10 @@ function renderRail(messages: AnaMessage[], onAct = vi.fn(), onSend = vi.fn()) {
       messages={messages}
       onSend={onSend}
       onAct={onAct}
+      onNav={onNav}
     />,
   );
-  return { onAct, onSend };
+  return { onAct, onSend, onNav };
 }
 
 describe('AnaRail — real ANA action rendering', () => {
@@ -92,5 +98,55 @@ describe('AnaRail — real ANA action rendering', () => {
       },
     ]);
     expect(screen.getByText('Reason for change required')).toBeTruthy();
+  });
+
+  /* The navigation loop: `shared/navigation` + `navigate_to` produced a
+     validated directive for a long time, and nothing carried it to a control the
+     user could press. These lock the closed half. */
+  it('renders a navigation target AnA resolved as a button that navigates', () => {
+    const { onNav, onAct } = renderRail([
+      {
+        role: 'ana',
+        body: 'The CMC workspace is where that specification lives.',
+        executedActions: [
+          { label: 'Open CMC', actionType: 'navigate', targetId: 'cmc', path: '/cmc', executed: true },
+        ],
+      },
+    ]);
+    const chip = screen.getByRole('button', { name: /Open CMC/ });
+    fireEvent.click(chip);
+    expect(onNav).toHaveBeenCalledWith('cmc');
+    // It navigates rather than handing the label back to AnA as a new question,
+    // which is what every other chip does and would loop here.
+    expect(onAct).not.toHaveBeenCalled();
+  });
+
+  it('does not offer a navigation chip that cannot say where it goes', () => {
+    const { onNav } = renderRail([
+      {
+        role: 'ana',
+        body: 'Somewhere.',
+        executedActions: [{ label: 'Open something', actionType: 'navigate', executed: true }],
+      },
+    ]);
+    // Still reported as an executed action, but inert: a control with no target
+    // must not look like one with a target.
+    expect(screen.getByText('Open something')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Open something/ })).toBeNull();
+    expect(onNav).not.toHaveBeenCalled();
+  });
+
+  it('leaves every non-navigation executed action inert', () => {
+    const { onNav } = renderRail([
+      {
+        role: 'ana',
+        body: 'Done.',
+        executedActions: [
+          { label: 'Validated the draft', actionType: 'run_validation', executed: true },
+        ],
+      },
+    ]);
+    expect(screen.queryByRole('button', { name: /Validated the draft/ })).toBeNull();
+    expect(onNav).not.toHaveBeenCalled();
   });
 });

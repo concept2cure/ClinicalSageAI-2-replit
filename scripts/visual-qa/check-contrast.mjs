@@ -42,57 +42,32 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchChromium } from './playwright.mjs';
 import { assertCaptureIsFresh } from './capture-freshness.mjs';
+/* The WCAG arithmetic is shared with scripts/ci/check-token-contrast.mjs. It
+   used to be transcribed into MEASURE below, because Playwright serialises an
+   evaluated function and a serialised function cannot close over an import.
+   `browserSource()` resolves that without a second copy: the page is handed
+   these exact definitions on `window.__wcag`, so the browser runs the module
+   rather than a transcription of it. Two correct copies of one formula is still
+   two, and a correction to either would have applied to half the product. */
+import { browserSource } from '../lib/wcag.mjs';
+import { builtStylesheets, styleTags } from './built-css.mjs';
 
 const TAG = '[visual-qa:contrast]';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const MARKUP = path.join(REPO, '.visual-qa/markup');
-const ASSETS = path.join(REPO, 'dist/public/assets');
 
-function asset(prefix) {
-  const hit = fs.readdirSync(ASSETS).find((f) => f.startsWith(prefix) && f.endsWith('.css'));
-  if (!hit) {
-    console.error(`${TAG} no built stylesheet matching ${prefix}*.css — run \`npm run build\` first.`);
-    process.exit(1);
-  }
-  return fs.readFileSync(path.join(ASSETS, hit), 'utf8');
-}
+// Every built stylesheet, in load order — see built-css.mjs. A colour measured
+// against a partial cascade is a measurement of a page the product never serves.
+const STYLES = styleTags(builtStylesheets(TAG));
 
-const ENTRY = asset('index-');
-const V2 = asset('V2App-');
-const MDX = asset('MdxSurfaceHost-');
-const PDEV = asset('PdevRoute-');
-
-const sheetsFor = (name) =>
-  name.startsWith('mdx__') ? [ENTRY, V2, MDX]
-    : name.startsWith('pdev__') ? [ENTRY, V2, PDEV]
-      : [ENTRY, V2];
-
-const page = (markup, sheets) =>
-  `<!doctype html><html><head><meta charset="utf-8">${sheets.map((c) => `<style>${c}</style>`).join('')}</head>
+const page = (markup) =>
+  `<!doctype html><html><head><meta charset="utf-8">${STYLES}</head>
 <body><div class="c2c-v2 shell">${markup}</div></body></html>`;
 
 /** Runs in the browser. Returns one record per text-bearing element. */
 const MEASURE = () => {
-  const parse = (c) => {
-    const m = /^rgba?\(([^)]+)\)$/.exec(c);
-    if (!m) return null;
-    const p = m[1].split(',').map((x) => parseFloat(x.trim()));
-    return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 };
-  };
-  // WCAG relative luminance, sRGB.
-  const lum = ({ r, g, b }) => {
-    const f = (v) => {
-      const s = v / 255;
-      return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-    };
-    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-  };
-  const over = (fg, bg) => ({
-    r: fg.r * fg.a + bg.r * (1 - fg.a),
-    g: fg.g * fg.a + bg.g * (1 - fg.a),
-    b: fg.b * fg.a + bg.b * (1 - fg.a),
-    a: 1,
-  });
+  // Injected from scripts/lib/wcag.mjs — see the import note above.
+  const { parseRgbString: parse, relativeLuminance: lum, over, contrastRatio } = window.__wcag;
 
   const out = [];
   const els = document.querySelectorAll('.c2c-v2 *');
@@ -127,9 +102,7 @@ const MEASURE = () => {
     if (!bg) bg = { r: 255, g: 255, b: 255, a: 1 };
 
     const fgc = fg.a < 1 ? over(fg, bg) : fg;
-    const L1 = lum(fgc);
-    const L2 = lum(bg);
-    const ratio = (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+    const ratio = contrastRatio(fgc, bg);
 
     const size = parseFloat(cs.fontSize);
     const weight = parseInt(cs.fontWeight, 10) || 400;
@@ -141,7 +114,7 @@ const MEASURE = () => {
     // reader would read out, and counting them inflates the failure rate with
     // characters no user needs to perceive. Recorded separately rather than
     // silently dropped, so the exclusion is auditable.
-    const decorative = /^[·•|/\\\-–—,:;()\[\]]{1,2}$/.test(own);
+    const decorative = window.__wcag.decorativeText(own);
 
     out.push({
       decorative,
@@ -171,6 +144,8 @@ assertCaptureIsFresh(TAG, MARKUP, REPO);
 
 const browser = await launchChromium();
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+/* Runs on every document this context creates, so MEASURE always finds it. */
+await ctx.addInitScript({ content: browserSource() });
 
 // Prove the measurement before trusting it: known-black on known-white is 21:1.
 {
@@ -202,7 +177,7 @@ for (const file of files) {
   const name = file.replace(/\.html$/, '');
   const markup = fs.readFileSync(path.join(MARKUP, file), 'utf8');
   const p = await ctx.newPage();
-  await p.setContent(page(markup, sheetsFor(name)), { waitUntil: 'load' });
+  await p.setContent(page(markup), { waitUntil: 'load' });
   const rows = await p.evaluate(MEASURE);
   await p.close();
 

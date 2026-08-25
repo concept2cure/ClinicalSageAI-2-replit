@@ -32,6 +32,7 @@
  * @module client/src/concept2cure/_shared/components/ConfirmDialog
  */
 import * as React from 'react';
+import { registerCeremonyOpen } from '../../v2/ceremony';
 
 // ── Inline Lucide-style icons (stroke, currentColor) ─────────────────────────
 
@@ -139,6 +140,13 @@ export function GovernedConfirmDialog({
       restoreFocusRef.current.focus?.();
       restoreFocusRef.current = null;
     }
+  }, [open]);
+
+  // The ceremony channel: unlike C2CForm this component stays mounted and
+  // shows on `open`, so registration keys on the prop (see v2/ceremony.ts).
+  React.useEffect(() => {
+    if (!open) return undefined;
+    return registerCeremonyOpen();
   }, [open]);
 
   // Esc closes + focus trap.
@@ -323,7 +331,7 @@ export function GovernedConfirmDialog({
               width: '100%',
               padding: 8,
               borderRadius: 6,
-              border: '1px solid var(--border, rgba(0,0,0,0.16))',
+              border: '1px solid var(--border-control, rgba(0,0,0,0.16))',
               fontFamily: 'inherit',
               fontSize: 13,
               resize: 'vertical',
@@ -358,7 +366,7 @@ export function GovernedConfirmDialog({
               width: '100%',
               padding: '6px 10px',
               borderRadius: 6,
-              border: '1px solid var(--border, rgba(0,0,0,0.16))',
+              border: '1px solid var(--border-control, rgba(0,0,0,0.16))',
               fontFamily: 'var(--font-mono, ui-monospace, monospace)',
               fontSize: 13,
             }}

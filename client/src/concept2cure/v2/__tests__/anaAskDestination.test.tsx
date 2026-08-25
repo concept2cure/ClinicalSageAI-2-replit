@@ -25,7 +25,10 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', () => ({ apiRequest }));
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+}));
 
 import { SURFACE_VIEWS, type SurfaceViewProps } from '../surfaceViews';
 import { AdminAccess } from '../surfaces/AdminAccess';
@@ -118,16 +121,28 @@ describe('admin-console — governed mutations reach the rail that draws the sig
     );
   });
 
-  it('"Invite member" hands a real prompt to the shell conversation', async () => {
+  it('"Invite member" opens the invite form rather than asking the rail', async () => {
+    /* This used to assert the opposite — that the button handed
+       'Invite a new member. Confirm name, email, role…' to the rail. That was
+       the right shape for THIS file's question (a rail-drawing surface may
+       legitimately answer through the rail) and the wrong shape for the
+       product: the page's primary CTA opened no form and created no member,
+       because ask() only streams a sentence. POST /api/tenant-users exists, is
+       org-admin gated and audits the create, so the button now opens the form
+       that calls it.
+
+       The file's contract is unchanged and still enforced by "Grant access"
+       below: a control on a surface that draws the rail may reach the rail,
+       and no control may write into a rail the surface hides. This one now
+       answers in place, which satisfies it the other way. */
     const p = props('admin-console');
     render(<AdminAccess {...p} />);
     fireEvent.click(await screen.findByRole('button', { name: /Invite member/ }));
 
-    // The §11.50 e-sign prompt for a governed command is rendered BY the rail
-    // (V2App adaptChatMessage → AnaRail → GovernedActionSignoff). This surface
-    // is only correct if the rail is there to receive it.
-    expect(p.onAsk).toHaveBeenCalledTimes(1);
-    expect(String((p.onAsk as ReturnType<typeof vi.fn>).mock.calls[0][0])).toMatch(/Invite a new member/);
+    // The form is open…
+    expect(await screen.findByText(/Invite a member/i)).toBeTruthy();
+    // …and nothing was written into the conversation.
+    expect(p.onAsk).not.toHaveBeenCalled();
   });
 
   it('a member-level grant is a governed ask, not a local mutation', async () => {

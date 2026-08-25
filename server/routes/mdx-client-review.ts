@@ -40,7 +40,7 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
 
 import { createScopedLogger } from '../utils/logger';
 import { requestDb } from '../db/requestDb';
@@ -109,6 +109,10 @@ router.get('/client-review', async (req: Request, res: Response) => {
   const conditions = [
     eq(unifiedTasks.organizationId, orgId),
     inArray(unifiedTasks.clientVisibility, [...CLIENT_REVIEW_STATES]),
+    // Archived (soft-deleted) work is invisible to every internal read model;
+    // this customer-facing room must not be the one place it survives. Without
+    // this filter a task archived on the board kept appearing to the client.
+    isNull(unifiedTasks.deletedAt),
   ];
   if (projectId !== undefined) conditions.push(eq(unifiedTasks.projectId, projectId));
 

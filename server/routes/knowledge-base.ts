@@ -49,6 +49,7 @@ import { extractWithGrobid, looksScholarlyDocument } from '../services/literatur
 import { indexGovernedDocument } from '../services/search/opensearchClient';
 import { searchConnectedRepositories } from '../services/integrations/connector-search.js';
 
+import { toBinaryBody } from '../utils/binary-body.js';
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 
@@ -730,7 +731,7 @@ router.post('/upload', upload.array('files'), async (req: Request, res: Response
     const form = new FormData();
     form.append('project_id', projectId);
     for (const f of files) {
-      form.append('files', new Blob([f.buffer], { type: f.mimetype }), f.originalname);
+      form.append('files', new Blob([toBinaryBody(f.buffer)], { type: f.mimetype }), f.originalname);
     }
 
     const url = new URL('/knowledge/ingest-files', shadowUrl());
@@ -753,14 +754,34 @@ router.post('/upload', upload.array('files'), async (req: Request, res: Response
 
 router.get('/context/:projectId', async (req: Request, res: Response) => {
   if (!requireToken(res)) return;
-  const { projectId } = req.params;
+  // Typed `string | string[]`. `String()` on an array joins with a comma, which
+  // would smuggle a separator into a path this route deliberately keeps to ONE
+  // segment — the very property the encoding below exists to preserve. A param
+  // that is not a single string is refused rather than flattened.
+  const projectId = req.params.projectId;
+  if (typeof projectId !== 'string' || projectId.length === 0) {
+    return res.status(400).json({ error: 'projectId must be a single path segment' });
+  }
 
   try {
     const qp: Record<string, string> = {};
     if (req.query.max_chars_per_doc) qp.max_chars_per_doc = String(req.query.max_chars_per_doc);
     if (req.query.max_total_chars) qp.max_total_chars = String(req.query.max_total_chars);
 
-    const result = await proxyJson(`/knowledge/project-context/${projectId}`, 'GET', undefined, qp);
+    // encodeURIComponent, not the bare param. `projectId` is interpolated into a
+    // path that is then resolved with `new URL(path, shadowUrl())`, and URL
+    // resolution APPLIES `../` segments. Express decodes %2F in a route param,
+    // so a request for `/context/..%2F..%2Fadmin` arrives here as `../../admin`
+    // and resolved to `http://<shadow>/admin` — an authenticated proxy to any
+    // endpoint on the internal service, not just the one this route names.
+    // Encoding keeps the traversal inert: it stays `..%2F..%2Fadmin`, one path
+    // segment, exactly as intended.
+    const result = await proxyJson(
+      `/knowledge/project-context/${encodeURIComponent(projectId)}`,
+      'GET',
+      undefined,
+      qp
+    );
     res.status(result.status).type(result.contentType).send(result.body);
   } catch (err: any) {
     console.error('[knowledge-base] context proxy error:', err.message);
@@ -878,16 +899,20 @@ router.post('/generate-ind-section', async (req: Request, res: Response) => {
     const result = await proxyJson('/knowledge/generate-ind-section', 'POST', req.body);
     res.status(result.status).type(result.contentType).send(result.body);
   } catch (err: any) {
-    console.warn('[knowledge-base] Shadow service unavailable for IND section, returning scaffold');
-    const { section_code, section_title, drug_name } = req.body;
-    res.json({
-      section_code: section_code || 'unknown',
-      title: section_title || 'IND Section',
-      content: `<h1>${section_title || 'IND Section'}</h1>\n<p>This section for ${
-        drug_name || 'the investigational drug'
-      } requires authoring. Use the Document Editor to draft content with Regulatory Intelligence assistance.</p>`,
-      status: 'scaffold',
-      generated_by: 'node-fallback',
+    // Generation failed. This used to answer 200 with a one-paragraph
+    // placeholder in the `content` field — the same field a generated IND
+    // section arrives in. Anything downstream that persists or assembles this
+    // response (the editor, a package build) would file that placeholder as
+    // IND section content, and `status: 'scaffold'` is a flag every one of
+    // those consumers has to remember to check. A section that was not
+    // generated is reported as not generated.
+    console.error('[knowledge-base] IND section generation unavailable:', err?.message);
+    res.status(503).json({
+      error: 'IND section generation is unavailable',
+      code: 'IND_SECTION_GENERATION_UNAVAILABLE',
+      message:
+        'The generation service is unreachable, so no section content was produced. Author the section in the Document Editor or retry once the service is available.',
+      section_code: req.body?.section_code ?? null,
     });
   }
 });

@@ -27,7 +27,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', () => ({ apiRequest }));
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+}));
 
 import { SubmissionCenter } from '../surfaces/SubmissionCenter';
 
@@ -183,7 +186,7 @@ describe('SubmissionCenter — honest error state', () => {
 
     expect(await screen.findByText("Couldn't load the submissions")).toBeTruthy();
     // The error-toned honest panel, not a table and not a fixture.
-    expect(document.querySelector('.c2c-empty-state.tone-error')).toBeTruthy();
+    expect(document.querySelector('.c2c-error-state')).toBeTruthy();
     expect(document.querySelector('.ub-inv')).toBeNull();
     expectNoFixtureArtifacts();
   });

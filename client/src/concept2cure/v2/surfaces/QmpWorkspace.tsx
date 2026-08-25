@@ -16,14 +16,16 @@
  * an honest error — never a fixture. Create/activate are real awaited writes
  * that adopt the server's returned row and refetch; nothing is fabricated.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 interface Plan { id: number; name: string; version: string | null; status: string | null; description: string | null; }
 interface Dashboard {
@@ -34,16 +36,6 @@ interface Dashboard {
   riskProfile: { highRiskPercentage: number; mediumRiskPercentage: number; lowRiskPercentage: number };
 }
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const t = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fire = useCallback((m: string) => { setMsg(m); if (t.current) clearTimeout(t.current); t.current = setTimeout(() => setMsg(''), 4200); }, []);
-  return [msg, fire];
-}
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
-}
 /** Reads the RAW body (QMP endpoints are not {data}-wrapped); never throws. */
 async function rawJson<T = any>(method: 'GET' | 'POST' | 'PATCH', path: string, body?: unknown): Promise<{ ok: boolean; status: number; body: T | null }> {
   try {
@@ -70,7 +62,12 @@ const CREATE_FORM: C2CFormConfig = {
   ],
 };
 
-export function QmpWorkspace(_props: SurfaceViewProps) {
+export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
+  /* AnA on this surface. It took SurfaceViewProps and discarded the whole
+     object as `_props`, so a quality lead looking at a gate-level breakdown and
+     a risk profile had no way to ask what any of it meant — on the screen that
+     decides what every other document is validated against. */
+  const ask = onAsk;
   const [plans, setPlans] = useState<Plan[]>([]);
   const [listState, setListState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [active, setActive] = useState<number | null>(null);
@@ -105,7 +102,7 @@ export function QmpWorkspace(_props: SurfaceViewProps) {
     const { ok, status, body } = await rawJson<Plan>('POST', '/api/quality/plans', {
       name: v.name, version: v.version || '1.0', status: v.status || 'draft', description: v.description || undefined,
     });
-    if (!ok || !body?.id) { fireToast(status === 400 ? 'Couldn’t create the plan — check the name (3–100 chars).' : `Couldn’t create the plan (HTTP ${status}).`); return; }
+    if (!ok || !body?.id) { fireToast(status === 400 ? 'Couldn’t create the plan — check the name (3–100 chars).' : `Couldn’t create the plan (HTTP ${status}).`, 'error'); return; }
     setCreating(false);
     fireToast('Quality-management plan created · ' + body.name);
     setPlans((ps) => [body, ...ps.filter((p) => p.id !== body.id)]);
@@ -114,22 +111,79 @@ export function QmpWorkspace(_props: SurfaceViewProps) {
 
   const activate = useCallback(async (id: number) => {
     const { ok, status, body } = await rawJson<Plan>('PATCH', `/api/quality/plans/${id}`, { status: 'active' });
-    if (!ok || !body) { fireToast(`Couldn’t activate the plan (HTTP ${status}).`); return; }
+    if (!ok || !body) { fireToast(`Couldn’t activate the plan (HTTP ${status}).`, 'error'); return; }
     fireToast('Plan activated · ' + (body.name ?? id));
     setPlans((ps) => ps.map((p) => (p.id === id ? { ...p, ...body } : p)));
     if (active === id) void loadDashboard(id);
   }, [active, loadDashboard, fireToast]);
+
+  /* WHAT ANA SEES HERE. A QMP defines the gates every other document is
+     validated against, so the payload carries the gate-level split and the risk
+     profile rather than just a plan name — "why did my document fail a hard
+     gate" is answered from this screen's numbers, not from the document's.
+
+     dashState travels separately from the plan list because the dashboard has
+     its own failure: a freshly created plan with no sections yet lands in
+     `error` by design (the loader requires the full shape before rendering).
+     Publishing that as "no sections" would state a fact the surface itself
+     refuses to state. */
+  const activePlan = plans.find((p) => p.id === active) ?? null;
+  const anaContext = useMemo(
+    () => ({
+      summary: listState === 'loading'
+        ? 'Quality management plans, still loading.'
+        : listState === 'error'
+          ? 'Quality management plans could not be loaded — unavailable, not empty.'
+          : plans.length === 0
+            ? 'Quality management: no quality plans defined yet for this organization.'
+            : `Quality management: ${plans.length} plan(s)` +
+              (activePlan ? `, "${activePlan.name}" (v${activePlan.version ?? '—'}, ${activePlan.status ?? 'no status'}) selected` : '') +
+              (dash ? `; ${dash.overallCompleteness}% complete across ${dash.sections.totalSections} section(s).` : '.'),
+      facts: {
+        plansState: listState,
+        planCount: plans.length,
+        activePlanCount: plans.filter((p) => String(p.status ?? '').toLowerCase() === 'active').length,
+        ...(activePlan
+          ? { selectedPlanId: activePlan.id, selectedPlanName: activePlan.name, selectedPlanVersion: activePlan.version, selectedPlanStatus: activePlan.status }
+          : {}),
+        dashboardState: dashState,
+        ...(dash
+          ? {
+              overallCompletenessPct: dash.overallCompleteness,
+              totalSections: dash.sections.totalSections,
+              sectionsByGateLevel: dash.sections.sectionsByGateLevel,
+              sectionsAllowingOverride: dash.sections.sectionsAllowingOverride,
+              totalFactors: dash.factors.totalFactors,
+              factorsByRiskLevel: dash.factors.factorsByRiskLevel,
+              requiredFactors: dash.factors.requiredFactors,
+              riskProfile: dash.riskProfile,
+            }
+          : {}),
+      },
+      availableActions: [
+        'Explain what a hard, soft and info gate each enforce',
+        'Explain this plan\'s risk profile and which factors drive it',
+        'Explain what activating this plan changes for documents in flight',
+        'Create a quality-management plan',
+      ],
+    }),
+    [listState, plans, activePlan, dashState, dash],
+  );
+  usePublishSurfaceContext('qmp', anaContext);
 
   return (
     <div className="cm-body">
       <div className="pj-card">
         <div className="pj-card-h">
           <span className="t">Quality management plans</span>
-          <button className="nda-open" onClick={() => setCreating(true)}>{I.plus} New plan</button>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {ask && <button className="reg-cta" onClick={() => ask('Explain what this quality-management plan enforces: what a hard, soft and info gate each block, which risk factors are required, and what changes for documents already in flight if I activate it. Say which figures are unavailable rather than assuming zero.')}>{I.sparkles} Explain this plan</button>}
+            <button className="nda-open" onClick={() => setCreating(true)}>{I.plus} New plan</button>
+          </span>
         </div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {listState === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading quality plans…" /></div>
-            : listState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load quality plans" hint="GET /api/quality/plans didn’t respond. Sign in to your tenant and retry." /></div>
+            : listState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load quality plans" hint="The quality-plan register didn’t respond. Sign in to your tenant and retry." /></div>
             : plans.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No quality plans yet" hint="Create a quality-management plan to define the gate levels and risk factors your documents are validated against." /></div>
             : <table className="reg-tbl"><thead><tr><th>Plan</th><th>Version</th><th>Status</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
               <tbody>{plans.map((p) => (
@@ -150,7 +204,7 @@ export function QmpWorkspace(_props: SurfaceViewProps) {
           <div className="pj-card-h"><span className="t">Plan dashboard</span>{dash && <span className={'rd-chip tone-' + (dash.overallCompleteness >= 80 ? 'ok' : 'warn')}>{dash.overallCompleteness}% complete</span>}</div>
           <div className="pj-card-b">
             {dashState === 'loading' ? <EmptyState icon={I.layers} title="Loading dashboard…" />
-              : dashState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the plan dashboard" hint="GET /api/quality/dashboard/:id didn’t respond." />
+              : dashState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the plan dashboard" hint="The plan dashboard didn’t respond." />
               : !dash ? <EmptyState icon={I.layers} title="No dashboard" hint="Select a plan to see its completeness, section gate levels, and factor risk profile." />
               : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 16 }}>

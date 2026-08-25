@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import { useLiveRows, useLiveData, EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   // Canonical reference config (kept — not fixture DATA): the node-type display
@@ -14,6 +15,7 @@ import {
   type LineageChain,
 } from '../fixtures/decision-lineage-data';
 import '../styles/project-home-v2.css';
+import { downloadBlob } from '../download';
 
 /* ── Helpers ── */
 
@@ -98,18 +100,18 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
         b: (
           <>
             If an inspector asks &quot;how did this document come to say what it says?&quot;, this is
-            the answer -- traceable back to the locked source evidence, with the electronic signature
+            the answer — traceable back to the locked source evidence, with the electronic signature
             manifestation attached. The chain is cryptographically verified.
           </>
         ),
-        re: 'Nothing here was reconstructed after the fact -- each record was written when the action happened and cannot be altered without breaking the chain.',
+        re: 'Nothing here was reconstructed after the fact — each record was written when the action happened and cannot be altered without breaking the chain.',
       }
     : pendingSig
       ? {
           tone: 'calm' as const,
           h: (
             <>
-              The trail is clean and complete -- it just needs the final signature.{' '}
+              The trail is clean and complete — it just needs the final signature.{' '}
               {md.totalDecisions} decision{md.totalDecisions === 1 ? '' : 's'} recorded, the last
               is <b>approved, pending electronic signature</b>.
             </>
@@ -120,13 +122,13 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
               (§11.50) closes the loop and locks the record. I can route it to the signer.
             </>
           ),
-          re: 'The revision that reviewer requested is captured in the trail too -- better the reviewer sees you addressed it than wonders if you did.',
+          re: 'The revision that reviewer requested is captured in the trail too — better the reviewer sees you addressed it than wonders if you did.',
         }
       : {
           tone: 'calm' as const,
           h: (
             <>
-              This artifact is still moving through review -- the decision trail is <b>open</b> at
+              This artifact is still moving through review — the decision trail is <b>open</b> at
               &quot;{dlActionLabel(lastNode.action)}&quot;.
             </>
           ),
@@ -137,7 +139,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
               decisions will extend this same immutable chain.
             </>
           ),
-          re: "Nothing is lost while it's in flight -- the trail captures every handoff, including the delegation, so accountability is never ambiguous.",
+          re: "Nothing is lost while it's in flight — the trail captures every handoff, including the delegation, so accountability is never ambiguous.",
         };
 
   // exportOne — REAL, awaited export. Streams the immutable lineage from
@@ -158,27 +160,77 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
       const res = await apiRequest('GET', url);
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-        setExportErr((j && (j.error || j.message)) || ('Export failed (HTTP ' + res.status + ').'));
+        // `j.error` was read before `j.message`, so an envelope shaped
+        // { error: 'FORBIDDEN', message: '<a real sentence>' } showed the enum
+        // token. serverMessage reads the sentence first and rejects codes and
+        // infrastructure text outright.
+        setExportErr(serverMessage(j) ?? 'Export failed (HTTP ' + res.status + ').');
         return;
       }
       const blob = await res.blob();
       const cd = res.headers.get('Content-Disposition') || '';
       const m = /filename="?([^";]+)"?/.exec(cd);
       const filename = (m && m[1]) || ('decision-lineage-' + g.rootEntityId + '.' + fmt);
-      const objUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = objUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(objUrl);
+      downloadBlob(filename, blob);
     } catch (e) {
-      setExportErr(e instanceof Error ? e.message : String(e));
+      // `String(e)` rendered anything at all — including the browser's own
+      // "Failed to fetch" and non-Error throws. Only ApiRequestError has been
+      // through the envelope reduction, so only it is shown.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      setExportErr(
+        known && (e as Error).message
+          ? (e as Error).message
+          : 'Could not reach the lineage export service. No file was produced.',
+      );
     } finally {
       setExportBusy('');
     }
   };
+
+  /* WHAT ANA SEES HERE. This is the surface that answers "when did this change,
+     who approved it, and what source does it trace back to", so the context has
+     to carry the chain verdict rather than just the trail. `chainVerified` is
+     three-valued on purpose — verified, broken, and not-yet-answered are three
+     different facts, and collapsing the third into "broken" would have AnA
+     report tampering on a slow endpoint. */
+  const anaContext = useMemo(
+    () => ({
+      summary: loading
+        ? 'Decision lineage, still loading the org\'s governed decision trails.'
+        : error
+          ? 'Decision lineage could not be loaded — the trails are unavailable, not empty.'
+          : empty
+            ? 'Decision lineage: no governed decision trails recorded for this org yet.'
+            : `Decision lineage: ${graphs.length} governed trail(s)` +
+              (g ? `, "${g.artifactLabel}" selected with ${g.nodes?.length ?? 0} node(s)` : '') + '.',
+      facts: {
+        trailsState: loading ? 'loading' : error ? 'error' : empty ? 'empty' : 'ready',
+        trailCount: graphs.length,
+        ...(g
+          ? {
+              selectedArtifact: g.artifactLabel,
+              selectedRootType: g.rootEntityType,
+              selectedRootId: g.rootEntityId,
+              nodeCount: g.nodes?.length ?? 0,
+              edgeCount: g.edges?.length ?? 0,
+            }
+          : {}),
+        // Absent is not "broken". See the comment above.
+        chainIntegrity: chainState.loading ? 'not-yet-checked' : (chain?.chainIntegrity ?? 'unavailable'),
+        ...(chain
+          ? { chainEntriesVerified: chain.entriesVerified, chainComplianceStatus: chain.complianceStatus }
+          : {}),
+      },
+      availableActions: [
+        'Explain this decision trail — what changed, when, who approved it',
+        'Trace a value back to its source document',
+        'Explain what the hash-chain verification result means',
+        'Export this lineage trail',
+      ],
+    }),
+    [loading, error, empty, graphs.length, g, chainState.loading, chain],
+  );
+  usePublishSurfaceContext('decision-lineage', anaContext);
 
   return (
     <div className="dl">
@@ -188,7 +240,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
         </div>
         <h1 className="dl-title">Decision lineage &amp; provenance</h1>
         <div className="dl-sub">
-          The immutable, Part-11 hash-chained trail behind every governed artifact -- who decided
+          The immutable, Part-11 hash-chained trail behind every governed artifact — who decided
           what, when, on what evidence.
         </div>
       </div>
@@ -261,7 +313,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
           <div className="dl-chain-hd">
             <span className="dl-chain-t">Decision trail</span>
             <span className="dl-chain-s">
-              {nodes.length} records -- read top to bottom
+              {nodes.length} records — read top to bottom
             </span>
           </div>
           <div className="dl-chain">
@@ -401,7 +453,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
                 </div>
                 <p className="dl-verify-b">
                   {(chain.entriesVerified || 0).toLocaleString()} audit entries cryptographically
-                  verified -- tamper-evident. Any alteration to a past record breaks the chain and
+                  verified — tamper-evident. Any alteration to a past record breaks the chain and
                   is detected.
                 </p>
                 <div className="dl-verify-meta">
@@ -522,7 +574,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
       )}
 
       <p className="dl-foot">
-        Lineage is sourced from the tamper-proof audit log -- records are written when the action
+        Lineage is sourced from the tamper-proof audit log — records are written when the action
         occurs and hash-chained per FDA 21 CFR Part 11 §11.10(e). The trail and its chain
         verification above are read live from this project's governed records.
       </p>

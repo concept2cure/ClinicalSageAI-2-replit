@@ -48,6 +48,7 @@
  */
 import React from 'react';
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
+import type { DriveSseEvent } from '../components/ana/useAnaChat.types';
 /*
  * The three bindings that stay static, each because splitting it would buy
  * nothing:
@@ -73,6 +74,23 @@ export interface SurfaceViewProps {
   onAsk: (text: string) => void;
   onNav: (id: string) => void;
   segment: string;
+  /**
+   * AnA Live Drive bridge, for surfaces that run their OWN useAnaChat instance
+   * (ownsConversation — e.g. ConversationThread). The shell owns the drive
+   * state machine and this hands its two ends down: `on` is the person's
+   * toggle (sent per turn as `live_drive`), `onDriveEvent` routes the turn's
+   * drive_state/drive_navigation events back into the shell's single
+   * apply/take-over reducer. Optional: a surface that ignores it simply
+   * cannot originate driving turns — the rail still can everywhere.
+   */
+  liveDrive?: {
+    on: boolean;
+    onDriveEvent: (event: DriveSseEvent) => void;
+    /** Follow-the-work: forward to `useAnaChat`'s `onArtifactSaved` so a
+     *  driven turn's persisted draft appears in front of the subscriber from
+     *  this surface's dock too, not only the shell rail. */
+    onWorkSaved?: (artifactId: string) => void;
+  };
 }
 
 /**
@@ -229,6 +247,8 @@ const Apps = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({
 const ArtifactsCenter = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.ArtifactsCenter })));
 const AuditTrail = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.AuditTrail })));
 const AdminAccess = lazySurface(() => import('./surfaces/AdminAccess').then((m) => ({ default: m.AdminAccess })));
+const MasterLicensing = lazySurface(() => import('./surfaces/MasterLicensing').then((m) => ({ default: m.MasterLicensing })));
+const AccessRequests = lazySurface(() => import('./surfaces/AccessRequests').then((m) => ({ default: m.AccessRequests })));
 const AgencyMeetings = lazySurface(() => import('./surfaces/AgencyMeetings').then((m) => ({ default: m.AgencyMeetings })));
 const AnaCommand = lazySurface(() => import('./surfaces/AnaCommand').then((m) => ({ default: m.AnaCommand })));
 const AnaMemory = lazySurface(() => import('./surfaces/AnaMemory').then((m) => ({ default: m.AnaMemory })));
@@ -244,6 +264,8 @@ const Pharmacovigilance = lazySurface(() => import('./surfaces/BiopharmaSpecialt
 const PvCockpit = lazySurface(() => import('./surfaces/PvCockpit').then((m) => ({ default: m.PvCockpit })));
 const Biostatistics = lazySurface(() => import('./surfaces/Biostatistics').then((m) => ({ default: m.Biostatistics })));
 const BiostatWorkbench = lazySurface(() => import('./surfaces/BiostatWorkbench').then((m) => ({ default: m.BiostatWorkbench })));
+const MissionControl = lazySurface(() => import('./surfaces/MissionControl').then((m) => ({ default: m.MissionControl })));
+const FilingStrategy = lazySurface(() => import('./surfaces/FilingStrategy').then((m) => ({ default: m.FilingStrategy })));
 const ChangeAssessment = lazySurface(() => import('./surfaces/ChangeAssessment').then((m) => ({ default: m.ChangeAssessment })));
 const ClinicalOps = lazySurface(() => import('./surfaces/ClinicalOps').then((m) => ({ default: m.ClinicalOps })));
 const ClientPortal = lazyOwnedSurface(() => import('./surfaces/ClientPortal').then((m) => ({ default: m.ClientPortal })));
@@ -332,6 +354,12 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   // single-column fallback and `.adm-access{min-width:0}` — so the rail is the
   // right home, not a compromise.
   'admin-console': { component: AdminAccess, full: true },
+  // Platform-owner licensing control. Deliberately NOT seeded into
+  // available_modules — the surface that EDITS entitlements must never itself
+  // be lockable, or a mis-set tier could strand the owner outside the only
+  // place the tier can be un-set.
+  'master-licensing': { component: MasterLicensing, full: true },
+  'access-requests': { component: AccessRequests },
   'agency-meetings': { component: AgencyMeetings },
   'ana-command': { component: AnaCommand },
   'ana-memory': { component: AnaMemory },
@@ -342,6 +370,8 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'batch-draft': { component: BatchDraft, full: true },
   biostatistics: { component: Biostatistics },
   'biostat-workbench': { component: BiostatWorkbench },
+  'mission-control': { component: MissionControl },
+  'filing-strategy': { component: FilingStrategy },
   'change-assessment': { component: ChangeAssessment },
   'clinical-ops': { component: ClinicalOps },
   // External client portal — full-page read-only view (no internal AnA rail).
@@ -477,7 +507,17 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'precedent-intelligence': { component: PrecedentEngine },
   'program-journey': { component: BiopharmaJourney },
   'project-home': { component: ProjectHome, full: true },
-  projects: { component: Projects },
+  /* Full-width, like every other workspace-level surface.
+     `.page-inner` caps content at 1160px — a reading measure, right for a
+     document or a narrative surface and wrong for this one. Projects is the
+     workspace index: a stat row and a table of every programme in the org, both
+     of which are columns-across-the-screen content. On any monitor wider than
+     ~1300px it rendered as a narrow strip down the middle of an empty page,
+     while `project-home` — the screen you reach by clicking a row IN this table
+     — was already full-bleed. Two adjacent screens in one journey disagreeing
+     about the page width is what made this read as broken rather than as a
+     choice. */
+  projects: { component: Projects, full: true },
   // NO `ownsConversation`. Unlike the authoring editor this is a two-track
   // grid — `.pd-grid{268px 1fr}` — whose work column sets `overflow-y:auto`,
   // which zeroes its automatic minimum size, and whose panes are capped at

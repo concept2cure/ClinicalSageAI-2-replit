@@ -26,6 +26,30 @@ const { mockGovernedConsequence } = vi.hoisted(() => ({
   })),
 }));
 
+// The route proves a caller-supplied numeric `projectId` belongs to the
+// caller's org before it can anchor an artifact-registry placement, and does so
+// through the request-scoped client. These tests invoke the handler directly, so
+// the middleware that normally establishes that client never runs — mock it, the
+// way every sibling route test and both golden journeys do.
+//
+// `mockOwnedProjectRows` is what that ownership lookup returns. The default is
+// the in-org project the fixtures name (101); a test can return [] to exercise
+// the refusal. Withholding the client entirely is NOT the interesting case: the
+// route already refuses then, which is the correct direction but tells us
+// nothing about the guard.
+const { fakeDb, mockOwnedProjectRows } = vi.hoisted(() => {
+  const mockOwnedProjectRows = vi.fn<[], unknown[]>(() => [{ id: 101 }]);
+  const fakeDb = {
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn(() => ({ limit: vi.fn(async () => mockOwnedProjectRows()) })),
+      })),
+    })),
+  } as any;
+  return { fakeDb, mockOwnedProjectRows };
+});
+vi.mock('../../server/db/requestDb', () => ({ requestDb: () => fakeDb }));
+
 vi.mock('../../server/export/renderers', () => ({
   renderPdfBuffersFor510k: vi.fn(async () => ({
     coverLetter: Buffer.from('cover'),
@@ -70,13 +94,6 @@ vi.mock('../../server/auth', () => ({
   authMiddleware: (_req: any, _res: any, next: any) => next(),
 }));
 
-vi.mock('../../server/services/mockVault', () => ({
-  mockVault: {
-    getMockEditorJson: vi.fn(() => ({ type: 'doc', content: [] })),
-    list: vi.fn(() => []),
-  },
-}));
-
 vi.mock('../../server/services/export/governedExportConsequence', () => ({
   createGovernedExportConsequence: mockGovernedConsequence,
 }));
@@ -118,6 +135,27 @@ describe('CERV2 export governance gate', () => {
     } else {
       process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW = originalGate;
     }
+  });
+
+  it('refuses a projectId that is not in the caller org, and registers nothing', async () => {
+    // The tenant guard on the numeric projectId. It is asserted HERE as well as
+    // in the CER golden journey because the mock above is what lets the other
+    // tests in this file reach the governed path at all — without this, making
+    // the fixture realistic could quietly disable the check it enables.
+    mockOwnedProjectRows.mockReturnValueOnce([]);
+
+    const req = createMockRequest({ body: baseBody() }) as any;
+    req.userRole = 'editor';
+    req.userId = 44;
+    req.header = (name: string) => (name === 'x-organization-id' ? '1' : undefined);
+    const res = createMockResponse();
+
+    await getHandler('/pdf')(req, res);
+
+    // 404, not 403: it must not distinguish "not yours" from "does not exist".
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(mockGovernedConsequence).not.toHaveBeenCalled();
+    expect(mockPdf).not.toHaveBeenCalled();
   });
 
   it('returns 403 when strict mode is enabled and governance approval is missing', async () => {

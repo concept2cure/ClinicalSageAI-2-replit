@@ -139,6 +139,23 @@ export interface FactSourceTrace {
   establishingSource: TracedSource | null;
   /** Every location that cites the value, each resolved back to its source. */
   citations: TracedCitation[];
+  /**
+   * Claim ids this fact referenced that the claim store did not return.
+   *
+   * A trace with nulls everywhere reads as "this value has no evidence". That
+   * is only one of the reasons it can happen — the others are that the claim
+   * was deleted, belongs to another tenant, or that the claim store holds
+   * nothing at all, which is currently true of `evidence_claims`: it has no
+   * writer anywhere in the repository (GA ledger L22). Those are different
+   * answers and a reviewer is entitled to know which one they got.
+   *
+   * Empty means every referenced claim resolved. Non-empty means the trail is
+   * broken, not absent.
+   */
+  unresolvedClaimIds: number[];
+  /** True when the fact referenced claims and NONE of them resolved — the
+   *  signature of an unpopulated claim store rather than an unsupported fact. */
+  claimStoreUnavailable: boolean;
 }
 
 export interface TraceFailure {
@@ -183,6 +200,11 @@ export async function traceFactToSource(
     };
   });
 
+  /* Referenced-but-missing claims. Computed rather than inferred from the
+     nulls above, because "no claims referenced" and "every referenced claim
+     missing" produce identical nulls and mean opposite things. */
+  const unresolvedClaimIds = claimIds.filter((id) => !claims.has(id));
+
   return {
     ok: true,
     fact,
@@ -190,6 +212,8 @@ export async function traceFactToSource(
     establishingSource:
       establishing.sourceId !== null ? (sources.get(establishing.sourceId) ?? null) : null,
     citations,
+    unresolvedClaimIds,
+    claimStoreUnavailable: claimIds.length > 0 && claims.size === 0,
   };
 }
 

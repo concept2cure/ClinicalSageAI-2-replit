@@ -23,52 +23,52 @@ npm run db:seed                           # scripts/seed-ga-demo.mjs
 npm run dev                               # tsx server/index.ts (ESM-clean on Node 20/22)
 ```
 
-Sign-in (printed by the seeder): `jm.smith@concept2cure.pro` / `pass-word`,
+Sign-in (printed by the seeder): `jonmichaelpsmith@gmail.com` / `demo123`,
 plus six role-scoped team members (`…@concept2cure.pro` / `demo-2026`).
 Rotate these before any shared or externally reachable deployment.
 
 ## 2. What testers should see — live surfaces (seeded)
 
-| Area | Surfaces | Backed by |
-|---|---|---|
-| Projects & portfolio | Projects list, project detail | `regulatory_programs` (5–7 programs) |
-| Risk (standalone module) | Overview, Register, Matrix, Controls | 9 risk items + 14 controls |
-| Tasks & approvals | Tasking board/list, Approvals, Review queue | 12 unified tasks; approval-workflow chain |
-| Audit & compliance | Communication audit timeline; Dispatch readiness gate | 12 governed-action events; real dispatch-gate engine |
-| Submission | Overview, Transmittals (+findings) | 8 transmittals, 9 findings |
-| Device (mdx) | UDI, Postmarket (vigilance/CAPA), Analytics, IVD, Engineering | 8 UDI records; 8 events + 5 CAPAs; aggregate base rows |
-| Vault & memory (mdx) | Vault, AnA memory | 9 artifacts + 22 versions; 9 memory atoms |
-| Labeling | Translation board, symbols glossary | doc + 7 translations; 12 ISO 15223-1 symbols |
-| Translation module | Projects, Segment workspace, Glossary | full `/api/translation` route layer (was 404) |
-| Nonclinical | Study review board (+SEND status) | 6 studies + SEND datasets |
-| Clinical ops | Studies & enrollment board | 3 studies |
-| Biopharma | Specialty (pediatric/orphan/lifecycle), programs | dedicated stores + programs |
-| Templates | Template library | 4 templates with docTypes |
-| Training | Learning paths, certifications | 6 paths, 3 certifications |
-| Change control | Change assessment | 2 assessments (FDA/EU decision trees) |
-| Orchestration | Readiness panel, approval checkpoints | computed readiness; `approval_checkpoints` |
-| Admin | Apps (module subscriptions); Admin console access grants | live module list + toggle; audited `platform_role_grants` |
-| Post-submission | HAQ manager (rounds + questions) | `project_memory_entries` (2 letters, 8 questions) |
-| Human factors | HFE/UE file + use scenarios | `c2c_hf_files` + `c2c_hf_scenarios` (1 file, 6 scenarios) |
-| Safety / PV | SafetyNarrative SAE worklist | `c2c_sae_cases` (3 cases; ICH E3 §16 composer client-side) |
-| NDA cockpit | CTD module readiness + overall % | `c2c_nda_modules` (5 modules, 80% ready) |
-| Evidence | Saved evidence-ask (answer + chunks) | `c2c_evidence_asks` (1 ask, 3 chunks) |
-| Document lifecycle | DocJourney stage rail | `c2c_doc_journeys` (9 stages) |
-| Agency interactions | Agency meetings + briefing books/minutes | `c2c_agency_meetings` (4 meetings) |
-| Device design | Design controls (820.30 traceability) | `c2c_design_controls` (7 inputs) |
-| CRO | Sponsor portfolio roster | `c2c_cro_portfolio` (5 sponsors) |
-| Evidence pool | pdev EvidencePicker | `c2c_evidence_objects` (11 objects) |
-| Biostatistics | SAP / sample-size / interims sections | `c2c_biostat_*` |
-| Reg intelligence | Reg-change horizon scan | `c2c_reg_changes` (5 change records) |
-| Governance | Decision lineage trails | `c2c_decision_lineage` (3 governed-artifact trails) |
-| Dossier | CTD module map (completeness/readiness) | `c2c_dossier_map` (5 modules) |
-| IND | IND lifecycle checklist (forms + eCTD sections) | `c2c_ind_checklist` (BX-301 IND: 3 forms, 17 sections) |
-| Program | Program journey (stage overlay + clock) | `c2c_program_journey` (BX-204) |
-| Market access | Payer coverage / value dossier / coding | `c2c_market_access` (BX-204) |
-| Shadow review | Refuse-to-File findings by reviewer lens | `c2c_shadow_review` (5 lenses, 14 findings) |
-| Labeling | USPI section worklist + agency negotiation | `c2c_labeling_pi` (18 sections) |
-| Protocol dev | Protocol section tree / SoA / risk register | `c2c_protocol_dev` (SELVO-DLBCL-201) |
-| Research admin | CITI training matrix | `research_personnel` + `personnel_training` (6 personnel; matrix derived live from real dates) |
+| Area                     | Surfaces                                                      | Backed by                                                                                      |
+| ------------------------ | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Projects & portfolio     | Projects list, project detail                                 | `regulatory_programs` (5–7 programs)                                                           |
+| Risk (standalone module) | Overview, Register, Matrix, Controls                          | 9 risk items + 14 controls                                                                     |
+| Tasks & approvals        | Tasking board/list, Approvals, Review queue                   | 12 unified tasks; approval-workflow chain                                                      |
+| Audit & compliance       | Communication audit timeline; Dispatch readiness gate         | 12 governed-action events; real dispatch-gate engine                                           |
+| Submission               | Overview, Transmittals (+findings)                            | 8 transmittals, 9 findings                                                                     |
+| Device (mdx)             | UDI, Postmarket (vigilance/CAPA), Analytics, IVD, Engineering | 8 UDI records; 8 events + 5 CAPAs; aggregate base rows                                         |
+| Vault & memory (mdx)     | Vault, AnA memory                                             | 9 artifacts + 22 versions; 9 memory atoms                                                      |
+| Labeling                 | Translation board, symbols glossary                           | doc + 7 translations; 12 ISO 15223-1 symbols                                                   |
+| Translation module       | Projects, Segment workspace, Glossary                         | full `/api/translation` route layer (was 404)                                                  |
+| Nonclinical              | Study review board (+SEND status)                             | 6 studies + SEND datasets                                                                      |
+| Clinical ops             | Studies & enrollment board                                    | 3 studies                                                                                      |
+| Biopharma                | Specialty (pediatric/orphan/lifecycle), programs              | dedicated stores + programs                                                                    |
+| Templates                | Template library                                              | 4 templates with docTypes                                                                      |
+| Training                 | Learning paths, certifications                                | 6 paths, 3 certifications                                                                      |
+| Change control           | Change assessment                                             | 2 assessments (FDA/EU decision trees)                                                          |
+| Orchestration            | Readiness panel, approval checkpoints                         | computed readiness; `approval_checkpoints`                                                     |
+| Admin                    | Apps (module subscriptions); Admin console access grants      | live module list + toggle; audited `platform_role_grants`                                      |
+| Post-submission          | HAQ manager (rounds + questions)                              | `project_memory_entries` (2 letters, 8 questions)                                              |
+| Human factors            | HFE/UE file + use scenarios                                   | `c2c_hf_files` + `c2c_hf_scenarios` (1 file, 6 scenarios)                                      |
+| Safety / PV              | SafetyNarrative SAE worklist                                  | `c2c_sae_cases` (3 cases; ICH E3 §16 composer client-side)                                     |
+| NDA cockpit              | CTD module readiness + overall %                              | `c2c_nda_modules` (5 modules, 80% ready)                                                       |
+| Evidence                 | Saved evidence-ask (answer + chunks)                          | `c2c_evidence_asks` (1 ask, 3 chunks)                                                          |
+| Document lifecycle       | DocJourney stage rail                                         | `c2c_doc_journeys` (9 stages)                                                                  |
+| Agency interactions      | Agency meetings + briefing books/minutes                      | `c2c_agency_meetings` (4 meetings)                                                             |
+| Device design            | Design controls (820.30 traceability)                         | `c2c_design_controls` (7 inputs)                                                               |
+| CRO                      | Sponsor portfolio roster                                      | `c2c_cro_portfolio` (5 sponsors)                                                               |
+| Evidence pool            | pdev EvidencePicker                                           | `c2c_evidence_objects` (11 objects)                                                            |
+| Biostatistics            | SAP / sample-size / interims sections                         | `c2c_biostat_*`                                                                                |
+| Reg intelligence         | Reg-change horizon scan                                       | `c2c_reg_changes` (5 change records)                                                           |
+| Governance               | Decision lineage trails                                       | `c2c_decision_lineage` (3 governed-artifact trails)                                            |
+| Dossier                  | CTD module map (completeness/readiness)                       | `c2c_dossier_map` (5 modules)                                                                  |
+| IND                      | IND lifecycle checklist (forms + eCTD sections)               | `c2c_ind_checklist` (BX-301 IND: 3 forms, 17 sections)                                         |
+| Program                  | Program journey (stage overlay + clock)                       | `c2c_program_journey` (BX-204)                                                                 |
+| Market access            | Payer coverage / value dossier / coding                       | `c2c_market_access` (BX-204)                                                                   |
+| Shadow review            | Refuse-to-File findings by reviewer lens                      | `c2c_shadow_review` (5 lenses, 14 findings)                                                    |
+| Labeling                 | USPI section worklist + agency negotiation                    | `c2c_labeling_pi` (18 sections)                                                                |
+| Protocol dev             | Protocol section tree / SoA / risk register                   | `c2c_protocol_dev` (SELVO-DLBCL-201)                                                           |
+| Research admin           | CITI training matrix                                          | `research_personnel` + `personnel_training` (6 personnel; matrix derived live from real dates) |
 
 Each Wave-2/3 surface adopts live data only when the store returns its full
 display shape, else fails closed to the codebase fixture with a "Sample data"
@@ -87,9 +87,10 @@ from the v2 display fixture, so `useLiveList`'s structural guard rejected the
 response and the panel stayed on its "Sample data" fixture. Each now adopts
 live through a pure, unit-tested, fail-closed adapter (the Orchestration
 mapping pattern):
+
 - **Risk** — `mapRiskItems` (org-wide `risk_items`).
 - **Labeling translations** — document-id discovery via `GET /api/mdx/labeling`
-  + `mapLabelTranslations` (language name via `Intl.DisplayNames`).
+  - `mapLabelTranslations` (language name via `Intl.DisplayNames`).
 - **RBM site-risk** — `GET /api/mdx/rbm-site-risk` now takes an optional
   `program_id` (org-wide when omitted, so no UUID handle to discover) and
   LEFT JOINs `site_intel.sites` for the site country; the board adopts via

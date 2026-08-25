@@ -10,44 +10,69 @@ import { createHash } from 'crypto';
 
 import type { RenderedReport } from '../render/types';
 import type { ProvenanceAtom, SealedRecord } from './types';
+import {
+  CANON_VERSION_CURRENT,
+  canonicalAsSealed,
+  readCanonVersion,
+} from '../../../../shared/versioned-digest.js';
 
 /**
- * Recursively produce a stable JSON string for an arbitrary value: object keys
- * are sorted at every level so logically-equal values serialize identically
- * regardless of key insertion order. Array element order is preserved.
+ * The version-1 canonicalizer, frozen.
+ *
+ * Every report sealed before `canonVersion` existed was hashed with exactly
+ * this function, so it must keep reproducing that string. Its job is fidelity
+ * to what was sealed, not correctness — do not "improve" it. New seals use
+ * `shared/canonical-json.ts` via {@link canonicalizeReport}. Ledger L46.
  */
-function stableStringify(value: unknown): string {
+function legacyCanonicalizeV1(value: unknown): string {
   if (value === null || typeof value !== 'object') {
     return JSON.stringify(value) ?? 'null';
   }
 
   if (Array.isArray(value)) {
-    return `[${value.map((item) => stableStringify(item)).join(',')}]`;
+    return `[${value.map((item) => legacyCanonicalizeV1(item)).join(',')}]`;
   }
 
   const obj = value as Record<string, unknown>;
   const keys = Object.keys(obj).sort();
   const entries = keys
-    // Mirror JSON.stringify: drop keys whose values serialize to undefined.
-    .filter((key) => stableStringify(obj[key]) !== undefined && obj[key] !== undefined)
-    .map((key) => `${JSON.stringify(key)}:${stableStringify(obj[key])}`);
+    // Dead half: legacyCanonicalizeV1 never returns undefined, so the first
+    // clause is always true. Preserved verbatim — a frozen serializer must
+    // reproduce what it sealed, and simplifying it risks changing a digest.
+    .filter((key) => legacyCanonicalizeV1(obj[key]) !== undefined && obj[key] !== undefined)
+    .map((key) => `${JSON.stringify(key)}:${legacyCanonicalizeV1(obj[key])}`);
   return `{${entries.join(',')}}`;
 }
 
 /**
- * Canonicalize a rendered report into a deterministic JSON string with
- * recursively sorted object keys, so logically-equal reports canonicalize
- * (and therefore hash) identically regardless of key order.
+ * Canonicalize a rendered report deterministically, at a given seal generation.
+ *
+ * Defaults to the current generation, so a caller sealing a new report gets the
+ * shared canonicalizer without having to know this parameter exists.
+ *
+ * A caller VERIFYING an existing seal must pass the generation that sealed it,
+ * normalized through `readCanonVersion` FIRST. Passing `record.canonVersion`
+ * straight through is a trap: a legacy record has no such field, the value is
+ * `undefined`, and a default parameter fires on `undefined` — so the record
+ * would be verified with the current serializer, which is precisely the failure
+ * this mechanism exists to prevent. `verifySeal` below normalizes.
  */
-export function canonicalizeReport(report: RenderedReport): string {
-  return stableStringify(report);
+export function canonicalizeReport(
+  report: RenderedReport,
+  canonVersion: unknown = CANON_VERSION_CURRENT,
+): string {
+  return canonicalAsSealed(report, canonVersion, legacyCanonicalizeV1);
 }
 
 /**
- * Compute the hex-encoded SHA-256 content hash of a rendered report.
+ * Compute the hex-encoded SHA-256 content hash of a rendered report, at a given
+ * seal generation.
  */
-export function computeContentHash(report: RenderedReport): string {
-  return createHash('sha256').update(canonicalizeReport(report)).digest('hex');
+export function computeContentHash(
+  report: RenderedReport,
+  canonVersion: unknown = CANON_VERSION_CURRENT,
+): string {
+  return createHash('sha256').update(canonicalizeReport(report, canonVersion)).digest('hex');
 }
 
 /**
@@ -108,6 +133,7 @@ export function buildSealedRecord(report: RenderedReport, sealedAt?: string): Se
   const atoms = extractProvenanceAtoms(report);
   return {
     algorithm: 'sha256',
+    canonVersion: CANON_VERSION_CURRENT,
     contentHash: computeContentHash(report),
     atoms,
     atomCount: atoms.length,
@@ -125,7 +151,10 @@ export function verifySeal(
   report: RenderedReport,
   record: SealedRecord,
 ): { ok: boolean; reason?: string } {
-  const contentHash = computeContentHash(report);
+  // Verify with the serializer that sealed this record, not the current one.
+  // Normalized before the call: `undefined` would otherwise trigger the default
+  // parameter and silently verify a legacy seal as if it were current.
+  const contentHash = computeContentHash(report, readCanonVersion(record.canonVersion));
   if (contentHash !== record.contentHash) {
     return {
       ok: false,

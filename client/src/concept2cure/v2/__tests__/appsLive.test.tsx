@@ -18,8 +18,12 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', () => ({ apiRequest }));
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+}));
 
+import { ApiRequestError } from '@/lib/queryClient';
 import { Apps } from '../surfaces/AdminSurfaces';
 
 const SURFACE: UiSurface = {
@@ -83,11 +87,29 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
     expect(screen.getByText('Insight Synthesis')).toBeTruthy();
     expect(screen.getByText('Authoring')).toBeTruthy();
     expect(screen.getByText('Intelligence')).toBeTruthy();
-    // tier chips: within-plan → its lowest tier; out-of-plan → Add-on (upgrade
-    // path). 'Professional' appears twice: the plan band + the module chip.
+    /* Tier chips state the PACKAGING BAND — the lowest plan that includes the
+       module — for every row, whether or not this org has reached it.
+       'Professional' appears twice: the plan band and the cmc-wizard chip.
+
+       This assertion used to require the literal string 'Add-on' for the
+       out-of-plan row, and that was pinning a defect rather than a contract.
+       `liveTierLabel` mapped `!isAvailable` to 'Add-on' BEFORE consulting
+       `requiredTier`, which threw away the one number a customer actually needs
+       — which plan do I need? — and said the same purchasable-sounding word for
+       a module withheld by INDUSTRY MODE, which no plan on the price list will
+       ever unlock. insight-synthesis requires enterprise, so the chip says so.
+       WHY it is unavailable is now the lock's job, asserted separately. */
     expect(screen.getAllByText('Professional')).toHaveLength(2);
-    expect(screen.getByText('Add-on')).toBeTruthy();
-    expect(screen.getByText('Upgrade plan')).toBeTruthy();
+    // insight-synthesis is above this org's plan, so the chip carries the lock's
+    // own sentence — which names the plan that WOULD include it.
+    expect(screen.getByText(/Included from Enterprise/)).toBeTruthy();
+    expect(screen.queryByText('Add-on')).toBeNull();
+    /* The CTA is the shell's own words now, not a second string for the same
+       step. It was 'Upgrade plan'; it is 'View plans', which is what
+       lockNotice's tier branch offers everywhere else — and the more honest of
+       the two, since pressing it shows you plans rather than committing you to
+       one. One vocabulary across the rail, the palette and this catalog. */
+    expect(screen.getByText('View plans')).toBeTruthy();
     // live quota numbers
     expect(screen.getByText('14 / 25')).toBeTruthy();
     expect(screen.getByText('38 / 50')).toBeTruthy();
@@ -109,8 +131,13 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
   });
 
   it('server rejection reverts the switch and surfaces the reason', async () => {
+    // An ApiRequestError, not a bare Error, because that is what apiRequest
+    // actually throws for a non-OK status — and the surface now renders a
+    // thrown message ONLY for that type. A bare Error here is a fetch failing
+    // ("Failed to fetch"), whose text is not user copy; simulating a server
+    // refusal with one made this test assert a path production cannot reach.
     mockLive(async () => {
-      throw new Error('Admin access required');
+      throw new ApiRequestError('Admin access required', 403, { error: 'Admin access required' });
     });
     mount();
     await screen.findByText('CMC Wizard');

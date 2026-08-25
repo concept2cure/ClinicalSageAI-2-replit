@@ -8,6 +8,7 @@
  * it directly.
  */
 import React from 'react';
+import { registerCeremonyOpen } from './ceremony';
 import { I } from './icons';
 
 export interface C2CFormFieldOption {
@@ -47,6 +48,22 @@ export interface C2CFormProps {
 
 export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
   const { eyebrow, title, sub, fields = [], submitLabel = 'Save', governed } = config;
+
+  /**
+   * Every control needs an id so its `<label>` can point at it.
+   *
+   * The labels here were plain `<label className="de-label">` wrappers with no
+   * `htmlFor`, and the inputs had no `id` and no `aria-label`. That means a
+   * screen reader announced "edit text, blank" for every field of a governed
+   * record — a scientist working this drawer non-visually could not tell the
+   * release limit from the shelf-life limit — and clicking a label did not focus
+   * its input. `useId` gives each mount a unique prefix so two drawers, or a
+   * drawer and the surface behind it, never collide on an id.
+   */
+  const uid = React.useId();
+  const fieldId = (key: string) => `${uid}-${key}`;
+  const labelId = (key: string) => `${uid}-${key}-label`;
+  const descId = (key: string) => `${uid}-${key}-desc`;
 
   const [v, setV] = React.useState<Record<string, string>>(() => {
     const o: Record<string, string> = {};
@@ -93,18 +110,25 @@ export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onCancel]);
 
+  // The ceremony channel: while this form is mounted, AnA's surface actions
+  // can refuse view changes that would disturb it (see v2/ceremony.ts).
+  React.useEffect(() => registerCeremonyOpen(), []);
+
   const renderField = (f: C2CFormField) => {
     const common = {
+      id: fieldId(f.key),
       className:
         f.type === 'textarea' ? 'de-textarea' : f.type === 'select' ? 'de-select' : 'de-input',
       value: v[f.key],
+      'aria-required': f.required || undefined,
+      'aria-describedby': f.desc ? descId(f.key) : undefined,
       onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
         set(f.key, e.target.value),
     };
 
     if (f.type === 'select') {
       return (
-        <select className="de-select" value={v[f.key]} onChange={(e) => set(f.key, e.target.value)}>
+        <select {...common} className="de-select">
           <option value="">Select…</option>
           {(f.options ?? []).map((o) => {
             const val = typeof o === 'object' ? o.value : o;
@@ -124,8 +148,13 @@ export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
       );
     }
     if (f.type === 'seg') {
+      /* A segmented control is a single choice made of buttons, so it carries
+         radiogroup semantics: the group is named by the field's label and each
+         option reports whether it is the one selected. Without `aria-checked` a
+         screen reader announces three identical buttons and never says which
+         disposition is currently chosen. */
       return (
-        <div className="de-seg">
+        <div className="de-seg" role="radiogroup" aria-labelledby={labelId(f.key)}>
           {(f.options ?? []).map((o) => {
             const val = typeof o === 'string' ? o : o.value;
             const lab = typeof o === 'string' ? o : o.label;
@@ -133,6 +162,8 @@ export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
               <button
                 key={val}
                 type="button"
+                role="radio"
+                aria-checked={v[f.key] === val}
                 className="de-seg-opt"
                 data-on={v[f.key] === val || undefined}
                 onClick={() => set(f.key, val)}
@@ -168,11 +199,20 @@ export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
         <div className="de-body">
           {fields.map((f) => (
             <div key={f.key} className={'de-field' + (f.half ? ' half' : '')}>
-              <label className="de-label">
+              {/* A seg is a radiogroup, not a labellable control, so its label
+                  is referenced by id rather than pointing at an input. The
+                  required marker is decorative — `aria-required` on the control
+                  already carries it — so it is hidden from the accessible name
+                  instead of turning every field into "Method code star". */}
+              <label
+                className="de-label"
+                id={labelId(f.key)}
+                {...(f.type === 'seg' ? {} : { htmlFor: fieldId(f.key) })}
+              >
                 {f.label}
-                {f.required && <span className="req">*</span>}
+                {f.required && <span className="req" aria-hidden="true">*</span>}
               </label>
-              {f.desc && <div className="de-desc">{f.desc}</div>}
+              {f.desc && <div className="de-desc" id={descId(f.key)}>{f.desc}</div>}
               {renderField(f)}
             </div>
           ))}

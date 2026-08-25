@@ -308,9 +308,12 @@ export const COMMAND_AUTHORIZATION: Readonly<Record<string, CommandAuthorization
     effect: 'write', object: 'document_section', minRole: 'member', requiresConfirmation: true,
   },
   'k510_workflow.preflight': { effect: 'read', object: 'k510_workflow' },
-  // Transmits to the FDA ESG. Highest-impact mutation on this surface.
+  // Transmits to the FDA ESG. Highest-impact mutation on this surface — the one
+  // action the platform cannot undo, so it carries the full Part 11 tier:
+  // reason-for-change AND a server-verified manifested e-signature.
   'k510_workflow.transmit': {
     effect: 'write', object: 'k510_workflow', minRole: 'manager', requiresConfirmation: true,
+    requiresReasonForChange: true, requiresSignature: true,
   },
   'k510_workflow.document_preview': { effect: 'read', object: 'k510_workflow' },
 
@@ -395,6 +398,60 @@ export const COMMAND_AUTHORIZATION: Readonly<Record<string, CommandAuthorization
   'audit.explain': { effect: 'read', object: 'audit_row' },
 };
 
+/**
+ * Commands AnA may PROPOSE but never EXECUTE on her own.
+ *
+ * ── Why this exists as a separate gate from the Part 11 tier ────────────────
+ * `part11Enforce` answers "must this dispatch carry a reason and a signature?"
+ * and is per-tenant, defaulting OFF. That is a reasonable rollout switch for a
+ * signature ceremony. It is NOT a reasonable answer to a different question:
+ * "may a language model take this action at all?"
+ *
+ * §11.200 requires an electronic signature to attest that a PERSON executed the
+ * action. An agent that can complete an approval, freeze a record or transmit a
+ * submission has produced an attestation about a decision no human made. That
+ * is not a configuration choice, so this gate is not configurable: it holds for
+ * every tenant, on the first deploy, with no settings row to read.
+ *
+ * ── DERIVED, not hand-listed ───────────────────────────────────────────────
+ * The membership rule is evaluated against COMMAND_AUTHORIZATION rather than
+ * typed out, so a new governed handler joins the partition the moment it is
+ * registered. A hand-maintained list is exactly the artefact that drifts, and
+ * the drift is silent — a new approve-shaped command would simply be executable
+ * by the agent and nothing would say so.
+ *
+ * A command is propose-only when it alters the official record in a way a
+ * person must own:
+ *   · requiresSignature      — the §11.200 e-signature tier;
+ *   · requiresReasonForChange — the reason-for-change tier;
+ *   · a manager-tier write carrying requiresConfirmation — the approve /
+ *     supersede class. These sit in NEITHER Part 11 set today
+ *     (section.approve, post_market.document.approve,
+ *     post_market.document.supersede), so no signature can ever be demanded of
+ *     them and their only gate is `params.confirm` — a string the MODEL writes,
+ *     which cannot distinguish a relayed human yes from the model confirming
+ *     itself. This clause is the one that closes that hole.
+ *
+ * Ordinary authoring mutations are deliberately NOT here. Creating a task or
+ * updating a draft is work, not attestation, and making AnA unable to do it
+ * would trade a real capability for no control.
+ */
+export const PROPOSE_ONLY_COMMANDS: ReadonlySet<string> = new Set(
+  Object.entries(COMMAND_AUTHORIZATION)
+    .filter(([, a]) =>
+      a.effect === 'write' &&
+      (a.requiresSignature === true ||
+        a.requiresReasonForChange === true ||
+        (a.requiresConfirmation === true && a.minRole === 'manager'))
+    )
+    .map(([name]) => name)
+);
+
+/** True when this command may only be proposed by an agent, never executed. */
+export function isProposeOnlyCommand(command: string): boolean {
+  return PROPOSE_ONLY_COMMANDS.has(command);
+}
+
 export type AuthorizationDecision = { ok: true } | { ok: false; result: CommandResult };
 
 /** Is this a positive integer id (from the verified principal)? */
@@ -431,7 +488,49 @@ export async function authorizeCommand(
     );
   }
 
-  // 2. Read-only commands stay available even when tenant governance
+  // 2. Per-tenant tool allow/deny policy (organizations.settings.anaToolPolicy),
+  //    applied to EVERY dispatched command.
+  //
+  //    Why here and not only in the MDX/PDEV path: requireGovernedToolGate() in
+  //    mdx-tool-policy.ts is reachable only from the dotted MDX/PDEV handlers, so
+  //    it covers 37 of the ~115 dispatchable commands. The remaining 78 — including
+  //    submit_document, freeze_document, sign_document, place_in_dossier,
+  //    create_submission_package and erase_personal_data — silently IGNORED an
+  //    admin `deny` entry, and a non-empty `allow` list failed to constrain them at
+  //    all, inverting a whitelist into a no-op. server/routes/ana-tool-policy.ts
+  //    accepts those command names, so that was a supported, silently-ineffective
+  //    configuration. Enforcing it here makes the tenant control mean what the admin
+  //    API says it means.
+  //
+  //    Placement is deliberate: BEFORE the read-only early return below, so a deny
+  //    also suppresses reads. Double-enforcement on the dotted commands is an
+  //    identical, idempotent deny (same error codes as mdx-tool-policy.ts) and is
+  //    harmless. Degraded mode is unchanged: when the strict policy load throws,
+  //    ctx.anaToolPolicy stays undefined and ctx.governanceUnavailable already
+  //    blocks every write.
+  const toolPolicy = ctx.anaToolPolicy;
+  if (toolPolicy) {
+    if (Array.isArray(toolPolicy.deny) && toolPolicy.deny.includes(command)) {
+      return deny(
+        command,
+        'TOOL_DENIED',
+        `'${command}' is disabled for your organization. Contact a tenant admin to enable it.`,
+      );
+    }
+    if (
+      Array.isArray(toolPolicy.allow) &&
+      toolPolicy.allow.length > 0 &&
+      !toolPolicy.allow.includes(command)
+    ) {
+      return deny(
+        command,
+        'TOOL_NOT_ALLOWED',
+        `'${command}' is not on your organization's allow-list.`,
+      );
+    }
+  }
+
+  // 3. Read-only commands stay available even when tenant governance
   //    configuration cannot be read — the documented degraded mode. They are
   //    still tenant-scoped by ctx.organizationId in every handler's SQL and by
   //    the tenant_isolation_policy RLS underneath.
@@ -451,7 +550,7 @@ export async function authorizeCommand(
 
   // ── mutation-capable from here down ────────────────────────────────────
 
-  // 3. Governance configuration could not be read at all → block the write.
+  // 4. Governance configuration could not be read at all → block the write.
   //    A settings/DB outage must not silently strip the tenant tool policy and
   //    the Part 11 gate off a regulated mutation.
   if (ctx.governanceUnavailable === true) {
@@ -463,7 +562,7 @@ export async function authorizeCommand(
     );
   }
 
-  // 4. Identity must come from the verified principal.
+  // 5. Identity must come from the verified principal.
   if (!isValidId(ctx.userId) || !isValidId(ctx.organizationId)) {
     return deny(
       command,
@@ -472,12 +571,12 @@ export async function authorizeCommand(
     );
   }
 
-  // 5. Parameter-dependent authorization is completed by the handler.
+  // 6. Parameter-dependent authorization is completed by the handler.
   if (authz.handlerAuthorized) {
     return { ok: true };
   }
 
-  // 6. Defensive: a write with no tier is unauthorizable. CI asserts this can
+  // 7. Defensive: a write with no tier is unauthorizable. CI asserts this can
   //    never happen, but never fall through to "allow".
   if (!authz.minRole) {
     return deny(

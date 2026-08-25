@@ -1,12 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { I } from '../icons';
 import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
+import { assessmentState, mayReassure } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ── Inline fixture types ── */
 
@@ -26,15 +29,6 @@ interface NdaM1Doc {
   blocker?: boolean;
   note?: string;
   _new?: boolean;
-}
-
-interface NdaClockStep {
-  id: string;
-  label: string;
-  day: string;
-  date: string;
-  st: string;
-  note?: string;
 }
 
 interface NdaRtfItem {
@@ -64,18 +58,22 @@ interface BlaAssessment {
    Refuse-to-File risk log, and the BLA 351(a) biologics assessments are all read
    fixture-free from their real, org-scoped stores (see the hooks below) — real
    data, an honest empty state, or an honest failed-load state, never a
-   fabricated stand-in. The PDUFA review-clock steps below remain the surface's
-   own local list: there is no clock store to read (nda-cockpit.routes.ts and
-   bla-workbench.ts back every other panel; neither exposes a clock). */
+   fabricated stand-in. There is NO review-clock store (nda-cockpit.routes.ts and
+   bla-workbench.ts back every other panel; neither exposes a clock), so the
+   PDUFA clock tab renders an honest "no review clock recorded" state instead of
+   the invented submission/PDUFA dates it used to hardcode. Likewise the header
+   names only the program actually open in the shell (window.C2C_PROJECT) — it
+   never invents an application number, pathway, or review designation. */
 
-const NDA_CLOCK: NdaClockStep[] = [
-  { id: 'sub', label: 'Submission received', day: 'Day 0', date: '14 Jul 2026', st: 'done' },
-  { id: 'file', label: 'Filing decision (RTF / 74-day letter)', day: 'Day 60', date: '12 Sep 2026', st: 'current', note: 'Filing review — RTF risk assessment open' },
-  { id: 'mid', label: 'Mid-cycle communication', day: '~Day 150', date: 'Dec 2026', st: 'upcoming' },
-  { id: 'late', label: 'Late-cycle meeting', day: '~Day 240', date: 'Mar 2027', st: 'upcoming' },
-  { id: 'adcom', label: 'Advisory committee (if convened)', day: '~Day 270', date: 'Apr 2027', st: 'upcoming' },
-  { id: 'goal', label: 'PDUFA goal date (action)', day: 'Day 304', date: '14 May 2027', st: 'goal' },
-];
+/** The open program's display name from the shell's runtime project channel
+ *  (window.C2C_PROJECT — the same convention every project-aware v2 surface
+ *  reads). Null when no project is open; the header then claims nothing. */
+function readProgramName(): string | null {
+  const p = (window as unknown as { C2C_PROJECT?: { title?: unknown; code?: unknown } }).C2C_PROJECT;
+  const title = typeof p?.title === 'string' && p.title.trim() ? p.title.trim() : null;
+  const code = typeof p?.code === 'string' && p.code.trim() ? p.code.trim() : null;
+  return title ?? code;
+}
 
 /* Biologics (BLA 351(a)) science-engine assessments — the biosimilar/biologic
    analytical-similarity, comparability, immunogenicity, and RTF/CRL filing-risk
@@ -103,25 +101,6 @@ const isPassingBlaVerdict = (v?: string | null): boolean => !!v && BLA_PASSING_V
 
 /* ── Inline shared kit helpers ── */
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => {
-    setMsg(m);
-    setTimeout(() => setMsg(''), 2400);
-  };
-  return [msg, fire];
-}
-
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
-    </div>
-  );
-}
-
 /* ════ NdaCockpit -- NDA / BLA filing cockpit ════ */
 
 export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
@@ -130,13 +109,15 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
   const open = (id: string) => {
     onNav && onNav(id);
   };
+  /* The open program's real name (or null) — the only identity this surface
+     may claim. */
+  const progName = readProgramName();
   /* Real rows — the org's CTD module (M1–M5) readiness, assembled from the real
      eCTD submission core (submissions where application_type IN ('nda','bla') +
      ectd_sequences + submission_leaves + coauthor_documents) by
      GET /api/nda-cockpit/modules. Fixture-free: real data, an honest empty
      state, or an honest failed-load state — never a fabricated stand-in. The
-     overall % ready is derived from the loaded rows. The M1 worklist, PDUFA
-     clock, and RtF log stay the surface's own lists. */
+     overall % ready is derived from the loaded rows. */
   const modulesLive = useLiveRows<NdaModule>('/api/nda-cockpit/modules');
   const modules = modulesLive.rows;
   const overall = modules.length
@@ -228,7 +209,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
       // Read failed (no org/session) — nothing to persist to; show it locally
       // and say so instead of faking success.
       addRtf(local());
-      fireToast('Filing risk logged · ' + v.area + ' · shown locally, not persisted');
+      fireToast('Filing risk logged · ' + v.area + ' · shown locally, not persisted', 'error');
       return;
     }
     try {
@@ -240,7 +221,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
       });
       if (!res.ok) {
         addRtf(local());
-        fireToast('Could not log filing risk · sign in required — shown locally, not persisted');
+        fireToast('Could not log filing risk · sign in required — shown locally, not persisted', 'error');
         return;
       }
       const body = await res.json().catch(() => null);
@@ -256,6 +237,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
         'Could not log filing risk · ' +
           (e instanceof Error && e.message ? e.message : 'request failed') +
           ' — shown locally, not persisted',
+        'error',
       );
     }
   };
@@ -268,7 +250,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
       // Read failed (no org/session) — nothing to persist to; show it locally
       // and say so instead of faking success.
       addM1(local());
-      fireToast('Module 1 document added · shown locally, not persisted');
+      fireToast('Module 1 document added · shown locally, not persisted', 'error');
       return;
     }
     try {
@@ -279,7 +261,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
       });
       if (!res.ok) {
         addM1(local());
-        fireToast('Could not save Module 1 document · sign in required — shown locally, not persisted');
+        fireToast('Could not save Module 1 document · sign in required — shown locally, not persisted', 'error');
         return;
       }
       const body = await res.json().catch(() => null);
@@ -295,6 +277,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
         'Could not save Module 1 document · ' +
           (e instanceof Error && e.message ? e.message : 'request failed') +
           ' — shown locally, not persisted',
+        'error',
       );
     }
   };
@@ -302,28 +285,210 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
   const tabs: [string, string][] = [['ctd', 'CTD readiness'], ['m1', 'Module 1 admin'], ['clock', 'PDUFA review clock'], ['rtf', 'Refuse-to-File risk'], ['bla', 'BLA biologics']];
 
   /* Context-aware human lead */
-  const clockNow = NDA_CLOCK.find(s => s.st === 'current') || NDA_CLOCK.find(s => s.st === 'goal');
   const highs = rtf.filter(r => r.sev === 'high');
   const topHigh = highs[0] || rtf.find(r => r.sev === 'med');
   const gateMod = modules.filter(m => m.gate).sort((a, b) => a.pct - b.pct)[0];
   const openItems = m1open + rtf.filter(r => r.sev !== 'low').length;
 
+  /* ── Which of the three states is this program actually in? (BP-W0-3) ───────
+     This used to be `highs.length ? urgent : clear`, a two-branch conditional
+     with no representation for "nothing has been assessed". Over an empty
+     program the second branch fired and the surface asserted "no Refuse-to-File
+     blockers left … You're close." Both clauses are true of an empty array and
+     neither is true of the program.
+
+     `scopeExists` is the CTD module roll-up, because that read IS the question
+     "does an NDA/BLA submission exist here at all" — assembleOrgNdaModules
+     returns an empty list for an org with no such submission, so no rows means
+     there is nothing an assessment could have run against.
+
+     `assessmentRan` is FALSE, deliberately and not as a placeholder. The RtF
+     risk log is an append-only list of items a human logged; GET
+     /api/nda-cockpit/rtf cannot distinguish "the day-60 shadow review ran and
+     found nothing" from "nobody has looked yet", because no completed-review
+     signal is recorded anywhere for this surface to read. Until one is, the
+     honest answer is that clearance is unproven — so this surface never claims
+     it. Deriving `assessmentRan` from `rtf.length === 0` would reinstate the
+     exact defect. When a shadow-review completion record lands (BP-W1-6 puts
+     one in reach), this is the single line that changes. */
+  const filingState = assessmentState({
+    loading: modulesLive.loading || rtfLive.loading,
+    unreadable: Boolean(modulesLive.error || rtfLive.error),
+    scopeExists: modules.length > 0,
+    findingCount: rtf.length,
+    assessmentRan: false,
+  });
+  const reassuring = mayReassure(filingState, overall);
+
+  /* What AnA can see of this screen.
+     She knew the user was on "nda-cockpit" and nothing else — not the CTD
+     readiness, not how many Module 1 admin items are open, and crucially not
+     whether Refuse-to-File risk has actually been ASSESSED.
+
+     `filingState` is published verbatim rather than re-derived, because this
+     surface already owns the distinction that matters and re-deriving it here
+     would be a second opinion that can drift from the one on screen. Its
+     vocabulary is the point: `not-assessed` is NOT `assessed-clear`, and
+     `unreadable` is neither. The comment above `filingState` records why —
+     no completed-review signal exists for this surface to read, so an empty
+     risk log cannot mean "the day-60 shadow review found nothing", and
+     inferring clearance from `rtf.length === 0` would reinstate the exact
+     defect. AnA must inherit that caution, not launder it into a percentage. */
+  const anaContext = useMemo(() => {
+    if (filingState === 'loading') {
+      return { summary: 'The NDA cockpit is still loading; nothing on screen is being asserted yet.' };
+    }
+    if (filingState === 'unreadable') {
+      return {
+        summary:
+          'The NDA cockpit reads could not complete, so this screen shows no readiness figure and no Refuse-to-File position — that is a failed read, not a clean program.',
+        availableActions: ['Retry the CTD module and RTF reads'],
+      };
+    }
+    const rtfClause =
+      filingState === 'assessed-with-findings'
+        ? `${rtf.length} logged Refuse-to-File risk(s), ${highs.length} high`
+        : 'Refuse-to-File risk is NOT ASSESSED — no completed shadow review is recorded, so an empty risk log is not clearance';
+    return {
+      summary:
+        `NDA cockpit${progName ? ` for ${progName}` : ''}: CTD readiness ${overall}% across ` +
+        `${modules.length} module(s), ${m1open} Module 1 admin item(s) open. ${rtfClause}.`,
+      facts: {
+        program: progName,
+        ctdReadinessPct: overall,
+        moduleCount: modules.length,
+        module1AdminOpen: m1open,
+        /* The surface's own verdict, not a re-derivation. */
+        refuseToFileState: filingState,
+        loggedRtfRisks: rtf.length,
+        highRtfRisks: highs.length,
+        mayReassure: reassuring,
+        openTab: tab,
+      },
+      availableActions: [
+        'Open a CTD module to see its readiness detail',
+        'Log a Refuse-to-File risk',
+        'Add or update a Module 1 administrative document',
+        'Review the BLA assessment set',
+      ],
+    };
+  }, [filingState, progName, overall, modules.length, m1open, rtf.length, highs.length, reassuring, tab]);
+  usePublishSurfaceContext('nda-cockpit', anaContext);
+
+  /* The KPI strip speaks from the SAME state the lead does, derived here rather
+     than re-tested at each tile, so the two cannot drift apart.
+
+     They had drifted. `overall`, `m1open` and `highs.length` all evaluate to 0
+     while their reads are in flight AND when those reads have failed, because
+     `useLiveRows` returns a frozen empty array in both cases and the local
+     working sets seed from it only once `!loading`. So the strip rendered
+     "0% Application readiness / 0 Module 1 admin open / 0 High RTF risk"
+     directly beneath the lead's own "Nothing is being asserted about
+     Refuse-to-File risk until the read settles" — and, on the failed-read path,
+     beneath "This is a failed read, not a clean program."
+
+     The failure case is the worse one and not only because the contradiction is
+     sharper: loading resolves, a failed read does not, so 0/0/0 is the FINAL
+     answer the user is left with. And `data-tone={highs.length ? 'err' : …}`
+     renders a failed Refuse-to-File read in the visual language of clearance —
+     a neutral-toned zero beside the words "High RTF risk". That is the precise
+     claim assessmentState exists to make unrepresentable, arriving in the one
+     form that reads faster than prose. */
+  const kpiReady = filingState !== 'loading' && filingState !== 'unreadable';
+  /* `m1Live` is deliberately NOT an input to `filingState` — widening those
+     inputs would change what the Refuse-to-File narrative means — so the
+     Module 1 tile carries its own gate. */
+  const m1Ready = !m1Live.loading && !m1Live.error;
+  const kv = (ready: boolean, n: number | string) => (ready ? String(n) : '—');
+
+  /* Each state gets its own sentence. No state borrows another's vocabulary,
+     and only `assessed-clear` — unreachable here for the reason above — may
+     speak of blockers being absent. */
+  const leadCopy: Record<string, { tone: 'calm' | 'urgent' | 'good'; headline: React.ReactNode; body: React.ReactNode }> = {
+    loading: {
+      tone: 'calm',
+      headline: <>Reading this application's filing readiness&hellip;</>,
+      body: <>Nothing is being asserted about Refuse-to-File risk until the read settles.</>,
+    },
+    unreadable: {
+      tone: 'urgent',
+      headline: <>Filing readiness could not be read.</>,
+      body: <>This is a failed read, not a clean program. Nothing here should be taken as an assessment of Refuse-to-File risk. Sign in to your tenant and retry.</>,
+    },
+    'not-assessed': {
+      tone: 'calm',
+      headline: modules.length === 0
+        ? <>Nothing has been assessed for this application yet.</>
+        : <>No Refuse-to-File assessment has been run against this application.</>,
+      body: modules.length === 0
+        ? <>There is no NDA/BLA submission in scope, so no module readiness, no Module&nbsp;1 worklist and no Refuse-to-File finding exists to report. Create the submission and compile a sequence, and this surface will have something to assess.</>
+        : <>{rtf.length === 0
+            ? 'The filing-risk log is empty. An empty log is not a clean shadow review — it records only what someone has entered, and no day-60 review has reported against this application.'
+            : `${rtf.length} filing-risk ${rtf.length === 1 ? 'item is' : 'items are'} logged, none of them high severity. That is the state of the log, not a verdict on the filing.`} Refuse-to-File risk is unknown until a review runs.</>,
+    },
+    'assessed-with-findings': {
+      tone: 'urgent',
+      headline: topHigh
+        ? <>You're <b>{overall}% ready</b>, but <b>{topHigh.area.split('·')[1]?.trim() || topHigh.area}</b> would get you refused at the filing door.</>
+        : <>You're <b>{overall}% ready</b>, with {rtf.length} filing-risk {rtf.length === 1 ? 'item' : 'items'} open.</>,
+      body: topHigh
+        ? <>The one that matters right now: {topHigh.text.charAt(0).toLowerCase() + topHigh.text.slice(1)} Clear it &mdash; {topHigh.fix.toLowerCase()}. {gateMod ? <>Module {gateMod.m} at {gateMod.pct}% is the next thing behind it.</> : null}</>
+        : <>{openItems} {openItems === 1 ? 'item' : 'items'} to work before you submit. None is currently rated high severity.</>,
+    },
+    'assessed-clear': {
+      tone: 'good',
+      headline: <>You're <b>{overall}% ready</b> to file &mdash; the completed review found no Refuse-to-File blockers, {openItems} items to tidy before you submit.</>,
+      body: <>The remaining items are administrative, not structural &mdash; close them out and the package is fileable.</>,
+    },
+  };
+  const copy = leadCopy[filingState];
+
   const lead = (
     <AnswerLead
-      tone={highs.length ? 'urgent' : 'calm'}
-      eyebrow="Are you ready to file NDA 212345 — and what stands in the way"
-      headline={highs.length && topHigh
-        ? <>You're <b>{overall}% ready</b>, but <b>{topHigh.area.split('·')[1]?.trim() || topHigh.area}</b> would get you refused at the {clockNow ? clockNow.label.toLowerCase() : 'filing'} door.</>
-        : <>You're <b>{overall}% ready</b> to file &mdash; no Refuse-to-File blockers left, {openItems} items to tidy before you submit.</>}
-      body={highs.length && topHigh
-        ? <>The one that matters right now: {topHigh.text.charAt(0).toLowerCase() + topHigh.text.slice(1)} Clear it &mdash; {topHigh.fix.toLowerCase()} &mdash; and the same review that refuses today accepts. {gateMod ? <>Module {gateMod.m} at {gateMod.pct}% is the next thing behind it.</> : null}</>
-        : <>You're at the {clockNow ? clockNow.label.toLowerCase() : 'filing'} step ({clockNow ? clockNow.date : '—'}). The remaining items are administrative, not structural &mdash; you're through the hard part.</>}
-      reassure={highs.length ? "This is fixable before Day 74. I'll draft each remediation with you, one at a time." : "You're close. I'll help you close out the last items and assemble the sequence."}
-      action={{
-        label: highs.length ? 'Fix the filing risks with AnA' : 'Draft the final readiness plan',
-        onClick: () => ask && ask(highs.length && topHigh
-          ? 'Draft a mitigation plan for the ' + topHigh.area + ' Refuse-to-File risk: ' + topHigh.text
-          : 'Draft the final NDA 212345 readiness plan for the open administrative items'),
+      tone={copy.tone}
+      eyebrow={'Are you ready to file ' + (progName ? 'the ' + progName + ' NDA' : 'this NDA') + ' — and what stands in the way'}
+      headline={copy.headline}
+      body={copy.body}
+      /* Reassurance is gated on the state, not on the absence of findings, and
+         additionally on a non-zero completeness — a 0% program is never told it
+         is close. Every other state renders no reassurance line at all rather
+         than a softened one, because there is nothing truthful to reassure
+         about yet. */
+      reassure={
+        filingState === 'assessed-with-findings'
+          ? "This is fixable before Day 74. I'll draft each remediation with you, one at a time."
+          : reassuring
+            ? "I'll help you close out the last items and assemble the sequence."
+            : undefined
+      }
+      /* No action while the read is unresolved.
+
+         The ternaries below had no `loading` or `unreadable` arm, so both fell
+         through to the final one: beneath the headline "Filing readiness could
+         not be read", the surface's one focal button offered to draft a FINAL
+         READINESS PLAN, and its prompt told AnA to work "the open administrative
+         items on this NDA program" — asserting to the model that such items
+         exist and are known, off a read that returned nothing. Of everything
+         ungated on this surface that is the one with reach beyond it: the other
+         claims stay on screen, this one enters the assistant's context and is
+         reasoned from.
+
+         Offering nothing is the honest option, and matches the reassurance
+         above, which is already withheld in both states. `alt` goes too — it
+         navigates to a Refuse-to-File tab that is itself showing a failed
+         read. */
+      action={!kpiReady ? undefined : {
+        label: filingState === 'assessed-with-findings'
+          ? 'Fix the filing risks with AnA'
+          : filingState === 'not-assessed'
+            ? 'Assess Refuse-to-File risk with AnA'
+            : 'Draft the final readiness plan',
+        onClick: () => ask && ask(
+          filingState === 'assessed-with-findings' && topHigh
+            ? 'Draft a mitigation plan for the ' + topHigh.area + ' Refuse-to-File risk: ' + topHigh.text
+            : filingState === 'not-assessed'
+              ? 'Assess this NDA/BLA application for Refuse-to-File triggers against 21 CFR 314.101, and list what evidence is missing before that assessment can be completed'
+              : 'Draft the final readiness plan for the open administrative items on this NDA program'),
         alt: { label: 'See Refuse-to-File risks', onClick: () => setTab('rtf') },
       }}
       secondary="Or work the readiness detail below."
@@ -338,18 +503,29 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
             Pharma {I.dot} filing
           </div>
           <h1 className="reg-title">NDA filing cockpit</h1>
-          <p className="reg-intro">BX-204 {I.dot} NDA 212345 {I.dot} 505(b)(1) {I.dot} standard review. The complete application on one surface &mdash; CTD Module 1-5 readiness, the Module 1 administrative set, the PDUFA review clock, and Refuse-to-File risk.</p>
+          <p className="reg-intro">{progName ? <>{progName} {I.dot} </> : null}The complete application on one surface &mdash; CTD Module 1-5 readiness, the Module 1 administrative set, the PDUFA review clock, and Refuse-to-File risk.</p>
         </div>
-        {ask && <button className="reg-cta" onClick={() => ask('Assess NDA 212345 filing readiness and the top Refuse-to-File risks')}>{I.sparkles} Assess with AnA</button>}
+        {ask && <button className="reg-cta" onClick={() => ask('Assess filing readiness and the top Refuse-to-File risks for this NDA program')}>{I.sparkles} Assess with AnA</button>}
       </div>
 
       {lead}
 
+      {/* CmcModule, on the same taxonomy, DELETED its strip rather than gate it
+          — "Repeating a figure three times does not make it more true" — and
+          two of these four tiles are likewise restatements of figures the lead
+          above already narrates. That is a live design option and is recorded
+          in the review; it is not taken here, because removing a scannable
+          summary is a product decision rather than a defect fix. */}
       <div className="reg-kpis">
-        <div className="reg-kpi"><div className="reg-kpi-v">{overall}%</div><div className="reg-kpi-l">Application readiness</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v">Day 60</div><div className="reg-kpi-l">Filing review {I.dot} PDUFA Day 304</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v" data-tone="warn">{m1open}</div><div className="reg-kpi-l">Module 1 admin open</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v" data-tone={highs.length ? 'err' : undefined}>{highs.length}</div><div className="reg-kpi-l">High RTF risk</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{kpiReady ? `${overall}%` : '—'}</div><div className="reg-kpi-l">Application readiness</div></div>
+        {/* "not started" asserted that a clock exists and has not begun. There
+            is no review-clock store at all (see the header note), and the clock
+            tab below says so in its own words — this label now matches it
+            instead of making the stronger, unevidenced claim. */}
+        <div className="reg-kpi"><div className="reg-kpi-v">&mdash;</div><div className="reg-kpi-l">Review clock {I.dot} not recorded</div></div>
+        {/* The warn tone was hardcoded, so a value of 0 wore it too. */}
+        <div className="reg-kpi"><div className="reg-kpi-v" data-tone={m1Ready && m1open ? 'warn' : undefined}>{kv(m1Ready, m1open)}</div><div className="reg-kpi-l">Module 1 admin open</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v" data-tone={kpiReady && highs.length ? 'err' : undefined}>{kv(kpiReady, highs.length)}</div><div className="reg-kpi-l">High RTF risk</div></div>
       </div>
 
       <div className="reg-tabs">
@@ -431,18 +607,12 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
 
       {tab === 'clock' && (
         <div className="reg-card">
-          <div className="reg-card-h"><span>PDUFA review clock &mdash; standard review (10-month)</span><span className="reg-card-s">Filing Day 60 → action Day 304</span></div>
-          <div className="nda-clock">
-            {NDA_CLOCK.map((s, i) => (
-              <div key={s.id} className="nda-ck-step" data-st={s.st}>
-                <div className="nda-ck-rail"><div className="nda-ck-dot">{s.st === 'done' ? I.check : s.st === 'goal' ? (I.flag || I.target) : i + 1}</div>{i < NDA_CLOCK.length - 1 && <div className="nda-ck-line" />}</div>
-                <div className="nda-ck-b">
-                  <div className="nda-ck-top"><span className="nda-ck-l">{s.label}</span><span className="nda-ck-day">{s.day}</span></div>
-                  <div className="nda-ck-date">{s.date}{s.note ? ' · ' + s.note : ''}</div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <div className="reg-card-h"><span>PDUFA review clock</span><span className="reg-card-s">Runs from FDA receipt of the filed application</span></div>
+          <EmptyState
+            icon={I.clock || I.fileText}
+            title="No review clock recorded"
+            hint="The review clock starts when FDA accepts the filing. File the application and record the acceptance, and the filing decision, mid- and late-cycle milestones, and the PDUFA goal date appear here from the real dates — nothing is projected or invented."
+          />
         </div>
       )}
 
@@ -513,7 +683,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
               <p className="scaf-note" style={{ marginTop: 10 }}>
                 The three biologics science engines (CQA-tiered analytical similarity, Q5E comparability, ADA/NAb
                 immunogenicity) and the RTF/CRL filing-risk profile are deterministic functions of the submitted data,
-                authored and Part 11-signed in the biologics workbench (<code>/api/biopharma/bla</code>). This tab reflects
+                authored and Part 11-signed in the biologics workbench. This tab reflects
                 the org's persisted assessments &mdash; it never fabricates a verdict.
               </p>
             </>

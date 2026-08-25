@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveRows, liveGetOrNull } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import {
   SURFACE_CTX, CL_MOD, CL_TYPE, CL_PRI,
   type C2CTask, type ActivityItem, type TeamMember, type ProjectEntry,
@@ -19,8 +19,12 @@ import {
        dueDate, estimatedHours, dependencies[], tags[].
      - Polymorphic origin: sourceEntityType + sourceEntityId.
      - Auto-assign: getOptimalAssignee() (workload-balanced).
-     - Honest gaps: task-audit.ts coded but unwired; notifications
-       stubbed.
+     - task-audit.ts IS wired: POST /api/tasks/tasks writes a
+       hash-chained ledger entry (auditTaskAction) and a persisted
+       notification (notifyTaskEvent) on every create. This comment
+       used to say both were stubbed; that was left behind when they
+       were wired, and the same stale claim reached the user-facing
+       banner below. Remaining gap is email delivery only.
 
    This module owns ONE shared store (C2C) so a task created from
    the editor, a submission, a safety case or the board all land in
@@ -91,7 +95,10 @@ interface ToastState {
    RETAINED, not dead code (audit determination): this in-session store still
    has WRITE consumers -- TaskBoard's New task / Move / Start-workflow actions
    and this file's own QuickTask / CollabDiscuss forms call
-   window.C2C.addTask / update. Those are MOCK, unpersisted actions (flagged at
+   window.C2C.addTask / update. `addTask` is now only ever called with a
+   SERVER-issued taskId (both the create modal and the collaboration composer
+   POST /api/tasks/tasks first and adopt the persisted row); the local store is
+   a view of what was written, not a source of ids. (flagged at
    each call site): their rows are orphaned from the live board above, which
    reads the real GET /api/task-management/board. The store stays until those
    writes are wired to POST /api/task-management/tasks in the actions pass -- it
@@ -373,8 +380,14 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState('');
 
+  /* `who` is the assignee the CLIENT can name — which, for "auto", is nobody.
+     C2C.optimalFor deliberately returns '' (its own note explains why: the
+     fixture roster it used to consult named people who do not work here). The
+     server owns the auto decision — getOptimalAssignee runs against the org's
+     real roster when assigneeId is omitted — so the client cannot know the
+     answer until the write comes back. Anything it renders before then is a
+     guess, and a blank one is the worst kind. */
   const who = f.assignee === 'auto' ? C2C.optimalFor(f.moduleType) : f.assignee;
-  const whoName = (C2C.team[who] || { n: who }).n;
 
   /**
    * REAL, awaited create against the org task store.
@@ -420,14 +433,39 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
     if (f.dueDays > 0) {
       body.dueDate = new Date(Date.now() + f.dueDays * 86400000).toISOString();
     }
+    /* ── The three governance toggles were dropped on submit ─────────────────
+       "Critical path", "Regulatory impact" and "Approval gate" set local state
+       and never reached the wire, so a task a user explicitly marked as
+       approval-gated persisted as an ordinary one — and the board, which
+       renders those flags and gates completion on approvalRequired, had no way
+       to know. The user's answer to a governance question was discarded.
+
+       They are not new fields. `createTaskSchema` (taskManagement.routes.ts)
+       already declares them, with a comment saying exactly why: "Governance
+       flags collected by the ui-v2 create form — real unified_tasks columns, so
+       the form's inputs persist instead of being silently dropped." The form
+       collected them; only the POST body did not carry them.
+
+       Sent unconditionally rather than only when true: `false` is an answer,
+       and omitting it would let a server-side default contradict what the user
+       chose. */
+    body.criticalPath = f.criticalPath;
+    body.regulatoryImpact = f.regulatoryImpact;
+    body.approvalRequired = f.approvalRequired;
 
     try {
       const res = await apiRequest('POST', '/api/tasks/tasks', body);
       const json = await res.json().catch(() => null);
       const serverTask = (json as { data?: Record<string, unknown> } | null)?.data;
       if (!res.ok || !serverTask?.taskId) {
-        const reason = (json as { error?: string } | null)?.error;
-        setSaveErr(reason ? String(reason) : `Couldn’t create the task (HTTP ${res.status}). Nothing was saved.`);
+        // `json.error` was read first and rendered as-is, so an envelope of the
+        // shape { error: 'ASSIGNEE_NOT_IN_ORG', message: '<a real sentence>' }
+        // showed the enum token. serverMessage prefers the sentence and rejects
+        // codes and infrastructure text; the domain fallback is kept because it
+        // states what was not saved.
+        setSaveErr(
+          serverMessage(json) ?? `Couldn’t create the task (HTTP ${res.status}). Nothing was saved.`,
+        );
         return;
       }
       // Adopt the persisted row: real taskId, and the assignee the SERVER chose
@@ -457,7 +495,14 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
       onCreated?.(t);
       if (another) { setF(p => ({ ...p, title: '', note: '' })); } else { onClose(); }
     } catch (e) {
-      setSaveErr(e instanceof Error ? e.message : 'Couldn’t reach the task service. Nothing was saved.');
+      // Only ApiRequestError carries an already-reduced message; anything else
+      // is a browser-native throw ("Failed to fetch") that must not be shown.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      setSaveErr(
+        known && (e as Error).message
+          ? (e as Error).message
+          : 'Couldn’t reach the task service. Nothing was saved.',
+      );
     } finally {
       setSaving(false);
     }
@@ -521,9 +566,20 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
           )}
         </div>
       </div>
+      {/* This said "Auto-assign resolves to <b>{whoName}</b> for <b>{moduleType}</b>"
+          — and with Auto selected, which is the DEFAULT, whoName was the empty
+          string on every render. The user was told a person had been chosen and
+          shown nobody, in the past tense, before any request existed.
+
+          The honest statement is the one the server can keep: it has not chosen
+          yet, it will choose on save, and here are the criteria. The chosen name
+          arrives with the created task (the create handler adopts
+          serverTask.assigneeId), so nothing here has to guess it. */}
       {f.assignee === 'auto' && (
         <div className="cl-note">
-          <span className="ico">{I.sparkles}</span>Auto-assign resolves to <b>{whoName}</b> for <b>{f.moduleType}</b> -- workload-balanced via <code>getOptimalAssignee()</code>.
+          <span className="ico">{I.sparkles}</span>Auto-assign: the assignee is chosen when you save, from your
+          organisation&rsquo;s roster for <b>{f.moduleType}</b>, balanced on current workload. Pick a name above
+          if you want to decide it yourself.
         </div>
       )}
       <div className="cl-field"><label>Flags</label>
@@ -546,8 +602,16 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
           board only". That is no longer true — the task is persisted — so the
           warning is gone rather than left to contradict the behaviour. What is
           still honest to say is the residual backend gap. */}
-      <div className="cl-warn">
-        <span className="ico">{I.alertTriangle}</span>The task is saved to your org board. Assignee notifications and the task audit trail (<code>task-audit.ts</code>) are still stubbed server-side, so no one is emailed yet.
+      {/* This banner used to claim the audit trail and notifications were
+          "stubbed server-side". That was false for the very call it decorates:
+          POST /api/tasks/tasks writes a hash-chained ledger entry via
+          auditTaskAction and a persisted notification via notifyTaskEvent
+          (taskManagement.routes.ts). TaskBoard's equivalent copy was corrected
+          when that landed; this one was missed and kept asserting a governed
+          action was ungoverned — the worst direction for a claim to be wrong in
+          a Part 11 product. What remains true is only the delivery gap. */}
+      <div className="cl-note">
+        <span className="ico">{I.check}</span>Saved to your org board, recorded in the Part 11 audit trail, and the assignee is notified in the app. Email delivery is not wired up yet.
       </div>
       {saveErr && (
         <div className="cl-warn" role="alert">
@@ -555,7 +619,22 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
         </div>
       )}
       <div className="cl-foot">
-        <div className="cl-endpoint"><b>POST</b> /api/tasks/tasks</div>
+        {/* `onGoToBoard` was passed in by the parent (onNav('tasks') — real,
+            working navigation to the task board) and this component never
+            rendered a control for it, so the prop terminated nowhere. An author
+            who had just created a task had no way from here to the board it
+            landed on. */}
+        {onGoToBoard && (
+          <button
+            className="btn ghost"
+            style={{ marginRight: 'auto' }}
+            onClick={onGoToBoard}
+            title="Open the task board"
+            data-testid="collab-go-to-board"
+          >
+            {I.grid || I.arrowRight} Go to board
+          </button>
+        )}
         <button className="btn ghost" onClick={() => void create(true)} disabled={!f.title.trim() || saving}>{I.plus} {saving ? 'Saving…' : 'Create & add another'}</button>
         <button className="btn primary" onClick={() => void create(false)} disabled={!f.title.trim() || saving}>{I.check} {saving ? 'Saving…' : 'Create task'}</button>
       </div>
@@ -566,27 +645,147 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
 /* ── Collaborate -- post a message / @mention / route, optionally -> task ── */
 
 function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussProps) {
-  const [to, setTo] = useState('sm');
+  /* No recipient until one is picked from the REAL roster.
+     This initialised to `'sm'` — one of the retired TB_TEAM fixture short-ids
+     ('jc' / 'mw' / 'sm' / …). Those keys no longer exist: `C2C.team` is keyed by
+     real user id from GET /api/task-management/assignees. So the drawer opened
+     with an addressee that resolves to nobody, and the "Also create a task"
+     branch stamped `assignee: 'sm'` onto the row it added — a fabricated user id
+     travelling with a task. Empty is the honest starting state, and the roster
+     below is the only thing that can set it. */
+  const [to, setTo] = useState('');
   const [body, setBody] = useState('');
   const [makeTask, setMakeTask] = useState(false);
 
-  const send = () => {
-    if (!body.trim()) return;
-    // MOCK ACTION (flagged): does NOT call POST /api/collaboration/messages; at
-    // most it captures an optimistic in-session task below. Wire in actions pass.
-    if (makeTask) {
-      C2C.addTask({
-        title: body.trim().slice(0, 90), project: surfaceCtx.project,
-        moduleType: surfaceCtx.moduleType || 'Regulatory',
-        taskType: 'review', priority: 'medium', assignee: to, assignmentType: 'manual',
-        sourceEntityType: surfaceCtx.entityType,
-        sourceEntityId: surfaceCtx.entityId || surfaceCtx.surfaceId,
-        sourceLabel: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
-        due: 'in 3 days', phase: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
-        activity: [{ type: 'note', text: body.trim(), who: 'You', when: 'just now' }],
-      });
-      onCreated?.();
+  /* Set while the POST is in flight, or holding the reason it failed. The
+     message must never be reported as sent until the server says it stored it. */
+  const [sending, setSending] = useState(false);
+  const [sendErr, setSendErr] = useState('');
+
+  /* ── "Send" composed a message and threw it away ───────────────────────────
+     The handler's own comment said so: "MOCK ACTION (flagged): does NOT call
+     POST /api/collaboration/messages". The drawer closed, the user watched
+     their message disappear into what looked like a sent state, and nothing
+     was ever delivered. A banner below the composer admitted it in small text,
+     which is not the same as the button not lying.
+
+     The endpoint exists and was BUILT FOR THIS BUTTON — the comment above
+     POST /api/tasks/messages (taskManagement.routes.ts) reads: "Backs the
+     universal launcher's Collaborate tab, which previously composed a message
+     and threw it away." It persists the message as a notification in the
+     recipient's inbox and refuses a recipient outside the caller's org.
+
+     `C2C.team` is keyed by the real user id from
+     GET /api/task-management/assignees (see the loader above, `team[String(r.id)]`),
+     so the picked key IS `recipientUserId`. */
+  const send = async () => {
+    if (!body.trim() || sending) return;
+    const recipientUserId = Number(to);
+    if (!Number.isInteger(recipientUserId) || recipientUserId <= 0) {
+      setSendErr('Pick who this goes to — a message with no recipient cannot be delivered.');
+      return;
     }
+    setSending(true);
+    setSendErr('');
+    try {
+      const res = await apiRequest('POST', '/api/tasks/messages', {
+        recipientUserId,
+        message: body.trim(),
+        about: (surfaceCtx.entityLabel || surfaceCtx.surfaceLabel || '').slice(0, 300) || undefined,
+        sourceEntityType: surfaceCtx.entityType || undefined,
+        sourceEntityId: (surfaceCtx.entityId || surfaceCtx.surfaceId || '').slice(0, 200) || undefined,
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => null);
+        setSending(false);
+        setSendErr(
+          'Not sent — ' + (serverMessage(b) ?? `the server refused the message (HTTP ${res.status})`) +
+            '. Nothing was delivered.',
+        );
+        return;
+      }
+    } catch (e) {
+      setSending(false);
+      setSendErr(
+        'Not sent — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was delivered.',
+      );
+      return;
+    }
+
+    /* ── "Also create a task and assign it to <name>" ────────────────────────
+       The message half of this composer has always been a real write. The task
+       half was `C2C.addTask` — a client-minted id pushed onto a module-level
+       array — so a user who ticked "Also create a task and assign it to Jane"
+       watched the modal close and no task existed anywhere. Jane was never
+       assigned anything.
+
+       It now POSTs the SAME /api/tasks/tasks the create modal above uses,
+       with the same integer discipline: `assigneeId` is only sent when the
+       picked recipient is a real numeric user id, and `projectId` only when the
+       surface context carries one, because createTaskSchema takes integers and
+       would reject the string forms.
+
+       The task is created only AFTER the message is confirmed stored — the old
+       order created it first, so a failed send left a task behind referencing a
+       message nobody received. And a failed TASK write is now reported: the
+       message went, the task did not, and the user is told exactly that rather
+       than watching the modal close on a half-done action. */
+    if (makeTask) {
+      const taskBody: Record<string, unknown> = {
+        title: body.trim().slice(0, 90),
+        moduleType: surfaceCtx.moduleType || 'Regulatory',
+        taskType: 'review',
+        priority: 'medium',
+        description: body.trim(),
+        dueDate: new Date(Date.now() + 3 * 86400000).toISOString(),
+      };
+      const projectIdNum = Number(surfaceCtx.project);
+      if (surfaceCtx.project && Number.isFinite(projectIdNum) && projectIdNum > 0) {
+        taskBody.projectId = projectIdNum;
+      }
+      if (Number.isInteger(recipientUserId) && recipientUserId > 0) {
+        taskBody.assigneeId = recipientUserId;
+      }
+      try {
+        const tres = await apiRequest('POST', '/api/tasks/tasks', taskBody);
+        const tjson = await tres.json().catch(() => null);
+        const serverTask = (tjson as { data?: Record<string, unknown> } | null)?.data;
+        if (!tres.ok || !serverTask?.taskId) {
+          setSending(false);
+          setSendErr(
+            'The message was sent, but the task was not created — ' +
+              (serverMessage(tjson) ?? `the server refused it (HTTP ${tres.status})`) +
+              '. Create it from the task board if it is still needed.',
+          );
+          return;
+        }
+        // Adopt the SERVER's row, exactly as the create modal does — the id in
+        // the local store is the persisted taskId, never a client-minted one.
+        C2C.addTask({
+          taskId: String(serverTask.taskId),
+          title: body.trim().slice(0, 90), project: surfaceCtx.project,
+          moduleType: surfaceCtx.moduleType || 'Regulatory',
+          taskType: 'review', priority: 'medium',
+          assignee: serverTask.assigneeId != null ? String(serverTask.assigneeId) : to,
+          assignmentType: 'manual',
+          sourceEntityType: surfaceCtx.entityType,
+          sourceEntityId: surfaceCtx.entityId || surfaceCtx.surfaceId,
+          sourceLabel: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
+          due: 'in 3 days', phase: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
+          activity: [{ type: 'note', text: body.trim(), who: 'You', when: 'just now' }],
+        });
+        onCreated?.();
+      } catch (e) {
+        setSending(false);
+        setSendErr(
+          'The message was sent, but the task was not created — ' +
+            (e instanceof Error ? e.message : String(e)) +
+            '. Create it from the task board if it is still needed.',
+        );
+        return;
+      }
+    }
+    setSending(false);
     onClose();
   };
 
@@ -595,7 +794,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
       <div className="cl-ctxbar">
         <span className="cl-ctx-k">About</span>
         <span className="cl-ctx-chip"><span className="ico">{I.messageSquare}</span>{surfaceCtx.entityLabel || surfaceCtx.surfaceLabel}</span>
-        <span className="cl-ctx-meta">thread on <code>/api/collaboration</code></span>
+        <span className="cl-ctx-meta">collaboration thread</span>
       </div>
       <div className="cl-field"><label>Send to</label>
         <div className="cl-assignees">
@@ -615,20 +814,32 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         </div>
       </div>
       <div className="cl-field"><label>Message</label>
+        {/* The "@name" prompt only appears once a real teammate is selected;
+            with no recipient it used to read "@ -- share context...". */}
         <textarea rows={4} autoFocus value={body} onChange={e => setBody(e.target.value)}
-          placeholder={'@' + (C2C.team[to] || { n: '' }).n + ' -- share context, ask a question, or route this for action...'} />
+          placeholder={(C2C.team[to] ? '@' + C2C.team[to].n + ' -- ' : '') + 'share context, ask a question, or route this for action...'} />
       </div>
       <button type="button" className={`cl-tasktoggle${makeTask ? ' on' : ''}`} onClick={() => setMakeTask(m => !m)}>
         <span className="cl-check">{makeTask ? I.check : ''}</span>
-        <span><b>Also create a task</b> and assign it to {(C2C.team[to] || { n: 'them' }).n}</span>
+        <span><b>Also create a task</b>{C2C.team[to] ? <> and assign it to {C2C.team[to].n}</> : <>, unassigned</>}</span>
       </button>
-      <div className="cl-warn">
-        <span className="ico">{I.alertTriangle}</span>Posting to the collaboration thread (<code>POST /api/collaboration/messages</code>) + <code>/tasks/:id/notify</code> is not yet wired here -- the message is not persisted, and WebSocket delivery is stubbed (<code>io.to('tasks').emit</code> commented out).
-      </div>
+      {sendErr && (
+        <div className="cl-warn" role="alert">
+          <span className="ico">{I.alertTriangle}</span>{sendErr}
+        </div>
+      )}
       <div className="cl-foot">
-        <span className="cl-endpoint"><b>POST</b> /api/collaboration/messages</span>
+        
         <button className="btn ghost" onClick={onClose}>Cancel</button>
-        <button className="btn primary" onClick={send} disabled={!body.trim()}>{I.arrowRight} {makeTask ? 'Send & assign' : 'Send'}</button>
+        <button
+          className="btn primary"
+          onClick={() => void send()}
+          disabled={!body.trim() || !to || sending}
+          title={!to ? 'Pick a recipient first' : undefined}
+          data-testid="collab-send"
+        >
+          {I.arrowRight} {sending ? 'Sending…' : makeTask ? 'Send & assign' : 'Send'}
+        </button>
       </div>
     </div>
   );
@@ -703,7 +914,7 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
             </button>
             <button className="cl-fab-mi" onClick={() => { setTab('collab'); setOpen(true); setMenuOpen(false); }}>
               <span className="ico">{I.messageSquare}</span>
-              <span><b>Collaborate</b><em>Message -- @mention -- route</em></span>
+              <span><b>Collaborate</b><em>Message -- @mention — route</em></span>
             </button>
             <button className="cl-fab-mi" onClick={() => { onNav?.('tasks'); setMenuOpen(false); }}>
               <span className="ico">{I.layoutPanels || I.grid}</span>
@@ -731,7 +942,7 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
                   <span className="ico">{I.messageSquare}</span>Collaborate
                 </button>
               </div>
-              <button className="cl-x" onClick={() => setOpen(false)}>{I.close}</button>
+              <button className="cl-x" onClick={() => setOpen(false)} aria-label="Close">{I.close}</button>
             </div>
             <div className="cl-body">
               {tab === 'task'
@@ -753,7 +964,7 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
               taskId. The discuss action is still session-only and keeps saying so. */}
           {toast.type === 'task' && toast.t
             ? <span className="cl-toast-t">Saved to the org board -- <b>{toast.t.taskId}</b>{toast.t.assignee ? <> for {(C2C.team[toast.t.assignee] || { n: toast.t.assignee }).n}</> : null}.</span>
-            : <span className="cl-toast-t">Captured in this session -- not saved to the org board yet.</span>}
+            : <span className="cl-toast-t">Captured in this session — not saved to the org board yet.</span>}
           <button className="cl-toast-go" onClick={() => { onNav?.('tasks'); setToast(null); }}>Open board {I.arrowRight}</button>
         </div>
       )}

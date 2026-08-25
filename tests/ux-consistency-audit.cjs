@@ -42,7 +42,7 @@ const SS_DIR = '/tmp/ux-audit';
     if (await quickDemo.isVisible({ timeout: 5000 })) {
       await quickDemo.click();
     } else {
-      await page.fill('input[name="email"], input[type="email"]', 'jm.smith@concept2cure.pro');
+      await page.fill('input[name="email"], input[type="email"]', 'jonmichaelpsmith@gmail.com');
       await page.fill('input[name="password"], input[type="password"]', 'demo123');
       await page.click('button[type="submit"]');
     }

@@ -20,6 +20,7 @@
  */
 
 import { pool } from '../db.js';
+import auditService from './auditService';
 import { recordArtifactProvenance } from './provenance/artifact-provenance';
 import crypto from 'crypto';
 import { ai } from '../lib/unified-ai-client';
@@ -303,6 +304,13 @@ async function processJob(job: ExtractionJob): Promise<void> {
     updateStage(job, 'artifact_storage', 'completed', `${artifacts.length} artifacts`);
 
     // Complete
+    /* Digest of the FULL source text, and deliberately so — this identifies the
+       document that was processed (dedup, idempotency), and `textLength` below
+       records its real length, so the capped `textContent` preview is never
+       presented as the whole. Do NOT "align" this with the artifact hashes in
+       storeExtractedArtifacts: those must digest the bytes they persist,
+       because verifyIntegrityChain recomputes over the stored column. Two
+       different questions, two different digests. */
     const contentHash = crypto.createHash('sha256').update(textContent).digest('hex');
     job.result = {
       textContent: textContent.slice(0, 50000), // Cap stored text
@@ -336,34 +344,54 @@ async function processJob(job: ExtractionJob): Promise<void> {
 // EXTRACTION STAGES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-async function extractText(job: ExtractionJob): Promise<string> {
-  // Try to load file content from uploads or artifacts
-  try {
-    // Check concept2cure_artifacts first
-    const artifactResult = await pool.query(
-      `SELECT content FROM concept2cure_artifacts
-       WHERE artifact_id = $1 AND organization_id = $2`,
-      [job.fileId, job.organizationId]
+/** Raised when the source text for an extraction job cannot be read. */
+export class ExtractionSourceUnavailableError extends Error {
+  constructor(fileId: string, fileName: string) {
+    super(
+      `Extraction source unavailable: no stored text for artifact_id=${fileId} (${fileName}). ` +
+        'The job is failed rather than completed with a placeholder.',
     );
-    if (artifactResult.rows[0]?.content) {
-      return artifactResult.rows[0].content;
-    }
-
-    // Check uploads table
-    const uploadResult = await pool.query(
-      `SELECT content, file_path FROM uploads
-       WHERE id = $1 AND organization_id = $2`,
-      [job.fileId, job.organizationId]
-    );
-    if (uploadResult.rows[0]?.content) {
-      return uploadResult.rows[0].content;
-    }
-
-    // Return placeholder if file content not directly accessible
-    return `[Extracted content from ${job.fileName} - ${job.fileType} format - ${job.fileSize} bytes]`;
-  } catch {
-    return `[Pending extraction from ${job.fileName}]`;
+    this.name = 'ExtractionSourceUnavailableError';
   }
+}
+
+/**
+ * Load the source text for an extraction job.
+ *
+ * HISTORY (2026-08-14). This function used to FABRICATE its own output. When no
+ * artifact row matched it returned the literal string
+ * `[Extracted content from <name> - <type> format - <n> bytes]`, and a bare
+ * catch returned `[Pending extraction from <name>]`. The caller then hashed
+ * whichever string came back and stored it as a governed `category:'extracted'`
+ * artifact — invented text, sealed and presented as extracted evidence.
+ *
+ * The catch fired reliably, because the query beneath the artifact lookup read
+ * a table named `uploads`, which no migration in this repository creates. Every
+ * job that did not hit the artifact row raised 42703/42P01 into that catch.
+ *
+ * It was latent rather than live only because the pipeline's sole HTTP entry
+ * point could not call it (a positional function invoked with one object). That
+ * route is repaired in the same change as this, deliberately: repairing it
+ * alone would have switched on a pipeline that writes fabricated content as
+ * governed evidence.
+ *
+ * Now it reads the one source that exists and throws when there is nothing to
+ * read. A failed job is recoverable; a governed artifact containing invented
+ * text is not.
+ */
+async function extractText(job: ExtractionJob): Promise<string> {
+  const artifactResult = await pool.query(
+    `SELECT content FROM concept2cure_artifacts
+      WHERE artifact_id = $1 AND organization_id = $2`,
+    [job.fileId, job.organizationId],
+  );
+  const content = artifactResult.rows[0]?.content;
+  if (typeof content === 'string' && content.trim().length > 0) {
+    return content;
+  }
+  // No second lookup: the `uploads` table this used to try does not exist, and
+  // a query that can only ever fail is not a fallback.
+  throw new ExtractionSourceUnavailableError(job.fileId, job.fileName);
 }
 
 async function extractTables(
@@ -624,12 +652,24 @@ async function storeExtractedArtifacts(
       'extracted',
       job.fileName,
       mainContent,
-      crypto.createHash('sha256').update(textContent).digest('hex'),
+      /* Hash WHAT IS STORED, not what was extracted. This hashed the
+         untruncated `textContent` while storing `mainContent` (capped at 100k),
+         so every document over 100k chars was permanently reported tampered by
+         verifyIntegrityChain — which recomputes over the stored column. A
+         tamper alarm that fires on arithmetic trains people to ignore the
+         alarm, which is worse than not having one. Truncation is recorded in
+         the metadata below so the cap is visible rather than silent. */
+      crypto.createHash('sha256').update(mainContent).digest('hex'),
       JSON.stringify({
         ...metadata,
         sourceFileId: job.fileId,
         extractionJobId: job.id,
         extractedAt: new Date().toISOString(),
+        /* The stored content is capped; say so on the row rather than letting a
+           reader assume they are looking at the whole document. */
+        contentTruncated: textContent.length > mainContent.length,
+        sourceCharCount: textContent.length,
+        storedCharCount: mainContent.length,
         fileType: job.fileType,
         fileSize: job.fileSize,
         harness: {
@@ -725,7 +765,12 @@ async function storeExtractedArtifacts(
         job.organizationId,
         table.title,
         tableContent,
-        table.sourceHash,
+        /* SHA-256 of the stored tableContent. This was `table.sourceHash` — an
+           MD5 digest of a DIFFERENT object (the raw parsed table, not the
+           {headers, rows} JSON persisted here) — sitting in a column the audit
+           report recomputes as SHA-256 and labels as such. It could never
+           match, so every extracted table read as tampered, twice over. */
+        crypto.createHash('sha256').update(tableContent).digest('hex'),
         JSON.stringify({
           sourceDocumentId: mainId,
           sourceFileName: job.fileName,
@@ -939,55 +984,47 @@ function updateStage(
 }
 
 async function storeJob(job: ExtractionJob): Promise<void> {
-  try {
-    await pool.query(
-      `INSERT INTO audit_logs (user_id, organization_id, action, entity_type, entity_id, details, ip_address, created_at)
-       VALUES ($1, $2, 'extraction_job_created', 'file', $3, $4, '0.0.0.0', NOW())`,
-      [
-        job.userId,
-        job.organizationId,
-        job.fileId,
-        JSON.stringify({
-          jobId: job.id,
-          fileName: job.fileName,
-          fileType: job.fileType,
-          fileSize: job.fileSize,
-          priority: job.priority,
-        }),
-      ]
-    );
-  } catch {
-    /* non-critical */
-  }
+  // Chained via auditService — the previous raw INSERT named columns audit_logs
+  // does not have (organization_id / entity_type / entity_id / details), so it
+  // raised 42703 into a bare catch and recorded nothing.
+  await auditService.logAction({
+    organizationId: job.organizationId,
+    userId: job.userId,
+    action: 'extraction_job_created',
+    resourceType: 'file',
+    resourceId: job.fileId,
+    details: {
+      jobId: job.id,
+      fileName: job.fileName,
+      fileType: job.fileType,
+      fileSize: job.fileSize,
+      priority: job.priority,
+    },
+  });
 }
 
 async function updateJobInDB(job: ExtractionJob): Promise<void> {
-  try {
-    await pool.query(
-      `INSERT INTO audit_logs (user_id, organization_id, action, entity_type, entity_id, details, ip_address, created_at)
-       VALUES ($1, $2, $3, 'file', $4, $5, '0.0.0.0', NOW())`,
-      [
-        job.userId,
-        job.organizationId,
-        job.status === 'completed' ? 'extraction_job_completed' : 'extraction_job_failed',
-        job.fileId,
-        JSON.stringify({
-          jobId: job.id,
-          fileName: job.fileName,
-          status: job.status,
-          durationMs: job.durationMs,
-          qualityScore: job.result?.qualityScore,
-          tablesExtracted: job.result?.tables.length || 0,
-          sectionsDetected: job.result?.sections.length || 0,
-          entitiesFound: job.result?.entities.length || 0,
-          artifactsStored: job.result?.artifacts.length || 0,
-          error: job.error,
-        }),
-      ]
-    );
-  } catch {
-    /* non-critical */
-  }
+  // Chained via auditService (see storeJob above for why the raw INSERT could
+  // never have written a row).
+  await auditService.logAction({
+    organizationId: job.organizationId,
+    userId: job.userId,
+    action: job.status === 'completed' ? 'extraction_job_completed' : 'extraction_job_failed',
+    resourceType: 'file',
+    resourceId: job.fileId,
+    details: {
+      jobId: job.id,
+      fileName: job.fileName,
+      status: job.status,
+      durationMs: job.durationMs,
+      qualityScore: job.result?.qualityScore,
+      tablesExtracted: job.result?.tables.length || 0,
+      sectionsDetected: job.result?.sections.length || 0,
+      entitiesFound: job.result?.entities.length || 0,
+      artifactsStored: job.result?.artifacts.length || 0,
+      error: job.error,
+    },
+  });
 }
 
 async function logExtractionAudit(job: ExtractionJob): Promise<void> {

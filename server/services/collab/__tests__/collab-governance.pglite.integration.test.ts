@@ -63,6 +63,26 @@ vi.mock('../../../middleware/orgMembership', async importOriginal => {
   };
 });
 
+// The tenant lifecycle posture, driven explicitly for the same reason membership
+// is: the collaboration socket is a separate TRANSPORT and never passes through
+// the HTTP lifecycle guard, so "this tenant is suspended" has to be a deliberate
+// state in these tests rather than an artefact of an unseeded organizations row.
+let tenantPosture: {
+  organizationId: number;
+  state: string;
+  decision: 'allow' | 'read_only' | 'deny';
+  code: string;
+  reason: string;
+} | null = null;
+vi.mock('../../tenant/tenant-lifecycle', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../tenant/tenant-lifecycle')>();
+  return {
+    ...actual,
+    getTenantAccessPosture: async (organizationId: number) =>
+      tenantPosture ? { ...tenantPosture, organizationId } : null,
+  };
+});
+
 import { authenticateCollabConnection } from '../../hocuspocus-server';
 import { parseDocumentName } from '../collab-authorization';
 import { loadCollabState, storeCollabState } from '../collab-state.store';
@@ -113,6 +133,8 @@ beforeAll(async () => {
 
   pglite = new PGlite();
   await pglite.exec(migration('db/migrations/20260725_authoring_document_loop_tables.sql'));
+  await pglite.exec(migration('db/migrations/20260817_doc_revisions_immutable_ledger.sql'));
+  await pglite.exec(migration('db/migrations/20260730_authoring_comments_router_columns.sql'));
   await pglite.exec(migration('db/migrations/20260727_collab_document_state.sql'));
 
   // Two tenants, one document each, one section each.
@@ -142,6 +164,13 @@ beforeEach(() => {
     { userId: USER_A, organizationId: ORG_A },
     { userId: USER_B, organizationId: ORG_B },
   ];
+  tenantPosture = {
+    organizationId: ORG_A,
+    state: 'active',
+    decision: 'allow',
+    code: 'TENANT_ACTIVE',
+    reason: 'Active.',
+  };
 });
 
 describe('documentName parsing', () => {
@@ -511,5 +540,83 @@ describe('an unprovisioned store', () => {
     } finally {
       await bare.close();
     }
+  });
+});
+
+/**
+ * The collaboration socket is a separate TRANSPORT from HTTP, so the lifecycle
+ * guard in middleware/tenantLifecycleGuard.ts never runs for it — and this is a
+ * pure WRITE channel. Before this was wired, a suspended organization's users
+ * kept editing documents in real time while every HTTP route refused them: the
+ * worst possible split for a control whose whole job is to stop a suspended
+ * tenant working.
+ */
+describe('tenant lifecycle on the collaboration socket', () => {
+  const openAsA = (connectionConfig?: { readOnly: boolean }) =>
+    authenticateCollabConnection({
+      token: accessToken(),
+      documentName: `authoring:${DOC_A}`,
+      connectionConfig,
+    });
+
+  it('admits a member of an ACTIVE tenant (the baseline)', async () => {
+    await expect(openAsA()).resolves.toMatchObject({ tenantId: ORG_A });
+  });
+
+  it('REFUSES a member of a suspended tenant', async () => {
+    tenantPosture = {
+      organizationId: ORG_A,
+      state: 'suspended',
+      decision: 'deny',
+      code: 'TENANT_SUSPENDED',
+      reason: 'suspended',
+    };
+    await expect(openAsA()).rejects.toMatchObject({ reason: 'tenant-suspended' });
+  });
+
+  it('DOWNGRADES a read-only tenant to a view-only socket rather than refusing', async () => {
+    // A past-due tenant keeps read access to its own regulatory record on HTTP.
+    // Refusing the socket outright would make documents readable over one
+    // transport and unreadable over the other, for no benefit.
+    tenantPosture = {
+      organizationId: ORG_A,
+      state: 'past_due',
+      decision: 'read_only',
+      code: 'TENANT_PAST_DUE',
+      reason: 'past due',
+    };
+    const connectionConfig = { readOnly: false };
+    await expect(openAsA(connectionConfig)).resolves.toMatchObject({ tenantId: ORG_A });
+    expect(connectionConfig.readOnly).toBe(true);
+  });
+
+  it('refuses a read-only tenant when the socket cannot be downgraded', async () => {
+    // No connectionConfig means no way to enforce view-only. Fail closed rather
+    // than admit a writer.
+    tenantPosture = {
+      organizationId: ORG_A,
+      state: 'pending_deletion',
+      decision: 'read_only',
+      code: 'TENANT_PENDING_DELETION',
+      reason: 'scheduled for deletion',
+    };
+    await expect(openAsA()).rejects.toMatchObject({ reason: 'tenant-read-only' });
+  });
+
+  it('refuses fail-closed when the posture cannot be read', async () => {
+    tenantPosture = null;
+    await expect(openAsA()).rejects.toMatchObject({ reason: 'tenant-state-unverified' });
+  });
+
+  it('checks the posture AFTER membership — a revoked user never reveals tenant state', async () => {
+    membershipRows = membershipRows.filter(r => r.userId !== USER_A);
+    tenantPosture = {
+      organizationId: ORG_A,
+      state: 'suspended',
+      decision: 'deny',
+      code: 'TENANT_SUSPENDED',
+      reason: 'suspended',
+    };
+    await expect(openAsA()).rejects.toMatchObject({ reason: 'membership-revoked' });
   });
 });

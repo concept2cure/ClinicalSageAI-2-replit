@@ -41,7 +41,17 @@ const TAG = '[ci:unrun-tests]';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /** Roots a test file may live under. Anything outside these is not our problem. */
-const ROOTS = ['tests', 'server', 'client', 'shared'];
+/* `scripts` is here because it was not, and that blind spot hid two dead files.
+   `scripts/visual-qa/*.spec.tsx` are real vitest specs, named in a real npm
+   script — and vitest matches a filter against its `include` globs first, which
+   covered tests|server|client|shared and not scripts. Both were silently
+   filtered out, so `npm run visual-qa:capture` exited "No test files found" and
+   the documented `npm run visual-qa` entry point died at step one. This guard
+   reported "every test file is reachable" the whole time, because it never
+   walked the directory they live in. A guard that does not look somewhere
+   cannot report on it, and reporting a clean result over unexamined ground is
+   the failure this file exists to prevent. */
+const ROOTS = ['tests', 'server', 'client', 'shared', 'scripts'];
 const SKIP_DIRS = new Set(['node_modules', 'dist', '_archive', '_deprecated', '.git', 'coverage']);
 
 /**
@@ -118,12 +128,25 @@ function globMatch(glob, filePath) {
   return walk(0, 0);
 }
 
-/** Pull the `include:` array out of vitest.config.ts as written. */
-function readVitestIncludes() {
-  const src = fs.readFileSync(path.join(REPO, 'vitest.config.ts'), 'utf8');
+/**
+ * Vitest configs whose include globs count as "this file runs".
+ *
+ * There are two runners, not one. `vitest.db.config.ts` owns the real-database
+ * project (`*.dbtest.ts`), which is deliberately EXCLUDED from vitest.config.ts
+ * so it cannot inherit that project's `vi.mock('pg')`. Reading only the first
+ * config would report every database test as unrun; reading only the second
+ * would miss everything else. Both are read for the same reason the original
+ * parser read the config at all: a guard with its own copy of the list agrees
+ * with itself and not with the runner.
+ */
+const VITEST_CONFIGS = ['vitest.config.ts', 'vitest.db.config.ts', 'vitest.visual-qa.config.ts'];
+
+/** Pull the `include:` array out of a vitest config as written. */
+function readVitestIncludes(configFile) {
+  const src = fs.readFileSync(path.join(REPO, configFile), 'utf8');
   const m = /include:\s*\[([\s\S]*?)\]/.exec(src);
   if (!m) {
-    console.error(`${TAG} could not find an \`include:\` array in vitest.config.ts.`);
+    console.error(`${TAG} could not find an \`include:\` array in ${configFile}.`);
     console.error(`${TAG} This guard reads the runner's own globs; if the config's shape`);
     console.error(`${TAG} changed, update the parser rather than hard-coding the list.`);
     process.exit(1);
@@ -156,7 +179,7 @@ function* walk(dir) {
   }
 }
 
-const includes = readVitestIncludes();
+const includes = VITEST_CONFIGS.flatMap(readVitestIncludes);
 const extras = readExtraRunnerGlobs();
 const globs = [...includes, ...extras];
 // tests/e2e is excluded from vitest by config and driven by its own script.
@@ -166,7 +189,11 @@ const found = [];
 for (const root of ROOTS) {
   for (const abs of walk(path.join(REPO, root))) {
     const rel = path.relative(REPO, abs).split(path.sep).join('/');
-    if (!/\.(test|spec)\.(m?[jt]sx?)$/.test(rel)) continue;
+    // `dbtest` is listed explicitly: `.dbtest.ts` does NOT match `\.test\.`
+    // (there is no dot before `test`), so without it every real-database test
+    // was invisible to this guard — which is precisely the "a test that cannot
+    // pass and cannot fail" condition the file header describes.
+    if (!/\.(dbtest|test|spec)\.(m?[jt]sx?)$/.test(rel)) continue;
     if (excluded.some((prefix) => rel.startsWith(prefix))) continue;
     found.push(rel);
   }

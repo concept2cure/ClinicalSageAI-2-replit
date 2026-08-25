@@ -51,9 +51,9 @@ describe('resolveNavigation', () => {
   });
 
   it('accepts a valid enum param and rejects an invalid one', () => {
-    const ok = resolveNavigation('intelligence', { intelligenceTab: 'protocol' });
+    const ok = resolveNavigation('intelligence', { intelligenceTab: 'clinical' });
     expect(ok.ok).toBe(true);
-    if (ok.ok) expect(ok.directive.params).toEqual({ intelligenceTab: 'protocol' });
+    if (ok.ok) expect(ok.directive.params).toEqual({ intelligenceTab: 'clinical' });
 
     const bad = resolveNavigation('intelligence', { intelligenceTab: 'nope' });
     expect(bad.ok).toBe(false);

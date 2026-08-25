@@ -31,11 +31,13 @@ import { EstarFilingPanel } from './EstarFilingPanel';
 import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 import { useCdxPairings, useCliaCategorizations } from '../hooks/useCdxClia';
 import { DataGate } from '../components/DataGate';
+import type { EditorSectionRef } from '../../v2/editorTarget';
 
 export interface IvdSurfaceProps {
   program: Program | null;
   onAskAna: (text: string) => void;
-  onOpenEditor?: (id: string | number) => void;
+  /** Open the one document editor; a section ref deep-links to that section. */
+  onOpenEditor?: (section?: EditorSectionRef) => void;
 }
 
 const PARAM_PILL: Record<IvdParamStatus, string> = {
@@ -434,6 +436,7 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
               label="CLIA categorizations"
               onRetry={clia.refresh}
               emptyHint="Categorize this test's CLIA complexity to plan a waiver strategy."
+              regulation="Serves the CLIA complexity categorization"
             >
               {(rows) => (
                 <table className="tbl">

@@ -639,8 +639,21 @@ export function createAuditTrailRoutes(pool: Pool): Router {
       const { getChainMonitorStatus } = await import('../services/audit/chainIntegrityMonitor.js');
       const status = getChainMonitorStatus();
       res.json({ success: true, data: status });
-    } catch {
-      res.json({ success: true, data: { status: 'not_started' } });
+    } catch (error) {
+      // §11.10(e): the chain-integrity monitor's status IS compliance evidence.
+      // Reporting `success: true, status: 'not_started'` when the status could
+      // not be read told an auditor "the monitor is idle" when the truth was
+      // "we could not determine whether the monitor is running at all" — the
+      // two are not the same claim, and only one of them is honest. Fail with a
+      // real status so the unknown state is visible instead of assumed benign.
+      console.error(
+        'Failed to read audit chain-monitor status:',
+        error instanceof Error ? error.message : String(error),
+      );
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to read chain integrity monitor status',
+      });
     }
   });
 

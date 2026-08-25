@@ -11,7 +11,7 @@
  * - Deterministic mode for testing
  */
 
-import { randomUUID, createHash } from 'crypto';
+import { randomUUID, createHash, randomInt } from 'crypto';
 import {
   gatewayRetryAttempts,
   overloadRetryAttempts,
@@ -383,6 +383,39 @@ function resolveMaxConcurrency(): number {
 // Gateway Class
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * The sampling seed to transmit, for providers that accept one.
+ *
+ * ── Why a seed is injected at all ───────────────────────────────────────────
+ * `seed` was plumbed end-to-end — request → provider params → audit ledger —
+ * and no caller has ever set it, so the column was structurally NULL. A
+ * provenance record that cannot reproduce its own generation is a record of
+ * very little; recording the seed is what makes "re-run this exact call" a
+ * thing an auditor can actually ask for.
+ *
+ * ── Why RANDOM per request, not a fixed constant ────────────────────────────
+ * Reproducibility here means "we can reproduce THIS generation", not "every
+ * generation is identical". A constant (or a prompt-derived) seed would make
+ * repeated identical requests return byte-identical output — so a user pressing
+ * Regenerate on a draft they disliked would get the same draft back, forever.
+ * A fresh random seed per call keeps variation intact AND makes each individual
+ * output replayable, because the seed that produced it is recorded next to it.
+ *
+ * Range is a signed 32-bit positive integer: OpenAI documents `seed` as an
+ * integer, and staying inside 2^31-1 avoids any 64-bit/float round-tripping
+ * question at the JSON boundary.
+ */
+function resolveSeed(requested: number | undefined): number {
+  if (typeof requested === 'number' && Number.isFinite(requested)) return requested;
+  return randomInt(0, 2 ** 31 - 1);
+}
+
+/**
+ * Test seam for resolveSeed. Exported separately so the helper itself stays a
+ * private implementation detail of the provider paths.
+ */
+export const resolveSeedForTest = resolveSeed;
+
 export class AIGateway {
   private config: GatewayConfig;
   private models: ModelConfig[];
@@ -418,6 +451,16 @@ export class AIGateway {
     log.debug(
       `[AI Gateway] Initialized — providers: ${this.getEnabledProviders().join(', ')}, strategy: ${this.config.defaultStrategy}, deterministic: ${this.config.deterministicMode}`
     );
+  }
+
+  /**
+   * Verify the provenance ledger is writable. Throws with the remedy if not.
+   * No-op when auditing is switched off, which is an explicit operator choice
+   * rather than the silent failure this guards against.
+   */
+  async assertAuditStoreReady(): Promise<void> {
+    if (!this.config.auditEnabled) return;
+    await this.auditLogger.initialize();
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -859,10 +902,11 @@ export class AIGateway {
       temperature: request.temperature ?? 0.7,
     };
 
-    // Pass the sampling seed through for reproducible output where supported.
-    if (request.seed !== undefined) {
-      params.seed = request.seed;
-    }
+    // Always send a seed here: this surface accepts one, and a recorded seed is
+    // what makes the generation replayable. resolveSeed honours a caller-
+    // supplied value and otherwise mints a fresh random one per call.
+    const effectiveSeed = resolveSeed(request.seed);
+    params.seed = effectiveSeed;
 
     if (request.jsonMode) {
       // Strict json_schema is a frontier/Azure feature; self-hosted
@@ -901,6 +945,10 @@ export class AIGateway {
       thinking: reasoning || undefined,
       provider: modelConfig.provider,
       model: modelConfig.model,
+      // The snapshot the provider says answered — `modelConfig.model` is only
+      // the alias we asked for. See GatewayResponse.resolvedModel.
+      resolvedModel: typeof completion.model === 'string' ? completion.model : undefined,
+      effectiveSeed,
       usage: {
         inputTokens: completion.usage?.prompt_tokens || 0,
         outputTokens: completion.usage?.completion_tokens || 0,
@@ -1145,6 +1193,9 @@ export class AIGateway {
       toolUses: toolUses.length > 0 ? toolUses : undefined,
       provider: modelConfig.provider,
       model: modelConfig.model,
+      // Anthropic echoes the resolved snapshot on the message body; an alias
+      // like claude-opus-4-8 comes back as the dated version that served it.
+      resolvedModel: typeof (response as any).model === 'string' ? (response as any).model : undefined,
       usage: {
         inputTokens,
         outputTokens,
@@ -1276,6 +1327,7 @@ export class AIGateway {
     let cacheCreationInputTokens = 0;
     let cacheReadInputTokens = 0;
     let stopReason = 'unknown';
+    let resolvedModel: string | undefined;
 
     // Per-chunk watchdog — detect stalled streams (no data for 30s)
     let lastChunkTime = Date.now();
@@ -1328,6 +1380,9 @@ export class AIGateway {
           stopReason = event.delta?.stop_reason || stopReason;
           outputTokens = event.usage?.output_tokens || outputTokens;
         } else if (event.type === 'message_start') {
+          // The resolved snapshot arrives once, on message_start, alongside the
+          // input-token count — the streaming path's only sighting of it.
+          if (typeof event.message?.model === 'string') resolvedModel = event.message.model;
           inputTokens = event.message?.usage?.input_tokens || 0;
           // Prompt cache usage (Anthropic emits these on the message_start
           // event alongside input_tokens). They stay 0 when caching is off.
@@ -1364,6 +1419,7 @@ export class AIGateway {
       toolUses: toolUses.length > 0 ? toolUses : undefined,
       provider: modelConfig.provider,
       model: modelConfig.model,
+      resolvedModel,
       usage: {
         inputTokens,
         outputTokens,
@@ -1409,10 +1465,11 @@ export class AIGateway {
       temperature: request.temperature ?? 0.7,
     };
 
-    // Pass the sampling seed through for reproducible output where supported.
-    if (request.seed !== undefined) {
-      params.seed = request.seed;
-    }
+    // Always send a seed here: this surface accepts one, and a recorded seed is
+    // what makes the generation replayable. resolveSeed honours a caller-
+    // supplied value and otherwise mints a fresh random one per call.
+    const effectiveSeed = resolveSeed(request.seed);
+    params.seed = effectiveSeed;
 
     if (request.jsonMode) {
       params.response_format = { type: 'json_object' };
@@ -1437,6 +1494,8 @@ export class AIGateway {
       thinking: reasoning || undefined,
       provider: 'moonshot',
       model: modelConfig.model,
+      resolvedModel: typeof completion.model === 'string' ? completion.model : undefined,
+      effectiveSeed,
       usage: {
         inputTokens: completion.usage?.prompt_tokens || 0,
         outputTokens: completion.usage?.completion_tokens || 0,
@@ -1483,7 +1542,8 @@ export class AIGateway {
       // stay accurate on the streaming path (ignored by servers that lack it).
       stream_options: { include_usage: true },
     };
-    if (request.seed !== undefined) params.seed = request.seed;
+    const effectiveSeed = resolveSeed(request.seed);
+    params.seed = effectiveSeed;
     if (request.jsonMode) {
       const supportsStrictSchema = provider !== 'local';
       params.response_format =
@@ -1500,6 +1560,7 @@ export class AIGateway {
     let outputTokens = 0;
     let totalTokens = 0;
     let finishReason = 'unknown';
+    let resolvedModel: string | undefined;
 
     // Per-chunk watchdog — abort a stream that goes silent for 30s (mirrors the
     // Anthropic path) so a hung provider can't wedge the turn.
@@ -1526,6 +1587,12 @@ export class AIGateway {
       for await (const chunk of stream as AsyncIterable<any>) {
         lastChunkTime = Date.now();
         if (streamStalled) break;
+
+        // Every chunk repeats the resolved model; take the first one that
+        // carries it rather than re-assigning on each.
+        if (resolvedModel === undefined && typeof chunk?.model === 'string') {
+          resolvedModel = chunk.model;
+        }
 
         const delta = parseOpenAIStreamDelta(chunk);
         // Reasoning precedes the answer within a turn — emit it first.
@@ -1561,6 +1628,8 @@ export class AIGateway {
       thinking: thinking || undefined,
       provider,
       model: modelConfig.model,
+      resolvedModel,
+      effectiveSeed,
       usage: {
         inputTokens,
         outputTokens,
@@ -1745,12 +1814,45 @@ export class AIGateway {
   // Deterministic Mode
   // ─────────────────────────────────────────────────────────────────────────
 
+  /**
+   * Deterministic-mode response.
+   *
+   * A streaming caller passes `stream: true` with an `onStream` callback and
+   * renders ONLY what that callback delivers. This path used to return the
+   * content and never invoke it, so in deterministic mode
+   * POST /api/ana-ri/stream emitted `run_started`, three `status` events,
+   * `orchestration`, `done` and `post_done` — and not one `text` event.
+   *
+   * The failure was silent in the worst way: `done` reported
+   * `outputTokens: 71` and `turn_status: "completed"`, so the transport
+   * declared success while delivering nothing, and useAnaChat rendered an
+   * empty assistant bubble with no error. AnA answered with silence. That is
+   * also the posture CI's production boot smoke runs in, where /readyz
+   * reports `anaState: "deterministic"` and passes readiness — a green probe
+   * over a chat surface that produces no words.
+   *
+   * Honouring the callback here fixes it for every streaming caller at once
+   * rather than per-route. The content is delivered as a single chunk: it is
+   * a fixed string with no generation latency to simulate, and splitting it
+   * would invent a progressive arrival that nothing here is actually doing.
+   */
   private buildDeterministicResponse(
     request: GatewayRequest,
     requestId: string,
     startTime: number
   ): GatewayResponse {
     const content = DETERMINISTIC_RESPONSES[request.taskType] || DETERMINISTIC_RESPONSES.general;
+    if (request.stream && typeof request.onStream === 'function' && content) {
+      try {
+        request.onStream(content);
+      } catch (err) {
+        // A caller whose sink has already closed must not turn a fixture
+        // response into a thrown request.
+        log.warn('[ai-gateway] deterministic onStream sink threw', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
     return {
       content,
       provider: 'anthropic',
@@ -1884,6 +1986,11 @@ export class AIGateway {
         timestamp: new Date(),
         provider: response.provider,
         model: response.model,
+        // Which snapshot actually answered. `model` above is the registry entry
+        // the router picked, and 13 of the 15 entries are floating aliases —
+        // recording only that cannot identify the model that produced the
+        // output, which is the question this row exists to answer.
+        resolvedModel: response.resolvedModel,
         taskType: request.taskType,
         strategy,
         organizationId: request.organizationId,
@@ -1900,8 +2007,31 @@ export class AIGateway {
         cached: response.cached,
         deterministic: response.deterministic,
         // Reproducibility: which params + prompt produced this output.
-        temperature: request.temperature ?? 0.7,
-        seed: request.seed,
+        //
+        // This recorded `request.temperature ?? 0.7` — the temperature ASKED
+        // FOR, defaulted — under a heading that claims to describe what
+        // produced the output. For the Opus 4.7+ reasoning-only family those
+        // are different things: applyAnthropicSamplingParams() returns early
+        // for those models and never sets params.temperature, because sending
+        // one is a 400. So the ledger asserted a sampling parameter that was
+        // never transmitted, and anyone reproducing the call from this record
+        // would set 0.7 against a model that does no sampling at all — a
+        // provenance record that is confidently wrong is worse than one that
+        // says "not applicable", because only the first gets trusted.
+        //
+        // Record the EFFECTIVE value: omitted when the model rejects sampling.
+        // `undefined`, not `null`, because GatewayAuditEntry.temperature is
+        // `number | undefined`; the writer coalesces it (`entry.temperature ??
+        // null`), so the column still stores NULL — the DB outcome is identical
+        // and the type is honest.
+        temperature: this.isReasoningOnlyModel(response.model)
+          ? undefined
+          : request.temperature ?? 0.7,
+        // The seed that was actually SENT. Undefined on every Anthropic call —
+        // that API has no seed parameter — so the column stays NULL there
+        // rather than asserting a value the provider never saw. Exactly the
+        // rule the temperature field above follows.
+        seed: response.effectiveSeed,
         promptHash: this.hashPrompt(request.messages),
         promptVersion,
         triedModels: triedModels && triedModels.length > 0 ? triedModels : undefined,
@@ -2242,4 +2372,19 @@ export function getGateway(config?: Partial<GatewayConfig>): AIGateway {
  */
 export function resetGateway(): void {
   gatewayInstance = null;
+}
+
+/**
+ * Boot-time assertion that the AI provenance ledger is present and writable.
+ *
+ * Separate from the per-call writer, which stays non-blocking: an audit outage
+ * must not take inference down mid-request. But "non-blocking" had become
+ * indistinguishable from "silently doing nothing", and did so for two reasons
+ * at once (no migration, no pool — see server/services/ai-gateway/audit.ts).
+ * This gives the condition exactly one place to surface loudly.
+ *
+ * @throws when the ledger cannot be written.
+ */
+export async function assertAiProvenanceLedgerReady(): Promise<void> {
+  await getGateway().assertAuditStoreReady();
 }

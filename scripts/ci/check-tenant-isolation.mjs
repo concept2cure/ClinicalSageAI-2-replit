@@ -120,6 +120,18 @@ const TENANT_SCOPED_TABLES = new Set([
   'translation_segments',
   'glossary_terms',
   'translation_memory_entries',
+  // CER literature corpus + its MEDDEV 2.7/1 Rev 4 screening trail (GA ledger
+  // L4). Both are raw-SQL-only — neither has a Drizzle definition in
+  // shared/schema.ts — so they are exactly the case this gate exists for: the
+  // query-builder analysis that covers most tables cannot see them at all.
+  // A screening decision is per-organization governance evidence; an unfiltered
+  // read would put one manufacturer's appraisal of an article into another
+  // manufacturer's clinical evaluation. All current access is through
+  // literature-recording.service.ts / literature-screening.service.ts, every
+  // statement of which carries organization_id, so adding them here tightens
+  // the gate with no new findings.
+  'literature_entries',
+  'literature_screening_decisions',
 ]);
 
 // ─── Tenant-filter signals ──────────────────────────────────────────────────
@@ -175,7 +187,11 @@ const ALLOWLIST_FILES = new Set([
   // own merits, not via this allowlist.
   'server/routes/c2c/actions.ts',
   // System / admin tools that legitimately operate cross-tenant.
-  'server/routes/admin.ts',
+  // ('server/routes/admin.ts' was listed here and has never existed in this
+  //  repo's history — `git log --all -- server/routes/admin.ts` is empty. A
+  //  phantom entry in an exact-path allowlist is a pre-approval: the day
+  //  someone adds a file at that plausible name, every raw query in it skips
+  //  this gate without review. Removed.)
   // Master Administration — the platform-owner + support console. EVERY query
   // here is cross-tenant by design (estate-wide monitoring of all clients /
   // users / audit). The whole router is gated by authMiddleware →
@@ -201,9 +217,9 @@ const ALLOWLIST_FILES = new Set([
   // audit_logs unfiltered; a tenant predicate would fork/break the chain and
   // make verification meaningless. Same rationale as chainIntegrityMonitor.
   'server/services/audit/chain.ts',
-  // Diagnostics / health.
-  'server/diagnostics.js',
-  'server/services/diagnostics.ts',
+  // Diagnostics / health — both entries removed as dead pre-approvals:
+  // server/diagnostics.js was deleted in 066acdb19, and
+  // server/services/diagnostics.ts has never existed in this repo's history.
   // Runtime-guarded: tenant isolation is enforced at function entry by
   // explicit throws when where.organizationId / tenantId / documentId is
   // missing (see server/prisma/__tests__/tenant-guards.test.ts). The

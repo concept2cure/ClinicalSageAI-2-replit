@@ -1381,6 +1381,54 @@ export const SEARCH_LITERATURE: AnaTool = {
   },
 };
 
+export const RECORD_LITERATURE: AnaTool = {
+  name: 'record_literature',
+  description:
+    "Record PubMed search hits into the organization's literature corpus (literature_entries) so " +
+    'they appear in the CER workbench corpus chart. Use after search_literature when the user asks ' +
+    'to save, record, or keep results. Idempotent per PMID — re-recording updates the stored entry ' +
+    'instead of duplicating it. The organization comes from the active context, never from ' +
+    'arguments. Scope: this tool records BIBLIOGRAPHY only — entries enter the corpus unscreened. ' +
+    'Include/exclude appraisal is a separate governed act with its own reviewer attribution and ' +
+    'appraisal stage, recorded by a human in the CER workbench screening surface; do not claim an ' +
+    'article has been screened because it was recorded. Entries are org-scoped (no program ' +
+    'binding); the per-program corpus chart matches entries by product name in title/abstract.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      entries: {
+        type: 'array',
+        description:
+          'Search hits to record — typically the articles returned by search_literature. ' +
+          'Each needs pmid + title; the other fields enrich the stored entry when present.',
+        items: {
+          type: 'object',
+          properties: {
+            pmid: { type: 'string', description: 'PubMed ID (numeric).' },
+            title: { type: 'string', description: 'Article title.' },
+            abstract: { type: 'string', description: 'Abstract text, when available.' },
+            journal: { type: 'string', description: 'Journal name.' },
+            year: { type: 'number', description: 'Publication year.' },
+            authors: {
+              type: 'array',
+              items: { type: 'string' },
+              description:
+                'Author names; a single comma-separated string is also accepted.',
+            },
+            doi: { type: 'string', description: 'DOI, when available.' },
+            url: {
+              type: 'string',
+              description: 'Canonical PubMed URL — derived from the PMID when omitted.',
+            },
+          },
+          required: ['pmid', 'title'],
+        },
+      },
+    },
+    required: ['entries'],
+  },
+};
+
 export const SEARCH_IVD_KNOWLEDGE: AnaTool = {
   name: 'search_ivd_knowledge',
   description:

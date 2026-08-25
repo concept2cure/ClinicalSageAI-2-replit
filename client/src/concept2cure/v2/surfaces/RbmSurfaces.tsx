@@ -69,7 +69,7 @@ export function RiskMatrix({ items, sel, onSel }: { items: { l: number; i: numbe
 
 /* ── Sparkline ── */
 export function Sparkline({ values, amber, red, w = 132, h = 34 }: { values: number[]; amber: number | null; red: number | null; w?: number; h?: number }) {
-  if (!values || values.length < 2) return <span className="rbm-spark-empty">No history -- add the first reading</span>;
+  if (!values || values.length < 2) return <span className="rbm-spark-empty">No history — add the first reading</span>;
   const refs = [amber, red].filter((n): n is number => n != null);
   const all = values.concat(refs);
   const mn = Math.min(...all), mx = Math.max(...all), span = (mx - mn) || 1;
@@ -230,7 +230,7 @@ export function GovernedApprovalDialog({ what, meaning, onCancel, onSigned }: {
           <label className="rbm-field"><span>Password</span><input type="password" value={pw} onChange={e => setPw(e.target.value)} autoComplete="off" /></label>
           <label className="rbm-field"><span>Authenticator code</span><input inputMode="numeric" maxLength={6} value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))} placeholder="6 digits" /></label>
         </div>
-        <div className="rbm-modal-note">Signature meaning: approval (21 CFR 11.50 / 11.200). Your password -- and your authenticator code if MFA is enabled -- are verified server-side before signing; the signer, timestamp and reason are written to the immutable audit trail.</div>
+        <div className="rbm-modal-note">Signature meaning: approval (21 CFR 11.50 / 11.200). Your password — and your authenticator code if MFA is enabled — are verified server-side before signing; the signer, timestamp and reason are written to the immutable audit trail.</div>
         {err && <div className="rbm-modal-note" style={{ color: '#e5484d' }}>{err}</div>}
         <div className="rbm-modal-acts">
           <button className="rbm-btn" onClick={onCancel} disabled={busy}>Cancel</button>
@@ -306,15 +306,15 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose }: {
   useEffect(() => { if (endRef.current) endRef.current.scrollTop = endRef.current.scrollHeight; }, [msgs]);
   const ask = (text: string) => { if (!text) return; onAsk(text); setDraft(''); };
   return (
-    <aside className="rbm-ana" aria-label="AnA -- risk-based monitoring">
+    <aside className="rbm-ana" aria-label="AnA — risk-based monitoring">
       <div className="rbm-ana-hdr">
-        <div className="rbm-ana-id"><span className="mk">{'✻'}</span><div><div className="nm">AnA -- RBM co-monitor</div><div className="md">bound to {study} -- {nav.label}</div></div></div>
+        <div className="rbm-ana-id"><span className="mk">{'✻'}</span><div><div className="nm">AnA — RBM co-monitor</div><div className="md">bound to {study} -- {nav.label}</div></div></div>
         <button className="tb-btn" onClick={onClose} title="Collapse">{I.panelRight}</button>
       </div>
       <div className="rbm-ana-ctx">
         <div className="rbm-ana-ctx-k">On this surface</div>
         <div className="rbm-ana-ctx-v">{nav.label} -- tool <code>{nav.tool}</code></div>
-        <div className="rbm-ana-ctx-note">{I.info}AnA runs the same 9 RBM tools the buttons run -- ask, and results deep-link into the surface. Advisory outputs (plans, reports) are drafts until approved.</div>
+        <div className="rbm-ana-ctx-note">{I.info}AnA runs the same 9 RBM tools the buttons run — ask, and results deep-link into the surface. Advisory outputs (plans, reports) are drafts until approved.</div>
       </div>
       <div className="rbm-ana-scroll" ref={endRef}>
         <div className="rbm-ana-starters">

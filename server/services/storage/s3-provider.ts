@@ -50,6 +50,24 @@ try {
   logger.warn('AWS SDK not installed — S3 provider unavailable');
 }
 
+/**
+ * Does this stored object belong to the organization making the request?
+ *
+ * The object's metadata carries the org that wrote it. Both read paths used to
+ * read that value purely to RECONSTRUCT the key — answering "which org owns
+ * this?" and then fetching, never asking whether that was the org asking. This
+ * is the comparison that was missing.
+ *
+ * Strict integer equality on both sides: `meta.metadata.orgId` is a string in S3
+ * metadata, so `==` coercion or a bare `Number()` on one side only would let
+ * '' / NaN slip through as a match. A metadata blob with no org is NOT owned by
+ * anyone and is refused rather than treated as public.
+ */
+function ownsObject(meta: any, orgId: number): boolean {
+  const owner = Number(meta?.metadata?.orgId);
+  return Number.isSafeInteger(owner) && Number.isSafeInteger(orgId) && owner > 0 && owner === orgId;
+}
+
 export class S3StorageProvider implements IStorageProvider {
   readonly name = 's3';
   private client: any;
@@ -126,14 +144,19 @@ export class S3StorageProvider implements IStorageProvider {
     return { vaultFileId, vaultVersionId, sizeBytes, sha256, provider: 's3' };
   }
 
-  async get(vaultVersionId: string): Promise<StorageGetResult | null> {
+  async get(vaultVersionId: string, orgId: number): Promise<StorageGetResult | null> {
     try {
       // First find the metadata to get the actual file path
       // In production, this would use a DB index; here we rely on known structure
       const meta = await this.getMeta(vaultVersionId);
       if (!meta) return null;
 
-      const orgId = Number(meta.metadata.orgId);
+      // The object's OWN metadata names its org. Trusting that alone is what made
+      // this cross-tenant: it answered "which org owns this?" and then fetched,
+      // never asking whether that was the org doing the asking. A mismatch is
+      // reported as MISSING, not forbidden — a distinguishable "forbidden" turns
+      // a version id into an existence oracle.
+      if (!ownsObject(meta, orgId)) return null;
       const projectId = meta.metadata.projectId;
 
       const response = await this.client.send(new GetObjectCommand({
@@ -160,12 +183,17 @@ export class S3StorageProvider implements IStorageProvider {
     }
   }
 
-  async delete(vaultVersionId: string): Promise<boolean> {
+  async delete(vaultVersionId: string, orgId: number): Promise<boolean> {
     try {
       const meta = await this.getMeta(vaultVersionId);
       if (!meta) return false;
 
-      const orgId = Number(meta.metadata.orgId);
+      // A cross-tenant DELETE is strictly worse than a cross-tenant read: the
+      // read leaks a regulatory record, this destroys one. The shadowed local
+      // `const orgId = Number(meta.metadata.orgId)` that used to sit here is
+      // exactly how the parameter would have been silently ignored.
+      if (!ownsObject(meta, orgId)) return false;
+
       const projectId = meta.metadata.projectId;
 
       await this.client.send(new DeleteObjectCommand({
@@ -237,7 +265,11 @@ export class S3StorageProvider implements IStorageProvider {
     return results.sort((a, b) => b.storedAt.localeCompare(a.storedAt));
   }
 
-  async getSignedUrl(vaultVersionId: string, ttlSeconds = 900): Promise<StorageSignedUrlResult> {
+  async getSignedUrl(
+    vaultVersionId: string,
+    orgId: number,
+    ttlSeconds = 900
+  ): Promise<StorageSignedUrlResult> {
     if (!getSignedUrlFn) {
       throw new Error('S3: @aws-sdk/s3-request-presigner not installed');
     }
@@ -245,7 +277,11 @@ export class S3StorageProvider implements IStorageProvider {
     const meta = await this.getMeta(vaultVersionId);
     if (!meta) throw new Error(`S3: version ${vaultVersionId} not found`);
 
-    const orgId = Number(meta.metadata.orgId);
+    // A pre-signed URL is a bearer token for the object that outlives this
+    // request and carries no further authorization, so the ownership check
+    // matters more here than on a direct read, not less. Same "not found"
+    // wording as a genuinely absent version.
+    if (!ownsObject(meta, orgId)) throw new Error(`S3: version ${vaultVersionId} not found`);
     const projectId = meta.metadata.projectId;
 
     const command = new GetObjectCommand({

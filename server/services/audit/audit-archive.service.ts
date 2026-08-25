@@ -25,6 +25,7 @@ import crypto from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
 import type { Pool, PoolClient } from 'pg';
+import { stableStringify } from '../../../shared/canonical-json.js';
 import {
   S3Client,
   PutObjectCommand,
@@ -142,7 +143,14 @@ export async function runAuditArchive(
     try {
       await txClient.query('BEGIN');
       await txClient.query(`SET LOCAL app.audit_archive_bypass = 'on'`);
-      await txClient.query(`DELETE FROM audit_logs WHERE id = ANY($1::int[])`, [ids]);
+      // `audit_logs.id` is uuid (migrations/0000_sweet_joseph.sql, shared/schema.ts),
+      // never integer. The previous `::int[]` cast made this DELETE fail on every
+      // batch with a type error — archival copied rows to cold storage and then
+      // never freed them from the hot table. Caught while wiring the §11.10(e)
+      // immutability triggers: this is the ONE path the DELETE trigger exempts,
+      // so it has to actually work, or "archive then delete" silently becomes
+      // "archive and retain forever".
+      await txClient.query(`DELETE FROM audit_logs WHERE id = ANY($1::uuid[])`, [ids]);
       await txClient.query('COMMIT');
     } catch (err) {
       try {
@@ -182,15 +190,13 @@ export function computeBatchHash(rows: Array<Record<string, unknown>>): string {
   return crypto.createHash('sha256').update(canon).digest('hex');
 }
 
+/**
+ * Canonical form for the batch checksum. The sink echoes back what it stored
+ * and the caller compares within the same call, so both sides move together —
+ * no stored digest is recomputed against (see the migration note).
+ */
 function canonicalJSON(value: unknown): string {
-  if (Array.isArray(value)) return '[' + value.map(canonicalJSON).join(',') + ']';
-  if (value && typeof value === 'object') {
-    const obj = value as Record<string, unknown>;
-    const keys = Object.keys(obj).sort();
-    return '{' + keys.map(k => JSON.stringify(k) + ':' + canonicalJSON(obj[k])).join(',') + '}';
-  }
-  if (value instanceof Date) return JSON.stringify(value.toISOString());
-  return JSON.stringify(value);
+  return stableStringify(value);
 }
 
 // ─── Filesystem sink (dev/CI; production overrides with S3) ────────────────

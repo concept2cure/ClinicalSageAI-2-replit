@@ -40,11 +40,20 @@ export class CreateTaskHandler implements ActionHandler {
       // Resolve assignee by role if specified
       let assigneeId: number | null = null;
       if (params.assignToRole) {
+        // Least-loaded first. The ordering subquery used to count tasks whose
+        // status was not 'done' — a value unified_tasks never holds (its domain
+        // is TASK_STATUSES; 'done' belongs to project_tasks). So it counted
+        // every task the user had EVER been assigned: whoever had the longest
+        // history looked busiest, and finishing work never made you eligible
+        // again. Archived tasks were counted too.
         const assignee = await this.pool.query(
           `SELECT u.id FROM users u
            JOIN user_roles ur ON u.id = ur.user_id
            WHERE ur.role = $1 AND u.organization_id = $2
-           ORDER BY (SELECT COUNT(*) FROM unified_tasks WHERE assignee_id = u.id AND status != 'done') ASC
+           ORDER BY (SELECT COUNT(*) FROM unified_tasks
+                      WHERE assignee_id = u.id
+                        AND deleted_at IS NULL
+                        AND status NOT IN ('completed', 'cancelled')) ASC
            LIMIT 1`,
           [params.assignToRole, payload.organizationId]
         );
@@ -116,19 +125,30 @@ export class SendNotificationHandler implements ActionHandler {
     try {
       const params = action.params as any;
 
-      // Insert into notifications table (in-app)
+      // Insert into notifications table (in-app).
+      //
+      // This statement named `user_id`, `severity` and `read`, none of which the
+      // table has — it declares recipient_id, priority and is_read — and it
+      // omitted notification_id and category, both NOT NULL. Postgres rejects an
+      // unknown column at PLAN time (42703), so EVERY rule-driven in-app
+      // notification failed, on every database, for as long as the code existed.
+      // Found by ci:insert-columns-declared.
       await this.pool.query(
         `INSERT INTO notifications (
-           user_id, organization_id, type, title, message,
-           severity, metadata, read, created_at
+           notification_id, recipient_id, organization_id, type, category,
+           title, message, priority, metadata, is_read, created_at
          ) VALUES (
-           $1, $2, 'rule_notification', $3, $4, $5, $6, false, NOW()
+           $1, $2, $3, 'rule_notification', 'workflow', $4, $5, $6, $7, false, NOW()
          )`,
         [
+          // NOT NULL UNIQUE. uuidv4 is already this module's id source.
+          uuidv4(),
           params.recipientUserId || null,
           payload.organizationId,
           `Rule: ${rule.name}`,
           this.buildMessage(params.template, payload),
+          // `priority` vocabulary is low | normal | high | critical; the rule's
+          // own `urgency` is passed through and defaulted the same way it was.
           params.urgency || 'normal',
           JSON.stringify({
             ruleId: rule.ruleId,
@@ -228,16 +248,29 @@ export class EscalateHandler implements ActionHandler {
     try {
       const params = action.params as any;
 
-      // Create escalation notification for the target role
+      // Create escalation notification for the target role.
+      //
+      // This statement was broken four ways at once and could never have
+      // inserted a row: it named user_id / severity / read (the table declares
+      // recipient_id / priority / is_read), omitted the NOT NULL
+      // notification_id and category, joined `user_roles` — a table with no
+      // Drizzle model and no CREATE in either migration lineage — and filtered
+      // `u.organization_id`, which `users` does not have. Org membership lives
+      // in `organization_users` (users carries only default_organization_id),
+      // which is also where the role actually is. Found by
+      // ci:insert-columns-declared; the missing table and column came out of
+      // fixing it.
+      //
+      // gen_random_uuid() rather than a caller-supplied id because this inserts
+      // one row PER recipient — a single id would collide on the second row.
       await this.pool.query(
         `INSERT INTO notifications (
-           user_id, organization_id, type, title, message,
-           severity, metadata, read, created_at
-         ) SELECT u.id, $1, 'escalation', $2, $3, 'critical',
-                  $4::json, false, NOW()
-         FROM users u
-         JOIN user_roles ur ON u.id = ur.user_id
-         WHERE ur.role = $5 AND u.organization_id = $1
+           notification_id, recipient_id, organization_id, type, category,
+           title, message, priority, metadata, is_read, created_at
+         ) SELECT gen_random_uuid()::text, ou.user_id, $1, 'escalation', 'workflow',
+                  $2, $3, 'critical', $4::json, false, NOW()
+         FROM organization_users ou
+         WHERE ou.role = $5 AND ou.organization_id = $1
          LIMIT 5`,
         [
           payload.organizationId,

@@ -6,11 +6,23 @@
  *   GET /api/mdx/vault/:artifactId         artifact metadata + linked sections
  *   GET /api/mdx/vault/:artifactId/versions  version history rows
  *
+ * Reads BOTH halves of the vault and merges them:
+ *   • concept2cure_artifacts — documents AUTHORED in the product
+ *   • vault.documents        — files UPLOADED via POST /api/vault/ingest
+ * Each row carries `source: 'authored' | 'upload'`. Before this they were two
+ * unrelated tables and only the first was listed, so a file uploaded into the
+ * vault did not appear in the vault.
+ *
  * Reads from concept2cure_artifacts (existing table, see schema.ts:5276).
- * concept2cure_artifacts.project_id is the legacy projects.id (numeric);
- * regulatory programs (uuid) bind to them via projects.regulatory_program_id
- * which we follow in the WHERE clause. When no program_id is given we list
- * every artifact in the org.
+ * concept2cure_artifacts.project_id is the legacy projects.id (numeric).
+ * Regulatory programs are uuid-keyed; the bridge between the two is
+ * `projects.regulatory_program_id` (Document Identity Contract slice C1,
+ * migrations/20260814_projects_regulatory_program_anchor.sql), so a
+ * program_id request filters through it. Where that column has not been
+ * applied yet the request is refused honestly (422) rather than 500-ing on
+ * 42703 — which is exactly what this route used to do while its own comment
+ * claimed the column had been "added by the MDX migration".
+ * Listing without program_id returns every artifact in the org.
  *
  * All endpoints return the canonical { data, meta? } envelope. Tenant-
  * scoped via the caller's organizationId. Audit-logged for reads at the
@@ -65,6 +77,29 @@ interface VaultRow {
   metadata:         Record<string, unknown> | null;
 }
 
+/* A row from `vault.documents` — the UPLOADED half of the vault.
+ *
+ * Deliberately a separate shape from VaultRow above: an authored artifact and
+ * an uploaded file share a surface, not a schema. `id` is a uuid here and an
+ * integer there; `version` is TEXT here and an integer there. Typing them as
+ * one row is how those differences turn into silent coercions. */
+interface UploadRow {
+  id:                string;
+  document_code:     string | null;
+  document_title:    string | null;
+  document_type:     string | null;
+  version:           string | null;
+  content_hash:      string | null;
+  file_name:         string | null;
+  file_size:         string | number | null;
+  mime_type:         string | null;
+  classification:    string | null;
+  processing_status: string | null;
+  created_by:        number | null;
+  created_at:        Date;
+  updated_at:        Date;
+}
+
 /* ─── GET /api/mdx/vault — list ───────────────────────────────────── */
 
 router.get('/vault', async (req: Request, res: Response) => {
@@ -76,16 +111,33 @@ router.get('/vault', async (req: Request, res: Response) => {
   }
   const { program_id: programId, ctd_prefix: ctdPrefix, status, limit = 200 } = parsed.data;
 
-  /* The project ↔ regulatory_program bridge. projects.regulatory_program_id
-     was added by the MDX migration. When it's null on legacy rows the
-     filter degrades to "any project in this org". */
+  /* The project ↔ regulatory_program bridge. HISTORY (2026-08-13): the comment
+     here claimed `projects.regulatory_program_id` "was added by the MDX
+     migration" while NO migration created it, so this filter raised 42703 and
+     every program-scoped Vault request 500'd; it was changed to refuse with a
+     422 until the column was real. It is real now (slice C1 of the Document
+     Identity Contract) and the filter is restored — but the 422 stays as the
+     runtime fallback below, because a deploy can run this code against a
+     database that has not had the migration applied yet, and "cannot filter"
+     is the honest answer there. What must never come back is returning the
+     whole org's artifacts as if they were one program's.
+
+     EXISTS rather than a JOIN: an artifact must not be duplicated or dropped
+     by the bridge, and the org predicate is repeated on `projects` so a
+     mis-anchored row (the anchor is deliberately FK-free — see the migration)
+     can never pull another tenant's project into the predicate. */
   /* a.organization_id lives in the SQL literal below (not this array) so the
      tenant-isolation CI gate can verify the scope statically. */
   const filters: string[] = [`a.status != 'archived'`];
   const args: unknown[] = [orgId];
   if (programId) {
     args.push(programId);
-    filters.push(`p.regulatory_program_id::text = $${args.length}`);
+    filters.push(
+      `EXISTS (SELECT 1 FROM projects p
+                WHERE p.id = a.project_id
+                  AND p.organization_id = a.organization_id
+                  AND p.regulatory_program_id = $${args.length}::uuid)`,
+    );
   }
   if (ctdPrefix) {
     args.push(`${ctdPrefix}%`);
@@ -103,7 +155,6 @@ router.get('/vault', async (req: Request, res: Response) => {
               a.version, a.content_hash, a.created_by_id, a.created_at, a.updated_at,
               a.locked_at, a.metadata
          FROM concept2cure_artifacts a
-         LEFT JOIN projects p ON p.id = a.project_id
         WHERE a.organization_id = $1 AND ${filters.join(' AND ')}
         ORDER BY a.updated_at DESC
         LIMIT $${args.length}`,
@@ -122,28 +173,137 @@ router.get('/vault', async (req: Request, res: Response) => {
       return 'Working files';
     };
 
-    return ok(
-      res,
-      rows.map((r) => ({
-        id:           r.id,
-        artifactId:   r.artifact_id,
-        title:        r.title,
-        type:         r.type,
-        category:     r.category,
-        family:       familyOf(r.ctd_section),
-        ctdSection:   r.ctd_section,
-        status:       r.status,
-        version:      r.version,
-        contentHash:  r.content_hash,
-        createdById:  r.created_by_id,
-        createdAt:    r.created_at,
-        updatedAt:    r.updated_at,
-        lockedAt:     r.locked_at,
-        eSig:         Boolean((r.metadata as { eSig?: unknown } | null)?.eSig),
-      })),
-      { count: rows.length },
+    /* UPLOADED FILES, from the other half of the vault.
+     *
+     * This route lists `concept2cure_artifacts` — documents AUTHORED in the
+     * product. Files UPLOADED through `POST /api/vault/ingest` land in
+     * `vault.documents`, a different table with a different key. Nothing joined
+     * the two, so a user who uploaded a file into the vault was shown a vault
+     * that did not contain it: the upload succeeded, the surface stayed empty,
+     * and the only way to tell them apart was to query the database. Adding an
+     * upload control to the MDX surface without this would have shipped exactly
+     * that silent failure.
+     *
+     * A union rather than a migration of one table into the other: an authored
+     * artifact and an uploaded file are genuinely different records — one has
+     * versions and a CTD section, the other has bytes, a size and a content
+     * hash — and collapsing them would lose what each is for. `source` marks
+     * which is which so the surface never has to guess.
+     *
+     * Tenancy: `vault.documents` has no organization_id column, so the join
+     * through `regulatory_programs` IS the tenant predicate here, exactly as it
+     * is the ownership check on the ingest side. */
+    const uploadArgs: unknown[] = [orgId];
+    let uploadProgramFilter = '';
+    if (programId) {
+      uploadArgs.push(programId);
+      uploadProgramFilter = ` AND d.program_id = $${uploadArgs.length}::uuid`;
+    }
+    uploadArgs.push(limit);
+
+    let uploads: UploadRow[] = [];
+    try {
+      const uploaded = await pool.query<UploadRow>(
+        `SELECT d.id, d.document_code, d.document_title, d.document_type,
+                d.version, d.content_hash, d.file_name, d.file_size, d.mime_type,
+                d.classification, d.processing_status, d.created_by,
+                d.created_at, d.updated_at
+           FROM vault.documents d
+           JOIN regulatory_programs p
+             ON p.id = d.program_id AND p.organization_id = $1
+          WHERE d.deleted_at IS NULL${uploadProgramFilter}
+          ORDER BY d.updated_at DESC
+          LIMIT $${uploadArgs.length}`,
+        uploadArgs,
+      );
+      uploads = uploaded.rows;
+    } catch (uploadErr) {
+      /* The authored half is the established contract and must not be taken
+         down by the newer half. An environment whose vault schema has not been
+         reconciled (see migrations/20260821_vault_documents_canonical_shape.sql)
+         raises 42703/42P01 here; the honest response is the artifacts the route
+         has always returned, plus a log — not a 500 that loses both. */
+      log.warn('vault.documents unavailable — listing authored artifacts only', {
+        orgId,
+        code: (uploadErr as { code?: string })?.code,
+      });
+    }
+
+    const artifactRows = rows.map((r) => ({
+      id:           r.id,
+      artifactId:   r.artifact_id,
+      title:        r.title,
+      type:         r.type,
+      category:     r.category,
+      family:       familyOf(r.ctd_section),
+      ctdSection:   r.ctd_section,
+      status:       r.status,
+      version:      r.version,
+      contentHash:  r.content_hash,
+      createdById:  r.created_by_id,
+      createdAt:    r.created_at,
+      updatedAt:    r.updated_at,
+      lockedAt:     r.locked_at,
+      eSig:         Boolean((r.metadata as { eSig?: unknown } | null)?.eSig),
+      source:       'authored' as const,
+      fileSize:     null as number | null,
+      mimeType:     null as string | null,
+    }));
+
+    const uploadRows = uploads.map((d) => ({
+      id:           d.id,
+      artifactId:   d.document_code,
+      title:        d.document_title ?? d.file_name,
+      type:         d.document_type,
+      category:     d.classification,
+      family:       'Uploaded files',
+      ctdSection:   null,
+      status:       d.processing_status === 'INDEXED' ? 'final' : 'draft',
+      /* `version` is TEXT here and a number on the artifact side; the surface
+         renders `v${version}`, so the numeric prefix is what it can use. */
+      version:      Number.parseInt(String(d.version ?? '1'), 10) || 1,
+      contentHash:  d.content_hash,
+      createdById:  d.created_by,
+      createdAt:    d.created_at,
+      updatedAt:    d.updated_at,
+      /* An uploaded file is not locked by the authoring workflow. Reporting a
+         lock it does not have would render an e-signature state nobody set. */
+      lockedAt:     null,
+      eSig:         false,
+      source:       'upload' as const,
+      fileSize:     d.file_size == null ? null : Number(d.file_size),
+      mimeType:     d.mime_type,
+    }));
+
+    const merged = [...artifactRows, ...uploadRows].sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
     );
+
+    return ok(res, merged, { count: merged.length, authored: artifactRows.length, uploaded: uploadRows.length });
   } catch (err) {
+    /* Fail closed on an un-migrated database: 42703 (undefined_column) can
+       only reach here from the program filter above, and the honest answer is
+       the one this route already gave for the year the column was phantom —
+       "cannot be filtered", not a 500, and never the unfiltered org list. */
+    if (programId && (err as { code?: string })?.code === '42703') {
+      log.warn(
+        'projects.regulatory_program_id absent — program-scoped vault listing refused ' +
+          '(apply migrations/20260814_projects_regulatory_program_anchor.sql)',
+        { orgId },
+      );
+      return clientError(
+        res,
+        422,
+        'Program-scoped vault listing is unavailable',
+        {
+          program_id: [
+            'Artifacts cannot be filtered by regulatory program in this environment: ' +
+              'the project-to-program anchor column has not been applied to this database. ' +
+              "Listing without program_id returns this organization's artifacts.",
+          ],
+        },
+      );
+    }
     return serverError(res, log, 'list-vault', err);
   }
 });
@@ -157,9 +317,15 @@ router.get('/vault/:artifactId', async (req: Request, res: Response) => {
 
   try {
     const { rows } = await pool.query(
-      `SELECT a.*, p.regulatory_program_id
+      // Deliberately no join to `projects`. This endpoint used to select
+      // p.regulatory_program_id unconditionally while the column was phantom,
+      // so it 500'd on EVERY request; the join went with it. The column is
+      // real now (slice C1), but nothing in this response consumed it, and
+      // re-adding a join for an unread field would reintroduce a 42703 on any
+      // database that has not applied the migration. It stays out until a
+      // caller actually needs it.
+      `SELECT a.*
          FROM concept2cure_artifacts a
-         LEFT JOIN projects p ON p.id = a.project_id
         WHERE a.organization_id = $1
           AND (a.id::text = $2 OR a.artifact_id = $2)
         LIMIT 1`,

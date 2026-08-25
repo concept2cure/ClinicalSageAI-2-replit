@@ -36,10 +36,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { requireScanRoots } from './lib/scan-roots.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
 const serverRoot = path.join(repoRoot, 'server');
+// A missing root is a broken scan, not a clean one. See lib/scan-roots.mjs.
+requireScanRoots('[ci:password-hygiene]', [serverRoot]);
 
 const PLAINTEXT_COMPARE = /\bpassword\s*(?:===|==)\s*(?:[A-Za-z_$][\w$]*|['"`][^'"`]*['"`])/g;
 const SCRYPT_USAGE = /\bscrypt(?:Async|Sync)?\s*\(/g;

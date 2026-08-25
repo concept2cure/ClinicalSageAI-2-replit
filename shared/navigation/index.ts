@@ -92,7 +92,14 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'pdev', label: 'Program Development (PDEV→IND)', description: 'The PDEV → IND workflow surface. May be feature-gated.', scope: 'global', group: 'global' },
   { id: 'deep-research', label: 'Deep Research', description: 'The full-screen deep-research chat surface.', scope: 'global', group: 'global' },
   { id: 'apps', label: 'Apps', description: 'The specialist-tools launcher (precedent intelligence, biostatistics, report engine, etc.).', scope: 'global', group: 'global' },
-  { id: 'artifacts-center', label: 'Artifacts Center', description: 'The cross-project artifacts center.', scope: 'global', group: 'global' },
+  {
+    id: 'artifacts-center', label: 'Artifacts Center', description: 'The cross-project artifacts center.', scope: 'global', group: 'global',
+    // Declared because it is already CONSUMED (the surface focuses/scrolls to
+    // this artifact on mount) and PRODUCED (the shell's follow-the-work stash
+    // on artifact_version_saved) — an undeclared param the channel carries is
+    // a contract gap, not a feature.
+    params: [{ name: 'artifactId', required: false, description: 'Artifact to focus and scroll into view on arrival.' }],
+  },
 
   // ── Project-scoped tabs (require an active project) ──
   { id: 'project-home', label: 'Project Home', description: 'The active project overview / home.', scope: 'project', group: 'project' },
@@ -117,7 +124,26 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'submission-gateway', label: 'Submission Gateway', description: 'The submission gateway (transmittals, validation).', scope: 'project', group: 'module' },
   {
     id: 'intelligence', label: 'Intelligence', description: 'The intelligence surface (protocol, CMC, biostat, reports tabs).', scope: 'project', group: 'module',
-    params: [{ name: 'intelligenceTab', required: false, description: 'Which intelligence tab to open.', enum: ['protocol', 'cmc', 'biostat', 'reports'] }],
+    params: [{
+      name: 'intelligenceTab',
+      required: false,
+      description: 'Which intelligence catalog group to open.',
+      // The REAL group ids the destination renders (shared/constants/global-ri-ui).
+      // The original values ('protocol','cmc','biostat','reports') predated the
+      // catalog and mostly matched nothing — a declared enum that promises tabs
+      // the screen does not have is the drift this list replaces.
+      enum: [
+        'strategy',
+        'designations_access',
+        'clinical',
+        'quality_cmc',
+        'safety_pv',
+        'submissions',
+        'devices_dx',
+        'lifecycle',
+        'commercial_supply',
+      ],
+    }],
   },
   { id: 'quality', label: 'Quality (SOP / Controlled Docs)', description: 'The quality management surface (SOP register, controlled documents).', scope: 'project', group: 'module' },
   {
@@ -131,6 +157,60 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // then the underlying tools (PV / HEOR) are still reachable from chat.
   { id: 'safety', label: 'Safety / Pharmacovigilance', description: 'The safety/PV workspace — SAE line listings, E2B(R3) ICSR composition, and PV deliverables for the project.', scope: 'project', group: 'module' },
   { id: 'market-access', label: 'Market Access / HEOR', description: 'The health-economics & market-access workspace — budget-impact, cost-effectiveness (ICER), Markov, and PSA modeling for payer dossiers.', scope: 'project', group: 'module' },
+
+  // ── Device & diagnostics workstream (all render via MdxSurfaceHost; program
+  // scope comes from the project in context when one is open) ──
+  { id: 'device-workstream', label: 'Device portfolio', description: 'The device portfolio overview — program cards and portfolio health KPIs.', scope: 'global', group: 'module' },
+  { id: 'device-510k', label: '510(k) pathway', description: 'The 510(k) pathway workspace — predicate intelligence, the substantial-equivalence matrix, and eSTAR sections.', scope: 'global', group: 'module' },
+  { id: 'device-pma', label: 'PMA pathway', description: 'The PMA pathway workspace — premarket-approval modules for the program in context.', scope: 'global', group: 'module' },
+  { id: 'device-cer', label: 'Clinical Evaluation Report', description: 'The CER pathway workspace for clinical evaluation under EU MDR.', scope: 'global', group: 'module' },
+  { id: 'device-diagnostics', label: 'IVD pathway', description: 'The IVD pathway workspace for in-vitro diagnostic programs.', scope: 'global', group: 'module' },
+  { id: 'device-clinical-studies', label: 'Device clinical studies', description: 'The clinical studies register for device programs.', scope: 'global', group: 'module' },
+  { id: 'device-software', label: 'Device software lifecycle', description: 'Software documentation completeness for the device program in context.', scope: 'global', group: 'module' },
+  { id: 'device-engineering', label: 'Device engineering', description: 'The engineering and design-controls workspace.', scope: 'global', group: 'module' },
+  { id: 'device-udi', label: 'UDI and labeling', description: 'The device UDI register.', scope: 'global', group: 'module' },
+  { id: 'device-postmarket', label: 'Post-market vigilance', description: 'Postmarket surveillance with its triage queue.', scope: 'global', group: 'module' },
+  { id: 'device-presub', label: 'Pre-Sub manager', description: 'The device pre-submission manager.', scope: 'global', group: 'module' },
+  { id: 'device-vault', label: 'Device vault', description: 'Device vault artifacts with versions and audit.', scope: 'global', group: 'module' },
+  { id: 'device-tasks', label: 'Device tasks', description: 'The device task workbench.', scope: 'global', group: 'module' },
+  { id: 'device-validation', label: 'Validation center', description: 'The device validation workbench.', scope: 'global', group: 'module' },
+  { id: 'device-submission', label: 'Device submissions', description: 'The device submission-packages workbench.', scope: 'global', group: 'module' },
+  { id: 'device-analytics', label: 'Device analytics', description: 'Device analytics panels.', scope: 'global', group: 'module' },
+
+  // ── Pharmaceutical development (the PDEV kit; `pdev` itself is above) ──
+  { id: 'pdev-cmc', label: 'PDEV CMC workstream', description: 'The CMC workstream of the PDEV → IND program.', scope: 'global', group: 'module' },
+  { id: 'pdev-nonclinical', label: 'PDEV nonclinical workstream', description: 'The nonclinical workstream of the PDEV → IND program.', scope: 'global', group: 'module' },
+  { id: 'pdev-clinical', label: 'PDEV clinical workstream', description: 'The clinical workstream of the PDEV → IND program.', scope: 'global', group: 'module' },
+  { id: 'pdev-regulatory', label: 'PDEV regulatory workstream', description: 'The regulatory workstream of the PDEV → IND program.', scope: 'global', group: 'module' },
+  { id: 'pdev-ind-assembly', label: 'IND assembly readiness', description: 'IND assembly readiness — per-module document presence against the compile threshold.', scope: 'global', group: 'module' },
+  { id: 'pdev-contradictions', label: 'PDEV contradictions registry', description: 'Cross-artifact contradictions for the PDEV program, with promotion-blocking authority states.', scope: 'global', group: 'module' },
+  { id: 'pdev-fda-interactions', label: 'FDA interactions', description: 'The PDEV FDA interaction stream and proposals.', scope: 'global', group: 'module' },
+
+  // ── Analysis & authoring tools ──
+  { id: 'batch-draft', label: 'Batch draft', description: 'Parallel section drafting over the eCTD Co-Author document spine (running a batch stays a human click).', scope: 'global', group: 'module' },
+  { id: 'biostatistics', label: 'Biostatistics designer', description: 'The deterministic biostatistics design engine — sample size, power, and governed statistical documents.', scope: 'global', group: 'module' },
+  { id: 'change-assessment', label: 'Change assessment', description: 'The 510(k)-change / MDR significant-change worklist with FDA and EU determinations.', scope: 'global', group: 'module' },
+  { id: 'doc-journey', label: 'Document journey', description: 'A document’s lifecycle rail — the read-only reconstruction of its real audit trail.', scope: 'global', group: 'module' },
+  { id: 'ectd-publishing', label: 'eCTD publishing reference', description: 'Spec versions and controlled vocabularies — read-only; nothing here publishes, transmits, or freezes a sequence.', scope: 'global', group: 'module' },
+  { id: 'inconsistency', label: 'Inconsistency board', description: 'The cross-document inconsistency submission gate for the project in context (fails closed).', scope: 'project', group: 'module' },
+  { id: 'intelligence-catalog', label: 'Capability catalog', description: 'The catalog of AnA’s deterministic tools, filterable by name.', scope: 'global', group: 'module' },
+  { id: 'labeling-pi', label: 'Prescribing information', description: 'The USPI / EU SmPC / SPL labeling workspace.', scope: 'global', group: 'module' },
+  { id: 'precedent-intelligence', label: 'Precedent intelligence', description: 'The precedent search board — clearances, cycles, and risk analysis (runs only when a person searches).', scope: 'global', group: 'module' },
+  { id: 'program-journey', label: 'Program journey', description: 'The end-to-end program arc — nine stages with readiness and blockers.', scope: 'global', group: 'module' },
+  { id: 'pyramid', label: 'Submission pyramid', description: 'The submission work-breakdown pyramid — phases, tasks and critical path per submission type.', scope: 'global', group: 'module' },
+  { id: 'authoring-engine', label: 'Authoring engine', description: 'What the authoring engine is built to do per document type — capability reference, no program data.', scope: 'global', group: 'module' },
+  { id: 'orchestration', label: 'Orchestration', description: 'Workflow runs, human-in-the-loop approval gates, and dispatch readiness.', scope: 'global', group: 'module' },
+  { id: 'report-governance', label: 'Report governance', description: 'The sealed-report lifecycle — integrity verification, provenance, seal and revoke ceremonies.', scope: 'global', group: 'module' },
+  { id: 'research-admin', label: 'Research administration', description: 'Research administration — the CITI training matrix (other sections connect later).', scope: 'global', group: 'module' },
+
+  // ── Administration & platform ──
+  { id: 'admin-console', label: 'Admin & access', description: 'Organization administration — members, roles, SSO, API keys, and settings.', scope: 'global', group: 'global' },
+  { id: 'access-requests', label: 'Access requests', description: 'The organization’s module access-request queue.', scope: 'global', group: 'global' },
+  { id: 'licensing', label: 'Plans & licensing', description: 'The organization’s current plan and the pricing catalog.', scope: 'global', group: 'global' },
+  { id: 'master-licensing', label: 'Master licensing', description: 'Platform-owner licensing control — packaging, tenants, flags, enforcement.', scope: 'global', group: 'global' },
+  { id: 'identity-console', label: 'Enterprise identity', description: 'SCIM provisioning tokens, the IdP allowlist, and SAML endpoints (platform administrators).', scope: 'global', group: 'global' },
+  { id: 'onboarding', label: 'Workspace setup', description: 'The workspace setup wizard — nothing is created until Activate.', scope: 'global', group: 'global' },
+  { id: 'onboarding-ingest', label: 'Set up from a document', description: 'Upload a document; AnA proposes provenance-verified values; a human reviews and applies.', scope: 'global', group: 'global' },
 ] as const;
 
 const TARGETS_BY_ID: ReadonlyMap<string, NavigationTarget> = new Map(

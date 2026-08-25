@@ -118,9 +118,9 @@ const rateLimiter = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 // MIDDLEWARE
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 
 const extractTenantContext = (req: Request, _res: Response, next: NextFunction) => {
   const organizationId = String((req as any).user?.organizationId || '') || null;
@@ -145,9 +145,9 @@ const errorHandler = (err: Error, req: Request, res: Response, _next: NextFuncti
 router.use(rateLimiter);
 router.use(extractTenantContext);
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 // HEALTH CHECK
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 
 router.get('/health', (_req: Request, res: Response) => {
   res.json({
@@ -159,9 +159,9 @@ router.get('/health', (_req: Request, res: Response) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 // API DOCUMENTATION
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 
 router.get('/docs', (_req: Request, res: Response) => {
   res.json({
@@ -203,10 +203,10 @@ router.get('/docs', (_req: Request, res: Response) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 // CONTEXT-AWARE CHAT ENDPOINT
 // POST /api/cortex/chat — Primary endpoint for ZenChat / AnA RI
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 
 // AI Gateway instance (lazy-initialized)
 let chatGateway: ReturnType<typeof getGateway> | null = null;
@@ -491,7 +491,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       { role: 'user', content: message }
     );
 
-    // ── STREAMING PATH (SSE) ────────────────────────────────────────────────
+    // ── STREAMING PATH (SSE) ──────────────────────────────────────────────────
     if (stream === true) {
       res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
       res.setHeader('Cache-Control', 'no-cache, no-transform');
@@ -500,7 +500,10 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       res.flushHeaders();
 
       let fullContent = '';
-      let streamModel = 'ana-cortex-demo';
+      // No demo path exists any more, so this initialiser must not claim one.
+      // It tags the persisted user turn when the stream fails before a model
+      // is resolved; 'unresolved' is the truth in that window.
+      let streamModel = 'unresolved';
       let streamAborted = false;
       const toolArtifacts: Array<{
         type: string;
@@ -540,7 +543,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         const openaiTools = toOpenAITools();
 
         if (openaiTools.length === 0) {
-          // ── Fast path: no tools registered — stream directly ─────────────
+          // ── Fast path: no tools registered — stream directly ───────────────
           const streamResponse = await ai.chat(aiMessages as any, {
             taskType: 'chat',
             maxTokens: 4000,
@@ -819,24 +822,44 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
           }
         } // close tools path else
       } catch (streamErr: any) {
-        logger.warn(`[Chat] AI stream failed, using demo response: ${streamErr.message}`);
-        fullContent = generateContextAwareDemoResponse(message, context);
+        // Fail closed. This used to swap in generateContextAwareDemoResponse() —
+        // hand-written prose streamed as chunks and then PERSISTED by
+        // saveChatMessage() as a real assistant turn, so it entered the thread
+        // history and every later turn treated it as something AnA had said.
+        // A regulatory assistant that invents its own transcript is worse than
+        // one that is briefly unavailable.
+        logger.error(`[Chat] AI stream failed — failing closed: ${streamErr.message}`);
+        fullContent = '';
         res.write(
           `data: ${JSON.stringify({
-            type: 'demo_warning',
-            message: 'AI service unavailable — showing pre-generated response',
+            type: 'error',
+            error: 'AI_PROVIDER_UNAVAILABLE',
+            message:
+              'The AI service is unavailable, so no answer was generated. Nothing has been saved to this conversation. Please retry.',
           })}\n\n`
         );
-        res.write(`data: ${JSON.stringify({ type: 'chunk', text: fullContent })}\n\n`);
       }
 
-      // Persist both messages after stream completes
+      // Persist both messages after stream completes.
+      //
+      // The assistant turn is written ONLY if the model actually produced one.
+      // On the fail-closed path above `fullContent` is empty, and persisting it
+      // would leave a blank assistant message in the thread — history that says
+      // AnA replied when it did not, which the next turn and the working-memory
+      // summarizer would both read back as real. The user turn is still saved:
+      // the question was genuinely asked, and losing it would silently discard
+      // what the user typed.
       await saveChatMessage(threadId, 'user', message, streamModel);
-      await saveChatMessage(threadId, 'assistant', fullContent, streamModel, 0);
+      const streamProducedAnswer = Boolean(fullContent && fullContent.trim());
+      if (streamProducedAnswer) {
+        await saveChatMessage(threadId, 'assistant', fullContent, streamModel, 0);
+      }
 
       // ── AUTO-SUMMARIZE: Generate working memory summary after extended conversations ──
-      // This runs async (fire-and-forget) to avoid blocking the response
-      if (previousMessages.length >= 10 && !streamAborted) {
+      // This runs async (fire-and-forget) to avoid blocking the response.
+      // Skipped when no answer was produced — summarizing an absent assistant
+      // turn would bake the gap into working memory as though AnA had spoken.
+      if (previousMessages.length >= 10 && !streamAborted && streamProducedAnswer) {
         summarizeAndStoreWorkingMemoryForThread({
           threadId,
           organizationId,
@@ -845,6 +868,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
             { role: 'user', content: message },
             { role: 'assistant', content: fullContent },
           ],
+          projectId: numericProjectId ?? null,
         }).catch((err: any) =>
           logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`)
         );
@@ -872,7 +896,9 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
 
     // ── NON-STREAMING PATH (JSON) ───────────────────────────────────────────
     let assistantMessage: string;
-    let model = 'ana-cortex-demo';
+    // Overwritten from the gateway response on the only path that reaches the
+    // success payload; both former demo branches now return 503 above.
+    let model = 'unresolved';
     let usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
 
     // Route through AI Gateway
@@ -906,12 +932,27 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
           total_tokens: gwResponse.usage.totalTokens,
         };
       } catch (gwError: any) {
-        logger.warn(`[Chat] AI Gateway call failed, using demo mode: ${gwError.message}`);
-        assistantMessage = generateContextAwareDemoResponse(message, context);
-        model = 'ana-cortex-demo';
+        // Fail closed rather than fabricate. The previous behaviour returned
+        // generateContextAwareDemoResponse() at HTTP 200 in the same `response`
+        // field a real answer uses, and then persisted it as an assistant turn.
+        logger.error(`[Chat] AI Gateway call failed — failing closed: ${gwError.message}`);
+        return res.status(503).json({
+          success: false,
+          error: 'AI_PROVIDER_UNAVAILABLE',
+          message:
+            'The AI service could not be reached, so no answer was generated. Nothing has been saved to this conversation. Please retry.',
+        });
       }
     } else {
-      assistantMessage = generateContextAwareDemoResponse(message, context);
+      // No providers configured. Previously this branch silently returned a
+      // fixture with no warning at all — indistinguishable from a real reply.
+      logger.error('[Chat] No AI providers available — failing closed');
+      return res.status(503).json({
+        success: false,
+        error: 'AI_PROVIDER_UNAVAILABLE',
+        message:
+          'No AI provider is configured, so no answer was generated. Configure ANTHROPIC_API_KEY or OPENAI_API_KEY.',
+      });
     }
 
     // Persist messages (parallel — independent operations)
@@ -930,6 +971,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
           { role: 'user', content: message },
           { role: 'assistant', content: assistantMessage },
         ],
+        projectId: numericProjectId ?? null,
       }).catch((err: any) =>
         logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`)
       );
@@ -941,7 +983,6 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       thread_id: threadId,
       usage,
       model,
-      demo: model === 'ana-cortex-demo', // Flag demo fallback so UI can warn users
       context: {
         projectName: context.project?.name || null,
         submissionType: context.project?.submissionType || submission_type || null,
@@ -978,10 +1019,10 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 // SAVE DRAFT — Persist AI-generated content as a tagged artifact
 // POST /api/cortex/save-draft
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 
 router.post('/save-draft', requireAuth, async (req: Request, res: Response) => {
   try {
@@ -1079,146 +1120,9 @@ router.post('/save-draft', requireAuth, async (req: Request, res: Response) => {
   }
 });
 
-/**
- * Demo response generator that uses project context for relevance.
- */
-function generateContextAwareDemoResponse(
-  message: string,
-  context: import('../services/ana-context-builder.js').AnAContext
-): string {
-  const lower = message.toLowerCase().trim();
-  const projectName = context.project?.name || 'your project';
-  const subType = context.project?.submissionType || 'regulatory submission';
-  const progress = context.project?.progress || 0;
-  const userName = context.userName || '';
-
-  // Greetings
-  if (/^(hi|hello|hey|good\s*(morning|afternoon|evening)|howdy|greetings|yo)\b/i.test(lower)) {
-    const greeting = userName ? `Hello, ${userName}!` : 'Hello!';
-    return `## ${greeting}
-
-Welcome to **${projectName}**. I'm AnA, your regulatory intelligence co-pilot.
-
-${
-  progress > 0
-    ? `Your **${subType}** is at **${progress}%** progress.${
-        context.documents
-          ? ` You have ${context.documents.completedDocuments}/${context.documents.totalDocuments} documents completed.`
-          : ''
-      }`
-    : `I see you're working on a **${subType}**. Let's make progress together.`
-}
-
-### What I can help with right now
-- **Draft** any CTD module section or regulatory document
-- **Review** your existing documents for compliance gaps
-- **Strategize** your submission timeline and approach
-
-What would you like to work on?`;
-  }
-
-  if (lower.includes('status') || lower.includes('progress') || lower.includes('where')) {
-    return `## ${projectName} — Status Overview
-
-**Submission Type**: ${subType}
-**Overall Progress**: ${progress}%
-${
-  context.documents
-    ? `**Documents**: ${context.documents.completedDocuments}/${context.documents.totalDocuments} completed`
-    : ''
-}
-
-### Recommended Next Steps
-
-1. ${
-      progress < 30
-        ? 'Complete Module 1 administrative forms (FDA 1571, 1572)'
-        : progress < 60
-        ? 'Finalize Module 2 summaries and Module 3 CMC data'
-        : 'Complete QA review and prepare eCTD package for submission'
-    }
-2. Review any open document gaps in the CTD section navigator
-3. Run a compliance check before advancing to the next phase
-
-Would you like me to focus on a specific module or document section?`;
-  }
-
-  if (
-    lower.includes('ind') ||
-    lower.includes('module') ||
-    lower.includes('ctd') ||
-    lower.includes('ectd')
-  ) {
-    return `## IND CTD Structure for ${projectName}
-
-The IND application follows the ICH Common Technical Document (CTD) format with 5 modules:
-
-| Module | Content | Status |
-|--------|---------|--------|
-| **M1** | Regional Administrative (FDA Forms, Cover Letter) | ${
-      progress > 20 ? '✅ In Progress' : '⬜ Not Started'
-    } |
-| **M2** | CTD Summaries (QOS, Nonclinical/Clinical Overviews) | ${
-      progress > 40 ? '✅ In Progress' : '⬜ Not Started'
-    } |
-| **M3** | Quality/CMC (Drug Substance S.1-S.7, Drug Product P.1-P.8) | ${
-      progress > 50 ? '✅ In Progress' : '⬜ Not Started'
-    } |
-| **M4** | Nonclinical Study Reports (Pharm, PK, Tox) | ${
-      progress > 60 ? '✅ In Progress' : '⬜ Not Started'
-    } |
-| **M5** | Clinical (Phase 1 Protocol, Study Reports) | ${
-      progress > 70 ? '✅ In Progress' : '⬜ Not Started'
-    } |
-
-### Key References
-- **21 CFR 312.23(a)** — Content and format of an IND
-- **ICH M4** — The Common Technical Document
-- **ICH M8** — eCTD v4.0 Implementation Guide
-
-What specific module or section would you like help with?`;
-  }
-
-  if (lower.includes('help') || lower.includes('what can') || lower.includes('how')) {
-    return `## How I Can Help with ${projectName}
-
-I'm AnA, your AI regulatory intelligence engine. For your **${subType}** submission, I can:
-
-1. **Draft Documents** — Generate eCTD-compliant sections for any CTD module
-2. **Review Content** — Check documents against regulatory requirements and flag gaps
-3. **Guide Strategy** — Recommend submission strategies and timeline optimization
-4. **Track Compliance** — Monitor 21 CFR Part 11, ICH, and agency-specific requirements
-5. **Analyze Risks** — Identify potential deficiencies before FDA review
-
-### Quick Actions
-- "Draft Module 2.3 Quality Overall Summary"
-- "What sections are missing for my IND?"
-- "Review my drug substance characterization"
-- "Create a submission timeline"
-
-What would you like to work on?`;
-  }
-
-  return `Thank you for your question about **${projectName}** (${subType}).
-
-I'd be happy to help. Based on your current progress (${progress}%), here are some thoughts:
-
-${
-  context.documents && context.documents.totalDocuments > 0
-    ? `You have **${context.documents.completedDocuments}** of **${context.documents.totalDocuments}** documents completed. `
-    : "It looks like you're in the early stages of document preparation. "
-}
-
-To give you the most relevant guidance, could you specify:
-1. Which CTD module or section you're working on?
-2. Whether you need help drafting, reviewing, or strategizing?
-
-I can also provide a full gap analysis of your submission package if that would be helpful.`;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 // SUB-ROUTER MOUNTS
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 
 async function mountSubRouters() {
   // Main Cortex routes
@@ -1276,9 +1180,9 @@ async function mountSubRouters() {
   // study-design surface; no Foresight routes are mounted under Cortex.
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 // THREAD MANAGEMENT — list, get, create, delete conversation threads
-// ═══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 
 function extractUserId(req: Request): number | null {
   try {

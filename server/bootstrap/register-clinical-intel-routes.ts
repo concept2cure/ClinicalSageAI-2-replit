@@ -13,11 +13,6 @@ import { authenticateToken } from '../middleware/auth.js';
 import { mountAll } from './mount-routes.js';
 
 import indRoutes from '../routes/ind.js';
-import indUnified from '../routes/ind-unified.js';
-import indTemplates from '../routes/ind-templates.js';
-import indSubmissions from '../routes/ind-submissions.routes.js';
-import indDatabase from '../routes/ind-database.routes.js';
-import indAutomation from '../routes/ind_automation_routes.js';
 import intelligence from '../routes/intelligence.js';
 import { protocolRoutes } from '../routes/protocol_routes.js';
 import qcRoutes from '../routes/qc.routes.js';
@@ -34,7 +29,7 @@ export async function registerClinicalIntelRoutes({
   app,
   pool,
 }: ClinicalIntelBootstrapContext) {
-  // ── IND Family (parallelized) ──
+  // ── IND Family ──
   //
   // SECURITY: All IND routes are tenant-scoped and must be
   // authenticated. Pre-fix, this entire family was reachable from the
@@ -43,16 +38,16 @@ export async function registerClinicalIntelRoutes({
   // backstop: even if an individual router file forgets to add its own
   // auth (and most do), the bootstrap forces it. Tenant isolation
   // inside each handler is a separate concern audited per-file.
+  //
+  // The legacy zero-caller wizard family (ind-unified /api/ind-wizard facade +
+  // ind-templates + ind-submissions + ind-database + ind_automation_routes +
+  // preIndRoutes) was deleted in the biotech-lifecycle consolidation: no client
+  // or AnA caller referenced any of those prefixes. The live IND surface is
+  // register-ind-lifecycle-routes.ts (/api/ind-lifecycle, /api/ind-forms,
+  // /api/ind-master-data) plus /api/ind-generation in register-ai-routes.ts.
   mountAll(
     app,
-    [
-      { path: '/api/ind', router: indRoutes, name: 'IND (auth-gated)' },
-      { path: '/api/ind-wizard', router: indUnified, name: 'IND Unified / Wizard (auth-gated)' },
-      { path: '/api/ind-templates', router: indTemplates, name: 'IND Templates (auth-gated)' },
-      { path: '/api/ind-submissions', router: indSubmissions, name: 'IND Submissions (auth-gated)' },
-      { path: '/api/ind-database', router: indDatabase, name: 'IND Database (auth-gated)' },
-      { path: '/api/ind-automation', router: indAutomation, name: 'IND Automation (auth-gated)' },
-    ],
+    [{ path: '/api/ind', router: indRoutes, name: 'IND (auth-gated)' }],
     authenticateToken,
   );
 
@@ -62,21 +57,15 @@ export async function registerClinicalIntelRoutes({
   // space was incoherent — the AI-edit writer inserted concept2cure_artifacts
   // ids where this route's reads expected documents ids. Recorded section→source
   // lineage lives in authoring_citations (cite-source API + Source Tracer).
-  try {
-    const [documentsUnified, documentIntelligenceRoutes] = await Promise.all([
-      import('../routes/documents-unified'),
-      import('../routes/document-intelligence-routes'),
-    ]);
-
-    const documentsGateway = express.Router();
-    documentsGateway.use(documentsUnified.default);
-    documentsGateway.use(documentIntelligenceRoutes.default);
-
-    app.use('/api/documents', documentsGateway);
-    console.log('✅ Documents gateway mounted at /api/documents (unified + intelligence)');
-  } catch (error) {
-    console.error('Failed to mount consolidated documents gateway routes:', error);
-  }
+  // REMOVED: the /api/documents gateway (documents-unified +
+  // document-intelligence-routes, with document-routes and dossier_routes
+  // sub-mounted under it). Every path it served — /health, /docs, /core/*,
+  // /dossier/*, /process, /identify-types, /analyze, /enhance — had ZERO
+  // callers anywhere in the repository: no client fetch, no server-internal
+  // call, no test. The four routers wrote to parallel document stores beside
+  // the canonical /api/authoring pipeline, so any request they could have
+  // served was a write into a copy nothing reads. All four files are deleted
+  // with this mount per the zero-duplication rule.
 
   // ── RTM Export ──
   //

@@ -1,13 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
+import { assessmentState } from '../assessmentState';
 import type { AnswerLeadProps } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 // GI_META (enum labels/tones/authority ranks), the regulator overlay rules, and
 // the deterministic overlay/promotion-gate functions are canonical config +
@@ -68,25 +71,6 @@ interface GiBoard {
 }
 
 /* ── Inline shared helpers (same pattern as Nonclinical.tsx) ── */
-
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => {
-    setMsg(m);
-    setTimeout(() => setMsg(''), 2400);
-  };
-  return [msg, fire];
-}
-
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
-    </div>
-  );
-}
 
 /* Current project id — the runtime channel set by Projects.tsx when a project is
    opened (read the same way by CmcModule / ProjectHome / VaultSources). The board
@@ -154,6 +138,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   }, [liveFindings]);
 
   const [form, setForm] = useState<{ id: string; label: string; value: string; refs?: unknown[] } | null>(null);
+  const [propagating, setPropagating] = useState(false);
   const [toast, fireToast] = useToast();
 
   /* Resolve one finding WITH AnA — optimistic local flip only (see flag #2). */
@@ -196,19 +181,29 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
       );
       const json = await res.json().catch(() => null);
       if (!res.ok) {
+        // This read `json.error` first, so a refusal shaped
+        // { error: 'REVIEW_STATE_INVALID', message: '<a real sentence>' } put the
+        // enum token into the toast. serverMessage takes the sentence and returns
+        // null for codes and infrastructure text; a bare "HTTP 500" is not copy
+        // either, so the fallback is a sentence that carries the status.
+        const detail =
+          serverMessage(json) ?? 'the service refused the update (HTTP ' + res.status + ')';
         fireToast(
           res.status === 404
             ? 'That finding is no longer on the board — refresh to see the current state.'
-            : 'Couldn’t update "' + f.title + '" — ' +
-              ((json as { error?: string } | null)?.error || 'HTTP ' + res.status) +
-              '. Nothing was changed.',
+            : 'Couldn’t update "' + f.title + '" — ' + detail + '. Nothing was changed.',
+          'error',
         );
         return;
       }
       setFindings(fs => fs.map(x => (x.id === f.id ? apply(x) : x)));
       fireToast(okMsg);
     } catch (e) {
-      fireToast('Couldn’t reach the contradiction service — ' + (e instanceof Error ? e.message : 'request failed') + '. Nothing was changed.');
+      // Only ApiRequestError has a message that has been through the envelope
+      // reduction; every other throw here is the browser's own "Failed to fetch".
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const detail = known && (e as Error).message ? (e as Error).message : 'request failed';
+      fireToast('Couldn’t reach the contradiction service — ' + detail + '. Nothing was changed.', 'error');
     } finally {
       setPendingId('');
     }
@@ -246,14 +241,20 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
       );
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        fireToast(
-          'Re-detection didn’t run — ' +
-            ((json as { error?: string } | null)?.error || 'HTTP ' + res.status) +
-            '. Showing the last known findings.',
-        );
+        // Same defect as the transition above: `json.error` won over `message`,
+        // so a scan refusal showed its enum. The fallback is a sentence rather
+        // than a bare status, which is not user copy on its own.
+        const detail =
+          serverMessage(json) ?? 'the service could not start it (HTTP ' + res.status + ')';
+        fireToast('Re-detection didn’t run — ' + detail + '. Showing the last known findings.', 'error');
       }
     } catch (e) {
-      fireToast('Couldn’t reach the contradiction engine — ' + (e instanceof Error ? e.message : 'request failed') + '. Showing the last known findings.');
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const detail = known && (e as Error).message ? (e as Error).message : 'request failed';
+      fireToast(
+        'Couldn’t reach the contradiction engine — ' + detail + '. Showing the last known findings.',
+        'error',
+      );
     } finally {
       setScanning(false);
       setRefresh(n => n + 1);
@@ -280,21 +281,54 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   const total = findings.length;
   const resolvedN = findings.filter(f => f.reviewState === 'approved_resolution').length;
   const openN = total - resolvedN;
-  const clean = openN === 0;
   const hasFindings = total > 0;
+
+  /* `clean` used to be `openN === 0`, so a program the engine had NEVER SCANNED
+     was indistinguishable from one it had scanned and found nothing wrong. The
+     surface then said "AnA scanned your {progCode} -- no contradictions", and
+     the hero verdict read "Submission gate — CLEAR". On a submission gate that
+     is the most expensive sentence this screen can produce.
+
+     There is no scan-completion record to consult: the board's own contract,
+     documented at the top of this file, is that `checks` is ALWAYS [] because
+     "the engine persists detected contradictions, not the [checks it ran]". So
+     an empty findings array carries no information about whether anything ran.
+
+     What DOES carry it is `hasFindings`. A contradiction that was detected and
+     then resolved is positive evidence the engine ran against this program —
+     which is exactly the `assessmentRan` input assessmentState.ts asks for, and
+     is why clearance is now gated on it rather than on the absence of open
+     items. total === 0 is not-assessed; total > 0 with openN === 0 is genuinely
+     assessed and clear. */
+  const giState = assessmentState({
+    loading: boardState.loading,
+    unreadable: Boolean(boardState.error),
+    scopeExists: Boolean(prog),
+    findingCount: openN,
+    assessmentRan: hasFindings,
+  });
+  const clean = giState === 'assessed-clear';
+  /** Nothing has ever been detected here, so nothing is known. */
+  const neverScanned = giState === 'not-assessed' && Boolean(prog);
   const hasDosage = findings.some(f => f.contradictionType === 'dosage_conflict' && f.reviewState !== 'approved_resolution');
 
   /* Answer-first lead -- computed from the real gate, in AnA's voice, about the FILING. */
   const lead: AnswerLeadProps | null = (() => {
     if (!prog) return null;
+    /* Nothing has ever been detected against this program, and the board keeps
+       no record of what was checked — so the honest answer is that no scan has
+       reported, not that the filing is consistent. */
+    if (neverScanned) return {
+      tone: 'calm' as const, eyebrow: 'AnA — path to a clean filing',
+      headline: <>No contradiction scan has reported on <b>{progCode}</b>.</>,
+      body: 'The governed record holds no contradiction findings for this filing — neither open nor resolved. That is the absence of a result, not a clean result: consistency across the ' + filingLabel + ' dossier is unknown until a scan runs against it.',
+      action: { label: 'Ask AnA to scan this filing for contradictions', onClick: () => ask('Scan the governed record for this filing and report every cross-reference contradiction you find, or state plainly that you found none.') },
+      secondary: 'Or work the record below.',
+    };
     if (clean) return {
-      tone: 'good' as const, eyebrow: 'AnA -- path to a clean filing',
-      headline: hasFindings
-        ? <>The <b>{progCode}</b> is clean -- every contradiction resolved.</>
-        : <>AnA scanned your <b>{progCode}</b> -- no contradictions.</>,
-      body: hasFindings
-        ? 'Nothing in the governed record contradicts anything else. This filing is ready to promote into the submission sequence.'
-        : 'Every governed cross-reference AnA checks on a ' + filingLabel + ' dossier is consistent -- nothing stands between this filing and a clean submission.',
+      tone: 'good' as const, eyebrow: 'AnA — path to a clean filing',
+      headline: <>The <b>{progCode}</b> is clean — every contradiction resolved.</>,
+      body: 'Nothing in the governed record contradicts anything else. This filing is ready to promote into the submission sequence.',
       reassure: 'This is what submission-ready looks like. I\'ll keep watching as new content lands.',
       /* NAVIGATION, and the label now says so. It used to read "Promote to
          submission sequence" on a control that only opens another surface —
@@ -324,31 +358,55 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
     if (gate.blocked) {
       const b = gate.blocking[0];
       return {
-        tone: 'urgent' as const, eyebrow: 'AnA -- path to a clean filing',
+        tone: 'urgent' as const, eyebrow: 'AnA — path to a clean filing',
         headline: <>Your <b>{progCode}</b> can't be filed yet -- {gate.blocking.length === 1 ? '1 issue would' : gate.blocking.length + ' issues would'} block it under {reg}.</>,
         body: b.title + '. ' + b.description,
-        reassure: 'This is fixable, and I\'ll do the work with you -- one governed change and the block clears.',
+        reassure: 'This is fixable, and I\'ll do the work with you — one governed change and the block clears.',
+        /* ── Was a 1.6-second outline and nothing else ────────────────────
+           The blocking finding is almost always below the fold, so the one
+           thing this button did was flash a border on a card the user could
+           not see — no scroll, no explanation, and the word "how" answered by
+           nothing.
+
+           It now brings the finding onto the screen, moves focus to it (so a
+           keyboard or screen-reader user arrives there too, which the outline
+           never did), and asks AnA for the governed resolution of THAT finding
+           by name — which is what "show me how to clear it" promises. */
         action: {
           label: 'Show me how to clear it',
           onClick: () => {
             const el = document.getElementById('gi-f-' + b.id);
-            if (el) el.style.outline = '2px solid var(--accent-200)';
-            setTimeout(() => { if (el) el.style.outline = ''; }, 1600);
+            /* Asking AnA is the part that matters; moving the viewport is a
+               courtesy. `scrollIntoView` is absent in jsdom and in some
+               embedded webviews, and an unguarded call there throws out of the
+               click handler — so the guidance would never be requested. */
+            try {
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.setAttribute('tabindex', '-1');
+                el.focus({ preventScroll: true });
+              }
+            } catch { /* no scrollIntoView here — the ask below still runs */ }
+            ask(
+              'The ' + progCode + ' filing is blocked under ' + reg + ' by "' + b.title +
+                '". Walk me through clearing it: what the governed change is, which documents it touches, ' +
+                'and what has to be re-approved afterwards.',
+            );
           },
         },
       };
     }
     if (gate.needApproval.length) return {
-      tone: 'calm' as const, eyebrow: 'AnA -- path to a clean filing',
+      tone: 'calm' as const, eyebrow: 'AnA — path to a clean filing',
       headline: <>{progCode} won't be blocked under {reg}, but {gate.needApproval.length} {gate.needApproval.length === 1 ? 'item needs' : 'items need'} sign-off before filing.</>,
       body: 'Nothing hard-blocks the submission, but these carry a "requires approval" authority under ' + reg + ' -- get them approved and the filing is clean.',
       reassure: 'You\'re close. I\'ll draft the resolutions and route them for approval.',
       action: { label: 'Resolve the open items with AnA', onClick: () => ask('Draft resolutions for the open ' + progCode + ' contradictions and route them for approval.') },
     };
     return {
-      tone: 'calm' as const, eyebrow: 'AnA -- path to a clean filing',
+      tone: 'calm' as const, eyebrow: 'AnA — path to a clean filing',
       headline: <>{progCode} has {openN} open {openN === 1 ? 'inconsistency' : 'inconsistencies'} to tidy before the filing is perfect.</>,
-      body: 'None of them block the submission under ' + reg + ' -- they\'re advisory or review-level -- but a perfect filing carries none of them.',
+      body: 'None of them block the submission under ' + reg + ' -- they\'re advisory or review-level — but a perfect filing carries none of them.',
       reassure: 'I\'ll clear them with you so the dossier reads as one coherent story.',
       action: { label: 'Clean them up with AnA', onClick: () => ask('Walk me through resolving the open ' + progCode + ' inconsistencies.') },
     };
@@ -364,21 +422,68 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   const ordered = [...findings].sort((a, b) => rank(a) - rank(b) || ((GI_META.severity[b.severity] ? 1 : 0) - (GI_META.severity[a.severity] ? 1 : 0)));
 
   const sevS = (s: string) => (GI_META.severity[s] || { s: 'low' }).s;
-  const propagate = (v: Record<string, string>) => {
+  /**
+   * Change a governed assumption's value — POST /api/governed-intelligence/
+   * assumptions/:id/revalue.
+   *
+   * This used to fire the toast "cross-dossier propagation is not yet wired"
+   * and stop there: a user filled in a new value AND a mandatory reason for
+   * change on a form headed "Governed change", pressed Propagate change, and
+   * nothing was propagated, nothing was recorded, and nothing was audited.
+   *
+   * The propagation was wired the whole time — superseding an assumption calls
+   * propagateChange, which marks every downstream object stale. What was
+   * missing was any call to it. The route does both writes (record the
+   * replacement, supersede the original by it) in one request, so a failure
+   * cannot leave an orphan replacement behind.
+   */
+  const propagate = async (v: Record<string, string>) => {
     const nv = (v.value || '').trim();
-    if (!nv || !form) return;
-    setForm(null);
-    // Softened: local UI only — the cross-dossier propagation + re-approval routing
-    // is not wired (flag #4).
-    fireToast('Requested change: ' + form.label + ' -> ' + nv + ' -- cross-dossier propagation is not yet wired');
+    const why = (v.reason || '').trim();
+    if (!nv || !form || propagating) return;
+    if (why.length < 8) {
+      fireToast('Enter a reason for change of at least 8 characters — it is recorded on the supersession.', 'error');
+      return;
+    }
+    setPropagating(true);
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/governed-intelligence/assumptions/' + encodeURIComponent(form.id) + '/revalue',
+        { newValue: nv, reason: why },
+      );
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        fireToast(
+          'The value was not changed — ' +
+            (serverMessage(json) ?? `the server refused it (HTTP ${res.status})`) +
+            '. ' + form.label + ' is still ' + form.value + '.',
+          'error',
+        );
+        return;
+      }
+      setForm(null);
+      setRefresh((n) => n + 1);
+      fireToast(
+        form.label + ' is now ' + nv + '. The previous assumption is superseded and everything downstream of it is flagged stale.',
+      );
+    } catch (e) {
+      fireToast(
+        'The value was not changed — ' + (e instanceof Error ? e.message : String(e)) +
+          '. ' + form.label + ' is still ' + form.value + '.',
+        'error',
+      );
+    } finally {
+      setPropagating(false);
+    }
   };
 
   const PROP_FORM: C2CFormConfig | null = form ? {
     eyebrow: 'Governed change',
     title: 'Change ' + form.label,
     sub: 'Current value ' + form.value + ' -- cited in ' + (form.refs ? form.refs.length : 0) + ' sections. AnA propagates the change and flags anything locked for re-approval.',
-    governed: 'Governed change -- draft sections update inline; approved/locked sections are flagged for re-approval, all on the audit trail.',
-    submitLabel: 'Propagate change',
+    governed: 'Governed change — draft sections update inline; approved/locked sections are flagged for re-approval, all on the audit trail.',
+    submitLabel: propagating ? 'Propagating…' : 'Propagate change',
     fields: [
       { key: 'value', label: 'New value', type: 'text', placeholder: form.value, required: true },
       { key: 'reason', label: 'Reason for change', type: 'textarea', placeholder: 'e.g. reconcile to the Protocol-specified dose', required: true },
@@ -387,13 +492,81 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
 
   const hasBoard = Boolean(boardData && prog);
 
+  /* WHAT ANA SEES HERE. A submission gate is the most expensive place to be
+     confidently wrong, so the payload obeys the same law as the render:
+     never-scanned is NOT clear, a failed read is NOT empty, and counts are
+     published only in assessed states — an openN of 0 must never be readable
+     as "clear" when nothing has ever scanned. The branches mirror the render's
+     four gates, then the existing giState / clean / neverScanned derivations. */
+  const anaContext = useMemo(() => {
+    if (!projectId) {
+      return {
+        summary:
+          'Cross-document inconsistency board: the board is project-scoped and no project is open — nothing can be read.',
+      };
+    }
+    if (boardState.loading && !boardData) {
+      return { summary: 'Cross-document inconsistency board for this project, still loading.' };
+    }
+    if (boardState.error) {
+      // Fail-closed, stated: on this surface an empty findings set means
+      // "ready to file", so a read failure must never be shown as clean.
+      return {
+        summary:
+          'Cross-document inconsistency board: the governed-intelligence read-model did not respond; it fails closed — a read failure is never shown as clean, so the submission-gate verdict is unknown.',
+      };
+    }
+    if (!hasBoard || !lead) {
+      return {
+        summary:
+          'Cross-document inconsistency board: no inconsistency data for this project yet — no findings, assumption records or decision records are recorded.',
+      };
+    }
+    const verdict = neverScanned
+      ? ('not-assessed' as const)
+      : clean
+        ? ('clear' as const)
+        : gate.blocked
+          ? ('blocked' as const)
+          : ('clear-with-open-items' as const);
+    return {
+      summary:
+        verdict === 'not-assessed'
+          ? `Submission gate for ${progCode}: NOT ASSESSED — no contradiction scan has ever reported on this program. That is the absence of a result, not a clean result; consistency across the ${filingLabel} dossier is unknown until a scan runs.`
+          : verdict === 'blocked'
+            ? `Submission gate for ${progCode}: BLOCKED under ${reg} — ${gate.blocking.length} unresolved contradiction(s) carry a blocks-promotion authority. The filing is held until resolved.`
+            : verdict === 'clear-with-open-items'
+              ? `Submission gate for ${progCode}: clear under ${reg}, with ${openN} open item(s) (${gate.needApproval.length} needing sign-off, ${gate.needReview.length} needing review) to close for a perfect filing.`
+              : `Submission gate for ${progCode}: CLEAR — assessed, with every detected contradiction resolved (${resolvedN}/${total}).`,
+      facts: {
+        gate: verdict,
+        regulator: reg,
+        // Counts only in assessed states: a total of 0 next to "not-assessed"
+        // would let a never-scanned board read as clean.
+        ...(verdict !== 'not-assessed'
+          ? {
+              blockingCount: gate.blocking.length,
+              needApprovalCount: gate.needApproval.length,
+              needReviewCount: gate.needReview.length,
+              resolvedCount: resolvedN,
+              total,
+            }
+          : {}),
+        disclaimer:
+          'Running a scan, resolving or reopening findings, and revaluing assumptions (reason-for-change gated) are governed — AnA proposes them in conversation, never through screen controls.',
+      },
+      availableActions: ['Switch the FDA/EMA overlay (re-scores the gate on screen)'],
+    };
+  }, [projectId, boardState.loading, boardState.error, boardData, hasBoard, lead, neverScanned, clean, gate, progCode, filingLabel, reg, openN, resolvedN, total]);
+  usePublishSurfaceContext('inconsistency', anaContext);
+
   return (
     <div className="sp">
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">AnA {I.dot} Governed intelligence</div>
           <h1 className="sp-title">{prog ? progCode + ' -- path to a clean filing' : 'Cross-document inconsistency'}</h1>
-          <p className="sp-state">{prog ? <>{prog.name}{prog.stage ? <> {I.dot} {prog.stage}</> : null}. </> : null}AnA continuously scans every governed record -- sections, specs, data and labeling -- for anything that contradicts anything else, and clears it with you before it can reach a reviewer.</p>
+          <p className="sp-state">{prog ? <>{prog.name}{prog.stage ? <> {I.dot} {prog.stage}</> : null}. </> : null}AnA continuously scans every governed record — sections, specs, data and labeling — for anything that contradicts anything else, and clears it with you before it can reach a reviewer.</p>
         </div>
         <button className="sp-primary" onClick={() => void runScan()} disabled={boardState.loading || scanning || !projectId}>{(boardState.loading || scanning) ? I.rotateCcw : I.sparkles} {scanning ? 'AnA is checking...' : boardState.loading ? 'Loading findings...' : 'Re-scan findings'}</button>
       </div>
@@ -411,7 +584,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the inconsistency board"
-          hint="The governed-intelligence read-model didn't respond. It fails closed on purpose -- an empty findings set means 'ready to file', so a read failure is never shown as clean. Sign in and retry, or check the service is reachable."
+          hint="The governed-intelligence read-model didn't respond. It fails closed on purpose — an empty findings set means 'ready to file', so a read failure is never shown as clean. Sign in and retry, or check the service is reachable."
         />
       ) : !hasBoard || !lead ? (
         <EmptyState
@@ -424,13 +597,15 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
           <AnswerLead {...lead} />
 
           {/* Submission gate: the hero verdict -- can this filing go? */}
-          <div className={'gi-gate ' + (clean ? 'is-clean' : gate.blocked ? 'is-blocked' : 'is-warn')}>
+          <div className={'gi-gate ' + (clean ? 'is-clean' : neverScanned ? 'is-warn' : gate.blocked ? 'is-blocked' : 'is-warn')}>
             <div className="gi-gate-main">
-              <span className="gi-gate-ico">{clean ? I.shieldCheck : gate.blocked ? I.shieldAlert : I.clock}</span>
+              <span className="gi-gate-ico">{clean ? I.shieldCheck : neverScanned ? I.helpCircle || I.clock : gate.blocked ? I.shieldAlert : I.clock}</span>
               <div>
-                <div className="gi-gate-verdict">{clean ? 'Submission gate -- CLEAR' : gate.blocked ? 'Submission gate -- BLOCKED' : 'Submission gate -- clear, with open items'}</div>
+                <div className="gi-gate-verdict">{clean ? 'Submission gate — CLEAR' : neverScanned ? 'Submission gate — NOT ASSESSED' : gate.blocked ? 'Submission gate — BLOCKED' : 'Submission gate — clear, with open items'}</div>
                 <div className="gi-gate-sub">{clean
                   ? 'No contradictions block promotion. ' + progCode + ' can enter the submission sequence.'
+                  : neverScanned
+                  ? 'No contradiction scan has reported on ' + progCode + '. A gate with nothing behind it is not a pass — run a scan before promoting.'
                   : gate.blocked
                     ? gate.blocking.length + ' unresolved ' + (gate.blocking.length === 1 ? 'contradiction' : 'contradictions') + ' with a "blocks promotion" authority under ' + reg + '. The filing is held until resolved.'
                     : 'Nothing blocks promotion under ' + reg + ', but ' + openN + ' open ' + (openN === 1 ? 'item' : 'items') + ' should be cleared for a perfect filing.'}</div>
@@ -451,8 +626,8 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
             </div>
           </div>
           {hasDosage
-            ? <div className="gi-overlay-note">{I.info} Same dossier, different regulator: the dosage conflict is <b>{reg === 'FDA' ? 'a hard filing block under FDA' : '"requires approval" under EMA -- not a hard block'}</b>. AnA re-scores authority from the active regulator's overlay rules.</div>
-            : <div className="gi-overlay-note">{I.info} AnA scores every finding's authority from the active regulator's overlay rules -- switch <b>{reg}</b> to see how {filingLabel} severity shifts by regulator.</div>}
+            ? <div className="gi-overlay-note">{I.info} Same dossier, different regulator: the dosage conflict is <b>{reg === 'FDA' ? 'a hard filing block under FDA' : '"requires approval" under EMA — not a hard block'}</b>. AnA re-scores authority from the active regulator's overlay rules.</div>
+            : <div className="gi-overlay-note">{I.info} AnA scores every finding's authority from the active regulator's overlay rules — switch <b>{reg}</b> to see how {filingLabel} severity shifts by regulator.</div>}
 
           {/* No open contradictions: show the live "what AnA checked" list. The
               engine does not persist the set of verified-consistent cross-references
@@ -460,7 +635,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
               clean-state panel, not a fabricated checklist. */}
           {!hasFindings && (
             <div className="pj-card gi-checks">
-              <div className="pj-card-h"><span className="t">What AnA checked</span><span className="s">{checks.length > 0 ? checks.length + ' cross-references ' : ''}{I.dot} all consistent</span></div>
+              <div className="pj-card-h"><span className="t">What AnA checked</span><span className="s">{checks.length > 0 ? checks.length + ' cross-references ' + String(I.dot) + ' all consistent' : 'no scan record'}</span></div>
               <div className="pj-card-b">
                 {checks.length > 0 ? (
                   <div className="sp-list">
@@ -479,7 +654,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
                     hint="AnA found nothing that contradicts anything else. The itemized list of every cross-reference it verified isn't persisted yet, so only detected contradictions are enumerated here."
                   />
                 )}
-                <div className="scaf-note" style={{ marginTop: 12 }}>AnA re-runs these checks every time content changes. The moment a value disagrees with another governed record, it surfaces here as a contradiction with a consequence -- before it can reach a reviewer.</div>
+                <div className="scaf-note" style={{ marginTop: 12 }}>AnA re-runs these checks every time content changes. The moment a value disagrees with another governed record, it surfaces here as a contradiction with a consequence — before it can reach a reviewer.</div>
               </div>
             </div>
           )}
@@ -524,7 +699,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
                     {!done && <button className="sp-ask" onClick={() => ask('For the ' + progCode + ' contradiction "' + f.title + '", draft the governed resolution and the decision record, and tell me which documents update.')}>{I.sparkles} Draft resolution</button>}
                     <button className="sp-go" title="Open the source record" onClick={() => open(f.factId ? 'cmc' : 'document-authoring')}>{I.right}</button>
                   </div>
-                  {done && <div className="gi-done-line">{I.check} Marked resolved by {f.resolvedBy || 'AnA'} in this view -- the governed audit-trail write + re-approval routing is not yet wired.</div>}
+                  {done && <div className="gi-done-line">{I.check} Marked resolved by {f.resolvedBy || 'AnA'} in this view — the governed audit-trail write + re-approval routing is not yet wired.</div>}
                 </div>
               );
             })}
@@ -535,7 +710,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
             <div className="pj-card">
               <div className="pj-card-h"><span className="t">Assumption registry</span><span className="s">drift origin</span></div>
               <div className="pj-card-b">
-                <p className="gi-support-p">Contradictions like the dropout drift start here -- two governed assumptions sharing a category and domain but holding different values.</p>
+                <p className="gi-support-p">Contradictions like the dropout drift start here — two governed assumptions sharing a category and domain but holding different values.</p>
                 {assumptions.length > 0 ? (
                   <div className="sp-list">
                     {assumptions.map(a => (
@@ -543,6 +718,22 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
                         <span className="sp-tag">{a.category}</span>
                         <span className="sp-row-b"><span className="sp-row-t">{a.title} {I.dot} <b style={{ color: 'var(--accent-200)' }}>{a.assumedValue}</b></span><span className="sp-row-s">{a.domainTrack} {I.dot} {a.source}</span></span>
                         <span className="rd-chip tone-ok">{a.status}</span>
+                        {/* The governed-change form is reachable from HERE, on a
+                            row that carries a real assumption id. Its other
+                            trigger sits behind `f.factId`, which the findings
+                            table documents as null on every live row — so the
+                            form had a real backend and no way in. A superseded
+                            record cannot be re-valued; change the one that
+                            replaced it. */}
+                        {a.status !== 'superseded' && (
+                          <button
+                            className="sp-ask"
+                            title={'Change ' + a.title + ' and flag everything downstream of it'}
+                            onClick={() => setForm({ id: a.id, label: a.title, value: a.assumedValue })}
+                          >
+                            {I.gitCompare} Change value
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -554,7 +745,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
             <div className="pj-card">
               <div className="pj-card-h"><span className="t">Decision records</span><span className="s">governed resolution</span></div>
               <div className="pj-card-b">
-                <p className="gi-support-p">Every resolution AnA proposes becomes a decision record -- proposed {'->'} approved {'->'} executed, linked to the exact artifact version it changed.</p>
+                <p className="gi-support-p">Every resolution AnA proposes becomes a decision record — proposed {'->'} approved {'->'} executed, linked to the exact artifact version it changed.</p>
                 {decisions.length > 0 ? (
                   <div className="sp-list">
                     {decisions.map(d => (

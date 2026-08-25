@@ -77,12 +77,38 @@
   --text-100:                #141413;   /* primary */
   --text-200:                #3d3d3a;
   --text-300:                #6b6963;
-  --text-400:                #8a8880;
+  --text-400:                #75736d;
   --text-500:                #b0aea5;
 
   --accent-main-000:         #faf0ec;
   --accent-main-100:         #d97757;   /* "Claude orange" — THE brand color */
-  --accent-main-200:         #c96442;   /* pressed / hover-darker */
+  /* Darkened 2026-08-21, the same hue-preserving lift the status colours took
+     on 2026-08-13 and the AnA blue took above. --accent-200 is not the brand
+     hue — it is the accent's TEXT weight, and 427 of its 551 uses are `color:`.
+     At #c96442 it measured 3.70:1 on bg-000 and 3.48:1 on --accent-000, which
+     made it the single largest remaining accessibility defect in the product:
+     371 failures, 75% of what was left.
+     The identity above is untouched. The brand is what you SEE — the rail
+     indicator, borders, progress fills, focus rings — and #d97757 still is it.
+     This is the value for what you READ. Ratios: bg-000 / bg-050 / bg-100 /
+     accent-000, so it clears every light surface rather than only the three it
+     happens to land on today. */
+  --accent-main-200:         #ad5132;   /* 4.98 / 4.76 / 4.52 / 4.69 */
+
+  /* The accent as a FILL that carries a label — primary buttons, active
+     segments, the current stage dot.
+     This is a third role and it needed its own token, because the other two
+     cannot do it. --accent-100 with white is 3.12:1. --accent-200 cannot serve
+     either: it inverts by theme (darker in light, LIGHTER in dark, for text on
+     the page), and a filled control needs a dark ground in light and a light
+     ground in dark — the opposite relationship. Using it as a fill puts white
+     on #e8916f in dark mode: 2.41:1.
+     So the fill flips by theme and the label flips with it. Both are stated
+     rather than derived, and all four combinations are measured: label on fill
+     against 4.5:1 (SC 1.4.3), fill against the page at 3:1 (SC 1.4.11, so the
+     control's own boundary is discernible). */
+  --accent-strong:           #ad5132;   /* label 5.25:1 · on page 4.98:1 */
+  --accent-on-strong:        #ffffff;
   --accent-main-900:         #431407;
 
   --accent-pro-000:          #ece9f7;
@@ -107,23 +133,56 @@
   --border-strong:           var(--bg-300);
   --border-focus:            var(--accent-main-100);
 
+  /* The boundary of an INTERACTIVE control, and the only border token that
+     clears WCAG 2.2 SC 1.4.11's 3:1.
+
+     `--border` is 1.34:1 on --bg-000 and `--border-strong` is 1.49:1, so until
+     now no token in the palette could draw a compliant control edge — the
+     `.c2c-input` rule carried a "KNOWN, NOT FIXED" note saying exactly that.
+     The reason it stayed open is that `--border` is used 1242 times and ~964 of
+     those are dividers, row rules and card edges, which SC 1.4.11 does NOT
+     cover: it governs "visual information required to identify user interface
+     components and states". Moving --border would have repainted every divider
+     in the product to fix the boundary of an input.
+
+     So this is a second token rather than a new value for the first, and it is
+     applied only where a border is what identifies a control.
+
+     Measured (light): 3.91:1 on --bg-000, 3.55:1 on --bg-100, 3.30:1 on
+     --bg-200 — the three fills controls actually sit on. Spelled as hex, not as
+     `var(--text-400)`, because ci:token-contrast can only measure a literal. */
+  --border-control:          #7f7d75;
+
   --accent-hover:            var(--accent-main-200);
   --accent-muted:            #f5ddd4;
   --accent-subtle:           var(--accent-main-000);
   --accent-glow:             rgba(217, 119, 87, 0.15);
 
   /* AnA assistant persona (muted blue, distinct from Claude orange) */
-  --ai:                      #6a9bcc;
-  --ai-hover:                #5585b3;
+  /* Darkened 2026-08-21 on the same grounds, and by the same method, as the
+     status colours below: hue-preserving minimum lift until the tone clears
+     4.5:1 as TEXT on the page and on its own badge fill. It was 2.35:1 on
+     --ai-muted — the worst pairing in the palette, and the one the 2026-08-13
+     pass missed because --info aliases it rather than declaring its own value.
+     Ratios: bg-000 / bg-100 / own muted fill. */
+  --ai:                      #366a9e;   /* 5.37 / 4.87 / 4.55 */
+  --ai-hover:                #2c5883;
   --ai-muted:                #dce8f3;
   --ai-glow:                 rgba(106, 155, 204, 0.10);
 
   /* Semantic status — earthy, matches Claude palette */
-  --success:                 #788c5d;
+  /* Status colours, darkened 2026-08-13 to clear WCAG AA (4.5:1) as TEXT on the
+     page, the sidebar, and their own badge fill. Previously: success 3.49:1,
+     warning 3.10:1 on --bg-000, and every badge pairing below 4.5 (warning on
+     its own fill was 2.73:1). Hue preserved; these are functional status
+     colours, not the brand accent, and a warning nobody can read is not a
+     warning. Ratios below are bg-000 / bg-100 / own muted fill.
+     scripts/ci/check-token-contrast.mjs enforces them. */
+  --success:                 #5e6d49;   /* 5.30 / 4.81 / 4.57 */
   --success-muted:           #e4ebd8;
-  --warning:                 #c87d2e;
+  --warning:                 #955d22;   /* 5.16 / 4.68 / 4.54 */
   --warning-muted:           #f8e9d0;
-  --error:                   #b93a3a;
+  --error:                   #b63939;   /* 5.49 / 4.98 / 4.54 */
   --error-muted:             #f5dfdd;
   --info:                    var(--ai);
   --info-muted:              var(--ai-muted);
@@ -252,7 +311,15 @@
   --sidebar-primary-foreground: oklch(0.9881 0 0);
   --sidebar-accent:          oklch(0.1680 0.0020 106.6177);
   --sidebar-accent-foreground: oklch(0.8074 0.0142 93.0137);
-  --sidebar-border:          oklch(0.9401 0 0);
+  /* Was `oklch(0.9401 0 0)` — #ebebeb, declared IDENTICALLY to light. A
+     near-white 1px rule on a #262624 page: 12.72:1, so not a subtle divider
+     but a glaring line. This is the same defect ci:token-contrast was built
+     after finding in `--error` ("never declared for dark, so the light value
+     cascaded onto the dark page"), still present here because `--border-subtle`
+     aliases this token in light but is overridden in dark, which hid it.
+     #30302e matches what --border-subtle already uses in dark: 1.15:1, the
+     same visual weight the light side has at 1.13:1. */
+  --sidebar-border:          #30302e;
   --sidebar-ring:            oklch(0.7731 0 0);
 
   /* Raw Claude dark scales */
@@ -269,16 +336,27 @@
   --text-100:                #faf9f5;
   --text-200:                #e8e6dc;
   --text-300:                #b0aea5;
-  --text-400:                #8a8880;
+  --text-400:                #8e8c84;
   --text-500:                #6b6963;
 
   --accent-main-000:         rgba(217, 119, 87, 0.12);
   --accent-main-100:         #d97757;
-  --accent-main-200:         #e8916f;   /* lighter in dark for legibility */
+  --accent-main-200:         #e8916f;   /* lighter in dark for legibility — 6.29:1 on bg-000 */
+
+  /* The filled-accent pair, inverted for dark. A #ad5132 ground would carry a
+     white label fine (5.25:1) but sits at 2.89:1 against the dark page, so the
+     control's own edge falls below SC 1.4.11's 3:1 and the button stops
+     reading as a button. Dark takes the light ground and the dark label
+     instead, which is the relationship dark mode already uses everywhere
+     else. */
+  --accent-strong:           #e8916f;   /* label 7.65:1 · on page 6.29:1 */
+  --accent-on-strong:        #141413;
 
   --canvas-elevated:         #30302e;
   --border-subtle:           #30302e;
   --border-strong:           #4a4a46;
+  /* 4.36:1 on --bg-000, 3.80:1 on --bg-100, 3.13:1 on --bg-200. */
+  --border-control:          #8a8a82;
   --accent-subtle:           rgba(217, 119, 87, 0.12);
   --accent-muted:            #4a2e24;
 
@@ -287,6 +365,39 @@
   --shadow-md:               0 4px 6px -1px rgb(0 0 0 / 0.40), 0 2px 4px -2px rgb(0 0 0 / 0.40);
   --shadow-lg:               0 10px 15px -3px rgb(0 0 0 / 0.45), 0 4px 6px -4px rgb(0 0 0 / 0.45);
   --shadow-xl:               0 20px 25px -5px rgb(0 0 0 / 0.50), 0 8px 10px -6px rgb(0 0 0 / 0.50);
+
+  /* ── Status colours for dark (added 2026-08-13) ─────────────────────────────
+     These were never declared for dark, so the LIGHT values cascaded onto the
+     dark page. Measured against --bg-000 #262624:
+
+         --error   #b93a3a  2.69:1   fails even the 3:1 non-text floor
+         --success #788c5d  4.12:1   below AA 4.5:1 for normal text
+         --warning #c87d2e  4.64:1   passed, and is lifted here for consistency
+
+     An unreadable error message is the one string a user cannot afford to
+     miss, and this is a regulated platform. The *-muted fills are darkened
+     alongside, because lifting only the text colour would leave it on a
+     near-white pastel badge (#ef7d7d on #f5dfdd is 2.09:1 — worse than what it
+     replaced). --accent-muted above was already darkened this way, so these six
+     are the ones the dark port missed rather than a new convention.
+
+     Hue-preserving minimum lifts; ratios on bg-000 / bg-100 / badge fill. */
+  --success:                 #8fae6e;   /* 6.10 / 5.32 */
+  --success-muted:           #2e3a24;   /* badge 4.84:1 */
+  --warning:                 #d99a58;   /* 6.29 / 5.49 */
+  --warning-muted:           #4a3a1e;   /* badge 4.55:1 */
+  --error:                   #ef7d7d;   /* 5.70 / 4.97 */
+  --error-muted:             #4a2424;   /* badge 5.03:1 */
+
+  /* The AnA blue was the seventh tone that pass missed, for the same reason:
+     never declared for dark, so the light values cascaded onto the dark page.
+     The base needs no lift here — #6a9bcc measures 5.17 on bg-000 and 4.51 on
+     bg-100 — but it has to be declared, or the light-side darkening above
+     cascades in and takes it to 1.9:1. The fill does need darkening: --ai on a
+     near-white #dce8f3 badge is 2.35:1 on a dark page, which is the exact
+     failure the note above describes for the other six. */
+  --ai:                      #6a9bcc;   /* 5.17 / 4.51 */
+  --ai-muted:                #24313f;   /* badge 4.51:1 */
 }
 
 /* ═══════════════════════════════════════════════════════════

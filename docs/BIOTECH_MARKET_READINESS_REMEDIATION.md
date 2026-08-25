@@ -125,10 +125,15 @@ Backend = ~28 route files, 120+ endpoints, ~6,700 LOC of real services. UI wires
 
 ## Phase 4 — Delete the dead weight
 
-- [ ] **P2 Delete the disabled Python FastAPI/Celery stack** — `services/api.py`,
+- [x] **P2 Delete the disabled Python FastAPI/Celery stack** — `services/api.py`,
   `worker.py`, `celery_app.py`, `ectd_generator.py`, `job_store.py`,
   `secure_runner.py`, `services/{api,worker}.Dockerfile`, `services/docker-compose.yml`.
   Not booted in prod (`server/startup/services.ts:30` `startPythonBackend` = no-op).
+  **Done 2026-08-13 (D9):** stack deleted along with its self-referential harness
+  (`docker-compose.e2e.yml`, `.github/workflows/{test_generator,debug_celery}.yml`),
+  `services/requirements.txt`, `services/tests/`, and the `startPythonBackend`
+  stub + shutdown wiring. `workers/artifact-compute/` (the only live Node→Python
+  bridge) and root `requirements.txt` are untouched.
 - [ ] **P2 Delete `services/documents/ChangePropagationService.ts`** — zero importers.
 - [ ] **P2 Delete the shelf-ware authoring shell** `client/src/concept2cure/authoring/App.tsx`
   (unrouted; its "AI" is `setTimeout` typing `AUTH_REWRITES` strings) + `authoring/data.ts`.

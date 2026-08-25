@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData, type DataState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ════════════════════════════════════════════════════════════════════════
    AnA Command Center — re-anchored to the real orchestration backend.
@@ -308,8 +309,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
   const [pid, setPid] = useState<number | null>(null);
   const [role, setRole] = useState('all');
   const [gateOpen, setGateOpen] = useState(false);
-  const [toast, setToast] = useState('');
-  const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
+  const [toast, fire] = useToast();
 
   /* Action runner — a run is staged (pending confirm), in flight, done, or
      errored. Executing mutates + audits, so nothing fires until confirm. */
@@ -377,7 +377,9 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
         return;
       }
       if (!res.ok) {
-        const msg = body?.error || body?.errors?.[0]?.message || `The executor returned HTTP ${res.status}.`;
+        // A per-step error names the step that failed, so it beats the
+        // envelope's own message; `body?.error` leading meant the enum beat both.
+        const msg = body?.errors?.[0]?.message || serverMessage(body) || 'The command could not be run.';
         setRunErr(String(msg));
         return;
       }
@@ -455,7 +457,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
 
   return (
     <div className="ac">
-      {toast && <div className="ac-toast">{I.check} {toast}</div>}
+      <C2CToast msg={toast} position="top" />
 
       {/* Header -- portfolio scale + role lens */}
       <div className="ac-head">
@@ -473,7 +475,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the portfolio rollup"
-          hint="The org-wide rollup (GET /api/report-os/portfolio/org) didn't respond. It requires a signed-in tenant on an entitled plan — sign in and retry, or check your plan."
+          hint="The org-wide rollup didn't respond. It requires a signed-in tenant on an entitled plan — sign in and retry, or check your plan."
         />
       ) : programs.length === 0 ? (
         <EmptyState
@@ -503,7 +505,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
         </div>
       )}
       <div className="ac-port-gap" style={{ margin: '2px 0 6px', padding: '8px 12px', fontSize: 12, lineHeight: 1.5, color: 'var(--text-300)', background: 'var(--bg-050)', border: '1px solid var(--border)', borderRadius: 8, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-        {Ico.info || I.alertTriangle}<span>Org-wide rollup over every program in your organization -- average readiness, worst risk, and attention-ranked members, bound to <code>GET /api/report-os/portfolio/org</code>.</span>
+        {Ico.info || I.alertTriangle}<span>Org-wide rollup over every program in your organization — average readiness, worst risk, and attention-ranked members.</span>
       </div>
 
       {/* Role lens -- jobs across client types */}
@@ -545,7 +547,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                   tone="error"
                   icon={I.alertTriangle}
                   title="Couldn't load the continuity briefing"
-                  hint="The cross-session briefing (POST /api/orchestration/continuity) didn't respond. Sign in and retry, or check the service is reachable."
+                  hint="The cross-session briefing didn't respond. Sign in and retry, or check the service is reachable."
                 />
               ) : !cont ? (
                 <EmptyState
@@ -606,7 +608,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                     tone="error"
                     icon={I.alertTriangle}
                     title="Couldn't load recommendations"
-                    hint="The recommendation engine (POST /api/orchestration/recommendations) didn't respond. Sign in and retry, or check the service is reachable."
+                    hint="The recommendation engine didn't respond. Sign in and retry, or check the service is reachable."
                   />
                 ) : allRecs.length === 0 ? (
                   <EmptyState
@@ -656,7 +658,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                   tone="error"
                   icon={I.alertTriangle}
                   title="Couldn't load workflows"
-                  hint="The workflow registry (GET /api/orchestration/templates) didn't respond. Sign in and retry, or check the service is reachable."
+                  hint="The workflow registry didn't respond. Sign in and retry, or check the service is reachable."
                 />
               ) : tpls.length === 0 ? (
                 <EmptyState icon={Ico.workflow || I.dot} title="No workflows available yet" />
@@ -683,7 +685,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
             <div className="ac-gate-top">
               <div>
                 <div className="ac-gate-crumb">{progLabel}{gate ? ' · ' + gate.submissionType : ''} · pre-submission quality gate</div>
-                <div className="ac-gate-sub">readiness + CMC contradictions + CRL + RTF + ICH -- one verdict, audited to Part 11</div>
+                <div className="ac-gate-sub">readiness + CMC contradictions + CRL + RTF + ICH — one verdict, audited to Part 11</div>
               </div>
               <button className="ac-gate-x" onClick={() => setGateOpen(false)}>{I.close}</button>
             </div>
@@ -694,7 +696,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                 tone="error"
                 icon={I.alertTriangle}
                 title="Couldn't run the pre-submission gate"
-                hint="The gate (POST /api/orchestration/pre-submission-gate) didn't respond. Sign in and retry, or check the service is reachable."
+                hint="The pre-submission gate didn't respond. Sign in and retry, or check the service is reachable."
               />
             ) : !gate ? (
               <EmptyState icon={Ico.shieldCheck || Ico.shield || I.check} title="No gate verdict yet" />

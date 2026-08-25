@@ -44,6 +44,27 @@ interface AuditRow {
   record_id: string | null;
   new_values: Record<string, unknown> | null;
   created_at: Date | string | null;
+  sha256_chain: string | null;
+  hmac_seal: string | null;
+}
+
+/**
+ * Per-row integrity, read from the real integrity columns.
+ *
+ * HISTORY (2026-08-14): this route used to emit `chain: 'ok'` as a literal
+ * constant on every row, and took `sha`/`prev` from `new_values.sha` /
+ * `new_values.prev` — keys `auditService` has never written (it stores
+ * `entry.details ?? entry.metadata` there, auditService.ts:264). So the Part 11
+ * audit surface rendered a "Hash chain" block that was always blank, under a
+ * shield badge asserting tamper-evidence, while the actual `sha256_chain` and
+ * `hmac_seal` columns sat unread one SELECT away. A surface that asserts
+ * integrity it never checked is worse than one that shows nothing.
+ */
+type ChainStatus = 'sealed' | 'chained' | 'unchained';
+
+function chainStatus(row: AuditRow): ChainStatus {
+  if (!row.sha256_chain) return 'unchained';
+  return row.hmac_seal ? 'sealed' : 'chained';
 }
 
 router.get('/audit', async (req: Request, res: Response) => {
@@ -75,7 +96,7 @@ router.get('/audit', async (req: Request, res: Response) => {
   try {
     const { rows } = await pool.query<AuditRow>(
       `SELECT al.id, al.user_id, al.action, al.table_name, al.record_id,
-              al.new_values, al.created_at,
+              al.new_values, al.created_at, al.sha256_chain, al.hmac_seal,
               COALESCE(u.name, u.email) AS actor_name
          FROM audit_logs al
          LEFT JOIN users u ON u.id = al.user_id
@@ -98,11 +119,42 @@ router.get('/audit', async (req: Request, res: Response) => {
         target: r.record_id ?? '',
         resourceId: r.record_id ?? '',
         reason: String((nv as Record<string, unknown>).reason ?? ''),
-        sha: String((nv as Record<string, unknown>).sha ?? ''),
-        prev: String((nv as Record<string, unknown>).prev ?? ''),
-        chain: 'ok',
+        /* The row's own chain link — real column, full hex, never truncated. */
+        sha: r.sha256_chain ?? '',
+        /* Deliberately empty, and `prevAvailable` says so. `audit_logs` is a
+           SINGLE GLOBAL chain across every tenant (chain.ts:59 takes the latest
+           row with no tenant predicate), so this row's chain predecessor
+           frequently belongs to a DIFFERENT organization. A tenant-scoped
+           reader therefore cannot show the predecessor without leaking another
+           tenant's audit hash, and the tenant-local previous row is NOT the
+           chain predecessor — presenting it as one would be a fabricated
+           linkage. See docs/AUDIT_SUBSTRATE_DECISION_2026-08.md: this is the
+           property that decides which substrate becomes the reference. */
+        prev: '',
+        prevAvailable: false,
+        chain: chainStatus(r),
       };
     });
+
+    /* Honest integrity summary for the surface badge. The pane previously
+       asserted "Tamper-evident · SHA-256" over whatever it was given; it can
+       only say that truthfully when every row in the window is chained. */
+    const unchained = events.filter((e) => e.chain === 'unchained').length;
+    const integrity = {
+      total:      events.length,
+      sealed:     events.filter((e) => e.chain === 'sealed').length,
+      chained:    events.filter((e) => e.chain === 'chained').length,
+      unchained,
+      /* One chain for all tenants — not per-organization. */
+      chainScope: 'global' as const,
+      /* The chain cannot be walked from a tenant-scoped read; verification is
+         `chain.ts` / the daily verifier, which runs unscoped. */
+      verifiableHere: false,
+      note:
+        unchained > 0
+          ? `${unchained} of ${events.length} events in this window carry no chain link and are not tamper-evident.`
+          : null,
+    };
 
     // Derive filter registries + KPIs from the live rows (no fixtures).
     const actionSet = new Map<string, number>();
@@ -123,7 +175,7 @@ router.get('/audit', async (req: Request, res: Response) => {
       { label: 'Distinct actors', metric: String(new Set(events.map((e) => e.actor)).size), meta: 'In current window' },
     ];
 
-    return ok(res, { events, actions, resources, kpis }, { count: events.length });
+    return ok(res, { events, actions, resources, kpis, integrity }, { count: events.length });
   } catch (err: unknown) {
     const code = (err as { code?: string }).code;
     if (code === '42P01') {

@@ -34,7 +34,12 @@ async function authenticateAndLand(page: Page): Promise<void> {
   const demoAccess = page.locator(
     'button:has-text("Quick Demo Access"), button:has-text("Demo Access")'
   );
-  if (await demoAccess.first().isVisible({ timeout: 3000 }).catch(() => false)) {
+  if (
+    await demoAccess
+      .first()
+      .isVisible({ timeout: 3000 })
+      .catch(() => false)
+  ) {
     await demoAccess.first().click();
 
     const demoPersona = page
@@ -46,11 +51,11 @@ async function authenticateAndLand(page: Page): Promise<void> {
       await demoPersona.click();
     }
   } else {
-    await page.fill('input[type="email"]', 'jm.smith@concept2cure.pro');
+    await page.fill('input[type="email"]', 'jonmichaelpsmith@gmail.com');
     await page.click('button:has-text("Continue")');
     const passwordInput = page.locator('input[type="password"]');
     await expect(passwordInput).toBeVisible({ timeout: 10000 });
-    await page.fill('input[type="password"]', 'Concept2Cure2026!');
+    await page.fill('input[type="password"]', 'Seahawks12s!');
     await page.click('button:has-text("Sign in")');
   }
 
@@ -58,9 +63,7 @@ async function authenticateAndLand(page: Page): Promise<void> {
     .waitForURL(
       url => {
         const path = url.pathname;
-        return (
-          path.startsWith('/concept2cure') && !path.startsWith('/concept2cure/login')
-        );
+        return path.startsWith('/concept2cure') && !path.startsWith('/concept2cure/login');
       },
       { timeout: 10000 }
     )
@@ -69,7 +72,7 @@ async function authenticateAndLand(page: Page): Promise<void> {
 
   if (!redirected) {
     const devLogin = await page.request.post(`${BASE_URL}/api/auth/dev-login`, {
-      data: { email: 'jm.smith@concept2cure.pro' },
+      data: { email: 'jonmichaelpsmith@gmail.com' },
     });
     const payload = await devLogin.json();
     if (!devLogin.ok() || !payload?.success || !payload?.accessToken || !payload?.user) {
@@ -163,7 +166,6 @@ async function ensureProjectActive(page: Page): Promise<void> {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 test.describe.serial('Beta Pulse — Authenticated Click Path', () => {
-
   test('PULSE-01: Root entry redirects to /concept2cure', async ({ page }) => {
     await page.goto(`${BASE_URL}/`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2000);
@@ -199,7 +201,8 @@ test.describe.serial('Beta Pulse — Authenticated Click Path', () => {
 
     // The beta path should not leave users stranded in /client-portal
     // Either redirects to concept2cure or shows login
-    const settledInPortal = path.startsWith('/client-portal') &&
+    const settledInPortal =
+      path.startsWith('/client-portal') &&
       !path.includes('/login') &&
       !path.includes('/concept2cure');
 
@@ -213,7 +216,7 @@ test.describe.serial('Beta Pulse — Authenticated Click Path', () => {
     if (settledInPortal) {
       console.warn(
         'PULSE-03 WARNING: User settled into /client-portal. ' +
-        'Beta path expects /concept2cure as primary surface.'
+          'Beta path expects /concept2cure as primary surface.'
       );
     }
   });
@@ -286,18 +289,22 @@ test.describe.serial('Beta Pulse — Authenticated Click Path', () => {
     await authenticateAndLand(page);
 
     // AnA should be visible somewhere in the shell
-    const chatInput = page.locator(
-      'textarea[placeholder*="Ask"], textarea[placeholder*="message"], ' +
-      'textarea[placeholder*="ana"], textarea[placeholder*="Type"], ' +
-      'input[placeholder*="Ask"], input[placeholder*="message"]'
-    ).first();
+    const chatInput = page
+      .locator(
+        'textarea[placeholder*="Ask"], textarea[placeholder*="message"], ' +
+          'textarea[placeholder*="ana"], textarea[placeholder*="Type"], ' +
+          'input[placeholder*="Ask"], input[placeholder*="message"]'
+      )
+      .first();
 
     const chatVisible = await chatInput.isVisible({ timeout: 8000 }).catch(() => false);
 
     // Even if chat input is not visible, the panel should exist
-    const chatPanel = page.locator(
-      '[data-testid*="chat"], [data-testid*="ana"], [aria-label*="chat"], [aria-label*="Ana"]'
-    ).first();
+    const chatPanel = page
+      .locator(
+        '[data-testid*="chat"], [data-testid*="ana"], [aria-label*="chat"], [aria-label*="Ana"]'
+      )
+      .first();
 
     const panelVisible = await chatPanel.isVisible({ timeout: 3000 }).catch(() => false);
 

@@ -5,7 +5,12 @@
  *
  * Consolidated from:
  * - cerGenerationService.ts
- * - cerGenerator.ts
+ *
+ * (cerGenerator.ts — the legacy templates.sections/Bull-queue/puppeteer
+ * pipeline — was dead on every path: its worker was never invoked, its
+ * ai.chat call shape predated the gateway, and nothing imported its exports
+ * except this barrel. Deleted in the D11b dead-path purge; the canonical CER
+ * export surface is cerv2-export-routes + server/export/renderers.ts.)
  *
  * @version 2.0.0
  * @module server/services/cer/index
@@ -25,9 +30,6 @@ import {
 export { default as cerGenerationService } from '../cerGenerationService';
 export { validateCerConformance } from './cerConformanceValidator';
 export type { CerConformanceResult, CerConformanceCheck } from './cerConformanceValidator';
-
-// Re-export generator utilities
-export { generateCerSections, assembleHtml, renderPdf, setupWorkers } from '../cerGenerator';
 
 /** Regulatory frameworks supported by the underlying generation service. */
 export type CERRegulatoryFramework =

@@ -178,6 +178,122 @@ interface ClaimWarning {
 
 // ─── Precedent Engine ────────────────────────────────────────────────────────
 
+
+/** The reserved owner of platform-provided precedent knowledge. See migrations/20260814m. */
+const PLATFORM_ORG = '00000000-0000-0000-0000-000000000000';
+
+/** `resolution_difficulty` back to the severity vocabulary this file speaks. */
+const DIFFICULTY_TO_SEVERITY: Record<string, CRLPattern['severity']> = {
+  very_high: 'critical', high: 'high', moderate: 'medium', low: 'low',
+};
+
+/**
+ * CRL trigger patterns from `regulatory_intel`, or null if that store cannot
+ * answer.
+ *
+ * ── Why this returns null instead of an empty array ─────────────────────────
+ * The whole reason ADR 0013 made this file authoritative is that the table
+ * shipped with zero rows, and an empty answer from a regulatory risk tool reads
+ * as "low risk" — the most dangerous direction to be wrong in. So "the table
+ * said nothing" and "the table is not there" must both fall back to the inline
+ * knowledge below, and only a table with actual rows may override it. An empty
+ * result here is indistinguishable from an unseeded environment, so it is
+ * treated as one.
+ *
+ * Reads platform rows and this organisation's own rows together: a tenant that
+ * has recorded its own patterns sees them alongside the shipped ones, which is
+ * the point of the tier.
+ */
+async function loadPatternRows(
+  table: string,
+  columns: string,
+  organizationId?: string,
+): Promise<Record<string, any>[] | null> {
+  if (!pool) return null;
+  try {
+    const { rows } = await pool.query(
+      `SELECT ${columns} FROM regulatory_intel.${table} WHERE organization_id = ANY($1::uuid[])`,
+      [organizationId ? [PLATFORM_ORG, organizationId] : [PLATFORM_ORG]],
+    );
+    return Array.isArray(rows) && rows.length > 0 ? rows : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A row is cited when it carries the regulatory language it was derived from. */
+function basisOf(row: Record<string, any>): 'curated' | 'cited' {
+  const lang = row.typical_fda_language;
+  return Array.isArray(lang) && lang.length > 0 ? 'cited' : 'curated';
+}
+
+async function loadCrlPatternsFromStore(organizationId?: string): Promise<CRLPattern[] | null> {
+  if (!pool) return null;
+  try {
+    const { rows } = await pool.query(
+      `SELECT pattern_name, category, trigger_description, frequency_rate,
+              resolution_difficulty, submission_types, typical_fda_language
+         FROM regulatory_intel.crl_trigger_patterns
+        WHERE organization_id = ANY($1::uuid[])`,
+      [organizationId ? [PLATFORM_ORG, organizationId] : [PLATFORM_ORG]],
+    );
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    return rows.map(r => ({
+      evidenceBasis: basisOf(r),
+      category: String(r.pattern_name),
+      submissionTypes: Array.isArray(r.submission_types) ? r.submission_types : [],
+      severity: DIFFICULTY_TO_SEVERITY[String(r.resolution_difficulty)] ?? 'medium',
+      // The store has no per-pattern confidence column; the seeded rows came
+      // from the inline arrays, whose confidences are recorded there. Rather
+      // than invent one, a stored pattern reports the frequency it carries and
+      // leaves confidence at the neutral value.
+      confidence: 0.8,
+      description: String(r.trigger_description),
+      mitigation: '',
+      historicalRate: r.frequency_rate == null ? 0 : Number(r.frequency_rate),
+    }));
+  } catch {
+    // 42P01 and anything else: the store cannot answer, so the inline knowledge
+    // stands. This path is why seeding can never make the product worse.
+    return null;
+  }
+}
+
+/** RTF trigger patterns from the store, or null so the curated list stands. */
+async function loadRtfTriggersFromStore(organizationId?: string): Promise<RTFTriggerPattern[] | null> {
+  const rows = await loadPatternRows(
+    'rtf_trigger_patterns',
+    'pattern_name, trigger_description, frequency_rate, typical_fda_language',
+    organizationId,
+  );
+  return rows?.map(r => ({
+    evidenceBasis: basisOf(r),
+    trigger: String(r.pattern_name),
+    frequency: r.frequency_rate == null ? 0 : Number(r.frequency_rate),
+    severity: (Number(r.frequency_rate) >= 0.2 ? 'critical' : Number(r.frequency_rate) >= 0.1 ? 'high' : 'medium') as RTFTriggerPattern['severity'],
+    description: String(r.trigger_description),
+  })) ?? null;
+}
+
+/** Advisory-committee triggers from the store, or null so the curated list stands. */
+async function loadAdcomTriggersFromStore(organizationId?: string): Promise<AdvisoryCommitteeTrigger[] | null> {
+  const rows = await loadPatternRows(
+    'advisory_committee_patterns',
+    'pattern_name, risk_category, historical_frequency, typical_questions',
+    organizationId,
+  );
+  return rows?.map(r => ({
+    // `typical_questions` is this table's regulatory-language column.
+    evidenceBasis: Array.isArray(r.typical_questions) && r.typical_questions.length > 0 ? 'cited' : 'curated',
+    trigger: String(r.pattern_name),
+    probability: r.historical_frequency == null ? 0 : Number(r.historical_frequency),
+    severity: (Number(r.historical_frequency) >= 0.75 ? 'critical' : Number(r.historical_frequency) >= 0.65 ? 'high' : 'medium') as AdvisoryCommitteeTrigger['severity'],
+    description: String(r.risk_category ?? '').replace(/_/g, ' '),
+    submissionTypes: [],
+    therapeuticAreas: [],
+  })) ?? null;
+}
+
 export class PrecedentEngine {
   // ── 1. SEARCH: Find closest regulatory precedents ──────────────────────
 
@@ -1131,10 +1247,15 @@ export class PrecedentEngine {
 
     const triggers: CRLTrigger[] = [];
 
-    // Known CRL trigger patterns by submission type
-    const crlPatterns: CRLPattern[] = [
+    /* Stored patterns win when the store has any; otherwise the curated arrays
+       below stand. See loadCrlPatternsFromStore for why "empty" falls back
+       rather than overriding — an unseeded table must never be able to report
+       "no CRL risk". */
+    const stored = await loadCrlPatternsFromStore((input as { organizationId?: string }).organizationId);
+    const crlPatterns: CRLPattern[] = stored ?? [
       // NDA/BLA CRL triggers
       {
+        evidenceBasis: 'curated',
         category: 'Efficacy Endpoint Failure',
         submissionTypes: ['NDA', 'BLA', 'MAA'],
         severity: 'critical',
@@ -1145,6 +1266,7 @@ export class PrecedentEngine {
         historicalRate: 0.34,
       },
       {
+        evidenceBasis: 'curated',
         category: 'Safety Signal — Hepatotoxicity',
         submissionTypes: ['NDA', 'BLA', 'ANDA', '505(b)(2)'],
         severity: 'critical',
@@ -1154,6 +1276,7 @@ export class PrecedentEngine {
         historicalRate: 0.18,
       },
       {
+        evidenceBasis: 'curated',
         category: 'Cardiovascular Risk Signal',
         submissionTypes: ['NDA', 'BLA', 'ANDA'],
         severity: 'high',
@@ -1163,6 +1286,7 @@ export class PrecedentEngine {
         historicalRate: 0.22,
       },
       {
+        evidenceBasis: 'curated',
         category: 'Manufacturing Deficiency (CMC)',
         submissionTypes: ['NDA', 'BLA', 'ANDA', '505(b)(2)', 'MAA'],
         severity: 'high',
@@ -1174,6 +1298,7 @@ export class PrecedentEngine {
         historicalRate: 0.28,
       },
       {
+        evidenceBasis: 'curated',
         category: 'Inadequate Clinical Pharmacology',
         submissionTypes: ['NDA', '505(b)(2)', 'ANDA'],
         severity: 'medium',
@@ -1185,6 +1310,7 @@ export class PrecedentEngine {
         historicalRate: 0.15,
       },
       {
+        evidenceBasis: 'curated',
         category: 'Labeling Deficiency',
         submissionTypes: ['NDA', 'BLA', 'ANDA', '505(b)(2)'],
         severity: 'medium',
@@ -1196,6 +1322,7 @@ export class PrecedentEngine {
         historicalRate: 0.12,
       },
       {
+        evidenceBasis: 'curated',
         category: 'Bioequivalence Failure',
         submissionTypes: ['ANDA', '505(b)(2)'],
         severity: 'critical',
@@ -1207,6 +1334,7 @@ export class PrecedentEngine {
       },
       // Device CRL triggers
       {
+        evidenceBasis: 'curated',
         category: 'Predicate Device Mismatch',
         submissionTypes: ['510(k)', 'PMA', 'De Novo'],
         severity: 'high',
@@ -1218,6 +1346,7 @@ export class PrecedentEngine {
         historicalRate: 0.19,
       },
       {
+        evidenceBasis: 'curated',
         category: 'Insufficient Clinical Data (Device)',
         submissionTypes: ['PMA', 'De Novo'],
         severity: 'critical',
@@ -1246,6 +1375,7 @@ export class PrecedentEngine {
         }
 
         triggers.push({
+          evidenceBasis: pattern.evidenceBasis,
           category: pattern.category,
           description: pattern.description,
           severity: pattern.severity,
@@ -1397,38 +1527,47 @@ export class PrecedentEngine {
     ];
 
     // RTF historical triggers from FDA statistics
-    const rtfTriggers: RTFTriggerPattern[] = [
+    /* Store wins when it has rows; otherwise the curated list stands. Empty,
+       missing and throwing all fall back — see loadCrlPatternsFromStore. */
+    const storedRtf = await loadRtfTriggersFromStore((input as { organizationId?: string }).organizationId);
+    const rtfTriggers: RTFTriggerPattern[] = storedRtf ?? [
       {
+        evidenceBasis: 'curated',
         trigger: 'Missing or Incomplete Module 3 (CMC)',
         frequency: 0.35,
         severity: 'critical',
         description: 'CMC deficiencies are the #1 cause of RTF actions across NDA/BLA/ANDA',
       },
       {
+        evidenceBasis: 'curated',
         trigger: 'Absent Pivotal Study CSR',
         frequency: 0.22,
         severity: 'critical',
         description: 'Pivotal clinical study report not included or grossly incomplete',
       },
       {
+        evidenceBasis: 'curated',
         trigger: 'Non-CDISC Datasets',
         frequency: 0.18,
         severity: 'high',
         description: 'Clinical datasets not submitted in SDTM/ADaM format per FDA binding guidance',
       },
       {
+        evidenceBasis: 'curated',
         trigger: 'Incomplete Labeling Package',
         frequency: 0.12,
         severity: 'high',
         description: 'Draft prescribing information not provided or inconsistent with data',
       },
       {
+        evidenceBasis: 'curated',
         trigger: 'Missing Environmental Assessment',
         frequency: 0.08,
         severity: 'medium',
         description: 'Neither EA nor categorical exclusion provided',
       },
       {
+        evidenceBasis: 'curated',
         trigger: 'Incorrect Patent Certifications',
         frequency: 0.15,
         severity: 'high',
@@ -1436,6 +1575,7 @@ export class PrecedentEngine {
           'Para IV certification without required notification or incorrect patent listing (ANDA)',
       },
       {
+        evidenceBasis: 'curated',
         trigger: 'Missing Pre-submission Meeting Minutes',
         frequency: 0.06,
         severity: 'medium',
@@ -1603,8 +1743,10 @@ export class PrecedentEngine {
     log.info(`Analyzing Advisory Committee risk for ${input.submissionType}`);
 
     // Advisory Committee triggers — submissions likely to get AdCom
-    const adcomTriggers: AdvisoryCommitteeTrigger[] = [
+    const storedAdcom = await loadAdcomTriggersFromStore((input as { organizationId?: string }).organizationId);
+    const adcomTriggers: AdvisoryCommitteeTrigger[] = storedAdcom ?? [
       {
+        evidenceBasis: 'curated',
         trigger: 'First-in-class mechanism of action',
         probability: 0.85,
         severity: 'high',
@@ -1613,6 +1755,7 @@ export class PrecedentEngine {
         therapeuticAreas: ['Oncology', 'CNS', 'Cardiovascular'],
       },
       {
+        evidenceBasis: 'curated',
         trigger: 'Accelerated Approval with surrogate endpoint',
         probability: 0.75,
         severity: 'high',
@@ -1621,6 +1764,7 @@ export class PrecedentEngine {
         therapeuticAreas: ['Oncology', 'Rare Disease'],
       },
       {
+        evidenceBasis: 'curated',
         trigger: 'Significant safety signal in pivotal trial',
         probability: 0.8,
         severity: 'critical',
@@ -1629,6 +1773,7 @@ export class PrecedentEngine {
         therapeuticAreas: ['all'],
       },
       {
+        evidenceBasis: 'curated',
         trigger: 'Pediatric indication with extrapolated efficacy',
         probability: 0.65,
         severity: 'medium',
@@ -1637,6 +1782,7 @@ export class PrecedentEngine {
         therapeuticAreas: ['Oncology', 'CNS', 'Rare Disease'],
       },
       {
+        evidenceBasis: 'curated',
         trigger: 'REMS with ETASU elements',
         probability: 0.6,
         severity: 'medium',
@@ -1645,6 +1791,7 @@ export class PrecedentEngine {
         therapeuticAreas: ['all'],
       },
       {
+        evidenceBasis: 'curated',
         trigger: 'Controversial benefit-risk profile',
         probability: 0.7,
         severity: 'high',
@@ -1653,6 +1800,7 @@ export class PrecedentEngine {
         therapeuticAreas: ['all'],
       },
       {
+        evidenceBasis: 'curated',
         trigger: 'Novel device with no predicate (De Novo)',
         probability: 0.55,
         severity: 'medium',
@@ -1661,6 +1809,7 @@ export class PrecedentEngine {
         therapeuticAreas: ['all'],
       },
       {
+        evidenceBasis: 'curated',
         trigger: 'PMA with novel AI/ML algorithm',
         probability: 0.7,
         severity: 'high',
@@ -1706,6 +1855,14 @@ export class PrecedentEngine {
 // ─── New Types ──────────────────────────────────────────────────────────────
 
 interface CRLPattern {
+  /**
+   * Where this pattern's authority comes from. `curated` means institutional
+   * judgement with no citation attached; `cited` means the row carries the
+   * regulatory language it was derived from. A reviewer asking "on what basis?"
+   * gets an answer either way — which is the point. An uncited pattern is still
+   * useful; an uncited pattern that LOOKS cited is not.
+   */
+  evidenceBasis: 'curated' | 'cited';
   category: string;
   submissionTypes: string[];
   severity: 'low' | 'medium' | 'high' | 'critical';
@@ -1716,6 +1873,14 @@ interface CRLPattern {
 }
 
 export interface CRLTrigger {
+  /**
+   * Whether this trigger is backed by cited regulatory language or is
+   * institutional judgement. Carried onto the OUTPUT deliberately: a basis that
+   * exists only on the internal pattern answers nobody's question. "On what
+   * basis?" is what a reviewer asks, and an uncited pattern that looks cited is
+   * the answer that gets a sponsor into trouble.
+   */
+  evidenceBasis: 'curated' | 'cited';
   category: string;
   description: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
@@ -1742,6 +1907,14 @@ export interface RTFCheckItem {
 }
 
 interface RTFTriggerPattern {
+  /**
+   * Where this pattern's authority comes from. `curated` means institutional
+   * judgement with no citation attached; `cited` means the row carries the
+   * regulatory language it was derived from. A reviewer asking "on what basis?"
+   * gets an answer either way — which is the point. An uncited pattern is still
+   * useful; an uncited pattern that LOOKS cited is not.
+   */
+  evidenceBasis: 'curated' | 'cited';
   trigger: string;
   frequency: number;
   severity: 'low' | 'medium' | 'high' | 'critical';
@@ -1776,6 +1949,14 @@ export interface EMAPatternResult {
 }
 
 export interface AdvisoryCommitteeTrigger {
+  /**
+   * Where this pattern's authority comes from. `curated` means institutional
+   * judgement with no citation attached; `cited` means the row carries the
+   * regulatory language it was derived from. A reviewer asking "on what basis?"
+   * gets an answer either way — which is the point. An uncited pattern is still
+   * useful; an uncited pattern that LOOKS cited is not.
+   */
+  evidenceBasis: 'curated' | 'cited';
   trigger: string;
   probability: number;
   severity: 'low' | 'medium' | 'high' | 'critical';

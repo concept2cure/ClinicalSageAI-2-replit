@@ -10,7 +10,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', () => ({ apiRequest }));
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+}));
 
 import { EctdCompile } from '../surfaces/EctdCompile';
 
@@ -62,7 +65,7 @@ describe('EctdCompile — real eCTD assembly', () => {
       expect(call![2] as any).toMatchObject({ submissionType: 'initial', region: 'FDA' });
     });
     expect(await screen.findByText(/Compilation complete/)).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Download eCTD 4.0 backbone/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Download eCTD backbone/ })).toBeTruthy();
   });
 
   it('shows an honest empty state when no program is open (no fixture)', () => {
@@ -70,6 +73,32 @@ describe('EctdCompile — real eCTD assembly', () => {
     expect(screen.getByText(/Open a program to compile its eCTD/)).toBeTruthy();
     // No compile/status calls fire without a project.
     expect(apiRequest).not.toHaveBeenCalled();
+  });
+
+  it('a program UUID ident is sent to the server (which resolves it) — the numeric-only dead-end is gone', async () => {
+    // window.C2C_PROJECT.id is a regulatory_programs UUID in the real shell.
+    const uuid = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
+    const STATUS_PROGRAM = {
+      projectId: null, projectIdent: uuid, programId: uuid, overallReadiness: 0,
+      contentComplete: false, submissionReady: false, totalSections: 0, totalRequired: 22, totalCompleted: 0, lastUpdated: null,
+      submissionBlockers: ['Required sections are not all complete.', 'This program has no linked section-tracking store'],
+      modules: [{ moduleCode: 'm1', moduleName: 'Administrative Information', totalSections: 0, requiredSections: 7, completedRequired: 0, completionPct: 0, ready: false }],
+    };
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === `/api/ectd-compile/${uuid}/status`) return ok(STATUS_PROGRAM);
+      if (method === 'GET' && url === `/api/ectd-compile/${uuid}/history`) return ok({ compilations: [] });
+      return ok({});
+    });
+    (window as any).C2C_PROJECT = { id: uuid, title: 'BX-204 CGM', code: 'BX-204' };
+    render(<EctdCompile {...props()} />);
+
+    // The server's readiness (not a client dead-end) renders.
+    expect(await screen.findByText('Administrative Information')).toBeTruthy();
+    expect(screen.queryByText(/no numeric project id/)).toBeNull();
+    // The status/history reads addressed the UUID ident verbatim.
+    expect(apiRequest.mock.calls.some((c) => c[1] === `/api/ectd-compile/${uuid}/status`)).toBe(true);
+    expect(apiRequest.mock.calls.some((c) => c[1] === `/api/ectd-compile/${uuid}/history`)).toBe(true);
   });
 });
 
@@ -94,14 +123,14 @@ describe('EctdCompile — what the surface may claim', () => {
       contentValidationPassed: true,
       leafFilesRendered: 0,
       submissionBlockers: [
-        'No leaf files have been rendered. This platform compiles the eCTD backbone over authored section content; it does not yet produce the PDF leaf files a sequence consists of, so the package cannot be transmitted to an agency gateway.',
+        "No leaf files have been rendered for this compile: it is not linked to a canonical submission (submissions → eCTD sequence) with placed documents, so this backbone describes authored section content only and cannot be transmitted to an agency gateway. Leaf rendering runs from the submission spine — create the program's submission and place approved documents into its eCTD sequence.",
       ],
     });
     render(<EctdCompile {...props()} />);
     fireEvent.click(await screen.findByText(/Compile eCTD/));
 
     expect(await screen.findByText('Not yet submittable:')).toBeTruthy();
-    expect(screen.getByText(/does not yet produce the PDF leaf files/)).toBeTruthy();
+    expect(screen.getByText(/No leaf files have been rendered for this compile/)).toBeTruthy();
   });
 
   it('warns that the downloadable backbone is not a sequence', async () => {
@@ -110,7 +139,7 @@ describe('EctdCompile — what the surface may claim', () => {
     render(<EctdCompile {...props()} />);
     fireEvent.click(await screen.findByText(/Compile eCTD/));
 
-    await screen.findByText(/Download eCTD 4.0 backbone XML/);
+    await screen.findByText(/Download eCTD backbone XML/);
     expect(screen.getByText(/not a sequence to transmit/)).toBeTruthy();
   });
 

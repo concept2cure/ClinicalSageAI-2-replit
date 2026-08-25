@@ -7,17 +7,31 @@ import * as React from 'react';
 import { I } from '../icons';
 import { K510_ESTAR, K510_PREDICATES, K510_SE_ROWS, K510_STAGES } from '../data/k510';
 import type { Program } from '../data/programs';
-import { useEstarReadiness, useK510EstarSections, useK510Predicates, useK510SeMatrix } from '../hooks/useK510';
+import {
+  useEstarReadiness,
+  useK510EstarSections,
+  useK510PredicateFallback,
+  useK510Predicates,
+  useK510SeMatrix,
+} from '../hooks/useK510';
+import { useDeviceProfile } from '../hooks/useDeviceProfile';
+import { useEstarExport, exportStatusLine } from '../hooks/useEstarExport';
 import { AskAnaChip } from './AskAnaChip';
 import { AnaDraftBanner } from '../components/AnaDraftBanner';
 import { PathwayPanes } from './pathway/PathwayPanes';
+import { DeviceProfilePanel } from './DeviceProfilePanel';
 import { EstarFilingPanel } from './EstarFilingPanel';
 import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
+import type { EditorSectionRef } from '../../v2/editorTarget';
+import { downloadCsv } from '../../v2/download';
 
 export interface K510SurfaceProps {
   program: Program | null;
   onAskAna: (text: string) => void;
-  onOpenEditor?: (id: string | number) => void;
+  /** Open the one document editor, on the named section when one is given.
+   *  Code + label both travel: the editor matches by code first, by title as
+   *  the fallback, and reports an honest miss with the label otherwise. */
+  onOpenEditor?: (section?: EditorSectionRef) => void;
 }
 
 export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProps) {
@@ -34,6 +48,22 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
   const predicates = useK510Predicates(programId);
   const seMatrix  = useK510SeMatrix(programId);
 
+  /* Device-profile ident: program UUID first, code as the secondary ident
+     (the server's /api/510k/device/profile resolver accepts either). */
+  const deviceIdent = program?.id ?? program?.code ?? null;
+
+  /* REDUCED predicate fallback — openFDA clearance records via the LOCAL
+     /api/510k/device/predicates endpoint. Queried ONLY once the shadow-
+     backed predicate fetch has errored (nulls keep both hooks idle
+     otherwise). The saved device profile supplies the query terms, so the
+     profile fetch is likewise gated on the fallback being active. */
+  const predicateFallbackActive = predicates.rows === null && !!predicates.error;
+  const fallbackProfile = useDeviceProfile(predicateFallbackActive ? deviceIdent : null);
+  const predicateFallback = useK510PredicateFallback(
+    predicateFallbackActive ? fallbackProfile.profile?.productName ?? program?.title ?? null : null,
+    predicateFallbackActive ? fallbackProfile.profile?.productCode ?? null : null,
+  );
+
   /* Can the OFFICIAL FDA eSTAR PDF be produced yet? Read-only probe — drives the
      "Generate official eSTAR" button's disabled-with-reason state so the gate is
      visible rather than hidden. `ready` flips true only once the official
@@ -41,6 +71,24 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
   const estarReadiness = useEstarReadiness('510k', 'device');
   const officialReady = estarReadiness.readiness?.ready ?? false;
   const officialBlockers = estarReadiness.readiness?.blockers ?? [];
+
+  /* Real export actions — POST /api/510k/estar/build and /official. The
+     package assembles server-side from the org's authored sections; the
+     response's base64 payload downloads in-browser. */
+  const estarExport = useEstarExport();
+  const exportStatus = exportStatusLine(estarExport.busy, estarExport.outcome);
+
+  /* Locked-never-dead (entitlements contract §4): a 403 NOT_ENTITLED from the
+     export routes disables the buttons WITH the reason — a Locked pill plus a
+     tooltip and status line naming the real minimum tier — never a reasonless
+     dead control, and never conflated with a role 403 or an out-of-credits
+     state (blockedByEntitlement is set only by the entitlement gate's shape). */
+  const entitlementLocked = estarExport.outcome?.blockedByEntitlement === true;
+  const lockedTitle = entitlementLocked
+    ? estarExport.outcome?.requiredTier
+      ? `Locked — requires the ${estarExport.outcome.requiredTier} plan (device assembly readiness)`
+      : 'Locked — requires a higher plan (device assembly readiness)'
+    : null;
 
   const sourcePredicates = useSampleRows(predicates.rows, K510_PREDICATES);
   const sourceSeRows     = useSampleRows(seMatrix.rows, K510_SE_ROWS);
@@ -88,46 +136,68 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
             {program ? program.dueLabel : 'FDA filing · 41 days'}
           </div>
         </div>
-        <button className="section-more" onClick={() => onOpenEditor && onOpenEditor(11)}>
+        <button
+          className="section-more"
+          onClick={() =>
+            onOpenEditor &&
+            onOpenEditor({
+              code: 11,
+              label: sourceEstar.find((s) => s.id === 11)?.label ?? 'Substantial Equivalence Discussion',
+            })
+          }
+        >
           Open §11 in editor {I.arrowRight}
         </button>
         <button
           className="section-more"
           style={{ marginLeft: 8 }}
-          onClick={() =>
-            onAskAna(
-              `Assemble the 510(k) content package for ${program?.code ?? 'this project'} as a draft ZIP — ` +
-                `Module 6 PDF + Form FDA 3514 + required attachments. Note: this is a content package, ` +
-                `not the official FDA eSTAR PDF that CDRH ingests.`,
-            )
+          disabled={estarExport.busy || !program || entitlementLocked}
+          title={
+            lockedTitle ??
+            (program
+              ? 'Assemble a draft ZIP of rendered section PDFs from your authored content — NOT the official FDA eSTAR PDF that CDRH ingests'
+              : 'Select a 510(k) program first')
           }
+          onClick={() => {
+            if (!program) return;
+            void estarExport.exportDraftPackage({ id: program.id, code: program.code, title: program.title });
+          }}
         >
           Export 510(k) package {I.download}
         </button>
         <button
           className="section-more"
           style={{ marginLeft: 8 }}
-          disabled={!officialReady || estarReadiness.loading}
+          disabled={!officialReady || estarReadiness.loading || estarExport.busy || !program || entitlementLocked}
           title={
-            estarReadiness.loading
+            lockedTitle ??
+            (estarReadiness.loading
               ? 'Checking official eSTAR availability…'
               : officialReady
                 ? 'Generate the official FDA eSTAR interactive PDF — the submittable artifact CDRH ingests'
                 : `Official eSTAR not yet available — ${
                     officialBlockers.join(' · ') || 'template not vendored / field map not populated'
-                  }`
+                  }`)
           }
-          onClick={() =>
-            onAskAna(
-              `Generate the OFFICIAL FDA eSTAR interactive PDF for ${program?.code ?? 'this project'} ` +
-                `via the governed export plane (POST /api/510k/estar/official) — the submittable artifact ` +
-                `CDRH ingests, not the draft content ZIP.`,
-            )
-          }
+          onClick={() => {
+            if (!program) return;
+            void estarExport.exportOfficialEstar({ id: program.id, code: program.code, title: program.title });
+          }}
         >
           Generate official eSTAR (PDF) {I.download}
         </button>
       </div>
+
+      {exportStatus && (
+        <div className="section-sub" role="status" style={{ marginTop: 4 }}>
+          {entitlementLocked ? (
+            <span className="status-pill review" style={{ marginRight: 6 }}>
+              Locked
+            </span>
+          ) : null}
+          {exportStatus}
+        </div>
+      )}
 
       <div className="stage-strip">
         {K510_STAGES.map((s, i) => {
@@ -148,6 +218,10 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
           );
         })}
       </div>
+
+      {/* Device intake — profile fields feed classification, predicate
+          search (including the reduced openFDA fallback), and eSTAR. */}
+      <DeviceProfilePanel ident={deviceIdent} />
 
       {/* Predicate intelligence is provisioned by a shadow service. When
           the live fetch errors (typical: shadow service not configured in
@@ -182,6 +256,22 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
         </div>
       )}
 
+      {/* Honest fallback states — when the reduced openFDA lookup itself
+          cannot run (or matched nothing), say so instead of showing
+          nothing under the banner. */}
+      {predicateFallbackActive && predicateFallback.available === false && (
+        <div className="section-sub" role="status" style={{ margin: '0 0 8px' }}>
+          Reduced openFDA fallback unavailable — {predicateFallback.unavailableReason}
+        </div>
+      )}
+      {predicateFallbackActive &&
+        predicateFallback.available === true &&
+        (predicateFallback.rows?.length ?? 0) === 0 && (
+          <div className="section-sub" role="status" style={{ margin: '0 0 8px' }}>
+            Reduced openFDA fallback found no clearance records matching this device profile.
+          </div>
+        )}
+
       <div className="col2">
         <div>
           <div className="panel">
@@ -191,7 +281,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                 <div className="s">
                   {selected.size} of {sourcePredicates.length} selected · ranked by similarity · check 2+ for side-by-side
                   {predicates.rows === null && !predicates.error && (
-                    <span style={{ marginLeft: 6, color: 'var(--text-400)' }}>· loading…</span>
+                    <span style={{ marginLeft: 6, color: 'var(--text-300)' }}>· loading…</span>
                   )}
                 </div>
               </div>
@@ -280,6 +370,54 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                     </tr>
                   );
                 })}
+                {/* Reduced fallback rows — real openFDA clearance records,
+                    NOT predicate-intelligence output: no match scoring, no
+                    diff counts, not selectable into the SE matrix. The
+                    label row keeps that visible. */}
+                {predicateFallbackActive &&
+                  predicateFallback.rows &&
+                  predicateFallback.rows.length > 0 && (
+                    <>
+                      <tr>
+                        <td
+                          colSpan={7}
+                          role="status"
+                          style={{
+                            padding: '8px 10px',
+                            fontSize: 11,
+                            color: 'var(--text-200)',
+                            background: 'var(--bg-050)',
+                            borderLeft: '3px solid var(--accent-100)',
+                          }}
+                        >
+                          Reduced results — openFDA clearance records (predicate intelligence
+                          unavailable)
+                        </td>
+                      </tr>
+                      {predicateFallback.rows.map((r, i) => (
+                        <tr key={`fallback-${r.kNumber}-${i}`}>
+                          <td className="cb"></td>
+                          <td>
+                            <span className="k-num">{r.kNumber}</span>
+                          </td>
+                          <td>
+                            <div className="k-name">{r.deviceName}</div>
+                            <div className="k-holder">{r.applicant}</div>
+                          </td>
+                          <td className="k-date">
+                            {r.decisionDate.length > 10 ? r.decisionDate.slice(0, 10) : r.decisionDate}
+                          </td>
+                          {/* No match score / diff count exists for reduced
+                              results — render an honest dash, never a bar. */}
+                          <td style={{ color: 'var(--text-400)' }}>—</td>
+                          <td style={{ color: 'var(--text-400)' }}>—</td>
+                          <td style={{ color: 'var(--text-300)', fontSize: 11 }}>
+                            {r.clearanceType || r.decisionCode || '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </>
+                  )}
               </tbody>
             </table>
           </div>
@@ -305,18 +443,11 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                         ? [r.attr, r.subject, ...selectedList.map(() => r.predicate)]
                         : [r.attr, r.subject, r.verdict, r.predicate, r.note ?? ''],
                     );
-                    const csv = [headers, ...rows]
-                      .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
-                      .join('\r\n');
-                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${(program?.code ?? 'project').toLowerCase()}-se-matrix.csv`;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    URL.revokeObjectURL(url);
+                    downloadCsv(
+                      `${(program?.code ?? 'project').toLowerCase()}-se-matrix.csv`,
+                      headers,
+                      rows,
+                    );
                   }}
                 >
                   {I.download}
@@ -421,7 +552,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                 <React.Fragment key={s.id}>
                   <button
                     className={`estar-row ${s.blocker ? 'blocker' : ''}`}
-                    onClick={() => onOpenEditor && onOpenEditor(s.id)}
+                    onClick={() => onOpenEditor && onOpenEditor({ code: s.id, label: s.label })}
                     title={`Open ${s.label} in editor`}
                   >
                     <div className="estar-num">§{String(s.id).padStart(2, '0')}</div>
@@ -436,7 +567,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                   {s.draft ? (
                     <AnaDraftBanner
                       draft={s.draft}
-                      onRefine={() => onOpenEditor && onOpenEditor(s.id)}
+                      onRefine={() => onOpenEditor && onOpenEditor({ code: s.id, label: s.label })}
                       onAccepted={estar.refresh}
                     />
                   ) : null}

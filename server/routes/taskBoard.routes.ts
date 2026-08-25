@@ -53,7 +53,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { asc, eq, inArray, or } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { requestDb } from '../db/requestDb';
@@ -63,6 +63,41 @@ import { unifiedTasks, taskDependencies, users, organizationUsers } from '../../
 const logger = createScopedLogger('task-board-routes');
 
 // ── Display-shape row type (mirrors TaskItem in task-board-data.ts) ─────────────
+
+/**
+ * One §11.50 manifestation as `task-signoff.ts` writes it into
+ * `unified_tasks.approval_history`. Mirrored (not imported) because that module
+ * is a server-side service and this is the wire contract; the shape is asserted
+ * against it in the route's tests.
+ */
+interface SignatureManifestation {
+  signedById: number | null;
+  signedByName: string;
+  meaning: string;
+  reason: string;
+  signedAt: string;
+  method: string;
+}
+
+/** Defensive: approval_history is a `json` column, so anything could be in it on
+ *  a row written before the current shape. Keep only well-formed entries rather
+ *  than handing the UI something it will render as "undefined". */
+function readManifestations(raw: unknown): SignatureManifestation[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap(entry => {
+    if (!entry || typeof entry !== 'object') return [];
+    const e = entry as Record<string, unknown>;
+    if (typeof e.signedAt !== 'string' || typeof e.meaning !== 'string') return [];
+    return [{
+      signedById: typeof e.signedById === 'number' ? e.signedById : null,
+      signedByName: typeof e.signedByName === 'string' ? e.signedByName : 'Unknown signer',
+      meaning: e.meaning,
+      reason: typeof e.reason === 'string' ? e.reason : '',
+      signedAt: e.signedAt,
+      method: typeof e.method === 'string' ? e.method : 'pin',
+    }];
+  });
+}
 
 interface TaskBoardItem {
   taskId: string;
@@ -84,12 +119,30 @@ interface TaskBoardItem {
   regulatoryImpact: boolean;
   approvalRequired: boolean;
   approvalStatus: string;
+  /**
+   * The §11.50 signature manifestations recorded against this task, oldest
+   * first. Shipped on the board read model because the sign-off ceremony was
+   * write-only from the UI's point of view: PATCH stored the manifestation and
+   * nothing could ever render it back, so a signature existed in the ledger
+   * that no user could see. §11.50 requires the signed record to display the
+   * signer's printed name, the date and time, and the meaning of the signature.
+   * Empty array when the task has never been signed — never null, so the client
+   * does not have to branch.
+   */
+  approvalHistory: SignatureManifestation[];
   dependsOn: string[];
   blocks: string[];
   comments: number;
   attachments: number;
   source: string;
   due: string;
+  /**
+   * Machine-readable due date (ISO 8601) or null. The humanised `due` string
+   * above is kept for display compat, but clients must not parse it — it is
+   * server-locale English and UTC-day based (assessment D21). Overdue logic
+   * belongs on this field.
+   */
+  dueDateIso: string | null;
   /**
    * Real `lifecycle_phase` column (LIFECYCLE_PHASES domain, shared/schema.ts:
    * strategy … postmarket); null when the task has never been phased.
@@ -176,10 +229,13 @@ export default function createTaskBoardRoutes(): Router {
     try {
       const db = requestDb(req);
 
+      // Soft-deleted (archived) rows never reach the board (D24).
       const rows = await db
         .select()
         .from(unifiedTasks)
-        .where(eq(unifiedTasks.organizationId, organizationId))
+        .where(
+          and(eq(unifiedTasks.organizationId, organizationId), isNull(unifiedTasks.deletedAt))
+        )
         .orderBy(asc(unifiedTasks.dueDate));
 
       const taskIds = rows.map(row => row.taskId);
@@ -239,12 +295,14 @@ export default function createTaskBoardRoutes(): Router {
           regulatoryImpact: row.regulatoryImpact ?? false,
           approvalRequired: row.approvalRequired ?? false,
           approvalStatus: row.approvalStatus ?? 'not_started',
+          approvalHistory: readManifestations(row.approvalHistory),
           dependsOn: dependsOnMap.get(row.taskId) ?? [],
           blocks: blocksMap.get(row.taskId) ?? [],
           comments: jsonArrayLength(row.comments),
           attachments: jsonArrayLength(row.attachments),
           source: mapSource(row.sourceEntityType),
           due: humanizeDue(row.dueDate, status),
+          dueDateIso: row.dueDate ? new Date(row.dueDate).toISOString() : null,
           phase: row.lifecyclePhase ?? null,
           blocked,
           estimatedHours: row.estimatedHours ?? null,

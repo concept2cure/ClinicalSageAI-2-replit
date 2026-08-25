@@ -19,7 +19,8 @@
  *                             C2C_API.connected()).
  */
 import React from 'react';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, redactInternals } from '@/lib/queryClient';
+import { I } from './icons';
 import { getAuthToken } from '@/utils/authToken';
 
 export interface LiveResult<T> {
@@ -206,6 +207,52 @@ export interface DataResult<T> {
   status: number;
 }
 
+/**
+ * Turn a thrown request failure into a DataResult that keeps its HTTP status.
+ *
+ * `apiRequest` THROWS `ApiRequestError` for every non-OK status except 401, so
+ * the `if (!res.ok)` branches below are reached only by a 401 and EVERY other
+ * failing status arrives here instead. Reporting `status: 0` for all of them
+ * collapsed "you are not allowed to do this" (403), "that is gone" (404) and
+ * "your input was rejected" (400) into "the network is down" — erasing exactly
+ * the distinction ApiRequestError's own header says it exists to preserve
+ * ("consumers that must distinguish forbidden, unavailable, validation, and
+ * empty states without parsing error strings").
+ *
+ * The status is read STRUCTURALLY rather than through `instanceof
+ * ApiRequestError`, for two reasons that both end in this helper throwing:
+ *
+ *   1. Several suites mock '@/lib/queryClient' with a factory that exports only
+ *      `apiRequest`. Importing the class here would bind it to `undefined` in
+ *      those runs, and `e instanceof undefined` throws — inside the very catch
+ *      whose entire contract is that it never throws. The surface then hangs on
+ *      "loading" instead of rendering its honest error. (Observed: it took the
+ *      Apps catalog's offline test down.)
+ *   2. `instanceof` is false across two instances of the same module, which a
+ *      bundler split or a duplicated dependency can produce silently.
+ *
+ * `error` carries the server's own wording where there is any, so a surface can
+ * show the API's message rather than inventing one. `apiRequest` has already
+ * reduced the envelope via `extractApiError` (client/src/lib/queryClient.ts),
+ * which is what makes this field SAFE to render: an enum-shaped `error` token
+ * and any infrastructure text are replaced with human copy there, so nothing
+ * reaching this string is a code, a relation name or a driver message.
+ *
+ * That order used to be reversed — `{ error }` was preferred over `{ message }`
+ * — so every surface reading this field displayed the literal token
+ * `PENDING_STORE` whenever a store was unprovisioned.
+ *
+ * 0 stays reserved for a genuine pre-response failure: DNS, offline, abort, or
+ * a body that would not parse.
+ */
+function failureFrom(e: unknown, path: string): DataResult<never> {
+  const status = (e as { status?: unknown } | null)?.status;
+  if (e instanceof Error && typeof status === 'number' && status > 0) {
+    return { data: null, error: e.message || `HTTP ${status} ${path}`, status };
+  }
+  return { data: null, error: e instanceof Error ? e.message : String(e), status: 0 };
+}
+
 /* ── Shape guards ──────────────────────────────────────────────────────────────
  *
  * `liveGetOrNull<T>` casts the parsed body to `T`. That cast is a promise the
@@ -301,7 +348,7 @@ export async function liveGetOrNull<T>(
     }
     return { data: payload as T, status: res.status };
   } catch (e) {
-    return { data: null, error: e instanceof Error ? e.message : String(e), status: 0 };
+    return failureFrom(e, path);
   }
 }
 
@@ -345,7 +392,7 @@ export async function liveMutateOrNull<T>(
     const parsed = (await res.json()) as unknown;
     return { data: unwrapEnvelope(parsed) as T, status: res.status };
   } catch (e) {
-    return { data: null, error: e instanceof Error ? e.message : String(e), status: 0 };
+    return failureFrom(e, path);
   }
 }
 
@@ -414,6 +461,29 @@ export interface ListState<T> {
  * zero-row load, and `error` is set only on a fetch failure — the three
  * states a list surface renders instead of a "Sample data" fixture.
  */
+/**
+ * The one empty array every non-array payload resolves to.
+ *
+ * `rows` is the natural dependency for the effect a list surface writes to seed
+ * its working set from the live file — `[live.loading, live.error, live.rows]`,
+ * the shape used by the CMC registers, the Module 3 program-records chain,
+ * specifications and batch records. That effect is correct only if `rows`
+ * changes identity exactly when the fetch re-resolves.
+ *
+ * Returning a fresh `[]` literal broke that on the honest-empty path
+ * specifically: when the payload IS an array the reference comes from state and
+ * is stable, but a 204 or a `{ success: true, data: null }` success — both of
+ * which this module's contract explicitly allows — produced a BRAND NEW array
+ * every render. The consumer's effect then fired on every render, set state,
+ * caused a render, and fired again. Measured at 220 effect runs where one was
+ * correct (see liveRowsStability.test.tsx). Nothing throws, so it presents as a
+ * mysteriously slow tab rather than as the unbounded loop it is.
+ *
+ * Frozen so a caller that mutates its rows in place fails loudly here instead of
+ * silently poisoning the empty state of every other surface.
+ */
+const NO_ROWS: readonly never[] = Object.freeze([]);
+
 export function useLiveRows<T>(
   path: string | null,
   deps: React.DependencyList = [path],
@@ -423,7 +493,7 @@ export function useLiveRows<T>(
   // Without a guard a non-array 200 is silently flattened to zero rows, which
   // renders as "nothing here yet" — an empty state that is not true. Pass
   // `isRowsWith(...)` to have that reported as the error it is.
-  const rows = Array.isArray(st.data) ? st.data : [];
+  const rows = Array.isArray(st.data) ? st.data : (NO_ROWS as unknown as T[]);
   return {
     rows,
     loading: st.loading,
@@ -433,27 +503,237 @@ export function useLiveRows<T>(
 }
 
 /**
+ * The one surface a failure is reported on.
+ *
+ * ── What this replaces ───────────────────────────────────────────────────────
+ * Four parallel implementations, each written where it was needed and none
+ * aware of the others:
+ *
+ *   · `EmptyState tone="error"` (139 call sites) — a dashed panel whose `hint`
+ *     was routinely handed the raw server string;
+ *   · `RbmWriteError` (10 sites) — an inline "The change was not saved" banner,
+ *     with a dismiss but no retry, styled from the RBM feature's own stylesheet;
+ *   · `DataGate`'s error branch (33 sites) — a third rendering of the same idea;
+ *   · the New Project wizard's outcome banner.
+ *
+ * They disagreed about everything that matters: whether a failure is announced
+ * to a screen reader, whether it offers a way out, and whether the string it
+ * renders is safe to show. UI standards §8 has named `<ErrorState retry={…}>`
+ * as the required shape for a query failure since before any of them were
+ * written; it simply did not exist.
+ *
+ * ── Why the redaction lives HERE ─────────────────────────────────────────────
+ * `message` is passed through `redactInternals` on every render. The transport
+ * layer already refuses to lift SQL, relation names, routes or env vars out of
+ * an error envelope, so in the normal path this changes nothing — and that is
+ * the point. Putting the filter in the component is what makes "no
+ * client-rendered string contains an internal" a property of the UI rather than
+ * a convention every future caller has to remember. A string that reached a
+ * surface from a caught exception, a websocket frame or a field the envelope
+ * reader never saw is caught here too.
+ *
+ * ── Two variants, one component ──────────────────────────────────────────────
+ * `panel` — a READ failed and there is nothing to show in its place.
+ * `inline` — a WRITE failed; the form is still on screen and the banner sits
+ *            next to the control that produced it.
+ * The distinction is spatial, not semantic: both are `role="alert"`, both are
+ * announced assertively, and both must offer a recovery path.
+ */
+export function ErrorState({
+  title,
+  message,
+  correlationId,
+  retry,
+  retryLabel = 'Try again',
+  onDismiss,
+  variant = 'panel',
+  icon,
+  busy = false,
+  testId,
+}: {
+  /** What failed, in the user's terms. Always shown. */
+  title: string;
+  /** The server's own sentence, when it sent one. Redacted before render. */
+  message?: React.ReactNode;
+  /** The `X-Request-Id` the server echoed, for the user to quote to support. */
+  correlationId?: string;
+  /** UI standards §8: a failure always offers a way out. */
+  retry?: () => void;
+  retryLabel?: string;
+  /** Present → the banner can be dismissed. Used for write failures. */
+  onDismiss?: () => void;
+  variant?: 'panel' | 'inline';
+  icon?: React.ReactNode;
+  busy?: boolean;
+  testId?: string;
+}) {
+  /* A string is only rendered if it survives the internals filter; otherwise the
+     title carries the message alone, which is always safe because the caller
+     wrote it. */
+  const safe =
+    typeof message === 'string' ? redactInternals(message, '') : message ?? '';
+
+  return (
+    <div
+      className={`c2c-error-state variant-${variant}`}
+      role="alert"
+      aria-live="assertive"
+      aria-busy={busy || undefined}
+      data-testid={testId}
+    >
+      <span className="c2c-error-ic" aria-hidden="true">{icon ?? I.alertTriangle}</span>
+      <div className="c2c-error-body">
+        <div className="c2c-error-t">{title}</div>
+        {safe ? <div className="c2c-error-h">{safe}</div> : null}
+        {correlationId ? (
+          /* The support handle. It replaced the store name the API used to
+             disclose, so it is the one identifier that makes an outage
+             diagnosable without describing the schema to whoever is looking. */
+          <div className="c2c-error-ref">
+            Reference <code>{correlationId}</code>
+          </div>
+        ) : null}
+      </div>
+      {(retry || onDismiss) && (
+        <div className="c2c-error-actions">
+          {retry && (
+            <button type="button" className="c2c-error-retry" onClick={retry} disabled={busy}>
+              {busy ? 'Retrying…' : retryLabel}
+            </button>
+          )}
+          {onDismiss && (
+            <button
+              type="button"
+              className="c2c-error-dismiss"
+              onClick={onDismiss}
+              aria-label="Dismiss this message"
+            >
+              {I.close}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * The honest panel a surface shows when a real backend returns nothing, or
  * when the fetch failed — the replacement for a fixture-backed "Sample data"
  * card. `tone="error"` is for a failed load; the default idle tone is for a
  * genuine empty result.
+ *
+ * W0-5 — the four-part contract. A finished empty state answers, in order:
+ *   what this is        → `title`
+ *   why it is empty     → `hint`
+ *   the ONE action that fixes it → `action` (a real CTA — navigate, create;
+ *                          never an instruction the panel does not implement)
+ *   the regulation it serves     → `regulation` (so a screen with nothing on
+ *                          it still says what record it exists to keep)
+ * `title` alone is a legal minimum for panels whose emptiness needs no fixing
+ * (an audit trail with no events yet is complete, not deficient). What the
+ * contract retires is the PASSIVE INSTRUCTION — "Select a program" as prose
+ * with nothing to click. If the fix is an action, render the action.
+ *
+ * `tone="error"` DELEGATES to `<ErrorState>` rather than rendering its own
+ * error panel. That is deliberate and is what converges the 139 existing error
+ * call sites without touching any of them: they inherit the internals filter,
+ * the assertive announcement and the correlation-id slot by construction. New
+ * code should call `<ErrorState>` directly. A failure is not an empty state,
+ * so `action` and `regulation` are deliberately NOT forwarded: the one action
+ * on a failure is recovery (`retry`), and a "create" CTA over a failed read
+ * would invite writing into a store that just refused to answer.
  */
 export function EmptyState({
   title,
   hint,
   icon,
   tone = 'idle',
+  busy = false,
+  retry,
+  /* No default here on purpose. An unspecified label falls through to whichever
+     renderer takes it: the idle panel keeps 'Retry', and a failure gets
+     ErrorState's 'Try again', so the recovery control reads the same on every
+     failure in the product rather than differing by which component happened to
+     render it. A caller that passes a label still wins. */
+  retryLabel,
+  action,
+  regulation,
+  testId,
 }: {
   title: string;
   hint?: React.ReactNode;
   icon?: React.ReactNode;
   tone?: 'idle' | 'error';
+  /** The panel is standing in for content that is still loading. */
+  busy?: boolean;
+  /** A recovery path for a failed load. UI standards §8: errors always have one. */
+  retry?: () => void;
+  retryLabel?: string;
+  /** The one action that resolves the emptiness — a real control, not prose.
+   *  Distinct from `retry`, which recovers a failure. */
+  action?: { label: string; onAct: () => void };
+  /** The regulation or record this surface serves, stated factually
+   *  (e.g. "Serves the CTD Module 3 record (ICH M4Q)"). */
+  regulation?: string;
+  testId?: string;
 }) {
+  /* A failure is not an empty state. It has one renderer, and this is not it —
+     every `tone="error"` call site is served by ErrorState above, so all 139 of
+     them get the internals filter and the correlation-id slot without being
+     rewritten. `hint` maps to `message`, which is exactly the field that used to
+     be handed a raw server string. */
+  if (tone === 'error') {
+    return (
+      <ErrorState
+        title={title}
+        message={hint}
+        icon={icon}
+        retry={retry}
+        {...(retryLabel ? { retryLabel } : {})}
+        busy={busy}
+        testId={testId}
+      />
+    );
+  }
+
+  /* UI standards §10 (non-negotiable): a loading or empty panel is a POLITE
+     status — it must not interrupt. The assertive case now lives in ErrorState. */
   return (
-    <div className={`c2c-empty-state tone-${tone}`}>
-      {icon && <span className="c2c-empty-ic">{icon}</span>}
+    <div
+      className="c2c-empty-state tone-idle"
+      role="status"
+      aria-live="polite"
+      aria-busy={busy || undefined}
+      data-testid={testId}
+    >
+      {/* `busy` used to set `aria-busy` and nothing else, so a panel standing in
+          for content that is still loading looked identical to one standing in
+          for content that does not exist — announced as busy to a screen reader
+          and silent about it to everyone else. The pulse is on the icon rather
+          than a separate spinner so the panel does not swap components under
+          the user as it moves loading → empty → loading. */}
+      {icon && (
+        <span
+          className={`c2c-empty-ic${busy ? ' c2c-empty-ic-busy' : ''}`}
+          aria-hidden="true"
+        >
+          {icon}
+        </span>
+      )}
       <div className="c2c-empty-t">{title}</div>
       {hint && <div className="c2c-empty-h">{hint}</div>}
+      {action && (
+        <button type="button" className="c2c-empty-action" onClick={action.onAct}>
+          {action.label}
+        </button>
+      )}
+      {retry && (
+        <button type="button" className="c2c-empty-retry" onClick={retry}>
+          {retryLabel ?? 'Retry'}
+        </button>
+      )}
+      {regulation && <div className="c2c-empty-reg">{regulation}</div>}
     </div>
   );
 }

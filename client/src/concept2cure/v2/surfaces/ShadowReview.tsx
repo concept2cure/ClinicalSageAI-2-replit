@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { PedigreeBadge } from '../intelligence/Intelligence';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 import {
   SHADOW_LENSES, shadowLens, shadowAggregateRisk, SR_SEV, SR_DIM,
@@ -78,6 +79,69 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
   const criticals = findings.filter((f) => f.severity === 'critical').length;
   const majors = findings.filter((f) => f.severity === 'major').length;
 
+  /* What AnA can see of this screen.
+     `lensRan` is the fact that carries this surface. A lens with no row has NOT
+     been run; a lens with a row and zero findings passed. Both draw an empty
+     finding list, and telling AnA "no findings" for the first would have her
+     report a clean reviewer verdict on a review that never happened — on the
+     surface whose whole purpose is predicting an RTF or CRL before filing. So
+     the two are published as different states, and the risk scores are withheld
+     entirely for a lens that has not run. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'The shadow-review worklist is still loading; nothing on screen is final yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'The shadow-review store could not be read, so this screen is showing no reviewer findings ' +
+          'because of a failure. That is NOT a clean review and must not be reported as one.',
+        availableActions: ['Retry the shadow-review read'],
+      };
+    }
+    const lensLabel = lens?.label ?? lensId;
+    if (!lensRan) {
+      return {
+        summary:
+          `Shadow review: the "${lensLabel}" reviewer lens has NOT been run against this submission, so ` +
+          'there are no findings and no RTF or CRL risk score on screen. This is an absence of review, ' +
+          'not a clean result.',
+        facts: {
+          selectedLens: lensId,
+          lensHasRun: false,
+          lensesRun: Object.keys(findingsByLens),
+        },
+        availableActions: ['Run the selected reviewer lens', 'Switch to a lens that has already been run'],
+      };
+    }
+    return {
+      summary:
+        `Shadow review under the "${lensLabel}" reviewer lens: ${findings.length} finding(s) — ` +
+        `${criticals} critical, ${majors} major. Refuse-to-file risk ${rtf}, complete-response risk ${crl} ` +
+        '(0-1 deterministic aggregation over the findings on screen).',
+      facts: {
+        selectedLens: lensId,
+        lensHasRun: true,
+        lensesRun: Object.keys(findingsByLens),
+        findingCount: findings.length,
+        criticalFindings: criticals,
+        majorFindings: majors,
+        refuseToFileRisk: rtf,
+        completeResponseRisk: crl,
+        findings: findings.slice(0, 12).map((f) => ({
+          dimension: f.dimension, severity: f.severity, title: f.title,
+          detail: f.detail, basis: f.basis, recommendation: f.recommendation, leafRef: f.leafRef,
+        })),
+      },
+      availableActions: [
+        'Switch reviewer lens',
+        'Open a finding to read its basis and the recommended fix',
+        'Re-run the lens after addressing findings',
+      ],
+    };
+  }, [live.loading, live.error, lens, lensId, lensRan, findingsByLens, findings, criticals, majors, rtf, crl]);
+  usePublishSurfaceContext('shadow-review', anaContext);
+
   /* AnA's answer-first verdict -- reviewer voice, honest, one clear next step.
      Speaks to the connected submission; no fabricated sequence identity (the
      read contract does not return one). */
@@ -86,7 +150,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
     ? {
         tone: 'urgent' as const,
         h: <>{criticals} finding{criticals > 1 ? 's' : ''} would <b>stop your {lens.agency} filing at the {worst === 'rtf' ? lens.gates.rtf : lens.gates.crl}</b>. I ran the {lens.label} over your submission and this is what they would raise first.</>,
-        b: <>A single critical saturates the gate -- fix these before you dispatch. Everything a reviewer flags here is cheaper to close now than in a {lens.gates.crl}.</>,
+        b: <>A single critical saturates the gate — fix these before you dispatch. Everything a reviewer flags here is cheaper to close now than in a {lens.gates.crl}.</>,
       }
     : majors > 0
       ? {
@@ -97,7 +161,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
       : {
           tone: 'good' as const,
           h: <>The {lens.label} recorded no blocking findings on your connected sequence. RTF risk {Math.round(rtf * 100)}%, {lens.gates.crl.split(' ')[0]} risk {Math.round(crl * 100)}%.</>,
-          b: <>This is a clean simulated review. It is not a guarantee -- but a reviewer opening this sequence would not hit an administrative or substantive wall.</>,
+          b: <>This is a clean simulated review. It is not a guarantee — but a reviewer opening this sequence would not hit an administrative or substantive wall.</>,
         };
 
   const showResults = !live.loading && !live.error && !live.empty && lensRan;
@@ -106,10 +170,10 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
     <div className="sr">
       <div className="sr-head">
         <div className="sr-eyebrow">
-          <span className="sr-kicker">AnA -- shadow review -- simulated {lens.agency} reviewer</span>
+          <span className="sr-kicker">AnA — shadow review — simulated {lens.agency} reviewer</span>
         </div>
         <h1 className="sr-title">What would a reviewer flag before you file?</h1>
-        <div className="sr-sub">Agencies run AI on their side of the desk -- this runs the reviewer's lens on yours, before they do.</div>
+        <div className="sr-sub">Agencies run AI on their side of the desk — this runs the reviewer's lens on yours, before they do.</div>
       </div>
 
       {/* Lens selector -- the 5 real reviewer lenses (canonical catalog) */}
@@ -149,7 +213,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
           <EmptyState
             icon={I.eye || I.fileText}
             title="No shadow review has been run yet"
-            hint={<>Connect an assembled sequence and run a simulated reviewer to see what an {lens.agency} reviewer would flag before you file. Runs via <span className="mono">POST /api/submissions/sequences/:seqId/shadow-review</span>.</>}
+            hint={<>Connect an assembled sequence and run a simulated reviewer to see what an {lens.agency} reviewer would flag before you file.</>}
           />
         ) : !lensRan ? (
           <EmptyState
@@ -162,8 +226,8 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
             {/* The two gates that kill a filing */}
             <div className="sr-gates">
               {([
-                { k: 'rtf', v: rtf, name: lens.gates.rtf, sub: 'Administrative gate -- will they accept the filing?', dims: 'rtf + format findings' },
-                { k: 'crl', v: crl, name: lens.gates.crl, sub: 'Substantive gate -- will they approve after review?', dims: 'crl + nb findings' },
+                { k: 'rtf', v: rtf, name: lens.gates.rtf, sub: 'Administrative gate — will they accept the filing?', dims: 'rtf + format findings' },
+                { k: 'crl', v: crl, name: lens.gates.crl, sub: 'Substantive gate — will they approve after review?', dims: 'crl + nb findings' },
               ] as const).map((g) => (
                 <div key={g.k} className={'sr-gate band-' + riskBand(g.v)}>
                   <div className="sr-gate-top">
@@ -181,7 +245,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
             <div className="sr-findings">
               <div className="sr-findings-hd">
                 <span className="sr-findings-t">{findings.length} finding{findings.length === 1 ? '' : 's'}</span>
-                <span className="sr-findings-s">critical to info -- what the reviewer raises, and how to close it</span>
+                <span className="sr-findings-s">critical to info — what the reviewer raises, and how to close it</span>
               </div>
               {findings.map((f, i) => {
                 const sev: SeverityMeta = SR_SEV[f.severity] || SR_SEV.info;
@@ -213,7 +277,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
         <div className="sr-foot">
           <PedigreeBadge level="model_assisted" />
           <PedigreeBadge level="deterministic_registry" />
-          <span className="sr-foot-note">Findings are produced by the AI gateway (task <span className="mono">regulatory_review</span>, prompt <span className="mono">shadow-review@v1.0</span>) -- model-assisted. The RTF/CRL risk aggregation is deterministic (a single critical saturates the gate). Connect a sequence to run the live reviewer via <span className="mono">POST /api/submissions/sequences/:seqId/shadow-review</span>.</span>
+          <span className="sr-foot-note">Findings are model-assisted — produced by the platform’s governed regulatory-review model, not by a human reviewer. The RTF/CRL risk aggregation is deterministic (a single critical saturates the gate). Connect a sequence to run the live reviewer against it.</span>
           <div className="sr-actions">
             {/* FLAG (mock action): asks AnA to run the reviewer rather than calling
                 POST /sequences/:seqId/shadow-review directly — the real endpoint

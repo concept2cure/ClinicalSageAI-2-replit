@@ -48,7 +48,12 @@ describe('classifyPdfA', () => {
 
   it('accepts an ArrayBuffer input', () => {
     const u = bytes('%PDF-1.7\n');
-    const res = classifyPdfA(u.buffer);
+    // Copy into a standalone ArrayBuffer rather than passing `u.buffer`, which
+    // is typed ArrayBufferLike (it could be a SharedArrayBuffer). This makes
+    // the case actually exercise the ArrayBuffer branch it is named for.
+    const ab = new ArrayBuffer(u.byteLength);
+    new Uint8Array(ab).set(u);
+    const res = classifyPdfA(ab);
     expect(res.isPdf).toBe(true);
     expect(res.pdfVersion).toBe('1.7');
   });

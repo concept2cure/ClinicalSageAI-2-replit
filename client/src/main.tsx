@@ -7,6 +7,11 @@ import './cspNonce';
 // Initialize Sentry error monitoring early, before other imports
 import './utils/sentry';
 
+// The build stamp: which commit this bundle was built from, on the window and
+// one console line, so a running deployment is a checkable fact.
+import { announceBuild } from './buildStamp';
+announceBuild();
+
 // Initialize i18next (side-effect import) before any component renders so the
 // first paint already reflects the detected language and <html lang>.
 import i18n from './i18n';
@@ -31,6 +36,7 @@ import App from './App';
 import ErrorBoundary from './ErrorBoundary';
 import { FileContextProvider } from './contexts/FileContext';
 import { Toaster } from './components/ui/toaster';
+import { GlobalMutationErrors } from './concept2cure/v2/GlobalMutationErrors';
 
 // Render the app with React 18 createRoot API - using the main App component
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -41,6 +47,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <FileContextProvider>
             <App />
             <Toaster />
+            {/* Every useMutation failure whose call site did not report one of
+                its own. Mounted at the root because a write can fail from any
+                surface, and a silent failed write is what this closes. */}
+            <GlobalMutationErrors />
           </FileContextProvider>
         </QueryClientProvider>
       </I18nextProvider>

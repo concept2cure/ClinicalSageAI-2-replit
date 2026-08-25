@@ -76,11 +76,19 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
     q(`SELECT id, protocol_document_id, category, description, likelihood, impact, mitigation, residual_likelihood, residual_impact, status FROM protocol_risks WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
     q(`SELECT id, protocol_document_id, name, milestone_type, target_date, actual_date FROM protocol_milestones WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY target_date NULLS LAST, id`),
     q(`SELECT id, protocol_document_id, amendment_number, title, affects_consent, submitted_date, decided_date FROM protocol_amendments WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
-    q(`SELECT id, protocol_document_id, deviation_number, description, is_reportable FROM protocol_deviations WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
+    /* severity / category / status are NOT NULL with CHECK constraints on this
+       table and were simply never selected, then hard-blanked below. A monitor
+       could not tell a CRITICAL deviation from a MINOR one — which is the 3-day
+       versus 10-day reporting distinction — and open rendered identically to
+       closed. */
+    q(`SELECT id, protocol_document_id, deviation_number, description, is_reportable, severity, category, status FROM protocol_deviations WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
     q(`SELECT id, protocol_document_id, category, description, unit_cost, quantity_per_subject FROM protocol_budget_items WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
     q(`SELECT protocol_document_id, target_enrollment, sponsor_payment_per_subject, indirect_rate_pct FROM protocol_budget_params WHERE protocol_document_id = ANY($1) AND organization_id = $2`),
     q(`SELECT id, protocol_document_id, reviewer_name, role, status FROM protocol_review_assignments WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
-    q(`SELECT id, protocol_document_id, section_ref, comment, resolved FROM protocol_review_comments WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
+    /* Same shape: `severity` exists (blocking/major/minor/info) and was blanked,
+       so the Review header was structurally incapable of reporting anything but
+       "0 blocking open" and every per-comment badge rendered empty. */
+    q(`SELECT id, protocol_document_id, section_ref, comment, resolved, severity FROM protocol_review_comments WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
     q(`SELECT id, protocol_document_id, name, category, order_index FROM protocol_soa_assessments WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, id`),
     q(`SELECT protocol_document_id, assessment_id, visit_id, required FROM protocol_soa_cells WHERE protocol_document_id = ANY($1) AND organization_id = $2`),
   ]);
@@ -202,13 +210,13 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
         changes: g(changesByAmend, Number(a.id)).map((c) => ({ sec: str(c.section_ref), from: str(c.previous_text), to: str(c.proposed_text) })),
       })),
       deviations: g(byDoc.deviations, id).map((dv) => ({
-        id: str(dv.id), title: str(dv.description), sev: '', cat: '',
-        reportable: bool(dv.is_reportable), status: '',
+        id: str(dv.id), title: str(dv.description), sev: str(dv.severity), cat: str(dv.category),
+        reportable: bool(dv.is_reportable), status: str(dv.status),
         capa: g(capaByDev, Number(dv.id)).map((c) => ({ id: str(c.deviation_id), action: str(c.action), status: str(c.status) })),
       })),
       reviews: g(byDoc.reviewAssignments, id).map((rv) => ({
         id: str(rv.id), reviewer: str(rv.reviewer_name), role: str(rv.role), status: str(rv.status),
-        comments: g(commentsByAssignment, id).map((c) => ({ id: str(c.id), sec: str(c.section_ref), sev: '', text: str(c.comment), resolved: bool(c.resolved) })),
+        comments: g(commentsByAssignment, id).map((c) => ({ id: str(c.id), sec: str(c.section_ref), sev: str(c.severity), text: str(c.comment), resolved: bool(c.resolved) })),
       })),
       consent: [],
       completenessFindings: findings.map((f) => ({ sev: str((f as { severity?: unknown }).severity), text: str((f as { message?: unknown }).message) })),

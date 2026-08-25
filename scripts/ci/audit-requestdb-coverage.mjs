@@ -59,7 +59,10 @@ const baselinePath = path.join(repoRoot, 'docs', 'reports', 'requestdb-coverage-
 const ALLOWLIST_FILES = new Set([
   'server/routes/auth.ts',
   'server/routes/authEnterprise.ts',
-  'server/routes/admin.ts',
+  // ('server/routes/admin.ts' removed — never existed in this repo's history.
+  //  An allowlisted-but-absent path is a pre-approval waiting to be claimed;
+  //  an allowlisted file is excluded from onSharedPool entirely, so a future
+  //  file at that name would not even appear in the RLS migration backlog.)
   // Master Administration — platform-owner + support console. Intentionally
   // cross-tenant (estate-wide monitoring of every client), gated by
   // requirePlatformAdmin. requestDb(req) would RLS-scope it to the caller's own
@@ -89,7 +92,16 @@ const ROUTES_DIR = path.join(repoRoot, 'server', 'routes');
 const SHARED_DB_IMPORT_RE =
   /import\s*\{[^}]*\bdb\b[^}]*\}\s*from\s*['"](?:\.\.\/)+db(?:\/runtime)?['"]/;
 const GETDB_RE = /\b(?:getDb|getPool)\s*\(/;
-const REQUESTDB_RE = /\brequestDb\s*\(/;
+/**
+ * `requestPgClient` counts too. It is declared in the same module as
+ * `requestDb`, returns the same request-pinned `req.dbClient`, and throws the
+ * same `MissingRequestDbContextError` when no tenant context exists — it is the
+ * raw-SQL form, for tables that have no Drizzle definition to build a query
+ * against. Recognising only `requestDb(` reported a route that had correctly
+ * migrated as still being on the shared pool, which pushes authors back toward
+ * the thing this gate exists to discourage.
+ */
+const REQUESTDB_RE = /\b(?:requestDb|requestPgClient)\s*\(/;
 
 function walk(dir) {
   const out = [];

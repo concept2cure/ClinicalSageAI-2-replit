@@ -21,6 +21,10 @@ import {
   getLifecycleSpineStatus,
   getCatalogOnlyGaps,
 } from '../server/services/regulatory/registry/registryCoverage.js';
+import {
+  buildSubmittabilityReport,
+  getUnsubmittableFilings,
+} from '../server/services/regulatory/registry/submittabilityCoverage.js';
 
 const asJson = process.argv.includes('--json');
 const gapsOnly = process.argv.includes('--gaps');
@@ -28,9 +32,19 @@ const gapsOnly = process.argv.includes('--gaps');
 const report = buildCoverageReport();
 const spine = getLifecycleSpineStatus();
 const gaps = getCatalogOnlyGaps();
+// The back half. `report` above answers "can this be AUTHORED"; this answers
+// "can it be SUBMITTED" — the other end of project initiation → submission.
+const submittability = buildSubmittabilityReport();
+const unsubmittable = getUnsubmittableFilings();
 
 if (asJson) {
-  process.stdout.write(JSON.stringify({ summary: report.summary, byRegion: report.byRegion, spine, gaps }, null, 2) + '\n');
+  process.stdout.write(
+    JSON.stringify(
+      { summary: report.summary, byRegion: report.byRegion, spine, gaps, submittability, unsubmittable },
+      null,
+      2
+    ) + '\n'
+  );
   process.exit(0);
 }
 
@@ -85,3 +99,30 @@ line();
 line('These types are selectable in the catalog but resolve to a generic CTD');
 line('outline. They are the prioritised backlog for dedicated section/task');
 line('blueprints. Run with --json for machine-readable output.');
+
+// ── Submittability: the back half of the workflow ────────────────────────────
+line();
+line('══════════════════════════════════════════════════════════════════');
+line('  SUBMITTABILITY — can an authored filing actually reach an agency?');
+line('══════════════════════════════════════════════════════════════════');
+line(
+  `  submittable ${submittability.byTier.submittable}   ` +
+    `components (not filed on their own) ${submittability.byTier.not_a_filing}   ` +
+    `no-identity ${submittability.byTier.no_identity}   ` +
+    `no-gateway ${submittability.byTier.no_gateway}`
+);
+line();
+for (const r of submittability.byRegion.filter((r) => r.filings > 0)) {
+  line(
+    `  ${String(r.region).padEnd(8)} ${String(r.submittable).padStart(3)}/${String(r.filings).padEnd(3)} filings via ` +
+      `${String(r.gatewaySlug ?? '-')}:${String(r.defaultGateway ?? '-')}`
+  );
+}
+if (unsubmittable.length) {
+  line();
+  line(`  ⚠ ${unsubmittable.length} filing type(s) selectable at initiation but NOT submittable:`);
+  for (const u of unsubmittable) line(`      ${u.id} (${u.region}) — ${u.tier}`);
+} else {
+  line();
+  line('  ✅ Every startable filing type is finishable.');
+}

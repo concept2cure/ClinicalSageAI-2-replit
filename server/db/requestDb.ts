@@ -62,6 +62,26 @@ export class MissingRequestDbContextError extends Error {
   }
 }
 
+/**
+ * Minimal pg-style query surface of the request-scoped client. For tables that
+ * have NO Drizzle definition in shared/schema (e.g. literature_entries, which
+ * exists only as a SQL migration), `requestDb`'s query builder is unusable —
+ * raw SQL on the SAME request-scoped connection is the faithful equivalent.
+ * Same fail-closed contract as `requestDb`: absent context throws the typed
+ * error, never falls back to the shared pool.
+ */
+export interface RequestSqlClient {
+  query(text: string, params?: unknown[]): Promise<{ rows: Array<Record<string, unknown>> }>;
+}
+
+export function requestPgClient(req: Request): RequestSqlClient {
+  const client = (req as Request & { dbClient?: { query?: unknown } }).dbClient;
+  if (!client || typeof client.query !== 'function') {
+    throw new MissingRequestDbContextError();
+  }
+  return client as unknown as RequestSqlClient;
+}
+
 export function requestDb(req: Request): RequestDb {
   // A bad merge left two copies of this function body here, so `client` was
   // declared twice (TS2451) and the file did not compile. The canonical shape is

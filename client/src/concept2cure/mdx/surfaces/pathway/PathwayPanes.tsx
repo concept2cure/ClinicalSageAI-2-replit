@@ -5,16 +5,22 @@
  *
  * Tabs: Workspace · Audit trail · Correspondence · Approvals · Files.
  * The host surface passes its existing content as `workspace`; the other tabs
- * render from PATHWAY_TABS_DATA + the in-memory dossier store. The drawer is a
- * preview surface — "Open in editor" hands off to the existing route.
+ * render live backend data through DataGate (honest loading / error / empty
+ * states), with the kit fixtures reachable only in explicit sample mode. The
+ * drawer is a preview surface — "Open in editor" hands off to the existing
+ * route.
  */
 
 import * as React from 'react';
 import { I } from '../../icons';
 import { AUDIT_KIND_META, PATHWAY_TABS_DATA } from '../../data/pathwayTabs';
+import { useVaultUpload } from '../../../v2/useVaultUpload';
+import { EmptyState, ErrorState } from '../../../v2/dataConnect';
 import { DossierStore, useSection } from '../../store/dossierStore';
+import { DataGate } from '../../components/DataGate';
 import { FilesTreePane } from './FilesTreePane';
 import { AnaDrafter } from '../../components/AnaDrafter';
+import { CORRESP_DETAIL } from '../../data/correspondenceDetail';
 import { usePathwayTabsData } from '../../hooks/usePathwayTabsData';
 import { useDossierHydration } from '../../hooks/useDossier';
 import { useSectionSave, type SaveState } from '../../hooks/useSectionSave';
@@ -27,10 +33,15 @@ import type {
   PathwayKey,
   SectionTarget,
 } from '../../types';
+import type { EditorSectionRef } from '../../../v2/editorTarget';
+import { RichSectionEditor } from '../../../v2/editor/RichSectionEditor';
 
 type PaneTab = 'workspace' | 'audit' | 'correspondence' | 'approvals' | 'files';
 type OpenSection = (t: SectionTarget) => void;
-type OpenEditor = (id: string | number) => void;
+/** Hand off to the one document editor. A section ref deep-links the editor to
+ *  that section (via the host's window.C2C_EDITOR_TARGET channel); calling with
+ *  nothing is plain navigation. */
+type OpenEditor = (section?: EditorSectionRef) => void;
 
 interface PaneCounts {
   audit: number;
@@ -129,6 +140,11 @@ function AuditTrailPane({ events, onOpenSection }: { pathway: PathwayKey; events
 
   const selected = events.find((e) => e.id === selectedId) || filtered[0];
 
+  /* Fixtures carry a synthesized chain and no `chain` field, so they count as
+     chained — they are only ever reachable through the explicit sample-mode
+     boundary, where the surface is already labelled as sample content. */
+  const unchainedCount = events.filter((e) => e.chain === 'unchained').length;
+
   const groups = React.useMemo(() => {
     const out: Array<{ day: string; items: AuditEvent[] }> = [];
     let curDay: string | null = null;
@@ -150,9 +166,27 @@ function AuditTrailPane({ events, onOpenSection }: { pathway: PathwayKey; events
     <div className="audit-pane">
       <div className="audit-bar">
         <div className="audit-bar-l">
-          <span className="audit-integrity" title="Each row is hash-chained to its predecessor (SHA-256). Tampering with any prior event invalidates the chain.">
-            {I.shieldCheck} Tamper-evident · SHA-256 · {events.length} events
-          </span>
+          {/* The badge states what the rows in this window actually carry.
+              It used to assert "Tamper-evident · SHA-256" unconditionally,
+              over rows whose real chain column the route never read — so it
+              said the same thing whether every row was sealed or none was.
+              A row is only tamper-evident if it carries a chain link. */}
+          {unchainedCount > 0 ? (
+            <span
+              className="audit-integrity warn"
+              title={`${unchainedCount} of ${events.length} events reached the audit table outside the hash chain and cannot be shown to be untampered. The remainder are chained.`}
+            >
+              {I.shieldCheck} {events.length - unchainedCount} of {events.length} chained ·{' '}
+              {unchainedCount} unchained
+            </span>
+          ) : (
+            <span
+              className="audit-integrity"
+              title="Each row carries a SHA-256 chain link committing it to the prior event. Tampering with any prior event invalidates the chain."
+            >
+              {I.shieldCheck} Tamper-evident · SHA-256 · {events.length} events
+            </span>
+          )}
         </div>
         <div className="audit-bar-r">
           <div className="audit-filters">
@@ -226,14 +260,40 @@ function AuditDetail({ e, onOpenSection }: { e: AuditEvent; onOpenSection: OpenS
 
       <div className="audit-det-chain">
         <div className="audit-chain-label">{I.link} Hash chain</div>
-        <div className="audit-chain-row">
-          <span className="audit-chain-k">prev</span>
-          <span className="mono audit-chain-v">{e.prev}</span>
-        </div>
-        <div className="audit-chain-row">
-          <span className="audit-chain-k">this</span>
-          <span className="mono audit-chain-v">{e.hash}</span>
-        </div>
+        {e.chain === 'unchained' ? (
+          /* Not a rendering edge case — a compliance fact. This row reached the
+             audit table without a chain link, so nothing here can attest to it.
+             Showing empty hash fields under a "Hash chain" heading read as a
+             display bug; it is not one. */
+          <div className="audit-chain-row">
+            <span className="audit-chain-v">
+              Written outside the hash chain — this event is not tamper-evident.
+            </span>
+          </div>
+        ) : (
+          <>
+            <div className="audit-chain-row">
+              <span className="audit-chain-k">prev</span>
+              {/* The audit_logs chain is global across tenants, so this row's
+                  predecessor commonly belongs to another organization and is
+                  not ours to display. That is why the field is empty — the
+                  linkage exists, it is just not tenant-visible. */}
+              <span className="mono audit-chain-v">
+                {e.prev || (e.prevAvailable === false ? 'not tenant-visible' : '—')}
+              </span>
+            </div>
+            <div className="audit-chain-row">
+              <span className="audit-chain-k">this</span>
+              <span className="mono audit-chain-v">{e.hash || '—'}</span>
+            </div>
+            {e.chain === 'sealed' && (
+              <div className="audit-chain-row">
+                <span className="audit-chain-k">seal</span>
+                <span className="audit-chain-v">HMAC sealed · 21 CFR 11.70</span>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {e.target_id && (
@@ -254,7 +314,9 @@ function CorrespondencePane({ pathway, items, onOpenSection, onAskAna, onDraftRe
   items: Correspondence[];
   onOpenSection: OpenSection;
   onAskAna: (text: string) => void;
-  onDraftResponse?: (c: Correspondence) => void;
+  /** Returns true when the drafter took ownership of this letter. False means
+      the caller must fall back to asking AnA — never a silent no-op. */
+  onDraftResponse?: (c: Correspondence) => boolean;
 }) {
   const [statusFilter, setStatusFilter] = React.useState('all');
   const [selectedId, setSelectedId] = React.useState<string | undefined>(items[0]?.id);
@@ -344,7 +406,9 @@ function CorrDetail({ c, onOpenSection, onAskAna, onDraftResponse }: {
   c: Correspondence;
   onOpenSection: OpenSection;
   onAskAna: (text: string) => void;
-  onDraftResponse?: (c: Correspondence) => void;
+  /** Returns true when the drafter took ownership of this letter. False means
+      the caller must fall back to asking AnA — never a silent no-op. */
+  onDraftResponse?: (c: Correspondence) => boolean;
 }) {
   const days = daysUntil(c.due);
   const overdue = days !== null && days < 0;
@@ -401,7 +465,13 @@ function CorrDetail({ c, onOpenSection, onAskAna, onDraftResponse }: {
       )}
 
       <div className="audit-det-actions">
-        <button className="audit-act primary" onClick={() => (onDraftResponse ? onDraftResponse(c) : onAskAna(`Draft response to ${c.kind}: ${c.subject}`))}>
+        <button
+          className="audit-act primary"
+          onClick={() => {
+            if (onDraftResponse?.(c)) return;
+            onAskAna(`Draft response to ${c.kind}: ${c.subject}`);
+          }}
+        >
           {I.sparkles} Draft response with AnA
         </button>
         <button className="audit-act">{I.userPlus} Assign</button>
@@ -612,10 +682,23 @@ function ApprovalCard({ a, mine, onOpenSection }: { a: Approval; mine: boolean; 
               Cancel
             </button>
           </div>
+          {/* The signer must see WHICH refusal this was — a wrong password, no
+              signing authority and an MFA challenge are materially different
+              problems, and collapsing them to "signing failed" leaves the
+              signer with no idea what to do. So the server's own reason is
+              still shown verbatim; that part was right.
+              What was missing is the filter. This interpolated `esig.error`
+              straight into the alert, so the one string in the product that is
+              DELIBERATELY passed through was also the one with no gate on it.
+              <ErrorState> shows the sentence and redacts anything that turns
+              out to be a relation name, a route or a stack frame. */}
           {esig.error && (
-            <div className="ap-sign-error" role="alert">
-              {I.alertCircle} {esig.error}
-            </div>
+            <ErrorState
+              variant="inline"
+              title="Signature not accepted"
+              message={esig.error}
+              testId="esign-rejected"
+            />
           )}
           <div className="ap-sign-foot">
             21 CFR §11.100(b) · By signing you certify the listed meaning. Your
@@ -642,14 +725,22 @@ export interface DossierDrawerProps {
    * editor says so rather than claiming a save.
    */
   documentId?: string | null;
+  /**
+   * The regulatory program this dossier belongs to. Required for attachments:
+   * every vault document is filed against a program, so without it the
+   * Attachments tab can accept a file but has nowhere to put it.
+   */
+  programId?: string | null;
   onClose: () => void;
   onOpenEditor?: OpenEditor;
 }
 
-export function DossierDrawer({ open, target, pathway, documentId = null, onClose, onOpenEditor }: DossierDrawerProps) {
+export function DossierDrawer({ open, target, pathway, documentId = null, programId = null, onClose, onOpenEditor }: DossierDrawerProps) {
   const safeTarget: SectionTarget = target || { id: '', label: '' };
   const [tab, setTab] = React.useState<'document' | 'attachments' | 'activity'>('document');
   const sectionSave = useSectionSave(documentId);
+  /* Attachments are real uploads now — see onAttach below. */
+  const attachUpload = useVaultUpload(programId);
 
   const { body, meta, attachments, folder } = useSection(pathway, safeTarget.id, safeTarget.label);
 
@@ -672,13 +763,36 @@ export function DossierDrawer({ open, target, pathway, documentId = null, onClos
     void sectionSave.save(String(safeTarget.id), next);
   };
 
-  const onAttach = (files: FileList) => {
+  /* THE ATTACHMENT PATH, and what it used to be.
+   *
+   * This read `f.name` and `f.size` off each File and passed them to
+   * `DossierStore.attachFile`, which wrote them into an in-memory Map. The
+   * BYTES WERE NEVER TOUCHED. A reviewer attaching the interference study a
+   * notified body had asked for saw it listed with their name and a timestamp,
+   * and nothing had left the browser — gone on reload, absent from the
+   * submission, and no way to tell from the screen.
+   *
+   * `attachFile` then pushed a `kind: 'attach'` event into the same array the
+   * Part 11 activity feed renders, so the dossier also showed an audit entry
+   * for the transfer that did not happen, attributed to a hardcoded
+   * 'Reg Lead'. That push is gone (see ../../store/dossierStore.ts); the real
+   * entry comes from the server, which writes it in the same transaction as
+   * the document.
+   *
+   * The file now goes to POST /api/vault/ingest, which hashes it, stores it and
+   * records who filed it. The local list is updated only for files the server
+   * actually accepted. */
+  const onAttach = async (files: FileList) => {
     if (!files || !files.length) return;
-    Array.from(files).forEach((f) => {
-      DossierStore.attachFile(pathway, safeTarget.id, safeTarget.label, {
-        name: f.name, size: f.size, kind: DossierStore.guessKind(f.name),
-      }, { who: 'You', role: 'Reg Lead' });
-    });
+    const outcome = await attachUpload.upload(files);
+    const accepted = new Set(outcome.succeeded);
+    Array.from(files)
+      .filter((f) => accepted.has(f.name))
+      .forEach((f) => {
+        DossierStore.attachFile(pathway, safeTarget.id, safeTarget.label, {
+          name: f.name, size: f.size, kind: DossierStore.guessKind(f.name),
+        }, { who: 'You', role: 'Reg Lead' });
+      });
   };
 
   const labelByPathway = pathway === 'k510' ? '510(k) dossier' : pathway === 'pma' ? 'PMA dossier' : pathway === 'ivd' ? 'IVD dossier' : 'CER dossier';
@@ -719,7 +833,9 @@ export function DossierDrawer({ open, target, pathway, documentId = null, onClos
         </div>
 
         <div className="dd-body">
-          {tab === 'document' && <DDDocumentTab body={body} onCommit={onCommitBody} saveState={sectionSave.state} />}
+          {/* Keyed per section: the editor owns its buffer, so a section
+              switch must remount it on the new body rather than syncing. */}
+          {tab === 'document' && <DDDocumentTab key={String(safeTarget.id)} body={body} onCommit={onCommitBody} saveState={sectionSave.state} />}
           {tab === 'attachments' && <DDAttachmentsTab attachments={attachments} onAttach={onAttach} />}
           {tab === 'activity' && <DDActivityTab events={activity} />}
         </div>
@@ -734,7 +850,13 @@ export function DossierDrawer({ open, target, pathway, documentId = null, onClos
             <span>·</span>
             <span>v{version}</span>
           </span>
-          <button className="dd-foot-edit" onClick={() => { onOpenEditor?.(safeTarget.id); onClose(); }}>
+          <button
+            className="dd-foot-edit"
+            onClick={() => {
+              onOpenEditor?.({ code: safeTarget.id, label: safeTarget.label });
+              onClose();
+            }}
+          >
             {I.edit} Open in editor
           </button>
         </div>
@@ -800,47 +922,35 @@ function DDSaveStatus({ dirty, state }: { dirty: boolean; state: SaveState }) {
   }
 }
 
+/**
+ * The drawer's document tab — the ONE canonical editor, in plain-text mode.
+ *
+ * This replaced the last hand-rolled `contentEditable` in the client (the
+ * other two canvases — the Document Authoring textarea and the execCommand
+ * DocCanvas — were replaced in the same change; CLAUDE.md zero-duplication).
+ * The backing store is the c2c dossier section (`content: { text }` via
+ * useSectionSave), a PLAIN TEXT column, so the editor serializes text rather
+ * than HTML; the 600ms-debounced commit contract is unchanged, and
+ * DDSaveStatus keeps reporting the SERVER's outcome, not the keystroke.
+ */
 function DDDocumentTab({ body, onCommit, saveState }: { body: string; onCommit: (next: string) => void; saveState: SaveState }) {
-  const ref = React.useRef<HTMLDivElement>(null);
-  const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const [dirty, setDirty] = React.useState(false);
-
-  React.useEffect(() => {
-    if (ref.current && ref.current.innerText !== body) {
-      ref.current.innerText = body;
-      setDirty(false);
-    }
-  }, [body]);
-
-  const onInput = (e: React.FormEvent<HTMLDivElement>) => {
-    setDirty(true);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    const next = e.currentTarget.innerText;
-    debounceRef.current = setTimeout(() => {
-      onCommit(next);
-      setDirty(false);
-    }, 600);
-  };
-
-  const onBlur = (e: React.FocusEvent<HTMLDivElement>) => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    const next = e.currentTarget.innerText;
-    if (next !== body) { onCommit(next); setDirty(false); }
-  };
-
   return (
     <div className="dd-doc-wrap">
       <div className="dd-doc-status">
         <DDSaveStatus dirty={dirty} state={saveState} />
       </div>
-      <div
-        ref={ref}
-        className="dd-doc-edit"
-        contentEditable
-        suppressContentEditableWarning
-        onInput={onInput}
-        onBlur={onBlur}
-        spellCheck
+      <RichSectionEditor
+        value={body}
+        format="text"
+        chrome="bare"
+        autosaveMs={600}
+        onSave={(text) => {
+          onCommit(text);
+        }}
+        onDirtyChange={setDirty}
+        ariaLabel="Section body"
+        placeholder="Write the section body…"
       />
     </div>
   );
@@ -961,8 +1071,17 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
   const [tab, setTab] = React.useState<PaneTab>('workspace');
   const [drawerTarget, setDrawerTarget] = React.useState<SectionTarget | null>(null);
   const [drafterCorr, setDrafterCorr] = React.useState<Correspondence | null>(null);
-  // Live backend data (audit / correspondence / approvals) with kit-fixture fallback.
+  // Live backend data (audit / correspondence / approvals); fixtures only in
+  // explicit sample mode, honest empty states otherwise.
   const data = usePathwayTabsData(pathway, programId);
+  /* Sample content handed to DataGate's `sample` prop — rendered solely when
+     the user has switched sample mode on, and always under the standing banner.
+     CORRESPONDENCE ONLY. The audit and approvals bundles were a synthesized
+     Part 11 hash-chain and a set of fabricated signed approvals; they are
+     deleted, and `PathwayTabsBundle` no longer declares the fields, so a
+     `sample={fixtures.audit}` here is now a compile error rather than a
+     judgement call. Those two panes render live rows or an honest empty. */
+  const fixtures = PATHWAY_TABS_DATA[pathway];
   // Async-seed the dossier store (Files tree + drawer) from the real backend.
   const dossier = useDossierHydration(pathway, programId);
 
@@ -993,21 +1112,110 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
       <PathwayTabBar tab={tab} setTab={setTab} pathway={pathway} counts={counts} />
       <div className="pwt-pane">
         {tab === 'workspace' && workspace}
-        {tab === 'audit' && <AuditTrailPane pathway={pathway} events={data.audit} onOpenSection={openSection} />}
-        {tab === 'correspondence' && (
-          <CorrespondencePane pathway={pathway} items={data.correspondence} onOpenSection={openSection} onAskAna={onAskAna} onDraftResponse={(c) => setDrafterCorr(c)} />
+        {tab === 'audit' && (
+          <DataGate
+            state={data.states.audit}
+            label="audit events"
+            onRetry={data.refresh.audit}
+            emptyHint="Part 11 events are recorded here as sections are edited, reviewed, and signed."
+            regulation="Serves the 21 CFR Part 11 audit trail"
+          >
+            {(events) => <AuditTrailPane pathway={pathway} events={events} onOpenSection={openSection} />}
+          </DataGate>
         )}
-        {tab === 'approvals' && <ApprovalsPane approvals={data.approvals} onOpenSection={openSection} />}
+        {tab === 'correspondence' && (
+          <DataGate
+            state={data.states.correspondence}
+            label="correspondence"
+            onRetry={data.refresh.correspondence}
+            sample={fixtures.correspondence}
+            emptyHint="Agency and notified-body letters appear here once received for this program."
+          >
+            {(items) => {
+              /* Only hand a letter to AnaDrafter when a structured decomposition
+                 of it actually exists. Passing this unconditionally shadowed
+                 CorrDetail's real-AnA fallback, so on live correspondence the
+                 primary action opened a workspace that could only say "No
+                 structured letter on file" — a dead button on the one screen
+                 where a response to an agency is written. Live letters now
+                 reach AnA. */
+              return (
+              <CorrespondencePane
+                pathway={pathway}
+                items={items}
+                onOpenSection={openSection}
+                onAskAna={onAskAna}
+                onDraftResponse={c => {
+                  if (!CORRESP_DETAIL[c.id]) return false;
+                  setDrafterCorr(c);
+                  return true;
+                }}
+              />
+              );
+            }}
+          </DataGate>
+        )}
+        {tab === 'approvals' && (
+          <DataGate
+            state={data.states.approvals}
+            label="approvals"
+            onRetry={data.refresh.approvals}
+            emptyHint="Approval requests appear here when a section or submission is routed for e-signature."
+            regulation="Serves the 21 CFR 11.50 signature manifestation record"
+          >
+            {(approvals) => <ApprovalsPane approvals={approvals} onOpenSection={openSection} />}
+          </DataGate>
+        )}
         {tab === 'files' && (
           <>
-            {dossier.status === 'loading' && <div role="status">Loading dossier files…</div>}
-            {dossier.status === 'unavailable' && <div role="alert">Dossier files are unavailable. Sample evidence has not been substituted.</div>}
-            {dossier.status === 'permission-denied' && <div role="alert">You do not have permission to view this program's dossier files.</div>}
-            {dossier.status === 'empty' && <div role="status">No dossier sections have been created for this program.</div>}
+            {/* Four bare divs, in the same switch as the three DataGates above.
+                They predate the shared primitives and never got converged, so
+                the Files tab announced its states differently from every other
+                pane beside it and — the part that matters — offered no way out
+                of either failure. `unavailable` is the transient one: a fetch
+                that failed is exactly the case a retry exists for, and there
+                was no control because the hook exposed nothing to call. */}
+            {dossier.status === 'loading' && (
+              <EmptyState busy icon={I.database} title="Loading dossier files" testId="dossier-loading" />
+            )}
+            {dossier.status === 'unavailable' && (
+              <ErrorState
+                variant="panel"
+                title="Couldn't load the dossier files"
+                /* Kept verbatim: it is the honest half of the old copy, and on
+                   a governed surface "we did not quietly show you something
+                   else instead" is worth saying. */
+                message="Sample evidence has not been substituted."
+                retry={dossier.refresh}
+                testId="dossier-unavailable"
+              />
+            )}
+            {dossier.status === 'permission-denied' && (
+              /* No retry, deliberately. Re-running the same request under the
+                  same identity cannot grant access, and a control that cannot
+                  work is worse than none — it invites the user to keep pressing
+                  it. The copy names who can fix it instead. */
+              <ErrorState
+                variant="panel"
+                title="You don't have access to this program's dossier files"
+                message="Ask a program administrator to grant you access."
+                testId="dossier-forbidden"
+              />
+            )}
+            {dossier.status === 'empty' && (
+              <EmptyState
+                icon={I.folder}
+                title="No dossier sections yet"
+                hint="Sections appear here once the submission outline is scaffolded for this program."
+                action={{ label: 'Check again', onAct: dossier.refresh }}
+                testId="dossier-empty"
+              />
+            )}
             {(dossier.status === 'live-data' || dossier.status === 'sample') && (
               <FilesTreePane
                 key={`ftp-${pathway}-${dossier.version}`}
                 pathway={pathway}
+                tabs={data}
                 onOpenSection={openSection}
               />
             )}
@@ -1019,6 +1227,7 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
         target={drawerTarget}
         pathway={pathway}
         documentId={dossier.documentId}
+        programId={programId}
         onClose={() => setDrawerTarget(null)}
         onOpenEditor={onOpenEditor}
       />

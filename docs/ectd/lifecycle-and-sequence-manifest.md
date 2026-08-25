@@ -26,7 +26,7 @@ manifest on the compilation row and read back verbatim later.
 compile a sequence ─┐
                     ├─► buildLeafManifest(...)  →  ectd_compilations.leaf_manifest (jsonb, immutable)
                     │        server/services/ectd/sequence-manifest.ts
-                    │        written by server/services/ectdExportService.ts
+                    │        (written by the compiling caller at compile time)
                     ▼
 plan the NEXT sequence
    loadPriorSequenceManifest(pool, {org, app, priorSeq})   ← tenant-scoped read
@@ -100,19 +100,15 @@ Manifest entry shape: `{ ctdSection, fileName, href, md5, operation?, title? }`.
    vendored (`assets/ectd-dtd/`). The **delete-leaf** attribute convention above
    is a best reading of the spec and should get a real-validator pass before a
    production lifecycle submission.
-2. **Path-1 (`ectdExportService`) delta mode is opt-in.** By default it marks
-   every leaf `new` and ships the full current dossier (a snapshot). Pass
-   `generateEctdPackage(..., { lifecycleAgainstPrior: true })` and — when a prior
-   sequence exists for the org+application — it produces a true sequence delta:
-   changed leaves become replace/append with a modified-file pointer, unchanged
-   leaves are omitted (and their bytes dropped from the ZIP + checksum manifest),
-   and dropped leaves become backbone-only delete leaves. The diff runs on the
-   shared operator against the immutable prior `leaf_manifest`
-   (`server/services/ectd/export-lifecycle.ts`). Default is off so existing
-   snapshot exports are unchanged; enabling it changes submission output, so
-   validate against a real eCTD validator before turning it on for a filing.
-   (Path-2 `packageEctdSubmission` renders caller-supplied operations directly
-   and is also lifecycle-complete.)
+2. **The legacy path-1 exporter (`ectdExportService`) and its whole-dossier
+   delta mode (`export-lifecycle.ts`) were RETIRED in the slice-5b
+   consolidation.** The canonical core carries lifecycle per leaf instead:
+   `submission_leaves.lifecycle_op` (+ `modified-file` derivation) flows through
+   `core-to-packager` into `packageEctdSubmission`, which renders
+   caller-supplied operations directly and is lifecycle-complete. Cross-sequence
+   diffs against a stored prior manifest run through the shared operator
+   (`lifecycle-operator.ts`) — e.g. the `compute_lifecycle_operations` agent
+   tool — and remain validated by the qualification harness's lifecycle step.
 3. **The submission-package-orchestrator now validates a REAL package.**
    `package.assemble` renders each Module 3 ComposedSection to a leaf PDF and runs
    the canonical packager (`server/services/ectd/orchestrator-real-package.ts`,
@@ -123,4 +119,5 @@ Manifest entry shape: `{ ctdSection, fileName, href, md5, operation?, title? }`.
    still gated on the deliverable path. Regions the packager cannot build a
    backbone for (Move-7 widened regions) fall back to a derived manifest. The
    orchestrator validates the *current composition* (all `new`); cross-sequence
-   lifecycle operators come from the export delta path (item 2), not here.
+   lifecycle operators come from the canonical per-leaf lifecycle path (item 2),
+   not here.

@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
-import { EmptyState, useLiveData, liveMutateOrNull, connected } from '../dataConnect';
+import { EmptyState, useLiveData, liveMutateOrNull, type DataResult } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import { takeUnlockIntent, type UnlockIntent } from '../unlockIntent';
 import type { SurfaceViewProps } from '../surfaceViews';
 // Canonical price list, NOT fabricated per-tenant data: LIC_DTC / LIC_PRICING /
 // LIC_ARCHETYPES / licBundle are the product's fixed pricing catalog — the same
@@ -19,27 +21,9 @@ import {
   type BillingStatus,
 } from '../fixtures/licensing';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* -- Inline helpers -- */
-
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => {
-    setMsg(m);
-    setTimeout(() => setMsg(''), 2400);
-  };
-  return [msg, fire];
-}
-
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
-    </div>
-  );
-}
 
 function money(n: number | null): string {
   return n == null ? 'Custom' : '$' + n.toLocaleString();
@@ -52,10 +36,9 @@ function lim(n: number): string | number {
 /* -- Billing API helper (mirrors kit runtime setup) -- */
 
 interface BillingApi {
-  checkout(body: Record<string, unknown>): Promise<{ checkoutUrl?: string } | null>;
-  dtcCheckout(body: Record<string, unknown>): Promise<{ checkoutUrl?: string } | null>;
-  portal(returnUrl: string): Promise<{ portalUrl?: string } | null>;
-  connected(): boolean;
+  checkout(body: Record<string, unknown>): Promise<DataResult<{ checkoutUrl?: string }>>;
+  dtcCheckout(body: Record<string, unknown>): Promise<DataResult<{ checkoutUrl?: string }>>;
+  portal(returnUrl: string): Promise<DataResult<{ portalUrl?: string }>>;
 }
 
 // Subscription STATUS is read fixture-free via useLiveData in the component.
@@ -67,21 +50,21 @@ interface BillingApi {
 // from this surface. dataConnect's header states the rule these now follow: the
 // kit global collapses onto apiRequest on port, and no second fetch convention
 // is introduced.
+//
+// The full DataResult is kept (rather than `.then(r => r.data)`) so a failure can
+// be REPORTED. It could not be before: a rejected checkout resolved to `null`,
+// which fell into the `else` arm of `if (r && r.checkoutUrl)` and fired the toast
+// "Checkout started". The user was told their checkout had begun when the server
+// had refused it.
 const billing: BillingApi = {
   checkout(body) {
-    return liveMutateOrNull<{ checkoutUrl?: string }>('POST', '/api/billing/checkout', body)
-      .then((r) => r.data);
+    return liveMutateOrNull<{ checkoutUrl?: string }>('POST', '/api/billing/checkout', body);
   },
   dtcCheckout(body) {
-    return liveMutateOrNull<{ checkoutUrl?: string }>('POST', '/api/billing/dtc-checkout', body)
-      .then((r) => r.data);
+    return liveMutateOrNull<{ checkoutUrl?: string }>('POST', '/api/billing/dtc-checkout', body);
   },
   portal(returnUrl) {
-    return liveMutateOrNull<{ portalUrl?: string }>('POST', '/api/billing/portal', { returnUrl })
-      .then((r) => r.data);
-  },
-  connected() {
-    return connected();
+    return liveMutateOrNull<{ portalUrl?: string }>('POST', '/api/billing/portal', { returnUrl });
   },
 };
 
@@ -93,12 +76,19 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
   const [arch, setArch] = useState('virtual_biotech');
   const [seats, setSeats] = useState(5);
   const [toast, fireToast] = useToast();
-  const live = billing.connected();
 
   // Per-org subscription STATUS is real persisted data: GET /api/billing/status
   // reads the organizations row (server getSubscriptionStatus) and reconciles
   // live Stripe state. Real object -> honest error -> no fixture. useLiveData
   // unwraps the success envelope; this route returns the status object directly.
+  /* What the customer was trying to open, when they arrived from a lock.
+     Read ONCE on mount and cleared in the same step — the intent is a fact
+     about one navigation, and a customer who comes back here later from the
+     account menu must not be told they were unlocking something they stopped
+     thinking about. Null on every other route into this page, which is the
+     common case. */
+  const [unlock] = useState<UnlockIntent | null>(() => takeUnlockIntent());
+
   const statusState = useLiveData<BillingStatus>('/api/billing/status');
   const status = statusState.data;
 
@@ -118,48 +108,108 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
       model === 'dtc'
         ? { tier, billingCycle: cycle }
         : { tier, billingCycle: cycle, seats };
-    if (live) {
-      (model === 'dtc' ? billing.dtcCheckout(body) : billing.checkout(body))
-        .then((r: any) => {
-          if (r && r.checkoutUrl) window.open(r.checkoutUrl, '_blank');
-          else fireToast('Checkout started');
-        })
-        .catch(() => fireToast('Checkout failed'));
-    } else {
-      fireToast(
-        'Sample · would POST /' +
-          (model === 'dtc' ? 'dtc-checkout' : 'checkout') +
-          ' · ' +
-          tier +
-          ' · ' +
-          cycle +
-          (model === 'b2b' ? ' · ' + seats + ' seats' : ''),
-      );
-    }
+    /* Always the real endpoint, and only ever the real outcome.
+       This used to be gated on `connected()` (a session token in local storage),
+       and when that read false it fired "Sample · would POST /dtc-checkout · …"
+       and did nothing. That is a mock action on a runtime path: the button
+       narrated a request it never made, in a tone that reads like a dry run
+       rather than a failure, so a real customer whose token lived somewhere this
+       check could not see simply could not buy anything and was never told.
+       The request now goes out; if it is refused, the refusal is what is shown. */
+    (model === 'dtc' ? billing.dtcCheckout(body) : billing.checkout(body)).then((r) => {
+      if (r.data?.checkoutUrl) {
+        window.open(r.data.checkoutUrl, '_blank');
+        return;
+      }
+      // No URL back means no checkout was created — never report one that was not.
+      fireToast(r.error ? 'Checkout failed · ' + r.error : 'Checkout did not return a payment link', 'error');
+    });
   };
 
   const managePortal = () => {
-    if (live) {
-      billing
-        .portal(window.location.href)
-        .then((r: any) => {
-          if (r && r.portalUrl) window.open(r.portalUrl, '_blank');
-        })
-        .catch(() => fireToast('Portal unavailable'));
-    } else {
-      fireToast('Sample · would POST /portal (Stripe customer portal)');
-    }
+    billing.portal(window.location.href).then((r) => {
+      if (r.data?.portalUrl) {
+        window.open(r.data.portalUrl, '_blank');
+        return;
+      }
+      fireToast(r.error ? 'Billing portal unavailable · ' + r.error : 'Billing portal unavailable', 'error');
+    });
   };
+
+  /* WHAT ANA SEES HERE. On a failed status read `curTier` silently falls back
+     to 'free' and the free card wears the Current tag — the error branch
+     exists so that fallback is never reported as the organization's plan.
+     Payment status is the raw value, never dunning language; choosing a plan
+     and the seats input are checkout acts and are never offered. */
+  const anaContext = useMemo(() => {
+    const lockLead = unlock
+      ? `The user arrived here from a lock on "${unlock.label}", which ${
+          unlock.requiredTier
+            ? `needs the ${unlock.requiredTier} plan or above`
+            : 'has no plan remedy — changing plan may not resolve it on its own'
+        }. `
+      : '';
+    const view = `Viewing the ${model === 'dtc' ? 'self-service' : 'enterprise per-user'} catalog on the ${cycle} cycle.`;
+    const shared = {
+      pricingModel: model,
+      cycle,
+      ...(model === 'b2b' ? { archetype: arch } : {}),
+      arrivedFromLock: unlock ? { label: unlock.label, requiredTier: unlock.requiredTier } : null,
+    };
+    if (statusState.loading) {
+      return { summary: lockLead + 'The current plan is still loading. ' + view, facts: shared };
+    }
+    if (statusState.error) {
+      return {
+        summary:
+          lockLead +
+          'The subscription status could not be read, so no current plan is shown — any "Current" marker on the ' +
+          'free card is the silent fallback of the failed read, NOT a finding that the organization is on the ' +
+          'free tier. ' + view,
+        facts: { ...shared, planUnavailable: true },
+      };
+    }
+    if (!status) {
+      return {
+        summary: lockLead + 'No subscription record was returned for this organization. ' + view,
+        facts: { ...shared, planUnavailable: true },
+      };
+    }
+    return {
+      summary:
+        lockLead +
+        `Plans & licensing: current plan "${status.tier}", payment status "${status.paymentStatus}", ` +
+        `${status.seats} seat(s), billed ${status.billingCycle}` +
+        (status.currentPeriodEnd
+          ? `, current period ends ${new Date(status.currentPeriodEnd).toLocaleDateString()}`
+          : '') +
+        '. ' + view,
+      facts: {
+        ...shared,
+        currentTier: status.tier,
+        paymentStatus: status.paymentStatus,
+        billingCycle: status.billingCycle,
+        seats: status.seats,
+        currentPeriodEnd: status.currentPeriodEnd ?? null,
+        planUnavailable: false,
+      },
+      availableActions: [
+        'Switch between the self-service and enterprise catalogs and the monthly/annual cycle (view state only)',
+        'Choosing a plan opens Stripe checkout; changing or cancelling runs through the billing portal — human acts',
+      ],
+    };
+  }, [unlock, model, cycle, arch, statusState.loading, statusState.error, status]);
+  usePublishSurfaceContext('licensing', anaContext);
 
   return (
     <div className="sp" style={{ maxWidth: 1120 }}>
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Admin · /api/billing {live ? '· live' : ''}</div>
+          <div className="sp-eyebrow">Admin · billing</div>
           <h1 className="sp-title">Plans &amp; licensing</h1>
           <p className="sp-state">
             Self-service monthly tiers, or enterprise per-user pricing by
-            organization archetype -- with seat bundle discounts and annual
+            organization archetype — with seat bundle discounts and annual
             savings. Billing runs on Stripe Checkout + Customer Portal.
           </p>
         </div>
@@ -169,6 +219,26 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
           </button>
         )}
       </div>
+
+      {unlock && (
+        /* Says the thing the customer came here to find out. Every value is the
+           server's own verdict, carried across the navigation — the module's
+           real name and the real minimum tier. When requiredTier is null the
+           lock has no plan remedy (an administrator disabled it, or it is
+           outside this workspace's industry mode) and this must NOT offer a plan
+           that would change nothing. */
+        <div className="lic-unlock" role="note">
+          <span className="lic-unlock-ic" aria-hidden="true">{I.lock}</span>
+          <div className="lic-unlock-mid">
+            <div className="lic-unlock-t">{unlock.label}</div>
+            <div className="lic-unlock-b">
+              {unlock.requiredTier
+                ? `Included from the ${unlock.requiredTier.charAt(0).toUpperCase()}${unlock.requiredTier.slice(1)} plan upward. Your current plan does not include it.`
+                : 'Not included in your plan. Changing plan may not resolve this on its own — check with your administrator.'}
+            </div>
+          </div>
+        </div>
+      )}
 
       {statusState.loading ? (
         <div className="scaf-note" style={{ marginBottom: 16 }}>
@@ -430,7 +500,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
         <div className="lic-usage-main">
           <b>Usage-based, capped, auditable</b>
           <span>
-            Every plan meters real usage -- session and weekly windows,
+            Every plan meters real usage — session and weekly windows,
             per-engine buckets, overage caps you set yourself, and credits with
             auto-reload. Changing a cap is a governed action: admin role,
             reason-for-change, audit entry.
@@ -447,9 +517,11 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       <div className="scaf-note" style={{ marginTop: 16 }}>
-        {I.shieldCheck} Prices, limits, credits and features are read from the
-        codebase pricing config (services/billing.ts). Checkout &amp; management
-        run through Stripe ({live ? 'live' : 'sample'}).
+        {I.shieldCheck} Prices, limits, credits and features are the product&rsquo;s fixed
+        catalog, mirrored from the same config the backend charges against
+        (services/billing.ts) — identical for every organization, not per-tenant data.
+        Your plan, seats and renewal above are read from your organization&rsquo;s billing
+        record. Checkout &amp; management run through Stripe.
       </div>
       <C2CToast msg={toast} />
     </div>

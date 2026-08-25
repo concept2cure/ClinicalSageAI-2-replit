@@ -7,8 +7,9 @@
  * - fdaIntegrationService.ts
  * - FDAComplianceTracker.ts
  * - FDAFormGenerator.ts
- * - FDA510kTemplateServiceBackend.ts
- * - 510kComplianceTracker.ts
+ *
+ * (FDA510kTemplateServiceBackend.ts and 510kComplianceTracker.ts were deleted
+ * in the Phase 1 consolidation — canonical 510(k) path is /api/510k/estar/*.)
  *
  * @version 2.0.0
  * @module server/services/fda/index

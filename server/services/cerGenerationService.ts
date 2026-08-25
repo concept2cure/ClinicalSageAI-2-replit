@@ -1,40 +1,35 @@
 /**
  * CER Generation Service
- * 
+ *
  * Clinical Evaluation Report generation with deterministic templates
  * MDR 2017/745 and IVDR 2017/746 compliant
- * 
+ *
  * Features:
  * - Deterministic template-based generation
  * - Version control and change tracking
  * - Clinical evidence integration
- * - Essential requirements mapping
- * - Post-market surveillance integration
- * - Multi-format export (PDF, DOCX, XML)
+ * - Essential requirements mapping (evidence-derived, fail-closed)
+ *
+ * Export lives elsewhere: the governed CER export surface is
+ * server/routes/cerv2-export-routes.ts + server/export/renderers.ts. The
+ * unreachable exportCer/generatePdf/generateDocx/generateXml family this file
+ * once carried was deleted in the D11c dead-path purge.
  */
 
 import { db } from '../db';
 import {
   cerReports,
   cerClinicalEvidence,
-  cerEssentialRequirements,
   cerTemplates,
   cerVersionHistory,
   deviceProfiles,
-  deviceSubmissions,
-  users,
-  organizations,
   CerReport,
-  NewCerReport,
   CerTemplate,
   CerClinicalEvidence,
-  NewCerClinicalEvidence
 } from '../../shared/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import crypto from 'crypto';
 import auditService from './auditService';
-import PDFDocument from 'pdfkit';
-import { Document, Packer, Paragraph, HeadingLevel, TextRun, AlignmentType } from 'docx';
 
 interface CerGenerationOptions {
   deviceId: number;
@@ -63,6 +58,37 @@ interface ClinicalEvidenceSource {
   quality: number;
 }
 
+/**
+ * Conformity vocabulary for essential-requirement assessments.
+ *
+ * Aligned with the honest, evidence-first stance of
+ * server/services/cer/cerConformanceValidator.ts and the free-text `status`
+ * column of shared/schema.ts cer_essential_requirements: a requirement is
+ * NEVER marked as conforming without evidence recorded for the report. The
+ * strongest evidence-derived status is "evidence linked, assessment pending" —
+ * an actual conformity verdict requires expert clinical judgement and is never
+ * auto-asserted by this service.
+ */
+export const CONFORMITY_NOT_ASSESSED = 'Not assessed — no linked evidence';
+export const CONFORMITY_EVIDENCE_LINKED =
+  'Evidence linked — conformity assessment pending expert review';
+
+/** Minimal shape of a cer_clinical_evidence row used for evidence derivation. */
+interface LinkedEvidenceLike {
+  title?: string | null;
+}
+
+/** One evidence-derived essential-requirement assessment row. */
+interface EssentialRequirementAssessment {
+  requirement: string;
+  description: string;
+  conformity: string;
+  /** What documentation WOULD demonstrate conformity (informational, not a claim). */
+  expectedEvidence: string;
+  /** Titles of evidence rows actually recorded for this report. Empty = none. */
+  linkedEvidence: string[];
+}
+
 class CerGenerationService {
   private readonly templateEngine: Map<string, Function>;
   
@@ -84,7 +110,10 @@ class CerGenerationService {
         deviceClass: data.deviceClass,
         intendedPurpose: data.intendedPurpose,
         clinicalEvaluation: `This Clinical Evaluation Report (CER) for ${data.deviceName} has been prepared in accordance with ${data.regulatoryFramework} requirements.`,
-        conclusion: `Based on the clinical data analyzed, ${data.deviceName} demonstrates an acceptable benefit-risk profile for its intended use.`,
+        // Draft-honest: a benefit-risk verdict must be derived from the
+        // documented benefit-risk analysis and linked clinical evidence — it is
+        // never asserted at generation time, when no evidence is linked yet.
+        conclusion: `Draft — the benefit-risk conclusion for ${data.deviceName} has not yet been established. It must be supported by the documented benefit-risk analysis and the clinical evidence linked to this report.`,
         date: new Date().toISOString().split('T')[0]
       }
     }));
@@ -104,15 +133,14 @@ class CerGenerationService {
       }
     }));
 
-    // Essential Requirements Template
+    // Essential Requirements Template — evidence-derived and fail-closed:
+    // when no linked evidence is supplied (the default), every requirement is
+    // reported as "Not assessed", never as conforming.
     engine.set('essential_requirements', (data: any) => ({
       title: 'Essential Requirements',
-      content: {
-        generalRequirements: this.generateGeneralRequirements(data),
-        designRequirements: this.generateDesignRequirements(data),
-        informationRequirements: this.generateInformationRequirements(data),
-        clinicalRequirements: this.generateClinicalRequirements(data)
-      }
+      content: this.buildEssentialRequirementsContent(
+        Array.isArray(data?.linkedEvidence) ? data.linkedEvidence : []
+      )
     }));
 
     // Clinical Background Template
@@ -271,6 +299,10 @@ class CerGenerationService {
       // Update CER report statistics
       await this.updateCerStatistics(cerReportId);
 
+      // Re-derive the evidence-linked sections from the rows actually recorded
+      // so the report never claims more (or less) evidence than the DB holds.
+      await this.refreshEvidenceDerivedSections(cerReportId, cer);
+
       return newEvidence;
     } catch (error) {
       console.error('Error adding clinical evidence:', error);
@@ -364,86 +396,12 @@ class CerGenerationService {
     }
   }
 
-  /**
-   * Export CER to various formats
-   */
-  async exportCer(
-    cerReportId: number,
-    format: 'PDF' | 'DOCX' | 'XML',
-    userId: number,
-    organizationId: number
-  ): Promise<{ content: string | Buffer; filename: string }> {
-    try {
-      const [cer] = await db
-        .select()
-        .from(cerReports)
-        .where(and(
-          eq(cerReports.id, cerReportId),
-          eq(cerReports.organizationId, organizationId)
-        ))
-        .limit(1);
-
-      if (!cer) {
-        throw new Error('CER report not found or access denied');
-      }
-
-      let exportContent: string | Buffer;
-      let filename: string;
-
-      switch (format) {
-        case 'PDF':
-          exportContent = await this.generatePdf(cer);
-          filename = `CER_${cer.cerNumber}_v${cer.cerVersion}.pdf`;
-          break;
-        case 'DOCX':
-          exportContent = await this.generateDocx(cer);
-          filename = `CER_${cer.cerNumber}_v${cer.cerVersion}.docx`;
-          break;
-        case 'XML':
-          exportContent = await this.generateXml(cer);
-          filename = `CER_${cer.cerNumber}_v${cer.cerVersion}.xml`;
-          break;
-        default:
-          throw new Error('Unsupported export format');
-      }
-
-      // Update export tracking
-      const exportChecksum = this.calculateChecksum(exportContent);
-      
-      await db
-        .update(cerReports)
-        .set({
-          metadata: sql`COALESCE(metadata, '{}'::jsonb) || ${sql.raw(
-            `'${JSON.stringify({
-              lastExportedAt: new Date().toISOString(),
-              exportFormat: format,
-              exportChecksum,
-            })}'::jsonb`
-          )}`,
-        })
-        .where(eq(cerReports.id, cerReportId));
-
-      // Log export
-      await auditService.logAction({
-        organizationId: cer.organizationId,
-        userId,
-        action: 'EXPORT',
-        resourceType: 'CER_REPORT',
-        resourceId: cerReportId.toString(),
-        details: {
-          format,
-          checksum: exportChecksum,
-          cerNumber: cer.cerNumber,
-          version: cer.cerVersion
-        }
-      });
-
-      return { content: exportContent, filename };
-    } catch (error) {
-      console.error('Error exporting CER:', error);
-      throw error;
-    }
-  }
+  // NOTE (D11c): the exportCer/generatePdf/generateDocx/generateXml family
+  // that lived here was unreachable — no route or service ever called
+  // exportCer, and the canonical CER export surface is
+  // server/routes/cerv2-export-routes.ts + server/export/renderers.ts
+  // (governed, human-review-gated). Deleted rather than kept as a rival
+  // export path.
 
   // Helper methods
 
@@ -530,6 +488,11 @@ class CerGenerationService {
       targetPopulation: device.targetPopulation
     });
 
+    // A newly generated CER cannot have linked clinical evidence yet: evidence
+    // rows in cer_clinical_evidence reference the report id, which does not
+    // exist until the insert in generateCER. Every evidence-derived section
+    // therefore starts in its honest empty state ("none recorded") and is
+    // refreshed from the DB as evidence is added (see addClinicalEvidence).
     structure.essentialRequirements = this.templateEngine.get('essential_requirements')!(device);
     structure.clinicalBackground = this.templateEngine.get('clinical_background')!(device);
     structure.riskBenefitAnalysis = this.templateEngine.get('risk_benefit_analysis')!(device);
@@ -537,7 +500,7 @@ class CerGenerationService {
     structure.clinicalEvidence = {
       title: 'Clinical Evidence',
       content: {
-        overview: 'Clinical evidence compiled from multiple sources',
+        overview: 'No clinical evidence has been recorded for this report. Sources appear here as evidence is added.',
         sources: []
       }
     };
@@ -545,8 +508,8 @@ class CerGenerationService {
     structure.literatureReview = {
       title: 'Literature Review',
       content: {
-        searchStrategy: 'Systematic literature search conducted',
-        databases: ['PubMed', 'EMBASE', 'Cochrane'],
+        searchStrategy: 'No literature search has been recorded for this report.',
+        databases: [],
         results: []
       }
     };
@@ -554,61 +517,126 @@ class CerGenerationService {
     structure.conclusions = {
       title: 'Conclusions',
       content: {
-        summary: `The clinical evaluation demonstrates that ${device.deviceName} meets all applicable requirements.`,
-        benefitRisk: 'The benefit-risk analysis is favorable.',
-        recommendations: 'Continue post-market surveillance as planned.'
+        summary: `Draft conclusions for ${device.deviceName}: essential-requirement conformity has not been assessed and no clinical evidence has been linked yet.`,
+        benefitRisk: 'Benefit-risk determination pending — see the Risk-Benefit Analysis section for the evidence-derived verdict.',
+        recommendations: 'Record clinical evidence, complete the literature review, and perform the conformity assessment before this CER is finalized.'
       }
     };
 
     return structure;
   }
 
-  private generateGeneralRequirements(data: any): any[] {
+  /**
+   * Build the evidence-derived essential-requirements section.
+   *
+   * Fail-closed contract:
+   * - Every requirement defaults to "Not assessed — no linked evidence".
+   * - The ONLY requirement with a real evidence linkage in the data model is
+   *   ER 14 (clinical evaluation): cer_clinical_evidence rows recorded for the
+   *   report ARE the clinical data of the evaluation. When such rows exist,
+   *   ER 14 is upgraded to "Evidence linked — conformity assessment pending
+   *   expert review" — never to an outright conformity claim.
+   * - ER 1/2/3/13 have NO evidence-linkage model in the schema (evidence rows
+   *   reference the report, not individual requirements, and design/labeling
+   *   documentation is not captured). Rather than inventing a linkage, they
+   *   always remain "Not assessed" and are surfaced in the gaps list.
+   */
+  private buildEssentialRequirementsContent(linkedEvidence: LinkedEvidenceLike[]): {
+    assessmentBasis: string;
+    generalRequirements: EssentialRequirementAssessment[];
+    designRequirements: EssentialRequirementAssessment[];
+    informationRequirements: EssentialRequirementAssessment[];
+    clinicalRequirements: EssentialRequirementAssessment[];
+    gaps: string[];
+  } {
+    const generalRequirements = this.generateGeneralRequirements();
+    const designRequirements = this.generateDesignRequirements();
+    const informationRequirements = this.generateInformationRequirements();
+    const clinicalRequirements = this.generateClinicalRequirements(linkedEvidence);
+
+    const all = [
+      ...generalRequirements,
+      ...designRequirements,
+      ...informationRequirements,
+      ...clinicalRequirements
+    ];
+    const gaps = all
+      .filter(r => r.conformity === CONFORMITY_NOT_ASSESSED)
+      .map(r => `${r.requirement} (${r.description}): no linked evidence — conformity not assessed`);
+
+    return {
+      assessmentBasis:
+        'Evidence-derived assessment: a requirement is only marked as supported when evidence ' +
+        'recorded for this report is linked to it; all other requirements remain "Not assessed". ' +
+        'No conformity is asserted without evidence.',
+      generalRequirements,
+      designRequirements,
+      informationRequirements,
+      clinicalRequirements,
+      gaps
+    };
+  }
+
+  private generateGeneralRequirements(): EssentialRequirementAssessment[] {
     return [
       {
         requirement: 'ER 1',
         description: 'Devices shall be designed and manufactured to be suitable for their intended purpose',
-        conformity: 'Conforms',
-        evidence: 'Design verification and validation documentation'
+        conformity: CONFORMITY_NOT_ASSESSED,
+        expectedEvidence: 'Design verification and validation documentation',
+        linkedEvidence: []
       },
       {
         requirement: 'ER 2',
         description: 'Devices shall be safe and effective',
-        conformity: 'Conforms',
-        evidence: 'Clinical evaluation and risk management file'
+        conformity: CONFORMITY_NOT_ASSESSED,
+        expectedEvidence: 'Clinical evaluation and risk management file',
+        linkedEvidence: []
       }
     ];
   }
 
-  private generateDesignRequirements(data: any): any[] {
+  private generateDesignRequirements(): EssentialRequirementAssessment[] {
     return [
       {
         requirement: 'ER 3',
         description: 'Chemical, physical and biological properties',
-        conformity: 'Conforms',
-        evidence: 'Material safety data and biocompatibility testing'
+        conformity: CONFORMITY_NOT_ASSESSED,
+        expectedEvidence: 'Material safety data and biocompatibility testing',
+        linkedEvidence: []
       }
     ];
   }
 
-  private generateInformationRequirements(data: any): any[] {
+  private generateInformationRequirements(): EssentialRequirementAssessment[] {
     return [
       {
         requirement: 'ER 13',
         description: 'Information supplied with the device',
-        conformity: 'Conforms',
-        evidence: 'Instructions for use and labeling'
+        conformity: CONFORMITY_NOT_ASSESSED,
+        expectedEvidence: 'Instructions for use and labeling',
+        linkedEvidence: []
       }
     ];
   }
 
-  private generateClinicalRequirements(data: any): any[] {
+  private generateClinicalRequirements(
+    linkedEvidence: LinkedEvidenceLike[]
+  ): EssentialRequirementAssessment[] {
+    // Only rows with a real title count as evidence — blank/placeholder rows
+    // never upgrade the status (fail closed).
+    const titles = linkedEvidence
+      .map(e => (typeof e?.title === 'string' ? e.title.trim() : ''))
+      .filter(t => t.length > 0);
+
     return [
       {
         requirement: 'ER 14',
         description: 'Clinical evaluation',
-        conformity: 'Conforms',
-        evidence: 'This clinical evaluation report'
+        conformity: titles.length > 0 ? CONFORMITY_EVIDENCE_LINKED : CONFORMITY_NOT_ASSESSED,
+        expectedEvidence:
+          'Clinical data recorded for this report (clinical investigations, literature, post-market surveillance, registries, real-world evidence)',
+        linkedEvidence: titles
       }
     ];
   }
@@ -636,7 +664,75 @@ class CerGenerationService {
 
   private generateRiskBenefitConclusion(data: any): string {
     const ratio = this.calculateBenefitRiskRatio(data);
-    return `Based on the analysis, the benefit-risk ratio is ${ratio.toLowerCase()}. The clinical benefits outweigh the residual risks when the device is used as intended.`;
+    const base = `Based on the analysis, the benefit-risk ratio is ${ratio.toLowerCase()}.`;
+    // The "benefits outweigh the risks" claim is only made when the
+    // evidence-derived ratio actually supports it — never for an
+    // indeterminate ("needs review") or balanced analysis.
+    if (ratio === 'Highly favorable' || ratio === 'Favorable') {
+      return `${base} The documented clinical benefits outweigh the residual risks when the device is used as intended.`;
+    }
+    return `${base} A favorable benefit-risk conclusion cannot be drawn from the documented benefits and risks at this time.`;
+  }
+
+  /**
+   * Rebuild the evidence-derived report sections (clinical evidence sources and
+   * the essential-requirements assessment) from the cer_clinical_evidence rows
+   * actually stored for the report.
+   *
+   * The essential-requirements section is only regenerated while it is still
+   * the machine-generated, evidence-derived assessment (identified by its
+   * `assessmentBasis` marker) — a manually authored section is never
+   * overwritten.
+   */
+  private async refreshEvidenceDerivedSections(
+    cerReportId: number,
+    currentCer: CerReport
+  ): Promise<void> {
+    const evidenceRows = await db
+      .select()
+      .from(cerClinicalEvidence)
+      .where(eq(cerClinicalEvidence.cerReportId, cerReportId));
+
+    const sources = evidenceRows.map(row => ({
+      type: row.evidenceType,
+      title: row.title,
+      authors: row.authors,
+      year: row.year,
+      patients: row.patients,
+      findings: row.findings,
+      relevance: row.relevance,
+      quality: row.quality
+    }));
+
+    const currentEr = currentCer.essentialRequirements as
+      | { content?: { assessmentBasis?: unknown } }
+      | null;
+    const erIsMachineGenerated = currentEr == null || currentEr?.content?.assessmentBasis != null;
+
+    await db
+      .update(cerReports)
+      .set({
+        clinicalEvidence: {
+          title: 'Clinical Evidence',
+          content: {
+            overview:
+              sources.length > 0
+                ? `${sources.length} clinical evidence source(s) recorded for this report.`
+                : 'No clinical evidence has been recorded for this report. Sources appear here as evidence is added.',
+            sources
+          }
+        },
+        ...(erIsMachineGenerated
+          ? {
+              essentialRequirements: {
+                title: 'Essential Requirements',
+                content: this.buildEssentialRequirementsContent(evidenceRows)
+              }
+            }
+          : {}),
+        updatedAt: new Date()
+      })
+      .where(eq(cerReports.id, cerReportId));
   }
 
   private async updateCerStatistics(cerReportId: number): Promise<void> {
@@ -646,7 +742,7 @@ class CerGenerationService {
       .where(eq(cerClinicalEvidence.cerReportId, cerReportId));
 
     const patientSum = await db
-      .select({ total: sql`sum(number_of_patients)` })
+      .select({ total: sql`sum(${cerClinicalEvidence.patients})` })
       .from(cerClinicalEvidence)
       .where(eq(cerClinicalEvidence.cerReportId, cerReportId));
 
@@ -715,474 +811,6 @@ class CerGenerationService {
     ];
   }
 
-  private async generatePdf(cer: CerReport): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      try {
-        // Create PDF document
-        const doc = new PDFDocument({
-          size: 'A4',
-          margins: { top: 72, left: 72, bottom: 72, right: 72 },
-          info: {
-            Title: `Clinical Evaluation Report - ${cer.deviceName}`,
-            Author: 'eCTD Co-Author™',
-            Subject: `CER ${cer.reportId} Version ${cer.version}`,
-            Keywords: 'CER, Medical Device, Clinical Evaluation'
-          }
-        });
-
-        // Collect PDF data
-        const chunks: Buffer[] = [];
-        doc.on('data', chunks.push.bind(chunks));
-        doc.on('end', () => resolve(Buffer.concat(chunks)));
-
-        // Title page
-        doc.fontSize(24).font('Helvetica-Bold')
-           .text('CLINICAL EVALUATION REPORT', { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(18).font('Helvetica')
-           .text(cer.deviceName, { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(14)
-           .text(`CER Number: ${cer.reportId}`, { align: 'center' })
-           .text(`Version: ${cer.version || '1.0'}`, { align: 'center' })
-           .text(`Status: ${cer.status}`, { align: 'center' });
-        doc.moveDown(2);
-        doc.fontSize(12)
-           .text(`Device Manufacturer: ${cer.deviceManufacturer || 'N/A'}`)
-           .text(`Device Type: ${cer.deviceType || 'N/A'}`);
-
-        // Add page break
-        doc.addPage();
-
-        // Table of Contents
-        doc.fontSize(18).font('Helvetica-Bold')
-           .text('TABLE OF CONTENTS', { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(12).font('Helvetica');
-        
-        const sections = [
-          '1. Executive Summary',
-          '2. Device Description', 
-          '3. Clinical Background',
-          '4. Essential Requirements',
-          '5. Clinical Evidence',
-          '6. Literature Review',
-          '7. Risk-Benefit Analysis',
-          '8. Conclusions'
-        ];
-        
-        sections.forEach((section, index) => {
-          doc.text(section);
-        });
-
-        // Add content sections
-        doc.addPage();
-
-        // Add actual content from cer.content (JSON)
-        const content = ((cer.content as Record<string, any>) || {}) as Record<string, any>;
-        
-        // Executive Summary
-        doc.fontSize(16).font('Helvetica-Bold')
-           .text('1. EXECUTIVE SUMMARY');
-        doc.fontSize(11).font('Helvetica');
-        doc.moveDown();
-        
-        if (content.executiveSummary) {
-          doc.text(JSON.stringify(content.executiveSummary.content || content.executiveSummary, null, 2));
-        } else {
-          doc.text(`This Clinical Evaluation Report (CER) has been prepared for ${cer.deviceName} in accordance with applicable regulatory requirements.`);
-          doc.moveDown();
-          doc.text('The device has been evaluated based on available clinical data, literature review, and risk-benefit analysis.');
-        }
-
-        // Device Description
-        doc.addPage();
-        doc.fontSize(16).font('Helvetica-Bold')
-           .text('2. DEVICE DESCRIPTION');
-        doc.fontSize(11).font('Helvetica');
-        doc.moveDown();
-        
-        if (content.deviceDescription) {
-          doc.text(JSON.stringify(content.deviceDescription.content || content.deviceDescription, null, 2));
-        } else {
-          doc.text(`Device Name: ${cer.deviceName}`);
-          doc.text(`Manufacturer: ${cer.deviceManufacturer || 'N/A'}`);
-          doc.text(`Device Type: ${cer.deviceType || 'N/A'}`);
-        }
-
-        // Additional sections from content
-        if (content.clinicalBackground) {
-          doc.addPage();
-          doc.fontSize(16).font('Helvetica-Bold')
-             .text('3. CLINICAL BACKGROUND');
-          doc.fontSize(11).font('Helvetica');
-          doc.moveDown();
-          doc.text(JSON.stringify(content.clinicalBackground.content || content.clinicalBackground, null, 2));
-        }
-
-        // Metadata and approval information
-        const metadata = (cer.metadata as Record<string, any>) || null;
-        if (metadata) {
-          doc.addPage();
-          doc.fontSize(16).font('Helvetica-Bold')
-             .text('DOCUMENT INFORMATION');
-          doc.fontSize(11).font('Helvetica');
-          doc.moveDown();
-          doc.text(`Created: ${new Date(cer.createdAt).toLocaleDateString()}`);
-          doc.text(`Last Updated: ${new Date(cer.updatedAt).toLocaleDateString()}`);
-          if (metadata.approvalDate) {
-            doc.text(`Approval Date: ${new Date(metadata.approvalDate).toLocaleDateString()}`);
-          }
-        }
-
-        // Finalize PDF
-        doc.end();
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  private async generateDocx(cer: CerReport): Promise<Buffer> {
-    try {
-      const content = ((cer.content as Record<string, any>) || {}) as Record<string, any>;
-      
-      // Create sections for the document
-      const docSections = [];
-      
-      // Title section
-      docSections.push(
-        new Paragraph({
-          text: 'CLINICAL EVALUATION REPORT',
-          heading: HeadingLevel.TITLE,
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 400 }
-        }),
-        new Paragraph({
-          text: cer.deviceName,
-          heading: HeadingLevel.HEADING_1,
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 200 }
-        }),
-        new Paragraph({
-          children: [
-            new TextRun({ text: 'CER Number: ', bold: true }),
-            new TextRun({ text: cer.reportId })
-          ],
-          alignment: AlignmentType.CENTER
-        }),
-        new Paragraph({
-          children: [
-            new TextRun({ text: 'Version: ', bold: true }),
-            new TextRun({ text: cer.version || '1.0' })
-          ],
-          alignment: AlignmentType.CENTER
-        }),
-        new Paragraph({
-          children: [
-            new TextRun({ text: 'Status: ', bold: true }),
-            new TextRun({ text: cer.status })
-          ],
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 600 }
-        })
-      );
-
-      // Device Information
-      docSections.push(
-        new Paragraph({
-          children: [
-            new TextRun({ text: 'Device Manufacturer: ', bold: true }),
-            new TextRun({ text: cer.deviceManufacturer || 'N/A' })
-          ]
-        }),
-        new Paragraph({
-          children: [
-            new TextRun({ text: 'Device Type: ', bold: true }),
-            new TextRun({ text: cer.deviceType || 'N/A' })
-          ],
-          spacing: { after: 800 }
-        })
-      );
-
-      // Table of Contents
-      docSections.push(
-        new Paragraph({
-          text: 'TABLE OF CONTENTS',
-          heading: HeadingLevel.HEADING_1,
-          spacing: { before: 800, after: 400 }
-        })
-      );
-
-      const tocItems = [
-        '1. Executive Summary',
-        '2. Device Description',
-        '3. Clinical Background',
-        '4. Essential Requirements',
-        '5. Clinical Evidence',
-        '6. Literature Review',
-        '7. Risk-Benefit Analysis',
-        '8. Conclusions'
-      ];
-
-      tocItems.forEach(item => {
-        docSections.push(
-          new Paragraph({
-            text: item,
-            spacing: { after: 200 }
-          })
-        );
-      });
-
-      // Executive Summary
-      docSections.push(
-        new Paragraph({
-          text: '1. EXECUTIVE SUMMARY',
-          heading: HeadingLevel.HEADING_1,
-          spacing: { before: 800, after: 400 },
-          pageBreakBefore: true
-        })
-      );
-
-      if (content.executiveSummary) {
-        const summaryContent = content.executiveSummary.content || content.executiveSummary;
-        docSections.push(
-          new Paragraph({
-            text: typeof summaryContent === 'string' 
-              ? summaryContent 
-              : JSON.stringify(summaryContent, null, 2),
-            spacing: { after: 400 }
-          })
-        );
-      } else {
-        docSections.push(
-          new Paragraph({
-            text: `This Clinical Evaluation Report (CER) has been prepared for ${cer.deviceName} in accordance with applicable regulatory requirements.`,
-            spacing: { after: 200 }
-          }),
-          new Paragraph({
-            text: 'The device has been evaluated based on available clinical data, literature review, and risk-benefit analysis.',
-            spacing: { after: 400 }
-          })
-        );
-      }
-
-      // Device Description
-      docSections.push(
-        new Paragraph({
-          text: '2. DEVICE DESCRIPTION',
-          heading: HeadingLevel.HEADING_1,
-          spacing: { before: 800, after: 400 },
-          pageBreakBefore: true
-        })
-      );
-
-      if (content.deviceDescription) {
-        const descContent = content.deviceDescription.content || content.deviceDescription;
-        docSections.push(
-          new Paragraph({
-            text: typeof descContent === 'string' 
-              ? descContent 
-              : JSON.stringify(descContent, null, 2),
-            spacing: { after: 400 }
-          })
-        );
-      } else {
-        docSections.push(
-          new Paragraph({
-            children: [
-              new TextRun({ text: 'Device Name: ', bold: true }),
-              new TextRun({ text: cer.deviceName })
-            ]
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({ text: 'Manufacturer: ', bold: true }),
-              new TextRun({ text: cer.deviceManufacturer || 'N/A' })
-            ]
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({ text: 'Device Type: ', bold: true }),
-              new TextRun({ text: cer.deviceType || 'N/A' })
-            ],
-            spacing: { after: 400 }
-          })
-        );
-      }
-
-      // Clinical Background
-      if (content.clinicalBackground) {
-        docSections.push(
-          new Paragraph({
-            text: '3. CLINICAL BACKGROUND',
-            heading: HeadingLevel.HEADING_1,
-            spacing: { before: 800, after: 400 },
-            pageBreakBefore: true
-          })
-        );
-
-        const bgContent = content.clinicalBackground.content || content.clinicalBackground;
-        docSections.push(
-          new Paragraph({
-            text: typeof bgContent === 'string' 
-              ? bgContent 
-              : JSON.stringify(bgContent, null, 2),
-            spacing: { after: 400 }
-          })
-        );
-      }
-
-      // Document Information
-      const docxMetadata = (cer.metadata as Record<string, any>) || null;
-      if (docxMetadata) {
-        docSections.push(
-          new Paragraph({
-            text: 'DOCUMENT INFORMATION',
-            heading: HeadingLevel.HEADING_1,
-            spacing: { before: 800, after: 400 },
-            pageBreakBefore: true
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({ text: 'Created: ', bold: true }),
-              new TextRun({ text: new Date(cer.createdAt).toLocaleDateString() })
-            ]
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({ text: 'Last Updated: ', bold: true }),
-              new TextRun({ text: new Date(cer.updatedAt).toLocaleDateString() })
-            ]
-          })
-        );
-
-        if (docxMetadata.approvalDate) {
-          docSections.push(
-            new Paragraph({
-              children: [
-                new TextRun({ text: 'Approval Date: ', bold: true }),
-                new TextRun({ text: new Date(docxMetadata.approvalDate).toLocaleDateString() })
-              ]
-            })
-          );
-        }
-      }
-
-      // Create the document
-      const doc = new Document({
-        sections: [{
-          properties: {
-            page: {
-              margin: {
-                top: 1440,
-                right: 1440,
-                bottom: 1440,
-                left: 1440
-              }
-            }
-          },
-          children: docSections
-        }],
-        creator: 'eCTD Co-Author™',
-        title: `Clinical Evaluation Report - ${cer.deviceName}`,
-        subject: `CER ${cer.reportId} Version ${cer.version}`
-      });
-
-      // Generate buffer
-      const buffer = await Packer.toBuffer(doc);
-      return buffer;
-    } catch (error) {
-      console.error('Error generating DOCX:', error);
-      // Fallback to simple text representation
-      return Buffer.from(JSON.stringify(cer, null, 2));
-    }
-  }
-
-  private async generateXml(cer: CerReport): Promise<string> {
-    // Generate structured XML for regulatory submission (eCTD compliant)
-    const content = ((cer.content as Record<string, any>) || {}) as Record<string, any>;
-    
-    // Escape XML special characters
-    const escapeXml = (str: any): string => {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&apos;');
-    };
-
-    // Format content sections as XML
-    const formatSection = (section: any, name: string): string => {
-      if (!section) return '';
-      
-      if (typeof section === 'string') {
-        return `    <${name}>${escapeXml(section)}</${name}>`;
-      } else if (typeof section === 'object') {
-        const innerContent = Object.entries(section)
-          .map(([key, value]) => {
-            if (typeof value === 'object') {
-              return `      <${key}>${escapeXml(JSON.stringify(value))}</${key}>`;
-            }
-            return `      <${key}>${escapeXml(value)}</${key}>`;
-          })
-          .join('\n');
-        return `    <${name}>\n${innerContent}\n    </${name}>`;
-      }
-      return `    <${name}>${escapeXml(JSON.stringify(section))}</${name}>`;
-    };
-
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<ClinicalEvaluationReport xmlns="urn:hl7-org:v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <Header>
-    <DocumentIdentifier>
-      <ReportId>${escapeXml(cer.reportId)}</ReportId>
-      <Version>${escapeXml(cer.version || '1.0')}</Version>
-      <Status>${escapeXml(cer.status)}</Status>
-    </DocumentIdentifier>
-    <DeviceInformation>
-      <DeviceName>${escapeXml(cer.deviceName)}</DeviceName>
-      <DeviceManufacturer>${escapeXml(cer.deviceManufacturer || 'N/A')}</DeviceManufacturer>
-      <DeviceType>${escapeXml(cer.deviceType || 'N/A')}</DeviceType>
-    </DeviceInformation>
-    <RegulatoryInformation>
-      <RegulatoryFramework>${escapeXml((cer.metadata as any)?.regulatoryFramework || 'MDR_2017_745')}</RegulatoryFramework>
-      <NotifiedBodyId>${escapeXml((cer.metadata as any)?.notifiedBodyId || 'N/A')}</NotifiedBodyId>
-    </RegulatoryInformation>
-    <DocumentMetadata>
-      <CreatedDate>${new Date(cer.createdAt).toISOString()}</CreatedDate>
-      <LastModifiedDate>${new Date(cer.updatedAt).toISOString()}</LastModifiedDate>
-      <OrganizationId>${cer.organizationId}</OrganizationId>
-    </DocumentMetadata>
-  </Header>
-  <Body>
-${formatSection(content.executiveSummary, 'ExecutiveSummary')}
-${formatSection(content.deviceDescription, 'DeviceDescription')}
-${formatSection(content.clinicalBackground, 'ClinicalBackground')}
-${formatSection(content.essentialRequirements, 'EssentialRequirements')}
-${formatSection(content.clinicalEvidence, 'ClinicalEvidence')}
-${formatSection(content.literatureReview, 'LiteratureReview')}
-${formatSection(content.riskBenefitAnalysis, 'RiskBenefitAnalysis')}
-${formatSection(content.conclusions, 'Conclusions')}
-  </Body>
-  <Signatures>
-    <AuthorSignature>
-      <Name>${escapeXml((cer.metadata as any)?.authorName || 'N/A')}</Name>
-      <Title>${escapeXml((cer.metadata as any)?.authorTitle || 'Clinical Evaluator')}</Title>
-      <Date>${new Date().toISOString()}</Date>
-    </AuthorSignature>
-    <ReviewerSignature>
-      <Name>${escapeXml((cer.metadata as any)?.reviewerName || 'N/A')}</Name>
-      <Title>${escapeXml((cer.metadata as any)?.reviewerTitle || 'Quality Manager')}</Title>
-      <Date>${escapeXml((cer.metadata as any)?.reviewDate || 'N/A')}</Date>
-    </ReviewerSignature>
-  </Signatures>
-</ClinicalEvaluationReport>`;
-    
-    return xml;
-  }
 }
 
 export default new CerGenerationService();

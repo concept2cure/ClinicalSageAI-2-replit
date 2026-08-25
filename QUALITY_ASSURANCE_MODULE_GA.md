@@ -13,7 +13,7 @@ for the 21 CFR Part 11 audit trail.
 
 ## 1. Where a human finds it
 
-1. Log in as the GA demo admin: **`jm.smith@concept2cure.pro` / `pass-word`**.
+1. Log in as the GA demo admin: **`jonmichaelpsmith@gmail.com` / `demo123`**.
 2. Open the ui-v2 workspace. On the home landing, under **"Everything in your
    workspace" → Review & govern**, click **Quality & Assurance**.
    (It also resolves via ⌘K → "Quality & Assurance", and by deep link to the
@@ -55,7 +55,9 @@ a 500, never a fabricated verdict.
 ## 3. What to test — the four capabilities
 
 ### ① AnA trains employees to raise change requests
+
 Change control tab → **How to raise a change** panel.
+
 - Read the 5-step process.
 - Click **Train me** → AnA explains the change-control procedure, quizzes you, and
   records read-and-understood training against the change-control SOP.
@@ -63,7 +65,9 @@ Change control tab → **How to raise a change** panel.
   members with an acknowledgment method + refresh date.
 
 ### ② Draft change-control documents & forms
+
 Change control tab → **Change-control documents & forms**.
+
 - Click **Change-request form** (or the change-control SOP / impact-assessment
   form). AnA opens the controlled template — with the standard change-control
   sections (identification → description → justification → classification & risk →
@@ -71,7 +75,9 @@ Change control tab → **Change-control documents & forms**.
   in the editor / Canvas to draft.
 
 ### ③ SOP engine — build, monitor, update SOPs
+
 SOP register tab.
+
 - **New controlled document** → AnA assigns the next number and opens the standard
   Purpose→Approval structure.
 - On an effective document: **Revise** (opens a controlled revision, bumps the
@@ -82,7 +88,9 @@ SOP register tab.
   overdue and where training is short.
 
 ### ④ Change-control log + lifecycle flowchart + linkage
+
 Change control tab.
+
 - **Lifecycle flowchart**: each node (proposed → under assessment → approved →
   in implementation → verification → closed) shows how many changes sit there.
   Click a node to filter the log to that stage; click again to clear. Off-ramps
@@ -100,12 +108,12 @@ Change control tab.
 
 AnA has typed, governed tools that run these actions against the real backend:
 
-| Tool | What it does | Governance |
-|---|---|---|
-| `qms_change_create` | Raise a change (starts `proposed`) | audit-logged |
-| `qms_change_transition` | Advance through the controlled lifecycle | **requires a reason-for-change**; enforces **segregation of duties** (approver ≠ proposer); rejects illegal transitions; audit-logged |
-| `qms_change_link` | Link a change to a deviation / CAPA / validation / doc | audit-logged |
-| `create_qms_document`, `approve_qms_document`, `ack_training` | SOP-register document + training actions | audit-stamped |
+| Tool                                                          | What it does                                           | Governance                                                                                                                            |
+| ------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `qms_change_create`                                           | Raise a change (starts `proposed`)                     | audit-logged                                                                                                                          |
+| `qms_change_transition`                                       | Advance through the controlled lifecycle               | **requires a reason-for-change**; enforces **segregation of duties** (approver ≠ proposer); rejects illegal transitions; audit-logged |
+| `qms_change_link`                                             | Link a change to a deviation / CAPA / validation / doc | audit-logged                                                                                                                          |
+| `create_qms_document`, `approve_qms_document`, `ack_training` | SOP-register document + training actions               | audit-stamped                                                                                                                         |
 
 So "Raise change request", "Advance", "Link a record" and "Train me" result in real,
 persisted, org-scoped changes — not a dead-ended chat.

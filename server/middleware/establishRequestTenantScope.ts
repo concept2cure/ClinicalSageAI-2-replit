@@ -241,6 +241,33 @@ export function establishRequestTenantScope(
   const orgUuid = resolveOrgUuid(req);
   const role = req.user?.role != null ? String(req.user.role) : null;
 
+  // Publish the verified tenant identity on the request, UNCONDITIONALLY.
+  //
+  // Historically the only writer of req.tenantContext on the global path was
+  // authBoundary's continueWithTenantExecutionContext, which returns early
+  // unless RLS_ENFORCE==='on'. That coupled a *tenant identity* fact to a
+  // *database isolation* knob, so in every environment where RLS is off — which
+  // is all of dev, test and CI, since production is the only env that accepts
+  // 'on' — req.tenantContext was undefined. Two consequences, both silent:
+  //   • per-organization rate limiting (middleware/redisRateLimiter.ts:352
+  //     reads req.tenantContext?.organizationId) degraded to a single shared
+  //     bucket, so the tenant-fairness control was never exercised before
+  //     production;
+  //   • any tenant-aware middleware written against req.tenantContext behaved
+  //     differently under test than in production — the worst possible split
+  //     for a control whose whole job is to hold in production.
+  // Identity is established here, where it is known, regardless of how the
+  // database happens to be enforcing isolation underneath.
+  req.tenantContext = {
+    ...(req.tenantContext ?? {}),
+    organizationId: tenantId,
+    organizationUuid: orgUuid,
+    userId: req.user?.userId ?? req.user?.id,
+    role,
+  };
+  req.tenantId = tenantId;
+  if (role) req.userRole = role;
+
   attachLazyClient(req, res, tenantSessionVars(tenantId, role, orgUuid));
 
   runWithTenantScope(

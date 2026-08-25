@@ -13,7 +13,10 @@
  * @module server/services/submission-service/submission-service
  */
 
+import { createHash } from 'crypto';
 import { eq, and, isNull, desc, sql } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import type { PoolClient } from 'pg';
 import { db } from '../../db';
 import {
   submissions,
@@ -91,11 +94,21 @@ export interface CreateSubmissionInput {
   lifecycleStage?: string;
 }
 
-export async function createSubmission(
+/** Anything that can run the canonical submissions INSERT — the pool-backed
+ *  `db`, or a per-request drizzle wrapper over a transaction's PoolClient. */
+type SubmissionInsertExecutor = Pick<typeof db, 'insert'>;
+
+/**
+ * The ONE definition of what a canonical `submissions` row is created from.
+ * Both creation paths (standalone `createSubmission`, transactional
+ * `createSubmissionTx`) run through here so the field mapping cannot fork.
+ */
+async function insertSubmissionRow(
+  executor: SubmissionInsertExecutor,
   input: CreateSubmissionInput,
   ctx: { organizationId: number; userId: number }
 ): Promise<Submission> {
-  const [row] = await db
+  const [row] = await executor
     .insert(submissions)
     .values({
       title: input.title,
@@ -108,6 +121,14 @@ export async function createSubmission(
       createdBy: ctx.userId,
     })
     .returning();
+  return row as Submission;
+}
+
+export async function createSubmission(
+  input: CreateSubmissionInput,
+  ctx: { organizationId: number; userId: number }
+): Promise<Submission> {
+  const row = await insertSubmissionRow(db, input, ctx);
   await auditService.logAction({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
@@ -117,7 +138,31 @@ export async function createSubmission(
     details: { applicationType: input.applicationType, primaryRegion: input.primaryRegion, clientType: input.clientType },
   });
   logger.info('Created submission', { submissionId: row.id, organizationId: ctx.organizationId });
-  return row as Submission;
+  return row;
+}
+
+/**
+ * Create a canonical submission INSIDE a caller-owned transaction.
+ *
+ * Runs the same INSERT as `createSubmission`, but on the caller's PoolClient,
+ * so the submission commits — or rolls back — atomically with whatever else
+ * that transaction creates (e.g. the regulatory program the C2C intake wizard
+ * writes in routes/c2c/projects.ts). Mirrors the `createSubmissionTx(client,…)`
+ * idiom in services/irb/irb-service.ts.
+ *
+ * Deliberately does NOT call auditService.logAction: that write runs on its own
+ * pooled connection, OUTSIDE the caller's transaction, so on rollback it would
+ * leave a sealed record of a submission that does not exist — a fabricated
+ * audit trail. The caller owns the transaction and must write its own audit row
+ * on the same client (the C2C intake route writes a hash-chained audit_logs row
+ * covering both creations).
+ */
+export function createSubmissionTx(
+  client: PoolClient,
+  input: CreateSubmissionInput,
+  ctx: { organizationId: number; userId: number }
+): Promise<Submission> {
+  return insertSubmissionRow(drizzle(client), input, ctx);
 }
 
 export async function listSubmissions(ctx: { organizationId: number }): Promise<Submission[]> {
@@ -653,15 +698,34 @@ export async function upsertLeaf(
 
   // When a leaf points at the canonical document table, the target must belong
   // to the caller's org — no dangling cross-tenant document pointers.
+  /* Source pin (GA ledger L23). The leaf records where the document lives and
+     the MD5 of its RENDERED bytes; neither says what the SOURCE contained when
+     it was filed. So "this went to the agency — is the document behind it still
+     what went?" had no answer: `document_id` resolves to the document as it is
+     now, and editing it after filing changes nothing on the leaf.
+
+     The digest is taken from the SAME org-scoped read that already proves the
+     document belongs to the caller, so the bytes pinned are the bytes the
+     tenancy check passed on — a second query could race a concurrent edit and
+     pin content the check never saw. */
+  let documentContentSha256: string | null = null;
   if (input.documentTable === 'coauthor_documents' && input.documentId) {
     const [doc] = await db
-      .select({ id: coauthorDocuments.id })
+      .select({ id: coauthorDocuments.id, content: coauthorDocuments.content })
       .from(coauthorDocuments)
       .where(and(eq(coauthorDocuments.id, input.documentId), eq(coauthorDocuments.organizationId, ctx.organizationId)))
       .limit(1);
     if (!doc) {
       throw new SubmissionError('FORBIDDEN', 'Referenced document not found for this organization.');
     }
+    /* An empty or absent body pins NOTHING rather than the digest of an empty
+       string. sha256('') is a real, constant hex value that would look exactly
+       like a pin that had been taken, and would then "match" any other empty
+       document forever. NULL is the honest record of "no content to pin". */
+    documentContentSha256 =
+      typeof doc.content === 'string' && doc.content.length > 0
+        ? createHash('sha256').update(doc.content, 'utf8').digest('hex')
+        : null;
   }
 
   // A lifecycle op that supersedes a prior leaf (replace|append|delete) carries a
@@ -704,6 +768,12 @@ export async function upsertLeaf(
         documentType: input.documentType ?? null,
         parentLeafId: input.parentLeafId ?? null,
         ...(input.checksum !== undefined ? { checksum: input.checksum } : {}),
+        /* Re-pinned on every update, because an update can re-point the leaf at
+           a different document — carrying the previous pin forward would attest
+           to content this leaf no longer references. Clearing to NULL when the
+           new target has no pinnable content is likewise correct: unknown. */
+        documentContentSha256,
+        documentPinnedAt: documentContentSha256 ? new Date() : null,
         updatedAt: new Date(),
       })
       .where(
@@ -739,6 +809,8 @@ export async function upsertLeaf(
       documentType: input.documentType ?? null,
       parentLeafId: input.parentLeafId ?? null,
       checksum: input.checksum ?? null,
+      documentContentSha256,
+      documentPinnedAt: documentContentSha256 ? new Date() : null,
       organizationId: ctx.organizationId,
       createdBy: ctx.userId,
     })
@@ -754,8 +826,73 @@ export async function upsertLeaf(
   return row as SubmissionLeaf;
 }
 
+/**
+ * Remove a misplaced leaf from a DRAFT-stage sequence (BP-W1-6 find F05: a
+ * wrong placement could only be corrected in place, never removed — the first
+ * end-to-end chain exercise had to clean its own mistakes with SQL).
+ *
+ * Soft delete, because every reader of `submission_leaves` — listLeaves, the
+ * assembler, dispatch readiness — already filters `deleted_at IS NULL`, and a
+ * hard delete would erase the row an audit event refers to. Guards mirror
+ * upsertLeaf: the sequence must belong to the caller's org and must not be
+ * frozen/dispatched, and a leaf that another leaf's `parentLeafId` points at
+ * cannot be removed — that would orphan the lifecycle chain.
+ */
+export async function removeLeaf(
+  leafId: number,
+  sequenceId: number,
+  ctx: { organizationId: number; userId: number }
+): Promise<void> {
+  const seq = await getSequence(sequenceId, ctx);
+  if (isSequenceLocked(seq.status)) {
+    throw new SubmissionError('INVALID_STATE', `Sequence is ${seq.status}; its leaves are immutable.`);
+  }
+
+  const [dependent] = await db
+    .select({ id: submissionLeaves.id })
+    .from(submissionLeaves)
+    .where(
+      and(
+        eq(submissionLeaves.parentLeafId, leafId),
+        eq(submissionLeaves.organizationId, ctx.organizationId),
+        isNull(submissionLeaves.deletedAt)
+      )
+    )
+    .limit(1);
+  if (dependent) {
+    throw new SubmissionError(
+      'INVALID_STATE',
+      'Another leaf’s lifecycle operation references this leaf; remove or re-point that leaf first.'
+    );
+  }
+
+  const [row] = await db
+    .update(submissionLeaves)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(
+      and(
+        eq(submissionLeaves.id, leafId),
+        eq(submissionLeaves.sequenceId, sequenceId),
+        eq(submissionLeaves.organizationId, ctx.organizationId),
+        isNull(submissionLeaves.deletedAt)
+      )
+    )
+    .returning();
+  if (!row) throw new SubmissionError('NOT_FOUND', 'Leaf not found for this organization/sequence.');
+
+  await auditService.logAction({
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    action: 'LEAF_REMOVED',
+    resourceType: 'submission_leaf',
+    resourceId: leafId,
+    details: { sequenceId, sectionCode: row.sectionCode },
+  });
+}
+
 export default {
   createSubmission,
+  createSubmissionTx,
   listSubmissions,
   getSubmission,
   createSequence,
@@ -763,6 +900,7 @@ export default {
   transitionSequence,
   listLeaves,
   upsertLeaf,
+  removeLeaf,
   canTransitionSequence,
   isSequenceLocked,
   SubmissionError,

@@ -35,6 +35,12 @@ import { processResponseActions } from '../../services/ana-guidance-executor.js'
 import type { CommandContext } from '../../services/ana-ri/command-executor.js';
 import { isPositiveIntegerId } from './shared.js';
 import { upsertDocumentArtifactVersion } from '../../services/ana/artifactVersionStore.js';
+import {
+  toNavigationActions,
+  toSurfaceActionChips,
+} from '../../services/ana-ri/navigation-actions.js';
+import type { NavigationDirective } from '../../../shared/navigation/index.js';
+import type { SurfaceActionDirective } from '../../../shared/navigation/surface-actions.js';
 
 export interface StreamPostProcessingContext {
   res: Response;
@@ -64,6 +70,18 @@ export interface StreamPostProcessingContext {
   toolEvidenceCorpus: string[];
   /** Provenance envelopes from evidence tools this turn — persisted to the lineage trail. */
   collectedProvenance: ProvenanceRecord[];
+  /**
+   * Validated navigation targets `navigate_to` resolved this turn. Surfaced on
+   * `post_done` as `actionType: 'navigate'` chips — offered to the user, never
+   * performed by the server. See services/ana-ri/navigation-actions.ts.
+   */
+  collectedNavigation?: NavigationDirective[];
+  /**
+   * Validated surface actions `act_on_screen` resolved this turn. Surfaced on
+   * `post_done` as `actionType: 'surface_action'` chips — offered to the user,
+   * performed client-side through the one surface-action bus when activated.
+   */
+  collectedSurfaceActions?: SurfaceActionDirective[];
   /** Document drafts emitted this turn — persisted to the governed artifact version history. */
   collectedDrafts: { title: string; content: string; documentType?: string; reasonForChange?: string }[];
   /** Gateway message history built for the turn (for working-memory write-back). */
@@ -82,7 +100,11 @@ export interface StreamPostProcessingContext {
  * upsert is wrapped so a DB failure never propagates (and so never blocks the
  * caller's `post_done`).
  */
-async function persistCollectedDrafts(args: {
+/* Exported for its own test. The three ways a draft can fail to reach the
+   version history — no project context, an unchanged content hash, and a
+   database failure — are indistinguishable to the client, so what this function
+   does and does NOT announce is the whole contract. */
+export async function persistCollectedDrafts(args: {
   res: Response;
   orgId: string | number | null | undefined;
   streamProjectId: string | number | null | undefined;
@@ -91,13 +113,51 @@ async function persistCollectedDrafts(args: {
   collectedDrafts: { title: string; content: string; documentType?: string; reasonForChange?: string }[];
 }): Promise<void> {
   const { res, orgId, streamProjectId, userId, threadId, collectedDrafts } = args;
-  const projectId =
-    streamProjectId != null && streamProjectId !== ''
-      ? typeof streamProjectId === 'string'
-        ? Number.parseInt(streamProjectId, 10)
-        : streamProjectId
-      : NaN;
-  if (!orgId || !threadId || !Number.isFinite(projectId) || collectedDrafts.length === 0) {
+  if (!orgId || !threadId || collectedDrafts.length === 0) {
+    return;
+  }
+  /* The ADR-0011 coercion hazard, live on this exact line until now:
+     `Number.parseInt('7abb1c22-…', 10) === 7`, so a draft produced in a
+     UUID-keyed program conversation was FILED UNDER integer project 7 — a
+     valid, wrong row — whenever the program UUID began with digits, and
+     silently dropped whenever it did not. Fail-closed parse instead; a
+     genuine program UUID resolves through the projects.regulatory_program_id
+     anchor so drafts from the live UUID spine are captured too. */
+  const { parseIntegerProjectId, looksLikeProgramUuid } = await import('../../lib/project-id.js');
+  let projectId = parseIntegerProjectId(streamProjectId);
+  if (projectId == null && looksLikeProgramUuid(streamProjectId)) {
+    try {
+      const { pool } = await import('../../db.js');
+      const anchor = await pool.query(
+        `SELECT id FROM projects WHERE regulatory_program_id = $1 LIMIT 1`,
+        [String(streamProjectId).trim()],
+      );
+      const anchored = parseIntegerProjectId(anchor.rows[0]?.id);
+      if (anchored != null) projectId = anchored;
+    } catch (anchorErr: any) {
+      console.warn('[AnA RI Stream] Program→project anchor lookup failed:', anchorErr?.message);
+    }
+  }
+  if (projectId == null) {
+    /* No project to file under. The rail says "Drafted <title>" — saying
+       nothing here leaves the user believing a version was durably recorded.
+       Same honesty contract as the write-failure warning below: name exactly
+       what is false (the SAVE), never discard the on-screen draft. */
+    try {
+      if (!res.writableEnded) {
+        for (const draft of collectedDrafts) {
+          if (!draft.content) continue;
+          res.write(
+            `data: ${JSON.stringify({
+              type: 'warning',
+              message: `${draft.title} was drafted but could not be saved to the version history — no project is linked to this conversation.`,
+            })}\n\n`,
+          );
+        }
+      }
+    } catch {
+      /* The client is gone; nothing further to tell. */
+    }
     return;
   }
   for (const draft of collectedDrafts) {
@@ -126,6 +186,36 @@ async function persistCollectedDrafts(args: {
       }
     } catch (e: any) {
       console.warn('[AnA RI Stream] Draft version persistence failed:', e?.message);
+      /* Tell the person, not just the log.
+       *
+       * AnA announces the deliverable — the rail renders "Drafted <title>" —
+       * and until now a failure to write its governed artifact version was a
+       * server-side console line and nothing else. Someone could close the
+       * session believing a draft was durably recorded when no version row
+       * exists. In a Part 11 context that is the product overstating what it
+       * did, which is the one thing it must not do.
+       *
+       * A `warning` rather than an `error`: the draft itself is real and still
+       * on screen, and discarding it would lose work. What is false is the
+       * impression that it was SAVED, so the caveat names exactly that and
+       * nothing more. No error detail — `e.message` is an internal database
+       * string and customer copy is not where it belongs.
+       *
+       * Never throws: this sits on the path to `post_done`, and a caveat that
+       * prevented the turn from closing would be a worse defect than the one
+       * it reports. */
+      try {
+        if (!res.writableEnded) {
+          res.write(
+            `data: ${JSON.stringify({
+              type: 'warning',
+              message: `${draft.title} was drafted but could not be saved to the version history.`,
+            })}\n\n`
+          );
+        }
+      } catch {
+        /* The client is gone. The draft failing to save is already logged. */
+      }
     }
   }
 }
@@ -151,6 +241,8 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     humanControls,
     toolEvidenceCorpus,
     collectedProvenance,
+    collectedNavigation,
+    collectedSurfaceActions,
     collectedDrafts,
     messages,
     model,
@@ -183,6 +275,22 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       } catch (e: any) {
         console.warn('[AnA RI Stream] Guidance executor failed:', e?.message);
       }
+    }
+
+    // Navigation — the screens AnA resolved this turn become chips the user can
+    // activate. Appended after the guidance executor so an artifact the turn
+    // actually created still leads. Nothing here moves the client on its own:
+    // the server offers a destination, the person takes it.
+    if (collectedNavigation && collectedNavigation.length > 0) {
+      executedActions = [...executedActions, ...toNavigationActions(collectedNavigation)];
+    }
+
+    // Surface actions — the on-screen operations AnA resolved this turn become
+    // chips too, under the identical offered-not-performed contract. (Under
+    // Live Drive the stream already applied them; the chip remains the
+    // transcript record and the re-run affordance.)
+    if (collectedSurfaceActions && collectedSurfaceActions.length > 0) {
+      executedActions = [...executedActions, ...toSurfaceActionChips(collectedSurfaceActions)];
     }
 
     // Command executor — execute operational commands (create project, artifact, task, etc.)
@@ -330,6 +438,10 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
         threadId,
         organizationId: Number(orgId),
         messages: writebackMessages,
+        // Recorded so the nightly consolidation job can promote this thread's
+        // memory into project_memory_entries; null when the stream had no
+        // project scope.
+        projectId: streamProjectId ? Number(streamProjectId) || null : null,
       });
     }
 

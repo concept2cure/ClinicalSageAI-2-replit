@@ -12,7 +12,7 @@
  * eCTD Specification v3.2.2 (the same structure the `ich-ectd-3-2.dtd` defines),
  * and places leaves into it. It is the single source of truth for both backbone
  * generators (the regional packager's `buildIndexXml` and the DB-driven
- * `ectdExportService.generateIndexXml`) and for the structural validator, so the
+ * the since-retired `ectdExportService`) and for the structural validator, so the
  * repo emits and checks ONE authoritative convention.
  *
  * Module 1 is region-specific and lives in the regional backbone

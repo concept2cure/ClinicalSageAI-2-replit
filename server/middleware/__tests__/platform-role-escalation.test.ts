@@ -42,10 +42,13 @@ import { describe, it, expect } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
-// Imported from the BARE specifier on purpose. server/middleware/auth.js and
-// auth.ts both exist and export overlapping names; extension resolution picks
-// .js first, so this is the module the 95 bare-specifier call sites actually
-// get. Testing auth.ts directly would prove nothing about production.
+// Imported from the BARE specifier on purpose — the same way the 95 call sites
+// import it. server/middleware/auth.js and auth.ts both exist and export
+// overlapping names, and which one wins is resolver-dependent (measured):
+// esbuild (production build) and tsx (dev) both pick auth.TS; Vite/vitest picks
+// auth.JS. So this file, imported bare, exercises the .js twin, while the .ts
+// twin below is the one that actually ships. Both are asserted here precisely
+// because neither alone would prove production is guarded.
 import { requireRole, requireSameOrganization, PLATFORM_SCOPED_ROLES } from '../auth';
 
 // The .ts twin can only be addressed by its explicit extension — the bare
@@ -162,7 +165,7 @@ describe('the shadowing .js and the .ts twin do not drift', () => {
   });
 });
 
-describe('requireSameOrganization (the LIVE .js guard) — platform staff only', () => {
+describe('requireSameOrganization (.js twin, as resolved under vitest) — platform staff only', () => {
   // The requireOrgAccess block below imports auth.ts explicitly, so it does NOT
   // exercise what production runs. This block does: requireSameOrganization is
   // the bare-specifier export, and it compares req.user.organizationId against

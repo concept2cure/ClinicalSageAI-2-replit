@@ -340,7 +340,10 @@ export const UI_V2_SURFACES: UiSurface[] = [
   },
   {
     id: 'maa-cockpit',
-    label: 'MAA / non-US Module 1',
+    // BP-W1-5: was 'MAA / non-US Module 1'. Module 1 is regional by definition —
+    // "non-US Module 1" is not one thing — and the surface itself is already a
+    // per-agency checklist, so the name now says so.
+    label: 'MAA Module 1 (Regional)',
     navTier: 'project',
     layoutMode: 'maa-cockpit',
     group: 'submission',
@@ -352,7 +355,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'Non-US marketing-application administrative module (eCTD Module 1) — region-accurate required-component checklist for EMA/PMDA/MHRA/TGA/HC/NMPA over the global-RI regional-module1-requirements engine.',
+    notes: 'Regional marketing-application administrative module (eCTD Module 1) — per-agency required-component checklist for EMA/PMDA/MHRA/TGA/HC/Swissmedic/NMPA over the global-RI regional-module1-requirements engine.',
   },
   {
     id: 'device-workstream',
@@ -362,7 +365,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'device',
     icon: 'stethoscope',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx', '/api/510k-workflow', '/api/cer', '/api/cerv2', '/api/ivdr', '/api/manufacturing'],
+    apiPrefixes: ['/api/mdx', '/api/510k/estar', '/api/510k/device', '/api/cer', '/api/cerv2', '/api/ivdr', '/api/manufacturing'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/predicate-intelligence',
     discoveryCatalog: null,
@@ -838,7 +841,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // Was 'kit-only', which Coverage renders to customers as "Design prototype
+    // exists; backend binding map being assembled". Untrue: BiopharmaSpecialty.tsx binds 12 live reads/writes
+    // against audited routes. sharedContract is still null, so this stops at
+    // routes-ready rather than contract-ready.
+    readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'FDA §505B PREA / iPSP and EMA PIP: plans, deferrals, waivers, extrapolation rationale and PREA milestones.',
   },
@@ -854,7 +861,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // Was 'kit-only', which Coverage renders to customers as "Design prototype
+    // exists; backend binding map being assembled". Untrue: BiopharmaSpecialty.tsx binds 12 live reads/writes
+    // against audited routes. sharedContract is still null, so this stops at
+    // routes-ready rather than contract-ready.
+    readiness: 'routes-ready',
     compliance: [A11Y, TONE],
     notes: 'Orphan-drug / rare-disease designations across FDA/EMA/PMDA, RPD priority-review vouchers & grants, and patient-advocacy engagement.',
   },
@@ -870,7 +881,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     anaToolFamilies: ['assess_change_impact'],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // Was 'kit-only', which Coverage renders to customers as "Design prototype
+    // exists; backend binding map being assembled". Untrue: BiopharmaSpecialty.tsx binds 12 live reads/writes
+    // against audited routes. sharedContract is still null, so this stops at
+    // routes-ready rather than contract-ready.
+    readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'Post-approval: supplements/variations (sBLA, Type II/IB, CBE-30), CMC change control classified against ICH Q12, and renewal cycles (PADER, 5-year, re-examination).',
   },
@@ -886,7 +901,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     anaToolFamilies: ['assess_site_risk'],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // Was 'kit-only', which Coverage renders to customers as "Design prototype
+    // exists; backend binding map being assembled". Untrue: ClinicalOps.tsx binds 5 live reads/writes
+    // against audited routes. sharedContract is still null, so this stops at
+    // routes-ready rather than contract-ready.
+    readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'Clinical-development operations: studies & enrollment, study sites with RBM risk linkage, DSMB / interim reviews, and protocol deviations with CAPA. Structured data entry for sites and deviations.',
   },
@@ -902,7 +921,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     anaToolFamilies: ['get_nonclinical_template', 'calculate_ttc'],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // Was 'kit-only', which Coverage renders to customers as "Design prototype
+    // exists; backend binding map being assembled". Untrue: Nonclinical.tsx binds 7 live reads/writes
+    // against audited routes. sharedContract is still null, so this stops at
+    // routes-ready rather than contract-ready.
+    readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'IND-enabling & CTD Module 4: GLP study registry with finding classification and SEND status, SEND 12-domain conformance, the Module 2.6 written/tabulated summary builder, and Module 4 placement. Structured data entry for studies.',
   },
@@ -1244,5 +1267,61 @@ export const UI_V2_SURFACES: UiSurface[] = [
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
     notes: 'Plan usage limits, weekly caps, usage credits, rate limits by tier — billing-dashboard.ts router, MOUNTED AT /api/billing (verified against register-inline-routes 2026-07-05).',
+  },
+  {
+    /* Wired into the shell (surfaceViews.ts:347, NAV_HIDDEN, and the
+       "Review & govern" group of every segment). Registered against what it
+       actually mounts.
+
+       NOTE (2026-08-17): the comment here used to say the surface was "never
+       registered", so `getSurface` returned undefined. That was wrong — an
+       older entry already existed in the v1 half of the registry, and because
+       SURFACE_BY_ID is built with Object.fromEntries (LAST wins) this entry was
+       already the one getSurface returned. The two together broke the
+       uniqueness invariant and listed the surface under two different navTiers
+       at once. The v1 duplicate is deleted and its substantive notes merged
+       here; this entry's placement is unchanged, so nothing moves on screen. */
+    id: 'mission-control',
+    label: 'Mission control',
+    navTier: 'project',
+    layoutMode: 'mission-control',
+    group: 'review',
+    icon: 'gauge',
+    uiKit: null,
+    apiPrefixes: ['/api/mission-control'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [A11Y, TONE],
+    notes:
+      'Cross-program standing: what is blocking, what moves next. Router mounted at /api/mission-control behind authenticateToken (register-advanced-platform-routes.ts). ' +
+      'The regulatory program engine — programs, server-computed readiness across nine ' +
+      'dimensions, and the artifacts, risks, decisions and stale dependencies behind that ' +
+      'score. Distinct from `projects` (/api/c2c/projects), which models the workspace a ' +
+      'team works inside rather than the regulatory program.',
+  },
+  {
+    /* Same as mission-control: present in the shell and in the segment
+       "Intelligence" groups. A v1 duplicate of this id also existed and is
+       deleted (see the note above); its notes are merged below. */
+    id: 'filing-strategy',
+    label: 'Global filing strategy',
+    navTier: 'project',
+    layoutMode: 'filing-strategy',
+    group: 'intelligence',
+    icon: 'globe',
+    uiKit: null,
+    apiPrefixes: ['/api/regulatory-precedent-intelligence'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [A11Y, TONE],
+    notes:
+      'Cross-jurisdictional filing sequence, agency divergence and reliance pathways over the regulatory_intel.* tables. Those tables ship EMPTY — this is storage plus query for a record the tenant builds, not a shipped knowledge base (see migrations/20260814l_catalog_filing_strategy.sql). ' +
+      'Reads the cross-jurisdictional and confidence families only — the CRL/RTF/EMA/' +
+      'advisory-committee endpoints on the same router are NOT authoritative ' +
+      '(see docs/adr/0013).',
   },
 ];

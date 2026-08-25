@@ -189,3 +189,49 @@ describe('mapCps', () => {
     expect(mapCps(null)).toBeNull();
   });
 });
+
+/**
+ * A run must remember which template it ran.
+ *
+ * ── The defect ──────────────────────────────────────────────────────────────
+ * "Retry" (on a failed or cancelled run) and "Replay" (on a completed one) were
+ * both `noop` behind a disabled flag, on the surface whose header advertises
+ * runs as "versioned, pausable, replayable". The reason they could not be wired
+ * was here: `mapRuns` used `templateId` to TITLE the row and then dropped it, so
+ * no control had anything to name when starting the run again.
+ *
+ * The engine can start a run from a template (POST /api/orchestration/execute).
+ * It keeps no resumable state for a finished one — so Retry and Replay are a NEW
+ * run of the same template, which is what they now say and do, and Pause/Resume
+ * stay disabled with that stated rather than a generic "unwired".
+ */
+describe('mapRuns carries the template a run can be started from again', () => {
+  const exec = (over: Record<string, unknown> = {}) => ({
+    executionId: 'wf_1', templateId: 'ind_initial_filing', status: 'failed',
+    startedAt: '2026-08-01T10:00:00Z', progressPercent: 40,
+    requestedBy: { userName: 'R. Patel' }, steps: [{ stepId: 's1', name: 'Assemble', status: 'failed' }],
+    ...over,
+  });
+
+  it('keeps templateId on the display row', () => {
+    const rows = mapRuns({ workflows: [exec()] }, { ind_initial_filing: 'IND initial filing' });
+    expect(rows).not.toBeNull();
+    expect(rows![0].templateId).toBe('ind_initial_filing');
+    expect(rows![0].title).toBe('IND initial filing');
+  });
+
+  it('reports NO template rather than inventing one when the engine did not record it', () => {
+    // A run that cannot name its template cannot be started again, and the
+    // control says exactly that instead of failing on click.
+    for (const missing of [{ templateId: undefined }, { templateId: '' }]) {
+      const rows = mapRuns({ workflows: [exec(missing)] }, {});
+      expect(rows![0].templateId).toBeNull();
+    }
+  });
+
+  it('still titles a run whose template is not in the registry, without claiming a name', () => {
+    const rows = mapRuns({ workflows: [exec({ templateId: 'not_registered' })] }, {});
+    expect(rows![0].templateId).toBe('not_registered');
+    expect(rows![0].title).toBe('not registered');
+  });
+});

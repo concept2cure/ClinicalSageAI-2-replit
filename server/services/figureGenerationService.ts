@@ -14,6 +14,7 @@
  */
 
 import { pool } from '../db.js';
+import auditService from './auditService';
 import { recordArtifactProvenance } from './provenance/artifact-provenance';
 import crypto from 'crypto';
 import { ai } from '../lib/unified-ai-client';
@@ -579,16 +580,27 @@ function computeFigureConfidence(
 async function storeFigure(figure: FigureSpec, request: FigureGenerationRequest): Promise<void> {
   try {
     const figRes = await pool.query<{ id: number }>(
+      // Named `user_id` and `content_type`, neither of which this table has —
+      // they are created_by_id and type — and omitted artifact_id, type and
+      // category, all NOT NULL with no default. So every generated figure
+      // failed to store. Found by ci:insert-columns-declared.
+      //
+      // 'figure' was already the value being passed; it was simply going into a
+      // column that does not exist. `category` is 'visualization' from the
+      // table's own documented vocabulary (document | interactive |
+      // visualization), which is what a figure is.
       `INSERT INTO concept2cure_artifacts (
-        project_id, organization_id, user_id, title, content, content_type, status,
-        metadata, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW()) RETURNING id`,
+        artifact_id, project_id, organization_id, created_by_id, title, content,
+        content_hash, type, category, status, metadata, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'visualization', $9, $10, NOW(), NOW()) RETURNING id`,
       [
+        `artifact_${crypto.randomUUID()}`,
         request.projectId,
         request.organizationId,
         request.userId,
         figure.title,
         figure.generatedContent,
+        crypto.createHash('sha256').update(String(figure.generatedContent ?? '')).digest('hex'),
         'figure',
         'draft',
         JSON.stringify({
@@ -629,30 +641,24 @@ async function logFigureGeneration(
   figure: FigureSpec,
   durationMs: number
 ): Promise<void> {
-  try {
-    await pool.query(
-      `INSERT INTO audit_logs (user_id, organization_id, action, entity_type, entity_id, details, ip_address, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
-      [
-        request.userId,
-        request.organizationId,
-        'figure_generated',
-        'figure',
-        figure.id,
-        JSON.stringify({
-          figureType: figure.figureType,
-          generatedFormat: figure.generatedFormat,
-          sectionCode: figure.regulatoryContext,
-          confidence: figure.confidence,
-          durationMs,
-          model: figure.metadata.modelUsed,
-        }),
-        '0.0.0.0',
-      ]
-    );
-  } catch {
-    // Non-critical
-  }
+  // Chained via auditService — the previous raw INSERT named columns audit_logs
+  // does not have (organization_id / entity_type / entity_id / details), so it
+  // raised 42703 into a bare catch and recorded nothing.
+  await auditService.logAction({
+    organizationId: request.organizationId,
+    userId: request.userId,
+    action: 'figure_generated',
+    resourceType: 'figure',
+    resourceId: figure.id,
+    details: {
+      figureType: figure.figureType,
+      generatedFormat: figure.generatedFormat,
+      sectionCode: figure.regulatoryContext,
+      confidence: figure.confidence,
+      durationMs,
+      model: figure.metadata.modelUsed,
+    },
+  });
 }
 
 function buildPlaceholderFigure(

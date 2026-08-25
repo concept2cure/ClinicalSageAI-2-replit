@@ -50,7 +50,11 @@ const { apiRequest, ApiRequestError } = vi.hoisted(() => {
   }
   return { apiRequest: vi.fn(), ApiRequestError };
 });
-vi.mock('@/lib/queryClient', () => ({ apiRequest, ApiRequestError }));
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+  ApiRequestError,
+}));
 
 import { AuthProvider } from '@/services/portal/authService';
 import { SURFACE_VIEWS } from '../surfaceViews';

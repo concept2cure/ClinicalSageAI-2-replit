@@ -48,6 +48,14 @@ const PRODUCT_TYPE_TO_SEGMENT: Record<string, ClientSegmentType> = {
   // union rule means a combination-heavy org that also files drugs still
   // sees the pharma catalog via its other programs.
   combination: 'device',
+  // A companion diagnostic IS an in-vitro diagnostic, and software as a medical
+  // device IS a device. They are stored as their own product types because the
+  // platform routes them differently, but they belong to these segments — and
+  // an unmapped value is DROPPED here, which for a single-program org means an
+  // empty segment list and a vault that renders the CRO/TMF view. A regulated
+  // diagnostic shown the cross-sponsor service view is not a cosmetic slip.
+  cdx: 'ivd',
+  samd: 'device',
 };
 
 /**

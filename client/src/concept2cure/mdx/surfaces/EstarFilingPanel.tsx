@@ -12,6 +12,7 @@
 
 import * as React from 'react';
 import { useState } from 'react';
+import { EmptyState } from '../../v2/dataConnect';
 import {
   useEstarRegistration,
   useEstarSubmissions,
@@ -244,12 +245,30 @@ export function EstarFilingPanel() {
           </div>
         </div>
       </div>
-      {submissions && submissions.length > 0 && (
+      {submissions && submissions.length > 0 ? (
         <div className="pma-modules">
           {submissions.map((s) => (
             <SubmissionCard key={s.id} s={s} busy={busy === s.id} onAdvance={onAdvance} />
           ))}
         </div>
+      ) : (
+        !subLoading && (
+          /* An empty result rendered NOTHING — the whole body was conditioned on
+             having rows, so a program with no tracked filings got a header and
+             blank space, which reads as a surface that failed to draw rather
+             than one with nothing in it.
+             The panel states the precondition instead, because the only control
+             here ("Start tracking") is disabled exactly when this state shows:
+             tracking requires a filing-readiness assessment, and without one the
+             button cannot fire. Naming that is the honest substitute for a CTA
+             that would not work. */
+          <EmptyState
+            title="No tracked filings yet"
+            hint="Select a submission type and run a filing-readiness assessment; tracking becomes available once it has one."
+            regulation="Serves the eSTAR submission record (FDA 510(k) / De Novo)"
+            testId="estar-no-filings"
+          />
+        )
       )}
     </>
   );

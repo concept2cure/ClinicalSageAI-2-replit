@@ -2,7 +2,7 @@
  * @fileoverview eCTD Validator Hardening — DTD, sequence, MD5, study-id, regional
  * @module server/services/ectd/ectd-validator-hardening
  *
- * Bridges the existing structural validator (ectd4-validator.ts, ectdExportService.ts)
+ * Bridges the existing structural validator (ectd4-validator.ts, ectd-structural-validator.ts)
  * with the gateway-conformance checks that prevent rejection at the FDA ESG / EMA CESP /
  * PMDA gateway. Wraps the lightweight per-leaf validator with package-level rules:
  *

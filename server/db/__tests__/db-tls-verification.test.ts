@@ -81,6 +81,12 @@ describe('allowUnverifiedDbTls — the opt-out is explicit or it is off', () => 
 });
 
 describe('the two connection sites verify by default', () => {
+  // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
+  // -- `p` is never external input. This is a vitest-only helper and every call
+  // site below passes a hardcoded repo-relative literal (e.g.
+  // 'server/db/ensureCoreTables.ts'); the test reads its own repo's source to
+  // assert on the shape of the `ssl:` assignment. No request, argv, env or file
+  // content reaches this argument, and nothing here ships to a runtime.
   const read = (p: string) => fs.readFileSync(path.resolve(__dirname, '..', '..', '..', p), 'utf8');
 
   it('ensureCoreTables derives rejectUnauthorized from the predicate', () => {

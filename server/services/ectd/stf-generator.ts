@@ -4,7 +4,7 @@
  * Emits a real per-study `stf.xml` (FDA STF Specification v2.6.1) that tags the
  * M4/M5 study-report leaves of a study with their controlling study identifier
  * and file-tags. The audit found only a single `util/stf.xml` "submission
- * tracking" stub (`ectdExportService.ts`) — NOT a true per-study STF tree; this
+ * tracking" stub (the since-retired `ectdExportService.ts`) — NOT a true per-study STF tree; this
  * fills that gap.
  *
  * PURE + DETERMINISTIC: no DB, no filesystem, no network, no LLM. Consumes the

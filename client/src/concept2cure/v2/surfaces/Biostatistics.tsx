@@ -1,11 +1,13 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { connected, useLiveRows, EmptyState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { saveToAuthoring } from '../authoringHandoff';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ═══════════════════════════════════════════════════════════════════
    Biostatistics — a document-producing statistical workbench.
@@ -311,7 +313,7 @@ const BiostatEngine = (() => {
     dims.push({ name: 'Power adequacy', verdict: pv, score: Math.round(res.power * 100), flags: pv === 'adequate' ? [] : ['Achieved power below target'], rationale: `Achieved power ${(res.power * 100).toFixed(1)}% vs target ${(input.powerTarget * 100) | 0}%.` });
     dims.push({ name: 'Effect-size assumption', verdict: 'marginal', score: 60, flags: ['Single most sensitive input'], rationale: `Effect size ${input.effectSize} drives N; verify against prior evidence.` });
     const fv = res.adjustedTotal <= 300 ? 'adequate' : res.adjustedTotal <= 800 ? 'marginal' : 'inadequate';
-    dims.push({ name: 'Enrollment feasibility', verdict: fv, score: fv === 'adequate' ? 85 : fv === 'marginal' ? 60 : 35, flags: fv === 'inadequate' ? ['Large N -- feasibility risk'] : [], rationale: `${res.adjustedTotal} subjects after ${(input.attritionRate * 100) | 0}% attrition.` });
+    dims.push({ name: 'Enrollment feasibility', verdict: fv, score: fv === 'adequate' ? 85 : fv === 'marginal' ? 60 : 35, flags: fv === 'inadequate' ? ['Large N — feasibility risk'] : [], rationale: `${res.adjustedTotal} subjects after ${(input.attritionRate * 100) | 0}% attrition.` });
     let bp = input.effectSize; for (let f = 1; f > 0.5; f -= 0.01) { const r2 = compute({ ...input, effectSize: input.effectSize * f }); if (r2.sampleSize.total > res.sampleSize.total * 1.15) { bp = input.effectSize * f; break; } }
     const margin = Math.round((1 - bp / input.effectSize) * 100);
     const cat = margin >= 20 ? 'robust' : margin >= 12 ? 'moderate' : margin >= 6 ? 'fragile' : 'very_fragile';
@@ -323,11 +325,11 @@ const BiostatEngine = (() => {
       rationale: `${res.method} is appropriate for a ${input.endpointType} endpoint in a ${input.studyType} design; a covariate-adjusted model is recommended as the confirmatory analysis.`,
       alternatives: input.endpointType === 'time_to_event' ? ['Stratified log-rank', 'RMST difference'] : input.endpointType === 'binary' ? ['Cochran-Mantel-Haenszel', 'Fisher exact (small N)'] : ['MMRM (longitudinal)', 'Rank-based (non-normal)'] };
     const limitations: string[] = []; if (pv !== 'adequate') limitations.push('Achieved power is below the stated target at the current assumptions.');
-    if (cat === 'fragile' || cat === 'very_fragile') limitations.push('The design is sensitive to the assumed effect size -- small overestimation materially reduces power.');
+    if (cat === 'fragile' || cat === 'very_fragile') limitations.push('The design is sensitive to the assumed effect size — small overestimation materially reduces power.');
     if (!input.variance && input.endpointType === 'continuous') limitations.push('Variance was assumed rather than sourced from prior data.');
     if (fv === 'inadequate') limitations.push('Enrollment target is large; site capacity and timelines should be confirmed.');
-    const escalation: string[] = []; if (worst === 'inadequate') escalation.push('Design is underpowered at current assumptions -- revise before finalizing.');
-    if (cat === 'very_fragile') escalation.push('Very fragile to effect-size assumption -- add a blinded sample-size re-estimation.');
+    const escalation: string[] = []; if (worst === 'inadequate') escalation.push('Design is underpowered at current assumptions — revise before finalizing.');
+    if (cat === 'very_fragile') escalation.push('Very fragile to effect-size assumption — add a blinded sample-size re-estimation.');
     const conf = { level: worst === 'adequate' ? 'high' : worst === 'marginal' ? 'moderate' : 'low', score: worst === 'adequate' ? 86 : worst === 'marginal' ? 64 : 42, factors: ['Deterministic computation', 'Rule-backed judgment'], limitations };
     const nm = input.indication || 'the study';
     const roleExplanations: Record<string, string> = {
@@ -338,7 +340,7 @@ const BiostatEngine = (() => {
     };
     return { overallVerdict: worst, overallRisk: risk, actionRecommendation: action, confidence: conf, dimensions: dims, endpointMethodFit, roleExplanations, escalationReasons: escalation,
       fragility: { fragilityIndex: 100 - margin, category: cat, margin, sensitiveParameters: [{ parameter: 'effect_size', currentValue: input.effectSize, breakpointValue: Math.round(bp * 1000) / 1000, percentMargin: margin }],
-        narrative: `The design tolerates about a ${margin}% shrink in the assumed effect before the required N grows more than 15% to preserve power -- classified ${cat.replace('_', ' ')}.` } };
+        narrative: `The design tolerates about a ${margin}% shrink in the assumed effect before the required N grows more than 15% to preserve power — classified ${cat.replace('_', ' ')}.` } };
   }
   return { normCdf, normQuantile, compute, judge };
 })();
@@ -405,18 +407,18 @@ const BiostatDocs = (() => {
     s += `## Role-Specific Interpretations\n\n### For Clinical Team\n${j.roleExplanations.clinical}\n\n### For Regulatory Affairs\n${j.roleExplanations.regulatory}\n\n### For Biostatistics\n${j.roleExplanations.technical}\n\n`;
     return s + foot();
   };
-  const sapSection: GenFn = (i, c, j, _d, r) => { const n = c.adjustedTotal ?? c.sampleSize.total; let s = `# Statistical Analysis Plan -- Section Draft\n\n## 1. Study Objectives and Endpoints\n\n### Primary Objective\n${i.objectiveType} assessment using ${i.endpointType} endpoint.\n\n### Primary Endpoint\nType: ${i.endpointType}. Study type: ${i.studyType}.\n\n## 2. Study Design\n\n- Design: ${i.studyType}\n- Groups: ${i.numberOfGroups ?? 2}\n- Allocation ratio: ${i.allocationRatio}:1\n- Comparator: ${i.comparatorType ?? 'placebo'}\n\n## 3. Sample Size Determination\n\nA sample size of ${n} subjects (${c.sampleSize.perGroup} per group) provides ${(c.power * 100).toFixed(1)}% power to detect a ${i.effectSize} ${i.endpointType === 'binary' ? 'difference in proportions' : i.endpointType === 'time_to_event' ? 'hazard ratio reduction' : 'effect size'} at a two-sided significance level of ${i.alpha}.\n\n${c.formula}\n\nAn attrition rate of ${(i.attritionRate * 100).toFixed(0)}% is assumed, yielding an adjusted total of ${n} subjects.\n\n## 4. Statistical Methods\n\n### Primary Analysis\n${c.method}\n\n### Endpoint-Method Assessment\n${j.endpointMethodFit.rationale}\n\n### Alternative Methods\n`;
+  const sapSection: GenFn = (i, c, j, _d, r) => { const n = c.adjustedTotal ?? c.sampleSize.total; let s = `# Statistical Analysis Plan — Section Draft\n\n## 1. Study Objectives and Endpoints\n\n### Primary Objective\n${i.objectiveType} assessment using ${i.endpointType} endpoint.\n\n### Primary Endpoint\nType: ${i.endpointType}. Study type: ${i.studyType}.\n\n## 2. Study Design\n\n- Design: ${i.studyType}\n- Groups: ${i.numberOfGroups ?? 2}\n- Allocation ratio: ${i.allocationRatio}:1\n- Comparator: ${i.comparatorType ?? 'placebo'}\n\n## 3. Sample Size Determination\n\nA sample size of ${n} subjects (${c.sampleSize.perGroup} per group) provides ${(c.power * 100).toFixed(1)}% power to detect a ${i.effectSize} ${i.endpointType === 'binary' ? 'difference in proportions' : i.endpointType === 'time_to_event' ? 'hazard ratio reduction' : 'effect size'} at a two-sided significance level of ${i.alpha}.\n\n${c.formula}\n\nAn attrition rate of ${(i.attritionRate * 100).toFixed(0)}% is assumed, yielding an adjusted total of ${n} subjects.\n\n## 4. Statistical Methods\n\n### Primary Analysis\n${c.method}\n\n### Endpoint-Method Assessment\n${j.endpointMethodFit.rationale}\n\n### Alternative Methods\n`;
     for (const a of j.endpointMethodFit.alternatives) s += `- ${a}\n`;
     s += `\n## 5. Significance Level and Multiplicity\n\nTwo-sided significance level: a = ${i.alpha}.\n\n## 6. Estimand Framework\n\n${i.estimandStrategy ? `### Estimand Strategy: ${i.estimandStrategy}\n\nPer ICH E9(R1): population, variable (${i.endpointType}), intercurrent-event handling (${i.estimandStrategy}), summary measure.` : 'Estimand framework should be defined per ICH E9(R1) prior to study conduct.'}\n\n## 7. Missing Data Handling\n\n${i.missingDataMethod ? `Primary approach: ${i.missingDataMethod}.` : 'Pre-specify the missing-data method (MMRM for longitudinal; multiple imputation otherwise).'}\n\n## 8. Sensitivity Analyses\n\n- Tipping point analysis for missing data\n- ITT vs. PP concordance\n`;
     if (j.fragility.category !== 'robust') s += `- Effect-size sensitivity (fragility index ${j.fragility.fragilityIndex})\n`;
     return s + `\n` + foot();
   };
-  const fullSAP: GenFn = (i, c, j, _d, r) => { const n = c.adjustedTotal ?? c.sampleSize.total, body = (r && r.body) || i.regulatoryBody || 'FDA'; let s = `# Statistical Analysis Plan\n\n*${track(i.clientTrack)} -- ${i.studyType} -- ${i.objectiveType}*\n\n## 1. Introduction\n\nThis Statistical Analysis Plan (SAP) specifies the analyses for a ${i.studyType} study with a ${i.endpointType} primary endpoint. It is written to ${body} expectations and should be finalized and signed prior to database lock and unblinding.\n\n## 2. Study Objectives and Endpoints\n\n- **Primary objective**: ${i.objectiveType} evaluation via the ${i.endpointType} primary endpoint.\n- **Study type**: ${i.studyType}${i.nonInferiorityMargin ? ` (non-inferiority margin ${i.nonInferiorityMargin})` : ''}${i.equivalenceMargin ? ` (equivalence margin ${i.equivalenceMargin})` : ''}.\n\n## 3. Study Design\n\n- Design: ${i.studyType}\n- Number of groups: ${i.numberOfGroups ?? 2}\n- Allocation ratio: ${i.allocationRatio}:1\n- Comparator: ${i.comparatorType ?? 'placebo'}\n\n## 4. Analysis Populations\n\n- **Intention-to-treat (ITT)**: all randomized subjects, analyzed as randomized. Primary population for efficacy.\n- **Per-protocol (PP)**: subjects without major protocol deviations. ${i.studyType === 'non_inferiority' || i.studyType === 'equivalence' ? 'Co-primary for non-inferiority/equivalence per ICH E9.' : 'Supportive.'}\n- **Safety**: all subjects who received any study intervention, analyzed as treated.\n\n## 5. Sample Size Determination\n\nA total of **${n} subjects** (${c.sampleSize.perGroup} per group) provides **${(c.power * 100).toFixed(1)}% power** at a two-sided a = ${i.alpha} to detect the planned effect (${i.effectSize}).\n\n${c.formula}\n\nAssumed attrition: ${(i.attritionRate * 100).toFixed(0)}%.\n\n## 6. Primary Analysis Method\n\n${c.method}\n\n*Endpoint-method fit*: ${j.endpointMethodFit.rationale}\n\n## 7. Multiplicity\n\nSingle primary endpoint -- no multiplicity adjustment required for the primary comparison. Pre-specify a testing hierarchy for key secondary endpoints.\n\n## 8. Estimand (ICH E9(R1))\n\n${i.estimandStrategy ? `Strategy for intercurrent events: **${i.estimandStrategy}**. Define population, variable (${i.endpointType}), intercurrent-event handling, and population-level summary measure explicitly.` : 'Define the estimand (population, variable, intercurrent-event strategy, summary measure) before study conduct per ICH E9(R1).'}\n\n## 9. Missing Data\n\n${i.missingDataMethod ? `Primary approach: **${i.missingDataMethod}**, with a tipping-point sensitivity analysis.` : 'Pre-specify the missing-data approach (e.g. MMRM for longitudinal endpoints, multiple imputation otherwise) and a tipping-point sensitivity analysis.'}\n\n## 10. Sensitivity Analyses\n\n- Tipping-point analysis for missing-data assumptions\n- ITT vs PP concordance\n`;
+  const fullSAP: GenFn = (i, c, j, _d, r) => { const n = c.adjustedTotal ?? c.sampleSize.total, body = (r && r.body) || i.regulatoryBody || 'FDA'; let s = `# Statistical Analysis Plan\n\n*${track(i.clientTrack)} -- ${i.studyType} -- ${i.objectiveType}*\n\n## 1. Introduction\n\nThis Statistical Analysis Plan (SAP) specifies the analyses for a ${i.studyType} study with a ${i.endpointType} primary endpoint. It is written to ${body} expectations and should be finalized and signed prior to database lock and unblinding.\n\n## 2. Study Objectives and Endpoints\n\n- **Primary objective**: ${i.objectiveType} evaluation via the ${i.endpointType} primary endpoint.\n- **Study type**: ${i.studyType}${i.nonInferiorityMargin ? ` (non-inferiority margin ${i.nonInferiorityMargin})` : ''}${i.equivalenceMargin ? ` (equivalence margin ${i.equivalenceMargin})` : ''}.\n\n## 3. Study Design\n\n- Design: ${i.studyType}\n- Number of groups: ${i.numberOfGroups ?? 2}\n- Allocation ratio: ${i.allocationRatio}:1\n- Comparator: ${i.comparatorType ?? 'placebo'}\n\n## 4. Analysis Populations\n\n- **Intention-to-treat (ITT)**: all randomized subjects, analyzed as randomized. Primary population for efficacy.\n- **Per-protocol (PP)**: subjects without major protocol deviations. ${i.studyType === 'non_inferiority' || i.studyType === 'equivalence' ? 'Co-primary for non-inferiority/equivalence per ICH E9.' : 'Supportive.'}\n- **Safety**: all subjects who received any study intervention, analyzed as treated.\n\n## 5. Sample Size Determination\n\nA total of **${n} subjects** (${c.sampleSize.perGroup} per group) provides **${(c.power * 100).toFixed(1)}% power** at a two-sided a = ${i.alpha} to detect the planned effect (${i.effectSize}).\n\n${c.formula}\n\nAssumed attrition: ${(i.attritionRate * 100).toFixed(0)}%.\n\n## 6. Primary Analysis Method\n\n${c.method}\n\n*Endpoint-method fit*: ${j.endpointMethodFit.rationale}\n\n## 7. Multiplicity\n\nSingle primary endpoint — no multiplicity adjustment required for the primary comparison. Pre-specify a testing hierarchy for key secondary endpoints.\n\n## 8. Estimand (ICH E9(R1))\n\n${i.estimandStrategy ? `Strategy for intercurrent events: **${i.estimandStrategy}**. Define population, variable (${i.endpointType}), intercurrent-event handling, and population-level summary measure explicitly.` : 'Define the estimand (population, variable, intercurrent-event strategy, summary measure) before study conduct per ICH E9(R1).'}\n\n## 9. Missing Data\n\n${i.missingDataMethod ? `Primary approach: **${i.missingDataMethod}**, with a tipping-point sensitivity analysis.` : 'Pre-specify the missing-data approach (e.g. MMRM for longitudinal endpoints, multiple imputation otherwise) and a tipping-point sensitivity analysis.'}\n\n## 10. Sensitivity Analyses\n\n- Tipping-point analysis for missing-data assumptions\n- ITT vs PP concordance\n`;
     if (j.fragility.category !== 'robust') s += `- Effect-size sensitivity (fragility index ${j.fragility.fragilityIndex})\n`;
     s += `\n## 11. Interim Analyses\n\n${i.interimAnalyses && i.interimAnalyses > 0 ? `${i.interimAnalyses} planned interim ${i.interimAnalyses === 1 ? 'analysis' : 'analyses'} governed by a pre-specified alpha-spending function (e.g. O'Brien-Fleming). See the Interim Analysis Plan and DSMB Charter.` : 'No interim efficacy analyses planned. Safety monitoring per the DSMB charter, if applicable.'}\n\n## 12. Planned Outputs\n\nTables, listings and figures are specified in the TLF Shell Plan. Disposition, demographics, primary/secondary efficacy, and safety summaries are mandatory.\n\n`;
     return s + foot();
   };
-  const protocolSection: GenFn = (i, c, j, _d, _r) => { let s = `# Protocol -- Statistical Considerations\n\n## Statistical Hypotheses\n\n`;
+  const protocolSection: GenFn = (i, c, j, _d, _r) => { let s = `# Protocol — Statistical Considerations\n\n## Statistical Hypotheses\n\n`;
     if (i.studyType === 'superiority') s += `H0: No difference between treatment groups.\nH1: Treatment is superior to control.\n\n`;
     else if (i.studyType === 'non_inferiority') s += `H0: Treatment is inferior to control by more than the non-inferiority margin (${i.nonInferiorityMargin}).\nH1: Treatment is non-inferior to control.\n\n`;
     else if (i.studyType === 'equivalence') s += `H0: Treatment and control differ by more than the equivalence margin (+/-${i.equivalenceMargin}).\nH1: Treatment and control are equivalent.\n\n`;
@@ -436,25 +438,25 @@ const BiostatDocs = (() => {
     s += `| Final | 100% | +/-1.97 |\n\n*Boundaries are indicative; compute exact boundaries with the chosen spending function (Lan-DeMets) at finalization.*\n\n## 4. Stopping Rules\n\n- **Efficacy**: cross the upper boundary at an interim look.\n- **Futility**: non-binding boundary (e.g. conditional power < 20%).\n- **Safety**: per DSMB charter, independent of efficacy boundaries.\n\n## 5. Governance\n\nInterim analyses are performed by an unblinded independent statistician and reviewed by the DSMB. The sponsor remains blinded.${r ? ` ${r.body} expects pre-specification of all boundaries before the first look.` : ''}\n\n`;
     return s + foot();
   };
-  const tlfShell: GenFn = (i, c, _j, _d, _r) => { let s = `# Tables, Listings & Figures (TLF) Shell Plan\n\nPlanned outputs for a ${i.studyType} study (N = ${c.adjustedTotal ?? c.sampleSize.total}). Shells are organized by ICH E3 domain.\n\n## Tables\n\n| ID | Title | Population |\n|---|---|---|\n| 14.1.1 | Subject disposition | All randomized |\n| 14.1.2 | Protocol deviations | All randomized |\n| 14.1.3 | Demographics and baseline characteristics | ITT; Safety |\n| 14.2.1 | Primary endpoint (${i.endpointType}) analysis -- ${c.method} | ITT |\n| 14.2.2 | Primary endpoint -- PP sensitivity | PP |\n| 14.2.3 | Secondary endpoints | ITT |\n| 14.3.1 | Exposure | Safety |\n| 14.3.2 | Adverse events overview | Safety |\n| 14.3.3 | AEs by SOC/PT | Safety |\n| 14.3.4 | Serious adverse events | Safety |\n| 14.3.5 | Laboratory shifts | Safety |\n\n## Figures\n\n| ID | Title |\n|---|---|\n| F-1 | Subject disposition (CONSORT) |\n`;
+  const tlfShell: GenFn = (i, c, _j, _d, _r) => { let s = `# Tables, Listings & Figures (TLF) Shell Plan\n\nPlanned outputs for a ${i.studyType} study (N = ${c.adjustedTotal ?? c.sampleSize.total}). Shells are organized by ICH E3 domain.\n\n## Tables\n\n| ID | Title | Population |\n|---|---|---|\n| 14.1.1 | Subject disposition | All randomized |\n| 14.1.2 | Protocol deviations | All randomized |\n| 14.1.3 | Demographics and baseline characteristics | ITT; Safety |\n| 14.2.1 | Primary endpoint (${i.endpointType}) analysis -- ${c.method} | ITT |\n| 14.2.2 | Primary endpoint — PP sensitivity | PP |\n| 14.2.3 | Secondary endpoints | ITT |\n| 14.3.1 | Exposure | Safety |\n| 14.3.2 | Adverse events overview | Safety |\n| 14.3.3 | AEs by SOC/PT | Safety |\n| 14.3.4 | Serious adverse events | Safety |\n| 14.3.5 | Laboratory shifts | Safety |\n\n## Figures\n\n| ID | Title |\n|---|---|\n| F-1 | Subject disposition (CONSORT) |\n`;
     if (i.endpointType === 'time_to_event') s += `| F-2 | Kaplan-Meier curve, primary endpoint |\n`;
     s += `| F-3 | Primary endpoint by visit / forest plot of subgroups |\n\n## Listings\n\n| ID | Title |\n|---|---|\n| 16.2.1 | Subject disposition |\n| 16.2.4 | Protocol deviations |\n| 16.2.7 | Adverse events |\n\n`;
     return s + foot();
   };
-  const randomization: GenFn = (i, c, _j, _d, _r) => { const g = i.numberOfGroups ?? 2; let s = `# Randomization & Blinding Plan\n\n## 1. Allocation\n\nSubjects are randomized ${i.allocationRatio}:1 across ${g} arm${g === 1 ? '' : 's'} for this ${i.studyType} study (target N = ${c.adjustedTotal ?? c.sampleSize.total}).\n\n## 2. Method\n\nPermuted-block randomization with randomly varying block sizes is recommended to balance arms while protecting allocation concealment. ${i.studyType === 'single_arm' ? 'Single-arm study -- randomization not applicable; document enrollment order instead.' : 'Stratify by key prognostic factors (e.g. site, baseline severity) to control confounding.'}\n\n## 3. Allocation Concealment\n\nThe randomization list is generated by an independent statistician and held in a secure IWRS/IRT. Sites obtain assignments at the point of randomization only.\n\n## 4. Blinding\n\n${i.comparatorType === 'placebo' ? 'Double-blind: subjects, investigators, and outcome assessors are masked using matching placebo.' : 'Specify the blinding level (open-label, single-, or double-blind). Where blinding is infeasible, use blinded independent endpoint adjudication.'}\n\n## 5. Unblinding\n\nEmergency unblinding is available via the IWRS for medical necessity and is logged. Planned unblinding occurs only after database lock, except for DSMB closed sessions.\n\n`;
+  const randomization: GenFn = (i, c, _j, _d, _r) => { const g = i.numberOfGroups ?? 2; let s = `# Randomization & Blinding Plan\n\n## 1. Allocation\n\nSubjects are randomized ${i.allocationRatio}:1 across ${g} arm${g === 1 ? '' : 's'} for this ${i.studyType} study (target N = ${c.adjustedTotal ?? c.sampleSize.total}).\n\n## 2. Method\n\nPermuted-block randomization with randomly varying block sizes is recommended to balance arms while protecting allocation concealment. ${i.studyType === 'single_arm' ? 'Single-arm study — randomization not applicable; document enrollment order instead.' : 'Stratify by key prognostic factors (e.g. site, baseline severity) to control confounding.'}\n\n## 3. Allocation Concealment\n\nThe randomization list is generated by an independent statistician and held in a secure IWRS/IRT. Sites obtain assignments at the point of randomization only.\n\n## 4. Blinding\n\n${i.comparatorType === 'placebo' ? 'Double-blind: subjects, investigators, and outcome assessors are masked using matching placebo.' : 'Specify the blinding level (open-label, single-, or double-blind). Where blinding is infeasible, use blinded independent endpoint adjudication.'}\n\n## 5. Unblinding\n\nEmergency unblinding is available via the IWRS for medical necessity and is logged. Planned unblinding occurs only after database lock, except for DSMB closed sessions.\n\n`;
     return s + foot();
   };
 
   const REGISTRY: DocDef[] = [
-    { id: 'sample_size_rationale', label: 'Sample Size Rationale', group: 'Design', gen: sampleSizeRationale, blurb: 'The justification reviewers ask for -- method, assumptions, result, fragility.' },
-    { id: 'full_statistical_analysis_plan', label: 'Statistical Analysis Plan', group: 'Analysis', gen: fullSAP, blurb: 'The full SAP -- populations, sample size, methods, estimand, missing data, interims.' },
+    { id: 'sample_size_rationale', label: 'Sample Size Rationale', group: 'Design', gen: sampleSizeRationale, blurb: 'The justification reviewers ask for — method, assumptions, result, fragility.' },
+    { id: 'full_statistical_analysis_plan', label: 'Statistical Analysis Plan', group: 'Analysis', gen: fullSAP, blurb: 'The full SAP — populations, sample size, methods, estimand, missing data, interims.' },
     { id: 'sap_section_draft', label: 'SAP Section Draft', group: 'Analysis', gen: sapSection, blurb: 'A focused SAP section for the primary analysis.' },
     { id: 'protocol_statistical_section', label: 'Protocol Statistical Section', group: 'Design', gen: protocolSection, blurb: 'Hypotheses, sample size, primary analysis and populations for the protocol.' },
     { id: 'statistical_methods_section', label: 'CSR S9.7 Methods', group: 'Reporting', gen: csrMethods, blurb: 'ICH E3 S9.7 statistical methods for the clinical study report.' },
     { id: 'statistical_risk_memo', label: 'Statistical Risk Memo', group: 'Governance', gen: riskMemo, blurb: 'Executive risk read with role-specific interpretations and escalation items.' },
     { id: 'design_assumption_note', label: 'Design Assumption Note', group: 'Design', gen: (i, c, j, d, r) => sampleSizeRationale(i, c, j, d, r), blurb: 'Assumptions and their sensitivity, for the design file.' },
     { id: 'interim_analysis_plan', label: 'Interim Analysis Plan', group: 'Governance', gen: interimPlan, blurb: 'Timing, alpha spending, stopping rules and governance for interim looks.' },
-    { id: 'dsmb_charter', label: 'DSMB / DMC Charter', group: 'Governance', gen: dsmbCharter, blurb: 'Independent data monitoring charter -- membership, meetings, stopping guidance.' },
+    { id: 'dsmb_charter', label: 'DSMB / DMC Charter', group: 'Governance', gen: dsmbCharter, blurb: 'Independent data monitoring charter — membership, meetings, stopping guidance.' },
     { id: 'tlf_shell_plan', label: 'TLF Shell Plan', group: 'Reporting', gen: tlfShell, blurb: 'Tables, listings and figures shells by ICH E3 domain.' },
     { id: 'randomization_plan', label: 'Randomization & Blinding', group: 'Design', gen: randomization, blurb: 'Allocation, concealment, blinding and unblinding plan.' },
   ];
@@ -493,22 +495,6 @@ const BS_PRESETS: Record<string, Preset> = {
 function vf(v: string): number | undefined { return v === undefined || v === null || v === '' ? undefined : parseFloat(v); }
 
 /* ── Inline toast helper ── */
-
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 2400); };
-  return [msg, fire];
-}
-
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
-    </div>
-  );
-}
 
 /* ════ Biostatistics surface ════ */
 
@@ -580,10 +566,13 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
    */
   const openingRef = useRef(false);
   const [opening, setOpening] = useState(false);
+  const attachingRef = useRef(false);
+  const [attaching, setAttaching] = useState(false);
+
   const openEditor = async () => {
     if (openingRef.current) return; // a second click must not create a second document
     const title = docDef?.label || 'Statistical document';
-    if (!md.trim()) { fireToast('Nothing to open yet — the document has not been generated.'); return; }
+    if (!md.trim()) { fireToast('Nothing to open yet — the document has not been generated.', 'error'); return; }
     openingRef.current = true; setOpening(true);
     try {
       // Statistical documentation files under Module 5; the server would
@@ -595,24 +584,130 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       // Navigate only on a clean write. On a half-failure the document exists
       // but is empty, so going there would show the user an editor without
       // their work — stay put and say so.
-      if (!r.ok) { fireToast(r.message); return; }
+      if (!r.ok) { fireToast(r.message, 'error'); return; }
       if (onNav) onNav('document-authoring');
       else fireToast(r.message);
     } finally {
       openingRef.current = false; setOpening(false);
     }
   };
-  const attach = () => { fireToast((docDef?.label || 'Document') + ' attached to dossier'); ask('Attach the ' + (docDef?.label || 'document') + ' to the submission dossier statistical section'); };
+  /**
+   * Ask AnA to attach the document — which is what this control does, and now
+   * what it says.
+   *
+   * It used to fire `'<Label> attached to dossier'` with the default 'ok' tone,
+   * i.e. the green success tick, SYNCHRONOUSLY and BEFORE `ask(...)` was even
+   * called. At the instant that tick painted, not one byte had left the browser.
+   *
+   * And nothing was attached even after it did. `ask()` returns void — it
+   * streams a natural-language sentence into the AnA conversation. The real
+   * path, attachToDossier in
+   * server/services/ana-biostats/workflow-integrator.ts, needs an artifactId and
+   * a dossierSectionId. This control is only reachable once `res && jud &&
+   * docDef`, so the document is GENERATED — but generated is not saved: there is
+   * no artifactId until `openEditor` writes one through saveToAuthoring, and
+   * this surface has no dossier-section picker at all. So there is no success to
+   * report, and no failure path to report one from either.
+   *
+   * `openEditor`, directly above, is this file's own proof of the right pattern:
+   * it awaits the real write and refuses to navigate or announce on anything but
+   * a confirmed `r.ok`. This is the same rule applied to a control whose honest
+   * description is "a request was sent", not "it is done" — so the toast now
+   * follows `ask()` rather than preceding it, and says what AnA still has to do.
+   *
+   * The `!md.trim()` guard mirrors openEditor's and is belt-and-braces for the
+   * same reason its twin is: both controls live in one AnswerLead gated on
+   * `res && jud && docDef`, so it only bites if `docDef.gen()` returns empty.
+   */
+  const attach = async () => {
+    const label = docDef?.label || 'Document';
+    if (!md.trim()) {
+      fireToast('Nothing to attach yet — the document has not been generated.', 'error');
+      return;
+    }
+    if (attachingRef.current) return; // a second click must not file a second copy
+    attachingRef.current = true;
+    setAttaching(true);
+    try {
+      /* This used to hand the request to the conversation — `ask('Attach the
+         … to the submission dossier statistical section')` — and then toast
+         that an attachment had been "requested". `ask()` returns void: it
+         streams a sentence into the AnA panel. Nothing was filed, and the user
+         was left waiting for a confirmation that had no producer.
+
+         `saveToAuthoring` is the real filing path and the sibling button beside
+         this one already uses it: it POSTs /api/authoring/docs with
+         window.C2C_PROJECT.id as client_program_id, which is what binds the
+         document to the project's dossier, then writes the content. Same call,
+         same module (statistical documentation files under M5), same failure
+         reporting — the only difference from "Open in editor" is that this one
+         does not navigate away. */
+      const r = await saveToAuthoring({
+        title: label, module: 'M5', code: docDef?.id || 'statistical_document',
+        content: md, subject: 'the document',
+      });
+      if (!r.ok) { fireToast(r.message, 'error'); return; }
+      fireToast(label + ' filed to the dossier under Module 5 — open it from Document authoring.');
+    } finally {
+      attachingRef.current = false;
+      setAttaching(false);
+    }
+  };
   const groups = BiostatDocs.REGISTRY.reduce<Record<string, DocDef[]>>((m, d) => { (m[d.group] = m[d.group] || []).push(d); return m; }, {});
   const vTone = (v: string) => v === 'adequate' ? 'ok' : v === 'marginal' ? 'warn' : 'err';
+
+  /* WHAT ANA SEES HERE. The design engine is pure and in-browser, so its
+     numbers are always current; the govDocs read scopes ONLY the
+     persisted-documents claim — its error must never read as zero rows. When
+     the engine itself returns null the screen shows no n/power/verdict, so
+     none is published either. */
+  const anaContext = useMemo(() => {
+    const presetLabel = BS_PRESETS[preset]?.label ?? preset;
+    const gov = govDocs.loading
+      ? 'the governed statistical document list is still loading'
+      : govDocs.error
+        ? 'the governed statistical document list did not load, so the count of persisted documents is unknown'
+        : govDocs.empty
+          ? 'no governed statistical documents persisted yet'
+          : govDocs.rows.length + ' governed statistical document(s) persisted (org-scoped)';
+    const govFacts = !govDocs.loading && !govDocs.error ? { governedDocumentsPersisted: govDocs.rows.length } : {};
+    if (!res || !jud) {
+      return {
+        summary:
+          'Biostatistics — the design engine could not compute a result for the current inputs, so no sample size, power or verdict is on screen; ' + gov + '.',
+        facts: { documentType: docDef?.label ?? null, preset: presetLabel, designComputed: false, ...govFacts },
+      };
+    }
+    return {
+      summary:
+        'Biostatistics — a ' + (docDef?.label ?? 'statistical document') + ' drafted for a ' + input.studyType.replace(/_/g, ' ')
+        + ' design (' + presetLabel + ' preset): ' + n + ' subjects, ' + (res.power * 100).toFixed(0) + '% power, overall verdict '
+        + jud.overallVerdict + '; ' + gov + '.',
+      facts: {
+        documentType: docDef?.label ?? null,
+        preset: presetLabel,
+        subjectsN: n,
+        achievedPowerPct: Number((res.power * 100).toFixed(1)),
+        overallVerdict: jud.overallVerdict,
+        ...govFacts,
+      },
+      availableActions: [
+        'Adjust any design input or preset — the document rewrites deterministically',
+        'Pick a different statistical document type to generate',
+        'Refine the document with AnA',
+        'Opening in the editor and attaching to the dossier both file a real governed document (genesis revision + Part 11 audit row) — AnA proposes them in conversation, never through screen controls.',
+      ],
+    };
+  }, [res, jud, docDef, preset, input.studyType, n, govDocs.loading, govDocs.error, govDocs.empty, govDocs.rows]);
+  usePublishSurfaceContext('biostatistics', anaContext);
 
   return (
     <div className="bs">
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Specialist -- clinical -- /api/ana-biostats {live ? '-- live' : ''}</div>
+          <div className="sp-eyebrow">Specialist — clinical {live ? '-- live' : ''}</div>
           <h1 className="sp-title">Biostatistics</h1>
-          <p className="sp-state">Describe the study once -- AnA computes the design deterministically (ICH E9(R1)) and writes the governed statistical document you actually need to file.</p>
+          <p className="sp-state">Describe the study once — AnA computes the design deterministically (ICH E9(R1)) and writes the governed statistical document you actually need to file.</p>
         </div>
       </div>
 
@@ -621,9 +716,9 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           tone={jud.overallVerdict === 'inadequate' ? 'urgent' : jud.overallVerdict === 'adequate' ? 'good' : 'calm'}
           eyebrow={'Your ' + docDef.label.toLowerCase() + ' is ready to review'}
           headline={<>I've drafted the <b>{docDef.label}</b> for your {input.studyType.replace(/_/g, ' ')} design -- <b>{n} subjects</b>, {(res.power * 100).toFixed(0)}% power, and the design reads as <b>{jud.overallVerdict}</b>.</>}
-          body={<>Everything below is written, not just calculated -- the method, assumptions, and {jud.fragility.category.replace('_', ' ')} fragility are already in the prose, with a provenance footer for the reviewer. Change any design input and the document rewrites itself.</>}
-          reassure={jud.overallVerdict === 'inadequate' ? "I flagged the underpowering honestly in the risk section -- better the reviewer sees you addressed it than found it." : "It's drafted to " + (input.regulatoryBody || 'FDA') + " expectations. Read it, adjust, and send it straight to the editor."}
-          action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: 'Attach to dossier', onClick: attach } }}
+          body={<>Everything below is written, not just calculated — the method, assumptions, and {jud.fragility.category.replace('_', ' ')} fragility are already in the prose, with a provenance footer for the reviewer. Change any design input and the document rewrites itself.</>}
+          reassure={jud.overallVerdict === 'inadequate' ? "I flagged the underpowering honestly in the risk section — better the reviewer sees you addressed it than found it." : "It's drafted to " + (input.regulatoryBody || 'FDA') + " expectations. Read it, adjust, and send it straight to the editor."}
+          action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: attaching ? 'Filing to the dossier…' : 'File it to the dossier', onClick: () => void attach() } }}
           secondary="Or pick a different document and adjust the design on the left."
         />
       )}
@@ -679,7 +774,16 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         {/* Center: the DOCUMENT -- the deliverable */}
         <div className="bs-doc">
           <div className="bs-doc-bar">
-            <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{live ? '/api/ana-biostats' : 'Deterministic engine'} -- v1.0.0 -- draft</span></div>
+            <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{/* Provenance describes where THIS document came from, and that never
+                  varies: `md` is always BiostatDocs.gen() over BiostatEngine.compute(),
+                  both defined in this file and ported verbatim from
+                  server/services/ana-biostats/*. `live` is connected() — a global
+                  API-reachability flag that has no bearing on how the document was
+                  produced — so naming the service there stamped a browser-computed
+                  document with a server origin, on the one line a reviewer reads to
+                  find out exactly that. It also printed an API route into customer
+                  UI, which the work order forbids outright. */}
+                Deterministic engine -- v1.0.0 — draft</span></div>
             <div className="bs-doc-bar-a">
               <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ': ' + (docDef?.blurb || ''))}>{I.sparkles} Refine with AnA</button>
               <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
@@ -717,10 +821,25 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
               {govDocs.rows.map((p) => {
                 const def = p.doc ? BiostatDocs.byId(p.doc) : undefined;
                 return (
-                  <button key={p.id} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => { if (p.doc && BiostatDocs.byId(p.doc)) setDocType(p.doc); }}>
+                  /* `doc` is null whenever statisticalDocumentType was not
+                     recorded on the artifact — a condition this type declares as
+                     normal. The row was still a <button> in that case, so
+                     clicking a perfectly ordinary persisted document did
+                     nothing at all. It now says so: a row we cannot open is
+                     rendered as a row, disabled, with the reason in its title,
+                     rather than as a control that silently declines. */
+                  <button
+                    key={p.id}
+                    className="sp-row"
+                    style={{ width: '100%', textAlign: 'left' }}
+                    disabled={!def}
+                    title={def ? `Open the ${def.label} generator` : 'This document has no recorded statistical type, so there is no generator to open for it.'}
+                    onClick={() => { if (p.doc && def) setDocType(p.doc); }}
+                  >
                     <span className="sp-tag" style={{ fontFamily: 'var(--font-mono)' }}>{p.id}</span>
                     <span className="sp-row-b"><span className="sp-row-t">{p.study}</span><span className="sp-row-s">{p.endpoint ? p.endpoint + ' -- ' : ''}{def?.label || 'Statistical document'}</span></span>
                     <span className={'rd-chip tone-' + (p.status === 'approved' ? 'ok' : 'warn')}>{p.status}</span>
+                    {!def && <span className="sp-row-note">no recorded type</span>}
                   </button>
                 );
               })}

@@ -9,6 +9,7 @@
 
 import type { CSSProperties } from 'react';
 import { useCallback, useState } from 'react';
+import { ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '../../utils/authToken';
 
 export interface ChatAttachment {
@@ -138,12 +139,16 @@ export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload
         });
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
-          // The error body may be a string or a { code, message } object.
-          const errMsg =
-            typeof body?.error === 'string'
-              ? body.error
-              : body?.error?.message || body?.message || `Upload failed (${res.status})`;
-          throw new Error(errMsg);
+          // This read took `body.error` first whenever it was a string, so an
+          // envelope of { error: 'UNSUPPORTED_MEDIA_TYPE', message: '<a real
+          // sentence>' } put the literal token in the attachment chip. The
+          // envelope reader takes the sentence and refuses the token; the
+          // upload's own wording stays as the fallback.
+          throw new ApiRequestError(
+            serverMessage(body) ?? `Upload failed (${res.status})`,
+            res.status,
+            body,
+          );
         }
         const data = await res.json();
         const method: string | null = data.extractionMethod ?? null;
@@ -158,12 +163,13 @@ export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload
         const read = attachmentReadLabel(method, words);
         setStatusMessage(read ? `${file.name} ${read}` : `${file.name} uploaded`);
       } catch (err) {
+        // Only an ApiRequestError carries copy that has been through the
+        // envelope reader. Anything else reaching here is the fetch itself
+        // failing (offline, DNS, abort), whose native message is "Failed to
+        // fetch" / "Load failed" — not something to put in a chip.
+        const message = err instanceof ApiRequestError ? err.message : 'Upload failed';
         setAttachments((prev) =>
-          prev.map((a) =>
-            a.id === localId
-              ? { ...a, status: 'error', error: err instanceof Error ? err.message : 'Upload failed' }
-              : a,
-          ),
+          prev.map((a) => (a.id === localId ? { ...a, status: 'error', error: message } : a)),
         );
         setStatusMessage(`${file.name} failed to upload`);
       }

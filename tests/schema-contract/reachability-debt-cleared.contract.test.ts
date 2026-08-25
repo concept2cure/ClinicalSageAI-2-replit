@@ -113,11 +113,13 @@ describe('C-39: the _consolidated tree was extracted, not imported', () => {
   });
 
   it('supplies the columns its consumers actually query', () => {
-    // Provisioning alone would not have fixed these endpoints: cerGenerator
-    // selects templates.sections, and command-executor selects doc_sections.id —
+    // Provisioning alone would not have fixed these endpoints: at extraction
+    // time cerGenerator selected templates.sections (that consumer has since
+    // been deleted in the D11b dead-path purge — the column stays in the
+    // shipped migration), and command-executor selects doc_sections.id —
     // neither existed in the _consolidated definitions.
     const body = read(EXTRACTION);
-    expect(body, 'templates.sections is selected by cerGenerator.ts').toMatch(/sections\s+JSONB/i);
+    expect(body, 'templates.sections (historical consumer: the deleted cerGenerator.ts)').toMatch(/sections\s+JSONB/i);
     expect(body, 'doc_sections must key on id, not section_id').toMatch(
       /CREATE TABLE IF NOT EXISTS doc_sections \(\s*\n\s*id\s+UUID/i,
     );

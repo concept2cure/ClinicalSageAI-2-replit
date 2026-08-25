@@ -21,29 +21,20 @@
  * editable field (defaulting to the open program's id when numeric) rather than
  * guessed silently — with no valid package, the surface says so.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 interface Readiness { readinessScore: number; fragilityScore: number; weakZones: Array<Record<string, unknown>>; }
 interface Challenge { id: number | string; reviewerLens: string | null; challengeText: string; targetSection: string | null; severity: string | null; deficiencyLikelihood: string | number | null; suggestedResponse: string | null; suggestedArtifact: string | null; }
 interface DriftAlert { id: number | string; driftType: string | null; severity: string | null; description: string | null; suggestedFix: string | null; resolved: boolean; }
 interface ChangeImpact { id: number | string; changeType: string | null; impactSeverity: string | null; impactDescription: string | null; remediation: string | null; resolved: boolean; }
 interface NextArtifact { artifactType: string | null; rationale: string | null; priority: string | null; }
-
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const t = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fire = useCallback((m: string) => { setMsg(m); if (t.current) clearTimeout(t.current); t.current = setTimeout(() => setMsg(''), 4200); }, []);
-  return [msg, fire];
-}
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
-}
 
 /** Unwraps the {success,data} envelope; never throws. */
 async function readData<T = any>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<{ ok: boolean; status: number; data: T | null; raw: any }> {
@@ -113,7 +104,7 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
     setBusy('assess');
     try {
       const { ok, status, data } = await readData<any>('POST', `/api/submission-twin/assess/${pkg}`);
-      if (!ok) { fireToast(status === 401 ? 'Sign in to assess.' : `Assessment failed (HTTP ${status}).`); return; }
+      if (!ok) { fireToast(status === 401 ? 'Sign in to assess.' : `Assessment failed (HTTP ${status}).`, 'error'); return; }
       const aid = Number(data?.assessmentId ?? data?.id ?? data?.assessment?.id);
       if (Number.isInteger(aid) && aid > 0) setLastAssessmentId(aid);
       fireToast('Twin assessment complete.');
@@ -126,7 +117,7 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
     setBusy('drift');
     try {
       const { ok, status } = await readData('POST', `/api/submission-twin/drift/detect/${pkg}`);
-      if (!ok) { fireToast(status === 401 ? 'Sign in to detect drift.' : `Drift detection failed (HTTP ${status}).`); return; }
+      if (!ok) { fireToast(status === 401 ? 'Sign in to detect drift.' : `Drift detection failed (HTTP ${status}).`, 'error'); return; }
       fireToast('Narrative-drift scan complete.');
       void refreshAll(pkg);
     } finally { setBusy(null); }
@@ -137,7 +128,7 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
     setBusy('challenges');
     try {
       const { ok, status } = await readData('POST', `/api/submission-twin/challenges/simulate/${pkg}`, { assessmentId: lastAssessmentId });
-      if (!ok) { fireToast(status === 401 ? 'Sign in to simulate.' : `Challenge simulation failed (HTTP ${status}).`); return; }
+      if (!ok) { fireToast(status === 401 ? 'Sign in to simulate.' : `Challenge simulation failed (HTTP ${status}).`, 'error'); return; }
       fireToast('Reviewer-challenge simulation complete.');
       void refreshAll(pkg);
     } finally { setBusy(null); }
@@ -145,13 +136,92 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
 
   const resolveDrift = useCallback(async (alertId: number | string) => {
     const { ok } = await readData('POST', `/api/submission-twin/drift/${alertId}/resolve`);
-    if (ok && pkg != null) { fireToast('Drift alert resolved.'); void refreshAll(pkg); } else fireToast('Couldn’t resolve the drift alert.');
+    if (ok && pkg != null) { fireToast('Drift alert resolved.'); void refreshAll(pkg); } else fireToast('Couldn’t resolve the drift alert.', 'error');
   }, [pkg, refreshAll, fireToast]);
 
   const resolveImpact = useCallback(async (impactId: number | string) => {
     const { ok } = await readData('POST', `/api/submission-twin/change-impact/${impactId}/resolve`);
-    if (ok && pkg != null) { fireToast('Change impact resolved.'); void refreshAll(pkg); } else fireToast('Couldn’t resolve the change impact.');
+    if (ok && pkg != null) { fireToast('Change impact resolved.'); void refreshAll(pkg); } else fireToast('Couldn’t resolve the change impact.', 'error');
   }, [pkg, refreshAll, fireToast]);
+
+  /* What AnA can see of this screen.
+     NO PACKAGE LOADED is its own state: every panel is empty until an id is
+     entered, and reporting that as "no drift, no challenges" would be a
+     readiness statement about a submission nobody selected.
+
+     The reviewer challenges are SIMULATED — the surface's own button says so —
+     and they are labelled as such here, because an assistant repeating a
+     simulated reviewer deficiency as a real one manufactures agency feedback.
+     `lastAssessmentId` travels too: challenges can only be simulated after an
+     assessment has run, so their absence often means "no assessment yet"
+     rather than "no challenges found". */
+  const anaContext = React.useMemo(() => {
+    if (pkg == null) {
+      return {
+        summary:
+          'Submission Twin has no submission package loaded, so nothing on screen is populated — this is a ' +
+          'missing selection, not a clean twin.',
+        availableActions: ['Enter a submission package id and load it'],
+      };
+    }
+    if (readyState === 'loading' || readyState === 'idle') {
+      return { summary: `Submission Twin for package ${pkg}: the readiness model is still loading.`, facts: { packageId: pkg } };
+    }
+    if (readyState === 'error' || !readiness) {
+      return {
+        summary:
+          `Submission Twin for package ${pkg}: the readiness model could not be read, so no readiness or ` +
+          'fragility score is on screen — a failure, not a zero.',
+        facts: { packageId: pkg },
+        availableActions: ['Re-run the twin assessment'],
+      };
+    }
+    const openDrift = drift.filter((d) => !d.resolved);
+    const openImpacts = impacts.filter((i) => !i.resolved);
+    return {
+      summary:
+        `Submission Twin for package ${pkg}: readiness ${readiness.readinessScore}, fragility ` +
+        `${readiness.fragilityScore}, ${(readiness.weakZones ?? []).length} weak zone(s). ` +
+        `${openDrift.length} unresolved drift alert(s), ${openImpacts.length} unresolved change impact(s), ` +
+        `${challenges.length} SIMULATED reviewer challenge(s)` +
+        (lastAssessmentId == null ? ' (no assessment has been run in this session, so challenges cannot be simulated yet)' : '') +
+        '.',
+      facts: {
+        packageId: pkg,
+        readinessScore: readiness.readinessScore,
+        fragilityScore: readiness.fragilityScore,
+        weakZones: readiness.weakZones ?? [],
+        lastAssessmentId,
+        /* Simulated, not received. Never repeat these as agency feedback. */
+        simulatedReviewerChallenges: challenges.slice(0, 10).map((c) => ({
+          id: c.id, reviewerLens: c.reviewerLens, challenge: c.challengeText,
+          targetSection: c.targetSection, severity: c.severity,
+          deficiencyLikelihood: c.deficiencyLikelihood,
+          suggestedResponse: c.suggestedResponse, suggestedArtifact: c.suggestedArtifact,
+        })),
+        challengesAreSimulated: true,
+        driftAlerts: drift.slice(0, 10).map((d) => ({
+          id: d.id, type: d.driftType, severity: d.severity,
+          description: d.description, suggestedFix: d.suggestedFix, resolved: d.resolved,
+        })),
+        changeImpacts: impacts.slice(0, 10).map((i) => ({
+          id: i.id, changeType: i.changeType, severity: i.impactSeverity,
+          description: i.impactDescription, remediation: i.remediation, resolved: i.resolved,
+        })),
+        nextArtifact: nextArtifact
+          ? { type: nextArtifact.artifactType, rationale: nextArtifact.rationale, priority: nextArtifact.priority }
+          : null,
+      },
+      availableActions: [
+        'Run a twin assessment on the loaded package',
+        'Detect drift, and resolve a drift alert',
+        'Simulate reviewer challenges (requires an assessment first)',
+        'Resolve a change impact',
+        'Load a different submission package',
+      ],
+    };
+  }, [pkg, readyState, readiness, challenges, drift, impacts, nextArtifact, lastAssessmentId]);
+  usePublishSurfaceContext('submission-twin', anaContext);
 
   return (
     <div className="cm-body">
@@ -183,7 +253,7 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
             <div className="pj-card-h"><span className="t">Readiness &amp; fragility</span></div>
             <div className="pj-card-b">
               {readyState === 'loading' ? <EmptyState icon={I.zap} title="Loading twin intelligence…" />
-                : readyState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load readiness" hint="GET /api/submission-twin/readiness/:pkg didn’t respond. Confirm the package id and that you’re signed in." />
+                : readyState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load readiness" hint="Package readiness didn’t respond. Confirm the package id and that you’re signed in." />
                 : !readiness ? <EmptyState icon={I.layers} title="No assessment yet" hint="Run an assessment to compute readiness and fragility for this package." />
                 : (
                   <div>

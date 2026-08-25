@@ -23,28 +23,20 @@
  * surfaced as "requires a platform administrator"). The one-time token is shown
  * exactly once from the server's response and never persisted client-side.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 interface ScimTenant { id: number; organizationId: number; label: string | null; enabled: boolean; createdAt?: string; updatedAt?: string; }
 interface ScimRule { id: number; organizationId: number; cidr: string; label: string | null; enabled: boolean; }
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const t = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fire = useCallback((m: string) => { setMsg(m); if (t.current) clearTimeout(t.current); t.current = setTimeout(() => setMsg(''), 4200); }, []);
-  return [msg, fire];
-}
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
-}
 async function rawJson<T = any>(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<{ ok: boolean; status: number; body: T | null }> {
   try {
     const res = await apiRequest(method, path, body);
@@ -111,7 +103,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
     const { ok, status, body } = await rawJson<ScimTenant & { token?: string }>('POST', '/api/admin/scim-tenants', {
       organizationId: Number(v.organizationId), label: v.label || undefined,
     });
-    if (!ok || !body?.token) { fireToast(status === 400 ? 'Couldn’t issue — organizationId (integer) is required.' : `Couldn’t issue the token (HTTP ${status}).`); return; }
+    if (!ok || !body?.token) { fireToast(status === 400 ? 'Couldn’t issue — organizationId (integer) is required.' : `Couldn’t issue the token (HTTP ${status}).`, 'error'); return; }
     setDialog(null);
     setRevealed({ id: body.id, token: body.token });
     fireToast('SCIM token issued — copy it now; it will not be shown again.');
@@ -120,7 +112,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
 
   const rotate = useCallback(async (id: number) => {
     const { ok, status, body } = await rawJson<ScimTenant & { token?: string }>('POST', `/api/admin/scim-tenants/${id}/rotate`);
-    if (!ok || !body?.token) { fireToast(`Couldn’t rotate (HTTP ${status}).`); return; }
+    if (!ok || !body?.token) { fireToast(`Couldn’t rotate (HTTP ${status}).`, 'error'); return; }
     setRevealed({ id, token: body.token });
     fireToast('Token rotated — the previous token is now invalid. Copy the new one now.');
     void load();
@@ -128,14 +120,14 @@ export function IdentityConsole(_props: SurfaceViewProps) {
 
   const toggleTenant = useCallback(async (t: ScimTenant) => {
     const { ok, status } = await rawJson('PATCH', `/api/admin/scim-tenants/${t.id}`, { enabled: !t.enabled });
-    if (!ok) { fireToast(`Couldn’t update (HTTP ${status}).`); return; }
+    if (!ok) { fireToast(`Couldn’t update (HTTP ${status}).`, 'error'); return; }
     fireToast((t.enabled ? 'Disabled' : 'Enabled') + ' SCIM tenant #' + t.id + '.');
     void load();
   }, [load, fireToast]);
 
   const revoke = useCallback(async (id: number) => {
     const { ok, status } = await rawJson('DELETE', `/api/admin/scim-tenants/${id}`);
-    if (!ok) { fireToast(`Couldn’t revoke (HTTP ${status}).`); return; }
+    if (!ok) { fireToast(`Couldn’t revoke (HTTP ${status}).`, 'error'); return; }
     fireToast('SCIM tenant #' + id + ' revoked.');
     if (revealed?.id === id) setRevealed(null);
     void load();
@@ -145,7 +137,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
     const { ok, status, body } = await rawJson<ScimRule>('POST', '/api/admin/scim-ip-allowlist', {
       organizationId: Number(v.organizationId), cidr: v.cidr, label: v.label || undefined,
     });
-    if (!ok || !body?.id) { fireToast(status === 400 ? 'Couldn’t add — a valid organizationId and CIDR are required.' : `Couldn’t add the rule (HTTP ${status}).`); return; }
+    if (!ok || !body?.id) { fireToast(status === 400 ? 'Couldn’t add — a valid organizationId and CIDR are required.' : `Couldn’t add the rule (HTTP ${status}).`, 'error'); return; }
     setDialog(null);
     fireToast('Allowlist rule added · ' + body.cidr);
     void load();
@@ -154,9 +146,51 @@ export function IdentityConsole(_props: SurfaceViewProps) {
   const copy = useCallback((text: string, what: string) => {
     void navigator.clipboard?.writeText(text).then(
       () => fireToast(what + ' copied to the clipboard.'),
-      () => fireToast('Couldn’t copy — select and copy manually.'),
+      () => fireToast('Couldn’t copy — select and copy manually.', 'error'),
     );
   }, [fireToast]);
+
+  /* WHAT ANA SEES HERE. Above the forbidden early return — this is a hook, and
+     a hook below a conditional return runs on some renders and not others.
+     Counts and access state only: never the revealed token (a live SCIM bearer
+     credential — §11.10(d) keeps only its hash server-side), never rule CIDRs,
+     organization ids or tenant labels. Zero allowlist rules is published as
+     the count, not as "unrestricted". */
+  const anaContext = useMemo(() => {
+    if (tenantState === 'loading') {
+      return { summary: 'Enterprise identity is still loading; nothing on screen is final yet.', facts: { access: 'loading' } };
+    }
+    if (tenantState === 'forbidden') {
+      return {
+        summary:
+          'This account cannot administer enterprise identity — the SCIM token and allowlist directory requires the super_admin or platform_admin role, so nothing is listed.',
+        facts: { access: 'forbidden' },
+      };
+    }
+    if (tenantState === 'error') {
+      return {
+        summary:
+          'The SCIM tenant directory could not be read — a failed read, not an organization with no SCIM configuration.',
+        facts: { access: 'error' },
+      };
+    }
+    return {
+      summary:
+        `Enterprise identity: ${tenants.length} SCIM token(s) (${tenants.filter((t) => t.enabled).length} enabled), ` +
+        `${rules.length} allowlist rule(s), and the four SAML endpoints (metadata, initiate, callback, logout) listed.`,
+      facts: {
+        access: tenantState,
+        scimTenantCount: tenants.length,
+        scimTenantsEnabled: tenants.filter((t) => t.enabled).length,
+        allowlistRuleCount: rules.length,
+        aTokenWasJustRevealed: revealed !== null,
+      },
+      availableActions: [
+        'Issuing, rotating, disabling and revoking SCIM tokens and allowlist rules are platform-administrator acts performed on this screen',
+      ],
+    };
+  }, [tenantState, tenants, rules, revealed]);
+  usePublishSurfaceContext('identity-console', anaContext);
 
   if (tenantState === 'forbidden') {
     return (
@@ -192,7 +226,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
         </div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {tenantState === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.lock} title="Loading SCIM tenants…" /></div>
-            : tenantState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load SCIM tenants" hint="GET /api/admin/scim-tenants didn’t respond. Retry as a platform administrator." /></div>
+            : tenantState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load SCIM tenants" hint="The SCIM tenant directory didn’t respond. Retry as a platform administrator." /></div>
             : tenants.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.lock} title="No SCIM tokens issued" hint="Issue a bearer token and configure your identity provider (Okta, Entra, OneLogin) to provision users against /scim/v2." /></div>
             : <table className="reg-tbl"><thead><tr><th>Id</th><th>Organization</th><th>Label</th><th>Status</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
               <tbody>{tenants.map((t) => (
@@ -227,7 +261,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
 
       {/* SSO endpoints */}
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">SSO — SAML endpoints</span><span className="s">/api/auth/sso</span></div>
+        <div className="pj-card-h"><span className="t">SSO — SAML endpoints</span></div>
         <div className="pj-card-b">
           <div style={{ fontSize: 13, color: 'var(--c2c-dim,#667085)', marginBottom: 10 }}>
             These are the platform’s live SAML endpoints. Configure your identity provider against them; provider

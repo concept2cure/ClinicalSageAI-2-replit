@@ -1,24 +1,33 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { connected, useLiveData, EmptyState, hasKeys } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { sanitizeChatHtml } from '../../components/ana/renderSafeMarkdown';
+import { AuthoredHtml } from '../editor/AuthoredHtml';
 import '../styles/project-home-v2.css';
 
-/* ── Window globals -- runtime channels with no typed provider yet (kit
-   data-connect.jsx C2C_AUTHORING and the editor's __C2C_DOC_ID; GAP RULE:
-   the offline fallbacks below stay honest until those modules port) ── */
+/* ── There is exactly one way to produce a draft on this surface ────────────
+   POST /api/claude/batch, via run(). Two other paths used to exist beside
+   it and both are gone:
 
-declare global {
-  interface Window {
-    C2C_AUTHORING?: {
-      batchDraft: (opts: BatchDraftOpts) => Promise<void>;
-      saveSection: (opts: SaveSectionOpts) => Promise<void>;
-    };
-    __C2C_DOC_ID?: string | null;
-  }
-}
+   • window.C2C_AUTHORING.batchDraft — a runtime channel this repository never
+     assigns, so the branch that dispatched to it was unreachable in every
+     build. It carried a `sample: boolean` back into onSectionComplete, which
+     is the only thing that gave the fabrication below a second caller.
+   • bdSample() — a generator that invented regulatory prose ("structured per
+     FDA expectations… each substantive claim carrying a citation marker back
+     to locked source data [E1]") on a setTimeout whenever the drafting service
+     was unreachable, chip-labelled "Sample".
+
+   The label was not the problem. Inventing a citation marker to a source that
+   was never consulted is fixture data in a governed path, and an unreachable
+   drafting service has to read as unreachable — CLAUDE.md, "fail closed, never
+   fabricate… honest empty states". So the offline path now refuses to draft
+   and says why, instead of filling the review screen with prose nobody wrote.
+
+   With no producer of sample cards left, CardState carries no `sample` flag
+   and the accept() guard is one condition rather than two. */
 
 /* ── Inline fixture types ── */
 
@@ -69,15 +78,11 @@ interface CardState {
   html: string;
   model: string | null;
   latencyMs: number | null;
-  sample: boolean;
   /** Acceptance is CONFIRMED, not requested. Set only after the write this card
-   *  triggered came back successful (or, for a sample card, after it was staged
-   *  locally — `savedToDocument` is what separates the two). */
+   *  triggered came back successful. */
   accepted: boolean;
   /** An acceptance write is in flight; the button is disabled while true. */
   saving: boolean;
-  /** True only when the draft is in the document. False for a staged sample. */
-  savedToDocument: boolean;
   /** Version the replaced content was preserved as; null when the section was
    *  empty and there was nothing to preserve. */
   savedVersion: number | null;
@@ -94,33 +99,13 @@ function bdCard(partial: Partial<CardState> & Pick<CardState, 'state'>): CardSta
     html: '',
     model: null,
     latencyMs: null,
-    sample: false,
     accepted: false,
     saving: false,
-    savedToDocument: false,
     savedVersion: null,
     saveError: null,
     error: null,
     ...partial,
   };
-}
-
-interface BatchDraftOpts {
-  documentId: string | null;
-  tone: string;
-  sections: { key: string; label: string }[];
-  onSectionStart: (key: string) => void;
-  onSectionText: (key: string, full: string) => void;
-  onSectionComplete: (key: string, content: string, meta: { latencyMs?: number; model?: string; provider?: string } | null, sample: boolean) => void;
-  onSectionError: (key: string, msg: string) => void;
-}
-
-interface SaveSectionOpts {
-  documentId: string | null;
-  sectionKey: string;
-  content: string;
-  draftSource: string;
-  reason: string;
 }
 
 /* ── Helpers ── */
@@ -131,40 +116,6 @@ function bdFlatten(nodes: SpineNode[], out: LeafSection[]): LeafSection[] {
     else if (n.num && n.title) out.push(n as LeafSection);
   });
   return out;
-}
-
-/* FLAG (mock ACTION output): fabricated placeholder draft prose for the drafting
-   action's offline / "Sample" path (see run() and onSectionComplete). It is
-   honestly labeled "Sample" on the card and never presented as a real AnA draft;
-   kept until the drafting action is wired to the real streaming service in the
-   actions pass. */
-/**
- * Escape text before it is concatenated into an HTML string.
- *
- * bdSample builds HTML by string concatenation, so every interpolated value is
- * markup unless escaped. `sec.preview` comes from the API, which derives it
- * from stored TipTap document content — attacker-influenced text arriving in a
- * field that reads like a harmless summary. `sec.title` and `sec.num` are
- * likewise server data.
- */
-function bdEscape(s: unknown): string {
-  return String(s ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
-}
-
-function bdSample(sec: LeafSection, agency: string): string {
-  const seed = sec.preview || (sec.title + ' -- integrated summary.');
-  return '<h3>§' + bdEscape(sec.num) + ' -- ' + bdEscape(sec.title) + '</h3>'
-    + '<p>' + bdEscape(seed) + '</p>'
-    + '<p>This first draft is structured per ' + bdEscape(agency || 'FDA') + ' expectations for the section, '
-    + 'with each substantive claim carrying a citation marker back to locked source data '
-    + '<span class="stream-cite">[E1]</span>. Quantitative results are stated with their confidence '
-    + 'intervals and cross-referenced to the supporting study report. Benefit-risk language is kept '
-    + 'to what the current evidence supports; unreconciled items are flagged rather than asserted.</p>';
 }
 
 function bdWordCount(html: string): number {
@@ -184,19 +135,18 @@ const EMPTY_TREE: LeafSection[] = [];
    server/routes/batch-draft-routes.ts), shown as real data / honest empty /
    honest error — never the former ../fixtures/dossier-data spine.
 
-   Drafting is POST /api/claude/batch (runLive) and acceptance is
+   Drafting is POST /api/claude/batch (run) and acceptance is
    POST /api/batch-draft/documents/:id/accept (accept) — both real, both against
-   the identifiers this surface actually holds. The legacy
-   window.C2C_AUTHORING.batchDraft channel survives only as the offline sample
-   path, which is labelled Sample on every card and is never written to a
-   document. */
+   the identifiers this surface actually holds, and both the only implementation
+   of their capability here. When the drafting service is unreachable the
+   surface produces NOTHING and says so; there is no offline prose generator to
+   fall back to. */
 
 export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
   const seg = segment || 'biotech';
   const agency = seg === 'pharma' || seg === 'biotech'
     ? 'FDA'
     : (seg === 'medtech' || seg === 'diagnostics' ? 'FDA CDRH' : 'FDA');
-  const docId: string | null = (typeof window !== 'undefined' && (window as any).__C2C_DOC_ID) || null;
   /* Acceptance writes to the section's OWN document (leaf.id), so it no longer
      depends on a connected editor document. `canLive` now means exactly what
      the copy claims: the service is reachable, so drafting is real and an
@@ -316,7 +266,16 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
 
   const [phase, setPhase] = useState<'pick' | 'drafting' | 'review'>('pick');
   const [cards, setCards] = useState<Record<string, CardState>>({});
-  const startRef = useRef<Record<string, number>>({});
+  /* Which card is open for editing, if any. "Edit" used to navigate away to
+     document-authoring, which abandoned the draft on the card: the text lives
+     in `cards[id].html` until Accept POSTs it, and that surface has no idea it
+     exists. So the edit happens where the text is. */
+  const [editingCard, setEditingCard] = useState<string | null>(null);
+  /* Timers: the offline sample path used to schedule one per section plus a
+     final one that moved to 'review', and cancelling them on unmount was its
+     own bug fix (a pending timer firing into a torn-down jsdom killed a CI run
+     in which every test passed). That path is gone — nothing on this surface
+     is scheduled on a timer any more, so there is nothing left to leak. */
 
   const selList = todo.filter((s) => sel.has(s.id));
   // The service refuses more than 20 requests per batch; refuse it here with a
@@ -335,21 +294,13 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
   const doneCount = Object.values(cards).filter((c) => c.state === 'done').length;
   const acceptedCount = Object.values(cards).filter((c) => c.accepted).length;
 
-  /* fire the parallel draft.
-     FLAG (mock ACTION): drafting runs through the untyped runtime channel
-     window.C2C_AUTHORING.batchDraft (injected by the kit's data-connect; not
-     provided in this repo). When it is absent the `else` branch fabricates
-     "Sample" cards on a setTimeout (bdSample) — fake streaming, not a real
-     draft. A real drafting service exists (server ana batch-draft-sections);
-     wiring it is the actions pass — left intact and flagged, not half-wired. */
   /**
-   * Real batch drafting — POST /api/claude/batch.
+   * Batch drafting — POST /api/claude/batch. The only drafting path.
    *
-   * Until now this only ever produced sample cards. It dispatches through
-   * `window.C2C_AUTHORING.batchDraft`, a runtime channel this repo never
-   * provides, so the `else` branch below always ran: fabricated prose on a
-   * setTimeout. Honestly labelled "Sample", but it meant a headline authoring
-   * capability had never once produced a real draft.
+   * This is the whole of `run()` now. It used to be one of three branches: this
+   * one, a dispatch through `window.C2C_AUTHORING.batchDraft` (a runtime
+   * channel this repo never assigns, so it was dead in every build), and an
+   * offline fallback that fabricated prose on a setTimeout.
    *
    * The service is real and purpose-built — ana-intelligence.ts:360, "Batch
    * draft multiple document sections", capped at 20 requests with server-side
@@ -366,12 +317,18 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
    *
    * Inferring the framework from a UI preference would produce confident,
    * plausible regulatory prose written to the WRONG expectations — harder to
-   * catch than a blank card, and worse than the sample it replaces. So the
-   * framework is chosen explicitly and shown on screen before anything is
-   * spent. When the document does start carrying a filing type, that becomes
+   * catch than a blank card. So the framework is chosen explicitly and shown
+   * on screen before anything is spent. When the document does start carrying a filing type, that becomes
    * the default here and this picker becomes the override.
    */
-  const runLive = async () => {
+  const run = async () => {
+    /* Every condition that makes drafting impossible refuses here and produces
+       nothing. There is no second path to fall through to any more: when the
+       drafting service is unreachable this surface draws no cards, because a
+       card is a proposal and there is nothing to propose. The picker below
+       states each of these reasons before the button is pressed. */
+    if (!selList.length || overBatchCap || !connected() || !framework) return;
+
     const init: Record<string, CardState> = {};
     selList.forEach((s) => {
       init[s.id] = bdCard({ state: 'drafting' });
@@ -398,7 +355,11 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) {
-        const msg = (body as { error?: string } | null)?.error || 'Drafting failed (HTTP ' + res.status + ').';
+        // `body.error` was read first, so an envelope shaped
+        // { error: 'MODEL_UNAVAILABLE', message: '<a real sentence>' } put the enum
+        // token on every card. serverMessage prefers the sentence and refuses
+        // codes and infrastructure text; the domain fallback keeps the status.
+        const msg = serverMessage(body) ?? 'Drafting failed (HTTP ' + res.status + ').';
         setCards((c) => {
           const next = { ...c };
           selList.forEach((s) => { next[s.id] = { ...next[s.id], state: 'error', error: msg }; });
@@ -415,13 +376,19 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
         selList.forEach((s, i) => {
           const r = results[i];
           next[s.id] = r && r.content
-            ? { ...next[s.id], state: 'done', html: r.content, sample: false, model: r.model || 'AnA', latencyMs: r.latencyMs ?? (Date.now() - started) }
-            : { ...next[s.id], state: 'error', error: (r && r.error) || 'No draft returned for this section.' };
+            ? { ...next[s.id], state: 'done', html: r.content, model: r.model || 'AnA', latencyMs: r.latencyMs ?? (Date.now() - started) }
+            // The per-result `error` is server text too, so it goes through the
+            // same filter: a provider code or a driver message is not card copy.
+            : { ...next[s.id], state: 'error', error: serverMessage(r) ?? 'No draft returned for this section.' };
         });
         return next;
       });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Could not reach the drafting service.';
+      // Only ApiRequestError carries an already-reduced message; any other throw
+      // here is the browser's own "Failed to fetch", which the cards used to show.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const msg =
+        known && (e as Error).message ? (e as Error).message : 'Could not reach the drafting service.';
       setCards((c) => {
         const next = { ...c };
         selList.forEach((s) => { next[s.id] = { ...next[s.id], state: 'error', error: msg }; });
@@ -429,75 +396,6 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
       });
     } finally {
       setPhase('review');
-    }
-  };
-
-  const run = () => {
-    if (!selList.length) return;
-    // Real drafting whenever the service is reachable and a framework has been
-    // stated. Everything else still falls through to the labelled sample path.
-    if (connected() && framework) { void runLive(); return; }
-
-    const init: Record<string, CardState> = {};
-    selList.forEach((s) => {
-      init[s.id] = bdCard({ state: 'queued', sample: !canLive });
-    });
-    setCards(init);
-    setPhase('drafting');
-    startRef.current = {};
-
-    const authoring = (window as any).C2C_AUTHORING;
-    if (authoring && authoring.batchDraft) {
-      authoring.batchDraft({
-        documentId: docId,
-        tone: agency,
-        // `key` is the document id, matching the cards map — see initialSel.
-        sections: selList.map((s) => ({ key: s.id, label: s.title })),
-        onSectionStart: (key: string) => {
-          startRef.current[key] = Date.now();
-          setCards((c) => ({ ...c, [key]: { ...c[key], state: 'drafting' } }));
-        },
-        onSectionText: (key: string, full: string) => {
-          setCards((c) => ({ ...c, [key]: { ...c[key], state: 'drafting', html: full } }));
-        },
-        onSectionComplete: (key: string, content: string, meta: { latencyMs?: number; model?: string; provider?: string } | null, sample: boolean) => {
-          const started = startRef.current[key] || Date.now();
-          const sec = todo.find((s) => s.id === key) || { num: key, title: key };
-          const html = sample ? bdSample(sec as LeafSection, agency) : (content || '');
-          const lat = (meta && meta.latencyMs) || (Date.now() - started);
-          setCards((c) => ({
-            ...c,
-            [key]: {
-              ...c[key],
-              state: 'done',
-              html,
-              sample: !!sample,
-              model: (meta && (meta.model || meta.provider)) || (sample ? 'Sample' : 'AnA'),
-              latencyMs: lat,
-            },
-          }));
-        },
-        onSectionError: (key: string, msg: string) => {
-          setCards((c) => ({ ...c, [key]: { ...c[key], state: 'error', error: msg || 'Drafting failed' } }));
-        },
-      }).then(() => { setPhase('review'); });
-    } else {
-      /* Offline fallback: generate sample cards */
-      selList.forEach((s, idx) => {
-        setTimeout(() => {
-          setCards((c) => ({
-            ...c,
-            [s.id]: bdCard({
-              state: 'done',
-              html: bdSample(s as LeafSection, agency),
-              model: 'Sample',
-              latencyMs: 800 + idx * 200,
-              sample: true,
-            }),
-          }));
-        }, 300 + idx * 150);
-      });
-      setTimeout(() => { setPhase('review'); }, 300 + selList.length * 150 + 100);
     }
   };
 
@@ -515,10 +413,6 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
    * all in one transaction. The card is marked accepted ONLY when that returns
    * successfully; a failure says so on the card instead of quietly looking done.
    *
-   * A SAMPLE card is never sent. bdSample() output is fabricated placeholder
-   * prose; writing it into a regulated document would be the worst outcome this
-   * surface could produce, so sample cards stage locally and say so.
-   *
    * @param key coauthor_documents.id — the identifier the route takes.
    */
   const accept = async (key: string) => {
@@ -528,12 +422,29 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
     if (!sec) return;
     const label = '§' + sec.num + ' ' + sec.title;
 
-    if (card.sample || !connected()) {
-      setCards((c) => ({ ...c, [key]: { ...c[key], accepted: true, savedToDocument: false, saveError: null } }));
-      onAsk && onAsk(
-        'Staged the sample draft for ' + label + ' locally. It is placeholder prose, '
-        + 'so it is not written to the document — connect to the drafting service for a real draft.',
-      );
+    /* ── Fail-closed guard ───────────────────────────────────────────────────
+       Acceptance used to set `accepted: true` and tell the user the draft was
+       "staged locally" whenever it could not write. Nothing was staged:
+       `accepted` is a component boolean that disappears on navigation, so the
+       card read "accepted", the counter above it read "N accepted", and there
+       was nothing anywhere. `accepted` now means one thing — the write came
+       back successful — so the second flag that used to distinguish the two
+       meanings is gone with the state it distinguished.
+
+       There is no reachable state that renders an Accept control while
+       disconnected, so this is a guard rather than a path: it records WHY it
+       cannot proceed instead of marking the card accepted. */
+    if (!connected()) {
+      setCards((c) => ({
+        ...c,
+        [key]: {
+          ...c[key],
+          accepted: false,
+          saveError:
+            'you are not connected to the drafting service, so nothing can be written to the document. Sign in and accept ' +
+            label + ' again.',
+        },
+      }));
       return;
     }
 
@@ -547,7 +458,9 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
       const body = await res.json().catch(() => null);
       const payload = body as { success?: boolean; error?: string; data?: { supersededVersion?: number | null } } | null;
       if (!res.ok || !payload || payload.success !== true) {
-        const msg = payload?.error || 'Save failed (HTTP ' + res.status + ').';
+        // Same defect as the batch call above: `payload.error` won over the
+        // sentence beside it, so a refusal code reached the card's save banner.
+        const msg = serverMessage(body) ?? 'Save failed (HTTP ' + res.status + ').';
         setCards((c) => ({ ...c, [key]: { ...c[key], saving: false, saveError: msg } }));
         return;
       }
@@ -555,7 +468,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
       spineDirtyRef.current = true;
       setCards((c) => ({
         ...c,
-        [key]: { ...c[key], saving: false, accepted: true, savedToDocument: true, savedVersion: superseded, saveError: null },
+        [key]: { ...c[key], saving: false, accepted: true, savedVersion: superseded, saveError: null },
       }));
       onAsk && onAsk(
         'Saved the AnA draft for ' + label + ' into its document'
@@ -564,7 +477,9 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
           : ' (the section was empty, so nothing was superseded).'),
       );
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Could not reach the document service.';
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const msg =
+        known && (e as Error).message ? (e as Error).message : 'Could not reach the document service.';
       setCards((c) => ({ ...c, [key]: { ...c[key], saving: false, saveError: msg } }));
     }
   };
@@ -590,25 +505,21 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
   const lead = phase === 'pick'
     ? {
         h: todo.length
-          ? 'You have ' + todo.length + ' sections still to draft. I can draft ' + (selList.length || 'several') + ' of them at once -- each comes back as its own card you Accept, edit, or discard.'
+          ? 'You have ' + todo.length + ' sections still to draft. I can draft ' + (selList.length || 'several') + ' of them at once — each comes back as its own card you Accept, edit, or discard.'
           : 'Every section in this build already has a draft. Pick any to redraft and I will run them in parallel.',
-        b: 'Parallel drafting takes about as long as the slowest section, not the sum. Nothing is written to the dossier until you accept a card'
-          + (canLive
-            ? ' -- accepting writes it into that section’s document, keeps the content it replaced as a version, and records the change in the audit trail.'
-            : ' -- the drafting service is unreachable, so these will be labelled sample drafts and accepting only stages them locally.'),
+        b: canLive
+          ? 'Parallel drafting takes about as long as the slowest section, not the sum. Nothing is written to the dossier until you accept a card — accepting writes it into that section’s document, keeps the content it replaced as a version, and records the change in the audit trail.'
+          : 'The drafting service is unreachable, so nothing can be drafted here right now. Sign in and retry — no placeholder prose is produced in its place.',
       }
     : phase === 'drafting'
     ? {
         h: 'Drafting ' + selList.length + ' sections in parallel' + (modules.length ? ' across ' + modules.join(' + ') : '') + '...',
-        b: doneCount + ' done {I.dot} ' + draftingCount + ' drafting. Cards fill as each section lands -- review and accept them independently.',
+        b: doneCount + ' done {I.dot} ' + draftingCount + ' drafting. Cards fill as each section lands — review and accept them independently.',
       }
     : {
         h: doneCount + ' drafts are ready to review' + (acceptedCount ? ' · ' + acceptedCount + ' accepted' : '') + '.',
-        b: 'Each card is a proposal. '
-          + (canLive
-            ? 'Accept writes it into the section’s document and versions what it replaced; '
-            : 'Accept stages the sample locally — it is never written to a document; ')
-          + 'Edit opens it in the section editor; Discard drops it. '
+        b: 'Each card is a proposal. Accept writes it into the section’s document '
+          + 'and versions what it replaced; Edit opens it in the section editor; Discard drops it. '
           + (acceptedCount ? '' : 'Nothing has been written yet.'),
       };
 
@@ -618,13 +529,64 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
         <span className="bd-kicker">AnA {I.dot} parallel section drafting</span>
         {/* Reflects the drafting / accept ACTION mode (canLive = the service is
             reachable, so drafts are real and accepting writes them), NOT the
-            spine DATA, which is always the live /api/batch-draft/spine read. */}
-        <span className={'bd-src ' + (canLive ? 'live' : 'sample')}>{canLive ? 'Live · versioned on accept' : 'Preview mode'}</span>
+            spine DATA, which is always the live /api/batch-draft/spine read.
+
+            It used to read "Preview mode", which named a mode that produced
+            fabricated prose. There is no preview mode: unreachable is
+            unreachable, and the chip now says that. */}
+        <span className={'bd-src ' + (canLive ? 'live' : 'offline')}>{canLive ? 'Live · versioned on accept' : 'Drafting service unreachable'}</span>
       </div>
       <h1 className="bd-title">{(spine && spine.program) || 'Active dossier'}</h1>
       <div className="bd-sub">{spine && spine.standard ? spine.standard.toUpperCase() + ' · ' : ''}{agency} · batch_draft_sections</div>
     </div>
   );
+
+  /* WHAT ANA SEES HERE. Published above the four-state gate — hooks cannot sit
+     below a conditional return, and one publish must cover every branch.
+     Loading/error/empty publish as themselves: a failed spine read is a
+     failure, not an empty spine, and no count is published that the gated
+     screens do not show. */
+  const anaContext = useMemo(() => {
+    if (spineState.loading) {
+      return { summary: 'Batch draft — loading the document spine; nothing draftable is on screen yet.' };
+    }
+    if (spineState.error) {
+      return {
+        summary:
+          'Batch draft — the eCTD Co-Author document spine did not load, so no draftable sections are shown — a failure, not an empty spine.',
+      };
+    }
+    if (tree.length === 0) {
+      return { summary: 'Batch draft — no eCTD Co-Author documents in this workspace yet, so there is nothing to draft.' };
+    }
+    const base =
+      phase === 'review'
+        ? 'Batch draft (review) — ' + doneCount + ' draft(s) ready to review, ' + acceptedCount + ' accepted and written to their documents.'
+        : phase === 'drafting'
+          ? 'Batch draft (drafting) — ' + selList.length + ' section(s) drafting in parallel, ' + doneCount + ' returned so far.'
+          : 'Batch draft (pick) — ' + todo.length + ' draftable section(s), ' + selList.length + ' selected'
+            + (frameworkLabel ? ', drafting against ' + frameworkLabel : ', no framework chosen yet')
+            + (overBatchCap ? '; over the 20-per-batch cap' : '') + '.';
+    return {
+      // canLive false = the surface's own claim: nothing can be drafted right now.
+      summary: canLive ? base : base + ' The drafting service is unreachable, so nothing can be drafted right now.',
+      facts: {
+        draftableSections: todo.length,
+        selectedSections: selList.length,
+        overBatchCap,
+        framework: frameworkLabel || null,
+        phase,
+        draftingServiceReachable: canLive,
+        ...(phase === 'review' ? { draftsReady: doneCount, draftsAccepted: acceptedCount } : {}),
+      },
+      availableActions: [
+        'Pick up to 20 draftable sections and the regulatory framework they are drafted against',
+        'Review each returned draft card — edit or discard it before anything is written',
+        'Running a batch (spends drafting budget) and accepting a draft into a document (a versioned, audited write) are governed — AnA proposes them in conversation, never through screen controls.',
+      ],
+    };
+  }, [spineState.loading, spineState.error, tree, todo.length, selList.length, overBatchCap, frameworkLabel, phase, canLive, doneCount, acceptedCount]);
+  usePublishSurfaceContext('batch-draft', anaContext);
 
   // ── Four-state gate for the spine DATA (loading → error → empty → real) ──
   if (spineState.loading) {
@@ -643,7 +605,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the document spine"
-          hint="The organization's eCTD Co-Author documents didn't respond, so no draftable sections are shown rather than a sample dossier. Sign in and retry, or check the service is reachable."
+          hint="The organization's eCTD Co-Author documents didn't respond, so no draftable sections are shown rather than a stand-in dossier. Sign in and retry, or check the service is reachable."
         />
       </div>
     );
@@ -694,31 +656,36 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
                 <option value="">Framework…</option>
                 {FRAMEWORKS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
+              {/* Disabled when the service is unreachable, where it used to run
+                  the offline generator. A control that cannot do the thing it
+                  names is disabled with the reason stated beside it, not
+                  redirected to a different, invented thing. */}
               <button
                 className="bd-primary"
-                disabled={!selList.length || overBatchCap || (connected() && !framework)}
-                onClick={run}
+                disabled={!selList.length || overBatchCap || !canLive || !framework}
+                onClick={() => { void run(); }}
                 title={
                   overBatchCap ? 'Select 20 sections or fewer — the drafting service takes 20 per batch.'
-                    : connected() && !framework ? 'Choose the regulatory framework these sections are drafted against.'
-                      : undefined
+                    : !canLive ? 'The drafting service is unreachable, so no sections can be drafted.'
+                      : !framework ? 'Choose the regulatory framework these sections are drafted against.'
+                        : undefined
                 }
               >
                 {I.sparkles} Draft {selList.length} section{selList.length === 1 ? '' : 's'} in parallel
               </button>
             </div>
           </div>
-          {overBatchCap ? (
+          {!canLive ? (
+            <div className="bd-fw-note" role="alert">Not connected to the drafting service, so no sections can be drafted here. Sign in and retry — nothing is drafted in its place.</div>
+          ) : overBatchCap ? (
             <div className="bd-fw-note">Select 20 sections or fewer — the drafting service takes 20 per batch.</div>
-          ) : connected() && !framework ? (
+          ) : !framework ? (
             <div className="bd-fw-note">Choose a regulatory framework — the drafts are written to its expectations, and no accepted draft on these documents has recorded a filing type to carry forward.</div>
-          ) : connected() && framework ? (
+          ) : (
             <div className="bd-fw-note">
               Drafting {selList.length} section{selList.length === 1 ? '' : 's'} against <b>{frameworkLabel}</b> expectations
               {frameworkFromDocuments ? ' — carried forward from the last draft accepted on these documents. Change it if this filing is different.' : '.'}
             </div>
-          ) : (
-            <div className="bd-fw-note">Not connected to the drafting service — these will be labelled sample drafts, not AnA output.</div>
           )}
           <div className="bd-pick-list">
             {todo.map((s) => {
@@ -769,14 +736,13 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
         const lats = doneCards.map((c) => c.latencyMs).filter((v): v is number => v != null).sort((a, b) => a - b);
         const medianMs = lats.length ? lats[Math.floor(lats.length / 2)] : null;
         const totalWords = doneCards.reduce((s, c) => s + bdWordCount(c.html), 0);
-        const anySample = doneCards.some((c) => c.sample);
         return (
           <div className="bd-metrics">
             <span className="bd-metric"><b>{doneCount}</b> drafted</span>
             <span className="bd-metric"><b>{acceptedCount}</b> accepted {I.dot} <b>{doneCount - acceptedCount}</b> in review</span>
             {medianMs != null && <span className="bd-metric"><b>{medianMs >= 1000 ? (medianMs / 1000).toFixed(1) + 's' : medianMs + 'ms'}</b> median time to draft</span>}
             <span className="bd-metric"><b>{totalWords.toLocaleString()}</b> words proposed</span>
-            <span className="bd-metric-note">measured from this run{anySample ? ' · sample drafts' : ''}</span>
+            <span className="bd-metric-note">measured from this run</span>
           </div>
         );
       })()}
@@ -803,24 +769,45 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
                 ) : (
                   // c.html is server-stored / streamed document HTML, injected
                   // raw here until the 2026-07 audit. It reaches this sink from
-                  // two directions: the drafting stream's `content`, and
-                  // bdSample(), which interpolates a section preview the API
-                  // derives from stored TipTap content. Sanitized through the
+                  // the drafting service's `content` and the user's own edits
+                  // in the textarea below. Sanitized through the
                   // same DOMPurify allowlist the chat surface uses — the
-                  // allowlist keeps h3/p/span.stream-cite, so sample and live
-                  // drafts render unchanged.
-                  <div
-                    className="bd-card-body"
-                    dangerouslySetInnerHTML={{
-                      __html: sanitizeChatHtml(c.html) || '<p class="bd-ph">Waiting to start...</p>',
-                    }}
-                  />
+                  // allowlist keeps h3/p/span.stream-cite, so a drafted
+                  // section renders unchanged.
+                  editingCard === s.id ? (
+                    /* Edited as the HTML it is. Accept already sends
+                       `card.html` verbatim, so what is typed here is exactly
+                       what gets POSTed and snapshotted into
+                       coauthor_document_versions — no separate edit path, no
+                       second store, nothing lost between here and the write. */
+                    <textarea
+                      className="bd-card-body bd-card-edit"
+                      value={c.html}
+                      onChange={(e) =>
+                        setCards((prev) => ({ ...prev, [s.id]: { ...prev[s.id], html: e.target.value } }))
+                      }
+                      aria-label={`Edit the draft for ${s.title || s.num || s.id}`}
+                      data-testid="bd-card-edit"
+                    />
+                  ) : c.html ? (
+                    /* AuthoredHtml, not sanitizeChatHtml: a draft derived from
+                       stored TipTap content can carry a governed figure
+                       reference, and the chat allowlist strips it — the card
+                       would show a different draft from the one Accept posts.
+                       Same audited sanitiser module, authoring variant. */
+                    <AuthoredHtml className="bd-card-body" html={c.html} />
+                  ) : (
+                    <div
+                      className="bd-card-body"
+                      dangerouslySetInnerHTML={{ __html: '<p class="bd-ph">Waiting to start...</p>' }}
+                    />
+                  )
                 )}
 
                 {c.state === 'done' && (
                   <div className="bd-card-foot">
                     <div className="bd-card-meta">
-                      <span className={'bd-chip ' + (c.sample ? 'sample' : 'live')}>{c.sample ? 'Sample' : c.model}</span>
+                      <span className="bd-chip live">{c.model}</span>
                       {c.latencyMs != null && <span className="bd-chip">{(c.latencyMs / 1000).toFixed(1)}s</span>}
                       <span className="bd-chip">{bdWordCount(c.html)} words</span>
                     </div>
@@ -828,24 +815,47 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
                       <div className="bd-card-acts">
                         {c.saveError && <span className="bd-accepted-note err">Not saved — {c.saveError}</span>}
                         <button className="bd-ghost sm" disabled={c.saving} onClick={() => { discard(s.id); }}>Discard</button>
-                        <button className="bd-ghost sm" onClick={() => { onNav && onNav('document-authoring'); }}>Edit</button>
                         <button
-                          className="bd-primary sm"
-                          disabled={c.saving}
-                          onClick={() => { void accept(s.id); }}
-                          title={c.sample ? 'Sample prose is staged locally and never written to the document.' : undefined}
+                          className="bd-ghost sm"
+                          onClick={() => setEditingCard((cur) => (cur === s.id ? null : s.id))}
+                          data-testid="bd-card-edit-toggle"
                         >
-                          {c.saving ? 'Saving…' : c.saveError ? 'Retry save' : (canLive && !c.sample) ? 'Accept · save to document' : 'Accept'}
+                          {editingCard === s.id ? 'Done editing' : 'Edit'}
                         </button>
+                        {/* Accept is offered only when it can write. It used
+                            to be offered on a fabricated "Sample" card too,
+                            where it set `accepted: true` and reported the draft
+                            "staged locally" — `accepted` is a component boolean
+                            that disappears on navigation, so the card read
+                            "accepted", the counter above read "N accepted", and
+                            there was nothing anywhere. The control is removed rather than
+                            disabled, and the reason is visible text on the card
+                            rather than a title attribute a disabled button will
+                            not announce. */}
+                        {!canLive ? (
+                          <span className="bd-accepted-note">
+                            Not connected to the drafting service, so nothing can be written to the document.
+                          </span>
+                        ) : (
+                          <button
+                            className="bd-primary sm"
+                            disabled={c.saving}
+                            onClick={() => { void accept(s.id); }}
+                          >
+                            {c.saving ? 'Saving…' : c.saveError ? 'Retry save' : 'Accept · save to document'}
+                          </button>
+                        )}
                       </div>
                     ) : (
                       <div className="bd-card-acts">
                         <span className="bd-accepted-note">
-                          {c.savedToDocument
-                            ? (c.savedVersion != null
-                                ? 'Saved to the document · previous content kept as version ' + c.savedVersion
-                                : 'Saved to the document · the section was empty, nothing superseded')
-                            : 'Staged locally · sample prose is never written to a document'}
+                          {/* `accepted` is now set only after a confirmed
+                              write, so there is no third state to word: it
+                              used to read "Staged locally", which described
+                              nothing that had happened. */}
+                          {c.savedVersion != null
+                            ? 'Saved to the document · previous content kept as version ' + c.savedVersion
+                            : 'Saved to the document · the section was empty, nothing superseded'}
                         </span>
                       </div>
                     )}

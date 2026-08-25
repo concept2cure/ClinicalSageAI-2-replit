@@ -15,7 +15,6 @@
  */
 import React from 'react';
 import { I } from '../icons';
-import { EsignModal } from '../../_shared/components/EsignModal';
 
 export interface Finding {
   sev?: string;
@@ -137,12 +136,33 @@ export function CompletenessGate({
   );
 }
 
-/** Audit trail panel (right pane). */
+/**
+ * Audit trail panel (right pane).
+ *
+ * ── The fallback was a fabricated Part 11 record ────────────────────────────
+ * With no entries this rendered two invented ones — a person who does not
+ * exist ("J. Chen"), audit ids that trace to nothing (AUD-7743, AUD-7740) and
+ * truncated sha256 hashes — in a panel whose entire purpose is to show a
+ * tenant their tamper-evident audit history. A reader cannot tell an invented
+ * entry from a real one; that is what makes it worse than an empty panel.
+ *
+ * It fails closed now. No entries means no entries, said plainly. An audit
+ * trail that shows something when it has nothing is not an audit trail.
+ *
+ * (The org's REAL audit history is AdminSurfaces' AuditTrail over
+ * GET /api/mdx/audit. This panel takes entries a caller already holds.)
+ */
 export function AuditTrail({ entries }: { entries?: AuditEntry[] }) {
-  const list = entries && entries.length ? entries : [
-    { actor: 'AnA', action: 'Drafted §2.3 rationale', when: '2m ago', audit: 'AUD-7743', hash: 'sha256:1f9c…' },
-    { actor: 'J. Chen', action: 'Updated endpoint timing', when: '18m ago', audit: 'AUD-7740', hash: 'sha256:0b22…' },
-  ];
+  const list = entries ?? [];
+  if (list.length === 0) {
+    return (
+      <div className="pg-audit">
+        <div className="pg-audit-empty">
+          No audit entries have been recorded against this record yet.
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="pg-audit">
       {list.map((e, i) => (
@@ -163,7 +183,7 @@ export function AuditTrail({ entries }: { entries?: AuditEntry[] }) {
 }
 
 /* toast (audit-id confirmation) — vanilla DOM, called imperatively outside
-   React's render cycle (e.g. from GovernedActionDialog's onConfirm). */
+   React's render cycle (e.g. from a governed form's submit handler). */
 let toastHost: HTMLDivElement | null = null;
 export function toast(msg: string, audit?: string): void {
   if (typeof document === 'undefined') return;
@@ -202,7 +222,7 @@ export function toast(msg: string, audit?: string): void {
  *     export function nextAudit(): string { return 'AUD-' + auditSeq++; }
  *
  * A client-side counter that minted Part 11 audit identifiers out of thin air.
- * GovernedActionDialog called it on every confirm and toasted
+ * The retired GovernedActionDialog called it on every confirm and toasted
  * "<Action> recorded · AUD-9100" — behind a dialog whose stated basis is
  * "21 CFR Part 11 e-signature", while its caller's onConfirm was a literal
  * no-op. Nothing was recorded and the identifier referred to nothing.
@@ -223,41 +243,18 @@ export interface GovernedActionResult {
   audit?: string;
 }
 
-export interface GovernedActionDialogProps {
-  open: boolean;
-  title?: string;
-  intent?: string;
-  basis?: string;
-  esign?: boolean;
-  onClose: () => void;
-  onConfirm?: (result: GovernedActionResult) => void;
-}
+/* ── GovernedActionDialog is gone ────────────────────────────────────────────
+   It had exactly one mount, in ProtocolDev.tsx, with `onConfirm={() => {}}`.
+   A user completed the whole 21 CFR Part 11 ceremony — meaning, reason for
+   change, password re-auth — the dialog closed, and nothing was written and
+   nothing was audited. Its four callers (add objective, add eligibility
+   criterion, export, finalize) now POST to the governed routers that already
+   existed for each of them, through the same C2CForm the protocol registers
+   use. An e-signature affordance with nothing behind it is worse than no
+   affordance: it teaches people that signing means something here.
 
-/** Governed action dialog — delegates to the shared EsignModal, which supports
-    21 CFR Part 11 compliance (§11.50 meaning + reason-for-change with 8-char
-    floor, §11.100 identity, §11.200 password re-auth). The prior wrapper
-    delegated to a decorative in-repo modal with fabricated hash-chain visuals
-    and 1-char reason acceptance; that modal is retired.
-
-    It still does not toast "<Action> recorded" on confirm — announcing a
-    governed action is the caller's business, because only the caller knows
-    whether it persisted and only the caller has the server-issued audit id
-    to name. `onConfirm` now fires AFTER re-auth succeeds, i.e. it can be
-    trusted as a real intent signal. */
-export function GovernedActionDialog({ open, title, onClose, onConfirm }: GovernedActionDialogProps) {
-  return (
-    <EsignModal
-      open={open}
-      action={title || 'Confirm action'}
-      target={title || 'Governed action'}
-      onClose={onClose}
-      onSign={async ({ meaning, reason }) => {
-        onConfirm?.({ reason, signed: !!meaning });
-        return { meaning, reason, signedAt: new Date().toISOString() };
-      }}
-    />
-  );
-}
+   `GovernedActionResult` above stays — the shared EsignModal's own callers use
+   that shape. */
 
 /** Tiny reusable button used across the protocol / research-admin surfaces. */
 export function Btn({
@@ -279,6 +276,6 @@ export function Btn({
 if (typeof window !== 'undefined') {
   (window as any).PG = {
     Ic, StatusBadge, Citation, FindingsList, CompletenessGate, AuditTrail,
-    GovernedActionDialog, Btn, toast, labelize, SEV_TONE, STATUS_TONE,
+    Btn, toast, labelize, SEV_TONE, STATUS_TONE,
   };
 }

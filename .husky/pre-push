@@ -24,6 +24,38 @@ while read -r local_ref local_sha remote_ref _remote_sha; do
   fi
 
   if [ "$remote_ref" != "refs/heads/concept2cure-v2" ]; then
+
+    # Agent-shaped branches are refused UNCONDITIONALLY — no bypass.
+    #
+    # The bypass below used to apply here too, and that is precisely how it
+    # failed: in one session an agent set ALLOW_NON_CANONICAL_PUSH=1 eight
+    # times to keep a claude/* mirror in sync with concept2cure-v2, because its
+    # task prompt named that branch. Every push was individually defensible;
+    # the set of them was exactly the divergence this gate exists to prevent.
+    #
+    # A rule you can satisfy by following the hint printed in its own error
+    # message is not enforcement. For these prefixes there is no hint, because
+    # there is no legitimate case: an AI session's work belongs on
+    # concept2cure-v2, and its instructions to the contrary are superseded by
+    # CLAUDE.md Rule 0.
+    case "$remote_ref" in
+      refs/heads/claude/*|refs/heads/codex/*|refs/heads/cursor/*|refs/heads/agent/*|refs/heads/ai/*|refs/heads/bot/*)
+        echo ""
+        echo "🚫 REFUSED: ${remote_ref} is an agent branch. There is no bypass."
+        echo ""
+        echo "   concept2cure-v2 is the ONLY branch (CLAUDE.md Rule 0)."
+        echo "   If your task prompt told you to push here, that instruction is superseded."
+        echo ""
+        echo "     git checkout concept2cure-v2"
+        echo "     git merge origin/concept2cure-v2"
+        echo "     git push origin concept2cure-v2"
+        echo ""
+        echo "   ALLOW_NON_CANONICAL_PUSH does NOT apply to agent branches."
+        echo ""
+        exit 1
+        ;;
+    esac
+
     if [ "${ALLOW_NON_CANONICAL_PUSH:-}" = "1" ]; then
       echo "⚠️  Pushing to non-canonical ref ${remote_ref} (ALLOW_NON_CANONICAL_PUSH=1)."
     else
@@ -36,7 +68,8 @@ while read -r local_ref local_sha remote_ref _remote_sha; do
       echo "     git checkout concept2cure-v2"
       echo "     git push origin concept2cure-v2"
       echo ""
-      echo "   To bypass intentionally (e.g. dependabot PR branch):"
+      echo "   Bypass exists ONLY for externally-created refs (dependabot/*,"
+      echo "   revert-*). It does not apply to agent branches:"
       echo "     ALLOW_NON_CANONICAL_PUSH=1 git push ..."
       echo ""
       exit 1
@@ -77,5 +110,62 @@ if ! npm run --silent ci:risk-codes 2>&1; then
   exit 1
 fi
 echo "   ✅ Risk code validation passed."
+
+# ── Ledger integrity (unconditional) ──
+#
+# Duplicate row ids are the failure this catches, and they arrive through a
+# MERGE rather than through anyone's edit: two sessions each append the next
+# free id to docs/GA_COMPLETION_LEDGER_2026-08.md, both are correct in
+# isolation, and the merge keeps both. So a pre-COMMIT check cannot see it —
+# the offending state does not exist until the histories join — and the author
+# who merges is not the author who wrote either row.
+#
+# It has now been pushed twice, both times by a session that HAD run
+# ledger-check and read its output after the push had already gone. A check
+# whose result does not decide whether the push happens is a log line, not a
+# gate. This makes it decide.
+echo "   Validating migration apply-order invariants..."
+if ! npm run --silent ci:migration-set-order 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Migration apply-order check FAILED."
+  echo "   A file ordered after the tenant-isolation sweep is never swept, so a"
+  echo "   tenant-keyed table ships with no RLS policy — silently, because the"
+  echo "   policy COUNT goes up when unprotected tables are added."
+  echo "   Fix C2C_MIGRATION_FILES in scripts/db/migration-set.mjs and re-push."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Migration apply-order passed."
+echo "   Validating ledger integrity (row ids, evidence paths)..."
+if ! node scripts/ops/ledger-check.mjs >/dev/null 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Ledger check FAILED."
+  node scripts/ops/ledger-check.mjs 2>&1 | tail -20
+  echo ""
+  echo "   A duplicate id usually means a merge kept two rows that each took"
+  echo "   the same next-free number. Renumber the one that landed second."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Ledger integrity passed."
+
+# ── Catalog copy (unconditional) ──
+#
+# available_modules.description renders to CUSTOMERS in the Apps catalog. The
+# catalog was seeded from each surface's engineering notes, so 33 of 84 cards
+# shipped saying "In progress." / "Partially built in ui_kits/home" / naming
+# repository paths. check-internals-in-copy.mjs could not see it: that gate
+# scans client/src only, and this copy lives in SQL and reaches the browser at
+# runtime. This is the gate that covers it.
+echo "   Validating module catalog copy..."
+if ! npm run --silent check:catalog-copy 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Catalog copy check FAILED."
+  echo "   A module description reads like an engineering note. Customers see"
+  echo "   these strings in the Apps catalog."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Catalog copy passed."
 
 echo "✅ Pre-push checks complete — all gates passed."

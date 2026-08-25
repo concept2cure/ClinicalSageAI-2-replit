@@ -292,6 +292,7 @@ import {
   CREATE_CALENDAR_EVENT,
   SEARCH_REGULATORY_CORRESPONDENCE,
   SEARCH_LITERATURE,
+  RECORD_LITERATURE,
   SEARCH_IVD_KNOWLEDGE,
   PROJECT_KNOWLEDGE_SEARCH,
   RENDER_SIGNATURE_MANIFESTATION,
@@ -374,6 +375,7 @@ import {
   ASSESS_QMS,
   LIST_REGULATORY_CAPABILITIES,
   ASSESS_DISPATCH_READINESS,
+  PLACE_INTO_SEQUENCE,
 } from './submission-center-tool-defs.js';
 // QMS + labeling + search + analytics tool definitions extracted to their own module (tranche 7).
 import {
@@ -1720,7 +1722,10 @@ const AMEND_FDA_FORM: AnaTool = {
   }, required: ['formId', 'currentValues', 'changes', 'reasonForChange'] },
 };
 
-const ALL_ANA_TOOLS_RAW: AnaTool[] = [
+// Exported for the registry-consistency suite only: ALL_ANA_TOOLS is deduped,
+// so a duplicate-name assertion against it can never fail. Tests assert against
+// this pre-dedupe array to catch collisions at source.
+export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   LIST_FDA_FORMS,
   PREPARE_FDA_FORM,
   AMEND_FDA_FORM,
@@ -1759,6 +1764,7 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   ASSESS_TRIAL_FEASIBILITY,
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
+  RECORD_LITERATURE,
   SEARCH_MEDICARE_COVERAGE,
   SEARCH_CONNECTED_REPOSITORIES,
   SEARCH_REGULATORY_CORRESPONDENCE,
@@ -1918,6 +1924,7 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   ASSESS_QMS,
   LIST_REGULATORY_CAPABILITIES,
   ASSESS_DISPATCH_READINESS,
+  PLACE_INTO_SEQUENCE,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
   CREATE_CLINICAL_INVESTIGATOR,

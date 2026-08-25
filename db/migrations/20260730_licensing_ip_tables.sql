@@ -57,6 +57,13 @@ CREATE TABLE IF NOT EXISTS licenses (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Existing installations may have the older licenses shape. Converge the
+-- column used by the license-routes INSERT and client-workspace lookup before
+-- creating its index.
+ALTER TABLE licenses
+  ADD COLUMN IF NOT EXISTS client_id TEXT;
+
 CREATE INDEX IF NOT EXISTS licenses_org_status_idx ON licenses (organization_id, status);
 CREATE INDEX IF NOT EXISTS licenses_client_idx     ON licenses (client_id);
 
@@ -104,7 +111,7 @@ BEGIN
         CREATE POLICY tenant_isolation_policy ON %I USING (
           NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
           OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-          OR organization_id = NULLIF(current_setting('app.current_org_id', TRUE), '')::INT
+          OR organization_id = substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INT
           OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
         )$pol$, t);
     END IF;

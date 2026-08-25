@@ -17,6 +17,71 @@ export type SynthesisMethod =
   | 'bayesian_borrowing'
   | 'naive_pooling';
 
+/**
+ * What the regulatory package is allowed to CLAIM was done, given what the
+ * record shows was actually done.
+ *
+ * Split out of generateRegulatoryPackage as a pure function for one reason:
+ * this is the truthfulness decision, and it should be provable without a
+ * database standing in for itself. It takes the evidence as an argument and
+ * returns prose — no I/O, so its tests use no doubles.
+ *
+ * The distinction it exists to preserve: choosing method 'propensity_score'
+ * runs propensityScoreMatching(), which estimates no propensity scores and
+ * performs no matching or weighting on one. It returns sample-size-weighted
+ * pooling with baseline covariate MEANS attached for balance reporting. Only
+ * fitPropensityModel() estimates scores, and it records that by inserting a
+ * propensityModels row — so a fitted model is the evidence, and control.method
+ * is only the request.
+ */
+export interface SynthesisEvidence {
+  /** A propensityModels row exists for this control (fitPropensityModel ran). */
+  propensityModelFitted: boolean;
+}
+
+export function describeSynthesisMethod(
+  method: SynthesisMethod,
+  evidence: SynthesisEvidence,
+): string {
+  switch (method) {
+    case 'naive_pooling':
+      return 'Individual patient-level summary statistics from multiple historical control arms were combined using sample-size-weighted pooling. This method assumes exchangeability across studies.';
+    case 'ipw':
+      return 'Inverse probability weighting was applied to adjust for observed differences across historical control arms. Arm-level weights were computed as the inverse of the within-arm variance of the primary endpoint.';
+    case 'bayesian_borrowing':
+      return 'A Bayesian dynamic borrowing framework was employed, with the degree of borrowing from historical data determined by the commensurability between historical and current trial populations. Between-study heterogeneity (tau-squared) was estimated using the DerSimonian-Laird method.';
+    case 'propensity_score':
+      return evidence.propensityModelFitted
+        ? 'Propensity score methodology was used to construct a balanced external control arm. Propensity scores estimated the probability of belonging to the treatment population conditional on measured baseline covariates.'
+        : 'Requested synthesis method: propensity score. NO propensity model has been fitted for this external control, so no propensity scores were estimated and no matching or weighting on a propensity score was performed. The summary statistics reported here were produced by sample-size-weighted pooling of the source arms, with baseline covariate means reported for balance assessment only. Fit a propensity model and regenerate this package before relying on it.';
+    default:
+      return 'Method details not available.';
+  }
+}
+
+/**
+ * Limitations that follow from the method and the evidence, restated where a
+ * reviewer reading only the limitations section will still meet them. An
+ * unadjusted estimate described as propensity-score adjusted is exactly the
+ * claim a reviewer is looking for, so it must appear in both places.
+ */
+export function synthesisMethodLimitations(
+  method: SynthesisMethod,
+  evidence: SynthesisEvidence,
+): string[] {
+  if (method === 'naive_pooling') {
+    return [
+      'Naive pooling does not adjust for between-study heterogeneity. This may bias the estimated treatment effect if there are systematic differences across source studies.',
+    ];
+  }
+  if (method === 'propensity_score' && !evidence.propensityModelFitted) {
+    return [
+      'The synthesis method recorded for this external control is propensity score, but no propensity model has been fitted. The reported estimates are UNADJUSTED pooled statistics and must not be described, here or elsewhere, as propensity-score matched or weighted. Naive pooling also does not adjust for between-study heterogeneity.',
+    ];
+  }
+  return [];
+}
+
 export interface HistoricalArmSearchParams {
   indication: string;
   endpoint: string;
@@ -59,8 +124,105 @@ export interface CovariateBalanceEntry {
   covariate: string;
   treatmentMean: number;
   controlMean: number;
-  standardizedDifference: number;
+  /**
+   * Null when the covariate perfectly separates the arms — see
+   * `perfectlySeparating`. Zero would claim perfect balance for the one case
+   * where there is no overlap to balance.
+   */
+  standardizedDifference: number | null;
+  /**
+   * The covariate is constant within each arm at DIFFERENT values, so the pooled
+   * SD is zero and the standardized difference is unbounded rather than zero.
+   * There is nothing to adjust for because the arms do not overlap at all.
+   */
+  perfectlySeparating: boolean;
   balanced: boolean;
+}
+
+/**
+ * Covariate balance across source arms by standardized mean difference,
+ * extracted from the service so it can be proved without a database standing in
+ * for one — the same split this file already applies to `describeSynthesisMethod`
+ * and `synthesisMethodLimitations`. Covariates come from each arm's demographics
+ * JSON; the first half of the arms stands in for treatment and the second half
+ * for control. Pure and deterministic.
+ */
+export function assessCovariateBalanceOfArms(
+  sourceArms: Array<{ demographics?: unknown }>
+): CovariateBalanceEntry[] {
+  if (sourceArms.length < 2) return [];
+
+  // Collect all demographic keys across arms
+  const allKeys = new Set<string>();
+  for (const arm of sourceArms) {
+    const demo = (arm.demographics ?? {}) as Record<string, unknown>;
+    for (const key of Object.keys(demo)) {
+      if (typeof demo[key] === 'number') allKeys.add(key);
+    }
+  }
+
+  if (allKeys.size === 0) return [];
+
+  // Use the first half of arms as "treatment" proxy and second half as "control"
+  // (in practice, the actual treatment arm would be provided externally)
+  const midpoint = Math.ceil(sourceArms.length / 2);
+  const groupA = sourceArms.slice(0, midpoint);
+  const groupB = sourceArms.slice(midpoint);
+
+  const results: CovariateBalanceEntry[] = [];
+
+  for (const key of allKeys) {
+    const valsA = groupA
+      .map(a => ((a.demographics ?? {}) as Record<string, unknown>)[key])
+      .filter((v): v is number => typeof v === 'number');
+    const valsB = groupB
+      .map(a => ((a.demographics ?? {}) as Record<string, unknown>)[key])
+      .filter((v): v is number => typeof v === 'number');
+
+    if (valsA.length === 0 || valsB.length === 0) continue;
+
+    const meanA = valsA.reduce((s, v) => s + v, 0) / valsA.length;
+    const meanB = valsB.reduce((s, v) => s + v, 0) / valsB.length;
+
+    const varA = valsA.length > 1
+      ? valsA.reduce((s, v) => s + (v - meanA) ** 2, 0) / (valsA.length - 1)
+      : 0;
+    const varB = valsB.length > 1
+      ? valsB.reduce((s, v) => s + (v - meanB) ** 2, 0) / (valsB.length - 1)
+      : 0;
+
+    const pooledSd = Math.sqrt((varA + varB) / 2);
+    // A zero pooled SD with DIFFERENT means is a covariate that separates the
+    // arms completely, not one that agrees perfectly. Reporting SMD = 0 there
+    // (as this did) sent the maximum SMD to zero and could carry the whole
+    // diagnostics verdict to "good" on a covariate with no overlap at all.
+    const separates = pooledSd === 0 && meanA !== meanB;
+    const smd = separates ? null : pooledSd > 0 ? (meanA - meanB) / pooledSd : 0;
+
+    results.push({
+      covariate: key,
+      treatmentMean: Math.round(meanA * 1000) / 1000,
+      controlMean: Math.round(meanB * 1000) / 1000,
+      standardizedDifference: smd === null ? null : Math.round(smd * 1000) / 1000,
+      perfectlySeparating: separates,
+      balanced: smd !== null && Math.abs(smd) < 0.1,
+    });
+  }
+
+  return results;
+}
+
+/**
+ * Largest |standardized difference| among the covariates that have one. Null
+ * when there are no covariates, or when every one of them perfectly separates
+ * the arms and so has no finite value to contribute.
+ */
+function maxAbsStandardizedDifference(entries: CovariateBalanceEntry[]): number | null {
+  const finite = entries
+    .map(e => e.standardizedDifference)
+    .filter((v): v is number => v !== null)
+    .map(Math.abs);
+  return finite.length > 0 ? Math.max(...finite) : null;
 }
 
 export interface DiagnosticsResult {
@@ -687,15 +849,23 @@ export class ExternalControlArmService {
     }
 
     // ── Overall quality ──
-    const maxSmd = covariateBalance.length > 0
-      ? Math.max(...covariateBalance.map(c => Math.abs(c.standardizedDifference)))
-      : 0;
+    const finiteSmds = covariateBalance
+      .map(c => c.standardizedDifference)
+      .filter((v): v is number => v !== null)
+      .map(Math.abs);
+    const maxSmd = finiteSmds.length > 0 ? Math.max(...finiteSmds) : 0;
+    // A covariate with no overlap cannot enter a maximum, so it has to gate the
+    // verdict directly. Without this, a perfect separator contributes nothing to
+    // maxSmd and the package can still be labelled "good".
+    const anySeparating = covariateBalance.some(c => c.perfectlySeparating);
     const overallQuality: DiagnosticsResult['overallQuality'] =
-      maxSmd < 0.1 && eValue > 2 && overlapAssessment.overlapping
-        ? 'good'
-        : maxSmd < 0.25 && eValue > 1.5
-          ? 'moderate'
-          : 'poor';
+      anySeparating
+        ? 'poor'
+        : maxSmd < 0.1 && eValue > 2 && overlapAssessment.overlapping
+          ? 'good'
+          : maxSmd < 0.25 && eValue > 1.5
+            ? 'moderate'
+            : 'poor';
 
     const diagnostics: DiagnosticsResult = {
       covariateBalance,
@@ -726,62 +896,9 @@ export class ExternalControlArmService {
    */
   private assessCovariateBalance(
     sourceArms: any[],
-    synthData: Record<string, unknown>
+    _synthData: Record<string, unknown>
   ): CovariateBalanceEntry[] {
-    if (sourceArms.length < 2) return [];
-
-    // Collect all demographic keys across arms
-    const allKeys = new Set<string>();
-    for (const arm of sourceArms) {
-      const demo = (arm.demographics ?? {}) as Record<string, unknown>;
-      for (const key of Object.keys(demo)) {
-        if (typeof demo[key] === 'number') allKeys.add(key);
-      }
-    }
-
-    if (allKeys.size === 0) return [];
-
-    // Use the first half of arms as "treatment" proxy and second half as "control"
-    // (in practice, the actual treatment arm would be provided externally)
-    const midpoint = Math.ceil(sourceArms.length / 2);
-    const groupA = sourceArms.slice(0, midpoint);
-    const groupB = sourceArms.slice(midpoint);
-
-    const results: CovariateBalanceEntry[] = [];
-
-    for (const key of allKeys) {
-      const valsA = groupA
-        .map(a => ((a.demographics ?? {}) as Record<string, unknown>)[key])
-        .filter((v): v is number => typeof v === 'number');
-      const valsB = groupB
-        .map(a => ((a.demographics ?? {}) as Record<string, unknown>)[key])
-        .filter((v): v is number => typeof v === 'number');
-
-      if (valsA.length === 0 || valsB.length === 0) continue;
-
-      const meanA = valsA.reduce((s, v) => s + v, 0) / valsA.length;
-      const meanB = valsB.reduce((s, v) => s + v, 0) / valsB.length;
-
-      const varA = valsA.length > 1
-        ? valsA.reduce((s, v) => s + (v - meanA) ** 2, 0) / (valsA.length - 1)
-        : 0;
-      const varB = valsB.length > 1
-        ? valsB.reduce((s, v) => s + (v - meanB) ** 2, 0) / (valsB.length - 1)
-        : 0;
-
-      const pooledSd = Math.sqrt((varA + varB) / 2);
-      const smd = pooledSd > 0 ? (meanA - meanB) / pooledSd : 0;
-
-      results.push({
-        covariate: key,
-        treatmentMean: Math.round(meanA * 1000) / 1000,
-        controlMean: Math.round(meanB * 1000) / 1000,
-        standardizedDifference: Math.round(smd * 1000) / 1000,
-        balanced: Math.abs(smd) < 0.1,
-      });
-    }
-
-    return results;
+    return assessCovariateBalanceOfArms(sourceArms);
   }
 
   // ── 4. generateRegulatoryPackage ──────────────────────────────────
@@ -833,15 +950,34 @@ export class ExternalControlArmService {
 
     // ── Build the regulatory package ──
 
-    const methodDescriptions: Record<SynthesisMethod, string> = {
-      naive_pooling:
-        'Individual patient-level summary statistics from multiple historical control arms were combined using sample-size-weighted pooling. This method assumes exchangeability across studies.',
-      ipw:
-        'Inverse probability weighting was applied to adjust for observed differences across historical control arms. Arm-level weights were computed as the inverse of the within-arm variance of the primary endpoint.',
-      propensity_score:
-        'Propensity score methodology was used to construct a balanced external control arm. Propensity scores estimated the probability of belonging to the treatment population conditional on measured baseline covariates.',
-      bayesian_borrowing:
-        'A Bayesian dynamic borrowing framework was employed, with the degree of borrowing from historical data determined by the commensurability between historical and current trial populations. Between-study heterogeneity (tau-squared) was estimated using the DerSimonian-Laird method.',
+    // Was a propensity model actually fitted for this control?
+    //
+    // This has to be CHECKED, not assumed from control.method. Selecting
+    // 'propensity_score' runs propensityScoreMatching(), which computes no
+    // propensity scores and performs no matching: it returns naivePooling()
+    // with baseline covariate MEANS attached for balance reporting, and says so
+    // in its own `note` ("Initial synthesis. Call fitPropensityModel for full
+    // propensity-score adjustment."). Only fitPropensityModel() estimates
+    // scores, and it records what it did by inserting a propensityModels row.
+    //
+    // The prose below goes into `regulatoryJustification` — a persisted methods
+    // statement written in the past tense for an agency reader. Claiming that
+    // "propensity scores estimated the probability of belonging to the
+    // treatment population" when none were ever estimated is a false methods
+    // statement in a submission document, and the `note` that contradicted it
+    // sat two levels down in synthesisParameters where no reader would weigh it
+    // against the prose. So the claim is made conditional on the evidence.
+    const fittedPropensityModels = await database
+      .select({ id: propensityModels.id })
+      .from(propensityModels)
+      .where(
+        and(
+          eq(propensityModels.syntheticControlId, syntheticControlId),
+          eq(propensityModels.organizationId, organizationId)
+        )
+      );
+    const evidence: SynthesisEvidence = {
+      propensityModelFitted: fittedPropensityModels.length > 0,
     };
 
     const limitations: string[] = [
@@ -856,11 +992,9 @@ export class ExternalControlArmService {
       );
     }
 
-    if (control.method === 'naive_pooling') {
-      limitations.push(
-        'Naive pooling does not adjust for between-study heterogeneity. This may bias the estimated treatment effect if there are systematic differences across source studies.'
-      );
-    }
+    limitations.push(
+      ...synthesisMethodLimitations(control.method as SynthesisMethod, evidence),
+    );
 
     const regulatoryPackage = {
       title: `External Control Arm: ${control.name}`,
@@ -872,7 +1006,7 @@ export class ExternalControlArmService {
       executiveSummary: `An external control arm was constructed for the indication "${control.indication}" using ${sourceArms.length} historical arm(s) and the "${control.method}" synthesis method. The resulting control includes an effective sample size of ${(synthData.effectiveN ?? synthData.totalN ?? 'N/A')} patients. Diagnostics indicate ${diagnostics.overallQuality} overall quality.`,
 
       methodsJustification: {
-        approach: methodDescriptions[control.method as SynthesisMethod] ?? 'Method details not available.',
+        approach: describeSynthesisMethod(control.method as SynthesisMethod, evidence),
         sourceSummary: sourceArms.map(a => ({
           armId: a.id,
           trialId: a.trialId,
@@ -886,13 +1020,10 @@ export class ExternalControlArmService {
 
       diagnosticsSummary: {
         covariateBalance: diagnostics.covariateBalance,
-        maxStandardizedDifference: diagnostics.covariateBalance.length > 0
-          ? Math.max(
-              ...diagnostics.covariateBalance.map(c =>
-                Math.abs(c.standardizedDifference)
-              )
-            )
-          : null,
+        maxStandardizedDifference: maxAbsStandardizedDifference(diagnostics.covariateBalance),
+        separatingCovariates: diagnostics.covariateBalance
+          .filter(c => c.perfectlySeparating)
+          .map(c => c.covariate),
         allCovariatesBalanced: diagnostics.covariateBalance.every(c => c.balanced),
         eValue: diagnostics.eValue,
         eValueInterpretation: `An unmeasured confounder would need to be associated with both treatment and outcome by a risk ratio of at least ${diagnostics.eValue} to fully explain the observed effect.`,

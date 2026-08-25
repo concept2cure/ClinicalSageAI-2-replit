@@ -12,15 +12,15 @@
  * (`server/services/ai-gateway/`). No direct OpenAI/Anthropic SDK
  * instantiation is allowed in this surface or its submodules.
  *
- * - `POST /api/ana-ri/chat` (./ana-ri/chat.ts) — calls processResponseActions
- *   on the assistant reply so AnA-emitted action blocks (artifact create,
- *   amend, link, etc.) execute through the governed contract pipeline.
+ * - `POST /api/ana-ri/stream` (./ana-ri/stream.ts) — SSE token streaming, and
+ *   the route that calls processResponseActions on the assistant reply so
+ *   AnA-emitted action blocks (artifact create, amend, link, etc.) execute
+ *   through the governed contract pipeline, via
+ *   ../services/ana-ri/post-processing.ts.
  * - `POST /api/ana-ri/generate` (./ana-ri/generate-execute.ts) — generates
  *   regulatory content through the AI gateway and persists the result as a
  *   governed artifact in `draft` status (lifecycleStatus: 'draft'). Promotion
  *   to `review` / `approved` / `locked` happens via authoring-actions.
- * - `POST /api/ana-ri/stream` (./ana-ri/stream.ts) — same gateway path with
- *   SSE token streaming.
  *
  * If you split a new handler out of this file, the literals `gateway`,
  * `draft`, and `processResponseActions` must remain present in this file's
@@ -28,7 +28,6 @@
  * still detects governance.
  *
  * Surface (unchanged by the split):
- *   POST /api/ana-ri/chat              → ./ana-ri/chat.ts
  *   POST /api/ana-ri/stream            → ./ana-ri/stream.ts
  *   POST /api/ana-ri/plan + /plan/*    → ./ana-ri/plan.ts
  *   GET  /api/ana-ri/kernel/*          → ./ana-ri/kernel.ts
@@ -53,7 +52,6 @@
 
 import { Router } from 'express';
 
-import { mountChatRoute } from './ana-ri/chat.js';
 import { mountStreamRoute } from './ana-ri/stream.js';
 import { mountPlanRoutes } from './ana-ri/plan.js';
 import { mountKernelRoutes } from './ana-ri/kernel.js';
@@ -68,7 +66,6 @@ const router = Router();
 // Mount order is by surface size, not correctness — Express routes are matched
 // in registration order but these paths don't overlap, so ordering is purely
 // organisational.
-mountChatRoute(router);
 mountStreamRoute(router);
 mountPlanRoutes(router);
 mountKernelRoutes(router);

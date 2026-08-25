@@ -34,10 +34,13 @@ import { citext } from '@electric-sql/pglite/contrib/citext';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { C2C_MIGRATION_FILES } from '../../scripts/db/migration-set.mjs';
+import { C2C_MIGRATION_FILES, TENANT_ISOLATION_SWEEP } from '../../scripts/db/migration-set.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const SWEEP = 'db/migrations/20260801_tenant_isolation_sweep.sql';
+// Imported, not re-typed: the same string used to be hardcoded in four places,
+// so the invariant had four copies and no definition. It lives next to the list
+// it constrains, and scripts/ci/check-migration-set-order.mjs reads the same one.
+const SWEEP = TENANT_ISOLATION_SWEEP;
 const BATCH_START = 'db/migrations/022_stability_v2.sql';
 const T = 180_000;
 
@@ -76,6 +79,11 @@ async function baseSchemaFixture(): Promise<PGlite> {
   for (const m of journal.matchAll(/CREATE TABLE "([a-z0-9_]+)" \([\s\S]*?\n\);/g)) {
     await safe(m[0].replace('CREATE TABLE ', 'CREATE TABLE IF NOT EXISTS '));
   }
+  // regulatory_programs is a BASE_SCHEMA_SENTINELS entry: deploy-migrate's
+  // preflight REFUSES to run the set unless it exists (it comes from the raw
+  // overlay, not the journal). The D11d IVDR entries FK it, so the fixture
+  // must present it the way a real deploy does.
+  await safe(readMig('migrations/20260524_program_workbench_schema.sql'));
   return pg;
 }
 
@@ -207,6 +215,9 @@ describe('C-33: the batch applies in set order, twice, and ends fully isolated',
       'db/migrations/20260207_phase6_6a_fda_clearance_universe.sql',
       'db/migrations/20260306_precedent_engine.sql',
       'db/migrations/20260208_phase6_6a_risk_rollups.sql', // reads the first file's tables
+      // adds a vector(1536) column to conversation_working_memory; the rest of
+      // that table ships pgvector-free in 20260820, which IS applied here
+      'migrations/20260602_working_memory_embeddings.sql',
     ]);
     const batch = C2C_MIGRATION_FILES.slice(C2C_MIGRATION_FILES.indexOf(BATCH_START)).filter(
       (rel: string) => !PGVECTOR_DEPENDENT.has(rel),
@@ -248,6 +259,38 @@ describe('C-33: the batch applies in set order, twice, and ends fully isolated',
           )`,
     );
     expect(rows.map((r) => r.table_name), 'unpoliced tenant tables').toEqual([]);
+  }, T);
+
+  it('policies electronic_signatures — the Part 11 record that had no tenant key', async () => {
+    // Named rather than left to the sweep above, because the failure mode was
+    // INVISIBLE to that check. The sweep policies tables that carry a tenant
+    // column and silently skips those that do not, so a table with no tenant key
+    // is not "unpoliced" by that query — it is simply absent from it. The
+    // 21 CFR Part 11 §11.50/§11.70 signature record sat in exactly that blind
+    // spot: shared/schema.ts declared organization_id, signature-persistence.ts
+    // threw without it, and no migration ever created it.
+    //
+    // Asserting the COLUMN separately from the POLICY is the point: drop the
+    // column and the generic sweep assertion still passes.
+    const col = await pg.query(
+      `SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'electronic_signatures' AND column_name = 'organization_id'`,
+    );
+    expect(col.rows, 'electronic_signatures lost its tenant key').toHaveLength(1);
+
+    const policy = await pg.query(
+      `SELECT 1 FROM pg_policies
+        WHERE tablename = 'electronic_signatures' AND policyname = 'tenant_isolation_policy'`,
+    );
+    expect(policy.rows, 'Part 11 signatures are not tenant-isolated').toHaveLength(1);
+
+    // FORCE matters here more than almost anywhere: without it the table owner
+    // bypasses the policy, and the owner is the role the application connects as
+    // on a stock deployment.
+    const forced = await pg.query<{ relforcerowsecurity: boolean }>(
+      `SELECT relforcerowsecurity FROM pg_class WHERE relname = 'electronic_signatures'`,
+    );
+    expect(forced.rows[0]?.relforcerowsecurity, 'RLS not FORCED — the owner bypasses it').toBe(true);
   }, T);
 
   it('actually blocks a cross-tenant read on a table it sweeps', async () => {

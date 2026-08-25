@@ -31,6 +31,12 @@
 import * as React from 'react';
 
 import type { SurfaceViewProps } from '../v2/surfaceViews';
+import { EmptyState, ErrorState } from '../v2/dataConnect';
+import {
+  clearEditorTarget,
+  setEditorTarget,
+  type EditorSectionRef,
+} from '../v2/editorTarget';
 import { Overview } from './surfaces/Overview';
 import { K510Surface } from './surfaces/K510Surface';
 import { PmaSurface } from './surfaces/PmaSurface';
@@ -57,6 +63,8 @@ import './app.css';
 import './pathway-tabs.css';
 import './files-tree.css';
 import './drafter.css';
+import { publishShellProject } from '../v2/shellProject';
+import { usePublishSurfaceContext } from '../v2/surfaceContext';
 
 /* The id list lives in `./surfaceIds` with no component or stylesheet imports,
    so the v2 registry can read it at module scope without pulling this file —
@@ -80,6 +88,90 @@ const PATHWAY_ANCHOR: Partial<Record<MdxSurfaceId, Program['pathway'] | null>> =
   // completeness summary can load when nothing is selected.
   'device-software': 'k510',
 };
+
+/**
+ * What each device screen IS, for AnA's screen-state channel — the title in the
+ * words the surface's own heading uses, and a one-line blurb describing what
+ * the leaf renders. Blurbs describe the screen; they never claim data values —
+ * the host does not hold the leaves' counts, and absent beats guessed.
+ */
+const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }> = {
+  'device-workstream': {
+    title: 'Device portfolio',
+    blurb: 'the device portfolio overview — program cards and portfolio health KPIs.',
+  },
+  'device-510k': {
+    title: '510(k) pathway',
+    blurb:
+      'the 510(k) pathway workspace — predicate intelligence, the substantial-equivalence matrix and eSTAR sections.',
+  },
+  'device-pma': {
+    title: 'PMA pathway',
+    blurb: 'the PMA pathway workspace — premarket-approval modules for the program in context.',
+  },
+  'device-cer': {
+    title: 'Clinical Evaluation Report',
+    blurb: 'the CER pathway workspace for clinical evaluation under EU MDR.',
+  },
+  'device-diagnostics': {
+    title: 'IVD pathway',
+    blurb: 'the IVD pathway workspace for in-vitro diagnostic programs.',
+  },
+  'device-clinical-studies': {
+    title: 'Clinical studies',
+    blurb: 'the clinical studies register for device programs.',
+  },
+  'device-software': {
+    title: 'Software lifecycle',
+    blurb: 'software documentation completeness for the program in context.',
+  },
+  'device-engineering': {
+    title: 'Device engineering',
+    blurb: 'the engineering and design-controls workspace.',
+  },
+  'device-udi': {
+    title: 'UDI and labeling',
+    blurb: 'the UDI register.',
+  },
+  'device-postmarket': {
+    title: 'Post-market vigilance',
+    blurb: 'postmarket surveillance with its triage queue.',
+  },
+  'device-presub': {
+    title: 'Pre-Sub manager',
+    blurb: 'the pre-submission manager.',
+  },
+  'device-vault': {
+    title: 'Document vault',
+    blurb: 'device vault artifacts.',
+  },
+  'device-tasks': {
+    title: 'Tasks and reviews',
+    blurb: 'the device task workbench.',
+  },
+  'device-validation': {
+    title: 'Validation center',
+    blurb: 'the validation workbench.',
+  },
+  'device-submission': {
+    title: 'Submission center',
+    blurb: 'the submission-packages workbench.',
+  },
+  'device-analytics': {
+    title: 'Analytics',
+    blurb: 'device analytics panels.',
+  },
+};
+
+/**
+ * The two things a user can truthfully do from any device screen. No operable
+ * screen actions are advertised because none are registered for the device
+ * surfaces; governed operations are proposed by AnA in conversation only.
+ */
+const DEVICE_SCREEN_ACTIONS: string[] = [
+  "Ask AnA about what is on this screen — the registers and counts render from the org's live device data",
+  'Signatures, transmissions, uploads and profile changes are governed — AnA proposes them in conversation, never through screen controls',
+];
 
 export interface MdxSurfaceHostProps extends SurfaceViewProps {
   /** Which surface to render. Supplied by the registry entry, not by state. */
@@ -130,7 +222,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
         // v2/surfaces/Projects.tsx:389 replaces the whole object; this now
         // matches it, and omits keys it cannot honestly supply rather than
         // inheriting stale ones.
-        window.C2C_PROJECT = { id: String(prog.id), title: prog.title };
+        publishShellProject({ id: String(prog.id), title: prog.title });
       }
       onNav('project-home');
     },
@@ -138,19 +230,128 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   );
 
   /**
-   * Open the one editor.
+   * Open the one editor — on the section the click named, when it named one.
    *
-   * Plain navigation, deliberately. An earlier version sent
-   * `document-authoring#<docType>`, which reads as though the editor opens on
-   * that document type — it does not. wouter navigates with `history.pushState`
-   * and reads `location.pathname`, so the browser strips the fragment before
-   * the router sees it, and `DocumentAuthoring` reads no hash anyway. The
-   * editor opened on its default either way; only the code claimed otherwise.
+   * An earlier version sent `document-authoring#<docType>`: wouter navigates on
+   * `location.pathname`, so the fragment never reached the router and every
+   * click landed on the editor's default view while the code claimed otherwise.
+   * The context now travels the way this shell already moves context between
+   * surfaces — a typed window channel plus navigation, the same shape as
+   * `window.C2C_PROJECT` (set two callbacks up) and `window.C2C_CONVO`
+   * (V2App.startShellConversation):
    *
-   * Per-doc-type entry needs `DocumentAuthoring` to accept and honour a type,
-   * which is a change to that surface rather than a string appended here.
+   *   1. The program hand-off mirrors `openProgram` exactly: REPLACE
+   *      `window.C2C_PROJECT` with the program whose section is being opened,
+   *      so the editor's document scope, filing outline and data room all
+   *      agree on which program the click meant.
+   *   2. The section rides `window.C2C_EDITOR_TARGET` (v2/editorTarget.ts,
+   *      one-shot, TTL-guarded). `DocumentAuthoring` consumes it on mount and
+   *      either opens the named document+section or says honestly that it
+   *      could not — never a silent wrong-document open.
+   *
+   * A click with no section (PmaSurface's plain "Open module editor") CLEARS
+   * the channel instead of writing to it, so an older target cannot ride along
+   * with a navigation that never named one. With no resolvable program and no
+   * section this collapses to the plain navigation it always was — nothing is
+   * claimed that cannot be honoured.
    */
-  const openEditor = React.useCallback(() => onNav('document-authoring'), [onNav]);
+  const openEditor = React.useCallback(
+    (section?: EditorSectionRef) => {
+      if (typeof window !== 'undefined' && programForContext) {
+        // REPLACE, never merge — same rule and same reason as openProgram above.
+        publishShellProject({ id: String(programForContext.id), title: programForContext.title });
+      }
+      const docType = programForContext?.pathway ?? PATHWAY_ANCHOR[nav] ?? null;
+      if (docType && section && (section.code != null || section.label)) {
+        setEditorTarget({
+          docType,
+          code: section.code,
+          label: section.label,
+          programId: programForContext ? String(programForContext.id) : null,
+          programTitle: programForContext?.title ?? null,
+        });
+      } else {
+        clearEditorTarget();
+      }
+      onNav('document-authoring');
+    },
+    [onNav, programForContext, nav],
+  );
+
+  /**
+   * What AnA can see of the device screen the user is on.
+   *
+   * Load and failure are stated as themselves — "still loading" and "could not
+   * be read" are different claims from "there are no programs", and publishing
+   * the wrong one makes AnA confidently wrong. The program named in the
+   * context comes only from `programForContext`, which already carries the
+   * honesty rule above: only `device-software` may borrow a program; every
+   * other surface reports nothing rather than something false. No leaf-level
+   * counts are published — the host does not hold them.
+   */
+  const programCount = programs.length;
+  const anaContext = React.useMemo(() => {
+    const meta = DEVICE_SCREEN_META[nav];
+    if (liveProgramsResult.loading) {
+      return {
+        summary: `${meta.title} — the regulatory-program read is still loading; nothing program-scoped is final yet.`,
+        facts: { screen: nav },
+        availableActions: DEVICE_SCREEN_ACTIONS,
+      };
+    }
+    if (liveProgramsResult.error) {
+      return {
+        summary: `${meta.title} — the regulatory programs could not be read — program-scoped content is missing because of a failure, not because none exists.`,
+        facts: { screen: nav },
+        availableActions: DEVICE_SCREEN_ACTIONS,
+      };
+    }
+    return {
+      summary:
+        `${meta.title} — ${meta.blurb}` +
+        (programForContext
+          ? ` Program in context: ${programForContext.title}.`
+          : ' No device program is in context; program-scoped registers show their empty states.'),
+      facts: {
+        screen: nav,
+        program: programForContext
+          ? {
+              id: programForContext.id,
+              code: programForContext.code,
+              title: programForContext.title,
+            }
+          : null,
+        programCount,
+      },
+      availableActions: DEVICE_SCREEN_ACTIONS,
+    };
+  }, [nav, liveProgramsResult.loading, liveProgramsResult.error, programForContext, programCount]);
+
+  /*
+   * One builder, sixteen literal publish calls. The AnA coverage gate counts
+   * single-quoted literal surface ids, so a single dynamic
+   * `usePublishSurfaceContext(nav, …)` would register as covering nothing —
+   * this is the sanctioned multi-id shape from v2/surfaces/UsageBilling.tsx.
+   * Only the call whose id matches `nav` publishes; the store treats the
+   * fifteen null calls as no-ops (each clears only its own id), and hook order
+   * stays fixed because every call runs unconditionally on every render.
+   */
+  usePublishSurfaceContext('device-workstream', nav === 'device-workstream' ? anaContext : null);
+  usePublishSurfaceContext('device-510k', nav === 'device-510k' ? anaContext : null);
+  usePublishSurfaceContext('device-pma', nav === 'device-pma' ? anaContext : null);
+  usePublishSurfaceContext('device-cer', nav === 'device-cer' ? anaContext : null);
+  usePublishSurfaceContext('device-diagnostics', nav === 'device-diagnostics' ? anaContext : null);
+  usePublishSurfaceContext('device-clinical-studies', nav === 'device-clinical-studies' ? anaContext : null);
+  usePublishSurfaceContext('device-software', nav === 'device-software' ? anaContext : null);
+  usePublishSurfaceContext('device-engineering', nav === 'device-engineering' ? anaContext : null);
+  usePublishSurfaceContext('device-udi', nav === 'device-udi' ? anaContext : null);
+  usePublishSurfaceContext('device-postmarket', nav === 'device-postmarket' ? anaContext : null);
+  usePublishSurfaceContext('device-presub', nav === 'device-presub' ? anaContext : null);
+  usePublishSurfaceContext('device-vault', nav === 'device-vault' ? anaContext : null);
+  usePublishSurfaceContext('device-tasks', nav === 'device-tasks' ? anaContext : null);
+  usePublishSurfaceContext('device-validation', nav === 'device-validation' ? anaContext : null);
+  usePublishSurfaceContext('device-submission', nav === 'device-submission' ? anaContext : null);
+  usePublishSurfaceContext('device-analytics', nav === 'device-analytics' ? anaContext : null);
 
   let surface: React.ReactNode;
   switch (nav) {
@@ -161,7 +362,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
       surface = <PmaSurface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} />;
       break;
     case 'device-cer':
-      surface = <CerSurface program={programForContext} onAskAna={onAsk} />;
+      surface = <CerSurface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} />;
       break;
     case 'device-diagnostics':
       surface = (
@@ -212,10 +413,30 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
       // are assigned rather than returned early, so they go through the same
       // wrapper as everything else — an early return here would escape the
       // scope root and render the status text unstyled.
+      /* THE RAW SERVER STRING IS GONE FROM THE LANE'S ENTRY SURFACE.
+         This read `{liveProgramsResult.error}` — interpolated verbatim into the
+         alert. `useFetchJson` sets that field to `HTTP ${status} ${path}` or to
+         a caught exception's message, so the highest-traffic failure in the MDX
+         lane rendered an API route, or a driver error, at a regulatory
+         director. That is an information-disclosure finding in a regulated
+         product, not a cosmetic one, and it is the exact class W0-4 closed
+         everywhere else. `<ErrorState>` runs every message through the
+         internals filter, so the guarantee holds here by construction rather
+         than by remembering.
+
+         It also had no way out. The hook has exposed `refresh` all along and
+         nothing called it, so a transient failure on the portfolio left the
+         user with a dead screen and no control — UI standards §8. */
       surface = liveProgramsResult.loading ? (
-        <div role="status">Loading device programs…</div>
+        <EmptyState busy title="Loading device programs" testId="mdx-programs-loading" />
       ) : liveProgramsResult.error ? (
-        <div role="alert">Device program data is unavailable. {liveProgramsResult.error}</div>
+        <ErrorState
+          variant="panel"
+          title="Couldn't load your device programs"
+          message={liveProgramsResult.error}
+          retry={liveProgramsResult.refresh}
+          testId="mdx-programs-error"
+        />
       ) : (
         <Overview programs={programs} onOpenProgram={openProgram} onAskAna={onAsk} />
       );

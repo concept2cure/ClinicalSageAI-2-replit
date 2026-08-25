@@ -47,7 +47,21 @@ export async function registerGovernanceRoutes(app: Express) {
   app.use('/api/harmonize', authenticateToken, harmonizeRoutes);
   app.use('/api/escalate', authenticateToken, escalateRoutes);
   app.use('/api/validate-completeness', authenticateToken, validateCompletenessRoutes);
-  app.use('/api/submission-center', authenticateToken, submissionCenterRoutes);
+  /* NOT MOUNTED — deliberately, and the router file is kept.
+     Zero occurrences of any tenant column in submissionCenter.routes.ts, and
+     `submission_projects` / `submission_tasks` were created with no tenant
+     column at all, so `0021_enable_rls_everywhere.sql` skips them and there is
+     no database backstop either. Any authenticated user of any tenant could
+     list every submission programme and `PUT /tasks/:id` across the boundary.
+     It has never leaked only because nothing populates those tables.
+     And nothing calls it: `SubmissionCenter.tsx` reads `/api/submissions`,
+     `/api/510k/estar/*` and `/api/c2c/projects` — never `/api/submission-center`.
+     So this is an unscoped write API with no consumer, one INSERT away from
+     being a live cross-tenant hole. Unmounting removes that today.
+     Restoring it means adding `organization_id`, backfilling, filtering in all
+     four handlers and enabling RLS — or deciding the family is superseded by
+     `/api/submissions`, which the evidence favours. Either is a product call. */
+  void submissionCenterRoutes;
   app.use('/api/submissions', authenticateToken, submissionCoreRoutes);
   app.use('/api/region-profiles', authenticateToken, regionProfileRoutes);
   app.use(

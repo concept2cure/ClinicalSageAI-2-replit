@@ -58,15 +58,6 @@ export interface TmfCompletenessResult {
   summary: TmfCompletenessSummary;
 }
 
-export interface SampleTrial {
-  trialId: string;
-  title: string;
-  sponsor: string;
-  phase: string;
-  sites: number;
-  model: string;
-  providedArtifacts: string[];
-}
 
 export interface FilingEntry {
   status: string;
@@ -193,32 +184,12 @@ export function tmfArtifactName(code: string): string {
   return code;
 }
 
-/* ---- Sample trial state ---- */
-export const ETMF_SAMPLE_TRIAL: SampleTrial = {
-  trialId: 'BX301-301',
-  title: 'BX-301 pivotal -- relapsed multiple myeloma (Phase 3)',
-  sponsor: 'Concept2Cure Therapeutics',
-  phase: 'Phase 3',
-  sites: 42,
-  model: 'DIA TMF Reference Model v3',
-  providedArtifacts: [
-    'tmf_plan', 'monitoring_plan',
-    'protocol', 'investigators_brochure', 'sample_crf', 'sample_icf',
-    'regulatory_submission', 'regulatory_approval',
-    'irb_submission', 'irb_approval', 'irb_composition',
-    'site_signature_sheet', 'investigator_cv', 'financial_disclosure',
-    'ip_accountability', 'ip_shipment',
-    'safety_management_plan', 'sae_reports', 'susar_reports',
-    'lab_certification', 'lab_normal_ranges',
-    'vendor_contract',
-    'data_management_plan',
-    'sap',
-    /* also-filed optional artifacts (tracked, never dilute readiness) */
-    'monitoring_plan', 'site_training_records', 'subject_log', 'ip_storage_temp', 'lab_manual',
-  ],
-};
+/* ETMF_SAMPLE_TRIAL is deleted — the fabricated trial `BX301-301 · "BX-301
+   pivotal — relapsed multiple myeloma (Phase 3)" · 42 sites`. Etmf.tsx reads the
+   real trial from /api/etmf and imports only `tmfArtifactName` (the DIA TMF
+   Reference Model catalog, which is reference config). Nothing else referenced
+   it. */
 
-/* ---- Timeliness + QC lenses ---- */
 export const ETMF_FILINGS: Record<string, FilingEntry> = {
   tmf_plan: { status: 'final', lagDays: 6 }, monitoring_plan: { status: 'final', lagDays: 9 },
   protocol: { status: 'final', lagDays: 3 }, investigators_brochure: { status: 'final', lagDays: 5 },

@@ -74,7 +74,7 @@ export function CodebaseCoverage({
     <div className="sp cv-page">
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Install map · shared/constants/ui-surface-registry.ts</div>
+          <div className="sp-eyebrow">Install map · surface registry</div>
           <h1 className="sp-title">Codebase coverage</h1>
           <p className="sp-state">
             Every canonical surface in concept2cure-v2, its real mounted API prefixes, AnA tool

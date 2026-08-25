@@ -24,6 +24,7 @@ import { pool } from '../db.js';
 import crypto from 'crypto';
 import { Writable, PassThrough } from 'stream';
 import { appendVeraPdfValidation } from './documentQuality/pdfValidationAttachment';
+import auditService from './auditService';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -487,7 +488,12 @@ function generateECTDIndexXml(
 <ectd:ectd xmlns:ectd="urn:hl7-org:v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="urn:hl7-org:v3 ${dtdVersion}.xsd">
   <ectd:id root="${crypto.randomUUID()}" />
-  <ectd:code code="${submissionType}" codeSystem="2.16.840.1.113883.3.989.5.1.3.1" displayName="${submissionType} Submission" />
+  <!-- submissionType arrives raw from req.body, and the very next line already
+       escapes submissionTitle. An ampersand or a quote here produces XML no
+       parser accepts. This module never writes to disk today (the real eCTD
+       publisher is elsewhere) so the blast radius is small — which is exactly
+       why it should be fixed before anyone wires it to one. -->
+  <ectd:code code="${escapeXml(submissionType)}" codeSystem="2.16.840.1.113883.3.989.5.1.3.1" displayName="${escapeXml(submissionType)} Submission" />
   <ectd:title>${escapeXml(submissionTitle)}</ectd:title>
   <ectd:effectiveTime value="${now.replace(/[-:T]/g, '').slice(0, 14)}" />
   <ectd:setId root="${crypto.randomUUID()}" />
@@ -911,21 +917,17 @@ async function logExport(
   fileSize: number,
   durationMs: number
 ): Promise<void> {
-  try {
-    await pool.query(
-      `INSERT INTO audit_logs (user_id, organization_id, action, entity_type, entity_id, details, ip_address, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
-      [
-        options.userId,
-        options.organizationId,
-        `document_exported_${exportType}`,
-        'project',
-        String(options.projectId),
-        JSON.stringify({ exportType, fileSize, durationMs }),
-        '0.0.0.0',
-      ]
-    );
-  } catch {
-    // Non-critical
-  }
+  // Routed through auditService so the export lands in the SHA-256 hash chain
+  // (audit/chain.ts) with an HMAC seal. The previous raw INSERT named columns
+  // audit_logs does not have — organization_id / entity_type / entity_id /
+  // details — so every one of these writes raised 42703 into a bare catch and
+  // recorded nothing. Part 11 §11.10(e) exports were silently unaudited.
+  await auditService.logAction({
+    organizationId: options.organizationId,
+    userId: options.userId,
+    action: `document_exported_${exportType}`,
+    resourceType: 'project',
+    resourceId: String(options.projectId),
+    details: { exportType, fileSize, durationMs },
+  });
 }

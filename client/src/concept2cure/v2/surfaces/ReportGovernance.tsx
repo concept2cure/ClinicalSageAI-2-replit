@@ -19,14 +19,16 @@
  * and hashes come only from the server; seal/revoke require a justification and
  * refetch so status is the server's.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { EmptyState } from '../dataConnect';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 interface GovReport {
   id: number;
@@ -40,16 +42,6 @@ interface GovReport {
   createdAt?: string | null;
 }
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const t = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fire = useCallback((m: string) => { setMsg(m); if (t.current) clearTimeout(t.current); t.current = setTimeout(() => setMsg(''), 4200); }, []);
-  return [msg, fire];
-}
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
-}
 async function readData<T = any>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<{ ok: boolean; status: number; data: T | null; raw: any }> {
   try {
     const res = await apiRequest(method, path, body);
@@ -89,7 +81,7 @@ export function ReportGovernance(_props: SurfaceViewProps) {
 
   const verify = useCallback(async (r: GovReport) => {
     const { ok, status, data } = await readData<Record<string, unknown>>('GET', `/api/intelligent-reports/${r.id}/verify`);
-    if (!ok || !data) { fireToast(status === 401 ? 'Sign in to verify.' : `Verification didn’t run (HTTP ${status}).`); return; }
+    if (!ok || !data) { fireToast(status === 401 ? 'Sign in to verify.' : `Verification didn’t run (HTTP ${status}).`, 'error'); return; }
     setVerifyRes({ id: r.id, verdict: data });
   }, [fireToast]);
 
@@ -105,7 +97,7 @@ export function ReportGovernance(_props: SurfaceViewProps) {
     if (!dialog) return;
     const { kind, report } = dialog;
     const { ok, status } = await readData('POST', `/api/intelligent-reports/${report.id}/${kind}`, { justification: v.justification });
-    if (!ok) { fireToast(status === 401 ? 'Sign in first.' : `Couldn’t ${kind} the report (HTTP ${status}). Nothing changed.`); return; }
+    if (!ok) { fireToast(status === 401 ? 'Sign in first.' : `Couldn’t ${kind} the report (HTTP ${status}). Nothing changed.`, 'error'); return; }
     setDialog(null);
     fireToast('Report ' + (kind === 'seal' ? 'sealed' : 'revoked') + ' · ' + (report.reportCode ?? report.id) + '.');
     void load();
@@ -116,13 +108,67 @@ export function ReportGovernance(_props: SurfaceViewProps) {
       .filter(([, val]) => ['string', 'number', 'boolean'].includes(typeof val))
       .map(([k, val]) => [k, String(val)]);
 
+  /* What AnA can see of this screen. A failed register read is published as a
+     failure, never as an org with no governed reports. The verification
+     verdict body is NOT published — it carries content hashes and chain
+     values that have no reader benefit in model context; AnA gets the fact
+     that verification ran for a report id, and the person reads the table. */
+  const anaContext = React.useMemo(() => {
+    if (state === 'loading') {
+      return { summary: 'Report governance — the governed report register is still loading.' };
+    }
+    if (state === 'error') {
+      return {
+        summary:
+          'Report governance — the governed report register could not be read, so no reports are ' +
+          'listed. That is a failed read, not an organization with no governed reports.',
+        availableActions: ['Retry the governed-report read'],
+      };
+    }
+    if (reports.length === 0) {
+      return {
+        summary:
+          'Report governance — no governed reports yet. Reports generated through the ' +
+          'intelligent-reports engine appear here with seal status, integrity verification, and provenance.',
+        facts: { reportCount: 0 },
+      };
+    }
+    const sealOf = (r: GovReport) => String(r.sealStatus ?? r.seal_status ?? 'draft').toLowerCase();
+    const sealed = reports.filter((r) => sealOf(r) === 'sealed').length;
+    const revoked = reports.filter((r) => sealOf(r) === 'revoked').length;
+    return {
+      summary:
+        `Report governance: ${reports.length} governed report(s) — ${sealed} sealed, ${revoked} revoked, ` +
+        `${reports.length - sealed - revoked} draft.` +
+        (verifyRes ? ` Integrity verification is shown for report ${verifyRes.id}.` : '') +
+        (detail
+          ? ` Report ${detail.id} shows ${detail.provenance} provenance atom(s) and ${detail.attestations} attestation(s).`
+          : '') +
+        (dialog ? ` A governed ${dialog.kind} justification form is open — a human ceremony in progress.` : ''),
+      facts: {
+        reportCount: reports.length,
+        sealed,
+        revoked,
+        draft: reports.length - sealed - revoked,
+        verificationShownFor: verifyRes?.id ?? null,
+        provenanceShownFor: detail?.id ?? null,
+        justificationFormOpen: dialog?.kind ?? null,
+      },
+      availableActions: [
+        'Verify a report’s integrity and read its provenance/attestation counts — read-only checks',
+        'Sealing and revoking a report each require a recorded justification — governed acts AnA proposes in conversation, never through screen controls',
+      ],
+    };
+  }, [state, reports, verifyRes, detail, dialog]);
+  usePublishSurfaceContext('report-governance', anaContext);
+
   return (
     <div className="cm-body">
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Governed reports</span><span className="s">{reports.length} · /api/intelligent-reports</span></div>
+        <div className="pj-card-h"><span className="t">Governed reports</span><span className="s">{reports.length} governed</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {state === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.scroll} title="Loading governed reports…" /></div>
-            : state === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load governed reports" hint="GET /api/intelligent-reports/list didn’t respond. Sign in to your tenant and retry." /></div>
+            : state === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load governed reports" hint="The governed report register didn’t respond. Sign in to your tenant and retry." /></div>
             : reports.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.scroll} title="No governed reports yet" hint="Reports generated through the intelligent-reports engine appear here with their seal status, integrity verification, and provenance." /></div>
             : <table className="reg-tbl"><thead><tr><th>Code</th><th>Title</th><th>Domain</th><th>Seal</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
               <tbody>{reports.map((r) => {
@@ -151,7 +197,7 @@ export function ReportGovernance(_props: SurfaceViewProps) {
 
       {verifyRes && (
         <div className="pj-card">
-          <div className="pj-card-h"><span className="t">Integrity verification · report {verifyRes.id}</span><span className="s">GET /:id/verify</span></div>
+          <div className="pj-card-h"><span className="t">Integrity verification · report {verifyRes.id}</span><span className="s">verification</span></div>
           <div className="pj-card-b" style={{ padding: 0 }}>
             {verdictRows(verifyRes.verdict).length === 0
               ? <div style={{ padding: 16 }}><EmptyState icon={I.shieldCheck} title="Verification ran" hint="The server returned no scalar verdict fields to tabulate." /></div>

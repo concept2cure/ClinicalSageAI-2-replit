@@ -111,7 +111,7 @@
   transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
 .mdx-shell .health-card:hover { border-color: var(--border-strong); background: var(--bg-100); }
-.mdx-shell .health-label { font-size: 11px; color: var(--text-400); font-weight: 500; }
+.mdx-shell .health-label { font-size: 11px; color: var(--text-300); font-weight: 500; }
 .mdx-shell .health-metric {
   font-family: var(--font-serif); font-size: 28px;
   font-weight: 400; color: var(--text-100); line-height: 1;
@@ -209,7 +209,7 @@
 }
 .mdx-shell .chip:hover { border-color: var(--border-strong); color: var(--text-100); }
 .mdx-shell .chip[data-on="true"] { background: var(--bg-100); color: var(--text-100); border-color: var(--border-strong); }
-.mdx-shell .chip .count { color: var(--text-400); font-variant-numeric: tabular-nums; }
+.mdx-shell .chip .count { color: var(--text-300); font-variant-numeric: tabular-nums; }
 .mdx-shell .chip[data-on="true"] .count { color: var(--text-300); }
 
 .mdx-shell .view-spacer { flex: 1; }
@@ -220,7 +220,7 @@
 .mdx-shell .view-toggle button {
   display: flex; align-items: center; gap: 4px;
   height: 26px; padding: 0 10px; font-size: 11px;
-  color: var(--text-400);
+  color: var(--text-300);
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 .mdx-shell .view-toggle button + button { border-left: 1px solid var(--border); }
@@ -336,9 +336,21 @@
   gap: 8px; position: relative; text-align: center;
   padding: 0 6px;
 }
-/* connector line */
+/* Connector line, drawn as two half-segments that meet on the cell boundary.
+   A single `left:50%; width:100%` run from this dot to the next one is 150% of
+   the node, so every node but the last reported scrollWidth 153 against a
+   clientWidth of 102 — twelve of the overflow gate's baselined findings, six on
+   510(k) and six on diagnostics.
+   The strip is `repeat(7, 1fr)` with no gap, so a segment ending at this cell's
+   right edge and one starting at the next cell's left edge are contiguous: same
+   line, same endpoints, drawn inside the boxes that own it. Both sit at z-index
+   0 so the dot's opaque fill covers the part that passes under it. */
 .mdx-shell .stage-node:not(:last-child)::after {
-  content: ''; position: absolute; top: 14px; left: 50%; width: 100%;
+  content: ''; position: absolute; top: 14px; left: 50%; right: 0;
+  height: 1px; background: var(--border-strong); z-index: 0;
+}
+.mdx-shell .stage-node:not(:first-child)::before {
+  content: ''; position: absolute; top: 14px; left: 0; right: 50%;
   height: 1px; background: var(--border-strong); z-index: 0;
 }
 .mdx-shell .stage-dot {
@@ -350,12 +362,12 @@
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 .mdx-shell .stage-node.complete .stage-dot { background: var(--success); color: var(--text-000); border-color: var(--bg-050); }
-.mdx-shell .stage-node.active .stage-dot   { background: var(--accent-100); color: var(--text-000); border-color: var(--bg-050); box-shadow: 0 0 0 3px var(--accent-000); }
+.mdx-shell .stage-node.active .stage-dot   { background: var(--accent-strong); color: var(--accent-on-strong); border-color: var(--bg-050); box-shadow: 0 0 0 3px var(--accent-000); }
 .mdx-shell .stage-node.blocked .stage-dot  { background: var(--warning); color: var(--text-000); border-color: var(--bg-050); box-shadow: 0 0 0 3px var(--warning-muted); }
-.mdx-shell .stage-node.idle .stage-dot     { background: var(--bg-200); color: var(--text-400); }
+.mdx-shell .stage-node.idle .stage-dot     { background: var(--bg-200); color: var(--text-200); }
 .mdx-shell .stage-node.active { font-weight: 500; }
 .mdx-shell .stage-label { font-size: 11px; color: var(--text-200); line-height: 1.3; max-width: 100px; }
-.mdx-shell .stage-meta { font-size: 10px; color: var(--text-400); max-width: 120px; line-height: 1.3; }
+.mdx-shell .stage-meta { font-size: 10px; color: var(--text-300); max-width: 120px; line-height: 1.3; }
 
 /* ════════════════════════════════════════════════════════════
    Two-column layout inside 510(k)/PMA/CER
@@ -373,7 +385,7 @@
   padding: 12px 16px; border-bottom: 1px solid var(--border);
 }
 .mdx-shell .panel-hdr .t { font-size: 13px; font-weight: 600; color: var(--text-100); }
-.mdx-shell .panel-hdr .s { font-size: 11px; color: var(--text-400); }
+.mdx-shell .panel-hdr .s { font-size: 11px; color: var(--text-300); }
 .mdx-shell .panel-hdr .actions { display: flex; gap: 4px; }
 .mdx-shell .panel-hdr .actions .tb-btn { color: var(--text-400); }
 .mdx-shell .panel-body { padding: 0; }
@@ -388,7 +400,7 @@
 }
 .mdx-shell .tbl thead th {
   background: var(--bg-100); padding: 8px 12px;
-  font-weight: 500; color: var(--text-400); text-align: left;
+  font-weight: 500; color: var(--text-300); text-align: left;
   font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
   border-bottom: 1px solid var(--border); white-space: nowrap;
 }
@@ -427,7 +439,7 @@
 .mdx-shell .status-pill.reviewed  { background: var(--bg-200); color: var(--text-300); }
 .mdx-shell .status-pill.rejected  { background: var(--bg-100); color: var(--text-400); text-decoration: line-through; }
 .mdx-shell .status-pill.complete  { background: var(--success-muted); color: var(--success); }
-.mdx-shell .status-pill.draft     { background: var(--bg-200); color: var(--text-300); }
+.mdx-shell .status-pill.draft     { background: var(--bg-200); color: var(--text-200); }
 .mdx-shell .status-pill.review    { background: var(--warning-muted); color: var(--warning); }
 .mdx-shell .status-pill.active    { background: var(--ai-muted); color: var(--ai); }
 .mdx-shell .status-pill.na        { background: var(--bg-100); color: var(--text-500); }
@@ -440,25 +452,37 @@
 .mdx-shell .status-pill.excluded  { background: var(--bg-100); color: var(--text-400); }
 .mdx-shell .status-pill.serious   { background: var(--error-muted); color: var(--error); }
 .mdx-shell .status-pill.non-serious { background: var(--bg-200); color: var(--text-300); }
+/* Verdict pills already emitted by EstarFilingPanel / PathwayPanes / the CER
+   workbench but previously unstyled (fell back to the neutral base). Tokens
+   only; each pill also carries a text label, so color is never the only
+   signal. */
+.mdx-shell .status-pill.ok        { background: var(--success-muted); color: var(--success); }
+.mdx-shell .status-pill.warn      { background: var(--warning-muted); color: var(--warning); }
+.mdx-shell .status-pill.err,
+.mdx-shell .status-pill.blocked   { background: var(--error-muted); color: var(--error); }
 
 /* ════════════════════════════════════════════════════════════
    SE Matrix
    ════════════════════════════════════════════════════════════ */
 .mdx-shell .se-row {
-  display: grid; grid-template-columns: 180px 1fr 32px 1fr;
+  /* The verdict column holds one 16px glyph per row, but its own header says
+     "Verdict" — 47px at 10px uppercase with 0.05em tracking. At 32px the
+     header label ran out of the column and over the predicate beside it. A
+     column that cannot show its own heading is under-specified. */
+  display: grid; grid-template-columns: 180px 1fr 56px 1fr;
   gap: 12px; padding: 10px 16px; align-items: start;
   border-bottom: 1px solid var(--border); font-size: 12px;
 }
 .mdx-shell .se-row:last-child { border-bottom: 0; }
 .mdx-shell .se-row.header {
-  background: var(--bg-100); color: var(--text-400);
+  background: var(--bg-100); color: var(--text-300);
   font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
   padding: 8px 16px;
 }
 .mdx-shell .se-attr { font-weight: 500; color: var(--text-200); padding-top: 2px; }
 .mdx-shell .se-val { color: var(--text-200); line-height: 1.5; }
 .mdx-shell .se-verdict {
-  width: 24px; height: 24px; border-radius: 50%;
+  width: 24px; height: 24px; border-radius: 50%; justify-self: center;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; margin: 0 auto;
 }
@@ -511,7 +535,7 @@
 .mdx-shell .phase.active   .phase-label    { color: var(--accent-200); font-weight: 500; }
 .mdx-shell .phase.active   .phase-bar-fill { background: var(--accent-100); }
 .mdx-shell .phase.blocked  .phase-bar-fill { background: var(--warning); }
-.mdx-shell .phase.idle     .phase-label    { color: var(--text-400); }
+.mdx-shell .phase.idle     .phase-label    { color: var(--text-300); }
 .mdx-shell .phase.idle     .phase-bar-fill { background: var(--bg-300); }
 .mdx-shell .phase-label {
   font-size: 10px; color: var(--text-300); line-height: 1.3;
@@ -521,7 +545,7 @@
   height: 4px; background: var(--bg-200); border-radius: 99px; overflow: hidden;
 }
 .mdx-shell .phase-bar-fill { height: 100%; background: var(--success); }
-.mdx-shell .phase-pct { font-size: 10px; color: var(--text-400); font-variant-numeric: tabular-nums; }
+.mdx-shell .phase-pct { font-size: 10px; color: var(--text-300); font-variant-numeric: tabular-nums; }
 
 /* ════════════════════════════════════════════════════════════
    Predicate table — checkbox column for multi-select
@@ -602,7 +626,7 @@
 .mdx-shell .pma-mod-hdr { display: flex; align-items: center; justify-content: space-between; }
 .mdx-shell .pma-mod-label { font-size: 13px; font-weight: 600; color: var(--text-100); }
 .mdx-shell .pma-mod-desc { font-size: 11px; color: var(--text-300); line-height: 1.5; }
-.mdx-shell .pma-mod-foot { font-size: 10px; color: var(--text-400); display: flex; justify-content: space-between; }
+.mdx-shell .pma-mod-foot { font-size: 10px; color: var(--text-300); display: flex; justify-content: space-between; }
 
 /* ════════════════════════════════════════════════════════════
    CER Generator
@@ -713,12 +737,16 @@
 }
 .mdx-shell .switch[data-on="true"] { background: var(--accent-100); }
 .mdx-shell .switch[data-on="true"]::after { transform: translateX(14px); }
-.mdx-shell .seg { display: flex; gap: 2px; }
+/* Wraps because it must: the Vault's framework filter is six buttons and 543px
+   of them, and a `nowrap` row of unshrinkable text in a 510px column pushes the
+   whole surface sideways. Wrapping only engages where the row does not fit, so
+   every seg that fits today is unchanged. */
+.mdx-shell .seg { display: flex; flex-wrap: wrap; gap: 2px; }
 .mdx-shell .seg-btn {
   padding: 4px 10px; font-size: 11px; border-radius: var(--radius-sm);
   color: var(--text-300); background: var(--bg-100);
 }
-.mdx-shell .seg-btn[data-on="true"] { background: var(--accent-100); color: var(--text-000); }
+.mdx-shell .seg-btn[data-on="true"] { background: var(--accent-strong); color: var(--accent-on-strong); }
 
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -1268,7 +1296,7 @@
 .mdx-shell .ed-claude-input textarea {
   width: 100%; box-sizing: border-box;
   padding: 8px 10px;
-  background: var(--bg-000); border: 1px solid var(--border);
+  background: var(--bg-000); border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
   font-family: var(--font-sans);
   font-size: 12.5px; line-height: 1.5;
@@ -1426,20 +1454,24 @@
 .mdx-shell .metric-card[data-tone="ok"]   { background: var(--success-muted); border-color: color-mix(in oklab, var(--success) 20%, transparent); }
 .mdx-shell .metric-label {
   font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--text-400); margin-bottom: 8px;
+  text-transform: uppercase; color: var(--text-200); margin-bottom: 8px;
 }
 .mdx-shell .metric-val {
   font-family: var(--font-serif);
   font-size: 28px; font-weight: 500; color: var(--text-100);
   font-variant-numeric: tabular-nums; line-height: 1;
 }
-.mdx-shell .metric-val .unit { font-size: 13px; color: var(--text-400); margin-left: 4px; font-family: var(--font-sans); font-weight: 400; }
-.mdx-shell .metric-meta { font-size: 11px; color: var(--text-300); margin-top: 8px; line-height: 1.4; }
+.mdx-shell .metric-val .unit { font-size: 13px; color: var(--text-200); margin-left: 4px; font-family: var(--font-sans); font-weight: 400; }
+.mdx-shell .metric-meta { font-size: 11px; color: var(--text-200); margin-top: 8px; line-height: 1.4; }
 
 /* ── Section (reused) ─────────────────────────────────────────── */
 .mdx-shell .section { padding: 24px 32px 4px; }
+/* Wrapping, because this header is not always in a full-width page. In the
+   vault's three-column grid the middle column is 656px, and the title, the
+   sub-line and an eight-chip `.seg` filter came to 667 inside 592 — the filter
+   row hung over the drawer beside it. Wrapping is a no-op wherever it fits. */
 .mdx-shell .section-head {
-  display: flex; align-items: baseline; gap: 12px;
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px;
   margin-bottom: 14px;
 }
 .mdx-shell .section-head h2 {
@@ -1462,6 +1494,11 @@
   border: 1px solid var(--border); border-radius: var(--radius-md);
   background: var(--bg-000); overflow: hidden; margin: 0 32px 20px;
 }
+/* `.section` already pads 32px a side, so a `.ctable` inside one was inset 64px
+   while the heading above it sat at 32 — visibly out of line, and 64px of the
+   width its columns needed. The margin exists for a `.ctable` placed directly
+   on a surface; inside a section the section owns the inset. */
+.mdx-shell .section > .ctable { margin-inline: 0; }
 .mdx-shell .ctable-head,
 .mdx-shell .ctable-row {
   display: grid; gap: 12px;
@@ -1469,7 +1506,7 @@
   font-size: 12px;
 }
 .mdx-shell .ctable-head {
-  background: var(--bg-050); color: var(--text-400);
+  background: var(--bg-050); color: var(--text-300);
   font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
   text-transform: uppercase; border-bottom: 1px solid var(--border);
 }
@@ -1508,11 +1545,185 @@
 .mdx-shell .pill-err.small { font-size: 9px; padding: 1px 5px; }
 
 /* ═════════════════════════════════════════════════════════════
+   DOCUMENTS PANEL (shared across surfaces)
+
+   <DocumentsPanel> has been shipping with no CSS at all.
+
+   Its own docblock says "CSS lives in client/src/concept2cure/mdx/app.css
+   (DOCUMENTS PANEL section)". There was no such section. The port brought the
+   JSX across from design-system/ui_kits/mdx and left the stylesheet behind, so
+   every one of its 24 classes — .docs-row, .docs-rail, .docs-head, .docs-meta,
+   .docs-progress, .docs-esig, the lot — matched nothing in any bundle. Five
+   surfaces render it: Vault, Engineering, UDI, Post-market and Analytics. On
+   each the document list is the main content, and on each it laid out as bare
+   stacked divs.
+
+   Nothing caught it because nothing was looking for it. The styling gate asks
+   whether a SURFACE receives the cascade, and these surfaces do — page,
+   sections, metrics and tables are all styled — so a wholly unstyled component
+   inside a styled surface is exactly the shape that check cannot see. It
+   surfaced from the other end: .docs-panel at 156 > 148 in the overflow
+   baseline, which is what an unstyled panel does when its rows have no box.
+
+   Ported verbatim rather than adapted. Every token the kit uses —
+   --canvas-elevated, --border-100, --border-200, --error-text, --radius-md —
+   already resolves under .mdx-shell, measured in a browser against the built
+   bundles, so there was nothing to translate but the scope prefix. One
+   exception, marked at the rule it applies to.
+   ═════════════════════════════════════════════════════════════ */
+
+.mdx-shell .docs-panel { display: flex; flex-direction: column; gap: 8px; }
+.mdx-shell .docs-row {
+  display: flex; gap: 0;
+  text-align: left;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all var(--dur) var(--ease);
+}
+/* The kit hovers on `box-shadow: var(--shadow-xs)`, which in this cascade is
+   `0 1px 0 hsl(0 0% 0% / 0)` — a shadow at alpha 0, so no hover feedback at all
+   on a row whose whole purpose is to be clicked. These two lines are this
+   sheet's own .task-card:hover, the nearest equivalent affordance in it. */
+.mdx-shell .docs-row:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 4px 12px color-mix(in oklab, var(--black) 6%, transparent);
+}
+.mdx-shell .docs-rail { width: 4px; flex-shrink: 0; background: var(--border-200); }
+.mdx-shell .docs-row[data-status="ready"]  .docs-rail { background: var(--success); width: 4px; }
+.mdx-shell .docs-row[data-status="review"] .docs-rail { background: var(--warning); width: 5px; }
+.mdx-shell .docs-row[data-status="draft"]  .docs-rail { background: var(--text-400); width: 4px; }
+.mdx-shell .docs-row[data-status="locked"] .docs-rail { background: var(--text-200); width: 6px; }
+.mdx-shell .docs-row[data-blocker="true"]  .docs-rail { background: var(--error); width: 6px; }
+
+/* The kit's --text-400 stands everywhere it lands on the row's white
+   --canvas-elevated: at #75736d that is 4.74:1 at 11px, clear of the 4.5:1 AA
+   asks of text this size. It was #8a8880 and 3.55:1 when this section was
+   written, which is why .docs-meta, .docs-last and .docs-dhf briefly read
+   --text-300; the token moved and the deviation went with it.
+   .docs-esig-na keeps --text-300, because it is the one of these on --bg-100
+   rather than white, where --text-400 is 4.08:1 and still short.
+   .docs-open and .docs-action-chip keep --text-400 — they are icons, judged
+   against the 3:1 non-text rule, not this one. */
+.mdx-shell .docs-body { flex: 1; min-width: 0; padding: 12px 16px; }
+.mdx-shell .docs-head {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  margin-bottom: 4px;
+}
+.mdx-shell .docs-type {
+  font-size: 11px; color: var(--text-300); text-transform: uppercase;
+  letter-spacing: 0.04em; font-weight: 600;
+}
+.mdx-shell .docs-framework {
+  padding: 1px 6px; border-radius: 4px; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
+}
+.mdx-shell .docs-fw-820   { background: #e2e8f5; color: #355270; }
+.mdx-shell .docs-fw-14971 { background: #f6e9cf; color: #7e5510; }
+.mdx-shell .docs-fw-62304 { background: #ece9f7; color: #544698; }
+.mdx-shell .docs-fw-cyber { background: #f3d6d2; color: #7c1f1f; }
+.mdx-shell .docs-dhf { color: var(--text-400); }
+.mdx-shell .docs-title {
+  font-size: 14px; font-weight: 600; color: var(--text-100); line-height: 1.4;
+  margin-bottom: 6px;
+}
+.mdx-shell .docs-meta {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  font-size: 11px; color: var(--text-400);
+}
+.mdx-shell .docs-ver { color: var(--text-300); font-weight: 600; }
+.mdx-shell .docs-progress {
+  flex-basis: 80px; flex-shrink: 0;
+  height: 4px; background: var(--bg-100); border-radius: 999px; overflow: hidden;
+  margin: 0 4px;
+}
+.mdx-shell .docs-progress-fill {
+  display: block; height: 100%;
+  background: var(--accent-100); opacity: 0.6;
+  border-radius: 999px;
+  transition: width var(--dur) var(--ease);
+}
+.mdx-shell .docs-row[data-blocker="true"] .docs-progress-fill { background: var(--error); }
+.mdx-shell .docs-pct { color: var(--text-300); font-weight: 600; }
+.mdx-shell .docs-owner {
+  padding: 1px 6px; background: var(--bg-100); border-radius: 999px;
+  color: var(--text-200); font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+}
+.mdx-shell .docs-reviewers { display: inline-flex; gap: 2px; }
+.mdx-shell .docs-reviewer {
+  padding: 1px 6px; background: var(--bg-050); border: 1px solid var(--border-100);
+  border-radius: 999px;
+  color: var(--text-300); font-family: var(--font-mono); font-size: 10px;
+}
+.mdx-shell .docs-last { color: var(--text-400); margin-left: 4px; }
+.mdx-shell .docs-esig {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 1px 6px; border-radius: 999px;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
+  margin-left: auto;
+}
+.mdx-shell .docs-esig svg { width: 11px; height: 11px; }
+.mdx-shell .docs-esig-signed  { background: #ecf1e4; color: #4d6235; }
+.mdx-shell .docs-esig-pending { background: #f6e9cf; color: #7e5510; }
+.mdx-shell .docs-esig-na      { background: var(--bg-100); color: var(--text-300); }
+.mdx-shell .docs-blocker-note {
+  display: flex; gap: 6px; align-items: center;
+  margin-top: 8px; padding: 6px 10px;
+  background: #fbeae6;
+  border-radius: var(--radius-md);
+  font-size: 11px; color: var(--error-text);
+}
+.mdx-shell .docs-blocker-note .ico svg { width: 12px; height: 12px; color: var(--error); }
+.mdx-shell .docs-flags { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.mdx-shell .docs-flag {
+  padding: 1px 6px; background: var(--bg-100); border-radius: 4px;
+  font-size: 10px; color: var(--text-300);
+}
+.mdx-shell .docs-actions {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 14px;
+  border-left: 1px solid var(--border-100);
+  background: var(--bg-050);
+}
+.mdx-shell .docs-action-chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 999px;
+  color: var(--text-400);
+  transition: all var(--dur) var(--ease);
+  cursor: pointer;
+}
+.mdx-shell .docs-action-chip:hover { background: var(--accent-000); color: var(--accent-200); }
+.mdx-shell .docs-action-chip svg { width: 14px; height: 14px; }
+.mdx-shell .docs-open { color: var(--text-400); }
+.mdx-shell .docs-open svg { width: 14px; height: 14px; }
+.mdx-shell .docs-row:hover .docs-open { color: var(--accent-100); }
+
+.mdx-shell .docs-panel-compact .docs-row { font-size: 12px; }
+.mdx-shell .docs-panel-compact .docs-title { font-size: 13px; margin-bottom: 4px; }
+.mdx-shell .docs-panel-compact .docs-body { padding: 8px 12px; }
+
+
+/* ═════════════════════════════════════════════════════════════
    TASKS — Kanban board
    ═════════════════════════════════════════════════════════════ */
+/* A board scrolls sideways; it does not compress. Four 260px minimums plus
+   gaps need 1,108px and the surface column is 748 — without this the columns
+   ran out over the AnA rail, carrying the spill out to .page-inner at
+   1132 > 796. `overflow-y:hidden` is explicit because setting only the x axis
+   computes y to auto, and the cards' shadows would then raise a stray vertical
+   scrollbar over a board whose columns already scroll themselves.
+
+   The track count is `grid-auto-flow: column` rather than `repeat(4, …)`
+   because there are five statuses in TASKS_COLUMNS and there were four tracks:
+   "Done" wrapped silently onto a second row underneath "To do", a board whose
+   last column is not on the board. Taking the count from the data is also what
+   stops the two drifting apart again. */
 .mdx-shell .kanban {
-  display: grid; grid-template-columns: repeat(4, minmax(260px, 1fr));
+  display: grid; grid-auto-flow: column;
+  grid-auto-columns: minmax(240px, 1fr);
   gap: 12px; padding: 20px 32px 32px;
+  overflow-x: auto; overflow-y: hidden;
   min-height: calc(100vh - 280px);
 }
 .mdx-shell .kanban-col {
@@ -1595,12 +1806,30 @@
 
 /* Phase 5 full-surface layout (kit surfaces.css merged; kit tokens
    --canvas-elevated/--border-100/--radius-md adapted to this sheet). */
+/* Rail, documents, preview — as a wrapping flex row, not a three-track grid.
+   The grid version reserved 220px and 320px for the outer two and left the
+   document list whatever remained. In the 748px a surface actually gets that
+   remainder is 172px, and the list needs about 700, so the overflow gate found
+   six findings stacked in one chain: .page-inner 941 > 796, .vault-grid
+   917 > 748, .vault-main and its section 699 > 212, .section-head 667 > 148.
+   The whole Vault scrolled sideways and the preview drawer sat on top of the
+   file names.
+   Its `@media (max-width: 1280px)` fallback could not help, and could never
+   have: a media query reads the WINDOW. At the 1440px window this layout is
+   designed for, the query does not match while the column is 748px wide — the
+   narrow case is precisely where the narrow rule is switched off. Wrapping is
+   driven by the space the row is really in, so it needs no width to be named.
+   The basis widths are the old track widths, so nothing moves where it fits;
+   below roughly 950px the drawer drops to its own line instead of squeezing
+   the list to a column too narrow to read. */
 .mdx-shell .vault-grid {
-  display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 320px;
+  display: flex; flex-wrap: wrap;
   gap: 18px;
-  align-items: start;
+  align-items: flex-start;
 }
+.mdx-shell .vault-grid > .vault-rail { flex: 0 0 220px; }
+.mdx-shell .vault-grid > .vault-main { flex: 1 1 420px; }
+.mdx-shell .vault-grid > .vault-drawer { flex: 1 1 320px; max-width: 320px; }
 .mdx-shell .vault-rail {
   background: var(--bg-050);
   border: 1px solid var(--border);
@@ -1611,13 +1840,13 @@
 }
 .mdx-shell .vault-rail-lbl {
   font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
-  color: var(--text-400); font-weight: 600; padding: 4px 8px 6px;
+  color: var(--text-300); font-weight: 600; padding: 4px 8px 6px;
 }
 .mdx-shell .vault-grid .vault-main { min-width: 0; }
 .mdx-shell .vault-grid .vault-drawer { position: sticky; top: 16px; }
-@media (max-width: 1280px) {
-  .mdx-shell .vault-grid { grid-template-columns: 200px minmax(0, 1fr) 300px; }
-}
+/* The `@media (max-width: 1280px)` narrowing that used to sit here is gone with
+   the tracks it re-declared. It measured the window, and the Vault's problem is
+   the width of a column inside the window. */
 
 /* Legacy workbench-tab layout (drawer/tree row styles below are shared
    by the Phase 5 surface). */
@@ -1652,7 +1881,7 @@
 .mdx-shell .vault-tree-row .ico { color: var(--text-400); display: inline-flex; }
 .mdx-shell .vault-tree-row .ico svg { width: 14px; height: 14px; }
 .mdx-shell .vault-tree-row .lbl { flex: 1; }
-.mdx-shell .vault-tree-row .n { font-size: 10px; color: var(--text-400); font-variant-numeric: tabular-nums; }
+.mdx-shell .vault-tree-row .n { font-size: 10px; color: var(--text-300); font-variant-numeric: tabular-nums; }
 .mdx-shell .vault-tree-row.small { padding-left: 16px; }
 
 .mdx-shell .vault-main { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
@@ -1700,7 +1929,7 @@
 .mdx-shell .drawer-head { margin-bottom: 16px; }
 .mdx-shell .drawer-eyebrow {
   font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--text-400);
+  text-transform: uppercase; color: var(--text-300);
   margin-bottom: 6px;
 }
 .mdx-shell .drawer-title {
@@ -1722,7 +1951,7 @@
 
 .mdx-shell .drawer-section-lbl {
   font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--text-400);
+  text-transform: uppercase; color: var(--text-300);
   margin: 14px 0 8px; padding-bottom: 4px;
   border-bottom: 1px solid var(--border);
 }
@@ -1747,7 +1976,7 @@
   display: flex; gap: 10px; padding: 6px 0;
   font-size: 11px; color: var(--text-300);
 }
-.mdx-shell .audit-row .mono { color: var(--text-400); font-size: 10px; }
+.mdx-shell .audit-row .mono { color: var(--text-300); font-size: 10px; }
 
 /* ═════════════════════════════════════════════════════════════
    VALIDATION
@@ -2425,7 +2654,7 @@
   width: 100%;
   padding: 10px 12px;
   border-radius: var(--radius-md);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   background: var(--bg-050);
   font-family: var(--font-sans);
   font-size: 13px;
@@ -2455,52 +2684,32 @@
    Every surface panel renders exactly one of: loading, idle,
    error, empty, or real data. Fixtures appear only in explicit
    sample mode, always under the standing banner below.
+
+   The gate no longer draws a panel. Its four non-ready branches
+   render `<EmptyState>` / `<ErrorState>` (v2/dataConnect), which
+   ARE the visual treatment — and which carry the four-part
+   empty-state contract this lane had no way to reach while it
+   drew its own. `.mdx-shell` is a descendant of `.c2c-v2 .shell`
+   (MdxSurfaceHost renders inside the one shell), so those rules
+   apply here.
+
+   What was deleted, and why it cannot come back quietly:
+     .data-gate-inner / -copy / -icon / -icon-pulse / -title /
+     -detail / -btn   → the parallel empty state itself
+     .data-gate-mono   → styled a raw server string AS CODE, which
+                         is how `relation "…" does not exist` came
+                         to read as intended output (W0-4)
+     .data-gate-error  → an error tone the shared ErrorState owns
+
+   `.data-gate` survives as a layout hook only: no border, no
+   background, nothing that would nest a second dashed box around
+   the panel's own. `.data-gate-sample` below is unaffected — the
+   standing sample banner is this lane's, not the shared panel's.
    ════════════════════════════════════════════════════════════ */
-.mdx-shell .data-gate {
-  display: flex; align-items: center; justify-content: center;
-  padding: 40px 24px;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--bg-050);
-}
-.mdx-shell .data-gate-dense { padding: 20px 16px; }
-
-.mdx-shell .data-gate-inner {
-  display: flex; align-items: flex-start; gap: 12px;
-  max-width: 420px;
-}
-.mdx-shell .data-gate-icon {
-  color: var(--text-400); flex-shrink: 0;
-  width: 16px; height: 16px; margin-top: 1px;
-}
-.mdx-shell .data-gate-error .data-gate-icon { color: var(--error); }
-
-/* Motion is limited to the 200ms ease-out house rule; the loading
-   pulse is the one exception, and it respects reduced-motion. */
-.mdx-shell .data-gate-icon-pulse { animation: data-gate-pulse 1.4s ease-in-out infinite; }
-@keyframes data-gate-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-@media (prefers-reduced-motion: reduce) {
-  .mdx-shell .data-gate-icon-pulse { animation: none; }
-}
-
-.mdx-shell .data-gate-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.mdx-shell .data-gate-title { font-size: 13px; font-weight: 500; color: var(--text-200); }
-.mdx-shell .data-gate-error .data-gate-title { color: var(--text-100); }
-.mdx-shell .data-gate-detail { font-size: 11px; color: var(--text-400); line-height: 1.5; }
-.mdx-shell .data-gate-mono {
-  font-family: var(--font-mono, ui-monospace, monospace);
-  word-break: break-word;
-}
-
-.mdx-shell .data-gate-btn {
-  align-self: flex-start; margin-top: 4px;
-  padding: 5px 10px; font-size: 11px; font-weight: 500;
-  color: var(--text-200);
-  border: 1px solid var(--border-strong); border-radius: var(--radius-md);
-  background: var(--bg-000);
-  transition: background var(--dur) ease-out, color var(--dur) ease-out;
-}
-.mdx-shell .data-gate-btn:hover { background: var(--bg-200); color: var(--text-100); }
+.mdx-shell .data-gate { display: block; }
+/* `dense` tightens the panel it wraps rather than a box of its own. */
+.mdx-shell .data-gate-dense .c2c-empty-state,
+.mdx-shell .data-gate-dense .c2c-error-state { padding: 18px 16px; }
 
 /* Standing sample-data marker. Not dismissible by design — it must
    remain visible for exactly as long as the example content does. */
@@ -2512,7 +2721,12 @@
   border: 1px solid var(--warning, var(--border));
   border-radius: var(--radius-md);
 }
-.mdx-shell .data-gate-sample .data-gate-icon { color: var(--warning, var(--text-400)); }
+/* Sized here rather than inherited: the shared `.data-gate-icon` base rule went
+   with the parallel empty state, and the banner is its only remaining user. */
+.mdx-shell .data-gate-sample .data-gate-icon {
+  color: var(--warning, var(--text-400)); flex-shrink: 0;
+  width: 16px; height: 16px; margin-top: 1px;
+}
 .mdx-shell .data-gate-sample-tag { color: var(--text-100); font-weight: 600; }
 
 /* E-signature rejection — the server's own reason, shown verbatim.
@@ -2677,3 +2891,43 @@
 }
 .mdx-shell .ana-draft-banner,
 .mdx-shell .ana-draft-btn { transition: none; }
+
+/* ════════════════════════════════════════════════════════════
+   CER workbench (CerSurface tabs)
+   Reuses the pwt-bar/pwt-btn idiom from pathway-tabs.css. The
+   inner bar's active indicator is NEUTRAL ink — the outer
+   PathwayPanes bar already carries the screen's one accent-100
+   indicator, and the design contract caps Claude orange at one
+   appearance per screen.
+   ════════════════════════════════════════════════════════════ */
+.mdx-shell .cer-tabbar {
+  margin: 4px 0 16px;
+  padding: 0;
+  background: transparent;
+  /* The bar contains its own overflow instead of widening the page.
+     Six tabs at their natural width measure 863px; the pane they sit in is
+     732px (a 796px surface column less page-inner's 32px sides), so without
+     this the extra 131px pushed .page-inner to 895px and the whole CER surface
+     scrolled sideways. Contained here, every tab keeps its label and its
+     sub-line — those name the article each tab answers to, which is what
+     separates Equivalence (61(5)) from PMS/PMCF (83 · Annex XIV B) — and
+     nothing below the bar moves.
+     overflow-y is explicit: with only overflow-x set, the y axis computes to
+     auto and .pwt-btn's `margin-bottom:-1px` (which lays the active indicator
+     over the bar's own border) can raise a stray vertical scrollbar. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+.mdx-shell .cer-tabbar .pwt-btn.active { border-bottom-color: var(--text-100); }
+
+/* Tab switches fade in at the contract's 200ms ease-out; no spring. */
+.mdx-shell .cer-tabpanel { animation: cer-tab-in var(--dur) var(--ease); }
+@keyframes cer-tab-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .mdx-shell .cer-tabpanel { animation: none; }
+}
+
+/* Wide tables (GSPR matrix, literature results) scroll inside their own
+   container — the page body never scrolls horizontally. */
+.mdx-shell .tbl-scroll { overflow-x: auto; }

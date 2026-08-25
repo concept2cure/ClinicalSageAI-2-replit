@@ -78,7 +78,13 @@ CREATE TABLE qms_documents (
   updated_at timestamptz NOT NULL DEFAULT now(), deleted_at timestamptz
 );
 CREATE TABLE concept2cure_artifacts (
-  id serial PRIMARY KEY, artifact_id text, organization_id int, type text, category text, title text,
+  id serial PRIMARY KEY, artifact_id text, organization_id int,
+  -- NOT NULL, matching the real table (migrations/0000_sweet_joseph.sql:1849).
+  -- This test's first DDL omitted the column entirely, so save_document_to_vault
+  -- passed here while failing on every real call — the drift this file exists
+  -- to prevent. The pglite table must be at least as strict as production.
+  project_id int NOT NULL,
+  type text, category text, title text,
   content text, content_hash text, ctd_section text, status text, version int, created_by_id int,
   metadata jsonb DEFAULT '{}'::jsonb, created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -110,7 +116,7 @@ const ALLOWED_COMMANDS = [
   'unclaim', 'transition-back', 'reopen', 'revoke-signature', 'reject-ai-suggestion', 'unlock',
 ];
 
-const CTX = { organizationId: 1, userId: 10 };
+const CTX = { organizationId: 1, userId: 10, projectId: 77 };
 
 /**
  * Break the Part 11 audit write from INSIDE the caller's transaction. A
@@ -305,13 +311,24 @@ describe('save_document_to_vault — vault artifact + version + audit are one tr
   it('writes the artifact, its immutable version AND the audit row', async () => {
     const res = await call('save_document_to_vault', INPUT);
     expect(res.ok).toBe(true);
-    expect((await pglite.query(`SELECT * FROM concept2cure_artifacts`)).rows).toHaveLength(1);
+    const artifacts = (await pglite.query(`SELECT * FROM concept2cure_artifacts`)).rows as any[];
+    expect(artifacts).toHaveLength(1);
+    // Filed under the context's project — the column whose omission made this
+    // tool fail on every real call while the old test table hid it.
+    expect(artifacts[0].project_id).toBe(77);
     expect((await pglite.query(`SELECT * FROM concept2cure_artifact_versions`)).rows).toHaveLength(1);
 
     const audits = await auditRows();
     expect(audits).toHaveLength(1);
     expect(audits[0].target).toBe(`vault-document:${res.artifact_id}`);
     expect(audits[0].actor_id).toBe(10);
+  });
+
+  it('REFUSES without a project — a vault document belonging to no project is an orphaned capture', async () => {
+    const res = await call('save_document_to_vault', INPUT, { organizationId: 1, userId: 10 });
+    expect(res.error).toMatch(/needs an open project/i);
+    expect((await pglite.query(`SELECT * FROM concept2cure_artifacts`)).rows).toHaveLength(0);
+    expect(await auditRows()).toHaveLength(0);
   });
 
   it('FAILS CLOSED — a broken audit write rolls back the artifact AND its version', async () => {

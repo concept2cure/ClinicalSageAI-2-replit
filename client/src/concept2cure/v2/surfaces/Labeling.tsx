@@ -1,14 +1,16 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { useLiveData, useLiveRows, EmptyState, unwrapList } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, extractApiError } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
 import { LABEL_ENUMS } from '../fixtures/labeling-data';
 import type { LabelTranslation } from '../fixtures/labeling-data';
+import { C2CToast, useToast } from '../toast';
 
 /* ---- Labeling and IFU ---- */
 
@@ -106,11 +108,23 @@ function envRow(json: unknown): unknown {
   return json && typeof json === 'object' && 'data' in json ? (json as { data: unknown }).data : json;
 }
 
-/* Best-effort human message from a JSON error body, falling back to the status. */
+/* Trailing punctuation removed: every toast below appends its own
+   ". Nothing was saved." clause, so a message that already ends in a full stop
+   would render a doubled period. */
+function clause(text: string): string {
+  return text.replace(/[.\s]+$/, '');
+}
+
+/* The human sentence for a failed write, reduced for display.
+
+   This used to read the body's `error` field FIRST, so against the envelope
+   { error: 'VALIDATION_FAILED', message: '<a real sentence>' } the enum won and
+   the toast showed the token. It also fell back to a bare `HTTP <status>`, which
+   is a status code rather than user copy. extractApiError takes the sentence
+   wherever the envelope put it — rejecting enum tokens and driver text — and
+   substitutes a status-keyed sentence when the server sent none. */
 function errText(json: unknown, status: number): string {
-  const j = json as { error?: unknown; message?: unknown } | null;
-  const m = j && (typeof j.error === 'string' ? j.error : typeof j.message === 'string' ? j.message : '');
-  return m || `HTTP ${status}`;
+  return clause(extractApiError(json, status).message);
 }
 
 export function Labeling({ onAsk }: SurfaceViewProps) {
@@ -160,8 +174,7 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
   }, [seedTrans]);
 
   const [tForm, setTForm] = useState(false);
-  const [toast, setToast] = useState('');
-  const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
+  const [toast, fire] = useToast();
 
   const cov = useMemo(() => {
     const total = trans.length;
@@ -197,7 +210,15 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
       setTForm(false);
       fire('Translation ' + language + ' saved · status Pending');
     } catch (e) {
-      fire('Couldn’t add the translation — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.');
+      // A caught throw is only safe to render when it is an ApiRequestError: its
+      // message has already been through the same reduction as errText above.
+      // Anything else reaching here is a browser-native fetch rejection, whose
+      // message ("Failed to fetch", "Load failed") is not user copy.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const msg = known && (e as Error).message
+        ? clause((e as Error).message)
+        : 'the labeling service could not be reached';
+      fire('Couldn’t add the translation — ' + msg + '. Nothing was saved.');
     }
   };
   // advTrans — REAL, awaited status advance. PATCHes the labeling backend, then
@@ -224,11 +245,88 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
       setTrans(ts => ts.map(t => (t.id === id ? (adopted ?? { ...t, status: nxt }) : t)));
       fire('Status advanced to ' + nxt.replace('_', ' '));
     } catch (e) {
-      fire('Couldn’t advance the status — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was persisted.');
+      // Same restriction as addTrans: only an ApiRequestError message has been
+      // reduced to user copy; a native fetch rejection must not reach the toast.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const msg = known && (e as Error).message
+        ? clause((e as Error).message)
+        : 'the labeling service could not be reached';
+      fire('Couldn’t advance the status — ' + msg + '. Nothing was persisted.');
     }
   };
 
   const tTone: Record<string, string> = { approved: 'ok', review: 'warn', in_progress: 'ai', pending: 'idle', rejected: 'err' };
+
+  /* What AnA can see of this screen.
+     The three reads here are chained — no labeling document means no symbols and
+     no translations — so "there is no document" has to be published as itself.
+     Reported as an empty translation board it would read to AnA as a label with
+     nothing left to translate, which is the opposite claim. */
+  const anaContext = useMemo(() => {
+    if (docsLive.loading) {
+      return { summary: 'The labeling document is still loading; nothing on screen is final yet.' };
+    }
+    if (docsLive.error) {
+      return {
+        summary:
+          'The labeling store could not be read, so this screen is showing no label because of a failure, ' +
+          'not because none exists.',
+        availableActions: ['Retry the labeling document read'],
+      };
+    }
+    if (!docRow) {
+      return {
+        summary:
+          'Labeling: this organisation has no labeling document yet, so there are no symbols or ' +
+          'translations to show — the boards below are empty for that reason.',
+        availableActions: ['Create a labeling document for a device'],
+      };
+    }
+    const byStatus = trans.reduce<Record<string, number>>((acc, t) => {
+      acc[t.status] = (acc[t.status] ?? 0) + 1;
+      return acc;
+    }, {});
+    return {
+      summary:
+        `Labeling: "${docRow.device_name}" ${kindLabel} v${docRow.version} (${docRow.status})` +
+        (docRow.udi_di ? `, UDI-DI ${docRow.udi_di}` : '') +
+        `. ${trans.length} translation(s) — ` +
+        (Object.keys(byStatus).length
+          ? Object.entries(byStatus).map(([k, n]) => `${n} ${k.replace('_', ' ')}`).join(', ')
+          : 'none yet') +
+        '. ' +
+        (symbolsLive.loading
+          ? 'Symbols are still loading.'
+          : symbolsLive.error
+            ? 'The symbol list could not be read.'
+            : `${symbolsLive.rows.length} symbol(s) recorded.`),
+      facts: {
+        document: {
+          id: docRow.id, device: docRow.device_name, kind: kindLabel,
+          version: docRow.version, status: docRow.status, udiDi: docRow.udi_di,
+        },
+        translations: trans.map((t) => ({
+          id: t.id, language: t.language, name: t.name,
+          method: t.method, backTranslationVerified: t.btv, status: t.status,
+        })),
+        translationsByStatus: byStatus,
+        translationsUnavailable: transState.error ? 'the translation read failed' : null,
+        symbols: symbolsLive.loading || symbolsLive.error
+          ? null
+          : symbolsLive.rows.map((sy) => ({
+              code: sy.symbol_code, name: sy.symbol_name,
+              description: sy.description, requiredBy: sy.required_by ?? [],
+            })),
+        symbolsUnavailable: symbolsLive.error ? 'the symbol read failed' : null,
+      },
+      availableActions: [
+        'Add a target-language translation (a real persisted write)',
+        'Advance a translation through pending, in progress, review, approved',
+        'Read the symbol set and what each symbol is required by',
+      ],
+    };
+  }, [docsLive.loading, docsLive.error, docRow, kindLabel, trans, transState.error, symbolsLive.loading, symbolsLive.error, symbolsLive.rows]);
+  usePublishSurfaceContext('labeling', anaContext);
 
   const transFormConfig: C2CFormConfig = {
     eyebrow: 'Labeling / translation',
@@ -242,8 +340,26 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
     governed: 'Back-translation QC is expected before a language reaches Approved.',
     submitLabel: 'Add translation',
     fields: [
-      { key: 'language', label: 'Language code', type: 'text', placeholder: 'e.g. pt, sv, cs', required: true },
-      { key: 'name', label: 'Language name', type: 'text', placeholder: 'e.g. Portuguese', required: true },
+      /* ── "Language name" is gone ────────────────────────────────────────
+         It was REQUIRED — the form refused to submit without it — and then
+         `addTrans` never read `v.name`. The typed name was discarded on every
+         submit, silently.
+
+         It could not have been saved: `labeling_translations` keys a
+         translation on its ISO language code and has no name column, and the
+         display name is DERIVED from the code by `languageName()` (Intl
+         DisplayNames). A free-text name beside the code would be a second
+         spelling of one fact — the case where the two disagree has no correct
+         resolution. So the code carries the guidance the name field was
+         giving, and the row is titled from it. */
+      {
+        key: 'language',
+        label: 'Language code',
+        type: 'text',
+        placeholder: 'e.g. pt, sv, cs, pt-BR',
+        desc: 'The ISO 639-1 code (or BCP-47 tag). The language name shown on the board is derived from it.',
+        required: true,
+      },
       { key: 'method', label: 'Translation method', type: 'select', options: EN.method.map(m => ({ value: m[0], label: m[1] })), required: true },
     ],
   };
@@ -285,7 +401,18 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
           <AnswerLead
             tone={cov.total > 0 && cov.approved === cov.total ? 'good' : 'calm'}
             eyebrow="Where the label package stands right now"
-            headline={cov.total === 0
+            /* Gated on the TRANSLATIONS read, not the document read.
+               This lead sits inside the document-read gate, while `cov` derives
+               from a separate translations read — so a failed or in-flight
+               translations fetch made `cov.total` 0 and the headline told a
+               device owner that no target-language IFU exists, for an EU MDR
+               filing that may hold a fully approved set. The table twelve lines
+               below said "Couldn't load translations" at the same moment. */
+            headline={transState.loading
+              ? <>Reading this label's translation coverage…</>
+              : transState.error
+              ? <>Couldn't read this label's translation coverage, so nothing is claimed about it here.</>
+              : cov.total === 0
               ? <>No translations are recorded for this label yet.</>
               : cov.approved < cov.total
                 ? <>The label content is controlled; <b>{cov.total - cov.approved}</b> of {cov.total} translation{cov.total === 1 ? '' : 's'} {cov.total - cov.approved === 1 ? 'is' : 'are'} still short of approved.</>
@@ -435,7 +562,7 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
         </>
       )}
 
-      {toast && <div className="pdev-toast">{I.check} {toast}</div>}
+      <C2CToast msg={toast} />
     </div>
   );
 }

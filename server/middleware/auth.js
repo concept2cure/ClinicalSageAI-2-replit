@@ -130,12 +130,21 @@ const PLATFORM_SCOPED_ROLES = new Set([
 /**
  * Check if the user has one of the required roles.
  *
- * ── This file is the one that actually runs ─────────────────────────────────
+ * ── Which twin runs depends on the resolver ─────────────────────────────────
  * `server/middleware/auth.js` and `server/middleware/auth.ts` both exist and
- * export overlapping names. For the 95 call sites that import the bare
- * specifier `'../middleware/auth'`, extension resolution picks `.js` FIRST —
- * so this file, not the larger TypeScript one, is the live implementation.
- * Edits made to auth.ts's requireRole do not reach those callers.
+ * export overlapping names, so the 95 call sites that import the bare specifier
+ * `'../middleware/auth'` get whichever one their bundler resolves first. That
+ * differs per runtime — measured, not assumed:
+ *
+ *   esbuild (`npm run build` -> dist/index.js, i.e. PRODUCTION)  -> auth.ts
+ *   tsx     (`npm run dev`)                                      -> auth.ts
+ *   Vite / vitest                                                -> auth.js
+ *
+ * esbuild's default resolveExtensions is `.tsx,.ts,.jsx,.js`; Vite's is
+ * `.mjs,.js,.mts,.ts`. So `.js` wins ONLY under vitest — production and dev
+ * both load the TypeScript twin. Both files therefore carry the same guard: the
+ * `.ts` copy is what ships, and this one is what the suite exercises. Change one
+ * without the other and the tests stop describing production.
  *
  * ── Two defects this had, both invisible from the call site ─────────────────
  * 1. It took a SINGLE role while every caller invokes it variadically. So

@@ -11,7 +11,8 @@
  *   - FDA FAERS (adverse event reports)
  *   - FDA Drug Labels (DailyMed)
  *   - Disease registries (SEER, CDC WONDER, NHANES)
- *   - Claims databases (simulated Optum/Truven interface)
+ *   - Claims databases (Optum/Truven connector — catalogued, status 'pending';
+ *     no claims data is served until a real connector is configured)
  *
  * Analytics:
  *   - Propensity score matching for observational comparisons
@@ -347,9 +348,36 @@ const DATA_SOURCES: RWEDataSource[] = [
 // FHIR CLIENT
 // ---------------------------------------------------------------------------
 
+/** Raised when the FHIR EHR connector is unreachable or not configured. */
+class FHIRUnavailableError extends Error {
+  constructor(
+    message: string,
+    readonly reason: 'not_configured' | 'request_failed',
+  ) {
+    super(message);
+    this.name = 'FHIRUnavailableError';
+  }
+}
+
+/**
+ * Query the configured FHIR R4 endpoint.
+ *
+ * THROWS on "not configured" and on request failure — it does NOT return `[]`.
+ * The empty array is a real-world-evidence ANSWER ("no patients in the EHR
+ * match this cohort definition"), and a study author sizes a cohort, an
+ * external control arm, or a feasibility assessment off exactly that number.
+ * Returning it because `FHIR_BASE_URL` was unset, or because the request blew
+ * up, reported a cohort of zero that the EHR never denied — a fabricated
+ * epidemiological finding. Callers surface the distinction to the client.
+ */
 async function queryFHIR(resourceType: string, params: Record<string, string>): Promise<any[]> {
   const baseUrl = process.env.FHIR_BASE_URL;
-  if (!baseUrl) return [];
+  if (!baseUrl) {
+    throw new FHIRUnavailableError(
+      'FHIR_BASE_URL is not configured; no EHR endpoint to query.',
+      'not_configured',
+    );
+  }
 
   try {
     const queryString = new URLSearchParams(params).toString();
@@ -359,11 +387,17 @@ async function queryFHIR(resourceType: string, params: Record<string, string>): 
         Authorization: `Bearer ${process.env.FHIR_ACCESS_TOKEN || ''}`,
       },
     });
+    if (!response.ok) {
+      throw new Error(`FHIR endpoint returned ${response.status}`);
+    }
     const bundle = (await response.json()) as any;
     return bundle.entry?.map((e: any) => e.resource) || [];
   } catch (err) {
     console.error(`[RWE] FHIR query failed for ${resourceType}:`, err);
-    return [];
+    throw new FHIRUnavailableError(
+      `FHIR query for ${resourceType} failed: ${err instanceof Error ? err.message : String(err)}`,
+      'request_failed',
+    );
   }
 }
 
@@ -604,8 +638,29 @@ router.post('/fhir/patients', async (req: Request, res: Response) => {
     ),
   };
 
-  // In production, builds proper FHIR search parameters
-  const patients = await queryFHIR('Patient', params);
+  let patients: any[];
+  try {
+    patients = await queryFHIR('Patient', params);
+  } catch (err) {
+    // `patientCount: 0` is a cohort-feasibility finding. It must only ever be
+    // reported when the EHR actually answered "none". An unconfigured or
+    // unreachable connector answers with its own status so the caller knows no
+    // query ran, instead of recording a zero-patient cohort that no EHR
+    // returned.
+    if (err instanceof FHIRUnavailableError) {
+      return res.status(503).json({
+        success: false,
+        error: {
+          code: err.reason === 'not_configured' ? 'FHIR_NOT_CONFIGURED' : 'FHIR_UNAVAILABLE',
+          message:
+            err.reason === 'not_configured'
+              ? 'No FHIR EHR endpoint is configured for this deployment; no patient cohort was queried.'
+              : 'The FHIR EHR endpoint could not be reached; no patient cohort was queried.',
+        },
+      });
+    }
+    throw err;
+  }
 
   res.json({
     success: true,

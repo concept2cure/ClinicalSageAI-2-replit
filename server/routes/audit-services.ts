@@ -135,24 +135,33 @@ router.post('/export/pdf', async (req: Request, res: Response) => {
 
 /**
  * POST /api/audit-services/export/ectd
- * Assemble an eCTD XML backbone package.
+ * Assemble an eCTD package from the canonical submission spine (submissions →
+ * ectd_sequences → submission_leaves) via the ONE canonical generator,
+ * `ectd/assemble-from-core`. `projectId` is the canonical submissions.id; a
+ * submission with no sequence or placed leaves is an honest 404/refusal, never
+ * a placeholder package.
  */
 router.post('/export/ectd', async (req: Request, res: Response) => {
   try {
-    const { generateEctdPackage, validateEctdPackage } = await getSvc<any>(() => import('../services/ectdExportService.js'));
-    const { projectId, applicationNumber, sequenceNumber, region, submissionType, validateAfter } =
-      req.body;
+    const { assembleSubmissionEctd } = await getSvc<any>(() => import('../services/ectd/assemble-from-core.js'));
+    const { validateEctdPackage } = await getSvc<any>(() =>
+      import('../services/submission-gateways/ectd-structural-validator.js'));
+    const { projectId, applicationNumber, sequenceNumber, region, validateAfter } = req.body;
     const user = (req as any).user;
 
     if (!projectId || !applicationNumber) {
       return res.status(400).json({ error: 'projectId and applicationNumber are required' });
     }
 
-    const result = await generateEctdPackage(Number(projectId), Number(user?.organizationId), {
+    const result = await assembleSubmissionEctd({
+      submissionId: Number(projectId),
+      organizationId: Number(user?.organizationId),
+      userId: Number(user?.id || user?.userId || 0),
       applicationNumber,
-      sequenceNumber: sequenceNumber || '0000',
-      region: region || 'FDA',
-      submissionType: submissionType || 'initial',
+      sequenceNumber: sequenceNumber || undefined,
+      // Cross-check only: the sequence's recorded region is authoritative and a
+      // contradicting request is refused, never silently honored.
+      region: region || undefined,
     });
 
     const validation = validateAfter === false ? null : await validateEctdPackage(result.buffer);
@@ -164,23 +173,35 @@ router.post('/export/ectd', async (req: Request, res: Response) => {
     res.setHeader('X-ECTD-Total-Files', String(result.stats.totalFiles));
     res.setHeader('X-ECTD-Generated-At', result.stats.generatedAt);
     // Surface submission-completeness here too (parity with /api/ectd/export) so
-    // any caller of this export path can see how much of the dossier is still
-    // placeholder content, not just the module/file counts.
+    // any caller of this export path can see how much of the dossier could not
+    // be materialized, not just the module/file counts.
     if (result.stats.completeness) {
       res.setHeader('X-ECTD-Completeness-Pct', String(result.stats.completeness.completenessPct));
       res.setHeader('X-ECTD-Incomplete-Leaves', String(result.stats.completeness.placeholderLeaves));
       res.setHeader('X-ECTD-Submission-Complete', String(result.stats.completeness.complete));
     }
     res.setHeader('X-ECTD-Index-XML-Path', 'index.xml');
-    res.setHeader('X-ECTD-Regional-XML-Path', `m1/${(region || 'FDA') === 'FDA' ? 'us' : (region || 'FDA') === 'EMA' ? 'eu' : 'jp'}-regional.xml`);
+    // The canonical packager nests the regional backbone under m1/<code>/.
+    const coreRegion = String(result.region || '').toLowerCase();
+    const regionCode = ['eu', 'ema'].includes(coreRegion) ? 'eu'
+      : ['jp', 'pmda'].includes(coreRegion) ? 'jp'
+      : 'us';
+    res.setHeader('X-ECTD-Regional-XML-Path', `m1/${regionCode}/${regionCode}-regional.xml`);
+    res.setHeader('X-ECTD-Sequence', result.sequenceNumber);
     if (validation) {
       res.setHeader('X-ECTD-Valid', String(validation.valid));
       res.setHeader('X-ECTD-Validation-Errors', String(validation.errors.length));
     }
     return res.send(result.buffer);
   } catch (error: any) {
-    logger.error('eCTD export failed', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({ error: error.message || 'eCTD export failed' });
+    const msg = error instanceof Error ? error.message : String(error);
+    logger.error('eCTD export failed', { err: msg });
+    // A submission/sequence that does not exist in the caller's org is a 404,
+    // not a server failure.
+    if (/not found/i.test(msg)) {
+      return res.status(404).json({ error: msg });
+    }
+    res.status(500).json({ error: msg || 'eCTD export failed' });
   }
 });
 
@@ -352,27 +373,52 @@ router.post('/keywords/consistency', async (req: Request, res: Response) => {
 
 /**
  * POST /api/audit-services/extraction/queue
- * Queue a file for automatic extraction.
+ * Queue a stored artifact for automatic extraction.
+ *
+ * HISTORY (2026-08-14). This route returned 500 on EVERY call. `queueExtraction`
+ * is positional — `(fileId, fileName, fileSize, projectId, organizationId,
+ * userId, options)` — and this passed it a single object, so `fileName` arrived
+ * undefined and `detectFileType(fileName)` threw on `.split`. It is the
+ * pipeline's only entry point and has no other caller, so the pipeline could
+ * not run at all.
+ *
+ * The body contract was wrong as well as the call: it demanded `fileContent`,
+ * which the pipeline has no parameter for and never reads. Extraction resolves
+ * its source text by artifact id (`concept2cure_artifacts.artifact_id`), so the
+ * route now takes `fileId`.
+ *
+ * Repaired in the SAME change as the fabrication in `extractText`, on purpose.
+ * That function used to answer with an invented placeholder string when it
+ * could not read the source, which the caller then hashed and stored as a
+ * governed `category:'extracted'` artifact. Fixing this route on its own would
+ * have switched on a pipeline that writes fabricated content as evidence — the
+ * bug being latent was the only thing preventing it.
  */
 router.post('/extraction/queue', async (req: Request, res: Response) => {
   try {
     const svc = await getSvc<any>(() => import('../services/autoExtractionPipeline.js'));
-    const { fileName, fileContent, fileType, projectId, priority } = req.body;
+    const { fileId, fileName, fileSize, projectId, priority } = req.body ?? {};
     const user = (req as any).user;
 
-    if (!fileName || !fileContent) {
-      return res.status(400).json({ error: 'fileName and fileContent are required' });
+    if (!fileId || !fileName) {
+      return res.status(400).json({ error: 'fileId and fileName are required' });
+    }
+    // Tenant comes from the authenticated context, never the body, and its
+    // absence is a refusal rather than an extraction attributed to org 0.
+    const organizationId = Number(user?.organizationId);
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Organization context required' });
     }
 
-    const jobId = await svc.queueExtraction({
-      fileName,
-      fileContent,
-      fileType,
-      projectId: projectId || 0,
-      organizationId: user?.organizationId,
-      userId: user?.id || user?.userId || 0,
-      priority: priority || 5,
-    });
+    const jobId = await svc.queueExtraction(
+      String(fileId),
+      String(fileName),
+      Number.isFinite(Number(fileSize)) ? Number(fileSize) : 0,
+      Number(projectId) || 0,
+      organizationId,
+      Number(user?.id ?? user?.userId) || 0,
+      { priority: Number(priority) || 5 },
+    );
 
     res.json({ success: true, jobId });
   } catch (error: any) {

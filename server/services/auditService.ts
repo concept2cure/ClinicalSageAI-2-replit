@@ -173,6 +173,112 @@ async function ensureInitialized(): Promise<TamperProofAuditLog | null> {
 }
 
 // ---------------------------------------------------------------------------
+/**
+ * What actually happened to an audit write.
+ *
+ * `logAction` deliberately does not throw — an audit-trail outage must not
+ * crash the user action it records, which is the right policy for the general
+ * call sites. The DEFECT was that the outcome was also unknowable: it returned
+ * `Promise<void>` and swallowed internally, so a caller could neither await a
+ * guarantee nor catch a failure. Seventeen call sites across sixteen files
+ * wrapped it in `try { await … } catch`, which cannot fire — dead code that
+ * reads as handling and is not.
+ *
+ * Returning the outcome keeps the policy and removes the lie. Callers that
+ * ignore the value behave exactly as before; callers that care can now say
+ * something true about it. Callers that need a GUARANTEE still cannot get one
+ * here by design and must use `writeChainedAuditRow` on their own transaction —
+ * see its note below.
+ */
+export interface AuditWriteResult {
+  /** True when at least one durable store accepted the row. */
+  persisted: boolean;
+  /** The sha256-chained `audit_logs` row. */
+  chained: boolean;
+  /** The tamper-proof hash-chain log. */
+  tamperProof: boolean;
+  /** Why it failed, for the caller's own log line. Never surfaced to a user. */
+  error?: string;
+}
+
+// Chained audit row — transaction-enlistable
+// ---------------------------------------------------------------------------
+
+/**
+ * Write ONE sha256-chained + HMAC-sealed `audit_logs` row on the CALLER'S
+ * client, inside the caller's transaction. No BEGIN/COMMIT here: the caller
+ * owns the transaction, so the audit row commits or rolls back atomically with
+ * whatever it records — and a failure PROPAGATES rather than being swallowed.
+ *
+ * Why this is exported rather than being private to `logAction`:
+ *
+ * `logAction` deliberately runs on its own connection and swallows persistence
+ * failures ("an audit-trail outage must not break the user action it records").
+ * That is a defensible policy for the ~234 general call sites, but it is the
+ * WRONG policy for 21 CFR Part 11 signing events, where the regulated claim is
+ * the opposite: no signature may exist without its audit row. A caller on that
+ * path cannot get the guarantee from `logAction` at all — not by awaiting it
+ * (it resolves normally on DB failure) and not by catching (it never rejects
+ * for one). It needs the write inside its own transaction, which is this.
+ *
+ * Same shape as `recordGovernedAction(client, …)` in server/routes/c2c/actions.ts,
+ * which already executes on the caller's client for exactly this reason.
+ */
+export async function writeChainedAuditRow(
+  client: { query: (sql: string, params?: unknown[]) => Promise<unknown> },
+  entry: AuditLogEntry,
+  resolvedTenantId?: string | number,
+  resolvedResourceId?: string,
+): Promise<void> {
+  const tenantIdSource = resolvedTenantId ?? entry.tenantId ?? entry.organizationId;
+  const recordId =
+    resolvedResourceId ??
+    entry.resourceId?.toString() ??
+    entry.recordId?.toString() ??
+    'unknown';
+
+  const occurredAt = new Date().toISOString();
+  const actorId =
+    entry.userId != null && Number.isFinite(Number(entry.userId)) ? Number(entry.userId) : null;
+  const tenantId = Number.isFinite(Number(tenantIdSource)) ? Number(tenantIdSource) : 0;
+  const newValues = entry.details ?? entry.metadata ?? null;
+  const target = `${entry.resourceType ?? entry.tableName ?? 'unknown'}:${recordId}`;
+  const payloadHash = hashPayload(newValues ?? { action: entry.action, target });
+  const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
+    action: entry.action,
+    actor_id: actorId,
+    target,
+    payload_hash: payloadHash,
+    occurred_at: occurredAt,
+  });
+  await client.query(
+    `INSERT INTO audit_logs
+       (id, tenant_id, user_id, action, table_name, record_id,
+        actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal,
+        old_values, new_values, ip_address, user_agent)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::json,$15,$16)`,
+    [
+      randomUUID(),
+      tenantId,
+      actorId,
+      entry.action,
+      entry.resourceType || entry.tableName || 'unknown',
+      recordId,
+      actorId,
+      target,
+      payloadHash,
+      sha256Chain,
+      occurredAt,
+      hmacSeal,
+      null,
+      newValues == null ? null : JSON.stringify(newValues),
+      entry.ipAddress ?? null,
+      entry.userAgent ?? null,
+    ],
+  );
+}
+
+// ---------------------------------------------------------------------------
 // AuditService
 // ---------------------------------------------------------------------------
 
@@ -205,7 +311,7 @@ class AuditService {
     resourceType?: string,
     resourceId?: string | number,
     details?: Record<string, any>
-  ): Promise<void> {
+  ): Promise<AuditWriteResult> {
     const entry: AuditLogEntry =
       typeof entryOrTenantId === 'object'
         ? entryOrTenantId
@@ -234,6 +340,27 @@ class AuditService {
     entry.resourceType = resolvedResourceType;
     entry.resourceId = resolvedResourceId;
 
+    // Outcome trackers.
+    //
+    // These were initialised to `true` and only ever demoted inside a catch —
+    // so they tracked "nothing threw", not "a store accepted the row". When
+    // neither store was configured, both `if` blocks below were skipped, no
+    // catch ran, and this returned `{persisted: true, chained: true,
+    // tamperProof: true}` for a row that was written NOWHERE. The comment that
+    // stood here claimed the opposite ("a store that is not configured at all
+    // leaves its flag false"), and AuditWriteResult documents `persisted` as
+    // "true when at least one durable store accepted the row".
+    //
+    // That is the failure mode this whole result type exists to expose: every
+    // `if (!audit.persisted)` check in the codebase — including the one that
+    // aborts a governed Part 11 action in routes/ana-ri/utility.ts — was being
+    // handed a success it could not have earned. So the flags now start false
+    // and are raised only by a write that actually completed.
+    let chained = false;
+    let tamperProof = false;
+    let tamperProofAttempted = false;
+    let failure: string | undefined;
+
     // Always log to structured console for observability
     logger.info(`[AUDIT] ${entry.action} ${entry.resourceType}`, {
       userId: entry.userId,
@@ -257,46 +384,9 @@ class AuditService {
         const client = await pool.connect();
         try {
           await client.query('BEGIN');
-          const occurredAt = new Date().toISOString();
-          const actorId =
-            entry.userId != null && Number.isFinite(Number(entry.userId)) ? Number(entry.userId) : null;
-          const tenantId = Number.isFinite(Number(resolvedTenantId)) ? Number(resolvedTenantId) : 0;
-          const newValues = entry.details ?? entry.metadata ?? null;
-          const target = `${entry.resourceType ?? 'unknown'}:${resolvedResourceId}`;
-          const payloadHash = hashPayload(newValues ?? { action: entry.action, target });
-          const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
-            action: entry.action,
-            actor_id: actorId,
-            target,
-            payload_hash: payloadHash,
-            occurred_at: occurredAt,
-          });
-          await client.query(
-            `INSERT INTO audit_logs
-               (id, tenant_id, user_id, action, table_name, record_id,
-                actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal,
-                old_values, new_values, ip_address, user_agent)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::json,$15,$16)`,
-            [
-              randomUUID(),
-              tenantId,
-              actorId,
-              entry.action,
-              entry.resourceType || 'unknown',
-              resolvedResourceId,
-              actorId,
-              target,
-              payloadHash,
-              sha256Chain,
-              occurredAt,
-              hmacSeal,
-              null,
-              newValues == null ? null : JSON.stringify(newValues),
-              entry.ipAddress ?? null,
-              entry.userAgent ?? null,
-            ],
-          );
+          await writeChainedAuditRow(client, entry, resolvedTenantId, resolvedResourceId);
           await client.query('COMMIT');
+          chained = true;
         } catch (txErr) {
           try {
             await client.query('ROLLBACK');
@@ -309,8 +399,17 @@ class AuditService {
         }
       }
     } catch (error) {
-      // Non-fatal: audit write failure should not crash the request
+      // Non-fatal by policy — but no longer SILENT: the outcome is returned so
+      // the caller can say something true instead of catching an error that
+      // never arrives.
+      chained = false;
+      failure = error instanceof Error ? error.message : String(error);
       logger.error('Failed to write chained audit_logs row', error);
+    }
+    if (!chained && !failure) {
+      // Reached only when `pool` was absent, so nothing was attempted. Silence
+      // here is what let an unwritten row report itself as persisted.
+      failure = 'no database pool: the chained audit_logs row was not attempted';
     }
 
     // -----------------------------------------------------------------------
@@ -319,6 +418,7 @@ class AuditService {
     try {
       const tpLog = await ensureInitialized();
       if (tpLog) {
+        tamperProofAttempted = true;
         await tpLog.log(
           mapEventType(entry.action),
           entry.action,
@@ -335,10 +435,23 @@ class AuditService {
             userAgent: entry.userAgent,
           }
         );
+        tamperProof = true;
       }
     } catch (error) {
+      tamperProof = false;
+      failure = failure ?? (error instanceof Error ? error.message : String(error));
       logger.error('Failed to write tamper-proof audit entry', error);
     }
+    if (!tamperProof && !tamperProofAttempted) {
+      failure = failure ?? 'no tamper-proof log configured: the hash-chain entry was not attempted';
+    }
+
+    return {
+      persisted: chained || tamperProof,
+      chained,
+      tamperProof,
+      ...(failure ? { error: failure } : {}),
+    };
   }
 
   /**

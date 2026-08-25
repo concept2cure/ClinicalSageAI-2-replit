@@ -16,6 +16,7 @@
 import * as React from 'react';
 import { I } from '../icons';
 import { DocumentsPanel } from '../components/DocumentsPanel';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 import {
   PV_CAPA_STAGES,
   PV_PMS_PLAN,
@@ -26,6 +27,7 @@ import { usePostmarket } from '../hooks/usePostmarket';
 import { useTriageQueue } from '../hooks/useTriageQueue';
 import { DataGate } from '../components/DataGate';
 import { readyRows } from '../lib/dataState';
+import { useSampleRows, useShowingSample } from '../lib/useSampleRows';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
 import type { Program } from '../data/programs';
 
@@ -62,8 +64,19 @@ export function PostmarketSurface({
      clock is a countdown to a statutory deadline shown as though it
      were real. */
   const triage = useTriageQueue({ programId: program?.id ?? null });
-  const documents = PV_DOCUMENTS as unknown as KitDocument[];
-  const frameworks = PV_DOC_FRAMEWORKS as unknown as KitDocFramework[];
+  /* Documents/frameworks have no live feed yet. They were wired to fixtures
+     UNCONDITIONALLY on the one surface where an example row is least
+     acceptable — a fabricated MDR submission reads as a statutory filing that
+     never happened. Same gate as every other panel now: live rows would win,
+     sample only in explicit sample mode, honest empty otherwise. */
+  const documents = useSampleRows<KitDocument>(null, PV_DOCUMENTS as unknown as readonly KitDocument[]);
+  const frameworks = useSampleRows<KitDocFramework>(null, PV_DOC_FRAMEWORKS as unknown as readonly KitDocFramework[]);
+  /* The gate above was right and the marking was missing: these rows carry
+     `esigState: 'signed'` with a named signer and a date (data/postmarket-docs.ts),
+     so on the one screen where an example row is least acceptable the user was
+     given no way to tell. The live argument is `null` because no feed exists
+     yet, which makes this permanently either sample-or-empty. */
+  const documentsAreSample = useShowingSample(null);
 
   /* Critical or under-review signals not yet wrapped in a doc. */
   const triageQueue = React.useMemo(
@@ -123,7 +136,7 @@ export function PostmarketSurface({
           <h1 className="page-title">Post-market vigilance</h1>
           <div className="page-sub">
             {documents.length} regulatory submissions in flight. 21 CFR 803 MDR ·
-            EU MDR Art. 87 · 21 CFR 820.100 CAPA · PSUR.
+            EU MDR Art. 87 · CAPA 21 CFR 820.100 · ISO 13485 §8.5.2/8.5.3 · PSUR.
           </div>
         </div>
         <div className="page-actions">
@@ -181,6 +194,10 @@ export function PostmarketSurface({
         </div>
       </div>
 
+      <SampleDataBanner
+        show={documentsAreSample}
+        label="regulatory submissions in flight"
+      />
       <DocumentsPanel
         title="Regulatory submissions in flight"
         subtitle="Tap any row to open in the MDR / CAPA / FSCA editor · sparkle to draft the narrative with AnA"

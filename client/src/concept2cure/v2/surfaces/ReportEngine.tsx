@@ -3,10 +3,12 @@ import { I } from '../icons';
 import { connected, liveMutateOrNull, useLiveData, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { saveToAuthoring } from '../authoringHandoff';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ═══════════════════════════════════════════════════════════════════
    Reporting & Analytics -- a protocol-analysis document producer,
@@ -133,7 +135,7 @@ function genStatisticalInsights(a: ParsedProtocol): string {
 }
 
 function genIndReadiness(_a: ParsedProtocol): string {
-  let s = `# IND Readiness Assessment\n\n*Qualitative regulatory guidance -- no numeric readiness score is emitted (the codebase returns null until a real scorer is wired).*\n\n`;
+  let s = `# IND Readiness Assessment\n\n*Qualitative regulatory guidance — no numeric readiness score is emitted (the codebase returns null until a real scorer is wired).*\n\n`;
   s += `## Strengths\n\n- Well-defined primary and secondary endpoints\n- Clear inclusion/exclusion criteria\n- Appropriate statistical analysis plan\n- Adequate safety monitoring provisions\n\n`;
   s += `## Improvement Areas\n\n- Additional details needed on concomitant medication management (FDA 21 CFR 312.23(a)(6))\n- Consider adding interim analysis points (ICH E9, Section 4.5)\n- Strengthen data management plan section (ICH E6(R2), Section 5.5)\n- Expand on randomization implementation details (EMA Guideline on multiplicity issues)\n\n`;
   s += `## Regulatory Guidance\n\n- Aligns with FDA guidance for Phase 2 trials in this indication\n- Consistent with ICH E6(R2) requirements for Good Clinical Practice\n- Meets basic requirements for EMA Scientific Advice submissions\n- May require additional ethnic considerations for PMDA submission\n\n`;
@@ -235,14 +237,6 @@ function parseProtocol(text: string): ParsedProtocol {
    removed rather than depended upon never to arrive -- and it is already
    covered by its own tests, which the hand-rolled copies never were. */
 
-/* ── Inline toast helper ── */
-
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 2400); };
-  return [msg, fire];
-}
-
 /* ═══ Main surface ═══ */
 
 export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
@@ -255,7 +249,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
 
   const runLocal = () => { const a = parseProtocol(text); setAnalysis({ protocol_data: a, similar_protocols: [], source: 'local' }); };
   const analyze = () => {
-    if (text.trim().length < 50) { fireToast('Add more protocol detail (min ~50 chars)'); return; }
+    if (text.trim().length < 50) { fireToast('Add more protocol detail (min ~50 chars)', 'error'); return; }
     // The old guard read `window.C2C_API`, which nothing assigns, so this always
     // fell through to the local analyzer and the server was never consulted.
     // dataConnect now carries the POST mapping its comment said was missing.
@@ -278,6 +272,23 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   const docDef = docById(docType);
+  /*
+   * The body is produced by the SELECTED document's own generator.
+   *
+   * This used to end in a two-branch ternary — recommendations, statistical,
+   * else `genIndReadiness(a)` — written when the registry held exactly three
+   * entries. Three more were added behind the clinical-regulatory-graph flag and
+   * the ternary was not touched, so choosing "Evidence chain", "Design risk" or
+   * "Regulatory precedent" relabelled the header and rendered the IND Readiness
+   * memo underneath: a document titled as one thing over the text of another,
+   * which is worse than an empty tab because it reads as a real deliverable.
+   *
+   * Every DocDef already carries the `gen` that belongs to it, so the registry is
+   * the single source of truth here and a seventh document type cannot repeat
+   * this. The live-service override stays where the server genuinely returns
+   * that document's prose (recommendations, statistical insights) and nowhere
+   * else — a server payload must never be printed under another document's name.
+   */
   const md = useMemo(() => {
     if (!analysis || !docDef) return '';
     const a = analysis.protocol_data;
@@ -285,12 +296,61 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
       if (docType === 'recommendations' && analysis.recommendations) return analysis.recommendations;
       if (docType === 'statistical' && analysis.statistical_insights) return analysis.statistical_insights;
     }
-    return docType === 'recommendations' ? genRecommendations(a, analysis.similar_protocols || [])
-      : docType === 'statistical' ? genStatisticalInsights(a)
-        : genIndReadiness(a);
+    return docDef.gen(a, analysis.similar_protocols || []);
   }, [analysis, docType, docDef]);
   const html = useMemo(() => analysis ? renderSafeMarkdown(md) : '', [md, analysis]);
   const a = analysis && analysis.protocol_data;
+
+  /* What AnA can see of this screen.
+     The PROVENANCE of the analysis is the load-bearing fact here, not the
+     numbers. `source: 'local'` means the server was never reached and the
+     parse came from an in-browser regex over pasted text; `source: 'live'`
+     means the analytics service answered. Those are very different warrants for
+     a protocol recommendation, and an assistant that discussed a locally-parsed
+     sample size as an analysed one would be laundering a text parse into a
+     statistical finding. So the source travels with every fact below. */
+  const anaContext = useMemo(() => {
+    if (busy) {
+      return { summary: 'The protocol is being analysed; nothing on screen is final yet.' };
+    }
+    if (!analysis || !a) {
+      return {
+        summary:
+          'Report engine: no protocol has been analysed yet' +
+          (text.trim() ? `, though ${text.trim().length} character(s) of protocol text are in the input.` : '.'),
+        facts: { protocolTextLength: text.trim().length, selectedDocumentType: docType },
+        availableActions: ['Paste protocol text and run the analysis'],
+      };
+    }
+    return {
+      summary:
+        `Report engine: a protocol has been analysed ${analysis.source === 'live' ? 'by the analytics service' : 'LOCALLY, in the browser, because the analytics service was not reachable — the figures below are a text parse, not an analysis'}. ` +
+        `"${a.title}" — ${a.phase}, ${a.indication}, n=${a.sample_size}, ${a.duration_weeks} weeks, primary endpoint "${a.primary_endpoint}". ` +
+        `${(a.risk_factors ?? []).length} risk factor(s). The "${docDef?.label ?? docType}" document is generated on screen.`,
+      facts: {
+        analysisSource: analysis.source,
+        analysisIsServerSide: analysis.source === 'live',
+        selectedDocumentType: docType,
+        documentLabel: docDef?.label ?? null,
+        protocol: {
+          title: a.title, indication: a.indication, phase: a.phase,
+          sampleSize: a.sample_size, durationWeeks: a.duration_weeks,
+          primaryEndpoint: a.primary_endpoint,
+        },
+        riskFactors: (a.risk_factors ?? []).map((r) => ({
+          description: r.description, severity: r.severity, mitigation: r.mitigation ?? null,
+        })),
+        similarProtocols: (analysis.similar_protocols ?? []).slice(0, 8).map((sp) => ({ id: sp.id, title: sp.title })),
+        generatedDocumentLength: md.length,
+      },
+      availableActions: [
+        'Analyse pasted protocol text',
+        'Switch the generated document type',
+        'Open the generated document in the authoring editor (creates a real Module 5 document)',
+      ],
+    };
+  }, [busy, analysis, a, text, docType, docDef, md]);
+  usePublishSurfaceContext('report-engine', anaContext);
 
   /*
    * "Open in editor" — a real handoff. See the long note on the same handler in
@@ -310,7 +370,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
   const openEditor = async () => {
     if (openingRef.current) return; // a second click must not create a second document
     const title = docDef?.label || 'Protocol analysis';
-    if (!md.trim()) { fireToast('Nothing to open yet — analyze a protocol first.'); return; }
+    if (!md.trim()) { fireToast('Nothing to open yet — analyze a protocol first.', 'error'); return; }
     openingRef.current = true; setOpening(true);
     try {
       // Protocol-derived analysis files under Module 5; the server would
@@ -320,7 +380,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
         content: md, subject: 'the analysis',
       });
       // Navigate only on a clean write — see authoringHandoff.
-      if (!r.ok) { fireToast(r.message); return; }
+      if (!r.ok) { fireToast(r.message, 'error'); return; }
       if (onNav) onNav('document-authoring');
       else fireToast(r.message);
     } finally {
@@ -332,9 +392,9 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
     <div className="ra">
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Specialist -- evidence -- /api/analytics</div>
+          <div className="sp-eyebrow">Specialist — evidence</div>
           <h1 className="sp-title">Reporting &amp; analytics</h1>
-          <p className="sp-state">Drop in a protocol and AnA analyses it against the CSR intelligence library -- then writes the design recommendations, statistical insights and IND-readiness memo you can act on.</p>
+          <p className="sp-state">Drop in a protocol and AnA analyses it against the CSR intelligence library — then writes the design recommendations, statistical insights and IND-readiness memo you can act on.</p>
         </div>
       </div>
 
@@ -343,8 +403,8 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
           tone="calm"
           eyebrow={'Your analysis of ' + (a.title || 'the protocol').slice(0, 48) + ' is ready'}
           headline={<>I read the {a.phase && a.phase !== 'Unknown' ? <>Phase {a.phase} </> : null}{a.indication && a.indication !== 'Unspecified' ? <>{a.indication.toLowerCase()} </> : null}protocol and drafted your <b>{docDef?.label}</b> -- {a.risk_factors.length ? <><b>{a.risk_factors.length} design {a.risk_factors.length === 1 ? 'risk' : 'risks'}</b> to address</> : <>the design looks sound on the parameters I could read</>}.</>}
-          body={<>{a.sample_size ? <>At N={a.sample_size}{a.duration_weeks ? <> over {a.duration_weeks} weeks</> : null}, the recommendations and statistical insights are written out below -- power estimates, dropout, and comparison to similar studies. {analysis.source === 'local' ? 'Connect the backend to match against the live CSR library.' : `Matched against ${(analysis.similar_protocols || []).length} similar CSRs.`}</> : <>I could not read a sample size from the text -- add it and the power analysis will fill in.</>}</>}
-          reassure="Everything is drafted as a real document, not a chart -- read it, adjust, and send it to the editor."
+          body={<>{a.sample_size ? <>At N={a.sample_size}{a.duration_weeks ? <> over {a.duration_weeks} weeks</> : null}, the recommendations and statistical insights are written out below — power estimates, dropout, and comparison to similar studies. {analysis.source === 'local' ? 'Connect the backend to match against the live CSR library.' : `Matched against ${(analysis.similar_protocols || []).length} similar CSRs.`}</> : <>I could not read a sample size from the text — add it and the power analysis will fill in.</>}</>}
+          reassure="Everything is drafted as a real document, not a chart — read it, adjust, and send it to the editor."
           action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: 'Re-analyze', onClick: analyze } }}
           secondary="Or switch documents and re-run below."
         />
@@ -353,7 +413,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
           tone="calm"
           eyebrow="What do you want to understand about your protocol"
           headline={<>Paste a protocol and I will tell you where it is strong, where it is risky, and what the statistics say.</>}
-          body="You will get three written deliverables -- design recommendations vs. similar studies, statistical insights (power, dropout, modelling), and an IND-readiness read -- not just numbers on a chart."
+          body="You will get three written deliverables — design recommendations vs. similar studies, statistical insights (power, dropout, modelling), and an IND-readiness read — not just numbers on a chart."
           reassure="I only report what the data supports; I will not invent a score the model cannot stand behind."
           action={{ label: 'Analyze the protocol', onClick: analyze }}
           secondary="Edit the protocol text below first if you like."
@@ -364,7 +424,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
         <div className="pj-card ra-input">
           <div className="pj-card-h"><span className="t">Protocol</span><span className="s">paste or edit</span></div>
           <div className="pj-card-b">
-            <textarea className="ra-ta" aria-label="Protocol synopsis" value={text} onChange={e => setText(e.target.value)} placeholder="Paste your protocol synopsis -- title, indication, phase, sample size, duration, primary endpoint..." />
+            <textarea className="ra-ta" aria-label="Protocol synopsis" value={text} onChange={e => setText(e.target.value)} placeholder="Paste your protocol synopsis — title, indication, phase, sample size, duration, primary endpoint..." />
             <div className="ra-actions">
               <button className="sp-primary" onClick={analyze} disabled={busy}>{I.sparkles} {busy ? 'Analyzing...' : 'Analyze protocol'}</button>
               {analysis && (
@@ -387,7 +447,14 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
         <div className="bs-doc ra-doc">
           {analysis ? (<>
             <div className="bs-doc-bar">
-              <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{analysis.source === 'live' ? '/api/analytics' : 'Ported generator -- offline'} -- draft</span></div>
+              <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{/* The live/local distinction here is REAL — `source: 'live'` is set only
+                  after the POST above returns data — so unlike the Biostatistics
+                  provenance stamp this one keeps its branch. What it may not do is
+                  print the route: the work order forbids API routes in customer UI,
+                  and this one was not even the endpoint being called
+                  (/api/analytics/analyze-protocol-text), so it told a reviewer
+                  nothing true and nothing useful. */}
+                {analysis.source === 'live' ? 'Live analytics service' : 'Ported generator — offline'} -- draft</span></div>
               <div className="bs-doc-bar-a">
                 <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ' for this protocol')}>{I.sparkles} Refine</button>
                 <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
@@ -401,7 +468,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       <AnalyticsDashboard />
-      {toast && <div className="c2c-toast">{toast}</div>}
+      <C2CToast msg={toast} />
     </div>
   );
 }
@@ -430,7 +497,7 @@ function AnalyticsDashboard() {
     <div className="pj-card" style={{ marginTop: 14 }}>
       <div className="pj-card-h">
         <span className="t">CSR intelligence library</span>
-        <span className="s">/api/analytics/dashboard{hasReports ? ` -- ${totalReports} reports` : ''}</span>
+        <span className="s">{hasReports ? `${totalReports} reports` : 'No reports yet'}</span>
       </div>
       <div className="pj-card-b">
         {loading ? (
@@ -440,7 +507,7 @@ function AnalyticsDashboard() {
             tone="error"
             icon={I.alertTriangle}
             title="Couldn't load the CSR library"
-            hint="These aggregates are your organization's CSR reports. The analytics service returned an error or no organization scope -- sign in with an organization and retry."
+            hint="These aggregates are your organization's CSR reports. The analytics service returned an error or no organization scope — sign in with an organization and retry."
           />
         ) : !hasReports ? (
           <EmptyState
@@ -453,7 +520,7 @@ function AnalyticsDashboard() {
             <div className="ra-kpis">
               <div className="ra-kpi"><div className="ra-kpi-v">{totalReports}</div><div className="ra-kpi-l">CSR reports</div></div>
               <div className="ra-kpi"><div className="ra-kpi-v">{data?.uniqueIndications ?? 0}</div><div className="ra-kpi-l">Indications</div></div>
-              <div className="ra-kpi"><div className="ra-kpi-v">{data?.recentAdditions ?? 0}</div><div className="ra-kpi-l">Added -- 30d</div></div>
+              <div className="ra-kpi"><div className="ra-kpi-v">{data?.recentAdditions ?? 0}</div><div className="ra-kpi-l">Added — 30d</div></div>
               <div className="ra-kpi"><div className="ra-kpi-v">{Math.round((data?.averageCompletionRate || 0) * 100)}%</div><div className="ra-kpi-l">Avg completion</div></div>
             </div>
             <div className="ra-charts">

@@ -15,11 +15,12 @@
  *  - The result reports exactly what was applied AND what was not, with the
  *    reason, rather than claiming blanket success.
  */
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import type { OnboardingIngestResult, OnboardingProposalField } from '@shared/types/onboarding-ingest';
 import { OnboardingProposalReview } from './OnboardingProposalReview';
 import '../styles/onboarding-review.css';
@@ -54,7 +55,7 @@ export function OnboardingIngest({ onNav }: SurfaceViewProps) {
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
-        setError(body?.error || 'That document could not be read.');
+        setError(serverMessage(body) || 'That document could not be read.');
         setPhase('idle');
         return;
       }
@@ -82,7 +83,7 @@ export function OnboardingIngest({ onNav }: SurfaceViewProps) {
         });
         const body = await res.json().catch(() => null);
         if (!res.ok || !body?.success) {
-          setError(body?.error || 'Those changes could not be applied.');
+          setError(serverMessage(body) || 'Those changes could not be applied.');
           setPhase('review');
           return;
         }
@@ -103,6 +104,66 @@ export function OnboardingIngest({ onNav }: SurfaceViewProps) {
     setPhase('idle');
     if (fileRef.current) fileRef.current.value = '';
   };
+
+  /* WHAT ANA SEES HERE. The phase machine, never the document: extracted
+     values, provenance quotes, sources, warning strings and per-field commit
+     errors all quote the client's document, so only counts and the app's own
+     schema field names travel. */
+  const anaContext = useMemo(() => {
+    const facts: Record<string, unknown> = { phase };
+    if (error) facts.lastError = error;
+    let summary: string;
+    if (phase === 'idle') {
+      summary = error
+        ? `Set up from a document — the last document could not be read: ${error}. Nothing proposed, nothing saved.`
+        : 'Set up from a document — no document uploaded yet; nothing is saved until the human reviews and applies.';
+    } else if (phase === 'reading') {
+      summary =
+        'Set up from a document — AnA is reading the uploaded document, looking for values it can trace back to a specific place in it.';
+    } else if (phase === 'review' || phase === 'committing') {
+      const groups = result?.groups ?? [];
+      const fieldCount = groups.reduce((n, g) => n + g.fields.length, 0);
+      const warningCount = result?.warnings.length ?? 0;
+      facts.proposedGroupCount = groups.length;
+      facts.proposedFieldCount = fieldCount;
+      facts.warningCount = warningCount;
+      facts.sourceCount = result?.sources.length ?? 0;
+      if (groups.length === 0) {
+        summary =
+          'Set up from a document — AnA could not verify any value against this document, so it proposed none — nothing was invented to fill the gap. ' +
+          `${warningCount} extraction warning(s).`;
+      } else if (phase === 'committing') {
+        summary =
+          'Set up from a document — the human-approved values are being applied under a recorded reason; the outcome has not reported yet.';
+      } else {
+        summary =
+          `Set up from a document — ${fieldCount} proposed field(s) across ${groups.length} group(s) awaiting human review, ` +
+          `${warningCount} extraction warning(s). Nothing is saved until the human applies.`;
+      }
+    } else {
+      // done
+      const applied = outcome?.applied ?? [];
+      const okCount = applied.filter((a) => a.ok).length;
+      facts.appliedCount = okCount;
+      facts.notAppliedCount = applied.length - okCount;
+      facts.writesRecorded = (outcome?.writes.length ?? 0) > 0;
+      facts.appliedFields = applied.map((a) => ({ targetField: a.targetField, ok: a.ok }));
+      summary =
+        `Set up from a document — ${okCount} of ${applied.length} field(s) applied, ${applied.length - okCount} not applied. ` +
+        ((outcome?.writes.length ?? 0) > 0
+          ? 'Applied changes are recorded in the Part 11 audit trail.'
+          : 'No changes were written.');
+    }
+    return {
+      summary,
+      facts,
+      availableActions: [
+        'Upload a document (PDF, Word or plain text) for AnA to read and propose provenance-verified values from',
+        'Applying is governed and human: the human reviews each proposed value against its quoted provenance and applies the ones they accept, under a recorded reason',
+      ],
+    };
+  }, [phase, error, result, outcome]);
+  usePublishSurfaceContext('onboarding-ingest', anaContext);
 
   return (
     <div className="opr">

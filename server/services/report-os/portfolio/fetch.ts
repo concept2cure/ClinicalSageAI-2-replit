@@ -170,11 +170,41 @@ export async function fetchOrgPortfolioSummary(
   const { rows, truncated } = await fetchOrgPrograms(organizationId);
   if (rows.length === 0) return null;
 
-  const insights: ProgramMemberInsight[] = [];
-  for (const r of rows) {
-    const computed = await computeInitialRun(organizationId, 'project', String(r.projectId));
-    insights.push(toMemberInsight(r.projectId, r.name, computed, { code: r.code, indication: r.indication }));
-  }
+  /* ── Readiness runs are independent, so they are not serialized ───────────
+     MDX UAT 2026-08-18, item A9: Reporting & analytics showed "Loading the
+     reporting canvas…" for 5+ seconds before resolving to a static empty
+     state. This loop is why. It was a sequential `await` per program, and
+     `computeInitialRun` is a full governed readiness computation — several
+     queries each — so page latency was ORG_ROLLUP_CAP (100) runs deep in the
+     worst case, one after another, on a single request.
+
+     The runs share no state and none reads another's output, so the ordering
+     bought nothing. Bounded rather than unbounded because they all draw from
+     the same pg pool (max 20 in dev, 40 in production, server/db/runtime.ts):
+     firing 100 at once would starve every other request on the process, which
+     trades one slow surface for a slow application. Eight keeps a comfortable
+     margin under the dev pool while cutting the depth by an order of magnitude.
+
+     Results are written back BY INDEX, so `insights` stays in the query's
+     order regardless of which run finishes first — `aggregateOrgPortfolio` and
+     the flagship pick below both read this array, and a nondeterministic order
+     would make the reported flagship depend on which compute happened to be
+     quickest. */
+  const CONCURRENCY = 8;
+  const insights: ProgramMemberInsight[] = new Array(rows.length);
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, rows.length) }, async () => {
+      for (let i = next++; i < rows.length; i = next++) {
+        const r = rows[i];
+        const computed = await computeInitialRun(organizationId, 'project', String(r.projectId));
+        insights[i] = toMemberInsight(r.projectId, r.name, computed, {
+          code: r.code,
+          indication: r.indication,
+        });
+      }
+    }),
+  );
   return aggregateOrgPortfolio(organizationId, insights, truncated);
 }
 

@@ -23,7 +23,6 @@ import {
   recordFailedLogin,
   resetFailedLogins,
   isPasswordExpired,
-  createElectronicSignature,
   verifySignatureIntegrity,
 } from '../services/auth-security-service';
 
@@ -91,25 +90,6 @@ const selectOrganizationSchema = z.object({
     z.number().int().positive(),
     z.string().trim().regex(/^\d+$/, 'organizationId must be numeric'),
   ]),
-});
-
-const electronicSignatureSchema = z.object({
-  documentId: z.coerce.number().int().positive(),
-  versionId: z.coerce.number().int().positive(),
-  signerName: z.string().trim().min(1).max(255),
-  signerTitle: z.string().max(255).optional(),
-  signerEmail: emailSchema.optional(),
-  signatureType: z.enum([
-    'approval',
-    'review',
-    'witness',
-    'acknowledgment',
-    'authorship',
-  ]),
-  signaturePurpose: z.string().max(2000).optional(),
-  signatureMeaning: z.string().max(2000).optional(),
-  password: z.string().min(1).max(1024),
-  mfaCode: mfaCodeSchema.optional(),
 });
 
 /**
@@ -638,58 +618,31 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
 });
 
 /**
- * POST /electronic-signature
- * Create a 21 CFR Part 11 compliant electronic signature
+ * POST /electronic-signature — REMOVED (Gone).
+ *
+ * This was a second electronic-signature write path. Its INSERT omitted
+ * `bound_payload_digest`, `binding_basis` and `organization_id`, so every row
+ * it wrote was permanently unverifiable against the content it approved, and it
+ * took `documentId`/`versionId` from the request body without checking they
+ * belonged to the caller's organization.
+ *
+ * Sign through POST /api/esignature/sign, which resolves the version inside the
+ * caller's org, refuses when the content cannot be bound
+ * (ESIGNATURE_CONTENT_UNBINDABLE), and writes through the single INSERT in
+ * services/part11/signature-persistence.ts.
+ *
+ * 410 rather than a silent 404: a caller that was using this needs to be told
+ * its signatures were not conforming, not left to think the path moved.
  */
-router.post('/electronic-signature', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const parsed = electronicSignatureSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({
-        error: 'Validation failed',
-        details: parsed.error.errors.map(e => ({
-          field: e.path.join('.'),
-          message: e.message,
-        })),
-      });
-    }
-    const sig = parsed.data;
-
-    const result = await createElectronicSignature({
-      documentId: sig.documentId,
-      versionId: sig.versionId,
-      // signerId is identity — sourced from the request body exactly as before
-      // (createElectronicSignature re-authenticates this user via password/MFA).
-      // It is intentionally NOT part of the validated schema as a trusted field.
-      signerId: req.body.signerId,
-      signerName: sig.signerName,
-      signerTitle: sig.signerTitle as string,
-      signerEmail: sig.signerEmail as string,
-      signatureType: sig.signatureType,
-      signaturePurpose: sig.signaturePurpose as string,
-      signatureMeaning: sig.signatureMeaning as string,
-      password: sig.password,
-      mfaCode: sig.mfaCode,
-      ipAddress: req.ip || (req.headers['x-forwarded-for'] as string),
-      deviceInfo: {
-        userAgent: req.headers['user-agent'],
-        timestamp: new Date().toISOString(),
-      },
-    });
-
-    if (!result.success) {
-      return res.status(400).json({ error: result.error });
-    }
-
-    res.json({
-      success: true,
-      signatureId: result.signatureId,
-      message: 'Electronic signature created successfully (21 CFR Part 11 compliant)',
-    });
-  } catch (error) {
-    console.error('[Enterprise Auth] electronic-signature error:', error);
-    res.status(500).json({ error: 'Failed to create electronic signature' });
-  }
+router.post('/electronic-signature', authMiddleware, async (_req: Request, res: Response) => {
+  res.status(410).json({
+    error: 'This signing endpoint has been removed.',
+    code: 'ESIGNATURE_ENDPOINT_REMOVED',
+    detail:
+      'It wrote electronic_signatures rows with no content binding and no organization, ' +
+      'which cannot satisfy 21 CFR Part 11 §11.70. Use POST /api/esignature/sign.',
+    use: '/api/esignature/sign',
+  });
 });
 
 /**
@@ -801,6 +754,47 @@ router.post('/select-organization', async (req: Request, res: Response) => {
       config.jwt.secret,
       { expiresIn: '24h' }
     );
+
+    // AUDIT: this is a tenant-boundary crossing and it was previously silent.
+    //
+    // Membership is validated above, so the switch is authorized — but "authorized"
+    // and "unrecorded" is the wrong combination for the one endpoint on the
+    // platform whose entire job is to move a session from one customer's data to
+    // another's. A CRO consultant serving several sponsors crosses this boundary
+    // routinely, and an access review of any one of those sponsors needs to see
+    // when their tenant was entered and by whom. 21 CFR Part 11 §11.10(d) asks the
+    // same question of any system limiting access to authorized individuals.
+    //
+    // Recorded against the DESTINATION org (the tenant being entered), with the
+    // origin in metadata, because that is the direction a reviewer reads it from.
+    // Fire-and-forget: an audit-sink outage must not break a legitimate switch,
+    // and the failure is logged rather than swallowed.
+    void import('../services/audit/auditLogger')
+      .then(({ logAuditEvent }) =>
+        logAuditEvent({
+          category: 'authorization',
+          severity: 'info',
+          action: 'organization_switch',
+          userId: String(userId),
+          organizationId: String(organizationId),
+          resourceType: 'organization',
+          resourceId: String(organizationId),
+          success: true,
+          metadata: {
+            fromOrganizationId: decoded.organizationId != null ? String(decoded.organizationId) : null,
+            toOrganizationId: String(organizationId),
+            roleInTarget: selectOrgRole,
+          },
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent'),
+        })
+      )
+      .catch(auditError => {
+        console.warn(
+          '[Enterprise Auth] failed to record organization_switch in the audit trail:',
+          auditError instanceof Error ? auditError.message : String(auditError)
+        );
+      });
 
     res.json({
       success: true,

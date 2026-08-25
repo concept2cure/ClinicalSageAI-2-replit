@@ -9,17 +9,12 @@
  * @module shared/constants/domain
  */
 
-/* ─── Shared domain-entry shape ───────────────────────────────────────── */
+/* ─── Shared shape + helper (declared in ./types.js, a leaf) ──────────── */
 
-export interface DomainEntry<T extends string> {
-  value: T;
-  label: string;
-  description?: string;
-  /** MedDRA SOC or related coding system reference. */
-  codingRef?: string;
-  /** ICH/regulatory references relevant to this entry. */
-  regulatoryRefs?: string[];
-}
+// `DomainEntry` lived here, which forced every domain module to import its own
+// barrel to get it — 14 of the 50 cycles in ledger L57. A type belongs below
+// the barrel that re-exports it.
+export { type DomainEntry, toQuestionOptions } from './types.js';
 
 /* ─── Re-exports ──────────────────────────────────────────────────────── */
 
@@ -113,6 +108,22 @@ export {
   toQuestionOptions as organizationTypeOptions,
   segmentToQuestionOptions as clientSegmentOptions,
 } from './organization-types.js';
+
+export {
+  type ProductType,
+  PRODUCT_TYPES,
+  DEVICE_FAMILY_PRODUCT_TYPES,
+  IVD_FAMILY_PRODUCT_TYPES,
+  MEDICINAL_PRODUCT_TYPES,
+  isDeviceFamily,
+  isIvdFamily,
+  isMedicinalProduct,
+  isProductType,
+  productTypeForFilingType,
+  listProductTypes,
+  listClassifiableFilingTypes,
+  toQuestionOptions as productTypeOptions,
+} from './product-types.js';
 
 export {
   type RegulatoryMeetingType,

@@ -40,6 +40,13 @@ export interface VaultApiArtifact {
   updatedAt: string;
   lockedAt: string | null;
   eSig: boolean;
+  /** Which half of the vault this row came from — see server/routes/mdx-vault.ts.
+   *  'authored' = concept2cure_artifacts, 'upload' = vault.documents. */
+  source?: 'authored' | 'upload';
+  /** Bytes, for an uploaded file. Null for an authored artifact, which has no
+   *  file behind it — the surface shows '—' rather than inventing a 0. */
+  fileSize?: number | null;
+  mimeType?: string | null;
 }
 
 interface VaultListPayload {
@@ -62,14 +69,26 @@ interface VaultVersionsPayload {
   meta?: { count?: number };
 }
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Live program ids are uuids; the surface's fixture ids ('or801' …) are not,
+ *  and the list route's zod schema rejects a non-uuid program_id outright. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function toStatus(status: string, lockedAt: string | null): VaultFileStatus {
   if (lockedAt || status === 'locked') return 'locked';
   if (status === 'approved') return 'final';
   if (status === 'review') return 'review';
   return 'draft';
+}
+
+/** Bytes → a short human size. Binary units, matching the rest of the kit. */
+function fmtBytes(n: number): string {
+  if (!Number.isFinite(n) || n < 0) return '—';
+  if (n < 1024) return `${n} B`;
+  const units = ['KB', 'MB', 'GB'];
+  let v = n / 1024;
+  let i = 0;
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i += 1; }
+  return `${v < 10 ? v.toFixed(1) : Math.round(v)} ${units[i]}`;
 }
 
 function toWhen(iso: string | null): string {
@@ -108,7 +127,10 @@ export function selectVaultFiles(
     name: r.title,
     kind: r.category || r.type,
     type: (r.type || '').toLowerCase(),
-    size: '—',
+    /* '—' is this file's idiom for a value it cannot supply, and an authored
+       artifact genuinely has no file size. An uploaded one does, and showing it
+       is how a user tells at a glance that the bytes are really there. */
+    size: r.fileSize != null ? fmtBytes(r.fileSize) : '—',
     prog: r.ctdSection ? `CTD ${r.ctdSection}` : r.family,
     folder: familyId(r.family),
     // "vundefined" is a version label that asserts a version the row does not
@@ -191,6 +213,14 @@ export interface UseVaultResult {
  * program filter only applies to real program ids.
  */
 export function useVault(programId: string | null): UseVaultResult {
+  /* Program filtering is requested again: the project-to-program bridge
+     (`projects.regulatory_program_id`) landed with slice C1 of the Document
+     Identity Contract, so the server filters on it instead of refusing. Only
+     real uuid program ids are sent — the surface's fixture ids ('or801' …)
+     are not uuids and the route's zod schema would 422 the whole request.
+     On a database that has not had the anchor migration applied the server
+     still answers 422 for a uuid; that surfaces as `error` here, which the
+     surface already renders as "no live data" rather than as an empty vault. */
   const url =
     programId && UUID_RE.test(programId)
       ? `/api/mdx/vault?program_id=${encodeURIComponent(programId)}`

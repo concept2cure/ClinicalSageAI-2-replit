@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
+import { downloadBlob, downloadText, safeFileName } from '../download';
+import { shellProgramName } from '../shellProject';
 
 /* ── Display types — aligned to the GET /api/haq-manager/rounds contract.
    server/routes/haq-manager.ts maps the governed HAQ store (feature store over
@@ -69,28 +73,16 @@ const EMPTY_QUESTIONS: Record<string, HaqQuestion[]> = {};
 
 /* ── Inline shared helpers ── */
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => {
-    setMsg(m);
-    setTimeout(() => setMsg(''), 2400);
-  };
-  return [msg, fire];
-}
-
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
-    </div>
-  );
-}
-
 /* ════ HaqManager -- Health Authority Questions response workbench ════ */
 
 export function HaqManager({ onAsk }: SurfaceViewProps) {
+  /* The open programme, named as a person would say it — never a hardcoded
+     product. `null` when no programme is open, and every caller below phrases
+     its request without one rather than substituting a placeholder: an
+     assistant that has to ask which programme beats one confidently answering
+     about the wrong one. */
+  const program = shellProgramName();
+
   /* Live governed HAQ store — the authority letters as "rounds" plus their
      questions grouped by round (server/routes/haq-manager.ts → GET /rounds).
      useLiveData unwraps the `{ data }` success envelope, so the payload is the
@@ -124,7 +116,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
   const effActiveId = activeId || qs[0]?.id || '';
 
   const HAQ_FORM: C2CFormConfig = {
-    eyebrow: 'HAQ -- log question',
+    eyebrow: 'HAQ — log question',
     title: 'Log an agency question',
     governed:
       'Logging an agency question persists it to the response package under the selected round; AnA decomposition and source-tracing follow.',
@@ -147,7 +139,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       v.tone === 'critical' ? 'err' : v.tone === 'minor' ? 'idle' : 'warn';
 
     if (!effRoundId) {
-      fireToast('Select an agency round before logging a question');
+      fireToast('Select an agency round before logging a question', 'error');
       return;
     }
 
@@ -165,13 +157,13 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       });
       if (!res.ok) {
         // apiRequest only reaches here non-OK on 401 (auth); others throw.
-        fireToast('Could not log question -- sign in and retry');
+        fireToast('Could not log question — sign in and retry', 'error');
         return;
       }
       const body = await res.json().catch(() => null);
       const created = body?.data;
       if (!created || !created.id) {
-        fireToast('Could not log question -- unexpected response');
+        fireToast('Could not log question — unexpected response', 'error');
         return;
       }
       setExtra((xs) => [
@@ -185,6 +177,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       fireToast(
         'Could not log question -- ' +
           (e instanceof Error && e.message ? e.message : 'request failed'),
+        'error',
       );
     }
   };
@@ -216,7 +209,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
   // the server confirms (adopting the server's status), never optimistically.
   const setStatus = async (q: HaqQuestion, st: 'in-review' | 'approved') => {
     if (q.dbId == null || !q.roundId) {
-      fireToast('This question predates the id-mapped feed — reload the rounds to enable governed transitions.');
+      fireToast('This question predates the id-mapped feed — reload the rounds to enable governed transitions.', 'error');
       return;
     }
     const verb = st === 'approved' ? 'approve' : 'review';
@@ -224,7 +217,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       const res = await apiRequest('POST', `/api/haq-manager/letters/${encodeURIComponent(q.roundId)}/questions/${q.dbId}/${verb}`, {});
       const json = await res.json().catch(() => null);
       if (!res.ok || !(json as any)?.success) {
-        fireToast(res.status === 401 ? 'Sign in to update the question.' : `Couldn’t ${verb} — ` + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.');
+        fireToast(res.status === 401 ? 'Sign in to update the question.' : `Couldn’t ${verb} — ` + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.', 'error');
         return;
       }
       const serverStatus = String((json as any)?.data?.status ?? st);
@@ -232,9 +225,70 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       setStatusMap((m) => ({ ...m, [q.id]: display }));
       fireToast((st === 'approved' ? 'Approved ' : 'Routed to review ') + q.id + ' — persisted to the HAQ store.');
     } catch (e) {
-      fireToast(`Couldn’t ${verb} — ` + (e instanceof Error ? e.message : String(e)) + '.');
+      fireToast(`Couldn’t ${verb} — ` + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
   };
+  /* ── "Assemble response package" ───────────────────────────────────────────
+     The primary action of the whole workbench, and it had NO onClick at all:
+     a user approved every question in the round, clicked the one button
+     everything else builds toward, and nothing happened.
+
+     POST /api/haq-manager/letters/:id/assemble assembles the package from the
+     round's own approved responses — question text, approved response,
+     citations, commitments, in question order — and REFUSES with the list of
+     what is outstanding if any question is unapproved. The Markdown it returns
+     downloads as-is, or goes to the DOCX/PDF renderer. Nothing is drafted on
+     the way through. */
+  const [assembling, setAssembling] = useState<'docx' | 'md' | null>(null);
+  const assemble = async (format: 'docx' | 'md') => {
+    if (assembling || !round) return;
+    setAssembling(format);
+    try {
+      const res = await apiRequest('POST', `/api/haq-manager/letters/${encodeURIComponent(round.id)}/assemble`, {});
+      const json = (await res.json().catch(() => null)) as
+        | { success?: boolean; error?: string; data?: { markdown: string; title: string; questionCount: number; questionsWithNoResponseText: string[] } }
+        | null;
+      if (!res.ok || json?.success !== true || !json.data?.markdown) {
+        fireToast(
+          'The package was not assembled — ' + (json?.error ?? `the server refused it (HTTP ${res.status})`),
+          'error',
+        );
+        return;
+      }
+      const { markdown, title, questionCount, questionsWithNoResponseText } = json.data;
+      const base = safeFileName(title, 'haq-response-package');
+      let ok: boolean;
+      if (format === 'md') {
+        ok = downloadText(base + '.md', markdown, 'text/markdown;charset=utf-8');
+      } else {
+        const r2 = await apiRequest('POST', '/api/concept2cure/artifacts/export-docx', { title, content: markdown });
+        if (!r2.ok) {
+          const b = await r2.json().catch(() => null);
+          fireToast(
+            'The package assembled but the Word file was not produced — ' +
+              ((b as any)?.error?.message ?? (b as any)?.error ?? `HTTP ${r2.status}`) + '.',
+            'error',
+          );
+          return;
+        }
+        ok = downloadBlob(base + '.docx', await r2.blob());
+      }
+      fireToast(
+        ok
+          ? `Response package downloaded — ${questionCount} approved response${questionCount === 1 ? '' : 's'}.` +
+              (questionsWithNoResponseText.length
+                ? ` ${questionsWithNoResponseText.join(', ')} ${questionsWithNoResponseText.length === 1 ? 'carries' : 'carry'} no response text.`
+                : '')
+          : 'The package was built but the browser refused the download.',
+        ok ? 'ok' : 'error',
+      );
+    } catch (e) {
+      fireToast('The package was not assembled — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+    } finally {
+      setAssembling(null);
+    }
+  };
+
   const approved = qs.filter((x) => x.status === 'approved').length;
   const pct = qs.length ? Math.round((approved / qs.length) * 100) : 0;
   const stPill = (s: string) =>
@@ -242,15 +296,73 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
   const stLbl = (s: string) =>
     s === 'approved' ? 'Approved' : s === 'in-review' ? 'In review' : 'Draft';
 
+  /* WHAT ANA SEES HERE. An agency question has a clock on it, so the round's
+     due date and remaining days travel — "what is due first" is the question
+     most often asked on this screen, and it cannot be answered from a question
+     list alone.
+
+     Question TEXT is deliberately not published. The summary carries counts,
+     disciplines and status; the verbatim agency wording stays on the screen.
+     This channel is sent on every turn and is bounded server-side, so putting
+     a letter's full text through it would crowd out the rest of the context
+     for no gain — AnA can be asked about a specific question, and the
+     surface's own affordances hand it over deliberately when that happens. */
+  const anaContext = useMemo(
+    () => ({
+      summary: roundsState.loading
+        ? 'HAQ manager, still loading agency question rounds.'
+        : roundsState.error
+          ? 'HAQ manager could not load the governed question store — rounds are unavailable, not absent.'
+          : rounds.length === 0
+            ? 'HAQ manager: no agency question rounds logged yet.'
+            : `HAQ manager: ${rounds.length} round(s)` +
+              (round ? `, "${round.id}" from ${round.agency} selected (${round.type}, due ${round.due})` : '') +
+              `; ${qs.length} question(s), ${approved} approved (${pct}%).`,
+      facts: {
+        roundsState: roundsState.loading ? 'loading' : roundsState.error ? 'error' : rounds.length === 0 ? 'empty' : 'ready',
+        roundCount: rounds.length,
+        ...(round
+          ? {
+              selectedRoundId: round.id,
+              agency: round.agency,
+              authority: round.authority,
+              submission: round.submission,
+              roundType: round.type,
+              receivedOn: round.received,
+              responseDue: round.due,
+              clockDaysRemaining: round.clockDays,
+            }
+          : {}),
+        questionCount: qs.length,
+        questionsApproved: approved,
+        percentApproved: pct,
+        disciplines: [...new Set(qs.map((q) => q.disc).filter(Boolean))],
+        severities: [...new Set(qs.map((q) => q.tone).filter(Boolean))],
+        openBySeverity: qs.filter((q) => q.status !== 'approved').reduce<Record<string, number>>(
+          (acc, q) => ({ ...acc, [q.tone || 'unspecified']: (acc[q.tone || 'unspecified'] ?? 0) + 1 }),
+          {},
+        ),
+      },
+      availableActions: [
+        'Explain which questions are on the critical path for the response clock',
+        'Decompose an agency question into what it is actually asking for',
+        'Draft a response to a question, grounded on locked evidence',
+        'Log an agency question',
+      ],
+    }),
+    [roundsState.loading, roundsState.error, rounds, round, qs, approved, pct],
+  );
+  usePublishSurfaceContext('haq-manager', anaContext);
+
   return (
     <div className="cv-body">
       <div className="haq">
         <div className="haq-head">
           <div>
-            <div className="sec-kicker">PLATFORM -- POST-SUBMISSION</div>
+            <div className="sec-kicker">PLATFORM — POST-SUBMISSION</div>
             <h1 className="haq-title">Health authority questions</h1>
             <p className="haq-sub">
-              Agency information requests and lists of questions -- decomposed,
+              Agency information requests and lists of questions — decomposed,
               source-traced, answered with precedent, and governed onto the
               response package.
             </p>
@@ -314,7 +426,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                     >
                       <span className="ico">{I.clock}</span>
                       <span>
-                        <b>{r.clockDays}d</b> of {r.clockTotal}d left -- due{' '}
+                        <b>{r.clockDays}d</b> of {r.clockTotal}d left — due{' '}
                         {r.due}
                       </span>
                     </div>
@@ -338,17 +450,28 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
               <div className="haq-ready-bar">
                 <span style={{ width: pct + '%' }} />
               </div>
-              <button
-                className="haq-assemble"
-                disabled={pct < 100}
-                title={
-                  pct < 100
-                    ? 'Approve all responses to assemble the package'
-                    : 'Assemble the response package'
-                }
-              >
-                {I.fileText} Assemble response package
-              </button>
+              <div className="haq-assemble-row">
+                <button
+                  className="haq-assemble"
+                  disabled={pct < 100 || assembling !== null || qs.length === 0}
+                  onClick={() => void assemble('docx')}
+                  title={
+                    pct < 100
+                      ? 'Approve all responses to assemble the package'
+                      : 'Assemble the response package as a Word document'
+                  }
+                >
+                  {I.fileText} {assembling === 'docx' ? 'Assembling…' : 'Assemble response package'}
+                </button>
+                <button
+                  className="haq-assemble alt"
+                  disabled={pct < 100 || assembling !== null || qs.length === 0}
+                  onClick={() => void assemble('md')}
+                  title="Download the assembled package as Markdown"
+                >
+                  {assembling === 'md' ? 'Assembling…' : 'Markdown'}
+                </button>
+              </div>
             </div>
 
             <div className="haq-grid">
@@ -403,11 +526,11 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                     <span className="ico">{I.sparkles}</span>
                     <div>
                       <div className="haq-analysis-l">
-                        AnA analysis -- what they are really asking
+                        AnA analysis — what they are really asking
                       </div>
                       <p>
                         {q.analysis ||
-                          'Not yet analyzed -- ask AnA to decompose what the agency is really asking.'}
+                          'Not yet analyzed — ask AnA to decompose what the agency is really asking.'}
                       </p>
                     </div>
                   </div>
@@ -421,7 +544,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                     </div>
                     <p className="haq-resp-text">
                       {q.draft ||
-                        'No draft yet -- ask AnA to draft a source-traced response.'}
+                        'No draft yet — ask AnA to draft a source-traced response.'}
                     </p>
                     <div className="haq-cites">
                       <span className="haq-cites-l">Cited evidence</span>
@@ -460,7 +583,13 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                       className="haq-act"
                       onClick={() =>
                         onAsk(
-                          `Refine the ${q.id} response to the ${round?.agency} ${round?.type} for BX-204`,
+                          /* `for BX-204` was a string literal, so refining any
+                             tenant's agency response asked about a demo
+                             programme. The round already knows its own
+                             submission — that is the real answer, and the open
+                             programme is the fallback. */
+                          `Refine the ${q.id} response to the ${round?.agency} ${round?.type}` +
+                            (round?.submission ? ` for ${round.submission}` : program ? ` for ${program}` : ''),
                         )
                       }
                     >
@@ -495,7 +624,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                       )
                     ) : (
                       <span className="haq-approved">
-                        {I.checkCircle} Approved -- persisted to the HAQ store
+                        {I.checkCircle} Approved — persisted to the HAQ store
                         (e-signature &amp; package assembly still to come)
                       </span>
                     )}

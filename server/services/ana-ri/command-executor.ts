@@ -73,10 +73,11 @@ import {
   requiresEsignature,
   validateSignoff,
   buildSignatureRequiredResult,
+  buildHumanConfirmationRequiredResult,
   loadPart11EnforceStrict,
   type Part11Signoff,
 } from './part11-governance';
-import { authorizeCommand, isPrivacyAdmin } from './command-rbac';
+import { authorizeCommand, isPrivacyAdmin, isProposeOnlyCommand } from './command-rbac';
 import {
   explainAuditRow,
   EXPLAIN_AUDIT_ROW_METADATA,
@@ -127,6 +128,20 @@ export interface CommandContext {
    * record-altering commands fail closed unless `signoff` is present + valid.
    */
   part11Enforce?: boolean;
+  /**
+   * TRUE only when a human has confirmed THIS dispatch through the governed
+   * sign-off flow. Assigned in exactly one place — the CommandContext literal
+   * in server/routes/ana-ri/utility.ts, inside POST /api/ana-ri/governed-action,
+   * which is reached only by a request the browser makes after
+   * GovernedActionSignoff has collected the user's reason-for-change and, for
+   * the e-signature tier, re-authenticated them server-side.
+   *
+   * Deliberately NOT settable from command params: params is the model's only
+   * writable channel into a dispatch, so a field read from there could be
+   * asserted by the model itself. Absence means "no human confirmed", which
+   * blocks — so any future dispatch path that forgets to stamp it fails closed.
+   */
+  humanConfirmed?: boolean;
   /**
    * The verified Part 11 sign-off for THIS dispatch (reason-for-change +
    * server-verified electronic signature). Stamped by the route after it
@@ -859,6 +874,109 @@ export async function listArtifacts(
 // 3. TASK MANAGEMENT
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Mirror an AnA-created project task into the canonical org board
+ * (unified_tasks) so a task created in chat is visible on the Task Board —
+ * previously AnA wrote project_tasks alone and the board read unified_tasks,
+ * so "create a task" produced work nothing surfaced (assessment finding 3).
+ * Best-effort: a mirror failure never fails the create. The unified-work view
+ * excludes sourceEntityType='project_task' rows so the task is never counted
+ * twice; the mirror carries a deterministic task_id so re-runs are idempotent.
+ */
+async function mirrorProjectTaskToUnified(
+  ctx: CommandContext,
+  projectTaskId: number,
+  params: {
+    projectId: number;
+    title: string;
+    description?: string;
+    assigneeId?: number;
+    priority?: string;
+    dueDate?: string;
+    moduleType?: string;
+  }
+): Promise<void> {
+  const mirroredTaskId = `TASK-PT-${ctx.organizationId}-${projectTaskId}`;
+  try {
+    const result = await pool.query(
+      `INSERT INTO unified_tasks
+         (task_id, organization_id, project_id, module_type, title, description,
+          assignee_id, priority, due_date, status, source_entity_type,
+          source_entity_id, created_by_id, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', 'project_task', $10, $11, NOW(), NOW())
+       ON CONFLICT (task_id) DO NOTHING
+       RETURNING task_id`,
+      [
+        mirroredTaskId,
+        ctx.organizationId,
+        params.projectId,
+        params.moduleType || 'general',
+        params.title,
+        params.description || '',
+        params.assigneeId || null,
+        params.priority || 'medium',
+        params.dueDate || null,
+        String(projectTaskId),
+        ctx.userId,
+      ]
+    );
+    // A row landing in the canonical regulated task table is a governed
+    // create, whoever wrote it: record the same `task.create` lineage the
+    // tasking routes record, and tell the assignee, so an AnA-created task is
+    // not a task with no audit trail and no notification. Skipped on a
+    // conflict (idempotent re-run wrote nothing).
+    if (result.rowCount) {
+      const [{ auditTaskAction }, { notifyTaskEvent }] = await Promise.all([
+        import('../tasking/task-audit.js'),
+        import('../tasking/task-side-effects.js'),
+      ]);
+      await auditTaskAction({
+        orgId: ctx.organizationId,
+        userId: ctx.userId,
+        command: 'task.create',
+        taskId: mirroredTaskId,
+        payload: {
+          moduleType: params.moduleType || 'general',
+          title: params.title,
+          priority: params.priority || 'medium',
+          status: 'pending',
+          sourceEntityType: 'project_task',
+          sourceEntityId: String(projectTaskId),
+        },
+        reason: 'Task created by AnA and mirrored to the canonical task board',
+      });
+      if (params.assigneeId && params.assigneeId !== ctx.userId) {
+        notifyTaskEvent({
+          organizationId: ctx.organizationId,
+          recipientUserId: params.assigneeId,
+          category: 'task_assigned',
+          title: `Task assigned: ${params.title}`,
+          body: params.description || null,
+          taskId: mirroredTaskId,
+        });
+      }
+    }
+  } catch (err) {
+    console.warn(
+      '[ana-ri] unified_tasks mirror failed (non-fatal):',
+      err instanceof Error ? err.message : err
+    );
+  }
+}
+
+/** project_tasks status → unified_tasks status, for the mirror. */
+function mirrorStatus(raw: unknown): string | null {
+  const v = String(raw ?? '').trim().toLowerCase();
+  if (!v) return null;
+  if (v === 'todo' || v === 'pending') return 'pending';
+  if (v === 'in-progress' || v === 'in_progress') return 'in-progress';
+  if (v === 'review') return 'review';
+  if (v === 'done' || v === 'completed') return 'completed';
+  if (v === 'blocked') return 'blocked';
+  if (v === 'cancelled') return 'cancelled';
+  return null;
+}
+
 /** Create a task in a project */
 export async function createTask(
   ctx: CommandContext,
@@ -892,6 +1010,7 @@ export async function createTask(
       ]
     );
     const task = result.rows[0];
+    await mirrorProjectTaskToUnified(ctx, task.id, params);
     const priorityLabel =
       params.priority && params.priority !== 'medium' ? `, priority: ${params.priority}` : '';
     const dueLabel = params.dueDate ? `, due: ${params.dueDate}` : '';
@@ -949,6 +1068,90 @@ export async function updateTask(
       return { success: false, action: 'update_task', message: 'No valid fields to update.' };
     }
 
+    // Read the canonical mirror BEFORE writing anything. The status domain has
+    // to be enforced ahead of the project_tasks write, not after it: rejecting
+    // afterwards would leave project_tasks already mutated while telling the
+    // caller nothing happened, and the two tables would disagree.
+    const mirroredTaskId = `TASK-PT-${ctx.organizationId}-${params.taskId}`;
+    const requestedStatus = mirrorStatus((params.updates as Record<string, unknown>).status);
+    let mirrorFrom: string | null = null;
+    /** The approval state of the mirror row, so the e-signature gate can be
+     *  applied here on the same terms the HTTP route applies it. */
+    let mirrorApproval: {
+      approvalRequired: boolean | null;
+      approvalStatus: string | null;
+      approvers: unknown;
+    } | null = null;
+    try {
+      const currentRes = await pool.query(
+        `SELECT status, approval_required, approval_status, approvers
+           FROM unified_tasks
+         WHERE source_entity_type = 'project_task'
+           AND source_entity_id = $1
+           AND organization_id = $2
+           AND deleted_at IS NULL`,
+        [String(params.taskId), ctx.organizationId]
+      );
+      mirrorFrom = currentRes.rows[0] ? String(currentRes.rows[0].status) : null;
+      mirrorApproval = currentRes.rows[0]
+        ? {
+            approvalRequired: currentRes.rows[0].approval_required as boolean | null,
+            approvalStatus: currentRes.rows[0].approval_status as string | null,
+            approvers: currentRes.rows[0].approvers,
+          }
+        : null;
+    } catch (err) {
+      // No mirror row readable (unprovisioned column, transient): fall through
+      // and treat this as an unmirrored task, exactly as before.
+      console.warn(
+        '[ana-ri] unified_tasks mirror read failed (non-fatal):',
+        err instanceof Error ? err.message : err
+      );
+    }
+
+    // Same domain rules as the routes: AnA must not drive a transition the HTTP
+    // path answers with a 409 (e.g. pending → completed).
+    if (mirrorFrom && requestedStatus && requestedStatus !== mirrorFrom) {
+      const { isLegalTransition } = await import('../tasking/task-state-machine.js');
+      if (!isLegalTransition(mirrorFrom, requestedStatus)) {
+        return {
+          success: false,
+          action: 'update_task',
+          message: `A task in "${mirrorFrom}" cannot move to "${requestedStatus}".`,
+        };
+      }
+    }
+
+    // ── §11.50 e-signature gate ────────────────────────────────────────────
+    // The HTTP route answers 428 ESIGN_REQUIRED when an approval-gated task is
+    // completed without a PIN-verified signature (taskManagement.routes.ts).
+    // This path completed the very same canonical row and never consulted it,
+    // so asking AnA to "mark it done" cleared a gate that the button in front
+    // of the user could not clear. That is not an AnA feature — it is the
+    // control being routed around, and the signature is exactly the thing that
+    // cannot be delegated to an agent: §11.200 requires it to attest that a
+    // PERSON decided.
+    //
+    // AnA cannot collect a PIN, so there is no signature to verify here and
+    // nothing to add to the ceremony. The only correct answer is to refuse and
+    // hand the user back to the surface that CAN run it. Checked before any
+    // write, so a refusal never leaves project_tasks already mutated.
+    if (
+      requestedStatus === 'completed' &&
+      mirrorApproval?.approvalRequired === true &&
+      mirrorApproval.approvalStatus !== 'approved'
+    ) {
+      return {
+        success: false,
+        action: 'update_task',
+        message:
+          `Task ${params.taskId} is approval-gated, so completing it needs an electronic ` +
+          `signature — your signing PIN, the meaning of the signature, and a reason. ` +
+          `I can't sign on your behalf. Open the task on the task board and complete it ` +
+          `there; the signature has to be yours.`,
+      };
+    }
+
     setClauses.push('updated_at = NOW()');
     const setSql = setClauses.join(', ');
     const result = await pool.query(
@@ -965,6 +1168,71 @@ export async function updateTask(
         message: `Task ${params.taskId} was not found for this project/organization; nothing was updated.`,
       };
     }
+
+    // Keep the canonical-board mirror in step (best-effort; see createTask).
+    //
+    // A status change here mutates the canonical regulated table, so it carries
+    // the same obligations the HTTP routes carry — the create mirror above
+    // already states the rule ("a row landing in the canonical regulated task
+    // table is a governed create, whoever wrote it"), and this path was the
+    // half that had not been brought up to it: no ledger entry, no state
+    // machine, no completion stamp, no unblock cascade, and no tombstone guard.
+    try {
+      const u = params.updates as Record<string, unknown>;
+      const newStatus = requestedStatus;
+
+      // Only mirror onto a row we actually read above. `deleted_at IS NULL` is
+      // repeated on the write so an archived Part 11 tombstone is never
+      // silently re-written.
+      if (mirrorFrom !== null) {
+        const mirrorSets: string[] = [];
+        const mirrorVals: unknown[] = [String(params.taskId), ctx.organizationId];
+        let mi = 3;
+        if (newStatus) { mirrorSets.push(`status = $${mi++}`); mirrorVals.push(newStatus); }
+        if (typeof u.name === 'string' && u.name) { mirrorSets.push(`title = $${mi++}`); mirrorVals.push(u.name); }
+        if (typeof u.priority === 'string' && u.priority) { mirrorSets.push(`priority = $${mi++}`); mirrorVals.push(u.priority); }
+        if (newStatus === 'completed') {
+          mirrorSets.push('completed_at = NOW()', 'progress = 100', 'completion_percentage = 100');
+        }
+        if (mirrorSets.length) {
+          mirrorSets.push('updated_at = NOW()');
+          const mirrored = await pool.query(
+            `UPDATE unified_tasks SET ${mirrorSets.join(', ')}
+             WHERE source_entity_type = 'project_task'
+               AND source_entity_id = $1
+               AND organization_id = $2
+               AND deleted_at IS NULL`,
+            mirrorVals
+          );
+
+          // Governed lineage only for a status change that actually landed.
+          if (mirrored.rowCount && newStatus && newStatus !== mirrorFrom) {
+            const [{ auditTaskAction }, { cascadeUnblockOnCompletion }] = await Promise.all([
+              import('../tasking/task-audit.js'),
+              import('../tasking/task-side-effects.js'),
+            ]);
+            await auditTaskAction({
+              orgId: ctx.organizationId,
+              userId: ctx.userId,
+              command: 'task.transition',
+              taskId: mirroredTaskId,
+              payload: { from: mirrorFrom, to: newStatus },
+              reason: 'Task status changed by AnA',
+            });
+            // Completing a task wakes its dependents on every write path.
+            if (newStatus === 'completed') {
+              await cascadeUnblockOnCompletion(ctx.organizationId, mirroredTaskId);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(
+        '[ana-ri] unified_tasks mirror update failed (non-fatal):',
+        err instanceof Error ? err.message : err
+      );
+    }
+
     return {
       success: true,
       action: 'update_task',
@@ -2914,11 +3182,18 @@ export async function freezeDocument(
         message: `Document "${res.rows[0].title}" is already frozen.`,
       };
 
-    // Mark as frozen
-    await pool.query(
-      `UPDATE authoring_documents SET status = 'FROZEN', updated_at = NOW() WHERE id = $1`,
-      [docId]
-    );
+    // PROPOSE, DO NOT WRITE — see the note in submit_document. Freezing is a
+    // governed transition with no audit row on this path, and the handler was
+    // dead anyway (the SELECT filters a column authoring_documents does not
+    // have). Refuse rather than switch on an unaudited write.
+    return {
+      success: false,
+      action: 'freeze_document',
+      data: { docId, requiresHumanAction: true },
+      message:
+        `Freezing a document is a governed transition, so it has to be done by a person ` +
+        `in the document panel where the reason is captured. I can't freeze it for you.`,
+    };
     return {
       success: true,
       action: 'freeze_document',
@@ -3036,15 +3311,31 @@ export async function submitDocument(
     );
     if (res.rows.length === 0)
       return { success: false, action: 'submit_document', message: `Document ${docId} not found.` };
-    await pool.query(
-      `UPDATE authoring_documents SET status = 'SUBMITTED', updated_at = NOW() WHERE id = $1`,
-      [docId]
-    );
+    // PROPOSE, DO NOT WRITE — same shape as sign_document above.
+    //
+    // Two things were true here and each makes the write wrong on its own:
+    //
+    //  1. Submitting a document is a governed transition on a regulated record
+    //     and nothing on this path wrote an audit row, while the returned
+    //     message said "Audit trail recorded." That sentence is the one a user
+    //     would repeat to an inspector, and it was false.
+    //  2. The handler never ran anyway. The SELECT above filters
+    //     `organization_id`, and authoring_documents has no such column — it is
+    //     `tenant_id` (db/migrations/20260725_authoring_document_loop_tables.sql).
+    //     Postgres raises 42703 and the catch below swallows it.
+    //
+    // So repairing the column would not have restored a working feature; it
+    // would have switched on an unaudited governed write that had never
+    // actually executed. Refusing is the honest state, and it matches the rule
+    // this module already follows for signatures.
     return {
-      success: true,
+      success: false,
       action: 'submit_document',
-      data: { docId, title: res.rows[0].title },
-      message: `Document "${res.rows[0].title}" submitted. Status updated to SUBMITTED. Audit trail recorded.`,
+      data: { docId, requiresHumanAction: true },
+      message:
+        `Submitting a document is a governed transition, so it has to be done by a person ` +
+        `in the document panel where the reason and signature are captured. I can't submit ` +
+        `it for you.`,
     };
   } catch (err: unknown) {
     return {
@@ -4856,6 +5147,27 @@ export async function executeCommands(
       if (!authz.ok) {
         results.push(authz.result);
         console.warn(`[AnA Command] Blocked ${cmd.command}: ${authz.result.error}`);
+        continue;
+      }
+
+      // ── Propose-only gate: an agent may ask, a person must act. ─────────
+      // LAST of the pre-handler gates, immediately before execution. Ordering
+      // matters and was chosen deliberately:
+      //   · after authorizeCommand, so a caller who simply lacks the role is
+      //     told that, not "a human must confirm" — and so an unreadable
+      //     governance configuration still reports GOVERNANCE_UNAVAILABLE;
+      //   · after the Part 11 block, so a signer mid-ceremony still gets the
+      //     signature demand first;
+      //   · but still before the handler, which is the only thing that matters
+      //     for the guarantee.
+      //
+      // It is unconditional — unlike the Part 11 block, which is per-tenant and
+      // defaults OFF, and unlike the params.confirm convention, which the model
+      // can satisfy by asserting it. Three approve-class commands sit in
+      // neither Part 11 set, so this is the only gate that reaches them.
+      if (isProposeOnlyCommand(cmd.command) && ctx.humanConfirmed !== true) {
+        results.push(buildHumanConfirmationRequiredResult(cmd.command, cmd.params as Record<string, unknown>));
+        console.log(`[AnA Command] Proposed ${cmd.command}: HUMAN_CONFIRMATION_REQUIRED`);
         continue;
       }
 

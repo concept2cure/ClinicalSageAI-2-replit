@@ -1,0 +1,40 @@
+{
+  "_readme": [
+    "Drizzle models that omit a tenant column their physical table declares.",
+    "Gate: scripts/ci/check-tenant-blind-models.mjs. The list may only SHRINK.",
+    "",
+    "READ BEFORE 'FIXING' ANY cmc-schema ENTRY BELOW. Adding organizationId to",
+    "these models WITHOUT first adding an organization predicate to the routes",
+    "that use them would CREATE a cross-tenant write that does not exist today.",
+    "See the per-entry reason; the divergence is currently masking the missing",
+    "authorization check, and removing the mask without adding the check is the",
+    "wrong order. NOTE: the routes are NOT unauthenticated \u2014 router.param('projectId') verifies project ownership. The gap is narrower and easier to miss: sub-resource writes filter on the CHILD id alone, so a caller's own projectId plus a foreign child id reaches the foreign row, with RLS as the only backstop."
+  ],
+  "entries": {
+    "shared/cmc-schema.ts::drugProducts": {
+      "table": "drug_products",
+      "tenantColumn": "organization_id",
+      "reason": "shared/cmc-schema.ts is a stale parallel definition that does not match the database on ANY of three counts: it models `id` as uuid where the table is serial, and it omits `organization_id` which the table declares NOT NULL. Measured empirically against the real DDL: the INSERT this model produces fails with 'null value in column organization_id violates not-null constraint', and a lookup by uuid fails with 'invalid input syntax for type integer'. The routes in server/api/cmc/projectRoutes.ts that use it therefore 500 rather than leak \u2014 the divergence fails closed. The canonical, DDL-matching, tenant-aware definition is shared/schema.ts::drugProducts. FIX ORDER MATTERS, and the reason is subtler than it first looks. The router DOES guard tenancy: `router.param('projectId')` calls verifyProjectOwnership for every sub-resource route, so a caller cannot reach another org's PROJECT. But the sub-resource writes filter on the child id alone \u2014 `db.update(drugProducts).set({...req.body}).where(eq(drugProducts.id, productId))` \u2014 so a caller can pass their OWN projectId (which passes router.param) together with ANOTHER tenant's productId, and the write targets the foreign row. Today RLS is the only thing stopping that, because drug_products carries organization_id NOT NULL and is policied \u2014 one control deep. The predicate cannot be added until the model exposes the column, which is exactly why this entry is baselined rather than 'tidied'. Correct fix: add organizationId to the model AND scope every sub-resource write with it in the same change. Note drug_products has NO project_id column, so the write cannot be scoped to the verified project \u2014 the org is the predicate to use."
+    },
+    "shared/cmc-schema.ts::drugSubstances": {
+      "table": "drug_substances",
+      "tenantColumn": "organization_id",
+      "reason": "Same stale cmc-schema.ts definition and same failure mode as drugProducts \u2014 uuid vs serial id, no organization_id against a NOT NULL column, so server/api/cmc/projectRoutes.ts inserts fail closed rather than writing untenanted rows. Canonical definition: shared/schema.ts::drugSubstances. Same fix order applies: add the organization predicate to the routes in the same change that aligns the model."
+    },
+    "shared/cmc-schema.ts::analyticalMethods": {
+      "table": "analytical_methods",
+      "tenantColumn": "organization_id",
+      "reason": "Same stale cmc-schema.ts definition. Canonical definition: shared/schema.ts::analyticalMethods. Baselined rather than fixed because aligning the model without adding an organization predicate to the consuming routes would remove a mask that is currently the only reason the missing check is not exploitable."
+    },
+    "shared/cmc-schema.ts::stabilityStudies": {
+      "table": "stability_studies",
+      "tenantColumn": "organization_id",
+      "reason": "Same stale cmc-schema.ts definition. Canonical definition: shared/schema.ts::stabilityStudies. Baselined on the same terms as analyticalMethods."
+    },
+    "shared/cmc-schema.ts::complianceTracking": {
+      "table": "compliance_tracking",
+      "tenantColumn": "organization_id",
+      "reason": "Same stale cmc-schema.ts definition. Canonical definition: shared/schema.ts::complianceTracking. Baselined on the same terms as analyticalMethods."
+    }
+  }
+}

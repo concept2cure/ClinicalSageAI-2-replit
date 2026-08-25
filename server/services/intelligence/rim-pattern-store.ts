@@ -27,7 +27,7 @@
  * @module server/services/intelligence/rim-pattern-store
  */
 
-import { persistPatterns, loadPersistedPatterns } from './rim-pattern-persistence.js';
+import { persistPattern, loadPersistedPatterns } from './rim-pattern-persistence.js';
 
 /**
  * The class of regulatory signal a pattern aggregates. Mirrors the signal/pattern
@@ -94,7 +94,17 @@ export interface GetPatternsQuery {
   domain?: string;
 }
 
-/** The pluggable store contract. The in-memory implementation is the default. */
+/**
+ * The pluggable store contract. The in-memory implementation is the default.
+ *
+ * Both operations are async because both must SEE persisted state first: a
+ * sync `getPatterns` that fires hydration and reads the map in the same tick
+ * returns `[]` on the first call of every process even when the database
+ * holds patterns — dormancy with extra machinery — and a `recordPattern`
+ * that upserts before hydration undercounts: a repeat of a persisted
+ * observation would seed a fresh occurrences=1 pattern instead of
+ * strengthening the one an earlier process learned.
+ */
 export interface RimPatternStore {
   /**
    * Record an observation. Upserts on { orgId, domain, signalType, observation }:
@@ -102,9 +112,9 @@ export interface RimPatternStore {
    * has its `occurrences` incremented, `confidence` bumped (bounded), and `lastSeen`
    * advanced. Returns the resulting pattern.
    */
-  recordPattern(input: RecordPatternInput): RimPattern;
+  recordPattern(input: RecordPatternInput): Promise<RimPattern>;
   /** Return this org's patterns, optionally filtered to one domain. Never cross-org. */
-  getPatterns(query: GetPatternsQuery): RimPattern[];
+  getPatterns(query: GetPatternsQuery): Promise<RimPattern[]>;
   /** Remove all stored patterns (test/maintenance helper). */
   clear(): void;
 }
@@ -139,9 +149,13 @@ export function rimPatternId(
 }
 
 /**
- * In-memory, deterministic {@link RimPatternStore}. Keyed internally by pattern id.
- * Process-lifetime by default; swap for a DB-backed implementation by providing
- * another {@link RimPatternStore} to callers (the read/write surface is identical).
+ * In-memory {@link RimPatternStore} backed by database persistence
+ * (rim-pattern-persistence.ts): the map is a per-process cache hydrated once
+ * per org from rim_learned_patterns, and every write persists the touched
+ * pattern (plus its append-only observation event) back. Both public
+ * operations await hydration first — see the interface docstring for why a
+ * sync read/unhydrated write here is not a smaller bug but the whole
+ * subsystem's dormancy.
  */
 export class InMemoryRimPatternStore implements RimPatternStore {
   private readonly patterns = new Map<string, RimPattern>();
@@ -182,7 +196,7 @@ export class InMemoryRimPatternStore implements RimPatternStore {
     return loading;
   }
 
-  recordPattern(input: RecordPatternInput): RimPattern {
+  async recordPattern(input: RecordPatternInput): Promise<RimPattern> {
     const orgId = input.orgId;
     const domain = input.domain.trim();
     const observation = input.observation.trim();
@@ -198,6 +212,13 @@ export class InMemoryRimPatternStore implements RimPatternStore {
       throw new Error('recordPattern: observation is required');
     }
 
+    // Hydrate BEFORE upserting. Recording against un-hydrated state both
+    // undercounts (a repeat of a persisted observation would seed occurrences
+    // back to 1) and corrupts persistence: persistOrg writes the org's FULL
+    // in-memory set, so a write from a fresh process that had not yet loaded
+    // would overwrite every previously persisted pattern with just this one.
+    await this.ensureLoaded(orgId);
+
     const observedAt = input.observedAt ?? new Date().toISOString();
     const id = rimPatternId(orgId, domain, signalType, observation);
     const existing = this.patterns.get(id);
@@ -211,8 +232,8 @@ export class InMemoryRimPatternStore implements RimPatternStore {
       };
       this.patterns.set(id, updated);
 
-      // Fire-and-forget persistence of the org's full pattern set.
-      this.persistOrg(orgId);
+      // Fire-and-forget persistence of the touched pattern (+ its observation event).
+      void persistPattern(updated).catch(() => {});
 
       return updated;
     }
@@ -230,25 +251,21 @@ export class InMemoryRimPatternStore implements RimPatternStore {
     };
     this.patterns.set(id, created);
 
-    // Fire-and-forget persistence of the org's full pattern set.
-    this.persistOrg(orgId);
+    // Fire-and-forget persistence of the touched pattern (+ its observation event).
+    void persistPattern(created).catch(() => {});
 
     return created;
   }
 
-  /** Fire-and-forget: persist all patterns for an org to disk. */
-  private persistOrg(orgId: number): void {
-    const orgPatterns = this.getPatterns({ orgId });
-    Promise.resolve()
-      .then(() => persistPatterns(String(orgId), orgPatterns))
-      .catch(() => {});
+  async getPatterns(query: GetPatternsQuery): Promise<RimPattern[]> {
+    // A read that races its own hydration returns [] on the first call of
+    // every process — the exact dormancy this store exists to end. Await it.
+    await this.ensureLoaded(query.orgId);
+    return this.snapshotOrg(query.orgId, query.domain);
   }
 
-  getPatterns(query: GetPatternsQuery): RimPattern[] {
-    // Kick off async load from persistence on first access (best-effort).
-    this.ensureLoaded(query.orgId).catch(() => {});
-
-    const { orgId, domain } = query;
+  /** Synchronous snapshot of the in-memory map (no hydration). */
+  private snapshotOrg(orgId: number, domain?: string): RimPattern[] {
     const out: RimPattern[] = [];
     for (const pattern of this.patterns.values()) {
       if (pattern.orgId !== orgId) continue;
@@ -278,19 +295,20 @@ export class InMemoryRimPatternStore implements RimPatternStore {
 export const rimPatternStore: RimPatternStore = new InMemoryRimPatternStore();
 
 /**
- * Record a learned pattern into the default store. Thin, deterministic, non-throwing
- * wrapper intended for fire-and-forget callers (e.g. RIM interceptors): a malformed
- * observation is dropped (returns null) rather than thrown into a primary pipeline.
+ * Record a learned pattern into the default store. Thin, non-throwing wrapper
+ * intended for fire-and-forget callers (e.g. RIM interceptors): a malformed
+ * observation is dropped (resolves null) rather than thrown or rejected into a
+ * primary pipeline.
  */
-export function recordPattern(input: RecordPatternInput): RimPattern | null {
+export async function recordPattern(input: RecordPatternInput): Promise<RimPattern | null> {
   try {
-    return rimPatternStore.recordPattern(input);
+    return await rimPatternStore.recordPattern(input);
   } catch {
     return null;
   }
 }
 
 /** Read this org's learned patterns from the default store (optionally one domain). */
-export function getPatterns(query: GetPatternsQuery): RimPattern[] {
+export async function getPatterns(query: GetPatternsQuery): Promise<RimPattern[]> {
   return rimPatternStore.getPatterns(query);
 }

@@ -92,21 +92,40 @@ export interface WorkflowTemplate {
 export const TB_MOD: Record<string, string> = {
   CMC: '#7c6f5b',
   IND: '#2a6f97',
+  // Both spellings: the server enum / demo seed use the space-less keys
+  // (MedicalDevice, ProtocolDesign) while older rows may carry the spaced
+  // labels — a live row must never fall through to grey (assessment D7).
   'Medical Device': '#5a8f69',
+  MedicalDevice: '#5a8f69',
   eCTD: '#8a5a9c',
   Vault: '#9c7a3c',
   'Protocol Design': '#9c5a5a',
+  ProtocolDesign: '#9c5a5a',
   Clinical: '#2a6f97',
   Nonclinical: '#6b8f5a',
   Biostatistics: '#5a6f9c',
   Safety: '#a8553c',
   Regulatory: '#7c6f5b',
+  general: '#7c6f5b',
 };
 
-/* ── Board columns (unifiedTasks status -> 4 columns, Board.tsx) ── */
+/* ── Board columns ──
+   One column per NON-TERMINAL status in TASK_STATUSES, in workflow order.
+   'blocked' has to be here: it is a legal target of every transition in
+   TASK_TRANSITIONS, the server's unblock cascade only wakes successors that are
+   literally in it, and without a column such a task rendered in no column at
+   all — counted in the Blocked stat tile but invisible and unmovable on the
+   board. ('cancelled' is deliberately absent; it is terminal and filtered out
+   of `list` rather than given a column.) */
 export const TB_COLS: BoardColumn[] = [
   { id: 'pending', label: 'To do', tone: 'idle' },
   { id: 'in-progress', label: 'In progress', tone: 'ai' },
+  // 'err', not 'warn': blocked work is stuck and needs intervention, review is
+  // healthy work awaiting a reader. Both carried 'warn' at first, which made the
+  // two column dots the identical amber — indistinguishable in the one place a
+  // board is scanned fastest. The palette's semantic split is amber = attention,
+  // red = critical (kdot[data-tone="err"], app-v2.css:457).
+  { id: 'blocked', label: 'Blocked', tone: 'err' },
   { id: 'review', label: 'In review', tone: 'warn' },
   { id: 'completed', label: 'Done', tone: 'ok' },
 ];

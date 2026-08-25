@@ -1,7 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const recordGovernedAction = vi.hoisted(() => vi.fn());
-vi.mock('../../../db', () => ({ pool: { query: vi.fn() } }));
+/* auditTaskAction now opens its OWN transaction so the chain lock is held
+   across the INSERT (see task-audit-transaction.test.ts), so the pool mock has
+   to hand out a client. */
+vi.mock('../../../db', () => ({
+  pool: {
+    query: vi.fn(),
+    connect: vi.fn(async () => ({ query: vi.fn(async () => ({ rows: [] })), release: vi.fn() })),
+  },
+}));
 vi.mock('../../../routes/c2c/actions', () => ({ recordGovernedAction }));
 
 import { auditTaskAction } from '../task-audit';

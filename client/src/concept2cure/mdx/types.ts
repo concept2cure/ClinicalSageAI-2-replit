@@ -173,6 +173,15 @@ export interface AuditEvent {
   reason?: string;
   hash?: string;
   prev?: string;
+  /** Real per-row integrity for live rows: 'sealed' (chain link + HMAC seal),
+   *  'chained', or 'unchained' — a row that reached the audit table outside the
+   *  chain writer and therefore is not tamper-evident. Absent on fixtures,
+   *  which carry a synthesized chain and make no integrity claim. */
+  chain?: 'sealed' | 'chained' | 'unchained';
+  /** False when the chain predecessor exists but is not this tenant's to show
+   *  (the audit_logs chain is global across tenants). Distinguishes "no
+   *  predecessor available" from "no predecessor". */
+  prevAvailable?: boolean;
   live?: boolean;
 }
 
@@ -240,10 +249,15 @@ export interface Approval {
   refs?: CorrespondenceRef[];
 }
 
+/**
+ * The sample content a pathway's sub-tabs may fall back to in explicit sample
+ * mode. Correspondence only, deliberately: the `audit` and `approvals` bundles
+ * were a synthesized Part 11 hash-chain and a set of fabricated signed
+ * approvals, and they are gone (see data/pathwayTabs.ts). Their absence from
+ * this type is the enforcement — `sample={fixtures.audit}` no longer compiles.
+ */
 export interface PathwayTabsBundle {
-  audit: AuditEvent[];
   correspondence: Correspondence[];
-  approvals: Approval[];
   corrLabel: string;
 }
 

@@ -8,7 +8,7 @@
  * mounted successfully. Static now; the reasoning is in ./mount-routes.ts.
  */
 
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import express from 'express';
 import type { Pool } from 'pg';
 import { authenticateToken } from '../middleware/auth.js';
@@ -77,30 +77,20 @@ export async function registerDocumentRoutes({
     console.error('❌ Failed to mount GCC Platform routes:', error);
   }
 
-  // ── Document Authoring (21 CFR Part 11 compliant) ──
+  // ── REMOVED: /api/document-authoring and /api/document-authoring/workspace ──
   //
-  // SECURITY: Document authoring routes are tenant-scoped and many
-  // expose document IDs in the URL. The router's internal
-  // checkDocumentPermission already filters by JWT org, but
-  // authenticateToken at the mount is the backstop so reachability
-  // never precedes authentication.
-  try {
-    const documentAuthoringModule = await import('../routes/documentAuthoring.routes.js');
-    app.use('/api/document-authoring', authenticateToken, documentAuthoringModule.default);
-    console.log('✅ Document Authoring API routes mounted (21 CFR Part 11 compliant, auth-gated)');
-  } catch (error) {
-    console.error('❌ Failed to mount Document Authoring routes:', error);
-  }
-
-  // ── Document Authoring Workspace (read-model for the ui-v2 document-authoring surface) ──
-  // Coexists with the router above on /api/document-authoring; serves /workspace only.
-  try {
-    const documentAuthoringWorkspaceModule = await import('../routes/document-authoring-workspace.routes.js');
-    app.use('/api/document-authoring/workspace', authenticateToken, documentAuthoringWorkspaceModule.default());
-    console.log('✅ Document Authoring Workspace read-model routes mounted (auth-gated): /api/document-authoring/workspace');
-  } catch (error) {
-    console.error('❌ Failed to mount Document Authoring Workspace routes:', error);
-  }
+  // Both routers were mounted, auth-gated, and unreachable: zero client
+  // callers in the repository, and documentAuthoring.routes.ts's own header
+  // named its consumer as client/src/concept2cure/hooks/useDocumentActions.ts
+  // — a file that does not exist. The document-editing client runs entirely on
+  // the canonical /api/authoring router (authoring_documents /
+  // authoring_sections / doc_revisions, hash-chained + audited); these two
+  // wrote to the PARALLEL documents/documentVersions store, so every request
+  // they could have served was a write into a copy nothing reads. Deleted
+  // with their mounts and their handler tests per the zero-duplication rule
+  // (CLAUDE.md): a parallel path is migrated onto the canonical one and
+  // deleted in the same change — the migration happened long ago, the
+  // deletion is this.
 
   // ── eCTD Routes (parallelized) ──
   //
@@ -215,32 +205,11 @@ export async function registerDocumentRoutes({
     console.error('❌ Failed to mount HAQ Manager routes:', error);
   }
 
-  // ── IND AutoDraft (AI-powered IND section generation) ──
-  try {
-    const indAutodraftModule = await import('../routes/ind-autodraft');
-    app.use('/api/ind-autodraft', indAutodraftModule.default);
-    console.log('✅ IND AutoDraft Engine routes mounted (16 IND sections, sentence-level traceability)');
-  } catch (error) {
-    console.error('❌ Failed to mount IND AutoDraft routes:', error);
-  }
-
-  // ── IND PDF generation (Puppeteer + PDFKit fallback) ──
-  try {
-    const indPdfModule = await import('../routes/ind-pdf');
-    app.use('/api/ind-pdf', indPdfModule.default);
-    console.log('✅ IND PDF generation routes mounted (Puppeteer-powered)');
-  } catch (error) {
-    console.error('❌ Failed to mount IND PDF routes:', error);
-  }
-
-  // ── IND Sections API (live CTD section map) ──
-  try {
-    const indSectionsModule = await import('../routes/ind-sections');
-    app.use('/api/ind-sections', indSectionsModule.default);
-    console.log('✅ IND Sections API routes loaded');
-  } catch (error) {
-    console.error('❌ Failed to mount IND Sections routes:', error);
-  }
+  // The zero-caller IND helper routes formerly mounted here (/api/ind-autodraft,
+  // /api/ind-pdf, /api/ind-sections) were deleted in the biotech-lifecycle
+  // consolidation — no client or server code called any of the three prefixes.
+  // IND autodraft lives on under /api/knowledge-base/ind-autodraft/*; the CTD
+  // section map is served by services/regulatory (registry adapters).
 
   // ── Project Sections (tracking, assignments, comments, audit trail) ──
   try {

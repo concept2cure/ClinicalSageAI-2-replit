@@ -18,10 +18,19 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # Full history: several guards in this job scope themselves to what a
+          # PR CHANGED, and need a base ref to diff against. At the default
+          # fetch-depth of 1 there is no HEAD~1 and no origin/<base>, so
+          # require-migration-headers.sh resolved no base and fell back to a
+          # working-tree diff that is empty on a clean checkout — reporting
+          # "No migration changes detected" on every PR, including ones that
+          # added migrations. See scripts/ci/require-migration-headers.sh.
+          fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
 
@@ -91,6 +100,34 @@ jobs:
         # with --no-exit-code so the job passed regardless.
         run: npm run ci:unreferenced-modules
 
+      - name: Guardrails — no live credentials committed to the tree
+        # A live `neondb_owner` Postgres password sat in two tracked files from
+        # 2026-01-23 (a getting-started doc, in plaintext AND as a URL; and a
+        # seed script, as the fallback used whenever DATABASE_URL was unset).
+        # Two different passwords, same endpoint, both the OWNER role — above
+        # the non-superuser app_service role the whole tenant-RLS program relies
+        # on. Nothing in CI could block it: semgrep.yml is deliberately
+        # continue-on-error so a broad ruleset with a triage backlog does not
+        # gate every PR. This guard is narrow enough to be blocking on day one.
+        run: npm run ci:committed-secrets
+
+      - name: Guardrails — requirements.txt pins must install on the declared Python
+        # Dependabot #1014 proposed numpy 2.4.6 -> 2.5.1. numpy 2.5.1 is
+        # requires_python >=3.12 and ships only cp312/cp313/cp314 wheels; this
+        # project declares python-3.11 (.replit line 1, and every setup-python
+        # in CI). With an exact pin pip hard-fails rather than degrading.
+        #
+        # The hole was not the bad pin, it was the silence: NOTHING installs the
+        # root requirements.txt. All four CI references resolve to sub-project
+        # manifests (shadow_service/, ind_automation/, services/), and neither
+        # Dockerfile installs it — so merging that bump would have turned no job
+        # red and surfaced only at deploy time on the 3.11 runtime.
+        #
+        # Reads the target interpreter from .replit rather than hardcoding it,
+        # so a real Python upgrade moves the check instead of stranding it.
+        # A PyPI outage skips loudly (never silently) so it cannot wedge CI.
+        run: npm run ci:requirements-pins
+
       - name: Guardrails — content cannot be saved without its data lineage
         # Every span of a saved document must trace to where it came from. The
         # gate that enforces it is a few lines inside a 6,000-line router, so a
@@ -159,8 +196,58 @@ jobs:
       - name: Guardrails — tenant column types (no TEXT-typed tenant cols)
         run: npm run ci:tenant-column-types
 
+      - name: Guardrails — org path params are checked against the caller
+        # IDOR class. RLS does not backstop it: organization_users, api_keys and
+        # four other tables are deliberately unpoliced so they can be read
+        # pre-auth, so for routes touching them the application check is the
+        # ONLY control. Zero baseline — all 43 routes pass today.
+        run: npm run ci:org-path-param-guards
+
+      - name: Guardrails — every biostat form field is one the server reads
+        # The workbench declares its calculators as data; the handlers read
+        # req.body untyped and ignore anything unrecognised. So a mistyped key
+        # does not throw and does not 400 — the form renders, the request
+        # succeeds, the server silently uses its default, and the user is shown
+        # a number computed from an input they believe they supplied. No type in
+        # either language spans that boundary. Zero baseline.
+        run: npm run ci:biostat-calculator-keys
+
+      - name: Guardrails — no tenant-blind Drizzle models
+        # Sibling to the gate above, and deliberately separate: that one checks
+        # the TYPE of a declared tenant column and cannot see one that is
+        # ABSENT. A model missing the column leaves every route built on it
+        # structurally unable to filter by tenant.
+        run: npm run ci:tenant-blind-models
+
+      - name: Guardrails — WCAG AA contrast on design tokens
+        # Contrast is arithmetic on two hex values, so this cannot drift into
+        # false positives. It caught --error never being declared for dark mode:
+        # the light red cascaded onto the dark page at 2.69:1, under even the
+        # 3:1 non-text floor.
+        run: npm run ci:token-contrast
+
       - name: Guardrails — tenant-isolation in raw SQL (no regressions)
         run: npm run ci:tenant-isolation:no-regression
+
+      - name: Guardrails — every tenant entry point considers entitlement
+        # Isolation asks "can A see B's data"; this asks "may A be operating at
+        # all", on every way INTO tenant data — not just the /api chain the
+        # lifecycle guard is mounted on. Four surfaces (the public API, two
+        # sockets, a cron sweep) were found bypassing that guard one at a time;
+        # this makes the surface enumerable instead of found-by-reading.
+        run: npm run ci:tenant-entry-points
+
+      - name: Guardrails — request values must not reach a path unconstrained
+        # RLS protects rows; it does nothing for files. Three instances of the
+        # same shape were found by hand in one afternoon — one of them MOUNTED,
+        # with the per-tenant vault inside its allowlist, so one customer could
+        # read another's regulatory document. Finding the fourth by reading code
+        # is not a plan. Express decodes %2F, so a single route param can carry
+        # `../../` — "it is only one segment" is not a defence.
+        run: npm run ci:path-containment
+
+      - name: Guardrails — workflows must not invoke files that do not exist
+        run: npm run ci:workflow-targets
 
       - name: Guardrails — ECS deploy uses pinned task-def revisions (rollback safety)
         # The production deploy registers a pinned task-def revision
@@ -189,6 +276,11 @@ jobs:
 
       - name: Guardrails — regulated-data delete audit coverage (Part 11)
         run: npm run ci:regulated-delete-audit
+
+      - name: Guardrails — no unreachable catch around an audit write (Part 11)
+        run: |
+          npm run ci:dead-audit-catch:self-test
+          npm run ci:dead-audit-catch
 
       - name: Guardrails — route mount authority audit (no regressions)
         run: npm run ci:audit-route-mounts:no-regression
@@ -232,6 +324,15 @@ jobs:
       # first and was copied past twice.
       - name: Guardrails — chip tones must have a CSS rule
         run: npm run ci:check-chip-tones
+
+      # `.de-toast .ico` is green, so a one-tone toast announces failures with a
+      # success tick. Twenty-eight surfaces had each hand-rolled that one-tone
+      # toast, so fixing it on Word export and on the §11.50 signature dialog
+      # left twenty-six. Now there is one implementation and this refuses a
+      # twenty-ninth — including the invisible case, a tone narrowed away at a
+      # prop boundary, which TypeScript accepts without a word.
+      - name: Guardrails — one toast implementation, and it can say "failed"
+        run: npm run ci:toast-canonicality
 
       - name: Guardrails — phantom design tokens (ratchet, may only shrink)
         run: npm run ci:check-phantom-tokens
@@ -294,6 +395,16 @@ jobs:
       - name: Guardrails — every test file is reachable by a runner
         run: npm run ci:check-unrun-tests
 
+      # tests/setup.ts mocks `pg` for the whole default project, and the
+      # "Integration Tests" job below — which stands up a real Postgres and
+      # applies migrations to it — ran under that mock: every query resolved to
+      # { rows: [], rowCount: 0 } without a packet leaving the process, so the
+      # DB-backed suite proved nothing and reported green. Real-database tests
+      # are now `*.dbtest.ts` under vitest.db.config.ts, excluded from every
+      # mocked config. This fails the PR that would undo that separation.
+      - name: Guardrails — real-database tests never inherit the pg mock
+        run: npm run ci:db-test-isolation
+
       - name: Guardrails — embedding runtime canonicality (corpus policy)
         run: npm run ci:check-embedding-runtime
 
@@ -344,7 +455,7 @@ jobs:
         run: npm run audit:orphaned-endpoints:strict
 
       - name: Upload governance audit artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: governance-audits-lint
           path: |
@@ -355,10 +466,29 @@ jobs:
             docs/reports/orphan-endpoints-latest.md
           retention-days: 14
 
+      # ── The verification steps below run even when a guardrail above failed ──
+      #
+      # These three are the only steps in this job that read the TypeScript
+      # source, and until now they were steps 71-73 of 73. GitHub skips every
+      # remaining step once one fails, so ANY of the ~70 guardrails above
+      # silently disabled all three — and a skipped step is not red, it is
+      # simply absent from the summary.
+      #
+      # Observed, not theorised: on b3b2005 the tenant-isolation guardrail
+      # (step 29) failed, so ESLint and the typecheck gate never ran. The
+      # typecheck restoration that had just landed was invisible in CI, and
+      # every downstream job (`needs: lint`) skipped with it.
+      #
+      # `!cancelled()` — not `always()` — so a deliberately cancelled run still
+      # stops. The job still fails if a guardrail failed; these simply also
+      # report, so a green typecheck can never again be indistinguishable from
+      # one that was never executed.
       - name: Run ESLint
+        if: '!cancelled()'
         run: npm run lint
 
       - name: Run TypeScript check (no regression vs baseline)
+        if: '!cancelled()'
         # The .typecheck-baseline.json count has been ratcheted down to 0
         # (from ~2,598 when the server/routes/auth.ts parse error was fixed
         # and the pre-existing debt became visible), so this gate now fails
@@ -369,6 +499,7 @@ jobs:
         run: npm run ci:typecheck:no-regression
 
       - name: Run beta-slice TypeScript check
+        if: '!cancelled()'
         run: npm run beta:typecheck
 
   test:
@@ -398,10 +529,10 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
 
@@ -424,7 +555,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y postgresql-client libxml2-utils
 
       - name: Setup Python (document runtime)
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.11'
 
@@ -479,10 +610,10 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
 
@@ -524,7 +655,7 @@ jobs:
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: coverage-report
           path: coverage/
@@ -538,10 +669,10 @@ jobs:
     # tenant-isolation baseline drift). A security regression must always report,
     # so this gate runs on its own.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
 
@@ -568,10 +699,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
 
@@ -612,10 +743,10 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
 
@@ -679,6 +810,66 @@ jobs:
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
           TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
 
+      # ── The step that actually uses the database this job provisions ────────
+      #
+      # Everything above runs under tests/setup.ts, which mocks `pg` process-
+      # wide. That mock is right for unit tests and wrong here: it meant this
+      # job — a real PostgreSQL service, real migrations applied to it — never
+      # opened a socket from a test. `new Pool().query(...)` answered
+      # { rows: [], rowCount: 0 }, and an empty result is indistinguishable from
+      # a query that never ran, so the suite was green either way.
+      #
+      # `*.dbtest.ts` runs under vitest.db.config.ts with NO pg mock, and
+      # tests/setup.db.ts fails the run if one is ever present. It also fails
+      # rather than skips when the database is unreachable: a database test that
+      # quietly does not run is the defect this whole split exists to end.
+      #
+      # RLS_ENFORCE=on is the mode production hard-requires, and until this step
+      # existed no CI job ran a single test in it.
+      # ── The database the real-database tests actually need ──────────────────
+      #
+      # These suites were pointed at concept2cure-ri_test, which this job builds
+      # from the `*_gcc_*` migrations alone. That schema has `organizations` and
+      # almost nothing else — no `users`, no `audit_logs`, no `c2c_documents`,
+      # no `regulatory_programs`, no `unified_documents`, and neither
+      # `organizations_slug_unique` nor `users_email_unique`. So
+      # c2c-project-persistence died in beforeAll with `42P10 invalid ON CONFLICT
+      # specification` (no unique index to infer an arbiter from) and
+      # workflow-approval-tables with `42P01 relation "unified_documents" does
+      # not exist` — 18 assertions never ran.
+      #
+      # Nobody had seen it: this step only executes when the step above it
+      # passes, and that one had been failing. The moment it went green, these
+      # two surfaced.
+      #
+      # The right database for a suite whose whole premise is "the real deployed
+      # shape" is one built the way a deployment builds it. install-fresh cannot
+      # run over the GCC-migrated database (it fails applying
+      # 0005_csr_knowledge_database.sql onto that partial schema), so this
+      # provisions a SEPARATE one from blank — the same install-fresh +
+      # deploy-migrate pair blank-db-provisioning proves works. Verified: 8 files
+      # / 65 tests pass against it, versus 2 files failing on the GCC-only one.
+      - name: Provision a deploy-shaped database for the real-database tests
+        run: |
+          set -euo pipefail
+          PAGER=cat psql "$ADMIN_URL" -v ON_ERROR_STOP=1 \
+            -c 'DROP DATABASE IF EXISTS "concept2cure-ri_dbtest"' \
+            -c 'CREATE DATABASE "concept2cure-ri_dbtest"'
+          node scripts/db/install-fresh.mjs
+          node scripts/db/deploy-migrate.mjs
+        env:
+          ADMIN_URL: postgresql://postgres@localhost:5432/postgres
+          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_dbtest
+
+      - name: Run real-database tests (unmocked pg, RLS_ENFORCE=on)
+        run: npm run test:db
+        env:
+          CI: true
+          NODE_ENV: test
+          RLS_ENFORCE: 'on'
+          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_dbtest
+          TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_dbtest
+
   # ── Blank-database provisioning + deploy-migration proof ──────────────────
   #
   # C2C-DB-001 / REM-7. Proves, against a genuinely empty Postgres, that:
@@ -720,10 +911,10 @@ jobs:
       # branch rather than trying to verify a certificate the service has none of.
       DATABASE_URL: postgresql://postgres@localhost:5432/c2c_blank_proof?sslmode=disable
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
 
@@ -852,15 +1043,242 @@ jobs:
         # here fails the build on a real DB before it can ship.
         run: node scripts/db/deploy-smoke-assert.mjs
 
+      - name: Server SQL resolves against the LIVE provisioned schema (ratchet)
+        # The two static table guards (ci:unbacked-tables, ci:migration-
+        # reachability) compare the repo to itself — "does some .sql file on
+        # some applier's list claim to create this table?" — a question the
+        # repository can always answer yes to. The 2026-08 assessment counted
+        # ~85 server-queried tables that do not exist after a full successful
+        # provisioning run while both guards reported green over every one.
+        # This guard asks the only question that settles it: it takes the SAME
+        # server-referenced table set (importing the reachability parser, not
+        # re-implementing it) and resolves each name against the database this
+        # job just built from nothing. First real census: 98 absent, baselined;
+        # the baseline may only shrink, and any NEW absence fails the build.
+        # It belongs in THIS job because this is the one place in CI where a
+        # database produced by the real installers exists to ask.
+        run: npm run ci:tables-live-schema
+
+      - name: Guardrails — what a tenant purge cannot reach (ratchet)
+        # tenant-offboarding.ts purges via PURGE_CHILD_TABLES — 8 tables — and
+        # UPDATEs the organizations row to 'purged' rather than deleting it, so
+        # nothing cascades from there. Against this freshly provisioned schema,
+        # 666 tables carry organization_id; following every ON DELETE CASCADE
+        # out of those 8 reaches 74. The other 615 still hold the tenant's rows
+        # after an erasure, and only 19 of them are the audit/billing records
+        # the implementation deliberately keeps.
+        #
+        # This does NOT re-implement the purge (that service is owned
+        # elsewhere). It measures the gap so the number is checkable, and
+        # ratchets it: a NEW org-keyed table outside the purge's reach fails the
+        # build. The gap grew to 615 precisely because nothing was watching.
+        # Same job for the same reason as the guard above — this is the one
+        # place in CI with a database the real installers built.
+        run: npm run ci:purge-coverage
+
+  # ── Production boot smoke — the shipped build must actually serve ──────────
+  #
+  # Every other DB-backed job here proves something about the SCHEMA. None of
+  # them ever started the application. That gap was not theoretical: with
+  # RLS_ENFORCE=on — the ONLY value production accepts (server/db/
+  # rlsEnforcement.ts refuses to boot on unset/off/shadow) — the shipped build
+  # threw
+  #
+  #   [tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope
+  #
+  # as an uncaughtException out of registerPreStartRoutes and shut down before
+  # it ever listened. An estate-wide catalog check (assertAuthoringAuthorization
+  # Ready) issued an unscoped pool.query, which instrumentation blocks once
+  # enforcement is on. No job noticed, because no job booted the app.
+  #
+  # So this one does the whole thing the way a deploy does:
+  #   blank DB → install-fresh → deploy-migrate → npm run build → node dist/
+  # with NODE_ENV=production, RLS_ENFORCE=on, and the runtime connected as the
+  # NON-SUPERUSER app_service role (APP_DATABASE_URL) over TLS — then asserts
+  # /readyz returns 200. That is Postgres RLS actually filtering, not merely
+  # compiled: a superuser or BYPASSRLS runtime role would make all ~790 policies
+  # inert, and the boot posture check fails closed on exactly that.
+  #
+  # Postgres runs as a plain container rather than a `services:` block because
+  # production hard-requires TLS with rejectUnauthorized (server/db/ssl.ts), so
+  # the server needs certificates mounted — which a service block cannot do.
+  production-boot-smoke:
+    name: Production Boot Smoke (RLS on, non-superuser role)
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm ci failed after 3 attempts"; exit 1
+
+      - name: Install Postgres client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      # Production forces TLS verification, so the server must present a cert
+      # the runtime trusts (NODE_EXTRA_CA_CERTS below). Self-signed is fine —
+      # what is being proven is that the TLS path works, not who signed it.
+      - name: Start PostgreSQL with TLS
+        run: |
+          mkdir -p "$RUNNER_TEMP/pgcerts"
+          openssl req -new -x509 -days 2 -nodes -text \
+            -out "$RUNNER_TEMP/pgcerts/server.crt" \
+            -keyout "$RUNNER_TEMP/pgcerts/server.key" \
+            -subj "/CN=localhost" \
+            -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+          # The postgres user inside the image (uid 999) must own the key, and
+          # the server refuses to start if it is group/world readable.
+          sudo chown 999:999 "$RUNNER_TEMP/pgcerts/server.key" "$RUNNER_TEMP/pgcerts/server.crt"
+          sudo chmod 600 "$RUNNER_TEMP/pgcerts/server.key"
+          docker run -d --name pgboot \
+            -e POSTGRES_HOST_AUTH_METHOD=trust \
+            -e POSTGRES_USER=postgres \
+            -e POSTGRES_DB=c2c_boot \
+            -p 5432:5432 \
+            -v "$RUNNER_TEMP/pgcerts:/certs:ro" \
+            pgvector/pgvector:pg15 \
+            -c ssl=on -c ssl_cert_file=/certs/server.crt -c ssl_key_file=/certs/server.key
+          for i in $(seq 1 45); do
+            pg_isready -h localhost -p 5432 -U postgres && break
+            sleep 2
+          done
+          psql "postgresql://postgres@localhost:5432/c2c_boot?sslmode=require" \
+            -tAc "SELECT 'TLS handshake OK'"
+
+      - name: Provision the schema from scratch (owner connection)
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS vector'
+          node scripts/db/install-fresh.mjs
+          node scripts/db/deploy-migrate.mjs
+        env:
+          DATABASE_URL: postgresql://postgres@localhost:5432/c2c_boot
+          # Mints the non-superuser runtime role the boot below connects as.
+          # Without it the installers are a no-op on this step and the app would
+          # fall back to the owner connection — which is the posture this job
+          # exists to reject.
+          APP_SERVICE_DB_PASSWORD: ci-boot-smoke-app-service-password
+
+      - name: The runtime role must be non-superuser and NOBYPASSRLS
+        run: |
+          POSTURE=$(psql "postgresql://postgres@localhost:5432/c2c_boot" -tAc \
+            "SELECT rolsuper::text || ',' || rolbypassrls::text FROM pg_roles WHERE rolname='app_service'")
+          echo "app_service rolsuper,rolbypassrls = $POSTURE"
+          if [ "$POSTURE" != "false,false" ]; then
+            echo "::error::app_service must be NOSUPERUSER and NOBYPASSRLS; got $POSTURE."
+            echo "A superuser or BYPASSRLS runtime role makes every RLS policy inert."
+            exit 1
+          fi
+
+      - name: Build the production bundle
+        run: npm run build
+
+      # The assertion: the built server, in production mode, under the only RLS
+      # value production accepts, as the least-privilege role, reaches ready.
+      - name: Boot in production mode and require /readyz=200
+        run: |
+          node dist/index.js > "$RUNNER_TEMP/boot.log" 2>&1 &
+          BOOT_PID=$!
+          READY=""
+          # 300s, not 90s. Boot takes ~7s on a warm local machine but far longer
+          # on a cold runner: the first attempt failed here with the process
+          # still alive and mid-startup ("[MEMORY] High memory usage: 97%",
+          # schedulers still registering). That is a slow runner, not a boot
+          # failure, and a smoke test that reports one as the other is worse
+          # than no smoke test. The loop still exits IMMEDIATELY if the process
+          # dies, so a genuine failure is not made slower by this budget.
+          for i in $(seq 1 300); do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5199/readyz || true)
+            if [ "$CODE" = "200" ]; then READY="yes"; echo "/readyz=200 after ${i}s"; break; fi
+            if ! kill -0 $BOOT_PID 2>/dev/null; then
+              echo "::error::the server exited during boot (last /readyz code: ${CODE:-none})."
+              break
+            fi
+            # Progress every 30s so a hang is distinguishable from a slow start.
+            if [ $((i % 30)) -eq 0 ]; then echo "…still booting at ${i}s (last /readyz: ${CODE:-none})"; fi
+            sleep 1
+          done
+          if [ -z "$READY" ]; then
+            # The body names the failing dependency and the schema verdict
+            # (readiness-state's detail string). Its absence from this output is
+            # what made the first two failures here cost a debugging session
+            # each: "503 forever" vs "port never bound" vs WHICH dependency was
+            # down are indistinguishable from status codes alone. The single-
+            # pass-provisioning defect (schemas missing: extensions) would have
+            # been named right here on the first red run.
+            echo "──────── /readyz body at failure ────────"
+            curl -s http://127.0.0.1:5199/readyz || echo "(no HTTP response — the port was never bound)"
+            echo ""
+            echo "──────── boot log ────────"
+            tail -n 120 "$RUNNER_TEMP/boot.log"
+            echo "::error::production boot smoke FAILED — the shipped build did not reach /readyz=200 with RLS_ENFORCE=on as a non-superuser role."
+            kill $BOOT_PID 2>/dev/null || true
+            exit 1
+          fi
+          curl -s http://127.0.0.1:5199/readyz
+          kill $BOOT_PID 2>/dev/null || true
+        env:
+          NODE_ENV: production
+          RLS_ENFORCE: 'on'
+          PORT: '5199'
+          # Migrations/admin keep the owner URL; the request-serving pool is the
+          # least-privilege role. This split is the whole point of the job.
+          DATABASE_URL: postgresql://postgres@localhost:5432/c2c_boot
+          APP_DATABASE_URL: postgresql://app_service:ci-boot-smoke-app-service-password@localhost:5432/c2c_boot
+          NODE_EXTRA_CA_CERTS: ${{ runner.temp }}/pgcerts/server.crt
+          # Production refuses to start without each of these. They are
+          # throwaway values for a container that is destroyed with the job.
+          JWT_SECRET: ci-boot-smoke-jwt-secret-min-32-chars-long-aaa
+          SESSION_SECRET: ci-boot-smoke-session-secret-min-32-chars-bbb
+          REFRESH_TOKEN_SECRET: ci-boot-smoke-refresh-secret-min-32-chars-ccc
+          AUDIT_HMAC_SECRET: ci-boot-smoke-audit-hmac-secret-min-32-chars-ddd
+          AUDIT_HMAC_KEY: ci-boot-smoke-audit-hmac-key-min-32-chars-eee
+          MFA_ENCRYPTION_KEY: ci-boot-smoke-mfa-encryption-key-min-32-chars-fff
+          CONNECTOR_ENCRYPTION_KEY: ci-boot-smoke-connector-encryption-key-32-ggg
+          # This job has no AI provider, and since /readyz gained its `ana`
+          # dependency (startup/ana-readiness-state.ts) that is no longer a
+          # silent condition: a process where AnA cannot answer refuses to
+          # report ready, which is the entire point of that gate. This job hit
+          # it and sat at 503 for the full 300s budget on its first run after
+          # the change.
+          #
+          # The honest fix is to declare the posture rather than weaken the
+          # gate. Deterministic mode is the documented opt-in for exactly this:
+          # AnA serves fixed responses, readiness passes, and /readyz reports
+          # `anaState: "deterministic"` — never "ready" — so nobody can mistake
+          # this environment for one with a live model.
+          #
+          # A throwaway ANTHROPIC_API_KEY would also turn the probe green and
+          # would be WORSE: it would claim an enabled provider that does not
+          # exist, which is the kind of green this whole gate exists to prevent.
+          #
+          # This job proves the build boots against a real database with RLS on
+          # as a non-superuser. It is not an AI test and must not need a key.
+          AI_GATEWAY_DETERMINISTIC: 'true'
+
+      - name: Tear down PostgreSQL
+        if: always()
+        run: docker rm -f pgboot || true
+
   aios-audit-assets:
     name: AIOS Audit Assets
     runs-on: ubuntu-latest
     needs: lint
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.11'
 
@@ -878,10 +1296,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, test, ana-readiness-tests, integration-tests, aios-audit-assets]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
 
@@ -899,7 +1317,7 @@ jobs:
         run: npm run build
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: dist
           path: dist/
@@ -909,10 +1327,10 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
 
@@ -934,7 +1352,7 @@ jobs:
         run: npm run sbom > sbom.cyclonedx.json
 
       - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: sbom-cyclonedx
           path: sbom.cyclonedx.json
@@ -951,7 +1369,7 @@ jobs:
       - name: Trivy filesystem scan (deps + secrets)
         # Blocking gate: fails the job on HIGH/CRITICAL findings so they cannot
         # be merged. (severity threshold + exit-code 1; no continue-on-error.)
-        uses: aquasecurity/trivy-action@v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -967,7 +1385,7 @@ jobs:
         # this to a blocking gate (exit-code 1, no continue-on-error). The
         # filesystem scan above (deps + secrets) remains blocking.
         continue-on-error: true
-        uses: aquasecurity/trivy-action@v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: config
           scan-ref: .
@@ -981,9 +1399,9 @@ jobs:
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
       - name: Install dependencies
@@ -1000,7 +1418,7 @@ jobs:
       - name: Repo health audit (strict debt gate)
         run: npm run audit:repo-health:full-strict
       - name: Upload nightly governance artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: governance-audits-nightly
           path: |

@@ -10,7 +10,7 @@
  * PURE + DETERMINISTIC: no DB, no filesystem, no network, no LLM. Given the leaf
  * set and the declared references, it reports which resolve and which are broken
  * (with a reason). This is the deterministic spine — it complements, and can feed,
- * the href-resolution check in ectdExportService and the Truth Engine provenance
+ * the href-resolution check in the ZIP structural validator and the Truth Engine provenance
  * graph (which is the source of truth for "what links where").
  *
  * INTEGRATION (no duplication): operates on the existing `EctdLeaf` shape from

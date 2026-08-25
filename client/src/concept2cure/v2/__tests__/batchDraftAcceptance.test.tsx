@@ -23,13 +23,17 @@
  *    written. Every assertion below about acceptance is therefore about the
  *    REQUEST that was actually sent and the state that follows a REAL answer.
  *
- * The sample-card case is here for the same reason: bdSample() output is
- * fabricated placeholder prose, and writing it into a regulated document would
- * be the worst thing this surface could do.
+ * 3. AN UNREACHABLE DRAFTING SERVICE FABRICATED PROSE. bdSample() invented
+ *    regulatory copy — "structured per FDA expectations… each substantive
+ *    claim carrying a citation marker back to locked source data [E1]" — on a
+ *    setTimeout, chip-labelled "Sample". The label was not the problem: a
+ *    citation marker to a source nobody consulted is fixture data in a governed
+ *    path, and CLAUDE.md requires an unreachable service to read as
+ *    unreachable. The last describe below is what replaces it.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, waitFor, cleanup, fireEvent } from '@testing-library/react';
+import { render, waitFor, cleanup, fireEvent, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as React from 'react';
 
@@ -79,8 +83,8 @@ beforeEach(() => {
   sent = [];
   acceptResponse = { status: 200, body: { success: true, data: { supersededVersion: null } } };
   spineBody = spine();
-  // connected() is `Boolean(getAuthToken())`; without a token the surface takes
-  // the offline sample path and none of this is exercised.
+  // connected() is `Boolean(getAuthToken())`; without a token the surface
+  // refuses to draft at all, so none of this is exercised.
   sessionStorage.setItem('trialsage_access_token', 'test-token');
 
   vi.stubGlobal(
@@ -307,20 +311,127 @@ describe('"accepted" means the write came back, not that it was attempted', () =
   });
 });
 
-describe('sample prose is never written to a regulated document', () => {
-  it('stages an offline sample card locally and sends nothing', async () => {
-    // No token → connected() is false → the surface takes the sample path.
+describe('an unreachable drafting service renders as unreachable, not as prose', () => {
+  /* ── What this replaces ─────────────────────────────────────────────────────
+     Two tests used to live here, and both took the offline path as a given:
+     one asserted that a "Sample" card offers no Accept button, the other that
+     the sample path's timers are cancelled on unmount. Both were true. Both
+     described a screen that should never have existed.
+
+     Without a token, `connected()` is false, `run()` fell through to a
+     setTimeout loop, and 300ms later the review screen filled with cards of
+     invented regulatory prose carrying a fake citation marker. It was chip-
+     labelled "Sample", so nothing about it was a lie — but it was still
+     fabricated regulatory content in a governed authoring surface, produced at
+     exactly the moment the product had nothing to say.
+
+     These assert the absence: no request, no cards, no prose, and a stated
+     reason. Every one of them FAILS against the old fallback — the first three
+     because the fallback produced all three things, the last because the note
+     it printed ("these will be labelled sample drafts") described drafting
+     that was about to happen. */
+
+  const offline = () => {
+    // No token → connected() is false → the drafting service is unreachable.
     sessionStorage.clear();
-    spineBody = spine({ tree: leaves([{ id: '7', num: '2.7.1', title: 'Summary of Clinical Efficacy' }]) });
-    const { container } = renderSurface();
+    spineBody = spine({
+      framework: 'ich_clinical',
+      tree: leaves([
+        { id: '7', num: '2.7.1', title: 'Summary of Clinical Efficacy' },
+        { id: '8', num: '2.7.2', title: 'Summary of Clinical Safety' },
+      ]),
+    });
+    return renderSurface();
+  };
 
-    await draftAll(container);
+  /**
+   * Press Draft the way a stale handler or a programmatic caller would — past
+   * the button's `disabled` — and then give the OLD setTimeout ladder its full
+   * budget (300ms + 150ms per section + 100ms) to deliver.
+   *
+   * The `act` wrapper is what makes this a real check. Without it the sample
+   * path's setCards calls, which fire from a bare setTimeout outside React's
+   * event loop, are scheduled but never flushed to the DOM before the
+   * assertion reads it — so an earlier draft of these tests passed against the
+   * fabricating build while the cards it was looking for sat unrendered. The
+   * only thing it was measuring was React's scheduler.
+   */
+  async function pressDraftAndWait(container: HTMLElement) {
+    const btn = container.querySelector('.bd-pick-actions .bd-primary') as HTMLButtonElement;
+    btn.disabled = false;
+    fireEvent.click(btn);
+    await act(async () => { await new Promise((r) => setTimeout(r, 900)); });
+  }
 
-    fireEvent.click(container.querySelector('.bd-card-acts .bd-primary') as HTMLButtonElement);
-    await waitFor(() => expect(container.querySelector('.bd-card.accepted')).not.toBeNull());
+  it('refuses to draft, and says why, instead of producing sample cards', async () => {
+    const { container } = offline();
+    await waitFor(() => expect(container.querySelectorAll('.bd-pick-item').length).toBe(2));
 
-    expect(acceptCalls().length, 'fabricated sample prose was POSTed to a document').toBe(0);
-    expect(container.textContent).toContain('never written to a document');
+    const btn = container.querySelector('.bd-pick-actions .bd-primary') as HTMLButtonElement;
+    expect(
+      btn.disabled,
+      'the Draft button was live while the drafting service was unreachable',
+    ).toBe(true);
+    expect(container.textContent).toContain('Not connected to the drafting service');
+    expect(container.textContent).toContain('nothing is drafted in its place');
+  });
+
+  it('produces no cards and sends no drafting request even when run() is invoked', async () => {
+    const { container } = offline();
+    await waitFor(() => expect(container.querySelectorAll('.bd-pick-item').length).toBe(2));
+
+    // The refusal must live in run(), not only in the button's `disabled`.
+    await pressDraftAndWait(container);
+
+    expect(
+      container.querySelectorAll('.bd-card').length,
+      'the offline path drew draft cards for sections nothing had drafted',
+    ).toBe(0);
+    expect(
+      sent.filter(r => r.url.includes('/api/claude/batch')).length,
+      'a drafting request went out while the service was unreachable',
+    ).toBe(0);
+  });
+
+  it('never renders the fabricated prose, by any label', async () => {
+    const { container } = offline();
+    await waitFor(() => expect(container.querySelectorAll('.bd-pick-item').length).toBe(2));
+    await pressDraftAndWait(container);
+
+    const text = container.textContent || '';
+    // The exact sentences bdSample() emitted. A generator reintroduced under
+    // any other name fails here too, because these are the claims that were
+    // never true: a citation marker back to source data nobody read.
+    expect(text).not.toContain('citation marker back to locked source data');
+    expect(text).not.toContain('[E1]');
+    expect(text).not.toContain('integrated summary');
+    // And the chip that made it look accounted for.
+    expect(container.querySelector('.bd-chip.sample')).toBeNull();
+    expect(text).not.toContain('Sample');
+  });
+
+  /* This one already held before the generator was removed — the Accept
+     control had been taken off sample cards in an earlier pass. It stays as
+     the guard on that half: with no sample cards left to render, the property
+     it asserts is now structural rather than conditional. */
+  it('does not offer acceptance, and does not call anything accepted', async () => {
+    const { container } = offline();
+    await waitFor(() => expect(container.querySelectorAll('.bd-pick-item').length).toBe(2));
+    await pressDraftAndWait(container);
+
+    expect(container.querySelector('.bd-card-acts .bd-primary')).toBeNull();
+    expect(container.querySelector('.bd-card.accepted')).toBeNull();
+    expect(acceptCalls().length, 'fabricated prose was POSTed to a document').toBe(0);
+    // The old copy for this state. It described staging that never happened.
+    expect(container.textContent).not.toContain('Staged locally');
+  });
+
+  it('says the service is unreachable in the header, not that this is a preview', async () => {
+    /* The chip read "Preview mode", which names a working mode of the product.
+       There is no preview mode — there is a service that did not answer. */
+    const { container } = offline();
+    await waitFor(() => expect(container.querySelector('.bd-src')).not.toBeNull());
+    expect(container.querySelector('.bd-src')?.textContent).toBe('Drafting service unreachable');
   });
 });
 
@@ -363,6 +474,6 @@ describe('the framework picker is remembered or stated — never guessed', () =>
     const { container } = renderSurface();
 
     await waitFor(() => expect(container.textContent).toContain('Cover letter'));
-    expect(container.querySelector('.c2c-empty-state.tone-error')).toBeNull();
+    expect(container.querySelector('.c2c-error-state')).toBeNull();
   });
 });

@@ -31,8 +31,14 @@ function getOrgId(req: Request): number {
  * "rounds" plus their questions grouped by round, shaped to exactly the keys
  * the surface renders (id/disc/tone/status/q/draft/cites/commitments). The
  * surface adopts this via liveGet and falls back to its codebase fixture when
- * the store is empty or unreachable, so it never renders a blank workbench.
- * Fails closed to `{ data: null }` on any store error.
+ * the store is empty, so it never renders a blank workbench.
+ *
+ * An unprovisioned store (42P01) still degrades to `{ data: null,
+ * pendingStore: true }` — that is a deployment state, not a fault. Every OTHER
+ * error is now a 500. Previously any exception produced the same 200, so a
+ * failed read of an authority's outstanding questions was indistinguishable
+ * from "this org has no open HAQs" — the reading that lets a response deadline
+ * pass unnoticed.
  */
 router.get('/rounds', async (req: Request, res: Response) => {
   try {
@@ -83,8 +89,17 @@ router.get('/rounds', async (req: Request, res: Response) => {
     }
 
     res.json({ data: { rounds, questions: byRound }, meta: { count: rounds.length } });
-  } catch {
-    res.json({ data: null, meta: { count: 0, pendingStore: true } });
+  } catch (err) {
+    if ((err as { code?: string } | null)?.code === '42P01') {
+      return res.json({ data: null, meta: { count: 0, pendingStore: true } });
+    }
+    console.error(
+      '[haq-manager] GET /rounds failed:',
+      err instanceof Error ? err.message : String(err),
+    );
+    return res.status(500).json({
+      error: { code: 'INTERNAL', message: 'Failed to read HAQ rounds.' },
+    });
   }
 });
 
@@ -326,6 +341,127 @@ router.post('/letters/:id/questions/:qid/approve', async (req: Request, res: Res
     res.json({ success: true, data: result });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'Failed to approve' });
+  }
+});
+
+/**
+ * POST /letters/:id/assemble — the response package the whole workbench builds
+ * toward.
+ *
+ * The surface's "Assemble response package" button had NO onClick at all: a
+ * user approved every question in a round, clicked the primary action, and
+ * nothing happened. This is the thing it names.
+ *
+ * The package is assembled from the round's OWN approved responses — the
+ * question text, the approved response, its citations and its commitments, in
+ * question order. Nothing is drafted here and nothing is inferred: a question
+ * whose response is empty is reported as empty rather than filled in.
+ *
+ * Fails closed. If any question in the round is not approved the package is
+ * refused with the list of what is outstanding — an agency response package
+ * that silently omits an unapproved answer, or ships a draft as if it were
+ * approved, is the failure mode this exists to prevent.
+ */
+router.post('/letters/:id/assemble', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const letterId = String(req.params.id);
+
+    const letters = await store.query(orgId, 'letter');
+    const letter = letters.find((l: any) => String(l.letterId) === letterId);
+    if (!letter) {
+      return res.status(404).json({ success: false, error: 'Round not found in this organization.' });
+    }
+
+    const all = await store.query(orgId, 'question');
+    const qs = all.filter((q: any) => String(q.letterId) === letterId);
+    if (qs.length === 0) {
+      return res.status(409).json({
+        success: false,
+        error: 'This round has no questions recorded, so there is no response package to assemble.',
+      });
+    }
+
+    const outstanding = qs
+      .filter((q: any) => String(q.status) !== 'approved')
+      .map((q: any) => ({ id: q.qid, status: q.status ?? 'unknown' }));
+    if (outstanding.length > 0) {
+      return res.status(409).json({
+        success: false,
+        error:
+          `${outstanding.length} of ${qs.length} responses are not approved, so the package was not assembled: ` +
+          outstanding.map((o) => `${o.id} (${o.status})`).join(', ') + '.',
+        outstanding,
+      });
+    }
+
+    // Deterministic question order — the display id, numerically where it ends
+    // in a number so Q10 follows Q9 rather than Q1.
+    const ordered = [...qs].sort((a: any, b: any) => {
+      const na = parseInt(String(a.qid).replace(/\D+/g, ''), 10);
+      const nb = parseInt(String(b.qid).replace(/\D+/g, ''), 10);
+      if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb;
+      return String(a.qid).localeCompare(String(b.qid));
+    });
+
+    const missingResponses: string[] = [];
+    const sections = ordered.map((q: any) => {
+      const draft = typeof q.draft === 'string' ? q.draft.trim() : '';
+      if (!draft) missingResponses.push(String(q.qid));
+      const cites = Array.isArray(q.cites) ? q.cites : [];
+      const commitments = Array.isArray(q.commitments) ? q.commitments : [];
+      const parts = [
+        `## ${q.qid}${q.disc ? ' — ' + q.disc : ''}`,
+        '',
+        '**Question**',
+        '',
+        String(q.q ?? '').trim() || '_(no question text recorded)_',
+        '',
+        '**Response**',
+        '',
+        draft || '_(no approved response text is recorded for this question)_',
+      ];
+      if (cites.length) {
+        parts.push('', '**Supporting references**', '', ...cites.map((c: unknown) => `- ${String(c)}`));
+      }
+      if (commitments.length) {
+        parts.push('', '**Commitments**', '', ...commitments.map((c: unknown) => `- ${String(c)}`));
+      }
+      return parts.join('\n');
+    });
+
+    const header = [
+      `# Response to ${letter.authority ?? letter.agency ?? 'health authority'} ${letter.type ?? 'questions'}`,
+      '',
+      ...[
+        letter.submission ? `**Submission:** ${letter.submission}` : null,
+        letter.agency ? `**Agency:** ${letter.agency}` : null,
+        letter.received ? `**Letter received:** ${letter.received}` : null,
+        letter.due ? `**Response due:** ${letter.due}` : null,
+        `**Questions in this round:** ${ordered.length}`,
+      ].filter(Boolean) as string[],
+      '',
+      '---',
+    ].join('\n');
+
+    return res.json({
+      success: true,
+      data: {
+        letterId,
+        questionCount: ordered.length,
+        markdown: [header, ...sections].join('\n\n'),
+        // Named honestly rather than silently: an approved question that
+        // carries no response text still assembles, but the caller is told.
+        questionsWithNoResponseText: missingResponses,
+        title: `Response package — ${letter.submission ?? letter.authority ?? letterId}`,
+      },
+    });
+  } catch (err: any) {
+    if (err?.code === '42P01') {
+      return res.status(503).json({ success: false, error: 'The HAQ store is not provisioned in this deployment.' });
+    }
+    console.error('[haq-manager] assemble failed:', err instanceof Error ? err.message : String(err));
+    return res.status(500).json({ success: false, error: 'Failed to assemble the response package.' });
   }
 });
 

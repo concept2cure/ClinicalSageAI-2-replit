@@ -83,6 +83,62 @@ function enrichSection(code: string, status: string, name: string) {
 
 interface CoauthorDoc { id: number; module_number: string | null; status: string; module_name: string | null }
 
+interface ProgramTargetRow {
+  name: string | null;
+  code: string | null;
+  product_name: string | null;
+  target_submission_date: Date | string | null;
+}
+
+/**
+ * The org's IND regulatory programs (regulatory_programs) — the one store that
+ * actually records a target submission date. Read org-scoped, newest first, and
+ * fail closed to [] when the table isn't provisioned (42P01): a missing store
+ * must yield "no target date", never a failed checklist and never an invented
+ * offset.
+ */
+async function readIndProgramTargets(orgId: number): Promise<ProgramTargetRow[]> {
+  try {
+    const res = await pool.query(
+      `SELECT name, code, product_name, target_submission_date
+         FROM regulatory_programs
+        WHERE organization_id = $1 AND upper(program_type) = 'IND' AND deleted_at IS NULL
+        ORDER BY updated_at DESC NULLS LAST`,
+      [orgId],
+    );
+    return res.rows as ProgramTargetRow[];
+  } catch (err) {
+    if ((err as { code?: string })?.code === '42P01') return [];
+    throw err;
+  }
+}
+
+const norm = (v: unknown): string => str(v).trim().toLowerCase();
+
+/**
+ * Resolve the submission's regulatory program by identity match (program
+ * product_name / name / code vs the submission's product_name / title,
+ * case-insensitive) and return its recorded target_submission_date as an ISO
+ * string. Null when no program matches or no matching program records a date —
+ * the surface renders an honest "no target date set" instead of a projection
+ * from an invented offset.
+ */
+function resolveTargetReceiptDate(
+  programs: ProgramTargetRow[],
+  sub: Record<string, unknown>,
+): string | null {
+  const keys = new Set([norm(sub.product_name), norm(sub.title)].filter((k) => k !== ''));
+  if (keys.size === 0) return null;
+  const match = programs.find(
+    (p) =>
+      p.target_submission_date != null &&
+      (keys.has(norm(p.product_name)) || keys.has(norm(p.name)) || keys.has(norm(p.code))),
+  );
+  if (!match || match.target_submission_date == null) return null;
+  const d = new Date(match.target_submission_date as string | Date);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 /** Merge a (code → {status,name}) entry, keeping the more-advanced status. */
 function put(map: Map<string, { status: string; name: string }>, code: string, status: string, name: string): void {
   if (!code) return;
@@ -110,8 +166,10 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
 
   // Real linkage submission → sequence → leaf → coauthor doc. The coauthor_documents read
   // resolves the docs a leaf references (docById); it is NOT used as an org-wide section
-  // fallback. All bulk (one query each), org-scoped, soft-delete aware.
-  const [seqRes, coauthorRes] = await Promise.all([
+  // fallback. All bulk (one query each), org-scoped, soft-delete aware. The
+  // regulatory_programs read backs the target-date resolution only and fails
+  // closed to [] when unprovisioned.
+  const [seqRes, coauthorRes, programTargets] = await Promise.all([
     pool.query(
       `SELECT id, submission_id FROM ectd_sequences
         WHERE submission_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL`,
@@ -122,6 +180,7 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
         WHERE organization_id = $1 AND module_number IS NOT NULL`,
       [orgId],
     ),
+    readIndProgramTargets(orgId),
   ]);
   const seqRows = seqRes.rows as Array<{ id: number; submission_id: number }>;
   const coauthorDocs = coauthorRes.rows as CoauthorDoc[];
@@ -173,6 +232,11 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
     const productName = s.product_name != null && str(s.product_name).trim() !== '' ? str(s.product_name) : null;
     const title = str(s.title).trim() !== '' ? str(s.title) : null;
     return {
+      // The REAL submissions.id this checklist was assembled from — the anchor the
+      // lifecycle filing routes (/safety-report/file, /annual-report/file,
+      // /amendment/file) need to create an ectd_sequences row. Real data, not an
+      // invented handle: every checklist row IS a submissions row.
+      submissionId: subId,
       // `code` is the surface's stable key and the drugName fallback; prefer the real
       // product/title, else a stable per-submission code.
       code: productName ?? title ?? `IND-${subId}`,
@@ -181,7 +245,9 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
       indication: null, // not a column on submissions — honest null, never fabricated
       sponsorName: str(s.org_name) || null, // the tenant org is the sponsor of record
       submissionType: 'IND',
-      targetReceiptOffsetDays: 14, // the surface labels the 30-day clock a projection
+      // The org's RECORDED target (regulatory_programs.target_submission_date,
+      // resolved by identity match) or an honest null — never an invented offset.
+      targetReceiptDate: resolveTargetReceiptDate(programTargets, s),
       forms,
       sections,
     };

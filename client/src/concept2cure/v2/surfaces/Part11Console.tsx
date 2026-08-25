@@ -21,6 +21,7 @@
 import React, { useEffect, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { EmptyState, hasKeys, isRowsWith, type ShapeGuard } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
@@ -137,6 +138,76 @@ export function Part11Console(_props: SurfaceViewProps) {
       ? Object.entries(rawSections)
       : [];
 
+  /* What AnA can see of this screen.
+     Three independent reads, each with its own three states, published
+     independently — and on this surface the loading/error distinction is the
+     whole point. "The audit hash chain is intact" is a tamper-evidence claim
+     under 21 CFR Part 11 §11.10; an assistant that made it because a
+     verification request had not returned would be asserting compliance nobody
+     verified. So `integrityValid` is published only when the read resolved, and
+     a failed read publishes the failure by name. */
+  const anaContext = React.useMemo(() => {
+    const chainLine =
+      chainState === 'loading'
+        ? 'the audit hash chain is still being verified'
+        : chainState === 'error' || !chain
+          ? 'the audit hash-chain verification could not be read, so its integrity is UNKNOWN — not verified, and not intact'
+          : `the audit hash chain is ${chain.integrityValid === true ? 'verified intact' : chain.integrityValid === false ? 'BROKEN' : 'reported without an integrity verdict'} over ${chain.totalEntries} entry(ies)`;
+    const statusLine =
+      statusState === 'loading'
+        ? 'the compliance status is still loading'
+        : statusState === 'error' || !status
+          ? 'the compliance status could not be read'
+          : `Part 11 overall status "${status.part11.overallStatus}" across ${sections.length} section(s)`;
+    const soc2Line =
+      soc2State === 'loading'
+        ? 'the SOC 2 control set is still loading'
+        : soc2State === 'error'
+          ? 'the SOC 2 control set could not be read'
+          : soc2
+            ? `${soc2.summary.totalControls} SOC 2 control(s), ${soc2.summary.part11MappedControls} mapped to Part 11`
+            : 'no SOC 2 controls are recorded';
+    return {
+      summary: `Part 11 console: ${chainLine}; ${statusLine}; ${soc2Line}.`,
+      facts: {
+        hashChain: chainState === 'ready' && chain
+          ? {
+              status: chain.chainStatus, integrityValid: chain.integrityValid,
+              totalEntries: chain.totalEntries, brokenLinks: chain.brokenLinks ?? null,
+              algorithm: chain.hashAlgorithm ?? null, verifiedAt: chain.verifiedAt ?? null,
+            }
+          : null,
+        hashChainUnavailable: chainState === 'error' ? 'the chain-integrity read failed — integrity is unknown, not intact' : null,
+        part11: statusState === 'ready' && status
+          ? {
+              overallStatus: status.part11.overallStatus,
+              sections: sections.map(([k, v]) => ({ key: k, title: v.title, status: v.status, platformControl: v.platformControl ?? null })),
+              disclaimer: status.disclaimer ?? null,
+              gamp5: status.gamp5,
+            }
+          : null,
+        part11Unavailable: statusState === 'error' ? 'the compliance-status read failed' : null,
+        soc2: soc2State === 'ready' && soc2
+          ? {
+              summary: soc2.summary,
+              controls: (soc2.controls ?? []).slice(0, 12).map((c) => ({
+                controlId: c.controlId, category: c.category, title: c.title,
+                part11Mapping: c.part11Mapping ?? null,
+                evidenceStatus: c.evidenceStatus, evidenceCount: c.evidenceCount,
+              })),
+            }
+          : null,
+        soc2Unavailable: soc2State === 'error' ? 'the SOC 2 control read failed' : null,
+      },
+      availableActions: [
+        'Read the audit hash-chain integrity verdict and its entry count',
+        'Read the per-section Part 11 status and the platform control behind each',
+        'Read the SOC 2 control set and its Part 11 mappings',
+      ],
+    };
+  }, [chainState, chain, statusState, status, sections, soc2State, soc2]);
+  usePublishSurfaceContext('part11-console', anaContext);
+
   return (
     <div className="cm-body">
       {/* Hash-chain integrity — the headline */}
@@ -144,7 +215,7 @@ export function Part11Console(_props: SurfaceViewProps) {
         <div className="pj-card-h"><span className="t">Audit hash-chain integrity</span><span className="s">21 CFR Part 11 §11.10 — tamper evidence</span></div>
         <div className="pj-card-b">
           {chainState === 'loading' ? <EmptyState icon={I.lock} title="Verifying the audit hash chain…" />
-            : chainState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t verify the hash chain" hint="GET /api/part11/audit-trail/chain-integrity didn’t respond. Sign in to your tenant and retry." />
+            : chainState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t verify the hash chain" hint="The audit-chain verifier didn’t respond. Sign in to your tenant and retry." />
             : !chain ? <EmptyState icon={I.lock} title="No chain data" />
             : (
               <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -166,7 +237,7 @@ export function Part11Console(_props: SurfaceViewProps) {
         <div className="pj-card-h"><span className="t">21 CFR Part 11 §11.10 controls</span>{typeof status?.part11?.overallStatus === 'string' && <span className="rd-chip tone-warn">{status.part11.overallStatus.replace(/_/g, ' ')}</span>}</div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {statusState === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.shieldCheck} title="Loading compliance status…" /></div>
-            : statusState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load compliance status" hint="GET /api/part11/compliance-status didn’t return a §11.10 status record." /></div>
+            : statusState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load compliance status" hint="The compliance service didn’t return a §11.10 status record." /></div>
             : sections.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.shieldCheck} title="No section status" /></div>
             : <table className="reg-tbl"><thead><tr><th>CFR</th><th>Control</th><th>Platform control</th><th style={{ textAlign: 'right' }}>Status</th></tr></thead>
               <tbody>{sections.map(([code, sec]) => (
@@ -188,7 +259,7 @@ export function Part11Console(_props: SurfaceViewProps) {
         <div className="pj-card-h"><span className="t">SOC 2 controls</span>{soc2?.summary && <span className="s">{soc2.summary.part11MappedControls}/{soc2.summary.totalControls} Part 11-mapped · {soc2.summary.certificationTarget}</span>}</div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {soc2State === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading SOC 2 controls…" /></div>
-            : soc2State === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load SOC 2 controls" hint="GET /api/part11/soc2/controls didn’t return the control framework." /></div>
+            : soc2State === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load SOC 2 controls" hint="The controls service didn’t return the SOC 2 framework." /></div>
             : !soc2 || !Array.isArray(soc2.controls) || soc2.controls.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No SOC 2 controls" hint="The SOC 2 control framework loads here once available." /></div>
             : <table className="reg-tbl"><thead><tr><th>Control</th><th>Category</th><th>Title</th><th>Part 11</th><th style={{ textAlign: 'right' }}>Evidence</th></tr></thead>
               <tbody>{soc2.controls.map((c) => (

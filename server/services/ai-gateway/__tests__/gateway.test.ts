@@ -152,6 +152,64 @@ describe('AIGateway', () => {
       expect(response.requestId).toBeDefined();
     });
 
+    /**
+     * A streaming caller passes `stream: true` with an `onStream` callback and
+     * renders ONLY what that callback delivers. Deterministic mode used to
+     * return the content and never invoke it, so POST /api/ana-ri/stream
+     * emitted run_started, three status events, orchestration, done and
+     * post_done — and not one `text` event.
+     *
+     * Observed on a live server before the fix, not theorised: `done` carried
+     * `outputTokens: 71` and `turn_status: "completed"` while the client
+     * received no words at all. The transport declared success having
+     * delivered nothing, useAnaChat rendered an empty assistant bubble with no
+     * error, and AnA answered with silence. It is also the posture CI's
+     * production boot smoke runs in, where /readyz reports
+     * `anaState: "deterministic"` and passes readiness.
+     */
+    it('delivers the content through onStream when the caller is streaming', async () => {
+      const chunks: string[] = [];
+
+      const response = await gateway.route(
+        buildTestRequest({
+          taskType: 'chat',
+          stream: true,
+          onStream: (chunk: string) => { chunks.push(chunk); },
+        }),
+      );
+
+      // The regression: this was 0, while `response.content` was populated and
+      // usage reported a non-zero output-token count.
+      expect(chunks.length).toBeGreaterThan(0);
+      expect(chunks.join('')).toBe(response.content);
+      expect(response.usage.outputTokens).toBeGreaterThan(0);
+    });
+
+    it('does not invoke onStream for a non-streaming caller', async () => {
+      const onStream = vi.fn();
+
+      await gateway.route(buildTestRequest({ taskType: 'chat', onStream }));
+
+      // No `stream: true`, so the caller is collecting the whole response and
+      // must not also receive it as deltas.
+      expect(onStream).not.toHaveBeenCalled();
+    });
+
+    it('still returns a response when the caller\'s stream sink throws', async () => {
+      // A client that disconnected mid-turn leaves a sink that throws. That
+      // must not convert a fixture response into a failed request.
+      const response = await gateway.route(
+        buildTestRequest({
+          taskType: 'chat',
+          stream: true,
+          onStream: () => { throw new Error('sink closed'); },
+        }),
+      );
+
+      expect(response.content).toMatch(/demo|deterministic/i);
+      expect(response.deterministic).toBe(true);
+    });
+
     it('should return different responses for different task types', async () => {
       const chatResponse = await gateway.route(buildTestRequest({ taskType: 'chat' }));
       const docResponse = await gateway.route(buildTestRequest({ taskType: 'document_analysis' }));
@@ -248,6 +306,44 @@ describe('AIGateway', () => {
       expect(params.top_p).toBeUndefined();
       expect(params.top_k).toBeUndefined();
       expect(params.thinking).toBeUndefined();
+    });
+
+    // ── The provenance record must match what was SENT ──────────────────
+    // The two cases above prove temperature is never transmitted to a
+    // reasoning-only model. The audit ledger recorded it anyway —
+    // `temperature: request.temperature ?? 0.7` — under a comment claiming to
+    // describe "which params + prompt produced this output". So the Part 11
+    // reproducibility record asserted a sampling parameter that never left the
+    // process, and anyone replaying the call from that record would set 0.7
+    // against a model that does no sampling. A provenance record that is
+    // confidently wrong is worse than one that says "not applicable", because
+    // only the first gets trusted.
+    const auditedTemperature = async (
+      model: string,
+      request: Partial<GatewayRequest>
+    ): Promise<number | null | undefined> => {
+      const logged: any[] = [];
+      (gateway as any).config.auditEnabled = true;
+      (gateway as any).auditLogger = { log: async (e: any) => { logged.push(e); } };
+      await (gateway as any).logAudit(
+        buildTestRequest(request),
+        { requestId: 'r-1', provider: 'anthropic', model, cached: false, deterministic: false,
+          usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 } },
+        'quality',
+        true
+      );
+      return logged[0]?.temperature;
+    };
+
+    it('records NO temperature for a reasoning-only model — it was never sent', async () => {
+      // undefined on the entry; GatewayAuditLogger coalesces to NULL in the
+      // column (`entry.temperature ?? null`), so the stored provenance is
+      // "not applicable" rather than a number nobody sent.
+      expect(await auditedTemperature('claude-opus-4-7', { temperature: 0.5 })).toBeUndefined();
+    });
+
+    it('records the real temperature for a model that does accept sampling', async () => {
+      expect(await auditedTemperature('claude-sonnet-4-6', { temperature: 0.5 })).toBe(0.5);
     });
 
     it('uses adaptive thinking (no budget_tokens) for Opus 4.7', () => {

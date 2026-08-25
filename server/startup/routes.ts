@@ -29,8 +29,11 @@ import type { Pool } from 'pg';
 import { authMiddleware } from '../auth.js';
 import { isStaticDataEnabled } from '../middleware/staticDataGuard';
 import { createCircuitBreakerMiddleware } from '../middleware/circuitBreaker';
+import { assertAuthoringAuthorizationReady } from './authoringAuthorizationInvariant';
+import { assertAiProvenanceLedgerForProduction } from './aiProvenanceLedgerInvariant';
 import type { CircuitBreakerMiddleware } from '../bootstrap/types';
 import { buildStaticBusinessDataGuard } from '../bootstrap/static-data-guard';
+import { registerEntitlementGate } from '../bootstrap/register-entitlement-gate.js';
 
 import { registerCoreRoutes } from '../bootstrap/register-core-routes';
 import { registerConcept2CureRoutes } from '../bootstrap/register-concept2cure-routes';
@@ -88,6 +91,22 @@ export async function registerPreStartRoutes(
   // redirects, enterprise auth, SSO, health probes, global /api auth gate.
   await registerPlatformRoutes({ app, pool, authMiddleware });
 
+  // Commercial entitlement enforcement. Mounted HERE — after the platform
+  // family establishes the global /api auth gate, and before every feature
+  // route family below — because it needs a resolved organization context and
+  // must cover all of them, and because mounting it per-family is how a new
+  // family silently ships ungated.
+  //
+  // Off unless a mode is set: 'report' records what it WOULD deny and serves
+  // the request, 'enforce' denies. Default 'off'. Turning hard enforcement on
+  // as a first act would deny real requests nobody has measured yet — which is
+  // what report mode and its console report exist to prevent.
+  //
+  // The mode is a governed platform setting changed from the licensing console,
+  // with the deployment's own configuration as the fallback, so this can go
+  // live without a redeploy — see services/entitlements/enforcement-mode.ts.
+  registerEntitlementGate({ app });
+
   // Slot 1 — Device-Project CRUD.
   registerInlineEarlyRoutes(inlineCtx);
 
@@ -121,6 +140,33 @@ export async function registerPreStartRoutes(
   await registerAiRoutes({ app, pool, aiCircuitBreaker });
   registerConcept2CureRoutes(app);
   registerAdminRoutes(app);
+
+  // Authoring object security. The permission-management router and the
+  // mandatory, fail-closed object-authorization middleware are mounted at the
+  // `/api` gateway inside the AI-workflow slot below
+  // (registerInlineAiWorkflowRoutes), immediately ahead of the legacy
+  // `/api/authoring` router — the composition root stays mount-free and only
+  // asserts boot-time readiness here (and retires the legacy flag).
+  //
+  // The old authoring router contains a feature-flagged helper under
+  // AUTH_ENFORCE_SECTION_PERMS. That helper is now RETIRED on the production
+  // composition path: it represented a second permission system, depended on the
+  // old schema shape, and could deny a request after the canonical policy had
+  // already approved it. Keep the legacy function inert until it is deleted from
+  // the large router in a dedicated decomposition PR.
+  await assertAuthoringAuthorizationReady(pool);
+
+  // The AI provenance ledger must be writable before any route that can reach
+  // the gateway is mounted. Fails closed in production, warns elsewhere — see
+  // server/startup/aiProvenanceLedgerInvariant.ts for what it was covering up.
+  await assertAiProvenanceLedgerForProduction();
+
+  if (process.env.AUTH_ENFORCE_SECTION_PERMS === '1') {
+    console.warn(
+      '[authoring] AUTH_ENFORCE_SECTION_PERMS is retired; canonical mandatory object authorization is active.',
+    );
+  }
+  process.env.AUTH_ENFORCE_SECTION_PERMS = '0';
 
   // Slot 5 — Authoring router + authoring actions + AnA platform control +
   // AI actions (+ Redis / queue init) + Phase 3 orchestration.

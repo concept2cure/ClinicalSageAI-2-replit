@@ -66,7 +66,7 @@
 .c2c-v2 .pj-card{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
 .c2c-v2 .pj-card-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg-050);}
 .c2c-v2 .pj-card-h .t{font-size:12.5px;font-weight:600;color:var(--text-100);}
-.c2c-v2 .pj-card-h .s{font-size:11px;color:var(--text-400);}
+.c2c-v2 .pj-card-h .s{font-size:11px;color:var(--text-300);}
 .c2c-v2 .pj-card-b{padding:16px;}
 
 /* Selected stage detail */
@@ -85,7 +85,9 @@
 .c2c-v2 .pj-deliv-row{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--text-200);}
 .c2c-v2 .pj-deliv-row .dot{width:15px;height:15px;flex-shrink:0;color:var(--text-400);}
 .c2c-v2 .pj-deliv-row .dot svg{width:15px;height:15px;}
-.c2c-v2 .pj-deliv-row[data-done] .dot{color:var(--success);}
+/* The [data-done] rule is gone with the hardcoded tick it coloured — see the
+   note beside 'Key deliverables' in BiopharmaJourney.tsx. */
+.c2c-v2 .pj-deliv-note{margin-top:8px;font-size:11px;line-height:1.5;color:var(--text-400);}
 .c2c-v2 .pj-caps{display:flex;flex-wrap:wrap;gap:7px;}
 .c2c-v2 .pj-cap{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--bg-000);border-radius:99px;padding:6px 12px 6px 10px;font-size:12px;font-weight:500;color:var(--text-200);transition:all var(--dur) var(--ease);}
 .c2c-v2 .pj-cap svg{width:14px;height:14px;color:var(--text-400);}
@@ -174,12 +176,12 @@
 .c2c-v2 .ae-pstage:last-child::after{display:none;}
 .c2c-v2 .ae-pstage[data-k="validate"]{border-color:var(--success);background:var(--success-muted);}
 .c2c-v2 .ae-pstage[data-k="draft"]{border-color:var(--accent-100);background:var(--accent-000);}
-.c2c-v2 .ae-pstage-n{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);}
+.c2c-v2 .ae-pstage-n{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-200);}
 .c2c-v2 .ae-pstage-ic{width:22px;height:22px;color:var(--accent-200);margin:8px 0 6px;}
 .c2c-v2 .ae-pstage-ic svg{width:20px;height:20px;}
 .c2c-v2 .ae-pstage[data-k="validate"] .ae-pstage-ic{color:var(--success);}
 .c2c-v2 .ae-pstage-t{font-size:13px;font-weight:600;color:var(--text-100);line-height:1.3;}
-.c2c-v2 .ae-pstage-d{font-size:11px;color:var(--text-400);line-height:1.45;margin-top:4px;}
+.c2c-v2 .ae-pstage-d{font-size:11px;color:var(--text-200);line-height:1.45;margin-top:4px;}
 
 /* Document-system cards */
 .c2c-v2 .ae-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:12px;}
@@ -245,7 +247,7 @@
 .c2c-v2 .sp-title{font-size:23px;font-weight:600;color:var(--text-100);margin:4px 0 6px;}
 .c2c-v2 .sp-state{font-size:13px;line-height:1.6;color:var(--text-400);margin:0;max-width:600px;}
 .c2c-v2 .sp-state b{color:var(--text-200);font-weight:600;}
-.c2c-v2 .sp-primary{flex-shrink:0;display:inline-flex;align-items:center;gap:7px;background:var(--accent-100);color:#fff;border-radius:var(--radius-md);padding:9px 14px;font-size:12.5px;font-weight:500;transition:background var(--dur);}
+.c2c-v2 .sp-primary{flex-shrink:0;display:inline-flex;align-items:center;gap:7px;background:var(--accent-strong);color:var(--accent-on-strong);border-radius:var(--radius-md);padding:9px 14px;font-size:12.5px;font-weight:500;transition:background var(--dur);}
 .c2c-v2 .sp-primary:hover{background:var(--accent-200);}.c2c-v2 .sp-primary svg{width:15px;height:15px;}
 .c2c-v2 .sp-primary{white-space:nowrap;}
 .c2c-v2 .sp-starters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0 20px;}
@@ -257,7 +259,7 @@
 .c2c-v2 .sp-sec-h{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .c2c-v2 .sp-sec-h .t{font-size:13px;font-weight:600;color:var(--text-100);white-space:nowrap;}
 .c2c-v2 .sp-sec-h .s{font-size:11px;color:var(--text-400);}
-.c2c-v2 .sp-sample{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);background:var(--bg-100);border-radius:4px;padding:2px 6px;}
+.c2c-v2 .sp-sample{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-300);background:var(--bg-100);border-radius:4px;padding:2px 6px;}
 .c2c-v2 .sp-queue{display:flex;flex-direction:column;gap:8px;}
 .c2c-v2 .sp-q{display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);padding:11px 13px;transition:border-color var(--dur);}
 .c2c-v2 .sp-q:hover{border-color:var(--text-400);}
@@ -267,7 +269,7 @@
 .c2c-v2 .sp-q-ic{width:18px;height:18px;flex-shrink:0;color:var(--text-400);}.c2c-v2 .sp-q-ic svg{width:18px;height:18px;}
 .c2c-v2 .sp-q-b{flex:1;min-width:0;display:flex;flex-direction:column;}
 .c2c-v2 .sp-q-t{font-size:12.5px;font-weight:500;color:var(--text-100);line-height:1.35;}
-.c2c-v2 .sp-q-s{font-size:11px;color:var(--text-400);margin-top:1px;}
+.c2c-v2 .sp-q-s{font-size:11px;color:var(--text-300);margin-top:1px;}
 .c2c-v2 .sp-q-a{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;color:var(--accent-200);}
 .c2c-v2 .sp-q-a svg{width:13px;height:13px;}
 .c2c-v2 .sp-list{display:flex;flex-direction:column;}
@@ -276,8 +278,13 @@
 .c2c-v2 .sp-tag{font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--text-300);background:var(--bg-100);border-radius:4px;padding:2px 7px;flex-shrink:0;white-space:nowrap;}
 .c2c-v2 .sp-tag2{font-size:9.5px;font-weight:600;color:var(--text-400);background:var(--bg-100);border-radius:4px;padding:2px 7px;flex-shrink:0;text-transform:uppercase;letter-spacing:.03em;}
 .c2c-v2 .sp-row-b{flex:1;min-width:0;display:flex;flex-direction:column;}
-.c2c-v2 .sp-row-t{font-size:12.5px;font-weight:500;color:var(--text-100);line-height:1.35;}
-.c2c-v2 .sp-row-s{font-size:11px;color:var(--text-400);margin-top:1px;}
+/* `.sp-row-b` is `flex:1 1 0%` with `min-width:0`, so when the row's other
+   columns take 242 of its 298px the label is handed 56 and shrinks below its
+   own min-content. Breaking the word is what keeps it inside that box.
+   56px is not a width a label can be read in, and that is a layout question
+   about the row's proportions rather than a wrapping one — ledger L111. */
+.c2c-v2 .sp-row-t{font-size:12.5px;font-weight:500;color:var(--text-100);line-height:1.35;overflow-wrap:break-word;}
+.c2c-v2 .sp-row-s{font-size:11px;color:var(--text-400);margin-top:1px;overflow-wrap:break-word;}
 .c2c-v2 .sp-sev{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 7px;border-radius:4px;flex-shrink:0;}
 .c2c-v2 .sp-sev[data-s="high"]{background:var(--error-muted);color:#7a1f1f;}
 .c2c-v2 .sp-sev[data-s="med"]{background:var(--warning-muted);color:#7a4a0f;}
@@ -314,7 +321,9 @@
 .c2c-v2 .cm-kicker{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-200);}
 .c2c-v2 .cm-title{font-size:23px;font-weight:600;color:var(--text-100);margin:4px 0 5px;}
 .c2c-v2 .cm-meta{font-size:12.5px;color:var(--text-400);}
-.c2c-v2 .cm-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+/* auto-fit, not a fixed four: a board with five or six measures must not wrap
+   a lone tile onto a row of its own. */
+.c2c-v2 .cm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
 .c2c-v2 .cm-matrix{overflow-x:auto;}
 .c2c-v2 .cm-matrix table{border-collapse:collapse;width:100%;font-size:12px;}
 .c2c-v2 .cm-matrix th{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);font-weight:700;padding:8px 10px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;}
@@ -345,12 +354,8 @@
 .c2c-v2 .cm-gen-b{flex:1;min-width:0;}
 .c2c-v2 .cm-gen-t{font-size:12.5px;font-weight:600;color:var(--text-100);}
 .c2c-v2 .cm-gen-s{font-size:11px;color:var(--text-400);margin-top:1px;}
-.c2c-v2 .cm-copilot-q{display:flex;gap:9px;align-items:flex-start;text-align:left;width:100%;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);padding:12px 14px;margin-bottom:9px;transition:border-color var(--dur);}
-.c2c-v2 .cm-copilot-q:hover{border-color:var(--accent-100);}
-.c2c-v2 .cm-copilot-q .ico{color:var(--accent-200);flex-shrink:0;margin-top:1px;}.c2c-v2 .cm-copilot-q .ico svg{width:16px;height:16px;}
-.c2c-v2 .cm-copilot-q .t{font-size:13px;color:var(--text-100);line-height:1.5;}
 .c2c-v2 .cm-connect{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 30px;background:var(--bg-050);border-bottom:1px solid var(--border);}
-.c2c-v2 .cm-connect-l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-right:2px;}
+.c2c-v2 .cm-connect-l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-300);margin-right:2px;}
 .c2c-v2 .cm-connect button{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500;color:var(--text-300);border:1px solid var(--border);background:var(--bg-000);border-radius:99px;padding:5px 11px;transition:all var(--dur);}
 .c2c-v2 .cm-connect button:hover{border-color:var(--accent-100);background:var(--accent-000);color:var(--accent-200);}
 .c2c-v2 .cm-connect button svg{width:13px;height:13px;}
@@ -360,6 +365,41 @@
 .c2c-v2 .cm-push button:hover{background:var(--accent-100);color:#fff;border-color:var(--accent-100);}
 .c2c-v2 .cm-push button svg{width:12px;height:12px;}
 .c2c-v2 .cm-pushbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+
+/* ── CMC suite: data entry, Module 3 build, provenance ── */
+/* The "add a record" control lives in a card header next to its title. */
+.c2c-v2 .cm-reg-add{margin-left:auto;flex-shrink:0;}
+.c2c-v2 .cm-inline-select{margin-left:auto;width:auto;min-width:190px;flex-shrink:0;}
+.c2c-v2 .cm-gate{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+/* pj-con is styled as an alert; the export gate reuses it for the PASS verdict
+   too, so the ok variant re-tones it rather than introducing a second panel. */
+.c2c-v2 .pj-con.is-ok{border-color:var(--success);background:var(--success-muted);}
+.c2c-v2 .pj-con.is-ok .pj-con-t{color:#3f5c1f;}
+.c2c-v2 .pj-con.is-ok>.ico{color:var(--success);}
+.c2c-v2 .cm-projbar-sm{height:5px;width:64px;display:inline-block;vertical-align:middle;margin-right:7px;}
+.c2c-v2 .cm-list{margin:4px 0 0;padding-left:18px;}
+.c2c-v2 .cm-list li{margin-bottom:3px;}
+.c2c-v2 .cm-sub-head{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin:18px 0 8px;}
+/* A results table nested inside an expanded register row. */
+.c2c-v2 .cm-subtable{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-md);margin:8px 0;}
+.c2c-v2 .cm-subtable th{background:transparent;}
+.c2c-v2 .cm-linkish{font-size:12.5px;color:var(--accent-200);font-weight:500;text-decoration:underline;text-underline-offset:2px;}
+.c2c-v2 .cm-linkish:hover{color:var(--accent-100);}
+/* The per-section provenance chain in the Module 3 build drawer. */
+.c2c-v2 .cm-prov{list-style:none;margin:0;padding:0;}
+.c2c-v2 .cm-prov li{padding:10px 0;border-bottom:1px solid var(--border);}
+.c2c-v2 .cm-prov li:last-child{border-bottom:0;}
+.c2c-v2 .cm-prov-h{display:flex;align-items:center;gap:8px;margin-bottom:3px;}
+.c2c-v2 .cm-prov-p{font-family:var(--font-mono);font-size:10.5px;line-height:1.5;color:var(--text-400);background:var(--bg-050);border:1px solid var(--border);border-radius:var(--radius-md);padding:8px 10px;margin:6px 0 0;overflow-x:auto;white-space:pre-wrap;word-break:break-word;}
+/* A failure toast must not wear the success tick's green. `.de-toast .ico` is
+   unconditionally var(--success), so "Couldn't save — nothing was persisted"
+   read as a success at a glance. */
+.c2c-v2 .de-toast[data-tone="error"]{background:var(--error);color:#fff;}
+.c2c-v2 .de-toast[data-tone="error"] .ico{color:#fff;}
+/* A disabled row action must look disabled. `.nda-open` carried no disabled
+   state, so "Review" blocked by the two-person rule and "Build" blocked by
+   having no source data both still read as live controls. */
+.c2c-v2 .nda-open:disabled,.c2c-v2 .reg-cta:disabled{opacity:.45;cursor:not-allowed;}
 .c2c-v2 .pj-toolgrp{margin-bottom:16px;}
 .c2c-v2 .pj-toolgrp-l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-bottom:8px;}
 .c2c-v2 .sp-tone-err{color:var(--error);font-weight:600;}
@@ -412,7 +452,7 @@
 .c2c-v2 .de-label{display:block;font-size:12px;font-weight:600;color:var(--text-200);margin-bottom:6px;}
 .c2c-v2 .de-label .req{color:var(--accent-200);margin-left:3px;}
 .c2c-v2 .de-desc{font-size:11px;color:var(--text-400);margin-bottom:6px;line-height:1.4;}
-.c2c-v2 .de-input, .c2c-v2 .de-select, .c2c-v2 .de-textarea{width:100%;border:1px solid var(--border-strong);background:var(--bg-000);border-radius:var(--radius-md);padding:9px 11px;font-size:13px;color:var(--text-100);transition:border-color var(--dur),box-shadow var(--dur);}
+.c2c-v2 .de-input, .c2c-v2 .de-select, .c2c-v2 .de-textarea{width:100%;border:1px solid var(--border-control);background:var(--bg-000);border-radius:var(--radius-md);padding:9px 11px;font-size:13px;color:var(--text-100);transition:border-color var(--dur),box-shadow var(--dur);}
 .c2c-v2 .de-input:focus, .c2c-v2 .de-select:focus, .c2c-v2 .de-textarea:focus{border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
 .c2c-v2 .de-textarea{resize:vertical;min-height:78px;line-height:1.5;font-family:inherit;}
 .c2c-v2 .de-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8880' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px;cursor:pointer;}
@@ -434,5 +474,14 @@
 .c2c-v2 .de-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:130;background:var(--text-100);color:var(--bg-000);border-radius:var(--radius-lg);padding:11px 16px;font-size:12.5px;font-weight:500;box-shadow:var(--v2-shadow-lg);display:flex;align-items:center;gap:9px;animation:de-toast-in var(--dur) var(--ease);}
 .c2c-v2 .de-toast .ico{color:var(--success);}.c2c-v2 .de-toast .ico svg{width:16px;height:16px;}
 @keyframes de-toast-in{from{opacity:0;transform:translate(-50%,8px);}to{opacity:1;transform:translate(-50%,0);}}
+/* Top-anchored variant, for the four surfaces that had their own pill class —
+   SafetyNarrative, AnaCommand and AnaMemory sat at top:18px so the pill would
+   not cover the composer, and Etmf at the bottom. Converging them onto the
+   canonical component is what gives them an error tone and a live region at
+   all; MOVING them is a separate design decision nobody has made, so the
+   position survives the migration. The entrance slides from above rather than
+   below, or the pill would animate away from the edge it is anchored to. */
+.c2c-v2 .de-toast[data-pos="top"]{bottom:auto;top:18px;animation-name:de-toast-in-top;}
+@keyframes de-toast-in-top{from{opacity:0;transform:translate(-50%,-8px);}to{opacity:1;transform:translate(-50%,0);}}
 .c2c-v2 .de-row-new{animation:de-hl 1.4s var(--ease);}
 @keyframes de-hl{0%{background:var(--success-muted);}100%{background:transparent;}}

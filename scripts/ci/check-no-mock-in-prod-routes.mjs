@@ -19,10 +19,101 @@ const allowedFiles = new Set([
   'notification_routes.ts',
 ]);
 
+/**
+ * Identifier forms, not just the bare word.
+ *
+ * `/\bMOCK\b/i` matches only a standalone "mock" — and `_` is a word
+ * character, so MOCK_PROGRAMS, mockData and mock_rows all failed it:
+ *
+ *   /\bMOCK\b/i.test('MOCK_PROGRAMS') === false
+ *   /\bMOCK\b/i.test('mockData')      === false
+ *
+ * Real mock data is named exactly that way. Combined with matching raw text
+ * (see stripCommentsAndStrings), the guard could fire on essentially nothing
+ * BUT prose, which is precisely what its seven baselined findings turned out to
+ * be. It reported for months on a condition it could not detect.
+ *
+ * Verified by mutation: appending `const MOCK_PROGRAMS = [{ id: 1 }]` to a real
+ * route left the old guard green, and fails this one.
+ */
 const suspiciousPatterns = [
-  /\bMOCK\b/i,
+  /\bmock\w*/i,
   /\bsimulated\b/i,
+  /\bdummy\w*/i,
 ];
+
+/**
+ * Strip comments and string literals before looking for mock markers.
+ *
+ * This guard matched raw file text, so it measured PROSE, not code — and the
+ * result was perverse. All seven baselined "violations" were comments, and five
+ * of them documented the removal of a mock:
+ *
+ *   auth.ts             "Removed error-path dev bypass that returned mock admin"
+ *   ind-database.routes "This replaces all mock data with real database operations."
+ *   submissionCenter    "Mock regulatory intelligence removed — returns real DB data"
+ *
+ * So fixing a mock and saying so made the guard angrier, while
+ * `const rows = [{ id: 1, name: 'Acme' }]` with no comment passed clean. A
+ * control that fires on the word rather than the thing trains people to delete
+ * the explanation, which is the opposite of what it is for.
+ *
+ * String literals go too: a user-facing message like "simulated annealing" or a
+ * route path containing "mock" is not mock DATA, and an audit trail of false
+ * positives is how a baseline grows until nobody reads it.
+ *
+ * Written as a scanner rather than a regex on purpose. The obvious
+ * `/\/\*[\s\S]*?\*\//g` + `/\/\/.*$/gm` pair corrupts ordinary source: the `//`
+ * inside `'https://example.com'` truncates the rest of that line, which can
+ * silently delete a real finding sitting after a URL. Tracking string state is
+ * the only way to tell a comment from two slashes inside quotes.
+ */
+function stripCommentsAndStrings(source) {
+  let out = '';
+  let i = 0;
+  const n = source.length;
+
+  while (i < n) {
+    const c = source[i];
+    const next = source[i + 1];
+
+    // Line comment — keep the newline so line numbers survive.
+    if (c === '/' && next === '/') {
+      while (i < n && source[i] !== '\n') i += 1;
+      continue;
+    }
+
+    // Block comment — preserve interior newlines for the same reason.
+    if (c === '/' && next === '*') {
+      i += 2;
+      while (i < n && !(source[i] === '*' && source[i + 1] === '/')) {
+        if (source[i] === '\n') out += '\n';
+        i += 1;
+      }
+      i += 2;
+      continue;
+    }
+
+    // String or template literal: consume it, honouring backslash escapes.
+    if (c === '"' || c === "'" || c === '`') {
+      const quote = c;
+      i += 1;
+      while (i < n && source[i] !== quote) {
+        if (source[i] === '\\') i += 1;
+        else if (source[i] === '\n') out += '\n';
+        i += 1;
+      }
+      i += 1;
+      out += quote + quote;
+      continue;
+    }
+
+    out += c;
+    i += 1;
+  }
+
+  return out;
+}
 
 const prodGatePattern = /(NODE_ENV\s*===\s*['"]production['"])|(process\.env\.ENABLE_MOCK_)/;
 
@@ -32,7 +123,6 @@ const betaPathHints = [
   'ai-actions',
   'concept2cure',
   'cerv2',
-  'documents-unified',
   'project-modules',
   'conversation-os',
 ];
@@ -54,13 +144,18 @@ const findings = [];
 for (const file of walk(routesDir)) {
   const rel = path.relative(repoRoot, file);
   const base = path.basename(file);
-  const text = fs.readFileSync(file, 'utf8');
+  const rawText = fs.readFileSync(file, 'utf8');
+  // Match against CODE only — comments and string literals are prose (see
+  // stripCommentsAndStrings). The prod-gate check below still reads the raw
+  // text: a gate is code, and reading it from the stripped form would be fine
+  // too, but the raw read cannot produce a false NEGATIVE here.
+  const text = stripCommentsAndStrings(rawText);
 
   const hasSuspicious = suspiciousPatterns.some((pattern) => pattern.test(text));
   if (!hasSuspicious) continue;
 
   if (allowedFiles.has(base)) {
-    if (!prodGatePattern.test(text)) {
+    if (!prodGatePattern.test(rawText)) {
       findings.push({
         file: rel,
         message: 'contains mock/simulated markers but no explicit production gate',

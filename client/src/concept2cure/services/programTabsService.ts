@@ -27,7 +27,7 @@
  *                    Envelope: { success, approvals, total }.
  */
 
-import { apiRequest, type ApiRequestMethod } from '../../lib/queryClient';
+import { apiRequest, serverMessage, type ApiRequestMethod } from '../../lib/queryClient';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES — mirror each route's response shape. Heterogeneous columns are picked
@@ -46,9 +46,29 @@ export interface AuditEvent {
   target: string;
   resourceId: string;
   reason: string;
+  /** The row's real `sha256_chain` value; '' when the row was written outside
+   *  the chain (see `chain`). Never synthesized. */
   sha: string;
+  /** Always '' for audit_logs rows: the chain is global across tenants, so the
+   *  predecessor is not this tenant's to show. `prevAvailable` states it. */
   prev: string;
-  chain: string;
+  prevAvailable?: boolean;
+  /** Real per-row integrity: 'sealed' (chained + HMAC), 'chained', or
+   *  'unchained' — a row that reached the table outside the chain writer. */
+  chain: 'sealed' | 'chained' | 'unchained' | string;
+}
+
+/** Honest integrity summary for the audit window (GET /api/mdx/audit). */
+export interface AuditIntegrity {
+  total: number;
+  sealed: number;
+  chained: number;
+  unchained: number;
+  /** 'global' — one chain across all tenants, not one per organization. */
+  chainScope: string;
+  /** False when the chain cannot be walked from a tenant-scoped read. */
+  verifiableHere: boolean;
+  note: string | null;
 }
 
 export interface AuditFilterOption {
@@ -67,6 +87,8 @@ export interface AuditTrail {
   actions: AuditFilterOption[];
   resources: AuditFilterOption[];
   kpis: AuditKpi[];
+  /** Absent on fixture/sample data, which carries no real integrity claim. */
+  integrity?: AuditIntegrity;
 }
 
 export interface AuditFilters {
@@ -170,8 +192,14 @@ class ProgramTabsService {
     if (response.status === 204) return undefined as T;
     const payload = await response.json().catch(() => ({}));
     if (payload?.error) {
-      const err = payload.error;
-      throw new Error(typeof err === 'string' ? err : err?.message || 'Program-tabs request failed');
+      // A 2xx body that still carries an `error` field. The string form of that
+      // field was thrown as-is, so an envelope of { error: '<CODE>', message:
+      // '<a real sentence>' } reached every tab as the literal token — the
+      // nested `message` was only consulted when `error` was an object. The
+      // envelope reader takes the sentence wherever the server put it and
+      // refuses both enum tokens and infrastructure text; this service's own
+      // wording stays as the fallback.
+      throw new Error(serverMessage(payload) ?? 'Program-tabs request failed');
     }
     return payload as T;
   }

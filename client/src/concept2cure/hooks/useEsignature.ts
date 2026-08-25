@@ -20,6 +20,7 @@
  */
 
 import { useMutation } from '@tanstack/react-query';
+import { ApiRequestError, extractApiError } from '@/lib/queryClient';
 
 const BASE = '/api/esignature';
 
@@ -32,8 +33,15 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
   });
   const payload = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) {
-    const msg = (payload?.error as string) || `HTTP ${res.status}`;
-    throw new Error(msg);
+    // `payload.error` was read first, so a refusal shaped { error:
+    // 'ESIGN_REQUIRED', message: '<the reason>' } showed the signer the token,
+    // and a body with no copy at all degraded to a bare "HTTP 403". This hook
+    // has no domain wording of its own for a failed verify, so extractApiError
+    // is the right reader: the server's sentence when there is one, a
+    // status-keyed sentence when there is not. The code is kept on the error so
+    // a caller can still branch on it without parsing display copy.
+    const { message, code } = extractApiError(payload, res.status);
+    throw new ApiRequestError(message, res.status, payload, code);
   }
   return payload as T;
 }
@@ -100,6 +108,15 @@ export function useEsignature() {
     verifyingPassword: verifyPasswordMut.isPending,
     verifyingMfa: verifyMfaMut.isPending,
     signing: signMut.isPending,
-    signError: signMut.error?.message ?? null,
+    // Only an ApiRequestError has been through the envelope reader above. A
+    // plain rejection here is the fetch failing (offline, DNS, abort) and its
+    // native "Failed to fetch" must not be shown as the reason a signature was
+    // not recorded.
+    signError:
+      signMut.error == null
+        ? null
+        : signMut.error instanceof ApiRequestError
+          ? signMut.error.message
+          : 'The signature could not be recorded. Check your connection and try again.',
   };
 }

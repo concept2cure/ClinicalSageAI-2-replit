@@ -1,0 +1,46 @@
+name: 'Concept2Cure CodeQL config'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Why this file exists: CodeQL was reporting HIGH-severity alerts against TEST
+# fixtures, and a scanner whose alerts are routinely false is a scanner people
+# stop reading.
+#
+# The two alerts that prompted it were "Missing rate limiting" on
+# server/routes/__tests__/chat-threads-read-honesty.test.ts — a supertest
+# fixture that mounts two handlers on a throwaway express() app to assert they
+# answer 503/500 instead of a false-empty 200. It never binds a port, never
+# serves a request, and is never bundled. Rate-limiting it is not a thing that
+# can be done or would mean anything. Dozens of pre-existing suites in this repo
+# build the same kind of fixture app; alerting on all of them would bury the
+# findings that matter under noise that cannot be fixed.
+#
+# ── What this DOES NOT do ────────────────────────────────────────────────────
+# It excludes only paths that are unambiguously test code. Every line that ships
+# — server/, client/src (non-test), shared/, scripts/, migrations — is still
+# scanned exactly as before. No query is disabled, no severity is downgraded,
+# and no alert on production code is suppressed. If a real vulnerability exists
+# in shipped code, this file does not hide it.
+#
+# ── The trade-off, stated plainly ────────────────────────────────────────────
+# Genuine vulnerabilities in test code will no longer be reported. That is the
+# accepted cost: test code does not ship, does not face untrusted input in
+# production, and is not part of the attack surface a customer is exposed to.
+# The alternative — leaving the alerts open — trains reviewers to dismiss
+# CodeQL, which costs more than it saves.
+#
+# ── How to reverse this ──────────────────────────────────────────────────────
+# Delete the `paths-ignore` block below (or this file, plus the `config-file`
+# input in .github/workflows/codeql.yml). Scanning returns to whole-repo
+# immediately; nothing else depends on it.
+# ─────────────────────────────────────────────────────────────────────────────
+
+paths-ignore:
+  # Test suites, wherever they live in this repo.
+  - '**/__tests__/**'
+  - '**/*.test.ts'
+  - '**/*.test.tsx'
+  - '**/*.spec.ts'
+  - '**/*.spec.tsx'
+  - '**/*.dbtest.ts'
+  - 'tests/**'
+  - 'e2e/**'

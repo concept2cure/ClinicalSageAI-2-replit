@@ -1,7 +1,7 @@
 /**
  * Contract: the dev CORS/CSRF origin allowlist accepts the loopback IP.
  *
- * The dev server + E2E runner (scripts/run-beta-founder-proof.mjs, playwright.config)
+ * The dev server + E2E runner (scripts/run-e2e-smoke.mjs, playwright.config)
  * serve and drive the app at http://127.0.0.1:5000. A browser then sends
  * `Origin: http://127.0.0.1:5000` on every module/asset fetch. The dev allowlist
  * historically included only `http://localhost:5000`, so the CSRF origin check

@@ -351,8 +351,32 @@ export interface GatewayResponse {
   /** Provider that served the request */
   provider: ProviderName;
 
-  /** Model used */
+  /** Model requested — the registry entry, usually a floating alias */
   model: string;
+
+  /**
+   * Model identifier the provider reports having served, verbatim from the
+   * response body (`completion.model` on the OpenAI-compatible surface,
+   * `model` on Anthropic messages).
+   *
+   * Kept alongside `model` rather than replacing it: `model` is the routing
+   * decision and callers already switch on it (see `isReasoningOnlyModel`),
+   * while this is the fact of which snapshot answered. Undefined when the
+   * provider omits it and on the cached/deterministic paths.
+   */
+  resolvedModel?: string;
+
+  /**
+   * The sampling seed ACTUALLY TRANSMITTED to the provider, or undefined when
+   * none was — which is the case for every Anthropic call, since that API has
+   * no seed parameter.
+   *
+   * Deliberately not `request.seed`. Recording a seed the provider never
+   * received is the same defect as recording a temperature a reasoning-only
+   * model rejects: a provenance row that reads as reproducible while naming a
+   * parameter that had no effect. Only the transmitting paths set this.
+   */
+  effectiveSeed?: number;
 
   /** Token usage and cost */
   usage: GatewayUsage;
@@ -482,7 +506,19 @@ export interface AuditLogEntry {
    * refusals are compliance events and must leave an audit trace too.
    */
   provider: ProviderName | 'none';
+  /** Registry entry the gateway ASKED for — usually a floating alias. */
   model: string;
+  /**
+   * Model identifier the provider reports having served, verbatim from the
+   * response body. Most registry entries are floating aliases (gpt-4o,
+   * claude-opus-4-8, ...), so `model` alone cannot answer "which model produced
+   * this output" — the question a provenance row exists to answer.
+   *
+   * Undefined when the provider omits it, and on the cached/deterministic
+   * paths. Left undefined rather than copied from `model`: "the provider did
+   * not tell us" is true, a manufactured resolution is not.
+   */
+  resolvedModel?: string;
   taskType: TaskType;
   strategy: RoutingStrategy;
   organizationId?: string | number;
@@ -501,7 +537,11 @@ export interface AuditLogEntry {
   // ── Reproducibility (which params + prompt produced this output) ──────────
   /** Sampling temperature used for the request. */
   temperature?: number;
-  /** Sampling seed, when supplied. */
+  /**
+   * Sampling seed as TRANSMITTED. NULL means no seed reached the provider —
+   * true for every Anthropic call — rather than "the caller did not ask for
+   * one". See GatewayResponse.effectiveSeed.
+   */
   seed?: number;
   /** SHA-256 of the canonicalized prompt messages (role:content joined). */
   promptHash?: string;

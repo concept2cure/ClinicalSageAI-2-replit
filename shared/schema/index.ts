@@ -288,6 +288,10 @@ export {
   insertGsprRequirementSchema,
   insertGsprProgramMappingSchema,
   insertPostMarketDocumentSchema,
+  pmcfEnrollmentRecords,
+  insertPmcfEnrollmentRecordSchema,
+  PMCF_ACTIVITY_KINDS,
+  PMCF_ACTIVITY_STATUSES,
 } from './gspr-postmarket';
 export type {
   GsprRequirement,
@@ -297,6 +301,10 @@ export type {
   PostMarketDocument,
   InsertPostMarketDocument,
   PostMarketDocumentType,
+  PmcfEnrollmentRecord,
+  InsertPmcfEnrollmentRecord,
+  PmcfActivityKind,
+  PmcfActivityStatus,
 } from './gspr-postmarket';
 
 // Evidence Sufficiency Assessments — PMA / De Novo / 510(k) approval-readiness

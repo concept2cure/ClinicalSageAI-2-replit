@@ -4,7 +4,9 @@
  * @module client/src/concept2cure/lineage/dataOriginsApi
  */
 
+import { serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '../../utils/authToken';
+import { downloadBlob } from '../v2/download';
 
 export type SpanProvenanceKind = 'cre_evidence_source' | 'author_assertion';
 export type SpanState = 'current' | 'changed' | 'unverified' | 'unresolved';
@@ -55,7 +57,7 @@ export async function fetchDataOrigins(q: SelectionQuery): Promise<DataOriginsRe
   });
   if (!res.ok) {
     const body = await res.json().catch(() => null);
-    throw new Error(body?.error?.message || `Data origins request failed (${res.status})`);
+    throw new Error(serverMessage(body) || `Data origins request failed (${res.status})`);
   }
   const body = await res.json();
   return body.report as DataOriginsReport;
@@ -76,18 +78,15 @@ export async function downloadDataOriginsPdf(q: SelectionQuery): Promise<void> {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => null);
-    throw new Error(body?.error?.message || `PDF export failed (${res.status})`);
+    throw new Error(serverMessage(body) || `PDF export failed (${res.status})`);
   }
 
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `data-origins-${q.documentId}-${q.charStart}-${q.charEnd}.pdf`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  // Revoking immediately can cancel the download in some browsers; one frame is
-  // enough for the click to have been handed off.
-  requestAnimationFrame(() => URL.revokeObjectURL(url));
+  /* This site was the only one of seven that knew revoking immediately can
+     cancel the download — it deferred by a frame and said why. That knowledge
+     now lives in `downloadBlob` (which defers by a second, well past the
+     hand-off) instead of in a comment six other copies never read. */
+  downloadBlob(
+    `data-origins-${q.documentId}-${q.charStart}-${q.charEnd}.pdf`,
+    await res.blob(),
+  );
 }

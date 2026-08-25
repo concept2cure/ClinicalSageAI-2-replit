@@ -75,6 +75,43 @@ describe('MDx IVDR linked-resource ownership', () => {
   });
 });
 
+describe('MDx IVDR classification list — THE list API after the D11d consolidation', () => {
+  /* The duplicate list at /api/ivdr/classifications was deleted; this router's
+     list is what useIvdClassifications now calls, so its scoping contract is
+     pinned here. */
+  it('stays organisation-wide when no programme is given', async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app()).get('/api/mdx/ivdr/classifications');
+    expect(res.status).toBe(200);
+    const [sql, args] = query.mock.calls[0];
+    expect(String(sql)).toContain('ivdr_classifications');
+    expect(String(sql)).toContain('organization_id = $1');
+    expect(String(sql)).not.toContain('program_id =');
+    expect(args).toEqual([7, 200]);
+  });
+
+  it('filters on program_id when given', async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app()).get(`/api/mdx/ivdr/classifications?program_id=${PROGRAM}`);
+    expect(res.status).toBe(200);
+    const [sql, args] = query.mock.calls[0];
+    expect(String(sql)).toContain('program_id = $2');
+    expect(args).toEqual([7, PROGRAM, 200]);
+  });
+
+  it('422s a malformed program_id rather than silently unscoping', async () => {
+    const res = await request(app()).get('/api/mdx/ivdr/classifications?program_id=not-a-uuid');
+    expect(res.status).toBe(422);
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it('excludes soft-deleted rows', async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+    await request(app()).get('/api/mdx/ivdr/classifications');
+    expect(String(query.mock.calls[0][0])).toContain('deleted_at IS NULL');
+  });
+});
+
 describe('MDx IVDR PER lifecycle', () => {
   it('requires every new PER to begin as draft', async () => {
     const res = await request(app()).post('/api/mdx/ivdr/per').send({

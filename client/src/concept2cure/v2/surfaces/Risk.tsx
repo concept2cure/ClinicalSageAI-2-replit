@@ -1,7 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
+
+import { usePublishSurfaceContext } from '../surfaceContext';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { I } from '../icons';
 import { EmptyState, useLiveRows } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, extractApiError } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -13,6 +16,7 @@ import '../styles/project-home-v2.css';
 // fixture and is gone: the surface now reads the org's real risk file.
 import { RISK_ENUMS, SEV_LABELS, PROB_LABELS } from '../fixtures/risk-data';
 import type { RiskRow, RiskControl } from '../fixtures/risk-data';
+import { C2CToast, useToast } from '../toast';
 
 /* ---- Risk management (ISO 14971) ---- */
 
@@ -119,11 +123,23 @@ function envRow(json: unknown): unknown {
   return json && typeof json === 'object' && 'data' in json ? (json as { data: unknown }).data : json;
 }
 
-/* Best-effort human message from a JSON error body, else the status. */
+/* Trailing punctuation removed: every toast below appends its own
+   ". Nothing was saved." clause, so a message already ending in a full stop
+   would render a doubled period. */
+function clause(text: string): string {
+  return text.replace(/[.\s]+$/, '');
+}
+
+/* The human sentence for a failed write, reduced for display.
+
+   This used to read the body's `error` field FIRST, so against the envelope
+   { error: 'VALIDATION_FAILED', message: '<a real sentence>' } the enum won and
+   the toast showed the token. It also fell back to a bare `HTTP <status>`, which
+   is a status code rather than user copy. extractApiError takes the sentence
+   wherever the envelope put it — rejecting enum tokens and driver text — and
+   substitutes a status-keyed sentence when the server sent none. */
 function errText(json: unknown, status: number): string {
-  const j = json as { error?: unknown; message?: unknown } | null;
-  const m = j && (typeof j.error === 'string' ? j.error : typeof j.message === 'string' ? j.message : '');
-  return m || `HTTP ${status}`;
+  return clause(extractApiError(json, status).message);
 }
 
 export function Risk({ onAsk }: SurfaceViewProps) {
@@ -155,8 +171,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
   const [view, setView] = useState<'initial' | 'residual'>('initial');
   const [form, setForm] = useState(false);
   const [ctrlForm, setCtrlForm] = useState(false);
-  const [toast, setToast] = useState('');
-  const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
+  const [toast, fire] = useToast();
 
   useEffect(() => {
     try {
@@ -173,6 +188,105 @@ export function Risk({ onAsk }: SurfaceViewProps) {
   const zone = (si: number, pi: number) => { const score = (si + 1) * (pi + 1); return score >= 15 ? 'err' : score >= 8 ? 'warn' : 'ok'; };
   const row = rows.find(r => r.id === sel) || rows[0];
 
+  /* ── AnA's hands on this screen — the surface-action bus ──────────────────
+     Registered under 'risk' (identity-mapped nav target). Every handler
+     drives the SAME state the human's own controls drive (setView, setSel via
+     the matrix dots and register rows); hazards resolve against the REAL risk
+     file with honest misses. Accepting residual risk, adding hazards, and
+     adding controls stay governed human acts, untouched. */
+  const riskFormGuard = (): { ok: false; reason: string } | null => {
+    if (form) return { ok: false, reason: 'The new-hazard form is open — close it first.' };
+    if (ctrlForm) return { ok: false, reason: 'The add-control form is open — close it first.' };
+    return null;
+  };
+  useSurfaceActionHandlers('risk', {
+    'risk.set-matrix-view': (params) => {
+      const guarded = riskFormGuard();
+      if (guarded) return guarded;
+      const target = (params.view ?? '').trim();
+      if (target !== 'initial' && target !== 'residual') {
+        return { ok: false, reason: 'View must be initial or residual.' };
+      }
+      // The matrix renders only once a row exists; until the read settles a
+      // refusal would be false, so the bus holds the directive instead.
+      if (live.loading && !row)
+        return { ok: false, reason: 'The risk file is still loading.', retry: true };
+      if (live.error && !row) return { ok: false, reason: 'The risk file could not be read.' };
+      if (!row) return { ok: false, reason: 'The risk file is empty.' };
+      setView(target);
+      return { ok: true, detail: `Showing the ${target} matrix` };
+    },
+    'risk.select-hazard': (params) => {
+      const guarded = riskFormGuard();
+      if (guarded) return guarded;
+      const wanted = (params.hazard ?? '').trim();
+      if (!wanted) return { ok: false, reason: 'No hazard named.' };
+      // MANDATORY hold while loading: the seed effect overwrites `sel` when
+      // the read lands, so an early select would be silently clobbered.
+      if (live.loading)
+        return { ok: false, reason: 'The risk file is still loading.', retry: true };
+      if (live.error) return { ok: false, reason: 'The risk file could not be read.' };
+      if (rows.length === 0) return { ok: false, reason: 'The risk file is empty.' };
+      const lower = wanted.toLowerCase();
+      const exact = rows.find((r) => r.id.toLowerCase() === lower);
+      const contains = exact
+        ? []
+        : rows.filter(
+            (r) => r.id.toLowerCase().includes(lower) || (r.hazard || '').toLowerCase().includes(lower),
+          );
+      const match = exact ?? (contains.length === 1 ? contains[0] : null);
+      if (!match) {
+        return {
+          ok: false,
+          reason:
+            contains.length > 1
+              ? `"${params.hazard}" matches ${contains.length} hazards — name one exactly.`
+              : `No hazard matching "${params.hazard}" in the risk file.`,
+        };
+      }
+      setSel(match.id);
+      return { ok: true, detail: `Opened ${match.id} — ${match.hazard || 'hazard'}` };
+    },
+    'risk.focus-cell': (params) => {
+      const guarded = riskFormGuard();
+      if (guarded) return guarded;
+      if (live.loading)
+        return { ok: false, reason: 'The risk file is still loading.', retry: true };
+      if (live.error) return { ok: false, reason: 'The risk file could not be read.' };
+      if (rows.length === 0) return { ok: false, reason: 'The risk file is empty.' };
+      const sev = (params.severity ?? '').trim();
+      const prob = (params.probability ?? '').trim();
+      const si = SEV_LABELS.indexOf(sev as (typeof SEV_LABELS)[number]);
+      const pi = PROB_LABELS.indexOf(prob as (typeof PROB_LABELS)[number]);
+      if (si < 0 || pi < 0) return { ok: false, reason: 'Unknown severity or probability band.' };
+      const requestedView =
+        params.view === 'initial' || params.view === 'residual' ? params.view : view;
+      if (requestedView !== view) setView(requestedView);
+      // The SAME derivation the matrix dots render from, against the requested band.
+      const bandProb = (r: RiskRow) =>
+        requestedView === 'residual' ? (r.probR || r.prob) : r.prob;
+      const hz = rows.filter((r) => sevI(r.sev) === si && probI(bandProb(r)) === pi);
+      if (hz.length === 0) {
+        return {
+          ok: false,
+          reason: `No hazard sits at ${sev} × ${prob} in the ${requestedView} matrix.`,
+        };
+      }
+      setSel(hz[0].id);
+      return {
+        ok: true,
+        detail:
+          hz.length === 1
+            ? `Focused ${hz[0].id} at ${sev} × ${prob}`
+            : `Focused ${hz[0].id} — first of ${hz.length} hazards at ${sev} × ${prob}`,
+      };
+    },
+  });
+  /* The ready signal for the retry contract above. */
+  useEffect(() => {
+    if (!live.loading) notifySurfaceActionReady('risk');
+  }, [live.loading]);
+
   const summary = useMemo(() => {
     const prod = (r: RiskRow, resid: boolean) => { const si = sevI(r.sev) + 1; const pi = (probI(resid ? (r.probR || r.prob) : r.prob)) + 1; return si * pi; };
     const total = rows.length;
@@ -183,6 +297,61 @@ export function Risk({ onAsk }: SurfaceViewProps) {
     const avgResidual = (rows.reduce((s, r) => s + prod(r, true), 0) / (total || 1)).toFixed(1);
     return { total, open, accepted, highResidual, avgInitial, avgResidual };
   }, [rows, view]);
+
+  /* What AnA can see of this screen.
+     She knew the user was on "risk" and nothing else — not how many hazards are
+     open, how many carry a high residual score, or which one is selected — so
+     "what still needs mitigation?" required the user to read their own risk
+     file back to her.
+
+     A failed read publishes the failure. `rows` is EMPTY_ROWS both when the
+     governed risk file is genuinely empty and when the read threw, and
+     "0 open risks" over an outage is the most dangerous sentence this surface
+     could produce: it reads as a clean risk file to the person accountable for
+     one. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'The risk file is still loading; nothing on screen is final yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'The risk file could not be read, so this screen shows no hazards because of a failure, not because none are recorded.',
+        availableActions: ['Retry the risk-file read'],
+      };
+    }
+    return {
+      summary:
+        `Risk management (ISO 14971): ${summary.total} hazard(s) — ${summary.open} open or mitigating, ` +
+        `${summary.accepted} accepted, ${summary.highResidual} with a residual score of 15 or more. ` +
+        `Mean score ${summary.avgInitial} initial, ${summary.avgResidual} residual. ` +
+        `Matrix showing ${view} risk` +
+        (row ? `; "${row.id} — ${row.hazard || 'hazard'}" selected` : ''),
+      facts: {
+        totalHazards: summary.total,
+        openOrMitigating: summary.open,
+        accepted: summary.accepted,
+        highResidual: summary.highResidual,
+        meanInitialScore: summary.avgInitial,
+        meanResidualScore: summary.avgResidual,
+        matrixView: view,
+        selected: row
+          ? {
+              id: row.id, hazard: row.hazard, severity: row.sev,
+              probability: row.prob, residualProbability: row.probR ?? null,
+              status: row.status, residualAcceptability: row.res ?? null,
+            }
+          : null,
+      },
+      availableActions: [
+        'Open a hazard to see its severity, probability and controls',
+        'Add a hazard to the governed risk file',
+        'Add a control to the selected hazard',
+        'Switch the matrix between initial and residual risk',
+      ],
+    };
+  }, [live.loading, live.error, summary, view, row]);
+  usePublishSurfaceContext('risk', anaContext);
 
   // addHazard — REAL, awaited write. POSTs to the governed risk file and adopts
   // the SERVER's row via mapRiskItems (real ref_code + numeric dbId, authoritative
@@ -206,7 +375,15 @@ export function Risk({ onAsk }: SurfaceViewProps) {
       setSel(adopted.id); setForm(false);
       fire('Hazard ' + adopted.id + ' saved · status ' + adopted.status);
     } catch (e) {
-      fire('Couldn’t add the hazard — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.');
+      // A caught throw is only safe to render when it is an ApiRequestError: its
+      // message has already been through the same reduction as errText above.
+      // Anything else reaching here is a browser-native fetch rejection, whose
+      // message ("Failed to fetch", "Load failed") is not user copy.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const msg = known && (e as Error).message
+        ? clause((e as Error).message)
+        : 'the risk file could not be reached';
+      fire('Couldn’t add the hazard — ' + msg + '. Nothing was saved.');
     }
   };
 
@@ -235,7 +412,13 @@ export function Risk({ onAsk }: SurfaceViewProps) {
       setCtrlForm(false);
       fire('Risk control saved to ' + row.id);
     } catch (e) {
-      fire('Couldn’t add the control — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.');
+      // Same restriction as addHazard: only an ApiRequestError message has been
+      // reduced to user copy; a native fetch rejection must not reach the toast.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const msg = known && (e as Error).message
+        ? clause((e as Error).message)
+        : 'the risk file could not be reached';
+      fire('Couldn’t add the control — ' + msg + '. Nothing was saved.');
     }
   };
 
@@ -256,7 +439,13 @@ export function Risk({ onAsk }: SurfaceViewProps) {
       setRows(rs => rs.map(r => r.id === id ? (adopted ? { ...adopted, controls: r.controls } : { ...r, status: st }) : r));
       fire(id + ' → ' + st);
     } catch (e) {
-      fire('Couldn’t update the status — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was persisted.');
+      // Same restriction as addHazard: only an ApiRequestError message has been
+      // reduced to user copy; a native fetch rejection must not reach the toast.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const msg = known && (e as Error).message
+        ? clause((e as Error).message)
+        : 'the risk file could not be reached';
+      fire('Couldn’t update the status — ' + msg + '. Nothing was persisted.');
     }
   };
 
@@ -265,14 +454,14 @@ export function Risk({ onAsk }: SurfaceViewProps) {
 
   const hazardFormConfig: C2CFormConfig = {
     eyebrow: 'ISO 14971 / risk item', title: 'New hazard',
-    sub: 'Adds a hazard -- hazardous situation -- harm row and computes initial risk (severity x probability).',
+    sub: 'Adds a hazard — hazardous situation — harm row and computes initial risk (severity x probability).',
     governed: 'Initial risk is the severity x probability product per ISO 14971. When the backend is connected the hazard is written to the governed risk file and audit-logged.',
     submitLabel: 'Add hazard',
     fields: [
       { key: 'hazard', label: 'Hazard', type: 'text', placeholder: 'e.g. Inaccurate glucose reading', required: true },
       { key: 'situation', label: 'Hazardous situation', type: 'text', placeholder: 'The circumstance that exposes the user to the hazard' },
       { key: 'harm', label: 'Harm', type: 'text', placeholder: 'e.g. Mis-dosing of insulin', required: true },
-      { key: 'seq', label: 'Sequence of events', type: 'text', placeholder: 'Cause -- situation -- harm' },
+      { key: 'seq', label: 'Sequence of events', type: 'text', placeholder: 'Cause — situation — harm' },
       { key: 'sev', label: 'Severity', type: 'select', options: SEV_LABELS.map((s, i) => ({ value: s, label: s + ' (' + (i + 1) + ')' })), required: true },
       { key: 'prob', label: 'Probability', type: 'select', options: PROB_LABELS.map((p, i) => ({ value: p, label: p + ' (' + (i + 1) + ')' })), required: true },
       { key: 'strategy', label: 'Control strategy', type: 'select', options: EN.strategy.map(s => ({ value: s[0], label: s[1] })) },
@@ -283,7 +472,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
   const ctrlFormConfig: C2CFormConfig = {
     eyebrow: 'Risk control / ' + (row?.id ?? ''), title: 'Add risk control',
     sub: 'Mitigation applied to ' + (row?.hazard ?? '') + '.',
-    governed: 'Controls follow the ISO 14971 hierarchy: inherent safety -- protective measure -- information for safety.',
+    governed: 'Controls follow the ISO 14971 hierarchy: inherent safety — protective measure — information for safety.',
     submitLabel: 'Add control',
     fields: [
       { key: 'desc', label: 'Control description', type: 'text', placeholder: 'e.g. Dual-sensor cross-check rejects disagreeing readings', required: true },
@@ -423,7 +612,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
 
       {form && <C2CForm config={hazardFormConfig} onCancel={() => setForm(false)} onSubmit={addHazard} />}
       {ctrlForm && <C2CForm config={ctrlFormConfig} onCancel={() => setCtrlForm(false)} onSubmit={addControl} />}
-      {toast && <div className="pdev-toast">{I.check} {toast}</div>}
+      <C2CToast msg={toast} />
     </div>
   );
 }

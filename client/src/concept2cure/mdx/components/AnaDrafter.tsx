@@ -83,6 +83,8 @@ export function AnaDrafter({ correspondence, onClose, onOpenSection }: AnaDrafte
   const [activeDefId, setActiveDefId] = React.useState<string | undefined>(deficiencies[0]?.id);
   const [generating, setGenerating] = React.useState(false);
   const [showCitations, setShowCitations] = React.useState(true);
+  /* Why a draft could not be produced. Never a silent no-op, never a fake one. */
+  const [genError, setGenError] = React.useState<string | null>(null);
 
   const due = correspondence.due;
   const days = React.useMemo(() => daysUntil(due), [due]);
@@ -111,32 +113,29 @@ export function AnaDrafter({ correspondence, onClose, onOpenSection }: AnaDrafte
 
   const { letter } = detail;
 
+  /* This button used to fabricate. It waited 850ms to look like work, then
+     built a response to an AGENCY DEFICIENCY LETTER out of string templates,
+     stamped it `generated_by: 'AnA'`, and populated the sign-off roster with
+     four invented people (a Reg Lead, a Biostat, a Med Affairs reviewer and a
+     QA reviewer who do not exist). No request was ever made to AnA. A reviewer
+     reading that screen saw AnA-attributed regulatory prose and a named
+     approval chain, all of it manufactured in the browser.
+
+     It now adopts the persisted draft when there is one and fails closed when
+     there is not. It never authors a response, and it never signs one. */
   const generate = () => {
     setGenerating(true);
-    setTimeout(() => {
-      const saved = detail.draft && detail.draft.deficiencies ? detail.draft : null;
-      const skeleton: ResponseDraft = saved || {
-        status: 'drafted',
-        generated_at: new Date().toISOString(),
-        generated_by: 'AnA',
-        intro: `Concept2Cure acknowledges receipt of ${letter.ref} dated ${fmtDate(letter.dated)}. We respond to each item below in the order presented in your letter.`,
-        deficiencies: deficiencies.map((d) => ({
-          id: d.id,
-          response: `Response to ${d.title}: drafted from current dossier sources. Awaiting review.`,
-          evidence: [],
-          updates: d.refs.map((r) => ({ section: r.label, diff: '+0 / −0', summary: 'No change yet — review and edit the response, then attach evidence to generate the section update.' })),
-        })),
-        closing: 'We respectfully request that review be resumed upon receipt of this response.',
-        reviewers: [
-          { role: 'Reg Lead', name: 'Jordan Chen', status: 'pending' },
-          { role: 'Biostat', name: 'Marcus Wei', status: 'pending' },
-          { role: 'Med Affairs', name: 'Dr. Lee Hartman', status: 'pending' },
-          { role: 'QA', name: 'Priya Shah', status: 'pending' },
-        ],
-      };
-      setDraft(skeleton);
+    const saved = detail.draft && detail.draft.deficiencies ? detail.draft : null;
+    if (!saved) {
+      setGenError(
+        'No AnA-drafted response exists for this letter, and this surface cannot draft one. Ask AnA for the response in the conversation, then return here to review it.'
+      );
       setGenerating(false);
-    }, 850);
+      return;
+    }
+    setGenError(null);
+    setDraft(saved);
+    setGenerating(false);
   };
 
   const status = draft.status || 'unstarted';
@@ -167,7 +166,7 @@ export function AnaDrafter({ correspondence, onClose, onOpenSection }: AnaDrafte
 
         <div className="drafter-response" ref={responseScrollRef}>
           {status === 'unstarted' ? (
-            <DrafterUnstarted deficiencies={deficiencies} onGenerate={generate} generating={generating} />
+            <DrafterUnstarted deficiencies={deficiencies} onGenerate={generate} generating={generating} error={genError} />
           ) : (
             <DrafterDraftedBody
               draft={draft}
@@ -352,7 +351,7 @@ function enrichParagraph(para: string, deficiencies: Deficiency[], activeDefId: 
 }
 
 /* ── Response pane (right) — unstarted ── */
-function DrafterUnstarted({ deficiencies, onGenerate, generating }: { deficiencies: Deficiency[]; onGenerate: () => void; generating: boolean }) {
+function DrafterUnstarted({ deficiencies, onGenerate, generating, error }: { deficiencies: Deficiency[]; onGenerate: () => void; generating: boolean; error?: string | null }) {
   return (
     <div className="drafter-unstarted">
       <div className="du-hero">
@@ -374,6 +373,11 @@ function DrafterUnstarted({ deficiencies, onGenerate, generating }: { deficienci
         </ol>
         <div className="du-plan-foot">No changes are written to the dossier until you accept the proposed updates.</div>
       </div>
+      {error && (
+        <div className="du-error" role="alert">
+          {error}
+        </div>
+      )}
       <button className="du-cta" onClick={onGenerate} disabled={generating}>
         {I.sparkles}
         <span>{generating ? 'AnA is drafting…' : 'Generate draft'}</span>

@@ -10,7 +10,7 @@
  */
 
 import type { QuestionOption } from '../../types/intelligence-questions.js';
-import type { DomainEntry } from './index.js';
+import { toQuestionOptions as sharedToQuestionOptions, type DomainEntry } from './types.js';
 
 export type ContainerClosure =
   | 'glass_vial'
@@ -121,5 +121,5 @@ export const CONTAINER_CLOSURES: DomainEntry<ContainerClosure>[] = [
 
 /** Convert CONTAINER_CLOSURES to QuestionOption[] for use in intelligence question flows. */
 export function toQuestionOptions(): QuestionOption[] {
-  return CONTAINER_CLOSURES.map((e) => ({ value: e.value, label: e.label, description: e.description }));
+  return sharedToQuestionOptions(CONTAINER_CLOSURES);
 }

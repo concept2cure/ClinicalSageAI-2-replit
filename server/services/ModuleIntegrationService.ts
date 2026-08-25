@@ -268,7 +268,10 @@ export class ModuleIntegrationService {
     // Get current approvals for each workflow
     const workflowsWithApprovals = await Promise.all(
       workflows.map(async (w: any) => {
-        const approvals = await this.workflowService.getWorkflowApprovals(w.id);
+        const approvals = await this.workflowService.getWorkflowApprovals(
+          w.id,
+          organizationId,
+        );
         const currentApproval = approvals.find((a: any) => a.status === 'pending');
         return {
           ...w,

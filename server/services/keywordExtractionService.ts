@@ -17,6 +17,7 @@
  */
 
 import { pool } from '../db.js';
+import auditService from './auditService';
 import crypto from 'crypto';
 import { ai } from '../lib/unified-ai-client';
 
@@ -507,38 +508,35 @@ async function storeKeywordExtraction(
   organizationId: number,
   keywords: ExtractedKeyword[]
 ): Promise<void> {
-  try {
-    await pool.query(
-      `INSERT INTO audit_logs (user_id, organization_id, action, entity_type, entity_id, details, ip_address, created_at)
-       VALUES (0, $1, 'keywords_extracted', 'document', $2, $3, '0.0.0.0', NOW())`,
-      [
-        organizationId,
-        documentId,
-        JSON.stringify({
-          projectId,
-          totalKeywords: keywords.length,
-          linkedKeywords: keywords.filter(k => k.linkedSources.length > 0).length,
-          categories: keywords.reduce(
-            (acc, k) => {
-              acc[k.category] = (acc[k.category] || 0) + 1;
-              return acc;
-            },
-            {} as Record<string, number>
-          ),
-          // Store lightweight keyword summaries (not full occurrences)
-          keywords: keywords.slice(0, 50).map(k => ({
-            term: k.term,
-            normalizedTerm: k.normalizedTerm,
-            category: k.category,
-            importance: k.importance,
-            sourceCount: k.linkedSources.length,
-            occurrenceCount: k.occurrences.length,
-          })),
-          extractedAt: new Date().toISOString(),
-        }),
-      ]
-    );
-  } catch {
-    // Non-critical
-  }
+  // Chained via auditService — the previous raw INSERT used columns audit_logs
+  // does not have (organization_id / entity_type / entity_id / details), so it
+  // raised 42703 into a bare catch and never recorded anything.
+  await auditService.logAction({
+    organizationId,
+    action: 'keywords_extracted',
+    resourceType: 'document',
+    resourceId: documentId,
+    details: {
+      projectId,
+      totalKeywords: keywords.length,
+      linkedKeywords: keywords.filter(k => k.linkedSources.length > 0).length,
+      categories: keywords.reduce(
+        (acc, k) => {
+          acc[k.category] = (acc[k.category] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>
+      ),
+      // Store lightweight keyword summaries (not full occurrences)
+      keywords: keywords.slice(0, 50).map(k => ({
+        term: k.term,
+        normalizedTerm: k.normalizedTerm,
+        category: k.category,
+        importance: k.importance,
+        sourceCount: k.linkedSources.length,
+        occurrenceCount: k.occurrences.length,
+      })),
+      extractedAt: new Date().toISOString(),
+    },
+  });
 }

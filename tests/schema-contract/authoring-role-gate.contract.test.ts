@@ -84,6 +84,8 @@ beforeAll(async () => {
     prereqSql: PREREQ,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
+      'db/migrations/20260730_authoring_comments_router_columns.sql',
       // authoring_templates et al. — moved out of retired runtime DDL by the
       // canonical-spine refactor; the router's role-gated reads hit this table.
       'db/migrations/20260730_authoring_runtime_ddl.sql',

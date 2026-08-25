@@ -27,9 +27,13 @@ import bcrypt from 'bcryptjs';
 import { createHash } from 'crypto';
 import { pool } from '../db.js';
 import { verifyToken as verifyMfaToken, isMfaEnabled } from '../services/mfaService.js';
-import auditService from '../services/auditService';
+import { writeChainedAuditRow } from '../services/auditService';
 import { buildVersionBindingDigest } from '../services/part11/version-binding.js';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
+import {
+  persistElectronicSignature,
+  BINDING_BASIS,
+} from '../services/part11/signature-persistence.js';
 
 const router = Router();
 
@@ -364,101 +368,110 @@ router.post('/sign', async (req: Request, res: Response) => {
     });
   }
 
+  // 21 CFR Part 11 §11.10(e): the signature and its audit row are ONE
+  // transaction. Previously the INSERT ran on an autocommit `pool.query`, so
+  // the signature was durably committed BEFORE the audit write was attempted.
+  // The comment below the INSERT claimed "no signature without a corresponding,
+  // durable audit-trail entry" — that guarantee could not hold: (a) the audit
+  // write ran on a different connection, so a 500 rolled back nothing, and
+  // (b) auditService.logAction catches its own persistence errors and returns
+  // normally, so the catch could never fire for the failure it was written for.
+  // A signature could therefore be permanently recorded with no audit row.
+  const signClient = await pool.connect();
   try {
-    const result = await pool.query(
-      `INSERT INTO electronic_signatures (
-         document_id, version_id, signature_type, signature_purpose,
-         signer_id, signer_name, signer_title, signer_email,
-         authentication_method, authentication_timestamp, second_factor_verified,
-         signature_hash, signature_meaning, signature_manifest,
-         is_valid, compliance_statement, legal_disclaimer,
-         ip_address, device_info, signed_at, bound_payload_digest, organization_id
-       ) VALUES (
-         $1, $2, $3, $4,
-         $5, $6, $7, $8,
-         'password+totp', $9, $10,
-         $11, $12, $13,
-         $18, $14, $15,
-         $16, $17, $9, $19, $20
-       ) RETURNING id, signed_at`,
-      [
-        Number(documentId),
-        Number(versionId),
-        resolvedSignatureType,
-        signaturePurpose,
-        userId,
-        signerName,
-        signerTitle ?? null,
-        signerEmail,
-        signedAt,
-        secondFactorVerified,
-        signatureHash,
-        signatureMeaning ?? null,
-        JSON.stringify({ action, signerRole, deviceInfo: deviceInfo ?? null, boundPayloadDigest }),
-        complianceStatement ?? null,
-        legalDisclaimer ?? null,
-        ipAddress,
-        deviceInfo ? JSON.stringify(deviceInfo) : null,
-        signatureIsValid,
-        boundPayloadDigest,
-        // Tenant scope stamped at INSERT — the signer's org context is already
-        // verified above (orgId gates the version lookup).
-        orgId,
-      ]
-    );
+    await signClient.query('BEGIN');
+    // Single e-signature write path: the INSERT lives in
+    // services/part11/signature-persistence.ts, shared with the governed sign
+    // action (/api/c2c/actions/sign). Values are unchanged from the historical
+    // inline INSERT of this route.
+    const result = await persistElectronicSignature(signClient, {
+      documentId: Number(documentId),
+      versionId: Number(versionId),
+      bindingBasis: BINDING_BASIS.DOCUMENT_VERSION_CONTENT,
+      signatureType: resolvedSignatureType,
+      signaturePurpose,
+      signerId: userId,
+      signerName,
+      signerTitle: signerTitle ?? null,
+      signerEmail,
+      authenticationMethod: 'password+totp',
+      authenticationTimestamp: signedAt,
+      secondFactorVerified,
+      signatureHash,
+      signatureMeaning: signatureMeaning ?? null,
+      signatureManifest: { action, signerRole, deviceInfo: deviceInfo ?? null, boundPayloadDigest },
+      isValid: signatureIsValid,
+      complianceStatement: complianceStatement ?? null,
+      legalDisclaimer: legalDisclaimer ?? null,
+      ipAddress: ipAddress ?? null,
+      deviceInfo: deviceInfo ?? null,
+      signedAt,
+      boundPayloadDigest,
+      // Tenant scope stamped at INSERT — the signer's org context is already
+      // verified above (orgId gates the version lookup).
+      organizationId: orgId,
+    });
 
-    // 21 CFR Part 11 §11.10(e): every signing event lands in the central
-    // audit trail in addition to the electronic_signatures row. The signature
-    // hash is included so an auditor can correlate the two tables.
+    // 21 CFR Part 11 §11.10(e): every signing event lands in the central audit
+    // trail in addition to the electronic_signatures row. The signature hash is
+    // included so an auditor can correlate the two tables.
     //
-    // The audit write is AWAITED before we report success: a signing action
-    // whose audit record fails must NOT be reported as signed (no signature
-    // without a corresponding, durable audit-trail entry). If it throws we fail
-    // the request — the response below is never reached.
-    try {
-      await auditService.logAction({
-        tenantId: (req as any).user?.organizationId ?? null,
-        userId,
-        action: 'esignature.sign',
-        resourceType: 'electronic_signature',
-        resourceId: String(result.rows[0].id),
-        ipAddress: ipAddress ?? undefined,
-        userAgent: req.headers['user-agent'] as string | undefined,
-        details: {
-          documentId: Number(documentId),
-          versionId: Number(versionId),
-          signaturePurpose,
-          signatureMeaning: signatureMeaning ?? null,
-          action,
-          signatureHash,
-          secondFactorVerified,
-          signerRole,
-        },
-      });
-    } catch (auditErr: any) {
-      console.error('[esignature] CRITICAL: audit write failed for signature', result.rows[0].id, '-', auditErr?.message);
-      return res.status(500).json({
-        error: 'Signature could not be recorded in the audit trail; signing aborted.',
-        code: 'ESIGNATURE_AUDIT_FAILED',
-      });
-    }
+    // Written on `signClient`, INSIDE the transaction that created the
+    // signature, via the transaction-enlistable writer rather than
+    // auditService.logAction (which runs on its own connection and swallows
+    // persistence failures by design). If the audit row cannot be written the
+    // whole transaction rolls back, so the signature never exists either. That
+    // is what makes "no signature without a durable audit entry" true rather
+    // than merely asserted.
+    await writeChainedAuditRow(signClient, {
+      tenantId: (req as any).user?.organizationId ?? null,
+      userId,
+      action: 'esignature.sign',
+      resourceType: 'electronic_signature',
+      resourceId: String(result.id),
+      ipAddress: ipAddress ?? undefined,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: {
+        documentId: Number(documentId),
+        versionId: Number(versionId),
+        signaturePurpose,
+        signatureMeaning: signatureMeaning ?? null,
+        action,
+        signatureHash,
+        secondFactorVerified,
+        signerRole,
+      },
+    });
+
+    await signClient.query('COMMIT');
 
     return res.status(201).json({
-      signatureId: result.rows[0].id,
+      signatureId: result.id,
       signatureHash,
-      signedAt: result.rows[0].signed_at?.toISOString?.() ?? signedAt.toISOString(),
+      signedAt: (result.signedAt as any)?.toISOString?.() ?? signedAt.toISOString(),
     });
   } catch (err: any) {
-    if (err?.code === '42P01') {
-      // Schema not migrated. Refuse signing rather than pretend it succeeded.
-      console.warn('[esignature] electronic_signatures table missing');
+    try {
+      await signClient.query('ROLLBACK');
+    } catch {
+      /* ignore rollback failure — the original error is what matters */
+    }
+    if (err?.code === '42P01' || err?.code === '42703') {
+      // Schema not migrated (table missing, or the signed_target/binding_basis
+      // columns not yet applied). Refuse signing rather than pretend it succeeded.
+      console.warn('[esignature] electronic_signatures schema missing/stale');
       return res.status(503).json({
         error: 'E-signature schema not present — run migrations before signing.',
         code: 'ESIGNATURE_SCHEMA_MISSING',
       });
     }
-    console.error('[esignature] sign insert failed:', err?.message);
-    return res.status(500).json({ error: 'Failed to record signature' });
+    console.error('[esignature] sign transaction failed:', err?.message);
+    return res.status(500).json({
+      error: 'Signature could not be recorded together with its audit-trail entry; signing aborted.',
+      code: 'ESIGNATURE_AUDIT_FAILED',
+    });
+  } finally {
+    signClient.release();
   }
 });
 

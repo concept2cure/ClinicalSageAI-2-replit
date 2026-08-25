@@ -129,16 +129,27 @@ export class KnowledgeGraphService {
    * Create an edge between two atoms
    */
   async createEdge(edge: Edge): Promise<string> {
+    // `extracted_from` and `confidence` are not columns on this table — it has
+    // source_atom_id, target_atom_id, relationship_type, relationship_strength,
+    // bidirectional, metadata, created_by and the timestamps. Naming them made
+    // every edge write 42703 at PLAN time, and the ON CONFLICT clause referenced
+    // `confidence` too, so fixing only the column list would still have failed.
+    //
+    // Neither value is dropped: both are real edge provenance (how the edge was
+    // derived, and how sure we are) and they are folded into `metadata`, which
+    // exists for exactly this. relationship_strength stays its own column and
+    // keeps the GREATEST merge, since that is the one the schema models.
+    // Found by ci:insert-columns-declared.
     const result = await this.pool.query(
       `
       INSERT INTO lumen_knowledge_graph_edges (
         source_atom_id, target_atom_id, relationship_type, relationship_strength,
-        bidirectional, extracted_from, confidence, metadata
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        bidirectional, metadata
+      ) VALUES ($1, $2, $3, $4, $5, $6)
       ON CONFLICT (source_atom_id, target_atom_id, relationship_type)
       DO UPDATE SET
         relationship_strength = GREATEST(lumen_knowledge_graph_edges.relationship_strength, $4),
-        confidence = GREATEST(lumen_knowledge_graph_edges.confidence, $7),
+        metadata = COALESCE(lumen_knowledge_graph_edges.metadata, '{}'::jsonb) || EXCLUDED.metadata,
         updated_at = NOW()
       RETURNING id
     `,
@@ -148,9 +159,11 @@ export class KnowledgeGraphService {
         edge.relationshipType,
         edge.relationshipStrength,
         edge.bidirectional,
-        edge.extractedFrom || 'manual',
-        edge.confidence,
-        JSON.stringify(edge.metadata || {}),
+        JSON.stringify({
+          ...(edge.metadata || {}),
+          extractedFrom: edge.extractedFrom || 'manual',
+          confidence: edge.confidence,
+        }),
       ]
     );
 
@@ -166,10 +179,12 @@ export class KnowledgeGraphService {
     const values: any[] = [];
     const placeholders: string[] = [];
 
+    // Same correction as createEdge above: six real columns, with
+    // extractedFrom/confidence folded into metadata rather than discarded.
     edges.forEach((edge, i) => {
-      const offset = i * 8;
+      const offset = i * 6;
       placeholders.push(
-        `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8})`
+        `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6})`
       );
       values.push(
         edge.sourceAtomId,
@@ -177,9 +192,11 @@ export class KnowledgeGraphService {
         edge.relationshipType,
         edge.relationshipStrength,
         edge.bidirectional,
-        edge.extractedFrom || 'manual',
-        edge.confidence,
-        JSON.stringify(edge.metadata || {})
+        JSON.stringify({
+          ...(edge.metadata || {}),
+          extractedFrom: edge.extractedFrom || 'manual',
+          confidence: edge.confidence,
+        })
       );
     });
 
@@ -187,12 +204,12 @@ export class KnowledgeGraphService {
       `
       INSERT INTO lumen_knowledge_graph_edges (
         source_atom_id, target_atom_id, relationship_type, relationship_strength,
-        bidirectional, extracted_from, confidence, metadata
+        bidirectional, metadata
       ) VALUES ${placeholders.join(', ')}
       ON CONFLICT (source_atom_id, target_atom_id, relationship_type)
       DO UPDATE SET
         relationship_strength = GREATEST(lumen_knowledge_graph_edges.relationship_strength, EXCLUDED.relationship_strength),
-        confidence = GREATEST(lumen_knowledge_graph_edges.confidence, EXCLUDED.confidence),
+        metadata = COALESCE(lumen_knowledge_graph_edges.metadata, '{}'::jsonb) || EXCLUDED.metadata,
         updated_at = NOW()
     `,
       values

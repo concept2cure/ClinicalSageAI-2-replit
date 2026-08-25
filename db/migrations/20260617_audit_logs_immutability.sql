@@ -1,9 +1,33 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- DB-Level Immutability Enforcement for public.audit_logs
 --
--- ⚠️  REQUIRES REVIEW BEFORE DEPLOY — produced by the security swarm for finding
---     F7 (SECURITY_SWARM_AUDIT_2026-06-17.md). ADDITIVE ONLY. Do NOT auto-apply
---     without DBA / compliance sign-off.
+-- ⚠️  DEPLOY-PATH STATUS — read before changing this file.
+--     Produced by the security swarm for finding F7
+--     (SECURITY_SWARM_AUDIT_2026-06-17.md) and originally marked "do NOT
+--     auto-apply without DBA / compliance sign-off". That banner had an
+--     unintended consequence: the file was never added to C2C_MIGRATION_FILES
+--     and never given the `_gcc_` infix, so NO apply path installed it and
+--     `public.audit_logs` stayed mutable on every deployed database for the
+--     entire period the control was believed to exist. The runtime role holds
+--     the default UPDATE/DELETE grant on `public` (scripts/db/provision-app-role.mjs),
+--     so the application itself could rewrite audit history.
+--
+--     It is now wired into scripts/db/migration-set.mjs. Still ADDITIVE ONLY.
+--     Pre-deploy verification performed against the tree (not assumed):
+--       * INSERT untouched — the chained writer only ever INSERTs.
+--       * No production code UPDATEs audit_logs. The only UPDATEs are PGlite
+--         tests that build the table inline (so they never see these triggers)
+--         and scripts/db-verify/verify-audit-chain.ts, a manual tamper-demo
+--         that is not wired into CI.
+--       * Nothing TRUNCATEs audit_logs anywhere in the repo.
+--       * The single legitimate DELETE — the retention/archival service — is
+--         exempted via the fail-closed `app.audit_archive_bypass` GUC it
+--         already sets with SET LOCAL on one dedicated connection.
+--
+--     Operator note: applying this makes audit history genuinely append-only in
+--     production. That is the regulatory intent, and it is irreversible for any
+--     tooling that expected to mutate audit rows. Confirm no external/admin
+--     tooling does so in your environment before deploying.
 --
 -- REGULATORY BASIS: 21 CFR Part 11 §11.10(e) — audit trail records must be
 -- immutable. The canonical queryable audit table `audit_logs` is sha256-chained
@@ -58,6 +82,27 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Guard: only install when public.audit_logs exists (no-op otherwise).
+-- ── The RAISE that never raised (fixed 2026-08-21) ───────────────────────────
+-- Each guard below was written as
+--     RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: … are append-only'
+--     USING ERRCODE = …, MESSAGE = 'IMMUTABILITY_VIOLATION', DETAIL = …
+-- which PostgreSQL rejects: the message is given twice, once as the RAISE
+-- literal and once as USING MESSAGE. The trigger therefore aborted with
+--     ERROR: RAISE option already specified: MESSAGE   (SQLSTATE 42601)
+-- instead of the P0A0x IMMUTABILITY_VIOLATION it declares. The operation was
+-- still blocked, so the audit trail was never actually at risk — but the error
+-- code and message were both wrong, so every caller that matches on
+-- /IMMUTABILITY_VIOLATION/ (server/routes/audit-trail-routes.ts,
+-- server/startup/middleware.ts, and the esig/orchestrator contract tests) would
+-- have failed to recognise it. A guard whose failure path has never been
+-- executed is a guard nobody has tested; this one had not been.
+--
+-- The redundant `MESSAGE =` option is removed, keeping the RAISE literal as the
+-- message — the form the repo's other immutability triggers already use
+-- (20260730_esign_audit_db_level_immutability.sql,
+-- 20260730_orchestrator_run_ledger_hardening.sql). The literal is the more
+-- informative of the two, and it still matches /IMMUTABILITY_VIOLATION/.
+
 DO $outer$
 BEGIN
   IF NOT EXISTS (
@@ -77,8 +122,7 @@ BEGIN
     RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: audit_logs are append-only'
     USING
       ERRCODE = 'P0A01',
-      MESSAGE = 'IMMUTABILITY_VIOLATION',
-      DETAIL  = 'UPDATE is not permitted on audit_logs. '
+        DETAIL  = 'UPDATE is not permitted on audit_logs. '
                 'Attempted to update row id=' || OLD.id || '. '
                 '21 CFR Part 11 §11.10(e) requires immutable audit trails.',
       HINT    = 'Insert a new corrective event (e.g., AMENDMENT, REVOCATION) rather than modifying history.';
@@ -116,8 +160,7 @@ BEGIN
     RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: audit_logs are append-only'
     USING
       ERRCODE = 'P0A02',
-      MESSAGE = 'IMMUTABILITY_VIOLATION',
-      DETAIL  = 'DELETE is not permitted on audit_logs outside the authorized '
+        DETAIL  = 'DELETE is not permitted on audit_logs outside the authorized '
                 'retention/archival path. Attempted to delete row id=' || OLD.id || '. '
                 '21 CFR Part 11 §11.10(e) requires immutable audit trails.',
       HINT    = 'Only the archival service may delete, and only after copying rows '
@@ -145,8 +188,7 @@ BEGIN
     RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: audit_logs are append-only'
     USING
       ERRCODE = 'P0A03',
-      MESSAGE = 'IMMUTABILITY_VIOLATION',
-      DETAIL  = 'TRUNCATE is not permitted on audit_logs. '
+        DETAIL  = 'TRUNCATE is not permitted on audit_logs. '
                 '21 CFR Part 11 §11.10(e) requires immutable audit trails.',
       HINT    = 'This is a regulatory compliance control. Archive via partitioning instead of truncating.';
     RETURN NULL;

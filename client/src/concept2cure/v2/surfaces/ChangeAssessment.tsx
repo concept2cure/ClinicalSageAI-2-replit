@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveRows } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -108,6 +109,13 @@ function ChangeDecision({ title, flag, dec }: ChangeDecisionProps) {
 
 export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
   const live = useLiveRows<ChangeItem>('/api/change-assessment');
+  /* Gated on error as well as loading. `useLiveRows`/`useLiveData` return
+     `data: null` on a FAILED read, so each count below derives from an empty
+     list and resolves to 0 — and with `loading` already false the strip renders
+     a SETTLED zero rather than a placeholder. Rows are empty in three
+     situations and only the third may say "nothing is on file"; the pattern is
+     MarketAccess.tsx:62. */
+  const kv = (n: number | string) => (live.loading || live.error ? '—' : String(n));
   const items = live.rows;
   const [sel, setSel] = useState<string | null>(null);
 
@@ -129,22 +137,68 @@ export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
     items.flatMap((c) => [c.fda ? 'FDA' : null, c.eu ? 'EU' : null].filter(Boolean) as string[]),
   ).size;
 
+  /* WHAT ANA SEES HERE. Branches mirror the render exactly. On error the
+     screen's kv() shows '—' for every KPI, so no numeric facts are published
+     there — a failed read is a failure, not zero changes. A jurisdiction with
+     no determination on the selected row is reported absent, never asserted. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'Change assessment — loading the 510(k)-change / MDR significant-change worklist; nothing is on screen yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'Change assessment — the 510(k)-change / MDR significant-change worklist did not load, so no counts are on screen — a failed read, not an empty worklist.',
+      };
+    }
+    if (items.length === 0 || !item) {
+      return { summary: 'Change assessment — no change assessments on file yet; record a change or ask AnA to assess one and its FDA / EU MDR determination appears here.' };
+    }
+    return {
+      summary:
+        'Change assessment — ' + items.length + ' open change(s): ' + triggers + ' trigger a filing, '
+        + (items.length - triggers) + ' document-to-file, ' + jurisdictions + ' jurisdiction(s) assessed. Selected: '
+        + item.id + ' — ' + item.title + '.',
+      facts: {
+        openChanges: items.length,
+        triggerFiling: triggers,
+        documentToFile: items.length - triggers,
+        jurisdictionsAssessed: jurisdictions,
+        selected: {
+          id: item.id,
+          title: item.title,
+          device: item.device,
+          area: item.area,
+          raised: item.raised,
+          owner: item.owner,
+          docStatus: item.doc?.status ?? null,
+        },
+        determinationsPresent: { fda: !!item.fda, eu: !!item.eu },
+      },
+      availableActions: [
+        'Selecting a row in the worklist is the only screen control here — the FDA and EU MDR determinations shown are read-outs of recorded assessments, not something this screen edits',
+        'Ask AnA to assess a new change, or to draft the selected change’s document-to-file',
+      ],
+    };
+  }, [live.loading, live.error, items, item, triggers, jurisdictions]);
+  usePublishSurfaceContext('change-assessment', anaContext);
+
   return (
     <div className="page-inner reg">
       <div className="reg-head">
         <div>
           <div className="reg-eyebrow">Platform {I.dot} lifecycle</div>
           <h1 className="reg-title">Change assessment</h1>
-          <p className="reg-sub">Every design, labeling or manufacturing change runs the FDA "When to Submit a 510(k) for a Change" (2017) and EU MDR significant-change (MDCG 2020-3) determinations -- resolving to a new submission or a document-to-file.</p>
+          <p className="reg-sub">Every design, labeling or manufacturing change runs the FDA "When to Submit a 510(k) for a Change" (2017) and EU MDR significant-change (MDCG 2020-3) determinations — resolving to a new submission or a document-to-file.</p>
         </div>
         {onAsk && <button className="reg-ask" onClick={() => onAsk('Assess a new device change for 510(k) / MDR significant-change impact')}>{I.sparkles} Assess a change</button>}
       </div>
 
       <div className="reg-kpis">
-        <div className="reg-kpi"><div className="reg-kpi-v">{items.length}</div><div className="reg-kpi-l">Open changes</div></div>
-        <div className="reg-kpi" data-tone="err"><div className="reg-kpi-v">{triggers}</div><div className="reg-kpi-l">Trigger a filing</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v">{items.length - triggers}</div><div className="reg-kpi-l">Document to file</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v">{jurisdictions}</div><div className="reg-kpi-l">Jurisdictions assessed</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{kv(items.length)}</div><div className="reg-kpi-l">Open changes</div></div>
+        <div className="reg-kpi" data-tone="err"><div className="reg-kpi-v">{kv(triggers)}</div><div className="reg-kpi-l">Trigger a filing</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{kv(items.length - triggers)}</div><div className="reg-kpi-l">Document to file</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{kv(jurisdictions)}</div><div className="reg-kpi-l">Jurisdictions assessed</div></div>
       </div>
 
       {live.loading ? (
@@ -192,15 +246,22 @@ export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
                 data as the jurisdictions KPI above, which counts `c.fda`/`c.eu`
                 only where they are present. */}
             <div className="chg-decisions">
-              {item.fda && <ChangeDecision title="FDA -- 21 CFR 807 / 2017 guidance" flag="US" dec={item.fda} />}
-              {item.eu && <ChangeDecision title="EU MDR -- MDCG 2020-3" flag="EU" dec={item.eu} />}
+              {item.fda && <ChangeDecision title="FDA — 21 CFR 807 / 2017 guidance" flag="US" dec={item.fda} />}
+              {item.eu && <ChangeDecision title="EU MDR — MDCG 2020-3" flag="EU" dec={item.eu} />}
             </div>
 
             <div className="chg-doc">
               <div className="chg-doc-l">{I.fileText} Generates: <b>{item.doc?.kind}</b></div>
               <div className="chg-doc-acts">
                 <button className="reg-doc-open" onClick={() => onAsk && onAsk(`Draft the ${item.doc?.kind} for ${item.id} -- ${item.title}`)}>{I.sparkles} Draft with AnA</button>
-                <button className="reg-doc-open ghost">{I.externalLink} Open change record</button>
+                {/* "Open change record" was a dead button — no onClick, and no
+                    second view to reach. The .chg-detail pane beside it already
+                    IS the change record: id, device, area, raised date, both
+                    jurisdictions' decision trees, outcomes, rationales, doc kind
+                    and status. Removed rather than wired, because wiring it
+                    would mean inventing a change-record document store this
+                    product does not have. "Draft with AnA" is the real action
+                    here and it works. */}
               </div>
             </div>
           </div>

@@ -21,9 +21,29 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', () => ({ apiRequest }));
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+}));
 
 import { EctdCoauthor } from '../surfaces/EctdCoauthor';
+
+/* jsdom has no layout: ProseMirror's scroll-into-view asks for client rects
+   the moment an insert moves the selection. Same shim as
+   richSectionEditorUnsaved.test.tsx. */
+const emptyRects = function () {
+  return [] as unknown as DOMRectList;
+};
+for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unknown as Array<
+  Record<string, unknown>
+>) {
+  if (typeof proto.getClientRects !== 'function') proto.getClientRects = emptyRects;
+  if (typeof proto.getBoundingClientRect !== 'function') {
+    proto.getBoundingClientRect = function () {
+      return { top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0 } as DOMRect;
+    };
+  }
+}
 
 const onAsk = vi.fn();
 const props = () => ({ surface: { id: 'ectd-coauthor', label: 'eCTD' } as any, onAsk, onNav: vi.fn(), segment: 'biopharma' });
@@ -260,6 +280,44 @@ describe('EctdCoauthor — honest error state', () => {
   });
 });
 
+describe('EctdCoauthor — tree search really filters (no dead input)', () => {
+  /* The "Find section..." input used to be a literal noop (onChange={() => {}}).
+     It now filters the loaded backbone client-side on title / section number,
+     with an honest no-match note. */
+  beforeEach(() => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/coauthor/documents') return ok(REAL_DOCS);
+      return ok({});
+    });
+  });
+
+  it('filters by title and section number, says so on no match, and clears', async () => {
+    render(<EctdCoauthor {...props()} />);
+    await screen.findByText('Drug Product — ZX-9');
+
+    const input = screen.getByLabelText('Find a section') as HTMLInputElement;
+
+    // Title match: only the safety document's module remains in the tree.
+    fireEvent.change(input, { target: { value: 'safety' } });
+    expect(screen.getByText('Integrated Summary of Safety')).toBeTruthy();
+    expect(screen.queryByText('Drug Product — ZX-9')).toBeNull();
+
+    // Section-number match.
+    fireEvent.change(input, { target: { value: '3.2.P' } });
+    expect(screen.getByText('Drug Product — ZX-9')).toBeTruthy();
+    expect(screen.queryByText('Integrated Summary of Safety')).toBeNull();
+
+    // No match → an honest note naming the query, never a silent empty tree.
+    fireEvent.change(input, { target: { value: 'zzz-nothing' } });
+    expect(screen.getByText(/No sections match "zzz-nothing"/)).toBeTruthy();
+
+    // Clearing restores the full backbone.
+    fireEvent.change(input, { target: { value: '' } });
+    expect(screen.getByText('Drug Product — ZX-9')).toBeTruthy();
+    expect(screen.getByText('Integrated Summary of Safety')).toBeTruthy();
+  });
+});
+
 describe('EctdCoauthor — no fabricated validation or compliance results', () => {
   it('reports validation as unavailable rather than inventing findings', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
@@ -295,5 +353,56 @@ describe('EctdCoauthor — no fabricated validation or compliance results', () =
     // The retired hardcoded 78% ICH M4 score must not appear.
     expect(document.body.textContent).not.toContain('78%');
     expect(document.querySelector('.ec-cscore-num')).toBeNull();
+  });
+});
+
+describe('EctdCoauthor — the Co-Author can AUTHOR', () => {
+  it('mounts the ONE canonical editor over the document and saves through the store’s own PUT', async () => {
+    /* Until this shipped, the artifact pane rendered coauthor_documents.content
+       read-only through dangerouslySetInnerHTML, and the empty state told the
+       author to go draft "in the authoring editor" — a surface named Co-Author
+       that could not author. The canonical RichSectionEditor holds the content
+       now, and its one save path is this store's own PUT. */
+    try { localStorage.clear(); } catch { /* ignore */ }
+    const put = vi.fn();
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && url === '/api/coauthor/documents') return ok(REAL_DOCS);
+      if (method === 'PUT' && url === '/api/coauthor/documents/7001') {
+        put(body);
+        return ok({
+          success: true,
+          document: { ...REAL_DOCS.documents[0], content: (body as { content: string }).content },
+        });
+      }
+      return fail(404);
+    });
+    render(<EctdCoauthor {...props()} />);
+
+    await waitFor(() => expect(document.querySelector('.rse-root .tiptap')).toBeTruthy());
+    // The read-only artifact body is gone; the editor holds the real content.
+    expect(document.querySelector('.ec-doc-body')).toBeNull();
+    expect(document.body.textContent).toContain('Development Rationale');
+
+    const el = document.querySelector('.rse-body .tiptap') as HTMLElement & {
+      editor?: { chain: () => any };
+    };
+    expect(el.editor).toBeTruthy();
+    el.editor!.chain().focus().insertContent(' Amended for cycle 2.').run();
+
+    const save = await waitFor(() => {
+      const b = Array.from(document.querySelectorAll('button')).find((x) =>
+        (x.textContent || '').includes('Save ('),
+      ) as HTMLButtonElement | undefined;
+      if (!b || b.disabled) throw new Error('save control not enabled yet');
+      return b;
+    });
+    fireEvent.click(save);
+
+    await waitFor(() => expect(put).toHaveBeenCalled());
+    expect(String((put.mock.calls[0][0] as { content: string }).content)).toContain(
+      'Amended for cycle 2.',
+    );
+    // The footer reports the CONFIRMED save — not an optimistic echo.
+    await waitFor(() => expect(document.body.textContent).toContain('All changes saved'));
   });
 });

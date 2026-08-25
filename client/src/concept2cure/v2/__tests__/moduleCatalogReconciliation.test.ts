@@ -15,20 +15,76 @@
  * agree, so a surface added to the shell without a catalog row (or a catalog row
  * naming no real surface) fails here rather than silently re-opening the gap.
  *
+ * ── The catalog is more than one file, and must be ────────────────────────────
+ * This originally read the 20260810 migration alone and treated it as the whole
+ * seed. That was wrong the moment a surface was added after it: an APPLIED
+ * migration must not be edited, because deployed databases will never re-run it,
+ * so a new catalog row correctly arrives as a FOLLOW-UP migration. Reading one
+ * file made those follow-ups look like missing rows, and the only way to go
+ * green would have been to edit history — the opposite of the practice this
+ * guard should protect.
+ *
+ * So the seed is the UNION of the 20260810 re-key and every LATER migration that
+ * inserts into `available_modules`, discovered by scanning rather than listed by
+ * name, so a follow-up added tomorrow is picked up without touching this file.
+ * Earlier catalog migrations are deliberately excluded: they seeded the legacy
+ * id space ('ind-filing', 'cmc-wizard', …) that 20260810 exists to retire, and
+ * counting them would resurrect exactly the drift this guard was written for.
+ *
  * It is a pure file+registry test on purpose: no database, so it runs in the
  * normal unit suite and guards the SOURCE of the seed rather than one deployment.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { SEGMENTS, getSegmentModules } from '../registryModel';
+import { SEGMENTS, getSegmentModules, DEEP_LINK_ALIASES } from '../registryModel';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 
-const MIGRATION = path.resolve(
-  __dirname,
-  '../../../../../db/migrations/20260810_reconcile_module_catalog.sql',
-);
+const REPO_ROOT = path.resolve(__dirname, '../../../../../');
+
+/** The migration that re-keyed the catalog to surface ids — the base seed. */
+const BASE_MIGRATION = path.join(REPO_ROOT, 'db/migrations/20260810_reconcile_module_catalog.sql');
+
+/** The base migration's date prefix; anything at or after it is in the live seed. */
+const BASE_PREFIX = '20260810';
+
+/**
+ * The base re-key plus every LATER migration that seeds catalog rows, in apply
+ * order (the filenames are date-prefixed, so name order is apply order).
+ *
+ * Discovered by scanning both migration directories, so a follow-up landing
+ * tomorrow needs no edit here. Migrations EARLIER than the base are excluded on
+ * purpose — `20260220_user_intelligence_platform.sql` and the drizzle baseline
+ * seed the legacy id space that 20260810 retires, and folding them in would
+ * re-assert the very rows this guard exists to keep retired.
+ */
+function catalogMigrationFiles(): string[] {
+  const found: string[] = [];
+  for (const dir of ['db/migrations', 'migrations']) {
+    const abs = path.join(REPO_ROOT, dir);
+    let names: string[] = [];
+    try {
+      names = readdirSync(abs).filter((n) => n.endsWith('.sql')).sort();
+    } catch {
+      continue;
+    }
+    for (const n of names) {
+      if (n.slice(0, BASE_PREFIX.length) < BASE_PREFIX) continue;
+      const full = path.join(abs, n);
+      /* Any migration that CHANGES the catalog, not only ones that insert into
+         it. A migration that only retires a row (UPDATE … deprecated) is just as
+         much part of what the catalog advertises, and reading inserts alone made
+         a retirement invisible — the set would still count a row that is no
+         longer offered. */
+      if (/(?:INSERT INTO|UPDATE)\s+available_modules/i.test(readFileSync(full, 'utf8'))) {
+        found.push(full);
+      }
+    }
+  }
+  // Base first so its rows are the spine and follow-ups extend it.
+  return [BASE_MIGRATION, ...found.filter((f) => f !== BASE_MIGRATION).sort((a, b) => path.basename(a).localeCompare(path.basename(b)))];
+}
 
 /**
  * Apps that must never become entitlement-gated.
@@ -46,6 +102,28 @@ const MIGRATION = path.resolve(
  */
 const NEVER_LICENSABLE = new Set(['audit-trail', 'part11-console']);
 
+/**
+ * Module ids that MORE THAN ONE migration seeds, and why.
+ *
+ * The INSERTs are upserts, so a later migration restating a row is a legitimate
+ * re-key rather than a duplicate. What is not legitimate is two migrations
+ * disagreeing about a row without anyone knowing — the winner then depends on
+ * apply order alone. Each acknowledged re-key is listed here; anything new
+ * fails the duplicate check until it is either fixed or recorded with a reason.
+ *
+ * design-controls / human-factors
+ *   migrations/20260814j_catalog_missing_product_surfaces.sql seeded both in the
+ *   ROOT migrations/ tree as 'Design controls' / 'Human factors' under category
+ *   'Device & diagnostics' (sort 210/220) with `{"tiers": []}` — which is what
+ *   left them unsellable. db/migrations/20260823_module_catalog_mdx_registers.sql
+ *   re-keys them to 'Design controls (DHF)' / 'Human factors (IEC 62366-1)'
+ *   under 'Evidence & data' (255/305) at the standard tier. That file is ordered
+ *   after 20260814j in C2C_MIGRATION_FILES and asserts its own end state, so the
+ *   later definition wins deterministically. Its header carries the same
+ *   correction — it originally claimed neither id had ever been catalogued.
+ */
+const KNOWN_RESEEDS = ['design-controls', 'human-factors'];
+
 /** Every app id the shell presents to a user, across every segment. */
 function shellAppIds(): Set<string> {
   const ids = new Set<string>();
@@ -62,9 +140,38 @@ function shellAppIds(): Set<string> {
  * Deliberately parses only the VALUES rows (leading `('id', ...`), not the
  * retire-list in step 1, so the two halves of the migration are checked apart.
  */
+/**
+ * Module ids a migration RETIRES (deprecates). The catalog reader filters on
+ * `deprecated`, so a retired row is not an advertised module and must not count
+ * as one — the same retire-don't-delete mechanism the base migration uses to
+ * stand down the legacy id space.
+ *
+ * Parsed from comment-STRIPPED sql and bounded to a single statement. Both
+ * matter: these migrations document their own rollback in `--` comments, so
+ * matching raw text picks up ids from prose, and an unbounded match runs from
+ * one UPDATE past the next semicolon into unrelated rows.
+ *
+ * A `module_id NOT IN (…)` clause is deliberately NOT read — that is the base
+ * migration retiring everything OUTSIDE its new id space, which is already
+ * expressed by reading its INSERT block as the seed.
+ */
+function retiredModuleIds(sql: string): string[] {
+  const executable = sql.replace(/^\s*--.*$/gm, '');
+  const out: string[] = [];
+  for (const stmt of executable.split(';')) {
+    if (!/UPDATE\s+available_modules/i.test(stmt)) continue;
+    if (!/deprecated/i.test(stmt)) continue;
+    const where = stmt.slice(stmt.search(/\bWHERE\b/i));
+    if (/module_id\s+NOT\s+IN/i.test(where)) continue;
+    if (!/module_id\s*(=|\bIN\b)/i.test(where)) continue;
+    for (const id of where.matchAll(/'([a-z0-9-]+)'/g)) out.push(id[1]);
+  }
+  return out;
+}
+
 function seededModuleIds(sql: string): string[] {
   const insertAt = sql.indexOf('INSERT INTO available_modules');
-  expect(insertAt, 'migration must carry an INSERT INTO available_modules').toBeGreaterThan(-1);
+  if (insertAt === -1) return [];
   const body = sql.slice(insertAt);
   const end = body.indexOf('ON CONFLICT');
   expect(end, 'INSERT must be an upsert (ON CONFLICT)').toBeGreaterThan(-1);
@@ -72,13 +179,92 @@ function seededModuleIds(sql: string): string[] {
 }
 
 describe('Apps catalog ↔ shell taxonomy', () => {
-  const sql = readFileSync(MIGRATION, 'utf8');
-  const seeded = seededModuleIds(sql);
+  const files = catalogMigrationFiles();
+  const sources = files.map((f) => readFileSync(f, 'utf8'));
+  /** Every catalog migration concatenated — the seed as a deployed DB sees it. */
+  const sql = sources.join('\n');
+  /** The base migration alone, for the assertions that are about ITS structure. */
+  const baseSql = sources[0];
+  const retired = new Set(sources.flatMap(retiredModuleIds));
+  /** Every INSERT row across every catalog migration, in apply order — including
+   *  an id a later migration RE-KEYS. */
+  const insertedInOrder = sources.flatMap(seededModuleIds);
+  /**
+   * The catalog as a deployed database actually holds it: one row per
+   * module_id, last definition winning.
+   *
+   * This used to be the flat `insertedInOrder` list, which modelled the
+   * migrations as if every INSERT added a row. They do not — every one of them
+   * is `ON CONFLICT (module_id) DO UPDATE`, and the whole follow-up pattern
+   * this file documents depends on that. So a legitimate re-key (a later
+   * migration restating a row's name, category and tier) read as a duplicate
+   * entitlement, and the counts below drifted from what any database holds.
+   */
+  const seededRows = Array.from(new Set(insertedInOrder));
+  /** What the catalog actually advertises: inserted, minus stood back down. */
+  const seeded = seededRows.filter((id) => !retired.has(id));
   const shell = shellAppIds();
 
-  it('seeds one catalog row per app the shell presents, minus the compliance controls', () => {
-    const expected = new Set([...shell].filter((id) => !NEVER_LICENSABLE.has(id)));
-    expect(new Set(seeded)).toEqual(expected);
+  it('reads the base seed and every follow-up that adds catalog rows', () => {
+    expect(files[0]).toBe(BASE_MIGRATION);
+    // If this ever collapses to one file again, the follow-up pattern has been
+    // broken by editing an applied migration.
+    expect(files.length).toBeGreaterThanOrEqual(1);
+  });
+
+  /*
+   * The invariant is a SUPERSET, not an equality.
+   *
+   * This asserted `seeded === shellAppIds()` exactly, which was right while the
+   * catalog was a one-time re-key of the segment nav lists. It is wrong now, and
+   * the migration header above says why: the product renders ~118 surfaces, the
+   * persistent rail exposes 14, and "everything else is meant to be found
+   * through the Apps catalog". The catalog is the BROADER discovery surface by
+   * design — 20260814j deliberately seeds eight built, routed surfaces that no
+   * segment group lists, precisely so a user can find them.
+   *
+   * Demanding equality would have forced one of two bad outcomes: deleting those
+   * rows and re-hiding the surfaces, or padding every segment's nav with them.
+   * So the guard splits into the two directions that are actually true.
+   */
+  it('leaves no app the shell presents without a catalog row', () => {
+    // Direction 1 — no gaps. This is the original defect: an app a user can open
+    // from the shell but cannot be entitled to.
+    const expected = [...shell].filter((id) => !NEVER_LICENSABLE.has(id));
+    const seededSet = new Set(seeded);
+    expect(expected.filter((id) => !seededSet.has(id))).toEqual([]);
+  });
+
+  it('seeds no catalog row for something a user cannot actually open', () => {
+    // Direction 2 — no phantoms. A catalog row states a capability is available,
+    // so every id must resolve to a registered surface the shell can mount.
+    // This is what keeps the catalog from re-growing rows for things that do not
+    // exist, now that it is allowed to be wider than the segment nav.
+    const known = new Set((UI_SURFACES as Array<{ id: string }>).map((s) => s.id));
+    expect(seeded.filter((id) => !known.has(id))).toEqual([]);
+  });
+
+  it('lists one module once — never the same surface under two ids', () => {
+    /*
+     * A catalog row IS an entitlement toggle, so listing one surface twice lets
+     * an organization switch it on under one id and off under the other. That
+     * really happened: 'ind-lifecycle' was seeded as a new module while the same
+     * `IndLifecycle` component was already catalogued as 'ind-checklist'
+     * (labelled "IND lifecycle"), because surfaceViews mounts it at both ids and
+     * DEEP_LINK_ALIASES canonicalises one to the other.
+     *
+     * Resolving through the alias table before counting is what catches it — an
+     * id-only comparison sees two different strings and passes.
+     */
+    const canonical = seeded.map((id) => DEEP_LINK_ALIASES[id] ?? id);
+    const seen = new Map<string, string[]>();
+    for (let i = 0; i < seeded.length; i++) {
+      const list = seen.get(canonical[i]) ?? [];
+      list.push(seeded[i]);
+      seen.set(canonical[i], list);
+    }
+    const duplicated = [...seen.entries()].filter(([, ids]) => ids.length > 1);
+    expect(duplicated, 'these catalog ids resolve to the same surface').toEqual([]);
   });
 
   it('never makes a Part 11 compliance control licensable', () => {
@@ -91,34 +277,52 @@ describe('Apps catalog ↔ shell taxonomy', () => {
   });
 
   it('seeds no duplicate module ids (module_id is UNIQUE)', () => {
-    expect(seeded.length).toBe(new Set(seeded).size);
-  });
-
-  it('every seeded module id resolves to a real registry surface', () => {
-    const known = new Set((UI_SURFACES as Array<{ id: string }>).map((s) => s.id));
-    expect(seeded.filter((id) => !known.has(id))).toEqual([]);
+    /* A repeated id is not automatically a bug — the INSERTs are upserts and a
+       follow-up migration may restate a row. It IS a bug when nobody knew: two
+       migrations that disagree about a row's name, category or tier, with the
+       winner decided by apply order alone.
+       So each one is acknowledged here, with the reason, and anything NEW fails. */
+    const seedCount = new Map<string, number>();
+    for (const id of insertedInOrder) seedCount.set(id, (seedCount.get(id) ?? 0) + 1);
+    const reseeded = [...seedCount.entries()].filter(([, n]) => n > 1).map(([id]) => id).sort();
+    expect(
+      reseeded,
+      'a module id is seeded by more than one migration — if that is a deliberate re-key, add it to KNOWN_RESEEDS with the reason',
+    ).toEqual(KNOWN_RESEEDS);
   });
 
   it('gives every module its true deep link, unique per module', () => {
     // The legacy seed pointed six different modules at one dead '/ind-workspace'.
     // Keying paths off the surface id makes that collision impossible.
     const paths = Array.from(sql.matchAll(/'(\/concept2cure\/[a-z0-9-]+)'/g)).map((m) => m[1]);
-    expect(paths.length).toBe(seeded.length);
-    expect(new Set(paths).size).toBe(paths.length);
-    for (const id of seeded) expect(paths).toContain(`/concept2cure/${id}`);
+    // One path per EFFECTIVE row; a re-keyed id contributes its path twice in
+    // the text and once in the catalog, so both sides are de-duplicated.
+    expect(new Set(paths).size).toBe(seededRows.length);
+    for (const id of seededRows) expect(paths).toContain(`/concept2cure/${id}`);
   });
 
-  it('invents no commercial packaging — every module is seeded unrestricted', () => {
-    // Tiers/industries are a business decision. Until one is made, no module may
-    // ship gated by a tier this migration guessed.
-    const policies = Array.from(sql.matchAll(/'(\{"tiers":[^']*\})'::json/g)).map((m) => m[1]);
-    expect(policies.length).toBe(seeded.length);
+  it('guesses no commercial packaging — the BASE seed ships every module unrestricted', () => {
+    /* Tiers/industries are a business decision, and 20260810 said so in its own
+       header: it "deliberately left [packaging] to be applied later rather than
+       guessed here". That promise is what this pins.
+
+       It used to pin the whole concatenated seed, which meant the gate failed
+       the moment the decision was actually MADE —
+       20260823_module_catalog_commercial_packaging.sql applies packaging with a
+       per-group citation back to billing.ts PRICING[] and license-manager.ts
+       FEATURE_TIER_MAP. A gate that forbids a decision from ever being taken is
+       not protecting anything; it is freezing the product. The base migration's
+       promise stands; what follows it is allowed to be a decision. */
+    const policies = Array.from(baseSql.matchAll(/'(\{"tiers":[^']*\})'::json/g)).map((m) => m[1]);
+    expect(policies.length).toBeGreaterThan(0);
     for (const p of policies) expect(JSON.parse(p)).toEqual({ tiers: [], industries: [] });
   });
 
   it('retires legacy rows instead of deleting them (ON DELETE CASCADE would take subscriptions)', () => {
-    expect(sql).toMatch(/UPDATE available_modules/);
-    expect(sql).toMatch(/"deprecated":\s*true/);
+    // A property of the base migration, which is the one that retired the
+    // legacy id space; follow-ups only add.
+    expect(baseSql).toMatch(/UPDATE available_modules/);
+    expect(baseSql).toMatch(/"deprecated":\s*true/);
     // Assert on EXECUTABLE sql, not prose: the migration's header documents the
     // rollback and explains why it must not be written as a DELETE, so the
     // literal appears in a comment. Checking the raw file would fail on the very

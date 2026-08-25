@@ -264,7 +264,7 @@ describe('a guarded surface reports instead of crashing', () => {
     const { container } = renderSurface();
 
     await waitFor(() =>
-      expect(container.querySelector('.c2c-empty-state.tone-error')).not.toBeNull(),
+      expect(container.querySelector('.c2c-error-state')).not.toBeNull(),
     );
     // And it is the honest message, not the boundary's "didn't finish loading".
     expect(container.querySelector('.surface-degraded')).toBeNull();
@@ -294,6 +294,6 @@ describe('a guarded surface reports instead of crashing', () => {
     await waitFor(() => expect(container.textContent).toContain('Biopharmaceutic Studies'), {
       timeout: 8000,
     });
-    expect(container.querySelector('.c2c-empty-state.tone-error')).toBeNull();
+    expect(container.querySelector('.c2c-error-state')).toBeNull();
   });
 });

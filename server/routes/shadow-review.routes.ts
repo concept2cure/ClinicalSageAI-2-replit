@@ -1,7 +1,7 @@
 /**
  * Shadow-review — pre-file reviewer worklist read for the v2 surface.
  *
- * GET /api/shadow-review → the org's simulated-reviewer findings, grouped by reviewer
+ * GET /api/shadow-review → the org's shadow-reviewer findings, grouped by reviewer
  * lens (fda_filing, ema_d120, pmda, nb_mdr, nb_ivdr), assembled ENTIRELY from the real,
  * org-scoped shadow-review store (shadow_review_runs + shadow_review_findings) — the
  * same tables runShadowReview persists. Each row is { lens, findings[] }, every finding

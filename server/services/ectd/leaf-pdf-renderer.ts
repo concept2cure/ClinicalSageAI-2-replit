@@ -1,7 +1,7 @@
 /**
  * Deterministic eCTD leaf PDF renderer.
  *
- * The eCTD publisher (`ectdExportService.generateEctdPackage`) writes leaf files
+ * The eCTD assemblers (leaf-source-resolver / assemble-from-core) write leaf files
  * with a `.pdf` extension, but the source content for a granule/section is HTML
  * or plain text. Writing those bytes under a `.pdf` name produces a file that an
  * FDA ESG / eCTD validator rejects (not a real PDF). This module renders that
@@ -103,9 +103,35 @@ export function toWinAnsiSafe(input: string): string {
   return out.replace(/[^\t\n\r\x20-\x7E\xA0-\xFF]/g, '?');
 }
 
-/** Reduce HTML to readable plain text: block tags → newlines, strip the rest. */
+/**
+ * Reduce HTML to readable plain text: block tags → newlines, strip the rest.
+ *
+ * ── Why table cells get an explicit delimiter ───────────────────────────────
+ * `tr` produced a line break but `td`/`th` fell through to the generic
+ * strip-remaining-tags rule, which removes a tag and inserts NOTHING. So the
+ * cells of an HTML table were concatenated in the rendered leaf:
+ *
+ *   <tr><th>Arm</th><th>n</th></tr>          rendered as   Armn
+ *   <tr><td>Placebo</td><td>150</td></tr>    rendered as   Placebo150
+ *
+ * Confirmed by extracting the text back out of a rendered PDF with pdfjs. No
+ * content is lost — every character survives — but the boundary between a label
+ * and its value is, which in a filing package means a dose or a subject count
+ * running into the cell beside it in a document a regulator reads.
+ *
+ * Only the boundary BETWEEN adjacent cells becomes a delimiter; the row's final
+ * `</td>` is still stripped by the generic rule, so a row does not end in a
+ * dangling separator. ` | ` matches the convention serializeTable() already
+ * uses in orchestrator-real-package.ts, and single spaces survive the
+ * whitespace-collapsing rules below (a two-space separator would not).
+ *
+ * The orchestrator path was never affected: it serializes structured tables via
+ * serializeTable() before rendering. This is the leaf-source-resolver path,
+ * which renders stored document HTML directly.
+ */
 export function htmlToPlainText(input: string): string {
   return input
+    .replace(/<\s*\/\s*(?:td|th)\s*>\s*<\s*(?:td|th)\b[^>]*>/gi, ' | ')
     .replace(/<\s*(br|\/p|\/div|\/li|\/h[1-6]|\/tr)\s*>/gi, '\n')
     .replace(/<\s*(p|div|li|h[1-6]|tr)\b[^>]*>/gi, '\n')
     .replace(/<[^>]+>/g, '') // remaining tags

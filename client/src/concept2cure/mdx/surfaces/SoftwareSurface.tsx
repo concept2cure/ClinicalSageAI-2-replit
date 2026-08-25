@@ -45,7 +45,7 @@ export function SoftwareSurface({ onAskAna, program }: SoftwareSurfaceProps) {
           <h1 className="page-title">Software lifecycle</h1>
           <div className="page-sub">
             IEC 62304 · FDA 2023 software &amp; cybersecurity guidance · AAMI TIR57.
-            {program ? ` · ${program.code}` : ' · Select a project'}
+            {program ? ` · ${program.code}` : ' · No program open'}
           </div>
         </div>
         <div className="page-actions">
@@ -68,6 +68,7 @@ export function SoftwareSurface({ onAskAna, program }: SoftwareSurfaceProps) {
         label="software completeness"
         onRetry={live.refresh}
         emptyHint="Create software lifecycle items to score the required IEC 62304 deliverable set for this project."
+        regulation="Serves the IEC 62304 software lifecycle record"
       >
         {(sum) => (
           <>
@@ -148,6 +149,7 @@ export function SoftwareSurface({ onAskAna, program }: SoftwareSurfaceProps) {
           label="software lifecycle items"
           onRetry={live.refresh}
           emptyHint="Software requirements, design, test, and cybersecurity artifacts appear here once recorded."
+          regulation="Serves the IEC 62304 software lifecycle record"
         >
           {(items) => (
             <div className="ctable">

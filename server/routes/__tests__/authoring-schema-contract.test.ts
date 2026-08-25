@@ -27,6 +27,7 @@ import path from 'node:path';
 // keeps this contract honest about the schema that ships.
 const CANONICAL_MIGRATIONS = [
   'db/migrations/20260725_authoring_document_loop_tables.sql',
+  'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
   'db/migrations/20260725_authoring_audit_trail.sql',
   'db/migrations/20260725_authoring_signatures_and_workflow.sql',
   'db/migrations/20260725_authoring_signature_freeze_binding.sql',

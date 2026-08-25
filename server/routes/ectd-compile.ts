@@ -1,21 +1,41 @@
 /**
  * eCTD Compile API Routes
  *
- * Provides endpoints for compiling eCTD 4.0 submission packages from
- * the INDWorkspace. Integrates with ectdService for backbone generation,
- * validation, and compilation tracking.
+ * Provides endpoints for compiling eCTD submission packages from the
+ * INDWorkspace / program surfaces.
  *
  * Endpoints:
- *   POST /api/ectd-compile/:projectId/compile      — Full eCTD compilation
- *   GET  /api/ectd-compile/:projectId/status        — Compilation readiness
- *   GET  /api/ectd-compile/:projectId/history       — Compilation history
- *   POST /api/ectd-compile/:projectId/validate      — Pre-compile validation
+ *   POST /api/ectd-compile/:projectIdent/compile    — Full eCTD compilation
+ *   GET  /api/ectd-compile/:projectIdent/status     — Compilation readiness
+ *   GET  /api/ectd-compile/:projectIdent/history    — Compilation history
+ *   POST /api/ectd-compile/:projectIdent/validate   — Pre-compile validation
+ *
+ * `:projectIdent` accepts the legacy numeric projects.id (the key of the
+ * project_sections store) OR a program identifier — a regulatory_programs UUID
+ * or program code — resolved org-scoped, mirroring the eSTAR meta.ident contract
+ * (see server/routes/510k-estar-routes.ts resolveProjectAnchor).
+ *
+ * TWO COMPILE PATHS, one honest answer:
+ *   • SPINE-BACKED (canonical): a program ident whose program resolves to a
+ *     canonical `submissions` row (the same product/name/code identity
+ *     convention the ind-checklist-view-assembler and the C2C intake use) with
+ *     an eCTD sequence carrying placed `submission_leaves` compiles through the
+ *     REAL generator — `ectd/assemble-from-core` driving the regional packager
+ *     (ICH v3.2.2 backbone, MD5 manifest, genuine rendered PDF leaves). The
+ *     response's xmlBackbone is the package's real index.xml and
+ *     leafFilesRendered counts leaves actually materialized to disk.
+ *   • DRAFT BACKBONE (legacy store): a numeric ident (project_sections) or a
+ *     program with no linked spine compiles the honest draft backbone over
+ *     authored section text — every <ectd:leaf> carries rendered="false", and
+ *     submissionBlockers says exactly why no leaf file exists and where leaf
+ *     rendering actually runs.
  *
  * @module server/routes/ectd-compile
- * @compliance ICH M8, eCTD 4.0, FDA ESG
+ * @compliance ICH M8, ICH eCTD v3.2.2, FDA ESG
  */
 
 import { createHash } from 'node:crypto';
+import { promises as fs } from 'node:fs';
 
 import { Router, Request, Response } from 'express';
 import { pool } from '../db';
@@ -28,21 +48,34 @@ function sha256(input: string): string {
 }
 
 /**
- * Whether this platform can produce the leaf files an eCTD sequence is made of.
- *
- * It cannot. `generateECTD4Backbone` emits XML over `project_sections.content`;
- * no step here or downstream renders a PDF, writes a leaf, or assembles a
- * directory tree. Stated as a named constant rather than left implicit because
- * three separate places have to agree about it, and because the day rendering
- * lands, this is the one line that changes.
+ * Why a compile has no leaf files, stated from the ACTUAL state of the
+ * submission spine — not from a hardcoded capability flag. Leaf rendering IS
+ * implemented (ectd/assemble-from-core renders real PDF leaves from placed
+ * submission_leaves); what varies is whether THIS project is connected to it.
+ * Every message keeps the words "leaf files" so the surface's blocker panel and
+ * the pinned tests read consistently.
  */
-const LEAF_RENDERING_IMPLEMENTED = false;
+const NO_SPINE_LEAF_BLOCKER =
+  'No leaf files have been rendered for this compile: it is not linked to a canonical submission ' +
+  '(submissions → eCTD sequence) with placed documents, so this backbone describes authored ' +
+  'section content only and cannot be transmitted to an agency gateway. Leaf rendering runs from ' +
+  'the submission spine — create the program\'s submission and place approved documents into its ' +
+  'eCTD sequence.';
 
-const LEAF_RENDERING_BLOCKER =
-  'No leaf files have been rendered. This platform compiles the eCTD backbone over authored section content; it does not yet produce the PDF leaf files a sequence consists of, so the package cannot be transmitted to an agency gateway.';
+const NO_SEQUENCE_LEAF_BLOCKER =
+  'No leaf files have been rendered: the linked submission has no eCTD sequence yet, so there are ' +
+  'no placed documents to render and the package cannot be transmitted. Create a sequence and ' +
+  'place approved documents into it.';
+
+const NO_PLACED_LEAVES_BLOCKER =
+  'No leaf files have been rendered: the submission\'s eCTD sequence has no placed documents, so ' +
+  'the package cannot be transmitted. Place approved documents into the sequence to render real ' +
+  'PDF leaf files.';
 
 /**
- * What stands between this project and a transmissible submission.
+ * What stands between this project and a transmissible submission (draft-path
+ * and status-endpoint variant — the spine-backed compile computes its blockers
+ * from the actual assembly result instead).
  *
  * `submissionReady` previously meant "content validation raised no blocking
  * errors", and the surface rendered that as the words "Submission-ready" next to
@@ -54,14 +87,35 @@ const LEAF_RENDERING_BLOCKER =
  * Blockers are returned as text so the surface can say WHY rather than showing a
  * bare negative.
  */
-function submissionBlockers(contentErrors: string[]): string[] {
+function submissionBlockers(
+  contentErrors: string[],
+  anchor?: CompileAnchor,
+  spine?: SubmissionSpine | null,
+): string[] {
   const blockers: string[] = [];
+  const leavesPlaced = (spine?.sequence?.leafCount ?? 0) > 0;
+  if (anchor && anchor.numericProjectId === null && !leavesPlaced) {
+    blockers.push(PROGRAM_SECTION_STORE_BLOCKER);
+  }
   if (contentErrors.length > 0) {
     blockers.push(
       `${contentErrors.length} blocking content ${contentErrors.length === 1 ? 'issue' : 'issues'} must be resolved.`,
     );
   }
-  if (!LEAF_RENDERING_IMPLEMENTED) blockers.push(LEAF_RENDERING_BLOCKER);
+  // The leaf-rendering answer, from the spine's real state.
+  if (!spine) {
+    blockers.push(NO_SPINE_LEAF_BLOCKER);
+  } else if (!spine.sequence) {
+    blockers.push(NO_SEQUENCE_LEAF_BLOCKER);
+  } else if (spine.sequence.leafCount === 0) {
+    blockers.push(NO_PLACED_LEAVES_BLOCKER);
+  } else {
+    // Documents are placed; rendering + verification happen at compile time.
+    blockers.push(
+      `${spine.sequence.leafCount} document(s) are placed in the submission's eCTD sequence. ` +
+        'Run Compile to render the leaf files and verify the package before it can be considered submission-ready.',
+    );
+  }
   return blockers;
 }
 
@@ -85,12 +139,257 @@ function resolveOrgId(req: Request): number | null {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// PROJECT-IDENT RESOLUTION (numeric legacy id | program UUID | program code)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Why a program-spine project compiles against an empty section set. Stated once
+ * and returned verbatim as a blocker / validation finding so the caller is told,
+ * in so many words, why readiness is 0% — never left to infer it from silence.
+ */
+// Client-reaching copy: names the condition and the consequence, but no schema
+// object — table names must never reach a response body (BP-W0-5).
+const PROGRAM_SECTION_STORE_BLOCKER =
+  'This program has no linked section-tracking store: section tracking is keyed by the ' +
+  'legacy numeric project id and no numeric project row exists for this program, so no ' +
+  'authored sections are visible to the compiler (pending the document-identity contract).';
+
+interface CompileAnchor {
+  /** Legacy numeric projects.id when the ident was numeric — keys project_sections. */
+  numericProjectId: number | null;
+  /** Resolved regulatory_programs UUID when the ident named a program. */
+  programId: string | null;
+  programCode: string | null;
+  title: string | null;
+  /** Program product_name — one of the spine identity keys. */
+  productName: string | null;
+  /** Program type (ind/cta/nda/…) — maps to submissions.application_type. */
+  programType: string | null;
+  /** Stable human label used in compilation names + the history filter. */
+  label: string;
+}
+
+/**
+ * Resolve the route's `:projectIdent`, org-scoped, mirroring the eSTAR ident
+ * contract: numeric → the legacy project id (pass-through — every section query
+ * is already org-scoped), UUID → regulatory_programs.id, else →
+ * regulatory_programs.code. Returns null when nothing in this org matches — the
+ * caller must 404, never compile against an unresolved project.
+ */
+async function resolveCompileAnchor(ident: string, orgId: number): Promise<CompileAnchor | null> {
+  if (/^\d+$/.test(ident)) {
+    const numeric = parseInt(ident, 10);
+    if (!Number.isInteger(numeric) || numeric <= 0) return null;
+    return {
+      numericProjectId: numeric,
+      programId: null,
+      programCode: null,
+      title: null,
+      productName: null,
+      programType: null,
+      label: `Project ${numeric}`,
+    };
+  }
+  const byUuid = UUID_RE.test(ident);
+  try {
+    const result = await pool.query(
+      `SELECT id, code, name, product_name, program_type FROM regulatory_programs
+        WHERE ${byUuid ? 'id = $1' : 'code = $1'} AND organization_id = $2 AND deleted_at IS NULL
+        LIMIT 1`,
+      [ident, orgId],
+    );
+    const row = result.rows[0];
+    if (row) {
+      return {
+        numericProjectId: null,
+        programId: String(row.id),
+        programCode: row.code != null ? String(row.code) : null,
+        title: row.name != null ? String(row.name) : null,
+        productName: row.product_name != null ? String(row.product_name) : null,
+        programType: row.program_type != null ? String(row.program_type) : null,
+        label: `Program ${row.code ?? row.id}`,
+      };
+    }
+  } catch {
+    // A failed lookup is a non-match — never a guessed anchor.
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SUBMISSION SPINE RESOLUTION (program → canonical submissions → sequence)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Program types whose intake creates the canonical `submissions` row (slice 4)
+ * — the value space of submissions.application_type for drug programs. Mirrors
+ * DRUG_APPLICATION_TYPES in routes/c2c/projects.ts.
+ */
+const DRUG_APPLICATION_TYPES = new Set(['ind', 'cta', 'nda', 'bla', 'maa', 'jnda', 'anda']);
+
+interface SubmissionSpine {
+  submissionId: number;
+  applicationType: string;
+  /** Latest sequence, with its placed-leaf count; null when none exists yet. */
+  sequence: { id: number; sequenceNumber: string; region: string; leafCount: number } | null;
+}
+
+/**
+ * Resolve the program anchor's canonical submission spine, org-scoped, by the
+ * SAME identity convention the ind-checklist-view-assembler and the C2C intake
+ * use to link program ↔ submission: matching application type, and the
+ * program's product_name / name / code matching the submission's product_name
+ * or title (case-insensitive). Numeric legacy anchors have no program identity
+ * and therefore no spine. Fail-closed: any lookup failure is "no spine", never
+ * a guessed one.
+ */
+async function resolveSubmissionSpine(
+  anchor: CompileAnchor,
+  orgId: number,
+): Promise<SubmissionSpine | null> {
+  if (anchor.programId === null) return null;
+  const appType = (anchor.programType ?? '').trim().toLowerCase();
+  if (!DRUG_APPLICATION_TYPES.has(appType)) return null;
+  const identityKeys = [
+    ...new Set(
+      [anchor.productName, anchor.title, anchor.programCode]
+        .map((v) => (v ?? '').trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  ];
+  if (identityKeys.length === 0) return null;
+  try {
+    const subRes = await pool.query(
+      `SELECT id, application_type FROM submissions
+        WHERE organization_id = $1 AND deleted_at IS NULL
+          AND lower(application_type) = $2
+          AND (lower(coalesce(product_name, '')) = ANY($3) OR lower(title) = ANY($3))
+        ORDER BY updated_at DESC NULLS LAST, id DESC
+        LIMIT 1`,
+      [orgId, appType, identityKeys],
+    );
+    const sub = subRes.rows[0];
+    if (!sub) return null;
+    const submissionId = Number(sub.id);
+
+    const seqRes = await pool.query(
+      `SELECT id, sequence_number, region FROM ectd_sequences
+        WHERE submission_id = $1 AND organization_id = $2 AND deleted_at IS NULL
+        ORDER BY sequence_number DESC, id DESC
+        LIMIT 1`,
+      [submissionId, orgId],
+    );
+    const seq = seqRes.rows[0];
+    if (!seq) return { submissionId, applicationType: String(sub.application_type), sequence: null };
+
+    const leafRes = await pool.query(
+      `SELECT count(*)::int AS n FROM submission_leaves
+        WHERE sequence_id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [Number(seq.id), orgId],
+    );
+    return {
+      submissionId,
+      applicationType: String(sub.application_type),
+      sequence: {
+        id: Number(seq.id),
+        sequenceNumber: String(seq.sequence_number),
+        region: String(seq.region),
+        leafCount: Number(leafRes.rows[0]?.n ?? 0),
+      },
+    };
+  } catch {
+    // Store not provisioned / lookup failure → no spine (the draft path's
+    // blockers state exactly what is missing).
+    return null;
+  }
+}
+
+/**
+ * Shared route prologue: org from auth context (401), then the ident resolved
+ * org-scoped (404). Responds itself and returns null on failure so handlers
+ * fail closed with one line.
+ */
+async function anchorFromRequest(
+  req: Request,
+  res: Response,
+): Promise<{ orgId: number; anchor: CompileAnchor; ident: string } | null> {
+  const ident = String(req.params.projectIdent ?? '').trim();
+  if (!ident) {
+    res.status(400).json({ error: 'Valid project identifier required' });
+    return null;
+  }
+  const orgId = resolveOrgId(req);
+  if (!orgId) {
+    res.status(401).json({ error: 'Organization context required' });
+    return null;
+  }
+  const anchor = await resolveCompileAnchor(ident, orgId);
+  if (!anchor) {
+    res.status(404).json({ error: 'Project not found in your organization' });
+    return null;
+  }
+  return { orgId, anchor, ident };
+}
+
+/**
+ * Load the anchor's tracked sections. A program-spine anchor has NO
+ * project_sections store (integer FK — see PROGRAM_SECTION_STORE_BLOCKER), so it
+ * loads an honestly-empty set rather than someone else's rows or a fabricated
+ * one. `swallow` preserves each route's existing table-missing behavior.
+ */
+async function loadAnchorSections(
+  anchor: CompileAnchor,
+  orgId: number,
+  columns: string,
+  opts: { orderBy?: string; swallow?: boolean } = {},
+): Promise<any[]> {
+  if (anchor.numericProjectId === null) return [];
+  try {
+    const result = await pool.query(
+      `SELECT ${columns}
+       FROM project_sections
+       WHERE project_id = $1 AND organization_id = $2${opts.orderBy ? ` ORDER BY ${opts.orderBy}` : ''}`,
+      [anchor.numericProjectId, orgId],
+    );
+    return result.rows;
+  } catch (err) {
+    if (opts.swallow) return []; // table may not exist — honest empty
+    throw err;
+  }
+}
+
+/**
+ * Prepend the unlinked-section-store finding for program-spine anchors so the
+ * validation report itself names the real reason every required section reads
+ * as missing.
+ */
+function withAnchorFindings(results: ValidationResult[], anchor: CompileAnchor): ValidationResult[] {
+  if (anchor.numericProjectId !== null) return results;
+  return [
+    {
+      rule: 'SECTION_STORE_UNLINKED',
+      severity: 'error',
+      message: PROGRAM_SECTION_STORE_BLOCKER,
+      fix: 'Author sections under a legacy sectioned project, or wait for the program → section-store mapping (document-identity contract).',
+    },
+    ...results,
+  ];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface CompilationResult {
   id: string;
-  projectId: number;
+  /** Legacy numeric project id, or null when the ident named a program. */
+  projectId: number | null;
+  /** The ident the caller addressed (numeric id, program UUID, or code). */
+  projectIdent: string;
+  /** Resolved regulatory_programs UUID for program-spine idents. */
+  programId: string | null;
   status: 'pending' | 'compiling' | 'validating' | 'completed' | 'failed';
   startedAt: string;
   completedAt?: string;
@@ -103,7 +402,8 @@ interface CompilationResult {
   submissionReady: boolean;
   /** Why not, in the caller's words. Empty exactly when submissionReady. */
   submissionBlockers: string[];
-  /** Leaf files actually written. Omitted once rendering exists and reports itself. */
+  /** Leaf files actually rendered to disk: the materialized count on the
+   *  spine-backed compile, 0 on the draft-backbone path. */
   leafFilesRendered?: number;
   errors: string[];
   warnings: string[];
@@ -165,12 +465,15 @@ const ECTD_MODULE_DEFS: Record<string, { name: string; requiredSections: string[
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// POST /:projectId/compile — Full eCTD compilation
+// POST /:projectIdent/compile — Full eCTD compilation
 // ═══════════════════════════════════════════════════════════════════════════════
 
-router.post('/:projectId/compile', async (req: Request, res: Response) => {
-  const projectId = parseInt(String(req.params.projectId), 10);
-  if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
+router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
+  // Org from auth context, then the ident resolved org-scoped (404 on a miss) —
+  // never compile against an unresolved project.
+  const resolved = await anchorFromRequest(req, res);
+  if (!resolved) return;
+  const { orgId, anchor, ident } = resolved;
 
   try {
     const { modules: targetModules, submissionType = 'initial', region = 'FDA' } = req.body;
@@ -178,11 +481,24 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
       ? new Set(targetModules.map((m: string) => String(m).toLowerCase()))
       : null;
 
-    // Derive org from auth context
-    const orgId = resolveOrgId(req);
-    if (!orgId) {
-      return res.status(401).json({ error: 'Organization context required' });
+    // 0. CANONICAL PATH: a program whose submission spine carries placed leaves
+    //    compiles through the real generator (assemble-from-core → regional
+    //    packager) — genuine rendered PDF leaves, real index.xml, real MD5s.
+    const spine = await resolveSubmissionSpine(anchor, orgId);
+    if (spine?.sequence && spine.sequence.leafCount > 0) {
+      return await compileFromSpine(req, res, {
+        orgId,
+        anchor,
+        ident,
+        spine,
+        submissionType: String(submissionType),
+        moduleFilter,
+      });
     }
+
+    // DRAFT-BACKBONE PATH (legacy section store, or a spine with nothing
+    // placed): compiles the honest draft backbone; the blockers name the real
+    // reason no leaf file exists.
 
     // 1. Gather all project sections from DB.
     //
@@ -192,19 +508,18 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
     // organization's sections just by guessing a numeric project id.
     // `project_sections.organization_id` is NOT NULL (see
     // db/migrations/20260220_ind_section_tracking.sql), so this cannot
-    // legitimately exclude rows that belong to the caller.
-    const sectionsResult = await pool.query(
-      `SELECT section_code, title, status, content, word_count, assigned_to, module,
-              required, updated_at
-       FROM project_sections
-       WHERE project_id = $1 AND organization_id = $2
-       ORDER BY section_code`,
-      [projectId, Number(orgId)]
+    // legitimately exclude rows that belong to the caller. A program-spine
+    // ident loads an honestly-empty set (no linked section store).
+    const sections = await loadAnchorSections(
+      anchor,
+      orgId,
+      `section_code, title, status, content, word_count, assigned_to, module,
+              required, updated_at`,
+      { orderBy: 'section_code' },
     );
-    const sections = sectionsResult.rows;
 
     // 2. Run pre-compile validation
-    const validationResults = runPreCompileValidation(sections, region);
+    const validationResults = withAnchorFindings(runPreCompileValidation(sections, region), anchor);
     const hasBlockingErrors = validationResults.some(v => v.severity === 'error');
 
     // 3. Build module compilation status
@@ -248,9 +563,14 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
         };
       });
 
-    // 4. Generate eCTD 4.0 XML backbone
+    // 4. Generate eCTD 4.0 XML backbone. The application reference is the
+    //    recorded identity we actually hold: the legacy numeric id (unchanged),
+    //    or the program's real recorded code — never an invented number.
     const xmlBackbone = generateECTD4Backbone({
-      projectId,
+      applicationRef:
+        anchor.numericProjectId !== null
+          ? `IND-${anchor.numericProjectId}`
+          : anchor.programCode ?? anchor.programId ?? ident,
       submissionType,
       region,
       modules: moduleStatuses,
@@ -258,7 +578,7 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
     });
 
     // 5. Record compilation
-    const compilationId = `comp_${Date.now()}_${projectId}`;
+    const compilationId = `comp_${Date.now()}_${anchor.numericProjectId ?? anchor.programId}`;
     // This insert previously bound SIX values to FIVE placeholders with a
     // duplicated orgId in second position, so every remaining value landed one
     // column to the left: the org id was written as compilation_name, the name
@@ -267,7 +587,7 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
     // execute anyway: module_id and compiled_by were NOT NULL and unsupplied.
     // The catch below blamed a missing table, so the failure was invisible and
     // GET /:projectId/history was permanently empty. See ledger C-16.
-    const compilationName = `IND Compilation — Project ${projectId}`;
+    const compilationName = `IND Compilation — ${anchor.label}`;
     try {
       await pool.query(
         `INSERT INTO ectd_compilations
@@ -288,16 +608,18 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
       // than a failed request — but say what actually went wrong instead of
       // assuming the table is missing.
       console.warn(
-        `[eCTD Compile] could not record compilation for project ${projectId}: ${err?.message}`
+        `[eCTD Compile] could not record compilation for ${anchor.label}: ${err?.message}`
       );
     }
 
     const errors = validationResults.filter(v => v.severity === 'error').map(v => v.message);
-    const blockers = submissionBlockers(errors);
+    const blockers = submissionBlockers(errors, anchor, spine);
 
     const result: CompilationResult = {
       id: compilationId,
-      projectId,
+      projectId: anchor.numericProjectId,
+      projectIdent: ident,
+      programId: anchor.programId,
       // The BACKBONE compiled — that part did succeed, and the caller can
       // download it. Whether the package can be submitted is a separate
       // question, answered by submissionReady/submissionBlockers below.
@@ -307,16 +629,18 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
       modules: moduleStatuses,
       xmlBackbone,
       validationResults,
-      contentValidationPassed: !hasBlockingErrors,
+      contentValidationPassed: errors.length === 0,
       submissionReady: blockers.length === 0,
       submissionBlockers: blockers,
-      leafFilesRendered: LEAF_RENDERING_IMPLEMENTED ? undefined : 0,
+      // The draft path renders nothing to disk — 0 is the honest count. The
+      // spine-backed path reports the leaves it actually materialized.
+      leafFilesRendered: 0,
       errors,
       warnings: validationResults.filter(v => v.severity === 'warning').map(v => v.message),
     };
 
     console.log(
-      `[eCTD Compile] Project ${projectId}: ${result.status} | ` +
+      `[eCTD Compile] ${anchor.label}: ${result.status} | ` +
         `${moduleStatuses.filter(m => m.status === 'complete').length}/5 modules complete | ` +
         `${validationResults.filter(v => v.severity === 'error').length} errors, ` +
         `${validationResults.filter(v => v.severity === 'warning').length} warnings`
@@ -333,33 +657,339 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// GET /:projectId/status — Compilation readiness dashboard
+// SPINE-BACKED COMPILE (canonical assemble-from-core path)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-router.get('/:projectId/status', async (req: Request, res: Response) => {
-  const projectId = parseInt(String(req.params.projectId), 10);
-  if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
+/** Acting user id for audit attribution on the canonical assembler. */
+function resolveUserId(req: Request): number {
+  const user = (req as any).user;
+  const n = Number(user?.id ?? user?.userId);
+  return Number.isFinite(n) ? n : 0;
+}
 
-  const orgId = resolveOrgId(req);
-  if (!orgId) {
-    return res.status(401).json({ error: 'Organization context required' });
+/** Case-insensitive CTD-section prefix match (leaf '3.2.s' covers '3.2.S'). */
+function sectionMatches(sectionCode: unknown, requiredCode: string): boolean {
+  return String(sectionCode ?? '')
+    .trim()
+    .toLowerCase()
+    .startsWith(requiredCode.toLowerCase());
+}
+
+interface SpineLeafRow {
+  section_code: string | null;
+  title: string | null;
+  lifecycle_op: string | null;
+  document_table: string | null;
+  document_id: number | null;
+}
+
+/**
+ * Validation findings over the PLACED leaves of a sequence. `isMaterialized`
+ * is provided by the compile path (which knows what actually rendered); the
+ * validate endpoint omits it and speaks only about placement — it never claims
+ * a leaf rendered without having rendered it.
+ *
+ * A required section with no placed document is a blocking error for an
+ * INITIAL sequence (0000) and advisory for later sequences — lifecycle
+ * sequences legitimately carry only what changed.
+ */
+function leafPlacementFindings(
+  leaves: SpineLeafRow[],
+  opts: { initialSequence: boolean; isMaterialized?: (l: SpineLeafRow) => boolean },
+): ValidationResult[] {
+  const results: ValidationResult[] = [];
+  const missingSeverity: ValidationResult['severity'] = opts.initialSequence ? 'error' : 'warning';
+  const allRequired = Object.values(ECTD_MODULE_DEFS).flatMap((m) => m.requiredSections);
+
+  for (const reqCode of allRequired) {
+    const found = leaves.find((l) => sectionMatches(l.section_code, reqCode));
+    if (!found) {
+      results.push({
+        rule: 'REQUIRED_SECTION_UNPLACED',
+        severity: missingSeverity,
+        message: `No document is placed at required section ${reqCode}${opts.initialSequence ? '' : ' (advisory: lifecycle sequences may carry only changed sections)'}`,
+        sectionCode: reqCode,
+        fix: `Place an approved document at section ${reqCode} in the submission's eCTD sequence`,
+      });
+    } else if (opts.isMaterialized && !opts.isMaterialized(found)) {
+      results.push({
+        rule: 'LEAF_SOURCE_UNRESOLVED',
+        severity: 'error',
+        message: `Section ${reqCode} (${found.title ?? found.section_code}) is placed but its source document could not be materialized into a leaf file`,
+        sectionCode: reqCode,
+        fix: 'Re-point the leaf at a renderable document (coauthor/unified) or upload the final PDF',
+      });
+    } else {
+      results.push({
+        rule: 'REQUIRED_SECTION_OK',
+        severity: 'info',
+        message: opts.isMaterialized
+          ? `Section ${reqCode} (${found.title ?? found.section_code}) is placed and rendered`
+          : `Section ${reqCode} (${found.title ?? found.section_code}) is placed`,
+        sectionCode: reqCode,
+      });
+    }
   }
 
-  try {
-    // Get project sections (tenant-scoped — readiness is tenant data)
-    let sections: any[] = [];
-    try {
-      const result = await pool.query(
-        `SELECT section_code, title, status, module, required,
-                word_count, updated_at
-         FROM project_sections WHERE project_id = $1 AND organization_id = $2
-         ORDER BY section_code`,
-        [projectId, orgId]
-      );
-      sections = result.rows;
-    } catch {
-      // Table may not exist — return empty readiness
+  // Unrenderable placed leaves at non-required sections are still errors —
+  // an incomplete package must be visible, never silently dropped.
+  if (opts.isMaterialized) {
+    for (const l of leaves) {
+      if (
+        !opts.isMaterialized(l) &&
+        !allRequired.some((rc) => sectionMatches(l.section_code, rc))
+      ) {
+        results.push({
+          rule: 'LEAF_SOURCE_UNRESOLVED',
+          severity: 'error',
+          message: `Placed leaf ${l.section_code ?? '?'} (${l.title ?? 'untitled'}) could not be materialized into a leaf file`,
+          sectionCode: l.section_code ?? undefined,
+          fix: 'Re-point the leaf at a renderable document (coauthor/unified) or upload the final PDF',
+        });
+      }
     }
+  }
+
+  return results;
+}
+
+/** Module roll-up computed from the sequence's placed leaves. */
+function moduleStatusesFromLeaves(
+  leaves: SpineLeafRow[],
+  isMaterialized: (l: SpineLeafRow) => boolean,
+  moduleFilter: Set<string> | null,
+): ModuleCompilationStatus[] {
+  return Object.entries(ECTD_MODULE_DEFS)
+    .filter(([code]) => !moduleFilter || moduleFilter.has(code))
+    .map(([code, def]) => {
+      const digit = code.replace('m', '');
+      const moduleLeaves = leaves.filter((l) => sectionMatches(l.section_code, digit));
+      const completedRequired = def.requiredSections.filter((rs) =>
+        moduleLeaves.some((l) => sectionMatches(l.section_code, rs) && isMaterialized(l)),
+      );
+      return {
+        moduleCode: code,
+        moduleName: def.name,
+        totalSections: moduleLeaves.length,
+        completedSections: moduleLeaves.filter(isMaterialized).length,
+        requiredSections: def.requiredSections.length,
+        requiredCompleted: completedRequired.length,
+        status:
+          completedRequired.length === def.requiredSections.length
+            ? ('complete' as const)
+            : completedRequired.length > 0
+              ? ('partial' as const)
+              : ('missing' as const),
+        documents: moduleLeaves.map((l) => ({
+          sectionCode: String(l.section_code ?? ''),
+          title: String(l.title ?? l.section_code ?? ''),
+          status: isMaterialized(l) ? 'rendered' : 'unresolved-source',
+          hasContent: isMaterialized(l),
+          required: def.requiredSections.some((rs) => sectionMatches(l.section_code, rs)),
+        })),
+      };
+    });
+}
+
+/**
+ * Compile through the canonical generator: assemble the sequence's placed
+ * leaves into a REAL eCTD package (rendered PDF leaves, ICH v3.2.2 backbone,
+ * MD5 manifest), then answer with the same CompilationResult shape the surface
+ * already renders — xmlBackbone is the package's actual index.xml and
+ * leafFilesRendered the materialized count. An assembly refusal (path safety,
+ * packager validation) is surfaced as a structured `failed` compilation with
+ * the refusal text, never papered over and never a bare 500.
+ */
+async function compileFromSpine(
+  req: Request,
+  res: Response,
+  args: {
+    orgId: number;
+    anchor: CompileAnchor;
+    ident: string;
+    spine: SubmissionSpine;
+    submissionType: string;
+    moduleFilter: Set<string> | null;
+  },
+): Promise<void> {
+  const { orgId, anchor, ident, spine, submissionType, moduleFilter } = args;
+  const seq = spine.sequence!;
+  const startedAt = new Date().toISOString();
+
+  const leafRes = await pool.query(
+    `SELECT section_code, title, lifecycle_op, document_table, document_id
+       FROM submission_leaves
+      WHERE sequence_id = $1 AND organization_id = $2 AND deleted_at IS NULL
+      ORDER BY section_code`,
+    [seq.id, orgId],
+  );
+  const leaves = leafRes.rows as SpineLeafRow[];
+
+  // Canonical assembler (dynamic import keeps the draft-only path light and
+  // lets route tests that stub the pool avoid loading the drizzle stack).
+  const { assembleSequence } = await import('../services/ectd/assemble-from-core');
+
+  let xmlBackbone = '';
+  let materialized = 0;
+  let unresolvedKeys = new Set<string>();
+  let unresolvedCount = 0;
+  let dtdSelfContained: boolean | null = null;
+  let packageSha256: string | null = null;
+  let assembleFailure: string | null = null;
+
+  try {
+    const assembled = await assembleSequence({
+      sequenceId: seq.id,
+      organizationId: orgId,
+      userId: resolveUserId(req),
+      // Recorded identity only: the program's real code, else the neutral
+      // sequence handle — never an invented agency number.
+      applicationId: anchor.programCode ?? `SEQ-${seq.id}`,
+      sponsorId: `ORG-${orgId}`,
+      sponsorName: `Organization ${orgId}`,
+    });
+    try {
+      const buffer = await fs.readFile(assembled.bundle.path);
+      const JSZip = (await import('jszip')).default;
+      const zip = await JSZip.loadAsync(buffer);
+      xmlBackbone = (await zip.file('index.xml')?.async('string')) ?? '';
+      materialized = assembled.materialized;
+      unresolvedCount = assembled.unresolvedLeaves.length;
+      unresolvedKeys = new Set(
+        assembled.unresolvedLeaves.map((u) => `${u.documentTable ?? ''}:${u.documentId ?? ''}`),
+      );
+      dtdSelfContained = assembled.bundle.dtdStatus?.selfContained ?? null;
+      packageSha256 = assembled.bundle.sha256;
+    } finally {
+      await assembled.cleanup();
+    }
+  } catch (err) {
+    assembleFailure = err instanceof Error ? err.message : String(err);
+  }
+
+  const isMaterialized = (l: SpineLeafRow) =>
+    assembleFailure == null &&
+    !unresolvedKeys.has(`${l.document_table ?? ''}:${l.document_id ?? ''}`);
+
+  const initialSequence = seq.sequenceNumber === '0000';
+  const validationResults = leafPlacementFindings(leaves, { initialSequence, isMaterialized });
+  if (assembleFailure != null) {
+    validationResults.unshift({
+      rule: 'ASSEMBLY_REFUSED',
+      severity: 'error',
+      message: `eCTD assembly refused: ${assembleFailure}`,
+      fix: 'Resolve the refusal (leaf sources, path safety, packager gates) and compile again.',
+    });
+  }
+  const errors = validationResults.filter((v) => v.severity === 'error').map((v) => v.message);
+  // The compile STATUS reports whether the package assembled — the same
+  // separation the draft path pins ("the backbone DID compile"): findings and
+  // blockers answer submittability, `failed` means the assembly itself refused.
+  const compileStatus: CompilationResult['status'] = assembleFailure != null ? 'failed' : 'completed';
+  const moduleStatuses = moduleStatusesFromLeaves(leaves, isMaterialized, moduleFilter);
+
+  // Blockers computed from the REAL assembly outcome.
+  const blockers: string[] = [];
+  if (assembleFailure != null) {
+    blockers.push(`eCTD assembly refused: ${assembleFailure}`);
+  } else {
+    if (unresolvedCount > 0) {
+      blockers.push(
+        `${unresolvedCount} placed document(s) could not be materialized into leaf files — the package is incomplete until their sources are renderable.`,
+      );
+    }
+    const missingRequired = validationResults.filter(
+      (v) => v.rule === 'REQUIRED_SECTION_UNPLACED' && v.severity === 'error',
+    ).length;
+    if (missingRequired > 0) {
+      blockers.push(
+        `${missingRequired} required section(s) have no placed document for this initial sequence.`,
+      );
+    }
+    if (dtdSelfContained === false) {
+      blockers.push(
+        'The package references eCTD DTDs that are not bundled under util/dtd/ — it is not self-contained. Vendor the ICH/regional DTDs before transmission.',
+      );
+    }
+  }
+
+  // Record the compilation (real backbone + recorded sequence identity, so this
+  // path feeds the sequence-continuity gate). Non-blocking, same as the draft
+  // path — a compilation the caller can download is worth more than a failed
+  // request.
+  const compilationName = `IND Compilation — ${anchor.label}`;
+  try {
+    await pool.query(
+      `INSERT INTO ectd_compilations
+         (organization_id, compilation_name, compilation_type, status,
+          xml_backbone, validation_results, compiled_at, version,
+          application_number, sequence_number)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW(), '1.0', $7, $8)`,
+      [
+        orgId,
+        compilationName,
+        submissionType,
+        compileStatus,
+        xmlBackbone,
+        JSON.stringify(validationResults),
+        anchor.programCode ?? `SEQ-${seq.id}`,
+        seq.sequenceNumber,
+      ],
+    );
+  } catch (err: any) {
+    console.warn(
+      `[eCTD Compile] could not record spine compilation for ${anchor.label}: ${err?.message}`,
+    );
+  }
+
+  const result: CompilationResult = {
+    id: `comp_${Date.now()}_${anchor.programId ?? anchor.numericProjectId}`,
+    projectId: anchor.numericProjectId,
+    projectIdent: ident,
+    programId: anchor.programId,
+    status: compileStatus,
+    startedAt,
+    completedAt: new Date().toISOString(),
+    modules: moduleStatuses,
+    xmlBackbone: xmlBackbone || undefined,
+    validationResults,
+    contentValidationPassed: errors.length === 0,
+    submissionReady: blockers.length === 0,
+    submissionBlockers: blockers,
+    leafFilesRendered: materialized,
+    errors,
+    warnings: validationResults.filter((v) => v.severity === 'warning').map((v) => v.message),
+  };
+
+  console.log(
+    `[eCTD Compile] ${anchor.label}: spine-backed ${result.status} | sequence ${seq.sequenceNumber} | ` +
+      `${materialized} leaf file(s) rendered, ${unresolvedCount} unresolved` +
+      (packageSha256 ? ` | sha256 ${packageSha256.slice(0, 12)}…` : ''),
+  );
+
+  res.json(result);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /:projectIdent/status — Compilation readiness dashboard
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/:projectIdent/status', async (req: Request, res: Response) => {
+  const resolved = await anchorFromRequest(req, res);
+  if (!resolved) return;
+  const { orgId, anchor, ident } = resolved;
+
+  try {
+    // Get project sections (tenant-scoped — readiness is tenant data). A missing
+    // table returns empty readiness; a program-spine ident loads an honestly-
+    // empty set (no linked section store — see PROGRAM_SECTION_STORE_BLOCKER).
+    const sections = await loadAnchorSections(
+      anchor,
+      orgId,
+      `section_code, title, status, module, required,
+                word_count, updated_at`,
+      { orderBy: 'section_code', swallow: true },
+    );
 
     // Module-level readiness
     const moduleReadiness = Object.entries(ECTD_MODULE_DEFS).map(([code, def]) => {
@@ -390,8 +1020,14 @@ router.get('/:projectId/status', async (req: Request, res: Response) => {
     const totalCompleted = moduleReadiness.reduce((a, m) => a + m.completedRequired, 0);
     const overallPct = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
 
+    // The leaf-rendering half of readiness comes from the submission spine's
+    // REAL state (documents placed into the sequence), not a capability flag.
+    const spine = await resolveSubmissionSpine(anchor, orgId);
+
     res.json({
-      projectId,
+      projectId: anchor.numericProjectId,
+      projectIdent: ident,
+      programId: anchor.programId,
       overallReadiness: overallPct,
       // Content completeness — every required section approved/locked/final.
       // This is what `submissionReady` used to report, and it is a real signal;
@@ -399,11 +1035,12 @@ router.get('/:projectId/status', async (req: Request, res: Response) => {
       contentComplete: overallPct === 100,
       // Readiness to TRANSMIT. Complete section text over a package with no leaf
       // files is not a submission, and the surface renders this field as the
-      // words "submission-ready" beside a download button.
-      submissionReady: overallPct === 100 && submissionBlockers([]).length === 0,
+      // words "submission-ready" beside a download button. Verification of leaf
+      // rendering happens at compile time, so status never claims it.
+      submissionReady: overallPct === 100 && submissionBlockers([], anchor, spine).length === 0,
       submissionBlockers: overallPct === 100
-        ? submissionBlockers([])
-        : ['Required sections are not all complete.', ...submissionBlockers([])],
+        ? submissionBlockers([], anchor, spine)
+        : ['Required sections are not all complete.', ...submissionBlockers([], anchor, spine)],
       modules: moduleReadiness,
       totalSections: sections.length,
       totalRequired,
@@ -425,20 +1062,16 @@ router.get('/:projectId/status', async (req: Request, res: Response) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// GET /:projectId/history — Compilation history
+// GET /:projectIdent/history — Compilation history
 // ═══════════════════════════════════════════════════════════════════════════════
 
-router.get('/:projectId/history', async (req: Request, res: Response) => {
-  const projectId = parseInt(String(req.params.projectId), 10);
-  if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
-
+router.get('/:projectIdent/history', async (req: Request, res: Response) => {
   // Compilation history is tenant data. The name-LIKE filter alone matched every
   // organization's compilations for the same project number, so one tenant could
   // read another's submission history. See ledger C-16.
-  const orgId = resolveOrgId(req);
-  if (!orgId) {
-    return res.status(401).json({ error: 'Organization context required' });
-  }
+  const resolved = await anchorFromRequest(req, res);
+  if (!resolved) return;
+  const { orgId, anchor, ident } = resolved;
 
   try {
     let compilations: any[] = [];
@@ -450,14 +1083,14 @@ router.get('/:projectId/history', async (req: Request, res: Response) => {
          WHERE organization_id = $1 AND compilation_name LIKE $2
          ORDER BY created_at DESC
          LIMIT 20`,
-        [orgId, `%Project ${projectId}%`]
+        [orgId, `%${anchor.label}%`]
       );
       compilations = result.rows;
     } catch (err: any) {
-      console.warn(`[eCTD History] query failed for project ${projectId}: ${err?.message}`);
+      console.warn(`[eCTD History] query failed for ${anchor.label}: ${err?.message}`);
     }
 
-    res.json({ projectId, compilations });
+    res.json({ projectId: anchor.numericProjectId, projectIdent: ident, programId: anchor.programId, compilations });
   } catch (error: any) {
     console.error('[eCTD History] Error:', error);
     res.status(500).json({ error: 'Failed to get compilation history', message: error.message });
@@ -465,40 +1098,60 @@ router.get('/:projectId/history', async (req: Request, res: Response) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// POST /:projectId/validate — Pre-compile validation only
+// POST /:projectIdent/validate — Pre-compile validation only
 // ═══════════════════════════════════════════════════════════════════════════════
 
-router.post('/:projectId/validate', async (req: Request, res: Response) => {
-  const projectId = parseInt(String(req.params.projectId), 10);
-  if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
-
-  const orgId = resolveOrgId(req);
-  if (!orgId) {
-    return res.status(401).json({ error: 'Organization context required' });
-  }
+router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
+  const resolved = await anchorFromRequest(req, res);
+  if (!resolved) return;
+  const { orgId, anchor, ident } = resolved;
 
   try {
     const { region = 'FDA' } = req.body;
 
-    let sections: any[] = [];
-    try {
-      const result = await pool.query(
-        `SELECT section_code, title, status, content, word_count, module, required
-         FROM project_sections WHERE project_id = $1 AND organization_id = $2`,
-        [projectId, orgId]
+    // Spine-backed programs validate against their PLACED LEAVES — the store
+    // the canonical compile actually assembles — not the (empty) legacy section
+    // store. Placement-only findings here: rendering is only claimed by the
+    // compile, which performs it.
+    const spine = await resolveSubmissionSpine(anchor, orgId);
+    let results: ValidationResult[];
+    if (spine?.sequence && spine.sequence.leafCount > 0) {
+      const leafRes = await pool.query(
+        `SELECT section_code, title, lifecycle_op, document_table, document_id
+           FROM submission_leaves
+          WHERE sequence_id = $1 AND organization_id = $2 AND deleted_at IS NULL
+          ORDER BY section_code`,
+        [spine.sequence.id, orgId],
       );
-      sections = result.rows;
-    } catch {
-      // Table may not exist
+      results = [
+        {
+          rule: 'SUBMISSION_SPINE_LINKED',
+          severity: 'info',
+          message:
+            `Validating the ${spine.sequence.leafCount} document(s) placed in the linked submission's ` +
+            `eCTD sequence ${spine.sequence.sequenceNumber}; compile assembles and renders them into real leaf files.`,
+        },
+        ...leafPlacementFindings(leafRes.rows as SpineLeafRow[], {
+          initialSequence: spine.sequence.sequenceNumber === '0000',
+        }),
+      ];
+    } else {
+      const sections = await loadAnchorSections(
+        anchor,
+        orgId,
+        `section_code, title, status, content, word_count, module, required`,
+        { swallow: true },
+      );
+      results = withAnchorFindings(runPreCompileValidation(sections, region), anchor);
     }
-
-    const results = runPreCompileValidation(sections, region);
     const passCount = results.filter(r => r.severity === 'info').length;
     const warnCount = results.filter(r => r.severity === 'warning').length;
     const errorCount = results.filter(r => r.severity === 'error').length;
 
     res.json({
-      projectId,
+      projectId: anchor.numericProjectId,
+      projectIdent: ident,
+      programId: anchor.programId,
       valid: errorCount === 0,
       results,
       summary: { pass: passCount, warnings: warnCount, errors: errorCount },
@@ -635,18 +1288,22 @@ function runPreCompileValidation(sections: any[], region: string): ValidationRes
  *   • an envelope `package-state` of `draft-backbone`, so a consumer knows this
  *     is not a transmissible sequence before it reads a single module.
  *
- * When leaf rendering is implemented, the leaf element gains its path and a
- * checksum computed over the rendered bytes, and `package-state` becomes
- * `sequence`. Until then the document says so.
+ * Real leaf rendering exists — on the SPINE-BACKED compile path, which
+ * assembles placed submission_leaves into a genuine package whose index.xml
+ * (returned as xmlBackbone there) carries real paths and checksums. THIS
+ * builder serves only the legacy section store, which renders nothing, and the
+ * document keeps saying exactly that.
  */
 function generateECTD4Backbone(opts: {
-  projectId: number;
+  /** Recorded application identity: `IND-<numeric id>` (legacy) or the program's
+   *  real recorded code — never an invented number. */
+  applicationRef: string;
   submissionType: string;
   region: string;
   modules: ModuleCompilationStatus[];
   sections: any[];
 }): string {
-  const { projectId, submissionType, region, modules, sections } = opts;
+  const { applicationRef, submissionType, region, modules, sections } = opts;
   const timestamp = new Date().toISOString();
   const sequenceNumber = '0000';
 
@@ -709,13 +1366,14 @@ function generateECTD4Backbone(opts: {
            xmlns:xlink="http://www.w3.org/1999/xlink"
            version="4.0">
   <ectd:envelope>
-    <ectd:application-number>IND-${projectId}</ectd:application-number>
+    <ectd:application-number>${escapeXml(applicationRef)}</ectd:application-number>
     <ectd:sequence-number>${sequenceNumber}</ectd:sequence-number>
     <ectd:submission-type>${submissionType}</ectd:submission-type>
     <ectd:region>${region}</ectd:region>
     <ectd:generated-at>${timestamp}</ectd:generated-at>
     <ectd:generator>Concept2Cure v1.0</ectd:generator>
-    <!-- draft-backbone until leaf rendering exists; then: sequence -->
+    <!-- draft-backbone: this compile ran over the legacy section store. A real
+         sequence is produced by the spine-backed compile (placed leaves). -->
     <ectd:package-state>draft-backbone</ectd:package-state>
   </ectd:envelope>
   <ectd:modules>${moduleXml}

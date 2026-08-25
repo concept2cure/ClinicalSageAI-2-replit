@@ -14,6 +14,7 @@ import { protocolOptimizerService } from '../protocol-optimizer-service';
 import { analyzeText } from '../openai-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { powerTwoSampleMeans } from '../services/stats/assurance';
+import { csvRow } from '../utils/csv';
 
 const log = createScopedLogger('analytics-routes');
 
@@ -723,7 +724,9 @@ router.post('/demo-analysis', async (req, res) => {
     log.debug(`Analyzing protocol with session ID: ${session_id}`);
 
     // Create session directory if it doesn't exist
-    const sessionDir = path.join(process.cwd(), 'exports', session_id);
+    // basename: session_id arrives from the request and is a path segment here.
+      // Express decodes %2F, so `..%2F..%2F` reaches this as real traversal.
+      const sessionDir = path.join(process.cwd(), 'exports', path.basename(String(session_id)));
     if (!fs.existsSync(sessionDir)) {
       fs.mkdirSync(sessionDir, { recursive: true });
     }
@@ -1283,14 +1286,18 @@ router.get('/export', async (req, res) => {
         csvContent += `Average Endpoints,${reportData.averageEndpoints}\n`;
         csvContent += `Success Rate,${reportData.successRate}%\n\n`;
 
+        /* Indication names are built by ctgov-normalizer with
+           `conditions.join(', ')`, so every multi-condition study emitted three
+           fields under a two-column header and pushed the count into a phantom
+           column — HTTP 200, plausible-looking file, wrong data. */
         csvContent += 'Indication,Count\n';
         Object.entries(reportData.reportsByIndication).forEach(([indication, count]) => {
-          csvContent += `${indication},${count}\n`;
+          csvContent += csvRow([indication, count]) + '\n';
         });
 
         csvContent += '\nPhase,Count\n';
         Object.entries(reportData.reportsByPhase).forEach(([phase, count]) => {
-          csvContent += `${phase},${count}\n`;
+          csvContent += csvRow([phase, count]) + '\n';
         });
       } else if (type === 'predictive') {
         csvContent = 'Endpoint,Predicted Effect Size,Confidence Interval,Reliability\n';

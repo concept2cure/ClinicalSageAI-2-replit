@@ -7,7 +7,7 @@
  */
 
 import { db } from '../db';
-import { eq, desc, and, or, like, inArray, sql } from 'drizzle-orm';
+import { eq, and, or, ne, sql } from 'drizzle-orm';
 import * as schema from '../../shared/schema';
 import { generateUUID } from '../utils/id-generator';
 
@@ -158,7 +158,8 @@ class UnifiedTaskService {
     const dbInstance = this.getDb();
     const baseQuery = dbInstance.select().from(schema.unifiedTasks);
 
-    const conditions = [];
+    // Archived rows are invisible to every read model (soft delete, D24).
+    const conditions = [sql`${schema.unifiedTasks.deletedAt} IS NULL`];
     if (options?.organizationId) {
       conditions.push(eq(schema.unifiedTasks.organizationId, options.organizationId));
     }
@@ -179,14 +180,50 @@ class UnifiedTaskService {
     }
 
     const filteredQuery = conditions.length > 0 ? baseQuery.where(and(...conditions)) : baseQuery;
+    // Semantic priority order — `priority` is a text column, so desc() sorted
+    // it ALPHABETICALLY (medium → low → high → critical). Rank explicitly,
+    // then soonest-due first with undated work last (assessment D16).
     const orderedQuery = filteredQuery.orderBy(
-      desc(schema.unifiedTasks.priority),
-      desc(schema.unifiedTasks.dueDate)
+      sql`CASE ${schema.unifiedTasks.priority}
+            WHEN 'critical' THEN 0
+            WHEN 'urgent'   THEN 1
+            WHEN 'high'     THEN 2
+            WHEN 'medium'   THEN 3
+            WHEN 'low'      THEN 4
+            ELSE 5
+          END`,
+      sql`${schema.unifiedTasks.dueDate} asc nulls last`
     );
     const limitedQuery = options?.limit ? orderedQuery.limit(options.limit) : orderedQuery;
     const offsetQuery = options?.offset ? limitedQuery.offset(options.offset) : limitedQuery;
 
     return await offsetQuery;
+  }
+
+  /**
+   * One task by business key (taskId) or numeric primary key, scoped to an
+   * organization. Replaces the previous pattern of fetching up to 2000 rows
+   * and .find()-ing the one (assessment D17).
+   */
+  async getOrgTaskById(organizationId: number, id: string): Promise<schema.UnifiedTask | null> {
+    const dbInstance = this.getDb();
+    const numeric = Number(id);
+    const idMatch =
+      Number.isInteger(numeric) && numeric > 0 && String(numeric) === id
+        ? or(eq(schema.unifiedTasks.taskId, id), eq(schema.unifiedTasks.id, numeric))
+        : eq(schema.unifiedTasks.taskId, id);
+    const rows = await dbInstance
+      .select()
+      .from(schema.unifiedTasks)
+      .where(
+        and(
+          eq(schema.unifiedTasks.organizationId, organizationId),
+          sql`${schema.unifiedTasks.deletedAt} IS NULL`,
+          idMatch
+        )
+      )
+      .limit(1);
+    return rows[0] ?? null;
   }
 
   /**
@@ -228,11 +265,12 @@ class UnifiedTaskService {
       throw new Error('One or both tasks not found');
     }
 
-    // Create the link
+    // Create the link (tenant-stamped from the validated source task, D20)
     const link = await dbInstance
       .insert(schema.crossModuleTaskLinks)
       .values({
         linkId,
+        organizationId: sourceTask[0].organizationId,
         sourceTaskId: input.sourceTaskId,
         sourceModule: sourceTask[0].moduleType,
         targetTaskId: input.targetTaskId,
@@ -272,7 +310,10 @@ class UnifiedTaskService {
    */
   async getUnifiedDashboardMetrics(organizationId: number, projectId?: number) {
     const dbInstance = this.getDb();
-    const baseConditions = [eq(schema.unifiedTasks.organizationId, organizationId)];
+    const baseConditions = [
+      eq(schema.unifiedTasks.organizationId, organizationId),
+      sql`${schema.unifiedTasks.deletedAt} IS NULL`,
+    ];
     if (projectId) {
       baseConditions.push(eq(schema.unifiedTasks.projectId, projectId));
     }
@@ -323,7 +364,17 @@ class UnifiedTaskService {
         and(
           ...baseConditions,
           eq(schema.unifiedTasks.approvalRequired, true),
-          eq(schema.unifiedTasks.approvalStatus, 'pending')
+          // NULL-safe "not yet approved". `= 'pending'` was structurally zero
+          // (the column is nullable with no default and nothing writes that
+          // value), which permanently credited the approvals component of the
+          // submission-readiness score a full 100 and made the
+          // "N tasks awaiting approval" critical alert unreachable.
+          sql`${schema.unifiedTasks.approvalStatus} IS DISTINCT FROM 'approved'`,
+          // A cancelled task is not awaiting anyone's signature. Without this
+          // the NULL-safe predicate above counts cancelled gated rows as
+          // pending approvals for as long as they exist, which drags the
+          // submission-readiness score down and keeps a critical alert lit.
+          ne(schema.unifiedTasks.status, 'cancelled')
         )
       );
 
@@ -705,9 +756,42 @@ class UnifiedTaskService {
   }
 
   /**
-   * Update task status
+   * Update task status.
+   *
+   * The unblock cascade is NOT run here — callers run the shared, org-scoped
+   * cascade (services/tasking/task-side-effects.cascadeUnblockOnCompletion),
+   * which covers both linkage systems and notifies. The private version this
+   * method used to call matched blockedBy across EVERY organization.
+   *
+   * `opts.manifestation` is the verified §11.50 sign-off record for an
+   * approval-gated completion — appended to approvalHistory with the gate
+   * marked approved.
    */
-  async updateTaskStatus(taskId: string, status: string, userId?: number) {
+  async updateTaskStatus(
+    taskId: string,
+    status: string,
+    userId?: number,
+    opts?: {
+      manifestation?: {
+        signedById: number | null;
+        signedByName: string;
+        meaning: string;
+        reason: string;
+        signedAt: string;
+        method: string;
+      } | null;
+      /** Tenant of the caller. ANDed into the WHERE as defence in depth. */
+      organizationId?: number;
+      /**
+       * Status the caller read before deciding this transition was legal.
+       * Supplied => the UPDATE is a compare-and-set: it matches only while the
+       * row still holds that status, so two concurrent transitions cannot both
+       * commit. Returns undefined when the race is lost, which the caller must
+       * treat as "nothing happened" and NOT audit.
+       */
+      expectedStatus?: string;
+    }
+  ) {
     const dbInstance = this.getDb();
     const updates: any = { status, updatedAt: new Date() };
 
@@ -717,56 +801,51 @@ class UnifiedTaskService {
       updates.progress = 100;
     }
 
+    // Reopening a completed task retires its signature. The manifestation in
+    // approvalHistory attests to the record as it stood at first completion;
+    // once the task is reopened and edited that attestation is stale, so the
+    // gate must close again. Leaving approvalStatus='approved' let a signed
+    // task be reopened, changed, and re-completed forever with no new PIN,
+    // meaning or reason — and rendered "approved" while it sat in progress.
+    // completedAt is cleared for the same reason (the sibling route does this;
+    // this path did not).
+    if (opts?.expectedStatus === 'completed' && status !== 'completed') {
+      updates.completedAt = null;
+      updates.approvalStatus = 'pending';
+    }
+
     if (userId) {
       updates.lastModifiedBy = userId;
+    }
+
+    // Appended in the UPDATE itself rather than read-then-written: two
+    // concurrent sign-offs each reading the same prior array would write
+    // [...same, mine] and silently drop one verified §11.50 manifestation
+    // while its ledger entry persisted. approval_history is `json`, so the
+    // concat casts through jsonb and back. Set AFTER the reopen branch so an
+    // actual signature always wins over the reset.
+    if (opts?.manifestation) {
+      updates.approvalStatus = 'approved';
+      updates.approvalHistory = sql`(COALESCE(${schema.unifiedTasks.approvalHistory}, '[]'::json)::jsonb || ${JSON.stringify([opts.manifestation])}::jsonb)::json`;
     }
 
     const result = await dbInstance
       .update(schema.unifiedTasks)
       .set(updates)
-      .where(eq(schema.unifiedTasks.taskId, taskId))
+      .where(
+        and(
+          eq(schema.unifiedTasks.taskId, taskId),
+          ...(opts?.organizationId !== undefined
+            ? [eq(schema.unifiedTasks.organizationId, opts.organizationId)]
+            : []),
+          ...(opts?.expectedStatus !== undefined
+            ? [eq(schema.unifiedTasks.status, opts.expectedStatus)]
+            : [])
+        )
+      )
       .returning();
 
-    // Check for dependent tasks to update
-    if (status === 'completed') {
-      await this.updateDependentTasks(taskId);
-    }
-
     return result[0];
-  }
-
-  private async updateDependentTasks(completedTaskId: string) {
-    const dbInstance = this.getDb();
-    // Find tasks blocked by this one
-    const blockedTasks = await dbInstance
-      .select()
-      .from(schema.unifiedTasks)
-      .where(sql`${completedTaskId} = ANY(${schema.unifiedTasks.blockedBy})`);
-
-    for (const task of blockedTasks) {
-      // Remove from blockedBy array
-      const newBlockedBy = task.blockedBy?.filter(id => id !== completedTaskId) || [];
-
-      // If no more blockers, update status to in-progress
-      if (newBlockedBy.length === 0 && task.status === 'blocked') {
-        await dbInstance
-          .update(schema.unifiedTasks)
-          .set({
-            blockedBy: newBlockedBy,
-            status: 'in-progress',
-            updatedAt: new Date(),
-          })
-          .where(eq(schema.unifiedTasks.taskId, task.taskId));
-      } else {
-        await dbInstance
-          .update(schema.unifiedTasks)
-          .set({
-            blockedBy: newBlockedBy,
-            updatedAt: new Date(),
-          })
-          .where(eq(schema.unifiedTasks.taskId, task.taskId));
-      }
-    }
   }
 }
 

@@ -22,6 +22,8 @@
  *     throw), so one bad tool never aborts the conversation.
  */
 
+import { stableStringify } from '../../../shared/canonical-json.js';
+
 export interface ToolCall {
   id: string;
   name: string;
@@ -155,13 +157,13 @@ export interface AgenticLoopResult {
   extendedRounds: number;
 }
 
-/** Stable key for a tool call so reordered input keys still compare equal. */
+/**
+ * Stable key for a tool call so reordered input keys still compare equal.
+ * In-process dedup only — never persisted, so it uses the shared canonicalizer
+ * directly with no version concern (docs/CANONICALIZATION_MIGRATION_2026-08.md).
+ */
 function callKey(call: ToolCall): string {
-  const input = call.input ?? {};
-  const keys = Object.keys(input).sort();
-  const norm: Record<string, unknown> = {};
-  for (const k of keys) norm[k] = (input as Record<string, unknown>)[k];
-  return `${call.name}|${JSON.stringify(norm)}`;
+  return `${call.name}|${stableStringify(call.input ?? {})}`;
 }
 
 /**

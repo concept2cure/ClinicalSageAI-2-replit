@@ -10,6 +10,7 @@ import type { Program } from '../data/programs';
 import { useProgramExtras } from '../hooks/useProgramExtras';
 import { PathwayPanes } from './pathway/PathwayPanes';
 import { EstarFilingPanel } from './EstarFilingPanel';
+import type { EditorSectionRef } from '../../v2/editorTarget';
 
 export interface PmaSurfaceProps {
   /** Active PMA program from App.tsx. When null, the surface renders the
@@ -17,7 +18,8 @@ export interface PmaSurfaceProps {
       program is selected). */
   program: Program | null;
   onAskAna: (text: string) => void;
-  onOpenEditor?: () => void;
+  /** Open the one document editor; a section ref deep-links to that section. */
+  onOpenEditor?: (section?: EditorSectionRef) => void;
 }
 
 /* Derive per-phase status + pct from the active program's stageIdx +
@@ -84,7 +86,10 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="section-more" onClick={onOpenEditor}>Open module editor {I.right}</button>
+          {/* No section named — deliberately `()`, not the click event. Passing
+              the handler bare would hand the MouseEvent to the editor channel
+              as though it were a section ref. */}
+          <button className="section-more" onClick={() => onOpenEditor?.()}>Open module editor {I.right}</button>
         </div>
       </div>
 

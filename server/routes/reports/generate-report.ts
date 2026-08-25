@@ -218,7 +218,9 @@ router.get('/download/:persona/:filename', (req, res) => {
     }
 
     // Construct file path
-    const filePath = path.join(EXAMPLE_REPORTS_PATH, persona, filename);
+    // basename on filename: `persona` is validated against SUPPORTED_PERSONAS
+      // above, but `filename` is unconstrained request input.
+      const filePath = path.join(EXAMPLE_REPORTS_PATH, persona, path.basename(filename));
 
     // Check if file exists
     if (!fs.existsSync(filePath)) {

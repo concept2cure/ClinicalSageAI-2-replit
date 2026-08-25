@@ -9,6 +9,7 @@
  * Per-program decisions live in `standards_applicability` (new).
  */
 
+import { isDeviceFamily, isIvdFamily } from '../../../shared/constants/domain/product-types.js';
 import { eq, inArray } from 'drizzle-orm';
 
 import { db } from '../../db';
@@ -67,15 +68,33 @@ interface RuleResult {
 
 type Rule = (std: Standard, profile: ProgramProfile) => RuleResult | null;
 
+/**
+ * Does this standard's `appliesTo` cover the program's product class?
+ *
+ * Family membership, not string equality. `samd` and `cdx` are stored product
+ * types in their own right, and matching them literally is not enough: software
+ * as a medical device IS a device, so ISO 13485 and ISO 14971 apply to it, and a
+ * companion diagnostic IS an IVD, so the IVD standards apply to it.
+ *
+ * Getting this wrong is not a fallthrough — it is a confident wrong answer.
+ * `assessProgram` stamps every standard `productMatches` rejects as
+ * `does_not_apply` at 0.7 confidence, with the rationale "applies_to does not
+ * include this program's product type". A SaMD program would have been told, in
+ * writing and with a confidence score, that ISO 14971 does not apply to it.
+ */
 const productMatches = (std: Standard, profile: ProgramProfile): boolean => {
   const appliesTo = (std.appliesTo ?? []) as string[];
   if (!appliesTo.length) return true; // unknown → don't filter
+  // Explicit flags first: they are overrides a caller set deliberately.
   if (profile.isIvd && appliesTo.includes('ivd')) return true;
   if (profile.isSoftware && appliesTo.includes('samd')) return true;
   if (profile.isAiMl && appliesTo.includes('ai_ml')) return true;
-  if (profile.productType === 'device' && appliesTo.includes('device')) return true;
   if (profile.productType === 'combination' && appliesTo.includes('combination')) return true;
-  if (profile.productType === 'ivd' && appliesTo.includes('ivd')) return true;
+  // `samd` matches BOTH the software tokens and the device tokens, because it
+  // is a device; `cdx` matches the IVD tokens, because it is an IVD.
+  if (profile.productType === 'samd' && appliesTo.includes('samd')) return true;
+  if (isIvdFamily(profile.productType) && appliesTo.includes('ivd')) return true;
+  if (isDeviceFamily(profile.productType) && appliesTo.includes('device')) return true;
   return false;
 };
 
@@ -332,7 +351,8 @@ export async function buildProgramProfile(
     deviceClass: program.deviceClass ?? null,
     primaryAgency: program.primaryAgency,
     targetAgencies: (program.targetAgencies ?? []) as string[],
-    isIvd: program.productType === 'ivd',
+    // A companion diagnostic is an IVD, so it must satisfy every IVD rule.
+    isIvd: isIvdFamily(program.productType),
     ...overrides,
   };
 }

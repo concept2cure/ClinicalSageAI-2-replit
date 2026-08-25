@@ -6,13 +6,21 @@
  *   • Save issues PATCH /api/authoring/sections/:id with the edited content and
  *     reports that a revision was recorded (auto-versioning is server-side)
  *   • a failed save is surfaced honestly and nothing is fabricated locally
+ *
+ * The canvas is the canonical RichSectionEditor (TipTap) — the textarea and
+ * DocCanvas it replaced are gone. Content assertions read the ProseMirror
+ * content element; edits are driven through the editor instance the content
+ * element carries (`dom.editor`), the same engine user keystrokes drive.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', () => ({ apiRequest }));
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+}));
 // The collab presence layer (AuthoringCollab) reads the auth identity; give it
 // a real-shaped user so the surface renders (it still joins no room here —
 // these tests set no C2C_PROJECT, so the collab layer honestly renders null).
@@ -20,10 +28,41 @@ vi.mock('@/services/portal/authService', () => ({
   useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
 }));
 
+
+/* jsdom implements no layout: ProseMirror's scroll-into-view (scheduled by
+   insertContent and selection changes) asks Ranges, Elements and text nodes
+   for client rects and crashes the worker when a node type lacks the method.
+   Stub the geometry to empty — scrolling is meaningless in jsdom anyway. */
+const emptyRects = function () { return [] as unknown as DOMRectList; };
+for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unknown as Array<Record<string, unknown>>) {
+  if (typeof proto.getClientRects !== 'function') proto.getClientRects = emptyRects;
+  if (typeof proto.getBoundingClientRect !== 'function') {
+    proto.getBoundingClientRect = function () {
+      return { top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0 } as DOMRect;
+    };
+  }
+}
+
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import type { Editor } from '@tiptap/core';
 
 function ok(payload: unknown) {
   return { ok: true, status: 200, json: async () => payload } as Response;
+}
+
+/** The canonical canvas's content element (ProseMirror mount point). */
+function canvasEl(): HTMLElement | null {
+  return document.querySelector<HTMLElement>('.rse-body .tiptap');
+}
+function canvasText(): string {
+  return (canvasEl()?.textContent ?? '').trim();
+}
+/** The live editor instance the content element carries — driving commands
+ *  through it exercises the same transaction pipeline as typing. */
+function canvasEditor(): Editor {
+  const el = canvasEl() as (HTMLElement & { editor?: Editor }) | null;
+  if (!el?.editor) throw new Error('editor not mounted');
+  return el.editor;
 }
 
 const DOCS = {
@@ -62,25 +101,30 @@ describe('DocumentAuthoring — real editable canvas', () => {
     expect((await screen.findAllByText('Nonclinical Overview')).length).toBeGreaterThan(0);
     // Auto-selected section's real content lands in the editor (not a fixture).
     await waitFor(() => {
-      const ta = screen.getByRole('textbox') as HTMLTextAreaElement;
-      expect(ta.value).toBe('The drug substance is a monoclonal antibody.');
+      expect(canvasText()).toBe('The drug substance is a monoclonal antibody.');
     });
+    // The canvas is the canonical editor, and it reads as a textbox.
+    expect(canvasEl()?.getAttribute('role')).toBe('textbox');
   });
 
   it('saves edited content via PATCH and reports that a revision was recorded', async () => {
     render(<DocumentAuthoring {...props()} />);
-    const ta = (await screen.findByRole('textbox')) as HTMLTextAreaElement;
-    await waitFor(() => expect(ta.value).toBe('The drug substance is a monoclonal antibody.'));
+    await waitFor(() => expect(canvasText()).toBe('The drug substance is a monoclonal antibody.'));
 
-    fireEvent.change(ta, { target: { value: 'Revised substance description.' } });
-    fireEvent.click(screen.getByRole('button', { name: /Save/i }));
+    canvasEditor().chain().focus().selectAll().insertContent('Revised substance description.').run();
+    await waitFor(() => expect(canvasText()).toBe('Revised substance description.'));
+    // The header Save button enables once the dirty state propagates.
+    const saveBtn = screen.getByRole('button', { name: /Save/i }) as HTMLButtonElement;
+    await waitFor(() => expect(saveBtn.disabled).toBe(false));
+    fireEvent.click(saveBtn);
 
-    // The write went to the real endpoint with the edited content.
+    // The write went to the real endpoint with the edited content (the store
+    // holds the editor's serialization — HTML — of exactly those words).
     await waitFor(() => {
       const patch = apiRequest.mock.calls.find((c) => c[0] === 'PATCH');
       expect(patch).toBeTruthy();
       expect(patch![1]).toBe('/api/authoring/sections/S1');
-      expect((patch![2] as any).content).toBe('Revised substance description.');
+      expect((patch![2] as any).content).toContain('Revised substance description.');
     });
     // Honest confirmation that a revision was recorded server-side.
     expect(await screen.findByText(/revision was recorded/i)).toBeTruthy();
@@ -97,14 +141,68 @@ describe('DocumentAuthoring — real editable canvas', () => {
     });
 
     render(<DocumentAuthoring {...props()} />);
-    const ta = (await screen.findByRole('textbox')) as HTMLTextAreaElement;
-    await waitFor(() => expect(ta.value.length).toBeGreaterThan(0));
+    await waitFor(() => expect(canvasText().length).toBeGreaterThan(0));
 
-    fireEvent.change(ta, { target: { value: 'My unsaved edit' } });
-    fireEvent.click(screen.getByRole('button', { name: /Save/i }));
+    canvasEditor().chain().focus().selectAll().insertContent('My unsaved edit').run();
+    await waitFor(() => expect(canvasText()).toBe('My unsaved edit'));
+    const saveBtn = screen.getByRole('button', { name: /Save/i }) as HTMLButtonElement;
+    await waitFor(() => expect(saveBtn.disabled).toBe(false));
+    fireEvent.click(saveBtn);
 
     expect(await screen.findByText(/Couldn’t save the section/i)).toBeTruthy();
     // The edit is preserved (not discarded, not replaced by a fake success).
-    expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe('My unsaved edit');
+    expect(canvasText()).toBe('My unsaved edit');
+    // And the canvas says so: not persisted, still on this device.
+    expect(await screen.findByText(/Save failed — kept on this device/i)).toBeTruthy();
+  });
+  it('moves the open section — server-validated reorder, tree redrawn from the canonical order', async () => {
+    /* order_index is what the export assembles by, and nothing could change
+       it before the reorder endpoint existed. This drives the real seam: the
+       swap goes up as the FULL permutation, and the tree redraws from the
+       canonical GET, never from a local echo. */
+    const S2 = {
+      id: 'S2', doc_id: 'D1', code: '3.2.S.2', title: 'Manufacture', content: 'Made carefully.',
+      order_index: 1, comment_count: 0, revision_count: 1, citation_count: 0,
+      updated_at: '2026-07-20T10:00:00Z',
+    };
+    const reorder = vi.fn();
+    let order = ['S1', 'S2'];
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && url.startsWith('/api/authoring/docs?')) {
+        return ok({ ...DOCS, documents: [{ ...DOCS.documents[0], section_count: 2 }] });
+      }
+      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') {
+        const byId: Record<string, unknown> = { S1: SECTIONS.sections[0], S2 };
+        return ok({
+          success: true,
+          sections: order.map((id, i) => ({ ...(byId[id] as object), order_index: i })),
+        });
+      }
+      if (method === 'POST' && url === '/api/authoring/docs/D1/sections/reorder') {
+        reorder(body);
+        order = (body as { section_ids: string[] }).section_ids;
+        return ok({ success: true, order });
+      }
+      return ok({ success: true, revisions: [], comments: [], sources: [] });
+    });
+
+    render(<DocumentAuthoring {...props()} />);
+    const down = await screen.findByRole('button', { name: 'Move 3.2.S.1 down' });
+    fireEvent.click(down);
+
+    await waitFor(() => expect(reorder).toHaveBeenCalledWith({ section_ids: ['S2', 'S1'] }));
+    // The tree now lists 3.2.S.2 before 3.2.S.1 — the server's order, refetched.
+    await waitFor(() => {
+      const codes = Array.from(document.querySelectorAll('.ed-tree-row .ed-num')).map(
+        (n) => n.textContent,
+      );
+      const a = codes.indexOf('3.2.S.2');
+      const b = codes.indexOf('3.2.S.1');
+      expect(a).toBeGreaterThan(-1);
+      expect(b).toBeGreaterThan(-1);
+      expect(a).toBeLessThan(b);
+    });
+    // The moved section stays open.
+    expect(document.querySelector('.ed-mast-num')?.textContent).toBe('3.2.S.1');
   });
 });

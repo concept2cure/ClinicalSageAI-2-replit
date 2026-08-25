@@ -28,7 +28,8 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { I } from '../icons';
-import { apiRequest } from '@/lib/queryClient';
+import { apiCall, apiErrorText } from '../apiCall';
+import { getAuthToken } from '@/utils/authToken';
 import { useAuth } from '@/services/portal/authService';
 
 interface RoomUser { userId: string; displayName?: string; email?: string; }
@@ -46,7 +47,10 @@ interface SectionLock {
 export interface AuthoringCollabProps {
   documentId: string;
   sectionId: string | null;
-  fireToast: (m: string) => void;
+  /* BP-W0-6: same erased tone as AuthoringFilingBar — a failed lock acquire or
+     takeover announced itself with the success tick. Lower stakes (editorial
+     concurrency, not a regulated state change) but the same defect. */
+  fireToast: (m: string, tone?: 'ok' | 'error') => void;
 }
 
 function initials(name: string): string {
@@ -72,11 +76,9 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
   const sectionParam = sectionId ? `?sectionId=${encodeURIComponent(sectionId)}` : '';
 
   const loadLocks = useCallback(async () => {
-    try {
-      const res = await apiRequest('GET', `/api/realtime-collab/locks/${encodeURIComponent(documentId)}`);
-      const body = await res.json().catch(() => null);
-      if (res.ok && Array.isArray(body?.data)) setLocks(body.data as SectionLock[]);
-    } catch { /* lock roster stays as-is; actions report their own errors */ }
+    const res = await apiCall<{ data?: SectionLock[] }>('GET', `/api/realtime-collab/locks/${encodeURIComponent(documentId)}`);
+    // Lock roster stays as-is on failure; actions report their own errors.
+    if (res.ok && Array.isArray(res.body?.data)) setLocks(res.body.data);
   }, [documentId]);
 
   // Join the section room; leave on unmount / section change. Without a
@@ -85,25 +87,35 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
     if (!projectId || !userId) { setJoined(false); setPeers([]); return; }
     let cancelled = false;
     void (async () => {
-      try {
-        const res = await apiRequest('POST', '/api/realtime-collab/rooms', {
-          documentId, projectId, sectionId: sectionId || undefined,
-        });
-        const body = await res.json().catch(() => null);
-        if (cancelled) return;
-        if (res.ok && body?.success) {
-          setJoined(true);
-          setPeers(Array.isArray(body?.data?.room?.connectedUsers) ? body.data.room.connectedUsers : []);
-        } else {
-          setJoined(false);
-        }
-      } catch { if (!cancelled) setJoined(false); }
+      const res = await apiCall<{ success?: boolean; data?: { room?: { connectedUsers?: RoomUser[] } } }>(
+        'POST', '/api/realtime-collab/rooms',
+        { documentId, projectId, sectionId: sectionId || undefined },
+      );
+      if (cancelled) return;
+      if (res.ok && res.body?.success) {
+        setJoined(true);
+        setPeers(Array.isArray(res.body.data?.room?.connectedUsers) ? res.body.data!.room!.connectedUsers! : []);
+      } else {
+        setJoined(false);
+      }
       void loadLocks();
     })();
     return () => {
       cancelled = true;
-      // Best-effort leave; the server also expires idle members.
-      void apiRequest('DELETE', `/api/realtime-collab/rooms/${encodeURIComponent(documentId)}/users/me${sectionParam}`).catch(() => {});
+      // Best-effort leave with keepalive so a navigation/tab-close actually
+      // reaches the server (a plain fetch is usually cancelled mid-unload —
+      // assessment D29). The server's idle sweep (90s TTL) is the backstop.
+      try {
+        const token = getAuthToken();
+        void fetch(`/api/realtime-collab/rooms/${encodeURIComponent(documentId)}/users/me${sectionParam}`, {
+          method: 'DELETE',
+          keepalive: true,
+          credentials: 'include',
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        }).catch(() => {});
+      } catch {
+        void apiCall('DELETE', `/api/realtime-collab/rooms/${encodeURIComponent(documentId)}/users/me${sectionParam}`);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documentId, sectionId, projectId, userId]);
@@ -117,54 +129,98 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
     if (!joined || !userId) return;
     let cancelled = false;
     const beat = async () => {
-      try {
-        const res = await apiRequest('PUT', `/api/realtime-collab/rooms/${encodeURIComponent(documentId)}/awareness`, {
-          sectionId: sectionId || undefined, focusedField: sectionId || null, isTyping: false,
-        });
-        const body = await res.json().catch(() => null);
-        if (!cancelled && res.ok && Array.isArray(body?.connectedUsers)) {
-          setPeers(body.connectedUsers as RoomUser[]);
-        }
-      } catch { /* roster keeps its last server value */ }
+      // A hidden tab does not claim presence — the server's idle sweep then
+      // ages it out honestly instead of a background tab looking "present".
+      if (typeof document !== 'undefined' && document.hidden) return;
+      const res = await apiCall<{ connectedUsers?: RoomUser[] }>(
+        'PUT', `/api/realtime-collab/rooms/${encodeURIComponent(documentId)}/awareness`,
+        { sectionId: sectionId || undefined, focusedField: sectionId || null, isTyping: false },
+      );
+      // Roster keeps its last server value on failure.
+      if (!cancelled && res.ok && Array.isArray(res.body?.connectedUsers)) {
+        setPeers(res.body.connectedUsers);
+      }
     };
     void beat();
     const t = setInterval(() => { void beat(); }, 20000);
-    return () => { cancelled = true; clearInterval(t); };
+    // Coming back to the tab re-claims presence immediately (the server
+    // re-joins an evicted member on heartbeat).
+    const onVis = () => { if (!document.hidden) void beat(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { cancelled = true; clearInterval(t); document.removeEventListener('visibilitychange', onVis); };
   }, [joined, userId, documentId, sectionId]);
 
   const myLock = locks.find((l) => l.mine === true && (l.sectionId ?? null) === (sectionId ?? null));
   const otherLock = locks.find((l) => l.mine !== true && (l.sectionId ?? null) === (sectionId ?? null));
 
+  // Two-step takeover of another author's lock (server audits it and notifies
+  // them). First click arms; second click within the window commits.
+  const [confirmTakeover, setConfirmTakeover] = useState(false);
+  // The reason the USER gives for taking someone else's lock. This was
+  // previously the constant 'Took over a stale section lock from the authoring
+  // canvas'. The server genuinely enforces this control —
+  // realtime-collab.ts rejects a takeover whose reason is under 3 characters,
+  // because it is recorded in the audit trail and the displaced author is shown
+  // it. Satisfying that check with the same canned sentence every time defeated
+  // a control the backend was correctly insisting on, and left every takeover
+  // in the ledger reading identically.
+  const [takeoverReason, setTakeoverReason] = useState('');
+  const takeoverReasonOk = takeoverReason.trim().length >= 3;
+  // No auto-disarm timer here any more: it would wipe a part-written reason.
+
+  const takeover = useCallback(async () => {
+    if (!confirmTakeover) { setConfirmTakeover(true); return; }
+    if (!takeoverReasonOk) return;
+    setConfirmTakeover(false);
+    const res = await apiCall<{ success?: boolean }>('POST', '/api/realtime-collab/locks', {
+      documentId, sectionId: sectionId || undefined,
+      lockType: 'section-edit', takeover: true,
+      reason: takeoverReason.trim(),
+    });
+    if (!res.ok || !res.body?.success) {
+      fireToast('Couldn’t take over the lock — ' + apiErrorText(res, `HTTP ${res.status}`) + '.', 'error');
+      return;
+    }
+    fireToast('Lock taken over — the previous holder has been notified.');
+    void loadLocks();
+  }, [confirmTakeover, documentId, sectionId, loadLocks, fireToast]);
+
+  /** Minutes until a lock expires — the chip's honesty about staleness. */
+  const expiresIn = (iso?: string): string => {
+    if (!iso) return '';
+    const ms = new Date(iso).getTime() - Date.now();
+    if (!Number.isFinite(ms) || ms <= 0) return ' (expired)';
+    const min = Math.ceil(ms / 60000);
+    return ` · ${min} min left`;
+  };
+
   const acquire = useCallback(async () => {
     if (!userId) return;
-    try {
-      const res = await apiRequest('POST', '/api/realtime-collab/locks', {
-        documentId, sectionId: sectionId || undefined,
-        lockType: 'section-edit', reason: 'Editing in the authoring canvas',
-      });
-      const body = await res.json().catch(() => null);
-      if (res.status === 409) { fireToast('Section is locked — ' + (body?.error ?? 'another author holds the lock') + '.'); void loadLocks(); return; }
-      if (!res.ok || !body?.success) { fireToast('Couldn’t acquire the lock — ' + (body?.error ?? `HTTP ${res.status}`) + '.'); return; }
-      fireToast('Section locked for your edit.');
+    const res = await apiCall<{ success?: boolean }>('POST', '/api/realtime-collab/locks', {
+      documentId, sectionId: sectionId || undefined,
+      lockType: 'section-edit', reason: 'Editing in the authoring canvas',
+    });
+    if (res.status === 409) {
+      fireToast('Section is locked — ' + apiErrorText(res, 'another author holds the lock') + '.', 'error');
       void loadLocks();
-    } catch (e) {
-      fireToast('Couldn’t acquire the lock — ' + (e instanceof Error ? e.message : String(e)) + '.');
+      return;
     }
+    if (!res.ok || !res.body?.success) {
+      fireToast('Couldn’t acquire the lock — ' + apiErrorText(res, `HTTP ${res.status}`) + '.', 'error');
+      return;
+    }
+    fireToast('Section locked for your edit.');
+    void loadLocks();
   }, [documentId, sectionId, userId, loadLocks, fireToast]);
 
   const release = useCallback(async () => {
     if (!userId) return;
-    try {
-      const res = await apiRequest('DELETE', `/api/realtime-collab/locks/${encodeURIComponent(documentId)}`, {
-        sectionId: sectionId || undefined,
-      });
-      const body = await res.json().catch(() => null);
-      if (!res.ok) { fireToast(`Couldn’t release the lock (HTTP ${res.status}).`); return; }
-      fireToast(body?.released ? 'Lock released.' : 'No lock of yours to release.');
-      void loadLocks();
-    } catch (e) {
-      fireToast('Couldn’t release — ' + (e instanceof Error ? e.message : String(e)) + '.');
-    }
+    const res = await apiCall<{ released?: boolean }>('DELETE', `/api/realtime-collab/locks/${encodeURIComponent(documentId)}`, {
+      sectionId: sectionId || undefined,
+    });
+    if (!res.ok) { fireToast(apiErrorText(res, `Couldn’t release the lock (HTTP ${res.status}).`), 'error'); return; }
+    fireToast(res.body?.released ? 'Lock released.' : 'No lock of yours to release.');
+    void loadLocks();
   }, [documentId, sectionId, userId, loadLocks, fireToast]);
 
   if (!projectId || !userId) return null;
@@ -184,7 +240,45 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
         </div>
       )}
       {otherLock ? (
-        <span className="rd-chip tone-warn" title={otherLock.reason || ''}>{I.lock} locked by {otherLock.lockedByLabel || 'another author'}</span>
+        <>
+          <span className="rd-chip tone-warn" title={otherLock.reason || ''}>
+            {I.lock} locked by {otherLock.lockedByLabel || 'another author'}{expiresIn(otherLock.expiresAt)}
+          </span>
+          {confirmTakeover && (
+            <input
+              className="rd-input"
+              style={{ height: 30, minWidth: 240 }}
+              autoFocus
+              value={takeoverReason}
+              onChange={(e) => setTakeoverReason(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && takeoverReasonOk) void takeover(); }}
+              aria-label="Reason for taking over the lock"
+              aria-required="true"
+              placeholder={`Why are you taking this from ${otherLock.lockedByLabel || 'them'}?`}
+            />
+          )}
+          <button
+            className="btn ghost"
+            style={{ height: 30, ...(confirmTakeover ? { color: 'var(--error)', borderColor: 'var(--error)' } : {}) }}
+            onClick={takeover}
+            disabled={confirmTakeover && !takeoverReasonOk}
+            title={
+              confirmTakeover && !takeoverReasonOk
+                ? 'Give a reason — the holder is shown it and it is written to the audit trail'
+                : 'Take over this lock — the holder is notified and the takeover is audited'
+            }
+            aria-label={confirmTakeover ? 'Confirm lock takeover' : 'Take over the section lock'}
+          >
+            {confirmTakeover ? 'Confirm takeover' : 'Take over'}
+          </button>
+          {confirmTakeover && (
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => { setConfirmTakeover(false); setTakeoverReason(''); }}
+            >Cancel</button>
+          )}
+        </>
       ) : myLock ? (
         <button className="btn ghost" style={{ height: 30 }} onClick={release} title="Release your section lock">
           {I.lock} Unlock

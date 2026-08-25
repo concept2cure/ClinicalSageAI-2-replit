@@ -87,7 +87,7 @@
 .c2c-v2 .cap-card{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;}
 .c2c-v2 .cap-card-h{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
 .c2c-v2 .cap-card-t{font-size:12px;font-weight:600;color:var(--text-100);flex:1;}
-.c2c-v2 .cap-card-n{font-family:var(--font-mono);font-size:9.5px;color:var(--text-400);background:var(--bg-100);padding:1px 6px;border-radius:8px;font-weight:600;}
+.c2c-v2 .cap-card-n{font-family:var(--font-mono);font-size:9.5px;color:var(--text-300);background:var(--bg-100);padding:1px 6px;border-radius:8px;font-weight:600;}
 .c2c-v2 .cap-tools{display:flex;flex-wrap:wrap;gap:4px;}
 .c2c-v2 .cap-tool{font-family:var(--font-mono);font-size:9.5px;color:var(--text-300);background:var(--bg-050);border:1px solid var(--bg-200);padding:2px 6px;border-radius:4px;line-height:1.4;cursor:pointer;transition:all 200ms cubic-bezier(.4,0,.2,1);}
 .c2c-v2 .cap-tool:hover{border-color:var(--accent-100);color:var(--accent-200);background:var(--accent-000);}

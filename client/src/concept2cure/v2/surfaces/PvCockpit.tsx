@@ -20,12 +20,16 @@
  * can be non-finite (division by an empty cell); those are shown as "∞"/"n/a",
  * never a fabricated number.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
+import { saveToAuthoring } from '../authoringHandoff';
+import { engineResultToHtml, type EngineProvenance } from '../engineResultHtml';
 
 interface Overview {
   kpis: { totalAdverseEvents: number; seriousEvents: number; expeditedReports: number; overdueReports: number; pendingSignals: number; upcomingPeriodicReports: number; complianceRate: number };
@@ -39,16 +43,6 @@ interface Disproportion { prr: number; ror: number; rorCi: { lower: number; uppe
 interface ComplianceRow { region?: string; totalEvents: number; overdueCount: number; complianceStatus?: string; }
 interface DeadlineResult { deadline: string; expeditedReport: boolean; daysRemaining: number; region: string; eventType: string; seriousnessCriteria: string; }
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const t = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fire = useCallback((m: string) => { setMsg(m); if (t.current) clearTimeout(t.current); t.current = setTimeout(() => setMsg(''), 4200); }, []);
-  return [msg, fire];
-}
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
-}
 async function readData<T = any>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<{ ok: boolean; status: number; data: T | null }> {
   try {
     const res = await apiRequest(method, path, body);
@@ -65,7 +59,13 @@ const EVENT_TYPES = ['AE', 'SAE', 'SUSAR', 'AESI'];
 const SERIOUSNESS = ['death', 'life_threatening', 'hospitalization', 'disability', 'congenital_anomaly', 'medically_important'];
 const REGIONS = ['FDA', 'EMA', 'PMDA', 'NMPA', 'Health_Canada'];
 
-export function PvCockpit(_props: SurfaceViewProps) {
+export function PvCockpit({ onAsk }: SurfaceViewProps) {
+  /* AnA on this surface. It took SurfaceViewProps and discarded it as `_props`,
+     so the one screen where a safety reviewer is looking at a disproportionality
+     signal or an expedited-reporting clock had no way to ask about it. The
+     prompts below name the actual artefact on screen — a generic "ask about this
+     page" would make the affordance decorative. */
+  const ask = onAsk;
   const [ov, setOv] = useState<Overview | null>(null);
   const [ovState, setOvState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [matrix, setMatrix] = useState<ComplianceRow[]>([]);
@@ -74,6 +74,8 @@ export function PvCockpit(_props: SurfaceViewProps) {
   // Disproportionality screener state (2×2: a=drug+event, b=drug+other, c=other+event, d=other+other).
   const [scr, setScr] = useState({ drug: '', event: '', a: '', b: '', c: '', d: '' });
   const [scrRes, setScrRes] = useState<Disproportion | null>(null);
+  const [scrProv, setScrProv] = useState<EngineProvenance | null>(null);
+  const [scrFiling, setScrFiling] = useState(false);
   const [scrBusy, setScrBusy] = useState(false);
 
   // Reporting-deadline calculator state.
@@ -95,15 +97,20 @@ export function PvCockpit(_props: SurfaceViewProps) {
 
   const runScreen = useCallback(async () => {
     const counts = { a: Number(scr.a), b: Number(scr.b), c: Number(scr.c), d: Number(scr.d) };
-    if (![counts.a, counts.b, counts.c, counts.d].every((x) => Number.isFinite(x))) { fireToast('Enter all four 2×2 cell counts (a, b, c, d).'); return; }
+    if (![counts.a, counts.b, counts.c, counts.d].every((x) => Number.isFinite(x))) { fireToast('Enter all four 2×2 cell counts (a, b, c, d).', 'error'); return; }
     setScrBusy(true);
     try {
-      const { ok, status, data } = await readData<{ rows: Array<{ result: Disproportion }>; summary: { total: number; signals: number } }>(
+      const { ok, status, data } = await readData<{
+        rows: Array<{ result: Disproportion }>;
+        summary: { total: number; signals: number };
+        provenance?: EngineProvenance;
+      }>(
         'POST', '/api/pharmacovigilance/signals/screen',
         { pairs: [{ drug: scr.drug || 'drug', event: scr.event || 'event', counts }] },
       );
-      if (!ok || !data?.rows?.[0]) { fireToast(status === 401 ? 'Sign in to screen signals.' : `Screening failed (HTTP ${status}).`); return; }
+      if (!ok || !data?.rows?.[0]) { fireToast(status === 401 ? 'Sign in to screen signals.' : `Screening failed (HTTP ${status}).`, 'error'); return; }
       setScrRes(data.rows[0].result);
+      setScrProv(data.provenance ?? null);
       fireToast(data.rows[0].result.signalDetected ? 'Disproportionality signal detected.' : 'No disproportionality signal.');
     } finally { setScrBusy(false); }
   }, [scr, fireToast]);
@@ -112,7 +119,7 @@ export function PvCockpit(_props: SurfaceViewProps) {
     setDlBusy(true);
     try {
       const { ok, status, data } = await readData<DeadlineResult>('POST', '/api/pharmacovigilance/calculate-deadline', dl);
-      if (!ok || !data) { fireToast(status === 401 ? 'Sign in to calculate.' : `Calculation failed (HTTP ${status}).`); return; }
+      if (!ok || !data) { fireToast(status === 401 ? 'Sign in to calculate.' : `Calculation failed (HTTP ${status}).`, 'error'); return; }
       setDlRes(data);
     } finally { setDlBusy(false); }
   }, [dl, fireToast]);
@@ -128,14 +135,60 @@ export function PvCockpit(_props: SurfaceViewProps) {
     ['Compliance', kpi.complianceRate + '%'],
   ] : [];
 
+  /* WHAT ANA SEES HERE. The affordances above let a user ASK; this lets AnA
+     answer without the user restating their screen. Deliberately the nouns and
+     numbers already rendered — never the raw API bodies, and never a figure the
+     panels are withholding, because the KPI panel distinguishes loading from
+     error from empty rather than showing zero and that distinction has to
+     survive into the conversation. `ovState` travels for exactly that reason:
+     "unavailable" and "zero overdue" are different answers. */
+  const anaContext = useMemo(
+    () => ({
+      summary:
+        `Pharmacovigilance cockpit. Safety KPIs are ${ovState}` +
+        (kpi ? `, ${kpi.overdueReports} report(s) overdue and ${kpi.pendingSignals} signal(s) pending` : '') +
+        `. Regional compliance matrix holds ${matrix.length} row(s).`,
+      facts: {
+        kpiState: ovState,
+        ...(kpi
+          ? {
+              adverseEvents: kpi.totalAdverseEvents,
+              seriousEvents: kpi.seriousEvents,
+              expeditedReports: kpi.expeditedReports,
+              overdueReports: kpi.overdueReports,
+              pendingSignals: kpi.pendingSignals,
+              upcomingPeriodicReports: kpi.upcomingPeriodicReports,
+              complianceRatePct: kpi.complianceRate,
+            }
+          : {}),
+        complianceMatrixRows: matrix.length,
+        // The screener result only exists once the user has run it. Absent is
+        // not "no signal" — saying so keeps AnA from reading a blank as a null
+        // result, the same mistake the compliance table refuses to make.
+        screenerRun: scrRes !== null,
+        ...(scrRes ? { screenerSignalDetected: scrRes.signalDetected } : {}),
+        deadlineCalculated: dlRes !== null,
+      },
+      availableActions: [
+        'Review pharmacovigilance posture (overdue, signals, periodic reports)',
+        'Interpret a disproportionality result (PRR, ROR, chi-square, EBGM, EB05)',
+        'Explain expedited and periodic reporting obligations by region',
+        'Screen a drug-event pair from 2x2 counts',
+        'Calculate a reporting deadline',
+      ],
+    }),
+    [ovState, kpi, matrix.length, scrRes, dlRes],
+  );
+  usePublishSurfaceContext('pv-cockpit', anaContext);
+
   return (
     <div className="cm-body">
       {/* KPI strip */}
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Safety surveillance</span><span className="s">Live org-scoped KPIs</span></div>
+        <div className="pj-card-h"><span className="t">Safety surveillance</span><span className="s" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Live org-scoped KPIs{ask && <button className="reg-cta" onClick={() => ask('Review our current pharmacovigilance posture: overdue cases, active signals, and any periodic report at risk of missing its deadline. Say which are unavailable rather than assuming zero.')}>{I.sparkles} Review posture</button>}</span></div>
         <div className="pj-card-b">
           {ovState === 'loading' ? <EmptyState icon={I.zap} title="Loading safety KPIs…" />
-            : ovState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load safety KPIs" hint="GET /api/pharmacovigilance/overview didn’t respond. Sign in to your tenant and retry." />
+            : ovState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load safety KPIs" hint="The pharmacovigilance overview didn’t respond. Sign in to your tenant and retry." />
             : !kpi ? <EmptyState icon={I.bell} title="No safety data yet" hint="Adverse-event, signal, and periodic-report metrics for your organization appear here." />
             : <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
                 {KPIS.map(([label, val, warn]) => (
@@ -148,7 +201,7 @@ export function PvCockpit(_props: SurfaceViewProps) {
       {/* Disproportionality screener + deadline calculator */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(320px,1fr))', gap: 14, marginBottom: 14 }}>
         <div className="pj-card" style={{ margin: 0 }}>
-          <div className="pj-card-h"><span className="t">Disproportionality screener</span><span className="s">PRR · ROR · EBGM</span></div>
+          <div className="pj-card-h"><span className="t">Disproportionality screener</span><span className="s" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>PRR · ROR · EBGM{ask && <button className="reg-cta" onClick={() => ask('Interpret a disproportionality result for a drug-event pair: what PRR, ROR with its confidence interval, chi-square, EBGM and EB05 together do and do not support, and what evidence would be needed before calling it a signal.')}>{I.sparkles} Interpret these statistics</button>}</span></div>
           <div className="pj-card-b">
             <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
               <input className="c2c-input" style={{ height: 30, flex: 1 }} aria-label="Drug name" placeholder="Drug" value={scr.drug} onChange={(e) => setScr({ ...scr, drug: e.target.value })} />
@@ -173,6 +226,48 @@ export function PvCockpit(_props: SurfaceViewProps) {
                   <tr><td>EBGM</td><td style={{ textAlign: 'right' }} className="mono">{fmt(scrRes.ebgm)}</td></tr>
                   <tr><td>EB05</td><td style={{ textAlign: 'right' }} className="mono">{fmt(scrRes.eb05)}</td></tr>
                 </tbody></table>
+                {scrProv && (
+                  <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-300,#6b6963)' }}>
+                    {scrProv.method} · {scrProv.engine} {scrProv.engineVersion}
+                    {scrProv.inputsSha256 ? <> · inputs <span className="mono">{String(scrProv.inputsSha256).slice(0, 12)}</span></> : null}
+                    {scrProv.reproducible ? ' · reproducible' : null}
+                  </div>
+                )}
+                {/* BP-W2-4: a screened signal is signal-detection-report content;
+                    file it with its stamp instead of retyping it without one. */}
+                <button
+                  className="btn"
+                  style={{ height: 30, marginTop: 8 }}
+                  disabled={scrFiling}
+                  onClick={() => void (async () => {
+                    setScrFiling(true);
+                    try {
+                      const outcome = await saveToAuthoring({
+                        title: `Disproportionality screen — ${scr.drug || 'drug'} / ${scr.event || 'event'}`,
+                        module: 'M5',
+                        code: 'pv.signal-screen',
+                        content: engineResultToHtml({
+                          title: `Disproportionality screen — ${scr.drug || 'drug'} / ${scr.event || 'event'}`,
+                          rows: [
+                            ['Signal detected', scrRes.signalDetected ? 'Yes' : 'No'],
+                            ['PRR', fmt(scrRes.prr)],
+                            ['ROR (95% CI)', `${fmt(scrRes.ror)} (${fmt(scrRes.rorCi?.lower)}–${fmt(scrRes.rorCi?.upper)})`],
+                            ['Chi-squared (Yates)', fmt(scrRes.chiSquared)],
+                            ['EBGM', fmt(scrRes.ebgm)],
+                            ['EB05', fmt(scrRes.eb05)],
+                          ],
+                          provenance: scrProv,
+                        }),
+                        subject: 'the screened signal',
+                      });
+                      fireToast(outcome.message, outcome.ok ? 'ok' : 'error');
+                    } finally {
+                      setScrFiling(false);
+                    }
+                  })()}
+                >
+                  {scrFiling ? 'Filing…' : 'Insert into document'}
+                </button>
               </div>
             )}
           </div>
@@ -199,7 +294,7 @@ export function PvCockpit(_props: SurfaceViewProps) {
 
       {/* Compliance matrix */}
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Regional reporting compliance</span><span className="s">{matrix.length}</span></div>
+        <div className="pj-card-h"><span className="t">Regional reporting compliance</span><span className="s" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{matrix.length}{ask && <button className="reg-cta" onClick={() => ask('Explain our expedited and periodic safety reporting obligations by region, and which of them our current compliance matrix shows we are not meeting. Say which regions have no compliance status recorded rather than assuming compliant.')}>{I.sparkles} Explain obligations</button>}</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {matrix.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No compliance data yet" hint="Per-region adverse-event reporting compliance appears here once events are logged." /></div>
             : <table className="reg-tbl"><thead><tr><th>Region</th><th>Events</th><th>Overdue</th><th style={{ textAlign: 'right' }}>Status</th></tr></thead>

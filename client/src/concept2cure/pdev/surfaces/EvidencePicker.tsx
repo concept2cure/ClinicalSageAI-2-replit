@@ -104,7 +104,12 @@ export function PdevEvidencePicker({
     };
   }, [programId, query]);
 
-  const onAttach = async () => {
+  /* Takes the ConfirmResult now.
+     This was `onConfirm={() => onAttach()}` — a zero-argument arrow, silently
+     assignable to the dialog's `(result: ConfirmResult) => void` prop — so the
+     reason the operator typed under "Captured verbatim in the audit log" was
+     dropped on the floor, and the server had no field to receive it either. */
+  const onAttach = async (reasonForChange?: string) => {
     if (!selected) return;
     setConfirmError(null);
     try {
@@ -115,6 +120,7 @@ export function PdevEvidencePicker({
         linkType,
         strength,
         rationale: rationale.trim(),
+        reasonForChange,
       });
       onAttached();
       onClose();
@@ -282,7 +288,7 @@ export function PdevEvidencePicker({
             setPending(null);
             setConfirmError(null);
           }}
-          onConfirm={() => onAttach()}
+          onConfirm={(result) => onAttach(result.reason)}
           submitError={confirmError}
         />
       )}

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState, hasKeys } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -111,6 +112,48 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
   const changed = allSources.filter(s => s.state === 'changed');
   const unresolved = allSources.filter(s => s.state === 'unresolved');
 
+  /* WHAT ANA SEES HERE. Published above all four early returns — the publisher
+     is a hook, and the loading/error/empty states are exactly the ones AnA most
+     needs to describe correctly. This surface's whole job is saying where text
+     came from, so the payload distinguishes "the citation store did not respond"
+     from "nothing has been cited yet": an error reported as an empty library
+     would be the same lie the render branches are written to avoid.
+
+     `changed` and `unresolved` travel because they are the answer to "can I
+     trust this section" — a source whose content identity moved since it was
+     cited is the thing a reviewer needs told, unprompted. */
+  const anaContext = useMemo(
+    () => ({
+      summary: st.loading
+        ? 'Source tracer, still loading recorded source lineage.'
+        : st.error
+          ? 'Source tracer could not load the citation store — lineage is unavailable, not absent.'
+          : sections.length === 0
+            ? 'Source tracer: no recorded source citations yet for this organization.'
+            : `Source tracer: ${sections.length} section(s) with recorded citations` +
+              (sec ? `, "${sec.sectionTitle ?? sec.sec ?? sec.id}" selected` : '') +
+              `; ${changed.length} source(s) changed since citation, ${unresolved.length} unresolved.`,
+      facts: {
+        lineageState: st.loading ? 'loading' : st.error ? 'error' : sections.length === 0 ? 'empty' : 'ready',
+        sectionCount: sections.length,
+        ...(sec ? { selectedSectionId: sec.id, selectedSectionTitle: sec.sectionTitle, selectedSectionModule: sec.module, selectedSectionStatus: sec.status, selectedSectionSources: sec.sources?.length ?? 0 } : {}),
+        totalRecordedSources: allSources.length,
+        sourcesChangedSinceCitation: changed.length,
+        sourcesUnresolved: unresolved.length,
+        // Only recorded citations appear here; nothing is inferred from text
+        // similarity. AnA must not offer to "find" a source that was never cited.
+        citationsAreRecordedOnly: true,
+      },
+      availableActions: [
+        'Trace this section back to its source documents',
+        'Explain which sources changed after they were cited, and what that means',
+        'Explain why a source is unresolved',
+      ],
+    }),
+    [st.loading, st.error, sections.length, sec, allSources.length, changed.length, unresolved.length],
+  );
+  usePublishSurfaceContext('source-tracer', anaContext);
+
   // Four-state on the real read-model — never a fabricated stand-in.
   if (st.loading) {
     return (
@@ -206,7 +249,7 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
               <span className="s">{sec.sources.length} recorded</span>
             </div>
             <div className="pj-card-b">
-              <div className="pj-seclbl">Drafted from <span style={{ fontWeight: 400, color: 'var(--text-400)' }}>/ recorded citation -- content identity at cite time -- standing today</span></div>
+              <div className="pj-seclbl">Drafted from <span style={{ fontWeight: 400, color: 'var(--text-400)' }}>/ recorded citation — content identity at cite time — standing today</span></div>
               <div className="st-sents">
                 {sec.sources.map(s => {
                   const lab = stateLabel(s);

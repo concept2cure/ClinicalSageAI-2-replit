@@ -30,7 +30,7 @@ import { createScopedLogger } from '../../utils/logger.js';
 
 const log = createScopedLogger('template-seeds');
 
-export const SEEDS_VERSION = '1.0.0';
+export const SEEDS_VERSION = '1.1.0';
 
 // ─── Seed data types ────────────────────────────────────────────────────────
 
@@ -361,6 +361,96 @@ const SEED_TEMPLATES: SeedTemplate[] = [
     ],
   },
 
+  // ─── Authoring-grade CTD skeletons ───────────────────────────────────────
+  // The outlines above are validation/intelligence granularity (one row for
+  // all of 3.2.S). These four are the skeletons an author STARTS FROM in the
+  // authoring surface: each row becomes a real section in the document tree.
+  // Module 3 section codes match the Module 3 operating system's canonical
+  // keys (module3-convergence-service SECTION_LABELS) VERBATIM, so a document
+  // started here carries the same section identity the CMC compile, placement
+  // and eCTD pipeline use. Structure and guidance only — a seeded section
+  // starts empty and the author writes it; no fabricated prose.
+  {
+    templateCode: 'ctd_m25_clinical_overview',
+    templateName: '2.5 Clinical Overview',
+    agency: 'cross_agency',
+    documentType: 'section',
+    submissionType: null,
+    modulePath: '2.5',
+    sourceReference: 'ICH M4E(R2) §2.5',
+    description:
+      'The clinical "expert report": a critical analysis of the clinical data, the benefit–risk assessment, and the conclusions supporting the proposed labeling. Typically 30 pages or fewer.',
+    sections: [
+      { sectionCode: '2.5.1', sectionTitle: 'Product Development Rationale', ordering: 100, required: true, criticality: 'important', contentGuidance: 'Why this product, this indication, this programme: pharmacological class, scientific rationale, and how the clinical programme design follows from it. State any agency advice received and how it was addressed.', requiredElements: ['pharmacological class', 'development programme rationale', 'regulatory advice addressed'] },
+      { sectionCode: '2.5.2', sectionTitle: 'Overview of Biopharmaceutics', ordering: 200, required: false, criticality: 'supporting', contentGuidance: 'Critical analysis of formulation-performance data: bioavailability, bioequivalence across programme formulations, food effect. Reference 2.7.1 for detail.', requiredElements: ['formulation bridging', 'BA/BE conclusions'] },
+      { sectionCode: '2.5.3', sectionTitle: 'Overview of Clinical Pharmacology', ordering: 300, required: true, criticality: 'important', contentGuidance: 'PK, PD and their relationship in the target population: exposure, intrinsic/extrinsic factors, interactions, QT assessment. Conclusions, not study-by-study recitation — that is 2.7.2.', requiredElements: ['PK summary', 'exposure-response', 'special populations', 'interaction conclusions'] },
+      { sectionCode: '2.5.4', sectionTitle: 'Overview of Efficacy', ordering: 400, required: true, criticality: 'blocking', contentGuidance: 'The critical efficacy argument: study designs and their adequacy, primary results with statistical rigour, clinical relevance of effect size, durability, and generalisability to the labeled population.', requiredElements: ['pivotal study results', 'effect size and clinical relevance', 'population generalisability'] },
+      { sectionCode: '2.5.5', sectionTitle: 'Overview of Safety', ordering: 500, required: true, criticality: 'blocking', contentGuidance: 'The critical safety argument: extent of exposure, common and serious adverse events, deaths, discontinuations, laboratory findings, special safety topics, and safety in special populations.', requiredElements: ['extent of exposure', 'serious adverse events and deaths', 'special safety topics', 'special populations'] },
+      { sectionCode: '2.5.6', sectionTitle: 'Benefits and Risks Conclusions', ordering: 600, required: true, criticality: 'blocking', contentGuidance: 'Integrated benefit–risk assessment supporting the proposed indication and labeling: therapeutic context, key benefits, key risks, risk management, and the explicit conclusion.', requiredElements: ['therapeutic context', 'benefit summary', 'risk summary and management', 'explicit benefit-risk conclusion'] },
+      { sectionCode: '2.5.7', sectionTitle: 'Literature References', ordering: 700, required: false, criticality: 'supporting', contentGuidance: 'References cited in the Clinical Overview. Copies belong in Module 5.4.' },
+    ],
+  },
+  {
+    templateCode: 'ctd_m273_summary_clinical_efficacy',
+    templateName: '2.7.3 Summary of Clinical Efficacy',
+    agency: 'cross_agency',
+    documentType: 'section',
+    submissionType: null,
+    modulePath: '2.7.3',
+    sourceReference: 'ICH M4E(R2) §2.7.3',
+    description:
+      'Detailed factual summarisation of all clinical efficacy data for a single indication, study by study and across studies. Written to be read alongside 2.5.4.',
+    sections: [
+      { sectionCode: '2.7.3.1', sectionTitle: 'Background and Overview of Clinical Efficacy', ordering: 100, required: true, criticality: 'important', contentGuidance: 'The programme at a glance for this indication: contributing studies, their designs, populations, endpoints, and the analytic strategy across them.', requiredElements: ['contributing studies table', 'endpoint definitions', 'analysis populations'] },
+      { sectionCode: '2.7.3.2', sectionTitle: 'Summary of Results of Individual Studies', ordering: 200, required: true, criticality: 'blocking', contentGuidance: 'Study-by-study factual results for every contributing study: disposition, baseline, primary and key secondary results with confidence intervals. Tables carry this section.', requiredElements: ['per-study results tables', 'primary endpoint results with CIs', 'disposition'] },
+      { sectionCode: '2.7.3.3', sectionTitle: 'Comparison and Analyses of Results Across Studies', ordering: 300, required: true, criticality: 'blocking', contentGuidance: 'The across-study picture: consistency of effect, subgroup behaviour, pooled or meta analyses where prespecified, and reconciliation of any divergent results.', requiredElements: ['consistency analysis', 'subgroup results'] },
+      { sectionCode: '2.7.3.4', sectionTitle: 'Analysis of Clinical Information Relevant to Dosing Recommendations', ordering: 400, required: true, criticality: 'important', contentGuidance: 'The dose story: dose-response and exposure-response for efficacy, the basis for the proposed dose and any adjustments (renal, hepatic, interactions, special populations).', requiredElements: ['dose-response evidence', 'proposed dose justification'] },
+      { sectionCode: '2.7.3.5', sectionTitle: 'Persistence of Efficacy and/or Tolerance Effects', ordering: 500, required: true, criticality: 'important', contentGuidance: 'Long-term data: maintenance of effect, tolerance development, withdrawal and rebound. State the follow-up duration honestly, including its limits.', requiredElements: ['long-term efficacy data', 'follow-up duration'] },
+      { sectionCode: '2.7.3.6', sectionTitle: 'Appendix', ordering: 600, required: false, criticality: 'supporting', contentGuidance: 'Supportive tables and figures referenced from the narrative sections.' },
+    ],
+  },
+  {
+    templateCode: 'ctd_m32s_drug_substance',
+    templateName: '3.2.S Drug Substance',
+    agency: 'cross_agency',
+    documentType: 'cmc',
+    submissionType: null,
+    modulePath: '3.2.S',
+    sourceReference: 'ICH M4Q(R1) §3.2.S',
+    description:
+      'The complete drug-substance quality section set, S.1 through S.7, with the same section identity the Module 3 operating system compiles and places. One set per substance and manufacturer.',
+    sections: [
+      { sectionCode: '3.2.S.1', sectionTitle: 'General Information', ordering: 100, required: true, criticality: 'important', contentGuidance: 'Nomenclature, structure, and general properties of the drug substance, drawn from the substance register.', requiredElements: ['nomenclature', 'structure', 'physicochemical properties'] },
+      { sectionCode: '3.2.S.2', sectionTitle: 'Manufacture (Drug Substance)', ordering: 200, required: true, criticality: 'blocking', contentGuidance: 'Manufacturer(s), process description, process controls, critical steps and process validation for the drug substance.', requiredElements: ['manufacturer(s)', 'process description and controls', 'critical steps', 'process validation'] },
+      { sectionCode: '3.2.S.3', sectionTitle: 'Characterisation', ordering: 300, required: true, criticality: 'important', contentGuidance: 'Structural elucidation and impurity characterisation, including biological activity where applicable.', requiredElements: ['structural elucidation', 'impurity profile'] },
+      { sectionCode: '3.2.S.4', sectionTitle: 'Control of Drug Substance', ordering: 400, required: true, criticality: 'blocking', contentGuidance: 'Specification, analytical procedures, method validation, and batch analyses for the drug substance. Cite specifications and methods by their governed record identifiers.', requiredElements: ['specification table', 'analytical procedures', 'validation summaries', 'batch analyses'] },
+      { sectionCode: '3.2.S.5', sectionTitle: 'Reference Standards (Drug Substance)', ordering: 500, required: false, criticality: 'supporting', contentGuidance: 'Reference standards or materials used for drug-substance testing, with certificates of analysis.', requiredElements: ['reference standard description', 'certificate of analysis'] },
+      { sectionCode: '3.2.S.6', sectionTitle: 'Container Closure System (Drug Substance)', ordering: 600, required: false, criticality: 'supporting', contentGuidance: 'Container closure system for drug-substance storage and shipment, with suitability justification.', requiredElements: ['container/closure description', 'suitability justification'] },
+      { sectionCode: '3.2.S.7', sectionTitle: 'Stability (Drug Substance)', ordering: 700, required: true, criticality: 'blocking', contentGuidance: 'Stability summary, conclusions, retest period, and the post-approval stability protocol and commitment. Cite studies from the stability register.', requiredElements: ['stability summary and conclusions', 'retest period', 'stability commitment'] },
+    ],
+  },
+  {
+    templateCode: 'ctd_m32p_drug_product',
+    templateName: '3.2.P Drug Product',
+    agency: 'cross_agency',
+    documentType: 'cmc',
+    submissionType: null,
+    modulePath: '3.2.P',
+    sourceReference: 'ICH M4Q(R1) §3.2.P',
+    description:
+      'The complete drug-product quality section set, P.1 through P.8, with the same section identity the Module 3 operating system compiles and places. One set per product presentation.',
+    sections: [
+      { sectionCode: '3.2.P.1', sectionTitle: 'Description & Composition', ordering: 100, required: true, criticality: 'important', contentGuidance: 'Dosage form description and full composition, including overages and their justification.', requiredElements: ['dosage form description', 'composition table', 'overage justification'] },
+      { sectionCode: '3.2.P.2', sectionTitle: 'Pharmaceutical Development', ordering: 200, required: true, criticality: 'important', contentGuidance: 'The development story: formulation development, manufacturing process development, container-closure selection and microbiological attributes.', requiredElements: ['formulation development', 'process development', 'container-closure rationale'] },
+      { sectionCode: '3.2.P.3', sectionTitle: 'Manufacture (Drug Product)', ordering: 300, required: true, criticality: 'blocking', contentGuidance: 'Manufacturer(s), batch formula, process description and controls, critical steps and process validation for the drug product.', requiredElements: ['batch formula', 'process description and controls', 'process validation'] },
+      { sectionCode: '3.2.P.4', sectionTitle: 'Control of Excipients', ordering: 400, required: false, criticality: 'supporting', contentGuidance: 'Specifications and analytical procedures for excipients; justification for excipients of human or animal origin and novel excipients.', requiredElements: ['excipient specifications', 'novel/animal-origin justification'] },
+      { sectionCode: '3.2.P.5', sectionTitle: 'Control of Drug Product', ordering: 500, required: true, criticality: 'blocking', contentGuidance: 'Specification, analytical procedures, method validation, batch analyses and impurity justification for the drug product.', requiredElements: ['specification table', 'analytical procedures', 'validation summaries', 'batch analyses'] },
+      { sectionCode: '3.2.P.6', sectionTitle: 'Reference Standards (Drug Product)', ordering: 600, required: false, criticality: 'supporting', contentGuidance: 'Reference standards or materials used for drug-product testing.', requiredElements: ['reference standard description', 'certificate of analysis'] },
+      { sectionCode: '3.2.P.7', sectionTitle: 'Container Closure System (Drug Product)', ordering: 700, required: false, criticality: 'supporting', contentGuidance: 'Container closure system for the drug product, with suitability evidence for the intended use.', requiredElements: ['container/closure description', 'suitability evidence'] },
+      { sectionCode: '3.2.P.8', sectionTitle: 'Stability (Drug Product)', ordering: 800, required: true, criticality: 'blocking', contentGuidance: 'Stability summary and conclusions, shelf-life claim and storage statement, and the post-approval stability protocol and commitment.', requiredElements: ['stability summary', 'shelf-life claim and storage statement', 'stability commitment'] },
+    ],
+  },
+
   // ─── Briefing packages ───────────────────────────────────────────────────
   {
     templateCode: 'fda_pre_sub_briefing',
@@ -459,4 +549,31 @@ export async function seedTemplates(): Promise<{ inserted: number; updated: numb
   }
   log.info(`Template seeds: inserted=${inserted} updated=${updated} sections=${sections}`);
   return { inserted, updated, sections };
+}
+
+/**
+ * Boot-time guard: seed only when the store is missing seed templates.
+ *
+ * The global template store shipped EMPTY for the life of the feature because
+ * seedTemplates() ran only when someone happened to POST
+ * /api/regulatory-intelligence/templates/seed — so the authoring surface's
+ * "Start from" picker had nothing to offer on every fresh estate. Startup now
+ * fills an empty or incomplete store (count-guarded so a normal boot is one
+ * SELECT); refreshing guidance for templates that already exist remains the
+ * seed endpoint's job, deliberately — boot must never rewrite reference data
+ * an operator refreshed on purpose.
+ */
+export async function seedTemplatesIfMissing(): Promise<
+  { ran: true; inserted: number; updated: number; sections: number } | { ran: false; present: number }
+> {
+  const codes = SEED_TEMPLATES.map((t) => t.templateCode);
+  const present = await pool.query(
+    `SELECT count(*)::int AS n FROM intelligence.document_templates
+      WHERE template_code = ANY($1) AND version = '1.0'`,
+    [codes],
+  );
+  const n: number = present.rows[0]?.n ?? 0;
+  if (n >= codes.length) return { ran: false, present: n };
+  const result = await seedTemplates();
+  return { ran: true, ...result };
 }

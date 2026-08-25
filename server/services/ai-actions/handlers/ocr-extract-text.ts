@@ -64,8 +64,14 @@ const handler: AIActionHandler = {
       nextSuggestedActions: [],
     };
 
+    // Scoped to the CALLER's organization. `vaultVersionId` arrives in the
+    // action payload, which on this surface is authored by the model — so an
+    // instruction injected into a document AnA is reading could name another
+    // tenant's file id. ctx.user.organizationId was already here and used for
+    // provenance; it is now also used for authorization, which is the half that
+    // was missing. A foreign file reads as absent.
     const storage = getStorageProvider();
-    const file = await storage.get(vaultVersionId);
+    const file = await storage.get(vaultVersionId, Number(ctx.user.organizationId));
 
     if (!file) {
       return {

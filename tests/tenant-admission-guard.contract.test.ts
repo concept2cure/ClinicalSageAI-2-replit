@@ -86,7 +86,7 @@ describe('tenant admission — enforcement scope follows the repo fail-closed id
     ['preview', 'preview'],
     ['Production (capitalised)', 'Production'],
   ])('enforces when NODE_ENV is %s — anything not explicitly local counts', (_label, nodeEnv) => {
-    // The mirror of bundleTrustEnforced / ESGSubmissionService.simulationAllowed:
+    // The mirror of submission-gateways/bundle-namespace.ts#bundleTrustEnforced:
     // an environment that forgot to declare itself is treated as deployed, never
     // as somebody's laptop.
     const env = { RLS_ENFORCE: 'off' } as NodeJS.ProcessEnv;

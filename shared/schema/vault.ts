@@ -106,8 +106,30 @@ export const vaultDocuments = vault.table(
     parentDocumentId: uuid('parent_document_id'),
     supersedesId: uuid('supersedes_id'),
 
+    /* Dossier placement — where this document sits in the program's vault
+       folder taxonomy (migrations/20260823_vault_document_placement.sql).
+       The classifier PROPOSES (placement_status='suggested'); a person
+       CONFIRMS or moves ('confirmed', placed_by/placed_at, audited). NULL
+       folder_id = unfiled, and the Vault renders that as a visible queue. */
+    folderId: text('folder_id'),
+    evidenceKind: text('evidence_kind'),
+    ctdSection: text('ctd_section'),
+    placementStatus: text('placement_status').notNull().default('unfiled'),
+    placementConfidence: text('placement_confidence'),
+    placementRationale: text('placement_rationale'),
+    placedBy: integer('placed_by'),
+    placedAt: timestamp('placed_at', { withTimezone: true }),
+
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    createdBy: uuid('created_by'),
+    /* INTEGER, not uuid.
+       `users.id` is an integer in this database and `req.user.id` is an
+       integer, so the ingest route passes one straight into this column. As a
+       uuid it could never have held a single real value — it would have raised
+       a type error on the first upload that got past the missing columns, which
+       is to say the first upload that ever worked. Two defects in one table
+       definition, the second hidden behind the first.
+       See migrations/20260821_vault_documents_canonical_shape.sql. */
+    createdBy: integer('created_by'),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },

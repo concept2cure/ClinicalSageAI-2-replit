@@ -190,6 +190,14 @@ export interface ToolContext {
   projectType?: string | null;
   /** Active document / CTD type (e.g. 'nonclinical_overview', 'qos') — situational context. */
   documentType?: string | null;
+  /**
+   * True when the turn runs under Live Drive (services/ana-ri/live-drive):
+   * navigate_to directives are applied to the subscriber's screen as they
+   * stream, so the handler's instruction to the model must say "you are
+   * taking them there" instead of "you can offer to". Never grants any tool
+   * additional authority — it only changes the narration contract.
+   */
+  liveDrive?: boolean | null;
 }
 
 type ToolHandler = (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>;
@@ -571,7 +579,7 @@ registerToolHandler('recall_rim_patterns', async (input, ctx) => {
 
   try {
     const { getPatterns } = await import('../intelligence/rim-pattern-store.js');
-    const patterns = getPatterns({ orgId: ctx.organizationId, domain });
+    const patterns = await getPatterns({ orgId: ctx.organizationId, domain });
     return JSON.stringify({
       source: 'RIM Pattern Store',
       pedigree: 'deterministic_query',
@@ -612,7 +620,7 @@ registerToolHandler('query_rim_patterns_by_domain', async (input: Record<string,
     const minConfidence = typeof input.minConfidence === 'number' ? input.minConfidence : 0;
     const minOccurrences = typeof input.minOccurrences === 'number' ? input.minOccurrences : 0;
 
-    const patterns = getPatterns({ orgId, domain })
+    const patterns = (await getPatterns({ orgId, domain }))
       .filter((p) => p.confidence >= minConfidence && p.occurrences >= minOccurrences)
       .sort((a, b) => b.occurrences - a.occurrences || b.confidence - a.confidence);
 
@@ -638,7 +646,7 @@ registerToolHandler('summarize_rim_intelligence', async (_input: Record<string, 
       throw new Error('summarize_rim_intelligence requires tenant context (organizationId).');
     }
 
-    const patterns = getPatterns({ orgId });
+    const patterns = await getPatterns({ orgId });
     if (patterns.length === 0) {
       return {
         source: 'RIM Pattern Store',
@@ -1563,6 +1571,67 @@ registerToolHandler('search_literature', async (input) => {
       query,
       note: 'PubMed API unavailable — use manual search',
       url: `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(query)}`,
+    });
+  }
+});
+
+// Record Literature — persist PubMed hits into the org's literature corpus
+// (literature_entries) through the same service the CER workbench's
+// POST /api/cerv2/literature/record uses (ZERO DUPLICATION). Org comes from
+// ToolContext, never from model arguments; without it the tool refuses.
+// Honest limits are relayed from the service constants: entries enter the
+// corpus unscreened and org-scoped (no program column). Screening is a separate
+// governed act with its own reviewer attribution, recorded through
+// POST /api/cerv2/literature/screen (literature-screening.service) — this tool
+// records bibliography only and says so rather than implying an appraisal.
+registerToolHandler('record_literature', async (input, ctx) => {
+  const organizationId = ctx?.organizationId;
+  if (typeof organizationId !== 'number' || !Number.isInteger(organizationId) || organizationId <= 0) {
+    return JSON.stringify({
+      recorded: false,
+      error: 'Organization context is required to record literature — none is active.',
+    });
+  }
+
+  const rawEntries = Array.isArray(input.entries) ? input.entries : [];
+  if (rawEntries.length === 0) {
+    return JSON.stringify({
+      recorded: false,
+      error: 'No entries supplied — pass the search_literature hits to record (pmid + title each).',
+    });
+  }
+
+  const {
+    recordLiteratureEntries,
+    SCREENING_RECORDED_SEPARATELY,
+    PROGRAM_BINDING_NOTE,
+  } = await import('../literature-recording.service.js');
+
+  try {
+    const { pool } = await import('../../db.js');
+    const result = await recordLiteratureEntries(
+      pool,
+      organizationId,
+      rawEntries.map((e: any) => ({
+        pmid: String(e?.pmid ?? ''),
+        title: String(e?.title ?? ''),
+        abstract: typeof e?.abstract === 'string' ? e.abstract : null,
+        journal: typeof e?.journal === 'string' ? e.journal : null,
+        year: typeof e?.year === 'number' ? e.year : null,
+        authors: Array.isArray(e?.authors) || typeof e?.authors === 'string' ? e.authors : null,
+        doi: typeof e?.doi === 'string' ? e.doi : null,
+        url: typeof e?.url === 'string' ? e.url : null,
+      })),
+    );
+    return JSON.stringify({
+      recorded: true,
+      ...result,
+      notes: [SCREENING_RECORDED_SEPARATELY, PROGRAM_BINDING_NOTE],
+    });
+  } catch (e) {
+    return JSON.stringify({
+      recorded: false,
+      error: `Failed to record literature — ${e instanceof Error ? e.message : 'database error'}`,
     });
   }
 });
@@ -5754,8 +5823,18 @@ registerToolHandler('trace_fact_to_source', async (input: Record<string, unknown
       establishingClaim: result.establishingClaim,
       establishingSource: result.establishingSource,
       citations: result.citations,
-      instruction:
-        'Report the chain: the governed value, the claim that established it, and the source artifact (file/page). List each citing location.',
+      /* A trace full of nulls reads as "this value has no evidence". That is
+         only one reason it happens; another is that the referenced claims are
+         not in the store at all — which is currently true of evidence_claims,
+         a table with no writer anywhere in the repository. Reporting the
+         broken references keeps the two apart. */
+      unresolvedClaimIds: result.unresolvedClaimIds,
+      claimStoreUnavailable: result.claimStoreUnavailable,
+      instruction: result.claimStoreUnavailable
+        ? 'Do NOT report this value as unsupported. Every claim it references failed to resolve, which means the evidence trail is BROKEN, not absent — say so plainly and name the unresolved claim ids.'
+        : result.unresolvedClaimIds.length > 0
+          ? 'Report the chain, and state clearly which referenced claims could not be resolved. A partial trail must not be presented as a complete one.'
+          : 'Report the chain: the governed value, the claim that established it, and the source artifact (file/page). List each citing location.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `trace_fact_to_source failed: ${err?.message ?? 'unknown error'}` });
@@ -8794,6 +8873,63 @@ registerToolHandler('validate_ectd_package', async (input) => {
   } catch (err) {
     return JSON.stringify({
       error: `validate_ectd_package failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// The authoring → filing seam as a tool: upsert a submission_leaves row in the
+// canonical core (submission-service.upsertLeaf — the same write the Submission
+// Center Builder and the editor's "Place into filing" make). Tenant + actor
+// from ToolContext; the service refuses locked sequences and cross-tenant
+// document pointers, and every refusal is returned verbatim as a structured
+// error — never a claimed placement.
+registerToolHandler('place_into_sequence', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) {
+    return JSON.stringify({ error: 'place_into_sequence requires tenant context (organizationId and userId).' });
+  }
+  const sequenceId = typeof input.sequence_id === 'number' ? input.sequence_id : NaN;
+  if (!Number.isFinite(sequenceId)) return JSON.stringify({ error: 'sequence_id (number) is required.' });
+  const sectionCode = typeof input.section_code === 'string' ? input.section_code.trim() : '';
+  if (!sectionCode) return JSON.stringify({ error: 'section_code is required.' });
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) return JSON.stringify({ error: 'title is required.' });
+  const lifecycleOp =
+    typeof input.lifecycle_op === 'string' && ['new', 'replace', 'append', 'delete'].includes(input.lifecycle_op)
+      ? input.lifecycle_op
+      : undefined;
+  try {
+    const { upsertLeaf } = await import('../submission-service/submission-service.js');
+    const leaf = await upsertLeaf(
+      {
+        sequenceId,
+        leafId: typeof input.leaf_id === 'number' ? input.leaf_id : undefined,
+        sectionCode,
+        title,
+        lifecycleOp,
+        granularity: typeof input.granularity === 'string' ? input.granularity : undefined,
+        documentTable: typeof input.document_table === 'string' ? input.document_table : undefined,
+        documentId: typeof input.document_id === 'number' ? input.document_id : undefined,
+        documentType: typeof input.document_type === 'string' ? input.document_type : undefined,
+        parentLeafId: typeof input.parent_leaf_id === 'number' ? input.parent_leaf_id : undefined,
+      },
+      { organizationId: ctx.organizationId, userId: ctx.userId },
+    );
+    return JSON.stringify({
+      ok: true,
+      leaf: {
+        id: leaf.id,
+        sequenceId: leaf.sequenceId,
+        sectionCode: leaf.sectionCode,
+        title: leaf.title,
+        lifecycleOp: leaf.lifecycleOp,
+        documentTable: leaf.documentTable,
+        documentId: leaf.documentId,
+      },
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `place_into_sequence failed: ${err instanceof Error ? err.message : String(err)}`,
+      code: (err as any)?.code,
     });
   }
 });
@@ -14264,32 +14400,97 @@ registerToolHandler('write_kit_section', async (input, ctx) => {
        section_key); the seed populates one row per key. We update in place
        rather than insert to preserve display_order, level, parent linkage.
        If the row doesn't exist we surface a clear error rather than silently
-       creating a free-floating row outside the kit's taxonomy. */
-    const { rows } = await pool.query(
-      `UPDATE cerv2_510k_sections
-          SET content                = $3,
-              status                 = $4,
-              completion_percentage  = $5,
-              draft_source           = 'ana',
-              drafted_at             = NOW(),
-              drafted_summary        = NULLIF($6, ''),
-              accepted_at            = NULL,
-              accepted_by            = NULL,
-              updated_at             = NOW()
-        WHERE organization_id = $1 AND section_key = $2
-        RETURNING id, section_number, section_title, section_key, status,
-                  completion_percentage AS "completionPercentage",
-                  drafted_at AS "draftedAt"`,
-      [ctx.organizationId, sectionKey, content, status, completionPct, note],
-    );
+       creating a free-floating row outside the kit's taxonomy.
 
-    if (rows.length === 0) {
-      return JSON.stringify({
-        error: `No section found for organization with section_key='${sectionKey}'. The kit's section taxonomy must be seeded first (run \`npm run db:seed:mdx-content\`).`,
+       HISTORY (2026-08-14). This UPDATE used to run alone: no version row, no
+       reason, no snapshot of the text it replaced — and `cerv2_510k_sections`
+       has no version trigger, so nothing else preserved it either. AnA could
+       overwrite a section's prior content on the device surface, where that
+       content becomes a 510(k), with no recoverable history. The human PATCH
+       route had always written a rich version row; only this path did not.
+
+       This path now goes through recordCerv2SectionVersion, on a transaction,
+       so the content write and its history commit together or not at all. A
+       version row written outside the content write can attest to a change
+       that rolled back; content written without one is the loss this exists to
+       prevent.
+
+       NOT yet consolidated: routes/cerv2-sections.ts still has three of its own
+       inserts into cerv2_section_versions. They record history correctly, so
+       nothing is unsafe there — but four writers of one table is three too
+       many, and re-pointing untested route paths is its own change. Tracked as
+       ledger L39. */
+    const { recordCerv2SectionVersion } = await import('../cerv2/section-version.js');
+    const client = await pool.connect();
+    let row: any;
+    try {
+      await client.query('BEGIN');
+
+      /* Read the prior state FOR UPDATE inside the transaction: it is both the
+         `previousValues` snapshot and the row lock that stops two concurrent
+         writers computing the same next version number. */
+      const prior = await client.query(
+        `SELECT id, content, status, completion_percentage
+           FROM cerv2_510k_sections
+          WHERE organization_id = $1 AND section_key = $2
+          FOR UPDATE`,
+        [ctx.organizationId, sectionKey],
+      );
+      if (prior.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return JSON.stringify({
+          error: `No section found for organization with section_key='${sectionKey}'. The kit's section taxonomy must be seeded first (run \`npm run db:seed:mdx-content\`).`,
+        });
+      }
+      const before = prior.rows[0];
+
+      const updated = await client.query(
+        `UPDATE cerv2_510k_sections
+            SET content                = $3,
+                status                 = $4,
+                completion_percentage  = $5,
+                draft_source           = 'ana',
+                drafted_at             = NOW(),
+                drafted_summary        = NULLIF($6, ''),
+                accepted_at            = NULL,
+                accepted_by            = NULL,
+                updated_at             = NOW()
+          WHERE organization_id = $1 AND section_key = $2
+          RETURNING id, section_number, section_title, section_key, status,
+                    completion_percentage AS "completionPercentage",
+                    drafted_at AS "draftedAt"`,
+        [ctx.organizationId, sectionKey, content, status, completionPct, note],
+      );
+
+      await recordCerv2SectionVersion(client, {
+        sectionId: before.id,
+        organizationId: ctx.organizationId,
+        changeType: 'edited',
+        /* The tool's own note when the caller supplied one. Falling back to a
+           fixed string is deliberate and honest — it names the actor and the
+           mechanism rather than inventing a rationale nobody gave. */
+        changeSummary: (note && String(note).trim()) || 'Drafted by AnA (no summary supplied)',
+        content,
+        status,
+        completionPercentage: completionPct,
+        previousValues: {
+          content: before.content ?? '',
+          status: before.status ?? null,
+          completion_percentage: before.completion_percentage ?? null,
+        },
+        newValues: { content, status, completion_percentage: completionPct },
+        fieldsChanged: ['content', 'status', 'completion_percentage'],
+        changedBy: ctx.userId ?? null,
       });
-    }
 
-    const row = rows[0];
+      await client.query('COMMIT');
+      row = updated.rows[0];
+    } catch (txErr) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw txErr;
+    } finally {
+      client.release();
+    }
 
     /* Audit log — fire-and-forget, never block the response. The auditService
        singleton handles tamper-proof chaining + Drizzle persistence. */
@@ -15588,6 +15789,151 @@ registerToolHandler('assess_batch_poolability', async (input: Record<string, unk
   }
 });
 
+/* The same ICH Q1E decision over the studies ON FILE, so AnA can answer "are my
+   primary batches combinable?" without the user transcribing their data.
+
+   Org scope comes from ToolContext and is applied in the WHERE clause, never
+   from model input — a study id the model produced must still belong to the
+   caller's tenant to be readable. The eligibility rules and the assessment
+   itself live in services/cmc/recorded-stability, shared verbatim with the HTTP
+   route the stability surface posts to, so the two can never disagree. */
+registerToolHandler('assess_recorded_batch_poolability', async (input, ctx) => {
+  const orgId = ctx?.organizationId;
+  if (!orgId) return 'An active organization context is required to read the stability register.';
+  const ids = Array.from(
+    new Set(
+      (Array.isArray(input.study_ids) ? input.study_ids : [])
+        .map((v: unknown) => (typeof v === 'number' ? v : parseInt(String(v), 10)))
+        .filter((n: number) => Number.isInteger(n) && n > 0),
+    ),
+  ).slice(0, 30);
+  if (ids.length < 2) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: 'Poolability compares batches, so it needs at least two different stability study ids.',
+    });
+  }
+  try {
+    const [{ db }, { stabilityStudies }, { and, eq, inArray }, { assessRecordedPoolability }] =
+      await Promise.all([
+        import('../../db.js'),
+        import('../../../shared/schema.js'),
+        import('drizzle-orm'),
+        import('../cmc/recorded-stability.js'),
+      ]);
+    const studies = await db
+      .select({
+        id: stabilityStudies.id,
+        studyTitle: stabilityStudies.studyTitle,
+        productName: stabilityStudies.productName,
+        batchNumber: stabilityStudies.batchNumber,
+        storageConditions: stabilityStudies.storageConditions,
+        duration: stabilityStudies.duration,
+        stabilityData: stabilityStudies.stabilityData,
+      })
+      .from(stabilityStudies)
+      .where(and(inArray(stabilityStudies.id, ids), eq(stabilityStudies.organizationId, orgId)));
+
+    if (studies.length !== ids.length) {
+      const found = new Set(studies.map(s => s.id));
+      return JSON.stringify({
+        status: 'not_found',
+        message: `No stability study in this organization for id(s): ${ids.filter(i => !found.has(i)).join(', ')}. List the stability register first and use the ids it returns — do not assess a partial set.`,
+      });
+    }
+
+    const outcome = await assessRecordedPoolability(studies);
+    if (!outcome.ok) {
+      return JSON.stringify({
+        status: 'not_assessable',
+        message: outcome.error,
+        instruction: 'Relay this reason to the user verbatim. Do not work around it by falling back to assess_batch_poolability with numbers you read off the studies — the refusal is a property of the data, not of the tool.',
+      });
+    }
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result: outcome.data,
+      instruction:
+        'Lead with the decision for the limiting attribute (combinable → one pooled shelf life; otherwise the shortest batch) and the supported shelf life, then report the slope/intercept F-tests verbatim. Name every attribute reported as not assessable and the reason given. This is EVIDENCE — the registered shelf life is set by a person on the study close-out, and this tool writes nothing.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `assess_recorded_batch_poolability failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+/* The Submission Readiness Twin, which shipped with five live routes and no
+   caller anywhere in the client.
+
+   Two things this handler owns beyond the service call:
+
+   1. TENANT PROOF. The program id comes from the model, so it must be proven to
+      belong to the caller's org before anything is read. It reuses the same
+      `programBelongsToOrg` the innovation routes use rather than a fourth copy
+      of that query.
+
+   2. "NOT ASSESSED" vs "SCORED ZERO". getDashboard returns getEmptyDashboard()
+      — overallScore 0, approvalProbability 0, no criteria — when no assessment
+      exists. That payload is indistinguishable from a genuinely terrible
+      program, and a model handed it will report a zero readiness score as fact.
+      It is detected here and returned as a different status entirely. */
+registerToolHandler('get_submission_readiness_twin', async (input, ctx) => {
+  const orgId = ctx?.organizationId;
+  if (!orgId) return 'An active organization context is required to read submission readiness.';
+  const programId = typeof input.program_id === 'string' ? input.program_id.trim() : '';
+  if (!programId) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'program_id is required.' });
+  }
+  const submissionType = typeof input.submission_type === 'string' && input.submission_type.trim()
+    ? input.submission_type.trim() : 'IND';
+  const agency = typeof input.agency === 'string' && input.agency.trim()
+    ? input.agency.trim() : 'FDA';
+
+  try {
+    const { programBelongsToOrg } = await import('../../routes/innovation-routes.js');
+    if (!(await programBelongsToOrg(programId, Number(orgId)))) {
+      return JSON.stringify({
+        status: 'not_found',
+        message: `No program "${programId}" in this organization. Do not report a readiness score; confirm the program with the user.`,
+      });
+    }
+
+    const [{ default: SubmissionReadinessTwinService }, { getPool }] = await Promise.all([
+      import('../innovation/submission-readiness-twin-service.js'),
+      import('../../db.js'),
+    ]);
+    const service = new SubmissionReadinessTwinService(getPool() as any);
+    const dashboard = await service.getDashboard(programId, submissionType, agency);
+
+    /* The empty dashboard is a zero-valued object, not an absence. Reporting it
+       verbatim would state a 0% readiness score and a 0% approval probability
+       for a program that has simply never been assessed. Zero evaluated criteria
+       is the same signal `report-os/prediction/model-adapters` uses to refuse. */
+    const neverAssessed = (dashboard?.criteriaProgress?.total ?? 0) === 0;
+    if (neverAssessed) {
+      return JSON.stringify({
+        status: 'not_assessed',
+        programId,
+        submissionType,
+        agency,
+        message: `No readiness assessment has been run for this program against ${submissionType}/${agency}. This is NOT a score of zero — say that no assessment exists and offer to run one, and do not state a readiness percentage or approval probability.`,
+      });
+    }
+
+    return JSON.stringify({
+      status: 'ok',
+      programId,
+      submissionType,
+      agency,
+      dashboard,
+      instruction:
+        'Lead with the overall score, its trend, and the criteria met-vs-total. Then the ranked recommendations with their effort, because that is what the user acts on. Report per-module readiness where it is uneven rather than averaging it away. The predicted approval probability, review time and deficiency count are MODEL ESTIMATES from historical patterns — attribute them as such and never assert them as the likelihood of approval.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `get_submission_readiness_twin failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Structured benefit-risk assessment (BRAT-style) — deterministic decision aid.
 registerToolHandler('assess_benefit_risk', async (input: Record<string, unknown>) => {
   try {
@@ -15767,7 +16113,7 @@ registerToolHandler('list_app_screens', async (input: Record<string, unknown>) =
 // AnA self-navigation — validate a target against the governed registry and
 // produce the navigation directive the chat client applies. Refuses unknown
 // targets / invalid params rather than emitting a broken jump.
-registerToolHandler('navigate_to', async (input: Record<string, unknown>) => {
+registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: ToolContext) => {
   try {
     const target = typeof input.target === 'string' ? input.target.trim() : '';
     if (!target) {
@@ -15786,11 +16132,151 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>) => {
     return JSON.stringify({
       status: 'navigation_ready',
       directive: res.directive,
-      instruction:
-        'A navigation directive was produced; the UI will move to this screen. Tell the user where you are taking them. Project-scoped screens require an active project.',
+      // The instruction must match what actually happens on screen: under Live
+      // Drive the directive is applied as it streams (the user opted in and is
+      // watching); otherwise it is offered as a chip the user activates.
+      instruction: ctx?.liveDrive
+        ? 'Live Drive is on: this navigation is being applied to the user’s screen now — they are watching you drive. Narrate where you have taken them and why, then continue the work there. Project-scoped screens require an active project.'
+        : 'A navigation directive was produced and is OFFERED to the user as an action they activate — the screen does not change on its own. Say where you can take them and why, not that you have taken them. Project-scoped screens require an active project.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `navigate_to failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// AnA self-operation — discover the ungoverned on-screen operations from the
+// governed surface-action registry (the sibling of list_app_screens).
+registerToolHandler('list_screen_actions', async (input: Record<string, unknown>) => {
+  try {
+    const { SURFACE_ACTIONS } = await import('../../../shared/navigation/surface-actions.js');
+    const surface = typeof input.surface === 'string' ? input.surface.trim() : '';
+    const actions = SURFACE_ACTIONS.filter(a => (surface ? a.surfaceId === surface : true)).map(
+      a => ({
+        id: a.id,
+        surface: a.surfaceId,
+        label: a.label,
+        description: a.description,
+        params: a.params,
+      })
+    );
+    return JSON.stringify({
+      status: 'ok',
+      count: actions.length,
+      actions,
+      instruction:
+        'Perform an action with act_on_screen using its id verbatim, after navigating to (or while on) the screen it operates. These are ungoverned view operations only — governed work (sign/approve/submit/lock) always goes through the propose-and-confirm path instead.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `list_screen_actions failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// AnA self-operation — validate an on-screen operation against the governed
+// surface-action registry and produce the directive the client bus performs.
+// Refuses unknown actions, governed verbs, and invalid params rather than
+// emitting a broken (or forbidden) operation.
+registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  try {
+    const action = typeof input.action === 'string' ? input.action.trim() : '';
+    if (!action) {
+      return JSON.stringify({
+        status: 'needs_parameters',
+        message: 'action is required — call list_screen_actions to discover action ids.',
+      });
+    }
+    const params =
+      input.params && typeof input.params === 'object'
+        ? (input.params as Record<string, unknown>)
+        : {};
+    const { resolveSurfaceAction } = await import('../../../shared/navigation/surface-actions.js');
+    const res = resolveSurfaceAction(action, params);
+    if (!res.ok) {
+      return JSON.stringify({
+        status:
+          res.code === 'unknown_action'
+            ? 'unknown_action'
+            : res.code === 'governed_refused'
+            ? 'governed_refused'
+            : 'needs_parameters',
+        message: res.error,
+        ...(res.code === 'unknown_action' && res.validActions ? { validActions: res.validActions } : {}),
+      });
+    }
+    return JSON.stringify({
+      status: 'action_ready',
+      directive: res.directive,
+      // The instruction must match what actually happens on screen, exactly as
+      // navigate_to's does.
+      instruction: ctx?.liveDrive
+        ? `Live Drive is on: this operation is being performed on the user's screen now (on the "${res.directive.surfaceId}" surface — make sure you have navigated there). Narrate what you did and what it shows, then continue.`
+        : `An action directive was produced and is OFFERED to the user as a chip they activate — the screen does not change on its own. Say what the action will do when they tap it, not that you have done it.`,
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `act_on_screen failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// AnA demonstrations — list the curated demo scripts (training + sales).
+registerToolHandler('list_demo_scripts', async (input: Record<string, unknown>) => {
+  try {
+    const { listDemoScripts } = await import('../../../shared/navigation/demo-scripts.js');
+    const kind = input.kind === 'training' || input.kind === 'sales' ? input.kind : undefined;
+    const scripts = listDemoScripts().filter(s => (kind ? s.kind === kind : true));
+    return JSON.stringify({
+      status: 'ok',
+      count: scripts.length,
+      scripts,
+      instruction:
+        'Fetch the chosen script with start_product_demo. Demonstrations run best under Live Drive demonstration mode — the user starts it from the AnA rail (Control → Run a demonstration).',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `list_demo_scripts failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// AnA demonstrations — fetch one validated script and the instructions for
+// running it. The script is a plan; execution stays tool-driven (navigate_to /
+// act_on_screen), so every drive invariant holds unchanged.
+registerToolHandler('start_product_demo', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  try {
+    const demoId = typeof input.demo === 'string' ? input.demo.trim() : '';
+    const { findDemoScript, listDemoScripts, validateDemoScript } = await import(
+      '../../../shared/navigation/demo-scripts.js'
+    );
+    if (!demoId) {
+      return JSON.stringify({
+        status: 'needs_parameters',
+        message: 'demo is required — call list_demo_scripts to discover script ids.',
+        scripts: listDemoScripts(),
+      });
+    }
+    const script = findDemoScript(demoId);
+    if (!script) {
+      return JSON.stringify({
+        status: 'unknown_demo',
+        message: `Unknown demonstration "${demoId}".`,
+        scripts: listDemoScripts(),
+      });
+    }
+    // Belt: scripts are registry-validated by the test suite; refuse rather
+    // than run a script that somehow references a screen that no longer exists.
+    const defects = validateDemoScript(script);
+    if (defects.length > 0) {
+      return JSON.stringify({
+        status: 'invalid_demo',
+        message: `Demonstration "${demoId}" failed validation and cannot run.`,
+        defects,
+      });
+    }
+    return JSON.stringify({
+      status: 'demo_ready',
+      script,
+      instruction: ctx?.liveDrive
+        ? `Run the demonstration now, stop by stop and briskly: for each step, narrate its "say" talking point in your own words (adapted to the user's real data on screen — never verbatim), then make its move (navigate_to for "navigate", act_on_screen for "act"). A step without pinned params (e.g. which program to open) is filled from the on-screen context; if the workspace has no programs yet, narrate from the portfolio and offer to set one up together instead. Answer any question the user asks mid-demo, then resume from the next stop. If the turn ends before the script does, say which stop you reached so you can continue from the next one.`
+        : `Live Drive is NOT on for this turn, so the moves below can only be OFFERED as chips, not performed. Tell the user a demonstration works best with Live Drive on (AnA rail → Control → Live Drive, or the Run a demonstration button) and offer to proceed chip-by-chip if they prefer.`,
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `start_product_demo failed: ${err?.message || 'unknown error'}` });
   }
 });
 
@@ -17934,6 +18420,22 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
   if (!title) return JSON.stringify({ error: 'title (string) is required.' });
   if (!content) return JSON.stringify({ error: 'content (string) is required.' });
   if (!reason) return JSON.stringify({ error: 'reason (min 8 characters) is required — governed action.' });
+  /* concept2cure_artifacts.project_id is integer NOT NULL — the INSERT below
+     omitted it, so this tool failed on EVERY real call while its contract test
+     (mocked pool) stayed green. The explicit "AnA, file this" path must file
+     under a project or say plainly that it cannot; a vault document belonging
+     to no project is exactly the orphaned capture this platform must not
+     produce. */
+  const projectId =
+    typeof ctx.projectId === 'number' && Number.isFinite(ctx.projectId) && ctx.projectId > 0
+      ? ctx.projectId
+      : null;
+  if (!projectId) {
+    return JSON.stringify({
+      error:
+        'save_document_to_vault needs an open project — every vault document is filed under one. Open or select a project, then ask again.',
+    });
+  }
   try {
     const { getPool } = await import('../../db.js');
     const { createHash, randomUUID } = await import('crypto');
@@ -17949,12 +18451,12 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
       await setTenantContextTx(client, ctx.organizationId);
       const ins = await client.query<{ id: number }>(
         `INSERT INTO concept2cure_artifacts (
-           artifact_id, organization_id, type, category, title, content, content_hash,
+           artifact_id, organization_id, project_id, type, category, title, content, content_hash,
            ctd_section, status, version, created_by_id, metadata
-         ) VALUES ($1, $2, 'document', $3, $4, $5, $6, $7, 'draft', 1, $8,
-           jsonb_build_object('source', 'ana_tool', 'reason', $9::text))
+         ) VALUES ($1, $2, $3, 'document', $4, $5, $6, $7, $8, 'draft', 1, $9,
+           jsonb_build_object('source', 'ana_tool', 'reason', $10::text))
          RETURNING id`,
-        [externalId, ctx.organizationId, category, title, content, hash, ctd, ctx.userId, reason],
+        [externalId, ctx.organizationId, projectId, category, title, content, hash, ctd, ctx.userId, reason],
       );
       await client.query(
         `INSERT INTO concept2cure_artifact_versions

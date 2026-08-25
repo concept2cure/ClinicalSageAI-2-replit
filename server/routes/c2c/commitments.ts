@@ -158,8 +158,21 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
       linkedTaskId: typeof req.body?.linkedTaskId === 'string' ? req.body.linkedTaskId : undefined,
     });
     if (!updated) return res.status(404).json({ error: 'COMMITMENT_NOT_FOUND' });
-    await writeCommitmentAudit(orgId, userId, String(req.params.id), status, reason).catch(() => undefined);
-    return res.json({ success: true, data: updated });
+    // The `.catch(() => undefined)` that used to sit here was the second half of
+    // the double swallow — the function already swallowed internally, so it
+    // caught nothing and only hid the (now real) return value.
+    const audited = await writeCommitmentAudit(orgId, userId, String(req.params.id), status, reason);
+    return res.json({
+      success: true,
+      data: updated,
+      ...(audited
+        ? {}
+        : {
+            auditWriteFailed: true,
+            auditWarning:
+              'The status changed, but its Part 11 audit entry could not be written. Record this change manually and raise it with your administrator before relying on the audit trail.',
+          }),
+    });
   } catch (err: any) {
     if (err?.message === 'COMMITMENTS_TABLE_MISSING') return res.status(503).json({ error: 'COMMITMENTS_TABLE_MISSING' });
     console.error('[c2c/commitments/status]', err?.message);
@@ -214,11 +227,27 @@ router.post('/:id/promote-to-task', async (req: Request, res: Response) => {
   }
 });
 
-/** Best-effort 21 CFR Part 11 audit (hash-chained) for a commitment status change. */
+/**
+ * 21 CFR Part 11 audit (hash-chained) for a commitment status change.
+ *
+ * Still best-effort — a governed status change must not fail because the ledger
+ * is unreachable — but it no longer swallows in silence. It used to `catch {
+ * ROLLBACK }` with no rethrow AND be called with `.catch(() => undefined)`: a
+ * double swallow, so the c2c_commitments UPDATE committed on another connection
+ * while its §11.10(e) record simply did not exist, and the route answered
+ * `{ success: true }` either way.
+ *
+ * That matters more here than it looks: this route REQUIRES a reason of at
+ * least eight characters and is documented as writing a Part 11 audit, so the
+ * reason a regulator would look for was being captured into a row that might
+ * never land.
+ *
+ * Returns whether the row was written.
+ */
 async function writeCommitmentAudit(
   orgId: number, userId: number | null, id: string, status: string, reason: string,
-): Promise<void> {
-  if (!pool) return;
+): Promise<boolean> {
+  if (!pool) return false;
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -237,8 +266,14 @@ async function writeCommitmentAudit(
        target, 'commitment', id, reason, payloadHash, null, sha256Chain, occurredAt, hmacSeal],
     );
     await client.query('COMMIT');
-  } catch {
+    return true;
+  } catch (err) {
     try { await client.query('ROLLBACK'); } catch { /* ignore */ }
+    console.error(
+      '[c2c/commitments] Part 11 audit row NOT written for a governed status change',
+      { commitmentId: id, status, reason: err instanceof Error ? err.message : String(err) },
+    );
+    return false;
   } finally {
     client.release();
   }

@@ -92,9 +92,13 @@ describe('resolveAuthBoundaryMode', () => {
 
 describe('createAuthBoundary', () => {
   const ORIGINAL_MODE = process.env.AUTH_BOUNDARY_MODE;
+  const ORIGINAL_RLS = process.env.RLS_ENFORCE;
+
   afterEach(() => {
     if (ORIGINAL_MODE === undefined) delete process.env.AUTH_BOUNDARY_MODE;
     else process.env.AUTH_BOUNDARY_MODE = ORIGINAL_MODE;
+    if (ORIGINAL_RLS === undefined) delete process.env.RLS_ENFORCE;
+    else process.env.RLS_ENFORCE = ORIGINAL_RLS;
   });
 
   it('passes CORS preflight without authenticating', () => {
@@ -125,11 +129,76 @@ describe('createAuthBoundary', () => {
     const authenticate = vi.fn();
     const next = vi.fn() as unknown as NextFunction;
     createAuthBoundary({ authenticate })(
-      mockReq({ baseUrl: '/api', path: '/documents', user: { id: 1 } } as Partial<Request>),
+      // "Already authenticated upstream" means the scope came WITH it: an
+      // attached request client is exactly what establishRequestTenantScope
+      // treats as authoritative and passes through untouched.
+      //
+      // The fixture used to be `{ id: 1 }` alone, which stopped exercising
+      // pass-through as the boundary grew. An identity with no organization
+      // claim now hits the AUTH_011 rejection (pinned by its own test below),
+      // and adding only `organizationId` runs off the far end into real scope
+      // installation, which needs a pool — and this suite is DB-free by
+      // construction. Both are the wrong shape for a test named "passes".
+      mockReq({
+        baseUrl: '/api',
+        path: '/documents',
+        user: { id: 1, organizationId: 1 },
+        dbClient: {} as never,
+      } as Partial<Request>),
       mockRes(),
       next
     );
     expect(authenticate).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects an authenticated request that carries no resolvable tenant (AUTH_011)', () => {
+    // The one control this boundary adds over the scope installer: an identity
+    // that authenticated upstream but resolves to no organization must NOT be
+    // allowed through unscoped. Under RLS_ENFORCE=on an unscoped pooled query
+    // fails closed anyway, so letting it past here would turn a clear 401 into
+    // an opaque downstream failure.
+    //
+    // The enforcement mode is set EXPLICITLY because that is the condition the
+    // control is written for (authBoundary.ts: `readEnforcementMode() === 'on'`).
+    // This test previously asserted the rejection with RLS_ENFORCE unset, where
+    // the middleware deliberately passes the request through — so it had never
+    // passed since it was written.
+    process.env.RLS_ENFORCE = 'on';
+    const authenticate = vi.fn();
+    const next = vi.fn() as unknown as NextFunction;
+    const res = mockRes();
+    createAuthBoundary({ authenticate })(
+      mockReq({ baseUrl: '/api', path: '/documents', user: { id: 1 } } as Partial<Request>),
+      res,
+      next
+    );
+    expect(authenticate).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({ code: 'AUTH_011' }),
+      })
+    );
+  });
+
+  it('and lets the same request through when RLS is not enforcing', () => {
+    // The other half of the same control, pinned so the carve-out stays
+    // deliberate rather than becoming an accident. Identities that predate the
+    // tenant claim (system consoles, platform tokens) keep working in dev, test
+    // and CI, where an unscoped query is not fenced by the database; production
+    // is the environment that sets RLS_ENFORCE=on and gets the 401 above.
+    process.env.RLS_ENFORCE = 'off';
+    const authenticate = vi.fn();
+    const next = vi.fn() as unknown as NextFunction;
+    const res = mockRes();
+    createAuthBoundary({ authenticate })(
+      mockReq({ baseUrl: '/api', path: '/documents', user: { id: 1 } } as Partial<Request>),
+      res,
+      next
+    );
+    expect(res.status).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalledTimes(1);
   });
 

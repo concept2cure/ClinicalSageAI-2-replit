@@ -60,6 +60,12 @@ export const AUTHORING_SUBSYSTEM_FILES = [
   'db/migrations/20260725_authoring_audit_trail.sql',
   'db/migrations/20260725_authoring_signatures_and_workflow.sql',
   'db/migrations/20260725_authoring_signature_freeze_binding.sql',
+  // C2C-AUTHOR-002 object-level authorization: adds doc_permissions columns
+  // (role/grant metadata) and the SECURITY DEFINER seed trigger that grants each
+  // document creator OWNER + AUTHOR. Depends only on authoring_documents /
+  // authoring_sections (from the loop-tables file above) and public.users, so it
+  // slots in after the 20260725 loop-tables set and before the 20260730_* files.
+  'db/migrations/20260727_authoring_object_permissions.sql',
   // The router's own tables (authoring_tokens/templates/template_guidance/
   // template_usage/section_guidance/export_history/tracked_change_decisions).
   // These were created by runtime `ensure*` DDL inside authoring.router.ts until
@@ -78,6 +84,12 @@ export const AUTHORING_SUBSYSTEM_FILES = [
   // 20260730_authoring_subsystem_schema.sql). Additive ALTER … ADD COLUMN IF NOT
   // EXISTS; must run after the loop tables that create these tables.
   'db/migrations/20260730_authoring_comments_router_columns.sql',
+  // Immutable revision ledger: hash-chain + origin + input-manifest columns on
+  // doc_revisions, and the engine-enforced append-only trigger. Additive ALTER
+  // + CREATE OR REPLACE FUNCTION/TRIGGER; must follow the loop-tables file
+  // that creates doc_revisions. Verified end-to-end by
+  // authoring-ledger.pglite.integration.test.ts.
+  'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
   // C-30: the genuinely-new authoring WORKFLOW tables (reviews, audit events, AI
   // suggestions, compliance scoring, suggestion feedback, comment activity,
   // exports, change requests, checklists(+items), template sections). After C-27
@@ -184,7 +196,7 @@ export const AUTHORING_SUBSYSTEM_TABLES = [
 // session vars tenant_isolation_policy consults, applied to the PARENT document's
 // tenant_id. Kept as one constant so the doc-scoped and tenant policies converge.
 const PARENT_TENANT_MATCH = `(d.tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-        OR d.tenant_id = NULLIF(current_setting('app.current_org_id', TRUE), '')::INT)`;
+        OR d.tenant_id = substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INT)`;
 
 export const AUTHORING_SUBSYSTEM_DOCSCOPED_TABLES = [
   {
@@ -226,6 +238,12 @@ export const AUTHORING_SUBSYSTEM_FK_CONSTRAINTS = [
   'doc_revisions_section_tenant_fkey',
   'authoring_comments_section_tenant_fkey',
   'authoring_citations_section_tenant_fkey',
+  // C2C-AUTHOR-002 object permissions: the composite tenant-parentage FKs on
+  // doc_permissions guaranteed by 20260727_authoring_object_permissions.sql
+  // (doc_id,tenant_id → authoring_documents; section_id,doc_id,tenant_id →
+  // authoring_sections). Listed so /readyz + the pilot gate surface their absence.
+  'doc_permissions_doc_tenant_fkey',
+  'doc_permissions_section_doc_tenant_fkey',
 ];
 
 /**
@@ -246,13 +264,13 @@ function tenantPolicySql(table) {
       USING (
         NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
         OR tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-        OR tenant_id = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+        OR tenant_id = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
         OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
       )
       WITH CHECK (
         NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
         OR tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-        OR tenant_id = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+        OR tenant_id = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
         OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
       );
   `;

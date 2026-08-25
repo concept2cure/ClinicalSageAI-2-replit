@@ -17,9 +17,9 @@ jobs:
     name: Semgrep (SAST)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Run Semgrep (SAST)
-        uses: returntocorp/semgrep-action@v1
+        uses: returntocorp/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d # v1
         with:
           config: p/ci
 
@@ -27,12 +27,12 @@ jobs:
     name: PR Validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
 
@@ -76,6 +76,68 @@ jobs:
         # generate noise. Deliberate exceptions annotate the line with
         # `microcopy-allow: <reason>`.
         run: npm run check:microcopy
+
+      - name: GA completion ledger check
+        # Hard gate. docs/GA_COMPLETION_LEDGER_2026-08.md is the single register
+        # of open GA work across every space; its failure mode is going stale —
+        # a row citing a renamed file, a row marked `done` on an agent's
+        # say-so, two rows sharing an ID. All three have happened here. The
+        # check refuses a `done` row whose evidence does not exist, and refuses
+        # work specified against a document that is not in the repo. A path an
+        # `open` row names as its deliverable is reported, never failed.
+        run: npm run check:ledger
+
+      - name: Document alias map holds identities only
+        # Hard gate. c2c_document_aliases is an identity map, not a registry.
+        # The registry that owned identity AND metadata AND placement was built
+        # here once and reverted, because it competed with the stores that
+        # already own those things. It would come back one reasonable-looking
+        # column at a time — a title "just for debugging", a status "so we
+        # don't have to join" — each defensible alone, the set being the
+        # reverted design. This says no once, to all of them.
+        run: npm run ci:document-alias-attribute-free
+
+      - name: Surfaces are discoverable, or declared not to be
+        # Hard gate. The product renders 118 surfaces and the rail exposes 14;
+        # the rest are found through the Apps catalog. Nothing kept those two
+        # lists in step, so eight backed surfaces — mounted routes, live API
+        # calls, one across seventeen endpoints — were reachable only by
+        # someone who already knew the URL. A surface a user cannot find is,
+        # to that user, a surface that does not exist. Exclusions are allowed
+        # and must carry a reason.
+        run: npm run ci:surface-discoverability
+
+      - name: AnA can see the screen she is asked about
+        # Ratchet, not a hard requirement. A surface tells AnA what it is showing
+        # via usePublishSurfaceContext; the shell forwards it and the server
+        # renders it into the prompt. That pipeline was completed end to end and
+        # then three surfaces out of 118 called the publisher — so on the other
+        # 115 AnA was handed a live conversation and an empty screen, and would
+        # answer "what should I do next?" from the surface id alone. Nothing
+        # detected it: publisher and consumer were both tested, and the thing
+        # between them was nobody's test. Adoption may rise and may never fall;
+        # the remaining backlog is reported, not failed.
+        run: npm run ci:ana-surface-context
+
+      - name: No server error carries the failure text to the client
+        # Ratchet, not a hard requirement. serverError() copied err.message into
+        # the response body while its docstring claimed the envelope was
+        # sanitized, so a route with a missing relation answered the browser
+        # with `relation "software_lifecycle_items" does not exist` — the exact
+        # string the MDX work order's verify step forbids, delivered to whoever
+        # holds the session. Fixing that helper closed 272 call sites and left
+        # 843 that answer a 5xx without it, mostly a copy-pasted local fail().
+        # Client-side redaction does not close this: it scrubs at render time
+        # while the API still ships the string to a proxy log or a saved HAR.
+        # The baseline may shrink and may never grow.
+        run: npm run ci:server-error-leaks
+
+      - name: No API route or table name in user-visible copy
+        # Hard gate, and it was running nowhere. The script has existed since
+        # W0-4 and was referenced only from package.json — absent from all 19
+        # workflows and both husky hooks — so the rule it enforces was checked
+        # only when somebody remembered to run it by hand.
+        run: npm run ci:internals-in-copy
 
       - name: Verify tests for changed code
         run: bash scripts/ai/verify-tests.sh

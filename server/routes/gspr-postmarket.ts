@@ -43,7 +43,20 @@ import {
   AUTHORABLE_DOCUMENT_TYPES,
 } from '../services/gspr-postmarket/post-market-authoring';
 import { getPostMarketDocStatus } from '../services/gspr-postmarket/post-market-readiness';
+import {
+  isPmcfEnrollmentStoreAbsent,
+  listPmcfEnrollmentRecords,
+  summariseRecords,
+  upsertPmcfEnrollmentRecord,
+  STORE_ABSENT,
+} from '../services/gspr-postmarket/pmcf-enrollment.service';
 import type { PostMarketDocumentType } from '../../shared/schema/gspr-postmarket';
+import {
+  PMCF_ACTIVITY_KINDS,
+  PMCF_ACTIVITY_STATUSES,
+  type PmcfActivityKind,
+  type PmcfActivityStatus,
+} from '../../shared/schema/gspr-postmarket';
 import auditService from '../services/auditService';
 
 function userIdFromReq(req: Request): string | null {
@@ -597,6 +610,136 @@ postMarketRouter.post(
       res.status(201).json(newDoc);
     } catch (err: any) {
       res.status(500).json({ error: 'Supersede failed', detail: err?.message });
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PMCF enrolment (MDR Annex XIV Part B) — the feed behind the PMS/PMCF tab
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// The PMCF plan generator and the documentation-status view were already live;
+// what had no backend at all was the actual follow-up activity — how many
+// subjects are enrolled, against what target, as of when. That is the evidence
+// a notified body reads the post-market section of a CER against, so without it
+// the tab could describe a plan but never its execution.
+//
+// The service refuses rather than guesses in three places, and these routes
+// carry those refusals through instead of smoothing them: an undated enrolment
+// count, a programme outside the caller's organization, and a database without
+// the migration applied. The last one answers 503 with the reason — an empty
+// list would read as "no PMCF activity", which is a claim about the programme
+// rather than about the database.
+
+/** Parse an optional ISO date field, distinguishing absent from unparseable. */
+function optionalDate(value: unknown, field: string): Date | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null || value === '') return null;
+  const d = new Date(String(value));
+  if (Number.isNaN(d.getTime())) throw new Error(`${field} is not a valid date`);
+  return d;
+}
+
+postMarketRouter.get(
+  '/programs/:programId/pmcf-enrollment',
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const programId = String(req.params.programId);
+    try {
+      const records = await listPmcfEnrollmentRecords(orgId, programId);
+      // Summarised from the SAME array that is returned, so the table and the
+      // totals cannot disagree — a summary computed by a second query can.
+      res.json({ programId, records, count: records.length, summary: summariseRecords(programId, records) });
+    } catch (err: any) {
+      if (isPmcfEnrollmentStoreAbsent(err) || err?.message === STORE_ABSENT) {
+        return res.status(503).json({ error: 'PMCF enrolment unavailable', detail: STORE_ABSENT });
+      }
+      res.status(500).json({ error: 'List failed', detail: err?.message });
+    }
+  }
+);
+
+postMarketRouter.post(
+  '/programs/:programId/pmcf-enrollment',
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const programId = String(req.params.programId);
+    const body = req.body ?? {};
+
+    // An unattributed post-market record is refused, not recorded as 'system':
+    // the activity is regulatory evidence and it needs an author.
+    const actorId = userIdFromReq(req);
+    if (!actorId) {
+      return res.status(403).json({ error: 'An identified user is required to record PMCF activity' });
+    }
+    if (!body.activityCode || !body.title) {
+      return res.status(422).json({ error: 'activityCode and title are required' });
+    }
+    if (!PMCF_ACTIVITY_KINDS.includes(body.activityKind)) {
+      return res.status(422).json({ error: `activityKind must be one of: ${PMCF_ACTIVITY_KINDS.join(', ')}` });
+    }
+    if (body.status !== undefined && !PMCF_ACTIVITY_STATUSES.includes(body.status)) {
+      return res.status(422).json({ error: `status must be one of: ${PMCF_ACTIVITY_STATUSES.join(', ')}` });
+    }
+
+    try {
+      const result = await upsertPmcfEnrollmentRecord({
+        organizationId: orgId,
+        programId,
+        actorId,
+        activityCode: String(body.activityCode),
+        activityKind: body.activityKind as PmcfActivityKind,
+        title: String(body.title),
+        status: body.status as PmcfActivityStatus | undefined,
+        pmcfPlanDocumentId: body.pmcfPlanDocumentId ?? undefined,
+        primaryEndpoint: body.primaryEndpoint ?? undefined,
+        sitesCount: body.sitesCount ?? undefined,
+        targetEnrollment: body.targetEnrollment ?? undefined,
+        enrolledCount: body.enrolledCount ?? undefined,
+        enrollmentAsOf: optionalDate(body.enrollmentAsOf, 'enrollmentAsOf'),
+        dataCollectionThrough: optionalDate(body.dataCollectionThrough, 'dataCollectionThrough'),
+        notes: body.notes ?? undefined,
+      });
+
+      // The service deliberately writes no audit row itself; it returns the
+      // superseded row so the before/after lands in the chained entry here.
+      void auditService.logAction({
+        tenantId: orgId,
+        userId: actorId,
+        action: 'post_market.pmcf_enrollment.upsert',
+        resourceType: 'pmcf_enrollment_record',
+        resourceId: String(result.record.id),
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: {
+          programId,
+          activityCode: result.record.activityCode,
+          created: result.superseded === null,
+          before: result.superseded
+            ? {
+                status: result.superseded.status,
+                enrolledCount: result.superseded.enrolledCount,
+                targetEnrollment: result.superseded.targetEnrollment,
+              }
+            : null,
+          after: {
+            status: result.record.status,
+            enrolledCount: result.record.enrolledCount,
+            targetEnrollment: result.record.targetEnrollment,
+          },
+        },
+      });
+
+      res.status(result.superseded === null ? 201 : 200).json(result);
+    } catch (err: any) {
+      if (isPmcfEnrollmentStoreAbsent(err) || err?.message === STORE_ABSENT) {
+        return res.status(503).json({ error: 'PMCF enrolment unavailable', detail: STORE_ABSENT });
+      }
+      // The service's own validation refusals (undated count, zero target,
+      // programme outside the org) are the caller's fault, not the server's.
+      res.status(422).json({ error: 'Record rejected', detail: err?.message });
     }
   }
 );

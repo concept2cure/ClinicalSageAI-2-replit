@@ -264,44 +264,14 @@ export const GI_FINDINGS: GiFinding[] = [
   },
 ];
 
-/* ── Per-segment binding ── */
+/* The per-segment binding (GI_BY_SEG / giForSeg) is deleted.
 
-export const GI_BY_SEG: Record<string, GiSegmentBinding> = {
-  biotech: {
-    program: { projectId: 301, code: 'BX-301', name: 'anti-BCMA mAb', app: 'BLA -- 351(a)', filing: 'BLA', stage: 'Clinical -> CMC assembly', indication: 'Relapsed multiple myeloma' },
-    findings: GI_FINDINGS.filter(f => f.id === 'CF-1' || f.id === 'CF-2'),
-    checks: [],
-  },
-  pharma: {
-    program: GI_PROGRAM,
-    findings: GI_FINDINGS.filter(f => f.id === 'CF-3' || f.id === 'CF-4' || f.id === 'CF-5'),
-    checks: [],
-  },
-  medtech: {
-    program: { projectId: 0, code: 'Aurora CGM', name: 'Continuous glucose monitor', app: '510(k) -- eSTAR', filing: '510(k)', stage: 'Substantial-equivalence assembly', indication: 'CGM' },
-    findings: [],
-    checks: [
-      { k: 'Accuracy (MARD)', detail: 'Subject MARD 8.2% is cited identically in S11 Substantial Equivalence, the 510(k) Summary, and the IFU.' },
-      { k: 'Predicate comparison', detail: 'Predicate MARD 8.7% is consistent across the comparison table and the SE discussion.' },
-      { k: 'Labeling claim', detail: 'The IFU accuracy claim matches the pivotal-study result -- no over-statement of performance.' },
-    ],
-  },
-  diagnostics: {
-    program: { projectId: 0, code: 'IVD', name: 'In-vitro diagnostic dossier', app: '510(k) for IVD -- eSTAR', filing: 'IVD 510(k)', stage: 'Performance evaluation', indication: 'IVD' },
-    findings: [],
-    checks: [
-      { k: 'Analytical performance vs claim', detail: 'Reported analytical performance is consistent with the labeled intended-use claim.' },
-      { k: 'Precision vs acceptance', detail: 'Precision and reproducibility results sit within the pre-specified acceptance criteria.' },
-      { k: 'LoD / LoQ consistency', detail: 'Limit of detection and quantitation are stated consistently across the performance report and the labeling.' },
-    ],
-  },
-};
-
-export function giForSeg(seg: string): GiSegmentBinding {
-  return GI_BY_SEG[seg] || GI_BY_SEG.pharma;
-}
-
-/* ── Assumption registry summary (test: drift origin) ── */
+   Its biotech entry was the invented programme `BX-301 · anti-BCMA mAb ·
+   BLA 351(a) · relapsed multiple myeloma`, paired with two sample findings.
+   Inconsistency.tsx moved to the live governed-intelligence board and stopped
+   importing it; nothing else referenced it, in the app or in the tests. Deleted
+   rather than left dormant — a sample programme sitting in an exported const is
+   one import away from being rendered again. */
 
 export const GI_ASSUMPTIONS: GiAssumption[] = [
   { id: 'ASM-1', category: 'dropout', domainTrack: 'clinical', assumedValue: '15%', status: 'active', title: 'Protocol dropout', source: 'Clinical Protocol v2 -- S9.2' },

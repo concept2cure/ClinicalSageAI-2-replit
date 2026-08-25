@@ -37,10 +37,15 @@ vi.mock('../server/services/mdx-health.service', () => ({
   probeMdxHealth: vi.fn(),
 }));
 
-/* Mock the database modules so saved-precedent-queries route handlers
-   resolve without an actual db connection. */
-vi.mock('../server/db', () => ({
-  db: {
+/* Mock the database modules so saved-precedent-queries route handlers resolve
+   without an actual db connection. The route runs on the request-scoped
+   connection (requestDb(req)); rather than install a fake req.dbClient we stub
+   requestDb() to hand back the SAME in-memory query builder as the shared `db`
+   mock, so both the legacy and tenant-scoped paths resolve identically here.
+   (The real requestDb path is exercised against Postgres in
+   server/routes/__tests__/saved-precedent-queries.rls.test.ts.) */
+const { mockDb } = vi.hoisted(() => {
+  const mockDb = {
     select: vi.fn(() => ({
       from: vi.fn(() => ({
         where: vi.fn(() => ({
@@ -65,9 +70,12 @@ vi.mock('../server/db', () => ({
         returning: vi.fn(async () => []),
       })),
     })),
-  },
-  pool: { query: vi.fn() },
-}));
+  };
+  return { mockDb };
+});
+
+vi.mock('../server/db', () => ({ db: mockDb, pool: { query: vi.fn() } }));
+vi.mock('../server/db/requestDb', () => ({ requestDb: () => mockDb }));
 
 import * as svc from '../server/services/regulatory-programs.service';
 import * as healthSvc from '../server/services/mdx-health.service';
@@ -157,10 +165,19 @@ describe('regulatory-programs routes — list', () => {
   });
 
   it('GET / returns 500 with sanitized envelope on service error', async () => {
+    // This case is named for the sanitized envelope and used to assert the
+    // opposite — `{ error: 'DB down' }`, the raw thrown message echoed to the
+    // client. 952d8c088 made respondInternalError sanitize (a 500 was telling
+    // the browser which table was missing) and did not update this expectation,
+    // so the test contradicted both its own title and the fix.
     vi.mocked(svc.listPrograms).mockRejectedValueOnce(new Error('DB down'));
     const res = await request(makeApp()).get('/api/regulatory-programs');
     expect(res.status).toBe(500);
-    expect(res.body).toEqual({ error: 'DB down' });
+    expect(res.body.error).toBe('INTERNAL_ERROR');
+    // The property that matters: nothing about the internal failure crosses the
+    // boundary. Asserted over the whole serialized body, not one field, so a
+    // future leak through `message`, `details` or any new key fails here.
+    expect(JSON.stringify(res.body)).not.toMatch(/DB down/);
   });
 });
 
@@ -439,10 +456,13 @@ describe('mdx module health — /api/mdx/health', () => {
   });
 
   it('returns 500 with sanitized envelope when probe throws', async () => {
+    // Same stale expectation as the list endpoint above. 'pg pool exhausted'
+    // names the failing infrastructure; the client gets the generic envelope.
     vi.mocked(healthSvc.probeMdxHealth).mockRejectedValueOnce(new Error('pg pool exhausted'));
     const res = await request(makeApp()).get('/api/mdx/health');
     expect(res.status).toBe(500);
-    expect(res.body).toEqual({ error: 'pg pool exhausted' });
+    expect(res.body.error).toBe('INTERNAL_ERROR');
+    expect(JSON.stringify(res.body)).not.toMatch(/pg pool exhausted/);
   });
 });
 

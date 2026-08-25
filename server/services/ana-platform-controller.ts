@@ -24,8 +24,8 @@ import { eq, and, sql } from 'drizzle-orm';
 import {
   organizations,
   projects,
-  auditLogs,
 } from '../../shared/schema';
+import auditService from './auditService.js';
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -108,7 +108,6 @@ interface PlatformCapability {
 // ─── Platform Controller ────────────────────────────────────
 
 class AnaPlatformController {
-
   // ── Authorization ───────────────────────────────────────
 
   /**
@@ -585,17 +584,34 @@ class AnaPlatformController {
 
   // ── Audit Logging ───────────────────────────────────────
 
+  /**
+   * Every platform-controller action lands in the canonical, hash-chained
+   * audit log.
+   *
+   * This previously did a raw `db.insert(auditLogs)` with `organizationId` /
+   * `entityType` / `entityId` — none of which exist on the table (the columns
+   * are `tenant_id` / `table_name` / `record_id`, all NOT NULL) — and passed a
+   * string into the integer `user_id`. An `as any` cast made it compile and an
+   * empty catch swallowed the resulting failure, so this audit trail recorded
+   * NOTHING while appearing to work. Routed through auditService, which maps
+   * the columns correctly and computes the chain link + HMAC seal
+   * (§11.10(e), §11.70).
+   */
   private async auditLog(orgId: number, action: string, details: Record<string, unknown>) {
-    try {
-      await db.insert(auditLogs).values({
-        organizationId: orgId,
-        userId: details.actor as string || 'ana:platform-controller',
-        action: `ana:${action}`,
-        entityType: 'organization',
-        entityId: String(orgId),
-        details,
-      } as any);
-    } catch {
+    const actorId = Number(details.actor);
+
+    const anaPlatformAudit = await auditService.logAction({
+      organizationId: orgId,
+      // `actor` is free-text on this path (often a subsystem name, not a
+      // user id); only a real numeric id is passed as the actor, otherwise
+      // it stays in details rather than being coerced into a fake user.
+      userId: Number.isFinite(actorId) && actorId > 0 ? actorId : undefined,
+      action: `ana:${action}`,
+      resourceType: 'organizations',
+      resourceId: String(orgId),
+      details,
+    });
+    if (!anaPlatformAudit.persisted) {
       // Audit logging should never block the primary action
       console.error(`[Ana Platform Controller] Audit log failed for ${action} on org ${orgId}`);
     }

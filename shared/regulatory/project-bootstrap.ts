@@ -344,6 +344,25 @@ const ICSR_SECTIONS: SectionDefinition[] = [
   { code: 'C.2', title: 'Primary Source / Reporter Information', module: 5, required: true, contentType: 'form' },
 ];
 
+/**
+ * Periodic Adverse Drug Experience Report — 21 CFR 314.80(c)(2).
+ *
+ * The US periodic obligation, distinct from the 15-day alert above in every
+ * respect that matters: it is periodic rather than case-triggered (quarterly for
+ * three years post-approval, annually thereafter), it covers the NON-expedited
+ * cases, and it carries a narrative summary and analysis the ICSR does not. The
+ * two were previously one catalog row, which is the kind of conflation that
+ * produces a missed filing (BP-W1-3).
+ */
+const PADER_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'FDA Form 3500A Reports (Non-Expedited Cases)', module: 1, required: true, contentType: 'form', guidance: '21 CFR 314.80(c)(2)(i)' },
+  { code: '2', title: 'Narrative Summary and Analysis of the Reporting Interval', module: 1, required: true, contentType: 'narrative', guidance: '21 CFR 314.80(c)(2)(ii)' },
+  { code: '3', title: 'Index Line-Listing of Reports', module: 1, required: true, contentType: 'mixed' },
+  { code: '4', title: 'History of Actions Taken for Safety Reasons', module: 1, required: true, contentType: 'narrative' },
+  { code: '5', title: 'Status of Post-Marketing Study Commitments', module: 1, required: false, contentType: 'narrative' },
+  { code: '6', title: 'Labeling Changes in the Interval', module: 1, required: false, contentType: 'mixed' },
+];
+
 /** Structured benefit-risk assessment (CTD 2.5.6 / FDA BRF / EMA PrOACT-URL). */
 const BENEFIT_RISK_SECTIONS: SectionDefinition[] = [
   { code: '1', title: 'Therapeutic Context (Condition, Current Treatment Options)', module: 2, required: true, contentType: 'narrative' },
@@ -518,6 +537,17 @@ const DEVICE_POSTMARKET_SECTIONS: SectionDefinition[] = [
   { code: '6', title: 'Periodic Safety Update / Annual Report', module: 1, required: true, contentType: 'narrative', guidance: 'MDR Article 86; 21 CFR 814.84' },
 ];
 
+/** Regulatory intelligence & strategy work products (BP-W1-2 absorbed rows):
+ *  governed internal documents, not agency submissions, so the structure is the
+ *  analysis file itself rather than a dossier module. */
+const REGULATORY_INTELLIGENCE_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'Objective & Scope', module: 1, required: true, contentType: 'narrative' },
+  { code: '2', title: 'Regulatory Landscape & Precedent', module: 1, required: true, contentType: 'mixed' },
+  { code: '3', title: 'Analysis & Findings', module: 1, required: true, contentType: 'mixed' },
+  { code: '4', title: 'Recommendations & Next Steps', module: 1, required: true, contentType: 'narrative' },
+  { code: '5', title: 'References & Source Records', module: 1, required: false, contentType: 'list' },
+];
+
 const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   // US Pre-submission
   us_pre_ind_sections: { id: 'us_pre_ind_sections', name: 'Pre-IND Meeting Briefing Package', sections: PRE_IND_SECTIONS },
@@ -643,7 +673,14 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
 
   // US post-approval lifecycle, safety, and environmental
   us_pmr_sections: { id: 'us_pmr_sections', name: 'Post-Marketing Requirement / Commitment Study', sections: PROTOCOL_SECTIONS },
-  us_medwatch_sections: { id: 'us_medwatch_sections', name: 'MedWatch Expedited Safety Report (ICSR)', sections: ICSR_SECTIONS },
+  /* BP-W1-3: `us_medwatch_sections` backed a catalog row named "MedWatch /
+     FAERS", which was not a filing type — FAERS is a database, MedWatch a form
+     family. The row is now two obligations with different legal bases and
+     different clocks, so each gets its own blueprint. The ICSR section set is
+     unchanged and simply renamed to what it always was: an E2B(R3) case, not a
+     MedWatch form. */
+  us_icsr_15day_sections: { id: 'us_icsr_15day_sections', name: '15-Day Alert Report — ICSR (21 CFR 314.80(c)(1))', sections: ICSR_SECTIONS },
+  us_pader_sections: { id: 'us_pader_sections', name: 'Periodic Adverse Drug Experience Report (21 CFR 314.80(c)(2))', sections: PADER_SECTIONS },
   us_ea_sections: { id: 'us_ea_sections', name: 'Environmental Assessment (21 CFR 25)', sections: ENVIRONMENTAL_ASSESSMENT_SECTIONS },
   us_eua_sections: { id: 'us_eua_sections', name: 'Emergency Use Authorization (vaccine/biologic)', sections: CTD_SECTIONS },
 
@@ -732,6 +769,88 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   us_device_reg_sections: { id: 'us_device_reg_sections', name: 'Establishment Registration & Device Listing', sections: DEVICE_POSTMARKET_SECTIONS },
   eu_psur_device_sections: { id: 'eu_psur_device_sections', name: 'Device PSUR (MDR Article 86)', sections: DEVICE_POSTMARKET_SECTIONS },
   eu_fsca_sections: { id: 'eu_fsca_sections', name: 'Field Safety Corrective Action (MDR Article 89)', sections: DEVICE_POSTMARKET_SECTIONS },
+
+  // ── Absorbed from the client registry mirror (BP-W1-2) ──────────────────────
+  // Every filing type the retired client-side catalogs offered now lives in the
+  // canonical registry, and every one must resolve to a REAL authoring
+  // structure (registryCoverage pins this). Each shares the section family that
+  // genuinely fits its document class — the same convention the device
+  // post-market blueprints above already use. Where the fit is approximate
+  // (an international registration on the STED technical-documentation family),
+  // that is recorded for the BP-W1-4 audit rather than silently invented.
+  us_type_a_meeting_sections: { id: 'us_type_a_meeting_sections', name: 'Type A Meeting Briefing Package', sections: PRE_IND_SECTIONS },
+  us_type_b_meeting_sections: { id: 'us_type_b_meeting_sections', name: 'Type B Meeting Briefing Package', sections: PRE_IND_SECTIONS },
+  us_type_c_meeting_sections: { id: 'us_type_c_meeting_sections', name: 'Type C Meeting Briefing Package', sections: PRE_IND_SECTIONS },
+  ca_presub_meeting_sections: { id: 'ca_presub_meeting_sections', name: 'Health Canada Pre-submission Briefing', sections: PRE_IND_SECTIONS },
+  jp_pre_consult_sections: { id: 'jp_pre_consult_sections', name: 'PMDA Consultation Briefing', sections: PRE_IND_SECTIONS },
+  au_presub_meeting_sections: { id: 'au_presub_meeting_sections', name: 'TGA Pre-submission Briefing', sections: PRE_IND_SECTIONS },
+  jp_sakigake_sections: { id: 'jp_sakigake_sections', name: 'Sakigake Designation Request', sections: DESIGNATION_REQUEST_SECTIONS },
+  us_priority_review_sections: { id: 'us_priority_review_sections', name: 'Priority Review Request', sections: DESIGNATION_REQUEST_SECTIONS },
+  eu_accel_assess_sections: { id: 'eu_accel_assess_sections', name: 'Accelerated Assessment Request', sections: DESIGNATION_REQUEST_SECTIONS },
+  uk_ilap_sections: { id: 'uk_ilap_sections', name: 'ILAP Innovation Passport Application', sections: DESIGNATION_REQUEST_SECTIONS },
+  eu_biosimilar_maa_sections: { id: 'eu_biosimilar_maa_sections', name: 'Biosimilar MAA (EU)', sections: CTD_SECTIONS },
+  jp_biosimilar_sections: { id: 'jp_biosimilar_sections', name: 'Biosimilar Application (Japan)', sections: CTD_SECTIONS },
+  au_biosimilar_sections: { id: 'au_biosimilar_sections', name: 'Biosimilar Registration (TGA)', sections: CTD_SECTIONS },
+  eu_generic_dcp_sections: { id: 'eu_generic_dcp_sections', name: 'Generic Decentralised Application (DCP)', sections: GENERIC_DOSSIER_SECTIONS },
+  ich_clin_overview_sections: { id: 'ich_clin_overview_sections', name: 'Clinical Overview (M2.5)', sections: CTD_SECTIONS.filter(s => s.module === 2) },
+  ich_clin_summary_sections: { id: 'ich_clin_summary_sections', name: 'Clinical Summary (M2.7)', sections: CTD_SECTIONS.filter(s => s.module === 2) },
+  ich_nonclin_overview_sections: { id: 'ich_nonclin_overview_sections', name: 'Nonclinical Overview (M2.4)', sections: CTD_SECTIONS.filter(s => s.module === 2) },
+  ich_nonclin_summary_sections: { id: 'ich_nonclin_summary_sections', name: 'Nonclinical Summary (M2.6)', sections: CTD_SECTIONS.filter(s => s.module === 2) },
+  ich_tabulated_summaries_sections: { id: 'ich_tabulated_summaries_sections', name: 'Tabulated Summaries (M2.7.4)', sections: CTD_SECTIONS.filter(s => s.module === 2) },
+  eu_line_extension_sections: { id: 'eu_line_extension_sections', name: 'Line Extension Application', sections: VARIATION_SECTIONS },
+  eu_eudravigilance_icsr_sections: { id: 'eu_eudravigilance_icsr_sections', name: 'EudraVigilance ICSR', sections: ICSR_SECTIONS },
+  ich_susar_sections: { id: 'ich_susar_sections', name: 'SUSAR (E2B ICSR)', sections: ICSR_SECTIONS },
+  eu_cep_sections: { id: 'eu_cep_sections', name: 'Certificate of Suitability Application (EDQM)', sections: MASTER_FILE_SECTIONS },
+  eu_gmp_cert_sections: { id: 'eu_gmp_cert_sections', name: 'GMP Certificate File', sections: QMS_SECTIONS },
+  ich_stability_protocol_sections: { id: 'ich_stability_protocol_sections', name: 'Stability Protocol (ICH Q1A/Q1E)', sections: COMPARABILITY_SECTIONS },
+  eu_nb_consult_sections: { id: 'eu_nb_consult_sections', name: 'Notified Body Consultation Briefing', sections: DEVICE_PRESUB_SECTIONS },
+  eu_mdr_class_i_sections: { id: 'eu_mdr_class_i_sections', name: 'EU MDR Class I Technical Documentation', sections: DEVICE_TECHDOC_SECTIONS },
+  eu_mdr_class_iia_sections: { id: 'eu_mdr_class_iia_sections', name: 'EU MDR Class IIa Technical Documentation', sections: DEVICE_TECHDOC_SECTIONS },
+  eu_mdr_class_iib_sections: { id: 'eu_mdr_class_iib_sections', name: 'EU MDR Class IIb Technical Documentation', sections: DEVICE_TECHDOC_SECTIONS },
+  eu_mdr_class_iii_sections: { id: 'eu_mdr_class_iii_sections', name: 'EU MDR Class III Technical Documentation', sections: DEVICE_TECHDOC_SECTIONS },
+  jp_nintei_sections: { id: 'jp_nintei_sections', name: 'Nintei Certification File (PMDA)', sections: DEVICE_TECHDOC_SECTIONS },
+  cn_device_reg_sections: { id: 'cn_device_reg_sections', name: 'Device Registration File (NMPA)', sections: DEVICE_TECHDOC_SECTIONS },
+  au_device_inclusion_sections: { id: 'au_device_inclusion_sections', name: 'ARTG Device Inclusion File (TGA)', sections: DEVICE_TECHDOC_SECTIONS },
+  ch_device_conformity_sections: { id: 'ch_device_conformity_sections', name: 'Device Conformity File (Swissmedic)', sections: DEVICE_TECHDOC_SECTIONS },
+  br_device_reg_sections: { id: 'br_device_reg_sections', name: 'Device Registration File (ANVISA)', sections: DEVICE_TECHDOC_SECTIONS },
+  eu_clin_investigation_sections: { id: 'eu_clin_investigation_sections', name: 'EU MDR Clinical Investigation Application', sections: DEVICE_CLINICAL_SECTIONS },
+  iso_cip_sections: { id: 'iso_cip_sections', name: 'Clinical Investigation Plan (ISO 14155)', sections: DEVICE_CLINICAL_SECTIONS },
+  eu_sig_change_sections: { id: 'eu_sig_change_sections', name: 'Significant Change Notification (MDR Art. 120)', sections: DEVICE_POSTMARKET_SECTIONS },
+  eu_mir_sections: { id: 'eu_mir_sections', name: 'Manufacturer Incident Report (MDR Art. 87)', sections: DEVICE_POSTMARKET_SECTIONS },
+  eu_trend_report_device_sections: { id: 'eu_trend_report_device_sections', name: 'Trend Report (MDR Art. 88)', sections: DEVICE_POSTMARKET_SECTIONS },
+  eu_ivdr_class_a_sections: { id: 'eu_ivdr_class_a_sections', name: 'EU IVDR Class A Technical Documentation', sections: DEVICE_TECHDOC_SECTIONS },
+  eu_ivdr_class_b_sections: { id: 'eu_ivdr_class_b_sections', name: 'EU IVDR Class B Technical Documentation', sections: DEVICE_TECHDOC_SECTIONS },
+  eu_ivdr_class_cd_sections: { id: 'eu_ivdr_class_cd_sections', name: 'EU IVDR Class C/D Technical Documentation', sections: DEVICE_TECHDOC_SECTIONS },
+  eu_cdx_ivdr_d_sections: { id: 'eu_cdx_ivdr_d_sections', name: 'CDx IVDR Class D Technical Documentation', sections: DEVICE_TECHDOC_SECTIONS },
+  jp_cdx_sections: { id: 'jp_cdx_sections', name: 'CDx Approval File (PMDA)', sections: DEVICE_TECHDOC_SECTIONS },
+  eu_ivd_clin_evidence_sections: { id: 'eu_ivd_clin_evidence_sections', name: 'IVDR Clinical Evidence Summary', sections: IVD_PERFORMANCE_SECTIONS },
+  us_ivd_analytical_validation_sections: { id: 'us_ivd_analytical_validation_sections', name: 'Analytical Validation Report', sections: IVD_PERFORMANCE_SECTIONS },
+  jp_ivd_approval_sections: { id: 'jp_ivd_approval_sections', name: 'IVD Approval File (PMDA)', sections: DEVICE_TECHDOC_SECTIONS },
+  cn_ivd_reg_sections: { id: 'cn_ivd_reg_sections', name: 'IVD Registration File (NMPA)', sections: DEVICE_TECHDOC_SECTIONS },
+  au_ivd_inclusion_sections: { id: 'au_ivd_inclusion_sections', name: 'ARTG IVD Inclusion File (TGA)', sections: DEVICE_TECHDOC_SECTIONS },
+  ca_ivd_licence_sections: { id: 'ca_ivd_licence_sections', name: 'IVD Licence File (Health Canada)', sections: DEVICE_TECHDOC_SECTIONS },
+  eu_ivd_pms_plan_sections: { id: 'eu_ivd_pms_plan_sections', name: 'IVDR Post-Market Surveillance Plan', sections: DEVICE_POSTMARKET_SECTIONS },
+  eu_ivd_vigilance_sections: { id: 'eu_ivd_vigilance_sections', name: 'IVDR Vigilance Report', sections: DEVICE_POSTMARKET_SECTIONS },
+  eu_psur_ivd_sections: { id: 'eu_psur_ivd_sections', name: 'IVD PSUR (IVDR Art. 81)', sections: DEVICE_POSTMARKET_SECTIONS },
+  ich_ectd_backbone_sections: { id: 'ich_ectd_backbone_sections', name: 'eCTD Backbone & Envelope', sections: CTD_SECTIONS.filter(s => s.module === 1) },
+  us_ctd_m1_regional_sections: { id: 'us_ctd_m1_regional_sections', name: 'CTD Module 1 — US Regional', sections: CTD_SECTIONS.filter(s => s.module === 1) },
+  eu_ctd_m1_regional_sections: { id: 'eu_ctd_m1_regional_sections', name: 'CTD Module 1 — EU Regional', sections: CTD_SECTIONS.filter(s => s.module === 1) },
+  jp_ctd_m1_regional_sections: { id: 'jp_ctd_m1_regional_sections', name: 'CTD Module 1 — JP Regional', sections: CTD_SECTIONS.filter(s => s.module === 1) },
+  ca_ctd_m1_regional_sections: { id: 'ca_ctd_m1_regional_sections', name: 'CTD Module 1 — CA Regional', sections: CTD_SECTIONS.filter(s => s.module === 1) },
+  uk_ctd_m1_regional_sections: { id: 'uk_ctd_m1_regional_sections', name: 'CTD Module 1 — UK Regional', sections: CTD_SECTIONS.filter(s => s.module === 1) },
+  au_ctd_m1_regional_sections: { id: 'au_ctd_m1_regional_sections', name: 'CTD Module 1 — AU Regional', sections: CTD_SECTIONS.filter(s => s.module === 1) },
+  ch_ctd_m1_regional_sections: { id: 'ch_ctd_m1_regional_sections', name: 'CTD Module 1 — CH Regional', sections: CTD_SECTIONS.filter(s => s.module === 1) },
+  cn_ctd_m1_regional_sections: { id: 'cn_ctd_m1_regional_sections', name: 'CTD Module 1 — CN Regional', sections: CTD_SECTIONS.filter(s => s.module === 1) },
+  eu_nees_sections: { id: 'eu_nees_sections', name: 'NeeS Submission Structure', sections: CTD_SECTIONS.filter(s => s.module === 1) },
+  qms_gmp_inspection_sections: { id: 'qms_gmp_inspection_sections', name: 'GMP Inspection Readiness Package', sections: QMS_SECTIONS },
+  qms_gcp_compliance_sections: { id: 'qms_gcp_compliance_sections', name: 'GCP Compliance Package', sections: QMS_SECTIONS },
+  qms_glp_compliance_sections: { id: 'qms_glp_compliance_sections', name: 'GLP Compliance Package', sections: QMS_SECTIONS },
+  qms_qsr_820_sections: { id: 'qms_qsr_820_sections', name: 'QSR (21 CFR 820) File', sections: QMS_SECTIONS },
+  qms_iso_13485_sections: { id: 'qms_iso_13485_sections', name: 'ISO 13485 QMS File', sections: QMS_SECTIONS },
+  ri_strategy_sections: { id: 'ri_strategy_sections', name: 'Regulatory Strategy Document', sections: REGULATORY_INTELLIGENCE_SECTIONS },
+  ri_gap_analysis_sections: { id: 'ri_gap_analysis_sections', name: 'Gap Analysis Report', sections: REGULATORY_INTELLIGENCE_SECTIONS },
+  ri_competitive_sections: { id: 'ri_competitive_sections', name: 'Competitive Landscape Analysis', sections: REGULATORY_INTELLIGENCE_SECTIONS },
+  ri_ha_meeting_sections: { id: 'ri_ha_meeting_sections', name: 'Health Authority Meeting Minutes', sections: REGULATORY_INTELLIGENCE_SECTIONS },
 
   // Default fallback
   default_sections: { id: 'default_sections', name: 'Standard CTD Sections', sections: CTD_SECTIONS },

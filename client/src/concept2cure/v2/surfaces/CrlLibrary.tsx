@@ -51,6 +51,7 @@ import {
   type MappingView,
   type RegulatoryFindingView,
 } from '../fixtures/clinical-regulatory-evidence';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
 interface CrlQuery {
@@ -297,6 +298,72 @@ export function CrlLibrary({ onAsk }: SurfaceViewProps) {
 
   const set = <K extends keyof CrlQuery>(k: K, v: CrlQuery[K]) => setQ({ ...q, [k]: v });
 
+  /* What AnA can see of this screen.
+     Published BEFORE the loading/error early returns below, because a hook that
+     only runs on the success path is a hook that goes silent exactly when the
+     user most needs to ask what happened — and React would refuse the
+     conditional call anyway.
+
+     A FAILED read publishes the failure. `findings` is [] both when the corpus
+     genuinely has nothing for these constraints and when the evidence graph did
+     not answer, and "no findings match" over an outage is a claim about the
+     regulatory record that no one made. The verification state travels with
+     every finding for the same reason it is on screen: an extracted, unreviewed
+     finding must not be quoted back as established fact. */
+  const anaContext = useMemo(() => {
+    if (res.loading && !res.data) {
+      return { summary: 'The regulatory evidence graph is still being searched; nothing on screen is final yet.' };
+    }
+    if (res.error && !res.data) {
+      return {
+        summary:
+          'The regulatory evidence graph could not be reached, so this screen is showing no findings ' +
+          'because of a failure, not because the corpus has none for these constraints.',
+        availableActions: ['Retry the search once the evidence service responds'],
+      };
+    }
+    const filters = Object.entries(applied).filter(([, v]) => v);
+    return {
+      summary:
+        `FDA CRL library: ${findings.length} regulatory finding(s) match` +
+        (filters.length
+          ? ` the filters ${filters.map(([k, v]) => `${k}="${v}"`).join(', ')}`
+          : ' with no filters applied') +
+        (coverage ? `, drawn from ${coverage.eligible} of ${coverage.scanned} letters scanned` : '') +
+        (sel ? `. "${sel.findingId}" is open in the detail pane` : '') +
+        (insufficient ? `. The corpus reports insufficient evidence: ${insufficient.reason}` : ''),
+      facts: {
+        matchedFindings: findings.length,
+        appliedFilters: Object.fromEntries(filters),
+        coverage: coverage ? { eligible: coverage.eligible, scanned: coverage.scanned } : null,
+        insufficientEvidence: insufficient
+          ? { reason: insufficient.reason, usable: insufficient.usable, total: insufficient.total }
+          : null,
+        // Enough to name a finding back to the user, not the whole result set.
+        findings: findings.slice(0, 10).map((f) => ({
+          findingId: f.findingId, severity: f.severity, discipline: f.discipline,
+          category: f.category, verification: f.verification, conflict: f.conflict,
+          applicability: f.applicability, epistemicStatus: f.epistemicStatus,
+        })),
+        selected: sel
+          ? {
+              findingId: sel.findingId, severity: sel.severity, discipline: sel.discipline,
+              category: sel.category, finding: sel.finding, requestedAction: sel.requestedAction,
+              verification: sel.verification, conflict: sel.conflict,
+              reviewedAt: sel.reviewedAt,
+              mappedTo: (sel.mappings ?? []).map((m) => ({ kind: m.kind, value: m.value, status: m.status })),
+            }
+          : null,
+      },
+      availableActions: [
+        'Search the corpus by application type, free text, discipline, CTD section or verification state',
+        'Open a finding to read its requested action, mappings and source reference',
+        'Clear the filters and search the whole corpus',
+      ],
+    };
+  }, [res.loading, res.error, res.data, findings, coverage, insufficient, sel, applied]);
+  usePublishSurfaceContext('crl-library', anaContext);
+
   /* ── Loading and error: two of the four honest states ── */
   if (res.loading && !res.data) {
     return (
@@ -329,7 +396,7 @@ export function CrlLibrary({ onAsk }: SurfaceViewProps) {
     <div className="sp" style={{ maxWidth: 1160 }}>
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Specialist — /api/clinical-regulatory-evidence/findings</div>
+          <div className="sp-eyebrow">Specialist — clinical & regulatory evidence</div>
           <h1 className="sp-title">FDA CRL library</h1>
           <p className="sp-state">
             Search official complete response letters by finding, discipline, category, CTD or ICH

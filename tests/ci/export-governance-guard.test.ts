@@ -23,7 +23,9 @@ const EXPORT_ROUTE_FILES = [
   // never landed in the canonical layout — removed from the inventory.
   'ectd-export.ts',
   'rtm-export.ts',
-  'ind-pdf.ts',
+  // `ind-pdf.ts` was a zero-caller export route (no client or server consumer
+  // of /api/ind-pdf) deleted in the biotech-lifecycle consolidation; dropped
+  // from the governance inventory with it.
   'docx-factory.ts',
   'ivdr-routes.ts',
   // tenant-export was added to the canonical layout but never to the

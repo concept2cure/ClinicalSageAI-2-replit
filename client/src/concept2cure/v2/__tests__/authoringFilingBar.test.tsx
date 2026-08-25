@@ -9,7 +9,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', () => ({ apiRequest }));
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+}));
 
 // Stub C2CForm: render a submit button that fires onSubmit with canned values
 // covering every field both dialogs read (reason/version/pin/meaning/intent).
@@ -77,7 +80,10 @@ describe('AuthoringFilingBar — real filing actions', () => {
     fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
     fireEvent.click(screen.getByTestId('form-submit'));
 
-    await waitFor(() => expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/PIN was not verified/)));
+    // BP-W0-6: the tone is asserted, not just the words. This call used to pass
+    // no tone at all, so a rejected PIN rendered with the green success tick —
+    // failure and success were visually identical on the §11.50 signature.
+    await waitFor(() => expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/PIN was not verified/), 'error'));
     expect(onChanged).not.toHaveBeenCalled();
   });
 

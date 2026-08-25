@@ -77,9 +77,59 @@ export function extractTableDdl(file: string, tables: readonly string[]): string
 export interface JourneyDb {
   pglite: import('@electric-sql/pglite').PGlite;
   db: unknown;
-  /** node-postgres-compatible shim over PGlite for the raw-SQL services. */
-  pool: { query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[] }> };
+  /** node-postgres-compatible shim over PGlite for the raw-SQL services.
+   *  `connect()` returns a client with the same shim so handlers that run
+   *  BEGIN/COMMIT on a checked-out client work under the single-connection
+   *  PGlite (release() is a no-op). Declared here so services type-checked
+   *  outside tests/** (e.g. server/**) see the real runtime shape. */
+  pool: {
+    query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
+    connect: () => Promise<{
+      query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
+      release: () => void;
+    }>;
+  };
   close: () => Promise<void>;
+}
+
+/**
+ * The `req.dbClient` shape that `requireTenantContext` installs, backed by
+ * PGlite — so a journey can drive a route that uses `requestDb(req)` /
+ * `requestPgClient(req)` WITHOUT mocking either of them.
+ *
+ * Drizzle's node-postgres driver calls `.query(queryConfig, params)` with
+ * `{ text, rowMode: 'array' }` for row-mapped selects and maps the array rows
+ * itself, so `rowMode` is forwarded to PGlite verbatim. Raw-SQL callers
+ * (requestPgClient) pass a plain string; both forms are accepted here, exactly
+ * as the production lazy client accepts both.
+ *
+ * Single connection (PGlite), which is what the request-scoped client is: one
+ * connection carrying the tenant session variables. Ported from the proven shim
+ * in server/routes/__tests__/saved-precedent-queries.rls.test.ts.
+ */
+export function makeRequestDbClient(pglite: import('@electric-sql/pglite').PGlite) {
+  return {
+    query: async (textOrConfig: unknown, values?: unknown[]) => {
+      const text =
+        typeof textOrConfig === 'string' ? textOrConfig : (textOrConfig as { text: string }).text;
+      const rowMode =
+        typeof textOrConfig === 'string'
+          ? undefined
+          : (textOrConfig as { rowMode?: string }).rowMode;
+      const r = await pglite.query(
+        text,
+        (values ?? []) as unknown[],
+        rowMode === 'array' ? { rowMode: 'array' } : undefined,
+      );
+      const rows = r.rows as unknown[];
+      const affected = (r as { affectedRows?: number }).affectedRows ?? 0;
+      return {
+        rows,
+        rowCount: rows.length > 0 ? rows.length : affected,
+        fields: (r as { fields?: unknown[] }).fields ?? [],
+      };
+    },
+  };
 }
 
 export async function createJourneyDb(options?: {
@@ -101,22 +151,45 @@ export async function createJourneyDb(options?: {
     await pglite.exec(fs.readFileSync(path.join(REPO_ROOT, f), 'utf8'));
   }
   if (options?.testOnlySql) await pglite.exec(options.testOnlySql);
+
+  // node-postgres result shape: handlers check rowCount as well as rows
+  // (Journey A found a 404 caused by a rows-only shim — rowCount ?? 0 treated
+  // every SELECT as empty).
+  //
+  // Both call forms are accepted, exactly as node-postgres accepts both:
+  // `query(text, params)` for the raw-SQL services, and `query(queryConfig,
+  // params)` — `{ text, rowMode }` — which is what Drizzle's node-postgres
+  // driver issues. A journey that runs Drizzle ON A TRANSACTION CLIENT hits the
+  // second form (e.g. createSubmissionTx inside the C2C intake transaction);
+  // without it PGlite is handed an object where it expects a string and the
+  // route reports an opaque INTERNAL_ERROR.
+  const runQuery = async (textOrConfig: unknown, params?: unknown[]) => {
+    const text =
+      typeof textOrConfig === 'string' ? textOrConfig : (textOrConfig as { text: string }).text;
+    const rowMode =
+      typeof textOrConfig === 'string' ? undefined : (textOrConfig as { rowMode?: string }).rowMode;
+    const r = await pglite.query(
+      text,
+      params as unknown[],
+      rowMode === 'array' ? { rowMode: 'array' } : undefined,
+    );
+    const rows = r.rows as unknown[];
+    // PGlite reports affectedRows: 0 for SELECTs, so prefer rows.length and fall
+    // back to affectedRows only for row-less commands (UPDATE without
+    // RETURNING, DELETE, …).
+    const affected = (r as { affectedRows?: number }).affectedRows ?? 0;
+    return {
+      rows,
+      rowCount: rows.length > 0 ? rows.length : affected,
+      fields: (r as { fields?: unknown[] }).fields ?? [],
+    };
+  };
+
   return {
     pglite,
     db: drizzle(pglite),
     pool: {
-      // node-postgres result shape: handlers check rowCount as well as rows
-      // (Journey A found a 404 caused by a rows-only shim — rowCount ?? 0
-      // treated every SELECT as empty).
-      query: async (text: string, params?: unknown[]) => {
-        const r = await pglite.query(text, params);
-        const rows = r.rows as unknown[];
-        // PGlite reports affectedRows: 0 for SELECTs, so prefer rows.length
-        // and fall back to affectedRows only for row-less commands (UPDATE
-        // without RETURNING, DELETE, …).
-        const affected = (r as { affectedRows?: number }).affectedRows ?? 0;
-        return { rows, rowCount: rows.length > 0 ? rows.length : affected };
-      },
+      query: runQuery,
       // Handlers that must write several rows atomically take a client and run
       // BEGIN/COMMIT on it — the authoring save does this so a section's content
       // and its data lineage commit together. Without connect() here the shim
@@ -126,15 +199,7 @@ export async function createJourneyDb(options?: {
       // PGlite is a single connection, so the "client" is this same shim and
       // BEGIN/COMMIT/ROLLBACK go through it as ordinary statements. release()
       // is a no-op because there is no pool to return anything to.
-      connect: async () => ({
-        query: async (text: string, params?: unknown[]) => {
-          const r = await pglite.query(text, params);
-          const rows = r.rows as unknown[];
-          const affected = (r as { affectedRows?: number }).affectedRows ?? 0;
-          return { rows, rowCount: rows.length > 0 ? rows.length : affected };
-        },
-        release: () => {},
-      }),
+      connect: async () => ({ query: runQuery, release: () => {} }),
     },
     close: () => pglite.close(),
   };

@@ -95,7 +95,14 @@ export interface SafetySignalRow {
   id: string;
   source: SignalSource;
   event: string;
-  count: number;
+  /**
+   * Supporting case count: the number of adverse_events rows sharing the
+   * signal's MedDRA reaction PT code within the program's visibility scope.
+   * Null when the signal carries no reaction_pt_code — there is then no
+   * countable case linkage, and null is rendered as "—" rather than a
+   * fabricated figure.
+   */
+  count: number | null;
   severity: SignalSeverity;
   status: SignalKitStatus;
   detectedAt: string;
@@ -156,10 +163,11 @@ interface SafetySignalDbRow {
   detected_at: Date | string;
   evaluation_status: string;
   action: string;
+  reaction_pt_code: string | null;
 }
 
-interface SafetySignalCountRow {
-  signal_source: string;
+interface AdverseEventPtCountRow {
+  reaction_pt_code: string;
   n: number;
 }
 
@@ -628,7 +636,16 @@ export async function getChangeImpact(
 
 /** Per-program safety signals from safety_signals (org-text-coerced for
  *  schema mismatch with mainline integer org ids). Tolerates missing
- *  table by returning empty list. */
+ *  table by returning empty list.
+ *
+ *  Count semantics (the kit's "N" column): the number of adverse_events case
+ *  rows sharing the signal's MedDRA reaction PT code (safety_signals
+ *  .reaction_pt_code → adverse_events.reaction_pt_code, the schema's join
+ *  key), scoped to the same org/program visibility as the signal list itself.
+ *  This replaces the earlier org-wide count grouped by signal_source, which
+ *  made every same-source signal show one shared approximate figure. A signal
+ *  without a reaction_pt_code has no countable case linkage → count: null
+ *  (rendered as "—"), never a fabricated 1. */
 export async function getSafetySignals(
   orgId: number,
   programId: string,
@@ -639,7 +656,8 @@ export async function getSafetySignals(
   let rows: SafetySignalDbRow[] = [];
   try {
     const result = await pool.query<SafetySignalDbRow>(
-      `SELECT id, signal_source, description, detected_at, evaluation_status, action
+      `SELECT id, signal_source, description, detected_at, evaluation_status, action,
+              reaction_pt_code
          FROM safety_signals
         WHERE organization_id::text = $1::text
           AND ( project_id::text = $2::text OR project_id IS NULL )
@@ -652,25 +670,32 @@ export async function getSafetySignals(
     if (!isPgUndefinedTable(err)) throw err;
   }
 
-  let countsBySource: Record<string, number> = {};
+  /* Null map = adverse_events is not provisioned, so nothing can be counted —
+     every count is null (honest "uncountable"), NOT 0 (a claim we counted and
+     found none). A missing table never blocks the signal list itself. */
+  let countsByPt: Record<string, number> | null = {};
   try {
-    const aeCounts = await pool.query<SafetySignalCountRow>(
-      `SELECT signal_source, COUNT(*)::int AS n
-         FROM safety_signals
+    const aeCounts = await pool.query<AdverseEventPtCountRow>(
+      `SELECT reaction_pt_code, COUNT(*)::int AS n
+         FROM adverse_events
         WHERE organization_id::text = $1::text
-        GROUP BY signal_source`,
-      [String(orgId)],
+          AND ( project_id::text = $2::text OR project_id IS NULL )
+          AND reaction_pt_code IS NOT NULL
+        GROUP BY reaction_pt_code`,
+      [String(orgId), programId],
     );
-    countsBySource = Object.fromEntries(aeCounts.rows.map((r) => [r.signal_source, r.n]));
-  } catch {
-    /* fall through */
+    countsByPt = Object.fromEntries(aeCounts.rows.map((r) => [r.reaction_pt_code, r.n]));
+  } catch (err: unknown) {
+    if (!isPgUndefinedTable(err)) throw err;
+    countsByPt = null;
   }
 
   return rows.map((r) => ({
     id:         String(r.id),
     source:     (SIGNAL_SOURCE_MAP[r.signal_source] ?? 'Spontaneous') as SignalSource,
     event:      String(r.description ?? '').slice(0, 160),
-    count:      countsBySource[r.signal_source] ?? 1,
+    count:
+      r.reaction_pt_code && countsByPt ? (countsByPt[r.reaction_pt_code] ?? 0) : null,
     severity:   (ACTION_TO_SEVERITY[r.action] ?? 'low') as SignalSeverity,
     status:     (STATUS_TO_KIT[r.evaluation_status] ?? 'review') as SignalKitStatus,
     detectedAt: r.detected_at instanceof Date ? r.detected_at.toISOString() : String(r.detected_at),

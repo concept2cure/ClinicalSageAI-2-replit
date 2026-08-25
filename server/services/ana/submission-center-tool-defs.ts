@@ -860,6 +860,28 @@ export const LIST_REGULATORY_CAPABILITIES: AnaTool = {
   input_schema: { type: 'object', properties: {}, required: [] },
 };
 
+export const PLACE_INTO_SEQUENCE: AnaTool = {
+  name: 'place_into_sequence',
+  description:
+    "Place a document into an eCTD sequence of the canonical submission core — create or update a submission_leaves row (upsert semantics: pass leaf_id to update an existing leaf, omit it to create one). Tenant and acting user come from the active context; the write is audited (LEAF_CREATED / LEAF_UPDATED). The server REFUSES a frozen or dispatched sequence (its leaves are immutable) and a coauthor document not owned by the caller's organization — surface that refusal verbatim, never claim a placement the server declined. document_table/document_id link the leaf to its source: coauthor_documents and unified_documents are the locally-renderable sources the assembler can materialize into the package; an unknown table fails closed at assembly as an unresolved leaf, so prefer those. Use this when a user asks to file a drafted document into a sequence.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      sequence_id: { type: 'number', description: 'The eCTD sequence to place into.' },
+      section_code: { type: 'string', description: 'CTD section code for the leaf, e.g. "2.7.3" or "m1/us/1.2".' },
+      title: { type: 'string', description: 'Leaf title (usually the document title).' },
+      lifecycle_op: { type: 'string', enum: ['new', 'replace', 'append', 'delete'], description: "Lifecycle operation; defaults to 'new'." },
+      document_table: { type: 'string', description: "Source document table, e.g. 'coauthor_documents' or 'unified_documents'." },
+      document_id: { type: 'number', description: 'Source document id in that table (integer).' },
+      document_type: { type: 'string', description: 'Optional document type label.' },
+      granularity: { type: 'string', description: "Optional granularity, e.g. 'document' or 'leaf'." },
+      leaf_id: { type: 'number', description: 'Existing leaf id to update instead of creating.' },
+      parent_leaf_id: { type: 'number', description: 'For replace/append/delete: the leaf in THIS sequence the operation supersedes.' },
+    },
+    required: ['sequence_id', 'section_code', 'title'],
+  },
+};
+
 export const ASSESS_DISPATCH_READINESS: AnaTool = {
   name: 'assess_dispatch_readiness',
   description:

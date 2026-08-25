@@ -454,7 +454,7 @@ ALTER TABLE cortex.timeline_predictions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS regulatory_signals_org_isolation ON cortex.regulatory_signals;
 CREATE POLICY regulatory_signals_org_isolation ON cortex.regulatory_signals
     FOR ALL USING (
-        org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id)
+        org_id = COALESCE(identity.current_org_id(), org_id)
         OR org_id IS NULL -- Global signals readable by all
     );
 
@@ -462,7 +462,7 @@ CREATE POLICY regulatory_signals_org_isolation ON cortex.regulatory_signals
 DROP POLICY IF EXISTS rejection_patterns_org_isolation ON cortex.rejection_patterns;
 CREATE POLICY rejection_patterns_org_isolation ON cortex.rejection_patterns
     FOR ALL USING (
-        org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id)
+        org_id = COALESCE(identity.current_org_id(), org_id)
         OR org_id IS NULL -- Global patterns readable by all
     );
 
@@ -470,14 +470,14 @@ CREATE POLICY rejection_patterns_org_isolation ON cortex.rejection_patterns
 DROP POLICY IF EXISTS intuition_predictions_org_isolation ON cortex.intuition_predictions;
 CREATE POLICY intuition_predictions_org_isolation ON cortex.intuition_predictions
     FOR ALL USING (
-        org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id)
+        org_id = COALESCE(identity.current_org_id(), org_id)
     );
 
 -- Soft signals: org-scoped + global readable
 DROP POLICY IF EXISTS soft_signals_org_isolation ON cortex.soft_signals;
 CREATE POLICY soft_signals_org_isolation ON cortex.soft_signals
     FOR ALL USING (
-        org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id)
+        org_id = COALESCE(identity.current_org_id(), org_id)
         OR org_id IS NULL -- Global signals readable by all
     );
 
@@ -485,7 +485,7 @@ CREATE POLICY soft_signals_org_isolation ON cortex.soft_signals
 DROP POLICY IF EXISTS timeline_predictions_org_isolation ON cortex.timeline_predictions;
 CREATE POLICY timeline_predictions_org_isolation ON cortex.timeline_predictions
     FOR ALL USING (
-        org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id)
+        org_id = COALESCE(identity.current_org_id(), org_id)
     );
 
 -- ============================================================================

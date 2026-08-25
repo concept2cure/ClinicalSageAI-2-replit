@@ -24,18 +24,14 @@ export function sha256Bytes(data: Buffer): string {
   return createHash('sha256').update(data).digest('hex');
 }
 
-/** Deterministic JSON.stringify — sorted keys, undefined omitted */
-export function stableStringify(obj: any): string {
-  if (obj === null || obj === undefined) return '';
-  if (typeof obj !== 'object') return JSON.stringify(obj);
-  if (Array.isArray(obj)) return '[' + obj.map(stableStringify).join(',') + ']';
-  const keys = Object.keys(obj).sort();
-  return (
-    '{' +
-    keys
-      .filter(k => obj[k] !== undefined)
-      .map(k => JSON.stringify(k) + ':' + stableStringify(obj[k]))
-      .join(',') +
-    '}'
-  );
-}
+/**
+ * Deterministic JSON serialization — re-exported from the one canonicalizer.
+ *
+ * This module used to carry its own copy, which mapped `null` to the empty
+ * string and therefore produced output that was not valid JSON: `{a:1,b:null}`
+ * serialized as `{"a":1,"b":}`. It feeds `snapshot_hash_sha256` on
+ * `ai_retrieval_runs`, which is written on INSERT and never recomputed for
+ * comparison — so re-pointing it changes the digests written from here on and
+ * breaks no verification. See docs/CANONICALIZATION_MIGRATION_2026-08.md.
+ */
+export { stableStringify } from '../../../shared/canonical-json.js';

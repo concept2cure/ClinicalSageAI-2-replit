@@ -14,6 +14,8 @@
  * @compliance FDA 21 CFR Part 11 — immutable audit trail
  */
 
+import { createHash, randomUUID } from 'node:crypto';
+
 import { getPool } from '../db/runtime.js';
 import { recordArtifactProvenance } from './provenance/artifact-provenance';
 import { resolveGovernedContext } from './concept2cure/governedDocumentContractService.js';
@@ -71,28 +73,62 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
 
     if (artifactId) {
       // ── UPDATE EXISTING ARTIFACT ──────────────────────────────────────────
+      //
+      // KNOWN, NOT FIXED HERE — this branch matches nothing today. `artifactId`
+      // is typed `number` (the integer PK), but every statement in it filters
+      // `WHERE artifact_id = $1`, which is the TEXT external id ('artifact_xxx').
+      // node-pg sends the number as text, so the comparison is legal and simply
+      // never matches: the SELECT returns no rows, the version snapshot below is
+      // skipped, the UPDATE touches nothing, and the function reports success.
+      // A silent no-op, which is worse than the error it looks like it should be.
+      //
+      // The same confusion runs through the return value: the create path sets
+      // resultArtifactId from `existing.rows[0].artifact_id` (text) in one branch
+      // and from `RETURNING id` (integer) in another, while TagArtifactResult
+      // declares it `number`. Untangling which id this service speaks is a
+      // contract change across its callers, not a column fix, so it is recorded
+      // rather than guessed at. The CREATE path below is repaired and does work.
+      //
       // Save current version to artifact_versions before overwriting
+      // `id` is selected as well as the content: the version row's artifact_id
+      // is an INTEGER FK to concept2cure_artifacts.id, not the external text
+      // `artifact_id`. Passing the external id here was a 22P02 on top of
+      // everything else below.
       const currentArtifact = await client.query(
-        `SELECT content, version, title, status FROM concept2cure_artifacts
+        `SELECT id, content, version, title, status FROM concept2cure_artifacts
          WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
         [artifactId, projectId, organizationId]
       );
 
       if (currentArtifact.rows.length > 0) {
         const cur = currentArtifact.rows[0];
+        // This snapshot INSERT could never have run. It named title, status,
+        // created_by and metadata — none of which the versions table has (its
+        // columns are content_hash, change_description, created_by_id) — omitted
+        // organization_id and content_hash, both NOT NULL, and passed the
+        // external text id into an integer FK. Three independent failures in one
+        // statement, so every governed AnA artifact UPDATE lost its
+        // before-image. Found by ci:insert-columns-declared.
+        //
+        // title and status are deliberately NOT carried over: they live on the
+        // artifact, and the version row records the CONTENT at a point in time.
+        // What was previously crammed into `metadata` is the change description,
+        // which the table does have a column for.
+        const previousContent = String(cur.content ?? '');
         const vResult = await client.query(
           `INSERT INTO concept2cure_artifact_versions
-             (artifact_id, version, content, title, status, created_by, metadata)
+             (artifact_id, organization_id, version, content, content_hash,
+              change_description, created_by_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7)
            RETURNING id`,
           [
-            artifactId,
+            cur.id,
+            organizationId,
             cur.version || 1,
-            cur.content,
-            cur.title,
-            cur.status,
+            previousContent,
+            createHash('sha256').update(previousContent).digest('hex'),
+            `Snapshot taken before update (previous source: ${source})`,
             userId || null,
-            JSON.stringify({ source: 'version_before_update', previousSource: source }),
           ]
         );
         versionId = vResult.rows[0]?.id;
@@ -210,16 +246,30 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
         }
 
         const insertResult = await client.query(
+          // As broken as the version snapshot above, and for overlapping
+          // reasons: it named `created_by` (the column is created_by_id) and
+          // omitted artifact_id, type and category — all three NOT NULL with no
+          // default — so it violated the constraints even before the unknown
+          // column was reached. `RETURNING artifact_id` was returning a value
+          // the statement never supplied. Every governed AnA artifact CREATE
+          // failed. Found by ci:insert-columns-declared.
+          //
+          // type/category use the same vocabulary as the other governed writers
+          // (compute/artifactWriteback.ts, compute/exportGovernance.ts).
           `INSERT INTO concept2cure_artifacts
-             (project_id, organization_id, title, content, status, ctd_section,
-              version, created_by, metadata)
-           VALUES ($1, $2, $3, $4, $5, $6, 1, $7, $8)
+             (artifact_id, project_id, organization_id, type, category, title,
+              content, content_hash, status, ctd_section, version,
+              created_by_id, metadata)
+           VALUES ($1, $2, $3, 'regulatory_document', 'document', $4, $5, $6,
+                   $7, $8, 1, $9, $10)
            RETURNING id, artifact_id`,
           [
+            `artifact_${randomUUID()}`,
             projectId,
             organizationId,
             title,
             content,
+            createHash('sha256').update(String(content ?? '')).digest('hex'),
             status,
             sectionCode,
             userId || null,

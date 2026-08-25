@@ -1,5 +1,7 @@
 import { Router } from 'express';
+import type { PoolClient, QueryResult, QueryResultRow } from 'pg';
 import { getPool } from '../../db';
+import { getTenantScope } from '../../db/tenantStore';
 import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
 import PDFDocument from 'pdfkit';
@@ -124,50 +126,102 @@ const validateUploadedFile = (req: any, res: any, next: any) => {
   return next();
 };
 
-// Get database pool at top level
-const pool = getPool();
+// ─────────────────────────────────────────────────────────────────────────────
+// Tenant-scoped DB access.
+//
+// SECURITY (docs/security/STABILITY_TENANT_ISOLATION_FINDING.md): every stab_*
+// table is under the app's uniform `tenant_isolation_policy` (0021), keyed on the
+// `app.current_tenant_id` session var. So EVERY query here must run on a connection
+// that carries that var — otherwise RLS (RLS_ENFORCE=on) returns zero rows. This
+// facade replaces the module pool: it derives the tenant from the request-scoped
+// tenant ALS (populated by the tenantContext middleware — the same source req.user
+// uses), sets the canonical RLS vars, and runs the query. It is FAIL-CLOSED: no
+// tenant scope ⇒ throw, no query runs. Vars are set `is_local` inside a transaction
+// so they are discarded at COMMIT and never persist onto a pooled connection (no
+// stale-tenant leak). `app.rls_enforce` is set per-connection by the pool's connect
+// handler (installRlsEnforcement), so it is already present on rawPool clients.
+//
+// The bespoke `set_config('app.tenant_id', …)` blocks this module used before were
+// inert: that is not the var any policy reads, and the value was discarded (is_local
+// with no surrounding transaction). Removed in favor of this facade.
+// ─────────────────────────────────────────────────────────────────────────────
+const rawPool = getPool();
 
-// Helper function to execute queries with proper tenant context and connection handling
-async function executeQuery(req: any, queryText: string, params?: any[]) {
-  const client = await pool.connect();
-  try {
-    // Set tenant context for RLS policies — derive from JWT-validated context, not raw headers
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    if (!tenantId) {
-      throw new Error('Tenant context required');
-    }
-    // Use parameterized set_config() to prevent SQL injection
-    const safeTenantId = parseInt(tenantId.toString());
-    if (!safeTenantId) {
-      throw new Error('Invalid tenant ID');
-    }
-    await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
-
-    // Execute the actual query
-    return await client.query(queryText, params);
-  } finally {
-    client.release();
-  }
-}
-
-// Helper function for queries that don't need request context (internal use)
-async function executeInternalQuery(tenantId: string, queryText: string, params?: any[]) {
-  if (!tenantId) {
+async function withTenantClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+  const scope = getTenantScope();
+  const tenantId = scope?.tenantId;
+  // Fail-closed: a stability query with no tenant boundary must not run at all,
+  // rather than run unscoped and rely on RLS returning nothing.
+  if (!tenantId || !parseInt(String(tenantId), 10)) {
     throw new Error('Tenant context required');
   }
-  const client = await pool.connect();
+  const client = await rawPool.connect();
   try {
-    // Use parameterized set_config() to prevent SQL injection
-    const safeTenantId = parseInt(tenantId.toString());
-    if (!safeTenantId) {
-      throw new Error('Invalid tenant ID');
-    }
-    await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
-    return await client.query(queryText, params);
+    await client.query('BEGIN');
+    await client.query(`SELECT set_config('app.current_tenant_id', $1, true)`, [String(tenantId)]);
+    await client.query(`SELECT set_config('app.current_org_id', $1, true)`, [scope?.orgUuid ?? '']);
+    await client.query(`SELECT set_config('app.current_user_role', $1, true)`, [scope?.role ?? '']);
+    const out = await fn(client);
+    await client.query('COMMIT');
+    return out;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
   } finally {
     client.release();
   }
 }
+
+/**
+ * Acquire a tenant-scoped client for handlers that manage their own multi-statement
+ * transaction (BEGIN/COMMIT). The canonical RLS vars are set session-level and
+ * cleared before the connection returns to the pool, so no stale tenant leaks onto
+ * a pooled connection. Fail-closed: no tenant scope ⇒ throw.
+ */
+async function tenantConnect(): Promise<PoolClient> {
+  const scope = getTenantScope();
+  const tenantId = scope?.tenantId;
+  if (!tenantId || !parseInt(String(tenantId), 10)) {
+    throw new Error('Tenant context required');
+  }
+  const client = await rawPool.connect();
+  try {
+    await client.query(`SELECT set_config('app.current_tenant_id', $1, false)`, [String(tenantId)]);
+    await client.query(`SELECT set_config('app.current_org_id', $1, false)`, [scope?.orgUuid ?? '']);
+    await client.query(`SELECT set_config('app.current_user_role', $1, false)`, [scope?.role ?? '']);
+  } catch (err) {
+    client.release();
+    throw err;
+  }
+  // Clear the session vars before the connection is returned to the pool. The reset
+  // is chained ahead of the real release so node-pg does not hand this connection to
+  // another tenant with our vars still set.
+  const origRelease = client.release.bind(client) as PoolClient['release'];
+  (client as unknown as { release: (...a: unknown[]) => void }).release = (...args: unknown[]) => {
+    void client
+      .query(
+        `SELECT set_config('app.current_tenant_id', '', false),
+                set_config('app.current_org_id', '', false),
+                set_config('app.current_user_role', '', false)`,
+      )
+      .catch(() => {})
+      .finally(() => (origRelease as (...a: unknown[]) => void)(...args));
+  };
+  return client;
+}
+
+/**
+ * Drop-in for the former `pool`. `.query()` runs a single statement in its own
+ * tenant-scoped transaction (canonical RLS vars set is_local, discarded at COMMIT);
+ * `.connect()` returns a tenant-scoped client for the handlers that run an explicit
+ * BEGIN/COMMIT. Both derive the tenant from the request ALS and are fail-closed.
+ */
+const pool = {
+  query<T extends QueryResultRow = any>(text: string, params?: any[]): Promise<QueryResult<T>> {
+    return withTenantClient((client) => client.query<T>(text, params));
+  },
+  connect: tenantConnect,
+};
 
 // Helper function for audit trail
 async function audit(studyId: string, action: string, payload: any, req: any) {
@@ -697,7 +751,6 @@ router.delete('/conditions/:condId', async (req, res) => {
 // POST /api/stability/studies/:id/timepoints - Add timepoint
 router.post('/studies/:id/timepoints', async (req, res) => {
   try {
-    const pool = getPool();
     const { id } = req.params;
     const { label, month, planned_date } = req.body;
 
@@ -1160,8 +1213,14 @@ Recommended label storage: ${tokens.LABEL_STORAGE}
     // Store export record
     await pool.query(
       `
-      INSERT INTO stab_exports (study_id, export_type, tokens_json, markdown_content, generated_at)
-      VALUES ($1, 'p8_authoring', $2, $3, NOW())
+      -- Column names corrected: the table declares tokens / markdown /
+      -- created_at (db/migrations/030_stability_results.sql), not tokens_json /
+      -- markdown_content / generated_at. All three were unknown columns, so
+      -- pushing P.8 content to authoring recorded nothing and 42703'd on every
+      -- call. created_at is omitted rather than passed NOW() — it already
+      -- defaults to it. Found by ci:insert-columns-declared.
+      INSERT INTO stab_exports (study_id, export_type, tokens, markdown)
+      VALUES ($1, 'p8_authoring', $2, $3)
     `,
       [id, JSON.stringify(tokens), markdown]
     );
@@ -1764,7 +1823,6 @@ router.get('/oot-surveillance', async (req, res) => {
   const testNm = ((req.query.test as string) || '').toLowerCase();
 
   try {
-    const pool = getPool();
     // Build query to get time series data
     let sql = `
       SELECT

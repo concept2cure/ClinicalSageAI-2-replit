@@ -683,18 +683,45 @@ router.post(
       return res.status(404).json({ error: 'SE discussion authoring is not enabled.' });
     }
 
-    // INTEGRATION: fetch the live analyzed SE matrix for this program from the
-    // Shadow service (GET /predicate/se-matrix → SEMatrixPayload) and pass it as
-    // `matrix` with provenance 'analyzed'. Until that join lands, the caller may
-    // POST a well-typed matrix body for preview; any matrix arriving this way is
-    // treated as non-analyzed (sample) and is therefore NOT sealable/exportable.
-    const matrix = req.body?.matrix;
+    // Provenance is derived server-side, never claimed by the client:
+    //  - `program_id` in the body → we fetch the LIVE analyzed SE matrix for
+    //    that program from the Shadow service ourselves → provenance 'analyzed'
+    //    (sealable/exportable).
+    //  - a client-POSTed `matrix` body → preview only, ALWAYS 'sample' (not
+    //    sealable) — a body field claiming analyzed provenance is ignored.
+    let matrix = req.body?.matrix;
+    let provenance: 'analyzed' | 'sample' = 'sample';
+
+    const programId = typeof req.body?.program_id === 'string' ? req.body.program_id.trim() : '';
+    if (programId) {
+      try {
+        const result = await proxyToShadow('/predicate/se-matrix', {
+          query: { program_id: programId },
+        });
+        if (result.status < 200 || result.status >= 300) {
+          return res.status(502).json({
+            error: 'Live SE matrix unavailable from predicate intelligence',
+            detail: `Shadow service responded ${result.status}`,
+          });
+        }
+        matrix = JSON.parse(result.body);
+      } catch {
+        // Unreachable shadow or non-JSON payload — never silently degrade the
+        // requested LIVE join to a sample preview.
+        return res.status(502).json({
+          error: 'Live SE matrix unavailable from predicate intelligence',
+          detail: 'Shadow service unreachable or returned a non-JSON matrix payload',
+        });
+      }
+      provenance = 'analyzed';
+    }
+
     if (!matrix || !Array.isArray(matrix.comparison_rows)) {
       return res.status(422).json({
-        error: 'A `matrix` with comparison_rows is required (analyzed SE matrix payload).',
+        error:
+          'A `program_id` (live analyzed matrix) or a `matrix` with comparison_rows (sample preview) is required.',
       });
     }
-    const provenance = matrix.__provenance === 'analyzed' ? 'analyzed' : 'sample';
 
     const ctx = {
       organizationId: (req as any).user?.organizationId ?? null,

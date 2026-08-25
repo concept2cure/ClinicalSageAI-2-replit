@@ -69,13 +69,13 @@ BEGIN
           USING (
             NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
             OR %I = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-            OR %I = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+            OR %I = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
             OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
           )
           WITH CHECK (
             NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
             OR %I = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-            OR %I = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+            OR %I = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
             OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
           )
       $f$,

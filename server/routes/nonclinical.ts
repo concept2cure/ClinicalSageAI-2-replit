@@ -11,7 +11,9 @@
 
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
+import { randomUUID } from 'crypto';
 import { pool } from '../db';
+import { createScopedLogger } from '../utils/logger.js';
 import { recordGovernedAction } from './c2c/actions';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import {
@@ -25,6 +27,7 @@ import { evaluateSendReadiness, requiredSendDomains } from '../services/nonclini
 import { recordNonclinicalStudyCreated, recordSendValidation } from '../services/nonclinical-metrics';
 
 const router = Router();
+const logger = createScopedLogger('nonclinical');
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -39,13 +42,48 @@ function resolveOrgId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, INVALID_STATE: 409, BAD_INPUT: 400 };
-function fail(res: Response, err: unknown): void {
+
+/**
+ * Answer a failure without disclosing how the system is built.
+ *
+ * The classified branch (400 / 404 / 409) keeps `err.message`, and should: those
+ * are DOMAIN errors this module raises itself, and their text is deliberate copy
+ * — "Provide a reason of at least 8 characters." is the sentence the user needs.
+ *
+ * The unclassified branch did the same thing, and there the message is whatever
+ * threw. While diagnosing BP-W0-2 this endpoint answered a browser with
+ *
+ *     { error: { code: 'INTERNAL', message: 'column s.duration_label does not exist' } }
+ *
+ * which the surface then rendered. That is a schema disclosure to whoever holds
+ * the session, and the work order's guardrail 3 forbids exactly it: no exception
+ * text in client UI.
+ *
+ * The house already decided how to answer this, in server/routes/c2c/projects.ts:
+ * the detail goes to the LOG keyed by the request id the requestId middleware
+ * sets and echoes as X-Request-Id, and the client gets a sentence plus that id.
+ * Nothing is lost — the operator question is answered by one log lookup on an id
+ * the user can read off the screen and quote.
+ */
+function fail(res: Response, err: unknown, req?: Request): void {
   const code = (err as { code?: string } | null)?.code;
   if (code && CODE_STATUS[code]) {
     res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
     return;
   }
-  res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Request failed.' } });
+  const correlationId = (req as unknown as { requestId?: string } | undefined)?.requestId ?? randomUUID();
+  logger.error('nonclinical request failed', {
+    correlationId,
+    driverCode: code ?? null,
+    detail: err instanceof Error ? err.message : String(err),
+  });
+  res.status(500).json({
+    error: {
+      code: 'INTERNAL',
+      message: 'The nonclinical registry could not complete that request.',
+      correlationId,
+    },
+  });
 }
 const reason = z.string().trim().min(8, 'Provide a reason of at least 8 characters.');
 const STUDY_TYPE = z.enum(['single_dose_tox', 'repeat_dose_tox', 'safety_pharmacology', 'genotoxicity', 'carcinogenicity', 'reproductive_tox', 'local_tolerance', 'adme_pk', 'immunotoxicity', 'other']);
@@ -73,7 +111,7 @@ async function governed(
     res.status(201).json({ ...body, ...gov });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
-    fail(res, err);
+    fail(res, err, req);
   } finally {
     client.release();
   }
@@ -109,7 +147,7 @@ router.get('/studies', async (req, res) => {
   try {
     res.json(await listStudies(orgId, Number.isFinite(submissionId) ? submissionId : undefined));
   } catch (err) {
-    fail(res, err);
+    fail(res, err, req);
   }
 });
 
@@ -158,7 +196,7 @@ router.get('/studies/:id/send-readiness', async (req, res) => {
     const input = await getSendReadinessInput(client, orgId, id);
     res.json(evaluateSendReadiness(input));
   } catch (err) {
-    fail(res, err);
+    fail(res, err, req);
   } finally {
     client.release();
   }

@@ -13,6 +13,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { extractApiError } from '@/lib/queryClient';
 import { getAuthHeaders } from '../../../utils/authToken';
 
 /** A governed action AnA proposed that needs the user's sign-off to run. */
@@ -96,14 +97,18 @@ export function useGovernedAction() {
       });
       const payload = (await res.json().catch(() => ({}))) as Record<string, any>;
       if (!res.ok) {
-        // The error body may be a string or a { code, message } object — never
-        // pass an object to setError (it would be rendered as a JSX child).
-        const rawErr = payload?.error;
-        const msg =
-          (typeof rawErr === 'string' ? rawErr : rawErr?.message) ||
-          (typeof payload?.message === 'string' ? payload.message : '') ||
-          `HTTP ${res.status}`;
-        setError(msg);
+        // `payload.error` was read before `payload.message`, so the governed
+        // refusals — which answer { error: '<CODE>', message: '<why>' } — put
+        // the code in the sign-off dialog instead of the reason, and a body
+        // with no copy fell through to a bare "HTTP 403". extractApiError takes
+        // the server's sentence where there is one and a status-keyed sentence
+        // where there is not, and always returns a string, so the original
+        // constraint holds: an object can never reach setError.
+        //
+        // The PART11_SIGNATURE_REQUIRED test in extractPendingSignoffs is a
+        // different thing entirely — a control-flow branch on an AnA stream
+        // event, not display copy — and is deliberately left as it is.
+        setError(extractApiError(payload, res.status).message);
         return null;
       }
       // The route returns the underlying CommandResult under `data`.
@@ -112,8 +117,12 @@ export function useGovernedAction() {
         success: result?.success === true,
         message: typeof result?.message === 'string' ? result.message : 'Action completed.',
       };
-    } catch (e: any) {
-      setError(e?.message || 'Request failed');
+    } catch {
+      // Nothing in the try block throws a reduced API error — the response body
+      // is parsed defensively above — so anything caught here is the fetch
+      // itself failing, whose native message is "Failed to fetch". That is not
+      // an answer to give someone mid sign-off.
+      setError('The sign-off could not be sent. Check your connection and try again.');
       return null;
     } finally {
       setSubmitting(false);

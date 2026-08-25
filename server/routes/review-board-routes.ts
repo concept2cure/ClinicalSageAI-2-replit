@@ -726,5 +726,389 @@ export default function createReviewBoardRoutes(): Router {
     }
   });
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // The three writes the Review surface was missing entirely.
+  //
+  // Review.tsx recorded an APPROVAL DECISION with `onSigned ? onSigned() :
+  // onClose()` — the queue row flipped to "Review decision recorded", and the
+  // decision existed in one browser tab until the next refresh. It delegated an
+  // approval by pushing a line into local thread state. It posted and resolved
+  // review comments with `setThread` and no request at all. All of it looked
+  // like a governed review and none of it reached the database.
+  //
+  // Each of these authorises the same way the change-request route does — the
+  // workflow carries the tenant AND the document, and only someone the workflow
+  // is actually waiting on may act — and records the act in workflow_history.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * The caller's pending approval step on `workflowId`, or null.
+   *
+   * Reading the assignment from the workflow rather than from the request is
+   * what stops an authenticated member of the org acting on a governed review
+   * they have no part in. `assigned_to` holds user-id strings, role labels, or
+   * '*' (anyone) — the same token vocabulary GET /board resolves for display.
+   */
+  async function pendingStepFor(db: ReturnType<typeof requestDb>, workflowId: number, userId: string) {
+    const steps = await db
+      .select({
+        id: workflowApprovals.id,
+        stepOrder: workflowApprovals.stepOrder,
+        assignedTo: workflowApprovals.assignedTo,
+      })
+      .from(workflowApprovals)
+      .where(and(eq(workflowApprovals.workflowId, workflowId), eq(workflowApprovals.status, 'pending')));
+    return steps.find(s => (s.assignedTo || []).some(t => String(t) === userId || String(t) === '*')) ?? null;
+  }
+
+  /** The active workflow `workflowId` in this org, or null. */
+  async function activeWorkflow(db: ReturnType<typeof requestDb>, workflowId: number, orgId: number) {
+    const [wf] = await db
+      .select({
+        id: documentWorkflows.id,
+        documentId: documentWorkflows.documentId,
+        status: documentWorkflows.status,
+        currentStep: documentWorkflows.currentStep,
+      })
+      .from(documentWorkflows)
+      .where(and(eq(documentWorkflows.id, workflowId), eq(documentWorkflows.organizationId, orgId)))
+      .limit(1);
+    return wf ?? null;
+  }
+
+  /** Shared 503/500 handling for a missing or broken review store. */
+  function reviewWriteFailed(res: Response, what: string, workflowId: number, error: any) {
+    if (error?.code === '42P01' || error?.code === '42703') {
+      logger.warn('review workflow tables not available; returning 503', { code: error.code });
+      return res.status(503).json({ success: false, error: 'REVIEW_TABLES_MISSING' });
+    }
+    logger.error(`${what} failed`, {
+      workflowId,
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({ success: false, error: `Failed to ${what}` });
+  }
+
+  /**
+   * Guard the common preamble: org, user, a valid workflow id, an ACTIVE
+   * workflow in this org, and a pending step the caller owns. Returns null and
+   * has already answered when any of them fails.
+   */
+  async function reviewerContext(req: Request, res: Response) {
+    let orgId: number;
+    try { orgId = getOrgId(req); } catch {
+      res.status(403).json({ success: false, error: 'Organization context required' });
+      return null;
+    }
+    const userId = getUserId(req);
+    if (!userId) {
+      res.status(401).json({ success: false, error: 'Authenticated user required' });
+      return null;
+    }
+    const workflowId = Number(req.params.workflowId);
+    if (!Number.isInteger(workflowId) || workflowId <= 0) {
+      res.status(400).json({ success: false, error: 'Invalid workflow id' });
+      return null;
+    }
+    const db = requestDb(req);
+    const wf = await activeWorkflow(db, workflowId, orgId);
+    if (!wf) {
+      res.status(404).json({ success: false, error: 'Workflow not found' });
+      return null;
+    }
+    if (wf.status !== 'active') {
+      res.status(409).json({
+        success: false,
+        error: `Workflow is ${wf.status}; only an active workflow can be acted on`,
+      });
+      return null;
+    }
+    const mine = await pendingStepFor(db, workflowId, userId);
+    if (!mine) {
+      res.status(403).json({
+        success: false,
+        error: 'You are not an assigned reviewer on a pending step of this workflow',
+      });
+      return null;
+    }
+    return { orgId, userId, workflowId, db, wf, mine };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // POST /api/review/workflows/:workflowId/decision   { decision, reason? }
+  //
+  // Record the reviewer's decision on their pending step. `approve` completes
+  // the step; if it was the last pending step the workflow completes, otherwise
+  // the workflow advances to the next one. `reject` rejects the step AND the
+  // workflow — a rejected review does not silently continue to the next
+  // approver — and requires a reason, because a rejection nobody can read the
+  // grounds for is not a reviewable record.
+  // ═══════════════════════════════════════════════════════════════════════════
+  router.post('/workflows/:workflowId/decision', async (req: Request, res: Response) => {
+    const ctx = await reviewerContext(req, res);
+    if (!ctx) return;
+    const { userId, workflowId, db, wf, mine } = ctx;
+
+    const decision = String(req.body?.decision ?? '');
+    if (decision !== 'approve' && decision !== 'reject') {
+      return res.status(400).json({ success: false, error: "decision must be 'approve' or 'reject'" });
+    }
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
+    if (decision === 'reject' && reason.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: 'A rejection needs a reason of at least 8 characters — it is what the next author has to act on.',
+      });
+    }
+    if (reason.length > MAX_CHANGE_REQUEST_CHARS) {
+      return res.status(413).json({ success: false, error: `reason exceeds ${MAX_CHANGE_REQUEST_CHARS} characters` });
+    }
+    // 21 CFR 11.50: a signature manifestation carries the MEANING of the
+    // signing. The surface sends the meaning the reviewer selected; it is
+    // recorded verbatim and never inferred from the decision.
+    const meaning = typeof req.body?.meaning === 'string' ? req.body.meaning.trim().slice(0, 200) : '';
+    const now = new Date();
+
+    try {
+      await db
+        .update(workflowApprovals)
+        .set({
+          status: decision === 'approve' ? 'approved' : 'rejected',
+          completedBy: userId,
+          completedAt: now,
+          comments: reason || null,
+        })
+        .where(eq(workflowApprovals.id, mine.id));
+
+      // What remains pending AFTER this decision decides whether the workflow
+      // moves on or is finished. Asking the database rather than assuming keeps
+      // a parallel step (two approvers on one order) from ending the review
+      // when only one of them has answered.
+      const remaining = await db
+        .select({ stepOrder: workflowApprovals.stepOrder })
+        .from(workflowApprovals)
+        .where(and(eq(workflowApprovals.workflowId, workflowId), eq(workflowApprovals.status, 'pending')));
+
+      let workflowStatus: 'active' | 'completed' | 'rejected' = 'active';
+      if (decision === 'reject') {
+        workflowStatus = 'rejected';
+        await db
+          .update(documentWorkflows)
+          .set({ status: 'rejected', rejectedBy: userId, rejectedAt: now })
+          .where(eq(documentWorkflows.id, workflowId));
+      } else if (remaining.length === 0) {
+        workflowStatus = 'completed';
+        await db
+          .update(documentWorkflows)
+          .set({ status: 'completed', completedBy: userId, completedAt: now })
+          .where(eq(documentWorkflows.id, workflowId));
+      } else {
+        const nextStep = Math.min(...remaining.map(r => r.stepOrder));
+        await db.update(documentWorkflows).set({ currentStep: nextStep }).where(eq(documentWorkflows.id, workflowId));
+      }
+
+      // The decision's grounds belong in the thread the next reviewer reads,
+      // not only in the approval row nobody renders.
+      let commentId: number | null = null;
+      if (reason) {
+        const [c] = await db
+          .insert(documentComments)
+          .values({
+            documentId: wf.documentId,
+            content: reason,
+            createdBy: userId,
+            metadata: { kind: 'review_decision', decision, workflowId, stepOrder: mine.stepOrder },
+          })
+          .returning({ id: documentComments.id });
+        commentId = c?.id ?? null;
+      }
+
+      await db.insert(workflowHistory).values({
+        workflowId,
+        action: decision === 'approve' ? 'step_approved' : 'step_rejected',
+        performedBy: userId,
+        details: { stepOrder: mine.stepOrder, meaning: meaning || null, workflowStatus, commentId },
+      });
+
+      return res.json({
+        success: true,
+        data: {
+          workflowId,
+          stepOrder: mine.stepOrder,
+          approvalStatus: decision === 'approve' ? 'approved' : 'rejected',
+          workflowStatus,
+          commentId,
+        },
+      });
+    } catch (error: any) {
+      return reviewWriteFailed(res, 'record the review decision', workflowId, error);
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // POST /api/review/workflows/:workflowId/delegate   { to, reason }
+  //
+  // Hand the caller's pending step to someone else. The step's assignment is
+  // REPLACED rather than appended to: a delegation that leaves the delegator
+  // assigned has not delegated anything. A reason is required — who a governed
+  // review was handed to, and why, is the whole point of recording it.
+  // ═══════════════════════════════════════════════════════════════════════════
+  router.post('/workflows/:workflowId/delegate', async (req: Request, res: Response) => {
+    const ctx = await reviewerContext(req, res);
+    if (!ctx) return;
+    const { userId, workflowId, db, wf, mine } = ctx;
+
+    const to = typeof req.body?.to === 'string' ? req.body.to.trim() : '';
+    if (!to) return res.status(400).json({ success: false, error: 'to is required' });
+    if (to === userId) {
+      return res.status(400).json({ success: false, error: 'You cannot delegate a step to yourself.' });
+    }
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
+    if (reason.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: 'A delegation needs a reason of at least 8 characters.',
+      });
+    }
+    if (reason.length > MAX_CHANGE_REQUEST_CHARS) {
+      return res.status(413).json({ success: false, error: `reason exceeds ${MAX_CHANGE_REQUEST_CHARS} characters` });
+    }
+
+    try {
+      await db
+        .update(workflowApprovals)
+        .set({ assignedTo: [to] })
+        .where(eq(workflowApprovals.id, mine.id));
+
+      const [c] = await db
+        .insert(documentComments)
+        .values({
+          documentId: wf.documentId,
+          content: reason,
+          createdBy: userId,
+          metadata: { kind: 'delegation', workflowId, stepOrder: mine.stepOrder, delegatedTo: to },
+        })
+        .returning({ id: documentComments.id });
+
+      await db.insert(workflowHistory).values({
+        workflowId,
+        action: 'step_delegated',
+        performedBy: userId,
+        details: { stepOrder: mine.stepOrder, delegatedTo: to, commentId: c?.id ?? null },
+      });
+
+      return res.json({
+        success: true,
+        data: { workflowId, stepOrder: mine.stepOrder, delegatedTo: to, commentId: c?.id ?? null },
+      });
+    } catch (error: any) {
+      return reviewWriteFailed(res, 'delegate the review step', workflowId, error);
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // POST /api/review/workflows/:workflowId/comments   { content }
+  //
+  // A thread comment on the document under review. Unlike a decision or a
+  // delegation, commenting is open to any reviewer on the workflow — including
+  // one whose own step is already answered — so this does NOT go through
+  // reviewerContext's pending-step check. It still requires the workflow to be
+  // in this org, which is what keeps the document id out of the request body.
+  // ═══════════════════════════════════════════════════════════════════════════
+  router.post('/workflows/:workflowId/comments', async (req: Request, res: Response) => {
+    let orgId: number;
+    try { orgId = getOrgId(req); } catch {
+      return res.status(403).json({ success: false, error: 'Organization context required' });
+    }
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ success: false, error: 'Authenticated user required' });
+    const workflowId = Number(req.params.workflowId);
+    if (!Number.isInteger(workflowId) || workflowId <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid workflow id' });
+    }
+    const content = typeof req.body?.content === 'string' ? req.body.content.trim() : '';
+    if (!content) return res.status(400).json({ success: false, error: 'content is required' });
+    if (content.length > MAX_CHANGE_REQUEST_CHARS) {
+      return res.status(413).json({ success: false, error: `content exceeds ${MAX_CHANGE_REQUEST_CHARS} characters` });
+    }
+    const parentIdRaw = req.body?.parentId;
+    const parentId =
+      parentIdRaw == null || parentIdRaw === '' ? null : Number.isInteger(Number(parentIdRaw)) ? Number(parentIdRaw) : NaN;
+    if (Number.isNaN(parentId)) {
+      return res.status(400).json({ success: false, error: 'parentId must be a comment id' });
+    }
+
+    try {
+      const db = requestDb(req);
+      const wf = await activeWorkflow(db, workflowId, orgId);
+      if (!wf) return res.status(404).json({ success: false, error: 'Workflow not found' });
+
+      const [c] = await db
+        .insert(documentComments)
+        .values({
+          documentId: wf.documentId,
+          content,
+          createdBy: userId,
+          parentId,
+          metadata: { kind: 'review_comment', workflowId },
+        })
+        .returning({ id: documentComments.id, createdAt: documentComments.createdAt });
+
+      return res.status(201).json({
+        success: true,
+        data: { commentId: c.id, documentId: wf.documentId, createdAt: c.createdAt, createdBy: userId },
+      });
+    } catch (error: any) {
+      return reviewWriteFailed(res, 'post the review comment', workflowId, error);
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PATCH /api/review/comments/:commentId/resolve   { resolved?: boolean }
+  //
+  // Resolve (or reopen) a review comment. Scoped by joining the comment to a
+  // workflow in the caller's org — document_comments carries no organization_id
+  // of its own, so without the join any comment id in the deployment would be
+  // resolvable by anyone.
+  // ═══════════════════════════════════════════════════════════════════════════
+  router.patch('/comments/:commentId/resolve', async (req: Request, res: Response) => {
+    let orgId: number;
+    try { orgId = getOrgId(req); } catch {
+      return res.status(403).json({ success: false, error: 'Organization context required' });
+    }
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ success: false, error: 'Authenticated user required' });
+    const commentId = Number(req.params.commentId);
+    if (!Number.isInteger(commentId) || commentId <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid comment id' });
+    }
+    const resolved = req.body?.resolved === undefined ? true : Boolean(req.body.resolved);
+
+    try {
+      const db = requestDb(req);
+      const [row] = await db
+        .select({ id: documentComments.id })
+        .from(documentComments)
+        .innerJoin(documentWorkflows, eq(documentWorkflows.documentId, documentComments.documentId))
+        .where(and(eq(documentComments.id, commentId), eq(documentWorkflows.organizationId, orgId)))
+        .limit(1);
+      if (!row) return res.status(404).json({ success: false, error: 'Comment not found' });
+
+      await db
+        .update(documentComments)
+        .set({
+          isResolved: resolved,
+          resolvedBy: resolved ? userId : null,
+          resolvedAt: resolved ? new Date() : null,
+          updatedAt: new Date(),
+        })
+        .where(eq(documentComments.id, commentId));
+
+      return res.json({ success: true, data: { commentId, isResolved: resolved, resolvedBy: resolved ? userId : null } });
+    } catch (error: any) {
+      return reviewWriteFailed(res, 'resolve the review comment', commentId, error);
+    }
+  });
+
   return router;
 }

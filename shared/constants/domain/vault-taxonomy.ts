@@ -30,7 +30,7 @@
  * @module shared/constants/domain/vault-taxonomy
  */
 
-import type { DomainEntry } from './index.js';
+import type { DomainEntry } from './types.js';
 import type { ClientSegmentType, OrganizationType } from './organization-types.js';
 import { orgToClientSegment } from './organization-types.js';
 import { TMF_ZONE_REFS } from './tmf-reference-model.js';
@@ -61,6 +61,20 @@ export const VAULT_VIEWS: DomainEntry<VaultViewId>[] = [
  * 'supplier', 'resp', plus the kit's 'submission'/'clinical'/'qms'/
  * 'capa'/'template').
  */
+/**
+ * The `vault.documents.document_type` vocabulary — the values
+ * POST /api/vault/ingest accepts. One list, shared: the ingest route's Zod
+ * enum and the Vault surface's upload picker both derive from it, so the
+ * picker can never offer a type the server will refuse (or hide one it
+ * accepts). MODULE_3 is how an uploaded CMC document declares what it is.
+ */
+export const VAULT_INGEST_DOCUMENT_TYPES = [
+  'CSR', 'PROTOCOL', 'CER', 'IB', 'DSUR', 'PSUR',
+  'SAP', 'SAR', 'MODULE_2', 'MODULE_3', 'MODULE_4', 'MODULE_5',
+  'SOP', 'REPORT', 'CORRESPONDENCE', 'OTHER',
+] as const;
+export type VaultIngestDocumentType = (typeof VAULT_INGEST_DOCUMENT_TYPES)[number];
+
 export type VaultDocKind =
   | 'protocol'      // clinical/nonclinical study protocols + amendments
   | 'csr'           // clinical study reports (ICH E3)

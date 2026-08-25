@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
 /* ── IVD Completeness -- IVDR technical-file / Performance-Evaluation readiness.
@@ -89,6 +90,78 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
   const [open, setOpen] = useState<string[]>(DEFAULT_OPEN_FAMILIES);
   const toggle = (id: string) => { setOpen(p => p.indexOf(id) >= 0 ? p.filter(x => x !== id) : p.concat([id])); };
 
+  /* Derived read-model projections -- safe when data is absent (loading/error);
+     the real board below only renders once data has at least one item.
+
+     Hoisted ABOVE the wrong-segment guard because the surface-context hook
+     below reads them, and a hook cannot run after an early return. They were
+     already null-safe, so nothing about them changes. */
+  const families = data?.families ?? [];
+  const allItems = families.reduce<IvdItem[]>((a, f) => a.concat(f.items ?? []), []);
+  const overall = data?.overall ?? 0;
+  const missing = allItems.filter(i => (i.pct || 0) === 0);
+  const inflight = allItems.filter(i => (i.pct || 0) > 0 && (i.pct || 0) < 100);
+  const done = allItems.filter(i => (i.pct || 0) >= 100);
+  const flags = allItems.filter(i => i.flag);
+
+  const blocker = missing.length
+    ? 'The gate to a CE certificate is the ' + (missing.find(m => /PER|performance evaluation/i.test(m.title)) ? 'Performance Evaluation Report' : missing[0].title) + ' -- ' + missing.length + ' requirement' + (missing.length === 1 ? '' : 's') + ' not yet started.'
+    : inflight.length ? inflight.length + ' requirements are still in progress before the technical file is Notified-Body ready.' : 'Every IVDR requirement is evidenced.';
+
+  /* What AnA can see of this screen. Published BEFORE the wrong-segment early
+     return below — that return is a legitimate screen state ("this board is
+     IVD-only, you are on another segment") and it is exactly the state a user
+     would ask about, so it must not be the one state AnA cannot see. React
+     would refuse the conditional call anyway.
+
+     A FAILED read publishes the failure: `families` is [] when the read threw,
+     and reporting 0% technical-file completeness over an outage is a
+     Notified-Body readiness claim nobody computed. */
+  const anaContext = useMemo(() => {
+    if (seg !== 'diagnostics') {
+      return {
+        summary:
+          `The IVDR technical-file completeness board applies to In-Vitro Diagnostic programs only, and the ` +
+          `active segment is "${seg}" — so no completeness data is on screen. This is a segment mismatch, ` +
+          'not an empty technical file.',
+        availableActions: ['Switch to the Diagnostics / IVD segment to see this board'],
+      };
+    }
+    if (loading) {
+      return { summary: 'The IVDR technical-file completeness is still loading; nothing on screen is final yet.' };
+    }
+    if (error || !data) {
+      return {
+        summary:
+          'The IVDR completeness read-model could not be read, so this screen is showing no requirement ' +
+          'coverage because of a failure, not because nothing is evidenced.',
+        availableActions: ['Retry the IVDR completeness read'],
+      };
+    }
+    return {
+      summary:
+        `IVDR technical file for ${data.program || 'this IVD program'} (${data.spine}): ` +
+        `${overall}% complete over ${allItems.length} requirement(s) — ${done.length} evidenced, ` +
+        `${inflight.length} in progress, ${missing.length} not started, ${flags.length} flagged. ${blocker}`,
+      facts: {
+        program: data.program,
+        spine: data.spine,
+        standard: data.standard,
+        overallPercent: overall,
+        summary: data.summary,
+        families: families.map((f) => ({ id: f.id, label: f.label, ref: f.ref, percent: f.pct, requirements: (f.items ?? []).length })),
+        notStarted: missing.slice(0, 12).map((i) => ({ code: i.code, title: i.title, ref: i.ref })),
+        inProgress: inflight.slice(0, 12).map((i) => ({ code: i.code, title: i.title, ref: i.ref, percent: i.pct })),
+        expandedFamilies: open,
+      },
+      availableActions: [
+        'Expand a requirement family to read its individual IVDR requirements',
+        'Read which requirements are not started, in progress or evidenced',
+      ],
+    };
+  }, [seg, loading, error, data, overall, allItems.length, done.length, inflight, missing, flags.length, blocker, families, open]);
+  usePublishSurfaceContext('ivd-completeness', anaContext);
+
   /* wrong-segment guard: this view is IVD-only */
   if (seg !== 'diagnostics') {
     return (
@@ -104,25 +177,11 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
     );
   }
 
-  /* Derived read-model projections -- safe when data is absent (loading/error);
-     the real board below only renders once data has at least one item. */
-  const families = data?.families ?? [];
-  const allItems = families.reduce<IvdItem[]>((a, f) => a.concat(f.items ?? []), []);
-  const overall = data?.overall ?? 0;
-  const missing = allItems.filter(i => (i.pct || 0) === 0);
-  const inflight = allItems.filter(i => (i.pct || 0) > 0 && (i.pct || 0) < 100);
-  const done = allItems.filter(i => (i.pct || 0) >= 100);
-  const flags = allItems.filter(i => i.flag);
-
-  const blocker = missing.length
-    ? 'The gate to a CE certificate is the ' + (missing.find(m => /PER|performance evaluation/i.test(m.title)) ? 'Performance Evaluation Report' : missing[0].title) + ' -- ' + missing.length + ' requirement' + (missing.length === 1 ? '' : 's') + ' not yet started.'
-    : inflight.length ? inflight.length + ' requirements are still in progress before the technical file is Notified-Body ready.' : 'Every IVDR requirement is evidenced.';
-
   return (
     <div className="ivd">
       <div className="ivd-head">
         <div className="ivd-eyebrow">
-          <span className="ivd-kicker">IVDR technical file -- performance evaluation</span>
+          <span className="ivd-kicker">IVDR technical file — performance evaluation</span>
         </div>
         <h1 className="ivd-title">{data?.program || 'IVD program'}</h1>
         <div className="ivd-sub">{data?.spine || 'EU IVDR 2017/746 · Annex II/III · Annex XIII'} -- technical-file completeness</div>
@@ -135,7 +194,7 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the IVDR completeness board"
-          hint="The IVDR completeness read-model didn't respond. It's computed from this organization's IVDR records -- Annex VIII classifications, analytical and clinical performance studies, the Performance Evaluation Report and the GSPR checklist. Sign in and retry, or check the IVD read-model is provisioned."
+          hint="The IVDR completeness read-model didn't respond. It's computed from this organization's IVDR records — Annex VIII classifications, analytical and clinical performance studies, the Performance Evaluation Report and the GSPR checklist. Sign in and retry, or check the IVD read-model is provisioned."
         />
       ) : allItems.length === 0 ? (
         <EmptyState
@@ -149,7 +208,7 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
             <div className="ivd-lead-ic">{I.sparkles}</div>
             <div>
               <p className="ivd-lead-h">Your IVDR technical file is {overall}% complete. {blocker}</p>
-              <p className="ivd-lead-b">These are IVDR requirements -- General Safety &amp; Performance (Annex I), the Performance Evaluation Report (Annex XIII), analytical and clinical performance, scientific validity and post-market follow-up -- not the 510(k)/device checklist. {done.length} of {allItems.length} evidenced -- {inflight.length} in progress -- {missing.length} not started{flags.length ? ' -- ' + flags.length + ' open flag' + (flags.length === 1 ? '' : 's') : ''}.</p>
+              <p className="ivd-lead-b">These are IVDR requirements — General Safety &amp; Performance (Annex I), the Performance Evaluation Report (Annex XIII), analytical and clinical performance, scientific validity and post-market follow-up — not the 510(k)/device checklist. {done.length} of {allItems.length} evidenced -- {inflight.length} in progress -- {missing.length} not started{flags.length ? ' -- ' + flags.length + ' open flag' + (flags.length === 1 ? '' : 's') : ''}.</p>
             </div>
           </div>
 
@@ -202,7 +261,7 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
             })}
           </div>
 
-          <p className="ivd-foot">Completeness is computed live from this organization's IVDR records -- Annex VIII classifications, analytical and clinical performance studies, the latest Performance Evaluation Report, and the GSPR checklist. Requirements with no recorded evidence show as not started; no owner, version or evidence flag is shown unless it is stored.</p>
+          <p className="ivd-foot">Completeness is computed live from this organization's IVDR records — Annex VIII classifications, analytical and clinical performance studies, the latest Performance Evaluation Report, and the GSPR checklist. Requirements with no recorded evidence show as not started; no owner, version or evidence flag is shown unless it is stored.</p>
         </>
       )}
     </div>

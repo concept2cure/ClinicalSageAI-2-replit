@@ -18,6 +18,10 @@ import { db } from '../db';
 import { eq, and, sql } from 'drizzle-orm';
 import { users, electronicSignatures } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger';
+/* The §11.70 binding evaluator is shared with part11ComplianceService rather
+   than reimplemented — see verifySignatureIntegrity. */
+import { evaluateBindingVerification } from './part11/version-binding';
+import part11ComplianceService from './part11ComplianceService';
 
 const logger = createScopedLogger('auth-security');
 
@@ -419,148 +423,41 @@ export async function isMFAEnabled(userId: number): Promise<boolean> {
 // ─── 21 CFR Part 11 Electronic Signatures ───────────────────────────────────
 
 /**
- * Create an electronic signature for a document
+ * REMOVED — `createElectronicSignature`.
  *
- * Per 21 CFR Part 11.200: Electronic signatures must include:
- * - The printed name of the signer
- * - The date and time the signature was executed
- * - The meaning of the signature (e.g., review, approval, responsibility)
+ * This was a SECOND electronic-signature write path, next to the canonical one
+ * at POST /api/esignature/sign (which binds the STORED version bytes through
+ * services/part11/signature-persistence.ts, the one INSERT).
  *
- * Per 21 CFR Part 11.100: Electronic signatures must be:
- * - Unique to one individual
- * - Not reused or reassigned
- * - Verified before first use
+ * It could not produce a conforming Part 11 record. Its INSERT omitted
+ * `bound_payload_digest`, `binding_basis` and `organization_id`, so by the
+ * binding evaluator's own rules every row it wrote was permanently
+ * unverifiable — the §11.70 question "is this still the content that was
+ * approved?" had no answer for any of them. It also took `documentId` and
+ * `versionId` straight from the request body without checking they belonged to
+ * the caller's organization.
+ *
+ * Deleted rather than repaired, for the same reason POST /api/part11/signatures
+ * was (see routes/__tests__/part11-signature-post-removed.test.ts): repairing
+ * it would have produced a second live document-signing surface, and one
+ * signing entry point per substrate is the rule. Nothing in client/ or server/
+ * called it. The re-authentication logic it carried (password + MFA before
+ * signing) is not lost — the canonical route performs the same check.
+ *
+ * Pinned by services/__tests__/signature-write-path-single.test.ts.
  */
-export async function createElectronicSignature(params: {
-  documentId: number;
-  versionId: number;
-  signerId: number;
-  signerName: string;
-  signerTitle: string;
-  signerEmail: string;
-  signatureType: 'approval' | 'review' | 'witness' | 'acknowledgment' | 'authorship';
-  signaturePurpose: string;
-  signatureMeaning: string;
-  password: string; // Re-authentication required per 21 CFR Part 11.200
-  mfaCode?: string; // Second factor if MFA enabled
-  ipAddress?: string;
-  deviceInfo?: Record<string, any>;
-}): Promise<{
-  success: boolean;
-  signatureId?: number;
-  error?: string;
-}> {
-  try {
-    // Step 1: Re-authenticate the signer (21 CFR Part 11.200)
-    const signer = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, params.signerId))
-      .limit(1);
 
-    if (!signer.length) {
-      return { success: false, error: 'Signer not found' };
-    }
-
-    const user = signer[0];
-
-    // Verify password
-    const bcrypt = await import('bcryptjs');
-    const passwordValid = await bcrypt.compare(params.password, user.passwordHash || '');
-    if (!passwordValid) {
-      logger.warn(`E-signature auth failed for user ${params.signerId} on document ${params.documentId}`);
-      return { success: false, error: 'Authentication failed — invalid password' };
-    }
-
-    // Verify MFA if enabled
-    if (user.mfaEnabled) {
-      if (!params.mfaCode) {
-        return { success: false, error: 'MFA code required for electronic signature' };
-      }
-      const mfaResult = await verifyMFACode(params.signerId, params.mfaCode);
-      if (!mfaResult.valid) {
-        return { success: false, error: 'MFA verification failed' };
-      }
-    }
-
-    // Step 2: Generate cryptographic signature hash
-    const signaturePayload = JSON.stringify({
-      documentId: params.documentId,
-      versionId: params.versionId,
-      signerId: params.signerId,
-      signerEmail: params.signerEmail,
-      signatureType: params.signatureType,
-      signatureMeaning: params.signatureMeaning,
-      timestamp: new Date().toISOString(),
-    });
-
-    const signatureHash = crypto
-      .createHash('sha256')
-      .update(signaturePayload)
-      .digest('hex');
-
-    // Step 3: Create the signature manifest (21 CFR Part 11.200 compliance)
-    const signatureManifest = {
-      signerPrintedName: params.signerName,
-      signerTitle: params.signerTitle,
-      signerEmail: params.signerEmail,
-      signatureDateTime: new Date().toISOString(),
-      signatureMeaning: params.signatureMeaning,
-      signaturePurpose: params.signaturePurpose,
-      authenticationMethod: user.mfaEnabled ? 'two_factor' : 'password',
-      secondFactorVerified: user.mfaEnabled ? true : false,
-      complianceFramework: '21 CFR Part 11',
-      signatureHash,
-    };
-
-    // Step 4: Store the signature
-    const result = await db
-      .insert(electronicSignatures)
-      .values({
-        documentId: params.documentId,
-        versionId: params.versionId,
-        signatureType: params.signatureType,
-        signaturePurpose: params.signaturePurpose,
-        signerId: params.signerId,
-        signerName: params.signerName,
-        signerTitle: params.signerTitle || '',
-        signerEmail: params.signerEmail,
-        authenticationMethod: user.mfaEnabled ? 'two_factor' : 'password',
-        authenticationTimestamp: new Date(),
-        secondFactorVerified: user.mfaEnabled ? true : false,
-        signatureHash,
-        signatureMeaning: params.signatureMeaning,
-        signatureManifest,
-        isValid: true,
-        verificationStatus: 'verified',
-        verificationDate: new Date(),
-        complianceStatement: 'This electronic signature is the legally binding equivalent of a handwritten signature per 21 CFR Part 11.',
-        legalDisclaimer: 'By signing electronically, the signer certifies that the information provided is accurate and complete to the best of their knowledge.',
-        ipAddress: params.ipAddress || 'unknown',
-        deviceInfo: params.deviceInfo || {},
-        signedAt: new Date(),
-      })
-      .returning({ id: electronicSignatures.id });
-
-    logger.info(
-      `Electronic signature created: user=${params.signerId}, doc=${params.documentId}, type=${params.signatureType}`
-    );
-
-    return {
-      success: true,
-      signatureId: result[0]?.id,
-    };
-  } catch (error) {
-    logger.error('Failed to create electronic signature', error);
-    return { success: false, error: 'Failed to create electronic signature' };
-  }
-}
 
 /**
  * Verify an electronic signature's integrity
  */
 export async function verifySignatureIntegrity(signatureId: number): Promise<{
   valid: boolean;
+  /** Whether the SIGNED CONTENT was re-derived and still matches. Distinct from
+   *  `valid`: a signature can be internally consistent and still attest to
+   *  nothing, if no content digest was recorded when it was written. */
+  bindingVerified?: boolean;
+  attestsToContent?: boolean;
   details?: any;
   error?: string;
 }> {
@@ -595,8 +492,39 @@ export async function verifySignatureIntegrity(signatureId: number): Promise<{
 
     const hashValid = sig.signatureHash === expectedHash;
 
+    /* ── §11.70 record binding — the check this endpoint used to skip ────────
+       Everything above hashes IDENTIFIERS: document id, version id, signer,
+       type, meaning, timestamp. None of it reads a byte of the signed content,
+       so this function answered `valid: true` for a document that had been
+       completely rewritten since it was signed — which is the one question a
+       signature exists to answer.
+
+       The content check is re-derived here from the signed version and compared
+       against the digest recorded at signing, through the SAME shared evaluator
+       the canonical validator uses (`evaluateBindingVerification`). Reusing it
+       matters: two verifiers that disagree about what "valid" means is how a
+       regulated system ends up with a screen that says verified and a report
+       that says tampered. */
+    const bound = (sig as { boundPayloadDigest?: string | null }).boundPayloadDigest;
+    const current =
+      bound && bound.length > 0 && sig.versionId != null
+        ? await part11ComplianceService.computeVersionBindingDigest(sig.versionId)
+        : null;
+    const binding = evaluateBindingVerification(bound, current);
+
     return {
-      valid: hashValid && sig.isValid === true,
+      /* A signature is only valid if BOTH hold. Previously this was the
+         identifier hash alone, so tampering with content could not move it. */
+      valid: hashValid && sig.isValid === true && binding.valid,
+      /* Reported separately and never folded into `valid`, because "the
+         content still matches what was signed" and "the signature row is
+         internally consistent" are different claims and a reader must be able
+         to tell which one they are getting. A signature written without a
+         bound digest reports attestsToContent:false — it is not tampered, it
+         simply never recorded what it was approving, and saying so is the
+         honest answer rather than a bare `valid: true`. */
+      bindingVerified: binding.bindingVerified,
+      attestsToContent: binding.bindingVerified,
       details: {
         signatureId: sig.id,
         signerName: sig.signerName,
@@ -604,6 +532,12 @@ export async function verifySignatureIntegrity(signatureId: number): Promise<{
         signatureType: sig.signatureType,
         signatureMeaning: sig.signatureMeaning,
         hashIntegrity: hashValid ? 'VERIFIED' : 'COMPROMISED',
+        contentBinding: binding.bindingVerified
+          ? 'VERIFIED'
+          : binding.valid
+            ? 'NOT_RECORDED'
+            : 'BROKEN',
+        contentBindingReason: binding.reason,
         isValid: sig.isValid,
       },
     };

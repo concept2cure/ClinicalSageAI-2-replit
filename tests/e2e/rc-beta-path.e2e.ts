@@ -5,7 +5,7 @@ const SCREENSHOT_DIR = 'test-results/rc-beta-path-screenshots';
 
 async function forceDevSession(page: Page) {
   const res = await page.request.post(`${BASE_URL}/api/auth/dev-login`, {
-    data: { email: 'jm.smith@concept2cure.pro' },
+    data: { email: 'jonmichaelpsmith@gmail.com' },
   });
 
   if (!res.ok()) {
@@ -68,7 +68,9 @@ test.describe.serial('RC beta-safe path', () => {
     await forceDevSession(page);
 
     const projectId = 'RC-BIO-001';
-    await page.goto(`${BASE_URL}/concept2cure/project/${projectId}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE_URL}/concept2cure/project/${projectId}`, {
+      waitUntil: 'domcontentloaded',
+    });
     await page.waitForTimeout(1500);
 
     const path = new URL(page.url()).pathname;
@@ -78,20 +80,31 @@ test.describe.serial('RC beta-safe path', () => {
 
   test('RC-05 project shell and governed workspace load', async ({ page }) => {
     await forceDevSession(page);
-    await page.goto(`${BASE_URL}/concept2cure/project/RC-BIO-001`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE_URL}/concept2cure/project/RC-BIO-001`, {
+      waitUntil: 'domcontentloaded',
+    });
 
     const bodyText = (await page.textContent('body')) || '';
     expect(bodyText.length).toBeGreaterThan(30);
 
-    const shellHintsPresent = bodyContains(bodyText, [/project/i, /workspace/i, /editor/i, /vault/i]);
+    const shellHintsPresent = bodyContains(bodyText, [
+      /project/i,
+      /workspace/i,
+      /editor/i,
+      /vault/i,
+    ]);
     expect(shellHintsPresent).toBeTruthy();
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/rc-05-project-workspace-shell.png` });
   });
 
-  test('RC-06 artifact/review/provenance surfaces are reachable and return preserves identity', async ({ page }) => {
+  test('RC-06 artifact/review/provenance surfaces are reachable and return preserves identity', async ({
+    page,
+  }) => {
     await forceDevSession(page);
-    await page.goto(`${BASE_URL}/concept2cure/project/RC-BIO-001`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE_URL}/concept2cure/project/RC-BIO-001`, {
+      waitUntil: 'domcontentloaded',
+    });
     const startPath = new URL(page.url()).pathname;
 
     const candidateSelectors = [
@@ -113,7 +126,9 @@ test.describe.serial('RC beta-safe path', () => {
     const currentPath = new URL(page.url()).pathname;
     expect(currentPath.includes('RC-BIO-001') || startPath.includes('RC-BIO-001')).toBeTruthy();
 
-    await page.goto(`${BASE_URL}/concept2cure/project/RC-BIO-001`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE_URL}/concept2cure/project/RC-BIO-001`, {
+      waitUntil: 'domcontentloaded',
+    });
     const returnPath = new URL(page.url()).pathname;
     expect(returnPath.includes('RC-BIO-001')).toBeTruthy();
 
@@ -122,7 +137,9 @@ test.describe.serial('RC beta-safe path', () => {
 
   test('RC-07 no primary beta CTA misroutes to dead/legacy destination', async ({ page }) => {
     await forceDevSession(page);
-    await page.goto(`${BASE_URL}/concept2cure/project/RC-BIO-001`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE_URL}/concept2cure/project/RC-BIO-001`, {
+      waitUntil: 'domcontentloaded',
+    });
 
     const ctaSelectors = [
       'a:has-text("Open Project")',
@@ -147,10 +164,14 @@ test.describe.serial('RC beta-safe path', () => {
   test('RC-08 fail-closed and command/panel safety smoke', async ({ page }) => {
     await forceDevSession(page);
 
-    const failClosed = await page.request.get(`${BASE_URL}/api/authoring-actions/invalid-test-route`);
+    const failClosed = await page.request.get(
+      `${BASE_URL}/api/authoring-actions/invalid-test-route`
+    );
     expect([400, 401, 403, 404, 405]).toContain(failClosed.status());
 
-    await page.goto(`${BASE_URL}/concept2cure/project/RC-BIO-001`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE_URL}/concept2cure/project/RC-BIO-001`, {
+      waitUntil: 'domcontentloaded',
+    });
     const bodyText = (await page.textContent('body')) || '';
 
     // Dead legacy command names should not be surfaced as primary actions.

@@ -26,37 +26,77 @@ import crypto from 'crypto';
 import { createPolicyGuard } from '../services/policy/opaMiddleware';
 import rbacService from '../services/roleBasedAccess';
 import { verifyAuditIntegrity } from '../services/audit/audit-integrity-service';
-import { isSigningAuthorized } from '../services/part11/signing-authority';
-import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
+import { requestPgClient } from '../db/requestDb';
+
+/**
+ * The request-scoped, tenant-pinned SQL client.
+ *
+ * ── What this replaces, and why it is not the shared pool ────────────────────
+ * Every route in this file resolved its pool as
+ *
+ *     const pool: Pool = (req as any).pool || (req.app as any).pool;
+ *
+ * and NOTHING in this repository assigns `req.pool` or `req.app.pool` — the
+ * only four assignments are in this file's own tests. So both operands were
+ * always undefined and every one of these five routes threw
+ * `TypeError: Cannot read properties of undefined (reading 'query')` and
+ * answered 500. `server/routes/graphrag.ts:543` documents the identical defect
+ * and repaired it with a fallback to the shared process pool.
+ *
+ * That fallback is deliberately NOT copied here, for two reasons.
+ *
+ * FIRST, it would arm a tenant leak rather than close a bug. Three of these five
+ * routes had no tenant predicate, and `document_id` / `entity_id` are
+ * enumerable serials — so the routes are currently safe only by virtue of being
+ * broken. Repairing the connection without the predicates is strictly worse
+ * than leaving them broken. The predicates land in the same change as the
+ * repair, route by route, and the two routes that cannot be made safe in one
+ * step are left disconnected on purpose (see their own comments).
+ *
+ * SECOND, the shared process pool is the wrong connection. `requestPgClient`
+ * returns the
+ * connection `establishRequestTenantScope` already pinned to this request, with
+ * `app.current_tenant_id` / `current_org_id` / `current_user_role` set on it —
+ * so the RLS policies on `electronic_signatures` and `audit_events` actually
+ * apply, instead of app-layer predicates being the only thing standing between
+ * one tenant and another. It is fail-closed: absent tenant context it throws
+ * `MissingRequestDbContextError` rather than quietly serving from the shared
+ * pool. `scripts/ci/audit-requestdb-coverage.mjs` ratchets on the shared-pool
+ * accessors and this file is not in its baseline, which is the same judgement
+ * expressed as a gate.
+ */
+/**
+ * Generic in the row type, matching what `pg`'s `Pool.query` gave these call
+ * sites before. `requestPgClient` declares its rows as
+ * `Record<string, unknown>`, which is the more honest type but would require
+ * rewriting every consumer in this file to narrow each column — a much larger
+ * diff, on routes whose SQL is unchanged, for no behavioural gain. The cast is
+ * confined to this one function so the widening is visible in one place.
+ */
+type SqlClient = {
+  query<T = any>(text: string, params?: unknown[]): Promise<{ rows: T[]; rowCount?: number }>;
+};
+
+const requestSql = (req: Request): SqlClient => requestPgClient(req) as unknown as SqlClient;
+
+/**
+ * The organization on the verified request, or `null`.
+ *
+ * Both accessors are the ones this file already used at the two routes that
+ * were correctly scoped; hoisted so a new route cannot invent a third way of
+ * asking, and so "no org ⇒ refuse" is one decision rather than five.
+ */
+function requestOrgId(req: Request): number | null {
+  const raw =
+    (req as unknown as { user?: { organizationId?: unknown } }).user?.organizationId ??
+    (req as unknown as { tenantContext?: { organizationId?: unknown } }).tenantContext?.organizationId;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
 
 // ---------------------------------------------------------------------------
 // TYPES
 // ---------------------------------------------------------------------------
-
-export interface ElectronicSignature {
-  id: string;
-  documentId: string;
-  documentVersion: number;
-  signerId: string;
-  signerName: string;
-  signerTitle: string;
-  signerOrganization: string;
-  meaning: SignatureMeaning;
-  customMeaning?: string;
-  timestamp: Date;
-  serverTimestamp?: string; // Server-authoritative timestamp (ISO 8601)
-  ipAddress: string;
-  userAgent: string;
-  signatureHash: string; // SHA-256 of document content + signer + timestamp
-  certificateId?: string; // Digital certificate reference
-  biometricVerified: boolean;
-  passwordVerified: boolean;
-  mfaVerified: boolean;
-  revoked: boolean;
-  revokedAt?: Date;
-  revokedBy?: string;
-  revokedReason?: string;
-}
 
 export type SignatureMeaning =
   | 'authorship' // Author/creator of the document
@@ -239,16 +279,6 @@ function computeHash(data: string): string {
   return crypto.createHash('sha256').update(data).digest('hex');
 }
 
-function computeSignatureHash(
-  documentId: string,
-  documentContent: string,
-  signerId: string,
-  timestamp: Date
-): string {
-  const payload = `${documentId}|${documentContent}|${signerId}|${timestamp.toISOString()}`;
-  return computeHash(payload);
-}
-
 function computeAuditChainHash(entry: Omit<AuditTrailEntry, 'hash'>, previousHash: string): string {
   const payload = `${previousHash}|${entry.entityType}|${entry.entityId}|${entry.action}|${entry.userId}|${entry.timestamp.toISOString()}`;
   return computeHash(payload);
@@ -322,270 +352,81 @@ function appendAuditEntry(
 
 const router = Router();
 
-async function verifySignerPassword(pool: Pool, signerId: string, password: string): Promise<boolean> {
-  if (!password || typeof password !== 'string' || password.length < 8) {
-    return false;
-  }
-
-  try {
-    // tenant-isolation-safe: re-auth self-lookup — signerId is derived from the authenticated user and a client-supplied signerId is rejected unless it matches (§11.200(a)(2)); users is a global identity.
-    const result = await pool.query(
-      `SELECT password_hash
-       FROM users
-       WHERE id::text = $1 OR email = $1
-       LIMIT 1`,
-      [signerId]
-    );
-    const hash = result.rows[0]?.password_hash;
-    if (!hash || typeof hash !== 'string' || hash.startsWith('temp_')) {
-      return false;
-    }
-
-    const bcrypt = await import('bcryptjs');
-    return bcrypt.compare(password, hash);
-  } catch (error) {
-    console.error('[Part11] Password verification query failed:', (error as Error).message);
-    return false;
-  }
-}
-
 // ============================
 // ELECTRONIC SIGNATURES (§11.50, §11.70, §11.100)
 // ============================
-
-/**
- * POST /signatures
- * Apply an electronic signature to a document
- * Requires: credential hash verification + meaning selection
- */
-router.post(
-  '/signatures',
-  createPolicyGuard({
-    action: 'part11.signature.create',
-    module: 'part11-compliance',
-    resourceType: 'electronic_signature',
-  }),
-  async (req: Request, res: Response) => {
-    const pool: Pool = (req as any).pool || (req.app as any).pool;
-    const {
-      documentId,
-      documentVersion,
-      documentContent,
-      signerId: bodySignerId,
-      signerName,
-      signerTitle,
-      signerOrganization,
-      meaning,
-      customMeaning,
-      password,
-    } = req.body;
-
-    // §11.200(a)(2): an electronic signature may be "used only by [its] genuine
-    // owner." The signer identity is therefore BOUND to the authenticated session
-    // user — never taken from the request body. A client-supplied `signerId` is
-    // only accepted as a redundant assertion that must match the authenticated
-    // user; any mismatch is rejected so a logged-in user cannot record a
-    // signature attributed to (and password-verified against) a different account.
-    const authUser = (req as any).user || {};
-    const authSignerId = authUser.userId ?? authUser.id;
-    if (authSignerId === undefined || authSignerId === null || authSignerId === '') {
-      return res.status(401).json({
-        error: 'Authenticated session required to sign per 21 CFR Part 11 §11.200',
-      });
-    }
-    const signerId = String(authSignerId);
-    if (
-      bodySignerId !== undefined &&
-      bodySignerId !== null &&
-      String(bodySignerId) !== signerId &&
-      String(bodySignerId) !== String(authUser.email ?? '')
-    ) {
-      return res.status(403).json({
-        error:
-          'signerId does not match the authenticated user; an e-signature may be used only by its genuine owner (§11.200(a)(2))',
-      });
-    }
-
-    if (!documentId || !meaning || !password) {
-      return res.status(400).json({
-        error:
-          'documentId, meaning, and password are required per 21 CFR Part 11 §11.100',
-      });
-    }
-
-    // §11.70 signature/record linking: a signature must bind the CONTENT being
-    // signed. This route hashes caller-supplied `documentContent`, so it must be
-    // present and non-empty — otherwise the "signature" would bind nothing (an
-    // empty-string digest), which is not a valid signature. Fail closed.
-    if (typeof documentContent !== 'string' || documentContent.length === 0) {
-      return res.status(400).json({
-        error:
-          'documentContent is required and must be non-empty — an electronic signature must bind the content being signed (21 CFR Part 11 §11.70).',
-        code: 'ESIGNATURE_CONTENT_REQUIRED',
-      });
-    }
-
-    // §11.10(g): identity is not authority. Enforce signing authority for the
-    // authenticated user before credential work, matching the policy on the
-    // other signing routes. Role from the membership record (never the body).
-    const signerOrgId = Number(
-      authUser.organizationId ?? (req as any).tenantContext?.organizationId,
-    );
-    const signerRole = await resolveSignerOrgRole(Number(signerId), signerOrgId);
-    if (!isSigningAuthorized(signerRole)) {
-      return res.status(403).json({
-        error: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
-        code: 'ESIGNATURE_NO_AUTHORITY',
-      });
-    }
-
-    // §11.100(a): Verify identity before signing against stored credential hash.
-    // The credential checked is ALWAYS the authenticated user's, not a body value.
-    const passwordVerified = await verifySignerPassword(pool, signerId, password);
-    if (!passwordVerified) {
-      appendAuditEntry({
-        entityType: 'signature',
-        entityId: documentId,
-        action: 'failed_login',
-        userId: signerId,
-        userName: signerName || 'unknown',
-        userRole: signerTitle || 'unknown',
-        timestamp: new Date(),
-        ipAddress: req.ip || 'unknown',
-        userAgent: req.get('user-agent') || 'unknown',
-        sessionId: (req as any).sessionId || 'unknown',
-      });
-      return res
-        .status(401)
-        .json({ error: 'Password verification failed — signature rejected per §11.100(a)' });
-    }
-
-    const signatureHash = computeSignatureHash(documentId, documentContent, signerId, new Date());
-
-    const signature: ElectronicSignature = {
-      id: uuidv4(),
-      documentId,
-      documentVersion: documentVersion || 1,
-      signerId,
-      signerName: signerName || signerId,
-      signerTitle: signerTitle || '',
-      signerOrganization: signerOrganization || '',
-      meaning,
-      customMeaning: meaning === 'custom' ? customMeaning : undefined,
-      timestamp: new Date(),
-      ipAddress: req.ip || 'unknown',
-      userAgent: req.get('user-agent') || 'unknown',
-      signatureHash,
-      biometricVerified: false,
-      passwordVerified,
-      mfaVerified: !!req.body.mfaToken,
-      revoked: false,
-    };
-
-    try {
-      await pool.query(
-        `
-        INSERT INTO electronic_signatures (
-          id, document_id, document_version, signer_id, signer_name, signer_title,
-          signer_organization, meaning, custom_meaning, signature_hash,
-          password_verified, mfa_verified, ip_address, user_agent, timestamp
-        ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-          $11, $12, $13, $14, $15
-        )
-      `,
-        [
-          signature.id,
-          signature.documentId,
-          signature.documentVersion,
-          signature.signerId,
-          signature.signerName,
-          signature.signerTitle,
-          signature.signerOrganization,
-          signature.meaning,
-          signature.customMeaning || null,
-          signature.signatureHash,
-          signature.passwordVerified,
-          signature.mfaVerified,
-          signature.ipAddress,
-          signature.userAgent,
-          signature.timestamp,
-        ]
-      );
-    } catch (error) {
-      // §11.70/§11.10(e): a signature that isn't durably persisted did not
-      // happen. Never report success after a failed insert — fail the request
-      // so the caller (and the audit trail) never records a phantom signature.
-      const code = (error as { code?: string })?.code;
-      console.error('[Part11] Signature persistence FAILED — signing aborted:', (error as Error).message);
-      if (code === '42P01') {
-        return res.status(503).json({
-          error: 'E-signature schema not present — run migrations before signing.',
-          code: 'ESIGNATURE_SCHEMA_MISSING',
-        });
-      }
-      return res.status(500).json({
-        error: 'Signature could not be persisted; signing aborted (no signature without a durable record).',
-        code: 'ESIGNATURE_PERSIST_FAILED',
-      });
-    }
-
-    appendAuditEntry({
-      entityType: 'signature',
-      entityId: documentId,
-      action: 'sign',
-      userId: signerId,
-      userName: signerName || signerId,
-      userRole: signerTitle || 'signer',
-      newValue: JSON.stringify({
-        meaning,
-        documentVersion: signature.documentVersion,
-        signatureHash,
-      }),
-      timestamp: signature.timestamp,
-      ipAddress: signature.ipAddress,
-      userAgent: signature.userAgent,
-      sessionId: (req as any).sessionId || 'unknown',
-      metadata: {
-        signerOrganization,
-        mfaVerified: signature.mfaVerified,
-        part11_section: '11.50,11.70,11.100',
-      },
-    });
-
-    res.status(201).json({
-      success: true,
-      data: {
-        id: signature.id,
-        documentId,
-        meaning,
-        timestamp: signature.timestamp,
-        signatureHash,
-        compliance: '21 CFR Part 11 compliant',
-      },
-    });
-  }
-);
+//
+// `POST /signatures` — REMOVED (single e-signature write path, Phase 4 D6).
+//
+// It was a THIRD signing entry point that had never once executed: its INSERT
+// named columns that do not exist on the physical `electronic_signatures`
+// table (document_version, signer_organization, meaning, custom_meaning,
+// password_verified, mfa_verified, user_agent, timestamp — plus a uuid `id`
+// against a serial PK), so every call raised 42703 and returned 500. It failed
+// closed, so it never fabricated a signature; it simply never worked, and a
+// repo-wide grep found no caller in client/ or server/ — only its own test.
+//
+// It was deleted rather than repaired because repairing it would have created a
+// second live document-signing surface with a WEAKER §11.70 binding than the one
+// we already have:
+//   - it hashed a caller-supplied `documentContent`, i.e. it bound whatever the
+//     client claimed the record was, which no inspector can re-derive from
+//     stored bytes;
+//   - it recorded `mfa_verified` from `!!req.body.mfaToken` — a client-asserted
+//     boolean, never verified;
+//   - it took a free-text documentId with no versionId, so post-D6 it could only
+//     have anchored via `signed_target`, inventing an anchor for a row that is
+//     conceptually a document-version signature.
+//
+// The supported document-signing surface is POST /api/esignature/sign
+// (server/routes/esignature.ts): it re-verifies password + TOTP server-side,
+// derives the §11.70 binding digest from the STORED version content inside the
+// signer's org, and writes through the one INSERT in
+// server/services/part11/signature-persistence.ts. Governed typed targets sign
+// via POST /api/c2c/actions/sign, through the same write path.
+//
+// The read/verification endpoints below are unaffected and still serve rows
+// written by BOTH paths.
 
 /**
  * GET /signatures/:documentId
  * Get all signatures for a document
  */
 router.get('/signatures/:documentId', async (req: Request, res: Response) => {
-  const pool: Pool = (req as any).pool || (req.app as any).pool;
+  /* SECURITY. This SELECT filtered on `document_id` ALONE, and `documents.id`
+     is a serial — so with a working connection any authenticated user of any
+     tenant could enumerate ids and read another tenant's §11.50 signature rows:
+     signer name, title, email, meaning, hash, IP address.
+
+     It has never actually leaked, because `req.pool` is undefined and the route
+     500s before reaching Postgres. That is not a control, it is an accident,
+     and it is why the predicate lands in the SAME change as the repair rather
+     than after it. The clause is mandatory — no org on the request is a 403,
+     not an unscoped read — which is the difference from the manifest route
+     below, whose optional clause silently became a read-by-id. */
+  const orgId = requestOrgId(req);
+  if (orgId == null) {
+    return res.status(403).json({ error: 'Tenant context required' });
+  }
+  const pool: SqlClient = requestSql(req);
   const { documentId } = req.params;
 
   try {
+    // Physical-schema column set (the previous SELECT referenced columns —
+    // document_version, signer_organization, meaning, password_verified,
+    // mfa_verified, timestamp, user_agent — that never existed on the table,
+    // so this read failed for every stored signature).
     const result = await pool.query(
       `
-      SELECT id, document_id, document_version, signer_id, signer_name, signer_title,
-             signer_organization, meaning, signature_hash, password_verified, mfa_verified,
-             timestamp, ip_address, user_agent
+      SELECT id, document_id, version_id, signed_target, signature_type,
+             signature_purpose, signer_id, signer_name, signer_title, signer_email,
+             signature_meaning, signature_hash, binding_basis,
+             second_factor_verified, is_valid, signed_at, ip_address
       FROM electronic_signatures
-      WHERE document_id = $1
-      ORDER BY timestamp DESC
+      WHERE document_id = $1 AND organization_id = $2
+      ORDER BY signed_at DESC
     `,
-      [documentId]
+      [documentId, orgId]
     );
 
     res.json({ success: true, data: result.rows });
@@ -610,16 +451,47 @@ router.get('/signatures/:documentId', async (req: Request, res: Response) => {
  * record. Read-only; the data is captured at signing time, this assembles it.
  */
 router.get('/signatures/:signatureId/manifest', async (req: Request, res: Response) => {
-  const pool: Pool = (req as any).pool || (req.app as any).pool;
+  const orgId = requestOrgId(req);
+  if (orgId == null) {
+    return res.status(403).json({ error: 'Tenant context required' });
+  }
+  const pool: SqlClient = requestSql(req);
   const { signatureId } = req.params as { signatureId: string };
 
+  // electronic_signatures.id is a serial integer — reject a non-numeric id
+  // before it reaches the database (22P02 would surface as an opaque 500).
+  const idNum = Number(signatureId);
+  if (!Number.isInteger(idNum) || idNum <= 0) {
+    return res.status(400).json({ success: false, error: 'signatureId must be a positive integer' });
+  }
+
   try {
+    // Query the PHYSICAL schema (shared/schema.ts electronicSignatures / the
+    // 0000 migration): signature_meaning + signed_at — the previous query
+    // referenced columns (meaning, custom_meaning, timestamp,
+    // signer_organization) that never existed on the table, so this endpoint
+    // 500'd for every stored signature. Serves BOTH document-anchored rows
+    // (/api/esignature/sign, sign-release) and governed-sign rows
+    // (/api/c2c/actions/sign — signed_target/binding_basis). §11.50 meaning
+    // falls back to signature_type when no explicit meaning was declared —
+    // a derivation from stored fields, never an invented value.
+    //
+    /* Tenant scope, now MANDATORY and without the NULL escape.
+       It was neither. The clause was appended only `if (Number.isFinite(orgId))`,
+       so a token carrying no numeric organization turned this into an unscoped
+       read-by-id — a conditional predicate is not a predicate, it is a default.
+       And `OR es.organization_id IS NULL` let every tenant read any
+       unattributed row, which is looser than the RLS policy behind it, and that
+       policy excludes NULL for the same reason. The org is checked once at the
+       top of the handler now (see above). */
     const result = await pool.query(
-      `SELECT id, signer_name, signer_title, signer_organization,
-              meaning, custom_meaning, timestamp
-       FROM electronic_signatures
-       WHERE id = $1`,
-      [signatureId]
+      `SELECT es.id, es.signer_name, es.signer_title, o.name AS signer_organization,
+              COALESCE(es.signature_meaning, es.signature_type) AS meaning,
+              es.signed_at, es.signed_target, es.binding_basis
+         FROM electronic_signatures es
+         LEFT JOIN organizations o ON o.id = es.organization_id
+        WHERE es.id = $1 AND es.organization_id = $2`,
+      [idNum, orgId]
     );
     if (!result.rows.length) {
       return res.status(404).json({ success: false, error: 'Signature not found' });
@@ -630,14 +502,25 @@ router.get('/signatures/:signatureId/manifest', async (req: Request, res: Respon
       signerTitle: row.signer_title,
       signerOrganization: row.signer_organization,
       meaning: row.meaning,
-      customMeaning: row.custom_meaning,
-      timestamp: row.timestamp,
+      customMeaning: null,
+      timestamp: row.signed_at,
     });
     res.json({
       success: true,
-      data: { id: row.id, ...manifest, compliance: '21 CFR Part 11 §11.50' },
+      data: {
+        id: row.id,
+        ...manifest,
+        signedTarget: row.signed_target ?? null,
+        bindingBasis: row.binding_basis ?? null,
+        compliance: '21 CFR Part 11 §11.50',
+      },
     });
   } catch (error) {
+    const code = (error as { code?: string } | null)?.code;
+    if (code === '42P01' || code === '42703') {
+      // Store or its D6 columns unprovisioned — fail closed, honestly.
+      return res.status(503).json({ success: false, error: 'SIGNATURE_STORE_UNPROVISIONED' });
+    }
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to build signature manifest',
@@ -703,6 +586,30 @@ router.get('/audit-trail/:entityId', async (req: Request, res: Response, next: N
   if (entityId === 'chain-integrity' || entityId === 'seal-integrity') {
     return next();
   }
+  /* DELIBERATELY NOT CONNECTED. Do not "fix the 500" by handing this a working
+     client — it is broken twice over and a connection makes it worse, not
+     better.
+
+     1. The columns do not exist. This selects `user_role`, `previous_value`,
+        `new_value`, `change_reason`, `session_id` and `record_hash` from an
+        unqualified `audit_trail`. The runtime connection sets no `search_path`,
+        so that resolves to `public.audit_trail`, whose only DDL in this repo
+        (migrations/0000_sweet_joseph.sql) defines none of those six. The
+        `compliance.audit_trail` that has some of them is in another schema this
+        query cannot reach, and has no `action`/`entity_type`/`entity_id`. A
+        working client turns the TypeError into a 42703, which the catch below
+        does not map (it handles 42P01 only) — a 500 either way.
+     2. There is no tenant predicate, and `entity_id` is a serial. The table has
+        no `organization_id` to add one from; it is isolated only by a
+        parent-scoped RLS policy through `leaf_id → leaves.organization_id`, and
+        both of those columns are nullable, so under enforcement the rows are
+        visible to nobody and with enforcement off they are visible to everyone.
+
+     There is also no writer: nothing in the repo INSERTs into `public.audit_trail`.
+     `appendAuditEntry` writes `audit_events`, the tamper-proof observer writes
+     `audit_logs`. The fix is to re-point this at `audit_events` — which has every
+     column it wants plus `organization_id` — or to delete it, as `POST /signatures`
+     was deleted above. Both are product decisions, not repairs. */
   const pool: Pool = (req as any).pool || (req.app as any).pool;
   const entityType = req.query.type as string;
 
@@ -808,18 +715,20 @@ router.post('/audit-trail', (req: Request, res: Response) => {
  * hashes from the DB and comparing against stored record_hash values.
  */
 router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) => {
-  const pool: Pool = (req as any).pool || (req.app as any).pool;
   // SECURITY: pre-fix the orgId came from req.query, so any caller
   // could verify the chain integrity of any tenant's audit trail.
   // When the query was empty the filter was OMITTED entirely — meaning
   // the verifier ran across all tenants combined, which would fail
   // chain consistency and leak hash data from foreign rows. JWT-bound now.
-  const orgIdRaw =
-    (req as any).user?.organizationId ?? (req as any).tenantContext?.organizationId;
-  if (orgIdRaw == null) {
+  const orgId = requestOrgId(req);
+  if (orgId == null) {
     return res.status(403).json({ error: 'Tenant context required' });
   }
-  const orgId = Number(orgIdRaw);
+  /* Connected. This is the one route of the five whose predicate was already
+     mandatory and unconditional, and the only one with a live client caller
+     (Part11Console) — which has therefore been reading a 500 for as long as the
+     pool has been undefined. */
+  const pool: SqlClient = requestSql(req);
 
   try {
     const orgFilter = `WHERE organization_id = $1`;
@@ -1206,9 +1115,38 @@ router.get('/health', (_req: Request, res: Response) => {
 router.get('/audit-trail/seal-integrity', async (req: Request, res: Response) => {
   const user = (req as any).user;
   const roles: string[] = user?.roles || (user?.role ? [user.role] : []);
-  if (!roles.includes('admin') && !roles.includes('super_admin')) {
-    return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Admin role required for system audit-integrity verification.' } });
+  /* `admin` is an ORG-scoped role, not a platform one. server/middleware/auth.ts
+     states it directly: self-service signup mints `admin` for the first user of
+     every new organization, so an org admin is an ordinary customer. This route
+     reads the estate-wide `audit_logs` chain deliberately un-scoped, so that
+     guard let any customer who signed themselves up verify — and receive hash
+     material from — every tenant's audit chain.
+
+     `super_admin` is genuine, and is retained. `admin` is removed. The full
+     platform guard is server/middleware/requirePlatformAdmin.ts, which also
+     honours PLATFORM_ADMIN_EMAILS; wiring it here needs a mount-order change
+     that belongs with the connection work below. */
+  if (!roles.includes('super_admin') && !roles.includes('platform_admin')) {
+    return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Platform-admin role required for system audit-integrity verification.' } });
   }
+  /* DELIBERATELY NOT CONNECTED, and this one is wrong in BOTH enforcement
+     modes, in opposite directions.
+
+     With RLS off, `verifyAuditIntegrity` walks the whole `audit_logs` table
+     across every tenant — which is what it is for, but it means the response
+     carries hash material spanning the estate.
+
+     With RLS ON, `requestPgClient` pins a per-tenant scope and `audit_logs`
+     carries `tenant_id`, so the walk sees a SUBSET of a chain whose hashes were
+     computed over the whole table. Every row after the first tenant boundary
+     mismatches and the endpoint reports a false "chain broken" on an intact
+     chain — the most alarming possible output of a §11.10(e) surface, produced
+     by the isolation working correctly.
+
+     It needs an explicit SYSTEM scope (establishRequestSystemScope), not a
+     request scope, and that is a different change from this one. Note also that
+     the `if (!pool)` check below is incompatible with a client accessor that
+     THROWS on missing context — it would never be reached. */
   const pool: Pool = (req as any).pool || (req.app as any).pool;
   if (!pool) {
     return res.status(503).json({ error: { code: 'NO_DB', message: 'Audit database not available.' } });

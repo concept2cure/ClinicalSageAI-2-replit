@@ -33,6 +33,26 @@ vi.mock('../../server/services/export/governedExportConsequence', () => ({
   createGovernedExportConsequence: mockGovernedConsequence,
 }));
 
+// The export routes resolve the project anchor org-scoped before producing
+// anything; resolve the tests' meta.projectId to an in-org GA project row.
+// The route resolves its project anchor through `requestDb(req)`; mocking
+// `server/db` alone stopped intercepting when that changed.
+const { fakeDb } = vi.hoisted(() => ({
+  fakeDb: {
+    select: () => ({
+      from: () => ({
+        where: () => ({ limit: async () => [{ id: 33, deviceName: 'Test Device' }] }),
+      }),
+    }),
+  } as any,
+}));
+vi.mock('../../server/db', () => ({ db: fakeDb }));
+vi.mock('../../server/db/requestDb', () => ({ requestDb: () => fakeDb }));
+
+vi.mock('../../server/services/auditService', () => ({
+  default: { logAction: vi.fn(async () => undefined) },
+}));
+
 import estarRoutes from '../../server/routes/510k-estar-routes';
 // The field map is a mutable singleton; tests populate then restore it to
 // exercise the "template + verified map present → real official PDF" path

@@ -20,6 +20,8 @@ import type { Pool } from 'pg';
 
 import { authMiddleware } from '../auth.js';
 import { requireTenantContext } from '../middleware/tenantContext.js';
+import { authoringObjectAuthorization } from '../middleware/authoringObjectAuthorization';
+import authoringPermissionsRouter from '../routes/authoring-permissions';
 import { sanitizeAskAnaInput } from '../routes/ask-ana-utils';
 import { mountBetaSafeRoutes } from '../betaRouteManifest';
 import { csrSearchService } from '../services/csr-search-service';
@@ -72,7 +74,6 @@ import mdxSearchRoutes from '../routes/mdx-search';
 import mdxAnalyticsRoutes from '../routes/mdx-analytics';
 import mdxImportsRoutes from '../routes/mdx-imports';
 import regulatoryCorrespondenceRoutes from '../routes/regulatory-correspondence';
-import { create510kWorkflowRoutes } from '../routes/510k-workflow-routes';
 import { createPMAWorkflowRoutes } from '../routes/pma-workflow-routes';
 import fdaFormsRoutes from '../routes/fda-forms.routes';
 import fieldSyncRoutes from '../routes/fieldSync.routes';
@@ -80,6 +81,7 @@ import contentAssemblyRoutes from '../routes/contentAssembly.routes';
 import { createMiscInlineRoutes } from '../routes/misc-inline-routes';
 import licenseRoutes from '../routes/license-routes.js';
 import moduleSubscriptions from '../routes/module-subscriptions.js';
+import moduleAccessRequests from '../routes/module-access-requests.js';
 import licensing from '../routes/licensing.js';
 import billing from '../routes/billing.js';
 import deepResearch from '../routes/deep-research.js';
@@ -189,6 +191,14 @@ export async function registerInlineLitCommerceRoutes({
   const litIntRoutes: ReadonlyArray<{ path: string; router: unknown; name: string }> = [
     { path: '/', router: licenseRoutes, name: 'License Management' },
     { path: '/api/module-subscriptions', router: moduleSubscriptions, name: 'Module Subscriptions' },
+    // Sits beside module-subscriptions deliberately: it is how a member who
+    // cannot buy asks for a locked module, so it must stay reachable to an
+    // organization that is locked out of everything else.
+    {
+      path: '/api/module-access-requests',
+      router: moduleAccessRequests,
+      name: 'Module Access Requests',
+    },
     { path: '/api/licensing', router: licensing, name: 'Intelligent Licensing & EULA' },
     { path: '/api/billing', router: billing, name: 'Billing' },
     { path: '/api/deep-research', router: deepResearch, name: 'Deep Research' },
@@ -289,6 +299,20 @@ export function registerInlinePlatformFacadesRoutes({
 export async function registerInlineAiWorkflowRoutes({
   app,
 }: InlineRouteContext): Promise<void> {
+  // Authoring object security — mounted at the `/api` gateway immediately ahead
+  // of the legacy `/api/authoring` router (below). The permission-management
+  // router terminates owner/admin-controlled permission requests; the mandatory,
+  // fail-closed object-authorization middleware then guards every other
+  // document/section mutation. The middleware ignores non-authoring paths, so no
+  // second `/api/authoring` mount is introduced and the route-mount contract
+  // holds. Boot-time readiness of this surface is asserted in startup/routes.ts
+  // before this slot runs. Mounted WITHOUT a swallowing try/catch on purpose: if
+  // the authorization surface cannot load, startup must fail closed rather than
+  // mount the authoring router unguarded.
+  app.use('/api', authoringPermissionsRouter);
+  app.use('/api', authoringObjectAuthorization);
+  console.log('✅ Authoring object-authorization + permission routes mounted (/api)');
+
   // Authoring Router (document workflows, reviews, tracked changes).
   try {
     const authoringRouterModule = await import('../routes/authoring.router');
@@ -817,6 +841,21 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount C2C Projects routes:', error);
   }
 
+  // C2C Project Vault (/api/c2c/project-vault) is mounted in
+  // register-clinical-intel-routes.ts — do not re-mount it here (avoids a
+  // duplicate app.use of the same read-model router).
+
+  // Vault document ingestion — the write path into the RAG corpus
+  // (vault.documents). Before this route, no production code ever inserted
+  // into vault.documents; documents could not enter the embedding pipeline.
+  try {
+    const { default: createVaultIngestRoutes } = await import('../routes/vault-ingest');
+    app.use('/api/vault/ingest', authMiddleware, createVaultIngestRoutes());
+    console.info('✅ Vault ingest route mounted (/api/vault/ingest)');
+  } catch (error) {
+    console.error('❌ Failed to mount Vault ingest route:', error);
+  }
+
   // PDEV Evidence Picker library — org-scoped searchable evidence pool read by
   // GET /api/evidence-objects (own sub-prefix, mounted nowhere else). Populates
   // the picker's result list; before this the fetch 404'd to a permanent empty
@@ -1128,8 +1167,18 @@ export function registerInlineSubmissionWorkflowRoutes({
   // nothing was populating). requireTenantContext authenticates, establishes the
   // AsyncLocalStorage tenant scope so those queries are permitted, and populates
   // req.user/req.tenantContext the handlers already read.
-  app.use('/api/mdx', requireTenantContext, mdxAnaDraftsRoutes);
-  app.use('/api/mdx', requireTenantContext, mdxVaultRoutes);
+  // The gate is bound to the two URL sub-trees these routers own, NOT to the
+  // shared /api/mdx prefix. `app.use('/api/mdx', requireTenantContext, router)`
+  // reads as "gate this router" and is not that: path-mounted middleware runs
+  // for every request matching the prefix, so it gated all 20+ routers stacked
+  // here. `/api/mdx/notifications/unread-count` — mounted below with no auth by
+  // design — answered 401 whenever tenant context was unresolved, which is the
+  // 500-then-401 alternation in the UAT report's BP-02. Proven with a real
+  // Express app before and after; see ledger L61.
+  app.use('/api/mdx/ana-drafts', requireTenantContext);
+  app.use('/api/mdx/vault', requireTenantContext);
+  app.use('/api/mdx', mdxAnaDraftsRoutes);
+  app.use('/api/mdx', mdxVaultRoutes);
   app.use('/api/mdx', mdxEngineeringRoutes);
   app.use('/api/mdx', mdxUdiRoutes);
   app.use('/api/mdx', mdxRiskRoutes);
@@ -1175,9 +1224,9 @@ export function registerInlineSubmissionWorkflowRoutes({
   console.log('✅ MDX module health endpoint mounted successfully');
   console.log('✅ Regulatory Correspondence API routes mounted successfully');
 
-  // 510k + PMA workflow routes.
-  app.use('/api/510k-workflow', create510kWorkflowRoutes(pool));
-  console.log('✅ 510k-workflow API routes mounted successfully');
+  // PMA workflow routes. (The legacy /api/510k-workflow family was deleted in
+  // the Phase 1 consolidation — the canonical 510(k) surface is
+  // /api/510k/estar/* + /api/510k/device/* over cerv2_510k_sections.)
   app.use('/api/pma-workflow', createPMAWorkflowRoutes(pool));
   console.log('✅ PMA-workflow API routes mounted successfully');
 

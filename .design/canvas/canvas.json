@@ -1,0 +1,31 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "Surface layer" },
+    { "id": "page-2", "name": "UAT status" },
+    { "id": "page-3", "name": "Provenance directions" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html", "page": "page-1", "title": "The surface layer", "x": 0, "y": 0, "w": 1100, "h": 1360 },
+    { "file": "Status.dc.html", "page": "page-2", "title": "UAT blockers, re-measured", "x": 0, "y": 0, "w": 1180, "h": 1500 },
+    { "file": "Provenance.dc.html", "page": "page-3", "title": "Where the mark belongs", "x": 0, "y": 0, "w": 1240, "h": 1000 }
+  ],
+  "annotations": [
+    {
+      "id": "read-order",
+      "x": 1180,
+      "y": 0,
+      "w": 260,
+      "page": "page-1",
+      "text": "Three pages, in the order I'd read them:\n\n1 · Surface layer — what the UI is\n2 · UAT status — what was claimed vs true\n3 · Provenance — the one open call\n\nEvery figure was re-derived against the tree, not carried over from the earlier documents."
+    },
+    {
+      "id": "decision-needed",
+      "x": 1300,
+      "y": 0,
+      "w": 250,
+      "page": "page-3",
+      "text": "This is the page that needs your answer.\n\nThe other two report. This one asks: which direction, and do we split the sample flag into 'fixture by design' vs 'read failed' first?"
+    }
+  ],
+  "launch": { "view": "canvas", "page": "page-1" }
+}

@@ -1,0 +1,579 @@
+/* ==========================================================================
+   Concept2Cure.RI — investor technical white paper, print stylesheet.
+
+   Honors the platform design system (design-system/README.md): warm cream
+   canvas, terracotta accent used sparingly, stone neutrals, Lora for
+   long-form reading, Inter for chrome, weights capped at 600, sentence case.
+   Rendered to PDF by scripts/build-investor-whitepaper.mjs via Chromium.
+   ========================================================================== */
+
+@font-face { font-family: 'Lora'; font-weight: 400; font-style: normal; src: url('fonts/Lora-400.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-weight: 500; font-style: normal; src: url('fonts/Lora-500.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-weight: 600; font-style: normal; src: url('fonts/Lora-600.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-weight: 400; font-style: italic; src: url('fonts/Lora-400i.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 400; font-style: normal; src: url('fonts/Inter-400.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 500; font-style: normal; src: url('fonts/Inter-500.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 600; font-style: normal; src: url('fonts/Inter-600.ttf') format('truetype'); }
+
+:root {
+  --canvas:          #faf9f5;
+  --canvas-muted:    #f4f3ee;
+  --canvas-elevated: #ffffff;
+  --ink:             #141413;
+  --ink-muted:       #565550;
+  --ink-faint:       #8a887f;
+  --border:          #e8e6dc;
+  --border-faint:    #f0eee6;
+  --accent:          #d97757;
+  --accent-subtle:   #f7e9e2;
+  --ai:              #6a9bcc;
+  --olive:           #788c5d;
+  --amber:           #d97706;
+  --sans: 'Inter', -apple-system, 'Helvetica Neue', sans-serif;
+  --serif: 'Lora', Georgia, serif;
+  --mono: 'Liberation Mono', 'DejaVu Sans Mono', monospace;
+}
+
+@page {
+  size: letter;
+  margin: 13mm 15mm 12mm 15mm;
+}
+@page :first { margin: 0; }
+
+* { box-sizing: border-box; }
+
+html {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 8.8pt;
+  line-height: 1.46;
+  font-weight: 400;
+}
+
+/* --------------------------------------------------------------------------
+   Page scaffolding
+   -------------------------------------------------------------------------- */
+
+/* No min-height: the printable box on letter at these margins is ~250mm, and any
+   forced height at or above it spills every section onto a second sheet. */
+.page {
+  page-break-after: always;
+  break-after: page;
+  position: relative;
+}
+.page:last-child { page-break-after: auto; break-after: auto; }
+
+.running-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--sans);
+  font-size: 6.4pt;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding-bottom: 2.4mm;
+  margin-bottom: 5mm;
+  border-bottom: 1px solid var(--border);
+}
+.running-head .rh-num { color: var(--accent); }
+
+/* --------------------------------------------------------------------------
+   Cover
+   -------------------------------------------------------------------------- */
+
+.cover {
+  height: 277mm;
+  padding: 26mm 22mm 17mm 22mm;
+  display: flex;
+  flex-direction: column;
+  background: var(--canvas);
+  page-break-after: always;
+}
+.cover-mark { display: flex; align-items: center; gap: 9px; }
+.cover-mark svg { width: 30px; height: 30px; border-radius: 7px; }
+.cover-wordmark {
+  font-family: var(--sans);
+  font-size: 11pt;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.cover-wordmark span { color: var(--accent); }
+
+.cover-body { margin-top: auto; }
+.cover-eyebrow {
+  font-family: var(--sans);
+  font-size: 7pt;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 9mm;
+}
+.cover-title {
+  font-family: var(--serif);
+  font-size: 30pt;
+  font-weight: 500;
+  line-height: 1.16;
+  letter-spacing: -0.018em;
+  margin: 0 0 7mm 0;
+  max-width: 150mm;
+}
+.cover-sub {
+  font-family: var(--serif);
+  font-size: 11.5pt;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--ink-muted);
+  max-width: 132mm;
+  margin: 0;
+}
+.cover-rule {
+  width: 46mm;
+  height: 2px;
+  background: var(--accent);
+  margin: 11mm 0 9mm 0;
+}
+
+.cover-facts {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5mm;
+  max-width: 180mm;
+}
+.cover-fact .cf-n {
+  font-family: var(--sans);
+  font-size: 16pt;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1.1;
+}
+.cover-fact .cf-l {
+  font-family: var(--sans);
+  font-size: 6.6pt;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-top: 2mm;
+  line-height: 1.4;
+}
+
+.cover-foot {
+  margin-top: auto;
+  padding-top: 8mm;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-family: var(--sans);
+  font-size: 7.4pt;
+  color: var(--ink-muted);
+  line-height: 1.6;
+}
+.cover-foot strong { font-weight: 600; color: var(--ink); }
+.cover-conf {
+  font-size: 6.6pt;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  text-align: right;
+}
+
+.cover-note {
+  font-family: var(--sans);
+  font-size: 6.6pt;
+  line-height: 1.55;
+  color: var(--ink-faint);
+  max-width: 132mm;
+  margin-top: 5mm;
+}
+
+/* --------------------------------------------------------------------------
+   Typography
+   -------------------------------------------------------------------------- */
+
+h1.section-title {
+  font-family: var(--serif);
+  font-size: 15.5pt;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  margin: 0 0 2mm 0;
+}
+.section-num {
+  font-family: var(--sans);
+  font-size: 7pt;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 2.2mm;
+}
+.deck {
+  font-family: var(--serif);
+  font-size: 9.6pt;
+  font-style: italic;
+  color: var(--ink-muted);
+  line-height: 1.45;
+  margin: 0 0 3.6mm 0;
+  max-width: 150mm;
+}
+
+h2 {
+  font-family: var(--sans);
+  font-size: 8.2pt;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  margin: 3.6mm 0 1.4mm 0;
+}
+h2:first-of-type { margin-top: 0; }
+
+h3 {
+  font-family: var(--sans);
+  font-size: 7.6pt;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 3mm 0 1.2mm 0;
+}
+
+p { margin: 0 0 2.4mm 0; }
+p:last-child { margin-bottom: 0; }
+
+strong { font-weight: 600; }
+em { font-style: italic; }
+
+a { color: var(--ink); text-decoration: none; }
+
+code, .mono {
+  font-family: var(--mono);
+  font-size: 8.1pt;
+  color: var(--ink-muted);
+}
+
+ul, ol { margin: 0 0 2.4mm 0; padding-left: 4.4mm; }
+li { margin-bottom: 1.1mm; }
+li:last-child { margin-bottom: 0; }
+ul.tight li { margin-bottom: 0.9mm; }
+
+.lede::first-letter { }
+
+.cols-2 {
+  column-count: 2;
+  column-gap: 8mm;
+  column-rule: 1px solid var(--border-faint);
+}
+.cols-2 > *:first-child { margin-top: 0; }
+
+/* --------------------------------------------------------------------------
+   Components
+   -------------------------------------------------------------------------- */
+
+.card {
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-faint);
+  border-radius: 3mm;
+  padding: 3.2mm 3.6mm;
+  margin: 0 0 3mm 0;
+  break-inside: avoid;
+}
+.card h3 { margin-top: 0; }
+.card p:last-child, .card ul:last-child { margin-bottom: 0; }
+
+.card-accent { border-left: 2px solid var(--accent); }
+.card-ai     { border-left: 2px solid var(--ai); }
+.card-olive  { border-left: 2px solid var(--olive); }
+.card-amber  { border-left: 2px solid var(--amber); }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; }
+.grid-2 .card, .grid-3 .card, .grid-4 .card { margin-bottom: 0; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 7.9pt;
+  margin: 0 0 3mm 0;
+  break-inside: avoid;
+}
+thead th {
+  font-family: var(--sans);
+  font-size: 6.5pt;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  text-align: left;
+  padding: 0 2.6mm 1.5mm 0;
+  border-bottom: 1px solid var(--border);
+}
+tbody td {
+  padding: 1.3mm 2.6mm 1.3mm 0;
+  border-bottom: 1px solid var(--border-faint);
+  vertical-align: top;
+  line-height: 1.38;
+}
+tbody tr:last-child td { border-bottom: none; }
+td:last-child, th:last-child { padding-right: 0; }
+td.num, th.num { font-family: var(--sans); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.pill {
+  display: inline-block;
+  font-family: var(--sans);
+  font-size: 6.3pt;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.6mm 1.7mm;
+  border-radius: 1.5mm;
+  background: var(--canvas-muted);
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+.pill-live    { background: #eef1e8; color: #5c6d45; }
+.pill-partial { background: #fdf0e0; color: #a35a06; }
+.pill-open    { background: #f2f1ec; color: #77756c; }
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4mm;
+  padding: 3.2mm 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin: 0 0 3.6mm 0;
+  break-inside: avoid;
+}
+.stat .s-n {
+  font-family: var(--sans);
+  font-size: 14pt;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.stat .s-l {
+  font-family: var(--sans);
+  font-size: 6.4pt;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-top: 1.6mm;
+  line-height: 1.45;
+}
+
+.callout {
+  background: var(--canvas-muted);
+  border-radius: 3mm;
+  padding: 3.2mm 3.8mm;
+  margin: 0 0 3.2mm 0;
+  font-size: 8.5pt;
+  break-inside: avoid;
+}
+.callout-accent { background: var(--accent-subtle); }
+.callout .c-label {
+  font-family: var(--sans);
+  font-size: 6.4pt;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1.8mm;
+}
+
+.footnote {
+  font-family: var(--sans);
+  font-size: 6.8pt;
+  line-height: 1.5;
+  color: var(--ink-faint);
+  border-top: 1px solid var(--border-faint);
+  padding-top: 2mm;
+  margin-top: 2.6mm;
+}
+
+/* Flow diagram — the submission chain */
+.chain {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 0 0 4mm 0;
+  break-inside: avoid;
+}
+.chain-step {
+  flex: 1;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-faint);
+  border-right: none;
+  padding: 2.6mm 2.2mm;
+  text-align: center;
+}
+.chain-step:first-child { border-radius: 2.5mm 0 0 2.5mm; }
+.chain-step:last-child { border-right: 1px solid var(--border-faint); border-radius: 0 2.5mm 2.5mm 0; }
+.chain-step .cs-n {
+  font-family: var(--sans);
+  font-size: 6pt;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+}
+.chain-step .cs-t {
+  font-family: var(--sans);
+  font-size: 7.4pt;
+  font-weight: 600;
+  margin-top: 1.4mm;
+  line-height: 1.3;
+}
+.chain-step .cs-d {
+  font-size: 7.2pt;
+  color: var(--ink-muted);
+  margin-top: 1.2mm;
+  line-height: 1.35;
+}
+
+/* Layered architecture stack */
+.stack { margin: 0 0 4mm 0; }
+.layer {
+  display: grid;
+  grid-template-columns: 30mm 1fr;
+  gap: 4mm;
+  align-items: start;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-faint);
+  border-radius: 2.5mm;
+  padding: 2.6mm 3.2mm;
+  margin-bottom: 1.5mm;
+  break-inside: avoid;
+}
+.layer:last-child { margin-bottom: 0; }
+.layer-name {
+  font-family: var(--sans);
+  font-size: 7.4pt;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.layer-name .ln-sub {
+  display: block;
+  font-weight: 500;
+  font-size: 6.3pt;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-top: 1mm;
+}
+.layer-desc { font-size: 7.9pt; line-height: 1.4; color: var(--ink-muted); }
+.layer-desc strong { color: var(--ink); font-weight: 600; }
+
+/* --------------------------------------------------------------------------
+   Table of contents
+   -------------------------------------------------------------------------- */
+
+.toc-list { list-style: none; margin: 0; padding: 0; }
+.toc-list > li {
+  display: grid;
+  grid-template-columns: 9mm 1fr 10mm;
+  align-items: baseline;
+  padding: 2.9mm 0;
+  border-bottom: 1px solid var(--border-faint);
+  margin: 0;
+}
+.toc-list > li:last-child { border-bottom: none; }
+.toc-n {
+  font-family: var(--sans);
+  font-size: 7.2pt;
+  font-weight: 600;
+  color: var(--accent);
+}
+.toc-t { font-family: var(--serif); font-size: 10.4pt; font-weight: 500; }
+.toc-d {
+  display: block;
+  font-family: var(--sans);
+  font-size: 7.3pt;
+  font-weight: 400;
+  color: var(--ink-faint);
+  margin-top: 1.1mm;
+  line-height: 1.45;
+}
+.toc-p {
+  font-family: var(--sans);
+  font-size: 8pt;
+  font-weight: 500;
+  color: var(--ink-muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.callout-amber { background: #fdf4e7; }
+.callout-amber .c-label { color: var(--amber); }
+
+/* 13-entry contents needs tighter rows than the 8-entry version. */
+.toc-compact > li { padding: 2.1mm 0; grid-template-columns: 8mm 1fr 10mm; }
+.toc-compact .toc-t { font-size: 9.6pt; }
+.toc-compact .toc-d { font-size: 6.9pt; margin-top: 0.8mm; }
+
+/* Lifecycle band — Section 07. Twelve stages, so it wraps rather than sitting
+   in one row like .chain; the submission stage is the only highlighted cell. */
+.lifecycle {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.6mm;
+  margin: 0 0 4mm 0;
+  break-inside: avoid;
+}
+.lc {
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-faint);
+  border-radius: 2mm;
+  padding: 2.2mm 2.6mm;
+}
+.lc-hi { border-color: var(--accent); background: var(--accent-subtle); }
+.lc-s {
+  display: block;
+  font-family: var(--sans);
+  font-size: 7pt;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.lc-hi .lc-s { color: #a84f2c; }
+.lc-d {
+  display: block;
+  font-size: 7.1pt;
+  line-height: 1.32;
+  color: var(--ink-muted);
+  margin-top: 0.8mm;
+}
+
+/* Two-column contents for the 27-section paper. */
+.toc-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-bottom: 4mm; }
+.toc-g-label {
+  font-family: var(--sans);
+  font-size: 6.3pt;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 2.2mm 0 0.9mm 0;
+}
+.toc-cols > div > .toc-g-label:first-child { margin-top: 0; }
+.toc-tight > li {
+  grid-template-columns: 7mm 1fr 7mm;
+  /* Tuned so the longer of the two contents columns clears the 254mm printable
+     box. Adding a section costs ~2.6mm here before the provenance note spills. */
+  padding: 0.82mm 0;
+  border-bottom: 1px solid var(--border-faint);
+}
+.toc-tight .toc-t { font-size: 8.4pt; font-weight: 400; }
+.toc-tight .toc-n { font-size: 6.8pt; }
+.toc-tight .toc-p { font-size: 7.2pt; }

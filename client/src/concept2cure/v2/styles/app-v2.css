@@ -67,6 +67,84 @@
 .c2c-v2 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; }
 .c2c-v2 button:focus-visible { outline: 2px solid var(--accent-100); outline-offset: 2px; border-radius: var(--radius-md); }
 .c2c-v2 input, .c2c-v2 textarea, .c2c-v2 select { font: inherit; color: inherit; background: transparent; border: 0; outline: 0; }
+/* The reset above strips the user-agent focus ring from every field in v2, and
+   nothing put one back — `.c2c-input`, the class every surface uses, has no rule
+   anywhere in the repo, so it inherited a bare `outline: 0`. A keyboard user had
+   no way to see which field they were on, across all 119 surfaces. Buttons
+   already had this ring one line up; fields simply never got the matching rule.
+   WCAG 2.2 SC 2.4.7. */
+.c2c-v2 input:focus-visible,
+.c2c-v2 textarea:focus-visible,
+.c2c-v2 select:focus-visible { outline: 2px solid var(--accent-100); outline-offset: 2px; border-radius: var(--radius-md); }
+
+/* `.c2c-input` — the field chrome the class never had.
+   ────────────────────────────────────────────────────────────────────────────
+   The focus ring above was half the repair. The class carrying it still had NO
+   box: the reset one rule up strips `border` and `background` from every field
+   in v2, and `.c2c-input` — 47 controls across 11 surfaces — put nothing back.
+   The result is not a cosmetic one. An input with no border, no background and
+   `display: inline-block` is indistinguishable from the text beside it, and
+   that produced both defects reported against the engine forms:
+
+     "Prior mean effect (δ)0.4"   the label is a text node, the control is
+                                  inline and invisible, so the two run together
+                                  as one string with no separator.
+     "placeholders styled as values"  greyed placeholder text floating in an
+                                  invisible box reads as a filled-in value —
+                                  which is why Compute answered "Prior mean
+                                  effect (δ) is required" over fields that
+                                  looked populated.
+
+   So the fix is one rule, not a rewrite of three forms: `display: block` alone
+   breaks the label/value concatenation (a block box cannot share the line), and
+   real chrome makes an empty field legibly empty. Colours, border, radius and
+   font-size are taken from `.tb-field input` below so the two field vocabularies
+   agree. Vertical padding deliberately does NOT match it (4px here, 8px there):
+   35 of the 47 call sites pin an inline `height: 30`, and 8px padding plus a
+   12.5px line does not fit inside 30px. `min-height` carries the same 30px to
+   the call sites that pin nothing — four controls in AuthoringPlaceIntoFiling —
+   which would otherwise render several pixels shorter than every field beside
+   them.
+
+   The placeholder is italic as well as dimmed. Colour alone would not carry the
+   "this is an example, not your number" distinction for a low-vision or
+   colour-blind reviewer, and on these forms that distinction decides whether a
+   number was chosen by a statistician or by a stylesheet. WCAG 2.2 SC 1.4.1.
+
+   It is --text-300, not the --text-500 this rule first used. Measured against
+   --bg-000, --text-500 is 2.11:1 in light and 2.76:1 in dark, and --text-400 is
+   3.37:1 / 4.27:1 — both fail SC 1.4.3 for 12.5px text. --text-300 is 5.21:1 and
+   6.82:1 and passes in both themes. check-token-contrast.mjs carries --text-500
+   on --bg-000 as a documented exception "verify each use is disabled/decorative";
+   a required numeric field's only affordance is neither, so the exception did not
+   apply here and the gate stayed green over a real failure.
+
+   The 1px border was var(--border) — 1.34:1 light against --bg-000, below the
+   3:1 SC 1.4.11 wants for a control boundary — and no token in the palette
+   cleared it (--border-strong is 1.49:1). That was a palette gap rather than a
+   rule bug: changing --border moves every divider in the product, and ~964 of
+   its 1242 uses are dividers, row rules and card edges that SC 1.4.11 does not
+   cover. The gap is now closed by --border-control (#7f7d75 light / #8a8a82
+   dark, 3.91:1 and 4.36:1 on --bg-000), which this rule and every other
+   text-entry control in the product read. ci:token-contrast enforces the 3:1
+   floor on it. --border keeps its divider job unchanged. */
+.c2c-v2 .c2c-input {
+  display: block;
+  width: 100%;
+  font: inherit;
+  font-size: 12.5px;
+  padding: 4px 10px;
+  min-height: 30px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--bg-000);
+  color: var(--text-100);
+}
+.c2c-v2 .c2c-input::placeholder { color: var(--text-300); font-style: italic; }
+/* A control that follows its own label text on the same line needs the gap the
+   label markup does not provide. Harmless where the field stands alone. */
+.c2c-v2 label > .c2c-input { margin-top: 4px; }
+
 .c2c-v2 svg { display: block; }
 
 /* the "Sample data" / "Live" provenance pill (kit data-connect.jsx renders it
@@ -106,6 +184,180 @@
   background: color-mix(in srgb, var(--warning) 6%, transparent);
 }
 .c2c-v2 .c2c-empty-state.tone-error .c2c-empty-ic { color: var(--warning); opacity: 1; }
+/* UI standards §8: a failed load always offers a recovery path. Sized to the
+   44px touch target the mobile-first rule requires. */
+.c2c-v2 .c2c-empty-state .c2c-empty-retry {
+  margin-top: 6px; min-height: 32px; padding: 7px 14px;
+  font-size: 12px; font-weight: 500; color: var(--accent-200);
+  border: 1px solid var(--accent-muted, var(--border)); border-radius: 99px;
+  background: var(--accent-000, transparent);
+  transition: background var(--dur, .15s), color var(--dur, .15s), border-color var(--dur, .15s);
+}
+.c2c-v2 .c2c-empty-state .c2c-empty-retry:hover { background: var(--accent-100); color: #fff; border-color: var(--accent-100); }
+@media (pointer: coarse) { .c2c-v2 .c2c-empty-state .c2c-empty-retry { min-height: 44px; padding: 11px 18px; } }
+
+/* W0-5: the empty-state contract's ONE action — a real CTA, filled where the
+   retry pill is outlined, because resolving the emptiness is the panel's
+   primary act and recovery is its fallback. Same fill the retry pill already
+   uses on hover, so the pair reads as one control family. */
+.c2c-v2 .c2c-empty-state .c2c-empty-action {
+  margin-top: 6px; min-height: 32px; padding: 7px 16px;
+  font-size: 12px; font-weight: 600; color: var(--accent-on-strong);
+  border: 1px solid var(--accent-100); border-radius: 99px;
+  background: var(--accent-strong);
+  transition: background var(--dur, .15s), border-color var(--dur, .15s);
+}
+.c2c-v2 .c2c-empty-state .c2c-empty-action:hover { background: var(--accent-200); border-color: var(--accent-200); }
+@media (pointer: coarse) { .c2c-v2 .c2c-empty-state .c2c-empty-action { min-height: 44px; padding: 11px 20px; } }
+
+/* W0-5: the regulation line — the record this screen exists to keep, stated
+   even when the screen is empty. Quiet by design: reference, not badge. */
+.c2c-v2 .c2c-empty-state .c2c-empty-reg {
+  margin-top: 8px; font-size: 11px; letter-spacing: .01em;
+  color: var(--text-300);
+}
+
+/* The loading treatment, moved off the MDX lane's private `.data-gate-icon-pulse`
+   when `<DataGate>` converged onto this component. `busy` previously set
+   `aria-busy` and nothing else here, so a panel waiting on a fetch was
+   indistinguishable from one whose record is genuinely empty.
+   `prefers-reduced-motion` removes the animation rather than substituting a
+   faster one: the panel says "Loading …" in text, so the pulse is
+   reinforcement and can simply stop. */
+.c2c-v2 .c2c-empty-state .c2c-empty-ic-busy { animation: c2c-empty-pulse 1.4s ease-in-out infinite; }
+@keyframes c2c-empty-pulse { 0%, 100% { opacity: .7; } 50% { opacity: .28; } }
+@media (prefers-reduced-motion: reduce) {
+  .c2c-v2 .c2c-empty-state .c2c-empty-ic-busy { animation: none; }
+}
+
+/* SampleDataBanner — the standing marker on any panel showing example content.
+ *
+ * ── It had no CSS. None. ─────────────────────────────────────────────────────
+ * `.sample-data-banner`, `.sample-data-icon`, `.sample-data-text` and
+ * `.sample-data-tag` matched zero rules anywhere in client/ or design-system/,
+ * across eleven usages — the device vault, the post-market document register,
+ * the submission pipeline, the IVD panes, the 510(k) predicate table and the
+ * rest. So the component rendered, and it rendered as a bare line of body text:
+ * no border, no tint, no icon sizing, nothing that reads as a warning.
+ *
+ * That matters more than a missing style usually does. This banner is the ENTIRE
+ * mitigation that makes fixture content acceptable — the argument is "sample
+ * data is fine because the user is always told", and the telling was
+ * indistinguishable from the surrounding copy. A reviewer scanning a predicate
+ * table had no visual signal that the rows were examples.
+ *
+ * ── Matched to the MDX gate's own banner ─────────────────────────────────────
+ * `.mdx-shell .data-gate-sample` (mdx/app.css) is the same marker for panels
+ * that go through <DataGate>, and it has been styled all along. These rules
+ * mirror it so the two read identically — a user should not be able to tell
+ * which component drew the warning.
+ *
+ * Scoped to `.c2c-v2` rather than `.mdx-shell`: the banner is used from the
+ * quality lane too (QualityModule → quality/*), which is a v2 surface and never
+ * inside `.mdx-shell`. Every consumer is a descendant of the one shell root.
+ *
+ * Colour is never the only signal: the banner also carries an alert icon, the
+ * literal word "Sample data" in bold, and a sentence saying it is not your
+ * project. --text-300 on --warning-muted keeps the body text legible where the
+ * tint is lightest. */
+.c2c-v2 .sample-data-banner {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 12px; margin-bottom: 12px;
+  font-size: 11px; line-height: 1.5; color: var(--text-300);
+  background: var(--warning-muted, var(--bg-100));
+  border: 1px solid var(--warning, var(--border));
+  border-radius: var(--radius-md, 6px);
+}
+.c2c-v2 .sample-data-icon {
+  color: var(--warning, var(--text-400)); flex-shrink: 0;
+  width: 16px; height: 16px; margin-top: 1px;
+}
+.c2c-v2 .sample-data-icon svg { width: 16px; height: 16px; }
+.c2c-v2 .sample-data-text { min-width: 0; }
+.c2c-v2 .sample-data-tag { color: var(--text-100); font-weight: 600; }
+
+/* ErrorState — the ONE surface a failure is reported on.
+ *
+ * Replaces four parallel implementations: EmptyState's tone-error panel (139
+ * call sites, which now delegate here), RbmWriteError (10 sites, deleted),
+ * DataGate's error branch, and the New-Project wizard's own banner. They
+ * disagreed about whether a failure is announced to a screen reader, whether it
+ * offers a way out, and whether the string it renders is safe to show.
+ *
+ * Two variants, one component. The distinction is spatial, not semantic — both
+ * are role="alert", both announce assertively, both offer a recovery path:
+ *   panel  — a READ failed; nothing to show in its place, so it fills the slot.
+ *   inline — a WRITE failed; the form is still on screen and this sits next to
+ *            the control that produced it.
+ *
+ * ── Colour ──────────────────────────────────────────────────────────────────
+ * --error is the canonical token (design-system/colors_and_type.css). It
+ * replaces the phantom --danger, which is declared nowhere and whose 46 call
+ * sites fall back to six different hardcoded reds. The border is SOLID, not a
+ * mix: composited over the surface, a 40% mix measures 1.88:1 (light) /
+ * 2.03:1 (dark) and even 70% reaches only 3.21 / 3.52, against the 3:1 SC
+ * 1.4.11 wants for a non-text boundary. Measured on the tinted fill: body text
+ * 9.23:1 / 10.71:1, icon 4.90:1 / 5.04:1.
+ *
+ * Colour is never the only signal — every instance also carries the alert icon,
+ * an assertive ARIA role, and copy that states what failed. */
+.c2c-v2 .c2c-error-state {
+  display: flex; align-items: flex-start; gap: 10px;
+  border-radius: var(--radius-md, 6px);
+  border: 1px solid var(--error);
+  background: color-mix(in srgb, var(--error) 8%, transparent);
+  color: var(--text-200);
+  font-size: 12px; line-height: 1.5;
+}
+.c2c-v2 .c2c-error-state.variant-panel  { padding: 20px 18px; }
+.c2c-v2 .c2c-error-state.variant-inline { padding: 10px 12px; }
+
+.c2c-v2 .c2c-error-ic { flex: 0 0 auto; margin-top: 1px; color: var(--error); }
+.c2c-v2 .c2c-error-ic svg { width: 15px; height: 15px; }
+.c2c-v2 .c2c-error-body { flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.c2c-v2 .c2c-error-t { font-size: 13px; font-weight: 600; color: var(--text-200); }
+.c2c-v2 .c2c-error-h { font-size: 12px; line-height: 1.5; max-width: 62ch; color: var(--text-200); }
+.c2c-v2 .c2c-error-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 4px; }
+
+/* The support handle that replaced the disclosed table name. Selectable and
+   monospaced so it can be read aloud or copied without transcription error.
+   NOT --text-400: at this size that is normal-size text needing 4.5:1, and it
+   measures 3.01:1 (light) / 3.77:1 (dark) on the tinted fill — worse again on
+   the chip's own 10% wash, at 2.74:1 / 3.32:1. The id is the one string a
+   support call depends on being read correctly, so it takes --text-200:
+   9.23:1 / 10.71:1 for the label, 8.40:1 / 9.42:1 for the chip. */
+.c2c-v2 .c2c-error-ref { font-size: 11px; color: var(--text-200); }
+.c2c-v2 .c2c-error-ref code {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 11px; user-select: all; color: var(--text-200);
+  padding: 1px 4px; border-radius: 3px;
+  background: color-mix(in srgb, var(--text-400) 10%, transparent);
+}
+
+/* UI standards §8: a failure always offers a recovery path. Sized to the 24px
+   floor SC 2.5.8 sets on every pointer type, and to 44px where the pointer is
+   coarse. `.tbtn` has no base rule anywhere in client/src and the universal
+   `.c2c-v2 button` reset strips its padding, so the dismiss control is sized
+   here rather than inherited. */
+.c2c-v2 .c2c-error-retry {
+  min-height: 32px; padding: 7px 14px;
+  font-size: 12px; font-weight: 500; color: var(--accent-200);
+  border: 1px solid var(--accent-muted, var(--border)); border-radius: 99px;
+  background: var(--accent-000, transparent);
+  transition: background var(--dur, .15s), color var(--dur, .15s), border-color var(--dur, .15s);
+}
+.c2c-v2 .c2c-error-retry:hover:not(:disabled) { background: var(--accent-100); color: #fff; border-color: var(--accent-100); }
+.c2c-v2 .c2c-error-retry:disabled { opacity: .6; cursor: default; }
+.c2c-v2 .c2c-error-dismiss {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 32px; min-height: 32px; border-radius: var(--radius-md, 6px);
+  color: var(--text-400);
+}
+.c2c-v2 .c2c-error-dismiss:hover { color: var(--text-200); background: color-mix(in srgb, var(--text-400) 10%, transparent); }
+@media (pointer: coarse) {
+  .c2c-v2 .c2c-error-retry,
+  .c2c-v2 .c2c-error-dismiss { min-width: 44px; min-height: 44px; }
+}
 
 /* port helpers — the kit expressed these as one-off inline style attributes;
    classes keep the TSX clean and the CSP surface minimal */
@@ -200,7 +452,7 @@
 .c2c-v2 .reg-std{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:560;padding:3px 9px;border-radius:100px;}
 .c2c-v2 .reg-std svg{width:11px;height:11px;}
 .c2c-v2 .reg-std.ok{color:var(--success);background:var(--success-muted, var(--bg-100));}
-.c2c-v2 .reg-std.gap{color:var(--text-400);background:var(--bg-100);}
+.c2c-v2 .reg-std.gap{color:var(--text-300);background:var(--bg-100);}
 .c2c-v2 .reg-kpi-v{font-size:26px;font-weight:600;color:var(--text-100);font-variant-numeric:tabular-nums;}
 .c2c-v2 .reg-kpi-l{font-size:11px;color:var(--text-400);margin-top:2px;}
 .c2c-v2 .reg-kpi[data-tone="ok"] .reg-kpi-v{color:var(--success);}
@@ -356,7 +608,7 @@
 .c2c-v2 .pj-stageband{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;padding:13px 16px;margin:0 0 18px;background:var(--bg-100);border:1px solid var(--border);border-radius:var(--radius-lg);}
 .c2c-v2 .pj-stageband-l{display:flex;flex-direction:column;gap:2px;}
 .c2c-v2 .pj-stageband-stage{font-size:15px;font-weight:650;color:var(--text-100);}
-.c2c-v2 .pj-stageband-blurb{font-size:12.5px;color:var(--text-400);}
+.c2c-v2 .pj-stageband-blurb{font-size:12.5px;color:var(--text-300);}
 .c2c-v2 .pj-stageband-next{display:flex;flex-direction:column;gap:2px;text-align:right;max-width:60%;}
 .c2c-v2 .pj-stageband-next-k{display:inline-flex;align-items:center;gap:5px;justify-content:flex-end;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--accent-200);}
 .c2c-v2 .pj-stageband-next-k svg{width:12px;height:12px;}
@@ -380,9 +632,17 @@
 .c2c-v2 .orch-detail-m{font-size:11px;color:var(--text-400);font-family:var(--font-mono);margin-top:3px;}
 .c2c-v2 .orch-ctrls{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
 .c2c-v2 .orch-ctrl{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:var(--radius-md);font-size:11.5px;font-weight:500;border:1px solid var(--border);background:var(--bg-000);color:var(--text-200);white-space:nowrap;}
-.c2c-v2 .orch-ctrl:hover{border-color:var(--text-400);}
+.c2c-v2 .orch-ctrl:hover:not(:disabled){border-color:var(--text-400);}
 .c2c-v2 .orch-ctrl.pri{background:var(--accent-100);border-color:var(--accent-100);color:#fff;}
-.c2c-v2 .orch-ctrl.pri:hover{background:var(--accent-200);}
+.c2c-v2 .orch-ctrl.pri:hover:not(:disabled){background:var(--accent-200);}
+/* A disabled run control looked EXACTLY like a live one. "Pause" and "Resume"
+   are permanently unavailable — the execution engine keeps no resumable state —
+   and "Resume" carries .pri, so it rendered as a full accent-filled primary
+   button that also lit up on hover. The only signal that it could not act was
+   that clicking did nothing. The reason now shows on hover (title) AND the
+   control reads as unavailable before it is pressed. */
+.c2c-v2 .orch-ctrl:disabled{opacity:.45;cursor:not-allowed;}
+.c2c-v2 .orch-ctrl.pri:disabled{background:var(--bg-100);border-color:var(--border);color:var(--text-400);}
 .c2c-v2 .orch-ctrl .ico{font-size:13px;}
 .c2c-v2 .orch-sec-l{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);font-weight:600;margin:16px 0 8px;}
 .c2c-v2 .orch-steps{display:flex;flex-direction:column;}
@@ -413,7 +673,7 @@
 /* Gate-level decision row. Sits on the checkpoint, not on an approver row —
    a gate with no decisions recorded yet still needs a way to act. */
 .c2c-v2 .orch-gate-act{display:flex;gap:6px;align-items:center;padding:8px 0 2px;flex-wrap:wrap;}
-.c2c-v2 .orch-gate-reason{flex:1 1 220px;min-width:180px;font-size:11.5px;padding:5px 8px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-000);color:var(--text-100);}
+.c2c-v2 .orch-gate-reason{flex:1 1 220px;min-width:180px;font-size:11.5px;padding:5px 8px;border-radius:var(--radius-md);border:1px solid var(--border-control);background:var(--bg-000);color:var(--text-100);}
 .c2c-v2 .orch-note.err{color:var(--danger, #b42318);}
 .c2c-v2 .orch-note.err .ico{color:var(--danger, #b42318);}
 .c2c-v2 .orch-mini:disabled{opacity:.55;cursor:not-allowed;}
@@ -445,7 +705,7 @@
 .c2c-v2 .tb-src-note{font-size:10.5px;color:var(--text-400);margin-left:auto;}
 .c2c-v2 .tb-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
 .c2c-v2 .tb-filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.c2c-v2 .tb-sel{height:32px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);font-size:12px;color:var(--text-100);}
+.c2c-v2 .tb-sel{height:32px;padding:0 10px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);font-size:12px;color:var(--text-100);}
 .c2c-v2 .tb-chip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);font-size:12px;color:var(--text-300);}
 .c2c-v2 .tb-chip .ico{font-size:14px;}
 .c2c-v2 .tb-chip.on{border-color:var(--accent-100);background:var(--accent-000);color:var(--accent-200);}
@@ -454,7 +714,83 @@
 .c2c-v2 .tb-col-h{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;color:var(--text-200);margin-bottom:10px;}
 .c2c-v2 .tb-col-h .kn{margin-left:auto;font-size:10.5px;color:var(--text-400);background:var(--bg-200);border-radius:10px;padding:1px 7px;}
 .c2c-v2 .kdot{width:8px;height:8px;border-radius:50%;background:var(--text-400);}
-.c2c-v2 .kdot[data-tone="idle"]{background:var(--text-400);}.c2c-v2 .kdot[data-tone="ai"]{background:var(--accent-100);}.c2c-v2 .kdot[data-tone="warn"]{background:var(--warning);}.c2c-v2 .kdot[data-tone="ok"]{background:var(--success);}
+.c2c-v2 .kdot[data-tone="idle"]{background:var(--text-400);}.c2c-v2 .kdot[data-tone="ai"]{background:var(--accent-100);}.c2c-v2 .kdot[data-tone="warn"]{background:var(--warning);}.c2c-v2 .kdot[data-tone="ok"]{background:var(--success);}.c2c-v2 .kdot[data-tone="err"]{background:var(--error);}
+.c2c-v2 .tb-card:focus-visible{outline:2px solid var(--accent-100);outline-offset:2px;}
+/* The card's move buttons are opacity:0 until hover. Without this companion
+   rule a keyboard user tabs onto a control that paints nothing — the focus ring
+   is suppressed along with the button, so there is no way to tell where you are
+   or that the control exists. SC 2.4.7. */
+.c2c-v2 .tb-card:focus-within .tb-move{opacity:1;}
+
+/* §11.50 signature manifestation, rendered in the task detail panel. */
+.c2c-v2 .tb-sig-list{display:flex;flex-direction:column;gap:8px;}
+.c2c-v2 .tb-sig{border:1px solid var(--border);border-left:3px solid var(--success);border-radius:var(--radius-md);background:var(--bg-050);padding:9px 11px;}
+.c2c-v2 .tb-sig-h{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-200);}
+.c2c-v2 .tb-sig-h svg{width:14px;height:14px;color:var(--success);flex-shrink:0;}
+.c2c-v2 .tb-sig-h time{font-size:11px;color:var(--text-400);white-space:nowrap;}
+.c2c-v2 .tb-sig-meaning{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--success);background:var(--success-muted);border-radius:4px;padding:1px 6px;}
+.c2c-v2.dark .tb-sig-meaning{color:var(--success);}
+.c2c-v2 .tb-sig-reason{font-size:12px;color:var(--text-300);line-height:1.5;margin-top:5px;}
+.c2c-v2 .tb-sig-meta{font-size:10.5px;color:var(--text-400);margin-top:5px;}
+.c2c-v2 .tb-kanban[data-cols="5"]{grid-template-columns:repeat(5,1fr);}
+@media (max-width:1250px){.c2c-v2 .tb-kanban[data-cols="5"]{grid-template-columns:repeat(3,1fr);}}
+@media (max-width:900px){.c2c-v2 .tb-kanban[data-cols="5"]{grid-template-columns:repeat(2,1fr);}}
+.c2c-v2 .tb-alert{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:8px 12px;border:1px solid var(--error);border-radius:var(--radius-md);background:color-mix(in srgb, var(--error) 8%, transparent);color:var(--text-100);font-size:12px;}
+.c2c-v2 .tb-alert button{margin-left:auto;background:none;border:0;color:var(--text-400);cursor:pointer;font-size:14px;}
+.c2c-v2 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
+
+/* ── Task Tray — persistent "what needs me" slide-over (top bar) ── */
+.c2c-v2 .tt-trigger{position:relative;}
+.c2c-v2 .tt-badge{position:absolute;top:1px;right:1px;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--accent-100);color:#fff;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;}
+.c2c-v2 .tt-scrim{position:fixed;inset:0;background:rgb(20 20 19/.18);z-index:90;animation:tt-fade 160ms ease-out;}
+@keyframes tt-fade{from{opacity:0;}to{opacity:1;}}
+.c2c-v2 .tt-panel{position:fixed;top:0;right:0;bottom:0;width:380px;max-width:92vw;background:var(--bg-000);border-left:1px solid var(--border);box-shadow:-18px 0 48px -20px rgb(20 20 19/.22);z-index:91;display:flex;flex-direction:column;animation:tt-slide 220ms cubic-bezier(.4,0,.2,1);}
+@keyframes tt-slide{from{transform:translateX(20px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+/* Reduced-motion policy for this stylesheet — keep every entrance/exit
+   animation registered HERE rather than beside its own rule, so the list can be
+   diffed against the keyframes in one place. Six of these were missing: the
+   task-board drawer and modal, and the collab launcher's menu, backdrop, modal
+   and toast all animated regardless of the user's setting. That is a
+   vestibular-safety gap, not a polish item.
+   Each of these is safe to kill outright: every keyframe animates FROM an
+   offset TO the element's resting state, so suppressing it lands on the base
+   rule. `.cl-toast` is the one to watch — its base rule carries
+   translateX(-50%), so it stays centred rather than jumping. */
+@media (prefers-reduced-motion: reduce){
+  .c2c-v2 .tt-panel,.c2c-v2 .tt-scrim,
+  .c2c-v2 .tb-detail,.c2c-v2 .tb-create,
+  .c2c-v2 .cl-fab-menu,.c2c-v2 .cl-bd,.c2c-v2 .cl-modal,.c2c-v2 .cl-toast{animation:none;}
+}
+.c2c-v2 .tt-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);}
+.c2c-v2 .tt-head b{font-size:14px;font-weight:600;}
+.c2c-v2 .tt-head-meta{font-size:11px;color:var(--text-400);}
+.c2c-v2 .tt-close{margin-left:auto;width:26px;height:26px;border-radius:6px;color:var(--text-400);display:inline-flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer;}
+.c2c-v2 .tt-close:hover{background:var(--bg-100);color:var(--text-100);}
+.c2c-v2 .tt-triage{display:flex;align-items:center;gap:7px;margin:12px 14px;padding:10px 12px;border-radius:9px;background:color-mix(in srgb, var(--accent-100) 8%, transparent);border:1px solid var(--accent-100);color:var(--text-100);font-size:12.5px;font-weight:600;cursor:pointer;transition:background 200ms;}
+.c2c-v2 .tt-triage:hover{background:color-mix(in srgb, var(--accent-100) 14%, transparent);}
+.c2c-v2 .tt-triage svg{color:var(--accent-100);}
+.c2c-v2 .tt-scroll{flex:1;overflow-y:auto;padding:0 14px 14px;}
+.c2c-v2 .tt-group{margin-bottom:16px;}
+.c2c-v2 .tt-group-head{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-400);padding:6px 2px;}
+.c2c-v2 .tt-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 10px;border-radius:9px;background:none;border:0;cursor:pointer;transition:background 200ms;}
+.c2c-v2 .tt-item:hover{background:var(--bg-050);}
+.c2c-v2 .tt-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.c2c-v2 .tt-dot-err{background:var(--error);}
+.c2c-v2 .tt-dot-warn{background:var(--warning);}
+.c2c-v2 .tt-dot-ok{background:var(--success);}
+.c2c-v2 .tt-item-body{flex:1;min-width:0;display:flex;flex-direction:column;}
+.c2c-v2 .tt-item-title{font-size:12.5px;font-weight:500;color:var(--text-100);line-height:1.35;}
+.c2c-v2 .tt-item-sub{font-size:11px;color:var(--text-400);margin-top:1px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.c2c-v2 .tt-go{color:var(--text-400);display:inline-flex;flex-shrink:0;}
+.c2c-v2 .tt-item:hover .tt-go{color:var(--accent-100);}
+.c2c-v2 .tt-notif{cursor:default;}
+.c2c-v2 .tt-read{width:24px;height:24px;border-radius:6px;color:var(--text-400);display:inline-flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer;flex-shrink:0;}
+.c2c-v2 .tt-read:hover{background:var(--bg-100);color:var(--success);}
+.c2c-v2 .tt-empty{font-size:11.5px;color:var(--text-400);padding:8px 10px;}
+.c2c-v2 .tt-more{display:block;width:100%;text-align:center;font-size:11.5px;color:var(--text-300);padding:7px;background:none;border:0;cursor:pointer;border-radius:8px;}
+.c2c-v2 .tt-more:hover{background:var(--bg-050);color:var(--text-100);}
+.c2c-v2 .tt-foot{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-300);font-weight:500;background:none;border-left:0;border-right:0;border-bottom:0;cursor:pointer;}
+.c2c-v2 .tt-foot:hover{color:var(--accent-100);}
 .c2c-v2 .tb-col-b{display:flex;flex-direction:column;gap:9px;}
 .c2c-v2 .tb-card{position:relative;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);padding:10px 11px 9px;cursor:pointer;transition:border-color var(--dur),box-shadow var(--dur);}
 .c2c-v2 .tb-card:hover{border-color:var(--text-400);box-shadow:0 2px 8px -4px rgb(20 20 19/.18);}
@@ -477,6 +813,13 @@
 .c2c-v2.dark .tb-pri.pri-critical{color:var(--error);}.c2c-v2.dark .tb-pri.pri-high{color:var(--warning);}
 .c2c-v2 .tb-appr{font-size:9.5px;font-weight:600;padding:1px 7px;border-radius:4px;background:var(--bg-100);color:var(--text-400);}
 .c2c-v2 .tb-appr[data-s="pending"]{background:var(--warning-muted);color:#7a4a0f;}.c2c-v2 .tb-appr[data-s="approved"]{background:var(--success-muted);color:#3f5c1f;}
+/* Both fills above are tokens that shift for dark mode, but the text was
+   hardcoded light-mode hex with no dark override — leaving pending at 1.47:1
+   and approved at 1.58:1 against the dark fill, i.e. unreadable. Every sibling
+   chip (.tb-pri, .tb-detail-note[data-warn], .cl-warn) carries this override;
+   the approval chip was the one that never got it. */
+.c2c-v2.dark .tb-appr[data-s="pending"]{color:var(--warning);}
+.c2c-v2.dark .tb-appr[data-s="approved"]{color:var(--success);}
 .c2c-v2 .tb-prog{height:3px;border-radius:2px;background:var(--bg-200);margin-bottom:8px;overflow:hidden;}
 .c2c-v2 .tb-prog>span{display:block;height:100%;background:var(--accent-100);border-radius:2px;}
 .c2c-v2 .tb-card-foot{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text-400);}
@@ -523,6 +866,8 @@
 .c2c-v2 .tb-an-open{color:var(--warning);}.c2c-v2 .tb-an-done{color:var(--success);}
 .c2c-v2 .tb-an-foot{font-size:10px;color:var(--text-400);margin-top:9px;padding-top:9px;border-top:1px solid var(--border);}
 .c2c-v2 .tb-an-foot[data-warn]{color:#7a4a0f;}
+/* Same missing-dark-override bug as .tb-appr: 2.03:1 on the dark surface. */
+.c2c-v2.dark .tb-an-foot[data-warn]{color:var(--warning);}
 .c2c-v2 .tb-an-auto{font-size:11.5px;color:var(--text-300);line-height:1.5;}
 .c2c-v2 .tb-an-auto-rules{display:flex;flex-direction:column;gap:4px;margin:9px 0;}
 .c2c-v2 .tb-an-auto-rules span{font-family:var(--font-mono);font-size:10px;color:var(--text-300);background:var(--bg-050);border-radius:4px;padding:3px 7px;}
@@ -563,7 +908,7 @@
 .c2c-v2 .tb-field.full{grid-column:1/-1;}
 .c2c-v2 .tb-field label{font-size:11px;font-weight:600;color:var(--text-300);}
 .c2c-v2 .tb-field label i{color:var(--error);font-style:normal;margin-left:2px;}
-.c2c-v2 .tb-field input[type=text], .c2c-v2 .tb-field input[type=number], .c2c-v2 .tb-field select, .c2c-v2 .tb-field textarea{font:inherit;font-size:12.5px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);color:var(--text-100);width:100%;}
+.c2c-v2 .tb-field input[type=text], .c2c-v2 .tb-field input[type=number], .c2c-v2 .tb-field select, .c2c-v2 .tb-field textarea{font:inherit;font-size:12.5px;padding:8px 10px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);color:var(--text-100);width:100%;}
 .c2c-v2 .tb-field input::placeholder{color:var(--text-500);}
 .c2c-v2 .tb-field input:focus, .c2c-v2 .tb-field select:focus, .c2c-v2 .tb-field textarea:focus{outline:none;border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
 .c2c-v2 .tb-field input[type=range]{padding:0;height:18px;accent-color:var(--accent-100);}
@@ -623,7 +968,7 @@
 .c2c-v2 .pj-convo-mark svg{width:14px;height:14px;}
 .c2c-v2 .pj-convo-id{display:flex;flex-direction:column;min-width:0;flex:1;}
 .c2c-v2 .pj-convo-t{font-size:12.5px;font-weight:600;color:var(--text-100);}
-.c2c-v2 .pj-convo-ctx{font-size:11px;color:var(--text-400);}
+.c2c-v2 .pj-convo-ctx{font-size:11px;color:var(--text-300);}
 .c2c-v2 .pj-convo-open{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--accent-200);font-weight:500;flex-shrink:0;}
 .c2c-v2 .pj-convo-open svg{width:13px;height:13px;}
 .c2c-v2 .pj-convo-scroll{max-height:360px;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;}
@@ -743,7 +1088,7 @@
 .c2c-v2 .pj-crumb{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:2px 0 10px;}
 .c2c-v2 .pj-crumb-i{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-300);}
 .c2c-v2 .pj-crumb-i[data-cur]{color:var(--text-100);font-weight:600;}
-.c2c-v2 .pj-crumb-k{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-500);background:var(--bg-100);padding:1px 6px;border-radius:5px;}
+.c2c-v2 .pj-crumb-k{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-300);background:var(--bg-100);padding:1px 6px;border-radius:5px;}
 .c2c-v2 .pj-crumb-sep{color:var(--text-500);font-size:13px;display:inline-flex;}
 /* pyramid phases */
 .c2c-v2 .pj-phases{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0;}
@@ -850,6 +1195,37 @@
 
 /* ── Shell grid ── */
 .c2c-v2.shell{display:grid;grid-template-columns:var(--rail) 1fr var(--ana);grid-template-rows:100vh;height:100vh;overflow:hidden;background:var(--bg-000);}
+/* ── Phone-width rail (<=640px) ──
+   At 430px the 264px expanded rail crushed the content column to nothing —
+   the whole app behind an open rail was unusable. The grid now always
+   reserves only the collapsed strip (--rail is narrowed, so every shell
+   variant below inherits it), and the EXPANDED rail paints OVER the content
+   as a fixed drawer above the .rail-scrim, which tap-closes it; Escape does
+   the same via the shell-level listener. Desktop is untouched — none of this
+   applies above 640px, and the scrim renders display:none there. */
+@media (max-width: 640px) {
+  .c2c-v2.shell { --rail: var(--rail-collapsed); }
+  .c2c-v2.shell:not([data-collapsed="true"]) .rail {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(300px, 84vw);
+    z-index: 61;
+    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.25);
+  }
+  .c2c-v2.shell:not([data-collapsed="true"]) .rail-scrim { display: block; }
+}
+.c2c-v2 .rail-scrim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.35);
+  animation: rail-scrim-in 200ms ease-out;
+}
+@keyframes rail-scrim-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .c2c-v2 .rail-scrim { animation: none; } }
 .c2c-v2.shell[data-collapsed="true"]{grid-template-columns:var(--rail-collapsed) 1fr var(--ana);}
 .c2c-v2.shell[data-ana-open="false"]{grid-template-columns:var(--rail) 1fr var(--ana-seam);}
 .c2c-v2.shell[data-collapsed="true"][data-ana-open="false"]{grid-template-columns:var(--rail-collapsed) 1fr var(--ana-seam);}
@@ -901,6 +1277,37 @@
 .c2c-v2 .nav-lic[data-lic="off"]{font-size:13px;color:var(--text-400);}
 .c2c-v2 .nav-item:hover .nav-lic[data-lic="off"]{color:var(--warning);}
 .c2c-v2.shell[data-collapsed="true"] .nav-lic{display:none;}
+
+/* ── Locked destinations ───────────────────────────────────────────────────
+   A destination the organization has not licensed stays a real, focusable,
+   activatable button (the entitlements spec forbids a disabled, reasonless
+   control) — it just reads as unavailable and opens the explanation panel
+   instead of the surface.
+
+   The state is carried by THREE channels, never colour alone: the muted label,
+   the lock glyph, and the accessible name the button carries ("… — not
+   included in your plan"). Hover restores full contrast so the entry never
+   becomes unreadable while a human is aiming at it. */
+.c2c-v2 .nav-item[data-locked]{color:var(--text-400);}
+.c2c-v2 .nav-item[data-locked] .lbl{color:var(--text-400);}
+.c2c-v2 .nav-item[data-locked]:hover{background:var(--bg-200);color:var(--text-200);}
+.c2c-v2 .nav-item[data-locked]:hover .lbl{color:var(--text-200);}
+.c2c-v2 .nav-item[data-locked] .nav-lic[data-lic="off"] svg{width:13px;height:13px;}
+/* Collapsed rail hides labels, so the lock is the only visible channel there
+   and must not be hidden with the rest of the licence indicators. */
+.c2c-v2.shell[data-collapsed="true"] .nav-item[data-locked] .nav-lic{display:flex;position:absolute;right:3px;bottom:3px;}
+
+/* ── Locked-destination panel (NavUnlockPanel) ───────────────────────────── */
+.c2c-v2 .nav-unlock-bd{position:fixed;inset:0;background:rgba(20,20,19,.3);display:flex;align-items:center;justify-content:center;padding:24px;z-index:60;}
+.c2c-v2 .nav-unlock{width:100%;max-width:440px;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--v2-shadow-lg);padding:18px;}
+.c2c-v2 .nav-unlock-hd{display:flex;align-items:flex-start;gap:11px;}
+.c2c-v2 .nav-unlock-ic{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-md);background:var(--bg-200);color:var(--text-200);}
+.c2c-v2 .nav-unlock-ic svg{width:15px;height:15px;}
+.c2c-v2 .nav-unlock-hd-mid{flex:1;min-width:0;}
+.c2c-v2 .nav-unlock-t{font-size:14.5px;font-weight:600;letter-spacing:-.01em;}
+.c2c-v2 .nav-unlock-status{margin-top:2px;font-size:11.5px;font-weight:500;color:var(--text-400);}
+.c2c-v2 .nav-unlock-body{margin:12px 0 0;font-size:13px;line-height:1.55;color:var(--text-300);}
+.c2c-v2 .nav-unlock-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
 .c2c-v2 .nav-badge{margin-left:auto;flex-shrink:0;font-size:9.5px;font-weight:700;letter-spacing:.02em;color:#fff;background:var(--accent-100);border-radius:999px;padding:1px 6px;}
 .c2c-v2 .nav-count{margin-left:auto;flex-shrink:0;font-size:10.5px;font-weight:600;color:var(--text-400);background:var(--bg-200);border-radius:999px;padding:1px 7px;min-width:20px;text-align:center;}
 .c2c-v2 .nav-item[aria-current="true"] .nav-count{color:var(--accent-200);background:var(--accent-muted);}
@@ -988,7 +1395,7 @@
 .c2c-v2 .fc-sub{font-size:13.5px;color:var(--text-400);line-height:1.5;}
 .c2c-v2 .fc-search{position:relative;display:flex;align-items:center;margin-top:22px;}
 .c2c-v2 .fc-search-ic{position:absolute;left:15px;color:var(--text-400);display:inline-flex;}.c2c-v2 .fc-search-ic svg{width:17px;height:17px;}
-.c2c-v2 .fc-search input{width:100%;border:1px solid var(--border-strong);border-radius:12px;background:var(--bg-000);padding:14px 40px;font-size:14px;color:var(--text-100);outline:none;transition:border-color var(--dur),box-shadow var(--dur);}
+.c2c-v2 .fc-search input{width:100%;border:1px solid var(--border-control);border-radius:12px;background:var(--bg-000);padding:14px 40px;font-size:14px;color:var(--text-100);outline:none;transition:border-color var(--dur),box-shadow var(--dur);}
 .c2c-v2 .fc-search input:focus{border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
 .c2c-v2 .fc-search-x{position:absolute;right:10px;width:26px;height:26px;border-radius:7px;color:var(--text-400);display:flex;align-items:center;justify-content:center;}
 .c2c-v2 .fc-search-x:hover{background:var(--bg-100);color:var(--text-200);}.c2c-v2 .fc-search-x svg{width:15px;height:15px;}
@@ -1014,7 +1421,7 @@
 .c2c-v2 .fc-acc[data-open] .fc-acc-chev{transform:rotate(0deg);color:var(--accent-200);}
 .c2c-v2 .fc-acc:not([data-open]) .fc-acc-chev{transform:rotate(-90deg);}
 .c2c-v2 .fc-acc-t{font-size:14.5px;font-weight:600;color:var(--text-100);flex-shrink:0;white-space:nowrap;}
-.c2c-v2 .fc-acc-n{font-size:11px;font-weight:600;color:var(--text-400);background:var(--bg-100);border-radius:6px;padding:1px 7px;flex-shrink:0;font-variant-numeric:tabular-nums;}
+.c2c-v2 .fc-acc-n{font-size:11px;font-weight:600;color:var(--text-300);background:var(--bg-100);border-radius:6px;padding:1px 7px;flex-shrink:0;font-variant-numeric:tabular-nums;}
 .c2c-v2 .fc-acc-d{font-size:11.5px;color:var(--text-400);margin-left:auto;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42%;}
 .c2c-v2 .fc-acc-body{padding:2px 0 12px;}
 
@@ -1030,7 +1437,7 @@
 .c2c-v2 .fc-meta{display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .c2c-v2 .fc-meta-auth{font-size:11.5px;color:var(--text-300);}
 .c2c-v2 .fc-meta-fmt{font-size:10.5px;color:var(--text-400);}
-.c2c-v2 .fc-meta-ctd{font-size:10.5px;color:var(--text-500);}
+.c2c-v2 .fc-meta-ctd{font-size:10.5px;color:var(--text-300);}
 .c2c-v2 .fc-item-go{flex-shrink:0;display:inline-flex;color:var(--text-500);opacity:0;transition:opacity var(--dur),transform var(--dur);}
 .c2c-v2 .fc-item-go svg{width:16px;height:16px;}
 .c2c-v2 .fc-item:hover .fc-item-go{opacity:1;transform:translateX(2px);color:var(--accent-200);}
@@ -1181,18 +1588,191 @@
 .c2c-v2 .ana-next-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:999px;color:var(--accent-200);}
 .c2c-v2 .ana-next-chip:hover{background:var(--accent-000);}
 .c2c-v2 .ana-next-chip svg{font-size:12px;}
+/* Executed-action chips. The inert ones report what AnA already did; the
+   navigation one is an offer, so it is the only <button> among them and the
+   only one that carries a focus ring. Tokens only — `ci:token-cascade` and
+   `ci:check-phantom-tokens` both read this file. */
+.c2c-v2 .ana-msg-executed{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+.c2c-v2 .ana-exec-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:999px;color:var(--text-300);background:var(--bg-000);}
+.c2c-v2 .ana-exec-chip svg{font-size:12px;}
+.c2c-v2 .ana-exec-chip.is-done{color:var(--success);}
+.c2c-v2 .ana-exec-chip.is-err{color:var(--warning);}
+.c2c-v2 .ana-exec-chip.is-nav{color:var(--accent-200);border-color:var(--accent-100);cursor:pointer;transition:background 200ms ease-out;}
+.c2c-v2 .ana-exec-chip.is-nav:hover{background:var(--accent-000);}
+.c2c-v2 .ana-exec-chip.is-nav:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
+@media (prefers-reduced-motion:reduce){
+  .c2c-v2 .ana-exec-chip.is-nav{transition:none;}
+}
 .c2c-v2 .ana-msg-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+
+/* The panel brings its own CSS module; this only gives it room in the
+   rail's rhythm. */
+.c2c-v2 .ana-premortem{margin-top:8px;}
+
+/* How well-grounded the answer is.
+   Deliberately the work record's vocabulary — same left rule, same 11.5px
+   rows, same --text-300 — so it reads as one more thing AnA reports about her
+   own turn rather than a competing strip. Colour never carries the verdict
+   alone: each row has its own glyph and its own words (WCAG 1.4.1). */
+.c2c-v2 .ana-grounding{display:flex;flex-direction:column;gap:3px;margin-top:8px;padding-left:9px;border-left:1px solid var(--border);}
+.c2c-v2 .ana-grounding-row{display:flex;align-items:flex-start;gap:6px;font-size:11.5px;line-height:1.5;color:var(--text-300);}
+.c2c-v2 .ana-grounding-ic{display:inline-flex;flex:none;margin-top:1px;}
+.c2c-v2 .ana-grounding-ic svg{font-size:12px;}
+.c2c-v2 .ana-grounding-ic.is-ok{color:var(--success);}
+.c2c-v2 .ana-grounding-ic.is-weak{color:var(--warning);}
+.c2c-v2 .ana-grounding-ic.is-unknown{color:var(--text-300);}
+.c2c-v2 .ana-grounding-kinds{color:var(--warning);}
+/* The quoted claim, indented to the row text above it (12px glyph + 6px gap). */
+.c2c-v2 .ana-grounding-claim{font-size:11px;line-height:1.5;color:var(--text-300);font-style:italic;margin-left:18px;}
+.c2c-v2 .ana-grounding-risk{font-size:11px;line-height:1.5;color:var(--text-300);margin-left:18px;}
+
+/* Mid-run control — pause, steer, stop, while she is still working.
+   --text-300 not --text-400 for every text rule here (11-12px is small text,
+   SC 1.4.3 wants 4.5:1). The stop action is not tinted with --warning: stopping
+   is a deliberate choice, not a failure, and spending the alarm colour on it
+   would leave nothing louder for a real one. */
+.c2c-v2 .ana-runctl{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 8px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-100);}
+.c2c-v2 .ana-runctl-state{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-300);white-space:nowrap;}
+.c2c-v2 .ana-runctl-dot{display:inline-flex;color:var(--accent-200);animation:ana-activity-pulse 1600ms ease-out infinite;}
+.c2c-v2 .ana-runctl-dot.is-paused{color:var(--text-300);animation:none;}
+.c2c-v2 .ana-runctl-dot svg{font-size:12px;}
+.c2c-v2 .ana-runctl-steer{display:flex;align-items:center;gap:6px;flex:1 1 180px;min-width:0;}
+.c2c-v2 .ana-runctl-input{flex:1 1 auto;min-width:0;font:inherit;font-size:12px;color:var(--text-100);background:var(--bg-000);border:1px solid var(--border-control);border-radius:var(--radius-sm);padding:5px 8px;}
+.c2c-v2 .ana-runctl-input::placeholder{color:var(--text-300);}
+.c2c-v2 .ana-runctl-input:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
+.c2c-v2 .ana-runctl-actions{display:flex;align-items:center;gap:6px;margin-left:auto;}
+.c2c-v2 .ana-runctl-btn,.c2c-v2 .ana-runctl-go{font:inherit;font-size:11.5px;color:var(--text-300);background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 10px;cursor:pointer;white-space:nowrap;transition:color 200ms ease-out,border-color 200ms ease-out;}
+.c2c-v2 .ana-runctl-btn:hover,.c2c-v2 .ana-runctl-go:hover:not(:disabled){color:var(--text-100);border-color:var(--text-300);}
+.c2c-v2 .ana-runctl-go:disabled{opacity:.55;cursor:default;}
+/* ── Live Drive strip — fixed so it survives every navigation AnA makes.
+   The shell grid is overflow:hidden (see .c2c-v2.shell), so like .cl-fab-wrap
+   this must be position:fixed; z-index 60 sits above CmdK's scrim (50) and
+   below the collab FAB (70). Centered on the viewport; when the AnA rail is
+   open, shifted left by half its width so it stays centered on the canvas. */
+.c2c-v2 .ana-drive-strip{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:6px;max-width:min(560px,calc(100vw - 32px));padding:8px 10px 8px 14px;background:var(--bg-000);border:1px solid var(--border);border-radius:20px;box-shadow:var(--v2-shadow-lg);animation:ana-drive-in 200ms ease-out;}
+.c2c-v2 .ana-drive-row{display:flex;align-items:center;gap:10px;min-width:0;}
+.c2c-v2 .ana-drive-narration{font-size:12px;line-height:1.45;color:var(--text-200);padding:0 4px 2px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.c2c-v2.shell[data-ana-open="true"] .ana-drive-strip{left:calc(50% - var(--ana) / 2);}
+.c2c-v2 .ana-drive-dot{width:8px;height:8px;border-radius:50%;background:var(--accent-200);animation:ana-activity-pulse 1600ms ease-out infinite;flex:none;}
+.c2c-v2 .ana-drive-title{font-size:12px;font-weight:600;color:var(--text-100);white-space:nowrap;}
+.c2c-v2 .ana-drive-step{font-size:12px;color:var(--text-300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.c2c-v2 .ana-drive-actions{display:flex;align-items:center;gap:6px;margin-left:4px;flex:none;}
+.c2c-v2 .ana-drive-btn{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:11.5px;color:var(--text-100);background:var(--bg-100);border:1px solid var(--border);border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:color 200ms ease-out,border-color 200ms ease-out;}
+.c2c-v2 .ana-drive-btn:hover{border-color:var(--text-300);}
+.c2c-v2 .ana-drive-btn.is-stop{color:var(--text-300);}
+.c2c-v2 .ana-drive-btn.is-stop:hover{color:var(--text-100);}
+.c2c-v2 .ana-drive-kbd{font:inherit;font-size:10px;color:var(--text-400);border:1px solid var(--border);border-radius:4px;padding:0 4px;line-height:1.5;}
+.c2c-v2 .ana-drive-activity{font-size:12px;color:var(--text-300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:220px;}
+.c2c-v2 .ana-drive-strip[data-mode="demo"]{max-width:min(720px,calc(100vw - 32px));}
+.c2c-v2 .ana-drive-count{font-size:11px;color:var(--text-400);border:1px solid var(--border);border-radius:999px;padding:1px 7px;white-space:nowrap;flex:none;}
+.c2c-v2 .ana-drive-steer{display:flex;min-width:0;flex:1 1 120px;}
+.c2c-v2 .ana-drive-steer-input{width:100%;min-width:80px;font:inherit;font-size:12px;color:var(--text-100);background:var(--bg-100);border:1px solid var(--border);border-radius:999px;padding:4px 10px;outline:none;transition:border-color 200ms ease-out;}
+.c2c-v2 .ana-drive-steer-input:focus{border-color:var(--text-300);}
+.c2c-v2 .ana-drive-steer-input::placeholder{color:var(--text-400);}
+/* Follow-the-work: the artifact row a driven turn just produced. Highlighted
+   with the accent, decaying to the resting row over 2.4s — long enough to see
+   which row arrived, calm enough to not celebrate (motion-discipline). */
+.c2c-v2 .art-row.is-focus{outline:2px solid var(--accent-200);outline-offset:-2px;background:var(--accent-000);animation:art-focus-settle 2400ms ease-out forwards;}
+@keyframes art-focus-settle{0%,60%{outline-color:var(--accent-200);}100%{outline-color:transparent;background:transparent;}}
+@media (prefers-reduced-motion: reduce){
+  .c2c-v2 .art-row.is-focus{animation:none;}
+}
+@keyframes ana-drive-in{from{opacity:0;transform:translateX(-50%) translateY(6px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+@media (prefers-reduced-motion: reduce){
+  .c2c-v2 .ana-drive-strip{animation:none;}
+  .c2c-v2 .ana-drive-dot{animation:none;}
+}
+.c2c-v2 .ana-runctl-btn:focus-visible,.c2c-v2 .ana-runctl-go:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
+
+/* A steer the human sent and AnA took, shown under the answer it shaped. */
+.c2c-v2 .ana-steers{display:flex;flex-direction:column;gap:4px;margin-top:6px;}
+.c2c-v2 .ana-steer{display:flex;align-items:flex-start;gap:6px;font-size:11.5px;line-height:1.5;color:var(--text-300);}
+.c2c-v2 .ana-steer-ic{display:inline-flex;flex:none;margin-top:1px;color:var(--text-300);}
+.c2c-v2 .ana-steer-ic svg{font-size:12px;}
+.c2c-v2 .ana-steer-k{color:var(--text-100);font-weight:500;}
+
+/* A caveat about the answer above it — a degraded-mode signal, or a turn cut
+   short. --warning carries meaning here, so it is never the ONLY carrier: the
+   triangle glyph and the sentence both say so (colour-never-alone). */
+.c2c-v2 .ana-msg-warnings{display:flex;flex-direction:column;gap:4px;margin-top:6px;}
+.c2c-v2 .ana-msg-warning{display:flex;align-items:flex-start;gap:6px;font-size:11.5px;line-height:1.5;color:var(--warning);}
+.c2c-v2 .ana-msg-warning-ic{display:inline-flex;flex:none;margin-top:1px;}
+.c2c-v2 .ana-msg-warning-ic svg{font-size:12px;}
+
+/* ── AnA activity — what she is doing, while she is doing it ──────────────── */
+/* Text here is --text-300, never --text-400. This file's own record above
+   (see the --text-500/--text-400 note) measures --text-400 on --bg-000 at
+   3.37:1 light / 4.27:1 dark, failing SC 1.4.3 at 12.5px — and these rows run
+   10-11px, smaller still. ci:token-contrast stays green either way: it carries
+   --text-400 as a documented EXCEPTION scoped to large text, so the gate could
+   not have caught this. --text-300 is 5.21:1 / 6.82:1 and passes in both
+   themes. The glyphs keep --text-400: as icons they need 3:1, not 4.5:1. */
+
+/* Every row is a step that really ran. The palette is deliberately quiet: this
+   sits under a streaming answer and must be readable without competing with
+   it. Motion is one 1.6s opacity pulse on the live dot — no spinner, no
+   spring — and it stops entirely under prefers-reduced-motion, where the dot
+   still reads as present, just still. */
+.c2c-v2 .ana-activity{margin-top:8px;}
+.c2c-v2 .ana-activity-toggle{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-300);background:none;border:0;padding:2px 0;cursor:pointer;transition:color 200ms ease-out;}
+.c2c-v2 .ana-activity-toggle:hover{color:var(--text-200);}
+.c2c-v2 .ana-activity-toggle:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:var(--radius-md);}
+.c2c-v2 .ana-activity-toggle svg{font-size:12px;}
+.c2c-v2 .ana-activity-body{display:flex;flex-direction:column;gap:3px;margin-top:5px;padding-left:9px;border-left:1px solid var(--border);}
+.c2c-v2 .ana-activity-phase{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-300);}
+/* Indented to the same text column as the phase and the step rows, which begin
+   after a 12px glyph and a 6px gap. Flush left, it read as a PARENT of the
+   line above it rather than a sibling. */
+.c2c-v2 .ana-activity-read{font-size:11px;color:var(--text-300);font-style:italic;margin-left:18px;}
+.c2c-v2 .ana-activity-round{display:flex;flex-direction:column;gap:3px;}
+.c2c-v2 .ana-activity-round-h{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-300);margin-top:5px;}
+/* wrap + a full-width note: the failure sentence is a SIBLING of the label in
+   the same flex row, so without this the two compete for width and a label as
+   short as "Literature search" gets squeezed into a two-line column beside a
+   wide message. Seen in a browser, not in a test — the assertions only ever
+   asked whether the text was present. */
+.c2c-v2 .ana-activity-step{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:11.5px;color:var(--text-300);}
+.c2c-v2 .ana-activity-step .ana-activity-glyph{display:inline-flex;color:var(--text-400);}
+.c2c-v2 .ana-activity-step .ana-activity-glyph svg{font-size:12px;}
+.c2c-v2 .ana-activity-step.is-success .ana-activity-glyph{color:var(--success);}
+.c2c-v2 .ana-activity-step.is-error .ana-activity-glyph{color:var(--warning);}
+/* A step still in flight is dimmer than a settled one, but it is still text
+   a user has to read: --text-300, not the --text-400 the glyph may use. */
+.c2c-v2 .ana-activity-step.is-running{color:var(--text-300);}
+/* padding + border-box, NOT margin: `flex-basis:100%` plus an 18px MARGIN is
+   100% + 18px, which overflowed the 380px rail horizontally — measured at
+   true rail width, where the step row came out 361px inside a 343px box.
+   With border-box the indent sits inside the basis. */
+.c2c-v2 .ana-activity-note{color:var(--warning);font-size:10.5px;flex:1 0 100%;box-sizing:border-box;padding-left:18px;}
+/* Her reasoning. Bounded height rather than unbounded: a long deliberation
+   must not push the answer off the screen, and a scroll says "there is more"
+   more honestly than a truncation would. */
+.c2c-v2 .ana-activity-think{font-size:11.5px;line-height:1.6;color:var(--text-300);font-style:italic;border-left:2px solid var(--border);padding:2px 0 2px 10px;margin:2px 0;max-height:240px;overflow-y:auto;white-space:pre-wrap;}
+.c2c-v2 .ana-activity-think.is-live{max-height:none;overflow:visible;}
+/* The scroll container is a tab stop (WCAG 2.1.1), so it needs a visible focus
+   indicator like any other. */
+.c2c-v2 .ana-activity-think:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:var(--radius-md);}
+.c2c-v2 .ana-activity-pulse{display:inline-flex;color:var(--accent-200);animation:ana-activity-pulse 1600ms ease-out infinite;}
+.c2c-v2 .ana-activity-pulse svg{font-size:12px;}
+@keyframes ana-activity-pulse{0%,100%{opacity:.35;}50%{opacity:1;}}
+@media (prefers-reduced-motion:reduce){
+  .c2c-v2 .ana-activity-pulse{animation:none;opacity:1;}
+  .c2c-v2 .ana-activity-toggle{transition:none;}
+}
+
 .c2c-v2 .ana-chip-gov{display:inline-flex;align-items:center;margin-left:3px;color:var(--text-400);}
 .c2c-v2 .ana-chip-gov svg{font-size:10px;}
 
 /* ── Page header ── */
 .c2c-v2 .ph{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:24px;}
-.c2c-v2 .ph-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent-100);font-weight:600;margin-bottom:6px;}
+/* --accent-200, not --accent-100: the identity orange is the colour the brand
+   is SEEN in, and this is text. At 11px it measured 2.96:1. */
+.c2c-v2 .ph-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent-200);font-weight:600;margin-bottom:6px;}
 .c2c-v2 .ph-title{font-size:24px;font-weight:600;letter-spacing:-.02em;margin:0;}
 .c2c-v2 .ph-sub{font-size:13px;color:var(--text-300);margin-top:6px;max-width:680px;line-height:1.5;}
 .c2c-v2 .btn{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 14px;border-radius:var(--radius-lg);font-size:12.5px;font-weight:500;transition:all var(--dur);white-space:nowrap;}
 .c2c-v2 .btn .ico{font-size:15px;}
-.c2c-v2 .btn.primary{background:var(--accent-100);color:#fff;}
+.c2c-v2 .btn.primary{background:var(--accent-strong);color:var(--accent-on-strong);}
 .c2c-v2 .btn.primary:hover{background:var(--accent-200);}
 .c2c-v2 .btn.ghost{border:1px solid var(--border);color:var(--text-200);}
 .c2c-v2 .btn.ghost:hover{background:var(--bg-100);}
@@ -1254,7 +1834,7 @@
 .c2c-v2 .cl-field>label{font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);font-weight:700;}
 .c2c-v2 .cl-field>label i{color:var(--accent-200);font-style:normal;margin-left:2px;}
 .c2c-v2 .cl-field .cl-opt{text-transform:none;letter-spacing:0;font-weight:400;color:var(--text-400);}
-.c2c-v2 .cl-field input, .c2c-v2 .cl-field select, .c2c-v2 .cl-field textarea{width:100%;height:34px;padding:0 10px;border:1px solid var(--border-strong);border-radius:var(--radius-md);background:var(--bg-000);color:var(--text-100);font-size:12.5px;font-family:inherit;}
+.c2c-v2 .cl-field input, .c2c-v2 .cl-field select, .c2c-v2 .cl-field textarea{width:100%;height:34px;padding:0 10px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);color:var(--text-100);font-size:12.5px;font-family:inherit;}
 .c2c-v2 .cl-field textarea{height:auto;padding:8px 10px;resize:vertical;line-height:1.5;}
 .c2c-v2 .cl-field input:focus, .c2c-v2 .cl-field select:focus, .c2c-v2 .cl-field textarea:focus{outline:none;border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
 .c2c-v2 .cl-frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -1346,7 +1926,7 @@
 .c2c-v2 .tone-ok{background:var(--success-muted);color:var(--success);}
 .c2c-v2 .tone-ai{background:var(--ai-muted);color:var(--ai);}
 .c2c-v2 .tone-warn{background:var(--warning-muted);color:var(--warning);}
-.c2c-v2 .tone-idle{background:var(--idle-muted);color:var(--text-400);}
+.c2c-v2 .tone-idle{background:var(--idle-muted);color:var(--text-300);}
 
 /* ── Labeling / IFU workbench ── */
 .c2c-v2 .lbl-symgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
@@ -1468,7 +2048,7 @@
 .c2c-v2 .gri-field label{display:block;font-size:12px;font-weight:500;margin-bottom:5px;}
 .c2c-v2 .gri-field .req{color:var(--accent-100);margin-left:3px;}
 .c2c-v2 .gri-field .desc{font-size:11px;color:var(--text-400);margin-bottom:6px;}
-.c2c-v2 .gri-input{width:100%;height:34px;padding:0 11px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);font-size:13px;}
+.c2c-v2 .gri-input{width:100%;height:34px;padding:0 11px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);font-size:13px;}
 .c2c-v2 .gri-input:focus{border-color:var(--accent-100);}
 .c2c-v2 select.gri-input{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a8880' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;}
 .c2c-v2 .gri-toggle{display:flex;align-items:center;gap:10px;}
@@ -1504,6 +2084,44 @@
 .c2c-v2 .cmdk-foot{display:flex;gap:14px;padding:9px 16px;border-top:1px solid var(--border);font-size:10px;color:var(--text-400);}
 .c2c-v2 .cmdk-hdr{padding:8px 16px 4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-400);user-select:none;}
 
+/* ── Locked ⌘K results ──────────────────────────────────────────────────────
+   The palette is the second door onto every destination the rail greys out, so
+   a locked result reads here the way it reads there: it stays a real, focusable
+   row that Enter activates (the entitlements spec forbids a disabled, reasonless
+   control), and it opens the same explanation panel instead of the surface.
+
+   Same three channels as the rail, so colour is never doing the work alone —
+   the muted row, the lock glyph reusing `.nav-lic[data-lic="off"]`, and the
+   REASON as text in both the hint column and the button's accessible name.
+
+   One deliberate difference from `.nav-item[data-locked]`, which mutes to
+   --text-400: that token measures 3.37:1 light / 4.27:1 dark on --bg-000 (the
+   numbers recorded at the top of this file), below the 4.5:1 SC 1.4.3 wants for
+   13px text, and the WCAG exception for it is scoped to "disabled/decorative"
+   uses — which a row a customer is meant to activate and read is not. --text-300
+   is 5.21:1 / 6.82:1, still an unmistakable step down from the unlocked label,
+   and passes in both themes. The reason text gets the same treatment rather than
+   the generic hint's --text-400: it is the only place the palette states WHY,
+   so it is the last string in this component that should be hard to read. */
+.c2c-v2 .cmdk-item[data-locked] .lbl{color:var(--text-300);}
+.c2c-v2 .cmdk-item[data-locked] .ico{color:var(--text-300);}
+.c2c-v2 .cmdk-item[data-locked] .hint{color:var(--text-300);}
+/* `.on` is both the pointer hover and the keyboard cursor in this list (the
+   rows set it on mouseenter), so restoring full contrast on it is the same
+   "never unreadable while a human is aiming at it" behaviour the rail gets from
+   :hover — and it reaches keyboard users, who never produce a hover at all. */
+.c2c-v2 .cmdk-item[data-locked].on .lbl{color:var(--text-100);}
+.c2c-v2 .cmdk-item[data-locked].on .hint{color:var(--text-200);}
+.c2c-v2 .cmdk-item[data-locked].on .nav-lic[data-lic="off"]{color:var(--warning);}
+.c2c-v2 .cmdk-item .nav-lic[data-lic="off"] svg{width:13px;height:13px;}
+/* The palette is rendered inside `.c2c-v2.shell`, so the collapsed-rail rule at
+   the top of this file — `[data-collapsed="true"] .nav-lic{display:none}`, which
+   exists because the rail's licence dots have no room in a 56px column — reaches
+   these rows too. A ⌘K row is full width whatever the rail is doing, and losing
+   the glyph there would quietly drop one of the three channels the locked state
+   is carried on for anyone who works with the rail collapsed. */
+.c2c-v2.shell[data-collapsed="true"] .cmdk-item[data-locked] .nav-lic[data-lic="off"]{display:flex;}
+
 /* ── Tweaks ── */
 .c2c-v2 .tweaks-toggle{position:fixed;right:16px;bottom:16px;width:38px;height:38px;border-radius:50%;background:var(--text-100);color:var(--bg-000);display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:var(--v2-shadow-md);z-index:40;}
 .c2c-v2 .tweaks{position:fixed;right:16px;bottom:16px;width:260px;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--v2-shadow-lg);z-index:40;overflow:hidden;}
@@ -1519,7 +2137,14 @@
 .c2c-v2 .ana-greet{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:40px 18px;}
 .c2c-v2 .ana-greet-mark{width:40px;height:40px;border-radius:11px;background:var(--accent-000);color:var(--accent-100);display:flex;align-items:center;justify-content:center;font-size:20px;}
 .c2c-v2 .ana-greet-t{font-size:16px;font-weight:600;font-family:var(--font-serif);}
-.c2c-v2 .ana-greet-s{font-size:12px;color:var(--text-400);line-height:1.5;max-width:240px;}
+/* This renders a surface's own `here` description, and several of those quote
+   an endpoint — "drilled from GET /api/pdev/programs/:id/workstreams". A URL
+   path offers no break opportunity, so in a fixed 240px box it ran out of the
+   rail on seven surfaces. A prose block with a fixed max-width that renders
+   content-derived strings has to be able to break them.
+   (Whether an assistant's greeting should quote a raw API path at a user at
+   all is a copy question, and a separate one — see ledger L111.) */
+.c2c-v2 .ana-greet-s{font-size:12px;color:var(--text-400);line-height:1.5;max-width:240px;overflow-wrap:break-word;}
 
 /* ════════ HAQ Manager (haq-manager.jsx) ════════ */
 .c2c-v2 .haq{max-width:1180px;margin:0 auto;padding:22px 24px 40px;}
@@ -1549,6 +2174,11 @@
 .c2c-v2 .haq-assemble{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:8px 13px;border-radius:var(--radius-md);background:var(--accent-100);color:#fff;white-space:nowrap;}
 .c2c-v2 .haq-assemble:disabled{background:var(--bg-200);color:var(--text-500);}
 .c2c-v2 .haq-assemble .ico{font-size:14px;}
+/* Assemble is a pair now: the Word package and the raw Markdown the server
+   returned, so a reviewer can read the assembly without opening Word. */
+.c2c-v2 .haq-assemble-row{display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.c2c-v2 .haq-assemble.alt{background:transparent;color:var(--text-200);border:1px solid var(--border);}
+.c2c-v2 .haq-assemble.alt:disabled{background:transparent;color:var(--text-500);border-color:var(--border);}
 
 .c2c-v2 .haq-grid{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start;}
 .c2c-v2 .haq-list{display:flex;flex-direction:column;gap:8px;}
@@ -1617,7 +2247,7 @@
 .c2c-v2 .dsr-toggle button{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-size:12px;font-weight:500;color:var(--text-400);background:var(--bg-000);}
 .c2c-v2 .dsr-toggle button svg{width:14px;height:14px;}
 .c2c-v2 .dsr-toggle button[data-on]{background:var(--accent-000);color:var(--accent-200);}
-.c2c-v2 .reg-cta{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;background:var(--accent-100);color:#fff;font-size:12.5px;font-weight:600;}
+.c2c-v2 .reg-cta{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;background:var(--accent-strong);color:var(--accent-on-strong);font-size:12.5px;font-weight:600;}
 .c2c-v2 .reg-cta:hover{background:var(--accent-200);}.c2c-v2 .reg-cta svg{width:14px;height:14px;}
 .c2c-v2 .reg-cta.sm{padding:7px 12px;font-size:12px;}
 .c2c-v2 .reg-mini{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg-000);color:var(--text-300);font-size:11px;font-weight:500;}
@@ -1873,7 +2503,10 @@
 .c2c-v2 .ct-ana-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;}
 
 .c2c-v2 .ct-think{align-self:flex-start;text-align:left;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:7px;padding:0;}
-.c2c-v2 .ct-think-h{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-400);}
+/* --text-300, not --text-400: 11.5px is small text, so SC 1.4.3 wants 4.5:1
+   and --text-400 measures 3.37:1 light / 4.27:1 dark. Same defect, and same
+   reason the contrast gate stayed green on it, as the ana-activity block. */
+.c2c-v2 .ct-think-h{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-300);}
 .c2c-v2 .ct-think-h svg{width:13px;height:13px;transition:transform var(--dur);}
 .c2c-v2 .ct-think.on .ct-think-h svg:last-child{transform:rotate(180deg);}
 .c2c-v2 .ct-think-b{font-size:12.5px;line-height:1.6;color:var(--text-300);border-left:2px solid var(--border);padding:2px 0 2px 12px;font-style:italic;}
@@ -1960,7 +2593,20 @@
 .c2c-v2 .ct-composer textarea{flex:1;border:none;background:none;resize:none;font-family:var(--font-sans);font-size:14px;line-height:1.5;color:var(--text-100);padding:7px 2px;max-height:160px;outline:none;}
 .c2c-v2 .ct-comp-send{flex-shrink:0;width:32px;height:32px;border-radius:8px;background:var(--accent-100);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .c2c-v2 .ct-comp-send:disabled{background:var(--bg-200);color:var(--text-500);cursor:default;}.c2c-v2 .ct-comp-send svg{width:16px;height:16px;}
-.c2c-v2 .ct-comp-foot{max-width:768px;margin:8px auto 0;font-size:10.5px;color:var(--text-500);display:flex;align-items:center;gap:5px;justify-content:center;text-align:center;}
+/* Attachment chips under the conversation composer. Status is carried by
+   colour AND by the text after the middot, never by colour alone — a reviewer
+   using a monochrome display must still be able to tell a file that was read
+   from one that failed. */
+.c2c-v2 .ct-comp-atts{max-width:768px;margin:8px auto 0;display:flex;flex-wrap:wrap;gap:6px;}
+.c2c-v2 .ct-att-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 6px 3px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-050);font-size:11.5px;color:var(--text-200);}
+.c2c-v2 .ct-att-chip svg{width:12px;height:12px;flex-shrink:0;}
+.c2c-v2 .ct-att-chip em{font-style:normal;color:var(--text-400);}
+.c2c-v2 .ct-att-chip[data-status="error"]{border-color:var(--error);}
+.c2c-v2 .ct-att-chip[data-status="error"] em{color:var(--error);}
+.c2c-v2 .ct-att-chip[data-status="uploading"] em{color:var(--text-500);}
+.c2c-v2 .ct-att-x{border:none;background:none;color:var(--text-400);cursor:pointer;font-size:14px;line-height:1;padding:0 2px;}
+.c2c-v2 .ct-att-x:hover{color:var(--text-100);}
+.c2c-v2 .ct-comp-foot{max-width:768px;margin:8px auto 0;font-size:10.5px;color:var(--text-300);display:flex;align-items:center;gap:5px;justify-content:center;text-align:center;}
 .c2c-v2 .ct-comp-foot svg{width:11px;height:11px;flex-shrink:0;}
 
 /* ── conversation + live artifact panel split ── */
@@ -1970,12 +2616,12 @@
 .c2c-v2 .ct-art-panel-h{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 4px;}
 .c2c-v2 .ct-art-panel-t{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--text-100);}
 .c2c-v2 .ct-art-panel-t svg{width:15px;height:15px;}
-.c2c-v2 .ct-art-panel-n{background:var(--accent-100);color:#fff;border-radius:99px;font-size:11px;font-weight:600;padding:0 7px;line-height:18px;}
+.c2c-v2 .ct-art-panel-n{background:var(--accent-strong);color:var(--accent-on-strong);border-radius:99px;font-size:11px;font-weight:600;padding:0 7px;line-height:18px;}
 .c2c-v2 .ct-art-panel-x{background:none;border:none;color:var(--text-400);cursor:pointer;padding:4px;border-radius:6px;}
 .c2c-v2 .ct-art-panel-x:hover{background:var(--bg-200);color:var(--text-100);}.c2c-v2 .ct-art-panel-x svg{width:15px;height:15px;}
-.c2c-v2 .ct-art-panel-sub{font-size:11px;color:var(--text-400);padding:0 16px 12px;border-bottom:1px solid var(--border);}
+.c2c-v2 .ct-art-panel-sub{font-size:11px;color:var(--text-300);padding:0 16px 12px;border-bottom:1px solid var(--border);}
 .c2c-v2 .ct-art-list{flex:1;min-height:0;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;}
-.c2c-v2 .ct-art-empty{font-size:12px;line-height:1.6;color:var(--text-400);padding:18px 6px;}
+.c2c-v2 .ct-art-empty{font-size:12px;line-height:1.6;color:var(--text-300);padding:18px 6px;}
 
 .c2c-v2 .ct-art-rail{align-self:stretch;flex-shrink:0;width:48px;border-left:1px solid var(--border);background:var(--bg-050);display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:18px;cursor:pointer;}
 .c2c-v2 .ct-art-rail:hover{background:var(--bg-100);}
@@ -2026,7 +2672,13 @@
 .c2c-v2 .ct-art-actions{display:flex;gap:6px;flex-wrap:wrap;}
 .c2c-v2 .ct-art-actions button{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg-000);color:var(--text-200);cursor:pointer;}
 .c2c-v2 .ct-art-actions button:hover{background:var(--bg-100);}.c2c-v2 .ct-art-actions button svg{width:13px;height:13px;}
+/* A disabled artifact action looked exactly like an enabled one — the artifact
+   card's controls can be legitimately unavailable (a draft with no governed
+   row, no open program), and until now the only signal was the tooltip. */
+.c2c-v2 .ct-art-actions button:disabled{opacity:.55;cursor:not-allowed;}
+.c2c-v2 .ct-art-actions button:disabled:hover{background:var(--bg-000);}
 .c2c-v2 .ct-art-adv{margin-left:auto;background:var(--accent-100)!important;color:#fff!important;border-color:var(--accent-100)!important;}
+.c2c-v2 .ct-art-adv:disabled{background:var(--bg-000)!important;color:var(--text-300)!important;border-color:var(--border)!important;}
 .c2c-v2 .ct-art-adv:hover{background:var(--accent-200)!important;}
 
 .c2c-v2 .ct-art-chip{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;padding:8px 11px;border:1px solid var(--accent-muted);background:var(--accent-000);border-radius:9px;cursor:pointer;}
@@ -2099,19 +2751,37 @@
 .c2c-v2 .dj-page-refs .dj-page-sh{margin-top:0;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#8a8880;}
 .c2c-v2 .dj-ref{font-family:Georgia,'Times New Roman',serif;font-size:12px;line-height:1.6;color:#3d3d3a;margin-bottom:5px;padding-left:18px;text-indent:-18px;}
 .c2c-v2 .dj-toolbar{display:flex;align-items:center;gap:3px;flex-wrap:wrap;max-width:780px;margin:0 auto 12px;padding:6px 8px;background:var(--bg-000);border:1px solid var(--border);border-radius:9px;box-shadow:var(--v2-shadow-sm);}
-.c2c-v2 .dj-tb-sel{font-size:12px;color:var(--text-200);border:1px solid var(--border);border-radius:6px;padding:5px 8px;background:var(--bg-000);margin-right:2px;}
-.c2c-v2 .dj-tb-b{width:30px;height:30px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:var(--text-200);background:none;border:none;}
-.c2c-v2 .dj-tb-b:hover{background:var(--bg-100);color:var(--text-100);}
-.c2c-v2 .dj-tb-b svg{width:15px;height:15px;}
-.c2c-v2 .dj-tb-sep{width:1px;height:20px;background:var(--border);margin:0 4px;}
-.c2c-v2 .dj-tb-tc{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-300);padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg-000);}
-.c2c-v2 .dj-tb-tc:hover{border-color:var(--accent-100);color:var(--accent-200);}
-.c2c-v2 .dj-tb-dot{width:7px;height:7px;border-radius:50%;background:var(--text-500);}
-.c2c-v2 .dj-tb-tc:hover .dj-tb-dot{background:var(--accent-100);}
-.c2c-v2 .dj-tb-save{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-400);padding-right:6px;}
-.c2c-v2 .dj-tb-save svg{width:12px;height:12px;color:var(--success);}
-.c2c-v2 .dj-stagepane .dj-page[contenteditable]{outline:none;}
-.c2c-v2 .dj-stagepane .dj-page[contenteditable]:focus-within{box-shadow:0 1px 3px rgb(20 20 19/.05),0 18px 46px -20px rgb(20 20 19/.22),0 0 0 2px var(--accent-muted);}
+/* ── The nine formatting controls are gone, and so is their styling ──────────
+   The preview carried a paragraph-style select plus B, I, U, bulleted list,
+   numbered list, quote, insert-table and a "Track changes" pill, on a surface
+   whose only request is GET /api/doc-journey. Nothing there could write.
+
+   It was fixed once the other way — all nine marked `disabled`, each given
+   title="Read-only preview" — and it did not hold, because the cascade never
+   followed the attribute. These rules are what was left: `.dj-tb-b:hover` still
+   lifted every disabled button, and `.dj-tb-tc:hover` still turned the
+   Track-changes pill accent-coloured, so the control that implies a Part 11
+   audit-trail mode kept reading as armable on a regulated document.
+
+   That is why the toolbar was deleted rather than disabled properly. Disabling
+   it correctly means telling the same truth in three places at once — the
+   attribute, the tooltip and the cascade, across two files — and those three
+   drifted apart inside a single commit. Deletion needs one place. And a
+   correctly-disabled row of nine still tells everyone who never hovers that
+   this screen formats documents; the affordance is the message.
+
+   Deleting the markup and keeping the rules would have left the resurrection
+   kit in place: re-add one `<button className="dj-tb-b">` and the live-looking
+   hover comes back for free. `.dj-toolbar` stays — it now holds `.dj-tb-ro`,
+   which states the constraint and points at the editor. The
+   `.dj-page[contenteditable]` focus ring goes with them: contentEditable came
+   off this page in the same removal, so the ring could only ever have framed a
+   surface that cannot save.
+
+   Pinned by __tests__/docJourneyPreviewIsHonest.test.tsx, which reads this
+   file off disk — jsdom applies no author stylesheet, so a rendered-tree
+   assertion cannot see a hover rule at all, which is the exact blind spot the
+   previous fix fell into. */
 @media(max-width:1080px){
   .c2c-v2 .dj-stagepane .dj-page, .c2c-v2 .lp-main .lp-page, .c2c-v2 .dt-doc .rv-doc-page{padding:48px 40px 50px;}
   .c2c-v2 .dj-stagepane .dj-page::before, .c2c-v2 .lp-main .lp-page::before, .c2c-v2 .dt-doc .rv-doc-page::before, .c2c-v2 .dj-stagepane .dj-page::after, .c2c-v2 .lp-main .lp-page::after, .c2c-v2 .dt-doc .rv-doc-page::after{left:40px;right:40px;}
@@ -2186,10 +2856,10 @@
 .c2c-v2 .lp-fmt{display:flex;align-items:center;gap:8px;margin-top:16px;flex-wrap:wrap;}
 .c2c-v2 .lp-fmt-b{font-size:12px;font-weight:500;color:var(--text-300);border:1px solid var(--border);border-radius:8px;padding:7px 12px;background:var(--bg-000);}
 .c2c-v2 .lp-fmt-b.on{background:var(--accent-000);border-color:var(--accent-100);color:var(--accent-200);}
-.c2c-v2 .lp-stages{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap;}
+.c2c-v2 .lp-stages{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap;list-style:none;margin-block:0;padding:0;}
 .c2c-v2 .lp-stage{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-400);border:1px solid var(--border);border-radius:99px;padding:5px 11px;background:var(--bg-000);}
 .c2c-v2 .lp-stage.done{color:var(--success);border-color:var(--success-muted);}
-.c2c-v2 .lp-stage.on{background:var(--accent-100);border-color:var(--accent-100);color:#fff;}
+.c2c-v2 .lp-stage.on{background:var(--accent-strong);border-color:var(--accent-100);color:var(--accent-on-strong);}
 .c2c-v2 .lp-stage-dot{display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
 .c2c-v2 .lp-stage-dot svg{width:12px;height:12px;}
 .c2c-v2 .lp-split{display:grid;grid-template-columns:280px 1fr;gap:18px;margin-top:16px;align-items:start;}
@@ -2250,6 +2920,25 @@
 .c2c-v2 .reg-btn.pri:hover{background:var(--accent-200);}
 .c2c-v2 .reg-btn.ghost{border-color:transparent;color:var(--text-400);}
 .c2c-v2 .reg-btn:hover{border-color:var(--text-400);}
+
+/* Labeling — stage ladder is a read-out (an <ol>), so the pill needs the same
+   box the old <button> got from the UA. */
+.c2c-v2 .lp-stages .lp-stage{list-style:none;}
+/* Labeling — SmPC section rows (read-only, so <div> not <button>). */
+.c2c-v2 .lp-sec-st{margin-left:auto;font-size:10.5px;color:var(--text-400);white-space:nowrap;}
+.c2c-v2 div.lp-sec{cursor:default;}
+/* Labeling — SPL product-identity form. */
+.c2c-v2 .lp-spl{padding:4px 2px 18px;}
+.c2c-v2 .lp-spl-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:0 0 14px;}
+.c2c-v2 .lp-spl-f{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--text-400);}
+.c2c-v2 .lp-spl-f input{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;background:var(--bg-000);color:var(--text-100);}
+.c2c-v2 .lp-spl-f input:focus-visible{outline:2px solid var(--accent-100);outline-offset:1px;}
+/* Labeling — agency negotiation: audited reason + expanded redline. */
+.c2c-v2 .lp-neg-reason{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--text-400);margin:12px 0 10px;}
+.c2c-v2 .lp-neg-reason input{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;background:var(--bg-000);color:var(--text-100);}
+.c2c-v2 .lp-neg-reason input:focus-visible{outline:2px solid var(--accent-100);outline-offset:1px;}
+.c2c-v2 .lp-neg-redline{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-top:12px;background:var(--bg-000);}
+.c2c-v2 .lp-neg-redline-h{font-size:11px;font-weight:600;color:var(--text-300);text-transform:uppercase;letter-spacing:.04em;}
 @media(max-width:1080px){.c2c-v2 .lp-split{grid-template-columns:1fr;}.c2c-v2 .lp-stages{margin-left:0;width:100%;}}
 
 /* ════ Registry Picker ════ */
@@ -2309,7 +2998,7 @@
 .c2c-v2 .gov-notice{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:6px;background:color-mix(in srgb,var(--accent-100) 6%,transparent);border:1px solid var(--accent-100);font-size:11.5px;color:var(--text-200);line-height:1.5;}
 .c2c-v2 .gov-field{display:flex;flex-direction:column;gap:4px;}
 .c2c-v2 .gov-label{font-size:11.5px;font-weight:500;color:var(--text-300);}
-.c2c-v2 .gov-textarea{padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg-100);font-size:12.5px;resize:vertical;font-family:inherit;line-height:1.5;}
+.c2c-v2 .gov-textarea{padding:8px 12px;border-radius:6px;border:1px solid var(--border-control);background:var(--bg-100);font-size:12.5px;resize:vertical;font-family:inherit;line-height:1.5;}
 .c2c-v2 .gov-textarea:focus{outline:none;border-color:var(--accent-200);}
 .c2c-v2 .gov-meanings{display:flex;flex-direction:column;gap:4px;}
 .c2c-v2 .gov-meaning{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg-100);cursor:pointer;font-size:12px;color:var(--text-200);text-align:left;transition:border var(--dur);}
@@ -2665,13 +3354,13 @@
 .c2c-v2 .al-h{ font-family:var(--font-serif,Georgia,serif); font-size:21px; line-height:1.34; color:var(--text-100); margin-bottom:9px; max-width:66ch; }
 .c2c-v2 .al-h b{ font-weight:700; }
 .c2c-v2 .al-b{ font-size:14px; line-height:1.65; color:var(--text-300); max-width:72ch; }
-.c2c-v2 .al-re{ display:flex; align-items:center; gap:7px; font-size:13px; color:var(--text-400); margin-top:10px; font-style:italic; }
+.c2c-v2 .al-re{ display:flex; align-items:center; gap:7px; font-size:13px; color:var(--text-300); margin-top:10px; font-style:italic; }
 .c2c-v2 .al-re svg{ width:14px; height:14px; flex-shrink:0; }
 .c2c-v2 .al-act{ display:flex; align-items:center; gap:12px; margin-top:16px; flex-wrap:wrap; }
-.c2c-v2 .al-btn{ display:inline-flex; align-items:center; gap:7px; background:var(--accent-100); color:#fff; border:none; border-radius:9px; padding:9px 16px; font-size:13.5px; font-weight:500; cursor:pointer; }
+.c2c-v2 .al-btn{ display:inline-flex; align-items:center; gap:7px; background:var(--accent-strong); color:var(--accent-on-strong); border:none; border-radius:9px; padding:9px 16px; font-size:13.5px; font-weight:500; cursor:pointer; }
 .c2c-v2 .al-btn svg{ width:15px; height:15px; }
 .c2c-v2 .al-btn2{ display:inline-flex; align-items:center; gap:6px; background:var(--bg-000); color:var(--text-200); border:1px solid var(--border); border-radius:9px; padding:9px 14px; font-size:13px; cursor:pointer; }
-.c2c-v2 .al-note{ font-size:12.5px; color:var(--text-400); }
+.c2c-v2 .al-note{ font-size:12.5px; color:var(--text-300); }
 .c2c-v2 .acct-scrim{ position:fixed; inset:0; z-index:40; }
 .c2c-v2 .acct-menu{ position:absolute; bottom:calc(100% + 6px); left:8px; right:auto; min-width:248px; max-width:calc(100vw - 24px); z-index:50; background:var(--bg-000); border:1px solid var(--border); border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,0.18); padding:6px; }
 .c2c-v2 .acct-head{ display:flex; align-items:center; gap:9px; padding:8px 10px 10px; border-bottom:1px solid var(--border); margin-bottom:6px; }
@@ -2696,8 +3385,110 @@
 .c2c-v2 .esign-h .t{font-size:14px;font-weight:600;}
 .c2c-v2 .esign-b{padding:18px;display:flex;flex-direction:column;gap:14px;}
 .c2c-v2 .esign-field label{display:block;font-size:11px;font-weight:600;color:var(--text-300);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;}
-.c2c-v2 .esign-field input, .c2c-v2 .esign-field select{width:100%;height:36px;padding:0 11px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-050);font-size:13px;}
+.c2c-v2 .esign-field input, .c2c-v2 .esign-field select{width:100%;height:36px;padding:0 11px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-050);font-size:13px;}
 .c2c-v2 .esign-field input:focus, .c2c-v2 .esign-field select:focus{border-color:var(--accent-100);}
 .c2c-v2 .esign-manifest{font-size:11px;color:var(--text-400);line-height:1.5;background:var(--bg-100);border-radius:var(--radius-md);padding:10px 12px;}
 .c2c-v2 .esign-f{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--border);}
 
+
+/* The created-but-not-scaffolded advisory. A neutral notice, deliberately NOT
+   ErrorState: the project was saved, so styling it as a failure would tell the
+   user the opposite of what happened. Announcement is handled by the permanent
+   polite live region in the wizard, not by this element. */
+.c2c-v2 .c2c-wizard-notice {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin: 0 20px; padding: 10px 12px;
+  border-radius: var(--radius-md, 6px);
+  border: 1px solid var(--border-200, var(--border));
+  background: color-mix(in srgb, var(--text-400) 5%, transparent);
+  color: var(--text-200); font-size: 12px; line-height: 1.5;
+}
+.c2c-v2 .c2c-wizard-notice .ico { flex: 0 0 auto; margin-top: 1px; color: var(--text-400); }
+.c2c-v2 .c2c-wizard-notice .ico svg { width: 15px; height: 15px; }
+.c2c-v2 .c2c-wizard-notice > div { flex: 1 1 auto; min-width: 0; }
+
+/* Global mutation failures. Fixed to the bottom-right so a write that failed
+   from any surface is visible without moving the page under the user, and above
+   modal content because a modal is exactly where a write is usually attempted. */
+.c2c-v2 .c2c-global-errors,
+.c2c-global-errors {
+  position: fixed; right: 16px; bottom: 16px; z-index: 9999;
+  display: flex; flex-direction: column; gap: 8px;
+  width: min(420px, calc(100vw - 32px));
+}
+@media (max-width: 480px) {
+  .c2c-global-errors { right: 8px; left: 8px; bottom: 8px; width: auto; }
+}
+
+/* The batch-draft card, opened for editing. Same box as the rendered body so
+   the card does not jump when the two swap. */
+.c2c-v2 .bd-card-edit{width:100%;min-height:160px;resize:vertical;font-family:var(--font-mono);font-size:12px;line-height:1.6;color:var(--text-100);background:var(--bg-000);border:1px solid var(--accent-100);border-radius:8px;padding:10px 12px;outline:none;}
+
+/* Safety narrative — the audited reason that gates "Save version". Inline in the
+   document toolbar because that is where the writer is when they decide to save. */
+.c2c-v2 .sn-save-reason{min-width:200px;max-width:280px;}
+
+/* Registrations — a market that requires a label type it has none of. The gap is
+   carried in an icon and a sentence, not colour alone. */
+.c2c-v2 .reg-doss-gap{display:flex;gap:8px;align-items:flex-start;margin-top:8px;padding:9px 11px;border-radius:var(--radius-md,8px);font-size:12px;line-height:1.55;color:var(--error);background:color-mix(in srgb, var(--error) 8%, transparent);border:1px solid color-mix(in srgb, var(--error) 28%, transparent);}
+.c2c-v2 .reg-doss-basis{display:block;margin-top:3px;color:var(--text-400);font-size:11px;}
+.c2c-v2 .ac-val-err{margin:8px 0;padding:8px 11px;border-radius:var(--radius-md,8px);font-size:12px;line-height:1.5;color:var(--error);background:color-mix(in srgb, var(--error) 8%, transparent);border:1px solid color-mix(in srgb, var(--error) 28%, transparent);}
+
+/* Biostatistics — a persisted document with no recorded statistical type has no
+   generator to open. Named in the row rather than left as a silent no-op. */
+.c2c-v2 .sp-row:disabled{cursor:default;opacity:.72;}
+.c2c-v2 .sp-row-note{font-size:10.5px;color:var(--text-400);white-space:nowrap;}
+
+/* Market access — the strategy tab states plainly that no sequencing has been
+   generated, rather than printing an invented one. */
+.c2c-v2 .ma-strat-empty{display:flex;gap:8px;align-items:flex-start;padding:12px 14px;border:1px dashed var(--border);border-radius:var(--radius-md,8px);color:var(--text-300);font-size:13px;line-height:1.6;}
+
+/* Insights — a programme-level figure stated as one, above the per-market grid
+   rather than repeated inside it. */
+.c2c-v2 .ro-dash-progline{margin:0 0 10px;font-size:12.5px;color:var(--text-300);}
+
+/* Home composer — attached files, matching the conversation composer's chips. */
+.c2c-v2 .landing-atts{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0;}
+.c2c-v2 .landing-att{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:4px 8px;border-radius:99px;border:1px solid var(--border);background:var(--bg-000);color:var(--text-200);}
+.c2c-v2 .landing-att em{font-style:normal;color:var(--text-400);}
+.c2c-v2 .landing-att[data-status="error"]{border-color:color-mix(in srgb, var(--error) 40%, transparent);color:var(--error);}
+.c2c-v2 .landing-att[data-status="error"] em{color:var(--error);}
+.c2c-v2 .landing-att-x{border:0;background:none;color:inherit;cursor:pointer;font-size:13px;line-height:1;padding:0 0 0 2px;}
+.c2c-v2 .landing-att-x:focus-visible{outline:2px solid var(--accent-100);outline-offset:1px;}
+
+/* Document journey — the preview's toolbar states what the screen can do
+   instead of offering nine controls that can never act. */
+.c2c-v2 .dj-tb-ro{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-400);line-height:1.5;}
+.c2c-v2 .dj-tb-ro svg{width:13px;height:13px;flex:none;}
+
+/* Orchestration — the template picker behind "New run". The CTA was hardcoded
+   disabled because choosing a template had no UI; this is that UI. */
+.c2c-v2 .orch-newrun-bd{position:fixed;inset:0;background:rgba(0,0,0,.34);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px;}
+.c2c-v2 .orch-newrun{width:min(560px,100%);max-height:80vh;display:flex;flex-direction:column;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg,12px);box-shadow:0 18px 48px rgba(0,0,0,.22);padding:18px 20px;}
+.c2c-v2 .orch-newrun-h{font-size:15px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .orch-newrun-sub{margin:6px 0 14px;font-size:12.5px;line-height:1.55;color:var(--text-400);}
+.c2c-v2 .orch-newrun-list{display:flex;flex-direction:column;gap:8px;overflow-y:auto;}
+.c2c-v2 .orch-newrun-t{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 12px;text-align:left;padding:11px 13px;border:1px solid var(--border);border-radius:var(--radius-md,8px);background:var(--bg-100);cursor:pointer;}
+.c2c-v2 .orch-newrun-t:hover:not(:disabled){border-color:var(--accent-100);background:var(--accent-000);}
+.c2c-v2 .orch-newrun-t:disabled{opacity:.6;cursor:default;}
+.c2c-v2 .orch-newrun-t:focus-visible{outline:2px solid var(--accent-100);outline-offset:1px;}
+.c2c-v2 .orch-newrun-tn{font-size:13px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .orch-newrun-td{grid-column:1;font-size:11.5px;line-height:1.5;color:var(--text-400);}
+.c2c-v2 .orch-newrun-go{grid-row:1/span 2;font-size:11.5px;color:var(--text-400);white-space:nowrap;}
+.c2c-v2 .orch-newrun-f{display:flex;justify-content:flex-end;margin-top:14px;}
+
+/* Nonclinical — the SEND conformance report, findings shown per study with the
+   guidance each one cites. */
+.c2c-v2 .nc-send-report{border-top:1px solid var(--border);margin-top:10px;padding-top:10px;display:flex;flex-direction:column;gap:8px;}
+.c2c-v2 .nc-send-report-h{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);}
+.c2c-v2 .nc-send-row{display:grid;grid-template-columns:130px 1fr;gap:10px;align-items:start;font-size:12px;}
+.c2c-v2 .nc-send-study{font-family:var(--font-mono,monospace);color:var(--text-300);}
+.c2c-v2 .nc-send-fs{display:flex;flex-direction:column;gap:4px;}
+.c2c-v2 .nc-send-f{line-height:1.5;color:var(--text-200);}
+.c2c-v2 .nc-send-f em{font-style:normal;color:var(--text-400);}
+.c2c-v2 .nc-send-f.err{color:var(--error);}
+.c2c-v2 .nc-send-f.warn{color:var(--warning);}
+.c2c-v2 .nc-send-f.ok{color:var(--success);}
+
+/* Precedent engine — the comparison the engine returned, shown as it came back. */
+.c2c-v2 .pe-compare{margin:0;font-family:var(--font-mono,monospace);font-size:11.5px;line-height:1.6;color:var(--text-200);white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto;}

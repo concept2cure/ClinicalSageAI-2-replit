@@ -18,8 +18,9 @@
  * Monitoring actions hang off a monitoring plan, so the controls that raise one
  * are disabled — with the reason shown — until the study has a plan.
  */
+import { ErrorState } from '../dataConnect';
 import React, { useState } from 'react';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
 import { RBM_VOCAB, type RbmSignal } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmBoardSignal, RbmBoardSite, RbmBoardAction } from './rbmBoard';
@@ -29,7 +30,7 @@ import {
 } from './RbmSurfaces';
 import {
   useRbmMutation, useRbmOwners, ownerId, dueDate,
-  rbmWrite, rbmWriteWithMeta, RbmWriteError, RbmWriteNote,
+  rbmWrite, rbmWriteWithMeta, RbmWriteNote,
 } from './rbmWrites';
 import '../styles/rbm-v2.css';
 
@@ -174,7 +175,14 @@ export function RbmSignals({ board, onTab, onReload }: SubProps) {
 
   return (
     <div>
-      <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
+      {mut.error && (
+        <ErrorState
+          variant="inline"
+          title="The change was not saved"
+          message={mut.error}
+          onDismiss={mut.clearError}
+        />
+      )}
       <RbmWriteNote note={mut.note} />
       <div className="rbm-bar">
         <div className="rbm-filters">{['open', 'new', 'investigating', 'resolved', 'all'].map(f => (
@@ -249,15 +257,22 @@ export function RbmPatients({ board, onReload }: SubProps) {
 
   return (
     <div>
-      <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
+      {mut.error && (
+        <ErrorState
+          variant="inline"
+          title="The change was not saved"
+          message={mut.error}
+          onDismiss={mut.clearError}
+        />
+      )}
       <RbmWriteNote note={mut.note} />
       <div className="rbm-bar">
-        <span className="rbm-bar-info">scorePatientCohort -- robust modified z-score -- MIN_COHORT 5 -- {board.summary.patients.scored} subjects -- {scannedAt ? `scored ${scannedAt}` : 'never scored'}</span>
+        <span className="rbm-bar-info">scorePatientCohort — robust modified z-score — MIN_COHORT 5 -- {board.summary.patients.scored} subjects -- {scannedAt ? `scored ${scannedAt}` : 'never scored'}</span>
         <button className="rbm-btn pri" disabled={mut.busy} onClick={scanCohort}>{I.zap}{mut.busy ? 'Scanning…' : 'Scan cohort'}</button>
       </div>
       <div className="rbm-pt-cols">
         <div className="rbm-card">
-          <div className="rbm-card-h">Cohort -- ranked by anomaly score<span className="rbm-card-sub">{flagged} flagged -- {review} in review</span></div>
+          <div className="rbm-card-h">Cohort — ranked by anomaly score<span className="rbm-card-sub">{flagged} flagged -- {review} in review</span></div>
           <table className="rbm-tbl"><thead><tr><th>Subject</th><th>Site</th><th>Anomaly</th><th>Top dimension</th><th>Status</th></tr></thead>
             <tbody>{P.map(p => (
               <tr key={p.sid} data-on={open === p.sid || undefined} className="rowbtn" onClick={() => setOpen(p.sid)}>
@@ -290,7 +305,7 @@ export function RbmPatients({ board, onReload }: SubProps) {
           </div>
         )}
       </div>
-      <div className="rbm-note">{I.info}The bars are the accessible equivalent of a cohort scatter -- every dimension shows its signed z. Cohorts below MIN_COHORT (5) are not scored (no false anomalies on thin data). Scoring runs over the metrics already loaded into the profile store; it is not a full patient timeline of visits, dosing, adverse events and concomitant medication.</div>
+      <div className="rbm-note">{I.info}The bars are the accessible equivalent of a cohort scatter — every dimension shows its signed z. Cohorts below MIN_COHORT (5) are not scored (no false anomalies on thin data). Scoring runs over the metrics already loaded into the profile store; it is not a full patient timeline of visits, dosing, adverse events and concomitant medication.</div>
     </div>
   );
 }
@@ -309,14 +324,21 @@ export function RbmSites({ board, onReload }: SubProps) {
 
   return (
     <div>
-      <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
+      {mut.error && (
+        <ErrorState
+          variant="inline"
+          title="The change was not saved"
+          message={mut.error}
+          onDismiss={mut.clearError}
+        />
+      )}
       <RbmWriteNote note={mut.note} />
       <div className="rbm-bar">
-        <span className="rbm-bar-info">site-risk-engine -- composite from Site Intelligence -- {at ? `scored ${at}` : 'never scored'}</span>
+        <span className="rbm-bar-info">site-risk-engine — composite from Site Intelligence -- {at ? `scored ${at}` : 'never scored'}</span>
         <button className="rbm-btn pri" disabled={mut.busy} onClick={recompute}>{I.zap}{mut.busy ? 'Recomputing…' : 'Recompute site risk'}</button>
       </div>
       <div className="rbm-card">
-        <table className="rbm-tbl"><thead><tr><th>Site</th><th>Composite</th><th style={{ width: 230 }}>Dimensions (of 25)</th><th>Tier</th><th>Drivers -- why this tier</th></tr></thead>
+        <table className="rbm-tbl"><thead><tr><th>Site</th><th>Composite</th><th style={{ width: 230 }}>Dimensions (of 25)</th><th>Tier</th><th>Drivers — why this tier</th></tr></thead>
           <tbody>{sites.map(s => (
             <tr key={s.n}>
               <td><b className="mono">{s.n}</b> {s.name}</td>
@@ -360,7 +382,7 @@ export function RbmOversight({ board, onTab, onReload }: SubProps) {
       await rbmWrite('POST', '/rbm-monitoring-actions', {
         planId,
         actionType: 'site_visit',
-        description: `${f.type === 'remote' ? 'Remote' : 'On-site'} oversight visit -- site ${site.n} (${f.focus})`,
+        description: `${f.type === 'remote' ? 'Remote' : 'On-site'} oversight visit — site ${site.n} (${f.focus})`,
         priority: site.tier === 'enhanced' ? 'high' : 'medium',
         owner: ownerId(f.monitor),
         dueDate: dueDate(f.when),
@@ -371,10 +393,17 @@ export function RbmOversight({ board, onTab, onReload }: SubProps) {
 
   return (
     <div>
-      <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
+      {mut.error && (
+        <ErrorState
+          variant="inline"
+          title="The change was not saved"
+          message={mut.error}
+          onDismiss={mut.clearError}
+        />
+      )}
       {planId == null && <NoPlanNote onTab={onTab} />}
       <div className="rbm-card">
-        <div className="rbm-card-h">Where do I send a monitor<span className="rbm-card-sub">SPOT -- site risk joined with open-signal load</span></div>
+        <div className="rbm-card-h">Where do I send a monitor<span className="rbm-card-sub">SPOT — site risk joined with open-signal load</span></div>
         <table className="rbm-tbl"><thead><tr><th>Site</th><th>Composite</th><th>Tier</th><th>Open signals</th><th>High severity</th><th>Oversight action</th></tr></thead>
           <tbody>{sites.map(s => {
             const c = C[s.n ?? ''] || { open: 0, high: 0 };
@@ -386,7 +415,7 @@ export function RbmOversight({ board, onTab, onReload }: SubProps) {
                 <td><RbmChip vocab="tier" value={s.tier} /></td>
                 <td>{c.open > 0 ? <button className="rbm-linknum" onClick={() => onTab?.('signals')}>{c.open} open {I.chevRight}</button> : <span className="mut">0</span>}</td>
                 <td>{c.high > 0 ? <button className="rbm-linknum hi" onClick={() => onTab?.('signals')}>{c.high} high {I.chevRight}</button> : <span className="mut">0</span>}</td>
-                <td>{v ? <span className="rbm-visit-set">{I.check}Scheduled -- due {v.due} -- {v.owner}</span>
+                <td>{v ? <span className="rbm-visit-set">{I.check}Scheduled — due {v.due} -- {v.owner}</span>
                   : <button className="rbm-linkbtn" disabled={mut.busy || planId == null}
                       title={planId == null ? 'This study has no monitoring plan for the visit to attach to' : undefined}
                       onClick={() => setSchedFor(s)}>{I.clock}Schedule visit</button>}</td>
@@ -397,7 +426,7 @@ export function RbmOversight({ board, onTab, onReload }: SubProps) {
           </tbody></table>
       </div>
       <div className="rbm-note">{I.info}SPOT turns risk + signal load into a monitoring assignment: scheduling a visit creates a site_visit action on the monitoring plan. Enhanced-tier sites should carry an on-site visit; reduced-tier sites are remote/central by default. The visit is a tracked action — the monitoring report, findings, follow-up letter and targeted SDV/SDR scope are not modelled yet.</div>
-      {schedFor && <RbmFormModal title={`Schedule oversight visit -- site ${schedFor.n}`}
+      {schedFor && <RbmFormModal title={`Schedule oversight visit — site ${schedFor.n}`}
         intro={`${schedFor.name} -- composite ${schedFor.composite ?? '—'} -- ${schedFor.tier} tier. The visit is created as a site_visit action on the monitoring plan.`}
         fields={[
           { key: 'type', label: 'Visit type', type: 'select', options: ['on_site', 'remote'], labels: { on_site: 'On-site', remote: 'Remote / central' } },
@@ -455,13 +484,20 @@ export function RbmPlan({ board, onReload }: SubProps) {
 
   return (
     <div>
-      <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
+      {mut.error && (
+        <ErrorState
+          variant="inline"
+          title="The change was not saved"
+          message={mut.error}
+          onDismiss={mut.clearError}
+        />
+      )}
       <RbmWriteNote note={mut.note} />
       {plan ? (
         <div className="rbm-asmt">
           <div className="rbm-asmt-l">
             <b>{plan.title}</b>
-            <span>strategy <RbmChip vocab="strategy" value={plan.strategy} /> -- {plan.status === 'active' ? 'active' : 'draft -- approval pending'} -- updated {plan.updated ?? '—'}</span>
+            <span>strategy <RbmChip vocab="strategy" value={plan.strategy} /> -- {plan.status === 'active' ? 'active' : 'draft — approval pending'} -- updated {plan.updated ?? '—'}</span>
             {plan.approval ? <span className="rbm-audit">{I.check}Approved by {plan.approval.by} -- {plan.approval.when} -- &quot;{plan.approval.reason}&quot;</span> : null}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7, alignItems: 'flex-end' }}>
@@ -478,7 +514,7 @@ export function RbmPlan({ board, onReload }: SubProps) {
         </div>
       )}
       <div className="rbm-bar" style={{ marginBottom: 11 }}>
-        <span className="rbm-bar-info">{acts.length} actions -- {acts.filter(a => a.overdue).length} overdue -- escalations, investigations and scheduled visits land here</span>
+        <span className="rbm-bar-info">{acts.length} actions -- {acts.filter(a => a.overdue).length} overdue — escalations, investigations and scheduled visits land here</span>
         <button className="rbm-btn" disabled={mut.busy || !plan} title={!plan ? 'Generate a monitoring plan first' : undefined} onClick={() => setAdding(true)}>{I.zap}Add action</button>
       </div>
       <div className="rbm-board">{cols.map(([st, label]) => (
@@ -514,7 +550,8 @@ export function RbmPlan({ board, onReload }: SubProps) {
           const res = await apiRequest('POST', `/api/mdx/rbm-monitoring-plans/${plan.id}/approve`, { reason, password, mfaToken });
           if (res.ok) { setSignFor(false); onReload?.(); return; }
           const body = await res.json().catch(() => null) as { error?: string } | null;
-          return body?.error || `Approval failed (HTTP ${res.status}). The plan was not activated.`;
+          // See RbmSurfacesA: the enum used to win over the server's sentence.
+          return serverMessage(body) || `Approval failed (HTTP ${res.status}). The plan was not activated.`;
         }} />}
     </div>
   );

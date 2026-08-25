@@ -101,6 +101,19 @@ export interface MemoryAssemblyDiagnostics {
     clientMemory: LayerOutcome;
     projectMemory: LayerOutcome;
   };
+  /**
+   * HOW working memory was recalled — the distinction layerOutcomes cannot
+   * carry ('ok' was reported identically for a semantic hit and a recency
+   * fallback, so a semantic-recall pilot produced no evidence it was actually
+   * running semantically):
+   *   - 'semantic'          flag on, similarity recall served the summary
+   *   - 'recency_fallback'  flag ON but semantic cleared nothing (or failed),
+   *                         the recency path answered — the "on but not
+   *                         working" state a pilot must be able to see
+   *   - 'recency'           flag off; the unchanged default path answered
+   *   - 'none'              no summary recalled at all
+   */
+  workingMemoryMode?: 'semantic' | 'recency_fallback' | 'recency' | 'none';
   /** Wall-clock milliseconds spent in semantic search (parallel across layers). */
   semanticSearchMs?: number;
 }
@@ -215,8 +228,14 @@ export async function buildMemoryContextForChat(
   // to the recency-only latest summary under the default policy, exactly as
   // before. The flag defaults off, so the recency path is the unchanged default.
   let useSemanticWorkingMemory = false;
+  const semanticAttempted = Boolean(
+    isSemanticWorkingMemoryEnabled() && input.organizationId && input.query?.trim()
+  );
+  let workingMemoryMode: MemoryAssemblyDiagnostics['workingMemoryMode'] = 'none';
 
-  if (isSemanticWorkingMemoryEnabled() && input.organizationId && input.query?.trim()) {
+  // (`&& input.organizationId` restores the type narrowing semanticAttempted
+  // already guarantees — it can never change which branch runs.)
+  if (semanticAttempted && input.organizationId) {
     const hits = await withTimeout(
       searchWorkingMemorySemantic(input.threadId, input.organizationId, input.query, {
         limit: 1,
@@ -241,6 +260,7 @@ export async function buildMemoryContextForChat(
       }
       layerOutcomes.workingMemory = 'ok';
       useSemanticWorkingMemory = true;
+      workingMemoryMode = 'semantic';
     }
   }
 
@@ -259,8 +279,10 @@ export async function buildMemoryContextForChat(
         },
       });
       layerOutcomes.workingMemory = 'ok';
+      workingMemoryMode = semanticAttempted ? 'recency_fallback' : 'recency';
     } else {
       layerOutcomes.workingMemory = 'empty';
+      workingMemoryMode = 'none';
     }
   }
 
@@ -392,6 +414,7 @@ export async function buildMemoryContextForChat(
     droppedByDeduplication,
     trimmed: memoryBlock.length < assembled.length,
     layerOutcomes,
+    workingMemoryMode,
     semanticSearchMs,
   };
 
