@@ -4,7 +4,7 @@ Date: 2026-03-27
 Branch baseline observed: `concept2cure-v2` lineage (working branch currently checked out locally).
 
 ## Runtime and stack truth
-- Primary runtime is Node.js 20+ with npm 10+, TypeScript, Vite, and Express.
+- Primary runtime is Node.js 22+ with npm 10+, TypeScript, Vite, and Express.
 - Existing scripts confirm canonical checks:
   - `npm run typecheck`
   - `npm test`

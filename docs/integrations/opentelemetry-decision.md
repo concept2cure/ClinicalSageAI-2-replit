@@ -4,7 +4,7 @@ Date checked: 2026-03-31
 
 ## Upstream requirement snapshot
 - OpenTelemetry JS supports Node auto-instrumentation with `@opentelemetry/sdk-node` and `@opentelemetry/auto-instrumentations-node`.
-- Node 20+ is compatible with current JS SDK guidance.
+- Node 22+ is compatible with the installed SDK dependency floor.
 - OTLP exporter over HTTP is standard for collector pipelines.
 
 ## Required runtime(s)

@@ -21,7 +21,7 @@
     "medical-device"
   ],
   "engines": {
-    "node": ">=20.0.0",
+    "node": ">=22.0.0",
     "npm": ">=10.0.0"
   },
   "scripts": {
@@ -31,6 +31,7 @@
     "db:ensure": "tsx server/db/ensureCoreTables.ts",
     "db:apply-c2c": "node scripts/db/apply-c2c-migrations.mjs",
     "db:migrate:deploy": "node scripts/db/deploy-migrate.mjs",
+    "db:check-schema-entrypoints": "node scripts/db/install-fresh.mjs --check-schema-entrypoints",
     "db:check-assembly": "node scripts/check_assembly_docs.mjs",
     "build": "vite build && node scripts/build-server.mjs",
     "start": "NODE_ENV=production node dist/index.js",
@@ -135,6 +136,7 @@
     "ci:js-ts-shadows": "node scripts/ci/check-js-ts-shadows.mjs",
     "ci:typecheck:no-regression": "node scripts/ci/typecheck-no-regression.mjs",
     "ci:typecheck:write-baseline": "node scripts/ci/typecheck-no-regression.mjs --write-baseline",
+    "ci:node-runtime-alignment": "node scripts/ci/check-node-runtime-alignment.mjs",
     "ci:governed-export-routes": "node scripts/ci/check-governed-export-routes.mjs",
     "ci:governed-export-consequence-shape": "node scripts/ci/check-governed-export-consequence-shape.mjs",
     "ci:check-docx-runtime": "node scripts/ci/check-docx-runtime-canonicality.mjs",

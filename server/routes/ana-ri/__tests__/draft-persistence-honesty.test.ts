@@ -198,6 +198,10 @@ describe('persistCollectedDrafts — it never overstates what was recorded', () 
     expect(store.upsertDocumentArtifactVersion).toHaveBeenCalledWith(
       expect.objectContaining({ projectId: 88 }),
     );
+    expect(db.pool.query).toHaveBeenCalledWith(
+      expect.stringMatching(/regulatory_program_id\s*=\s*\$1\s+AND\s+organization_id\s*=\s*\$2/),
+      ['aabb1c22-1234-4abc-8def-0123456789ab', 7],
+    );
     expect(res.events().find(e => e.type === 'artifact_version_saved')).toBeTruthy();
   });
 

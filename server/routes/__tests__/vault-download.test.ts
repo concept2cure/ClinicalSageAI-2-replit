@@ -119,6 +119,9 @@ describe('integrity', () => {
     // it received without a second request.
     expect(res.headers['x-content-sha256']).toBe(HASH);
     expect(Buffer.from(res.body).equals(BYTES)).toBe(true);
+    const documentLookup = query.mock.calls.find(([sql]) => /FROM vault\.documents/.test(sql));
+    expect(documentLookup?.[0]).toMatch(/rp\.organization_id = \$3/);
+    expect(documentLookup?.[1]).toEqual([DOCUMENT, PROGRAM, 7]);
   });
 
   it('REFUSES bytes that do not match the recorded hash', async () => {

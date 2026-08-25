@@ -1539,22 +1539,14 @@ export const C2C_MIGRATION_FILES = [
   // missing column and fails every org closed.
   'db/migrations/20260824_module_grant_expiry.sql',
 
-  // ── Access requests from a lock — NOT YET WRITTEN ─────────────────────────
-  // `db/migrations/20260824_module_access_requests.sql` was listed here by
-  // 89ce2cd20 and never committed. It exists in no commit, and
-  // `module_access_requests` is referenced nowhere in server/, shared/ or the
-  // schema — the entry described a feature whose migration was not written.
-  //
-  // A listing for a file that is not on disk is not harmless here. This set is
-  // APPLIED in order, and the entry sat AFTER the tenant-isolation sweep in a
-  // reading where it created a tenant-keyed table — which is the exact case
-  // check-migration-set-order.mjs exists to catch, because such a table ships
-  // with no RLS policy and the policy count still goes up. It also blocked
-  // every push to this branch, for every session, from the moment it landed.
-  //
-  // Removed rather than stubbed: an empty migration would satisfy the gate and
-  // teach it to accept a file that creates nothing. When the feature is built,
-  // the entry returns WITH its SQL, in the same change.
+  // ── Access requests from a locked module ──────────────────────────────────
+  // The route is live and reads/writes module_access_requests. The migration
+  // therefore belongs on the same durable deploy path as the route, before the
+  // final tenant-isolation sweep so its integer organization_id receives the
+  // standard RLS policy in the same run. Keeping the SQL in db/migrations/
+  // without this entry creates a deploy-dead table definition: unit tests pass,
+  // while every real request fails with 42P01.
+  'db/migrations/20260824_module_access_requests.sql',
 
   // ── The enforcement mode becomes a governed setting ───────────────────────
   // Creates platform_settings, the store the Master Licensing console writes

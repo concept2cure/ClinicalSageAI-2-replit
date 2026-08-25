@@ -76,8 +76,14 @@ async function assertDocumentRefResolves(documentRef: string, organizationId: nu
     const { rows } = await pool.query(
       `SELECT 1 FROM vault.documents d
         WHERE d.id::text = $1
+          AND EXISTS (
+            SELECT 1 FROM regulatory_programs rp
+             WHERE rp.id = d.program_id
+               AND rp.organization_id = $2
+               AND rp.deleted_at IS NULL
+          )
         LIMIT 1`,
-      [id],
+      [id, organizationId],
     );
     if (rows.length === 0) {
       throw new TmfArtifactError(

@@ -659,8 +659,14 @@ export default function createProjectVaultRoutes(): Router {
              FROM vault.documents d
              LEFT JOIN users u ON u.id = d.created_by
             WHERE d.program_id = $1 AND d.deleted_at IS NULL
+              AND EXISTS (
+                SELECT 1 FROM regulatory_programs rp
+                 WHERE rp.id = d.program_id
+                   AND rp.organization_id = $2
+                   AND rp.deleted_at IS NULL
+              )
             ORDER BY d.updated_at DESC`,
-          [id],
+          [id, orgId],
         );
         uploads = upRes.rows as UploadRow[];
         tree.push(filingCabinet(view, uploads));
@@ -836,8 +842,14 @@ export default function createProjectVaultRoutes(): Router {
         `SELECT id, file_name, document_title, mime_type, file_size, s3_key, content_hash
            FROM vault.documents
           WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
+            AND EXISTS (
+              SELECT 1 FROM regulatory_programs rp
+               WHERE rp.id = vault.documents.program_id
+                 AND rp.organization_id = $3
+                 AND rp.deleted_at IS NULL
+            )
           LIMIT 1`,
-        [documentId, id],
+        [documentId, id, orgId],
       );
       if (docRes.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
       const doc = docRes.rows[0] as {
@@ -954,8 +966,14 @@ export default function createProjectVaultRoutes(): Router {
                   placement_status, placement_rationale
              FROM vault.documents
             WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
+              AND EXISTS (
+                SELECT 1 FROM regulatory_programs rp
+                 WHERE rp.id = vault.documents.program_id
+                   AND rp.organization_id = $3
+                   AND rp.deleted_at IS NULL
+              )
             FOR UPDATE`,
-          [documentId, id],
+          [documentId, id, orgId],
         );
         if (docRes.rows.length === 0) {
           await client.query('ROLLBACK');
@@ -1020,7 +1038,13 @@ export default function createProjectVaultRoutes(): Router {
              placed_by = $6,
              placed_at = NOW(),
              updated_at = NOW()
-           WHERE id = $7
+           WHERE id = $7 AND program_id = $8
+             AND EXISTS (
+               SELECT 1 FROM regulatory_programs rp
+                WHERE rp.id = vault.documents.program_id
+                  AND rp.organization_id = $9
+                  AND rp.deleted_at IS NULL
+             )
            RETURNING folder_id, evidence_kind, ctd_section, placement_status,
                      placement_confidence, placement_rationale`,
           [
@@ -1033,6 +1057,8 @@ export default function createProjectVaultRoutes(): Router {
             rationale,
             userId,
             documentId,
+            id,
+            orgId,
           ],
         );
         const after = upd.rows[0] as {
