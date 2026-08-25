@@ -2672,28 +2672,66 @@ router.patch('/comments/:commentId', async (req: Request, res: Response) => {
       values.push(resolution_note);
     }
 
-    values.push(commentId, tenantId);
-
-    const result = await pool.query(
-      `UPDATE authoring_comments
-       SET ${updates.join(', ')}
-       WHERE id = $${paramCount + 1} AND tenant_id = $${paramCount + 2}
-       RETURNING *`,
-      values
-    );
-
-    if (((result.rowCount ?? 0) === 0)) {
-      return res.status(404).json({
-        success: false,
-        error: 'Comment not found',
-      });
+    if (updates.length === 0) {
+      return res.status(400).json({ success: false, error: 'No comment changes supplied' });
     }
 
-    res.json({
-      success: true,
-      comment: result.rows[0],
-      message: 'Comment updated successfully',
-    });
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const before = await client.query(
+        `SELECT doc_id, section_id, status, resolution_note
+           FROM authoring_comments
+          WHERE id = $1 AND tenant_id = $2
+          FOR UPDATE`,
+        [commentId, tenantId]
+      );
+      if (((before.rowCount ?? 0) === 0)) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ success: false, error: 'Comment not found' });
+      }
+
+      values.push(commentId, tenantId);
+      const result = await client.query(
+        `UPDATE authoring_comments
+            SET ${updates.join(', ')}, updated_at = NOW()
+          WHERE id = $${paramCount + 1} AND tenant_id = $${paramCount + 2}
+          RETURNING *`,
+        values
+      );
+
+      const updated = result.rows[0];
+      const eventType = status === 'resolved' ? 'comment_resolved' : 'comment_updated';
+      const actor = req.user?.email ?? resolvedBy;
+      await createAuditEvent(
+        updated.doc_id,
+        eventType,
+        actor,
+        {
+          comment_id: commentId,
+          section_id: updated.section_id,
+          previous_status: before.rows[0].status,
+          status: updated.status,
+          previous_resolution_note: before.rows[0].resolution_note ?? null,
+          resolution_note: updated.resolution_note ?? null,
+        },
+        tenantId,
+        client
+      );
+
+      await client.query('COMMIT');
+      res.json({
+        success: true,
+        comment: updated,
+        message: 'Comment updated successfully',
+      });
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   } catch (error) {
     console.error('Error updating comment:', error);
     res.status(500).json({
