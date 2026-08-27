@@ -5,7 +5,7 @@ const approved = { region: 'us', zeroRetentionApproved: true, approvedDataClasse
 const base: SensitivePlacementInput = { environment: 'production', detectedDataClass: 'pii', tenantPolicy: {}, provider: 'private-deployment', region: 'us', zeroRetentionApproval: true, intendedUse: 'clinical_drafting', providerApproval: approved };
 
 describe('canonical sensitive placement decision', () => {
-  it.each([
+  it.each<[string, Partial<SensitivePlacementInput>, boolean, string]>([
     ['no PII', { detectedDataClass: 'none' }, true, 'ALLOW_NON_SENSITIVE'],
     ['ordinary PII', {}, true, 'ALLOW_APPROVED_PLACEMENT'],
     ['health information', { detectedDataClass: 'phi' }, true, 'ALLOW_APPROVED_PLACEMENT'],
