@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-27T01:30:55.304Z",
+  "generatedAt": "2026-08-27T01:33:45.319Z",
   "git": {
-    "sha": "cd04a6bc1174cba7e8e015003eaea258ee106730",
+    "sha": "f04bd533c7b179dcf34736883fdcc314d79e2cfe",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2403,12 +2403,12 @@
         "lines": 2504
       },
       {
-        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
-        "lines": 2419
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 2465
       },
       {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2391
+        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
+        "lines": 2419
       },
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
