@@ -287,10 +287,39 @@ earlier disjuncts do not satisfy, the cast **is** evaluated:
 ERROR:  invalid input syntax for type integer: "d0211565-c7f2-402f-ad10-e4211e683857"
 ```
 
-That is every read and every write of every integer tenant-keyed table, on any
-connection carrying a real request scope, **in every RLS mode** — the
-shadow-mode bypass is just another disjunct and does not stop the cast being
-evaluated.
+That is every read and every write of every integer tenant-keyed table on any
+connection **where `app.current_org_id` actually holds the uuid**, in every RLS
+mode — the shadow-mode bypass is just another disjunct and does not stop the
+cast being evaluated.
+
+### How live is it, measured rather than assumed
+
+An earlier revision of this document said "on any connection carrying a real
+request scope", which is **wrong**, and the correction is worth more than the
+original claim.
+
+Booting the app against a provisioned database as `app_service` with
+`RLS_ENFORCE=on`, restoring the pre-fix cast on `regulatory_programs`, and
+hitting `GET /api/regulatory-programs` returns **200 with the tenant's row** —
+not a crash. A follow-up probe (a policy that divides by zero when
+`app.current_org_id` is non-empty) also returned 200. So on that request path
+the uuid GUC is **empty**, and RLS is filtering on `app.current_tenant_id`
+alone — which it does correctly.
+
+So the accurate statement is narrower:
+
+- the crash needs `app.current_org_id` to hold a non-integer value;
+- `server/middleware/establishRequestTenantScope.ts` is *designed* to put the
+  org uuid there (`orgUuid ?? ''`), and the JWT carries `organizationUuid`, but
+  on the path measured it arrives empty;
+- the paths that definitely populate it are the ones passing it explicitly —
+  `withTenantConnection({ orgUuid })`, `advancedRAGPipeline`, and
+  `server/src/routes/stability.router.ts`.
+
+It is therefore a **loaded landmine rather than a fire already burning**: it
+fires the moment `attachOrgUuid` succeeds or an explicit-uuid path runs, and the
+fix is still worth having for exactly that reason. What it is not is "the app
+cannot read a tenant table today". It can, and does.
 
 Two things hid it, and both are worth naming:
 
@@ -302,8 +331,8 @@ Two things hid it, and both are worth naming:
    `app.current_org_id` to `''`, the one value that avoids the cast.
 
 So the defect was invisible precisely under the conditions the role split
-removes: the moment a runtime connects as `app_service`, which production
-requires, no tenant table is readable at all.
+removes — and stays invisible until something populates the org-uuid GUC, which
+is why measuring it end to end mattered more than reasoning about it.
 
 Fixed by **extracting** an integer instead of casting whatever is there:
 
@@ -582,6 +611,45 @@ apply order by comparing `indexOf` **byte offsets** of the two quoted paths in
 the source text of `migration-set.mjs`. That proxy broke the moment an entry
 stopped being a bare string literal. It now measures the array, which is what
 determines apply order and what the test always meant.
+
+---
+
+## 4c. The app, running on it
+
+Provisioning is only interesting if the application actually serves from it. The
+chain was booted end to end against a provisioned database:
+
+| Posture | Result |
+|---|---|
+| dev (`postgres`, `RLS_ENFORCE=shadow`) | boots; `/readyz` → `database: ok`, `schema: ok`, `schemaState: ready` |
+| **production (`app_service`, `RLS_ENFORCE=on`)** | boots; same readiness; live tenant data served |
+
+`/readyz` reports `ana: down` in both, with the reason: no AI provider key is
+configured. That is an environment gap, correctly named rather than papered
+over — the database and schema legs are green.
+
+**A real write→read round trip**, authenticated as a seeded user whose JWT
+carries `organizationId: 36`:
+
+- `POST /api/c2c/projects` → **201**, and it did real work: a project, a
+  document, **71 scaffolded sections**, a submission — a multi-table write
+  across exactly the tables §1 and §2 gave creators to. It also reported
+  `projectAnchorSkipped: "NO_CLIENT_WORKSPACE"` rather than silently faking the
+  anchor.
+- `GET /api/c2c/projects` → **200**, returns the project.
+- `GET /api/c2c/rule-packs` → **200**, 30 seeded rule packs.
+- Empty tables return honest empty collections, not fixtures and not errors.
+
+All of the above holds under `app_service` with `RLS_ENFORCE=on`, which is the
+configuration the role split exists for and which nothing had previously run.
+
+One thing this surfaced, working as designed: with enforcement on, background
+work that uses the **raw pool with no tenant scope** is refused —
+`[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while
+RLS_ENFORCE=on`, seen from the sentinel scheduler and a feature-flag read. That
+is the guard doing its job, and it is the signal that those jobs need a
+tenant-scoped or explicitly super-admin-scoped connection before enforcement is
+turned on in production.
 
 ---
 
