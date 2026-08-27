@@ -1270,6 +1270,13 @@ jobs:
           # This job proves the build boots against a real database with RLS on
           # as a non-superuser. It is not an AI test and must not need a key.
           AI_GATEWAY_DETERMINISTIC: 'true'
+          # Production refuses to boot without an explicit sensitive-data
+          # placement contract (assertSensitivePlacementConfiguration). This is
+          # the most fail-closed contract expressible: enforcement on, and the
+          # single named deployment approved for NO sensitive data classes —
+          # nothing here claims a contractual zero-retention approval exists.
+          AI_SENSITIVE_DATA_POLICY_MODE: enforce
+          AI_PROVIDER_PLACEMENT_APPROVALS: '{"private-deployment":{"region":"us","zeroRetentionApproved":true,"approvedDataClasses":[],"approvedIntendedUses":[]}}'
 
       - name: Tear down PostgreSQL
         if: always()
