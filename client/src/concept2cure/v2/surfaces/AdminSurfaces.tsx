@@ -2173,6 +2173,8 @@ interface ArtifactRow {
   when: string;
   ver: string;
   sig: boolean;
+  reviewed: boolean;
+  sourceCount: number;
   prog: string;
 }
 
@@ -2423,6 +2425,10 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
                 </span>
                 <span className="ct-strong">{a.name}</span>
                 <span className="art-kind">{a.kind}</span>
+                <span className="art-kind" data-testid={`artifact-governance-${a.id}`}>
+                  {a.sourceCount ?? 0} cited source{a.sourceCount === 1 ? '' : 's'} ·{' '}
+                  {a.reviewed ? 'Human review recorded' : 'Human review required'}
+                </span>
               </div>
               <div>
                 {/* No format on the row -> no badge, rather than an empty pill
