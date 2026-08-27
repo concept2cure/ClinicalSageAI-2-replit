@@ -16,6 +16,7 @@
  * PDF, and the version before that passed it through.
  */
 import type { ContentBlock, InlineRun } from './authoring-section-content.js';
+import type { ResolvedImage } from './authoring-images.js';
 
 export function escapeHtml(s: string): string {
   return String(s ?? '')
@@ -66,7 +67,10 @@ function tableHtml(b: ContentBlock): string {
  * one real list, so a numbered procedure keeps its numbering instead of
  * becoming a run of bulleted paragraphs.
  */
-export function blocksToHtml(blocks: ContentBlock[]): string {
+export function blocksToHtml(
+  blocks: ContentBlock[],
+  images?: Map<string, ResolvedImage>,
+): string {
   const parts: string[] = [];
   let openList: 'ol' | 'ul' | null = null;
   const closeList = () => {
@@ -87,7 +91,25 @@ export function blocksToHtml(blocks: ContentBlock[]): string {
     }
     closeList();
     if (b.kind === 'table') parts.push(tableHtml(b));
-    else if (b.kind === 'heading') parts.push(`<h3>${inline(b.runs)}</h3>`);
+    else if (b.kind === 'image') {
+      /* The bytes ride into the print engine as a data URI — no network
+         fetch happens inside the renderer, so the auth boundary is never
+         in play. Emitted markup stays whitelisted: the src is built here
+         from resolved bytes, never copied from stored markup. */
+      const resolved = b.src ? images?.get(b.src) : undefined;
+      if (resolved) {
+        const alt = b.alt ? ` alt="${escapeHtml(b.alt)}"` : '';
+        parts.push(
+          `<figure><img src="data:${resolved.mimeType};base64,${resolved.buffer.toString('base64')}"${alt}>` +
+            (b.alt ? `<figcaption>${escapeHtml(b.alt)}</figcaption>` : '') +
+            `</figure>`
+        );
+      } else {
+        parts.push(
+          `<p class="img-missing">[Figure not exported: ${escapeHtml(b.alt || b.src || 'unresolved image reference')}]</p>`
+        );
+      }
+    } else if (b.kind === 'heading') parts.push(`<h3>${inline(b.runs)}</h3>`);
     else parts.push(`<p>${inline(b.runs)}</p>`);
   }
   closeList();
@@ -103,4 +125,8 @@ export const PRINT_STYLES = `
   th { background: #f2f4f5; font-weight: bold; }
   tr { page-break-inside: avoid; }
   caption { caption-side: bottom; font-style: italic; font-size: 10pt; padding-top: 4px; }
+  figure { margin: 0.8em 0; text-align: center; page-break-inside: avoid; }
+  figure img { max-width: 100%; height: auto; }
+  figcaption { font-style: italic; font-size: 10pt; padding-top: 4px; }
+  .img-missing { color: #6b7280; font-style: italic; }
 `;

@@ -11,7 +11,8 @@
  *
  * What it does (idempotent — safe to re-run):
  *   1. Create the named schemas + extensions the Drizzle schema references.
- *   2. `drizzle-kit push` to lay down all tables from shared/schema.ts.
+ *   2. `drizzle-kit push` to lay down every table from the schema entrypoints
+ *      declared in drizzle.config.ts.
  *   3. Overlay the raw migrations/ tree ON TOP of push (multi-pass, tolerant of
  *      objects push already made) to create the core product tables that live
  *      ONLY in raw migrations and are NOT in shared/schema.ts — regulatory_programs,
@@ -96,7 +97,13 @@ const RLS_MIGRATIONS = [
   '20260612_rls_research_admin.sql',
 ];
 
-const url = resolveDatabaseUrl(INSTALL_URL_VARS);
+const CHECK_SCHEMA_ENTRYPOINTS = process.argv.includes('--check-schema-entrypoints');
+// The config-only guard must be runnable before credentials or a database
+// exist. node-postgres connects lazily, so a syntactically valid inert URL lets
+// the shared pool be constructed without opening a socket in this mode.
+const url = CHECK_SCHEMA_ENTRYPOINTS
+  ? 'postgresql://schema-check:unused@127.0.0.1:1/schema-check'
+  : resolveDatabaseUrl(INSTALL_URL_VARS);
 const pool = new Pool({ connectionString: url, ssl: sslFor(url) });
 
 /**
@@ -252,23 +259,34 @@ function sourceOf(table) {
  * that admits it does not know, because the wrong name sends the next operator
  * to the wrong file.
  */
-function resolveDrizzleEntrypoint() {
+function resolveDrizzleEntrypoints() {
   const configPath = path.resolve(__dirname, '..', '..', 'drizzle.config.ts');
   let text;
   try {
     text = fs.readFileSync(configPath, 'utf8');
   } catch (err) {
-    return { path: null, detail: `drizzle.config.ts unreadable: ${err.message}` };
+    return { paths: [], detail: `drizzle.config.ts unreadable: ${err.message}` };
   }
-  const m = text.match(/\bschema\s*:\s*['"]([^'"]+)['"]/);
-  if (!m) {
-    return { path: null, detail: 'drizzle.config.ts has no literal `schema:` field' };
+
+  // drizzle-kit accepts either a string or an array. The installer used to
+  // recognise only the string form, so changing the real config to an array of
+  // three entrypoints made a successful install report itself incomplete. Keep
+  // this deliberately literal (no config execution before a database exists),
+  // but parse both documented forms and verify every path on disk.
+  const field = text.match(/\bschema\s*:\s*(\[[\s\S]*?\]|['"][^'"]+['"])/);
+  const paths = field
+    ? [...field[1].matchAll(/['"]([^'"]+)['"]/g)].map((m) => m[1])
+    : [];
+  if (paths.length === 0) {
+    return { paths: [], detail: 'drizzle.config.ts has no literal `schema:` entrypoint' };
   }
-  const entry = m[1];
-  const full = path.resolve(path.dirname(configPath), entry);
+  const missing = paths.filter((entry) => !fs.existsSync(path.resolve(path.dirname(configPath), entry)));
   return {
-    path: entry,
-    detail: fs.existsSync(full) ? null : `declared entrypoint ${entry} does not exist on disk`,
+    paths,
+    detail:
+      missing.length === 0
+        ? null
+        : `declared entrypoint(s) do not exist on disk: ${missing.join(', ')}`,
   };
 }
 
@@ -597,6 +615,61 @@ async function step(label, fn) {
   await fn();
 }
 
+/**
+ * Every table name drizzle-kit will create from `shared/schema.ts`.
+ *
+ * Scoped exactly the way drizzle scopes it: use every entrypoint named in
+ * `drizzle.config.ts`, plus whatever each entrypoint recursively re-exports
+ * (`export * from './schema/…'`) — and nothing else under `shared/`. Modules
+ * outside that reachable graph are not push inputs. Counting them here would
+ * make this gate fail an install that is in fact complete, which is worse than
+ * the silence it replaces.
+ *
+ * Read from source text rather than by importing: this runs against a database
+ * that may not exist yet, and importing pulls in the whole Drizzle graph. The
+ * declaration form is uniform — `pgTable('name', …)` — so a regex over the
+ * reachable files is sufficient and cannot be broken by the module failing to
+ * load. Views are excluded (`pgView`/`pgMaterializedView`): push does not
+ * create them.
+ */
+function declaredTableNames(entrypoints) {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const files = [];
+  const queued = entrypoints.map((entry) => path.resolve(repoRoot, entry));
+  const seen = new Set();
+
+  // Follow literal re-exports from every configured entrypoint. A queue keeps
+  // this correct if an entrypoint gains a second level of barrel files later;
+  // `seen` prevents cycles from turning installer verification into a hang.
+  while (queued.length > 0) {
+    const file = queued.shift();
+    if (!file || seen.has(file)) continue;
+    seen.add(file);
+    files.push(file);
+    const src = fs.readFileSync(file, 'utf8');
+    for (const m of src.matchAll(/export\s+\*\s+from\s+['"](\.[^'"]+)['"]/g)) {
+      for (const suffix of ['.ts', '/index.ts']) {
+        const candidate = path.resolve(path.dirname(file), `${m[1]}${suffix}`);
+        if (fs.existsSync(candidate)) {
+          queued.push(candidate);
+          break;
+        }
+      }
+    }
+  }
+
+  const names = new Set();
+  for (const f of files) {
+    const src = fs.readFileSync(f, 'utf8');
+    for (const m of src.matchAll(/\bpgTable\(\s*['"`]([a-zA-Z0-9_]+)['"`]/g)) {
+      names.add(m[1]);
+    }
+  }
+  return [...names].sort();
+}
+
+
+
 async function main() {
   await step('1/8 Prerequisites — schemas + extensions', async () => {
     await pool.query(`
@@ -648,9 +721,11 @@ async function main() {
     // whichever step happened to run first.
     recordSchemaSource('pre-existing (before this run)', await snapshotPublicTables());
 
-    const entrypoint = resolveDrizzleEntrypoint();
-    if (entrypoint.path) {
-      console.log(`  • schema source: drizzle-kit push from ${entrypoint.path} (drizzle.config.ts)`);
+    const entrypoint = resolveDrizzleEntrypoints();
+    if (entrypoint.paths.length > 0) {
+      console.log(
+        `  • schema source: drizzle-kit push from ${entrypoint.paths.join(', ')} (drizzle.config.ts)`,
+      );
     }
     if (entrypoint.detail) {
       console.log(`  ⚠ ${entrypoint.detail}`);
@@ -672,7 +747,48 @@ async function main() {
         console.error(res.stderr || '');
         throw new Error(`drizzle-kit push failed (exit ${res.status})`);
       }
-      console.log('  ✓ schema pushed from shared/schema.ts');
+      /* ── The exit code is not evidence ────────────────────────────────────
+         The degraded branch below already records why: drizzle-kit push applies
+         its statements in ONE sequential loop, stops at the first error, and
+         EXITS 0 while doing so. That hazard is not specific to pgvector — any
+         failing statement (an introspection error, a type it cannot round-trip,
+         a policy-bound column) ends the loop the same way — so a status check
+         here proves nothing at all.
+
+         Observed: on a database with pgvector present, push aborted partway
+         with a validation error, exited 0, and this step printed
+         "✓ schema pushed from the configured entrypoints". `project_memory_entries`,
+         `coauthor_documents` and `conversation_working_memory` were never
+         created; step 8's checks (a table COUNT, five named route tables, the
+         authoring subsystem) all passed, and the install reported success. The
+         first sign was /api/haq-manager/rounds and /api/coauthor/documents
+         returning 500 in the running product.
+
+         So the push is verified against the thing it claims to have done:
+         every table the configured schema graph declares must now exist. That cannot be
+         satisfied by an exit code. */
+      const declared = declaredTableNames(entrypoint.paths);
+      const { rows: existing } = await pool.query(
+        `SELECT table_name FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_type = 'BASE TABLE'`,
+      );
+      const have = new Set(existing.map((r) => r.table_name));
+      const missing = declared.filter((t) => !have.has(t));
+      if (missing.length > 0) {
+        console.error(res.stdout || '');
+        console.error(res.stderr || '');
+        throw new Error(
+          `drizzle-kit push exited 0 but did NOT create ${missing.length} of ` +
+            `${declared.length} table(s) declared by the configured schema entrypoints. push stops at ` +
+            `the first failing statement and still exits 0, so its exit code cannot be ` +
+            `trusted. Missing: ${missing.slice(0, 25).join(', ')}` +
+            `${missing.length > 25 ? `, …and ${missing.length - 25} more` : ''}`,
+        );
+      }
+      console.log(
+        `  ✓ schema pushed from ${entrypoint.paths.join(', ')} ` +
+          `(${declared.length} declared tables verified present)`,
+      );
       return;
     }
 
@@ -794,10 +910,14 @@ async function main() {
     }
   });
 
-  recordSchemaSource(`drizzle-kit push (${resolveDrizzleEntrypoint().path ?? 'drizzle.config.ts'})`, await snapshotPublicTables());
+  const pushedEntrypoints = resolveDrizzleEntrypoints().paths;
+  recordSchemaSource(
+    `drizzle-kit push (${pushedEntrypoints.join(', ') || 'drizzle.config.ts'})`,
+    await snapshotPublicTables(),
+  );
 
   await step('3/8 Complete schema — raw migration overlay', async () => {
-    // drizzle-kit push lays down ONLY shared/schema.ts. The core product tables
+    // drizzle-kit push lays down only the configured Drizzle schema graph. The core product tables
     // — regulatory_programs, c2c_documents / c2c_document_sections /
     // c2c_rule_packs, c2c_ana_*, the submission-ops set, and ~200 more — live
     // ONLY in the raw migrations/ tree, which drizzle's journaled migrate() does
@@ -1540,14 +1660,29 @@ function report() {
   return 1;
 }
 
-main()
-  .then(async () => {
-    const code = report();
-    await pool.end().catch(() => {});
-    process.exit(code);
-  })
-  .catch(async (err) => {
-    console.error(`\n❌ Install failed: ${err.message}`);
-    await pool.end().catch(() => {});
-    process.exit(1);
-  });
+if (CHECK_SCHEMA_ENTRYPOINTS) {
+  const entrypoint = resolveDrizzleEntrypoints();
+  if (entrypoint.detail) {
+    console.error(`[db:check-schema-entrypoints] FAIL — ${entrypoint.detail}`);
+    process.exitCode = 1;
+  } else {
+    const tables = declaredTableNames(entrypoint.paths);
+    console.log(
+      `[db:check-schema-entrypoints] OK — ${entrypoint.paths.length} entrypoint(s), ` +
+        `${tables.length} declared public table(s): ${entrypoint.paths.join(', ')}`,
+    );
+  }
+  await pool.end().catch(() => {});
+} else {
+  main()
+    .then(async () => {
+      const code = report();
+      await pool.end().catch(() => {});
+      process.exit(code);
+    })
+    .catch(async (err) => {
+      console.error(`\n❌ Install failed: ${err.message}`);
+      await pool.end().catch(() => {});
+      process.exit(1);
+    });
+}

@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { EmptyState, connected, liveGetOrNull, unwrapList, useLiveData } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
 /* ── Display-contract types (mapped from the real orchestration backends) ── */
@@ -34,6 +35,10 @@ interface OrchStep {
 
 interface OrchRun {
   id: string;
+  /** The template this run executed. Carried so "Retry"/"Replay" can start the
+   *  same workflow again — without it neither button could name what to run,
+   *  which is why both were `noop`. */
+  templateId: string | null;
   title: string;
   status: string;
   started: string;
@@ -198,6 +203,7 @@ export function mapRuns(payload: unknown, tplNames: Record<string, string>): Orc
     .sort((a, b) => String(b.startedAt ?? '').localeCompare(String(a.startedAt ?? '')))
     .map((x): OrchRun => ({
       id: x.executionId,
+      templateId: typeof x.templateId === 'string' && x.templateId ? x.templateId : null,
       title: tplNames[String(x.templateId)] || String(x.templateId || 'workflow').replace(/_/g, ' '),
       status: x.status,
       started: fmtWhen(x.startedAt),
@@ -278,10 +284,21 @@ function useOrchProgram(): { pid: number; label: string } | null {
 
 /* ── Helpers ── */
 
-/** [label, icon, onClick, primary, busy?, disabledReason?] — a control with a
-    disabledReason is rendered disabled and explains itself on hover, rather
-    than pretending to act. */
-type CtrlTuple = [string, string, () => void, boolean, boolean?, string?];
+/** A run control. `why` is the reason it cannot act: a control that carries one
+ *  is rendered disabled AND visually disabled (`.orch-ctrl:disabled`), and says
+ *  why on hover, rather than looking live and doing nothing on click.
+ *  `busyLabel` is the copy shown while its own write is in flight — every
+ *  control used to share the single string "Cancelling…", so pressing Retry
+ *  told the user their run was being cancelled while a new one was starting. */
+interface RunCtrl {
+  label: string;
+  icon: string;
+  onClick: () => void;
+  primary: boolean;
+  busy?: boolean;
+  busyLabel?: string;
+  why?: string;
+}
 
 /* ════ Orchestration -- workflow runs & readiness ════ */
 
@@ -294,6 +311,11 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   /* ── Live adoption — every panel fixture-free (real → empty → error) ── */
   const prog = useOrchProgram();
   const pid = prog ? prog.pid : null;
+  const [newRunOpen, setNewRunOpen] = useState(false);
+  /** Bumped by "Re-evaluate" — the readiness read recomputes on every call. */
+  const [rdEpoch, setRdEpoch] = useState(0);
+  /** Bumped after a run is created, so the board is re-read from the engine. */
+  const [runsEpoch, setRunsEpoch] = useState(0);
   const progLabel = prog ? prog.label : null;
 
   // Template names give live runs their registered display titles (real
@@ -305,13 +327,28 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
     if (Array.isArray(t)) for (const x of t) if (x?.templateId && x?.name) m[x.templateId] = x.name;
     return m;
   }, [tplState.data]);
+  /* `loading` is false for one render after `pid` arrives — useLiveData set it
+     false while the path was null, and only the effect turns it back on. In
+     that window `templates` is empty for the same reason a 500 leaves it empty,
+     and the CTA claimed "No workflow templates are registered in this
+     deployment": a fact about the deployment, asserted from a read that had not
+     happened. Settled means the payload actually came back. */
+  const tplSettled = Boolean(tplState.data) && !tplState.loading && !tplState.error;
+  /** The registered templates a new run can be started from, in registry order. */
+  const templates = useMemo(() => {
+    const t = (tplState.data as { templates?: Array<{ templateId?: string; name?: string; description?: string }> } | null)?.templates;
+    return Array.isArray(t)
+      ? t.filter((x): x is { templateId: string; name: string; description?: string } =>
+          typeof x?.templateId === 'string' && typeof x?.name === 'string')
+      : [];
+  }, [tplState.data]);
 
   // Readiness — the computed ReadinessAssessment (real object / honest empty /
   // honest error). Null while loading, on error, when no program is identified,
   // or when the payload shape is rejected by mapReadiness.
   const rdState = useLiveData<unknown>(
     pid == null ? null : `/api/orchestration/projects/${pid}/readiness`,
-    [pid],
+    [pid, rdEpoch],
   );
   const r = useMemo(
     () => (!rdState.loading && !rdState.error ? mapReadiness(rdState.data) : null),
@@ -322,7 +359,10 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   // run controls can update optimistically (FLAGGED mock actions, see below);
   // seeded from the mapped live rows and re-seeded only when their identity
   // changes, so the seed effect can't loop on useLiveData's fresh null/[].
-  const runsState = useLiveData<unknown>(pid == null ? null : `/api/orchestration/project/${pid}`, [pid]);
+  const runsState = useLiveData<unknown>(
+    pid == null ? null : `/api/orchestration/project/${pid}`,
+    [pid, runsEpoch],
+  );
   const runsMapped = useMemo(
     () => (!runsState.loading && !runsState.error ? mapRuns(runsState.data, tplNames) : null),
     [runsState.loading, runsState.error, runsState.data, tplNames],
@@ -412,14 +452,56 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
-  /* Pause / Resume / Retry / Replay and the approval decisions are NOT wired,
-     and are no longer pretended.
-     - The run controls used to call setRunStatus, relabelling a server-side run
-       locally: "Pause" left it executing, "Resume" un-paused something never
-       paused, and "Replay" silently re-labelled a completed, audited run as
-       running. /api/orchestration exposes execute and cancel only — there is no
-       pause/resume/retry route to call.
-     - `decide` is now WIRED to POST /api/orchestration/checkpoints/:id/decision.
+  /**
+   * Start a workflow run — POST /api/orchestration/execute.
+   *
+   * This is what "New run", "Retry" and "Replay" all are. The header CTA was
+   * hardcoded `disabled` with no onClick at all, on the surface whose entire
+   * purpose is workflow runs; Retry and Replay were `noop` behind a disabled
+   * flag because the display row did not carry the templateId they would need.
+   *
+   * Retry and Replay are stated as what they ARE: a NEW run of the same
+   * template against the same project. The engine keeps no resumable state for
+   * a finished run, so calling either of them "resuming" would be a claim about
+   * the record that is not true — the new run gets its own id and its own
+   * audit chain, and the failed or completed one stays exactly as it is.
+   */
+  const startRun = async (templateId: string, label: string) => {
+    if (busyRun || pid == null) return;
+    setBusyRun('new:' + templateId);
+    setRunErr('');
+    try {
+      const res = await apiRequest('POST', '/api/orchestration/execute', {
+        templateId,
+        projectId: pid,
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        const detail = serverMessage(json);
+        setRunErr(`Couldn’t start ${label}${detail ? ` — ${detail}` : ` (HTTP ${res.status})`}. No run was created.`);
+        return;
+      }
+      setNewRunOpen(false);
+      // Re-read rather than appending a client-built row: the run that appears
+      // is the one the engine actually created, with its real id and status.
+      setRunsEpoch((n) => n + 1);
+    } catch (e) {
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      setRunErr(
+        known && (e as Error).message
+          ? (e as Error).message
+          : `Couldn’t reach the orchestration service. ${label} was not started.`,
+      );
+    } finally {
+      setBusyRun('');
+    }
+  };
+
+  /* The run controls used to call setRunStatus, relabelling a server-side run
+     locally: "Pause" left it executing, "Resume" un-paused something never
+     paused, and "Replay" silently re-labelled a completed, audited run as
+     running.
+     - `decide` is WIRED to POST /api/orchestration/checkpoints/:id/decision.
        It used to write the decision into local state with `when: 'just now'`, a
        FABRICATED timestamp, and the row then rendered "✓ Approved" while the
        checkpoint store was read-only — a completed, timestamped approval that
@@ -430,10 +512,22 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
        decision from the same approver refused, decidedAt taken from the database
        clock, and an audit_events row written in the same transaction. It is NOT
        a §11.50 signature and the on-screen copy says so.
-     The RUN controls below stay disabled with a visible reason, rather than
-     removed: the run is real and worth showing, and hiding the control would
-     hide the fact that no pause/resume path exists. */
-  const UNWIRED_RUN = 'Not available yet — orchestration supports execute and cancel only.';
+     - "New run", "Retry" and "Replay" are WIRED, to POST
+       /api/orchestration/execute. All three mean the one thing the engine can
+       actually do: run a template against a project.
+     - Pause and Resume genuinely have no path. executeWorkflow() runs a
+       template's steps through one loop inside a single awaited call and keeps
+       no resumable state — /execute does not even answer until the run has
+       finished — so there is nothing for a pause to hold or a resume to pick
+       up, and /api/orchestration exposes no pause/resume route. Both controls
+       stay VISIBLE (the run state they belong to is real, and hiding them would
+       hide that no pause exists), disabled, carrying that reason on hover, and
+       — the part that was missing — visually disabled: see
+       `.orch-ctrl:disabled` / `.orch-ctrl.pri:disabled` in app-v2.css, without
+       which a permanently-dead control was pixel-identical to a live one, and
+       "Resume" rendered as a full accent-filled primary CTA. */
+  const NO_PAUSE = 'The workflow engine has no pause: a run executes its steps in one pass and keeps no resumable state. Cancel it and start a new run instead.';
+  const NO_TEMPLATE = 'This run does not record which template it executed, so it cannot be run again from here.';
 
   /**
    * Record this user's decision on a gate — POST /api/orchestration/checkpoints/:id/decision.
@@ -510,19 +604,133 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
     return dec.indexOf('pending') > -1 || dec.indexOf('blocked') > -1;
   });
 
-  /* Only Cancel and "Open gate" do anything real, so only they are enabled.
-     The unwired controls stay visible (the run state they belong to is real)
-     but are disabled and carry the reason on hover, instead of silently
-     relabelling a run that is still executing on the server. */
+  /* The metrics strip speaks from the reads that feed it.
+     `runs` and `cps` are local state seeded ONLY when their mapped value is
+     non-null, and both mappers return null while loading or on error — so both
+     stay `[]` and every metric resolved to a settled 0. On a failed
+     `/api/orchestration/checkpoints` read the surface told a reviewer that zero
+     human-in-the-loop Part 11 approval gates were awaiting them. Approval
+     checkpoints are the gate before dispatch: a reviewer who trusts
+     "Awaiting approval: 0" walks away from signatures that are actually
+     pending. The readiness tile two over already did this correctly
+     (`r ? r.overallScore + '%' : '—'`), so the strip disagreed with itself. */
+  const runsReady = !runsState.loading && !runsState.error;
+  const gatesReady = !cpsState.loading && !cpsState.error;
+  const kvRuns = (n: number) => (runsReady ? String(n) : '—');
+  const kvGates = (n: number) => (gatesReady ? String(n) : '—');
+
+  /* WHAT ANA SEES HERE. Four independent reads stay independent — runs, gates,
+     readiness and templates each report their own loading/error/empty, and a
+     failed gates read is never published as zero pending approvals. */
+  const activeRunCount = runs.filter((x) => ['running', 'paused', 'awaiting_approval'].indexOf(x.status) > -1).length;
+  const pendingGateCount = pendingGates.length;
+  const anaContext = useMemo(() => {
+    const parts: string[] = [];
+    if (pid == null) {
+      parts.push('Orchestration — no lead program identified, so no runs, readiness or templates are being read.');
+    } else {
+      parts.push(`Orchestration for ${progLabel}, ${view} view.`);
+      if (runsState.loading) parts.push('Workflow runs are still loading.');
+      else if (runsState.error) parts.push('The execution engine did not respond — a failed read, not a project with no runs.');
+      else if (runs.length === 0) parts.push('No workflow runs yet for this program.');
+      else parts.push(`${activeRunCount} active run(s) of ${runs.length} total.`);
+    }
+    // The gates read is not program-scoped, so it is reported even with no program.
+    if (cpsState.loading) {
+      parts.push('The approval-gate store is still loading.');
+    } else if (cpsState.error) {
+      parts.push(
+        'The approval-checkpoint store could not be read, so the Awaiting-approval count reads "—". ' +
+          'This is NOT a report that zero human-in-the-loop gates are pending — a reviewer must not treat it as one.',
+      );
+    } else if (cps.length === 0) {
+      parts.push('No human-in-the-loop approval gates exist for this organization yet.');
+    } else {
+      parts.push(`${pendingGateCount} of ${cps.length} approval gate(s) awaiting a human decision.`);
+    }
+    if (pid != null) {
+      if (rdState.loading) parts.push('Readiness is being evaluated.');
+      else if (rdState.error) parts.push('The readiness engine did not respond — the score is unknown, not zero.');
+      else if (!r) parts.push('No readiness assessment yet — the engine has nothing to score for this program.');
+      else
+        parts.push(
+          `Readiness ${r.overallScore}%, ${r.blockerCount} critical blocker(s), ` +
+            `${r.isReady ? 'Ready' : 'Not ready'} (Ready requires 90+ and zero critical blockers), evaluated ${r.evaluatedAt}.`,
+        );
+      if (tplState.error) parts.push('The template registry could not be read — whether templates are registered is unknown.');
+      else if (!tplSettled) parts.push('The template registry has not answered yet.');
+      else parts.push(`${templates.length} workflow template(s) registered.`);
+    }
+    const facts: Record<string, unknown> = {
+      program: progLabel,
+      projectId: pid,
+      openView: view,
+      activeRuns: runsReady ? activeRunCount : null,
+      totalRuns: runsReady ? runs.length : null,
+      ...(runsState.error ? { runsUnavailable: runsState.error } : {}),
+      pendingGateCount: gatesReady ? pendingGateCount : null,
+      totalGates: gatesReady ? cps.length : null,
+      ...(cpsState.error ? { gatesUnavailable: cpsState.error } : {}),
+      readinessScore: r ? r.overallScore : null,
+      blockerCount: r ? r.blockerCount : null,
+      isReady: r ? r.isReady : null,
+      evaluatedAt: r ? r.evaluatedAt : null,
+      ...(rdState.error ? { readinessUnavailable: rdState.error } : {}),
+      templatesRegistered: tplSettled ? templates.length : null,
+      ...(sel
+        ? {
+            selectedRun: {
+              id: sel.id, title: sel.title, status: sel.status, pct: sel.pct,
+              blockers: sel.blockers.slice(0, 5),
+            },
+          }
+        : {}),
+    };
+    return {
+      summary: parts.join(' '),
+      facts,
+      // Pause/resume are not offered: the engine has no pause path.
+      availableActions: [
+        'Switch view: Runs, Approvals or Readiness; select a run to inspect its steps, outputs and blockers',
+        'approving or rejecting a gate (separation-of-duties enforced), starting/retrying/cancelling runs, and re-evaluating readiness are human acts — AnA proposes them in conversation only',
+      ],
+    };
+  }, [
+    pid, progLabel, view, runsState.loading, runsState.error, runsReady, runs, activeRunCount,
+    cpsState.loading, cpsState.error, gatesReady, cps, pendingGateCount,
+    rdState.loading, rdState.error, r, tplState.error, tplSettled, templates, sel,
+  ]);
+  usePublishSurfaceContext('orchestration', anaContext);
+
+  /* Cancel, Retry, Replay and "Open gate" all reach a real endpoint. The two
+     that cannot — Pause and Resume — stay visible (the run state they belong to
+     is real) but are disabled, visually disabled, and carry the reason on
+     hover, instead of silently relabelling a run that is still executing on the
+     server. */
   const noop = () => undefined;
-  const ctrlsFor = (x: OrchRun): CtrlTuple[] => {
-    const cancel: CtrlTuple = ['Cancel', 'close', () => void cancelRun(x.id), false, busyRun === x.id];
-    if (x.status === 'running') return [['Pause', 'pause', noop, false, false, UNWIRED_RUN], cancel];
-    if (x.status === 'paused') return [['Resume', 'play', noop, true, false, UNWIRED_RUN], cancel];
-    if (x.status === 'failed') return [['Retry', 'rotateCw', noop, true, false, UNWIRED_RUN]];
-    if (x.status === 'awaiting_approval') return [['Open gate', 'shieldCheck', () => setView('approvals'), true]];
-    if (x.status === 'completed') return [['Replay', 'rotateCw', noop, false, false, UNWIRED_RUN]];
-    if (x.status === 'cancelled') return [['Retry', 'rotateCw', noop, true, false, UNWIRED_RUN]];
+  const ctrlsFor = (x: OrchRun): RunCtrl[] => {
+    const cancel: RunCtrl = {
+      label: 'Cancel', icon: 'close', primary: false,
+      onClick: () => void cancelRun(x.id),
+      busy: busyRun === x.id, busyLabel: 'Cancelling…',
+    };
+    /* Retry / Replay = a NEW run of the same template, which is what the engine
+       can do and what the label is now understood to mean. Disabled only when
+       the run does not record its template, with that stated. */
+    const again = (label: string, primary: boolean): RunCtrl =>
+      x.templateId
+        ? {
+            label, icon: 'rotateCw', primary,
+            onClick: () => void startRun(x.templateId as string, `${label} of ${x.title}`),
+            busy: busyRun === 'new:' + x.templateId, busyLabel: 'Starting…',
+          }
+        : { label, icon: 'rotateCw', primary, onClick: noop, why: NO_TEMPLATE };
+    if (x.status === 'running') return [{ label: 'Pause', icon: 'pause', primary: false, onClick: noop, why: NO_PAUSE }, cancel];
+    if (x.status === 'paused') return [{ label: 'Resume', icon: 'play', primary: true, onClick: noop, why: NO_PAUSE }, cancel];
+    if (x.status === 'failed') return [again('Retry', true)];
+    if (x.status === 'awaiting_approval') return [{ label: 'Open gate', icon: 'shieldCheck', primary: true, onClick: () => setView('approvals') }];
+    if (x.status === 'completed') return [again('Replay', false)];
+    if (x.status === 'cancelled') return [again('Retry', true)];
     return [];
   };
 
@@ -555,6 +763,42 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="page-inner orch">
+      {newRunOpen && (
+        <div className="orch-newrun-bd" onClick={() => setNewRunOpen(false)}>
+          <div
+            className="orch-newrun"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Start a workflow run"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="orch-newrun-h">Start a workflow run</div>
+            <p className="orch-newrun-sub">
+              Runs against {progLabel || 'the open program'}. Every step, object touched and output
+              is recorded for Part 11 traceability.
+            </p>
+            <div className="orch-newrun-list">
+              {templates.map((t) => (
+                <button
+                  key={t.templateId}
+                  className="orch-newrun-t"
+                  disabled={Boolean(busyRun)}
+                  onClick={() => void startRun(t.templateId, t.name)}
+                >
+                  <span className="orch-newrun-tn">{t.name}</span>
+                  {t.description && <span className="orch-newrun-td">{t.description}</span>}
+                  <span className="orch-newrun-go">
+                    {busyRun === 'new:' + t.templateId ? 'Starting…' : I.right}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <div className="orch-newrun-f">
+              <button className="btn ghost" onClick={() => setNewRunOpen(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="ph">
         <div>
           <div className="ph-eyebrow">Orchestration{progLabel ? <> {I.dot} {progLabel}</> : null}</div>
@@ -563,24 +807,47 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn ghost" onClick={() => onAsk && onAsk('Run a pre-dispatch readiness evaluation for ' + (progLabel || 'this program'))}>{I.sparkles} Ask AnA</button>
-          {/* This carried no onClick at all — pressing it did literally nothing,
-              not even local state. POST /api/orchestration/execute is real and
-              mounted, but it requires a templateId AND a projectId, i.e. a
-              template-selection step this surface does not have. Until that
-              exists the button says so rather than silently ignoring the click. */}
-          <button className="btn primary" disabled title="Starting a run needs a workflow template to be chosen first — not available from this surface yet.">{I.workflow} New run</button>
+          {/* ── The primary CTA of the whole surface was hardcoded disabled ──
+              `disabled` with no onClick at all, on the screen whose entire
+              purpose is workflow runs. Its title said starting one "needs a
+              workflow template to be chosen first" — which is true, and is a
+              picker, not a reason to have no button.
+              POST /api/orchestration/execute and GET /api/orchestration/templates
+              both existed; the surface already READ the templates, to title the
+              runs. */}
+          <button
+            className="btn primary"
+            onClick={() => setNewRunOpen(true)}
+            disabled={pid == null || !tplSettled || templates.length === 0 || Boolean(busyRun)}
+            title={
+              pid == null
+                ? 'Open a program to start a workflow run against it.'
+                : tplState.error
+                  // An unreachable registry is NOT an empty registry. Saying
+                  // "none are registered" here would render a failed read as a
+                  // settled fact about the deployment.
+                  ? 'Couldn’t load the workflow templates — the orchestration service didn’t respond.'
+                  : !tplSettled
+                    ? 'Loading the registered workflow templates…'
+                    : templates.length === 0
+                      ? 'No workflow templates are registered in this deployment.'
+                      : undefined
+            }
+          >
+            {I.workflow} New run
+          </button>
         </div>
       </div>
 
       <div className="metrics">
         <div className="metric">
           <div className="metric-l">Active runs</div>
-          <div className="metric-n">{runs.filter((x) => ['running', 'paused', 'awaiting_approval'].indexOf(x.status) > -1).length}</div>
-          <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-300)' }}>of {runs.length} total</div>
+          <div className="metric-n">{kvRuns(runs.filter((x) => ['running', 'paused', 'awaiting_approval'].indexOf(x.status) > -1).length)}</div>
+          <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-300)' }}>{runsReady ? `of ${runs.length} total` : 'not read'}</div>
         </div>
-        <div className="metric" data-tone="warn">
+        <div className="metric" data-tone={gatesReady && pendingGates.length ? 'warn' : undefined}>
           <div className="metric-l">Awaiting approval</div>
-          <div className="metric-n">{pendingGates.length}</div>
+          <div className="metric-n">{kvGates(pendingGates.length)}</div>
           <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-300)' }}>HITL gates</div>
         </div>
         <div className="metric" data-tone={r ? (r.isReady ? '' : 'err') : ''}>
@@ -645,15 +912,15 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
                 <div className="orch-detail-m">{sel.id} {I.dot} {ORCH_SLABEL[sel.status]} {I.dot} started {sel.started} {I.dot} by {sel.by}</div>
               </div>
               <div className="orch-ctrls">
-                {ctrlsFor(sel).map(([lbl, ic, fn, pri, busy, why], i) => (
+                {ctrlsFor(sel).map((c, i) => (
                   <button
                     key={i}
-                    className={'orch-ctrl' + (pri ? ' pri' : '')}
-                    onClick={fn}
-                    disabled={Boolean(why) || Boolean(busy)}
-                    title={why || undefined}
+                    className={'orch-ctrl' + (c.primary ? ' pri' : '')}
+                    onClick={c.onClick}
+                    disabled={Boolean(c.why) || Boolean(c.busy)}
+                    title={c.why || undefined}
                   >
-                    {I[ic]}{busy ? 'Cancelling…' : lbl}
+                    {I[c.icon]}{c.busy ? (c.busyLabel ?? c.label) : c.label}
                   </button>
                 ))}
               </div>
@@ -861,7 +1128,23 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
                 Deterministic gate computed by the readiness engine: ready requires a 90+ score with zero critical blockers.
               </div>
             </div>
-            <button className="btn ghost" onClick={() => onAsk && onAsk('Re-run the readiness evaluation and explain the open blockers')}>{I.rotateCw} Re-evaluate</button>
+            {/* ── "Re-evaluate" asked the assistant to re-evaluate ──────────
+                It sat on the readiness score, with a refresh icon, and typed
+                'Re-run the readiness evaluation…' into the chat — nothing was
+                recomputed and the score on screen never moved.
+
+                GET /api/orchestration/projects/:id/readiness is not a cached
+                row: it assembles the cross-object payload and runs
+                computeReadinessAssessment on every call. So re-reading it IS
+                the re-evaluation, and the score that comes back is the engine's
+                current answer. */}
+            <button
+              className="btn ghost"
+              onClick={() => setRdEpoch((n) => n + 1)}
+              disabled={rdState.loading}
+            >
+              {I.rotateCw} {rdState.loading ? 'Evaluating…' : 'Re-evaluate'}
+            </button>
           </div>
           {findGroup('Rules-based findings', 'readinessRules · required_item / quality_gate', r.findings.rules)}
           {findGroup('Validation findings', 'eCTD · CDISC · hyperlink integrity', r.findings.validation)}

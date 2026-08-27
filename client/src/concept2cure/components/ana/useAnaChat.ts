@@ -46,6 +46,7 @@ export type {
   UseAnaChatOptions,
   RunControlStatus,
   UseAnaChatReturn,
+  DriveSseEvent,
 } from './useAnaChat.types';
 
 import type {
@@ -61,6 +62,7 @@ import type {
   UseAnaChatOptions,
   RunControlStatus,
   UseAnaChatReturn,
+  DriveSseEvent,
 } from './useAnaChat.types';
 
 
@@ -349,8 +351,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         }
       );
       if (!res.ok) {
+        // Resolving here made the caller's error branch unreachable, so a 401
+        // or a 500 on a real conversation rendered as the "Talk to AnA" empty
+        // state: the user was told their conversation was empty when the read
+        // had failed. An error is never an empty result.
         console.warn('[useAnaChat] loadThread non-ok:', res.status);
-        return;
+        throw new Error(`loadThread ${res.status}`);
       }
       const body = (await res.json()) as {
         messages?: Array<{
@@ -386,6 +392,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       setMessages(hydrated);
     } catch (err: any) {
       console.warn('[useAnaChat] loadThread failed:', err?.message);
+      throw err;
     } finally {
       setIsLoadingThread(false);
     }
@@ -589,6 +596,13 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         // default routing (effort='balanced', no model pin).
         effort_level: options.effortLevel ?? undefined,
         model_override: options.modelOverride ?? undefined,
+        // Live Drive opt-in — sent only while the toggle is on, so the common
+        // case stays byte-identical and the server does zero extra work.
+        live_drive: options.liveDrive === true ? true : undefined,
+        // Demonstration mode rides only on opted-in turns (the server ignores
+        // it otherwise), so a stale mode can never outlive the toggle.
+        drive_mode:
+          options.liveDrive === true && options.driveMode === 'demo' ? 'demo' : undefined,
       });
 
       let streamedText = '';
@@ -803,6 +817,20 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     : m
                 )
               );
+            } else if (
+              event.type === 'drive_state' ||
+              event.type === 'drive_navigation' ||
+              event.type === 'drive_action'
+            ) {
+              // Live Drive events — forwarded verbatim; the shell validates and
+              // applies (v2/liveDrive.ts + v2/surfaceActions.ts). A listener
+              // throw must not kill the stream: the turn's answer matters more
+              // than the drive.
+              try {
+                options.onDriveEvent?.(event as DriveSseEvent);
+              } catch {
+                /* listener error — drive skips, stream continues */
+              }
             } else if (event.type === 'warning') {
               const msg: string = event.message || '';
               if (msg) {
@@ -963,6 +991,13 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     };
                   })
                 );
+                // Follow-the-work hook: a listener throw must not kill the
+                // stream (same rule as onDriveEvent above).
+                try {
+                  options.onArtifactSaved?.(artifactId);
+                } catch {
+                  /* listener error — the save is still recorded above */
+                }
               }
             } else if (event.type === 'intelligence_question') {
               const question = event.question;
@@ -1093,6 +1128,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       options.selectedTools,
       options.effortLevel,
       options.modelOverride,
+      options.liveDrive,
+      options.onDriveEvent,
+      options.onArtifactSaved,
     ]
   );
 

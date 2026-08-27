@@ -215,10 +215,14 @@ interface GsprMatrixPayload {
   overallCompliancePercent?: number;
 }
 
+/* The fallback used when a server chapter arrives without a label. It held
+   MDR's ranges, so the wrong regulation reappeared on the LIVE path and not
+   only in the fixture — correcting the fixture alone would have left this to
+   put 1–9 / 10–18 / 19–23 back on screen. */
 const CHAPTER_LABEL: Record<string, string> = {
-  I: 'General requirements (GSPR 1–9)',
-  II: 'Performance, design & manufacture (10–18)',
-  III: 'Information supplied (GSPR 19–23)',
+  I: 'General requirements (GSPR 1–8)',
+  II: 'Performance, design & manufacture (9–13)',
+  III: 'Information supplied (GSPR 14–20)',
 };
 
 function adaptGspr(key: string, ch: ServerGsprChapter): IvdGsprChapter | null {

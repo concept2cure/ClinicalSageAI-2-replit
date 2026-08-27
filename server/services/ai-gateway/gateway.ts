@@ -62,12 +62,15 @@ import {
   getOrgPlacementResolver,
   mergeOrgPolicyDefaults,
 } from './providers/org-placement';
+import {
+  decideSensitivePlacement,
+  readProviderPlacementApprovals,
+} from './sensitive-placement-policy';
 import { recordApiUsageSafe, usdToCents } from '../usage-recorder.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { getContentClassifier } from '../ai-governance/classification/index.js';
 import {
   extractRequestText,
-  decideSensitiveDataPlacement,
   getPiiEnforcement,
 } from './pii-screen.js';
 const log = createScopedLogger('ai-gateway');
@@ -478,6 +481,9 @@ export class AIGateway {
       try {
         return await fn();
       } catch (err: any) {
+        // Governance decisions are not transient provider failures. Retrying
+        // duplicated denial audits and could never make the placement safe.
+        if (err instanceof GatewayPolicyError) throw err;
         const status = err?.status || err?.statusCode;
         // Hard client errors (400/401/403/404/422, …) never succeed on retry.
         if (isHardClientError(status)) throw err;
@@ -514,6 +520,23 @@ export class AIGateway {
     // the request doesn't specify it. Explicit request values always win; if no
     // policy or the lookup fails, behavior is unchanged (explicit-only).
     request = await this.applyOrgPlacementDefaults(request);
+
+    // Capture classification before the redaction policy can replace sensitive
+    // values. The last-mile placement gate consumes this immutable category.
+    if (this.config.policy.piiDetection) {
+      try {
+        const text = extractRequestText(request);
+        const classification = text.trim()
+          ? await getContentClassifier().classify(text)
+          : { phi: false, pii: false };
+        request = {
+          ...request,
+          sensitiveDataClass: classification.phi ? 'phi' : classification.pii ? 'pii' : 'none',
+        };
+      } catch {
+        request = { ...request, sensitiveDataClass: 'unknown' };
+      }
+    }
 
     // Policy check (sync: token budget, prompt-injection scan, blocked
     // patterns, rate limits)
@@ -583,44 +606,6 @@ export class AIGateway {
       return this.buildDeterministicResponse(request, requestId, startTime);
     }
 
-    // PHI/PII placement screen. When piiDetection is enabled, classify the
-    // request content and (under 'block' enforcement) refuse to send protected
-    // data to a provider without a zero-data-retention guarantee. Always
-    // records a structured signal when detected; never logs raw content.
-    if (this.config.policy.piiDetection) {
-      try {
-        const text = extractRequestText(request);
-        if (text.trim()) {
-          const classification = await getContentClassifier().classify(text);
-          if (classification.phi || classification.pii) {
-            const placement = resolvePlacement(selectedModel.provider);
-            const decision = decideSensitiveDataPlacement({
-              classification,
-              zeroDataRetention: placement.zeroDataRetention,
-              enforcement: getPiiEnforcement(),
-              provider: selectedModel.provider,
-            });
-            log.warn('[ai-gateway] sensitive-data screen', {
-              classes: classification.classes,
-              provider: selectedModel.provider,
-              zeroDataRetention: placement.zeroDataRetention,
-              blocked: decision.block,
-            });
-            if (decision.block) {
-              throw new GatewayPolicyError(decision.reason || 'Blocked by PHI/PII placement policy');
-            }
-          }
-        }
-      } catch (err) {
-        // A real block must propagate; a classifier failure must not take the
-        // request down (fail-open on the classifier itself, closed on findings).
-        if (err instanceof GatewayPolicyError) throw err;
-        log.warn('[ai-gateway] sensitive-data screen skipped (classifier error)', {
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-    }
-
     // Execute with fallback. Track tried MODELS (not just providers) so
     // the fallback chain can exhaust Anthropic's quality ladder
     // (Opus 4.7 → Opus 4 → Sonnet 4.6 → Sonnet 4 → Haiku 4.5) before
@@ -645,6 +630,9 @@ export class AIGateway {
       await this.logAudit(request, response, strategy, true, undefined, triedModels, contentPolicy);
       return response;
     } catch (error: any) {
+      // Policy denials are terminal. Never retry or cross-provider fallback:
+      // doing so would turn a placement refusal into a routing hint.
+      if (error instanceof GatewayPolicyError) throw error;
       lastError = error;
       triedModels.push(selectedModel.id);
       this.recordFailure(selectedModel.provider, error);
@@ -670,6 +658,7 @@ export class AIGateway {
         await this.logAudit(request, response, strategy, true, undefined, triedModels, contentPolicy);
         return response;
       } catch (error: any) {
+        if (error instanceof GatewayPolicyError) throw error;
         lastError = error;
         triedModels.push(fallback.id);
         this.recordFailure(fallback.provider, error);
@@ -806,6 +795,7 @@ export class AIGateway {
     requestId: string,
     startTime: number
   ): Promise<GatewayResponse> {
+    await this.assertSensitiveDispatchAllowed(modelConfig, request, requestId, startTime);
     // Bound concurrent in-flight outbound calls. This is the single chokepoint
     // for every provider invocation (primary + fallback paths), so wrapping it
     // here caps outbound concurrency without touching the retry / circuit-
@@ -813,6 +803,85 @@ export class AIGateway {
     return this.outboundLimiter.run(() =>
       this.dispatchProvider(modelConfig, request, requestId, startTime)
     );
+  }
+
+  /** Last-mile gate: it runs for the primary and every fallback before an SDK is invoked. */
+  private async assertSensitiveDispatchAllowed(
+    modelConfig: ModelConfig,
+    request: GatewayRequest,
+    requestId: string,
+    startTime: number,
+  ): Promise<void> {
+    if (!this.config.policy.piiDetection) return;
+    const detectedDataClass = request.sensitiveDataClass ?? 'unknown';
+    // Development retains audit-only usefulness; production always uses the
+    // explicit deployment contract and fails closed on unknown classification.
+    if (process.env.NODE_ENV !== 'production' && getPiiEnforcement() !== 'block') return;
+    const placement = resolvePlacement(modelConfig.provider);
+    const approvals = readProviderPlacementApprovals();
+    const region = request.dataResidency && request.dataResidency !== 'any'
+      ? request.dataResidency
+      : placement.regions[0];
+    const approval = approvals[modelConfig.provider];
+    const decision = decideSensitivePlacement({
+      environment: process.env.NODE_ENV || 'development',
+      detectedDataClass,
+      tenantPolicy: {
+        resolution: request.sensitiveTenantPolicy?.resolution ?? 'absent',
+        requiredRegion: request.sensitiveTenantPolicy?.residency && request.sensitiveTenantPolicy.residency !== 'any'
+          ? request.sensitiveTenantPolicy.residency
+          : request.dataResidency && request.dataResidency !== 'any' ? request.dataResidency : undefined,
+        requireZeroRetention: request.sensitiveTenantPolicy?.zeroDataRetention ?? request.zeroDataRetention,
+        allowedProviders: request.sensitiveTenantPolicy?.allowedSubstrates &&
+          !request.sensitiveTenantPolicy.allowedSubstrates.includes(placement.substrate)
+          ? []
+          : undefined,
+      },
+      provider: modelConfig.provider,
+      region,
+      zeroRetentionApproval: approval?.zeroRetentionApproved === true,
+      intendedUse: request.taskType,
+      providerApproval: approval,
+    });
+    log.info('[ai-gateway] sensitive placement decision', {
+      reasonCode: decision.reasonCode,
+      provider: decision.provider,
+      region: decision.region,
+      dataClass: decision.dataClass,
+      allowed: decision.allowed,
+    });
+    if (!decision.allowed) {
+      await this.logContentPolicyBlock(
+        {
+          ...request,
+          metadata: {
+            ...(request.metadata ?? {}),
+            sensitivePlacement: {
+              reasonCode: decision.reasonCode,
+              provider: decision.provider,
+              region: decision.region,
+              dataClass: decision.dataClass,
+            },
+          },
+        },
+        request.strategy || this.config.defaultStrategy,
+        requestId,
+        startTime,
+        decision.reasonCode,
+        [{
+          scope: 'pii',
+          action: 'block',
+          messageIndex: -1,
+          role: 'request',
+          detector: 'sensitive_placement_policy',
+          contentClass: decision.dataClass,
+        }],
+      );
+      throw new GatewayPolicyError(
+        `This request cannot be sent to the configured AI service (${decision.reasonCode}). ` +
+        'Contact your administrator to review the approved data-placement policy.'
+      );
+    }
   }
 
   private async dispatchProvider(
@@ -1781,32 +1850,37 @@ export class AIGateway {
 
   /**
    * Fill in residency / zero-retention from the org's placement policy when the
-   * request didn't specify them. Explicit request values always win. Never
-   * throws — a failed lookup leaves the request unchanged (explicit-only).
+   * request didn't specify them. The resolved policy is also retained for the
+   * last-mile sensitive-data decision. Production treats lookup failure as an
+   * unknown policy and therefore refuses sensitive dispatch.
    */
   private async applyOrgPlacementDefaults(request: GatewayRequest): Promise<GatewayRequest> {
-    if (request.organizationId === undefined || request.organizationId === null) return request;
-    // Both already pinned — nothing for a default to fill.
-    if (request.dataResidency !== undefined && request.zeroDataRetention !== undefined) {
-      return request;
+    if (request.organizationId === undefined || request.organizationId === null) {
+      return { ...request, sensitiveTenantPolicy: { resolution: 'absent' } };
     }
     try {
       const policy = await getOrgPlacementResolver().resolve(request.organizationId);
-      if (!policy) return request;
+      if (!policy) return { ...request, sensitiveTenantPolicy: { resolution: 'absent' } };
       const merged = mergeOrgPolicyDefaults(
         { dataResidency: request.dataResidency, zeroDataRetention: request.zeroDataRetention },
         policy,
       );
-      return { ...request, ...merged };
+      return {
+        ...request,
+        ...merged,
+        sensitiveTenantPolicy: {
+          resolution: 'resolved',
+          residency: policy.residency,
+          zeroDataRetention: policy.zeroDataRetention,
+          allowedSubstrates: policy.allowedSubstrates,
+        },
+      };
     } catch (err) {
-      // Deliberate fail-soft: a policy-store failure must not break the request.
-      // But surface it — silently skipping a tenant's residency / zero-retention
-      // default is a compliance-visibility gap, not a no-op.
       log.warn(
         `[AI Gateway] Org placement policy lookup failed for org ${request.organizationId}; ` +
-          `proceeding without org defaults: ${err instanceof Error ? err.message : String(err)}`
+          `sensitive dispatch will fail closed: ${err instanceof Error ? err.message : String(err)}`
       );
-      return request; // never let policy resolution break a request
+      return { ...request, sensitiveTenantPolicy: { resolution: 'unknown' } };
     }
   }
 

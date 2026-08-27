@@ -22,8 +22,8 @@
 
 import type { Page } from '@playwright/test';
 
-/** The user install-fresh / the default-org seed provisions (org-admin). */
-export const DEFAULT_DEV_USER = 'jm.smith@concept2cure.pro';
+/** The canonical org-admin seed provisions this user; override for explicit fixtures. */
+export const DEFAULT_DEV_USER = process.env.SMOKE_USER_EMAIL || 'jm.smith@concept2cure.pro';
 
 interface DevLoginResponse {
   success?: boolean;
@@ -39,7 +39,7 @@ interface DevLoginResponse {
 export async function authenticateViaDevLogin(
   page: Page,
   baseURL: string,
-  email: string = DEFAULT_DEV_USER,
+  email: string = DEFAULT_DEV_USER
 ): Promise<{ email: string; organizationId: string }> {
   const dl = (await (
     await fetch(`${baseURL}/api/auth/dev-login`, {
@@ -52,7 +52,7 @@ export async function authenticateViaDevLogin(
   if (!dl.accessToken || !dl.refreshToken) {
     throw new Error(
       `dev-login failed for ${email} (${dl.error?.message ?? 'no token'}). ` +
-        'The server must run with NODE_ENV=development and ALLOW_DEV_AUTH=1.',
+        'The server must run with NODE_ENV=development and ALLOW_DEV_AUTH=1.'
     );
   }
 
@@ -78,7 +78,7 @@ export async function authenticateViaDevLogin(
         store.setItem('trialsage_user', userJson);
       }
     },
-    [dl.accessToken, dl.refreshToken, expiry, JSON.stringify(sess.user)] as const,
+    [dl.accessToken, dl.refreshToken, expiry, JSON.stringify(sess.user)] as const
   );
 
   return { email, organizationId: sess.user.organizationId };

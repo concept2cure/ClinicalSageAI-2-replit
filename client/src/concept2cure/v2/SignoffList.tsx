@@ -48,17 +48,39 @@ export interface SignoffListProps {
 export function SignoffList({ signoffs, className, style, doneClassName }: SignoffListProps): ReactNode {
   // Keyed by index rather than by command: the same command can legitimately be
   // pending twice in one turn, and signing one must not resolve the other.
-  const [outcomes, setOutcomes] = useState<Record<number, string>>({});
+  /* The outcome carries `success`, and dropping it was the defect.
+     `GovernedActionSignoff` calls back with `{ success: boolean; message: string }`
+     — the server answers a REFUSED governed action with HTTP 200 and
+     `success: false` plus the reason. Storing only the message erased that, so a
+     refusal rendered as `{I.check} {message}` under `role="status"`: a green tick
+     over a user who had just supplied a reason-for-change, a §11.50 meaning and a
+     password re-authentication, for an action the server declined. The sentence
+     was truthful; the glyph contradicted it, and the prompt was gone with no way
+     back short of re-issuing the whole AnA turn.
+
+     Reachable from five hosts (Shell, ConversationThread, DocumentAuthoring,
+     EctdCoauthor, RbmSurfaces). */
+  const [outcomes, setOutcomes] = useState<Record<number, { success: boolean; message: string }>>({});
   const [dismissed, setDismissed] = useState<Record<number, boolean>>({});
 
   return (
     <div className={className} style={style}>
       {signoffs.map((s, i) => {
         if (dismissed[i]) return null;
-        if (outcomes[i]) {
+        const done = outcomes[i];
+        if (done) {
+          /* A refusal is announced as one: the alert icon, the error tone, and
+             `role="alert"` so it is not queued behind other chatter. A refused
+             governed action is the moment a user most needs to know something
+             did not happen. */
           return (
-            <div key={`${s.command}-${i}`} className={doneClassName} role="status">
-              {I.check} {outcomes[i]}
+            <div
+              key={`${s.command}-${i}`}
+              className={doneClassName}
+              data-tone={done.success ? undefined : 'error'}
+              role={done.success ? 'status' : 'alert'}
+            >
+              {done.success ? I.check : I.alertTriangle} {done.message}
             </div>
           );
         }
@@ -66,7 +88,7 @@ export function SignoffList({ signoffs, className, style, doneClassName }: Signo
           <GovernedActionSignoff
             key={`${s.command}-${i}`}
             signoff={s}
-            onResolved={(o) => setOutcomes((p) => ({ ...p, [i]: o.message }))}
+            onResolved={(o) => setOutcomes((p) => ({ ...p, [i]: o }))}
             onCancel={() => setDismissed((p) => ({ ...p, [i]: true }))}
           />
         );

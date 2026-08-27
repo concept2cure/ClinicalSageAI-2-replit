@@ -24,6 +24,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
@@ -142,6 +143,85 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
     const { ok } = await readData('POST', `/api/submission-twin/change-impact/${impactId}/resolve`);
     if (ok && pkg != null) { fireToast('Change impact resolved.'); void refreshAll(pkg); } else fireToast('Couldn’t resolve the change impact.', 'error');
   }, [pkg, refreshAll, fireToast]);
+
+  /* What AnA can see of this screen.
+     NO PACKAGE LOADED is its own state: every panel is empty until an id is
+     entered, and reporting that as "no drift, no challenges" would be a
+     readiness statement about a submission nobody selected.
+
+     The reviewer challenges are SIMULATED — the surface's own button says so —
+     and they are labelled as such here, because an assistant repeating a
+     simulated reviewer deficiency as a real one manufactures agency feedback.
+     `lastAssessmentId` travels too: challenges can only be simulated after an
+     assessment has run, so their absence often means "no assessment yet"
+     rather than "no challenges found". */
+  const anaContext = React.useMemo(() => {
+    if (pkg == null) {
+      return {
+        summary:
+          'Submission Twin has no submission package loaded, so nothing on screen is populated — this is a ' +
+          'missing selection, not a clean twin.',
+        availableActions: ['Enter a submission package id and load it'],
+      };
+    }
+    if (readyState === 'loading' || readyState === 'idle') {
+      return { summary: `Submission Twin for package ${pkg}: the readiness model is still loading.`, facts: { packageId: pkg } };
+    }
+    if (readyState === 'error' || !readiness) {
+      return {
+        summary:
+          `Submission Twin for package ${pkg}: the readiness model could not be read, so no readiness or ` +
+          'fragility score is on screen — a failure, not a zero.',
+        facts: { packageId: pkg },
+        availableActions: ['Re-run the twin assessment'],
+      };
+    }
+    const openDrift = drift.filter((d) => !d.resolved);
+    const openImpacts = impacts.filter((i) => !i.resolved);
+    return {
+      summary:
+        `Submission Twin for package ${pkg}: readiness ${readiness.readinessScore}, fragility ` +
+        `${readiness.fragilityScore}, ${(readiness.weakZones ?? []).length} weak zone(s). ` +
+        `${openDrift.length} unresolved drift alert(s), ${openImpacts.length} unresolved change impact(s), ` +
+        `${challenges.length} SIMULATED reviewer challenge(s)` +
+        (lastAssessmentId == null ? ' (no assessment has been run in this session, so challenges cannot be simulated yet)' : '') +
+        '.',
+      facts: {
+        packageId: pkg,
+        readinessScore: readiness.readinessScore,
+        fragilityScore: readiness.fragilityScore,
+        weakZones: readiness.weakZones ?? [],
+        lastAssessmentId,
+        /* Simulated, not received. Never repeat these as agency feedback. */
+        simulatedReviewerChallenges: challenges.slice(0, 10).map((c) => ({
+          id: c.id, reviewerLens: c.reviewerLens, challenge: c.challengeText,
+          targetSection: c.targetSection, severity: c.severity,
+          deficiencyLikelihood: c.deficiencyLikelihood,
+          suggestedResponse: c.suggestedResponse, suggestedArtifact: c.suggestedArtifact,
+        })),
+        challengesAreSimulated: true,
+        driftAlerts: drift.slice(0, 10).map((d) => ({
+          id: d.id, type: d.driftType, severity: d.severity,
+          description: d.description, suggestedFix: d.suggestedFix, resolved: d.resolved,
+        })),
+        changeImpacts: impacts.slice(0, 10).map((i) => ({
+          id: i.id, changeType: i.changeType, severity: i.impactSeverity,
+          description: i.impactDescription, remediation: i.remediation, resolved: i.resolved,
+        })),
+        nextArtifact: nextArtifact
+          ? { type: nextArtifact.artifactType, rationale: nextArtifact.rationale, priority: nextArtifact.priority }
+          : null,
+      },
+      availableActions: [
+        'Run a twin assessment on the loaded package',
+        'Detect drift, and resolve a drift alert',
+        'Simulate reviewer challenges (requires an assessment first)',
+        'Resolve a change impact',
+        'Load a different submission package',
+      ],
+    };
+  }, [pkg, readyState, readiness, challenges, drift, impacts, nextArtifact, lastAssessmentId]);
+  usePublishSurfaceContext('submission-twin', anaContext);
 
   return (
     <div className="cm-body">

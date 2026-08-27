@@ -21,11 +21,29 @@ import React from 'react';
 import { useLocation } from 'wouter';
 import { getSurface, type UiSurface } from '@shared/constants/ui-surface-registry';
 import { AnaRail, CmdK, Rail, TopBar, type AnaMessage } from './Shell';
-import { useAnaChat, type AnaChatMessage } from '../components/ana/useAnaChat';
+import { useAnaChat, type AnaChatMessage, type DriveSseEvent } from '../components/ana/useAnaChat';
+import {
+  driveReducer,
+  INITIAL_DRIVE_STATE,
+  shouldApplyNavigation,
+  shouldApplyAction,
+  validateDriveDirective,
+  type DriveAction,
+  type DriveLock,
+} from './liveDrive';
+import {
+  advertisedScreenActions,
+  applySurfaceAction,
+  validateDriveAction,
+} from './surfaceActions';
+import { LiveDriveOverlay } from './LiveDriveOverlay';
+import { stashNavParamsForTarget } from './navParams';
+import { getAuthHeaders } from '@/utils/authToken';
 import { useActiveSurfaceContext, toModuleContext } from './surfaceContext';
 import { useAuth } from '@/services/portal/authService';
 import { getJwtOrgId } from '@/utils/authToken';
 import { useLiveData } from './dataConnect';
+import { NavEntitlementsProvider } from './navEntitlements';
 import { welcomeFor } from './onboardingWelcome';
 import { SurfaceBoundary } from './SurfaceScaffold';
 import { CollabLayer } from './surfaces/CollabLauncher';
@@ -81,6 +99,7 @@ import './styles/misc-surfaces-v2.css';
 import './styles/device-v2.css';
 import './styles/pathway-core-v2.css';
 import './styles/pathway-panels-v2.css';
+import { restoreShellProject } from './shellProject';
 
 const PREFS_KEY = 'c2c-v2-prefs';
 
@@ -92,6 +111,8 @@ interface Prefs {
   segment: string;
   /** Set once the client dismisses (or outgrows) the first-run AnA welcome. */
   welcomeDismissed: boolean;
+  /** AnA Live Drive toggle — while on, turns opt in to applied navigation. */
+  liveDrive: boolean;
 }
 
 const DEFAULT_PREFS: Prefs = {
@@ -101,6 +122,7 @@ const DEFAULT_PREFS: Prefs = {
   anaMode: 'standard',
   segment: 'biopharma',
   welcomeDismissed: false,
+  liveDrive: false,
 };
 
 function loadPrefs(): Prefs {
@@ -185,6 +207,15 @@ function hasReportableWork(m: AnaChatMessage): boolean {
   );
 }
 
+/* Rehydrate the open program BEFORE any surface renders. The selection is a
+   window global set by Projects/MdxSurfaceHost via publishShellProject and
+   mirrored per-tab; without this, a reload or a deep link straight to
+   /concept2cure/cmc (or /vault, /ectd-compile) dropped every project-scoped
+   surface to "Open a program" until the user detoured through Projects.
+   Module scope deliberately: it must run when the shell bundle evaluates,
+   ahead of the first render of any reader. A live selection always wins. */
+restoreShellProject();
+
 /* The shell's grounding for ANA: the project currently in context (set on the
    window by the projects surface, the same source the CMC/board surfaces read).
    Passing it to useAnaChat lets ANA see the open program on every surface's
@@ -215,6 +246,101 @@ export function V2App() {
     });
 
   const activeId = surfaceIdFromLocation(location);
+
+  /* ── AnA Live Drive — the shell's apply/take-over state machine ──────────
+     The reducer (v2/liveDrive.ts) is pure; the ref is folded through the SAME
+     reducer on dispatch so back-to-back events in one SSE chunk see the cap
+     and take-over immediately, without waiting for React's commit. */
+  const [drive, reactDispatchDrive] = React.useReducer(driveReducer, INITIAL_DRIVE_STATE);
+  const driveRef = React.useRef(INITIAL_DRIVE_STATE);
+  const dispatchDrive = React.useCallback((action: DriveAction) => {
+    driveRef.current = driveReducer(driveRef.current, action);
+    reactDispatchDrive(action);
+  }, []);
+  /* Moved above useAnaChat because onDriveEvent below needs it. The single
+     client navigation entry — Live Drive goes through the same door a chip
+     click does, never a second router. */
+  const nav = React.useCallback(
+    (id: string) => {
+      setLocation(locationForSurface(id));
+    },
+    [setLocation]
+  );
+  /* True from a drive_state{enabled} until the person takes over — read by the
+     follow-the-work effect below, which fires AFTER turn_end has already
+     released the reducer's `active` (drafts persist post-`done`). */
+  const droveThisTurnRef = React.useRef(false);
+  const onDriveEvent = React.useCallback(
+    (ev: DriveSseEvent) => {
+      if (ev.type === 'drive_state') {
+        droveThisTurnRef.current = ev.enabled;
+        dispatchDrive({
+          kind: 'drive_state',
+          enabled: ev.enabled,
+          mode: ev.mode === 'demo' ? 'demo' : 'assist',
+          reason: ev.reason,
+          requiredTier: ev.requiredTier,
+        });
+        return;
+      }
+      if (ev.type === 'drive_action') {
+        /* drive_action: the screen only ever DOES what the shared
+           surface-action registry itself resolves (fail closed), only while
+           the drive is genuinely live, only under the mode's action budget —
+           and only through a handler the mounted surface registered (the bus
+           refuses a screen that does not implement the operation). Across the
+           navigate→mount gap the bus stashes one-shot and performs on the
+           destination's registration. */
+        const actionDirective = validateDriveAction(ev.directive);
+        if (!actionDirective || !shouldApplyAction(driveRef.current)) return;
+        dispatchDrive({
+          kind: 'action',
+          actionId: actionDirective.actionId,
+          label: actionDirective.label,
+          round: ev.round,
+        });
+        applySurfaceAction(actionDirective, nav);
+        return;
+      }
+      /* drive_navigation: the screen moves ONLY to what the shared registry
+         itself resolves (fail closed), only while the drive is genuinely live
+         (per-turn consent, take-over kills it instantly), and only under the
+         per-turn cap. The reducer records what was actually applied — the
+         overlay never shows a step that did not happen. */
+      const directive = validateDriveDirective(ev.directive);
+      if (!directive || !shouldApplyNavigation(driveRef.current)) return;
+      dispatchDrive({ kind: 'navigation', directive, round: ev.round });
+      /* Registry-validated params ride the navParams channel so the
+         destination opens on the exact tab/section AnA named — and a
+         param-less drive clears any stale entry rather than inheriting it. */
+      stashNavParamsForTarget(directive.targetId, directive.params);
+      nav(directive.targetId);
+    },
+    [dispatchDrive, nav]
+  );
+  /* ── Follow the work (declared before useAnaChat, which takes it) ─────
+     The point of Live Drive is WATCHING AnA work — and her biggest work
+     product is a persisted draft (`artifact_version_saved` → onArtifactSaved,
+     fired by EVERY chat instance: the rail's and each owned dock's via the
+     bridge). When a driven turn lands one, take the subscriber to the
+     Artifacts Center with that artifact focused, so the document appears in
+     front of them instead of behind a nav item. */
+  const followedArtifactsRef = React.useRef<Set<string>>(new Set());
+  const followWork = React.useCallback(
+    (artifactId: string) => {
+      /* Both gates on purpose: the toggle must still be ON (a turn-old ref
+         must not outlive the person switching drive off) AND this turn must
+         have genuinely driven (an un-entitled or undriven turn never moves
+         the screen, drafts included). Deduped per artifact so a re-render or
+         duplicate event can never re-hijack the screen. */
+      if (!artifactId || !prefs.liveDrive || !droveThisTurnRef.current) return;
+      if (followedArtifactsRef.current.has(artifactId)) return;
+      followedArtifactsRef.current.add(artifactId);
+      stashNavParamsForTarget('artifacts-center', { artifactId });
+      nav('artifacts-center');
+    },
+    [nav, prefs.liveDrive]
+  );
   /* The real AnA assistant for the whole shell — one streaming conversation
      (/api/ana-ri/stream) shared by the rail, ⌘K and every surface's onAsk. */
   /* What the active surface is showing, forwarded to AnA as `module_context` on
@@ -225,14 +351,28 @@ export function V2App() {
      context belongs to the surface currently mounted, so context from the
      previous screen can never be presented as this one's. */
   const activeSurfaceContext = useActiveSurfaceContext(activeId);
-  const anaModuleContext = React.useMemo(
-    () => toModuleContext(activeSurfaceContext),
-    [activeSurfaceContext]
-  );
+  const anaModuleContext = React.useMemo(() => {
+    const base = toModuleContext(activeSurfaceContext);
+    /* The active screen's OPERABLE vocabulary, from the shared surface-action
+       registry (aliases applied) — folded into every turn so AnA can
+       act_on_screen without a list_screen_actions round-trip. Static truth of
+       what is wireable here; the bus still refuses anything the mounted
+       surface has not actually registered. */
+    const screenActions = advertisedScreenActions(activeId);
+    if (screenActions.length === 0) return base;
+    return { ...(base ?? { surface: activeId }), screen_actions: screenActions };
+  }, [activeSurfaceContext, activeId]);
+  /* Demonstration mode — 'demo' while a started demonstration is live. It
+     rides every opted-in turn (so a question asked mid-demo and the resumed
+     stops keep the demo budgets), and drops on take-over, toggle-off, or
+     starting a plain tour. Never persisted: a demonstration is a session
+     event, not a preference. */
+  const [driveMode, setDriveMode] = React.useState<'assist' | 'demo'>('assist');
   const anaChat = useAnaChat({
     screenName: activeId,
     projectId: readShellProjectId(),
     moduleContext: anaModuleContext,
+    driveMode,
     /* The composer's mode picker, finally connected.
        `prefs.anaMode` was stored and rendered beside the send button — "Ask ·
        Maximum" — and never reached the request. `effort_level` decides how many
@@ -242,7 +382,126 @@ export function V2App() {
        Quick ask cost twice what it promised. Only Standard was right, and only
        by coincidence. */
     effortLevel: effortForMode(prefs.anaMode),
+    /* Live Drive: while the toggle is on every rail/⌘K turn opts in, and the
+       turn's drive events feed the shell's apply/take-over machine above. */
+    liveDrive: prefs.liveDrive,
+    onDriveEvent,
+    onArtifactSaved: followWork,
   });
+  /* A turn ending releases the drive (and its per-turn cap/take-over) so the
+     overlay never claims AnA is driving after she has stopped working. */
+  React.useEffect(() => {
+    if (!anaChat.isStreaming) dispatchDrive({ kind: 'turn_end' });
+  }, [anaChat.isStreaming, dispatchDrive]);
+  /* Pre-emptive Live Drive verdict — the toggle shows its honest lock (with
+     the real required tier) before the first attempted turn. Advisory only:
+     the same resolveDriveState answers per turn and overwrites this. A failed
+     read changes nothing — unknown is neither locked nor entitled. */
+  React.useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch('/api/ana-ri/live-drive/state', {
+          headers: getAuthHeaders(),
+          credentials: 'include',
+        });
+        if (!res.ok) return;
+        const body = (await res.json()) as {
+          success?: boolean;
+          data?: { enabled?: boolean; reason?: string; requiredTier?: string | null };
+        };
+        const d = body?.data;
+        if (cancelled || !body?.success || !d || typeof d.enabled !== 'boolean') return;
+        const lock: DriveLock | null = d.enabled
+          ? null
+          : { reason: d.reason ?? 'not_enabled', requiredTier: d.requiredTier ?? null };
+        dispatchDrive({ kind: 'lock_info', lock });
+      } catch {
+        /* verdict unknown — leave the toggle unannotated, never fabricate */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [dispatchDrive]);
+  /* Take over = this is the person's screen again, now: stop applying for the
+     rest of the turn AND drop the toggle (and any live demonstration), so the
+     next turn does not re-engage until they deliberately switch it back on.
+     AnA keeps answering. */
+  const takeOverDrive = () => {
+    droveThisTurnRef.current = false;
+    dispatchDrive({ kind: 'take_over' });
+    setDriveMode('assist');
+    set('liveDrive', false);
+  };
+  /* ── One-click drive asks: the guided tour + the demonstrations ────────
+     Enable the toggle, then send the ask only AFTER the pref has committed —
+     sending in the same tick would build the request from this render's stale
+     options and the turn would stream WITHOUT live_drive (the toolsOverride
+     trap, documented in useAnaChat). Already-on skips the wait and sends
+     immediately. Demonstrations also need the demo MODE committed, so they
+     ride the same pending mechanism even when the toggle is already on. */
+  const TOUR_ASK =
+    'Show me around this workspace. Take me through the screens that matter most for my work — navigate to each one and briefly explain what I can do there as you go.';
+  const pendingDriveAskRef = React.useRef<string | null>(null);
+  const [driveAskEpoch, setDriveAskEpoch] = React.useState(0);
+  const queueDriveAsk = (ask: string, mode: 'assist' | 'demo') => {
+    /* The tour/demo buttons live in the AnaRail's Control menu, and the rail
+       is only rendered on surfaces that do NOT own the conversation — so
+       opening the rail is always the right move here. */
+    if (!prefs.anaOpen) set('anaOpen', true);
+    pendingDriveAskRef.current = ask;
+    setDriveMode(mode);
+    if (!prefs.liveDrive) set('liveDrive', true);
+    /* The epoch guarantees the sending effect runs after THIS click commits,
+       even when toggle and mode were already in the requested state. */
+    setDriveAskEpoch((n) => n + 1);
+  };
+  const startTour = () => queueDriveAsk(TOUR_ASK, 'assist');
+  /* Start a curated demonstration (training or sales — the Control menu lists
+     them from the shared script registry). The ask names the script id so AnA
+     fetches exactly that plan with start_product_demo. */
+  const startDemo = (demoId: string, title: string) =>
+    queueDriveAsk(
+      `Run the "${title}" demonstration for me now (demo script id: ${demoId}). ` +
+        `Fetch it with start_product_demo and drive it stop by stop — brisk pace, ` +
+        `and check in with me as you go.`,
+      'demo'
+    );
+  React.useEffect(() => {
+    if (!pendingDriveAskRef.current || !prefs.liveDrive) return;
+    const ask = pendingDriveAskRef.current;
+    pendingDriveAskRef.current = null;
+    void anaChat.send(ask);
+    // anaChat.send is rebuilt each render with fresh options; this effect runs
+    // on the render WHERE liveDrive and driveMode (set in the same click's
+    // batch as the epoch bump) committed, so the turn carries both flags.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefs.liveDrive, driveAskEpoch]);
+  const lastMsg = anaChat.messages[anaChat.messages.length - 1];
+  /* What AnA is doing right now, for the drive strip — only ever a label the
+     stream genuinely reported (the running tool's label, else the phase). */
+  const driveActivity =
+    lastMsg?.role === 'assistant' && lastMsg.streaming
+      ? (lastMsg.toolCalls?.filter((t) => t.status === 'running').slice(-1)[0]?.label ??
+        lastMsg.statusPhase)
+      : undefined;
+  /* The narration tail for the drive strip — the REAL streamed text, bounded.
+     Shown only on surfaces that own the conversation (the rail is hidden
+     there, so without this a demo stop on e.g. document-authoring would play
+     out in silence: AnA narrating into a column the screen does not draw). */
+  const driveNarration =
+    lastMsg?.role === 'assistant' && lastMsg.streaming && lastMsg.text
+      ? lastMsg.text.length > 180
+        ? `…${lastMsg.text.slice(-180).replace(/^\S*\s/, '')}`
+        : lastMsg.text
+      : undefined;
+  /* The bridge for surfaces that run their own conversation (see
+     SurfaceViewProps.liveDrive) — same toggle, same reducer, one machine. */
+  const liveDriveBridge = React.useMemo(
+    () => ({ on: prefs.liveDrive, onDriveEvent, onWorkSaved: followWork }),
+    [prefs.liveDrive, onDriveEvent, followWork]
+  );
   const { user } = useAuth();
   /* The onboarding welcome must reflect the TENANT's real client type
      (organizations.client_type), not `prefs.segment` — that is a browser-local
@@ -258,12 +517,6 @@ export function V2App() {
     [jwtOrgId]
   );
   const tenantClientType = orgLive.data?.organization?.clientType ?? null;
-  const nav = React.useCallback(
-    (id: string) => {
-      setLocation(locationForSurface(id));
-    },
-    [setLocation]
-  );
   const selectSegment = (id: string) => {
     set('segment', id);
     nav('home');
@@ -412,7 +665,15 @@ export function V2App() {
     /* Narrowed by the union: this component's props do not include `onAsk`, so
        there is no way to hand it a rail that is not being rendered. */
     const V = view.component;
-    body = <V key={bodyKey} surface={ctxSurface} onNav={nav} segment={prefs.segment} />;
+    body = (
+      <V
+        key={bodyKey}
+        surface={ctxSurface}
+        onNav={nav}
+        segment={prefs.segment}
+        liveDrive={liveDriveBridge}
+      />
+    );
   } else if (view) {
     const V = view.component;
     body = <V key={bodyKey} surface={ctxSurface} onAsk={ask} onNav={nav} segment={prefs.segment} />;
@@ -435,7 +696,26 @@ export function V2App() {
       ? welcomeFor(tenantClientType ?? prefs.segment, firstName)
       : null;
 
+  /* Escape closes the phone-width rail overlay. Gated on the SAME media query
+     the overlay css uses, so a desktop Escape never collapses the persistent
+     rail — the overlay is the only rail state Escape should dismiss. */
+  React.useEffect(() => {
+    if (prefs.railCollapsed) return undefined;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && window.matchMedia('(max-width: 640px)').matches) {
+        set('railCollapsed', true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefs.railCollapsed]);
+
   return (
+    /* Licence verdicts are fetched once, above the rail, so the rail and the
+       panel that explains a locked destination read the same answer. The
+       provider renders no DOM of its own, so the shell's grid is untouched. */
+    <NavEntitlementsProvider>
     <div
       className={`c2c-v2 shell${prefs.dark ? ' dark' : ''}`}
       data-collapsed={prefs.railCollapsed}
@@ -453,6 +733,15 @@ export function V2App() {
         segment={prefs.segment}
         setSegment={selectSegment}
       />
+      {/* Phone-width scrim: at <=640px the EXPANDED rail paints over the
+          content (app-v2.css keeps the grid at the collapsed strip), and this
+          scrim sits between them — tap collapses the rail; Escape is handled
+          by the shell-level listener below, which is also gated to phone
+          width. Display is entirely CSS-gated (.rail-scrim), so wider
+          viewports render nothing and desktop behavior is untouched. */}
+      {!prefs.railCollapsed && (
+        <div aria-hidden="true" className="rail-scrim" onClick={() => set('railCollapsed', true)} />
+      )}
       <main className="main">
         <TopBar
           surface={activeId === 'home' ? { id: 'home', label: 'Home', navTier: 'global' } : ctxSurface}
@@ -497,6 +786,19 @@ export function V2App() {
           onResume={() => void anaChat.resume()}
           onStop={() => anaChat.stop()}
           onSteer={(m) => void anaChat.interject(m)}
+          liveDrive={{
+            on: prefs.liveDrive,
+            locked: drive.lock,
+            setOn: (v) => {
+              set('liveDrive', v);
+              if (!v) {
+                dispatchDrive({ kind: 'take_over' });
+                setDriveMode('assist');
+              }
+            },
+            onStartTour: startTour,
+            onStartDemo: startDemo,
+          }}
         />
       )}
       <CmdK
@@ -510,7 +812,21 @@ export function V2App() {
         }}
       />
       <CollabLayer onNav={nav} />
+      {/* Fixed strip, above every surface, while AnA is actually driving —
+          who is driving, where she just went, take-over one keypress away. */}
+      <LiveDriveOverlay
+        state={drive}
+        activity={driveActivity}
+        narration={ownsConversation ? driveNarration : undefined}
+        onTakeOver={takeOverDrive}
+        onStop={() => anaChat.stop()}
+        /* Interactivity without surrender: a question or steer typed into the
+           strip lands mid-run (the run-control interject) — AnA answers and
+           continues driving; the person never has to take over just to speak. */
+        onSteer={(m) => void anaChat.interject(m)}
+      />
     </div>
+    </NavEntitlementsProvider>
   );
 }
 

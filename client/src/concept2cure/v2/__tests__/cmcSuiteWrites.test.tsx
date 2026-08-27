@@ -446,4 +446,106 @@ describe('CmModule3Build — the operating system, finally reachable', () => {
     render(<CmModule3Build ask={() => {}} />);
     expect(await screen.findByText('Couldn’t load the Module 3 build state')).toBeTruthy();
   });
+
+  it('says the artifact registry is unlinked instead of rendering its absence as "no artifacts"', async () => {
+    wire((m, u) =>
+      m === 'GET' && u.startsWith('/api/cmc/module3-os/build-state/')
+        ? res({
+            success: true,
+            data: {
+              ...buildState,
+              artifactRegistry: {
+                state: 'unanchored',
+                detail: 'This program has no PM-spine anchor (projects.regulatory_program_id).',
+              },
+            },
+          })
+        : null,
+    );
+    render(<CmModule3Build ask={() => {}} />);
+    await screen.findByText('Control of Drug Substance');
+    expect(screen.getByText('Governed artifact registry not linked')).toBeTruthy();
+    expect(screen.getByText(/no PM-spine anchor/)).toBeTruthy();
+  });
+
+  /* ── Place into submission — the CMC → IND seam ── */
+
+  const wirePlacement = (over: (m: string, u: string) => Response | null = () => null) =>
+    wire((m, u) => {
+      const o = over(m, u);
+      if (o) return o;
+      if (m === 'GET' && u.startsWith('/api/cmc/module3-os/readiness/')) {
+        return res({
+          success: true,
+          data: { totalSections: 2, approvedSections: 2, staleSections: 0, openCriticalContradictions: 0, exportReady: true },
+        });
+      }
+      if (m === 'GET' && u === '/api/submissions') {
+        return res([{ id: 10, title: 'ABC-123 IND', applicationType: 'ind', primaryRegion: 'FDA', status: 'active' }]);
+      }
+      if (m === 'GET' && u === '/api/submissions/10/sequences') {
+        return res([
+          { id: 20, sequenceNumber: '0002', type: 'amendment', status: 'draft', region: 'FDA' },
+          { id: 19, sequenceNumber: '0001', type: 'original', status: 'dispatched', region: 'FDA' },
+        ]);
+      }
+      return null;
+    });
+
+  const pickTargets = async () => {
+    fireEvent.change(await screen.findByLabelText('Target submission'), { target: { value: '10' } });
+    fireEvent.change(await screen.findByLabelText('Target sequence'), { target: { value: '20' } });
+  };
+
+  it('places approved sections into a chosen sequence through the placement endpoint', async () => {
+    wirePlacement((m, u) =>
+      m === 'POST' && u === '/api/cmc/module3-os/place-into-submission/' + PROJECT
+        ? res({
+            success: true,
+            data: {
+              placed: true,
+              placements: [
+                { sectionKey: '3.2.S.4', leafSectionCode: 'm3.2.S.4', leafId: 900, title: 'Module 3 — Control of Drug Substance (§3.2.S.4)' },
+              ],
+              skipped: [{ sectionKey: '3.2.S.7', reason: 'No compiled narrative to place.' }],
+            },
+          })
+        : null,
+    );
+    render(<CmModule3Build ask={() => {}} />);
+    await screen.findByText('Control of Drug Substance');
+    await pickTargets();
+
+    // The dispatched sequence is offered only as a disabled option, with the reason.
+    const locked = screen.getByRole('option', { name: /0001 · dispatched — leaves are immutable/ }) as HTMLOptionElement;
+    expect(locked.disabled).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: /Place into the submission/i }));
+    await waitFor(() =>
+      expect(callsTo('POST', '/api/cmc/module3-os/place-into-submission/' + PROJECT)).toHaveLength(1),
+    );
+    expect(callsTo('POST', '/api/cmc/module3-os/place-into-submission/' + PROJECT)[0][2]).toEqual({
+      submissionId: 10,
+      sequenceId: 20,
+    });
+    expect(await screen.findByText(/1 section placed into the submission/)).toBeTruthy();
+    expect(screen.getByText(/m3\.2\.S\.4/)).toBeTruthy();
+    // A skipped section is stated, never silently dropped.
+    expect(screen.getByText(/§3\.2\.S\.7 \(No compiled narrative to place\.\)/)).toBeTruthy();
+  });
+
+  it('shows a placement refusal as the gate verdict it is, verbatim', async () => {
+    wirePlacement((m, u) =>
+      m === 'POST' && u === '/api/cmc/module3-os/place-into-submission/' + PROJECT
+        ? res({ success: false, error: 'Critical contradictions or missing approvals block final export' }, 409)
+        : null,
+    );
+    render(<CmModule3Build ask={() => {}} />);
+    await screen.findByText('Control of Drug Substance');
+    await pickTargets();
+    fireEvent.click(screen.getByRole('button', { name: /Place into the submission/i }));
+
+    expect(await screen.findByText('Placement refused')).toBeTruthy();
+    expect(screen.getByText(/Critical contradictions or missing approvals/)).toBeTruthy();
+  });
 });

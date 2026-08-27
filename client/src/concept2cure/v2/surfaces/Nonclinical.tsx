@@ -1,11 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState, isRowsWith, useLiveData, useLiveRows, type DataState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 
 /* ── Inline fixture types ── */
 
@@ -16,7 +18,7 @@ interface NcStudy {
   // duration_label / key_finding / finding_class are nullable columns — and the
   // POST /studies write path does not set dur/finding/cls, so persisted studies
   // routinely carry null there. Rendered honestly (omitted when absent), never
-  // fabricated. `_new` is a client-only optimistic-add marker.
+  // fabricated.
   id: string;
   type: string;
   species: string | null;
@@ -24,7 +26,6 @@ interface NcStudy {
   finding: string | null;
   cls: string | null;
   send: string;
-  _new?: boolean;
 }
 
 interface NcM26Section {
@@ -235,28 +236,20 @@ function pill(status: string) {
   return <span className={'rd-chip tone-' + (map[status] || 'idle')}>{status}</span>;
 }
 
-function rowcls(r: { _new?: boolean }): string {
-  return 'sp-row' + (r._new ? ' de-row-new' : '');
+/* Was `'sp-row' + (r._new ? ' de-row-new' : '')`. `_new` was set only by the
+   deleted optimistic-append path, so the highlight had no writer left. */
+function rowcls(): string {
+  return 'sp-row';
 }
 
-function useRows(seed: NcStudy[]): readonly [NcStudy[], (r: NcStudy) => void] {
-  const [rows, setRows] = useState(() => (seed || []).map((r) => ({ ...r })));
-  // Re-seed when the live list resolves (the seed identity changes once the
-  // backend responds); user-added rows before that are optimistic.
-  const seedRef = useRef(seed);
-  useEffect(() => {
-    if (seed !== seedRef.current) {
-      seedRef.current = seed;
-      setRows((seed || []).map((r) => ({ ...r })));
-    }
-  }, [seed]);
-  const add = (r: NcStudy) => {
-    const row: NcStudy = { ...r, _new: true };
-    setRows((rs) => [row, ...rs]);
-    setTimeout(() => setRows((rs) => rs.map((x) => (x === row ? { ...x, _new: false } : x))), 1500);
-  };
-  return [rows, add] as const;
-}
+/* `useRows` is gone.
+   It mirrored the live list and let a caller APPEND an optimistic row — which
+   is the machinery "Add study" used to fabricate a saved study with. Now that
+   the create is a real governed POST followed by a re-read, there is nothing
+   left for it to do: the list IS the store's list. A helper whose only
+   remaining purpose is to let a surface show a row the server does not have is
+   the defect, not a convenience. */
+
 
 /* ── Honest loading / error / empty guard for the /api/nonclinical-summary
    object (the M2.6 / Module 4 / SEND projection). The route fails closed to a
@@ -298,9 +291,13 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
   /* Was a dead write to `c2c_open_surface`, a key with no reader — so every
      Module 4 placement row was a button that did nothing. */
   const open = (id: string) => onNav(id);
+  /* Bumped after a confirmed create so the list is RE-READ — the surface shows
+     the store's row, never a locally-appended echo of the form. */
+  const [studyReload, setStudyReload] = useState(0);
+  const [savingStudy, setSavingStudy] = useState(false);
   const liveStudies = useLiveRows<NcStudy>(
     '/api/nonclinical/studies',
-    ['/api/nonclinical/studies'],
+    ['/api/nonclinical/studies', studyReload],
     STUDY_ROWS,
   );
   // `useLiveRows` synthesizes a FRESH [] every render whenever it has no array
@@ -310,7 +307,9 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
   // []), that reference is stable and becomes the seed.
   const seedStudies =
     liveStudies.loading || liveStudies.error ? EMPTY_STUDIES : liveStudies.rows;
-  const [studies, addStudy] = useRows(seedStudies);
+  // The org's studies, exactly as the store holds them. Nothing is appended
+  // locally; a confirmed create bumps `studyReload` and this re-reads.
+  const studies = seedStudies;
 
   // Live M2.6 / M4-placement / SEND projection of the governed registry
   // (server nonclinical-summary.routes.ts → m26-m4-view.ts). useLiveData unwraps
@@ -325,6 +324,102 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
     isNcSummary,
   );
   const summary = summaryState.data;
+
+  /* ── "Today · your queue" was three invented work items ────────────────────
+     A Pinnacle21 SD0063 reject and a study numbered CARC-701 — neither of which
+     exists in any tenant's registry — shown under a heading with an item count
+     and an error-toned badge, so every organization opening Nonclinical was
+     told it had a blocking dataset reject. Clicking "Fix" then pushed that
+     fabricated study number into the assistant.
+
+     The queue is now DERIVED from the two live reads this surface already
+     makes: studies whose SEND package has not conformed, and the Module 2.6
+     sections the summary reports as missing. An org with neither gets an empty
+     queue, which is the truth about its day — and while either read is failing
+     the queue stays empty rather than asserting "nothing outstanding" over an
+     outage. */
+  /**
+   * Run the SEND conformance check across the registry's studies.
+   *
+   * Each study is evaluated by the server (evaluateSendReadiness over its real
+   * datasets, define.xml, nSDRG and validator state) and the findings are shown
+   * with the study they belong to. Nothing is summarised away: a study the
+   * check reports as outside mandatory SEND scope says so, and a failed
+   * evaluation is listed as a failure rather than dropped, because a study
+   * silently missing from a conformance report reads as a study that passed.
+   */
+  const [sendRunning, setSendRunning] = useState(false);
+  const [sendReport, setSendReport] = useState<
+    Array<{ study: string; ok: boolean; risk?: string; findings: Array<{ severity: string; message: string; basis?: string }>; error?: string }> | null
+  >(null);
+  const runSendConformance = async () => {
+    if (sendRunning || studies.length === 0) return;
+    setSendRunning(true);
+    setSendReport(null);
+    try {
+      const out = await Promise.all(
+        studies.map(async (st) => {
+          try {
+            const res = await apiRequest('GET', `/api/nonclinical/studies/${encodeURIComponent(st.id)}/send-readiness`);
+            const j = await res.json().catch(() => null);
+            if (!res.ok || !j) {
+              return { study: st.id, ok: false, findings: [], error: serverMessage(j) ?? `HTTP ${res.status}` };
+            }
+            const r = j as { findings?: Array<{ severity: string; message: string; basis?: string }>; riskLevel?: string };
+            return { study: st.id, ok: true, risk: r.riskLevel, findings: Array.isArray(r.findings) ? r.findings : [] };
+          } catch (e) {
+            return { study: st.id, ok: false, findings: [], error: e instanceof Error ? e.message : String(e) };
+          }
+        }),
+      );
+      setSendReport(out);
+    } finally {
+      setSendRunning(false);
+    }
+  };
+
+  const queue = useMemo(() => {
+    if (liveStudies.loading || liveStudies.error || summaryState.loading || summaryState.error) return [];
+    const items: Array<{ ico: string; title: string; sub: string; tone: string; action: string; cmd: string }> = [];
+
+    const sendOpen = studies.filter((st) => st.send === 'in progress');
+    if (sendOpen.length) {
+      const names = sendOpen.slice(0, 3).map((st) => st.id).join(', ');
+      items.push({
+        ico: 'shieldAlert',
+        title: `SEND validation outstanding on ${sendOpen.length} ${sendOpen.length === 1 ? 'study' : 'studies'}`,
+        sub: names + (sendOpen.length > 3 ? ` and ${sendOpen.length - 3} more` : ''),
+        tone: 'err',
+        action: 'Fix',
+        cmd: `Which SEND validation findings are open on ${names}, and what has to change to make the package conform?`,
+      });
+    }
+
+    const missing = (summary?.m26 ?? []).filter((sec) => sec.st === 'missing');
+    for (const sec of missing.slice(0, 2)) {
+      items.push({
+        ico: 'fileText',
+        title: `§${sec.n} ${sec.l} not written`,
+        sub: sec.note || 'Required for a complete Module 2.6',
+        tone: 'warn',
+        action: 'Draft',
+        cmd: `Draft §${sec.n} ${sec.l} from the governed nonclinical study registry, citing each claim to its source study.`,
+      });
+    }
+
+    const gaps = summary?.gaps ?? [];
+    if (gaps.length) {
+      items.push({
+        ico: 'clock',
+        title: `${gaps.length} Module 4 ${gaps.length === 1 ? 'gap' : 'gaps'}`,
+        sub: gaps.slice(0, 3).join(' · '),
+        tone: 'info',
+        action: 'Review',
+        cmd: 'Walk me through the open Module 4 gaps and what closes each one.',
+      });
+    }
+    return items;
+  }, [liveStudies.loading, liveStudies.error, summaryState.loading, summaryState.error, studies, summary]);
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -334,34 +429,173 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
     governed: 'Study records are governed — the report is classified, SEND is queued, and an audit entry is written.',
     submitLabel: 'Add study',
     fields: [
-      { key: 'id', label: 'Study ID', type: 'text', placeholder: 'e.g. TX-703', required: true, half: true },
-      { key: 'type', label: 'Study type', type: 'select', options: ['Repeat-dose tox', 'Single-dose tox', 'Carcinogenicity', 'Toxicokinetics', 'Safety pharm (CV)', 'Safety pharm (CNS)', 'Genotoxicity (Ames + MN)', 'Reproductive tox', 'Local tolerance'], required: true, half: true },
-      { key: 'species', label: 'Species / system', type: 'select', options: ['Rat', 'Mouse', 'Tg mouse', 'Cynomolgus', 'Rabbit', 'Dog', 'in vitro', 'in vitro / in vivo'], required: true, half: true },
-      { key: 'dur', label: 'Duration', type: 'text', placeholder: 'e.g. 26-week', half: true },
-      { key: 'finding', label: 'Key finding', type: 'text', placeholder: 'Principal observed finding', required: true },
-      { key: 'cls', label: 'Finding classification', type: 'seg', options: ['clean', 'non-adverse', 'adverse', 'pending'], default: 'pending' },
-      { key: 'send', label: 'SEND status', type: 'seg', options: ['n/a', 'in progress', 'conforms'], default: 'in progress' },
+      { key: 'id', label: 'Study number', type: 'text', placeholder: 'e.g. TX-703', required: true, half: true },
+      /* The study-type options are the SERVER's vocabulary (the STUDY_TYPE enum
+         in server/routes/nonclinical.ts), labelled for a reader. They used to be
+         nine display strings of the surface's own invention — "Toxicokinetics",
+         "Safety pharm (CV)" — none of which the schema accepts, so even a
+         wired-up form would have been rejected on every submit. */
+      { key: 'type', label: 'Study type', type: 'select', required: true, half: true, options: [
+        { value: 'repeat_dose_tox', label: 'Repeat-dose toxicity' },
+        { value: 'single_dose_tox', label: 'Single-dose toxicity' },
+        { value: 'carcinogenicity', label: 'Carcinogenicity' },
+        { value: 'safety_pharmacology', label: 'Safety pharmacology' },
+        { value: 'genotoxicity', label: 'Genotoxicity' },
+        { value: 'reproductive_tox', label: 'Reproductive toxicity' },
+        { value: 'local_tolerance', label: 'Local tolerance' },
+        { value: 'adme_pk', label: 'ADME / PK' },
+        { value: 'immunotoxicity', label: 'Immunotoxicity' },
+        { value: 'other', label: 'Other' },
+      ] },
+      { key: 'title', label: 'Study title', type: 'text', placeholder: 'e.g. 26-week repeat-dose toxicity study in the rat', required: true },
+      { key: 'species', label: 'Species / system', type: 'select', options: ['Rat', 'Mouse', 'Tg mouse', 'Cynomolgus', 'Rabbit', 'Dog', 'in vitro', 'in vitro / in vivo'], half: true },
+      { key: 'testingFacility', label: 'Testing facility', type: 'text', half: true, placeholder: 'GLP facility name' },
+      { key: 'noael', label: 'NOAEL', type: 'text', placeholder: 'e.g. 30 mg/kg/day', half: true },
+      { key: 'reason', label: 'Reason for change (governed)', type: 'textarea', required: true,
+        placeholder: 'Why this study is being recorded — at least 8 characters; written to the audit trail.' },
     ],
   };
 
-  const onSubmit = (v: Record<string, string>) => {
-    addStudy({
-      id: v.id,
-      type: v.type,
-      species: v.species,
-      dur: v.dur || '—',
-      finding: v.finding,
-      cls: v.cls,
-      send: v.send,
-    });
-    setForm(false);
-    fireToast('Study added -- ' + v.id + ' -- SEND queued');
+  /* ── "Add study" told the user it had saved, and saved nothing ─────────────
+     `onSubmit` called `addStudy` — a local optimistic-row helper — and toasted
+     "Study added — <id> — SEND queued". The row appeared, the count moved, and
+     the whole thing was gone on reload. Nothing was POSTed, no SEND was queued,
+     and no audit entry was written, while the form's own governed banner said
+     all three had happened.
+
+     POST /api/nonclinical/studies existed the entire time. It is a GOVERNED
+     write: it requires a reason for change and records the act, which is why
+     the form now collects one. Fields the store does not carry (the display
+     classification and SEND status, which are DERIVED server-side from the
+     validation record) are no longer collected — asking for data that is
+     discarded is the same defect in a smaller form.
+
+     The row is adopted only after the server confirms it, and the surface then
+     re-reads so what is on screen is the store's row, not a local echo. */
+  const onSubmit = async (v: Record<string, string>) => {
+    if (savingStudy) return;
+    const reason = (v.reason ?? '').trim();
+    if (reason.length < 8) {
+      fireToast('Enter a reason for change (at least 8 characters) — the study record is audited.', 'error');
+      return;
+    }
+    setSavingStudy(true);
+    try {
+      const body: Record<string, unknown> = {
+        studyNumber: v.id.trim(),
+        title: v.title.trim(),
+        studyType: v.type,
+        reason,
+      };
+      if (v.species) body.species = v.species;
+      if (v.testingFacility?.trim()) body.testingFacility = v.testingFacility.trim();
+      if (v.noael?.trim()) body.noael = v.noael.trim();
+
+      const res = await apiRequest('POST', '/api/nonclinical/studies', body);
+      const j = await res.json().catch(() => null);
+      if (!res.ok || (j as { id?: unknown } | null)?.id == null) {
+        fireToast(
+          'The study was not recorded — ' +
+            (serverMessage(j) ?? `the server refused it (HTTP ${res.status})`) +
+            '. Nothing was saved.',
+          'error',
+        );
+        return;
+      }
+      setForm(false);
+      setStudyReload((n) => n + 1);
+      const domains = (j as { requiredSendDomains?: string[] }).requiredSendDomains ?? [];
+      fireToast(
+        'Study ' + v.id.trim() + ' recorded and audited' +
+          (domains.length ? ` — SEND domains required: ${domains.join(', ')}.` : '.'),
+      );
+    } catch (e) {
+      fireToast(
+        'The study was not recorded — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.',
+        'error',
+      );
+    } finally {
+      setSavingStudy(false);
+    }
   };
 
   const clsPill = (c: string | null) =>
     c ? (
       <span className={'rd-chip tone-' + (c === 'adverse' ? 'warn' : c === 'pending' ? 'idle' : 'ok')}>{c}</span>
     ) : null;
+
+  /* What AnA can see of this screen. All four starters this surface offers her
+     — draft §2.6.6, fix the SEND reject, classify a finding, show the Module 4
+     gap — are questions about the registry and the projection below.
+
+     The two live reads fail independently and are published independently. A
+     Module 2.6 completeness figure derived from a failed projection read would
+     be a filing-readiness claim nobody computed, and `provisioned: false` is a
+     third state again: the projection ran and says the store is not there. */
+  const anaContext = useMemo(() => {
+    const studiesUnavailable = liveStudies.error ? 'the nonclinical study registry read failed' : null;
+    const base = {
+      studyCount: liveStudies.loading || liveStudies.error ? null : studies.length,
+      studiesUnavailable,
+      studies: liveStudies.loading || liveStudies.error
+        ? null
+        : studies.slice(0, 12).map((st) => ({
+            studyId: st.id, type: st.type, species: st.species,
+            duration: st.dur, keyFinding: st.finding,
+            findingClass: st.cls, sendStatus: st.send,
+          })),
+    };
+    if (summaryState.loading || liveStudies.loading) {
+      return { summary: 'The nonclinical registry and its Module 2.6 / Module 4 projection are still loading; nothing on screen is final yet.' };
+    }
+    if (summaryState.error || !summary) {
+      return {
+        summary:
+          'Nonclinical (CTD Module 4): the Module 2.6 / Module 4 / SEND projection could not be read, so no ' +
+          'completeness or SEND readiness figure is on screen — that is a failure, not a zero.' +
+          (studiesUnavailable ? ' The study registry did not load either.' : ` ${studies.length} GLP study(ies) are in the registry.`),
+        facts: { ...base, projectionUnavailable: 'the /api/nonclinical-summary projection read failed' },
+        availableActions: ['Retry the Module 2.6 / Module 4 projection read'],
+      };
+    }
+    if (!summary.provisioned) {
+      return {
+        summary:
+          'Nonclinical (CTD Module 4): the projection reports that the governed nonclinical store is not ' +
+          'provisioned in this environment, so there is no Module 2.6 completeness or SEND rollup to show.',
+        facts: { ...base, provisioned: false },
+      };
+    }
+    return {
+      summary:
+        `Nonclinical (CTD Module 4): ${studies.length} GLP study(ies) in the governed registry. ` +
+        `Module 2.6 is ${summary.completeness}% complete with ${(summary.gaps ?? []).length} gap(s). ` +
+        `SEND — ${summary.send.validated} of ${summary.send.inScope} in-scope dataset(s) validated, ` +
+        `${(summary.send.missingDomains ?? []).length} domain(s) missing, conformance risk "${summary.send.risk}" ` +
+        '(SEND is mandatory for FDA nonclinical data; "none" means no conformance risk was flagged, not out of scope).',
+      facts: {
+        ...base,
+        provisioned: true,
+        module26Completeness: summary.completeness,
+        module26Gaps: summary.gaps ?? [],
+        module26Sections: (summary.m26 ?? []).map((sec) => ({ number: sec.n, label: sec.l, state: sec.st, note: sec.note ?? null })),
+        module4Placements: (summary.m4 ?? []).map((pl) => ({ code: pl.code, label: pl.l, percent: pl.pct })),
+        send: {
+          inScope: summary.send.inScope,
+          validated: summary.send.validated,
+          missingDomains: summary.send.missingDomains ?? [],
+          conformanceRisk: summary.send.risk,
+        },
+      },
+      availableActions: [
+        'Add a GLP study (a governed record — the report is classified, SEND queued, audit entry written)',
+        'Open a Module 4 placement to work its section',
+        'Read the Module 2.6 written-summary section states and their gaps',
+        'Read the SEND conformance rollup and its missing domains',
+      ],
+    };
+  }, [liveStudies.loading, liveStudies.error, studies, summaryState.loading, summaryState.error, summary]);
+  usePublishSurfaceContext('nonclinical', anaContext);
 
   return (
     <BpComposer
@@ -393,11 +627,7 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
         'Show the gap to a complete Module 4',
       ]}
       primary={<button className="sp-primary" onClick={() => setForm(true)}>{I.plus} Add study</button>}
-      queue={[
-        { ico: 'shieldAlert', title: 'SEND LB dataset — Reject', sub: 'Pinnacle21 rule SD0063 — blocks Module 5 crosswalk', tone: 'err', action: 'Fix', cmd: 'Fix the SEND LB dataset reject (rule SD0063) and re-validate the package' },
-        { ico: 'fileText', title: '§2.6.6 toxicology written summary drafting', sub: 'Carcinogenicity subsection held for CARC-701', tone: 'warn', action: 'Continue', cmd: 'Continue drafting the §2.6.6 toxicology written summary from the locked study reports' },
-        { ico: 'clock', title: 'CARC-701 terminal necropsy pending', sub: 'Gates the 2.6.6 carcinogenicity subsection', tone: 'info', action: 'Status', cmd: 'Status of CARC-701 and its impact on the 2.6.6 carcinogenicity subsection' },
-      ]}
+      queue={queue}
       onAsk={ask}
     >
       <div className="sp-sec">
@@ -431,7 +661,7 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
               />
             ) : (
               studies.map((s, i) => (
-                <div key={i} className={rowcls(s)}>
+                <div key={i} className={rowcls()}>
                   <span className="sp-tag">{s.id}</span>
                   <span className="sp-row-b">
                     <span className="sp-row-t">
@@ -477,9 +707,49 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
               </div>
             )}
           </SummaryBody>
+          {sendReport && (
+            <div className="nc-send-report">
+              <div className="nc-send-report-h">
+                SEND conformance — {sendReport.length} {sendReport.length === 1 ? 'study' : 'studies'} checked
+              </div>
+              {sendReport.map((r) => (
+                <div key={r.study} className="nc-send-row">
+                  <span className="nc-send-study">{r.study}</span>
+                  {!r.ok ? (
+                    <span className="nc-send-f err">Not checked — {r.error}</span>
+                  ) : r.findings.length === 0 ? (
+                    <span className="nc-send-f ok">No findings{r.risk ? ` · risk ${r.risk}` : ''}</span>
+                  ) : (
+                    <span className="nc-send-fs">
+                      {r.findings.map((f, i) => (
+                        <span key={i} className={'nc-send-f ' + (f.severity === 'critical' || f.severity === 'major' ? 'err' : 'warn')}>
+                          {f.message}
+                          {f.basis && <em> — {f.basis}</em>}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
           <div className="sp-foot">
-            <button className="sp-ask" onClick={() => ask('Run SEND conformance — map units to controlled terminology and re-validate the package.')}>
-              {I.sparkles} Run SEND conformance
+            {/* ── "Run SEND conformance" ran nothing ─────────────────────────
+                It typed a sentence into the chat. The check is real and
+                deterministic: GET /api/nonclinical/studies/:id/send-readiness
+                runs evaluateSendReadiness — required SENDIG 3.x domains,
+                define.xml, the nSDRG, and open validator errors — each finding
+                carrying the guidance it comes from. It had no caller.
+
+                Run per study, because that is the unit the check evaluates;
+                the rollup above is derived from the same registry. */}
+            <button
+              className="sp-ask"
+              onClick={() => void runSendConformance()}
+              disabled={sendRunning || studies.length === 0}
+              title={studies.length === 0 ? 'No studies are in the registry to check.' : undefined}
+            >
+              {I.sparkles} {sendRunning ? 'Checking…' : 'Run SEND conformance'}
             </button>
           </div>
         </SpCard>
@@ -512,7 +782,17 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
             {(sum) => (
               <div className="sp-list">
                 {sum.m26.map((m, i) => (
-                  <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Open §${m.n} ${m.l} and continue drafting`)}>
+                  /* ── These rows asked the chat to "open" a section ──────────
+                     `ask('Open §2.6.6 … and continue drafting')`, while the
+                     Module 4 rows two panels up — identical in look and
+                     behaviour-suggesting affordance — actually navigate
+                     (`onClick={() => open('dossier')}`). One of the two was
+                     lying about what a click does, and it was this one.
+
+                     A §2.6 section is authored in the document workspace, so
+                     that is where the row goes; the section is named in the
+                     prompt only when the user asks for help with it. */
+                  <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => open('document-authoring')}>
                     <span className="sp-tag">{m.n}</span>
                     <span className="sp-row-b">
                       <span className="sp-row-t">{m.l}</span>

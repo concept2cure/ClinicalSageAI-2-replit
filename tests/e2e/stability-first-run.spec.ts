@@ -8,9 +8,9 @@ test.describe('Stability First-Run Guide', () => {
     page.on('pageerror', error => runtimeErrors.push(error.message));
 
     await page.goto('/concept2cure/login');
-    await page.fill('input[type="email"]', 'jm.smith@concept2cure.pro');
+    await page.fill('input[type="email"]', 'jonmichaelpsmith@gmail.com');
     await page.click('button:has-text("Continue")');
-    await page.fill('input[type="password"]', 'Concept2Cure2026!');
+    await page.fill('input[type="password"]', 'Seahawks12s!');
     await page.click('button:has-text("Sign in")');
     await page.waitForURL(
       url => {

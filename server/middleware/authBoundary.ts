@@ -37,10 +37,7 @@ import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import { authenticateToken } from './auth';
 import { createScopedLogger } from '../utils/logger';
 import { readEnforcementMode } from '../db/rlsEnforcement';
-import {
-  establishRequestTenantScope,
-  isSystemScopedPath,
-} from './establishRequestTenantScope';
+import { establishRequestTenantScope, isSystemScopedPath } from './establishRequestTenantScope';
 
 const defaultLogger = createScopedLogger('auth-boundary');
 
@@ -246,6 +243,13 @@ export function createAuthBoundary(options: AuthBoundaryOptions = {}): RequestHa
     // establishTenantContext is a no-op that just calls next(), so warn-mode
     // behaviour is unchanged in the common dev case.
     const captureRes = {
+      // Warn mode captures auth failures, but successful authentication still
+      // reaches the canonical tenant-scope installer, which attaches cleanup
+      // listeners to the real Express response.
+      on(event: string, listener: (...args: unknown[]) => void) {
+        res.on(event, listener);
+        return this;
+      },
       status(statusCode: number) {
         return {
           json(_body: unknown) {

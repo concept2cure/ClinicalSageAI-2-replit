@@ -1,11 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AnswerLead } from '../AnswerLead';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { severityTone } from '../fixtures/precedent-engine-data';
 import '../styles/project-home-v2.css';
+import { C2CForm } from '../C2CForm';
 
 /*
  * Precedent intelligence — wired to the real precedent read-model.
@@ -151,6 +153,87 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
   const results = board.data?.results ?? [];
   const sel = results.find((r) => r.clearanceNumber === selK) || results[0];
 
+  /* ── Ingest and Compare, against the endpoints that already existed ────────
+     Both were `ask(...)`. `POST /api/precedent-engine/compare` runs the real
+     comparison (precedentEngine.compare) and `POST /ingest` writes the
+     precedent — neither had a caller, so the surface's two primary verbs were
+     conversation. */
+  const [ingestOpen, setIngestOpen] = React.useState(false);
+  const [ingesting, setIngesting] = React.useState(false);
+  const [peNote, setPeNote] = React.useState<{ text: string; tone: 'ok' | 'error' } | null>(null);
+  const [comparing, setComparing] = React.useState('');
+  const [comparison, setComparison] = React.useState<{ k: string; result: unknown } | null>(null);
+
+  const ingestPrecedent = async (v: Record<string, string>) => {
+    if (ingesting) return;
+    setIngesting(true);
+    setPeNote(null);
+    try {
+      const body: Record<string, unknown> = {
+        submissionType: v.submissionType,
+        decisionOutcome: v.decisionOutcome,
+      };
+      for (const k of ['clearanceNumber', 'deviceName', 'applicant', 'indication', 'productType', 'predicateKNumber'] as const) {
+        if (v[k]?.trim()) body[k] = v[k].trim();
+      }
+      const res = await apiRequest('POST', '/api/precedent-engine/ingest', body);
+      const j = await res.json().catch(() => null);
+      if (!res.ok || (j as { success?: boolean } | null)?.success !== true) {
+        setPeNote({
+          text: 'The precedent was not ingested — ' + (serverMessage(j) ?? `the server refused it (HTTP ${res.status})`) + '.',
+          tone: 'error',
+        });
+        return;
+      }
+      setIngestOpen(false);
+      setPeNote({ text: `Precedent ${v.clearanceNumber || v.submissionType} added to the registry.`, tone: 'ok' });
+    } catch (e) {
+      setPeNote({
+        text: 'The precedent was not ingested — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        tone: 'error',
+      });
+    } finally {
+      setIngesting(false);
+    }
+  };
+
+  const runCompare = async (target: { clearanceNumber: string; submissionType?: string; deviceName?: string; indication?: string }) => {
+    if (comparing) return;
+    setComparing(target.clearanceNumber);
+    setPeNote(null);
+    setComparison(null);
+    try {
+      const res = await apiRequest('POST', '/api/precedent-engine/compare', {
+        precedentId: target.clearanceNumber,
+        // The comparison needs a submission type; the precedent's own is the
+        // honest default and is what the user is comparing against.
+        submissionType: target.submissionType || '510k',
+        deviceName: target.deviceName || undefined,
+        indication: target.indication || undefined,
+      });
+      const j = await res.json().catch(() => null);
+      const payload = (j as { success?: boolean; data?: unknown } | null);
+      if (!res.ok || payload?.success !== true || payload.data == null) {
+        setPeNote({
+          text: `The comparison against ${target.clearanceNumber} did not run — ` +
+            (serverMessage(j) ?? `the server refused it (HTTP ${res.status})`) + '.',
+          tone: 'error',
+        });
+        return;
+      }
+      setComparison({ k: target.clearanceNumber, result: payload.data });
+    } catch (e) {
+      setPeNote({
+        text: `The comparison against ${target.clearanceNumber} did not run — ` +
+          (e instanceof Error ? e.message : String(e)) + '.',
+        tone: 'error',
+      });
+    } finally {
+      setComparing('');
+    }
+  };
+
+
   const runSearch = () => setApplied(q);
 
   /* Saved queries — list on load; save/pin/reload/delete against the real CRUD. */
@@ -282,11 +365,15 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
           registry precedents.
         </p>
       </div>
-      <button
-        className="sp-primary"
-        onClick={() => ask('Ingest a new precedent into the registry')}
-      >
-        {I.plus} Ingest precedent
+      {/* ── "Ingest precedent" ingested nothing ────────────────────────────
+          The surface's primary CTA — the one its own empty states repeatedly
+          tell the user to press ("or ingest a precedent to seed the
+          registry") — typed a sentence into the chat rail. No precedent was
+          ever added, so the registry could not be seeded the way the screen
+          said to seed it. POST /api/precedent-engine/ingest and its schema
+          existed with no caller. */}
+      <button className="sp-primary" onClick={() => setIngestOpen(true)} disabled={ingesting}>
+        {I.plus} {ingesting ? 'Ingesting…' : 'Ingest precedent'}
       </button>
     </div>
   );
@@ -361,6 +448,57 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
     </div>
   );
 
+  /* WHAT ANA SEES HERE — published above the honest-state early returns so one
+     call covers every branch (a hook below a conditional return would not). */
+  const anaContext = useMemo(() => {
+    if (!applied) {
+      // Nothing from the typed-but-unrun form: a pre-filled query once told an
+      // org which predicate to cite for a device it did not have.
+      return {
+        summary:
+          'Precedent intelligence: no search has been run; nothing is on screen but the empty search form.',
+        facts: { searchRun: false },
+      };
+    }
+    if (board.loading && !board.data) {
+      return {
+        summary: `Precedent intelligence: the applied ${applied.submissionType} search is still loading; no board is on screen yet.`,
+      };
+    }
+    if (board.error && !board.data) {
+      return {
+        summary:
+          'Precedent intelligence: the precedent read-model did not respond — a failed read, not an empty corpus.',
+      };
+    }
+    return {
+      summary:
+        `Precedent intelligence for the applied ${applied.submissionType} search` +
+        (applied.indication.trim() ? ` (${applied.indication.trim()})` : '') +
+        `: ${results.length} precedent(s)` +
+        (sel ? `; ${sel.clearanceNumber} selected` : '') +
+        `; the ${tab} analysis tab is open.`,
+      facts: {
+        query: {
+          submissionType: applied.submissionType,
+          therapeuticArea: applied.therapeuticArea,
+          indication: applied.indication,
+          productCode: applied.productCode,
+        },
+        resultCount: results.length,
+        ...(sel ? { selected: sel.clearanceNumber } : {}),
+        tab,
+        // `cycle` is nullable on the real record — no range unless one exists.
+        ...(lo != null && hi != null ? { cycleDaysMin: lo, cycleDaysMax: hi } : {}),
+      },
+      availableActions: [
+        'Select a result; switch the analysis tab',
+        'Running a search commits a query; ingesting a precedent, comparing, saved-query changes and claim checks are writes or verdicts — AnA proposes them in conversation, never through screen controls.',
+      ],
+    };
+  }, [applied, board.loading, board.error, board.data, results.length, sel, tab, lo, hi]);
+  usePublishSurfaceContext('precedent-intelligence', anaContext);
+
   /* Four honest states on the real read-model — never a fixture, and never a
      seeded search standing in for one the user has not run. */
   if (!applied) {
@@ -403,6 +541,53 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
   return (
     <div className="sp" style={{ maxWidth: 1160 }}>
       {head}
+
+      {peNote && (
+        <div
+          className="scaf-note"
+          role="status"
+          style={{ margin: '0 0 12px', color: peNote.tone === 'error' ? 'var(--error)' : undefined }}
+        >
+          {peNote.text}
+        </div>
+      )}
+
+      {ingestOpen && (
+        <C2CForm
+          config={{
+            eyebrow: 'Precedent registry',
+            title: 'Ingest a precedent',
+            sub: 'A cleared or approved submission to compare against. Only the two fields the registry requires are mandatory; the rest sharpen the comparison and are recorded as given.',
+            submitLabel: ingesting ? 'Ingesting…' : 'Ingest precedent',
+            fields: [
+              { key: 'submissionType', label: 'Submission type', type: 'text', placeholder: 'e.g. 510k, PMA, De Novo', required: true, half: true },
+              { key: 'decisionOutcome', label: 'Decision outcome', type: 'text', placeholder: 'e.g. Cleared, Approved, NSE', required: true, half: true },
+              { key: 'clearanceNumber', label: 'Clearance / approval number', type: 'text', placeholder: 'e.g. K243117', half: true },
+              { key: 'deviceName', label: 'Device or product name', type: 'text', half: true },
+              { key: 'applicant', label: 'Applicant', type: 'text', half: true },
+              { key: 'predicateKNumber', label: 'Predicate K-number', type: 'text', half: true },
+              { key: 'indication', label: 'Indication', type: 'textarea' },
+            ],
+          }}
+          onCancel={() => setIngestOpen(false)}
+          onSubmit={ingestPrecedent}
+        />
+      )}
+
+      {comparison && (
+        <div className="pj-card" style={{ marginBottom: 14 }}>
+          <div className="pj-card-h">
+            <span className="t">Comparison against {comparison.k}</span>
+            <button type="button" className="pj-card-h-go" onClick={() => setComparison(null)}>Close</button>
+          </div>
+          <div className="pj-card-b">
+            {/* The engine's own answer, rendered as it came back. This surface
+                does not re-score or summarise it — a comparison the reader
+                cannot trace to the engine is worth less than none. */}
+            <pre className="pe-compare">{JSON.stringify(comparison.result, null, 2)}</pre>
+          </div>
+        </div>
+      )}
 
       <AnswerLead
         tone={strong ? 'good' : 'calm'}
@@ -523,14 +708,16 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
                 <span className="t">
                   {sel.clearanceNumber} -- {sel.deviceName}
                 </span>
+                {/* Was `ask('Compare our submission against precedent …')` —
+                    it bypassed POST /api/precedent-engine/compare, which runs
+                    the real comparison. */}
                 <button
                   className="pj-card-h-go"
                   style={{ fontSize: 11, color: 'var(--accent-200)' }}
-                  onClick={() =>
-                    ask('Compare our submission against precedent ' + sel.clearanceNumber)
-                  }
+                  onClick={() => void runCompare(sel)}
+                  disabled={comparing === sel.clearanceNumber}
                 >
-                  Compare {I.arrowRight}
+                  {comparing === sel.clearanceNumber ? 'Comparing…' : <>Compare {I.arrowRight}</>}
                 </button>
               </div>
               <div className="pj-card-b">

@@ -23,6 +23,7 @@ import { DeviceProfilePanel } from './DeviceProfilePanel';
 import { EstarFilingPanel } from './EstarFilingPanel';
 import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 import type { EditorSectionRef } from '../../v2/editorTarget';
+import { downloadCsv } from '../../v2/download';
 
 export interface K510SurfaceProps {
   program: Program | null;
@@ -442,18 +443,11 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                         ? [r.attr, r.subject, ...selectedList.map(() => r.predicate)]
                         : [r.attr, r.subject, r.verdict, r.predicate, r.note ?? ''],
                     );
-                    const csv = [headers, ...rows]
-                      .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
-                      .join('\r\n');
-                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${(program?.code ?? 'project').toLowerCase()}-se-matrix.csv`;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    URL.revokeObjectURL(url);
+                    downloadCsv(
+                      `${(program?.code ?? 'project').toLowerCase()}-se-matrix.csv`,
+                      headers,
+                      rows,
+                    );
                   }}
                 >
                   {I.download}

@@ -54,14 +54,22 @@ export function convertV2StudyToCsrReport(study: any): Partial<InsertCsrReport> 
       indication,
       phase,
       status,
-      date: completionDate,
-      fileName: `${nctrialId || 'unknown'}.pdf`,
-      fileSize: 0, // We don't have file size from the API
-      filePath: null, // We don't have file path from the API
-      nctrialId,
+      /* Six of this object's keys never existed on csr_reports (`date`,
+         `fileName`, `fileSize`, `filePath`, `nctrialId`, `drugName`,
+         `region`) — every one was silently dropped as an unknown key for as
+         long as this importer has existed, so the completion date never
+         persisted and the NCT id never reached `nct_id`, the corpus dedupe
+         column. Surfaced the moment the insert-schema types stopped
+         collapsing to `{}` (see createInsertSchemaOmit). Mapped to the REAL
+         columns now; the intervention name rides metadata (no column exists,
+         and inventing one is a migration, not an importer patch). */
+      reportDate: completionDate,
+      nctId: nctrialId,
       studyId: nctrialId,
-      drugName: protocol?.interventionsModule?.interventions?.[0]?.name || null,
-      region: null, // We don't have region information from the API
+      metadata: {
+        source: 'clinicaltrials.gov/v2',
+        drugName: protocol?.interventionsModule?.interventions?.[0]?.name || null,
+      },
     };
 
     return reportData;

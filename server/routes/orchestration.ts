@@ -186,7 +186,23 @@ router.get('/project/:id', (req: Request, res: Response) => {
 
 router.post('/cancel/:id', (req: Request, res: Response) => {
   try {
+    const orgId = getOrganizationId(req);
     const userId = getUserId(req);
+    /* ── This route had no tenant check ────────────────────────────────────
+       `cancelWorkflow` looks a run up in a process-global map BY ID ALONE, so
+       any authenticated user who knew an execution id could cancel another
+       tenant's workflow run — reachable from the Cancel control on the
+       Orchestration surface. Its sibling two routes up, GET /executions/:id,
+       has always verified `execution.organizationId !== orgId` before
+       answering; the destructive route was the one that did not.
+
+       The ownership check is made FIRST and answers 404, not 403 — matching
+       the read: a run in another tenant should not be distinguishable from a
+       run that does not exist, or the id space itself becomes an oracle. */
+    const execution = getWorkflowExecution(String(req.params.id));
+    if (!execution || execution.organizationId !== orgId) {
+      return res.status(404).json({ error: 'Workflow execution not found' });
+    }
     const success = cancelWorkflow(String(req.params.id), userId);
     if (!success) {
       return res.status(404).json({ error: 'Workflow not found or not cancellable' });

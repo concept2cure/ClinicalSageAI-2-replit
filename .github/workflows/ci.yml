@@ -32,7 +32,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
+
+      - name: Guardrails — Node 22 runtime contracts
+        run: node scripts/ci/check-node-runtime.mjs
 
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET)
@@ -276,6 +279,11 @@ jobs:
 
       - name: Guardrails — regulated-data delete audit coverage (Part 11)
         run: npm run ci:regulated-delete-audit
+
+      - name: Guardrails — no unreachable catch around an audit write (Part 11)
+        run: |
+          npm run ci:dead-audit-catch:self-test
+          npm run ci:dead-audit-catch
 
       - name: Guardrails — route mount authority audit (no regressions)
         run: npm run ci:audit-route-mounts:no-regression
@@ -529,7 +537,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
@@ -610,7 +618,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies
         run: npm ci
@@ -669,7 +677,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
@@ -699,7 +707,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
@@ -743,7 +751,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
@@ -855,6 +863,7 @@ jobs:
         env:
           ADMIN_URL: postgresql://postgres@localhost:5432/postgres
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_dbtest
+          APP_SERVICE_DB_PASSWORD: ci-dbtest-app-service-password
 
       - name: Run real-database tests (unmocked pg, RLS_ENFORCE=on)
         run: npm run test:db
@@ -864,6 +873,7 @@ jobs:
           RLS_ENFORCE: 'on'
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_dbtest
           TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_dbtest
+          APP_DATABASE_URL: postgresql://app_service:ci-dbtest-app-service-password@localhost:5432/concept2cure-ri_dbtest
 
   # ── Blank-database provisioning + deploy-migration proof ──────────────────
   #
@@ -911,7 +921,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies
         run: |
@@ -1107,7 +1117,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies
         run: |
@@ -1296,7 +1306,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
@@ -1327,7 +1337,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
@@ -1354,12 +1364,26 @@ jobs:
           retention-days: 90
           if-no-files-found: ignore
 
-      - name: Run npm audit (with documented false-positive allowlist)
-        # The wrapper filters out registry-lag false positives where installed
-        # version > advisory's vulnerable range. Genuine new high/critical
-        # advisories still fail. See scripts/ci/audit-with-allowlist.mjs for the
-        # current allowlist and justifications.
-        run: node scripts/ci/audit-with-allowlist.mjs
+      - name: Run lockfile audit and dependency-risk ledger gate
+        # The wrapper reconciles the exact lockfile scan with the reviewed risk
+        # ledger. New findings, expired approvals, and scanner outages fail.
+        run: npm run ci:dependency-risk
+        env:
+          NPM_AUDIT_OUTPUT: dependency-audit-results.json
+
+      - name: Prove dependency-risk gate fail-closed behavior
+        run: npm run test:dependency-risk
+
+      - name: Prove PPTX image parser is unreachable
+        run: npm run ci:pptx-image-reachability
+
+      - name: Upload exact npm audit evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: npm-audit-lockfile-evidence
+          path: dependency-audit-results.json
+          if-no-files-found: error
 
       - name: Trivy filesystem scan (deps + secrets)
         # Blocking gate: fails the job on HIGH/CRITICAL findings so they cannot
@@ -1398,7 +1422,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
         run: |

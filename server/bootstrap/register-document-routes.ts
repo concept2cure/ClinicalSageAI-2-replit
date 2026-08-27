@@ -8,7 +8,7 @@
  * mounted successfully. Static now; the reasoning is in ./mount-routes.ts.
  */
 
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import express from 'express';
 import type { Pool } from 'pg';
 import { authenticateToken } from '../middleware/auth.js';
@@ -77,30 +77,20 @@ export async function registerDocumentRoutes({
     console.error('❌ Failed to mount GCC Platform routes:', error);
   }
 
-  // ── Document Authoring (21 CFR Part 11 compliant) ──
+  // ── REMOVED: /api/document-authoring and /api/document-authoring/workspace ──
   //
-  // SECURITY: Document authoring routes are tenant-scoped and many
-  // expose document IDs in the URL. The router's internal
-  // checkDocumentPermission already filters by JWT org, but
-  // authenticateToken at the mount is the backstop so reachability
-  // never precedes authentication.
-  try {
-    const documentAuthoringModule = await import('../routes/documentAuthoring.routes.js');
-    app.use('/api/document-authoring', authenticateToken, documentAuthoringModule.default);
-    console.log('✅ Document Authoring API routes mounted (21 CFR Part 11 compliant, auth-gated)');
-  } catch (error) {
-    console.error('❌ Failed to mount Document Authoring routes:', error);
-  }
-
-  // ── Document Authoring Workspace (read-model for the ui-v2 document-authoring surface) ──
-  // Coexists with the router above on /api/document-authoring; serves /workspace only.
-  try {
-    const documentAuthoringWorkspaceModule = await import('../routes/document-authoring-workspace.routes.js');
-    app.use('/api/document-authoring/workspace', authenticateToken, documentAuthoringWorkspaceModule.default());
-    console.log('✅ Document Authoring Workspace read-model routes mounted (auth-gated): /api/document-authoring/workspace');
-  } catch (error) {
-    console.error('❌ Failed to mount Document Authoring Workspace routes:', error);
-  }
+  // Both routers were mounted, auth-gated, and unreachable: zero client
+  // callers in the repository, and documentAuthoring.routes.ts's own header
+  // named its consumer as client/src/concept2cure/hooks/useDocumentActions.ts
+  // — a file that does not exist. The document-editing client runs entirely on
+  // the canonical /api/authoring router (authoring_documents /
+  // authoring_sections / doc_revisions, hash-chained + audited); these two
+  // wrote to the PARALLEL documents/documentVersions store, so every request
+  // they could have served was a write into a copy nothing reads. Deleted
+  // with their mounts and their handler tests per the zero-duplication rule
+  // (CLAUDE.md): a parallel path is migrated onto the canonical one and
+  // deleted in the same change — the migration happened long ago, the
+  // deletion is this.
 
   // ── eCTD Routes (parallelized) ──
   //

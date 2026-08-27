@@ -81,6 +81,7 @@ import contentAssemblyRoutes from '../routes/contentAssembly.routes';
 import { createMiscInlineRoutes } from '../routes/misc-inline-routes';
 import licenseRoutes from '../routes/license-routes.js';
 import moduleSubscriptions from '../routes/module-subscriptions.js';
+import moduleAccessRequests from '../routes/module-access-requests.js';
 import licensing from '../routes/licensing.js';
 import billing from '../routes/billing.js';
 import deepResearch from '../routes/deep-research.js';
@@ -190,6 +191,14 @@ export async function registerInlineLitCommerceRoutes({
   const litIntRoutes: ReadonlyArray<{ path: string; router: unknown; name: string }> = [
     { path: '/', router: licenseRoutes, name: 'License Management' },
     { path: '/api/module-subscriptions', router: moduleSubscriptions, name: 'Module Subscriptions' },
+    // Sits beside module-subscriptions deliberately: it is how a member who
+    // cannot buy asks for a locked module, so it must stay reachable to an
+    // organization that is locked out of everything else.
+    {
+      path: '/api/module-access-requests',
+      router: moduleAccessRequests,
+      name: 'Module Access Requests',
+    },
     { path: '/api/licensing', router: licensing, name: 'Intelligent Licensing & EULA' },
     { path: '/api/billing', router: billing, name: 'Billing' },
     { path: '/api/deep-research', router: deepResearch, name: 'Deep Research' },

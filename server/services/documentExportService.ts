@@ -488,7 +488,12 @@ function generateECTDIndexXml(
 <ectd:ectd xmlns:ectd="urn:hl7-org:v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="urn:hl7-org:v3 ${dtdVersion}.xsd">
   <ectd:id root="${crypto.randomUUID()}" />
-  <ectd:code code="${submissionType}" codeSystem="2.16.840.1.113883.3.989.5.1.3.1" displayName="${submissionType} Submission" />
+  <!-- submissionType arrives raw from req.body, and the very next line already
+       escapes submissionTitle. An ampersand or a quote here produces XML no
+       parser accepts. This module never writes to disk today (the real eCTD
+       publisher is elsewhere) so the blast radius is small — which is exactly
+       why it should be fixed before anyone wires it to one. -->
+  <ectd:code code="${escapeXml(submissionType)}" codeSystem="2.16.840.1.113883.3.989.5.1.3.1" displayName="${escapeXml(submissionType)} Submission" />
   <ectd:title>${escapeXml(submissionTitle)}</ectd:title>
   <ectd:effectiveTime value="${now.replace(/[-:T]/g, '').slice(0, 14)}" />
   <ectd:setId root="${crypto.randomUUID()}" />

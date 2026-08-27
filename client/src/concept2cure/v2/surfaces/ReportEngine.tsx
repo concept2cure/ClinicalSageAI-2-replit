@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { connected, liveMutateOrNull, useLiveData, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { saveToAuthoring } from '../authoringHandoff';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
@@ -271,6 +272,23 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   const docDef = docById(docType);
+  /*
+   * The body is produced by the SELECTED document's own generator.
+   *
+   * This used to end in a two-branch ternary — recommendations, statistical,
+   * else `genIndReadiness(a)` — written when the registry held exactly three
+   * entries. Three more were added behind the clinical-regulatory-graph flag and
+   * the ternary was not touched, so choosing "Evidence chain", "Design risk" or
+   * "Regulatory precedent" relabelled the header and rendered the IND Readiness
+   * memo underneath: a document titled as one thing over the text of another,
+   * which is worse than an empty tab because it reads as a real deliverable.
+   *
+   * Every DocDef already carries the `gen` that belongs to it, so the registry is
+   * the single source of truth here and a seventh document type cannot repeat
+   * this. The live-service override stays where the server genuinely returns
+   * that document's prose (recommendations, statistical insights) and nowhere
+   * else — a server payload must never be printed under another document's name.
+   */
   const md = useMemo(() => {
     if (!analysis || !docDef) return '';
     const a = analysis.protocol_data;
@@ -278,12 +296,61 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
       if (docType === 'recommendations' && analysis.recommendations) return analysis.recommendations;
       if (docType === 'statistical' && analysis.statistical_insights) return analysis.statistical_insights;
     }
-    return docType === 'recommendations' ? genRecommendations(a, analysis.similar_protocols || [])
-      : docType === 'statistical' ? genStatisticalInsights(a)
-        : genIndReadiness(a);
+    return docDef.gen(a, analysis.similar_protocols || []);
   }, [analysis, docType, docDef]);
   const html = useMemo(() => analysis ? renderSafeMarkdown(md) : '', [md, analysis]);
   const a = analysis && analysis.protocol_data;
+
+  /* What AnA can see of this screen.
+     The PROVENANCE of the analysis is the load-bearing fact here, not the
+     numbers. `source: 'local'` means the server was never reached and the
+     parse came from an in-browser regex over pasted text; `source: 'live'`
+     means the analytics service answered. Those are very different warrants for
+     a protocol recommendation, and an assistant that discussed a locally-parsed
+     sample size as an analysed one would be laundering a text parse into a
+     statistical finding. So the source travels with every fact below. */
+  const anaContext = useMemo(() => {
+    if (busy) {
+      return { summary: 'The protocol is being analysed; nothing on screen is final yet.' };
+    }
+    if (!analysis || !a) {
+      return {
+        summary:
+          'Report engine: no protocol has been analysed yet' +
+          (text.trim() ? `, though ${text.trim().length} character(s) of protocol text are in the input.` : '.'),
+        facts: { protocolTextLength: text.trim().length, selectedDocumentType: docType },
+        availableActions: ['Paste protocol text and run the analysis'],
+      };
+    }
+    return {
+      summary:
+        `Report engine: a protocol has been analysed ${analysis.source === 'live' ? 'by the analytics service' : 'LOCALLY, in the browser, because the analytics service was not reachable — the figures below are a text parse, not an analysis'}. ` +
+        `"${a.title}" — ${a.phase}, ${a.indication}, n=${a.sample_size}, ${a.duration_weeks} weeks, primary endpoint "${a.primary_endpoint}". ` +
+        `${(a.risk_factors ?? []).length} risk factor(s). The "${docDef?.label ?? docType}" document is generated on screen.`,
+      facts: {
+        analysisSource: analysis.source,
+        analysisIsServerSide: analysis.source === 'live',
+        selectedDocumentType: docType,
+        documentLabel: docDef?.label ?? null,
+        protocol: {
+          title: a.title, indication: a.indication, phase: a.phase,
+          sampleSize: a.sample_size, durationWeeks: a.duration_weeks,
+          primaryEndpoint: a.primary_endpoint,
+        },
+        riskFactors: (a.risk_factors ?? []).map((r) => ({
+          description: r.description, severity: r.severity, mitigation: r.mitigation ?? null,
+        })),
+        similarProtocols: (analysis.similar_protocols ?? []).slice(0, 8).map((sp) => ({ id: sp.id, title: sp.title })),
+        generatedDocumentLength: md.length,
+      },
+      availableActions: [
+        'Analyse pasted protocol text',
+        'Switch the generated document type',
+        'Open the generated document in the authoring editor (creates a real Module 5 document)',
+      ],
+    };
+  }, [busy, analysis, a, text, docType, docDef, md]);
+  usePublishSurfaceContext('report-engine', anaContext);
 
   /*
    * "Open in editor" — a real handoff. See the long note on the same handler in

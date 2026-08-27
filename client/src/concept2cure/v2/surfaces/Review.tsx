@@ -11,11 +11,11 @@
  * are applied from the authoring workspace (server/routes/authoring.router.ts),
  * PIN-verified and sealed against a frozen document version.
  */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
-import { useAuth } from '@/services/portal/authService';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import type { ReviewItem, ReviewComment, ReviewWorkflow } from '../fixtures/review-data';
@@ -67,7 +67,8 @@ function Pill({ tone, children }: { tone: string; children: React.ReactNode }) {
 function ESignModal({ onClose, item, onSigned }: {
   onClose: () => void;
   item: ReviewItem;
-  onSigned?: () => void;
+  /** Fires only after the server confirms the write, with what it recorded. */
+  onSigned?: (result: { workflowStatus?: string; approvalStatus?: string }) => void;
 }) {
   /**
    * This dialog does NOT apply an electronic signature, and no longer claims to.
@@ -93,9 +94,49 @@ function ESignModal({ onClose, item, onSigned }: {
    * Until it is, the honest thing is a local review decision that says so.
    */
   const [meaning, setMeaning] = useState('APPROVER');
+  const [decision, setDecision] = useState<'approve' | 'reject'>('approve');
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
 
-  const recordDecision = () => {
-    onSigned ? onSigned() : onClose();
+  /* ── This used to be `onSigned ? onSigned() : onClose()` ───────────────────
+     A reviewer picked a meaning of signature, clicked "Record decision", and
+     the queue row flipped to "Review decision recorded" — in that browser tab,
+     until the next refresh. No request was made. The approval step stayed
+     pending forever and the next reviewer was never unblocked.
+
+     It now POSTs the decision to the governed router, which completes the
+     reviewer's approval row, advances the workflow to the next pending step (or
+     completes it when this was the last), and records the act with its 21 CFR
+     11.50 meaning in workflow_history. A rejection rejects the workflow and
+     requires a reason — the next author has to act on something. */
+  const recordDecision = async () => {
+    if (busy) return;
+    if (decision === 'reject' && reason.trim().length < 8) {
+      setErr('A rejection needs a reason of at least 8 characters — it is what the author has to act on.');
+      return;
+    }
+    setBusy(true);
+    setErr('');
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/review/workflows/' + encodeURIComponent(String(item?.id ?? '')) + '/decision',
+        { decision, meaning, reason: reason.trim() || undefined },
+      );
+      const body = await res.json().catch(() => null);
+      const payload = body as { success?: boolean; data?: { workflowStatus?: string; approvalStatus?: string } } | null;
+      if (!res.ok || payload?.success !== true) {
+        setErr(serverMessage(body) ?? 'The decision was not recorded (HTTP ' + res.status + '). Nothing changed.');
+        return;
+      }
+      onSigned?.(payload.data ?? {});
+    } catch (e) {
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      setErr(known && (e as Error).message ? (e as Error).message : 'Could not reach the review service. Nothing changed.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -113,25 +154,59 @@ function ESignModal({ onClose, item, onSigned }: {
             </div>
           )}
           <div className="esign-field">
-            <label>Meaning of signature</label>
-            <select value={meaning} onChange={(e) => setMeaning(e.target.value)}>
+            <label htmlFor="rv-decision">Decision</label>
+            <select
+              id="rv-decision"
+              value={decision}
+              onChange={(e) => setDecision(e.target.value as 'approve' | 'reject')}
+            >
+              <option value="approve">Approve this step</option>
+              <option value="reject">Reject — send the document back</option>
+            </select>
+          </div>
+          <div className="esign-field">
+            <label htmlFor="rv-meaning">Meaning of signature</label>
+            <select id="rv-meaning" value={meaning} onChange={(e) => setMeaning(e.target.value)}>
               {ESIGN_MEANINGS.map((m) => (
                 <option key={m} value={m}>{m.replace(/_/g, ' ')}</option>
               ))}
             </select>
           </div>
+          <div className="esign-field">
+            <label htmlFor="rv-reason">
+              {decision === 'reject' ? 'Reason (required)' : 'Note for the thread (optional)'}
+            </label>
+            <textarea
+              id="rv-reason"
+              rows={3}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder={decision === 'reject'
+                ? 'What has to change before this can be approved'
+                : 'Anything the next reviewer should know'}
+            />
+          </div>
+          {err && <div className="esign-err" role="alert">{err}</div>}
           <div className="esign-manifest">
-            This records a review decision of <b>{meaning.replace(/_/g, ' ')}</b> in
-            this session only. <b>It is not an electronic signature</b> and it is
-            not a 21 CFR §11.50 manifestation — no signer identity is verified,
-            nothing is bound to a document version, and nothing is persisted.
-            Apply a binding signature from the authoring workspace, where the
-            signature is PIN-verified and sealed against a frozen version.
+            This records a review decision of <b>{meaning.replace(/_/g, ' ')}</b> against
+            this workflow step: the step is completed, the workflow advances or
+            closes, and the act is written to the review history with that meaning.
+            It is <b>not</b> a 21 CFR §11.50 signature manifestation — no signer
+            identity is re-verified here and nothing is sealed against a frozen
+            document version. Apply a binding signature from the authoring
+            workspace, where it is PIN-verified and sealed.
           </div>
         </div>
         <div className="esign-f">
-          <button className="btn ghost" style={{ flex: 1, justifyContent: 'center' }} onClick={onClose}>Cancel</button>
-          <button className="btn primary" style={{ flex: 1, justifyContent: 'center' }} onClick={recordDecision}>{I.shieldCheck} Record decision</button>
+          <button className="btn ghost" style={{ flex: 1, justifyContent: 'center' }} onClick={onClose} disabled={busy}>Cancel</button>
+          <button
+            className="btn primary"
+            style={{ flex: 1, justifyContent: 'center' }}
+            onClick={recordDecision}
+            disabled={busy || (decision === 'reject' && reason.trim().length < 8)}
+          >
+            {I.shieldCheck} {busy ? 'Recording…' : decision === 'reject' ? 'Record rejection' : 'Record approval'}
+          </button>
         </div>
       </div>
     </div>
@@ -140,14 +215,23 @@ function ESignModal({ onClose, item, onSigned }: {
 
 /* ── Approve & sign button ── */
 
-function ApproveSign({ item, onApproved }: { item: ReviewItem; onApproved?: () => void }) {
+function ApproveSign({ item, onApproved }: {
+  item: ReviewItem;
+  onApproved?: (result: { workflowStatus?: string; approvalStatus?: string }) => void;
+}) {
   const [open, setOpen] = useState(false);
-  const [done, setDone] = useState(false);
 
-  if (done) {
+  /* The "Review decision recorded" chip used to be a local `done` flag set on
+     a click that wrote nothing. It is now driven by the row's state, which
+     comes back from the board after the decision is written — so the chip is a
+     statement about the record rather than about this tab. */
+  if (item.state === 'approved' || item.state === 'rejected') {
     return (
-      <span className="rd-chip tone-ok" style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}>
-        {I.shieldCheck} Review decision recorded
+      <span
+        className={'rd-chip tone-' + (item.state === 'approved' ? 'ok' : 'err')}
+        style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}
+      >
+        {I.shieldCheck} Review decision recorded — {item.state}
       </span>
     );
   }
@@ -159,10 +243,9 @@ function ApproveSign({ item, onApproved }: { item: ReviewItem; onApproved?: () =
         <ESignModal
           item={item}
           onClose={() => setOpen(false)}
-          onSigned={() => {
-            setDone(true);
+          onSigned={(result) => {
             setOpen(false);
-            onApproved && onApproved();
+            onApproved?.(result);
           }}
         />
       )}
@@ -173,11 +256,12 @@ function ApproveSign({ item, onApproved }: { item: ReviewItem; onApproved?: () =
 /* ════ Review & Approval surface ════ */
 
 export function Review({ onAsk, onNav }: SurfaceViewProps) {
-  // Real signed-in identity for in-session comment attribution — never a
-  // hardcoded name. A comment the reviewer types here is authored by them.
-  const { user } = useAuth();
-  const meName = user?.displayName || user?.email || 'You';
-  const meRole = (user?.roles && user.roles[0]) || '';
+  /* `useAuth` used to be read here for one purpose: attributing comments this
+     surface appended to its OWN local thread. Nothing is appended locally any
+     more — every comment, delegation and decision is written and then re-read —
+     so the author on screen is the author the SERVER recorded, which is the
+     only one that can be trusted. The hook is gone with the code that needed
+     it. */
 
   const [queue, setQueue] = useState<ReviewItem[]>([]);
   const [sel, setSel] = useState('');
@@ -193,28 +277,149 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   const [requesting, setRequesting] = useState(false);
   const [requestErr, setRequestErr] = useState('');
   const [toast, fireToast] = useToast();
+  /** The queue column — "Open the queue" scrolls to it and focuses the row it selected. */
+  const queueRef = useRef<HTMLDivElement>(null);
 
   // Live, org-scoped review board — GET /api/review/board → { success, data }.
   // useLiveData unwraps the success envelope, so `board` is the render contract
   // itself ({ queue, workflows, thread }). There is no fixture: a tenant with
   // nothing in review renders an honest empty board, and a failed load renders
   // an honest error — never a fabricated queue behind a "sample" pill.
-  const boardState = useLiveData<ReviewBoardData>('/api/review/board');
+  /* Bumped after every confirmed write so the board is RE-READ. Each of the
+     writes below used to end in `setThread`/`setQueue` and stop there, which is
+     how a review comment could exist on screen and nowhere else. Re-reading is
+     what makes the surface show the record rather than a memory of what was
+     clicked. */
+  const [boardEpoch, setBoardEpoch] = useState(0);
+  const boardState = useLiveData<ReviewBoardData>('/api/review/board', [
+    '/api/review/board',
+    boardEpoch,
+  ]);
   const board = boardState.data;
   const workflows: Record<string, ReviewWorkflow> = board?.workflows ?? {};
 
   // Seed the editable queue + thread from the real board exactly once, the first
   // time it resolves — so later in-session edits (reply, resolve, delegate) are
   // never clobbered by the effect re-running.
-  const seededRef = useRef(false);
+  const seededRef = useRef(-1);
   useEffect(() => {
-    if (seededRef.current || boardState.loading || !board) return;
-    seededRef.current = true;
+    if (seededRef.current === boardEpoch || boardState.loading || !board) return;
+    seededRef.current = boardEpoch;
     const q = (board.queue ?? []).map((r) => ({ ...r }));
     setQueue(q);
     setSel((prev) => (q.some((r) => r.id === prev) ? prev : q[0] ? q[0].id : prev));
     setThread((board.thread ?? []).map((c) => ({ ...c })));
-  }, [boardState.loading, board]);
+  }, [boardState.loading, board, boardEpoch]);
+
+  /** Re-read the board from the server after a confirmed write. */
+  const refreshBoard = () => setBoardEpoch((e) => e + 1);
+
+  /* Jump to the next document still awaiting a decision — ONE path shared by
+     the AnswerLead's "Open the queue" button and AnA's review.open-queue
+     action, so the two can never drift. Selecting the row is the part that
+     matters; bringing it into view is a courtesy (`scrollIntoView` is absent
+     in jsdom and some embedded webviews, and an unguarded call there throws
+     out of the handler — taking the selection with it). */
+  const openQueue = (): ReviewItem | null => {
+    const next = queue.find((r) => r.state !== 'approved') ?? null;
+    if (next) setSel(next.id);
+    setRejecting(false);
+    try {
+      queueRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      queueRef.current?.querySelector<HTMLButtonElement>('.lrow[data-on]')?.focus();
+    } catch { /* no scrollIntoView here — the row is still selected */ }
+    return next;
+  };
+
+  /* ── AnA's hands on this screen — the surface-action bus ──────────────────
+     Registered under 'review' (identity-mapped nav target). View selection
+     ONLY: recording a decision, requesting changes, delegating, commenting,
+     and resolving stay governed human acts, untouched by this registration.
+     Both handlers refuse — with the real reason — while a form holding a
+     person's in-progress justification is open: setSel does not clear those
+     forms, so an AnA-driven selection change would silently re-target a
+     half-typed reason at a DIFFERENT document. */
+  const reviewBusyGuard = (): { ok: false; reason: string } | null => {
+    if (requesting) return { ok: false, reason: 'A review write is in flight — wait for it to finish.' };
+    if (rejecting) return { ok: false, reason: 'The request-changes form is open — close it first.' };
+    if (delegating) return { ok: false, reason: 'The delegate form is open — close it first.' };
+    return null;
+  };
+  useSurfaceActionHandlers('review', {
+    'review.select-document': (params) => {
+      const guarded = reviewBusyGuard();
+      if (guarded) return guarded;
+      const wanted = (params.document ?? '').trim();
+      if (!wanted) return { ok: false, reason: 'No document named.' };
+      if (boardState.error && queue.length === 0)
+        return { ok: false, reason: 'The review board could not be read.' };
+      // Not-ready, not failed: the bus holds the directive and re-attempts on
+      // the ready signal below — the navigate→act gap.
+      if (boardState.loading && queue.length === 0)
+        return { ok: false, reason: 'The review board is still loading.', retry: true };
+      if (queue.length === 0) return { ok: false, reason: 'Nothing is in review.' };
+      const lower = wanted.toLowerCase();
+      const exact = queue.find((r) => r.id === wanted || r.doc.toLowerCase() === lower);
+      const contains = exact ? [] : queue.filter((r) => r.doc.toLowerCase().includes(lower));
+      const match = exact ?? (contains.length === 1 ? contains[0] : null);
+      if (!match) {
+        return {
+          ok: false,
+          reason:
+            contains.length > 1
+              ? `"${params.document}" matches ${contains.length} documents — name one exactly.`
+              : `No document named "${params.document}" in the review queue.`,
+        };
+      }
+      setSel(match.id);
+      setRejecting(false);
+      setDelegating(false);
+      return { ok: true, detail: `Selected ${match.doc}` };
+    },
+    'review.open-queue': () => {
+      const guarded = reviewBusyGuard();
+      if (guarded) return guarded;
+      if (boardState.error && queue.length === 0)
+        return { ok: false, reason: 'The review board could not be read.' };
+      if (boardState.loading && queue.length === 0)
+        return { ok: false, reason: 'The review board is still loading.', retry: true };
+      if (queue.length === 0) return { ok: false, reason: 'Nothing is in review.' };
+      if (!queue.some((r) => r.state !== 'approved'))
+        return { ok: false, reason: 'Every document in the queue is already approved.' };
+      const next = openQueue();
+      return { ok: true, detail: next ? `Opened the queue at ${next.doc}` : 'Opened the queue' };
+    },
+  });
+  /* The ready signal for the retry contract above. */
+  useEffect(() => {
+    if (!boardState.loading) notifySurfaceActionReady('review');
+  }, [boardState.loading]);
+
+  /* The approval-board slice of AnA's screen context. NOT published here:
+     ReviewThreadsPane (always mounted by this surface, in both the empty and
+     the loaded branch) is the ONE 'review' publisher — two publishers on one
+     id fight for the store, which surfaceContextIds.test.ts refuses. The
+     board facts travel to the pane as a prop and are merged into its context,
+     so AnA sees the queue AND the threads in one truthful block. A FAILED
+     read ships the failure: "0 documents in review" over an outage would make
+     her confidently wrong about the whole approval workload. */
+  const boardContext = useMemo(() => {
+    if (boardState.loading && queue.length === 0) {
+      return { state: 'loading' as const };
+    }
+    if (boardState.error && queue.length === 0) {
+      return { state: 'error' as const };
+    }
+    const awaiting = queue.filter((r) => r.state !== 'approved').length;
+    const selected = queue.find((r) => r.id === sel);
+    return {
+      state: 'ready' as const,
+      queueCount: queue.length,
+      awaitingDecision: awaiting,
+      selectedDoc: selected?.doc ?? null,
+      selectedState: selected?.state ?? null,
+    };
+  }, [boardState.loading, boardState.error, queue, sel]);
 
   useEffect(() => {
     try {
@@ -261,7 +466,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
           icon={I.shieldCheck}
         />
         {/* Threads can exist even when no document is on the approval board. */}
-        <ReviewThreadsPane onNotice={fireToast} />
+        <ReviewThreadsPane onNotice={fireToast} board={boardContext} />
         <C2CToast msg={toast} />
       </div>
     );
@@ -270,10 +475,6 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   const item = queue.find((r) => r.id === sel) || queue[0];
   const wf: ReviewWorkflow | null = workflows[item.id] || null;
   const curStep = wf ? wf.steps.find((s) => s.status === 'current') : null;
-
-  const setItemState = (id: string, state: string, esig?: string) => {
-    setQueue((q) => q.map((r) => (r.id === id ? { ...r, state, esig: esig || r.esig } : r)));
-  };
 
   const openEditor = () => {
     onNav('document-authoring');
@@ -322,17 +523,9 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
         );
         return;
       }
-      setItemState(item.id, 'changes-requested');
-      setThread((t) => [{
-        id: 'rj' + Date.now(),
-        author: meName,
-        role: meRole,
-        when: 'just now',
-        state: 'open',
-        body: 'Changes requested: ' + text,
-      }, ...t]);
       setRejecting(false);
       setReason('');
+      refreshBoard();
       fireToast('Change request recorded on the document');
     } catch (e) {
       // Only ApiRequestError carries a message that has already been reduced to
@@ -347,38 +540,97 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
-  const doDelegate = () => {
-    if (!delTo.trim()) return;
-    setDelegating(false);
+  /**
+   * Delegate this step — POST /api/review/workflows/:workflowId/delegate.
+   *
+   * This used to push one line into local thread state and toast "Approval
+   * delegated to <name>". Nobody was delegated to, the step stayed assigned to
+   * the delegator, and the line vanished on reload. The route REPLACES the
+   * step's assignment (a delegation that leaves the delegator assigned has not
+   * delegated anything) and records who and why.
+   */
+  const doDelegate = async () => {
     const to = delTo.trim();
-    setDelTo('');
-    setDelReason('');
-    setThread((t) => [{
-      id: 'dg' + Date.now(),
-      author: meName,
-      role: meRole,
-      when: 'just now',
-      state: 'open',
-      body: 'Delegated "' + (curStep ? curStep.name : 'this approval') + '" to ' + to + (delReason.trim() ? ' — ' + delReason.trim() : ''),
-    }, ...t]);
-    fireToast('Approval delegated to ' + to);
+    const why = delReason.trim();
+    if (!to || requesting) return;
+    if (why.length < 8) {
+      setRequestErr('A delegation needs a reason of at least 8 characters.');
+      return;
+    }
+    setRequesting(true);
+    setRequestErr('');
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/review/workflows/' + encodeURIComponent(item.id) + '/delegate',
+        { to, reason: why },
+      );
+      const body = await res.json().catch(() => null);
+      if (!res.ok || (body as { success?: boolean } | null)?.success !== true) {
+        setRequestErr(serverMessage(body) ?? 'The step was not delegated (HTTP ' + res.status + '). Nothing changed.');
+        return;
+      }
+      setDelegating(false);
+      setDelTo('');
+      setDelReason('');
+      refreshBoard();
+      fireToast('"' + (curStep ? curStep.name : 'This approval') + '" is now assigned to ' + to + '.');
+    } catch (e) {
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      setRequestErr(known && (e as Error).message ? (e as Error).message : 'Could not reach the review service. Nothing changed.');
+    } finally {
+      setRequesting(false);
+    }
   };
 
-  const resolveCmt = (id: string) => {
+  /**
+   * Resolve a review comment — PATCH /api/review/comments/:id/resolve.
+   * Was `setThread(... state: 'resolved')`: the comment was open again for
+   * everyone, including the same reviewer, after a reload.
+   */
+  const resolveCmt = async (id: string) => {
+    const prev = thread;
     setThread((t) => t.map((c) => (c.id === id ? { ...c, state: 'resolved' } : c)));
+    try {
+      const res = await apiRequest('PATCH', '/api/review/comments/' + encodeURIComponent(id) + '/resolve', { resolved: true });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || (body as { success?: boolean } | null)?.success !== true) {
+        setThread(prev); // the record did not change, so neither does the thread
+        fireToast(serverMessage(body) ?? 'The comment was not resolved (HTTP ' + res.status + '). It is still open.', 'error');
+      }
+    } catch (e) {
+      setThread(prev);
+      fireToast('The comment was not resolved — ' + (e instanceof Error ? e.message : String(e)) + '. It is still open.', 'error');
+    }
   };
 
-  const postReply = () => {
-    if (!reply.trim()) return;
-    setThread((t) => [...t, {
-      id: 'rp' + Date.now(),
-      author: meName,
-      role: meRole,
-      when: 'just now',
-      state: 'open',
-      body: reply.trim(),
-    }]);
-    setReply('');
+  /**
+   * Post a review comment — POST /api/review/workflows/:workflowId/comments.
+   * Was `setThread([...t, …])` and nothing else: the comment was never saved,
+   * never seen by anyone else, and gone on refresh.
+   */
+  const postReply = async () => {
+    const text = reply.trim();
+    if (!text || requesting) return;
+    setRequesting(true);
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/review/workflows/' + encodeURIComponent(item.id) + '/comments',
+        { content: text },
+      );
+      const body = await res.json().catch(() => null);
+      if (!res.ok || (body as { success?: boolean } | null)?.success !== true) {
+        fireToast(serverMessage(body) ?? 'The comment was not posted (HTTP ' + res.status + '). Nothing was saved.', 'error');
+        return;
+      }
+      setReply('');
+      refreshBoard();
+    } catch (e) {
+      fireToast('The comment was not posted — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.', 'error');
+    } finally {
+      setRequesting(false);
+    }
   };
 
   const openCmts = thread.filter((c) => c.state === 'open').length;
@@ -417,13 +669,28 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
         action={
           signSteps.length
             ? { label: 'Review ' + signSteps[0].doc, onClick: () => setSel(signSteps[0].id) }
-            : { label: 'Open the queue', onClick: () => {} }
+            /* Was `onClick: () => {}` — the most prominent button on the
+               screen, doing nothing at all. It now selects the first document
+               still moving through review and brings the queue into view; when
+               everything is approved it says so instead of pretending there is
+               a queue to open. */
+            : queue.some((r) => r.state !== 'approved')
+              ? {
+                  label: 'Open the queue',
+                  /* The ONE openQueue path — shared with AnA's review.open-queue
+                     surface action, so the button and the action cannot drift. */
+                  onClick: () => { openQueue(); },
+                }
+              /* Every document is approved. There is no queue to open, so no
+                 button is offered — the headline already says so, and a button
+                 that reports a state is not a button. */
+              : undefined
         }
         secondary="Or work the queue below."
       />
 
       <div className="split">
-        <div className="split-list">
+        <div className="split-list" ref={queueRef}>
           {queue.map((r) => (
             <button key={r.id} className="lrow" data-on={sel === r.id || undefined} onClick={() => { setSel(r.id); setRejecting(false); }}>
               <div className="lrow-top">
@@ -454,7 +721,20 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
                   : <>
                     <button className="btn ghost" onClick={() => { setDelegating((v) => !v); setRejecting(false); }}>{I.user} Delegate...</button>
                     <button className="btn ghost" onClick={() => { setRejecting((v) => !v); setDelegating(false); }}>{I.close} Request changes...</button>
-                    <ApproveSign item={item} onApproved={() => setItemState(item.id, 'approved', 'signed')} />
+                    <ApproveSign
+                      item={item}
+                      onApproved={(result) => {
+                        refreshBoard();
+                        fireToast(
+                          result.approvalStatus === 'rejected'
+                            ? 'Rejection recorded — the workflow is closed and the author has your reason.'
+                            : result.workflowStatus === 'completed'
+                              ? 'Approval recorded — that was the last step, so the review is complete.'
+                              : 'Approval recorded — the workflow has moved to the next step.',
+                          result.approvalStatus === 'rejected' ? 'error' : 'ok',
+                        );
+                      }}
+                    />
                   </>
               }
             </div>
@@ -518,9 +798,21 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
                 value={delReason}
                 onChange={(e) => setDelReason(e.target.value)}
               />
+              {requestErr && (
+                <div className="rv-reject-note" role="alert" style={{ color: 'var(--danger, #b42318)' }}>
+                  Not delegated — {requestErr}
+                </div>
+              )}
               <div className="rv-reject-row">
-                <button className="btn ghost" onClick={() => { setDelegating(false); setDelTo(''); setDelReason(''); }}>Cancel</button>
-                <button className="btn primary" disabled={!delTo.trim()} onClick={doDelegate}>{I.user} Delegate approval</button>
+                <button className="btn ghost" onClick={() => { setDelegating(false); setDelTo(''); setDelReason(''); setRequestErr(''); }}>Cancel</button>
+                <button
+                  className="btn primary"
+                  disabled={requesting || !delTo.trim() || delReason.trim().length < 8}
+                  title={delReason.trim().length < 8 ? 'A reason of at least 8 characters is recorded with the delegation' : undefined}
+                  onClick={doDelegate}
+                >
+                  {I.user} {requesting ? 'Delegating…' : 'Delegate approval'}
+                </button>
               </div>
             </div>
           )}
@@ -617,7 +909,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
 
       {/* Real, persisted review threads (Phase-13 backend) — assigned to the
           signed-in reviewer, with reply / request-changes / resolve in place. */}
-      <ReviewThreadsPane onNotice={fireToast} />
+      <ReviewThreadsPane onNotice={fireToast} board={boardContext} />
 
       <C2CToast msg={toast} />
     </div>

@@ -41,6 +41,15 @@ export interface AnaChatAction {
   path?: string;
   /** Params the target requires (e.g. an intelligence sub-tab). */
   params?: Record<string, string>;
+  /**
+   * Present only when `actionType === 'surface_action'`: the surface-action
+   * registry id (e.g. "vault.search") produced server-side by `act_on_screen`
+   * against the governed surface-action contract, plus the screen it operates.
+   * The rail renders these as a button too — performed client-side through
+   * the ONE surface-action bus when the person activates it.
+   */
+  actionId?: string;
+  surfaceId?: string;
 }
 /** A tool invocation surfaced for transparency/auditability during a turn. */
 export interface AnaToolCall {
@@ -406,7 +415,58 @@ export interface UseAnaChatOptions {
    * against the tenant's enabled models and drops it silently when invalid.
    */
   modelOverride?: string | null;
+  /**
+   * AnA Live Drive: while true, every turn is sent with `live_drive: true`, so
+   * validated navigate_to / act_on_screen directives stream back as
+   * `drive_navigation` / `drive_action` events for immediate application
+   * instead of waiting as chips. The server gates this per turn on the
+   * `ana_live_drive` entitlement and answers honestly with a `drive_state`
+   * event either way.
+   */
+  liveDrive?: boolean;
+  /**
+   * Drive mode for opted-in turns: 'demo' marks an explicitly started
+   * demonstration (larger applied budgets + the demo prompt block server-side,
+   * same entitlement). Omitted/anything else → the server's default 'assist'.
+   */
+  driveMode?: 'assist' | 'demo';
+  /**
+   * Receives Live Drive events (`drive_state` / `drive_navigation`) as they
+   * stream. The hook stays dumb here on purpose — validation against the
+   * shared navigation registry and the apply/take-over state machine live in
+   * v2/liveDrive.ts, next to the shell that owns navigation.
+   */
+  onDriveEvent?: (event: DriveSseEvent) => void;
+  /**
+   * Fired when the server persists a draft this turn produced
+   * (`artifact_version_saved`, with the governed artifact's external id).
+   * The shell's follow-the-work behavior hangs off this so a driven turn's
+   * document appears in front of the subscriber — from ANY chat instance
+   * (rail or an owned surface's dock), not just the shell's own.
+   */
+  onArtifactSaved?: (artifactId: string) => void;
 }
+/**
+ * Live Drive SSE events, forwarded verbatim to `onDriveEvent` as they stream.
+ * `drive_state` arrives once per opted-in turn (an honest enable — carrying
+ * the turn's mode — or an honest lock carrying the real required tier);
+ * `drive_navigation` / `drive_action` arrive per directive the server emitted
+ * for immediate application. Each `directive` is typed unknown on purpose:
+ * the shell re-validates navigations against the shared navigation registry
+ * (v2/liveDrive.ts) and actions against the shared surface-action registry
+ * (v2/surfaceActions.ts) before anything moves or is performed.
+ */
+export type DriveSseEvent =
+  | {
+      type: 'drive_state';
+      enabled: boolean;
+      mode?: 'assist' | 'demo';
+      reason?: string;
+      requiredTier?: string | null;
+    }
+  | { type: 'drive_navigation'; round?: number; directive: unknown }
+  | { type: 'drive_action'; round?: number; directive: unknown };
+
 /** Control status of an in-flight AnA run (null when no run is active). */
 export type RunControlStatus = 'running' | 'paused' | 'cancelled' | null;
 export interface UseAnaChatReturn {

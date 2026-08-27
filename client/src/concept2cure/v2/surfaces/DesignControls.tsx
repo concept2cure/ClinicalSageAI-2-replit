@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
@@ -65,21 +66,37 @@ const DC_INPUT_CATS: [string, string][] = [
 /** V&V result → cell tone (presentation map, not data). */
 const DC_RESULT: Record<string, string> = { pass: 'ok', fail: 'err', pending: 'warn', null: 'idle' };
 
-/** The nine 21 CFR 820.30 subsections (regulatory structure) and the rule that
- *  derives each element's state from the REAL design-input rows. Only the five
- *  elements the c2c_design_controls store actually evidences are derivable;
- *  design plan / reviews / transfer / changes have no backing store here and are
- *  reported 'untracked' rather than asserted present or absent. */
+/**
+ * The nine design-control elements, dual-cited.
+ *
+ * QMSR took effect 2 February 2026 and incorporates ISO 13485:2016 by
+ * reference: design controls now live at ISO 13485 §7.3, and 21 CFR 820.30 is
+ * the legacy citation. This surface cited 820.30 alone in thirty-one places
+ * with no mention of 13485 anywhere in the file — so a device team reading it
+ * after February was being pointed at the superseded clause for every element
+ * of their design history file.
+ *
+ * BOTH are shown during the transition rather than a swap. A DHF assembled
+ * before the changeover is indexed to 820.30 and its reviewers still search on
+ * it; dropping the old citation would make the existing record unfindable, and
+ * dropping the new one leaves the product a year behind the rule it claims to
+ * enforce.
+ *
+ * The derivation is unchanged: only the five elements the c2c_design_controls
+ * store actually evidences are derivable. Design plan / reviews / transfer /
+ * changes have no backing store here and are reported 'untracked' rather than
+ * asserted present or absent.
+ */
 const DC_820_30: Dc82030Def[] = [
-  { el: 'designPlan', label: 'Design & development plan', ref: '820.30(b)', derive: () => 'untracked' },
-  { el: 'designInputs', label: 'Design inputs', ref: '820.30(c)', derive: (r) => (r.length ? 'present' : 'absent') },
-  { el: 'designOutputs', label: 'Design outputs', ref: '820.30(d)', derive: (r) => (r.some(i => i.outputs && i.outputs.length) ? 'present' : 'absent') },
-  { el: 'designReviews', label: 'Design reviews (independent)', ref: '820.30(e)', derive: () => 'untracked' },
-  { el: 'designVerification', label: 'Design verification', ref: '820.30(f)', derive: (r) => (r.some(i => i.ver === 'pass') ? 'present' : 'absent') },
-  { el: 'designValidation', label: 'Design validation', ref: '820.30(g)', derive: (r) => (r.some(i => i.val === 'pass') ? 'present' : 'absent') },
-  { el: 'designTransfer', label: 'Design transfer documented', ref: '820.30(h)', derive: () => 'untracked' },
-  { el: 'designChanges', label: 'Design changes reviewed/verified', ref: '820.30(i)', derive: () => 'untracked' },
-  { el: 'traceability', label: 'Full requirements<->V&V traceability', ref: '820.30(j)',
+  { el: 'designPlan', label: 'Design & development plan', ref: '820.30(b) · ISO 13485 §7.3.2', derive: () => 'untracked' },
+  { el: 'designInputs', label: 'Design inputs', ref: '820.30(c) · ISO 13485 §7.3.3', derive: (r) => (r.length ? 'present' : 'absent') },
+  { el: 'designOutputs', label: 'Design outputs', ref: '820.30(d) · ISO 13485 §7.3.4', derive: (r) => (r.some(i => i.outputs && i.outputs.length) ? 'present' : 'absent') },
+  { el: 'designReviews', label: 'Design reviews (independent)', ref: '820.30(e) · ISO 13485 §7.3.5', derive: () => 'untracked' },
+  { el: 'designVerification', label: 'Design verification', ref: '820.30(f) · ISO 13485 §7.3.6', derive: (r) => (r.some(i => i.ver === 'pass') ? 'present' : 'absent') },
+  { el: 'designValidation', label: 'Design validation', ref: '820.30(g) · ISO 13485 §7.3.7', derive: (r) => (r.some(i => i.val === 'pass') ? 'present' : 'absent') },
+  { el: 'designTransfer', label: 'Design transfer documented', ref: '820.30(h) · ISO 13485 §7.3.8', derive: () => 'untracked' },
+  { el: 'designChanges', label: 'Design changes reviewed/verified', ref: '820.30(i) · ISO 13485 §7.3.9', derive: () => 'untracked' },
+  { el: 'traceability', label: 'Full requirements<->V&V traceability', ref: '820.30(j) · ISO 13485 §7.3.10',
     derive: (r) => {
       if (!r.length) return 'absent';
       const traced = r.filter(i => i.outputs && i.outputs.length && i.ver === 'pass' && i.val === 'pass').length;
@@ -131,10 +148,10 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
   const firstGap = inputs.find(i => !i.outputs || !i.outputs.length) || inputs.find(i => i.ver !== 'pass') || inputs.find(i => i.val !== 'pass');
 
   const FORM: C2CFormConfig = {
-    eyebrow: 'DHF — 820.30(c)',
+    eyebrow: 'DHF — 820.30(c) · ISO 13485 §7.3.3',
     title: 'New design input',
     sub: 'A design input is a requirement the device must meet. It enters the traceability matrix untraced until an output, verification and validation are linked.',
-    governed: 'Design inputs are controlled records; adding one is audit-logged per 21 CFR 820.30.',
+    governed: 'Design inputs are controlled records; adding one is audit-logged per 21 CFR 820.30 and ISO 13485 §7.3.',
     submitLabel: 'Add design input',
     fields: [
       { key: 'req', label: 'Requirement', type: 'text', placeholder: 'e.g. Battery lasts a full 14-day wear period', required: true },
@@ -180,13 +197,69 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
   const hasRows = inputs.length > 0;
   const isLive = !live.loading && !live.error;
 
+  /* What AnA can see of this screen. A DHF question is always about a specific
+     gap — "what is untraced?", "does 820.30(g) hold?" — and until now she had
+     the surface name and none of the matrix.
+
+     A FAILED read publishes the failure. `inputs` is [] on error as well as on
+     an empty file, and reporting 0% traceability over an outage would be a
+     confident claim about a device maker's design history file. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'The design history file is still loading; nothing on screen is final yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'The design history file could not be read, so this screen is showing no design inputs because ' +
+          'of a failure, not because none are recorded.',
+        availableActions: ['Retry the design-input read'],
+      };
+    }
+    return {
+      summary:
+        `Design controls (DHF — 21 CFR 820.30 · ISO 13485 §7.3): ${trace.total} design input(s), ${trace.fullyTraced} fully traced ` +
+        `(${trace.pct}%). ${trace.noOutput} have no linked output, ${trace.noVer} are unverified, ` +
+        `${trace.noVal} unvalidated. 820.30 completeness ${elPct}% over ${assessable.length} assessable ` +
+        `element(s), ${untracked} element(s) not tracked by any store.`,
+      facts: {
+        totalInputs: trace.total,
+        fullyTraced: trace.fullyTraced,
+        traceabilityPercent: trace.pct,
+        missingOutput: trace.noOutput,
+        unverified: trace.noVer,
+        unvalidated: trace.noVal,
+        completeness820_30: {
+          percent: elPct,
+          assessableElements: assessable.length,
+          presentElements: present,
+          untrackedElements: untracked,
+          elements: checklist.map((e) => ({ element: e.el, label: e.label, ref: e.ref, state: e.state })),
+        },
+        firstGap: firstGap
+          ? {
+              id: firstGap.id, requirement: firstGap.req, category: catLabel(firstGap.cat),
+              outputs: (firstGap.outputs ?? []).length,
+              verification: firstGap.ver, validation: firstGap.val,
+            }
+          : null,
+      },
+      availableActions: [
+        'Add a design input (a controlled record; the write is audit-logged under 21 CFR 820.30 / ISO 13485 §7.3)',
+        'Read the traceability matrix — inputs to outputs to verification to validation',
+        'Read the 820.30 completeness checklist, including the elements no store evidences',
+      ],
+    };
+  }, [live.loading, live.error, trace, checklist, assessable.length, present, untracked, elPct, firstGap]);
+  usePublishSurfaceContext('design-controls', anaContext);
+
   return (
     <div className="dc" style={{ maxWidth: 1200 }}>
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Specialist {I.dot} device {isLive ? <> {I.dot} live</> : ''}</div>
           <h1 className="sp-title">Design controls {I.dot} DHF</h1>
-          <p className="sp-state">21 CFR 820.30 design history file — inputs {'->'} outputs {'->'} verification {'->'} validation, traced end to end.</p>
+          <p className="sp-state">Design history file — 21 CFR 820.30 · ISO 13485 §7.3 (QMSR, in force 2 Feb 2026) — inputs {'->'} outputs {'->'} verification {'->'} validation, traced end to end.</p>
         </div>
         <button className="sp-primary" onClick={() => setForm(true)}>{I.plus} New design input</button>
       </div>

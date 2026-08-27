@@ -33,6 +33,7 @@ import { assertAuthoringAuthorizationReady } from './authoringAuthorizationInvar
 import { assertAiProvenanceLedgerForProduction } from './aiProvenanceLedgerInvariant';
 import type { CircuitBreakerMiddleware } from '../bootstrap/types';
 import { buildStaticBusinessDataGuard } from '../bootstrap/static-data-guard';
+import { registerEntitlementGate } from '../bootstrap/register-entitlement-gate.js';
 
 import { registerCoreRoutes } from '../bootstrap/register-core-routes';
 import { registerConcept2CureRoutes } from '../bootstrap/register-concept2cure-routes';
@@ -89,6 +90,22 @@ export async function registerPreStartRoutes(
   // Platform: /api/auth, /api/v1/auth, /api/users, /api/user, legacy auth
   // redirects, enterprise auth, SSO, health probes, global /api auth gate.
   await registerPlatformRoutes({ app, pool, authMiddleware });
+
+  // Commercial entitlement enforcement. Mounted HERE — after the platform
+  // family establishes the global /api auth gate, and before every feature
+  // route family below — because it needs a resolved organization context and
+  // must cover all of them, and because mounting it per-family is how a new
+  // family silently ships ungated.
+  //
+  // Off unless a mode is set: 'report' records what it WOULD deny and serves
+  // the request, 'enforce' denies. Default 'off'. Turning hard enforcement on
+  // as a first act would deny real requests nobody has measured yet — which is
+  // what report mode and its console report exist to prevent.
+  //
+  // The mode is a governed platform setting changed from the licensing console,
+  // with the deployment's own configuration as the fallback, so this can go
+  // live without a redeploy — see services/entitlements/enforcement-mode.ts.
+  registerEntitlementGate({ app });
 
   // Slot 1 — Device-Project CRUD.
   registerInlineEarlyRoutes(inlineCtx);

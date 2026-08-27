@@ -193,7 +193,7 @@ export const ZenLogin: React.FC = () => {
       const res = await fetch('/api/auth/dev-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'jm.smith@concept2cure.pro' }),
+        body: JSON.stringify({ email: 'jonmichaelpsmith@gmail.com' }),
       });
       const data = await res.json();
       if (data.success && data.accessToken) {

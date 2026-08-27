@@ -1,7 +1,7 @@
 {
   "$comment": "Tenant-data entry points that do NOT reference the tenant lifecycle vocabulary. Each needs a justification saying why the surface does not need an entitlement check. This list may only SHRINK: wire the check, then re-run with --write-baseline. Adding an entry by hand is a regression, not a fix.",
   "generatedBy": "scripts/ci/check-tenant-entry-points.mjs --write-baseline",
-  "count": 11,
+  "count": 10,
   "unconsidered": {
     "server/jobs/auditChainIntegritySweep.ts": {
       "reason": "DELIBERATELY UNCONDITIONAL. Verifies the tamper-evident audit hash chain estate-wide (zero organization_id references; runs under a system scope). Audit integrity is precisely the thing that must NOT stop when a tenant is suspended, pending deletion or purged — 21 CFR Part 11 §11.10(e) expects the trail to outlive the records it describes. Gating this on entitlement would blind the platform to chain damage in exactly the tenants under scrutiny.",
@@ -33,15 +33,11 @@
     },
     "server/routes/api-keys.ts": {
       "reason": "FALSE POSITIVE of the shape matcher (matches on the string 'validateApiKey'). This is the session-authenticated router for MANAGING keys, mounted under /api behind the auth boundary, so enforceTenantLifecycle already covers it. It is not itself an alternative-auth surface.",
-      "digest": "abe28eea448abb02"
+      "digest": "2cea38b3e490f332"
     },
     "server/routes/mdx-admin.ts": {
       "reason": "FALSE POSITIVE (matches on the word 'SCIM' in prose). Mounted at /api/mdx, behind the auth boundary, so the lifecycle guard already covers it.",
       "digest": "f89f9d81bb3be28b"
-    },
-    "server/routes/pyramid.routes.ts": {
-      "reason": "FALSE POSITIVE (matches on the string 'X-API-Key' in prose/headers docs). Guarded by authenticateToken and mounted under /api, so the lifecycle guard already covers it.",
-      "digest": "88cffc2bf3885ee8"
     },
     "server/workers/vectorization-worker.ts": {
       "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; embeds the shared corpus under a system scope. Per-tenant vectorization would need the check — the digest will re-flag it if that changes.",

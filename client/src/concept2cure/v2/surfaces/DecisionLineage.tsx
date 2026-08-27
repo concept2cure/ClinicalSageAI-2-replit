@@ -15,6 +15,7 @@ import {
   type LineageChain,
 } from '../fixtures/decision-lineage-data';
 import '../styles/project-home-v2.css';
+import { downloadBlob } from '../download';
 
 /* ── Helpers ── */
 
@@ -170,14 +171,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
       const cd = res.headers.get('Content-Disposition') || '';
       const m = /filename="?([^";]+)"?/.exec(cd);
       const filename = (m && m[1]) || ('decision-lineage-' + g.rootEntityId + '.' + fmt);
-      const objUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = objUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(objUrl);
+      downloadBlob(filename, blob);
     } catch (e) {
       // `String(e)` rendered anything at all — including the browser's own
       // "Failed to fetch" and non-Error throws. Only ApiRequestError has been

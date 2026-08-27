@@ -18,6 +18,7 @@ import {
 import { decisionLifecycleService } from '../../services/decision-lifecycle-service.js';
 import { getSinceLastVisit } from '../../services/ana/since-last-visit.js';
 import { getAgentActivity } from '../../services/ana/agent-activity.js';
+import { resolveDriveState } from '../../services/ana-ri/live-drive.js';
 import { executeCommands, type CommandContext } from '../../services/ana-ri/command-executor.js';
 import {
   requiresPart11Signoff,
@@ -30,6 +31,7 @@ import {
 } from '../../services/ana-ri/governed-action-signoff.js';
 import { handleSealVerifiedVersion } from './seal-verified.js';
 import auditService from '../../services/auditService.js';
+import { createScopedLogger } from '../../utils/logger.js';
 import {
   sendSuccess,
   sendError,
@@ -37,6 +39,8 @@ import {
   isDatabaseAvailable,
   extractRequestContext,
 } from './shared.js';
+
+const log = createScopedLogger('ana-ri/utility');
 
 /** Register utility endpoints on the given router. */
 export function mountUtilityRoutes(router: Router): void {
@@ -232,6 +236,37 @@ export function mountUtilityRoutes(router: Router): void {
   });
 
   // ─────────────────────────────────────────────────────────────────────────
+  // GET /api/ana-ri/live-drive/state — the pre-emptive Live Drive verdict, so
+  // the toggle can show an honest lock (with the real required tier) BEFORE
+  // the person burns a turn discovering it. Runs the exact per-turn decision
+  // (resolveDriveState — entitlement + ENTITLEMENTS_ENFORCE mode), so the
+  // toggle and the stream can never disagree. Advisory only: every drive turn
+  // still resolves its own drive_state; this endpoint grants nothing.
+  // ─────────────────────────────────────────────────────────────────────────
+  router.get('/live-drive/state', async (req: Request, res: Response) => {
+    const { numericOrgId } = extractRequestContext(req);
+    if (!numericOrgId) {
+      return sendError(res, 401, 'Organization context required', null, 'NO_ORG_CONTEXT');
+    }
+    try {
+      const state = await resolveDriveState(true, numericOrgId);
+      return sendSuccess(res, {
+        enabled: state.enabled,
+        ...(state.reason ? { reason: state.reason } : {}),
+        ...(state.requiredTier !== undefined ? { requiredTier: state.requiredTier } : {}),
+      });
+    } catch (error: any) {
+      return sendError(
+        res,
+        500,
+        error?.message || 'Failed to resolve Live Drive state',
+        null,
+        'LIVE_DRIVE_STATE_FAILED'
+      );
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
   // POST /api/ana-ri/governed-action — execute a Part 11 governed AnA command
   // WITH a verified sign-off. The client routes here after a chat command is
   // blocked with PART11_SIGNATURE_REQUIRED: it collects the reason-for-change +
@@ -287,19 +322,36 @@ export function mountUtilityRoutes(router: Router): void {
     }
 
     // §11.10(e): record the sign-off to the audit trail before executing.
-    try {
-      await auditService.logAction({
-        tenantId: numericOrgId,
+    // No governed mutation without a durable audit record.
+    //
+    // This was a try/catch whose catch returned SIGNOFF_AUDIT_FAILED — and it
+    // had never once run. `auditService.logAction` swallows both of its
+    // persistence sections internally and RESOLVES NORMALLY on failure; it is
+    // documented never to reject. So the abort below was unreachable, and a
+    // governed Part 11 action whose audit row was lost proceeded to execute
+    // while the code read as though it refused to. The strictest-looking guard
+    // on the e-signature path was the one doing nothing.
+    //
+    // logAction returns AuditWriteResult, so the refusal can be real: read
+    // `persisted` and abort on it.
+    const signoffAudit = await auditService.logAction({
+      tenantId: numericOrgId,
+      userId,
+      action: eSignRequired ? 'ana.governed_action.esign' : 'ana.governed_action.reason',
+      resourceType: 'ana_command',
+      resourceId: command,
+      ipAddress: (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() || req.socket?.remoteAddress || undefined,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: { command, reasonForChange, eSignRequired, secondFactorVerified },
+    });
+    if (!signoffAudit.persisted) {
+      log.error('Governed action aborted: sign-off audit row was not persisted', {
+        command,
+        organizationId: numericOrgId,
         userId,
-        action: eSignRequired ? 'ana.governed_action.esign' : 'ana.governed_action.reason',
-        resourceType: 'ana_command',
-        resourceId: command,
-        ipAddress: (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() || req.socket?.remoteAddress || undefined,
-        userAgent: req.headers['user-agent'] as string | undefined,
-        details: { command, reasonForChange, eSignRequired, secondFactorVerified },
+        eSignRequired,
+        reason: signoffAudit.error ?? 'no durable store accepted the row',
       });
-    } catch (auditErr: any) {
-      // No governed mutation without a durable audit record.
       return sendError(res, 500, 'Could not record the sign-off in the audit trail; action aborted', null, 'SIGNOFF_AUDIT_FAILED');
     }
 

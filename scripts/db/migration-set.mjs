@@ -255,6 +255,28 @@ export const C2C_MIGRATION_FILES = [
   //
   // MUST precede the re-key below, which indexes the tables this creates.
   'db/migrations/20260401_cmc_convergence_os.sql',
+
+  // ── project_workflows (added 2026-08-23) ─────────────────────────────────
+  // The CMC workflow store. `server/api/cmc/routes.ts` and
+  // `server/api/cmc/workflowRoutes.ts` query `project_workflows`; this file is
+  // its ONLY creator, and it was on no applier — so the table existed on no
+  // real database and both routes 500'd.
+  //
+  // It was invisible to ci:migration-reachability because that guard treated
+  // any `pgTable(...)` under shared/ as the drizzle push surface, and
+  // shared/cmc-schema.ts declares this table. drizzle.config.ts scopes push to
+  // shared/schema.ts alone, which does not re-export cmc-schema, so drizzle
+  // never created it either. The guard is corrected in the same change and now
+  // reports exactly this one finding.
+  //
+  // Meets the wiring bar (scripts/db/verify-migration-set.mjs): applied against
+  // a real PostgreSQL 16 with the full install present, creates
+  // project_workflows, and is CREATE TABLE IF NOT EXISTS throughout — its
+  // second pass reported "relation already exists, skipping" rather than
+  // failing, so the deploy's every-time re-run is safe. Placed after
+  // 20260401_cmc_convergence_os.sql, which provisions the CMC tables it sits
+  // beside.
+  'db/migrations/20260402_cmc_runtime_ddl_to_migration.sql',
   // ── Schedule of events tenant-scoped uniqueness (added 2026-07-28) ────────
   // SECURITY. project_schedule_of_events had a unique constraint on (project_id)
   // alone — org-blind. generateProjectSchedule() upserted with
@@ -837,8 +859,10 @@ export const C2C_MIGRATION_FILES = [
   //     by server code at all. It is dead schema, not a live gap; the "missing
   //     regulatory.submissions creator" C-34 recorded here was an artifact of the
   //     guard bug C-35 fixed. Left unwired because nothing needs it.
-  //   • 20260125_enhanced_cortex_schema — RESOLVED by C-36 and wired above; its
-  //     UUID-vs-serial atom-key conflict was the defect, not an ordering gap.
+  //   • 20260125_enhanced_cortex_schema — RESOLVED by C-36 and intentionally
+  //     excluded; its UUID-vs-serial atom-key conflict cannot be replayed
+  //     against the canonical integer atom schema. The reconciliation path
+  //     above owns those tables now.
 
   // ── Performance indexes on hot-path tables (added 2026-08-10) ────────────────
   // Indexes on the 30 most-queried tables targeting organization_id (tenant
@@ -1152,6 +1176,12 @@ export const C2C_MIGRATION_FILES = [
   // lineages / reach no durable applier respectively).
   'migrations/20260814b_literature_screening_decisions.sql',
 
+  // ── GSPR catalog + post-market authoring, MDR/IVDR Annex I ───────────────
+  // The route and Drizzle schema already exist in the application, but this
+  // migration was never on a durable apply path. Keep it before PMCF
+  // enrollment, whose records point to post-market documents by convention.
+  'migrations/20260429_gspr_postmarket.sql',
+
   // ── PMCF enrolment progress, GA ledger L5 (added 2026-08-14) ─────────────
   // pmcf_enrollment_records — the EU MDR Annex XIV Part B §6.2 / MDCG 2020-7
   // execution evidence behind the CER's post-market section. The PMCF PLAN was
@@ -1258,7 +1288,6 @@ export const C2C_MIGRATION_FILES = [
   // table, no column, no data, and existing placeholder rows are left alone
   // because they truthfully record that nothing was captured.
   'migrations/20260814g_section_version_reason_required.sql',
-
 
   // Constraint repair only: no table, no column, no data. 0001_phase13_full
   // meant to widen concept2cure_review_tasks.task_type to include
@@ -1403,6 +1432,74 @@ export const C2C_MIGRATION_FILES = [
   // this list exists to close. Idempotent (ON CONFLICT (module_id) DO UPDATE).
   'db/migrations/20260810_reconcile_module_catalog.sql',
 
+  // ── provision_org_modules() repair (added 2026-08-23) ──────────────────────
+  // Two defects, each of which masks the other. The function called
+  // jsonb_array_elements_text() on available_modules.metadata, which is `json`
+  // — no implicit cast exists, so it raised on EVERY call and
+  // POST /api/module-subscriptions/provision has never written a row. And its
+  // tier test was `=` rather than `>=`, so with the cast fixed a professional
+  // org would receive professional modules but NOT standard ones — an inverted
+  // ladder, disagreeing with provisionModulesForTier, getModuleCatalog and
+  // canAccessModule, all three of which are inclusive.
+  //
+  // Ordered after the catalog reconcile above (it reads available_modules) and
+  // after 20260220_user_intelligence_platform.sql, which first defines the
+  // function. Function bodies only — no DDL, nothing for the sweep to policy.
+  'db/migrations/20260823_fix_provision_org_modules_tier_ladder.sql',
+
+  // ── Commercial packaging applied to the catalog (added 2026-08-23) ────────
+  // 20260810 seeded all 84 modules unrestricted and said the tiering was "a
+  // business decision ... deliberately left to be applied later". This applies
+  // it: one min_tier per module, derived from boundaries already committed in
+  // billing.ts PRICING[].features, license-manager.ts FEATURE_TIER_MAP and
+  // entitlements/mdx-entitlements.ts. Data-only, no DDL. MUST come after the
+  // provision_org_modules repair above — before it, a non-empty `tiers` is what
+  // the broken function chokes on.
+  'db/migrations/20260823_module_catalog_commercial_packaging.sql',
+
+  // ── Catalog descriptions become customer copy (added 2026-08-23) ──────────
+  // The 20260810 seed copied each surface's registry `notes` verbatim into
+  // `description`, which the Apps catalog renders to CUSTOMERS — so 33 of 84
+  // cards told a prospect the product was unfinished ("In progress.",
+  // "Partially built in ui_kits/home") or leaked repository internals.
+  // Display text only; nothing keys on it. scripts/ci/check-catalog-copy.mjs
+  // stops it recurring.
+  'db/migrations/20260823_module_catalog_customer_copy.sql',
+
+  // ── The two MDX design registers finally get catalog rows (2026-08-23) ────
+  // `design-controls` and `human-factors` are built, reachable surfaces with no
+  // row in available_modules, so they were unsellable (no tier can name a module
+  // that is not in the catalog), ungatable (module_subscriptions FKs into it, so
+  // an admin decision about them could not even be written down) and, by the
+  // client's correct "an unknown id is not licensable" rule, silently free on
+  // every tier. The 20260810 seed missed them because it was derived from
+  // SEGMENT_MODULES and both ids sit in NAV_HIDDEN instead.
+  //
+  // POSITION IS LOAD-BEARING — it must stay after BOTH the catalog seed and the
+  // packaging migration, and this is why. 20260810 step 1 stamps
+  // {"deprecated": true} on every catalog row absent from its protected id list,
+  // and these two ids are absent from it, so every re-apply retires them again.
+  // The packaging file then raises 'catalog modules with no tier assigned' for
+  // any LIVE row its fixed 84-id list does not name — which these two are not.
+  // The two cancel only in this order: the seed's retire step hides the rows
+  // from the packaging assertion, and this file, running last, clears the flag
+  // and restores them with their own tier and their own customer copy. Verified
+  // by execution both ways — packaging applies clean with the flag set, and
+  // raises on exactly these two ids when they are live.
+  //
+  // Moving this entry above the packaging migration therefore breaks the next
+  // deploy. The tidier end state is one change to two files that are not this
+  // one: add both ids to 20260810's protected list AND to the packaging file's
+  // module_packaging list. Doing only the first breaks the deploy.
+  'db/migrations/20260823_module_catalog_mdx_registers.sql',
+
+  // ── CMC / Module 3 moves to the professional band (pricing decision) ──────
+  // MUST stay after the reconcile (resets tiers to []) and packaging (sets
+  // 'standard') entries above — the professional band is the final catalog
+  // word on cmc. Grandfathers exactly-standard orgs with explicit grants
+  // BEFORE the band moves, so no entitled org loses the filing path.
+  'db/migrations/20260824_cmc_professional_tier.sql',
+
   // ── BP-W1-5: the MAA cockpit catalog row stops calling Module 1 one thing ──
   // Name + description only (adds Swissmedic to the modeled-agency list); no
   // entitlement change. Idempotent UPDATE keyed on module_id.
@@ -1421,6 +1518,45 @@ export const C2C_MIGRATION_FILES = [
   // document upload 500s. This reconciles the table additively; it must run
   // AFTER 044c, which the overlay applies.
   'migrations/20260821_vault_documents_canonical_shape.sql',
+
+  // ── Vault filing: dossier placement on vault.documents ─────────────────────
+  // Adds folder_id / evidence_kind / ctd_section / placement_status (+
+  // confidence, rationale, placed_by/placed_at) so every ingested document
+  // carries a dossier placement: the classifier proposes ('suggested'), a
+  // person confirms or moves ('confirmed', audited), and the unplaceable stay
+  // visibly 'unfiled'. Additive, guarded on to_regclass('vault.documents');
+  // must run AFTER the canonical-shape reconciliation above.
+  'migrations/20260823_vault_document_placement.sql',
+
+  // ── Time-limited module grants ─────────────────────────────────────────────
+  // Adds a nullable `expires_at` (+ who set it, when) to module_subscriptions,
+  // so a grant can be opened until a date instead of only on or off. Strictly
+  // additive: every pre-existing grant keeps NULL and stays perpetual.
+  //
+  // Entitlement resolution reads the column at read time — nothing sweeps these
+  // rows — so `server/services/license-manager.ts` SELECTs it and this entry
+  // must be applied before that code is deployed, or getLicenseInfo throws on a
+  // missing column and fails every org closed.
+  'db/migrations/20260824_module_grant_expiry.sql',
+
+  // ── Access requests from a locked module ──────────────────────────────────
+  // The route is live and reads/writes module_access_requests. The migration
+  // therefore belongs on the same durable deploy path as the route, before the
+  // final tenant-isolation sweep so its integer organization_id receives the
+  // standard RLS policy in the same run. Keeping the SQL in db/migrations/
+  // without this entry creates a deploy-dead table definition: unit tests pass,
+  // while every real request fails with 42P01.
+  'db/migrations/20260824_module_access_requests.sql',
+
+  // ── The enforcement mode becomes a governed setting ───────────────────────
+  // Creates platform_settings, the store the Master Licensing console writes
+  // the route-enforcement mode into. Seeds NO row: an empty table means the
+  // deployment's own configuration still decides, so applying this changes no
+  // deployment's behaviour. Read by
+  // server/services/entitlements/enforcement-mode.ts, which treats a missing
+  // relation as "nothing stored" — so applying it late is safe, but until it is
+  // applied the console cannot store a decision.
+  'db/migrations/20260824_enforcement_mode_setting.sql',
 
   // ── Both entries below must precede the two isolation steps ────────────────
   // The last two entries of this list are, and must remain, the uuid non-public
@@ -1464,7 +1600,7 @@ export const C2C_MIGRATION_FILES = [
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */
-const selfTransacting = (sql) => /^\s*BEGIN\s*;/im.test(sql);
+const selfTransacting = sql => /^\s*BEGIN\s*;/im.test(sql);
 
 /**
  * Apply `files` (repo-relative) against `pool`, one transaction per file.
@@ -1482,7 +1618,7 @@ export async function applyMigrationFiles(
   pool,
   repoRoot,
   files,
-  { log = () => {}, error = () => {}, stopOnFirstFailure = false } = {},
+  { log = () => {}, error = () => {}, stopOnFirstFailure = false } = {}
 ) {
   const applied = [];
   const failures = [];

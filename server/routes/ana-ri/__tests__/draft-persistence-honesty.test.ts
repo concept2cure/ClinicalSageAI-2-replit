@@ -16,12 +16,19 @@
  *
  * THE CONTRACT, AND WHY IT IS ASYMMETRIC
  * Three different situations produce no `artifact_version_saved` event: missing
- * org/project/thread context (skipped deliberately — project_id is NOT NULL),
- * an unchanged content hash (`saved.created === false`, nothing new to record),
- * and a database failure. Only the third is a problem. So the client is told
- * about the failure specifically, and absence of a save event on its own is
- * never rendered as "not saved" — that would state one of three possibilities
- * as fact.
+ * project context, an unchanged content hash (`saved.created === false`,
+ * nothing new to record), and a database failure. The unchanged hash is the
+ * only silent one — nothing was overstated. A database failure AND a missing
+ * project both warn: in each case the rail already says "Drafted <title>", so
+ * silence would leave the user believing a version row exists when none does.
+ *
+ * PROJECT-ID PARSING (ADR-0011)
+ * The old guard was `Number.parseInt(streamProjectId, 10)`. For a
+ * `regulatory_programs` UUID beginning with digits that returns those digits —
+ * `parseInt('7abb1c22-…') === 7` — so a draft from a UUID-keyed program
+ * conversation was filed under integer project 7: a valid, WRONG row. The
+ * parse is now the fail-closed `parseIntegerProjectId`, and a genuine program
+ * UUID resolves through the `projects.regulatory_program_id` anchor instead.
  */
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
@@ -31,6 +38,11 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 // reads as a failing test rather than a passing one.
 const store = vi.hoisted(() => ({ upsertDocumentArtifactVersion: vi.fn() }));
 vi.mock('../../../services/ana/artifactVersionStore.js', () => store);
+
+// The program→project anchor lookup (`projects.regulatory_program_id`) runs
+// only when the stream carries a program UUID.
+const db = vi.hoisted(() => ({ pool: { query: vi.fn() } }));
+vi.mock('../../../db.js', () => db);
 
 import { persistCollectedDrafts } from '../post-processing';
 
@@ -159,12 +171,54 @@ describe('persistCollectedDrafts — it never overstates what was recorded', () 
     expect(res.events().find(e => e.type === 'artifact_version_saved')).toBeUndefined();
   });
 
-  it('missing project context is a deliberate skip, not a caveat', async () => {
+  it('a missing project no longer skips silently — the client is told the save did not happen', async () => {
     const res = fakeRes();
 
     await persistCollectedDrafts({ ...ctx(res), streamProjectId: null });
 
     expect(store.upsertDocumentArtifactVersion).not.toHaveBeenCalled();
-    expect(res.events()).toHaveLength(0);
+    const warning = res.events().find(e => e.type === 'warning');
+    expect(warning).toBeTruthy();
+    expect(warning.message).toContain('Clinical Overview 2.5');
+    expect(warning.message).toMatch(/no project/i);
+  });
+
+  it('a program UUID resolves through the projects anchor and the draft IS saved', async () => {
+    db.pool.query.mockResolvedValueOnce({ rows: [{ id: 88 }] });
+    store.upsertDocumentArtifactVersion.mockResolvedValue({
+      created: true, artifactId: 'art_9', version: 1, contentHash: 'h',
+    });
+    const res = fakeRes();
+
+    await persistCollectedDrafts({
+      ...ctx(res),
+      streamProjectId: 'aabb1c22-1234-4abc-8def-0123456789ab',
+    });
+
+    expect(store.upsertDocumentArtifactVersion).toHaveBeenCalledWith(
+      expect.objectContaining({ projectId: 88 }),
+    );
+    expect(db.pool.query).toHaveBeenCalledWith(
+      expect.stringMatching(/regulatory_program_id\s*=\s*\$1\s+AND\s+organization_id\s*=\s*\$2/),
+      ['aabb1c22-1234-4abc-8def-0123456789ab', 7],
+    );
+    expect(res.events().find(e => e.type === 'artifact_version_saved')).toBeTruthy();
+  });
+
+  it('a UUID with leading digits NEVER files to the integer project those digits spell', async () => {
+    // parseInt('7abb1c22-…') === 7 — the ADR-0011 Class-A coercion. With no
+    // anchor row, the only honest outcomes are: no save, and a warning.
+    db.pool.query.mockResolvedValueOnce({ rows: [] });
+    const res = fakeRes();
+
+    await persistCollectedDrafts({
+      ...ctx(res),
+      streamProjectId: '7abb1c22-1234-4abc-8def-0123456789ab',
+    });
+
+    expect(store.upsertDocumentArtifactVersion).not.toHaveBeenCalled();
+    const warning = res.events().find(e => e.type === 'warning');
+    expect(warning).toBeTruthy();
+    expect(warning.message).toMatch(/no project/i);
   });
 });

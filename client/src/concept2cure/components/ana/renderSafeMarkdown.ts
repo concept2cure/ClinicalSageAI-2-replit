@@ -58,6 +58,47 @@ const SANITIZE_CONFIG = {
   ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'id'],
 };
 
+/* ── Authored section HTML — the document-view variant ──────────────────────
+ *
+ * Same audited module, second config, one deliberate difference: figures.
+ * Section HTML written by the canonical editor stores images as governed
+ * references (`<img src="/api/authoring/images/<id>">`), and a read-only view
+ * that strips them shows a DIFFERENT document from the one the author signed —
+ * the silent-loss class this platform bans. Chat stays image-free on purpose
+ * (model/tool-authored chat HTML rendering arbitrary external images is a
+ * tracking/exfil surface); authored sections carry their figures.
+ *
+ * The extra tags are the editor's own serialization set: img (the figure
+ * reference), figure/figcaption (legacy stored content), s/mark (strike and
+ * highlight marks), ins/del (track changes), and colspan/rowspan so merged
+ * table cells don't silently un-merge in the read view.
+ *
+ * API image references are rewritten `src` → `data-authsrc` during
+ * sanitization: every API route authenticates by Authorization header only,
+ * so a bare <img src="/api/…"> would fire an unauthenticated request and
+ * paint a broken glyph. The companion renderer (v2/editor/AuthoredHtml)
+ * resolves data-authsrc through the app's authenticated fetch — the same
+ * path the editor's node view uses — and states a failure instead of hiding
+ * it. External http(s) and data:image URIs pass through DOMPurify's default
+ * URI policy untouched, matching what the editor itself displays.
+ */
+const AUTHORING_SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    ...SANITIZE_CONFIG.ALLOWED_TAGS,
+    'img',
+    'figure',
+    'figcaption',
+    's',
+    'mark',
+    'ins',
+    'del',
+  ],
+  ALLOWED_ATTR: [...SANITIZE_CONFIG.ALLOWED_ATTR, 'src', 'alt', 'colspan', 'rowspan'],
+};
+
+/** The attribute AuthoredHtml resolves through the authenticated fetch. */
+export const AUTH_IMG_ATTR = 'data-authsrc';
+
 // Bounded LRU so the chat panel doesn't recompute identical markdown
 // every render during streaming. 200 entries ≈ one long conversation.
 const MD_CACHE_MAX = 200;
@@ -106,4 +147,33 @@ export function renderSafeMarkdown(content: string): string {
 export function sanitizeChatHtml(html: string): string {
   if (!html) return '';
   return DOMPurify.sanitize(html, SANITIZE_CONFIG);
+}
+
+/**
+ * Sanitize authored section HTML for read-only rendering (document view,
+ * batch-draft cards). Keeps figures; rewrites same-app API image references
+ * to `data-authsrc` so nothing fires an unauthenticated image request — see
+ * AUTHORING_SANITIZE_CONFIG above for the full rationale. Render the result
+ * with `AuthoredHtml` (v2/editor/AuthoredHtml), which resolves the references
+ * with auth and states failures; a bare dangerouslySetInnerHTML of this
+ * output shows figures only for external/data sources.
+ */
+export function sanitizeAuthoringHtml(html: string): string {
+  if (!html) return '';
+  // Hook scoped to this call: registered, used, removed — DOMPurify hooks are
+  // instance-global, so the try/finally keeps chat sanitization unaffected.
+  DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+    if (node.tagName === 'IMG') {
+      const src = node.getAttribute('src') ?? '';
+      if (src.startsWith('/api/')) {
+        node.setAttribute(AUTH_IMG_ATTR, src);
+        node.removeAttribute('src');
+      }
+    }
+  });
+  try {
+    return DOMPurify.sanitize(html, AUTHORING_SANITIZE_CONFIG);
+  } finally {
+    DOMPurify.removeHook('afterSanitizeAttributes');
+  }
 }

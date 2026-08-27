@@ -23,6 +23,7 @@ import {
 import { usePresubList, usePresubDetail } from '../hooks/usePresub';
 import { EmptyState, ErrorState } from '../../v2/dataConnect';
 import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
+import { downloadCsv } from '../../v2/download';
 
 interface PreSubTypeChipProps {
   type: PresubTypeId;
@@ -407,18 +408,11 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
                 r.qNumber, r.prog, r.type, r.title, r.stage, String(r.daysIn),
                 String(r.questions), String(r.answered), String(r.commitments), String(r.rolledIn),
               ]);
-              const csv = [headers, ...rows]
-                .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
-                .join('\r\n');
-              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `presub-export-${new Date().toISOString().slice(0, 10)}.csv`;
-              document.body.appendChild(a);
-              a.click();
-              a.remove();
-              URL.revokeObjectURL(url);
+              downloadCsv(
+                `presub-export-${new Date().toISOString().slice(0, 10)}.csv`,
+                headers,
+                rows,
+              );
             }}
           >
             {I.download} Export

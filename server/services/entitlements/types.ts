@@ -62,7 +62,16 @@ export type FeatureKey =
   | 'global_market_planner'
   // ── AnA advisory ──
   /** AnA device & global-market advisory (grounded, structured guidance). */
-  | 'ana_advisory';
+  | 'ana_advisory'
+  // ── AnA Live Drive ──
+  /**
+   * AnA Live Drive — the subscriber toggles a session mode in which AnA's
+   * validated `navigate_to` directives are applied to their screen as they
+   * stream, so they watch her move through the app and work live instead of
+   * clicking offered chips. Navigation-only autonomy: governed mutations keep
+   * their human-confirmation/e-sign gates regardless of this mode.
+   */
+  | 'ana_live_drive';
 
 /**
  * One row of the feature → minimum-tier entitlement matrix.

@@ -29,9 +29,9 @@ import { sendSuccess, sendError } from './shared.js';
 
 /** Register the goal-plan + protocol-event endpoints on the given router. */
 export function mountPlanRoutes(router: Router): void {
-  // ─────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────
   // POST /api/ana-ri/plan — Return planner preview without generation
-  // ─────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────
   router.post('/plan', async (req: Request, res: Response) => {
     try {
       const { message, intent_lens, submission_type, persist, thread_id } = req.body || {};
@@ -45,7 +45,7 @@ export function mountPlanRoutes(router: Router): void {
         submissionType: submission_type,
       });
       const routingPlan = planKernelExecution({
-        route: '/api/ana-ri/chat',
+        route: '/api/ana-ri/stream',
         messageLength: message.length,
         intentLens: orchestration.detectedIntent.lens,
         intentConfidence: orchestration.detectedIntent.confidence,
@@ -89,9 +89,9 @@ export function mountPlanRoutes(router: Router): void {
     }
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────
   // GET /api/ana-ri/plan/:planRunId — Fetch persisted goal plan run
-  // ─────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────
   router.get('/plan/:planRunId', async (req: Request, res: Response) => {
     const planRun = await getGoalPlanRun(String(req.params.planRunId));
     if (!planRun) {
@@ -100,9 +100,9 @@ export function mountPlanRoutes(router: Router): void {
     return sendSuccess(res, planRun);
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────
   // POST /api/ana-ri/plan/:planRunId/advance — Advance step status
-  // ─────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────
   router.post('/plan/:planRunId/advance', async (req: Request, res: Response) => {
     const { stepId, nextStatus } = req.body || {};
     if (!stepId || !nextStatus) {
@@ -124,9 +124,9 @@ export function mountPlanRoutes(router: Router): void {
     return sendSuccess(res, { ok: true });
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────
   // POST /api/ana-ri/plan/:planRunId/execute-next — Execute next runnable step
-  // ─────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────
   router.post('/plan/:planRunId/execute-next', async (req: Request, res: Response) => {
     const result = await executeNextGoalPlanStep(String(req.params.planRunId));
     if (!result.ok) {
@@ -148,17 +148,17 @@ export function mountPlanRoutes(router: Router): void {
     return sendSuccess(res, result);
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────
   // GET /api/ana-ri/plan/:planRunId/events — Step event audit trail
-  // ─────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────
   router.get('/plan/:planRunId/events', async (req: Request, res: Response) => {
     const events = await listGoalPlanEvents(String(req.params.planRunId));
     return sendSuccess(res, { events });
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────
   // POST /api/ana-ri/plan/:planRunId/protocol — Append protocol event
-  // ─────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────
   router.post('/plan/:planRunId/protocol', async (req: Request, res: Response) => {
     const { actorType, actorId, messageType, payload, metadata } = req.body || {};
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
@@ -183,9 +183,9 @@ export function mountPlanRoutes(router: Router): void {
     return sendSuccess(res, { ok: true });
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────
   // GET /api/ana-ri/plan/:planRunId/protocol — List protocol events
-  // ─────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────
   router.get('/plan/:planRunId/protocol', async (req: Request, res: Response) => {
     const events = await listProtocolEvents(String(req.params.planRunId));
     return sendSuccess(res, { events });

@@ -34,7 +34,12 @@ torch==2.12.0
 sentence-transformers==5.5.1
 
 # Vector database
-chromadb==1.5.9
+# Chroma was a leftover from the deleted Python backend and has no importer,
+# runtime entrypoint, container, or workflow in this repository. Keeping the
+# package nevertheless shipped its remotely exploitable server components (and
+# their cross-tenant/RCE advisories) in dependency scans. PostgreSQL + pgvector
+# is the platform's active vector store; do not re-add Chroma without a deployed
+# architecture, threat model, and an advisory-free supported release.
 pinecone-client==2.2.4
 
 # API and HTTP
