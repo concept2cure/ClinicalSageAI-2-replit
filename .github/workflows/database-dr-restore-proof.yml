@@ -1,0 +1,63 @@
+name: Database DR restore proof
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [concept2cure-v2]
+    paths:
+      - "scripts/ops/dr-*"
+      - "tests/ops/dr-*"
+      - ".github/workflows/database-dr-restore-proof.yml"
+  schedule:
+    - cron: "17 3 * * 1"
+  pull_request:
+    paths:
+      - "scripts/ops/dr-*"
+      - "tests/ops/dr-*"
+      - ".github/workflows/database-dr-restore-proof.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: database-dr-restore-proof-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  restore-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: c2c_dr_source
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d c2c_dr_source"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # The disposable service uses trust authentication; no credential or repository/cloud secret is used.
+      DR_SOURCE_DATABASE_URL: postgresql://postgres@localhost:5432/c2c_dr_source
+      DR_TARGET_DATABASE_URL: postgresql://postgres@localhost:5432/c2c_dr_restored
+      DR_TARGET_ADMIN_URL: postgresql://postgres@localhost:5432/postgres
+      DR_APP_DATABASE_URL: postgresql://c2c_dr_app@localhost:5432/c2c_dr_restored
+      DR_EVIDENCE_DIR: ${{ github.workspace }}/.dr-evidence
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install locked application dependencies
+        run: npm ci --ignore-scripts
+      - name: Prove destructive guardrails
+        run: npm run db:dr:guardrails
+      - name: Backup, replace, restore, and verify
+        run: npm run db:dr:restore-proof
+      - name: Retain non-sensitive evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-dr-evidence-${{ github.run_id }}
+          path: .dr-evidence/dr-evidence.json
+          if-no-files-found: error
+          retention-days: 7

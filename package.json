@@ -194,6 +194,8 @@
     "db:check": "node scripts/db_check.js",
     "db:status": "node scripts/db_status.js",
     "db:readiness": "node scripts/db/readiness-audit.mjs",
+    "db:dr:guardrails": "bash tests/ops/dr-restore-guardrails.test.sh",
+    "db:dr:restore-proof": "bash scripts/ops/dr-restore-drill.sh",
     "readiness:check": "tsx scripts/readiness-check.mjs",
     "readiness:check:strict": "tsx scripts/readiness-check.mjs --strict",
     "pilot:go-no-go": "node scripts/ops/pilot-go-no-go.mjs",
