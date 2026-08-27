@@ -80,6 +80,7 @@ import {
   assessFidelity,
   looksLikeHtml,
   plainTextToHtml,
+  htmlVisibleText,
 } from './roundTrip';
 import { FindReplace, getFindState } from './findReplace';
 import { AuthoringImage } from './imageNode';
@@ -231,6 +232,72 @@ function jsonDocText(node: JSONContent): string {
 }
 
 /* ── Component ────────────────────────────────────────────────── */
+
+/**
+ * A ribbon button.
+ *
+ * ── Why this lives OUTSIDE the component ─────────────────────────────────────
+ * It was declared inside the render body, so every render produced a new
+ * component TYPE and React tore down and rebuilt all twelve-to-seventeen ribbon
+ * buttons' DOM nodes. `onUpdate` fires four state setters per keystroke, so
+ * that was every character typed — and because the pressed button's node was
+ * destroyed under the pointer, focus fell to `<body>`. Measured: after one
+ * keystroke the Bold button is a different DOM node and `document.activeElement`
+ * is BODY.
+ *
+ * ── Why `onClick`, not `onMouseDown` ─────────────────────────────────────────
+ * It bound `onMouseDown` and nothing else. Keyboard activation of a <button>
+ * (Enter or Space) dispatches only `click`, so every one of these controls was
+ * MOUSE-ONLY. TipTap's own keymaps happen to rescue nine of them (⌘B, ⌘I, ⌘U,
+ * the lists, undo/redo), which is why this went unnoticed — but Insert table,
+ * Cite the selected claim, Comment on the selection, and all six table controls
+ * had no keyboard path at all. On a surface for authoring CTD modules, "build a
+ * table" being pointer-exclusive fails WCAG 2.1.1 outright.
+ *
+ * `onMouseDown` with `preventDefault` was doing one necessary job: keeping the
+ * editor selection from collapsing when the button takes focus. That is
+ * preserved — the mousedown handler now ONLY prevents the default, and `click`
+ * does the work, so both input methods run the same path exactly once.
+ *
+ * `aria-pressed` is `false` rather than absent when off: omitting it tells a
+ * screen reader "not a toggle" instead of "not pressed".
+ */
+const RB = React.memo(function RB({
+  onClick,
+  active,
+  title,
+  shortcut,
+  children,
+  disabled,
+}: {
+  onClick: () => void;
+  active?: boolean;
+  title: string;
+  /** Shown in the tooltip so the shortcut is discoverable. */
+  shortcut?: string;
+  children: React.ReactNode;
+  disabled?: boolean;
+}) {
+  const label = shortcut ? `${title} (${shortcut})` : title;
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      aria-pressed={active ?? false}
+      disabled={disabled}
+      /* Keeps the editor selection alive when focus moves to the button; the
+         activation itself is `click`, so keyboard and pointer agree. */
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={() => { if (!disabled) onClick(); }}
+      className="rse-rb"
+      data-active={active || undefined}
+      data-testid={`rse-rb-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+    >
+      {children}
+    </button>
+  );
+});
 
 export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSectionEditorProps>(
   function RichSectionEditor(
@@ -415,9 +482,33 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     /* ── Source mode state (raw stored string, same save path) ── */
     const [sourceText, setSourceText] = useState<string>(value ?? '');
 
+    /* The footer's word count comes from the TipTap editor, which in source
+       mode is constructed EMPTY — so a 120-word section under the fidelity
+       gate reported "0 words". Fabricated metadata, on exactly the sections the
+       gate flagged as most delicate. In source mode the textarea is the
+       document, so it is what gets counted. */
+    const displayWords = boot.mode === 'source' ? wordsOf(htmlVisibleText(sourceText)) : words;
+
     const editor = useEditor(
       {
         extensions,
+        /* THE RIBBON HAS TO FOLLOW THE CARET.
+           Without this, TipTap re-renders the component only when the DOCUMENT
+           changes — never on a bare selection move — so every control that
+           reflects where the caret IS was stale until you typed a character:
+           click into a table and the +Row/+Col/Hdr/delete controls never
+           appeared (while "Insert table" stayed on offer, so pressing it nested
+           a table inside a cell); select bold text and B did not light; put the
+           caret in an H2 and the style picker still read "Paragraph"; arm bold
+           on a collapsed caret and nothing indicated it.
+           This option is a boolean in TipTap 3, so the cost is a re-render per
+           transaction — including caret movement. That is affordable now and
+           was not before: `RB` is hoisted to module scope and memoized, so a
+           re-render no longer tears down and rebuilds every ribbon button's DOM
+           (it did, on every keystroke, dropping focus to <body>). If this ever
+           needs to be cheaper, the answer is to memoize what the ribbon reads,
+           not to go back to a toolbar that does not know where the caret is. */
+        shouldRerenderOnTransaction: true,
         editable: !readOnly && boot.mode === 'rich',
         editorProps: {
           attributes: {
@@ -484,6 +575,31 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       },
       [],
     );
+
+    /* THE EDITOR MUST STOP ACCEPTING KEYSTROKES WHEN THE RECORD SEALS.
+     *
+     * `editable` above is read ONCE, at construction, and never again. With an
+     * empty dependency array TipTap re-applies changed options on each render
+     * but deliberately pins editability to its current value
+     * (@tiptap/react: `setOptions({ ...options, editable: editor.isEditable })`),
+     * so a later `readOnly` prop change had no effect whatsoever. Nothing
+     * remounts the editor on a freeze either: the host keys it on
+     * `sectionId + contentEpoch`, and freezing bumps neither.
+     *
+     * What the author saw: they freeze or e-sign the open document — or a
+     * colleague does and the list refreshes — the banner appears, the ribbon
+     * disappears, the Save button greys out, AND THE CANVAS KEEPS TAKING TEXT.
+     * They write into a signed record that no longer has any way to accept it,
+     * and the save path is refused server-side, so every word is lost.
+     *
+     * DocumentAuthoring carries a 16-line comment asserting this was fixed and
+     * that "the canvas stops accepting keystrokes rather than accepting them
+     * and losing them at save time". It did not; this is that fix. */
+    useEffect(() => {
+      if (!editor || editor.isDestroyed) return;
+      const shouldEdit = !readOnly && boot.mode === 'rich';
+      if (editor.isEditable !== shouldEdit) editor.setEditable(shouldEdit);
+    }, [editor, readOnly, boot.mode]);
 
     /* Seed a first-ever collab doc from the stored content once synced. */
     useEffect(() => {
@@ -940,36 +1056,6 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const isEmpty = editorReady && docEmpty;
     const full = chrome === 'full';
 
-    /* ── Ribbon button helper ── */
-    const RB = ({
-      onClick,
-      active,
-      title,
-      children,
-      disabled,
-    }: {
-      onClick: () => void;
-      active?: boolean;
-      title: string;
-      children: React.ReactNode;
-      disabled?: boolean;
-    }) => (
-      <button
-        type="button"
-        title={title}
-        aria-label={title}
-        aria-pressed={active || undefined}
-        disabled={disabled}
-        onMouseDown={(e) => {
-          e.preventDefault();
-          if (!disabled) onClick();
-        }}
-        className="rse-rb"
-        data-active={active || undefined}
-      >
-        {children}
-      </button>
-    );
 
     const blockValue = !editor
       ? 'p'
@@ -1035,21 +1121,21 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
               <option value="h3">Heading 3</option>
             </select>
             <span className="rse-sep" />
-            <RB title="Bold" active={editor?.isActive('bold')} onClick={() => editor?.chain().focus().toggleBold().run()}>
+            <RB title="Bold" shortcut="⌘B" active={editor?.isActive('bold')} onClick={() => editor?.chain().focus().toggleBold().run()}>
               <b>B</b>
             </RB>
-            <RB title="Italic" active={editor?.isActive('italic')} onClick={() => editor?.chain().focus().toggleItalic().run()}>
+            <RB title="Italic" shortcut="⌘I" active={editor?.isActive('italic')} onClick={() => editor?.chain().focus().toggleItalic().run()}>
               <i>I</i>
             </RB>
-            <RB title="Underline" active={editor?.isActive('underline')} onClick={() => editor?.chain().focus().toggleUnderline().run()}>
+            <RB title="Underline" shortcut="⌘U" active={editor?.isActive('underline')} onClick={() => editor?.chain().focus().toggleUnderline().run()}>
               <span style={{ textDecoration: 'underline' }}>U</span>
             </RB>
-            <RB title="Superscript" active={editor?.isActive('superscript')} onClick={() => editor?.chain().focus().toggleSuperscript().run()}>
+            <RB title="Superscript" shortcut="⌘." active={editor?.isActive('superscript')} onClick={() => editor?.chain().focus().toggleSuperscript().run()}>
               <span>
                 x<sup>2</sup>
               </span>
             </RB>
-            <RB title="Subscript" active={editor?.isActive('subscript')} onClick={() => editor?.chain().focus().toggleSubscript().run()}>
+            <RB title="Subscript" shortcut="⌘," active={editor?.isActive('subscript')} onClick={() => editor?.chain().focus().toggleSubscript().run()}>
               <span>
                 x<sub>2</sub>
               </span>
@@ -1058,10 +1144,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
               <span className="rse-hl-glyph">ab</span>
             </RB>
             <span className="rse-sep" />
-            <RB title="Bullet list" active={editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
+            <RB title="Bullet list" shortcut="⌘⇧8" active={editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
               {I.listBullet}
             </RB>
-            <RB title="Numbered list" active={editor?.isActive('orderedList')} onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
+            <RB title="Numbered list" shortcut="⌘⇧7" active={editor?.isActive('orderedList')} onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
               {I.listOrdered}
             </RB>
             <span className="rse-sep" />
@@ -1167,10 +1253,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
               ))}
             </select>
             <span className="rse-sep" />
-            <RB title="Undo" onClick={() => editor?.chain().focus().undo().run()}>
+            <RB title="Undo" shortcut="⌘Z" onClick={() => editor?.chain().focus().undo().run()}>
               {I.undo}
             </RB>
-            <RB title="Redo" onClick={() => editor?.chain().focus().redo().run()}>
+            <RB title="Redo" shortcut="⌘⇧Z" onClick={() => editor?.chain().focus().redo().run()}>
               {I.redo}
             </RB>
             <span className="rse-sep" />
@@ -1461,7 +1547,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
               {SAVE_META[saveState].label}
             </span>
             <span className="rse-foot-sep">{'·'}</span>
-            <span>{words.toLocaleString()} words</span>
+            <span>{displayWords.toLocaleString()} words</span>
             {trackOn && (
               <>
                 <span className="rse-foot-sep">{'·'}</span>
