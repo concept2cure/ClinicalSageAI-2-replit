@@ -7051,6 +7051,40 @@ router.post(
       // Sanitize content
       const sanitizedContent = sanitizeContent(data.content);
       const sanitizedTitle = sanitizeContent(data.title);
+      const sourceArtifactIds = Array.isArray(data.metadata?.sourceArtifactIds)
+        ? [
+            ...new Set(
+              data.metadata.sourceArtifactIds.filter(
+                (id): id is string => typeof id === 'string' && id.trim().length > 0
+              )
+            ),
+          ]
+        : [];
+      const sourceArtifacts = sourceArtifactIds.length
+        ? await db
+            .select({
+              artifactId: concept2cureArtifacts.artifactId,
+              title: concept2cureArtifacts.title,
+            })
+            .from(concept2cureArtifacts)
+            .where(
+              and(
+                eq(concept2cureArtifacts.organizationId, organizationId),
+                eq(concept2cureArtifacts.projectId, numericProjectId),
+                inArray(concept2cureArtifacts.artifactId, sourceArtifactIds)
+              )
+            )
+        : [];
+      if (sourceArtifacts.length !== sourceArtifactIds.length) {
+        const foundIds = new Set(sourceArtifacts.map(source => source.artifactId));
+        return sendError(
+          res,
+          400,
+          'One or more source evidence artifacts were not found in this project',
+          { missingSourceArtifactIds: sourceArtifactIds.filter(id => !foundIds.has(id)) },
+          'SOURCE_EVIDENCE_NOT_FOUND'
+        );
+      }
       const governedResolution = resolveGovernedContext({
         req,
         projectId: numericProjectId,
@@ -7215,6 +7249,7 @@ router.post(
           contentHash,
           ctdSection: ctdSection || null,
           conversationId: data.conversationId || null,
+          sourceArtifactIds,
         },
         sourceDescription: data.conversationId
           ? `Created from conversation ${data.conversationId}`
@@ -7263,6 +7298,29 @@ router.post(
             logger.warn('Failed to record artifact lineage (conversation -> artifact)', {
               artifactId,
               conversationId: data.conversationId,
+              err: err instanceof Error ? err.message : String(err),
+            });
+          });
+        }
+        for (const source of sourceArtifacts) {
+          recordLineage({
+            organizationId,
+            projectId: numericProjectId,
+            sourceObjectType: 'artifact',
+            sourceObjectId: source.artifactId,
+            sourceTitle: source.title,
+            targetObjectType: 'artifact',
+            targetObjectId: artifactId,
+            targetTitle: sanitizedTitle,
+            targetField: ctdSection || undefined,
+            linkageType: 'cited_by',
+            transformationType: 'manual_reference',
+            createdById: userId,
+            metadata: { contentHash, version: 1 },
+          }).catch((err: unknown) => {
+            logger.warn('Failed to record artifact lineage (evidence artifact -> draft artifact)', {
+              artifactId,
+              sourceArtifactId: source.artifactId,
               err: err instanceof Error ? err.message : String(err),
             });
           });
@@ -11988,7 +12046,7 @@ router.get('/regulatory-catalog/search', async (req: Request, res: Response) => 
 // ─────────────────────────────────────────────────────────────────────────────
 
 const EXPORT_REVIEW_NOTICE =
-  'REGULATORY SAFETY NOTICE: This document may contain AI-generated content. Qualified human review and approval are required before use in regulated submissions, clinical/safety decisions, or external communications.';
+  'DRAFT — NOT AGENCY-VALIDATED. This document may contain AI-generated content and is not an agency submission or agency decision. Qualified human review and approval are required before use in regulated submissions, clinical/safety decisions, or external communications.';
 
 const exportGovernanceSchema = z.object({
   aiGenerated: z.boolean().default(true),
@@ -12036,6 +12094,25 @@ function validateExportGovernance(
   }
 
   const governance = parsed.data;
+  if (
+    governance.humanReviewApproved &&
+    (!governance.reviewerName || !governance.reviewerRole || !governance.reviewTimestamp)
+  ) {
+    sendError(
+      res,
+      400,
+      'Reviewer identity, role, and timestamp are required when human review is approved',
+      {
+        required: [
+          'governance.reviewerName',
+          'governance.reviewerRole',
+          'governance.reviewTimestamp',
+        ],
+      },
+      'INCOMPLETE_HUMAN_REVIEW'
+    );
+    return null;
+  }
   const strictGateEnabled = shouldEnforceExportReviewGate();
   if (strictGateEnabled && !governance.humanReviewApproved) {
     sendError(
@@ -12073,7 +12150,7 @@ router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
     const { title, content } = schema.parse(req.body);
     const governance = validateExportGovernance(req, res);
     if (!governance) return;
-    const exportBody = governance.aiGenerated ? `${EXPORT_REVIEW_NOTICE}\n\n${content}` : content;
+    const exportBody = `${EXPORT_REVIEW_NOTICE}\n\n${content}`;
 
     // Dynamic import to avoid circular dependency issues
     const { generateDocxBuffer } = await import('../services/docxGenerator');
@@ -12158,7 +12235,7 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
     });
     y -= 30;
 
-    if (governance.aiGenerated) {
+    {
       const noticeLines = EXPORT_REVIEW_NOTICE.match(/.{1,110}(\s|$)/g) ?? [EXPORT_REVIEW_NOTICE];
       for (const noticeLine of noticeLines) {
         page.drawText(noticeLine.trim(), {
@@ -12349,7 +12426,7 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
     const { title, content, nanoBanana } = schema.parse(req.body);
     const governance = validateExportGovernance(req, res);
     if (!governance) return;
-    const exportBody = governance.aiGenerated ? `${EXPORT_REVIEW_NOTICE}\n\n${content}` : content;
+    const exportBody = `${EXPORT_REVIEW_NOTICE}\n\n${content}`;
 
     // If Nano Banana is enabled and configured, generate the full presentation with cover
     if (nanoBanana) {

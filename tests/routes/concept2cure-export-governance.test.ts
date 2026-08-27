@@ -14,9 +14,13 @@ vi.mock('../../server/services/pptxGenerator', () => ({
 
 vi.mock('../../server/db', () => ({
   db: {
-    select: vi.fn(() => ({ from: vi.fn(() => ({ where: vi.fn(() => ({ limit: vi.fn().mockResolvedValue([]) })) })) })),
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({ where: vi.fn(() => ({ limit: vi.fn().mockResolvedValue([]) })) })),
+    })),
     insert: vi.fn(() => ({ values: vi.fn(() => ({ returning: vi.fn().mockResolvedValue([]) })) })),
-    update: vi.fn(() => ({ set: vi.fn(() => ({ where: vi.fn(() => ({ returning: vi.fn().mockResolvedValue([]) })) })) })),
+    update: vi.fn(() => ({
+      set: vi.fn(() => ({ where: vi.fn(() => ({ returning: vi.fn().mockResolvedValue([]) })) })),
+    })),
   },
   pool: { query: vi.fn() },
 }));
@@ -30,7 +34,9 @@ vi.mock('../../server/utils/logger', () => ({
   }),
 }));
 
-vi.mock('../../server/auth', () => ({ authMiddleware: (_req: any, _res: any, next: any) => next() }));
+vi.mock('../../server/auth', () => ({
+  authMiddleware: (_req: any, _res: any, next: any) => next(),
+}));
 vi.mock('../../server/middleware/tenantContext', () => ({
   tenantContextMiddleware: (_req: any, _res: any, next: any) => next(),
   requireOrganizationContext: (_req: any, _res: any, next: any) => next(),
@@ -42,7 +48,9 @@ vi.mock('../../server/middleware/redisRateLimiter', () => ({
 import concept2cureRouter from '../../server/routes/concept2cure';
 
 function getRouteHandler(path: string, method: 'post' | 'get' = 'post') {
-  const layer = concept2cureRouter.stack.find((l: any) => l.route?.path === path && l.route?.methods?.[method]);
+  const layer = concept2cureRouter.stack.find(
+    (l: any) => l.route?.path === path && l.route?.methods?.[method]
+  );
   if (!layer) throw new Error(`Missing route ${method.toUpperCase()} ${path}`);
   return layer.route.stack[layer.route.stack.length - 1].handle;
 }
@@ -106,12 +114,56 @@ describe('Concept2Cure export governance gates', () => {
 
     expect(mockGenerateDocxBuffer).toHaveBeenCalledTimes(1);
     const [, mergedContent] = mockGenerateDocxBuffer.mock.calls[0];
-    expect(mergedContent).toContain('REGULATORY SAFETY NOTICE');
+    expect(mergedContent).toContain('DRAFT — NOT AGENCY-VALIDATED');
 
     expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-AI-Generated', 'true');
     expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Human-Review-Approved', 'false');
     expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Review-Required', 'true');
     expect(res.send).toHaveBeenCalled();
+  });
+
+  it('rejects a fabricated approval state without complete reviewer attribution', async () => {
+    const req = createMockRequest({
+      body: {
+        title: 'Regulatory Memo',
+        content: 'Draft content',
+        governance: {
+          aiGenerated: false,
+          humanReviewApproved: true,
+          reviewerName: 'Dr. Jane Doe',
+        },
+      },
+    }) as any;
+    const res = createMockResponse();
+
+    const handler = getRouteHandler('/artifacts/export-docx', 'post');
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({ code: 'INCOMPLETE_HUMAN_REVIEW' }),
+      })
+    );
+    expect(mockGenerateDocxBuffer).not.toHaveBeenCalled();
+  });
+
+  it('labels a human-authored export as draft and not agency-validated', async () => {
+    const req = createMockRequest({
+      body: {
+        title: 'Human-authored Regulatory Memo',
+        content: 'Human-authored draft content',
+        governance: { aiGenerated: false, humanReviewApproved: false },
+      },
+    }) as any;
+    const res = createMockResponse();
+
+    const handler = getRouteHandler('/artifacts/export-docx', 'post');
+    await handler(req, res);
+
+    const [, mergedContent] = mockGenerateDocxBuffer.mock.calls[0];
+    expect(mergedContent).toContain('DRAFT — NOT AGENCY-VALIDATED');
+    expect(mergedContent).toContain('Human-authored draft content');
   });
 
   it('allows PPTX export in strict mode when approved and includes reviewer headers', async () => {
@@ -137,7 +189,10 @@ describe('Concept2Cure export governance gates', () => {
 
     expect(mockGeneratePptxBuffer).toHaveBeenCalledTimes(1);
     expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Reviewer', 'Dr.%20Jane%20Doe');
-    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Review-Timestamp', '2026-03-24T12:00:00.000Z');
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'X-Concept2Cure-Review-Timestamp',
+      '2026-03-24T12:00:00.000Z'
+    );
     expect(res.send).toHaveBeenCalled();
   });
 });

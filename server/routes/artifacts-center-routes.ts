@@ -59,6 +59,13 @@ const logger = createScopedLogger('artifacts-center-routes');
  *  /api/concept2cure/artifacts read (LIMIT 200). */
 const MAX_ROWS = 200;
 
+function shouldEnforceArtifactExportReview(): boolean {
+  if (process.env.NODE_ENV === 'production') return true;
+  if (process.env.EXPORT_REVIEW_GATE === 'enforce') return true;
+  if (process.env.EXPORT_REVIEW_GATE === 'off') return false;
+  return false;
+}
+
 // ── Display-shape row (mirrors ArtifactEntry in fixtures/admin-data.ts) ──────────
 
 interface ArtifactCenterRow {
@@ -76,6 +83,8 @@ interface ArtifactCenterRow {
   when: string;
   ver: string;
   sig: boolean;
+  reviewed: boolean;
+  sourceCount: number;
   prog: string;
 }
 
@@ -93,6 +102,8 @@ interface RawArtifactRow {
   model: string | null;
   program: string | null;
   is_signed: boolean;
+  is_reviewed: boolean;
+  source_count: number | string;
   /** Version the newest active signature covers; null when unsigned or when
    *  the signature's version row is missing. */
   signed_version: number | string | null;
@@ -205,6 +216,18 @@ export default function createArtifactsCenterRoutes(): Router {
                 AND s.organization_id = a.organization_id
                 AND s.status = 'active'
            )                                               AS is_signed,
+           EXISTS (
+             SELECT 1 FROM concept2cure_review_decisions d
+              WHERE d.artifact_id = a.id
+                AND d.organization_id = a.organization_id
+                AND d.decision = 'approve'
+                AND d.version_reviewed = a.version
+           )                                               AS is_reviewed,
+           CASE
+             WHEN json_typeof(a.metadata -> 'sourceArtifactIds') = 'array'
+             THEN json_array_length(a.metadata -> 'sourceArtifactIds')
+             ELSE 0
+           END                                             AS source_count,
            /* Which version the newest active signature actually covers.
               is_signed above is EXISTS-any: it says a signature exists, not
               that it covers what you are looking at. An artifact signed at v3
@@ -235,7 +258,7 @@ export default function createArtifactsCenterRoutes(): Router {
          WHERE a.organization_id = $1
          ORDER BY a.updated_at DESC
          LIMIT ${MAX_ROWS}`,
-        [orgId],
+        [orgId]
       );
 
       const rawRows = result.rows as RawArtifactRow[];
@@ -255,6 +278,8 @@ export default function createArtifactsCenterRoutes(): Router {
           when: relativeTime(r.updated_at),
           ver: `v${Number.isFinite(version) ? version : 1}`,
           sig: r.is_signed === true,
+          reviewed: r.is_reviewed === true,
+          sourceCount: Number(r.source_count) || 0,
           /* The version the signature covers, and whether that is still the
              current one. `sigStale` is only asserted when BOTH numbers are
              known — an unresolvable signed_version reports null rather than
@@ -288,7 +313,6 @@ export default function createArtifactsCenterRoutes(): Router {
     }
   });
 
-
   /**
    * Download one governed artifact as a file.
    *
@@ -305,14 +329,11 @@ export default function createArtifactsCenterRoutes(): Router {
    * content, and streams it back.
    *
    * ── The export-review gate is NOT skipped ──────────────────────────────────
-   * AI-generated regulatory content must not leave the system unreviewed. The
-   * three single-document exporters in routes/concept2cure.ts all sit behind
-   * `validateExportGovernance`, which refuses with HUMAN_REVIEW_REQUIRED when
-   * the environment enforces it. A download route that quietly bypassed that
-   * would be a hole in the same gate, reachable from a gallery listing EVERY
-   * artifact in the org — so this refuses unreviewed AI content the same way,
-   * reading the artifact's own review state rather than asking the caller to
-   * assert it.
+   * Governed regulatory content must not leave the system without a persisted
+   * decision covering its current version. A download route that trusted a
+   * caller-supplied approval boolean would fabricate governance. This route
+   * derives authorization from an active signature or current-version review
+   * decision, scoped to the artifact's organization.
    */
   router.get('/:artifactId/export', async (req: Request, res: Response) => {
     try {
@@ -336,16 +357,27 @@ export default function createArtifactsCenterRoutes(): Router {
       const { rows } = await pool.query(
         `SELECT a.title,
                 a.content,
-                a.metadata,
+                a.version,
                 EXISTS (
-                  SELECT 1 FROM concept2cure_signatures s
+                  SELECT 1
+                    FROM concept2cure_signatures s
+                    JOIN concept2cure_artifact_versions v
+                      ON v.id = s.artifact_version_id
                    WHERE s.artifact_id = a.id
                      AND s.organization_id = a.organization_id
                      AND s.status = 'active'
-                ) AS is_signed
+                     AND v.version = a.version
+                ) AS is_signed,
+                EXISTS (
+                  SELECT 1 FROM concept2cure_review_decisions d
+                   WHERE d.artifact_id = a.id
+                     AND d.organization_id = a.organization_id
+                     AND d.decision = 'approve'
+                     AND d.version_reviewed = a.version
+                ) AS is_reviewed
            FROM concept2cure_artifacts a
           WHERE a.artifact_id = $1 AND a.organization_id = $2`,
-        [artifactId, orgId],
+        [artifactId, orgId]
       );
       if (rows.length === 0) {
         return res.status(404).json({
@@ -357,8 +389,9 @@ export default function createArtifactsCenterRoutes(): Router {
       const row = rows[0] as {
         title: string | null;
         content: string | null;
-        metadata: Record<string, unknown> | null;
+        version: number;
         is_signed: boolean;
+        is_reviewed: boolean;
       };
 
       const content = typeof row.content === 'string' ? row.content : '';
@@ -372,23 +405,34 @@ export default function createArtifactsCenterRoutes(): Router {
         });
       }
 
-      /* The export-review gate, read from the artifact rather than asserted by
-         the caller. An active signature IS the human review — a signed artifact
-         has been approved by a named person through the Part 11 ceremony. An
-         unsigned, AI-generated artifact is exactly what the gate exists to
-         hold, so it is refused with the same code the other exporters use. */
-      const meta = row.metadata ?? {};
-      const aiGenerated = Boolean(
-        meta.model ?? meta.modelTier ?? meta.aiModel ?? meta.aiGenerated,
-      );
-      if (aiGenerated && !row.is_signed && process.env.EXPORT_REVIEW_GATE === 'enforce') {
+      /* The export-review gate is read from persisted state, never asserted by
+         the caller. The approval must cover the current artifact version. */
+      if (!row.is_signed && !row.is_reviewed && shouldEnforceArtifactExportReview()) {
         return res.status(403).json({
           success: false,
           error: 'HUMAN_REVIEW_REQUIRED',
           message:
-            'This artifact was AI-generated and carries no active signature. Sign it before exporting.',
+            'The current artifact version has no persisted approval decision or active signature.',
         });
       }
+
+      const notice =
+        'DRAFT — NOT AGENCY-VALIDATED. This artifact is not an agency submission, agency decision, or evidence of agency acceptance.';
+      const exportContent = `${notice}\n\n${content}`;
+      res.setHeader('X-Concept2Cure-Draft', 'true');
+      res.setHeader('X-Concept2Cure-Agency-Validated', 'false');
+      res.setHeader(
+        'X-Concept2Cure-Human-Review-Recorded',
+        String(row.is_reviewed || row.is_signed)
+      );
+      res.setHeader(
+        'X-Concept2Cure-Export-Authorization',
+        row.is_reviewed
+          ? 'persisted-review-decision'
+          : row.is_signed
+          ? 'current-version-signature'
+          : 'none'
+      );
 
       const title = row.title || 'artifact';
       const safeTitle = title.replace(/[^\w.-]+/g, '_').slice(0, 80) || 'artifact';
@@ -396,13 +440,13 @@ export default function createArtifactsCenterRoutes(): Router {
       if (format === 'txt') {
         res.setHeader('Content-Type', 'text/plain; charset=utf-8');
         res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.txt"`);
-        return res.send(content);
+        return res.send(exportContent);
       }
 
-      const buffer = await generateDocxBuffer(title, content);
+      const buffer = await generateDocxBuffer(title, exportContent);
       res.setHeader(
         'Content-Type',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       );
       res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.docx"`);
       return res.send(buffer);
