@@ -137,8 +137,8 @@ jobs:
         env:
           CI: true
 
-      - name: Run npm audit (with documented false-positive allowlist)
-        run: node scripts/ci/audit-with-allowlist.mjs
+      - name: Run lockfile audit and dependency-risk ledger gate
+        run: npm run ci:dependency-risk
 
       - name: Trivy filesystem scan (deps + secrets)
         # Blocking: HIGH/CRITICAL findings fail the deploy gate.

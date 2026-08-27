@@ -1359,12 +1359,26 @@ jobs:
           retention-days: 90
           if-no-files-found: ignore
 
-      - name: Run npm audit (with documented false-positive allowlist)
-        # The wrapper filters out registry-lag false positives where installed
-        # version > advisory's vulnerable range. Genuine new high/critical
-        # advisories still fail. See scripts/ci/audit-with-allowlist.mjs for the
-        # current allowlist and justifications.
-        run: node scripts/ci/audit-with-allowlist.mjs
+      - name: Run lockfile audit and dependency-risk ledger gate
+        # The wrapper reconciles the exact lockfile scan with the reviewed risk
+        # ledger. New findings, expired approvals, and scanner outages fail.
+        run: npm run ci:dependency-risk
+        env:
+          NPM_AUDIT_OUTPUT: dependency-audit-results.json
+
+      - name: Prove dependency-risk gate fail-closed behavior
+        run: npm run test:dependency-risk
+
+      - name: Prove PPTX image parser is unreachable
+        run: npm run ci:pptx-image-reachability
+
+      - name: Upload exact npm audit evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: npm-audit-lockfile-evidence
+          path: dependency-audit-results.json
+          if-no-files-found: error
 
       - name: Trivy filesystem scan (deps + secrets)
         # Blocking gate: fails the job on HIGH/CRITICAL findings so they cannot
