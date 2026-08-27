@@ -48,12 +48,14 @@ INSERT INTO dr_proof.tenants(id, name) VALUES
 INSERT INTO dr_proof.users(id, tenant_id, email, auth_subject) VALUES
   ('11000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'alpha.dr@example.invalid', 'dr-auth-alpha'),
   ('22000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000002', 'beta.dr@example.invalid', 'dr-auth-beta');
-INSERT INTO dr_proof.regulated_records(id, tenant_id, title, content, content_sha256)
-SELECT '13000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001',
-       'Protocol approval', 'Approved synthetic protocol v1', encode(digest('Approved synthetic protocol v1', 'sha256'), 'hex')
-UNION ALL
-SELECT '23000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000002',
-       'Submission review', 'Reviewed synthetic submission v1', encode(digest('Reviewed synthetic submission v1', 'sha256'), 'hex');
+-- VALUES, not SELECT ... UNION ALL: UNION resolves the unknown-typed uuid
+-- literals to text, and text has no assignment cast to uuid, so the UNION form
+-- fails on every PostgreSQL version and aborted the whole drill at seeding.
+INSERT INTO dr_proof.regulated_records(id, tenant_id, title, content, content_sha256) VALUES
+  ('13000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001',
+   'Protocol approval', 'Approved synthetic protocol v1', encode(digest('Approved synthetic protocol v1', 'sha256'), 'hex')),
+  ('23000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000002',
+   'Submission review', 'Reviewed synthetic submission v1', encode(digest('Reviewed synthetic submission v1', 'sha256'), 'hex'));
 INSERT INTO dr_proof.object_references(id, tenant_id, storage_provider, object_key, media_type, payload, payload_sha256)
 SELECT '14000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001',
        'dr-inline-test-adapter', 'tenant-alpha/proof.bin', 'application/octet-stream',

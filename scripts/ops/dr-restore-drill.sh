@@ -77,7 +77,11 @@ RESTORE_CLIENT_VERSION=$(pg_restore --version | tr -d '\n')
 SOURCE_SCHEMA_FINGERPRINT=$(schema_fingerprint "$DR_SOURCE_DATABASE_URL")
 SOURCE_COUNTS=$(psql "$DR_SOURCE_DATABASE_URL" -Atqc "SELECT json_build_object('tenants',count(*),'regulated_records',(SELECT count(*) FROM dr_proof.regulated_records),'audit_events',(SELECT count(*) FROM dr_proof.audit_events),'object_references',(SELECT count(*) FROM dr_proof.object_references)) FROM dr_proof.tenants")
 SOURCE_MARK=$(psql "$DR_SOURCE_DATABASE_URL" -Atqc "SELECT (extract(epoch FROM max(applied_at))*1000)::bigint FROM dr_proof.schema_migrations")
-pg_dump --format=custom --compress=9 --no-owner --no-acl --file="$BACKUP" "$DR_SOURCE_DATABASE_URL"
+# --no-owner only: ownership is environment-specific, but the ACLs ARE part of
+# what the drill proves — stripping them (--no-acl) drops the GRANTs to
+# c2c_dr_app, so the restored database has RLS policies the application role
+# cannot even reach and every post-restore verification fails on permissions.
+pg_dump --format=custom --compress=9 --no-owner --file="$BACKUP" "$DR_SOURCE_DATABASE_URL"
 BACKUP_END=$(date -u +%FT%TZ); BACKUP_END_EPOCH=$(date +%s%3N); BACKUP_SHA=$(sha256sum "$BACKUP" | awk '{print $1}')
 printf '%s  %s\n' "$BACKUP_SHA" "$BACKUP" | sha256sum --check --status || die 'backup checksum verification failed before restore'
 
@@ -93,7 +97,7 @@ dropdb --if-exists --force --maintenance-db="$TARGET_ADMIN_URL" "$TARGET_DB"
 createdb --maintenance-db="$TARGET_ADMIN_URL" "$TARGET_DB"
 NEW_TARGET_OID=$(psql "$TARGET_ADMIN_URL" -Atqc "SELECT oid FROM pg_database WHERE datname='$TARGET_DB'")
 [[ -n $OLD_TARGET_OID && -n $NEW_TARGET_OID && $OLD_TARGET_OID != "$NEW_TARGET_OID" ]] || die 'target replacement proof failed'
-pg_restore --exit-on-error --no-owner --no-acl --dbname="$DR_TARGET_DATABASE_URL" "$BACKUP"
+pg_restore --exit-on-error --no-owner --dbname="$DR_TARGET_DATABASE_URL" "$BACKUP"
 
 VERIFY_SQL="$WORK/verify.sql"
 cat >"$VERIFY_SQL" <<'SQL'
