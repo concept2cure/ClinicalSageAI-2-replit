@@ -21,7 +21,7 @@
     "medical-device"
   ],
   "engines": {
-    "node": ">=20.0.0",
+    "node": ">=22.0.0 <23.0.0",
     "npm": ">=10.0.0"
   },
   "scripts": {
@@ -98,6 +98,8 @@
     "ci:unreferenced-modules": "node scripts/ci/check-unreferenced-modules.mjs",
     "ci:committed-secrets": "node scripts/ci/check-committed-secrets.mjs",
     "ci:requirements-pins": "node scripts/ci/check-requirements-pins.mjs",
+    "ci:node-runtime": "node scripts/ci/check-node-runtime.mjs",
+    "ci:node-runtime:self-test": "node scripts/ci/check-node-runtime.mjs --self-test",
     "ci:lineage-save-gate": "node scripts/ci/check-lineage-save-gate.mjs",
     "ci:artifact-provenance": "node scripts/ci/check-artifact-provenance.mjs",
     "ci:unreferenced-modules:strict": "node scripts/ci/check-unreferenced-modules.mjs --strict",

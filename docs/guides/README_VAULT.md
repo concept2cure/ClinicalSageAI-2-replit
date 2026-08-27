@@ -51,7 +51,7 @@ Authorization: Bearer <your-access-token>
 
 ### Prerequisites
 
-- Node.js 16+
+- Node.js 22 LTS
 - PostgreSQL database (provided by Neon)
 - Environment variables:
   - `NEON_DATABASE_URL`: Neon database connection string
