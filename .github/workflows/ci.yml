@@ -863,6 +863,7 @@ jobs:
         env:
           ADMIN_URL: postgresql://postgres@localhost:5432/postgres
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_dbtest
+          APP_SERVICE_DB_PASSWORD: ci-dbtest-app-service-password
 
       - name: Run real-database tests (unmocked pg, RLS_ENFORCE=on)
         run: npm run test:db
@@ -872,6 +873,7 @@ jobs:
           RLS_ENFORCE: 'on'
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_dbtest
           TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_dbtest
+          APP_DATABASE_URL: postgresql://app_service:ci-dbtest-app-service-password@localhost:5432/concept2cure-ri_dbtest
 
   # ── Blank-database provisioning + deploy-migration proof ──────────────────
   #
