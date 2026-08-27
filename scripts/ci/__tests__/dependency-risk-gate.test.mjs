@@ -35,6 +35,33 @@ test('passes the npm transitive wrapper for reviewed image-size', () => {
   assert.match(result.stdout, /GHSA-5P2G-FCMC-QVQQ image-size high: unreachable/);
 });
 
+test('passes a diamond: two wrappers sharing one reviewed transitive', () => {
+  // npm audit's normal shape for a shared vulnerable transitive. A shared
+  // visited-set implementation misreads the second branch as a cycle and
+  // blocks a fully reviewed advisory; only a true cycle may fail here.
+  const result = run(report({
+    midA: { severity: 'high', via: ['image-size'] },
+    midB: { severity: 'high', via: ['image-size'] },
+    appwrap: { severity: 'high', via: ['midA', 'midB'] },
+    'image-size': { severity: 'high', via: [{ severity: 'high', url: 'https://github.com/advisories/GHSA-w3rx-r6r6-pgpr' }] },
+  }));
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('fails closed on a true via cycle', () => {
+  const result = run(report({
+    ouro: { severity: 'high', via: ['boros'] },
+    boros: { severity: 'high', via: ['ouro'] },
+  }));
+  assert.equal(result.status, 1); assert.match(result.stderr, /unreviewed Critical\/High/);
+});
+
+test('fails closed on a via-string naming a package absent from the report', () => {
+  // A truncated or malformed scanner response must not read as reviewed.
+  const result = run(report({ appwrap: { severity: 'high', via: ['ghost'] } }));
+  assert.equal(result.status, 1); assert.match(result.stderr, /unreviewed Critical\/High/);
+});
+
 test('fails closed on a new high advisory', () => {
   const result = run(report({ surprise: { severity: 'critical', via: [{ severity: 'critical', url: 'https://github.com/advisories/GHSA-aaaa-bbbb-cccc' }] } }));
   assert.equal(result.status, 1); assert.match(result.stderr, /unreviewed Critical\/High/);

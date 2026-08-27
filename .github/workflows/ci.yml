@@ -37,6 +37,19 @@ jobs:
       - name: Guardrails — Node 22 runtime contracts
         run: node scripts/ci/check-node-runtime.mjs
 
+      # The guard's own detection logic is code that can regress; the self-test
+      # mutates each contract surface and requires the guard to reject it (it
+      # refuses to run against an already-dirty baseline, so it cannot pass
+      # vacuously).
+      - name: Guardrails — Node 22 guard rejects simulated drift
+        run: node scripts/ci/check-node-runtime.mjs --self-test
+
+      # Pure node:test suite over scripts/release-evidence (no npm deps); the
+      # manifest gate's fail-closed logic must be exercised on every push, not
+      # only when a release workflow eventually calls it.
+      - name: Guardrails — release-evidence manifest gate self-tests
+        run: npm run test:release-evidence
+
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET)
         # that otherwise fail the whole pipeline (every other job needs: lint).
@@ -1390,7 +1403,11 @@ jobs:
         with:
           name: npm-audit-lockfile-evidence
           path: dependency-audit-results.json
-          if-no-files-found: error
+          # The gate writes this file only after its ledger-freshness checks
+          # pass, so a ledger-stage failure legitimately leaves no file; `error`
+          # here would stack a second, misleading failure on top of the real
+          # diagnostic. A missing file on a green gate is still impossible.
+          if-no-files-found: warn
 
       - name: Trivy filesystem scan (deps + secrets)
         # Blocking gate: fails the job on HIGH/CRITICAL findings so they cannot

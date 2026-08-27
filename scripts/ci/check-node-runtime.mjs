@@ -88,6 +88,14 @@ export function checkRuntimeContracts({ read = readText, workflows = trackedWork
 function runSelfTest() {
   const originals = new Map();
   const read = (path) => originals.get(path) ?? readText(path);
+  // Each case below only asserts errors exist AFTER a mutation, so a repo that
+  // is already in violation would satisfy every case without the mutation ever
+  // being detected. Require a clean baseline first, or the self-test proves
+  // nothing about the mutations it claims to reject.
+  const baseline = checkRuntimeContracts({ read });
+  if (baseline.length > 0) {
+    throw new Error(`self-test requires a clean baseline; the repo already violates:\n${baseline.map((e) => `  ${e}`).join('\n')}`);
+  }
   const cases = [
     ['package engine downgrade', 'package.json', (value) => value.replace(NODE_ENGINE, '>=20.0.0')],
     ['package engine broadening', 'package.json', (value) => value.replace(NODE_ENGINE, '>=22.0.0')],
