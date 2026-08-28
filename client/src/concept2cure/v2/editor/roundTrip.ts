@@ -27,9 +27,31 @@
  * detection routed such text through an HTML parse that swallowed the token —
  * the exact silent-loss class this module exists to stop. Mirrored by
  * `contentLooksLikeHtml` in server/export/authoring-section-content.ts; keep
- * the two in agreement. */
+ * the two in agreement.
+ *
+ * AN ALLOWLIST THAT IS TOO NARROW CORRUPTS THE RECORD, and did. `dl`, `dt`,
+ * `dd` and `caption` were missing. A definition list is how an abbreviations
+ * or glossary section is written — "AE / Adverse Event", "MTD / Maximum
+ * Tolerated Dose" — and is exactly the shape an AI draft emits for one. With
+ * the tag unrecognised the boot path took the PLAIN-TEXT branch, where
+ * `plainTextToHtml` escapes everything because plain text has no markup by
+ * definition. So the record's markup became visible body text: a filed
+ * document reading `<dl><dt>AE</dt><dd>Adverse Event</dd></dl>` as a literal
+ * line of prose, angle brackets and all.
+ *
+ * The gate then AFFIRMED it. `assessFidelity` asks this same question, so it
+ * compared the raw string-with-tags against the parsed literal
+ * string-with-tags, they matched, and it returned `lossy: false` — reporting
+ * the corruption as faithful because both halves agreed on the same mistake.
+ *
+ * Adding a tag here is therefore not cosmetic. Anything the stored record can
+ * legitimately hold must be recognised, or it is escaped into the filed
+ * document; anything ambiguous with prose must not be. `figure`/`figcaption`
+ * are listed for the same reason even though the boot path also routes
+ * `figure` to source mode explicitly — the two guards are independent, and
+ * this one governs whether `assessFidelity` reads the content as markup. */
 const KNOWN_HTML_TAG =
-  /<\/?(p|div|br|h[1-6]|ul|ol|li|b|strong|i|em|u|s|strike|ins|del|span|table|thead|tbody|tfoot|tr|td|th|blockquote|pre|a|img|hr|sub|sup|mark|code|font|section|article)\b[^>]*>/i;
+  /<\/?(p|div|br|h[1-6]|ul|ol|li|dl|dt|dd|b|strong|i|em|u|s|strike|ins|del|span|table|caption|thead|tbody|tfoot|tr|td|th|blockquote|pre|a|img|hr|sub|sup|mark|code|font|section|article|figure|figcaption)\b[^>]*>/i;
 export function looksLikeHtml(stored: string): boolean {
   return KNOWN_HTML_TAG.test(stored);
 }
