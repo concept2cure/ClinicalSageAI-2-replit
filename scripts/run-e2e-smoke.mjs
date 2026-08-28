@@ -59,6 +59,10 @@ function resolvePlaywright() {
 function startDevServer() {
   const env = {
     ...process.env,
+    // The governed-export gate must be ON for the golden journey's
+    // denied-before-review step to mean anything (server-side toggle;
+    // non-production only — production is always enforced).
+    EXPORT_REVIEW_GATE: process.env.EXPORT_REVIEW_GATE || 'enforce',
     DATABASE_URL:
       process.env.DATABASE_URL ||
       'postgresql://postgres:postgres@localhost:5432/concept2cure-ri?sslmode=disable',
@@ -98,6 +102,9 @@ function stopDevServer(server) {
 async function main() {
   // Seed the login user the smoke authenticates as (idempotent upsert).
   await run('node', ['scripts/seed-admin.mjs']);
+  // Seed the governed-workflow identities (author/reviewer/admin) the golden
+  // journey authenticates as (idempotent upsert; same database).
+  await run('node', ['tests/e2e/seed-governed-workflow.cjs']);
 
   const server = startDevServer();
   let closed = false;
@@ -109,6 +116,13 @@ async function main() {
     await waitForServer(BASE_URL);
     const pw = resolvePlaywright();
     await run(pw.cmd, [...pw.prefix, 'test', 'tests/e2e/authenticated-app-smoke.e2e.spec.ts'], {
+      env: { ...process.env, BASE_URL },
+    });
+    // The WO-06 golden journey, on the same booted server: governed evidence
+    // draft → citation gate → denied pre-review export → assignment →
+    // reviewer approval → persistence. One boot proves both surfaces; the
+    // combined login count (~5) stays inside the auth limiter's 10/15min.
+    await run(pw.cmd, [...pw.prefix, 'test', 'tests/e2e/golden-customer-journey.e2e.ts'], {
       env: { ...process.env, BASE_URL },
     });
   } catch (error) {
