@@ -38,6 +38,7 @@ import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 import { createJourneyDb, type JourneyDb } from '../golden-journeys/harness';
+import { REASON_NOT_STATED } from '../../server/services/c2c/commit-section-to-filing';
 
 const JWT_SECRET = 'commit-section-to-filing-contract';
 process.env.JWT_SECRET = JWT_SECRET;
@@ -191,6 +192,12 @@ const save = (code: string, content: string) =>
     content, changeReason: 'drafting the overview',
   });
 
+/** A save exactly as the document editor makes it: no reason, because the
+ *  editor has no field to give one. Every assertion above sends a reason, so
+ *  the path nearly every real save takes had no coverage at all. */
+const saveWithoutReason = (code: string, content: string) =>
+  as(request(app).patch(`/api/authoring/sections/${sectionIds[code]}`)).send({ content });
+
 describe('a save in the editor reaches the filing', () => {
   it('writes the text into the governed section', async () => {
     const res = await save('2.5', 'The investigational product was well tolerated.');
@@ -256,6 +263,61 @@ describe('a save in the editor reaches the filing', () => {
     );
     expect(row.content).toBe('Revised: no dose-limiting toxicity was observed.');
   }, T);
+});
+
+describe('the reason for change is recorded, never invented', () => {
+  it('records that no reason was given, rather than inventing one', async () => {
+    /* The path nearly every real save takes. Only AuthoringAiDraft sends a
+       `changeReason`; the document editor has no field for one, so this is
+       what the ledger receives on an ordinary save.
+
+       It used to receive the literal 'authored in the document editor' —
+       supplied here, not by anyone — sitting in the reason column of the
+       filing's immutable version ledger, indistinguishable on the page an
+       inspector reads from a sentence a person actually wrote. It also
+       defeated the gate built for this: the snapshot trigger RAISES on an
+       empty app.reason ("Part 11 reason-for-change is mandatory"), and a
+       constant satisfies that on every save, so the mandatory-reason gate had
+       never once fired for this editor.
+
+       The trigger will not accept empty, so the honest value has to SAY it was
+       not stated — the same answer `author_kind` gives with 'unspecified'
+       rather than guessing 'human'. Asserted against the exported constant so
+       the check cannot drift from the writer. */
+    const res = await saveWithoutReason('2.5', 'Saved with no reason given.');
+    expect(res.status).toBe(200);
+
+    const versions = await q<{ reason: string }>(
+      `SELECT reason FROM c2c_document_section_versions ORDER BY version DESC LIMIT 1`,
+    );
+    expect(versions[0].reason).toBe(REASON_NOT_STATED);
+    expect(versions[0].reason).not.toMatch(/authored in the document editor/i);
+  }, T);
+
+  it('still records a real reason verbatim when the save gives one', async () => {
+    /* The working path must keep working: the fix must not flatten a stated
+       reason into the not-stated marker. */
+    const res = await save('2.5', 'Saved with a reason this time.');
+    expect(res.status).toBe(200);
+    const [newest] = await q<{ reason: string }>(
+      `SELECT reason FROM c2c_document_section_versions ORDER BY version DESC LIMIT 1`,
+    );
+    expect(newest.reason).toBe('drafting the overview');
+  }, T);
+
+  it('treats a whitespace-only reason as not stated', async () => {
+    /* "   " is not a reason. Storing it would satisfy the trigger's non-empty
+       check while telling a reader nothing, which is the same fabrication in a
+       quieter form. */
+    const res = await as(request(app).patch(`/api/authoring/sections/${sectionIds['2.5']}`))
+      .send({ content: 'Saved with a blank reason.', changeReason: '   ' });
+    expect(res.status).toBe(200);
+    const [newest] = await q<{ reason: string }>(
+      `SELECT reason FROM c2c_document_section_versions ORDER BY version DESC LIMIT 1`,
+    );
+    expect(newest.reason).toBe(REASON_NOT_STATED);
+  }, T);
+
 });
 
 describe('what it deliberately does NOT do', () => {
