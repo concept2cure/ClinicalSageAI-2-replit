@@ -141,6 +141,25 @@ describe('RPS validator', () => {
     m.submissionUnit.title = 'x'.repeat(129);
     expect(validateRpsMessage(m).findings.some((x) => x.code === 'RPS-SU-TITLE-LEN')).toBe(true);
   });
+
+  it('flags a context-of-use code that is not in the CL2 list (presence alone is not enough)', () => {
+    const m = sampleMessage();
+    // Syntactically fine, but not a catalogued context-of-use section.
+    m.contextsOfUse[0].code = 'us_9.99_not_a_section';
+    const r = validateRpsMessage(m);
+    expect(r.findings.some((x) => x.code === 'RPS-COU-CODE-VALID')).toBe(true);
+    expect(r.valid).toBe(false);
+  });
+
+  it('flags a keyword with no code', () => {
+    const m = sampleMessage();
+    m.contextsOfUse[0].keywords = [
+      { code: '', codeSystem: '2.16.840.1.113883.3.989.5.1.2.2.1.3' },
+    ];
+    expect(
+      validateRpsMessage(m).findings.some((x) => x.code === 'RPS-KEYWORD-CODE-REQUIRED'),
+    ).toBe(true);
+  });
 });
 
 describe('v3.2.2 → v4.0 forward compatibility', () => {

@@ -137,9 +137,16 @@ export function validateRpsMessage(
     }
     if (!cou.code) {
       err('RPS-COU-CODE-REQUIRED', `${p} code is required.`, `${p}.code`);
+    } else if (!isValidV4Code('contextOfUse', cou.code)) {
+      // Presence alone is not enough: a syntactically-fine but non-catalogued
+      // code binds content to a CTD section FDA's CL2 context-of-use list does
+      // not contain — the ESG/JANUS gateway rejects or mis-files it. Validate
+      // against the list, matching how submissionUnit/application codes above are
+      // checked.
+      err('RPS-COU-CODE-VALID', `${p} code "${cou.code}" is not a valid context-of-use (CL2) value.`, `${p}.code`);
     }
-    if (!isValidOid(cou.codeSystem)) {
-      err('RPS-COU-CODESYSTEM-OID', `${p} code system "${cou.codeSystem}" is not a valid OID.`, `${p}.code`);
+    if (!isCodeSystemOidValid('contextOfUse', cou.codeSystem)) {
+      err('RPS-COU-CODESYSTEM-OID', `${p} code system "${cou.codeSystem}" is not the context-of-use code-system OID.`, `${p}.code`);
     }
     if (cou.status !== 'active' && cou.status !== 'suspended') {
       err('RPS-COU-STATUS', `${p}.statusCode must be "active" or "suspended".`, `${p}.statusCode`);
@@ -151,6 +158,13 @@ export function validateRpsMessage(
       err('RPS-COU-DOCREF', `${p}.documentReference does not resolve to a document in the message.`, `${p}.documentReference`);
     }
     for (const kw of cou.keywords ?? []) {
+      // Keyword code was never checked for presence. Keyword code systems are
+      // polymorphic (manufacturer / substance / study id, each its own code
+      // system), so the code system stays a generic OID check rather than being
+      // pinned to one list, but a keyword with no code at all is invalid.
+      if (!kw.code || !kw.code.trim()) {
+        err('RPS-KEYWORD-CODE-REQUIRED', `${p} keyword code is required.`, `${p}.keyword`);
+      }
       if (!isValidOid(kw.codeSystem)) {
         err('RPS-KEYWORD-CODESYSTEM-OID', `${p} keyword code system "${kw.codeSystem}" is not a valid OID.`, `${p}.keyword`);
       }
