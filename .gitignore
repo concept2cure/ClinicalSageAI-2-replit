@@ -1,4 +1,9 @@
 node_modules/
+# Also match a node_modules SYMLINK. The rule above ends in a slash, so it
+# matches directories ONLY — a worktree or CI checkout that symlinks
+# node_modules at a shared install is not covered by it, and `git add -A` will
+# happily stage the link. That has already put one into history once.
+node_modules
 dist/
 .cache/
 .cerv2_program_id
