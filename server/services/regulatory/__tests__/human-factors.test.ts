@@ -53,20 +53,51 @@ describe('analyzeUseRelatedRisk', () => {
     const r = analyzeUseRelatedRisk(scenarios);
     expect(r.criticalTaskCount).toBe(2); // critical + serious
     expect(r.unmitigatedCriticalTasks).toBe(1); // the serious one is unmitigated
-    expect(r.residualRiskAcceptable).toBe(false);
+    expect(r.criticalTaskGate).toBe('blocked');
     expect(r.criticalTasks.map(t => t.task)).toEqual(['Set dose', 'Confirm patient']);
   });
 
-  it('residual risk acceptable when all critical tasks are mitigated', () => {
+  it('critical-task gate is clear when all critical tasks are mitigated', () => {
     const r = analyzeUseRelatedRisk([
       { task: 'Set dose', useError: 'x', potentialHarmSeverity: 'critical', mitigated: true },
       { task: 'Read label', useError: 'y', potentialHarmSeverity: 'minor', mitigated: false },
     ]);
-    expect(r.residualRiskAcceptable).toBe(true);
+    expect(r.criticalTaskGate).toBe('clear');
     expect(r.criticalTaskCount).toBe(1);
   });
 
-  it('rejects an empty scenario list', () => {
-    expect(() => analyzeUseRelatedRisk([])).toThrow();
+  /**
+   * The state the old `residualRiskAcceptable: unmitigatedCriticalTasks === 0`
+   * got wrong, and the reason this contract changed.
+   *
+   * `unmitigatedCriticalTasks` counts a filter over a filter over the scenarios
+   * passed in. With no scenarios recorded both filters are vacuously empty, the
+   * count is 0, and the old field reported `true` — "residual use-related risk
+   * is acceptable" — for an HFE/UE file nothing had ever examined, in a result
+   * object that is served straight through to an HFE/UE report. `not-assessed`
+   * is the honest reading, and no acceptability is reported in ANY state: under
+   * IEC 62366-1 that is a documented manufacturer determination, not a count.
+   */
+  it('reports NOT-ASSESSED, never acceptability, when no scenarios are recorded', () => {
+    const r = analyzeUseRelatedRisk([]);
+    // Asserted FIRST: this is the claim the old boolean got wrong, and it must
+    // not be masked by a later assertion failing on the new field.
+    expect(r).not.toHaveProperty('residualRiskAcceptable');
+    expect(r.criticalTaskGate).toBe('not-assessed');
+    expect(r.totalScenarios).toBe(0);
+    expect(r.unmitigatedCriticalTasks).toBe(0); // vacuously — which is the whole point
+  });
+
+  it('never reports residual-risk acceptability, even with the gate clear', () => {
+    const r = analyzeUseRelatedRisk([
+      { task: 'Set dose', useError: 'x', potentialHarmSeverity: 'critical', mitigated: true },
+    ]);
+    expect(r.criticalTaskGate).toBe('clear');
+    expect(r).not.toHaveProperty('residualRiskAcceptable');
+  });
+
+  /** The regulatory citation on the result is unchanged — asserted, not edited. */
+  it('carries the unchanged IEC 62366-1 / FDA HFE framework label', () => {
+    expect(analyzeUseRelatedRisk([]).framework).toBe('IEC 62366-1 / FDA HFE');
   });
 });
