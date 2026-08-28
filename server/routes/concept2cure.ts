@@ -480,10 +480,35 @@ function calculateSignatureHash(payload: Record<string, unknown>): string {
  * Recomputes SHA-256 for each version's content and verifies it matches the stored hash.
  * Returns detailed verification results.
  */
-function verifyIntegrityChain(
+/**
+ * What this check actually covers, stated once and carried into every response.
+ *
+ * `verifyIntegrityChain` recomputes SHA-256 over `artifact.content` and each
+ * version's `content` — both read from the database — and compares each to the
+ * hash stored beside it. That is a real check: it catches a stored row whose
+ * content and recorded hash disagree. It is NOT verification of the originating
+ * document, because no source bytes are read here; nothing in this path
+ * re-derives a hash from an uploaded file, a vault object, or a filed leaf.
+ *
+ * The distinction matters because of where this lands. The audit-report route
+ * emits this block under `standard: '21 CFR Part 11 · ICH M8 eCTD v4.0'` and
+ * directly beside a `sourceLineage` section, and the export persists that as a
+ * governed artifact an inspector reads. "verified: true, SHA-256" next to a
+ * source-lineage list reads as "the source documents were checked". They were
+ * not. Naming the scope is the whole fix — the check is fine, the claim was
+ * broader than the check.
+ */
+const INTEGRITY_CHECK_SCOPE =
+  'Compares each stored artifact version against the SHA-256 recorded with it. ' +
+  'Detects a stored record altered without its hash being updated. Does NOT read ' +
+  'or verify the bytes of the originating source document.';
+
+export function verifyIntegrityChain(
   artifact: { content: string | null; contentHash: string | null; version: number },
   versions: Array<{ version: number; content: string; contentHash: string; createdAt: Date | null }>
 ): {
+  scope: string;
+  sourceDocumentBytesVerified: false;
   chainIntact: boolean;
   currentHashVerified: boolean;
   computedHash: string;
@@ -523,6 +548,11 @@ function verifyIntegrityChain(
   }
 
   return {
+    scope: INTEGRITY_CHECK_SCOPE,
+    // Always false, and present rather than omitted: a reader must be able to
+    // see that source-document verification did not happen, not infer it from
+    // the absence of a field.
+    sourceDocumentBytesVerified: false,
     chainIntact,
     currentHashVerified,
     computedHash,
@@ -8828,6 +8858,12 @@ router.get(
           ...(() => {
             const verification = verifyIntegrityChain(artifact, versions);
             return {
+              // Scope travels with the verdict. This block is emitted under a
+              // 21 CFR Part 11 heading and directly above sourceLineage; without
+              // it, "chainIntact: true" reads as a statement about the source
+              // documents listed below, which this check never touches.
+              scope: verification.scope,
+              sourceDocumentBytesVerified: verification.sourceDocumentBytesVerified,
               chainIntact: verification.chainIntact,
               currentHashVerified: verification.currentHashVerified,
               failureReason: verification.failureReason,
@@ -9013,6 +9049,12 @@ router.post(
           ...(() => {
             const verification = verifyIntegrityChain(artifact, versions);
             return {
+              // Scope travels with the verdict. This block is emitted under a
+              // 21 CFR Part 11 heading and directly above sourceLineage; without
+              // it, "chainIntact: true" reads as a statement about the source
+              // documents listed below, which this check never touches.
+              scope: verification.scope,
+              sourceDocumentBytesVerified: verification.sourceDocumentBytesVerified,
               chainIntact: verification.chainIntact,
               currentHashVerified: verification.currentHashVerified,
               failureReason: verification.failureReason,
@@ -9969,7 +10011,15 @@ router.get(
         title: artifact.title,
         currentVersion: artifact.version,
         algorithm: 'SHA-256',
-        verified: verification.chainIntact,
+        // Was `verified`. A bare "verified: true" beside "algorithm: SHA-256"
+        // names no subject, and the subject is the point: this establishes that
+        // the STORED record is self-consistent, not that the document it came
+        // from is intact. Renamed rather than kept as an alias — nothing in the
+        // client or the test suite reads it, so there is no reason to keep the
+        // ambiguous name alive.
+        storedRecordSelfConsistent: verification.chainIntact,
+        scope: verification.scope,
+        sourceDocumentBytesVerified: verification.sourceDocumentBytesVerified,
         currentHashVerified: verification.currentHashVerified,
         computedHash: verification.computedHash,
         storedHash: verification.storedHash,

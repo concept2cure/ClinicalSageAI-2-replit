@@ -71,6 +71,15 @@ export interface AssembleSequenceResult extends PackageFromCoreResult {
    */
   unresolvedLeaves: UnresolvedLeaf[];
   /**
+   * Number of MATERIALIZED leaves whose source document is still a draft/review
+   * artifact (not approved/finalized). These render into the package but a
+   * submission-grade package must have zero of them — carried through to the
+   * completeness verdict so `requireComplete` fails on an un-finalized dossier.
+   */
+  unfinalized: number;
+  /** The unfinalized leaves' section + source status, for the completeness report. */
+  unfinalizedSections: Array<{ sectionCode: string; status: string }>;
+  /**
    * Path to the SHA-256 governance manifest (per-leaf md5+sha256 + package
    * sha256), written OUTSIDE the eCTD backbone. The regulatory index.xml/md5.txt
    * remain md5-only for agency compatibility; this file is the modern-hash
@@ -83,11 +92,16 @@ export interface AssembleSequenceResult extends PackageFromCoreResult {
  * Assemble the sequence's canonical leaves into an eCTD package. Tenant-scoped:
  * leaves + their coauthor documents must belong to organizationId.
  */
-export async function assembleSequence(params: AssembleSequenceParams): Promise<AssembleSequenceResult> {
-  const { sequenceId, organizationId, userId } = params;
-
-  // 1. Tenant-scoped leaves for this sequence that point at the canonical doc table.
-  const leaves = await db
+/**
+ * The live leaves of a sequence, tenant-scoped and excluding soft-deleted rows.
+ *
+ * Extracted from assembleSequence purely to keep it under the
+ * max-lines-per-function ceiling. The predicate is unchanged — the organization
+ * filter and the deletedAt exclusion are what keep an assembly inside its tenant
+ * and out of withdrawn leaves, so neither may be dropped here.
+ */
+async function readSequenceLeaves(sequenceId: number, organizationId: number) {
+  return db
     .select()
     .from(submissionLeaves)
     .where(
@@ -97,6 +111,45 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
         isNull(submissionLeaves.deletedAt)
       )
     );
+}
+
+/**
+ * Refuse assembly unless every leaf resolves to a real, non-symlink PDF inside
+ * the staging root, with no output-name collisions.
+ *
+ * This guards the injectable `resolveFile` seam: a caller-supplied path outside
+ * the root, a symlink, or a non-PDF is refused BEFORE anything is packaged, and
+ * the refusal is audited as ECTD_ASSEMBLE_BLOCKED so a blocked assembly leaves a
+ * record rather than just an exception. Extracted from assembleSequence to keep
+ * it under the max-lines-per-function ceiling; the check, the audit row and the
+ * thrown message are unchanged.
+ */
+async function assertLeafPathsSafe(
+  files: Array<{ fileName: string; sourcePath: string }>,
+  allowedRoot: string,
+  ctx: { organizationId: number; userId: number; sequenceId: number },
+): Promise<void> {
+  const pathSafety = await validateLeafPaths(files, { allowedRoot });
+  if (pathSafety.ok) return;
+  await auditService.logAction({
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    action: 'ECTD_ASSEMBLE_BLOCKED',
+    resourceType: 'ectd_sequence',
+    resourceId: ctx.sequenceId,
+    details: { reason: 'leaf_path_safety', violations: pathSafety.violations },
+  });
+  throw new Error(
+    `eCTD assembly blocked: ${pathSafety.violations.length} leaf path-safety violation(s): ` +
+      pathSafety.violations.map((v) => `${v.fileName}:${v.code}`).join(', '),
+  );
+}
+
+export async function assembleSequence(params: AssembleSequenceParams): Promise<AssembleSequenceResult> {
+  const { sequenceId, organizationId, userId } = params;
+
+  // 1. Tenant-scoped leaves for this sequence. See readSequenceLeaves.
+  const leaves = await readSequenceLeaves(sequenceId, organizationId);
 
   // 2. Materialize every leaf's source document to a deterministic PDF, keyed by
   //    table:id. Every locally-renderable table (coauthor_documents,
@@ -113,7 +166,13 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
   let assembleReturned = false;
   try {
 
-  const { byKey, unresolved: unresolvedLeaves, materialized } = await materializeLeafSources({
+  const {
+    byKey,
+    unresolved: unresolvedLeaves,
+    materialized,
+    unfinalized,
+    unfinalizedSections,
+  } = await materializeLeafSources({
     leaves: leaves.map((l) => ({ documentTable: l.documentTable, documentId: l.documentId })),
     organizationId,
     stageDir,
@@ -124,24 +183,11 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
   //     collisions. This guards the injectable resolveFile seam — a caller-
   //     supplied path outside the root, a symlink, or a non-PDF is refused before
   //     anything is packaged.
-  const pathSafety = await validateLeafPaths(
+  await assertLeafPathsSafe(
     [...byKey.values()].map((f) => ({ fileName: f.fileName, sourcePath: f.sourcePath })),
-    { allowedRoot: stageDir },
+    stageDir,
+    { organizationId, userId, sequenceId },
   );
-  if (!pathSafety.ok) {
-    await auditService.logAction({
-      organizationId,
-      userId,
-      action: 'ECTD_ASSEMBLE_BLOCKED',
-      resourceType: 'ectd_sequence',
-      resourceId: sequenceId,
-      details: { reason: 'leaf_path_safety', violations: pathSafety.violations },
-    });
-    throw new Error(
-      `eCTD assembly blocked: ${pathSafety.violations.length} leaf path-safety violation(s): ` +
-        pathSafety.violations.map((v) => `${v.fileName}:${v.code}`).join(', '),
-    );
-  }
 
   // 3. Sync resolver over the materialized map (package-from-core needs sync).
   const resolveFile: LeafFileResolver = (leaf) => {
@@ -220,7 +266,7 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
   };
 
   assembleReturned = true;
-  return { ...result, cleanup, materialized, unresolvedLeaves, governanceManifestPath };
+  return { ...result, cleanup, materialized, unresolvedLeaves, unfinalized, unfinalizedSections, governanceManifestPath };
   } finally {
     if (!assembleReturned) {
       await fs.rm(outputDir, { recursive: true, force: true }).catch(() => {});
@@ -369,16 +415,28 @@ export async function assembleSubmissionEctd(
     // Completeness over what ACTUALLY materialized. `skipped` is the packager's
     // view of every leaf without a staged file (a superset of the resolver's
     // `unresolvedLeaves`), so it is the honest "unfinished leaf" count.
-    const incompleteSections: IncompleteLeaf[] = assembled.skipped.map((s) => ({
-      granuleId: s.sectionCode,
-      granuleName: s.sectionCode,
-      status: s.reason,
-    }));
+    const incompleteSections: IncompleteLeaf[] = [
+      ...assembled.skipped.map((s) => ({
+        granuleId: s.sectionCode,
+        granuleName: s.sectionCode,
+        status: s.reason,
+      })),
+      // Materialized-but-unfinalized leaves are ALSO incomplete: a draft/review
+      // document rendered to PDF is not a submission-ready leaf.
+      ...assembled.unfinalizedSections.map((s) => ({
+        granuleId: s.sectionCode,
+        granuleName: s.sectionCode,
+        status: `source not finalized (${s.status})`,
+      })),
+    ];
     const completeness = computeEctdCompleteness(
       assembled.materialized + assembled.skipped.length,
       assembled.skipped.length,
       incompleteSections,
-      0,
+      // Real count of materialized leaves whose source is still a draft — NOT a
+      // hardcoded 0. A package of all-draft documents is not submission-complete,
+      // and requireComplete must fail on it.
+      assembled.unfinalized,
     );
     if (params.requireComplete) assertEctdSubmissionComplete(completeness);
 

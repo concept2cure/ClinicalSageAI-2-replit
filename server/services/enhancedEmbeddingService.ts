@@ -227,7 +227,7 @@ export class EnhancedEmbeddingService {
     const { rows } = await this.pool.query(
       `
       SELECT
-        id, content, title, description, atom_type,
+        id, content, title, atom_type,
         embedding IS NOT NULL as has_embedding
       FROM lumen_data_atoms
       WHERE id = $1
@@ -291,7 +291,7 @@ export class EnhancedEmbeddingService {
       // Get batch of atoms without embeddings
       const { rows: atoms } = await this.pool.query(
         `
-        SELECT id, content, title, description, atom_type
+        SELECT id, content, title, atom_type
         FROM lumen_data_atoms
         WHERE embedding IS NULL
         ORDER BY created_at ASC
@@ -654,6 +654,10 @@ export class EnhancedEmbeddingService {
     const parts = [];
     if (atom.title) parts.push(`Title: ${atom.title}`);
     if (atom.atom_type) parts.push(`Type: ${atom.atom_type}`);
+    // lumen_data_atoms has no description column — the SELECTs above listed
+    // one anyway, so every embedAtom() call failed 42703 and auto-embedding
+    // had silently never worked. The optional field remains for callers that
+    // construct atom text directly.
     if (atom.description) parts.push(`Description: ${atom.description}`);
     parts.push(atom.content);
     return parts.join('\n\n');

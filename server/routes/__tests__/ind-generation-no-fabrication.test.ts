@@ -51,7 +51,12 @@ const REQ_BODY = {
   phase: 'Phase 1',
 };
 
-const fetchMock = vi.fn(async () =>
+// The parameters are declared even though the body ignores them: this stands in
+// for global fetch, which is called as fetch(url, init), and vi.fn infers the
+// call-args tuple from the implementation's signature. Declared with none, the
+// tuple is `[]`, and the `([url]) =>` destructuring below cannot index it
+// (TS2493). Naming them makes mock.calls describe the real call shape.
+const fetchMock = vi.fn(async (_url?: unknown, _init?: unknown) =>
   new Response(JSON.stringify({ success: true, data: { id: 'artifact-1' } }), { status: 200 }),
 );
 

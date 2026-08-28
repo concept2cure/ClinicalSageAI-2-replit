@@ -16,6 +16,7 @@ import {
   isUuid,
   type RpsMessageInput,
 } from '../index';
+import { packageRpsSubmission } from '../rps-packager';
 import { FDA_REGIONAL_IG_OID } from '../../controlled-vocab';
 import type { EctdLeaf } from '../../../submission-gateways/regional-packager';
 
@@ -141,6 +142,25 @@ describe('RPS validator', () => {
     m.submissionUnit.title = 'x'.repeat(129);
     expect(validateRpsMessage(m).findings.some((x) => x.code === 'RPS-SU-TITLE-LEN')).toBe(true);
   });
+
+  it('flags a context-of-use code that is not in the CL2 list (presence alone is not enough)', () => {
+    const m = sampleMessage();
+    // Syntactically fine, but not a catalogued context-of-use section.
+    m.contextsOfUse[0].code = 'us_9.99_not_a_section';
+    const r = validateRpsMessage(m);
+    expect(r.findings.some((x) => x.code === 'RPS-COU-CODE-VALID')).toBe(true);
+    expect(r.valid).toBe(false);
+  });
+
+  it('flags a keyword with no code', () => {
+    const m = sampleMessage();
+    m.contextsOfUse[0].keywords = [
+      { code: '', codeSystem: '2.16.840.1.113883.3.989.5.1.2.2.1.3' },
+    ];
+    expect(
+      validateRpsMessage(m).findings.some((x) => x.code === 'RPS-KEYWORD-CODE-REQUIRED'),
+    ).toBe(true);
+  });
 });
 
 describe('v3.2.2 → v4.0 forward compatibility', () => {
@@ -180,6 +200,54 @@ describe('v3.2.2 → v4.0 forward compatibility', () => {
     expect(message.contextsOfUse[1].code.startsWith('ich_')).toBe(true);
     expect(notes.length).toBeGreaterThan(0);
     expect(validateRpsMessage(message, seq).valid).toBe(true);
+  });
+
+  it('does NOT fabricate a document integrity hash from metadata when none is supplied', () => {
+    const { message, notes } = forwardCompatToV4({
+      application: { number: appNo, typeCode: 'us_application_type_1', center: 'cder' },
+      submission: { typeCode: 'us_submission_type_1' },
+      submissionUnit: {
+        id: submissionUnitId(appNo, seq),
+        unitTypeCode: 'us_submission_unit_type_1',
+        title: 'Original',
+        sequenceNumber: seq,
+        status: 'active',
+      },
+      leaves: [leaf({ ctdSection: '1.2', fileName: 'cover.pdf', operation: 'new' })],
+      // no sha256ByPath
+    });
+    // The integrity check is EMPTY (honestly "not computed"), never a 64-hex
+    // metadata hash that would masquerade as a real content hash.
+    expect(message.documents[0].checksum).toBe('');
+    expect(message.documents[0].checksum).not.toMatch(/^[0-9a-f]{64}$/);
+    expect(notes.some((n) => /not computed|not a filing-ready/i.test(n))).toBe(true);
+  });
+
+  it('uses the real per-leaf SHA-256 when one is supplied', () => {
+    const realSha = 'b'.repeat(64);
+    const { message } = forwardCompatToV4({
+      application: { number: appNo, typeCode: 'us_application_type_1', center: 'cder' },
+      submission: { typeCode: 'us_submission_type_1' },
+      submissionUnit: {
+        id: submissionUnitId(appNo, seq),
+        unitTypeCode: 'us_submission_unit_type_1',
+        title: 'Original',
+        sequenceNumber: seq,
+        status: 'active',
+      },
+      leaves: [leaf({ ctdSection: '1.2', fileName: 'cover.pdf', operation: 'new' })],
+      sha256ByPath: { '/tmp/cover.pdf': realSha },
+    });
+    expect(message.documents[0].checksum).toBe(realSha);
+  });
+
+  it('refuses to package a zero-byte source as a leaf (fail closed)', async () => {
+    const m = sampleMessage();
+    // A truthy-but-empty buffer used to sail through the `!raw` check.
+    const sources = new Map<string, Buffer>([[m.documents[0].id, Buffer.alloc(0)]]);
+    await expect(
+      packageRpsSubmission({ message: m, sources, creationTime: '20260101000000' }),
+    ).rejects.toThrow(/empty|0 bytes/i);
   });
 
   it('sets relatedContextOfUse for a replace against a prior sequence', () => {

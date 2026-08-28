@@ -297,7 +297,12 @@ export function validatePackage(
     if (!fnResult.valid) {
       findings.push({
         id: `V${++findingId}`,
-        severity: 'warning',
+        // Every validateFilename failure — disallowed extension, >64 chars, or a
+        // non-conformant character (uppercase/space/underscore) — is a genuine
+        // eCTD 2-6-2 / ICH M8 rejection cause at the FDA ESG, not a cosmetic
+        // nit. It must block `valid` the same way a missing checksum does, or a
+        // package the ESG will technically reject reports valid:true.
+        severity: 'error',
         code: 'INVALID_FILENAME',
         sectionCode: leaf.sectionCode,
         message: `File "${leaf.filePath}": ${fnResult.message}`,

@@ -89,7 +89,11 @@ jobs:
         run: node scripts/db/install-fresh.mjs
 
       - name: Run the authenticated browser smoke
-        # Seeds the login user, boots the server with dev-auth, drives the spec.
+        # Seeds the smoke login user AND the governed-workflow identities,
+        # boots the server once (export review gate enforced), then drives
+        # BOTH specs: the authenticated app smoke and the WO-06 golden
+        # customer journey (governed evidence draft → citation gate → denied
+        # pre-review export → assignment → reviewer approval → persistence).
         run: npm run test:e2e:smoke
 
       - name: Upload smoke artifacts (traces, screenshots, results)

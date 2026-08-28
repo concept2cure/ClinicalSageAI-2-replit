@@ -496,7 +496,6 @@ describe('golden journey — drug NDA / eCTD', () => {
       expect(res.status, JSON.stringify(res.body)).toBe(200);
       expect(res.body.validationErrors).toBe(0);
       expect(res.body.leafCount).toBe(1);
-      expect(res.body.gate.cleared).toBe(true);
       // No agency-grade validator is licensed in this environment, and the
       // assessment says so rather than implying a clean external run.
       expect(res.body.externalValidation.configured).toBe(false);
@@ -504,6 +503,18 @@ describe('golden journey — drug NDA / eCTD', () => {
       // Nothing has adversarially reviewed this dossier — surfaced, not hidden.
       expect(res.body.shadowReviewRunCount).toBe(0);
       expect(res.body.shadowReviewMissing).toBe(true);
+      // ...and therefore the gate does NOT clear. This step asserted
+      // `cleared: true` ALONGSIDE `shadowReviewMissing: true`, which are
+      // contradictory: it encoded the behaviour where a never-adversarially-
+      // reviewed dossier was dispatched to the agency as cleared. A sequence
+      // with zero completed Shadow Review runs has zero open criticals for the
+      // same reason an unread document has zero findings — nothing ran to
+      // produce any. The blocker is asserted by name, so this cannot pass on
+      // some unrelated blocker appearing.
+      expect(res.body.gate.cleared).toBe(false);
+      expect(
+        (res.body.gate.blockers as string[]).some((b) => /Shadow Review/i.test(b)),
+      ).toBe(true);
       // Module-1 completeness is a WARNING, never a fabricated hard error.
       const warnings = (res.body.readiness.findings as Array<{ severity: string; code: string }>)
         .filter((f) => f.severity === 'warning');
@@ -511,6 +522,7 @@ describe('golden journey — drug NDA / eCTD', () => {
       return {
         validationErrors: res.body.validationErrors,
         gateCleared: res.body.gate.cleared,
+        gateBlockers: res.body.gate.blockers,
         externalValidation: res.body.externalValidation,
         shadowReviewMissing: res.body.shadowReviewMissing,
         warnings: warnings.length,
@@ -693,6 +705,47 @@ describe('golden journey — drug NDA / eCTD', () => {
         status: res.status,
         code: res.body?.error?.code,
         signedTarget: `ectd-sequence:${emptySequenceId}`,
+      };
+    });
+
+    // ── Shadow Review has run, because the gate requires it ────────────────
+    await R.step('shadow-review-runs-and-the-presence-gate-clears', async () => {
+      // The dispatch gate blocks a never-adversarially-reviewed dossier: zero
+      // completed runs is UNASSESSED, not clean, so it must not clear. The
+      // journey used to freeze and dispatch without one ever having run — which
+      // is exactly what that rule exists to stop — so it now satisfies the rule
+      // rather than asserting around it.
+      //
+      // The run is SEEDED rather than driven through
+      // POST /sequences/:id/shadow-review, because that endpoint calls a model
+      // and returns 502 INVALID_AI_RESPONSE with no provider reachable. What
+      // this step exists to prove is the GATE's response to a completed run
+      // existing, which is a database fact; the reviewer's AI behaviour is
+      // covered by its own tests. Seeding the row the gate actually counts —
+      // status 'complete', same org, not deleted — keeps the journey honest
+      // about which half it is exercising.
+      await jdb.pool.query(
+        `INSERT INTO shadow_review_runs
+           (sequence_id, organization_id, region, lens, status, summary, created_by)
+         VALUES ($1, $2, 'fda', 'fda_filing', 'complete', 'Journey-seeded completed run', $3)`,
+        [sequenceId, ORG, USER],
+      );
+
+      const res = await asPrincipal(ORG, USER)(
+        request(app).get(`/api/submissions/sequences/${sequenceId}/dispatch-readiness`),
+      );
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      expect(res.body.shadowReviewRunCount).toBeGreaterThan(0);
+      expect(res.body.shadowReviewMissing).toBe(false);
+      // The blocker that was present before is gone, and named specifically so
+      // this cannot pass merely because the blocker list changed shape.
+      expect(
+        (res.body.gate.blockers as string[]).some((b) => /Shadow Review/i.test(b)),
+      ).toBe(false);
+      return {
+        shadowReviewRunCount: res.body.shadowReviewRunCount,
+        gateCleared: res.body.gate.cleared,
+        blockers: res.body.gate.blockers,
       };
     });
 

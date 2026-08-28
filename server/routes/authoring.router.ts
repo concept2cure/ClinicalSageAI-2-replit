@@ -5546,6 +5546,45 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
       }))
     );
 
+    /* CITATIONS are numbered by POSITION, once for the whole document.
+       The stored content carries the SOURCE'S ID and never the number a
+       reviewer reads: "[3]" describes where that source currently sits in this
+       document's reference list, and a citation inserted in an earlier section
+       moves it. So the content is parsed here, once, before the format
+       branches; the sources it actually cites are resolved against what this
+       tenant may see; and ONE registry numbers every marker in reading order
+       and yields the reference list at the end. Both filed formats consume the
+       same registry, so a DOCX and a PDF of the same frozen document cannot
+       disagree about what "[3]" means.
+
+       A citation whose source does not resolve — deleted, or another tenant's —
+       takes no number and no entry, and is stated in place. A number with no
+       entry behind it would send a reviewer looking for a reference that is not
+       there. */
+    const { sectionContentToBlocks, countPendingSuggestions, collectCitedSourceIds } =
+      await import('../export/authoring-section-content.js');
+    const { makeCitationRegistry, citationLookupFor } = await import(
+      '@shared/authoring/citations'
+    );
+    type ExportSection = { id: string; code: string; title: string; content: string | null };
+    const parsedSections =
+      format === 'docx' || format === 'pdf'
+        ? sectionsResult.rows.map((section: ExportSection) => ({
+            section,
+            blocks: sectionContentToBlocks(section.content),
+          }))
+        : [];
+    const citedSourceIds = parsedSections.flatMap((p) => collectCitedSourceIds(p.blocks));
+    const citationSources = citedSourceIds.length
+      ? await (async () => {
+          const { listCitationSources } = await import(
+            '../services/clinical-regulatory-evidence/source-usage.service.js'
+          );
+          return listCitationSources(tenantId, citedSourceIds);
+        })()
+      : [];
+    const citations = makeCitationRegistry(citationLookupFor(citationSources));
+
     // Generate export based on format
     let fileContent: Buffer | undefined;
     let fileName: string = 'export';
@@ -5615,12 +5654,8 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
          wrong with the docx generation below it — it had simply never run. */
       const docxNs = await import('docx');
       const { Document, Packer, Paragraph, HeadingLevel, TextRun } = docxNs;
-      const { blocksToDocx, orderedListNumbering, sectionHeadingParagraph } = await import(
-        '../export/authoring-blocks-to-docx.js'
-      );
-      const { sectionContentToBlocks, countPendingSuggestions } = await import(
-        '../export/authoring-section-content.js'
-      );
+      const { blocksToDocx, orderedListNumbering, sectionHeadingParagraph, referenceListParagraphs } =
+        await import('../export/authoring-blocks-to-docx.js');
 
       const exportedAt = new Date().toISOString();
       const children = [];
@@ -5641,13 +5676,15 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
          when we wrote the file, not when someone made the edit. */
       let pendingIns = 0;
       let pendingDel = 0;
-      const sectionBlocks = sectionsResult.rows.map((section: any) => {
-        const blocks = sectionContentToBlocks(section.content);
+      /* Parsed ONCE, above the format branches, because the citation registry
+         has to know which sources this document cites before a single marker
+         can be numbered. */
+      const sectionBlocks = parsedSections;
+      for (const { blocks } of sectionBlocks) {
         const pending = countPendingSuggestions(blocks);
         pendingIns += pending.insertions;
         pendingDel += pending.deletions;
-        return { section, blocks };
-      });
+      }
       if (pendingIns + pendingDel > 0) {
         children.push(
           new Paragraph({
@@ -5690,9 +5727,18 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
             revisionDate: exportedAt,
             footnoteSink,
             crossRefs,
+            citations,
           })
         );
       }
+
+      /* The reference list: every source the document's citations actually
+         resolved to, once each, numbered in first-appearance order. Filed after
+         the content that cites it and before the attestation, which is where a
+         reviewer expects to find it. Nothing is emitted when nothing was
+         cited — a heading over an empty list would claim a bibliography this
+         document does not have. */
+      children.push(...referenceListParagraphs(docxNs, citations));
 
       /* §11.50(b) manifestation. Ordered after the content so the record reads
          document-then-attestation, which is how a reviewer expects a signed
@@ -5737,12 +5783,8 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
       // template render path uses). The previous implementation returned DOCX
       // bytes under a PDF label — a mislabeled file is worse than no file.
       const { renderHtmlToPdf } = await import('../export/renderers');
-      const { sectionContentToBlocks, countPendingSuggestions } = await import(
-        '../export/authoring-section-content.js'
-      );
-      const { blocksToHtml, escapeHtml: esc, PRINT_STYLES } = await import(
-        '../export/authoring-blocks-to-html.js'
-      );
+      const { blocksToHtml, renderReferenceListHtml, escapeHtml: esc, PRINT_STYLES } =
+        await import('../export/authoring-blocks-to-html.js');
       /* Section content parsed to typed runs and re-emitted as a WHITELISTED
          structure with every text node escaped — stored markup never reaches
          the renderer raw (the previous escape-everything approach printed
@@ -5750,19 +5792,22 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
          render as redline with an up-front notice, same as the DOCX branch. */
       let pdfPendingIns = 0;
       let pdfPendingDel = 0;
-      const pdfSections = sectionsResult.rows.map(
-        (s: { id: string; code: string; title: string; content: string | null }) => {
-          const blocks = sectionContentToBlocks(s.content);
-          const pending = countPendingSuggestions(blocks);
-          pdfPendingIns += pending.insertions;
-          pdfPendingDel += pending.deletions;
-          const body = blocksToHtml(blocks, exportImages, { crossRefs });
-          // The heading is the anchor a resolved cross-reference links to.
-          return `<h2 id="${esc(crossReferenceAnchorId(String(s.id)))}">${esc(s.code)} — ${esc(
-            s.title
-          )}</h2>${body}`;
-        }
-      );
+      /* The same parse and the SAME citation registry the DOCX branch uses, so
+         the two filed formats cannot number one source differently. */
+      const pdfSections = parsedSections.map(({ section: s, blocks }) => {
+        const pending = countPendingSuggestions(blocks);
+        pdfPendingIns += pending.insertions;
+        pdfPendingDel += pending.deletions;
+        const body = blocksToHtml(blocks, exportImages, { crossRefs, citations });
+        // The heading is the anchor a resolved cross-reference links to.
+        return `<h2 id="${esc(crossReferenceAnchorId(String(s.id)))}">${esc(s.code)} — ${esc(
+          s.title
+        )}</h2>${body}`;
+      });
+      /* Assembled after every section has been rendered, because the list is
+         built from the citations actually used and their order is reading
+         order. Empty when nothing was cited. */
+      const referenceListHtml = renderReferenceListHtml(citations);
       const html = `<!doctype html><html><head><meta charset="utf-8"><style>
           body { font-family: Georgia, 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; margin: 1in; }
           h1 { font-size: 18pt; } h2 { font-size: 14pt; margin-top: 1.2em; } h3 { font-size: 12.5pt; margin-top: 1em; }
@@ -5779,6 +5824,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
             : ''
         }
         ${pdfSections.join('\n')}
+        ${referenceListHtml}
         <h2>Electronic signatures</h2>
         ${manifest.length === 0
           ? '<p>No electronic signatures are recorded against this document.</p>'

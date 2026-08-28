@@ -8,6 +8,7 @@
 import { db } from '../db';
 import { featureToggles } from '../../shared/schema';
 import { eq, and, or } from 'drizzle-orm';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 
 export class FeatureToggleService {
   /**
@@ -202,30 +203,47 @@ export class FeatureToggleService {
     description: string,
     enabled: boolean = false
   ): Promise<void> {
-    const existingToggles = await db
-      .select()
-      .from(featureToggles)
-      .where(eq(featureToggles.featureKey, featureKey))
-      .limit(1);
+    // Runs in a SYSTEM scope, and unlike a per-tenant accessor that is safe to
+    // do from inside the function itself.
+    //
+    // `feature_toggles` is platform reference data: it has no tenant column and
+    // carries no RLS policy (verified against a provisioned database), so there
+    // is no tenant dimension here to escalate across. The scope is not authority
+    // derived from a caller-supplied id — it is a statement of what this
+    // operation IS. Contrast SentinelScheduler.scheduleOrg, which takes an
+    // organizationId and therefore establishes its scope at the job boundary
+    // instead: a data accessor that mints tenant authority out of one of its own
+    // arguments is a privilege-escalation shape.
+    //
+    // Without a scope this bootstrap is refused outright under RLS_ENFORCE=on —
+    // "[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope" —
+    // which is what made the toggle bootstrap fail on every enforcing boot.
+    await runWithSystemTenantScope('feature-toggle:initialize', async () => {
+      const existingToggles = await db
+        .select()
+        .from(featureToggles)
+        .where(eq(featureToggles.featureKey, featureKey))
+        .limit(1);
 
-    if (existingToggles.length === 0) {
-      await db.insert(featureToggles).values({
-        featureKey,
-        description,
-        enabled,
-        enabledForOrganizationIds: [],
-        enabledForClientWorkspaceIds: [],
-      });
-    } else {
-      // Only update description if toggle already exists
-      await db
-        .update(featureToggles)
-        .set({
+      if (existingToggles.length === 0) {
+        await db.insert(featureToggles).values({
+          featureKey,
           description,
-          updatedAt: new Date(),
-        })
-        .where(eq(featureToggles.id, existingToggles[0].id));
-    }
+          enabled,
+          enabledForOrganizationIds: [],
+          enabledForClientWorkspaceIds: [],
+        });
+      } else {
+        // Only update description if toggle already exists
+        await db
+          .update(featureToggles)
+          .set({
+            description,
+            updatedAt: new Date(),
+          })
+          .where(eq(featureToggles.id, existingToggles[0].id));
+      }
+    });
   }
 }
 
