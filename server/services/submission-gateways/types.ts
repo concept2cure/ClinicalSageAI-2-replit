@@ -99,6 +99,23 @@ export interface SubmissionBundle {
   sizeBytes: number;
   /** Region-specific format flag. */
   format: SubmissionFormat;
+  /**
+   * Per-sequence leaf manifest: each SHIPPED leaf's CTD section + final package
+   * href + md5 (+ optional op/title). The exporter/compiler persists this as the
+   * sequence's immutable `leaf_manifest`; the NEXT sequence loads it
+   * (loadPriorSequenceManifest) and diffs to derive replace/append/delete
+   * lifecycle operations. Raw shape (fed through buildLeafManifest before
+   * persisting) so the packager needs no ectd/ import. Optional: a bundle may be
+   * constructed outside the packager (integrity checks) without one.
+   */
+  leafManifest?: Array<{
+    ctdSection: string;
+    fileName: string;
+    href: string;
+    md5: string;
+    operation?: string;
+    title?: string;
+  }>;
   /** Optional human-readable display name. */
   displayName?: string;
   /**

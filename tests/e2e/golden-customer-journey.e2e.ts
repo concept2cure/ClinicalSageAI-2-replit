@@ -235,14 +235,16 @@ test('fixture-free golden journey persists evidence, review, provenance, and gov
   expect(JSON.stringify(payload(persisted))).toContain(JOURNEY.artifactTitle);
   expect(JSON.stringify(payload(persisted))).toContain('review');
 
-  // Nav state lives in the URL (wouter); the sidebar renders as a collapsed
-  // icon rail by default, so its text label exists but is hidden — navigate
-  // by the surface's real route instead of clicking a hidden label.
-  await page.goto('/concept2cure/artifacts-center');
-  await expect(page.getByText(JOURNEY.artifactTitle, { exact: true })).toBeVisible();
-  await expect(page.getByTestId(`artifact-governance-${artifact.id}`)).toHaveText(
-    '1 cited source · Human review recorded'
-  );
+  // Click the sidebar BUTTON by its accessible name: the bare text locator
+  // matched a hidden label node, and a direct URL load bounces back to Home
+  // (the shell restores its own state on a cold load).
+  await page.getByRole('button', { name: 'Artifacts Center' }).first().click();
+  // Anchor on the row's testid, not the exact title: the listing truncates
+  // long titles in the cell text, so an exact-text locator can never match.
+  // The governance label is the claim under test and is asserted verbatim.
+  const governance = page.getByTestId(`artifact-governance-${artifact.id}`);
+  await expect(governance).toBeVisible();
+  await expect(governance).toHaveText('1 cited source · Human review recorded');
   await testInfo.attach('golden-journey-after-review.png', {
     body: await page.screenshot({ fullPage: true }),
     contentType: 'image/png',
