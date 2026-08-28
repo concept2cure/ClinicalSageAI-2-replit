@@ -4259,19 +4259,40 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
           ['APPROVED', docId, tenantId]
         );
 
-        // Auto-freeze on approval
+        // Auto-freeze on approval — capture the FULL approved snapshot (document
+        // + sections) and hash the SNAPSHOT BYTES, exactly like the manual freeze
+        // above. The prior code stored a 3-field stub {approvedBy, documentHash,
+        // timestamp} and set content_hash = docHash (the hash of the live
+        // SECTIONS, not of the stub). Two filing-integrity failures followed:
+        // the approved content was captured nowhere immutable (it lived only in
+        // the editable authoring_sections table), and GET /docs/:docId/frozen —
+        // which recomputes sha256(frozen_content) and compares to content_hash —
+        // raised a false "tampering detected" 500 on EVERY e-sign-approved
+        // document, because sha256(stub) can never equal docHash. Approval must
+        // produce a verifiable frozen legal record.
+        const approvedDoc = await client.query(
+          'SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+          [docId, tenantId]
+        );
+        const approvedSections = await client.query(
+          'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+          [docId, tenantId]
+        );
         const frozenContent = JSON.stringify({
+          document: approvedDoc.rows[0] ?? null,
+          sections: approvedSections.rows,
           approvedBy: email,
           documentHash: docHash,
-          timestamp: new Date().toISOString(),
+          frozenAt: new Date().toISOString(),
         });
+        const frozenContentHash = crypto.createHash('sha256').update(frozenContent).digest('hex');
 
         await client.query(
           `INSERT INTO frozen_documents
            (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7)
            ON CONFLICT (document_id, version, tenant_id) DO NOTHING`,
-          [docId, 'approved', frozenContent, docHash, email, 'Approved and frozen', tenantId]
+          [docId, 'approved', frozenContent, frozenContentHash, email, 'Approved and frozen', tenantId]
         );
       }
 
