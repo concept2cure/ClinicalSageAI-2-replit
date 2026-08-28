@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-28T14:25:03.812Z",
+  "generatedAt": "2026-08-28T14:27:12.108Z",
   "git": {
-    "sha": "eaf48866ce8831c69319c6bb1cd9bb80257c81f7",
+    "sha": "2c7fdf194f217e5e14c40c3ee49b99545919130f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2154,7 +2154,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 690658
+        "bytes": 693275
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2298,7 +2298,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 100092
+        "bytes": 100522
       }
     ],
     "largeFilesByLines": [
@@ -2312,7 +2312,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 18533
+        "lines": 18584
       },
       {
         "file": "server/statistics-service.ts",
@@ -2404,7 +2404,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2511
+        "lines": 2519
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
