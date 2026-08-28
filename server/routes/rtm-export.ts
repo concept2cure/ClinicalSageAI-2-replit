@@ -55,6 +55,21 @@ function isMissingRelation(err: unknown): boolean {
   return code === '42P01' || code === '42703';
 }
 
+/**
+ * An empty matrix must SAY it is empty, on the artifact itself.
+ *
+ * With no claims the CSV was a header line and nothing else, and that file was
+ * hashed and filed as a governed regulated export titled "RTM Export: Program
+ * N". A reviewer opening it cannot tell an empty program from a feature that was
+ * never wired, while the governed record around it asserts a traceability matrix
+ * was produced. One row in the first column removes the ambiguity without
+ * blocking a legitimate export of a program that genuinely has no claims yet.
+ */
+const EMPTY_MATRIX_STATEMENT =
+  'No evidence claims are recorded for this program. This matrix is empty because ' +
+  'nothing has been recorded — it is not a finding that every claim is traced, and ' +
+  'no coverage figure was measured.';
+
 const STORE_UNPROVISIONED_BODY = {
   error: {
     code: 'CLAIM_STORE_UNPROVISIONED',
@@ -244,24 +259,7 @@ router.get('/programs/:programId/rtm/csv', async (req: Request, res: Response) =
       }
     }
 
-    // An empty matrix must SAY it is empty, on the artifact.
-    //
-    // With no claims this produced a header line and nothing else, and that file
-    // was then hashed and filed as a governed regulated export titled
-    // "RTM Export: Program N". A reviewer opening it cannot tell an empty
-    // program from a feature that was never wired — and the governed record
-    // around it asserts a traceability matrix was produced. One row, in the
-    // first column, removes the ambiguity without blocking a legitimate export
-    // of a program that genuinely has no claims yet.
-    if (claims.length === 0) {
-      rows.push(
-        escapeCSV(
-          'No evidence claims are recorded for this program. This matrix is empty ' +
-          'because nothing has been recorded — it is not a finding that every claim ' +
-          'is traced, and no coverage figure was measured.',
-        ),
-      );
-    }
+    if (claims.length === 0) rows.push(escapeCSV(EMPTY_MATRIX_STATEMENT));
 
     const csvContent = rows.join('\n');
     const filename = `RTM_Program_${programId}_${new Date().toISOString().slice(0, 10)}.csv`;
