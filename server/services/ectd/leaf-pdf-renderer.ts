@@ -79,10 +79,76 @@ const WIN_ANSI_SUBSTITUTIONS: ReadonlyArray<readonly [RegExp, string]> = [
   [/μ/g, 'u'], // Greek small mu → u (micro sign U+00B5 is WinAnsi, untouched)
   [/σ/g, 'sigma'],
   [/ω/g, 'omega'],
-  [/[Α-Ωα-ω]/g, ''], // any other Greek letter → drop (rare in body)
+  // ── Every remaining Greek letter is TRANSLITERATED, never dropped ─────────
+  // This line used to be `[/[Α-Ωα-ω]/g, '']` — "any other Greek letter → drop
+  // (rare in body)". They are not rare in clinical statistics, and dropping is
+  // the worst available outcome because the sentence stays grammatical while
+  // the symbol identifying the number disappears:
+  //
+  //   "chi-square χ² = 4.21"      rendered as   "chi-square ² = 4.21"
+  //   "Δ from baseline -2.4"      rendered as   "from baseline -2.4"
+  //   "Spearman ρ = 0.42"         rendered as   "Spearman = 0.42"
+  //   "Kendall τ = 0.31"          rendered as   "Kendall = 0.31"
+  //
+  // A reviewer cannot see that anything was removed. Verified by extracting the
+  // text back out of a rendered leaf with pdfjs.
+  [/Χ/g, 'Chi'], [/χ/g, 'chi'],
+  [/Δ/g, 'Delta'],
+  [/Π/g, 'Pi'], [/π/g, 'pi'],
+  [/Θ/g, 'Theta'], [/θ/g, 'theta'],
+  [/ρ/g, 'rho'],
+  [/τ/g, 'tau'],
+  [/Φ/g, 'Phi'], [/φ/g, 'phi'],
+  [/Ψ/g, 'Psi'], [/ψ/g, 'psi'],
+  [/Ω/g, 'Omega'],
+  [/Σ/g, 'Sigma'],
+  [/Λ/g, 'Lambda'],
+  [/Γ/g, 'Gamma'],
+  [/Α/g, 'Alpha'], [/Β/g, 'Beta'],
+  [/ε/g, 'epsilon'], [/ζ/g, 'zeta'], [/η/g, 'eta'], [/ι/g, 'iota'],
+  [/κ/g, 'kappa'], [/ν/g, 'nu'], [/ξ/g, 'xi'], [/ο/g, 'o'],
+  [/υ/g, 'upsilon'],
+  // Anything still Greek (final sigma, accented forms) transliterates to a
+  // marker rather than vanishing — '?' is honest, absence is not.
+  [/[Α-Ωα-ω]/g, '?'],
+  // ── Sub/superscript digits ───────────────────────────────────────────────
+  // CO₂ and H₂O are ordinary CMC text; ₂ is not WinAnsi and became '?'.
+  [/₀/g, '0'], [/₁/g, '1'], [/₂/g, '2'], [/₃/g, '3'], [/₄/g, '4'],
+  [/₅/g, '5'], [/₆/g, '6'], [/₇/g, '7'], [/₈/g, '8'], [/₉/g, '9'],
+  // Superscripts are handled as whole runs by normalizeSuperscripts() below.
   // Zero-width / BOM artifacts from copy-paste (U+200B–200D, U+FEFF).
   [/[\u200B-\u200D\uFEFF]/g, ''],
 ];
+
+/**
+ * Superscript runs become caret notation: "10⁶" -> "10^6", "5×10⁻³" -> "5×10^-3".
+ *
+ * Two separate hazards make this a run-level transform rather than per-character
+ * substitution:
+ *
+ *   1. Dropping the marker changes the value. Mapping ⁶ to a bare '6' turns
+ *      "10⁶ CFU/mL" into "106 CFU/mL" — a microbial count wrong by four orders
+ *      of magnitude, and plausible enough that no reviewer would query it. A
+ *      corrupted number that still looks like a number is worse than a visible
+ *      '?', which is what this used to render.
+ *   2. ¹ ² ³ are Latin-1 and survive to the page as real superscript glyphs
+ *      while ⁴-⁹ and ⁻ do not. Substituting only the latter left one number
+ *      spelled two ways — "5×10⁻³" came out as "5×10^-³". Normalizing the whole
+ *      run gives a submission one exponent notation throughout.
+ */
+const SUPERSCRIPT_DIGITS: Readonly<Record<string, string>> = {
+  '\u2070': '0', '\u00b9': '1', '\u00b2': '2', '\u00b3': '3', '\u2074': '4',
+  '\u2075': '5', '\u2076': '6', '\u2077': '7', '\u2078': '8', '\u2079': '9',
+  '\u207a': '+', '\u207b': '-', '\u207c': '=', '\u207d': '(', '\u207e': ')',
+  '\u2071': 'i', '\u207f': 'n',
+};
+
+export function normalizeSuperscripts(input: string): string {
+  return input.replace(
+    /[\u2070-\u207f\u00b9\u00b2\u00b3]+/g,
+    (run) => '^' + Array.from(run).map((c) => SUPERSCRIPT_DIGITS[c] ?? c).join(''),
+  );
+}
 
 /**
  * Make text safe for pdf-lib's WinAnsi standard fonts: apply the substitutions
@@ -93,14 +159,28 @@ const WIN_ANSI_SUBSTITUTIONS: ReadonlyArray<readonly [RegExp, string]> = [
  * preserved. NBSP (U+00A0) is Latin-1 and WinAnsi-safe, so it is left intact.
  */
 export function toWinAnsiSafe(input: string): string {
-  let out = input;
+  let out = normalizeSuperscripts(input);
   for (const [pattern, replacement] of WIN_ANSI_SUBSTITUTIONS) {
     out = out.replace(pattern, replacement);
   }
-  // Keep: tab, LF, CR, printable ASCII (0x20–0x7E), Latin-1 (0xA0–0xFF).
-  // Replace everything else (other controls, and any code point > 0xFF that was
-  // not mapped above) with '?'.
-  return out.replace(/[^\t\n\r\x20-\x7E\xA0-\xFF]/g, '?');
+  // Keep: tab, LF, CR, printable ASCII (0x20–0x7E), Latin-1 (0xA0–0xFF), AND
+  // the 27 characters CP1252 places at 0x80–0x9F whose Unicode code points are
+  // above 0xFF.
+  //
+  // The filter used to reject everything > 0xFF, which destroyed characters
+  // WinAnsi can represent perfectly well. Confirmed against pdf-lib itself:
+  // page.drawText succeeds for en dash, em dash, curly quotes, dagger, double
+  // dagger, bullet, ellipsis, trademark and euro; it throws only for genuinely
+  // unrepresentable code points such as ₂, χ and Δ (handled above). So this was
+  // damaging submission prose for no reason:
+  //
+  //   "Range 10–20 mg — as dosed"   rendered as   "Range 10?20 mg ? as dosed"
+  //   "“primary” and ‘secondary’"   rendered as   "?primary? and ?secondary?"
+  //   "Footnote † and ‡"            rendered as   "Footnote ? and ?"
+  //
+  // Ranges, quoted endpoint names and dagger footnote markers are ordinary in
+  // text pasted from Word, which is how most submission source arrives.
+  return out.replace(/[^\t\n\r\x20-\x7E\xA0-\xFF\u20AC\u201A\u0192\u201E\u2026\u2020\u2021\u02C6\u2030\u0160\u2039\u0152\u017D\u2018\u2019\u201C\u201D\u2022\u2013\u2014\u02DC\u2122\u0161\u203A\u0153\u017E\u0178]/g, '?');
 }
 
 /**
