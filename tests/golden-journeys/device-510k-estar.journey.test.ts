@@ -454,13 +454,32 @@ describe('golden journey — device 510(k) eSTAR path', () => {
       });
       expect(patched.status, JSON.stringify(patched.body)).toBe(200);
 
+      // Content alone does not make a section substantive: readiness counts a
+      // required section as present only when it is APPROVED, so a dossier of
+      // in-progress drafts is not a filing-complete dossier no matter how much
+      // prose it carries. The journey therefore performs the approval — a
+      // governed act with its own audit consequence — rather than asserting a
+      // completeness the product is right to withhold from drafts.
+      const drafted = (
+        await jdb.pool.query(
+          `SELECT id FROM cerv2_510k_sections WHERE organization_id = $1 ORDER BY id`,
+          [ORG],
+        )
+      ).rows as Array<{ id: number }>;
+      for (const section of drafted) {
+        const approved = await asPrincipal(ORG, USER)(
+          request(app).patch(`/api/cerv2-sections/${section.id}`),
+        ).send({ status: 'approved' });
+        expect(approved.status, JSON.stringify(approved.body)).toBe(200);
+      }
+
       const res = await asPrincipal(ORG, USER)(request(app).post('/api/510k/estar/assemble')).send({
         pathway: '510k',
         variant: 'device',
       });
       expect(res.status).toBe(200);
       expect(res.body.estar.summary.missingRequired).toEqual([]);
-      return { missingRequired: res.body.estar.summary.missingRequired };
+      return { approvedSections: drafted.length, missingRequired: res.body.estar.summary.missingRequired };
     });
 
     // ── 5. The honest artifactKind with a complete content set ──────────────

@@ -242,6 +242,13 @@ describe('HTML/PDF rendering', () => {
     );
   });
 
+});
+
+// A second describe, not a style preference: the block crossed the 100-line
+// function ceiling the warning ratchet holds, and these four cases are a
+// distinct contract anyway — what the renderer does when a citation cannot
+// be resolved, versus how it numbers and lists the ones that can.
+describe('HTML/PDF rendering — unresolved and renamed sources', () => {
   it('never prints the editor’s cached name in place of a number', () => {
     /* The stored element's text is the source's name. It is a cache: a renderer
        that fell back to it would file a citation with no number and no way into
