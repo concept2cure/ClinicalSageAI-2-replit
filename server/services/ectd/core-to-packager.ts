@@ -56,19 +56,29 @@ function toOperation(op: string): EctdLeaf['operation'] {
   return OPERATIONS.has(op as EctdLeaf['operation']) ? (op as EctdLeaf['operation']) : 'new';
 }
 
+// All 12 regions the packager can build a backbone for (mirrors
+// regional-packager backboneByRegion), keyed by both agency name and ISO code.
+// Health Canada ('ca') and the eight widened regions were previously ABSENT, so
+// toPackagerRegion('ca') threw and the entire spine path could not build a
+// Health Canada (or UK/CH/AU/CN/BR/IN/KR/SG) submission — only the separate
+// orchestrator path could. NOTE: orchestrator-real-package.ts carries a parallel
+// toPackagerRegion; the two should be unified in the packager-convergence work.
 const REGION_MAP: Record<string, Region> = {
-  fda: 'fda',
-  us: 'fda',
-  eu: 'ema',
-  ema: 'ema',
-  jp: 'pmda',
-  pmda: 'pmda',
+  fda: 'fda', us: 'fda',
+  ema: 'ema', eu: 'ema',
+  pmda: 'pmda', jp: 'pmda',
+  ca: 'ca',
+  uk: 'uk', ch: 'ch', au: 'au', cn: 'cn', br: 'br', in: 'in', kr: 'kr', sg: 'sg',
 };
 
-/** Map a canonical-core region (`fda|eu|jp`) to a publisher Region (`fda|ema|pmda`). */
+/** Map a canonical-core region (agency name or ISO code) to a publisher Region. */
 export function toPackagerRegion(coreRegion: string): Region {
   const r = REGION_MAP[coreRegion.toLowerCase()];
-  if (!r) throw new Error(`Unsupported region "${coreRegion}" (expected fda | eu | jp).`);
+  if (!r) {
+    throw new Error(
+      `Unsupported region "${coreRegion}" (expected one of: ${[...new Set(Object.values(REGION_MAP))].join(', ')}).`,
+    );
+  }
   return r;
 }
 

@@ -121,7 +121,13 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
       readData<GatewayInfo[]>('GET', '/api/mdx/gateways'),
       readData<Transmittal[]>('GET', '/api/mdx/gateways/transmittals'),
     ]);
-    if (!t.ok && !g.ok) { setState('error'); return; }
+    // Fail to 'error' if EITHER read fails. Previously this required BOTH to
+    // fail (&&), so a single failed read (e.g. the transmittal log) rendered its
+    // honest-empty copy ("No transmittals yet") as if the org genuinely had
+    // none — a false negative on the last screen before bytes leave for an
+    // agency, where the transmittal log is exactly what a user checks to confirm
+    // what has or hasn't already been sent.
+    if (!t.ok || !g.ok) { setState('error'); return; }
     setGateways(Array.isArray(g.data) ? g.data : []);
     setRows(Array.isArray(t.data) ? t.data : []);
     setState('ready');
