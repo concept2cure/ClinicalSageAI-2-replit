@@ -7891,6 +7891,18 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'write_q_sub_section requires tenant context.' });
   }
+  // Matches create_qms_document / approve_qms_document / revise_qms_document,
+  // which all refuse without an identified actor. This handler wrote author
+  // lineage as String(ctx.userId ?? 'system') — a literal, into
+  // document_span_lineage.asserted_by, whose CHECK requires that column to be
+  // NOT NULL for an author_assertion. Satisfying an attribution constraint with
+  // a placeholder defeats what the constraint is for: the prose is regulatory
+  // text bound for FDA, and 'system' is not a person who can stand behind it.
+  if (!ctx.userId) {
+    return JSON.stringify({
+      error: 'write_q_sub_section requires user context — section prose cannot be attributed without an identified author (21 CFR Part 11).',
+    });
+  }
   const qSubId     = typeof input.q_sub_id === 'string' ? input.q_sub_id : '';
   const sectionKey = typeof input.section_key === 'string' ? input.section_key : '';
   const content    = typeof input.content === 'string' ? input.content : '';
@@ -7953,7 +7965,7 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
         ctx.organizationId,
         { documentTable: 'q_sub_section_bodies', documentId: String(rows[0].id) },
         content,
-        String(ctx.userId ?? 'system'),
+        String(ctx.userId),
       );
       await client.query('COMMIT');
       return JSON.stringify({
