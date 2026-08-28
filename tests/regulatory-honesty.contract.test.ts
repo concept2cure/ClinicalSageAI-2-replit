@@ -30,6 +30,17 @@
  * These tests assert on source because the defect IS the source: what the record
  * says, and what the UI tells the user it did. Each assertion is written so that
  * reinstating the specific fabricated string fails it.
+ *
+ * UPDATE (f3515fcf8, "Review & approval: four governed acts that reached no
+ * server at all"): the review surface's decision modal is no longer a dead
+ * control — it POSTs to /api/review/workflows/:id/decision on the governed
+ * review router, sends the reviewer's selected 21 CFR 11.50 MEANING verbatim,
+ * and reports success only after the server confirms the write. What it records
+ * is a review decision, still NOT a §11.50 signature manifestation (no signer
+ * re-verification, nothing sealed against a frozen document version) — and the
+ * surface still says so, in the modal manifest and in a persistent banner. The
+ * contract below therefore pins BOTH truths: the wiring must be real, and the
+ * not-a-signature disclosure must stay.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -132,9 +143,31 @@ describe('the review surface does not fabricate an electronic signature', () => 
     expect(src).not.toMatch(/E-sign is re-verified and manifested/);
   });
 
-  it('says explicitly that it is not an electronic signature', () => {
-    expect(src).toMatch(/not an electronic signature/i);
-    expect(src).toMatch(/not a 21 CFR §11\.50 manifestation/i);
+  it('says explicitly that a recorded decision is not an electronic signature', () => {
+    // The decision now reaches the server (next test), but it is still not a
+    // §11.50 signature: no signer identity is re-verified here and nothing is
+    // sealed against a frozen document version. The modal manifest and the
+    // persistent banner both have to keep saying so — wiring the act made the
+    // act real, it did not make it a signature.
+    expect(src).toMatch(/not (an )?electronic signature/i);
+    expect(src).toMatch(/not\s*(<\/?b>\s*)?a 21 CFR §11\.50 signature manifestation/i);
+  });
+
+  it('records the decision on the server and claims only what came back', () => {
+    // f3515fcf8: the modal POSTs to the governed review router. The 11.50
+    // meaning the reviewer SELECTED travels verbatim — never inferred from the
+    // decision — and the only success path out of the modal (onSigned) fires
+    // behind the { success: true } guard, so "recorded" is a statement about
+    // the record, not about the click.
+    const modal = src.slice(src.indexOf('function ESignModal'), src.indexOf('function ApproveSign'));
+    expect(modal).toMatch(/apiRequest\(\s*'POST',\s*'\/api\/review\/workflows\/'/);
+    expect(modal).toContain("'/decision'");
+    expect(modal).toMatch(/\{ decision, meaning, reason/);
+    expect(modal).toMatch(/!res\.ok \|\| payload\?\.success !== true/);
+    expect(modal.indexOf("onSigned?.(")).toBeGreaterThan(modal.indexOf('success !== true'));
+    // A rejection is a record the author must act on: it cannot be written
+    // without substantive grounds.
+    expect(modal).toMatch(/decision === 'reject' && reason\.trim\(\)\.length < 8/);
   });
 
   it('points at the path that does perform a binding signature', () => {

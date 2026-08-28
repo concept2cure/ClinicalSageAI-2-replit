@@ -22,8 +22,16 @@ const { query, insert, update } = vi.hoisted(() => ({
 vi.mock('../../utils/feature-persistence.js', () => ({
   createFeatureStore: () => ({ query, insert, update, getById: vi.fn(), remove: vi.fn() }),
 }));
-vi.mock('../../middleware/auth.js', () => ({
-  authenticateToken: (_req: Request, _res: Response, next: NextFunction) => next(),
+// The router guards every route with authMiddleware (server/auth.ts) and
+// enforceTenantLifecycle (server/middleware/tenantLifecycleGuard.ts). Both are
+// passed through here: identity is injected per-app below (`req.user`), and the
+// org-scoping contract under test lives in the route's own progressOrgId check,
+// not in these middlewares.
+vi.mock('../../auth.js', () => ({
+  authMiddleware: (_req: Request, _res: Response, next: NextFunction) => next(),
+}));
+vi.mock('../../middleware/tenantLifecycleGuard.js', () => ({
+  enforceTenantLifecycle: (_req: Request, _res: Response, next: NextFunction) => next(),
 }));
 
 import pyramidRouter from '../pyramid.routes';

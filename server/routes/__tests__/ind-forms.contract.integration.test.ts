@@ -13,7 +13,15 @@ import { createIndPgliteDb, type IndPgliteDb } from '../../db/pglite-harness';
 
 const holder = vi.hoisted(() => ({ db: null as any }));
 vi.mock('../../db', () => ({ get db() { return holder.db; } }));
-vi.mock('../../services/auditService', () => ({ default: { logAction: vi.fn(async () => {}) } }));
+// logAction resolves an AuditWriteResult (server/services/auditService.ts) and
+// the artifact routes dereference it (.persisted / .error), so the mock must
+// resolve the real success shape — resolving undefined makes the route throw a
+// TypeError and 500.
+vi.mock('../../services/auditService', () => ({
+  default: {
+    logAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })),
+  },
+}));
 
 import formsRouter from '../ind-forms.routes';
 import { createSponsor, createInvestigator } from '../../services/ind-master-data/ind-master-data-service';

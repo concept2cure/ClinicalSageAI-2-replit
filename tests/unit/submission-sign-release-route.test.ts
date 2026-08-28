@@ -251,7 +251,15 @@ beforeEach(() => {
   // Default behaviors
   hoisted.findActiveReleaseSignature.mockResolvedValue(null);
   hoisted.loadSubmissionFkBySubmissionIdText.mockResolvedValue(null);
-  hoisted.auditLogAction.mockResolvedValue(undefined);
+  // logAction resolves an AuditWriteResult (server/services/auditService.ts)
+  // and the route dereferences it (.persisted / .error) to decide whether to
+  // attach the auditWriteFailed warning — so the mock must resolve the real
+  // success shape, not undefined.
+  hoisted.auditLogAction.mockResolvedValue({
+    persisted: true,
+    chained: true,
+    tamperProof: true,
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
