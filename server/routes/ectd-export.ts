@@ -386,6 +386,25 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       validation = await validateEctdPackage(result.buffer);
     }
 
+    // Fail closed: a package that FAILED structural validation must not be
+    // returned as a downloadable attachment. Previously the only signal was the
+    // X-ECTD-Valid response header — invisible to a script or human that simply
+    // saves the 200 + zip and forwards it to a gateway. A caller that
+    // deliberately wants the bytes despite errors can opt out with
+    // validateAfter:false; the default (validateAfter:true) now blocks an
+    // invalid package instead of shipping it.
+    if (validation && !validation.valid) {
+      return res.status(422).json({
+        error: 'eCTD package failed structural validation and was not returned',
+        code: 'ECTD_PACKAGE_INVALID',
+        valid: false,
+        errorCount: validation.errors.length,
+        errors: validation.errors.slice(0, 50),
+        sequenceNumber: result.sequenceNumber,
+        region: result.region,
+      });
+    }
+
     console.log(
       `[eCTD Export] Package generated: ${result.filename} ` +
         `(${result.stats.totalFiles} files, ${result.stats.totalGranules} rendered leaves)` +
