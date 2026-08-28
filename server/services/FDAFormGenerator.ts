@@ -278,7 +278,11 @@ export default class FDAFormGenerator {
     // Extract data from various sources
     const applicantName = organization?.name || 'Not Specified';
     const deviceName = fda510kProject?.deviceName || formData?.device_specs?.deviceName || 'Not Specified';
-    const deviceClass = fda510kProject?.deviceClassification || formData?.device_specs?.deviceClassification || 'Class II';
+    // Never fabricate a device classification. Class determines the entire
+    // premarket pathway; asserting "Class II" for an unclassified device misstates
+    // the regulatory class to CDRH. Absent an established classification, render it
+    // as unset (and the completeness filter below correctly counts it unfilled).
+    const deviceClass = fda510kProject?.deviceClassification || formData?.device_specs?.deviceClassification || 'Not Specified';
     const productCode = fda510kProject?.productCode || formData?.device_specs?.productCode || '';
     const regulationNumber = fda510kProject?.regulationNumber || formData?.device_specs?.regulationNumber || '';
     
@@ -328,11 +332,18 @@ export default class FDAFormGenerator {
     const formData3601 = {
       applicantName: organization?.name || 'Not Specified',
       deviceName: fda510kProject?.deviceName || 'Not Specified',
-      feeCategory: 'Standard 510(k)',
-      paymentMethod: workflowData?.feeInfo?.paymentMethod || 'Check',
+      // Never assert a fee posture the filer did not provide. A hardcoded
+      // "Standard 510(k)" / $19,870 / not-small-business misstates the User Fee
+      // Cover Sheet for a small-business or differently-categorized filer. Absent
+      // explicit fee info, render unset (completeness below counts it unfilled).
+      feeCategory: workflowData?.feeInfo?.feeCategory || 'Not Specified',
+      paymentMethod: workflowData?.feeInfo?.paymentMethod || 'Not Specified',
       referenceNumber: workflowData?.feeInfo?.referenceNumber || '',
-      smallBusiness: workflowData?.feeInfo?.smallBusiness || false,
-      feeAmount: workflowData?.feeInfo?.feeAmount || 19870, // FY2025 standard fee
+      smallBusiness:
+        typeof workflowData?.feeInfo?.smallBusiness === 'boolean'
+          ? workflowData.feeInfo.smallBusiness
+          : undefined,
+      feeAmount: workflowData?.feeInfo?.feeAmount ?? null,
       // Certification date comes from the actual signing/submission event, not now().
       submissionDate: ''
     };
@@ -413,7 +424,15 @@ export default class FDAFormGenerator {
       // true. Source each from an explicit input and default to false (unchecked)
       // so a generated draft never pre-certifies compliance the user hasn't affirmed.
       certificationStatement: workflowData?.certification?.certificationStatement === true,
-      clinicalStudies: fda510kProject?.hasClinicalData || false,
+      // Tri-state, never inferred from whether data was uploaded. The signer must
+      // explicitly state whether clinical studies were conducted; until they do,
+      // this is undefined and NEITHER box is checked (see render). Deriving "WERE
+      // NOT conducted" from an absent `hasClinicalData` would put an affirmative
+      // negative certification the signer never made onto a Part 11 statement.
+      clinicalStudies:
+        typeof workflowData?.certification?.clinicalStudiesConducted === 'boolean'
+          ? workflowData.certification.clinicalStudiesConducted
+          : undefined,
       financialInterests: workflowData?.certification?.financialInterests || false,
       deviceCompliance: workflowData?.certification?.deviceCompliance === true,
       truthfulStatement: workflowData?.certification?.truthfulStatement === true,
@@ -587,10 +606,10 @@ export default class FDAFormGenerator {
     <div class="fee-box">
       <div class="field-group">
         <span class="field-label">FY 2025 Fee Amount:</span>
-        <span class="field-value">$${data.feeAmount?.toLocaleString() || '19,870'}</span>
+        <span class="field-value">${data.feeAmount != null ? '$' + Number(data.feeAmount).toLocaleString() : 'Not Specified'}</span>
       </div>
       <div class="checkbox-group">
-        <input type="checkbox" class="checkbox" ${data.smallBusiness ? 'checked' : ''}>
+        <input type="checkbox" class="checkbox" ${data.smallBusiness === true ? 'checked' : ''}>
         <label>Small Business Qualified (Reduced Fee Applies)</label>
       </div>
     </div>
@@ -812,11 +831,11 @@ export default class FDAFormGenerator {
   <div class="section">
     <div class="section-title">CLINICAL INVESTIGATIONS</div>
     <div class="checkbox-group">
-      <input type="checkbox" class="checkbox" ${data.clinicalStudies ? 'checked' : ''}>
+      <input type="checkbox" class="checkbox" ${data.clinicalStudies === true ? 'checked' : ''}>
       <label><strong>Clinical studies WERE conducted</strong> to support this 510(k)</label>
     </div>
     <div class="checkbox-group">
-      <input type="checkbox" class="checkbox" ${!data.clinicalStudies ? 'checked' : ''}>
+      <input type="checkbox" class="checkbox" ${data.clinicalStudies === false ? 'checked' : ''}>
       <label><strong>Clinical studies WERE NOT conducted</strong> to support this 510(k)</label>
     </div>
     
