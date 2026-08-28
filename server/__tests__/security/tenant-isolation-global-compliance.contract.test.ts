@@ -30,14 +30,40 @@ const { ORG_A, TARGET_ORG, calls } = vi.hoisted(() => ({
   calls: [] as Array<{ sql: string; params: any[] }>,
 }));
 
-vi.mock('../../db', () => ({
-  pool: {
+// The lifecycle guard's posture lookup is a real tenant-scoped DB read that
+// answers 503 TENANT_STATE_UNVERIFIED when it cannot verify — correct in
+// production, noise here where the subject is the route's org-path isolation.
+// Passthrough like the sibling suites; the guard has its own dbtests.
+vi.mock('../../middleware/tenantLifecycleGuard', () => ({
+  enforceTenantLifecycle: (_req: any, _res: any, next: any) => next(),
+}));
+
+vi.mock('../../db', () => {
+  // enforceOrgMembership (now in the canonical chain for every specifier
+  // after the M-5 consolidation — this suite previously exercised the legacy
+  // auth.js, which never re-checked membership) dynamically imports db.select
+  // and refuses with 503 when it is absent. Answer the membership lookup with
+  // a valid row for the JWT's own org; the foreign-org rejections under test
+  // are the ROUTE's org-path comparison, which runs after membership.
+  const membershipRow = { role: 'member', orgUuid: null };
+  const chain = {
+    from: () => chain,
+    leftJoin: () => chain,
+    where: () => chain,
+    limit: async () => [membershipRow],
+  };
+  const pool = {
     query: vi.fn(async (sql: string, params: any[] = []) => {
       calls.push({ sql, params });
       return { rows: [{ id: 1, organization_id: ORG_A }], rowCount: 1 };
     }),
-  },
-}));
+  };
+  return {
+    db: { select: () => chain },
+    pool,
+    getPool: () => pool,
+  };
+});
 
 const token = (orgId: number, role = 'user') =>
   jwt.sign({ userId: 1, organizationId: orgId, role, type: 'access' }, process.env.JWT_SECRET as string, {
