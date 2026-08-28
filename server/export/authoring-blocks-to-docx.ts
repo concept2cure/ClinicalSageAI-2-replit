@@ -12,7 +12,7 @@
  * dynamically (it is ESM-only and the route is hot), and a caller that already
  * holds the namespace should not load a second copy.
  */
-import type { ContentBlock, InlineRun } from './authoring-section-content.js';
+import { MAX_LIST_DEPTH, type ContentBlock, type InlineRun } from './authoring-section-content.js';
 import type { ResolvedImage } from './authoring-images.js';
 import {
   crossReferenceBookmarkId,
@@ -54,15 +54,36 @@ const DOCX_IMAGE_TYPE: Record<string, 'png' | 'jpg' | 'gif'> = {
 /** Numbering definition the ordered lists reference. Declare it on the Document. */
 export const ORDERED_LIST_REFERENCE = 'authoring-ordered';
 
+/**
+ * 1. / a. / i. / (1) / (a) — the standard legal-and-regulatory outline.
+ *
+ * Only levels 0 and 1 were declared. Every item deeper than that referenced a
+ * level Word had no format for, and Word falls back to no number at all — so
+ * the third rank of a nested procedure lost its step identifiers entirely. It
+ * was invisible in practice because the PARSER never emitted a level above 0:
+ * it dropped nesting depth outright and flattened every item to the top rank,
+ * which renumbered the document (see `ContentBlock.depth`). Fixing the parser
+ * without this would simply move the defect one layer down.
+ *
+ * `indent` is explicit per level because Word's default hanging indents do not
+ * apply to a numbering definition supplied this way, and without them a
+ * three-deep procedure renders flush left with only the number to distinguish
+ * the ranks.
+ */
 export function orderedListNumbering(D: DocxNs) {
+  const FORMATS = ['decimal', 'lowerLetter', 'lowerRoman', 'decimal', 'lowerLetter'] as const;
+  const TEXTS = ['%1.', '%2.', '%3.', '(%4)', '(%5)'];
   return {
     config: [
       {
         reference: ORDERED_LIST_REFERENCE,
-        levels: [
-          { level: 0, format: 'decimal' as const, text: '%1.', alignment: D.AlignmentType.START },
-          { level: 1, format: 'lowerLetter' as const, text: '%2.', alignment: D.AlignmentType.START },
-        ],
+        levels: FORMATS.map((format, level) => ({
+          level,
+          format,
+          text: TEXTS[level],
+          alignment: D.AlignmentType.START,
+          style: { paragraph: { indent: { left: 720 * (level + 1), hanging: 360 } } },
+        })),
       },
     ],
   };
@@ -289,6 +310,13 @@ function headingFor(D: DocxNs, level: number | undefined) {
   return D.HeadingLevel[DOCX_HEADING[idx]];
 }
 
+/** A block's nesting depth as a Word list level, clamped to what the numbering
+ *  definition declares. Both list kinds clamp identically so an ordered and an
+ *  unordered list at the same depth line up. */
+function listLevel(depth: number | undefined): number {
+  return Math.min(Math.max(Math.floor(depth ?? 0), 0), MAX_LIST_DEPTH);
+}
+
 /**
  * A real Word table. The subject-versus-predicate comparison in a 510(k) and
  * every Module 3 specification, batch-analysis and stability table ARE the
@@ -306,27 +334,92 @@ function tableOf(
   revisionDate: string,
   footnoteSink?: (noteText: string) => number,
   crossRefs?: CrossReferenceLookup | null,
+  images?: Map<string, ResolvedImage>,
 ) {
   const border = { style: D.BorderStyle.SINGLE, size: 4, color: 'BFBFBF' };
   const rows = (block.rows ?? []).map(
     (row) =>
       new D.TableRow({
         tableHeader: row.some((c) => c.header) || undefined,
-        children: row.map(
-          (cell) =>
-            new D.TableCell({
-              columnSpan: cell.colSpan,
-              rowSpan: cell.rowSpan,
-              shading: cell.header
-                ? { type: D.ShadingType.CLEAR, fill: 'F2F4F5', color: 'auto' }
-                : undefined,
-              borders: { top: border, bottom: border, left: border, right: border },
-              children: [new D.Paragraph({ children: runsOf(D, cell.runs, Boolean(cell.header), revisionId, revisionDate, footnoteSink, crossRefs) })],
-            })
-        ),
+        children: row.map((cell) => {
+          const children: InstanceType<DocxNs['Paragraph']>[] = [];
+          if (cell.runs.length) {
+            children.push(
+              new D.Paragraph({
+                children: runsOf(
+                  D, cell.runs, Boolean(cell.header), revisionId, revisionDate, footnoteSink,
+                  crossRefs,
+                ),
+              })
+            );
+          }
+          /* A figure inside a cell — the subject device beside the predicate,
+             a chromatogram in a results column. Same honesty rule as a
+             standalone figure: it ships, or the cell SAYS it could not. */
+          for (const fig of cell.images ?? []) children.push(...figureParagraphs(D, fig, images));
+          /* Word requires at least one paragraph per cell; an empty cell with
+             none produces a file Word repairs on open. */
+          if (!children.length) children.push(new D.Paragraph({ text: '' }));
+          return new D.TableCell({
+            columnSpan: cell.colSpan,
+            rowSpan: cell.rowSpan,
+            shading: cell.header
+              ? { type: D.ShadingType.CLEAR, fill: 'F2F4F5', color: 'auto' }
+              : undefined,
+            borders: { top: border, bottom: border, left: border, right: border },
+            children,
+          });
+        }),
       })
   );
   return new D.Table({ rows, width: { size: 100, type: D.WidthType.PERCENTAGE } });
+}
+
+/** One figure as DOCX paragraphs: the image and its caption when the bytes
+ *  resolved, a stated placeholder when they did not. Shared by the standalone
+ *  image block and the in-cell figure so the two cannot disagree about what a
+ *  missing figure looks like in a filed document. */
+function figureParagraphs(
+  D: DocxNs,
+  fig: { src?: string; alt?: string },
+  images?: Map<string, ResolvedImage>,
+): InstanceType<DocxNs['Paragraph']>[] {
+  const resolved = fig.src ? images?.get(fig.src) : undefined;
+  const type = resolved ? DOCX_IMAGE_TYPE[resolved.mimeType] : undefined;
+  if (!resolved || !type) {
+    /* The section shows a figure this export could not resolve (bytes gone,
+       foreign reference, external URL never fetched server-side). The filed
+       record must SAY that — a document quietly missing a figure the editor
+       displays is a different document. */
+    return [
+      new D.Paragraph({
+        children: [
+          new D.TextRun({
+            text: `[Figure not exported: ${fig.alt || fig.src || 'unresolved image reference'}]`,
+            italics: true,
+            color: '8A8F98',
+          }),
+        ],
+      }),
+    ];
+  }
+  const out = [
+    new D.Paragraph({
+      alignment: D.AlignmentType.CENTER,
+      children: [
+        new D.ImageRun({ type, data: resolved.buffer, transformation: docxImageSize(resolved) }),
+      ],
+    }),
+  ];
+  if (fig.alt) {
+    out.push(
+      new D.Paragraph({
+        alignment: D.AlignmentType.CENTER,
+        children: [new D.TextRun({ text: fig.alt, italics: true, size: 18 })],
+      })
+    );
+  }
+  return out;
 }
 
 /** Render parsed section blocks to DOCX paragraphs and tables, in order.
@@ -354,50 +447,11 @@ export function blocksToDocx(
   const out: (InstanceType<DocxNs['Paragraph']> | InstanceType<DocxNs['Table']>)[] = [];
   for (const block of blocks) {
     if (block.kind === 'image') {
-      const resolved = block.src ? images?.get(block.src) : undefined;
-      const type = resolved ? DOCX_IMAGE_TYPE[resolved.mimeType] : undefined;
-      if (resolved && type) {
-        out.push(
-          new D.Paragraph({
-            alignment: D.AlignmentType.CENTER,
-            children: [
-              new D.ImageRun({
-                type,
-                data: resolved.buffer,
-                transformation: docxImageSize(resolved),
-              }),
-            ],
-          })
-        );
-        if (block.alt) {
-          out.push(
-            new D.Paragraph({
-              alignment: D.AlignmentType.CENTER,
-              children: [new D.TextRun({ text: block.alt, italics: true, size: 18 })],
-            })
-          );
-        }
-      } else {
-        /* The section shows a figure this export could not resolve (bytes
-           gone, foreign reference, external URL never fetched server-side).
-           The filed record must SAY that — a document quietly missing a
-           figure the editor displays is a different document. */
-        out.push(
-          new D.Paragraph({
-            children: [
-              new D.TextRun({
-                text: `[Figure not exported: ${block.alt || block.src || 'unresolved image reference'}]`,
-                italics: true,
-                color: '8A8F98',
-              }),
-            ],
-          })
-        );
-      }
+      out.push(...figureParagraphs(D, block, images));
       continue;
     }
     if (block.kind === 'table') {
-      out.push(tableOf(D, block, revisionId, revisionDate, footnoteSink, crossRefs));
+      out.push(tableOf(D, block, revisionId, revisionDate, footnoteSink, crossRefs, images));
       if (block.caption) {
         out.push(
           new D.Paragraph({
@@ -416,8 +470,8 @@ export function blocksToDocx(
         ...(block.kind === 'heading' ? { heading: headingFor(D, block.level) } : {}),
         ...(block.kind === 'list-item'
           ? block.ordered
-            ? { numbering: { reference: ORDERED_LIST_REFERENCE, level: 0 } }
-            : { bullet: { level: 0 } }
+            ? { numbering: { reference: ORDERED_LIST_REFERENCE, level: listLevel(block.depth) } }
+            : { bullet: { level: listLevel(block.depth) } }
           : {}),
         children: runsOf(D, block.runs, false, revisionId, revisionDate, footnoteSink, crossRefs),
       })

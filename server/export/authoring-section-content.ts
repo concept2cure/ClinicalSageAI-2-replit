@@ -106,6 +106,17 @@ export interface TableCell {
   header?: boolean;
   colSpan?: number;
   rowSpan?: number;
+  /** Figures inside the cell, in document order.
+   *
+   *  A cell is not always text. A subject-versus-predicate comparison puts the
+   *  subject device's photograph beside the predicate's; a Module 3 method
+   *  table puts a chromatogram in the results column. `<img>` is void, so the
+   *  run walker below visited zero children and the figure contributed
+   *  NOTHING — and a table whose cells held only figures then had no text at
+   *  all, so the emptiness filter deleted THE ENTIRE TABLE from the export.
+   *  Silently: no placeholder, no warning, a filed document simply missing the
+   *  comparison the submission turns on. */
+  images?: { src: string; alt?: string }[];
 }
 
 export interface ContentBlock {
@@ -122,6 +133,32 @@ export interface ContentBlock {
   level?: 1 | 2 | 3 | 4 | 5;
   /** List items only: true when the item came from an `ol`. */
   ordered?: boolean;
+  /** List items only: 0-based nesting depth. 0 is a top-level item, 1 is an
+   *  item inside a nested list, and so on.
+   *
+   *  THE PARSER USED TO DROP THIS, AND DROPPING IT CHANGED WHAT THE DOCUMENT
+   *  SAID. The parser tracked only the innermost list TYPE, so every item of
+   *
+   *      1. Prepare the sample
+   *         a. Weigh 5.0 mg
+   *         b. Dissolve in 10 mL diluent
+   *      2. Inject 20 µL
+   *
+   *  came out as a flat sequence of top-level ordered items, and the renderers
+   *  — which restart nothing, because they were never told a level changed —
+   *  numbered them 1, 2, 3, 4. The filed procedure's "step 2" is
+   *  "Weigh 5.0 mg". The author's "step 2" is "Inject 20 µL".
+   *
+   *  That is not a lost indent. Every character survives, so the round-trip
+   *  fidelity gate — which compares text — passes it, and a deviation
+   *  investigation, a validation protocol or an IFU that cites "step 2" now
+   *  cites a different instruction in the copy the agency reads than in the
+   *  copy the author wrote. Numbered procedures are the form most test
+   *  methods and instructions-for-use take.
+   *
+   *  Absent means 0; every consumer clamps, so an out-of-range depth from
+   *  pathological markup cannot produce an invalid list level. */
+  depth?: number;
   /**
    * Inline content. Always present so every consumer can iterate it
    * unconditionally; empty for a `table` (text lives in `rows`) and for an
@@ -137,6 +174,18 @@ export interface ContentBlock {
   src?: string;
   alt?: string;
 }
+
+/** How deep a list may nest before the renderers clamp. Five ranks is the
+ *  standard outline depth and deeper than any real procedure; the clamp exists
+ *  so pathological stored markup cannot ask for a rank a renderer has no
+ *  format for — which Word renders as an unnumbered paragraph, silently
+ *  costing a step its identifier.
+ *
+ *  It lives here, beside `depth`, because it constrains the BLOCK MODEL: both
+ *  renderers clamp to it and must clamp identically, and the alternative —
+ *  the HTML renderer importing it from the DOCX one — makes the PDF path
+ *  depend on the Word path for a rule that belongs to neither. */
+export const MAX_LIST_DEPTH = 4;
 
 /** Every run in a block, including the ones inside a table's cells. */
 export function blockRuns(b: ContentBlock): InlineRun[] {
@@ -286,8 +335,12 @@ function applyMark(tag: string, st: InlineState, el?: { getAttribute(name: strin
  * are joined with a space rather than becoming separate blocks; the cell is the
  * structural unit here, and its internal paragraphing is not load-bearing.
  */
-function inlineRunsOf(node: HTMLElement, st: InlineState): InlineRun[] {
+function cellContentOf(
+  node: HTMLElement,
+  st: InlineState,
+): { runs: InlineRun[]; images: { src: string; alt?: string }[] } {
   const runs: InlineRun[] = [];
+  const images: { src: string; alt?: string }[] = [];
   const visit = (n: Node, state: InlineState): void => {
     if (n instanceof TextNode) {
       const text = n.text.replace(/\s+/g, ' ');
@@ -300,6 +353,16 @@ function inlineRunsOf(node: HTMLElement, st: InlineState): InlineRun[] {
       pushRun(runs, ' ', state);
       return;
     }
+    if (tag === 'img') {
+      /* Void element: the recursion below would visit zero children and the
+         figure would leave no trace at all. See TableCell.images. */
+      const src = (n.getAttribute('src') ?? '').trim();
+      if (src) {
+        const alt = (n.getAttribute('alt') ?? '').trim();
+        images.push({ src, ...(alt ? { alt } : {}) });
+      }
+      return;
+    }
     const isBlock = BLOCK_TAGS.has(tag) || tag === 'ol' || tag === 'ul';
     if (isBlock && runs.length) pushRun(runs, ' ', state);
     const inner = applyMark(tag, state, n);
@@ -310,7 +373,7 @@ function inlineRunsOf(node: HTMLElement, st: InlineState): InlineRun[] {
     for (const child of n.childNodes) visit(child, inner);
   };
   for (const child of node.childNodes) visit(child, st);
-  return trimRuns(runs);
+  return { runs: trimRuns(runs), images };
 }
 
 /** Trim the outer whitespace of a run list and drop the runs left empty. */
@@ -351,11 +414,13 @@ function parseTable(node: HTMLElement, st: InlineState): ContentBlock | null {
       };
       const colSpan = span('colspan');
       const rowSpan = span('rowspan');
+      const { runs, images } = cellContentOf(child, st);
       cells.push({
-        runs: inlineRunsOf(child, st),
+        runs,
         ...(tag === 'th' || inHead ? { header: true } : {}),
         ...(colSpan ? { colSpan } : {}),
         ...(rowSpan ? { rowSpan } : {}),
+        ...(images.length ? { images } : {}),
       });
     }
     if (cells.length) rows.push(cells);
@@ -392,8 +457,12 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
     current = null;
   };
 
-  /** Innermost list type, so a nested ol inside a ul numbers correctly. */
-  let listOrdered: boolean | null = null;
+  /* The open list ancestry, innermost last: `true` for an `ol`, `false` for a
+     `ul`. This was a single `listOrdered: boolean | null` — the innermost TYPE
+     with no notion of how deep it sat — which is why every item of a nested
+     procedure exported as a top-level item and was renumbered. See
+     `ContentBlock.depth`. */
+  const listStack: boolean[] = [];
 
   const walk = (node: Node, st: InlineState): void => {
     if (node instanceof TextNode) {
@@ -421,10 +490,9 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
 
     if (tag === 'ol' || tag === 'ul') {
       closeBlock();
-      const outer = listOrdered;
-      listOrdered = tag === 'ol';
+      listStack.push(tag === 'ol');
       for (const child of node.childNodes) walk(child, nextState);
-      listOrdered = outer;
+      listStack.pop();
       closeBlock();
       return;
     }
@@ -459,7 +527,16 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
         current = { kind: 'heading', level, runs: [] };
         blocks.push(current);
       } else if (tag === 'li') {
-        current = { kind: 'list-item', ...(listOrdered ? { ordered: true } : {}), runs: [] };
+        /* An `li` with no list ancestor is malformed stored markup; it keeps
+           the old behaviour — an unordered item at depth 0 — rather than
+           being dropped. */
+        const depth = Math.max(0, listStack.length - 1);
+        current = {
+          kind: 'list-item',
+          ...(listStack[depth] ? { ordered: true } : {}),
+          ...(depth ? { depth } : {}),
+          runs: [],
+        };
         blocks.push(current);
       }
       for (const child of node.childNodes) walk(child, nextState);
@@ -486,16 +563,22 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
   for (const child of root.childNodes) walk(child, {});
   closeBlock();
 
-  // Drop blocks that are only whitespace, trim run edges per block. A table
-  // keeps its rows untouched — its cells were trimmed as they were read, and
-  // its emptiness test is over the cells, not over the (always empty) runs.
-  // An image block is textless BY KIND — testing it for text would delete
-  // every figure here, which is the defect the img branch above closed.
+  /* Drop blocks that are only whitespace, trim run edges per block.
+     An image block is textless BY KIND — testing it for text would delete
+     every figure here, which is the defect the img branch above closed.
+     A TABLE IS TEXTLESS BY KIND TOO, and this filter did test it: it ran
+     `blockRuns` over the cells, so a table whose cells hold only figures —
+     the subject/predicate photographs of a substantial-equivalence
+     comparison — had no text anywhere and the WHOLE TABLE was deleted from
+     the export, with no placeholder and no warning. `parseTable` already
+     returns null for a table with no cells, which is the real emptiness
+     test and the only one this needs. */
   return blocks
     .map((b) => (b.kind === 'table' || b.kind === 'image' ? b : { ...b, runs: trimRuns(b.runs) }))
     .filter(
       (b) =>
         b.kind === 'image' ||
+        b.kind === 'table' ||
         blockRuns(b).some((r) => r.text.trim().length > 0) ||
         /* A block whose only content is a cross-reference has no text of its
            own — the reference's text is RESOLVED at render time. Testing it for

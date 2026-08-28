@@ -131,3 +131,47 @@ describe('the footer counts what is actually there', () => {
     expect(foot!.textContent).toMatch(/(^|\W)5 words/);
   });
 });
+
+describe('an AI draft is never reported as inserted when it is discarded', () => {
+  /* The worst kind of failure this surface can have: the author is TOLD their
+     regulatory text landed, and sent to review it, while it was thrown away.
+     In source mode the TipTap instance exists but is a shell — the textarea is
+     the document, and `doSave` serializes that, never the editor. The insert
+     went into an invisible ProseMirror document and `run()` still returned
+     true, so the caller's honest failure branch never fired. */
+  it('refuses in source mode, where the editor is not the document', () => {
+    const ref = React.createRef<any>();
+    render(
+      <RichSectionEditor
+        {...base}
+        ref={ref}
+        /* An <img> carries no text, so the text-only fidelity gate cannot judge
+           it and the editor drops to raw source. */
+        value={'<p>Stored section.</p><figure><img src="x.png" alt="" /></figure>'}
+      />,
+    );
+    expect(
+      ref.current?.insertSuggestion('Proposed CER wording.', { id: 'ana', name: 'AnA (AI draft)' }),
+      'reported success for a draft that is discarded on save',
+    ).toBe(false);
+  });
+
+  it('refuses on a frozen section, whose save the server would refuse anyway', () => {
+    const ref = React.createRef<any>();
+    render(<RichSectionEditor {...base} ref={ref} readOnly />);
+    expect(
+      ref.current?.insertSuggestion('Proposed wording.', { id: 'ana', name: 'AnA (AI draft)' }),
+      'reported success for an insert into a sealed record',
+    ).toBe(false);
+  });
+
+  it('still inserts, and reports so, on an editable rich section', () => {
+    const ref = React.createRef<any>();
+    render(<RichSectionEditor {...base} ref={ref} />);
+    expect(
+      ref.current?.insertSuggestion('Proposed wording.', { id: 'ana', name: 'AnA (AI draft)' }),
+      'the working path must keep working',
+    ).toBe(true);
+    expect(document.querySelector('.tiptap')?.textContent).toContain('Proposed wording.');
+  });
+});
