@@ -162,9 +162,23 @@ export async function commitSectionToFiling(
   // Org-scoped through the document: c2c_document_sections has no org column of
   // its own, so the EXISTS is what keeps this write inside the caller's tenant.
   const updated = await client.query<{ section_key: string }>(
+    // draft_source is NULL — "origin not stated" — and deliberately not 'human'.
+    //
+    // authoring_sections has no provenance column (see
+    // db/migrations/20260725_authoring_document_loop_tables.sql): the editing
+    // layer stores text and never records whether a person typed it or accepted
+    // an AnA draft. Writing 'human' here therefore asserted, in the system of
+    // record for a filing, a fact this layer has no way to know — and the
+    // snapshot trigger then carried that assertion into the immutable version
+    // ledger, where `author_kind` is what an inspector reads to answer "who
+    // wrote this". A guess is indistinguishable there from a genuine human
+    // assertion, so it cannot be audited back out.
+    //
+    // NULL records that the origin was not captured, which is true. When the
+    // editing layer learns to carry provenance, it can state it here.
     `UPDATE c2c_document_sections ds
         SET content      = jsonb_build_object('text', $3::text),
-            draft_source = 'human',
+            draft_source = NULL,
             drafted_at   = now(),
             updated_at   = now()
       WHERE ds.document_id = $1

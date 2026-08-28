@@ -120,6 +120,17 @@ const USERS_DDL = `
 CREATE TABLE IF NOT EXISTS users (
   id serial PRIMARY KEY, email text NOT NULL, name text NOT NULL,
   password_hash text, title text
+);
+
+-- The §11.50 printed name is resolved by ORG MEMBERSHIP, not by user id alone:
+-- signature-persistence.ts joins organization_users so one tenant cannot
+-- manifest a signature in the name of a user who belongs to another. Without
+-- this table every sign in this suite failed with 'relation
+-- "organization_users" does not exist' rather than on anything it tests.
+CREATE TABLE IF NOT EXISTS organization_users (
+  organization_id integer NOT NULL,
+  user_id integer NOT NULL,
+  PRIMARY KEY (organization_id, user_id)
 );`;
 
 // Governed-target content tables for the derivable-binding case.
@@ -160,6 +171,11 @@ beforeEach(async () => {
   await pg.query(
     `INSERT INTO users (id, email, name, title) VALUES ($1, $2, $3, $4)`,
     [SIGNER, 'qa.lead@acme.test', 'Quinn A. Lead', 'Director, Regulatory QA'],
+  );
+  // Membership is what makes the signer resolvable — see the DDL note above.
+  await pg.query(
+    `INSERT INTO organization_users (organization_id, user_id) VALUES ($1, $2)`,
+    [ORG, SIGNER],
   );
   holder.query = (sql: string, params?: unknown[]) => pg.query(sql, params) as Promise<{ rows: any[] }>;
 });
@@ -287,6 +303,27 @@ describe('governed sign → electronic_signatures (single write path)', () => {
     ).rejects.toThrow(/signer/i);
     const actions = (await pg.query(`SELECT count(*)::int AS n FROM c2c_ana_actions`)).rows[0] as { n: number };
     expect(actions.n).toBe(0);
+  });
+
+  it('FAIL CLOSED: a real user who belongs to ANOTHER org cannot be signed as', async () => {
+    // The case the §11.50 org scoping exists for, and the one the deleted-user
+    // test above cannot reach: the user is real and resolvable by id — only the
+    // membership is missing. Before the JOIN, the printed name was looked up by
+    // user id alone, so this org could manifest a signature bearing the name and
+    // title of a person who belongs to a different tenant.
+    await pg.query(`DELETE FROM organization_users WHERE user_id = $1`, [SIGNER]);
+    await pg.query(
+      `INSERT INTO organization_users (organization_id, user_id) VALUES ($1, $2)`,
+      [ORG + 1, SIGNER],
+    );
+    await expect(
+      writeMutation('sign', signEnvelope('program:prog_4') as any, SIGNER, ORG),
+    ).rejects.toThrow(/is not a member of org/i);
+    // Fail closed means nothing lands, not that the signature alone is skipped.
+    const actions = (await pg.query(`SELECT count(*)::int AS n FROM c2c_ana_actions`)).rows[0] as { n: number };
+    expect(actions.n).toBe(0);
+    const sigs = (await pg.query(`SELECT count(*)::int AS n FROM electronic_signatures`)).rows[0] as { n: number };
+    expect(sigs.n).toBe(0);
   });
 
   it('non-sign governed commands do not write electronic_signatures (regression)', async () => {

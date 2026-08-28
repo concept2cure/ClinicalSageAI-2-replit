@@ -1289,6 +1289,15 @@ export const C2C_MIGRATION_FILES = [
   // because they truthfully record that nothing was captured.
   'migrations/20260814g_section_version_reason_required.sql',
 
+  // ── An unstated author is recorded as unspecified, not as a human ──────────
+  // The same fix as 20260814g one column over: the section save defaulted an
+  // omitted `draftSource` to 'human' and the trigger's CASE fell through to
+  // 'human' for NULL, so a save that said nothing about where its text came
+  // from filed a version row asserting a named person wrote it. MUST stay last
+  // of the five definitions of c2c_snapshot_section_version() — it is built on
+  // 20260814g's body and carries its mandatory-reason RAISE.
+  'migrations/20260822_section_version_author_kind_unspecified.sql',
+
   // Constraint repair only: no table, no column, no data. 0001_phase13_full
   // meant to widen concept2cure_review_tasks.task_type to include
   // 'approval_task' but added a second CHECK instead of replacing phase13's
