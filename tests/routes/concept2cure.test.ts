@@ -136,7 +136,17 @@ vi.mock('../../server/db', () => {
     })),
   };
 
-  return { db };
+  // resolveClientWorkspaceId reads the caller org's workspace from the
+  // database instead of the fabricated constant 1 it used to return outside
+  // production; answer that one query and leave every other raw query empty.
+  const poolQuery = vi.fn(async (text: unknown) =>
+    typeof text === 'string' && text.includes('FROM client_workspaces')
+      ? { rows: [{ id: 1 }] }
+      : { rows: [] }
+  );
+  const pool = { query: poolQuery };
+
+  return { db, pool, getPool: () => pool };
 });
 
 vi.mock('../../server/services/ai-gateway/gateway.js', () => ({

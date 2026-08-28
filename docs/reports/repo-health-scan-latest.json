@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-08-28T15:16:43.070Z",
+  "generatedAt": "2026-08-28T19:53:32.323Z",
   "git": {
-    "sha": "f5c1634386ee520f2024c996e94b10d34eef9fd3",
+    "sha": "fb7db1ebae74c14fdbbbcc96778217200ab6e330",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500,
-    "ceilingLargeBytes": null,
-    "ceilingLargeLines": null
+    "ceilingLargeBytes": 33,
+    "ceilingLargeLines": 82
   },
   "managedMirrors": [
     "design-system/"
@@ -17,8 +17,8 @@
     "duplicateBasenames": 222,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 39,
-    "largeFilesByLines": 90
+    "largeFilesByBytes": 33,
+    "largeFilesByLines": 82
   },
   "findings": {
     "duplicateBasenames": [
@@ -2283,30 +2283,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
-      },
-      {
-        "file": "server/services/medical-device/medical-device-knowledge.ts",
-        "bytes": 106347
-      },
-      {
-        "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
-        "bytes": 105877
-      },
-      {
-        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
-        "bytes": 105154
-      },
-      {
-        "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
-        "bytes": 104369
-      },
-      {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "bytes": 104021
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 100522
       }
     ],
     "largeFilesByLines": [
@@ -2407,16 +2383,12 @@
         "lines": 2582
       },
       {
-        "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
-        "lines": 2559
+        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+        "lines": 2504
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2519
-      },
-      {
-        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
-        "lines": 2504
+        "lines": 2466
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2451,10 +2423,6 @@
         "lines": 2174
       },
       {
-        "file": "server/services/medical-device/medical-device-knowledge.ts",
-        "lines": 2166
-      },
-      {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
       },
@@ -2479,16 +2447,20 @@
         "lines": 2068
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
-        "lines": 2059
-      },
-      {
         "file": "server/routes/submission-ops.ts",
         "lines": 2050
       },
       {
+        "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
+        "lines": 2024
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
         "lines": 2020
+      },
+      {
+        "file": "server/services/medical-device/medical-device-knowledge.ts",
+        "lines": 2018
       },
       {
         "file": "server/routes/report-os.ts",
@@ -2531,10 +2503,6 @@
         "lines": 1888
       },
       {
-        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
-        "lines": 1881
-      },
-      {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
         "lines": 1869
       },
@@ -2545,10 +2513,6 @@
       {
         "file": "server/services/digital-health/digital-health-knowledge.ts",
         "lines": 1864
-      },
-      {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1855
       },
       {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
@@ -2611,6 +2575,10 @@
         "lines": 1710
       },
       {
+        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
+        "lines": 1696
+      },
+      {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
         "lines": 1678
       },
@@ -2631,6 +2599,10 @@
         "lines": 1623
       },
       {
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "lines": 1615
+      },
+      {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
         "lines": 1606
       },
@@ -2641,34 +2613,6 @@
       {
         "file": "server/services/contradiction-engine-service.ts",
         "lines": 1601
-      },
-      {
-        "file": "shared/schema/csr-knowledge-db.ts",
-        "lines": 1600
-      },
-      {
-        "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
-        "lines": 1582
-      },
-      {
-        "file": ".claude/skills/gstack/test/skill-validation.test.ts",
-        "lines": 1550
-      },
-      {
-        "file": "server/services/ana/intelligence-questions/flows/sop-development.ts",
-        "lines": 1549
-      },
-      {
-        "file": "server/services/submission-twin-service.ts",
-        "lines": 1534
-      },
-      {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 1531
-      },
-      {
-        "file": "server/routes/protocol_routes.ts",
-        "lines": 1516
       }
     ]
   },
@@ -2677,20 +2621,20 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 401,
-      "largeByBytes": 31,
-      "largeByLines": 74
+      "largeByBytes": 25,
+      "largeByLines": 68
     },
     {
       "owner": "Unassigned (TBD)",
       "duplicateGroups": 251,
       "largeByBytes": 2,
-      "largeByLines": 8
+      "largeByLines": 7
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
       "duplicateGroups": 73,
       "largeByBytes": 3,
-      "largeByLines": 2
+      "largeByLines": 1
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",

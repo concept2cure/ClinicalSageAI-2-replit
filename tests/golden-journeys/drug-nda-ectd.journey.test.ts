@@ -64,6 +64,25 @@ const T = 180_000;
 process.env.AUDIT_HMAC_KEY = randomBytes(32).toString('hex');
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
+
+// Only the AI PROVIDER is stubbed — every governed path around it stays real:
+// the run row is written, findings persist, and the dispatch gate reads that
+// persisted review state exactly as it does in production. A clean review is
+// returned so the journey proves the CLEARED path; the never-reviewed refusal
+// is asserted separately, before this runs.
+vi.mock('../../server/services/ai-gateway', () => ({
+  getGateway: () => ({
+    route: async () => ({
+      model: 'stub-model-for-journey',
+      content: JSON.stringify({
+        rtfRiskScore: 0.05,
+        crlRiskScore: 0.05,
+        summary: 'Synthetic journey review: no filing-blocking deficiencies identified.',
+        findings: [],
+      }),
+    }),
+  }),
+}));
 vi.mock('../../server/db', () => ({
   get db() {
     return h.db;
@@ -489,6 +508,39 @@ describe('golden journey — drug NDA / eCTD', () => {
       return { status: v.body.status };
     });
 
+    await R.step('dispatch-gate-refuses-a-never-reviewed-dossier', async () => {
+      // Fail-closed proof: before any review exists the gate must NOT clear,
+      // and must say why. An unread dossier has zero open criticals for the
+      // same reason an unopened book has no typos.
+      const res = await asPrincipal(ORG, USER)(
+        request(app).get(`/api/submissions/sequences/${sequenceId}/dispatch-readiness`),
+      );
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      expect(res.body.gate.cleared).toBe(false);
+      expect(JSON.stringify(res.body.gate.blockers)).toMatch(/Shadow Review/i);
+      return { blockers: res.body.gate.blockers.length };
+    });
+
+    await R.step('shadow-review-runs-before-any-dispatch-readiness-claim', async () => {
+      // The dispatch gate refuses to clear a never-reviewed dossier (an unread
+      // dossier has zero open criticals for the same reason an unopened book
+      // has no typos). The journey therefore has to actually run the review —
+      // asserting a cleared gate without one was asserting a state the product
+      // now correctly refuses to reach.
+      const run = await asPrincipal(ORG, USER)(
+        request(app).post(`/api/submissions/sequences/${sequenceId}/shadow-review`),
+      ).send({ lens: 'fda_filing' });
+      expect(run.status, JSON.stringify(run.body)).toBe(200);
+
+      const runs = await asPrincipal(ORG, USER)(
+        request(app).get(`/api/submissions/sequences/${sequenceId}/shadow-review`),
+      );
+      expect(runs.status, JSON.stringify(runs.body)).toBe(200);
+      const list = Array.isArray(runs.body) ? runs.body : (runs.body.runs ?? []);
+      expect(list.length).toBeGreaterThan(0);
+      return { reviewRuns: list.length };
+    });
+
     await R.step('dispatch-readiness-is-computed-from-server-state', async () => {
       const res = await asPrincipal(ORG, USER)(
         request(app).get(`/api/submissions/sequences/${sequenceId}/dispatch-readiness`),
@@ -496,14 +548,16 @@ describe('golden journey — drug NDA / eCTD', () => {
       expect(res.status, JSON.stringify(res.body)).toBe(200);
       expect(res.body.validationErrors).toBe(0);
       expect(res.body.leafCount).toBe(1);
-      expect(res.body.gate.cleared).toBe(true);
+      expect(res.body.gate.cleared, JSON.stringify(res.body.gate)).toBe(true);
       // No agency-grade validator is licensed in this environment, and the
       // assessment says so rather than implying a clean external run.
       expect(res.body.externalValidation.configured).toBe(false);
       expect(res.body.externalValidation.ran).toBe(false);
-      // Nothing has adversarially reviewed this dossier — surfaced, not hidden.
-      expect(res.body.shadowReviewRunCount).toBe(0);
-      expect(res.body.shadowReviewMissing).toBe(true);
+      // The review the step above ran is what the gate consulted to clear —
+      // the count and the missing-flag are read back from persisted state, not
+      // from anything this assertion supplies.
+      expect(res.body.shadowReviewRunCount).toBeGreaterThan(0);
+      expect(res.body.shadowReviewMissing).toBe(false);
       // Module-1 completeness is a WARNING, never a fabricated hard error.
       const warnings = (res.body.readiness.findings as Array<{ severity: string; code: string }>)
         .filter((f) => f.severity === 'warning');
