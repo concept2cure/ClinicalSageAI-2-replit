@@ -1111,22 +1111,53 @@ function getUserId(req: Request): number {
 }
 
 /**
- * Get client workspace ID if available.
- * Returns 1 as default for development.
+ * Resolve the caller's client workspace — validated, never fabricated.
+ *
+ * The previous implementation returned a hardcoded workspace 1 outside
+ * production ("dev fallback"), which is a fabricated tenant anchor: on any
+ * database whose workspace ids do not start at 1 it broke with an FK
+ * violation, and wherever id 1 happened to exist it silently attached rows to
+ * whatever tenant owned workspace 1. It also trusted the x-client-id header
+ * (tenantContext.clientWorkspaceId) without checking the workspace belongs to
+ * the caller's organization, so a tenant could plant rows into another org's
+ * workspace. Both are gone:
+ *   - a claimed workspace id is accepted only after a same-statement
+ *     ownership check against the caller's org (fail closed on mismatch);
+ *   - with no claim, the caller org's own workspace is resolved from the
+ *     database (deterministic: lowest id);
+ *   - no workspace resolvable → error, in every environment.
  */
-function getClientWorkspaceId(req: Request): number {
-  // Check if tenantContext has clientWorkspaceId (from tenant middleware)
+async function resolveClientWorkspaceId(req: Request): Promise<number> {
   const ctx = req.tenantContext as Record<string, unknown> | undefined;
-  if (ctx?.clientWorkspaceId) {
-    const id =
-      typeof ctx.clientWorkspaceId === 'number'
-        ? ctx.clientWorkspaceId
-        : parseInt(String(ctx.clientWorkspaceId), 10);
-    if (!isNaN(id)) return id;
+  const orgId = Number(ctx?.organizationId ?? req.user?.organizationId);
+  const hasOrg = Number.isInteger(orgId) && orgId > 0;
+
+  const claimed = ctx?.clientWorkspaceId;
+  if (claimed != null && claimed !== '') {
+    const id = Number(claimed);
+    if (Number.isInteger(id) && id > 0) {
+      if (!hasOrg) {
+        throw new Error('Client workspace context requires an authenticated organization');
+      }
+      const owned = await pool.query(
+        'SELECT id FROM client_workspaces WHERE id = $1 AND organization_id = $2',
+        [id, orgId]
+      );
+      if (owned.rows.length === 0) {
+        // Fail closed: never accept a workspace outside the caller's org, and
+        // do not disclose whether the id exists elsewhere.
+        throw new Error('Client workspace does not belong to the caller organization');
+      }
+      return id;
+    }
   }
-  // Dev fallback: return default workspace 1 so routes work without full tenant setup
-  if (process.env.NODE_ENV !== 'production') {
-    return 1;
+
+  if (hasOrg) {
+    const own = await pool.query(
+      'SELECT id FROM client_workspaces WHERE organization_id = $1 ORDER BY id LIMIT 1',
+      [orgId]
+    );
+    if (own.rows.length > 0) return Number(own.rows[0].id);
   }
   throw new Error('Client workspace context required');
 }
@@ -1229,6 +1260,26 @@ async function loadProjectAccessRow(params: {
   });
 
   if (!hasAccess) {
+    // A reviewer with a live assignment on an artifact in this project has
+    // access BECAUSE of that assignment. Without this, assignment granted
+    // nothing: the assigned reviewer's own decision submission 404'd on this
+    // very predicate (creator/owner/sharing only), making the review flow
+    // unusable for any reviewer who is not also on the project team —
+    // discovered on the golden journey's first real browser execution.
+    const assigned = await pool.query(
+      `SELECT 1
+         FROM concept2cure_review_assignments ra
+         JOIN concept2cure_artifacts a ON a.id = ra.artifact_id
+        WHERE ra.reviewer_id = $1
+          AND ra.organization_id = $2
+          AND a.project_id = $3
+          AND ra.status = 'pending'
+        LIMIT 1`,
+      [params.userId, params.organizationId, params.projectId]
+    );
+    if (assigned.rows.length > 0) {
+      return { project, legacyFallbackApplied: sharing.legacyFallbackApplied };
+    }
     return { project: null, legacyFallbackApplied: sharing.legacyFallbackApplied };
   }
 
@@ -1811,7 +1862,7 @@ router.get(
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
       const actorRole = getActorRole(req);
-      const clientWorkspaceId = getClientWorkspaceId(req);
+      const clientWorkspaceId = await resolveClientWorkspaceId(req);
 
       // Use raw SQL to avoid Drizzle ORM schema mismatch (parent_project_id doesn't exist in DB)
       const result = await pool.query(
@@ -1968,7 +2019,7 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
     const actorRole = getActorRole(req);
-    const clientWorkspaceId = getClientWorkspaceId(req);
+    const clientWorkspaceId = await resolveClientWorkspaceId(req);
     const scope = getProjectScope(req.params.id);
     if (!scope) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
@@ -2074,7 +2125,7 @@ router.post('/projects', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
-    const clientWorkspaceId = getClientWorkspaceId(req);
+    const clientWorkspaceId = await resolveClientWorkspaceId(req);
     const data = createProjectSchema.parse(req.body);
 
     // Auto-populate custom instructions based on registry entry or submission type
@@ -2749,7 +2800,7 @@ router.get('/projects/:id/sharing', async (req: Request, res: Response) => {
 
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId: getClientWorkspaceId(req),
+      clientWorkspaceId: await resolveClientWorkspaceId(req),
       projectId: scope.numericId,
       userId,
       actorRole,
@@ -2910,7 +2961,7 @@ router.patch('/projects/:id/sharing/visibility', async (req: Request, res: Respo
 
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId: getClientWorkspaceId(req),
+      clientWorkspaceId: await resolveClientWorkspaceId(req),
       projectId: scope.numericId,
       userId,
       actorRole,
@@ -3007,7 +3058,7 @@ router.put('/projects/:id/sharing/members/:userId', async (req: Request, res: Re
 
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId: getClientWorkspaceId(req),
+      clientWorkspaceId: await resolveClientWorkspaceId(req),
       projectId: scope.numericId,
       userId: actorUserId,
       actorRole,
@@ -3132,7 +3183,7 @@ router.delete('/projects/:id/sharing/members/:userId', async (req: Request, res:
 
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId: getClientWorkspaceId(req),
+      clientWorkspaceId: await resolveClientWorkspaceId(req),
       projectId: scope.numericId,
       userId: actorUserId,
       actorRole,
@@ -3200,7 +3251,7 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
     // First verify access and capture state for audit
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId: getClientWorkspaceId(req),
+      clientWorkspaceId: await resolveClientWorkspaceId(req),
       projectId: scope.numericId,
       userId,
       actorRole,
@@ -3453,7 +3504,7 @@ router.get('/projects/:projectId/knowledge', async (req: Request, res: Response)
 
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId: getClientWorkspaceId(req),
+      clientWorkspaceId: await resolveClientWorkspaceId(req),
       projectId: scope.numericId,
       userId,
       actorRole,
@@ -3943,7 +3994,7 @@ router.patch('/projects/:projectId/knowledge', async (req: Request, res: Respons
 
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId: getClientWorkspaceId(req),
+      clientWorkspaceId: await resolveClientWorkspaceId(req),
       projectId: scope.numericId,
       userId,
       actorRole,
@@ -6553,7 +6604,7 @@ async function verifyProjectAccess(
   const organizationId = getOrganizationId(req);
   const userId = getUserId(req);
   const actorRole = getActorRole(req);
-  const clientWorkspaceId = getClientWorkspaceId(req);
+  const clientWorkspaceId = await resolveClientWorkspaceId(req);
   try {
     const scope = getProjectScope(projectId);
     if (!scope) {

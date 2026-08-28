@@ -5,6 +5,8 @@ const JOURNEY = {
   password: process.env.GOLDEN_JOURNEY_PASSWORD ?? 'Author123!test',
   reviewerEmail: process.env.GOLDEN_JOURNEY_REVIEWER_EMAIL ?? 'e2e-reviewer@trialsage.test',
   reviewerPassword: process.env.GOLDEN_JOURNEY_REVIEWER_PASSWORD ?? 'Reviewer123!test',
+  adminEmail: process.env.GOLDEN_JOURNEY_ADMIN_EMAIL ?? 'e2e-admin@trialsage.test',
+  adminPassword: process.env.GOLDEN_JOURNEY_ADMIN_PASSWORD ?? 'Admin123!test',
   projectName: 'Synthetic demo — governed evidence draft',
   artifactTitle: 'Synthetic evidence assessment — DRAFT',
   sourceRef: 'synthetic://golden-journey/source-001',
@@ -189,12 +191,17 @@ test('fixture-free golden journey persists evidence, review, provenance, and gov
   expect(deniedExport.status).toBe(403);
   expect(JSON.stringify(deniedExport.body)).toContain('HUMAN_REVIEW_REQUIRED');
 
-  // The reviewers route requires role admin/approver/reviewer; the seed's
-  // author is role 'author', so the assignment is made from the reviewer's own
-  // authenticated session (a reviewer claiming the review), which the role
-  // matrix permits. The decision below still runs under separation-of-duties.
+  // The reviewers route requires role admin/approver/reviewer AND live
+  // project access. A reviewer not yet assigned has no project-access row —
+  // assignment is what would grant it — so the live model needs the org
+  // ADMIN to make the assignment (discovered on this journey's first real
+  // execution: the reviewer session 404s exactly as verifyProjectAccess
+  // says it should). The decision below still runs as the reviewer, under
+  // separation-of-duties.
+  const adminContext = await browser.newContext();
+  const adminPage = await authenticatedPage(adminContext, JOURNEY.adminEmail, JOURNEY.adminPassword);
   const assignment = await browserApi<any>(
-    reviewerPage,
+    adminPage,
     'POST',
     `/api/concept2cure/projects/${project.id}/artifacts/${artifact.id}/reviewers`,
     { reviewerIds: [reviewerId], notes: 'Synthetic golden-journey review assignment.' }
@@ -228,9 +235,10 @@ test('fixture-free golden journey persists evidence, review, provenance, and gov
   expect(JSON.stringify(payload(persisted))).toContain(JOURNEY.artifactTitle);
   expect(JSON.stringify(payload(persisted))).toContain('review');
 
-  const artifactsNavigation = page.getByText('Artifacts Center', { exact: true }).first();
-  await expect(artifactsNavigation).toBeVisible();
-  await artifactsNavigation.click();
+  // Nav state lives in the URL (wouter); the sidebar renders as a collapsed
+  // icon rail by default, so its text label exists but is hidden — navigate
+  // by the surface's real route instead of clicking a hidden label.
+  await page.goto('/concept2cure/artifacts-center');
   await expect(page.getByText(JOURNEY.artifactTitle, { exact: true })).toBeVisible();
   await expect(page.getByTestId(`artifact-governance-${artifact.id}`)).toHaveText(
     '1 cited source · Human review recorded'
