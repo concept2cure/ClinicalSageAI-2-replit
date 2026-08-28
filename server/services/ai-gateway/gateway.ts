@@ -817,8 +817,16 @@ export class AIGateway {
     const detectedDataClass = request.sensitiveDataClass ?? 'unknown';
     // Development retains audit-only usefulness; production always uses the
     // explicit deployment contract and fails closed on unknown classification.
+    // AI_SENSITIVE_DATA_POLICY_MODE is the same deployment contract the
+    // production boot assert requires (strictly 'enforce'): any environment
+    // that declares it — staging included — gets dispatch-time enforcement,
+    // not just a passing boot check. AI_PII_ENFORCEMENT=block keeps its
+    // existing meaning as an equivalent opt-in.
     const enforcement = getPiiEnforcement();
-    const enforced = process.env.NODE_ENV === 'production' || enforcement === 'block';
+    const enforced =
+      process.env.NODE_ENV === 'production' ||
+      process.env.AI_SENSITIVE_DATA_POLICY_MODE === 'enforce' ||
+      enforcement === 'block';
     if (!enforced) {
       // 'off' disables screening entirely. 'audit' exists to make otherwise
       // invisible exposure visible, so it still RECORDS the placement signal
