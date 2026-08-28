@@ -1378,6 +1378,31 @@ export class StatisticsService {
     try {
       const { sampleSize, treatmentEffect, controlResponse, variability, iterations } = params;
 
+      // Fail closed on degenerate inputs. These do not throw on their own; they
+      // silently produce a FABRICATED result that reads as real:
+      //  - iterations < 1  → successCount/iterations is 0/0 = NaN (or a bare 0).
+      //  - sampleSize < 4  → a group of <2 has undefined variance → pooledSE
+      //    issues, and a group of 0 makes means NaN.
+      //  - variability <= 0 → every simulated outcome is the group constant, so
+      //    pooledSE = 0 and tStat = ±Infinity for any non-zero treatmentEffect,
+      //    counting EVERY iteration as a success → a fabricated 100% probability
+      //    of trial success computed from zero real variance.
+      // A power/success-probability figure feeds sample-size justifications; a
+      // fabricated one must never be returned as if computed.
+      if (!Number.isFinite(iterations) || iterations < 1) {
+        throw new Error(`simulateTrialOutcomes: iterations must be >= 1 (got ${iterations}).`);
+      }
+      if (!Number.isFinite(sampleSize) || sampleSize < 4) {
+        throw new Error(
+          `simulateTrialOutcomes: sampleSize must be >= 4 so each arm has >= 2 subjects (got ${sampleSize}).`
+        );
+      }
+      if (!Number.isFinite(variability) || variability <= 0) {
+        throw new Error(
+          `simulateTrialOutcomes: variability must be > 0; zero variance fabricates a 100% success probability (got ${variability}).`
+        );
+      }
+
       // Split sample size between treatment and control
       const treatmentSize = Math.floor(sampleSize / 2);
       const controlSize = sampleSize - treatmentSize;
@@ -1422,12 +1447,14 @@ export class StatisticsService {
         powerEstimate: this.calculateStatisticalPower(sampleSize, treatmentEffect / variability),
       };
     } catch (error) {
+      // Fail closed: never render a computation error as a legitimate-looking
+      // "0% probability of success" result — that is indistinguishable from a
+      // real computed zero and would mislead a sample-size / power
+      // justification. Surface the failure to the caller.
       console.error('Error simulating trial outcomes:', error);
-      return {
-        successProbability: 0,
-        confidenceInterval: { lower: 0, upper: 0 },
-        powerEstimate: 0,
-      };
+      throw error instanceof Error
+        ? error
+        : new Error(`simulateTrialOutcomes failed: ${String(error)}`);
     }
   }
 
