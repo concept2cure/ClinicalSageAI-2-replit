@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-28T13:43:53.331Z",
+  "generatedAt": "2026-08-28T14:03:33.742Z",
   "git": {
-    "sha": "72b2fa6f528c10161e1df25627ab26f63d6d4f78",
+    "sha": "99ef62db7498ef5925717f3dcb752d080ca5e700",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -18,7 +18,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 39,
-    "largeFilesByLines": 89
+    "largeFilesByLines": 90
   },
   "findings": {
     "duplicateBasenames": [
@@ -2657,6 +2657,10 @@
       {
         "file": "server/routes/c2c/projects.ts",
         "lines": 1531
+      },
+      {
+        "file": "server/routes/protocol_routes.ts",
+        "lines": 1516
       }
     ]
   },
@@ -2666,7 +2670,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 400,
       "largeByBytes": 31,
-      "largeByLines": 73
+      "largeByLines": 74
     },
     {
       "owner": "Unassigned (TBD)",
