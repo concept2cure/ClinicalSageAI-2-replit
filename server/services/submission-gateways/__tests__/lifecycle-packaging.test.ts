@@ -149,6 +149,36 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
     }
   });
 
+  it('hashes the shipped bytes for the manifest, ignoring a wrong caller-supplied leaf.md5', async () => {
+    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-md5-'));
+    try {
+      const bytes = pdf('the real content that ships');
+      const docPath = path.join(work, 'general.pdf');
+      await fs.writeFile(docPath, bytes);
+      const bundle = await packageEctdSubmission({
+        region: 'fda', applicationId: 'IND000009', sequence: '0000', submissionType: 'IND',
+        sponsorId: 'IND000009', sponsorName: 'Sponsor', productName: 'Product',
+        outputDir: path.join(work, 'out'), environment: 'staging',
+        skipPdfaConversion: true, // shipped bytes == raw, so md5(bytes) is exact
+        leaves: [{
+          ctdSection: '3.2.S.1', operation: 'new', sourcePath: docPath, fileName: 'general.pdf',
+          title: 'Drug Substance — General Information',
+          // A STALE/WRONG pre-computed checksum. Before the fix this value was
+          // written into index-md5.txt verbatim, not matching the shipped bytes.
+          md5: 'deadbeefdeadbeefdeadbeefdeadbeef',
+        }],
+      });
+      const zip = await JSZip.loadAsync(await fs.readFile(bundle.path));
+      const md5Index = await zip.file('util/index-md5.txt')!.async('string');
+      expect(md5Index).toContain(md5(bytes));
+      expect(md5Index).not.toContain('deadbeefdeadbeefdeadbeefdeadbeef');
+      // The exposed leaf manifest is likewise the real hash.
+      expect((bundle.leafManifest ?? [])[0]?.md5).toBe(md5(bytes));
+    } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  });
+
   it('writes the ICH-required root index-md5.txt = MD5(index.xml) on the canonical packager', async () => {
     const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-rootmd5-'));
     try {

@@ -94,7 +94,11 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   id TEXT PRIMARY KEY, tenant_id INTEGER, user_id INTEGER, action TEXT, table_name TEXT,
   record_id TEXT, actor_id INTEGER, target TEXT, target_type TEXT, target_id TEXT, reason TEXT,
   payload_hash TEXT, ana_action_id TEXT, sha256_chain TEXT,
-  occurred_at TIMESTAMPTZ NOT NULL DEFAULT now(), hmac_seal TEXT
+  occurred_at TIMESTAMPTZ NOT NULL DEFAULT now(), hmac_seal TEXT,
+  old_values   JSON,
+  new_values   JSON,
+  ip_address   TEXT,
+  user_agent   TEXT
 );
 CREATE TABLE IF NOT EXISTS c2c_ana_actions (
   id TEXT PRIMARY KEY, org_id INTEGER NOT NULL, conversation_id TEXT, domain TEXT NOT NULL,

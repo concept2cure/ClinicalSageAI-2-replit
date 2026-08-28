@@ -86,7 +86,11 @@ async function boot(withOutlines = true, withAndaIde = withOutlines) {
       table_name text, record_id text, actor_id text, target text,
       target_type text, target_id text, reason text, payload_hash text,
       ana_action_id text, sha256_chain text,
-      occurred_at timestamptz DEFAULT now(), hmac_seal text
+      occurred_at timestamptz DEFAULT now(), hmac_seal text,
+      old_values   json,
+      new_values   json,
+      ip_address   text,
+      user_agent   text
     );
     INSERT INTO organizations DEFAULT VALUES;
     INSERT INTO users DEFAULT VALUES;

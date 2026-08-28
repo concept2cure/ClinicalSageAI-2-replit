@@ -38,10 +38,17 @@ import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 import { createJourneyDb, type JourneyDb } from '../golden-journeys/harness';
+import { REASON_NOT_STATED } from '../../server/services/c2c/commit-section-to-filing';
 
 const JWT_SECRET = 'commit-section-to-filing-contract';
 process.env.JWT_SECRET = JWT_SECRET;
 process.env.JWT_SECRET_DEV = JWT_SECRET;
+
+/* Sealing is opt-in on AUDIT_HMAC_KEY (>= 32 chars) and production refuses to
+   boot without it — auditSealPosture.ts. Set here so the chained-audit
+   assertions exercise the SEALED path this product actually ships, rather than
+   passing against an unsealed row and calling it tamper-evident. */
+process.env.AUDIT_HMAC_KEY = 'contract-test-audit-hmac-key-not-a-real-secret';
 
 const AUTHOR = {
   // INTEGER, not a uuid. shared/schema.ts declares `users.id serial`, and the
@@ -73,7 +80,11 @@ const PREREQ = `
     table_name text, record_id text, actor_id text, target text,
     target_type text, target_id text, reason text, payload_hash text,
     ana_action_id text, sha256_chain text,
-    occurred_at timestamptz DEFAULT now(), hmac_seal text
+    occurred_at timestamptz DEFAULT now(), hmac_seal text,
+    old_values   json,
+    new_values   json,
+    ip_address   text,
+    user_agent   text
   );
   INSERT INTO organizations (id, name) VALUES (1, 'contract-org');
   INSERT INTO users (id, name, email) VALUES ('${AUTHOR.id}', '${AUTHOR.name}', '${AUTHOR.email}');
@@ -191,6 +202,12 @@ const save = (code: string, content: string) =>
     content, changeReason: 'drafting the overview',
   });
 
+/** A save exactly as the document editor makes it: no reason, because the
+ *  editor has no field to give one. Every assertion above sends a reason, so
+ *  the path nearly every real save takes had no coverage at all. */
+const saveWithoutReason = (code: string, content: string) =>
+  as(request(app).patch(`/api/authoring/sections/${sectionIds[code]}`)).send({ content });
+
 describe('a save in the editor reaches the filing', () => {
   it('writes the text into the governed section', async () => {
     const res = await save('2.5', 'The investigational product was well tolerated.');
@@ -255,6 +272,168 @@ describe('a save in the editor reaches the filing', () => {
       `SELECT content FROM authoring_sections WHERE id = $1`, [sectionIds['2.5']],
     );
     expect(row.content).toBe('Revised: no dose-limiting toxicity was observed.');
+  }, T);
+});
+
+describe('the reason for change is recorded, never invented', () => {
+  it('records that no reason was given, rather than inventing one', async () => {
+    /* The path nearly every real save takes. Only AuthoringAiDraft sends a
+       `changeReason`; the document editor has no field for one, so this is
+       what the ledger receives on an ordinary save.
+
+       It used to receive the literal 'authored in the document editor' —
+       supplied here, not by anyone — sitting in the reason column of the
+       filing's immutable version ledger, indistinguishable on the page an
+       inspector reads from a sentence a person actually wrote. It also
+       defeated the gate built for this: the snapshot trigger RAISES on an
+       empty app.reason ("Part 11 reason-for-change is mandatory"), and a
+       constant satisfies that on every save, so the mandatory-reason gate had
+       never once fired for this editor.
+
+       The trigger will not accept empty, so the honest value has to SAY it was
+       not stated — the same answer `author_kind` gives with 'unspecified'
+       rather than guessing 'human'. Asserted against the exported constant so
+       the check cannot drift from the writer. */
+    const res = await saveWithoutReason('2.5', 'Saved with no reason given.');
+    expect(res.status).toBe(200);
+
+    const versions = await q<{ reason: string }>(
+      `SELECT reason FROM c2c_document_section_versions ORDER BY version DESC LIMIT 1`,
+    );
+    expect(versions[0].reason).toBe(REASON_NOT_STATED);
+    expect(versions[0].reason).not.toMatch(/authored in the document editor/i);
+  }, T);
+
+  it('still records a real reason verbatim when the save gives one', async () => {
+    /* The working path must keep working: the fix must not flatten a stated
+       reason into the not-stated marker. */
+    const res = await save('2.5', 'Saved with a reason this time.');
+    expect(res.status).toBe(200);
+    const [newest] = await q<{ reason: string }>(
+      `SELECT reason FROM c2c_document_section_versions ORDER BY version DESC LIMIT 1`,
+    );
+    expect(newest.reason).toBe('drafting the overview');
+  }, T);
+
+  it('treats a whitespace-only reason as not stated', async () => {
+    /* "   " is not a reason. Storing it would satisfy the trigger's non-empty
+       check while telling a reader nothing, which is the same fabrication in a
+       quieter form. */
+    const res = await as(request(app).patch(`/api/authoring/sections/${sectionIds['2.5']}`))
+      .send({ content: 'Saved with a blank reason.', changeReason: '   ' });
+    expect(res.status).toBe(200);
+    const [newest] = await q<{ reason: string }>(
+      `SELECT reason FROM c2c_document_section_versions ORDER BY version DESC LIMIT 1`,
+    );
+    expect(newest.reason).toBe(REASON_NOT_STATED);
+  }, T);
+
+});
+
+describe('a section save reaches the hash-chained ledger', () => {
+  /* The section save is the most frequent governed act in the product and the
+     one that changes what the filing SAYS. It reached neither ledger.
+     `createAuditTrail` wrote the unchained `authoring_audit_trail` row and
+     then, because the handler correctly passes its own transaction client,
+     skipped the mirror entirely — the guard was `if (executor === pool)`. So
+     an edit to a filed document left NO tamper-evident trace: nothing for
+     verifyAuditChain to attest, and `authoring_audit_trail` carries no chain,
+     no HMAC and no immutability trigger.
+
+     Freeze, e-sign and sign were each fixed at their own call sites and are
+     the reason the gap was invisible — the three loudest acts were covered
+     and the everyday one was not. */
+  it('writes a chained, sealed row for the save', async () => {
+    const before = await q<{ n: string }>(`SELECT count(*) AS n FROM audit_logs`);
+    const res = await save('2.6', 'A change that must leave a tamper-evident trace.');
+    expect(res.status).toBe(200);
+
+    const rows = await q<{
+      action: string; sha256_chain: string; hmac_seal: string;
+      record_id: string; tenant_id: number; new_values: any;
+    }>(`SELECT action, sha256_chain, hmac_seal, record_id, tenant_id, new_values
+          FROM audit_logs ORDER BY occurred_at DESC, id DESC LIMIT 1`);
+
+    expect(
+      Number((await q<{ n: string }>(`SELECT count(*) AS n FROM audit_logs`))[0].n),
+      'the save wrote no chained audit row at all',
+    ).toBeGreaterThan(Number(before[0].n));
+
+    const [row] = rows;
+    expect(row.action).toBe('authoring.section.UPDATE');
+    expect(row.record_id).toBe(sectionIds['2.6']);
+    expect(row.tenant_id).toBe(1);
+    // The chain and the seal are what make it tamper-evident; a row with
+    // either missing is an ordinary log line wearing the name.
+    expect(row.sha256_chain, 'no chain hash — the row is not linked').toBeTruthy();
+    expect(row.hmac_seal, 'no HMAC seal — the row is not sealed').toBeTruthy();
+  }, T);
+
+  it('writes exactly ONE chained row per save, not one per ledger', async () => {
+    /* Freeze, e-sign and sign write their own richer chained row, so
+       `createAuditTrail` must not add a second for them — the chain is the
+       tamper-evidence, and double-counting the three acts that matter most is
+       not a cosmetic duplicate. The opt-out is explicit
+       (`chainedRowWrittenByCaller`), and this pins that an ordinary save,
+       which does NOT opt out, still yields exactly one. */
+    const before = Number((await q<{ n: string }>(`SELECT count(*) AS n FROM audit_logs`))[0].n);
+    const res = await save('2.6', 'One act, one entry in the chain.');
+    expect(res.status).toBe(200);
+    const after = Number((await q<{ n: string }>(`SELECT count(*) AS n FROM audit_logs`))[0].n);
+    expect(after - before).toBe(1);
+  }, T);
+
+  it('a freeze — which writes its OWN chained row — still gets exactly one', async () => {
+    /* This covers the opt-out, and it exists because the test above did not.
+       Asserting "exactly one row" on an ordinary save cannot fail when the
+       opt-out is ignored: an ordinary save never opts out, so inverting
+       `chainedRowWrittenByCaller` left that assertion green. (Verified by
+       inverting it and watching all thirteen stay green.)
+
+       Freeze, e-sign and sign each write a richer, action-specific chained row
+       at their own call site, so `createAuditTrail` must NOT add a second. A
+       duplicate here is not cosmetic: the chain is the tamper-evidence, and
+       double-counting the three acts that matter most corrupts the census a
+       reviewer takes from it. */
+    const doc = await as(request(app).post('/api/authoring/docs')).send({
+      title: 'Doc to freeze', module: 'M2',
+    });
+    const freezeDocId = doc.body.document.id;
+
+    const before = Number((await q<{ n: string }>(`SELECT count(*) AS n FROM audit_logs`))[0].n);
+    const res = await as(request(app).post(`/api/authoring/docs/${freezeDocId}/freeze`))
+      .send({ reason: 'Locked for submission.' });
+    expect(res.status, 'the freeze did not succeed, so this proves nothing').toBe(200);
+
+    const rows = await q<{ action: string }>(
+      `SELECT action FROM audit_logs WHERE record_id = $1 ORDER BY occurred_at`, [freezeDocId],
+    );
+    expect(rows.map((r) => r.action)).toEqual(['authoring.document.freeze']);
+
+    const after = Number((await q<{ n: string }>(`SELECT count(*) AS n FROM audit_logs`))[0].n);
+    expect(after - before, 'the freeze wrote more than one row into the chain').toBe(1);
+  }, T);
+
+  it('takes the whole save down if the chained row cannot be written', async () => {
+    /* Fail-closed is the point: an un-audited change to a filed document must
+       not commit. Proven by making the audit write itself impossible, and
+       asserting the CONTENT did not move — not by mocking, so the rollback is
+       the database's. */
+    const before = await q<{ content: string }>(
+      `SELECT content FROM authoring_sections WHERE id = $1`, [sectionIds['2.6']],
+    );
+    await q(`ALTER TABLE audit_logs ADD CONSTRAINT tmp_no_authoring
+               CHECK (action <> 'authoring.section.UPDATE') NOT VALID`);
+    try {
+      const res = await save('2.6', 'This must not survive without an audit row.');
+      expect(res.status).toBe(500);
+    } finally {
+      await q(`ALTER TABLE audit_logs DROP CONSTRAINT tmp_no_authoring`);
+    }
+    const after = await q<{ content: string }>(
+      `SELECT content FROM authoring_sections WHERE id = $1`, [sectionIds['2.6']],
+    );
+    expect(after[0].content).toBe(before[0].content);
   }, T);
 });
 

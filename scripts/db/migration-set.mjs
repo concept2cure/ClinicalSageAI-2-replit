@@ -1599,6 +1599,29 @@ export const C2C_MIGRATION_FILES = [
   // there). Proven by tests/db/vault-ingest.dbtest.ts.
   'db/migrations/20260828_program_org_resolution_canonical.sql',
 
+  // ── Orphaned org-GUC policies on the IND section-tracking tables ───────────
+  // 20260220_ind_section_tracking.sql created five *_org_policy policies keyed
+  // on `app.organization_id`, a GUC nothing in the application sets — so they
+  // have never granted anyone access. They are not an outage (the canonical
+  // tenant_isolation_policy is PERMISSIVE and ORs alongside them, measured: own
+  // org sees its row, another org sees none) but their cast is unguarded, so
+  // one `set_config('app.organization_id','')` anywhere takes all five tables
+  // down with 22P02 — both expressions are evaluated no matter which one grants.
+  // Dropped rather than repaired: a repair would restate what the sweep already
+  // says. Ordered before the sweep so a table is never left without a policy.
+  'db/migrations/20260828_drop_orphaned_org_guc_policies.sql',
+
+  // ── Non-public tenant policies must fail CLOSED (ordered before the sweep) ──
+  // The gcc 074-078 migrations and the earlier form of the non-public sweep
+  // emitted `<col> = COALESCE(<resolver>, <col>)`, which collapses to
+  // `<col> = <col>` — TRUE for every row — whenever the org GUC is unset, empty
+  // or not a uuid. Measured as app_service with app.rls_enforce=on: an unset
+  // GUC and a GUC of '42' each returned BOTH tenants' rows. This rewrites them
+  // to the shadow-clause form the 793 public policies already use, so they do
+  // not filter when enforcement is off and filter strictly when it is on.
+  // Idempotent; matches on shape, not on policy name.
+  'db/migrations/20260828_fail_closed_org_coalesce_policies.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
