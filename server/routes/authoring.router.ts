@@ -5529,6 +5529,20 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
           })
         );
       }
+      /* Word holds footnotes on the DOCUMENT, keyed by an id the referencing
+         run cites, so they are collected across ALL sections here and handed to
+         `new Document({ footnotes })` below. Ids must be unique across the file;
+         one counter for the whole export is the only way to guarantee that.
+         Identical note text cited twice reuses its id — that is what a writer
+         means by "the same note", and it is what Word does natively. */
+      const footnoteText = new Map<string, number>();
+      const footnoteSink = (noteText: string): number => {
+        const hit = footnoteText.get(noteText);
+        if (hit !== undefined) return hit;
+        const id = footnoteText.size + 1;
+        footnoteText.set(noteText, id);
+        return id;
+      };
       for (const { section, blocks } of sectionBlocks) {
         children.push(
           new Paragraph({
@@ -5536,7 +5550,9 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
             heading: HeadingLevel.HEADING_1,
           })
         );
-        children.push(...blocksToDocx(docxNs, blocks, exportImages, { revisionDate: exportedAt }));
+        children.push(
+          ...blocksToDocx(docxNs, blocks, exportImages, { revisionDate: exportedAt, footnoteSink })
+        );
       }
 
       /* §11.50(b) manifestation. Ordered after the content so the record reads
@@ -5558,6 +5574,20 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
            inert and numbered steps silently render unnumbered — which is the
            shape of the bug this replaced. */
         numbering: orderedListNumbering(docxNs),
+        /* Real Word footnotes: auto-numbered, at the foot of the page they are
+           cited on, and renumbered by Word when content moves. Every Module 3
+           specification, batch-analysis and stability table in a submission
+           carries them, and until now the editor could not express one at all. */
+        ...(footnoteText.size > 0
+          ? {
+              footnotes: Object.fromEntries(
+                [...footnoteText.entries()].map(([text, id]) => [
+                  String(id),
+                  { children: [new Paragraph({ text })] },
+                ])
+              ),
+            }
+          : {}),
         sections: [{ children }],
       });
       fileContent = await Packer.toBuffer(docxDoc);
