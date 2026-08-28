@@ -187,7 +187,15 @@ export function assessEstarTemplateReadiness(
     requiredFileName,
     programVersion: descriptor ? currentVersionFor(descriptor.family)?.version : undefined,
     present: input.present,
+    // `available` is the TRUTH signal — whether the official FDA eSTAR template
+    // is actually present so the platform can produce the official PDF. Every
+    // consumer deciding "official eSTAR producible" MUST gate on `available`.
     available,
+    // `cleared` reflects POLICY ENFORCEMENT ONLY (blockers.length === 0), which
+    // fires solely when requireTemplate is set AND the build is production. It
+    // is `true` by default (requireTemplate off) even when the template is
+    // ABSENT — so `cleared` must NOT be read as "the template exists / official
+    // eSTAR is producible". Use `available` for that.
     cleared: blockers.length === 0,
     blockers,
   };
