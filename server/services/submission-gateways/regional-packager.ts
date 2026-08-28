@@ -722,10 +722,26 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     }
   }
 
+  // Per-sequence leaf manifest for cross-sequence lifecycle diffing: each shipped
+  // leaf's CTD section + final href + md5 (+ op/title). The NEXT sequence loads
+  // this (loadPriorSequenceManifest) and diffs against it to derive
+  // replace/append/delete. Raw shape (not built via sequence-manifest) to keep
+  // the packager free of an ectd/ import; the ectd-side caller runs
+  // buildLeafManifest over it before persisting.
+  const leafManifest = prepared.map((p) => ({
+    ctdSection: p.leaf.ctdSection,
+    fileName: p.leaf.fileName,
+    href: p.relPath,
+    md5: p.ref.md5,
+    ...(p.leaf.operation ? { operation: p.leaf.operation } : {}),
+    ...(p.leaf.title ? { title: p.leaf.title } : {}),
+  }));
+
   return {
     path:      outPath,
     sha256:    createHash('sha256').update(buffer).digest('hex'),
     sizeBytes: buffer.length,
+    leafManifest,
     format,
     displayName: `${input.productName} · ${region.toUpperCase()} ${submissionTypeLabel} #${input.sequence}`,
     submissionGrade,

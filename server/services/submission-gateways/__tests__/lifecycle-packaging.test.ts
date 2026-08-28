@@ -118,6 +118,37 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
     }
   });
 
+  it('exposes a per-sequence leafManifest that round-trips into prior leaves for lifecycle diffing', async () => {
+    const { manifestToPriorLeaves, buildLeafManifest } = await import('../../ectd/sequence-manifest');
+    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-manifest-'));
+    try {
+      const docPath = path.join(work, 'general.pdf');
+      await fs.writeFile(docPath, pdf('general'));
+      const bundle = await packageEctdSubmission({
+        region: 'fda', applicationId: 'IND000009', sequence: '0000', submissionType: 'IND',
+        sponsorId: 'IND000009', sponsorName: 'Sponsor', productName: 'Product',
+        outputDir: path.join(work, 'out'), environment: 'staging',
+        leaves: [{
+          ctdSection: '3.2.S.1', operation: 'new', sourcePath: docPath, fileName: 'general.pdf',
+          title: 'Drug Substance — General Information', md5: md5(pdf('general')),
+        }],
+      });
+      // The packager exposes the shipped leaf's section + final href + md5.
+      expect(Array.isArray(bundle.leafManifest)).toBe(true);
+      const leafManifest = bundle.leafManifest ?? [];
+      const entry = leafManifest.find((l) => l.ctdSection === '3.2.S.1')!;
+      expect(entry).toBeTruthy();
+      expect(entry.href).toMatch(/^m3\/.+general\.pdf$/);
+      expect(entry.md5).toBe(md5(pdf('general')));
+      // Round-trips: this is exactly what ectd-compile persists as leaf_manifest,
+      // and what the NEXT sequence loads to compute replace/append/delete.
+      const priors = manifestToPriorLeaves(buildLeafManifest(leafManifest));
+      expect(priors.find((p) => p.ctdSection === '3.2.S.1')?.md5).toBe(md5(pdf('general')));
+    } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  });
+
   it('writes the ICH-required root index-md5.txt = MD5(index.xml) on the canonical packager', async () => {
     const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-rootmd5-'));
     try {
