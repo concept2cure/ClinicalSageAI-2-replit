@@ -501,7 +501,27 @@ jobs:
       # one that was never executed.
       - name: Run ESLint
         if: '!cancelled()'
-        run: npm run lint
+        # JSON to a file so the warning ratchet below reuses THIS run instead
+        # of linting the tree twice; the exit code still enforces 0 errors.
+        # Readable output for humans is re-rendered only on failure.
+        run: npx eslint . --format json --output-file eslint-report.json
+
+      - name: Render ESLint findings (failure only)
+        if: failure()
+        run: npm run lint || true
+
+      - name: Guardrails — ESLint warning ratchet (may only shrink)
+        if: '!cancelled()'
+        run: npm run ci:eslint-ratchet
+        env:
+          ESLINT_RATCHET_REPORT_JSON: eslint-report.json
+
+      # Every node:test suite under scripts/ci/__tests__ — the guards' own
+      # fail-closed proofs — runs on every push, so a guard whose detection
+      # logic regresses cannot keep passing silently.
+      - name: Guardrails — CI guard self-tests
+        if: '!cancelled()'
+        run: npm run test:ci-scripts
 
       - name: Run TypeScript check (no regression vs baseline)
         if: '!cancelled()'
