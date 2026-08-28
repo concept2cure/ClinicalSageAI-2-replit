@@ -15,7 +15,7 @@ import request from 'supertest';
 
 const query = vi.fn();
 vi.mock('../../db', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
-vi.mock('../../services/auditService', () => ({ default: { logAction: vi.fn() } }));
+vi.mock('../../services/auditService', () => ({ default: { logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) } }));
 
 import mdxQmsRouter from '../mdx-qms';
 

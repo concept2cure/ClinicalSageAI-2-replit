@@ -32,8 +32,10 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
+import type { DataState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
+import { assessmentStateFor, mayReassure } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 // tmfArtifactName maps a reference-model code → its human name. It reads the
@@ -56,11 +58,16 @@ function readinessReportMd(
   scope: 'essential' | 'all',
   R: TmfCompletenessResult,
   missing: MissingDoc[],
+  /* The verdict the SURFACE reached, passed in rather than re-derived from
+     `R.ready`. The offline report is the same claim in a file the reader keeps,
+     so it must not be able to say INSPECTION-READY over an assessment the
+     screen declined to call clear. */
+  ready: boolean,
 ): string {
   let s = '# Trial Master File — Inspection-Readiness Package\n\n';
   s += '**Trial:** ' + trialId + '\n\n';
   s += '**Reference model:** DIA TMF Reference Model (ICH E6(R2) §8)  --  **Scope:** ' + (scope === 'all' ? 'All artifacts' : 'Essential (ICH E6(R2) §8)') + '\n\n';
-  s += '**Verdict (completeness):** ' + (R.ready ? 'INSPECTION-READY' : 'NOT INSPECTION-READY') + '  --  Zones complete ' + R.summary.zonesComplete + '/' + R.summary.zoneCount + '  --  Open gaps ' + R.summary.totalMissing + '\n\n';
+  s += '**Verdict (completeness):** ' + (ready ? 'INSPECTION-READY' : 'NOT INSPECTION-READY') + '  --  Zones complete ' + R.summary.zonesComplete + '/' + R.summary.zoneCount + '  --  Open gaps ' + R.summary.totalMissing + '\n\n';
   s += '## Zone index\n\n| Zone | Name | Filed | Status |\n|---|---|---|---|\n';
   (R.zones || []).forEach((z) => { s += '| ' + z.number + ' | ' + z.name + ' | ' + z.present.length + '/' + z.required.length + ' | ' + (z.complete ? 'complete' : (z.required.length - z.present.length) + ' open') + ' |\n'; });
   s += '\n## Open essential documents\n\n';
@@ -95,7 +102,55 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
     ? '/api/etmf/trials/' + encodeURIComponent(tid) + '/completeness?scope=' + scope
     : null;
   const completeness = useLiveData<TmfCompletenessResult>(completenessPath, [completenessPath, reloadKey]);
-  const R = completeness.data;
+  // The exact read this render is asking for. `reloadKey` is part of the key
+  // because a successful file re-reads the SAME path: until that read lands,
+  // the counts in hand are the pre-filing ones.
+  const fetchKey = completenessPath ? completenessPath + '#' + reloadKey : null;
+
+  /* ── Correlating the payload in hand with the trial named RIGHT NOW ────────
+     THE FINDING. Every sentence below is attributed by name to `tid`, and `tid`
+     changes SYNCHRONOUSLY as the user edits the trial-identifier input — while
+     `completeness.data` still holds the PREVIOUS trial's assessment.
+     `useLiveData` merges `{ ...s, loading: true }` on a dependency change
+     (dataConnect.tsx), which preserves `data`, `error` and `empty` from the
+     previous read, so the old payload outlives the whole round trip of the new
+     fetch. The guard here used to be `!R`, and a previous trial's payload is
+     truthy, so for the full fetch latency the headline read
+
+       "<newly typed trial>'s TMF holds every required essential document
+        across all <previous trial's> zones -- complete on a completeness basis"
+
+     with "Every required document is filed" in the reassure slot and "Live from
+     the trial's filed TMF artifacts" as the caption. Gating on
+     `completeness.loading` narrows that window but does not close it: the hook
+     flips `loading` from its effect, one commit later, so the commit React can
+     paint immediately after the keystroke still holds `loading: false` and the
+     previous trial's `data`. The same carry-over attributes a previous trial's
+     failed read, or its honest empty, to the newly named one. Changing `scope`
+     does all of the above too — it is part of the path.
+
+     The correlation is by object identity, the one signal available without
+     changing the shared hook: `useLiveData` builds a NEW state object at every
+     settle, and a settle belonging to a superseded read cannot arrive (its
+     effect cleanup cancels it first). So the object held at the moment the
+     fetch key changed is by construction the PREVIOUS read's; any later object
+     that is no longer loading belongs to this one. */
+  const fetchKeyRef = useRef<string | null>(fetchKey);
+  const supersededRef = useRef<DataState<TmfCompletenessResult> | null>(null);
+  if (fetchKeyRef.current !== fetchKey) {
+    fetchKeyRef.current = fetchKey;
+    supersededRef.current = completeness;
+  }
+  /** Does the payload in hand belong to the read this render is asking for? */
+  const inSync = completeness !== supersededRef.current && !completeness.loading;
+
+  // Nothing below reads `completeness` directly. These four are the read AS IT
+  // APPLIES to the trial and scope named now; uncorrelated means still loading,
+  // never "complete", never "failed", never "nothing filed".
+  const readLoading = !inSync;
+  const readError = inSync ? completeness.error : undefined;
+  const readEmpty = inSync ? completeness.empty : false;
+  const R = inSync ? completeness.data : null;
 
   const missing = useMemo<MissingDoc[]>(() => {
     const out: MissingDoc[] = [];
@@ -103,6 +158,33 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
     return out;
   }, [R]);
   const incompleteZones = (R?.zones || []).filter((z) => !z.complete).length;
+
+  /* ── What counts as "an assessment ran" (assessmentState.ts) ───────────────
+     Positive evidence, never a restatement of emptiness. Here it is the
+     DENOMINATOR the backend reports: `summary.zoneCount` and
+     `summary.totalRequired` are the reference-model zones and required
+     artifacts it actually evaluated this trial's filings against. A payload
+     with a zero denominator evaluated nothing — and `ready` is `true` on it,
+     which is how "holds every required essential document across all 0 DIA
+     Reference-Model zones -- complete" could be presented as the clean picture
+     an inspector would see. Deliberately NOT derived from `missing.length === 0`;
+     that inference is the defect. */
+  const assessmentRan = Boolean(R && R.summary.zoneCount > 0 && R.summary.totalRequired > 0);
+
+  /* Open gaps. A payload the backend did not call `ready` counts as carrying at
+     least one finding even where the zone arrays enumerated none, so a gap in
+     the enumeration can never be read as a clear verdict. */
+  const enumeratedGaps = R ? Math.max(missing.length, R.summary.totalMissing || 0) : 0;
+  const openGaps = R && !R.ready ? Math.max(1, enumeratedGaps) : enumeratedGaps;
+
+  // loading / unreadable / not-assessed / assessed-with-findings / assessed-clear.
+  const tmfState = assessmentStateFor({ loading: readLoading, error: readError }, {
+    scopeExists: Boolean(tid),
+    findingCount: openGaps,
+    assessmentRan,
+  });
+  /** The completeness verdict. Only an assessment that ran may read clear. */
+  const clear = tmfState === 'assessed-clear';
 
   const reload = () => setReloadKey((k) => k + 1);
 
@@ -255,7 +337,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
     setDl(null);
     const finish = (kind: string) => { setBusy(false); setDl(kind); setTimeout(() => setDl(null), 3200); };
     const downloadReport = () => {
-      const md = readinessReportMd(tid, scope, R, missing);
+      const md = readinessReportMd(tid, scope, R, missing, clear);
       downloadBlob(tid + '_inspection-readiness.md', new Blob([md], { type: 'text/markdown' }));
     };
     try {
@@ -308,46 +390,68 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
           title="Name a trial to assess its TMF"
           hint="Enter a trial identifier above. AnA computes inspection readiness from that trial's filed TMF artifacts against the DIA TMF Reference Model (ICH E6(R2) §8) — the essential-document completeness an inspector would check."
         />
-      ) : completeness.error ? (
+      ) : tmfState === 'loading' ? (
+        /* First, not last. This branch now also catches the whole window in
+           which a payload is in hand but belongs to a different trial or scope
+           — the window the assessed block used to render through. */
+        <div className="scaf-note" style={{ padding: '18px 10px' }}>
+          Reading {tid}'s TMF completeness… Nothing is stated about this trial's readiness until the read lands.
+        </div>
+      ) : tmfState === 'unreadable' ? (
         <EmptyState
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load inspection readiness"
           hint="The eTMF completeness service didn't respond. Readiness is computed from this trial's filed artifacts (org-scoped) — sign in and retry, or check the service is reachable."
         />
-      ) : !R ? (
-        // `empty` = the fetch resolved with no payload (a genuine honest empty);
-        // otherwise the fetch is in flight (incl. the frame right after the trial
-        // id changes, before the hook flips `loading`) → show loading, not empty.
-        completeness.empty ? (
-          <EmptyState
-            icon={I.fileText}
-            title={'No completeness data for ' + tid + ' yet'}
-            hint="Nothing has been filed against this trial's TMF yet. File the essential documents below and the readiness picture will populate."
-          />
-        ) : (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading inspection readiness…</div>
-        )
+      ) : !R || !assessmentRan ? (
+        /* Nothing was assessed. Two ways to get here, both honest empties of a
+           SETTLED read: no payload at all, or a payload whose reference-model
+           denominator is zero (nothing was evaluated, so `ready: true` on it
+           states nothing). Neither may borrow the vocabulary of a clean file. */
+        <EmptyState
+          icon={I.fileText}
+          title={'No TMF assessment for ' + tid + ' yet'}
+          hint={readEmpty
+            ? "The completeness service returned no assessment for this trial identifier, so nothing has been assessed against the DIA TMF Reference Model and no readiness verdict is stated here. Check the identifier, or file this trial's essential documents and the readiness picture will populate."
+            : 'The completeness read returned no reference-model zones or required artifacts for this trial, so nothing was evaluated against the DIA TMF Reference Model (ICH E6(R2) §8). No readiness verdict is stated on an assessment with nothing in it.'}
+        />
       ) : (
         <>
+          {/* Every claim in this lead is now gated on `clear` / `tmfState`
+              rather than on `R.ready` alone: `R` is the correlated payload, so
+              reaching this block is itself evidence that the assessment on
+              screen was computed for the trial and scope named in it. */}
           <AnswerLead
-            tone={R.ready ? 'good' : 'urgent'}
+            tone={clear ? 'good' : 'urgent'}
             eyebrow={"Whether " + tid + "'s TMF is complete for inspection"}
-            headline={R.ready
+            headline={clear
               ? <>{tid}'s TMF holds every required {scope === 'all' ? 'artifact' : 'essential document'} across all {R.summary.zoneCount} DIA Reference-Model zones -- <b>complete</b> on a completeness basis.</>
               : <>{tid}'s TMF is missing <b>{R.summary.totalMissing} required {scope === 'all' ? 'artifact' : 'essential'} document{R.summary.totalMissing === 1 ? '' : 's'}</b> across {incompleteZones} zone{incompleteZones === 1 ? '' : 's'}.</>}
             body={<>This assessment is <b>completeness only</b> -- which DIA TMF Reference Model {scope === 'all' ? 'artifacts are' : 'essential documents are'} filed vs missing for this trial, computed from its filed artifacts. Timeliness and QC signals aren't persisted yet, so they are not part of this verdict.</>}
-            reassure={R.ready ? 'Every required document is filed — this is the clean completeness picture an inspector would see.' : 'None of these are findings yet — they are gaps you can close before an inspector ever opens the file.'}
-            action={{ label: R.ready ? 'Generate the inspection package' : 'Generate the readiness package', onClick: generatePackage }}
-            secondary="Live from the trial's filed TMF artifacts."
+            /* The single most reassuring sentence on the surface. It may be
+               spoken from one state only — an assessment that ran and came back
+               with nothing open — which is what mayReassure gates on. */
+            reassure={mayReassure(tmfState) ? 'Every required document is filed — this is the clean completeness picture an inspector would see.' : 'None of these are findings yet — they are gaps you can close before an inspector ever opens the file.'}
+            action={{ label: clear ? 'Generate the inspection package' : 'Generate the readiness package', onClick: generatePackage }}
+            /* Was the unconditional string "Live from the trial's filed TMF
+               artifacts." — the surface's own liveness guarantee, carrying no
+               gate whatsoever, printed under counts that during the carry-over
+               window belonged to a different trial. It now names the trial and
+               scope the assessment on screen was actually computed for, and is
+               reachable only from the correlated, assessed state. */
+            secondary={'Read live from ' + tid + "'s filed TMF artifacts -- " + scopeLabel + ' scope.'}
           />
 
           {/* AnA's read across the inspection lenses */}
           <div className="etmf-lenses">
-            <div className={'etmf-lens' + (R.ready ? ' ok' : ' warn')}>
+            {/* `clear` rather than `R.ready`: one verdict variable for the whole
+                surface, so the lens, the cover badge and the headline cannot
+                disagree about whether this file reads clean. */}
+            <div className={'etmf-lens' + (clear ? ' ok' : ' warn')}>
               <div className="etmf-lens-k">{I.checkSquare} Completeness</div>
               <div className="etmf-lens-v">{R.summary.zonesComplete}/{R.summary.zoneCount} zones</div>
-              <div className="etmf-lens-s">{R.ready ? 'All essentials filed' : R.summary.totalMissing + ' essential' + (R.summary.totalMissing === 1 ? '' : 's') + ' open'}</div>
+              <div className="etmf-lens-s">{clear ? 'All essentials filed' : R.summary.totalMissing + ' essential' + (R.summary.totalMissing === 1 ? '' : 's') + ' open'}</div>
             </div>
             {/* Timeliness + Quality have NO backend on the trials/:trialId path:
                 tmf_artifact_filings stores only artifact CODE + filedAt (no
@@ -440,7 +544,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
                 </div>
                 <div className="cm-doc-body etmf-doc-body">
                   <div className="etmf-cover">
-                    <div className="etmf-cover-badge" data-ready={R.ready || undefined}>{R.ready ? 'INSPECTION-READY' : 'NOT INSPECTION-READY'}</div>
+                    <div className="etmf-cover-badge" data-ready={clear || undefined}>{clear ? 'INSPECTION-READY' : 'NOT INSPECTION-READY'}</div>
                     <h2>Trial Master File — Inspection-Readiness Package</h2>
                     <div className="etmf-cover-meta">
                       <span>Trial {tid}</span><span>DIA TMF Reference Model (ICH E6(R2) §8)</span>
@@ -456,7 +560,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
 
                   <h3>1 — Readiness verdict (completeness)</h3>
-                  <p>{R.ready
+                  <p>{clear
                     ? <>This trial's TMF holds every required {scope === 'all' ? 'artifact' : 'essential document'} across all {R.summary.zoneCount} DIA Reference-Model zones. On a completeness basis it is <b>inspection-ready</b>.</>
                     : <>This trial's TMF is missing <b>{R.summary.totalMissing} required {scope === 'all' ? 'artifact' : 'essential'} document{R.summary.totalMissing === 1 ? '' : 's'}</b> across {incompleteZones} zone{incompleteZones === 1 ? '' : 's'}. It is <b>not yet inspection-ready</b>; the open items are listed in §3.</>}</p>
 

@@ -1,0 +1,49 @@
+/**
+ * Regression guard: the SMART-forms generator must never assert a regulatory
+ * fact the filer did not provide. A 510(k) cover sheet that fabricates a device
+ * class, an affirmative clinical-studies certification, or a fee posture is a
+ * legal misstatement to FDA. Pins the fix in "fix(fda-forms): stop fabricating
+ * device class, clinical-studies certification, and fee posture".
+ */
+import { describe, it, expect } from 'vitest';
+import FDAFormGenerator from '../FDAFormGenerator';
+
+describe('FDAFormGenerator — no fabricated regulatory content', () => {
+  it('Form 3514 does not fabricate a device classification of "Class II"', async () => {
+    const gen = new FDAFormGenerator();
+    // No fda510kProject, no formData → classification was never established.
+    const out = await gen.generateForm3514({});
+    expect(out.formData.deviceClass).toBe('Not Specified');
+    expect(out.formData.deviceClass).not.toBe('Class II');
+    // The fabricated value must not be counted as a completed required field.
+    // (required: applicantName, deviceName, deviceClass, productCode — all unset)
+    expect(out.completeness).toBe(0);
+  });
+
+  it('Form 3654 does not auto-certify "clinical studies WERE NOT conducted"', async () => {
+    const gen = new FDAFormGenerator();
+    // No explicit certification input → the attestation was never made.
+    const out = await gen.generateForm3654({});
+    expect(out.formData.clinicalStudies).toBeUndefined();
+    // Neither the "WERE conducted" nor the "WERE NOT conducted" box is pre-checked.
+    const html: string = out.htmlContent;
+    const notConductedIdx = html.indexOf('WERE NOT conducted');
+    const notConductedInput = html.lastIndexOf('<input', notConductedIdx);
+    expect(html.slice(notConductedInput, notConductedIdx)).not.toContain('checked');
+    const conductedIdx = html.indexOf('WERE conducted');
+    const conductedInput = html.lastIndexOf('<input', conductedIdx);
+    expect(html.slice(conductedInput, conductedIdx)).not.toContain('checked');
+  });
+
+  it('Form 3601 does not fabricate the fee amount, category, or small-business status', async () => {
+    const gen = new FDAFormGenerator();
+    // No feeInfo → the fee posture was never provided.
+    const out = await gen.generateForm3601({});
+    expect(out.formData.feeAmount).toBeNull();
+    expect(out.formData.feeCategory).toBe('Not Specified');
+    expect(out.formData.smallBusiness).toBeUndefined();
+    // The full standard fee must not appear as a fabricated default.
+    expect(out.htmlContent).not.toContain('19,870');
+    expect(out.completeness).toBe(0);
+  });
+});

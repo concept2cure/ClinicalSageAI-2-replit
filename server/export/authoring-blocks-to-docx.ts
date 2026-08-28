@@ -61,28 +61,77 @@ export function orderedListNumbering(D: DocxNs) {
   };
 }
 
-const REDLINE_INSERT = '067647';
-const REDLINE_DELETE = 'B42318';
+/**
+ * Unresolved tracked changes export as REAL Word revisions (w:ins / w:del),
+ * not as coloured text.
+ *
+ * WHAT THIS USED TO DO, and why it mattered. A pending insertion was emitted as
+ * a TextRun coloured 067647 and a deletion as one coloured B42318 with a
+ * strike. It looked like a redline and was not one. Everything a reviewer does
+ * with a redline in Word — Accept, Reject, Next, Accept All, the reviewing pane,
+ * filtering by author — is driven by w:ins / w:del elements. Against coloured
+ * text the entire Review ribbon is inert.
+ *
+ * That is the industry's review loop, not an optional nicety: a medical writer
+ * sends a draft out, QC and the regulatory reviewer work in Word, and the
+ * document comes back with revisions to accept. Exporting colours meant the
+ * reviewer had to retype every change by hand, and meant any change they did not
+ * notice stayed in the file as green text — a rendering artefact that then went
+ * into a submission.
+ *
+ * Word will only attribute a revision (and enable accept/reject on it) when it
+ * carries an author and a date. The editor's suggestion marks have always
+ * recorded both; the parser dropped them, which is why this could not have been
+ * done here before — see the applyMark note in authoring-section-content.ts.
+ *
+ * `revisionDate` is threaded in rather than read from the clock so an export is
+ * reproducible: the same section must produce the same bytes twice, which
+ * matters for a hash-sealed record and for the export tests.
+ */
+const FALLBACK_AUTHOR = 'Unattributed';
 
-function runsOf(D: DocxNs, runs: InlineRun[], forceBold = false) {
-  return runs.map(
-    (r) =>
-      new D.TextRun({
-        text: r.text,
-        bold: r.bold || forceBold || undefined,
-        italics: r.italics,
-        underline: r.underline ? {} : undefined,
-        strike: r.strike,
-        superScript: r.superScript,
-        subScript: r.subScript,
-        color:
-          r.suggestion === 'insertion'
-            ? REDLINE_INSERT
-            : r.suggestion === 'deletion'
-              ? REDLINE_DELETE
-              : undefined,
-      })
-  );
+export interface DocxRenderOptions {
+  /** ISO timestamp used when a suggestion mark carries no data-at. */
+  revisionDate?: string;
+}
+
+/** Word requires a unique id per revision within the document. */
+function makeRevisionIds() {
+  let next = 1;
+  return () => next++;
+}
+
+function runsOf(
+  D: DocxNs,
+  runs: InlineRun[],
+  forceBold = false,
+  revisionId: () => number = makeRevisionIds(),
+  revisionDate = '1970-01-01T00:00:00Z',
+) {
+  return runs.map((r) => {
+    const props = {
+      text: r.text,
+      bold: r.bold || forceBold || undefined,
+      italics: r.italics,
+      underline: r.underline ? {} : undefined,
+      strike: r.strike,
+      superScript: r.superScript,
+      subScript: r.subScript,
+    };
+    if (r.suggestion === 'insertion' || r.suggestion === 'deletion') {
+      const change = {
+        id: revisionId(),
+        author: r.suggestionAuthor || FALLBACK_AUTHOR,
+        date: r.suggestionAt || revisionDate,
+      };
+      return r.suggestion === 'insertion'
+        ? new D.InsertedTextRun({ ...props, ...change })
+        : // Word renders the strike itself on a w:del; leaving ours on would
+          // double it, and a rejected deletion would come back struck.
+          new D.DeletedTextRun({ ...props, strike: undefined, ...change });
+    }
+    return new D.TextRun(props);
+  });
 }
 
 function headingFor(D: DocxNs, level: number | undefined) {
@@ -99,7 +148,7 @@ function headingFor(D: DocxNs, level: number | undefined) {
  * argument being filed; exporting them as tab-separated paragraphs — which is
  * what happened before — files a different document.
  */
-function tableOf(D: DocxNs, block: ContentBlock) {
+function tableOf(D: DocxNs, block: ContentBlock, revisionId: () => number, revisionDate: string) {
   const border = { style: D.BorderStyle.SINGLE, size: 4, color: 'BFBFBF' };
   const rows = (block.rows ?? []).map(
     (row) =>
@@ -114,7 +163,7 @@ function tableOf(D: DocxNs, block: ContentBlock) {
                 ? { type: D.ShadingType.CLEAR, fill: 'F2F4F5', color: 'auto' }
                 : undefined,
               borders: { top: border, bottom: border, left: border, right: border },
-              children: [new D.Paragraph({ children: runsOf(D, cell.runs, Boolean(cell.header)) })],
+              children: [new D.Paragraph({ children: runsOf(D, cell.runs, Boolean(cell.header), revisionId, revisionDate) })],
             })
         ),
       })
@@ -124,12 +173,24 @@ function tableOf(D: DocxNs, block: ContentBlock) {
 
 /** Render parsed section blocks to DOCX paragraphs and tables, in order.
  *  `images` maps a block's `src` to resolved bytes; an image block whose src
- *  is not in the map renders as a stated placeholder, never as silence. */
+ *  is not in the map renders as a stated placeholder, never as silence.
+ *
+ *  Two independent capabilities land on this one signature: figures (the
+ *  `images` map) and unresolved tracked changes exported as real w:ins / w:del
+ *  revisions (`opts.revisionDate`). They were built in parallel and both are
+ *  kept — a filing needs its figures AND a redline a reviewer can accept in
+ *  Word. `images` stays third so existing positional callers are unaffected. */
 export function blocksToDocx(
   D: DocxNs,
   blocks: ContentBlock[],
   images?: Map<string, ResolvedImage>,
+  opts: DocxRenderOptions = {},
 ): (InstanceType<DocxNs['Paragraph']> | InstanceType<DocxNs['Table']>)[] {
+  // ONE counter per document: Word requires revision ids to be unique across
+  // the file, so a per-call counter would repeat them and collapse separate
+  // revisions into one.
+  const revisionId = makeRevisionIds();
+  const revisionDate = opts.revisionDate ?? '1970-01-01T00:00:00Z';
   const out: (InstanceType<DocxNs['Paragraph']> | InstanceType<DocxNs['Table']>)[] = [];
   for (const block of blocks) {
     if (block.kind === 'image') {
@@ -176,7 +237,7 @@ export function blocksToDocx(
       continue;
     }
     if (block.kind === 'table') {
-      out.push(tableOf(D, block));
+      out.push(tableOf(D, block, revisionId, revisionDate));
       if (block.caption) {
         out.push(
           new D.Paragraph({
@@ -198,7 +259,7 @@ export function blocksToDocx(
             ? { numbering: { reference: ORDERED_LIST_REFERENCE, level: 0 } }
             : { bullet: { level: 0 } }
           : {}),
-        children: runsOf(D, block.runs),
+        children: runsOf(D, block.runs, false, revisionId, revisionDate),
       })
     );
   }

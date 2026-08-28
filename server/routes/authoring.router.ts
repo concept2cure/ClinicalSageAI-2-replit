@@ -4259,19 +4259,40 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
           ['APPROVED', docId, tenantId]
         );
 
-        // Auto-freeze on approval
+        // Auto-freeze on approval — capture the FULL approved snapshot (document
+        // + sections) and hash the SNAPSHOT BYTES, exactly like the manual freeze
+        // above. The prior code stored a 3-field stub {approvedBy, documentHash,
+        // timestamp} and set content_hash = docHash (the hash of the live
+        // SECTIONS, not of the stub). Two filing-integrity failures followed:
+        // the approved content was captured nowhere immutable (it lived only in
+        // the editable authoring_sections table), and GET /docs/:docId/frozen —
+        // which recomputes sha256(frozen_content) and compares to content_hash —
+        // raised a false "tampering detected" 500 on EVERY e-sign-approved
+        // document, because sha256(stub) can never equal docHash. Approval must
+        // produce a verifiable frozen legal record.
+        const approvedDoc = await client.query(
+          'SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+          [docId, tenantId]
+        );
+        const approvedSections = await client.query(
+          'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+          [docId, tenantId]
+        );
         const frozenContent = JSON.stringify({
+          document: approvedDoc.rows[0] ?? null,
+          sections: approvedSections.rows,
           approvedBy: email,
           documentHash: docHash,
-          timestamp: new Date().toISOString(),
+          frozenAt: new Date().toISOString(),
         });
+        const frozenContentHash = crypto.createHash('sha256').update(frozenContent).digest('hex');
 
         await client.query(
           `INSERT INTO frozen_documents
            (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7)
            ON CONFLICT (document_id, version, tenant_id) DO NOTHING`,
-          [docId, 'approved', frozenContent, docHash, email, 'Approved and frozen', tenantId]
+          [docId, 'approved', frozenContent, frozenContentHash, email, 'Approved and frozen', tenantId]
         );
       }
 
@@ -5425,6 +5446,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
         '../export/authoring-section-content.js'
       );
 
+      const exportedAt = new Date().toISOString();
       const children = [];
       children.push(new Paragraph({ text: doc.title, heading: HeadingLevel.TITLE }));
 
@@ -5432,9 +5454,15 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
          (which can carry ins/del track-changes marks). It used to be written
          into one paragraph verbatim, so markup rendered literally in a filed
          Word document. It is parsed to typed runs now; an unresolved
-         suggestion exports AS redline (insertion underlined, deletion struck)
-         with an up-front notice — settling it silently either way at export
-         time would fabricate a decision nobody made. */
+         suggestion exports as a REAL Word revision (w:ins / w:del) with an
+         up-front notice — settling it silently either way at export time would
+         fabricate a decision nobody made.
+
+         The revision carries the mark's own author and timestamp. The date
+         passed here is only the fallback for legacy marks written before the
+         editor recorded data-at; those export as "Unattributed", and dating
+         them to the export is the closest honest statement available — we know
+         when we wrote the file, not when someone made the edit. */
       let pendingIns = 0;
       let pendingDel = 0;
       const sectionBlocks = sectionsResult.rows.map((section: any) => {
@@ -5466,7 +5494,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
             heading: HeadingLevel.HEADING_1,
           })
         );
-        children.push(...blocksToDocx(docxNs, blocks, exportImages));
+        children.push(...blocksToDocx(docxNs, blocks, exportImages, { revisionDate: exportedAt }));
       }
 
       /* §11.50(b) manifestation. Ordered after the content so the record reads

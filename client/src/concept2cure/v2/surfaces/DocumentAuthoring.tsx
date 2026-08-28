@@ -78,6 +78,7 @@ import { AuthoringFilingBar } from './AuthoringFilingBar';
 import { AuthoringPlaceIntoFiling } from './AuthoringPlaceIntoFiling';
 import { AuthoringCollab } from './AuthoringCollab';
 import { AuthoringCreateExport } from './AuthoringCreateExport';
+import { newDocumentAction } from '../newDocumentAction';
 import { AuthoringRevisionDiff } from './AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from './AuthoringAiDraft';
 import { AuthoringExports } from './AuthoringExports';
@@ -2632,14 +2633,28 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               hint="The document list didn’t respond. Sign in to your tenant and retry."
             />
           ) : docs.length === 0 ? (
+            <>
+            {/* Was: `No ${status.replace('_',' ')} documents in this project.
+                Switch the status filter above.` — which renders "No ALL
+                documents in this project" on the default filter, because the
+                filter's own value is interpolated into the middle of a
+                sentence. It then instructed the reader to change a filter that
+                was already showing everything, so following the instruction
+                changed nothing.
+                The action that actually resolves this is New document. It
+                existed, in the toolbar directly above, and could not be reached
+                from here — see ../newDocumentAction.ts. */}
             <EmptyState
               icon={I.fileText}
-              title="No documents here"
-              hint={`No ${status.replace(
-                '_',
-                ' '
-              )} documents in this project. Switch the status filter above.`}
+              title={status === 'all' ? 'No documents yet' : `Nothing at this stage`}
+              hint={status === 'all'
+                ? 'Documents you create in this project appear here.'
+                : `This project has no ${status.replace('_', ' ')} documents. Clear the filter to see the rest.`}
+              action={status === 'all'
+                ? newDocumentAction()
+                : { label: 'Show all documents', onAct: () => setStatus('all') }}
             />
+            </>
           ) : (
             docs.map(d => {
               const open = d.id === activeDocId;
@@ -3032,14 +3047,26 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               </div>
             ) : !activeSection ? (
               <div style={{ paddingTop: 48 }}>
+                {/* THE OTHER HALF OF THE CIRCLE. This said "Choose a document
+                    from the tree" while the tree said "no documents — switch
+                    the filter". Two empty states pointing at each other, on a
+                    project where the honest answer is that nothing has been
+                    created yet, next to a New document button neither of them
+                    offered. When there are no documents at all this now offers
+                    the action; when there IS a document open, "choose a
+                    section" is genuinely correct — the tree beside it is full. */}
                 <EmptyState
                   icon={I.fileText}
-                  title={activeDoc ? 'Select a section to edit' : 'Select a document'}
-                  hint={
-                    activeDoc
-                      ? 'Choose a section from the tree to open its content in the editor. Every save records an auditable revision.'
-                      : 'Choose a document from the tree to open its sections.'
-                  }
+                  title={activeDoc ? 'Select a section to edit' : docs.length === 0 ? 'Nothing to edit yet' : 'Select a document'}
+                  hint={activeDoc
+                    ? 'Choose a section from the tree to open its content in the editor. Every save records an auditable revision.'
+                    : docs.length === 0
+                      ? 'Create the first document for this project and its sections open here.'
+                      : 'Choose a document from the tree to open its sections.'}
+                  action={!activeDoc && docs.length === 0 ? newDocumentAction() : undefined}
+                  regulation={!activeDoc && docs.length === 0
+                    ? 'Every save records an auditable revision (21 CFR Part 11)'
+                    : undefined}
                 />
               </div>
             ) : (

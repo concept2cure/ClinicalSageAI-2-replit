@@ -17,7 +17,7 @@ import express from 'express';
 import request from 'supertest';
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 
-const logActionMock = vi.fn();
+const logActionMock = vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true }));
 
 // Minimal Drizzle-shaped chainables — model only what these handlers call.
 type Row = Record<string, unknown>;

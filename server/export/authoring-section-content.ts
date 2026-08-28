@@ -50,6 +50,13 @@ export interface InlineRun {
   subScript?: boolean;
   /** Present when this run is an unresolved tracked change. */
   suggestion?: 'insertion' | 'deletion';
+  /** Who made it, and when — from the mark's data-author-name / data-at.
+   *  Carried so the DOCX export can emit a REAL Word revision (w:ins / w:del),
+   *  which Word will only attribute and let a reviewer accept or reject if it
+   *  has an author and a date. Without these the export can do no better than
+   *  colour the text. */
+  suggestionAuthor?: string;
+  suggestionAt?: string;
 }
 
 export interface TableCell {
@@ -108,6 +115,8 @@ interface InlineState {
   superScript?: boolean;
   subScript?: boolean;
   suggestion?: 'insertion' | 'deletion';
+  suggestionAuthor?: string;
+  suggestionAt?: string;
 }
 
 const BLOCK_TAGS = new Set(['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'tr', 'blockquote', 'pre']);
@@ -123,7 +132,9 @@ function pushRun(runs: InlineRun[], text: string, st: InlineState): void {
     !!prev.strike === !!st.strike &&
     !!prev.superScript === !!st.superScript &&
     !!prev.subScript === !!st.subScript &&
-    prev.suggestion === st.suggestion
+    prev.suggestion === st.suggestion &&
+    prev.suggestionAuthor === st.suggestionAuthor &&
+    prev.suggestionAt === st.suggestionAt
   ) {
     prev.text += text;
     return;
@@ -137,11 +148,19 @@ function pushRun(runs: InlineRun[], text: string, st: InlineState): void {
     ...(st.superScript ? { superScript: true } : {}),
     ...(st.subScript ? { subScript: true } : {}),
     ...(st.suggestion ? { suggestion: st.suggestion } : {}),
+    ...(st.suggestionAuthor ? { suggestionAuthor: st.suggestionAuthor } : {}),
+    ...(st.suggestionAt ? { suggestionAt: st.suggestionAt } : {}),
   });
 }
 
-/** Inline tags that carry attribution; shared by the block walk and cells. */
-function applyMark(tag: string, st: InlineState): InlineState {
+/** Inline tags that carry attribution; shared by the block walk and cells.
+ *
+ * `el` is threaded in so `<ins>` / `<del>` can keep their data-author-name and
+ * data-at. The editor's suggestion marks have always written both
+ * (v2/editor/suggestions.ts); this parser dropped them, so by the time the DOCX
+ * renderer saw a tracked change all it knew was the KIND. That is why redlines
+ * exported as coloured text rather than as Word revisions. */
+function applyMark(tag: string, st: InlineState, el?: { getAttribute(name: string): string | null | undefined }): InlineState {
   const next: InlineState = { ...st };
   if (tag === 'b' || tag === 'strong') next.bold = true;
   if (tag === 'i' || tag === 'em') next.italics = true;
@@ -149,13 +168,18 @@ function applyMark(tag: string, st: InlineState): InlineState {
   if (tag === 's' || tag === 'strike') next.strike = true;
   if (tag === 'sup') next.superScript = true;
   if (tag === 'sub') next.subScript = true;
-  if (tag === 'ins') {
-    next.underline = true;
-    next.suggestion = 'insertion';
-  }
-  if (tag === 'del') {
-    next.strike = true;
-    next.suggestion = 'deletion';
+  if (tag === 'ins' || tag === 'del') {
+    if (tag === 'ins') {
+      next.underline = true;
+      next.suggestion = 'insertion';
+    } else {
+      next.strike = true;
+      next.suggestion = 'deletion';
+    }
+    const who = el?.getAttribute('data-author-name');
+    const when = el?.getAttribute('data-at');
+    if (who) next.suggestionAuthor = who;
+    if (when) next.suggestionAt = when;
   }
   return next;
 }
@@ -182,7 +206,7 @@ function inlineRunsOf(node: HTMLElement, st: InlineState): InlineRun[] {
     }
     const isBlock = BLOCK_TAGS.has(tag) || tag === 'ol' || tag === 'ul';
     if (isBlock && runs.length) pushRun(runs, ' ', state);
-    for (const child of n.childNodes) visit(child, applyMark(tag, state));
+    for (const child of n.childNodes) visit(child, applyMark(tag, state, n));
   };
   for (const child of node.childNodes) visit(child, st);
   return trimRuns(runs);
@@ -291,7 +315,7 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
       return;
     }
 
-    const nextState: InlineState = applyMark(tag, st);
+    const nextState: InlineState = applyMark(tag, st, node as unknown as { getAttribute(n: string): string | null | undefined });
 
     if (tag === 'ol' || tag === 'ul') {
       closeBlock();

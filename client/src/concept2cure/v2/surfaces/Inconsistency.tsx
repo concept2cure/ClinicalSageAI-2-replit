@@ -629,10 +629,34 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
             ? <div className="gi-overlay-note">{I.info} Same dossier, different regulator: the dosage conflict is <b>{reg === 'FDA' ? 'a hard filing block under FDA' : '"requires approval" under EMA — not a hard block'}</b>. AnA re-scores authority from the active regulator's overlay rules.</div>
             : <div className="gi-overlay-note">{I.info} AnA scores every finding's authority from the active regulator's overlay rules — switch <b>{reg}</b> to see how {filingLabel} severity shifts by regulator.</div>}
 
-          {/* No open contradictions: show the live "what AnA checked" list. The
-              engine does not persist the set of verified-consistent cross-references
-              (board.checks is always []), so when it's empty this is an honest
-              clean-state panel, not a fabricated checklist. */}
+          {/* The cross-reference record. Three different things to say here, and
+              this card used to say only one.
+
+              WHAT IT USED TO CLAIM: with `checks` empty — which the board
+              contract at the top of this file documents as ALWAYS, because the
+              engine persists detected contradictions and not the references it
+              verified — it rendered "No contradictions across this project's
+              governed records / AnA found nothing that contradicts anything
+              else". That is a clearance claim, and its only condition was
+              `total === 0`. A project the engine has never run against also has
+              `total === 0`, so on a never-scanned board this card asserted that
+              AnA had looked and found nothing — a few elements below the gate
+              panel which, in that same state, correctly reads "Submission gate
+              — NOT ASSESSED". Two panels on one screen, opposite claims.
+
+              `giState` — computed above from the same live read that feeds the
+              gate and the AnswerLead, and which both of those already branch on
+              — is the discriminator this card now branches on as well.
+
+              On `assessed-clear` being kept rather than deleted: it is not
+              reachable while this card renders, because the card renders only
+              when `!hasFindings` and `assessmentRan` on this board IS
+              `hasFindings`. Gating the reassuring copy on the state that would
+              earn it, instead of on emptiness, is the fix; if the board ever
+              carries a scan record the copy is then correct rather than
+              retro-fitted. The states that ARE reachable here are
+              `not-assessed` and — while a re-scan refetches over the rows
+              already read — `loading`, and each now says what is true of it. */}
           {!hasFindings && (
             <div className="pj-card gi-checks">
               <div className="pj-card-h"><span className="t">What AnA checked</span><span className="s">{checks.length > 0 ? checks.length + ' cross-references ' + String(I.dot) + ' all consistent' : 'no scan record'}</span></div>
@@ -647,14 +671,34 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
                       </div>
                     ))}
                   </div>
-                ) : (
+                ) : giState === 'assessed-clear' ? (
                   <EmptyState
                     icon={I.shieldCheck}
                     title="No contradictions across this project's governed records"
                     hint="AnA found nothing that contradicts anything else. The itemized list of every cross-reference it verified isn't persisted yet, so only detected contradictions are enumerated here."
                   />
+                ) : giState === 'loading' ? (
+                  <EmptyState
+                    busy
+                    icon={I.clock}
+                    title="Re-reading the contradiction board"
+                    hint="The read is still in flight. Nothing on this card is settled until it returns."
+                  />
+                ) : (
+                  <EmptyState
+                    icon={I.clock}
+                    title="No contradiction scan has reported on this project"
+                    hint={'The board holds no contradiction findings for ' + progCode + ' — neither open nor resolved — and it records only the contradictions the engine detects, never the cross-references it verified as consistent. So there is nothing here showing that the governed records agree; there is nothing here at all.'}
+                  />
                 )}
-                <div className="scaf-note" style={{ marginTop: 12 }}>AnA re-runs these checks every time content changes. The moment a value disagrees with another governed record, it surfaces here as a contradiction with a consequence — before it can reach a reviewer.</div>
+                {/* The same conditional applies to the note beneath: "AnA re-runs
+                    these checks every time content changes" describes the upkeep
+                    of a check set that, in the never-scanned state, does not
+                    exist — and the card's own subtitle two lines above says so
+                    ("no scan record"). */}
+                <div className="scaf-note" style={{ marginTop: 12 }}>{checks.length > 0 || giState === 'assessed-clear'
+                  ? 'AnA re-runs these checks every time content changes. The moment a value disagrees with another governed record, it surfaces here as a contradiction with a consequence — before it can reach a reviewer.'
+                  : 'Once a scan has run, each value that disagrees with another governed record appears here as a contradiction — naming the two records, and what the disagreement costs.'}</div>
               </div>
             </div>
           )}

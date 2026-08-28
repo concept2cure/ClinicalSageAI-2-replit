@@ -16,7 +16,7 @@ import request from 'supertest';
 
 const { createRegChange, listRegChanges, RegChangeValidationError, logAction } = vi.hoisted(() => {
   class RegChangeValidationError extends Error {}
-  return { createRegChange: vi.fn(), listRegChanges: vi.fn(), RegChangeValidationError, logAction: vi.fn() };
+  return { createRegChange: vi.fn(), listRegChanges: vi.fn(), RegChangeValidationError, logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) };
 });
 vi.mock('../../services/reg-change/reg-change-service', () => ({ createRegChange, listRegChanges, RegChangeValidationError }));
 vi.mock('../../services/auditService', () => ({ default: { logAction } }));

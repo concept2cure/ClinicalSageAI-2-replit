@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-27T01:33:45.319Z",
+  "generatedAt": "2026-08-28T02:43:32.030Z",
   "git": {
-    "sha": "f04bd533c7b179dcf34736883fdcc314d79e2cfe",
+    "sha": "6feb79718ece36d1791bb8e3329536f8e99dff8e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2166,7 +2166,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 275926
+        "bytes": 277858
       },
       {
         "file": "server/statistics-service.ts",
@@ -2178,7 +2178,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 192914
+        "bytes": 195023
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2316,7 +2316,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6687
+        "lines": 6715
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2336,7 +2336,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 4411
+        "lines": 4438
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2603,6 +2603,10 @@
         "lines": 1672
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 1664
+      },
+      {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
         "lines": 1650
       },
@@ -2633,10 +2637,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
         "lines": 1582
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 1578
       },
       {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",
