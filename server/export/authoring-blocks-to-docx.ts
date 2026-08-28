@@ -134,12 +134,17 @@ function runsOf(
   });
 }
 
+/* Content headings sit one level below the section title, which is HEADING_1 —
+   so content level 1 is Word's Heading 2, and so on down to Heading 6. The old
+   mapping stopped at HEADING_4 and sent everything deeper there too, which is
+   the collapse a publisher's template then bakes into the submission's
+   navigation pane and table of contents. */
+const DOCX_HEADING = [
+  'HEADING_2', 'HEADING_3', 'HEADING_4', 'HEADING_5', 'HEADING_6',
+] as const;
 function headingFor(D: DocxNs, level: number | undefined) {
-  return level === 1
-    ? D.HeadingLevel.HEADING_2
-    : level === 2
-      ? D.HeadingLevel.HEADING_3
-      : D.HeadingLevel.HEADING_4;
+  const idx = Math.min(Math.max((level ?? 1) - 1, 0), DOCX_HEADING.length - 1);
+  return D.HeadingLevel[DOCX_HEADING[idx]];
 }
 
 /**
