@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-28T02:43:32.030Z",
+  "generatedAt": "2026-08-28T02:49:35.510Z",
   "git": {
-    "sha": "6feb79718ece36d1791bb8e3329536f8e99dff8e",
+    "sha": "cc1298b65e2fe4d09d40dd4156a4c7b11b408e3a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2599,12 +2599,12 @@
         "lines": 1678
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1672
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 1676
       },
       {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 1664
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 1672
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
