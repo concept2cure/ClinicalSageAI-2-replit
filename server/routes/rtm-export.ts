@@ -23,6 +23,47 @@ import { createScopedLogger } from '../utils/logger';
 const logger = createScopedLogger('rtm-export');
 const router = Router();
 
+/**
+ * A Requirements Traceability Matrix is read by a regulatory reviewer, so it may
+ * not report a state it did not establish.
+ *
+ * THE STORE THIS READS HAS NO WRITERS. `evidence_claims`, `evidence_sources` and
+ * `evidence_claim_links` are created by db/migrations/20260319_evidence_fabric.sql,
+ * which is on NO durable apply path — not in C2C_MIGRATION_FILES, not in the
+ * drizzle journal — and nothing anywhere in the repo INSERTs into them. So on a
+ * real database the queries below raise 42P01, and where the tables do exist
+ * they are empty.
+ *
+ * Both outcomes used to be reported as an answer. Zero claims produced
+ * `untracedClaims: 0` — which a reader takes as "nothing is untraced", i.e.
+ * everything is traced — beside `coverageScore: 0`, a MEASURED nought asserted
+ * where nothing was measured. And a missing relation produced a bare 500
+ * "Failed to generate traceability matrix", indistinguishable from a transient
+ * fault. The CSV route then registered a header-only file as a governed
+ * regulated export titled "RTM Export: Program N", hashed and filed, with
+ * nothing on the artifact saying it traces nothing.
+ *
+ * The rule is the repo's own (client/src/concept2cure/v2/assessmentState.ts): an
+ * empty result is not a finding of "none". These three states are now distinct
+ * everywhere they surface.
+ */
+type RtmState = 'store-unprovisioned' | 'no-claims-recorded' | 'claims-present';
+
+/** Postgres: undefined_table / undefined_column — the store was never created. */
+function isMissingRelation(err: unknown): boolean {
+  const code = (err as { code?: string } | null | undefined)?.code;
+  return code === '42P01' || code === '42703';
+}
+
+const STORE_UNPROVISIONED_BODY = {
+  error: {
+    code: 'CLAIM_STORE_UNPROVISIONED',
+    message:
+      'The evidence-claim store is not provisioned in this deployment, so no traceability ' +
+      'matrix can be produced. This is not an empty matrix — nothing was read.',
+  },
+} as const;
+
 function getOrganizationId(req: Request): number {
   const raw = (req as any).tenantId || (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
   const orgId = typeof raw === 'number' ? raw : parseInt(String(raw), 10);
@@ -107,20 +148,32 @@ router.get('/programs/:programId/rtm', async (req: Request, res: Response) => {
 
     const totalClaims = matrix.length;
     const tracedClaims = matrix.filter(m => m.isMapped).length;
-    const coverageScore = totalClaims > 0 ? Math.round((tracedClaims / totalClaims) * 100) : 0;
+    // null, not 0, when there is nothing to measure. A coverageScore of 0 is a
+    // measurement — "we checked, and none of it is traced" — and that is a
+    // different statement from "no claims are recorded". Only one of them is
+    // true here, and it was reporting the other.
+    const coverageScore = totalClaims > 0 ? Math.round((tracedClaims / totalClaims) * 100) : null;
+    const state: RtmState = totalClaims > 0 ? 'claims-present' : 'no-claims-recorded';
 
     return res.json({
       programId,
       generatedAt: new Date().toISOString(),
+      state,
       summary: {
         totalClaims,
         tracedClaims,
-        untracedClaims: totalClaims - tracedClaims,
+        // Only meaningful once claims exist. Previously `0 - 0 = 0`, which a
+        // reader takes as "nothing is untraced" — i.e. everything is traced.
+        untracedClaims: totalClaims > 0 ? totalClaims - tracedClaims : null,
         coverageScore,
       },
       matrix,
     });
   } catch (error: any) {
+    if (isMissingRelation(error)) {
+      logger.error('RTM requested but the claim store is not provisioned', { programId: req.params.programId });
+      return res.status(503).json(STORE_UNPROVISIONED_BODY);
+    }
     logger.error('Failed to generate RTM', { error: error.message });
     if (error.message.includes('Missing or invalid')) {
       return res.status(400).json({ error: error.message });
@@ -191,6 +244,25 @@ router.get('/programs/:programId/rtm/csv', async (req: Request, res: Response) =
       }
     }
 
+    // An empty matrix must SAY it is empty, on the artifact.
+    //
+    // With no claims this produced a header line and nothing else, and that file
+    // was then hashed and filed as a governed regulated export titled
+    // "RTM Export: Program N". A reviewer opening it cannot tell an empty
+    // program from a feature that was never wired — and the governed record
+    // around it asserts a traceability matrix was produced. One row, in the
+    // first column, removes the ambiguity without blocking a legitimate export
+    // of a program that genuinely has no claims yet.
+    if (claims.length === 0) {
+      rows.push(
+        escapeCSV(
+          'No evidence claims are recorded for this program. This matrix is empty ' +
+          'because nothing has been recorded — it is not a finding that every claim ' +
+          'is traced, and no coverage figure was measured.',
+        ),
+      );
+    }
+
     const csvContent = rows.join('\n');
     const filename = `RTM_Program_${programId}_${new Date().toISOString().slice(0, 10)}.csv`;
 
@@ -231,6 +303,10 @@ router.get('/programs/:programId/rtm/csv', async (req: Request, res: Response) =
 
     return res.send(csvContent);
   } catch (error: any) {
+    if (isMissingRelation(error)) {
+      logger.error('RTM CSV requested but the claim store is not provisioned', { programId: req.params.programId });
+      return res.status(503).json(STORE_UNPROVISIONED_BODY);
+    }
     logger.error('Failed to export RTM CSV', { error: error.message });
     if (error.message.includes('Missing or invalid')) {
       return res.status(400).json({ error: error.message });
