@@ -36,6 +36,12 @@
  * numbered procedure — the form most test methods and instructions-for-use take
  * — exported as bullets and silently lost its step numbers.
  *
+ * CITATIONS carry THE SOURCE'S ID and not the number printed at the claim.
+ * "[3]" is a rendering of where a source currently sits in this document's
+ * reference list; the number is assigned in reading order at render time by a
+ * document-scoped registry, and the reference list is assembled from the
+ * citations actually used. See @shared/authoring/citations.
+ *
  * CROSS-REFERENCES carry the TARGET SECTION'S ID and not its printed number.
  * The run's `text` is the editor's cache and is not what either renderer
  * prints: both resolve the id against the document's sections at render time,
@@ -50,6 +56,10 @@ import {
   normalizeCrossReferenceDisplay,
   type CrossReferenceDisplay,
 } from '@shared/authoring/cross-references';
+import {
+  CITATION_SOURCE_ATTR,
+  CITATION_LOCATOR_ATTR,
+} from '@shared/authoring/citations';
 
 export interface InlineRun {
   text: string;
@@ -98,6 +108,20 @@ export interface InlineRun {
   crossRefTarget?: string;
   /** How much of the target to print — see CrossReferenceDisplay. */
   crossRefDisplay?: CrossReferenceDisplay;
+  /** Present when this run is a CITATION of a source.
+   *
+   *  `citationSourceId` is the source's identity in the platform's canonical
+   *  source registry — never the number printed at the claim. "[3]" describes
+   *  where that source currently sits in this document's reference list, and a
+   *  citation inserted earlier moves it. Both renderers ask a document-scoped
+   *  registry for the number (see @shared/authoring/citations) and IGNORE this
+   *  run's `text`, which is the editor's cache of the source's NAME.
+   *
+   *  `citationLocator` is the author's pinpoint within the source — "p. 42",
+   *  "Table 3". It is authored content, not a derived value: no renderer can
+   *  recompute it, so it is stored and printed inside the marker. */
+  citationSourceId?: string;
+  citationLocator?: string;
 }
 
 export interface TableCell {
@@ -218,6 +242,8 @@ interface InlineState {
   footnote?: string;
   crossRefTarget?: string;
   crossRefDisplay?: CrossReferenceDisplay;
+  citationSourceId?: string;
+  citationLocator?: string;
 }
 
 const BLOCK_TAGS = new Set(['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'tr', 'blockquote', 'pre']);
@@ -241,7 +267,14 @@ function pushRun(runs: InlineRun[], text: string, st: InlineState): void {
        the second target would be silently discarded and the filed document
        would carry one reference where the author wrote two. */
     prev.crossRefTarget === st.crossRefTarget &&
-    prev.crossRefDisplay === st.crossRefDisplay
+    prev.crossRefDisplay === st.crossRefDisplay &&
+    /* Two citations of DIFFERENT sources must never merge into one run — the
+       second source would be silently discarded and the filed document would
+       carry one citation, and one reference-list entry, where the author cited
+       two. A different locator is a different citation of the same source
+       ("p. 42" and "p. 96" are not interchangeable), so it separates runs too. */
+    prev.citationSourceId === st.citationSourceId &&
+    prev.citationLocator === st.citationLocator
   ) {
     prev.text += text;
     return;
@@ -260,25 +293,40 @@ function pushRun(runs: InlineRun[], text: string, st: InlineState): void {
     ...(st.footnote ? { footnote: st.footnote } : {}),
     ...(st.crossRefTarget ? { crossRefTarget: st.crossRefTarget } : {}),
     ...(st.crossRefTarget && st.crossRefDisplay ? { crossRefDisplay: st.crossRefDisplay } : {}),
+    ...(st.citationSourceId ? { citationSourceId: st.citationSourceId } : {}),
+    ...(st.citationSourceId && st.citationLocator ? { citationLocator: st.citationLocator } : {}),
   });
 }
 
 /**
- * A cross-reference whose cached text is empty still contributes a run.
+ * A cross-reference or a citation whose cached text is empty still contributes
+ * a run.
  *
- * `pushRun` drops empty text, and correctly so for every other run kind. But a
- * reference's text is RESOLVED at render time — the stored text is only a cache
- * — so an empty one is a reference the author wrote, not whitespace. Dropping
- * it here would delete it from the filed document in silence, which is the one
- * outcome this feature may never produce.
+ * `pushRun` drops empty text, and correctly so for every other run kind. But
+ * both of these are RESOLVED at render time — the stored text is only a cache —
+ * so an empty one is something the author wrote, not whitespace. Dropping it
+ * here would delete it from the filed document in silence, which is the one
+ * outcome neither feature may ever produce.
+ *
+ * Shared by both because the rule is one rule: an element whose printed form
+ * comes from a directory rather than from its own text survives an empty cache.
  */
-function pushEmptyCrossRef(runs: InlineRun[], st: InlineState): void {
-  if (!st.crossRefTarget) return;
-  runs.push({
-    text: '',
-    crossRefTarget: st.crossRefTarget,
-    ...(st.crossRefDisplay ? { crossRefDisplay: st.crossRefDisplay } : {}),
-  });
+function pushEmptyResolvedRef(runs: InlineRun[], st: InlineState): void {
+  if (st.crossRefTarget) {
+    runs.push({
+      text: '',
+      crossRefTarget: st.crossRefTarget,
+      ...(st.crossRefDisplay ? { crossRefDisplay: st.crossRefDisplay } : {}),
+    });
+    return;
+  }
+  if (st.citationSourceId) {
+    runs.push({
+      text: '',
+      citationSourceId: st.citationSourceId,
+      ...(st.citationLocator ? { citationLocator: st.citationLocator } : {}),
+    });
+  }
 }
 
 /** Inline tags that carry attribution; shared by the block walk and cells.
@@ -302,8 +350,9 @@ function applyMark(tag: string, st: InlineState, el?: { getAttribute(name: strin
     if (note) next.footnote = note;
   }
   if (tag === 'sub') next.subScript = true;
-  /* An `a` carrying the target attribute is a cross-reference. Any other
-     anchor is an ordinary link and keeps its text unchanged, as before. */
+  /* An `a` carrying the target attribute is a cross-reference, and one carrying
+     the source attribute is a citation. Any other anchor is an ordinary link
+     and keeps its text unchanged, as before. */
   if (tag === 'a') {
     const target = el?.getAttribute(CROSS_REF_TARGET_ATTR);
     if (target && target.trim()) {
@@ -311,6 +360,12 @@ function applyMark(tag: string, st: InlineState, el?: { getAttribute(name: strin
       next.crossRefDisplay = normalizeCrossReferenceDisplay(
         el?.getAttribute(CROSS_REF_DISPLAY_ATTR),
       );
+    }
+    const cited = el?.getAttribute(CITATION_SOURCE_ATTR);
+    if (cited && cited.trim()) {
+      next.citationSourceId = cited.trim();
+      const locator = (el?.getAttribute(CITATION_LOCATOR_ATTR) ?? '').trim();
+      if (locator) next.citationLocator = locator;
     }
   }
   if (tag === 'ins' || tag === 'del') {
@@ -366,8 +421,8 @@ function cellContentOf(
     const isBlock = BLOCK_TAGS.has(tag) || tag === 'ol' || tag === 'ul';
     if (isBlock && runs.length) pushRun(runs, ' ', state);
     const inner = applyMark(tag, state, n);
-    if (tag === 'a' && inner.crossRefTarget && !n.text) {
-      pushEmptyCrossRef(runs, inner);
+    if (tag === 'a' && (inner.crossRefTarget || inner.citationSourceId) && !n.text) {
+      pushEmptyResolvedRef(runs, inner);
       return;
     }
     for (const child of n.childNodes) visit(child, inner);
@@ -386,8 +441,9 @@ function trimRuns(runs: InlineRun[]): InlineRun[] {
         '',
       ),
     }))
-    // A reference is kept whatever its cached text says — see pushEmptyCrossRef.
-    .filter((r) => r.text.length > 0 || Boolean(r.crossRefTarget));
+    // A reference or a citation is kept whatever its cached text says — see
+    // pushEmptyResolvedRef.
+    .filter((r) => r.text.length > 0 || Boolean(r.crossRefTarget) || Boolean(r.citationSourceId));
 }
 
 /**
@@ -544,8 +600,8 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
       return;
     }
 
-    if (tag === 'a' && nextState.crossRefTarget && !node.text) {
-      pushEmptyCrossRef(ensureBlock().runs, nextState);
+    if (tag === 'a' && (nextState.crossRefTarget || nextState.citationSourceId) && !node.text) {
+      pushEmptyResolvedRef(ensureBlock().runs, nextState);
       return;
     }
 
@@ -580,11 +636,11 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
         b.kind === 'image' ||
         b.kind === 'table' ||
         blockRuns(b).some((r) => r.text.trim().length > 0) ||
-        /* A block whose only content is a cross-reference has no text of its
-           own — the reference's text is RESOLVED at render time. Testing it for
-           text here would delete the reference from the filed document, which
-           is the silent-vanish this feature must never do. */
-        blockRuns(b).some((r) => r.crossRefTarget),
+        /* A block whose only content is a cross-reference or a citation has no
+           text of its own — both are RESOLVED at render time. Testing it for
+           text here would delete them from the filed document, which is the
+           silent-vanish neither feature may ever do. */
+        blockRuns(b).some((r) => r.crossRefTarget || r.citationSourceId),
     );
 }
 
@@ -602,6 +658,29 @@ export function sectionContentToBlocks(stored: string | null | undefined): Conte
       .map((line) => ({ kind: 'paragraph' as const, runs: [{ text: line }] }));
   }
   return parseHtmlToBlocks(s);
+}
+
+/**
+ * Every source id cited across a set of blocks, in reading order, de-duplicated.
+ *
+ * The export needs this BEFORE it renders: the reference list is assembled from
+ * the sources actually cited, so the export has to know which sources to look
+ * up before it can number a single marker. Reading order is preserved so a
+ * caller that resolves in this order sees the document as a reviewer does.
+ */
+export function collectCitedSourceIds(blocks: ContentBlock[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const b of blocks) {
+    for (const r of blockRuns(b)) {
+      const id = r.citationSourceId;
+      if (id && !seen.has(id)) {
+        seen.add(id);
+        out.push(id);
+      }
+    }
+  }
+  return out;
 }
 
 /** Unresolved tracked changes across a set of blocks. */

@@ -965,7 +965,10 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
             tone="error"
             icon={I.alertTriangle}
             title="Couldn't load workflow runs"
-            hint="The orchestration execution engine didn't respond. These are the project's real workflow runs — sign in and retry, or check the service is reachable."
+            hint="The orchestration execution engine didn't respond. These are the project's real workflow runs — retry, or check the service is reachable."
+            retry={() => setRunsEpoch((n) => n + 1)}
+            retryLabel="Retry"
+            busy={runsState.loading}
           />
         ) : runs.length === 0 ? (
           <EmptyState
@@ -1064,7 +1067,10 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
             tone="error"
             icon={I.alertTriangle}
             title="Couldn't load approval gates"
-            hint="The approval-checkpoint store didn't respond. These are the organization's real human-in-the-loop approval gates — sign in and retry, or check the service is reachable."
+            hint="The approval-checkpoint store didn't respond. These are the organization's real human-in-the-loop approval gates — retry, or check the service is reachable."
+            retry={() => setCpsReloadKey((n) => n + 1)}
+            retryLabel="Retry"
+            busy={cpsState.loading}
           />
         ) : cps.length === 0 ? (
           <EmptyState
@@ -1184,11 +1190,19 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
         rdRead === 'loading' ? (
           <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading readiness…</div>
         ) : rdState.error ? (
+          /* UI standards §8: a failure always offers a way out. Each of these
+             three hints ENDED with "sign in and retry" while offering nothing to
+             retry with, so the instruction named an action the screen did not
+             provide. Every reload mechanism already existed and was simply never
+             wired to the failure that needs it. */
           <EmptyState
             tone="error"
             icon={I.alertTriangle}
             title="Couldn't load the readiness evaluation"
-            hint="The readiness engine didn't respond. The score is computed on demand from this program's governed objects — sign in and retry, or check the service is reachable."
+            hint="The readiness engine didn't respond. The score is computed on demand from this program's governed objects — retry, or check the service is reachable."
+            retry={() => setRdEpoch((n) => n + 1)}
+            retryLabel="Retry"
+            busy={rdState.loading}
           />
         ) : rdRead === 'unreadable' ? (
           /* The branch that did not exist. Copy carries no parse detail and no
