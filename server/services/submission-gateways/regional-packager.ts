@@ -544,6 +544,11 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       // referenced leaf must be in input.leaves so it is actually packaged.
       throw new ValidationError(
         `regional-packager: leaf "${l.fileName}" (section ${l.ctdSection}) is referenced by the backbone but was not packaged — include it in input.leaves so it is read, hashed, and written into the submission.`,
+        // ValidationError carries structured findings alongside the sentence —
+        // this call was written with the message alone. Same shape as the
+        // unplaceable-leaf refusal above, so a caller inspecting `findings`
+        // sees this refusal too instead of only its text.
+        [`unpackaged-referenced-leaf:${l.ctdSection}:${l.fileName}`],
       );
     }
     return ref;
