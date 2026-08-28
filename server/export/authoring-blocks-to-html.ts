@@ -17,6 +17,12 @@
  */
 import type { ContentBlock, InlineRun } from './authoring-section-content.js';
 import type { ResolvedImage } from './authoring-images.js';
+import {
+  crossReferenceAnchorId,
+  normalizeCrossReferenceDisplay,
+  resolveCrossReference,
+  type CrossReferenceLookup,
+} from '@shared/authoring/cross-references';
 
 export function escapeHtml(s: string): string {
   return String(s ?? '')
@@ -71,10 +77,34 @@ function makeFootnoteCollector(): FootnoteCollector {
   };
 }
 
-function inline(runs: InlineRun[], fn?: FootnoteCollector): string {
+function inline(
+  runs: InlineRun[],
+  fn?: FootnoteCollector,
+  crossRefs?: CrossReferenceLookup | null,
+): string {
   return runs
     .map((r) => {
       let t = escapeHtml(r.text);
+      /* A CROSS-REFERENCE prints what its target says NOW, resolved through the
+         document's section directory — never the text the editor cached when
+         the reference was inserted. That cached text is the stale number the
+         whole feature exists to abolish, so it is not a fallback: with no
+         directory the reference is UNRESOLVED and says so, exactly as a
+         dangling one does. Neither state is silence, and neither is a number. */
+      if (r.crossRefTarget) {
+        const ref = resolveCrossReference(
+          r.crossRefTarget,
+          normalizeCrossReferenceDisplay(r.crossRefDisplay),
+          crossRefs,
+        );
+        if (!ref.found) {
+          return `<span class="xref-missing">${escapeHtml(ref.text)}</span>`;
+        }
+        return (
+          `<a class="xref" href="#${escapeHtml(crossReferenceAnchorId(r.crossRefTarget))}">` +
+          `${escapeHtml(ref.text)}</a>`
+        );
+      }
       /* A footnote reference renders as its marker, not as whatever character
          happened to be typed — the letter belongs to the note's position. With
          no collector the reference degrades to plain superscript rather than
@@ -98,7 +128,11 @@ function inline(runs: InlineRun[], fn?: FootnoteCollector): string {
     .join('');
 }
 
-function tableHtml(b: ContentBlock, fn?: FootnoteCollector): string {
+function tableHtml(
+  b: ContentBlock,
+  fn?: FootnoteCollector,
+  crossRefs?: CrossReferenceLookup | null,
+): string {
   const rows = (b.rows ?? [])
     .map(
       (row) =>
@@ -107,13 +141,25 @@ function tableHtml(b: ContentBlock, fn?: FootnoteCollector): string {
             const tag = c.header ? 'th' : 'td';
             const cs = c.colSpan ? ` colspan="${c.colSpan}"` : '';
             const rs = c.rowSpan ? ` rowspan="${c.rowSpan}"` : '';
-            return `<${tag}${cs}${rs}>${inline(c.runs, fn)}</${tag}>`;
+            return `<${tag}${cs}${rs}>${inline(c.runs, fn, crossRefs)}</${tag}>`;
           })
           .join('')}</tr>`
     )
     .join('');
   const caption = b.caption ? `<caption>${escapeHtml(b.caption)}</caption>` : '';
   return `<table>${caption}${rows}</table>`;
+}
+
+export interface HtmlRenderOptions {
+  /**
+   * Resolves a cross-reference's target section id to what it is called NOW.
+   *
+   * Threaded in for the same reason `footnoteSink` is threaded into the DOCX
+   * renderer: the answer belongs to the DOCUMENT being exported, not to one
+   * section, and the renderer must not invent it. Absent, references render as
+   * unresolved rather than falling back to the editor's cached text.
+   */
+  crossRefs?: CrossReferenceLookup | null;
 }
 
 /**
@@ -124,8 +170,10 @@ function tableHtml(b: ContentBlock, fn?: FootnoteCollector): string {
 export function blocksToHtml(
   blocks: ContentBlock[],
   images?: Map<string, ResolvedImage>,
+  opts: HtmlRenderOptions = {},
 ): string {
   const parts: string[] = [];
+  const crossRefs = opts.crossRefs ?? null;
   const fn = makeFootnoteCollector();
   let openList: 'ol' | 'ul' | null = null;
   const closeList = () => {
@@ -141,11 +189,11 @@ export function blocksToHtml(
         parts.push(`<${want}>`);
         openList = want;
       }
-      parts.push(`<li>${inline(b.runs, fn)}</li>`);
+      parts.push(`<li>${inline(b.runs, fn, crossRefs)}</li>`);
       continue;
     }
     closeList();
-    if (b.kind === 'table') parts.push(tableHtml(b, fn));
+    if (b.kind === 'table') parts.push(tableHtml(b, fn, crossRefs));
     else if (b.kind === 'image') {
       /* The bytes ride into the print engine as a data URI — no network
          fetch happens inside the renderer, so the auth boundary is never
@@ -170,9 +218,9 @@ export function blocksToHtml(
          by one for the same reason the DOCX path does — the section title is the
          h1 above this content. */
       const h = Math.min(Math.max((b.level ?? 1) + 1, 2), 6);
-      parts.push(`<h${h}>${inline(b.runs, fn)}</h${h}>`);
+      parts.push(`<h${h}>${inline(b.runs, fn, crossRefs)}</h${h}>`);
     }
-    else parts.push(`<p>${inline(b.runs, fn)}</p>`);
+    else parts.push(`<p>${inline(b.runs, fn, crossRefs)}</p>`);
   }
   closeList();
   /* The notes themselves, after the content that cites them.
@@ -204,4 +252,8 @@ export const PRINT_STYLES = `
   figure img { max-width: 100%; height: auto; }
   figcaption { font-style: italic; font-size: 10pt; padding-top: 4px; }
   .img-missing { color: #6b7280; font-style: italic; }
+  /* A resolved cross-reference is a real anchor into the section it names. */
+  a.xref { color: #1d4ed8; text-decoration: none; }
+  /* An unresolved one is STATED, in place. Not a number, not a blank. */
+  .xref-missing { color: #b42318; font-style: italic; }
 `;

@@ -5454,6 +5454,27 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
           )
         : new Map();
 
+    /* CROSS-REFERENCES resolve against the sections THIS export is writing,
+       resolved ONCE here for the same reason the figures are — the DOCX and PDF
+       branches consume the same directory, so the two filed formats cannot
+       disagree about what a reference says.
+
+       A reference stores the target section's id and never its printed number,
+       so a section renumbered since the reference was written comes out with
+       its current number without one byte of the referring section's stored
+       content changing. A target that is not in this document resolves to a
+       stated line rather than to a number that would look right and be wrong. */
+    const { crossReferenceLookupFor, crossReferenceAnchorId } = await import(
+      '@shared/authoring/cross-references'
+    );
+    const crossRefs = crossReferenceLookupFor(
+      sectionsResult.rows.map((s: { id: string; code: string; title: string }) => ({
+        id: String(s.id),
+        code: s.code,
+        title: s.title,
+      }))
+    );
+
     // Generate export based on format
     let fileContent: Buffer | undefined;
     let fileName: string = 'export';
@@ -5523,7 +5544,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
          wrong with the docx generation below it — it had simply never run. */
       const docxNs = await import('docx');
       const { Document, Packer, Paragraph, HeadingLevel, TextRun } = docxNs;
-      const { blocksToDocx, orderedListNumbering } = await import(
+      const { blocksToDocx, orderedListNumbering, sectionHeadingParagraph } = await import(
         '../export/authoring-blocks-to-docx.js'
       );
       const { sectionContentToBlocks, countPendingSuggestions } = await import(
@@ -5586,14 +5607,19 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
         return id;
       };
       for (const { section, blocks } of sectionBlocks) {
+        /* The heading carries the Word bookmarks every REF field to this
+           section cites. Emitted for EVERY section, so a reference that
+           resolved above always finds its anchor — a REF to a bookmark that
+           was never written shows a word processor's own error string in a
+           filed document, which is not a sentence a reviewer should ever
+           read. */
+        children.push(sectionHeadingParagraph(docxNs, section));
         children.push(
-          new Paragraph({
-            text: `${section.code} - ${section.title}`,
-            heading: HeadingLevel.HEADING_1,
+          ...blocksToDocx(docxNs, blocks, exportImages, {
+            revisionDate: exportedAt,
+            footnoteSink,
+            crossRefs,
           })
-        );
-        children.push(
-          ...blocksToDocx(docxNs, blocks, exportImages, { revisionDate: exportedAt, footnoteSink })
         );
       }
 
@@ -5654,13 +5680,16 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
       let pdfPendingIns = 0;
       let pdfPendingDel = 0;
       const pdfSections = sectionsResult.rows.map(
-        (s: { code: string; title: string; content: string | null }) => {
+        (s: { id: string; code: string; title: string; content: string | null }) => {
           const blocks = sectionContentToBlocks(s.content);
           const pending = countPendingSuggestions(blocks);
           pdfPendingIns += pending.insertions;
           pdfPendingDel += pending.deletions;
-          const body = blocksToHtml(blocks, exportImages);
-          return `<h2>${esc(s.code)} — ${esc(s.title)}</h2>${body}`;
+          const body = blocksToHtml(blocks, exportImages, { crossRefs });
+          // The heading is the anchor a resolved cross-reference links to.
+          return `<h2 id="${esc(crossReferenceAnchorId(String(s.id)))}">${esc(s.code)} — ${esc(
+            s.title
+          )}</h2>${body}`;
         }
       );
       const html = `<!doctype html><html><head><meta charset="utf-8"><style>
