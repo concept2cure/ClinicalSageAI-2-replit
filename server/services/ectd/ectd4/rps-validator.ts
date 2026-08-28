@@ -112,6 +112,39 @@ function validateSubmissionUnit(
 
 }
 
+/**
+ * The code + code-system pair of one context of use.
+ *
+ * Extracted from the context-of-use loop so that loop stays under the
+ * complexity ceiling once it had to tell the two governing code systems apart.
+ */
+function validateCouCoding(
+  cou: { code?: string; codeSystem: string },
+  p: string,
+  err: (code: string, message: string, path?: string) => void,
+): void {
+  if (!cou.code) {
+    err('RPS-COU-CODE-REQUIRED', `${p} code is required.`, `${p}.code`);
+  } else if (cou.codeSystem === ICH_COU_OID) {
+    if (!/^ich_[0-9a-z.]+$/.test(cou.code)) {
+      err(
+        'RPS-COU-CODE-VALID',
+        `${p} code "${cou.code}" is not a valid ICH-governed context-of-use code.`,
+        `${p}.code`,
+      );
+    }
+  } else if (!isValidV4Code('contextOfUse', cou.code)) {
+    err('RPS-COU-CODE-VALID', `${p} code "${cou.code}" is not a valid context-of-use (CL2) value.`, `${p}.code`);
+  }
+  if (cou.codeSystem !== ICH_COU_OID && !isCodeSystemOidValid('contextOfUse', cou.codeSystem)) {
+    err(
+      'RPS-COU-CODESYSTEM-OID',
+      `${p} code system "${cou.codeSystem}" is neither the FDA context-of-use nor the ICH context-of-use code-system OID.`,
+      `${p}.code`,
+    );
+  }
+}
+
 export function validateRpsMessage(
   input: RpsMessageInput,
   expectedSequenceNumber?: string,
@@ -172,26 +205,7 @@ export function validateRpsMessage(
     // Strictness is preserved: an unrecognised code system is still an error, an
     // FDA-governed code must still be in CL2, and an ICH-governed code must still
     // match the governed shape rather than being accepted on the code system alone.
-    if (!cou.code) {
-      err('RPS-COU-CODE-REQUIRED', `${p} code is required.`, `${p}.code`);
-    } else if (cou.codeSystem === ICH_COU_OID) {
-      if (!/^ich_[0-9a-z.]+$/.test(cou.code)) {
-        err(
-          'RPS-COU-CODE-VALID',
-          `${p} code "${cou.code}" is not a valid ICH-governed context-of-use code.`,
-          `${p}.code`,
-        );
-      }
-    } else if (!isValidV4Code('contextOfUse', cou.code)) {
-      err('RPS-COU-CODE-VALID', `${p} code "${cou.code}" is not a valid context-of-use (CL2) value.`, `${p}.code`);
-    }
-    if (cou.codeSystem !== ICH_COU_OID && !isCodeSystemOidValid('contextOfUse', cou.codeSystem)) {
-      err(
-        'RPS-COU-CODESYSTEM-OID',
-        `${p} code system "${cou.codeSystem}" is neither the FDA context-of-use nor the ICH context-of-use code-system OID.`,
-        `${p}.code`,
-      );
-    }
+    validateCouCoding(cou, p, err);
     if (cou.status !== 'active' && cou.status !== 'suspended') {
       err('RPS-COU-STATUS', `${p}.statusCode must be "active" or "suspended".`, `${p}.statusCode`);
     }

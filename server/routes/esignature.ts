@@ -182,7 +182,10 @@ router.post('/sign', async (req: Request, res: Response) => {
     legalDisclaimer,
     deviceInfo,
     signatureType,
-    signerTitle,
+    // signerTitle is intentionally NOT read from the request body: a signer must
+    // not be able to assert an arbitrary credential/authority (e.g. "Chief
+    // Medical Officer") into the immutable §11.50 manifestation. It is resolved
+    // server-side from the signer's own users row below.
   } = req.body ?? {};
 
   if (!Number.isFinite(Number(documentId)) || !Number.isFinite(Number(versionId))) {
@@ -272,15 +275,20 @@ router.post('/sign', async (req: Request, res: Response) => {
   const session = (req as any).user ?? {};
   let signerName: string = session.name ?? '';
   let signerEmail: string = session.email ?? '';
+  // §11.50 signer title — resolved ONLY from the server-side users row, never
+  // from client input. Null when unresolvable (never fabricated).
+  let resolvedSignerTitle: string | null = null;
   try {
-    // tenant-isolation-safe: signer self-lookup — userId is the authenticated user's own session id; denormalises signer_name/email onto the signature row for Part 11 offline audit.
+    // tenant-isolation-safe: signer self-lookup — userId is the authenticated user's own session id; denormalises signer_name/email/title onto the signature row for Part 11 offline audit.
     const u = await pool.query(
-      `SELECT name, email FROM users WHERE id = $1 LIMIT 1`,
+      `SELECT name, email, title FROM users WHERE id = $1 LIMIT 1`,
       [userId]
     );
     if (u.rows[0]) {
       signerName = signerName || u.rows[0].name || '';
       signerEmail = signerEmail || u.rows[0].email || '';
+      // Server-resolved title only — never a client-asserted one.
+      resolvedSignerTitle = u.rows[0].title ?? null;
     }
   } catch (err: any) {
     if (err?.code !== '42P01') {
@@ -296,24 +304,6 @@ router.post('/sign', async (req: Request, res: Response) => {
     (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
     req.socket?.remoteAddress ||
     undefined;
-
-  // Deterministic content hash (the bytes a regulator would re-derive to
-  // verify integrity). Includes everything that defines the signing event;
-  // does NOT include the password or MFA token.
-  const signatureHash = createHash('sha256')
-    .update(
-      JSON.stringify({
-        documentId: Number(documentId),
-        versionId: Number(versionId),
-        signaturePurpose,
-        signatureMeaning: signatureMeaning ?? null,
-        action,
-        signerId: userId,
-        signerEmail,
-        signedAt: signedAt.toISOString(),
-      })
-    )
-    .digest('hex');
 
   // §11.70 content binding: the signature must be linked to the *bytes* of the
   // version being signed, not just its id. Load the version's content
@@ -368,6 +358,31 @@ router.post('/sign', async (req: Request, res: Response) => {
     });
   }
 
+  // §11.200 attribution manifest + hash. The hash MUST be computed over the
+  // EXACT object persisted as signature_manifest — previously the hash covered
+  // one set of fields while a DIFFERENT (thinner) object was stored, so the
+  // stored signature_hash did not authenticate the stored manifest and any
+  // re-derivation over the manifest always mismatched. Build the manifest once,
+  // then hash that same object. Computed here (after the §11.70 binding digest)
+  // so boundPayloadDigest is included. Excludes the password and MFA token.
+  const signatureManifest = {
+    documentId: Number(documentId),
+    versionId: Number(versionId),
+    signaturePurpose,
+    signatureMeaning: signatureMeaning ?? null,
+    action,
+    signerId: userId,
+    signerEmail,
+    signerRole,
+    signerTitle: resolvedSignerTitle,
+    deviceInfo: deviceInfo ?? null,
+    boundPayloadDigest,
+    signedAt: signedAt.toISOString(),
+  };
+  const signatureHash = createHash('sha256')
+    .update(JSON.stringify(signatureManifest))
+    .digest('hex');
+
   // 21 CFR Part 11 §11.10(e): the signature and its audit row are ONE
   // transaction. Previously the INSERT ran on an autocommit `pool.query`, so
   // the signature was durably committed BEFORE the audit write was attempted.
@@ -392,14 +407,14 @@ router.post('/sign', async (req: Request, res: Response) => {
       signaturePurpose,
       signerId: userId,
       signerName,
-      signerTitle: signerTitle ?? null,
+      signerTitle: resolvedSignerTitle,
       signerEmail,
       authenticationMethod: 'password+totp',
       authenticationTimestamp: signedAt,
       secondFactorVerified,
       signatureHash,
       signatureMeaning: signatureMeaning ?? null,
-      signatureManifest: { action, signerRole, deviceInfo: deviceInfo ?? null, boundPayloadDigest },
+      signatureManifest,
       isValid: signatureIsValid,
       complianceStatement: complianceStatement ?? null,
       legalDisclaimer: legalDisclaimer ?? null,

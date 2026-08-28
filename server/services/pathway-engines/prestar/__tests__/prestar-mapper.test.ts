@@ -6,13 +6,14 @@ import {
   type PreStarInputLeaf,
 } from '../prestar-mapper';
 
-const leaf = (sectionCode: string, title: string, documentType?: string): PreStarInputLeaf => ({
+const leaf = (sectionCode: string, title: string, documentType?: string, substantive = true): PreStarInputLeaf => ({
   sectionCode,
   title,
   documentType,
+  substantive,
 });
 
-// Admin spine shared by every request.
+// Admin spine shared by every request. Finalized/substantive content.
 const adminLeaves: PreStarInputLeaf[] = [
   leaf('1', 'Cover letter'),
   leaf('2', 'Applicant contact and administrative information'),
@@ -85,6 +86,25 @@ describe('mapToPreStar — Q-Submissions', () => {
     expect(r.summary.missingRequired).toEqual([]);
     expect(r.summary.completeness).toBe(100);
   });
+
+  it('honesty fix: a matched-but-non-substantive leaf (draft/placeholder) does NOT mark its required section present, and does NOT make the submission ready', () => {
+    // Same titles/documentTypes as the "becomes ready" case — every required
+    // section TITLE-matches — but every leaf is a draft/placeholder stub
+    // (substantive: false). Before the fix this incorrectly reported
+    // ready:true off title matches alone.
+    const draftLeaves: PreStarInputLeaf[] = [
+      leaf('1', 'Cover letter', undefined, false),
+      leaf('2', 'Applicant contact and administrative information', undefined, false),
+      leaf('3', 'Device description and intended use', undefined, false),
+      leaf('4', 'Specific questions for FDA', 'questions', false),
+      leaf('5', 'Background and our position', 'background', false),
+    ];
+    const r = mapToPreStar({ leaves: draftLeaves, submissionType: 'q_sub', qSubType: 'pre_submission' });
+    expect(r.sections.every((s) => !s.present)).toBe(true);
+    expect(r.summary.ready).toBe(false);
+    expect(r.summary.completeness).toBe(0);
+    expect(r.summary.missingRequired.length).toBeGreaterThan(0);
+  });
 });
 
 describe('mapToPreStar — IDE', () => {
@@ -106,7 +126,7 @@ describe('mapToPreStar — IDE', () => {
 
   it('matches by documentType', () => {
     const r = mapToPreStar({
-      leaves: [{ sectionCode: 'x', title: 'untitled', documentType: 'investigational_plan' }],
+      leaves: [{ sectionCode: 'x', title: 'untitled', documentType: 'investigational_plan', substantive: true }],
       submissionType: 'ide',
     });
     expect(r.sections.find((s) => s.id === 'investigational-plan')?.present).toBe(true);

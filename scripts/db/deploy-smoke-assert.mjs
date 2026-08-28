@@ -160,9 +160,10 @@ for (const [label, sql] of CONSUMER_QUERIES) {
 
 // ── 1c. Every NON-PUBLIC uuid-tenant table is policied or explicitly exempt ───
 // The public checks above are integer-keyed and public-only. The non-public
-// schemas use a uuid tenant key; C-46 policied the tenant-owned ones with the
-// context-less-safe COALESCE policy and left two cross-tenant-by-design tables
-// exempt. This asserts no non-public uuid-tenant BASE TABLE is left with NO
+// schemas use a uuid tenant key; C-46 policied the tenant-owned ones and left
+// two cross-tenant-by-design tables exempt. (That policy originally used a
+// COALESCE fallback to stay non-breaking for context-less reads; it now uses
+// the app.rls_enforce shadow clause instead — see 1d.) This asserts no non-public uuid-tenant BASE TABLE is left with NO
 // policy at all (any policy name counts — these schemas use per-subsystem names),
 // so a newly-provisioned uuid-tenant table that nobody policied fails the build.
 const UUID_TENANT_EXEMPT = ['federated_ml.federation_participants', 'audit.event_log'];
@@ -187,6 +188,44 @@ const UUID_TENANT_EXEMPT = ['federated_ml.federation_participants', 'audit.event
   );
   if (rows.length === 0) ok('every non-public uuid-tenant table is policied or exempt (C-46)');
   else fail(`${rows.length} non-public uuid-tenant table(s) unpoliced`, rows.map((r) => r.rel).join(', '));
+}
+
+// ── 1d. No tenant policy may FAIL OPEN ───────────────────────────────────────
+// A predicate of the form `<col> = COALESCE(<resolver>, <col>)` collapses to
+// `<col> = <col>` — TRUE for every row — the moment the resolver yields NULL,
+// which an unset, empty or non-uuid org GUC all do. That is a tenant policy
+// whose failure mode is "return every tenant's rows".
+//
+// It is not hypothetical: measured on a provisioned database as the
+// non-superuser app_service role with app.rls_enforce=on, two rows under
+// different org_ids in cortex.knowledge_gaps came back BOTH with the GUC unset
+// and BOTH with it set to '42' (what an integer org id looks like arriving at a
+// uuid-keyed schema). 48 policies carried the shape.
+//
+// Asserted here rather than fixed only by migration because the shape is easy
+// to reintroduce — there are still source migrations (gcc 074-078) that emit
+// it, and the ordered set repairs them afterwards. This gate is what makes that
+// repair non-optional: any NEW policy written this way fails the deploy.
+{
+  const { rows } = await client.query(
+    `SELECT n.nspname || '.' || c.relname || ' :: ' || p.polname AS rel
+       FROM pg_policy p
+       JOIN pg_class c     ON c.oid = p.polrelid
+       JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE COALESCE(pg_get_expr(p.polqual, p.polrelid), '')
+              ~ 'COALESCE\\([^()]*(\\([^()]*\\)[^()]*)*,\\s*(org_id|organization_id|tenant_id)\\s*\\)'
+         OR COALESCE(pg_get_expr(p.polwithcheck, p.polrelid), '')
+              ~ 'COALESCE\\([^()]*(\\([^()]*\\)[^()]*)*,\\s*(org_id|organization_id|tenant_id)\\s*\\)'
+      ORDER BY 1`,
+  );
+  if (rows.length === 0) {
+    ok('no tenant policy falls back to the row\'s own tenant id (fail-open)');
+  } else {
+    fail(
+      `${rows.length} tenant policy(ies) FAIL OPEN — an unresolved scope returns every tenant's rows`,
+      rows.map((r) => r.rel).join(', '),
+    );
+  }
 }
 
 // ── 4. pgvector actually loaded and the C-37 tables exist ─────────────────────

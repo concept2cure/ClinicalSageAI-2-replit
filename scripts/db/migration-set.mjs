@@ -1611,6 +1611,17 @@ export const C2C_MIGRATION_FILES = [
   // says. Ordered before the sweep so a table is never left without a policy.
   'db/migrations/20260828_drop_orphaned_org_guc_policies.sql',
 
+  // ── Non-public tenant policies must fail CLOSED (ordered before the sweep) ──
+  // The gcc 074-078 migrations and the earlier form of the non-public sweep
+  // emitted `<col> = COALESCE(<resolver>, <col>)`, which collapses to
+  // `<col> = <col>` — TRUE for every row — whenever the org GUC is unset, empty
+  // or not a uuid. Measured as app_service with app.rls_enforce=on: an unset
+  // GUC and a GUC of '42' each returned BOTH tenants' rows. This rewrites them
+  // to the shadow-clause form the 793 public policies already use, so they do
+  // not filter when enforcement is off and filter strictly when it is on.
+  // Idempotent; matches on shape, not on policy name.
+  'db/migrations/20260828_fail_closed_org_coalesce_policies.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

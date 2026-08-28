@@ -27,6 +27,12 @@ export interface CockpitInputLeaf {
   sectionCode: string;
   title: string;
   documentType?: string;
+  /**
+   * True only when this leaf carries real, finalized authored content — never a
+   * draft/placeholder stub. Required so a title match alone never marks a
+   * required section present (mirrors EstarInputLeaf/PmaInputLeaf).
+   */
+  substantive?: boolean; // optional: undefined ⇒ NOT substantive (fail-closed)
 }
 
 export interface PathwayReadiness {
