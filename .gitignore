@@ -133,3 +133,9 @@ scripts/visual-qa/probe-*.spec.tsx
 
 # DR restore drill evidence (local runs; CI uploads it as an artifact)
 .dr-evidence/
+
+# ESLint JSON report: the CI lint step writes it so the warning ratchet can
+# reuse that run instead of linting twice. A plain filename, not a trailing
+# slash — `node_modules/` matched directories only, which is exactly how a
+# symlink of that name slipped into history.
+eslint-report.json
