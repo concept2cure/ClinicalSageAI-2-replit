@@ -51,7 +51,9 @@ const REQ_BODY = {
   phase: 'Phase 1',
 };
 
-const fetchMock = vi.fn(async () =>
+// Parameters declared so mock.calls carries fetch's tuple type — a zero-arg
+// vi.fn types calls as [][], and destructuring ([url]) below is then TS2493.
+const fetchMock = vi.fn(async (..._args: Parameters<typeof fetch>) =>
   new Response(JSON.stringify({ success: true, data: { id: 'artifact-1' } }), { status: 200 }),
 );
 

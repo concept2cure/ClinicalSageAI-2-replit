@@ -235,7 +235,7 @@ export function normalizeStudy(input: PreclinicalStudy | NonclinicalStudyInput):
       durationWeeks: input.durationWeeks,
       glpCompliant: input.glpCompliant,
       doseGroups: Array.isArray((input as { doseGroups?: unknown }).doseGroups)
-        ? ((input as { doseGroups: Array<{ group: string; doseLevel: string }> }).doseGroups)
+        ? ((input as unknown as { doseGroups: Array<{ group: string; doseLevel: string }> }).doseGroups)
         : [],
       noael: input.noael,
       loael: input.loael,
@@ -261,7 +261,7 @@ export function normalizeStudy(input: PreclinicalStudy | NonclinicalStudyInput):
     durationWeeks: loose.durationWeeks ?? null,
     glpCompliant: loose.glpCompliant ?? (loose.glpStatus ? loose.glpStatus === 'GLP' : null),
     doseGroups: Array.isArray((loose as { doseGroups?: unknown }).doseGroups)
-      ? ((loose as { doseGroups: Array<{ group: string; doseLevel: string }> }).doseGroups)
+      ? ((loose as unknown as { doseGroups: Array<{ group: string; doseLevel: string }> }).doseGroups)
       : [],
     noael: loose.noael ?? loose.noel ?? null,
     loael: null,
