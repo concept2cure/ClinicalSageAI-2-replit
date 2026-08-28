@@ -195,6 +195,13 @@ export async function persistElectronicSignature(
   if (!record.signatureHash) {
     throw new Error('electronic_signatures: attribution signatureHash is required (§11.200).');
   }
+  if (!record.boundPayloadDigest) {
+    // The §11.70 content-binding digest links the signature to the exact bytes
+    // signed. This module is the single fail-closed guarantor for every current
+    // and future caller, and the digest is the one required field the guards had
+    // omitted — an empty binding must be refused, not persisted.
+    throw new Error('electronic_signatures: boundPayloadDigest is required (§11.70 content binding).');
+  }
   if (!Number.isFinite(record.organizationId)) {
     throw new Error('electronic_signatures: organizationId is required (tenant scope).');
   }
