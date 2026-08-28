@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-28T14:27:12.108Z",
+  "generatedAt": "2026-08-28T14:33:41.424Z",
   "git": {
-    "sha": "2c7fdf194f217e5e14c40c3ee49b99545919130f",
+    "sha": "be0bec0aac58bcaf54db6b9c7180c941122f9b52",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2511,16 +2511,16 @@
         "lines": 1917
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 1915
+      },
+      {
         "file": "server/routes/regulatory-digital-twin.ts",
         "lines": 1894
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
         "lines": 1888
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 1885
       },
       {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
