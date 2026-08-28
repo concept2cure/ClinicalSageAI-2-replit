@@ -20,15 +20,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   resolve: {
     alias: [
-      // server/middleware/auth is a live .js/.ts shadow pair (KNOWN_ISSUES_LEDGER
-      // M-5). The production runtimes (tsx in dev, esbuild in the bundle) resolve
-      // the extensionless import to auth.ts; Vite's default extension order
-      // prefers .js, silently swapping in the legacy middleware — which never
-      // attaches the request DB context, so every tenant-scoped route 500s with
-      // REQUEST_DB_CONTEXT_REQUIRED and the WO-03 isolation proof tests the
-      // wrong auth chain entirely. Pin this lane to what production runs. The
-      // real fix is the M-5 consolidation; this keeps the proof honest until then.
-      { find: /^.*\/server\/middleware\/auth$/, replacement: path.resolve(__dirname, 'server/middleware/auth.ts') },
+      // server/middleware/auth WAS a live .js/.ts shadow pair (KNOWN_ISSUES_LEDGER
+      // M-5): Vite's extension order preferred the legacy auth.js while tsx and
+      // esbuild ran auth.ts, so this lane carried an alias pinning the extensionless
+      // import to auth.ts. The M-5 consolidation made auth.js a pure re-export shim
+      // of auth.ts, so every resolver — this one included — executes the canonical
+      // middleware and the alias is gone. If the WO-03 proof ever fails with
+      // REQUEST_DB_CONTEXT_REQUIRED again, suspect auth.js regrowing logic.
       { find: '@', replacement: path.resolve(__dirname, 'client/src') },
       { find: '@shared', replacement: path.resolve(__dirname, 'shared') },
       { find: 'shared', replacement: path.resolve(__dirname, 'shared') },
