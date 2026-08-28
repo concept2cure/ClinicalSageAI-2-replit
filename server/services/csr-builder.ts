@@ -31,8 +31,73 @@ export interface CSRSection {
   required: boolean;
   description: string;
   content?: string;
-  status: 'empty' | 'drafting' | 'drafted' | 'reviewed' | 'approved';
+  // 'needs_data' — content was drafted (AI or template) but still contains
+  // one or more unresolved data placeholders (e.g. [DATA TO BE INSERTED],
+  // [N], [value]) and is therefore NOT numerically complete. See
+  // hasUnresolvedPlaceholders below. This is deliberately distinct from
+  // 'drafted' so a downstream consumer gating export/submission readiness
+  // on section status cannot mistake prose-with-placeholders for done.
+  status: 'empty' | 'drafting' | 'drafted' | 'needs_data' | 'reviewed' | 'approved';
+  // True exactly when status === 'needs_data'. Duplicated as a boolean flag
+  // (in addition to the status string) so callers that only check a single
+  // field can't miss it either way.
+  needsData?: boolean;
   childSections?: CSRSection[];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLACEHOLDER / DATA-COMPLETENESS DETECTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Matches an unresolved data placeholder left in drafted CSR content, e.g.
+ * [DATA TO BE INSERTED], [N], [value], [result], [reasons], [list], [X],
+ * [statistical method to be specified], [favorable/unfavorable]. Both the AI
+ * system prompt (buildSectionSystemPrompt) and the template fallback
+ * (generateSectionTemplate) are instructed to use exactly this bracketed
+ * convention for any real study number/finding that isn't available yet —
+ * so ANY surviving `[...]` span containing a letter means the section still
+ * needs real data, regardless of how much surrounding prose looks finished.
+ *
+ * Deliberately broad on purpose (fail closed per repo working agreement): a
+ * false positive costs a section an extra "needs_data" glance from a
+ * reviewer; a false negative would let a CSR section that's still full of
+ * [DATA TO BE INSERTED] report as filing-ready, which is the bug this gate
+ * exists to close. Legitimate regulatory prose does not use square brackets.
+ */
+const PLACEHOLDER_PATTERN = /\[[^[\]]*[A-Za-z][^[\]]*\]/;
+
+/** True if `content` still contains at least one unresolved data placeholder. */
+export function hasUnresolvedPlaceholders(content: string | null | undefined): boolean {
+  if (!content) return false;
+  return PLACEHOLDER_PATTERN.test(content);
+}
+
+/**
+ * Derive a section's status from its drafted content. Non-empty content that
+ * still carries a placeholder is 'needs_data', not 'drafted' — see
+ * hasUnresolvedPlaceholders.
+ */
+function statusForContent(content: string | undefined): CSRSection['status'] {
+  if (!content) return 'empty';
+  return hasUnresolvedPlaceholders(content) ? 'needs_data' : 'drafted';
+}
+
+/** Apply statusForContent + the needsData mirror flag to a section in place. */
+function applyContentStatus(section: CSRSection): void {
+  section.status = statusForContent(section.content);
+  section.needsData = section.status === 'needs_data';
+}
+
+/**
+ * A section counts as *data-complete* only when it has content AND that
+ * content has no residual placeholders (status 'drafted' or further along
+ * the review pipeline — 'reviewed'/'approved'). Used to compute build-level
+ * progress/status so a job can never report 'complete'/100 while any
+ * section is still 'empty' or 'needs_data'.
+ */
+function isSectionDataComplete(section: CSRSection): boolean {
+  return section.status === 'drafted' || section.status === 'reviewed' || section.status === 'approved';
 }
 
 export const ICH_E3_STRUCTURE: CSRSection[] = [
@@ -137,11 +202,56 @@ export interface CSRBuildRequest {
 
 export interface CSRBuildJob {
   id: number;
-  status: 'queued' | 'generating' | 'complete' | 'failed';
+  // 'needs_data' — drafting finished but one or more targeted sections still
+  // carry unresolved data placeholders; NOT the same as 'complete'. See
+  // computeBuildCompleteness.
+  status: 'queued' | 'generating' | 'complete' | 'needs_data' | 'failed';
   progress: number;
   sections: CSRSection[];
   studyInfo: CSRBuildRequest['studyInfo'];
   createdAt: Date;
+}
+
+/**
+ * Compute a build job's overall status/progress from its drafted section
+ * tree. A job is 'complete'/100 ONLY when every *targeted* section
+ * (respecting sectionsToGenerate — mirrors csr-job-runner's target-list
+ * semantics so a partial build isn't held to the full ICH-E3 backbone) is
+ * data-complete: it has content, and that content has no residual
+ * [DATA TO BE INSERTED]-style placeholder (see hasUnresolvedPlaceholders).
+ * Any targeted section still 'empty' (no template/AI content — e.g. a
+ * section number with no template case) or 'needs_data' (placeholders
+ * remain) holds the whole job at 'needs_data' with progress < 100.
+ *
+ * Fail closed: a CSR with any residual data placeholder — or any required
+ * section that never got drafted at all — must never surface as
+ * 'complete'/100. A downstream consumer gating export on job status depends
+ * on this.
+ */
+function computeBuildCompleteness(
+  sections: CSRSection[],
+  sectionsToGenerate?: string[]
+): { status: 'complete' | 'needs_data'; progress: number } {
+  const flat = flattenICHE3Sections(sections);
+  const targets =
+    sectionsToGenerate && sectionsToGenerate.length > 0
+      ? flat.filter(s => sectionsToGenerate.includes(s.number))
+      : flat;
+
+  if (targets.length === 0) {
+    // Nothing was in scope to draft — vacuously complete (matches
+    // csr-job-runner's totalSections === 0 -> progress 100 convention).
+    return { status: 'complete', progress: 100 };
+  }
+
+  const completeCount = targets.filter(isSectionDataComplete).length;
+  if (completeCount === targets.length) {
+    return { status: 'complete', progress: 100 };
+  }
+  return {
+    status: 'needs_data',
+    progress: Math.floor((completeCount / targets.length) * 100),
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -185,10 +295,15 @@ export async function launchCSRBuild(request: CSRBuildRequest): Promise<CSRBuild
   // Generate content for each section based on study info
   const generated = await generateCSRSections(sections, request);
 
+  // Fail closed: only report complete/100 when every targeted section is
+  // actually data-complete (no residual placeholders). See
+  // computeBuildCompleteness.
+  const completeness = computeBuildCompleteness(generated, request.sectionsToGenerate);
+
   return {
     id: Date.now(),
-    status: 'complete',
-    progress: 100,
+    status: completeness.status,
+    progress: completeness.progress,
     sections: generated,
     studyInfo: request.studyInfo,
     createdAt: new Date(),
@@ -288,7 +403,7 @@ export async function generateCSRSections(
     } else {
       section.content = generateSectionTemplate(section, info);
     }
-    section.status = section.content ? 'drafted' : 'empty';
+    applyContentStatus(section);
 
     if (section.childSections) {
       for (const child of section.childSections) {
@@ -300,7 +415,7 @@ export async function generateCSRSections(
         } else {
           child.content = generateSectionTemplate(child, info);
         }
-        child.status = child.content ? 'drafted' : 'empty';
+        applyContentStatus(child);
       }
     }
   }
@@ -727,5 +842,6 @@ export default {
   draftCSRSection,
   compareWithExistingCSRs,
   analyzeCSRSafetySignals,
+  hasUnresolvedPlaceholders,
   ICH_E3_STRUCTURE,
 };

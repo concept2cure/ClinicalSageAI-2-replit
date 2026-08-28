@@ -15,7 +15,12 @@ settings, bypass actors, or administrator enforcement are configured.
 
 No live check contexts or sample pull request could be read safely. Check names
 must be copied from successful, recent check runs—not inferred from workflow
-files—before protection is enabled. The workflow files currently in this
+files—before protection is enabled. `config/release-evidence-policy.v1.json`
+is the canonical machine-readable list of required release jobs (already
+carrying the expanded live matrix names, e.g. `Analyze (CodeQL
+javascript-typescript)`); derive the protection list from it plus the
+per-commit checks it does not carry, rather than maintaining a second
+independent list. The workflow files currently in this
 checkout expose the following **unverified candidates** relevant to the
 requested policy:
 

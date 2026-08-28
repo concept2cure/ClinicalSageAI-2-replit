@@ -35,9 +35,31 @@
  * Ordered and unordered lists are also distinguished here. They were not, so a
  * numbered procedure — the form most test methods and instructions-for-use take
  * — exported as bullets and silently lost its step numbers.
+ *
+ * CITATIONS carry THE SOURCE'S ID and not the number printed at the claim.
+ * "[3]" is a rendering of where a source currently sits in this document's
+ * reference list; the number is assigned in reading order at render time by a
+ * document-scoped registry, and the reference list is assembled from the
+ * citations actually used. See @shared/authoring/citations.
+ *
+ * CROSS-REFERENCES carry the TARGET SECTION'S ID and not its printed number.
+ * The run's `text` is the editor's cache and is not what either renderer
+ * prints: both resolve the id against the document's sections at render time,
+ * so renumbering a section fixes every reference to it without any referring
+ * section's stored content changing. See @shared/authoring/cross-references.
  */
 
 import { parse, HTMLElement, TextNode, Node } from 'node-html-parser';
+import {
+  CROSS_REF_TARGET_ATTR,
+  CROSS_REF_DISPLAY_ATTR,
+  normalizeCrossReferenceDisplay,
+  type CrossReferenceDisplay,
+} from '@shared/authoring/cross-references';
+import {
+  CITATION_SOURCE_ATTR,
+  CITATION_LOCATOR_ATTR,
+} from '@shared/authoring/citations';
 
 export interface InlineRun {
   text: string;
@@ -57,6 +79,49 @@ export interface InlineRun {
    *  colour the text. */
   suggestionAuthor?: string;
   suggestionAt?: string;
+  /** The note text, when this run is a footnote REFERENCE.
+   *
+   *  Regulatory tables are built on footnotes — every Module 3 specification,
+   *  batch-analysis and stability table carries them ("a Determined by HPLC;
+   *  b n=3; ITT population"), and so does every efficacy summary. The editor
+   *  had no footnote of any kind, so the only way to write one was a superscript
+   *  letter and a loose paragraph underneath, which detaches the moment the
+   *  table moves.
+   *
+   *  The note travels WITH its reference rather than in a separate list, so a
+   *  cut-and-paste of the row carries its own note and cannot orphan it. The
+   *  marker a reader sees is derived at render time from position, so notes
+   *  renumber themselves when content moves. */
+  footnote?: string;
+  /** Present when this run is a CROSS-REFERENCE to another section.
+   *
+   *  `crossRefTarget` is the target section's ID — never its printed number.
+   *  "2.7.4.2" is a rendering of where a section currently sits; storing it is
+   *  precisely the bug this closes, because a renumber then leaves every
+   *  reference silently wrong with no way to find them but by eye.
+   *
+   *  `text` on this run is the editor's CACHED rendering and both renderers
+   *  ignore it: they resolve the target through the export's section directory
+   *  and print what it says now. That is why renumbering a section corrects
+   *  every reference to it without one byte of the referring sections'
+   *  stored content changing. */
+  crossRefTarget?: string;
+  /** How much of the target to print — see CrossReferenceDisplay. */
+  crossRefDisplay?: CrossReferenceDisplay;
+  /** Present when this run is a CITATION of a source.
+   *
+   *  `citationSourceId` is the source's identity in the platform's canonical
+   *  source registry — never the number printed at the claim. "[3]" describes
+   *  where that source currently sits in this document's reference list, and a
+   *  citation inserted earlier moves it. Both renderers ask a document-scoped
+   *  registry for the number (see @shared/authoring/citations) and IGNORE this
+   *  run's `text`, which is the editor's cache of the source's NAME.
+   *
+   *  `citationLocator` is the author's pinpoint within the source — "p. 42",
+   *  "Table 3". It is authored content, not a derived value: no renderer can
+   *  recompute it, so it is stored and printed inside the marker. */
+  citationSourceId?: string;
+  citationLocator?: string;
 }
 
 export interface TableCell {
@@ -65,14 +130,59 @@ export interface TableCell {
   header?: boolean;
   colSpan?: number;
   rowSpan?: number;
+  /** Figures inside the cell, in document order.
+   *
+   *  A cell is not always text. A subject-versus-predicate comparison puts the
+   *  subject device's photograph beside the predicate's; a Module 3 method
+   *  table puts a chromatogram in the results column. `<img>` is void, so the
+   *  run walker below visited zero children and the figure contributed
+   *  NOTHING — and a table whose cells held only figures then had no text at
+   *  all, so the emptiness filter deleted THE ENTIRE TABLE from the export.
+   *  Silently: no placeholder, no warning, a filed document simply missing the
+   *  comparison the submission turns on. */
+  images?: { src: string; alt?: string }[];
 }
 
 export interface ContentBlock {
   kind: 'paragraph' | 'heading' | 'list-item' | 'table' | 'image';
-  /** Heading level 1–3 (headings only). */
-  level?: 1 | 2 | 3;
+  /** Heading level 1–5 (headings only), relative to the section title.
+   *
+   *  Was 1–3, and the parser clamped with `Math.min(3, …)`. CTD sections nest
+   *  deeper than that — 2.7.3.1.2 is five levels — so an H4 a writer had
+   *  legitimately stored came back as an H3 and the document's structure was
+   *  quietly flattened. The round-trip fidelity gate could not catch it either:
+   *  it compares TEXT, and a heading demoted from H4 to H3 keeps every
+   *  character. The words survived; the hierarchy did not, and hierarchy is
+   *  what a reviewer navigates a submission by. */
+  level?: 1 | 2 | 3 | 4 | 5;
   /** List items only: true when the item came from an `ol`. */
   ordered?: boolean;
+  /** List items only: 0-based nesting depth. 0 is a top-level item, 1 is an
+   *  item inside a nested list, and so on.
+   *
+   *  THE PARSER USED TO DROP THIS, AND DROPPING IT CHANGED WHAT THE DOCUMENT
+   *  SAID. The parser tracked only the innermost list TYPE, so every item of
+   *
+   *      1. Prepare the sample
+   *         a. Weigh 5.0 mg
+   *         b. Dissolve in 10 mL diluent
+   *      2. Inject 20 µL
+   *
+   *  came out as a flat sequence of top-level ordered items, and the renderers
+   *  — which restart nothing, because they were never told a level changed —
+   *  numbered them 1, 2, 3, 4. The filed procedure's "step 2" is
+   *  "Weigh 5.0 mg". The author's "step 2" is "Inject 20 µL".
+   *
+   *  That is not a lost indent. Every character survives, so the round-trip
+   *  fidelity gate — which compares text — passes it, and a deviation
+   *  investigation, a validation protocol or an IFU that cites "step 2" now
+   *  cites a different instruction in the copy the agency reads than in the
+   *  copy the author wrote. Numbered procedures are the form most test
+   *  methods and instructions-for-use take.
+   *
+   *  Absent means 0; every consumer clamps, so an out-of-range depth from
+   *  pathological markup cannot produce an invalid list level. */
+  depth?: number;
   /**
    * Inline content. Always present so every consumer can iterate it
    * unconditionally; empty for a `table` (text lives in `rows`) and for an
@@ -88,6 +198,18 @@ export interface ContentBlock {
   src?: string;
   alt?: string;
 }
+
+/** How deep a list may nest before the renderers clamp. Five ranks is the
+ *  standard outline depth and deeper than any real procedure; the clamp exists
+ *  so pathological stored markup cannot ask for a rank a renderer has no
+ *  format for — which Word renders as an unnumbered paragraph, silently
+ *  costing a step its identifier.
+ *
+ *  It lives here, beside `depth`, because it constrains the BLOCK MODEL: both
+ *  renderers clamp to it and must clamp identically, and the alternative —
+ *  the HTML renderer importing it from the DOCX one — makes the PDF path
+ *  depend on the Word path for a rule that belongs to neither. */
+export const MAX_LIST_DEPTH = 4;
 
 /** Every run in a block, including the ones inside a table's cells. */
 export function blockRuns(b: ContentBlock): InlineRun[] {
@@ -117,6 +239,11 @@ interface InlineState {
   suggestion?: 'insertion' | 'deletion';
   suggestionAuthor?: string;
   suggestionAt?: string;
+  footnote?: string;
+  crossRefTarget?: string;
+  crossRefDisplay?: CrossReferenceDisplay;
+  citationSourceId?: string;
+  citationLocator?: string;
 }
 
 const BLOCK_TAGS = new Set(['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'tr', 'blockquote', 'pre']);
@@ -134,7 +261,20 @@ function pushRun(runs: InlineRun[], text: string, st: InlineState): void {
     !!prev.subScript === !!st.subScript &&
     prev.suggestion === st.suggestion &&
     prev.suggestionAuthor === st.suggestionAuthor &&
-    prev.suggestionAt === st.suggestionAt
+    prev.suggestionAt === st.suggestionAt &&
+    prev.footnote === st.footnote &&
+    /* Two references to DIFFERENT sections must never merge into one run —
+       the second target would be silently discarded and the filed document
+       would carry one reference where the author wrote two. */
+    prev.crossRefTarget === st.crossRefTarget &&
+    prev.crossRefDisplay === st.crossRefDisplay &&
+    /* Two citations of DIFFERENT sources must never merge into one run — the
+       second source would be silently discarded and the filed document would
+       carry one citation, and one reference-list entry, where the author cited
+       two. A different locator is a different citation of the same source
+       ("p. 42" and "p. 96" are not interchangeable), so it separates runs too. */
+    prev.citationSourceId === st.citationSourceId &&
+    prev.citationLocator === st.citationLocator
   ) {
     prev.text += text;
     return;
@@ -150,7 +290,43 @@ function pushRun(runs: InlineRun[], text: string, st: InlineState): void {
     ...(st.suggestion ? { suggestion: st.suggestion } : {}),
     ...(st.suggestionAuthor ? { suggestionAuthor: st.suggestionAuthor } : {}),
     ...(st.suggestionAt ? { suggestionAt: st.suggestionAt } : {}),
+    ...(st.footnote ? { footnote: st.footnote } : {}),
+    ...(st.crossRefTarget ? { crossRefTarget: st.crossRefTarget } : {}),
+    ...(st.crossRefTarget && st.crossRefDisplay ? { crossRefDisplay: st.crossRefDisplay } : {}),
+    ...(st.citationSourceId ? { citationSourceId: st.citationSourceId } : {}),
+    ...(st.citationSourceId && st.citationLocator ? { citationLocator: st.citationLocator } : {}),
   });
+}
+
+/**
+ * A cross-reference or a citation whose cached text is empty still contributes
+ * a run.
+ *
+ * `pushRun` drops empty text, and correctly so for every other run kind. But
+ * both of these are RESOLVED at render time — the stored text is only a cache —
+ * so an empty one is something the author wrote, not whitespace. Dropping it
+ * here would delete it from the filed document in silence, which is the one
+ * outcome neither feature may ever produce.
+ *
+ * Shared by both because the rule is one rule: an element whose printed form
+ * comes from a directory rather than from its own text survives an empty cache.
+ */
+function pushEmptyResolvedRef(runs: InlineRun[], st: InlineState): void {
+  if (st.crossRefTarget) {
+    runs.push({
+      text: '',
+      crossRefTarget: st.crossRefTarget,
+      ...(st.crossRefDisplay ? { crossRefDisplay: st.crossRefDisplay } : {}),
+    });
+    return;
+  }
+  if (st.citationSourceId) {
+    runs.push({
+      text: '',
+      citationSourceId: st.citationSourceId,
+      ...(st.citationLocator ? { citationLocator: st.citationLocator } : {}),
+    });
+  }
 }
 
 /** Inline tags that carry attribution; shared by the block walk and cells.
@@ -166,8 +342,32 @@ function applyMark(tag: string, st: InlineState, el?: { getAttribute(name: strin
   if (tag === 'i' || tag === 'em') next.italics = true;
   if (tag === 'u') next.underline = true;
   if (tag === 's' || tag === 'strike') next.strike = true;
-  if (tag === 'sup') next.superScript = true;
+  if (tag === 'sup') {
+    next.superScript = true;
+    /* A footnote reference is a `sup` carrying its note. Anything else in a
+       `sup` is ordinary superscript (cm², t½) and stays that way. */
+    const note = el?.getAttribute('data-note');
+    if (note) next.footnote = note;
+  }
   if (tag === 'sub') next.subScript = true;
+  /* An `a` carrying the target attribute is a cross-reference, and one carrying
+     the source attribute is a citation. Any other anchor is an ordinary link
+     and keeps its text unchanged, as before. */
+  if (tag === 'a') {
+    const target = el?.getAttribute(CROSS_REF_TARGET_ATTR);
+    if (target && target.trim()) {
+      next.crossRefTarget = target.trim();
+      next.crossRefDisplay = normalizeCrossReferenceDisplay(
+        el?.getAttribute(CROSS_REF_DISPLAY_ATTR),
+      );
+    }
+    const cited = el?.getAttribute(CITATION_SOURCE_ATTR);
+    if (cited && cited.trim()) {
+      next.citationSourceId = cited.trim();
+      const locator = (el?.getAttribute(CITATION_LOCATOR_ATTR) ?? '').trim();
+      if (locator) next.citationLocator = locator;
+    }
+  }
   if (tag === 'ins' || tag === 'del') {
     if (tag === 'ins') {
       next.underline = true;
@@ -190,8 +390,12 @@ function applyMark(tag: string, st: InlineState, el?: { getAttribute(name: strin
  * are joined with a space rather than becoming separate blocks; the cell is the
  * structural unit here, and its internal paragraphing is not load-bearing.
  */
-function inlineRunsOf(node: HTMLElement, st: InlineState): InlineRun[] {
+function cellContentOf(
+  node: HTMLElement,
+  st: InlineState,
+): { runs: InlineRun[]; images: { src: string; alt?: string }[] } {
   const runs: InlineRun[] = [];
+  const images: { src: string; alt?: string }[] = [];
   const visit = (n: Node, state: InlineState): void => {
     if (n instanceof TextNode) {
       const text = n.text.replace(/\s+/g, ' ');
@@ -204,12 +408,27 @@ function inlineRunsOf(node: HTMLElement, st: InlineState): InlineRun[] {
       pushRun(runs, ' ', state);
       return;
     }
+    if (tag === 'img') {
+      /* Void element: the recursion below would visit zero children and the
+         figure would leave no trace at all. See TableCell.images. */
+      const src = (n.getAttribute('src') ?? '').trim();
+      if (src) {
+        const alt = (n.getAttribute('alt') ?? '').trim();
+        images.push({ src, ...(alt ? { alt } : {}) });
+      }
+      return;
+    }
     const isBlock = BLOCK_TAGS.has(tag) || tag === 'ol' || tag === 'ul';
     if (isBlock && runs.length) pushRun(runs, ' ', state);
-    for (const child of n.childNodes) visit(child, applyMark(tag, state, n));
+    const inner = applyMark(tag, state, n);
+    if (tag === 'a' && (inner.crossRefTarget || inner.citationSourceId) && !n.text) {
+      pushEmptyResolvedRef(runs, inner);
+      return;
+    }
+    for (const child of n.childNodes) visit(child, inner);
   };
   for (const child of node.childNodes) visit(child, st);
-  return trimRuns(runs);
+  return { runs: trimRuns(runs), images };
 }
 
 /** Trim the outer whitespace of a run list and drop the runs left empty. */
@@ -222,7 +441,9 @@ function trimRuns(runs: InlineRun[]): InlineRun[] {
         '',
       ),
     }))
-    .filter((r) => r.text.length > 0);
+    // A reference or a citation is kept whatever its cached text says — see
+    // pushEmptyResolvedRef.
+    .filter((r) => r.text.length > 0 || Boolean(r.crossRefTarget) || Boolean(r.citationSourceId));
 }
 
 /**
@@ -249,11 +470,13 @@ function parseTable(node: HTMLElement, st: InlineState): ContentBlock | null {
       };
       const colSpan = span('colspan');
       const rowSpan = span('rowspan');
+      const { runs, images } = cellContentOf(child, st);
       cells.push({
-        runs: inlineRunsOf(child, st),
+        runs,
         ...(tag === 'th' || inHead ? { header: true } : {}),
         ...(colSpan ? { colSpan } : {}),
         ...(rowSpan ? { rowSpan } : {}),
+        ...(images.length ? { images } : {}),
       });
     }
     if (cells.length) rows.push(cells);
@@ -279,7 +502,7 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
   const blocks: ContentBlock[] = [];
   let current: ContentBlock | null = null;
 
-  const ensureBlock = (kind: ContentBlock['kind'] = 'paragraph', level?: 1 | 2 | 3): ContentBlock => {
+  const ensureBlock = (kind: ContentBlock['kind'] = 'paragraph', level?: 1 | 2 | 3 | 4 | 5): ContentBlock => {
     if (!current) {
       current = { kind, ...(level ? { level } : {}), runs: [] };
       blocks.push(current);
@@ -290,8 +513,12 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
     current = null;
   };
 
-  /** Innermost list type, so a nested ol inside a ul numbers correctly. */
-  let listOrdered: boolean | null = null;
+  /* The open list ancestry, innermost last: `true` for an `ol`, `false` for a
+     `ul`. This was a single `listOrdered: boolean | null` — the innermost TYPE
+     with no notion of how deep it sat — which is why every item of a nested
+     procedure exported as a top-level item and was renumbered. See
+     `ContentBlock.depth`. */
+  const listStack: boolean[] = [];
 
   const walk = (node: Node, st: InlineState): void => {
     if (node instanceof TextNode) {
@@ -319,10 +546,9 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
 
     if (tag === 'ol' || tag === 'ul') {
       closeBlock();
-      const outer = listOrdered;
-      listOrdered = tag === 'ol';
+      listStack.push(tag === 'ol');
       for (const child of node.childNodes) walk(child, nextState);
-      listOrdered = outer;
+      listStack.pop();
       closeBlock();
       return;
     }
@@ -353,15 +579,29 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
       closeBlock();
       const heading = /^h([1-6])$/.exec(tag);
       if (heading) {
-        const level = Math.min(3, Number(heading[1])) as 1 | 2 | 3;
+        const level = Math.min(5, Number(heading[1])) as 1 | 2 | 3 | 4 | 5;
         current = { kind: 'heading', level, runs: [] };
         blocks.push(current);
       } else if (tag === 'li') {
-        current = { kind: 'list-item', ...(listOrdered ? { ordered: true } : {}), runs: [] };
+        /* An `li` with no list ancestor is malformed stored markup; it keeps
+           the old behaviour — an unordered item at depth 0 — rather than
+           being dropped. */
+        const depth = Math.max(0, listStack.length - 1);
+        current = {
+          kind: 'list-item',
+          ...(listStack[depth] ? { ordered: true } : {}),
+          ...(depth ? { depth } : {}),
+          runs: [],
+        };
         blocks.push(current);
       }
       for (const child of node.childNodes) walk(child, nextState);
       closeBlock();
+      return;
+    }
+
+    if (tag === 'a' && (nextState.crossRefTarget || nextState.citationSourceId) && !node.text) {
+      pushEmptyResolvedRef(ensureBlock().runs, nextState);
       return;
     }
 
@@ -379,14 +619,29 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
   for (const child of root.childNodes) walk(child, {});
   closeBlock();
 
-  // Drop blocks that are only whitespace, trim run edges per block. A table
-  // keeps its rows untouched — its cells were trimmed as they were read, and
-  // its emptiness test is over the cells, not over the (always empty) runs.
-  // An image block is textless BY KIND — testing it for text would delete
-  // every figure here, which is the defect the img branch above closed.
+  /* Drop blocks that are only whitespace, trim run edges per block.
+     An image block is textless BY KIND — testing it for text would delete
+     every figure here, which is the defect the img branch above closed.
+     A TABLE IS TEXTLESS BY KIND TOO, and this filter did test it: it ran
+     `blockRuns` over the cells, so a table whose cells hold only figures —
+     the subject/predicate photographs of a substantial-equivalence
+     comparison — had no text anywhere and the WHOLE TABLE was deleted from
+     the export, with no placeholder and no warning. `parseTable` already
+     returns null for a table with no cells, which is the real emptiness
+     test and the only one this needs. */
   return blocks
     .map((b) => (b.kind === 'table' || b.kind === 'image' ? b : { ...b, runs: trimRuns(b.runs) }))
-    .filter((b) => b.kind === 'image' || blockRuns(b).some((r) => r.text.trim().length > 0));
+    .filter(
+      (b) =>
+        b.kind === 'image' ||
+        b.kind === 'table' ||
+        blockRuns(b).some((r) => r.text.trim().length > 0) ||
+        /* A block whose only content is a cross-reference or a citation has no
+           text of its own — both are RESOLVED at render time. Testing it for
+           text here would delete them from the filed document, which is the
+           silent-vanish neither feature may ever do. */
+        blockRuns(b).some((r) => r.crossRefTarget || r.citationSourceId),
+    );
 }
 
 /** Parse a stored section content string into export blocks. */
@@ -403,6 +658,29 @@ export function sectionContentToBlocks(stored: string | null | undefined): Conte
       .map((line) => ({ kind: 'paragraph' as const, runs: [{ text: line }] }));
   }
   return parseHtmlToBlocks(s);
+}
+
+/**
+ * Every source id cited across a set of blocks, in reading order, de-duplicated.
+ *
+ * The export needs this BEFORE it renders: the reference list is assembled from
+ * the sources actually cited, so the export has to know which sources to look
+ * up before it can number a single marker. Reading order is preserved so a
+ * caller that resolves in this order sees the document as a reviewer does.
+ */
+export function collectCitedSourceIds(blocks: ContentBlock[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const b of blocks) {
+    for (const r of blockRuns(b)) {
+      const id = r.citationSourceId;
+      if (id && !seen.has(id)) {
+        seen.add(id);
+        out.push(id);
+      }
+    }
+  }
+  return out;
 }
 
 /** Unresolved tracked changes across a set of blocks. */

@@ -83,6 +83,12 @@ export async function packageRpsSubmission(input: RpsPackagerInput): Promise<Rps
     if (!raw) {
       throw new Error(`RPS packager: no source bytes provided for document ${doc.id} (${doc.href}).`);
     }
+    // A zero-length buffer is truthy and would otherwise be hashed and zipped as
+    // a "valid" (but blank) leaf whose checksum correctly matches nothing. An
+    // empty leaf must never ship — fail closed.
+    if (raw.length === 0) {
+      throw new Error(`RPS packager: source bytes for document ${doc.id} (${doc.href}) are empty (0 bytes) — refusing to package a blank leaf.`);
+    }
     const { bytes, sha256 } = await finalizeBytes(raw, doc.mediaType);
     doc.checksum = sha256; // integrity matches shipped bytes
     zip.file(doc.href, bytes);

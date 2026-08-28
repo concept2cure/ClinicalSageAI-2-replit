@@ -352,9 +352,10 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
         const programContentHash = crypto.createHash('sha256').update(programContent).digest('hex');
         const ready = builtForProgram.missingRequired.length === 0;
         // The audit row is the ONLY persisted trace on this path — it is required,
-        // not best-effort. If it throws, the catch below answers 500 and the
-        // response never claims `audited: true` over nothing.
-        await auditService.logAction({
+        // not best-effort. logAction resolves an outcome instead of throwing on
+        // a persistence failure, so the outcome must be checked: without it the
+        // response claims `audited: true` over nothing.
+        const unplacedAudit = await auditService.logAction({
           action: 'ind_form.artifact.unplaced',
           userId: ctx.userId,
           organizationId: ctx.organizationId,
@@ -372,6 +373,13 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
             artifactRegistry: 'unplaced_pending_document_identity_contract',
           },
         });
+        if (!unplacedAudit?.persisted) {
+          return res.status(500).json({
+            error: 'AUDIT_WRITE_FAILED',
+            message:
+              'the unplaced-artifact audit row is the only persisted trace on this path and it was not persisted',
+          });
+        }
         return res.status(200).json({
           governed: false,
           audited: true,

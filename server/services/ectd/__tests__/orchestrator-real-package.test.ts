@@ -91,4 +91,25 @@ describe('assembleRealPackage', () => {
     // Real MD5 verification ran and matched (buffers keyed by filePath).
     expect(result.findings.some((f) => f.code === 'MD5_MISMATCH')).toBe(false);
   });
+
+  it('fails closed with no backbone: DTD_NO_BACKBONE is an error and the package is not gateway-ready', async () => {
+    const res = await assembleRealPackage([section('3.2.S.1', 'Content A')], CTX);
+    const result = await validateEctdPackageHardened(
+      res.leaves,
+      {
+        submissionId: 'sub-1',
+        region: 'US',
+        applicationNumber: CTX.applicationNumber,
+        sequenceNumber: CTX.sequenceNumber,
+        submissionType: CTX.submissionType,
+        totalSizeBytes: res.totalSizeBytes,
+        leafBuffers: res.leafBuffers,
+      },
+      // no backboneXml → DTD conformance could not run
+    );
+    const dtd = result.dtd.find((f) => f.code === 'DTD_NO_BACKBONE');
+    expect(dtd).toBeDefined();
+    expect(dtd!.severity).toBe('error'); // was 'warning' — left gatewayReady true
+    expect(result.gatewayReady).toBe(false);
+  });
 });

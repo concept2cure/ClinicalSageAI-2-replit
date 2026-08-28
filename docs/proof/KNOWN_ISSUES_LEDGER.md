@@ -43,7 +43,7 @@
 | M-2 | `guided-demo-path.test.ts` has drift failures | Test expects old strings/routes/labels | `tests/` | Stage 8 known-limits | **RESOLVED** — all 24 guided-demo tests pass as of 2026-04-01 |
 | M-3 | `ana-ri-health.test.ts` has 1 failing mocked-import | Mock drift; does not affect runtime | `tests/` | Stage 8 known-limits | **RESOLVED** — all 5 AnA RI health tests pass as of 2026-04-01 |
 | M-4 | `/api/chat/stream` lacks `processResponseActions` | Streaming chat path cannot create governed artifacts | `server/routes/chat.ts` | Stage 12 | **FIXED** — `processResponseActions` added with org/project context |
-| M-5 | Auth middleware exists in both `.ts` and `.js` | Caller confusion about which to import | `server/middleware/auth.ts` + `auth.js` | Stage 8 | Documented — consolidation note added to `.js` |
+| M-5 | Auth middleware exists in both `.ts` and `.js` | Caller confusion about which to import | `server/middleware/auth.ts` + `auth.js` | Stage 8 | **FIXED** — 2026-08-28: `auth.js` is now a pure re-export shim of `auth.ts` (single implementation, every resolver executes the canonical middleware); legacy-only behaviors dispositioned in the shim header; vitest.db.config.ts stopgap alias removed |
 | M-6 | `main.jsx` is unused legacy entry | Dead file | `client/src/main.jsx` | Stage 8 | **FIXED** — deleted |
 
 ---

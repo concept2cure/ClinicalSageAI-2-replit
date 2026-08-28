@@ -216,6 +216,10 @@ describe('CERV2 export governance gate', () => {
           aiGenerated: true,
           humanReviewApproved: true,
           reviewerName: 'QA Reviewer',
+          // Reviewer attribution is WHO + in WHAT capacity + WHEN: the shared
+          // gate refuses humanReviewApproved:true without reviewerRole
+          // (INCOMPLETE_HUMAN_REVIEW), so an accepted approval must carry it.
+          reviewerRole: 'Regulatory QA Reviewer',
           reviewTimestamp: '2026-03-24T12:00:00.000Z',
         },
       },

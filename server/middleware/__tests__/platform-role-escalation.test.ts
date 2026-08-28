@@ -43,24 +43,24 @@ import express from 'express';
 import request from 'supertest';
 
 // Imported from the BARE specifier on purpose — the same way the 95 call sites
-// import it. This used to reach a DIFFERENT implementation than production:
-// server/middleware/auth.js was a hand-written twin of auth.ts, and which one
-// wins is resolver-dependent (measured): esbuild (production build) and tsx
-// (dev) both pick auth.TS, Vite/vitest picks auth.JS. So every test in this
-// file exercised code that never shipped. auth.js is now a re-export shim, so
-// the bare specifier and the explicit .ts are the same module — asserted below
-// rather than assumed.
-import { requireRole, requireSameOrganization, PLATFORM_SCOPED_ROLES } from '../auth';
+// import it. Under vitest the bare specifier resolves to auth.js, which since
+// the M-5 consolidation is a PURE RE-EXPORT SHIM of auth.ts — so this import
+// exercises the exact functions production ships. The identity of the two
+// specifiers is itself asserted below ("one module behind every specifier"),
+// because the .js file regrowing its own implementation is precisely the
+// regression this suite exists to catch.
+import { requireRole, requireOrgAccess, requireSameOrganization, PLATFORM_SCOPED_ROLES } from '../auth';
 
-// Addressing auth.ts by its explicit extension, kept so the identity assertion
-// below can compare the two specifiers and prove no twin has reappeared. A
-// STATIC `from '../auth.ts'` is TS5097 ("an import path can only end with '.ts'
-// when allowImportingTsExtensions is enabled"), so the specifier is held in a
-// variable: tsc cannot apply TS5097 to a non-literal, and Vite still resolves
-// it at runtime.
+// The .ts module addressed by its explicit extension, to compare against the
+// bare-specifier bindings above. A STATIC `from '../auth.ts'` is TS5097 ("an
+// import path can only end with '.ts' when allowImportingTsExtensions is
+// enabled"), so the specifier is held in a variable: tsc cannot apply TS5097
+// to a non-literal, and Vite still resolves it at runtime.
 const TS_TWIN_SPECIFIER = '../auth.ts';
 type TsTwin = {
+  requireRole: (...roles: string[]) => express.RequestHandler;
   requireOrgAccess: express.RequestHandler;
+  requireSameOrganization: express.RequestHandler;
   PLATFORM_SCOPED_ROLES: Set<string>;
 };
 const loadTsTwin = async (): Promise<TsTwin> =>
@@ -95,10 +95,10 @@ describe('requireRole — an org admin cannot stand in for platform staff', () =
     const res = await request(appWith(ORG_ADMIN, requireRole('super_admin', 'platform_admin')))
       .get('/probe');
     expect(res.status).toBe(403);
-    // One module, one error contract. This used to read `res.body.status ===
-    // 'error'` because the bare specifier resolved to a .js twin with its own
-    // envelope; auth.js is now a re-export shim, so the canonical
-    // {error:{code}} envelope is the only one there is.
+    // Canonical envelope. (Pre-consolidation the .js twin answered
+    // {status,message} while auth.ts answered {error:{code}} — two modules
+    // exporting one name and disagreeing on the error contract. One module
+    // now, one contract.)
     expect(res.body?.error?.code).toBe('AUTH_004');
   });
 
@@ -149,59 +149,36 @@ describe('requireRole — the org-scoped stand-in survives, because it must', ()
   });
 });
 
-describe('there is no second implementation to drift from', () => {
-  it('resolves the bare specifier and the explicit .ts to the SAME module', async () => {
-    // This file used to assert that two separate implementations agreed,
-    // because two existed: vite resolved `../auth` to a hand-written auth.js
-    // twin while esbuild and tsx resolved it to auth.ts, so tests and
-    // production ran different code. auth.js is now nothing but
-    // `export * from './auth.ts'`.
-    //
-    // Identity is the stronger property, so it replaces the agreement check: if
-    // anyone reintroduces a real implementation in auth.js, these stop being the
-    // same function object and this fails immediately — whereas a field-by-field
-    // comparison only catches the drift someone thought to compare.
-    const tsTwin = await loadTsTwin();
-    expect(tsTwin.requireOrgAccess).toBe(requireSameOrganization);
-    expect(tsTwin.PLATFORM_SCOPED_ROLES).toBe(PLATFORM_SCOPED_ROLES);
+describe('one module behind every specifier (M-5 consolidation holds)', () => {
+  it('the bare specifier binds the very same functions as auth.ts', async () => {
+    // auth.js is a pure re-export shim of auth.ts. If it ever regrows its own
+    // implementation, these stop being IDENTICAL references (not merely
+    // equivalent behavior) and this fails — the resolver-dependent shadowing
+    // this suite was built around cannot quietly return.
+    const twin = await loadTsTwin();
+    expect(requireRole).toBe(twin.requireRole);
+    expect(requireOrgAccess).toBe(twin.requireOrgAccess);
+    expect(requireSameOrganization).toBe(twin.requireSameOrganization);
+    expect(PLATFORM_SCOPED_ROLES).toBe(twin.PLATFORM_SCOPED_ROLES);
   });
 
-  it('makes requireRole variadic, so a second role is never silently dropped', () => {
-    // The removed .js twin took (requiredRole) — so
-    // requireRole('super_admin', 'platform_admin') discarded the second and
-    // denied real platform admins.
+  it('requireRole is variadic, so a second role is never silently dropped', async () => {
+    // The pre-consolidation .js took (requiredRole) — so requireRole(
+    // 'super_admin', 'platform_admin') discarded the second and denied real
+    // platform admins.
     expect(requireRole.length).toBe(0); // rest params report length 0
   });
-});
 
-describe('requireSameOrganization — the alias is the same hardened guard', () => {
-  // requireSameOrganization is `export const requireSameOrganization =
-  // requireOrgAccess`, so it must deny exactly what requireOrgAccess denies.
-  //
-  // The removed .js twin compared req.user.organizationId against
-  // req.organizationId, which its own authenticateJWT had set FROM THE JWT —
-  // i.e. it compared the caller's org against the caller's org. The canonical
-  // guard reads the requested org from request INPUT (route param, body or
-  // query), which is the value an attacker actually controls, so these drive it
-  // through a route parameter.
-  it('denies an org admin another organization', async () => {
-    const res = await request(appWith(ORG_ADMIN, requireSameOrganization)).get('/probe/999');
-    expect(res.status).toBe(403);
-    expect(res.body?.error?.code).toBe('AUTH_005');
-  });
-
-  it('allows an org admin their own organization', async () => {
-    const res = await request(appWith(ORG_ADMIN, requireSameOrganization)).get('/probe/30');
-    expect(res.status).toBe(200);
-  });
-
-  it('allows platform staff any organization', async () => {
-    const res = await request(appWith(PLATFORM, requireSameOrganization)).get('/probe/999');
-    expect(res.status).toBe(200);
+  it('requireSameOrganization is the requireOrgAccess guard', () => {
+    // The legacy .js twin had a DIFFERENT requireSameOrganization (it compared
+    // req.organizationId, which only tenantContext sets). No route imports the
+    // name; production always ran this alias. Pinned so the alias is not
+    // "helpfully" re-implemented.
+    expect(requireSameOrganization).toBe(requireOrgAccess);
   });
 });
 
-describe('requireOrgAccess — platform staff only', () => {
+describe('requireOrgAccess (canonical, as production runs it) — platform staff only', () => {
   it('denies an org admin another organization’s id', async () => {
     const { requireOrgAccess } = await loadTsTwin();
     const res = await request(appWith(ORG_ADMIN, requireOrgAccess)).get('/probe/999');

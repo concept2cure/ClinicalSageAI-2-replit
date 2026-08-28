@@ -122,6 +122,20 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash text, title text
 );`;
 
+// organization_users as in the 0000 base migration (FKs omitted — referents out
+// of scope). The §11.50 signer lookup joins users through this authorization
+// relation, so the printed name resolves ONLY for a member of the signing org.
+const ORGANIZATION_USERS_DDL = `
+CREATE TABLE IF NOT EXISTS organization_users (
+  id serial PRIMARY KEY,
+  organization_id integer NOT NULL,
+  user_id integer NOT NULL,
+  role text DEFAULT 'member' NOT NULL,
+  created_at timestamp DEFAULT now() NOT NULL,
+  updated_at timestamp DEFAULT now() NOT NULL,
+  CONSTRAINT unique_user_org UNIQUE (user_id, organization_id)
+);`;
+
 // Governed-target content tables for the derivable-binding case.
 const ECTD_DDL = `
 CREATE TABLE IF NOT EXISTS ectd_sequences (
@@ -155,11 +169,18 @@ beforeEach(async () => {
   await pg.exec(ANA_ACTIONS_DDL);
   await pg.exec(ELECTRONIC_SIGNATURES_PRE_D6_DDL);
   await pg.exec(USERS_DDL);
+  await pg.exec(ORGANIZATION_USERS_DDL);
   await pg.exec(ECTD_DDL);
   await pg.exec(D6_MIGRATION); // the REAL migration under test
   await pg.query(
     `INSERT INTO users (id, email, name, title) VALUES ($1, $2, $3, $4)`,
     [SIGNER, 'qa.lead@acme.test', 'Quinn A. Lead', 'Director, Regulatory QA'],
+  );
+  // Membership in the signing org — without it the signer lookup resolves
+  // nobody and every legitimate sign would (correctly) refuse.
+  await pg.query(
+    `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'member')`,
+    [ORG, SIGNER],
   );
   holder.query = (sql: string, params?: unknown[]) => pg.query(sql, params) as Promise<{ rows: any[] }>;
 });
@@ -281,7 +302,14 @@ describe('governed sign → electronic_signatures (single write path)', () => {
   });
 
   it('FAIL CLOSED: an unresolvable signer aborts the sign (no anonymous signatures)', async () => {
-    await pg.query(`DELETE FROM users WHERE id = $1`, [SIGNER]);
+    // The user row still exists; only the organization_users membership in the
+    // signing org is gone. The membership-scoped lookup then resolves nobody,
+    // so the code's OWN §11.100 refusal fires — a genuine no-signer condition,
+    // not a missing relation masquerading as one.
+    await pg.query(
+      `DELETE FROM organization_users WHERE user_id = $1 AND organization_id = $2`,
+      [SIGNER, ORG],
+    );
     await expect(
       writeMutation('sign', signEnvelope('program:prog_4') as any, SIGNER, ORG),
     ).rejects.toThrow(/signer/i);

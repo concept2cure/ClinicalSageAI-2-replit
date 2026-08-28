@@ -1,51 +1,58 @@
-// Vitest/Vite ESM resolution shim — same pattern as server/config/environment.js
-// and server/utils/jwtVerify.js. Several first-party `.js` modules
-// (server/api/enterprise/routes.js, server/api/enterprise/rbac-routes.js,
-// server/api/semantic-search.js, server/api/cmc/index.js) import
-// '../middleware/auth.js' with the .js extension, which Node ESM requires and
-// which vite's resolver will NOT rewrite to .ts when the importer is itself a
-// .js file. This file keeps that specifier resolvable.
-//
-// NB the sibling shims (environment.js, jwtVerify.js) each claim "production
-// builds emit X.js from X.ts and overwrite this shim". No such step exists:
-// package.json builds with `vite build && node scripts/build-server.mjs`, and
-// build-server.mjs is a single esbuild bundle (entry server/index.ts, bundle:
-// true, outfile dist/index.js) with no tsc emit into server/. THIS FILE IS WHAT
-// SHIPS. Which is precisely why the twin mattered in production and not only
-// under vitest: esbuild resolves an explicit './auth.js' literally, so the 29
-// .ts modules that import '../middleware/auth.js' — every bootstrap registrar
-// among them — bundled the twin. Confirmed by building both ways and grepping
-// dist/index.js: the twin's isPublicRoute bypass is present with it and absent
-// with this shim.
-//
-// ── What used to be here, and what it cost ───────────────────────────────────
-// This file was a hand-written LEGACY TWIN of auth.ts, not a shim: ~360 lines
-// with its own authenticateToken, requireRole, requirePermission and a
-// public-route bypass. Because vite resolves `.js` before `.ts`, EVERY
-// extensionless `import { authenticateToken } from '.../middleware/auth'` in a
-// test resolved here — so the suite exercised an implementation production does
-// not run.
-//
-// The two had drifted badly. auth.ts authenticates and then runs the chain that
-// makes a request safe:
-//
-//     enforceOrgMembership -> establishRequestTenantScope
-//       -> enforceTenantLifecycle -> enforceStorageQuota
-//
-// which re-checks that the membership behind the JWT's organizationId still
-// exists, and opens the tenant AsyncLocalStorage scope that attaches the
-// request-scoped DB client. The twin did none of it: it verified the signature,
-// set req.user, and called next(). Under RLS_ENFORCE=on every handler reached
-// through it then failed with REQUEST_DB_CONTEXT_REQUIRED ("Request-scoped
-// database context is required"), which is how this was finally found —
-// tests/db/two-tenant-application-rls.dbtest.ts, the suite whose whole job is to
-// prove cross-tenant reads are impossible, could not get a single request past
-// the auth gate. It also carried an isPublicRoute() bypass that auth.ts
-// deliberately does not have (see the "no more dev-mode auth bypasses" note
-// there).
-//
-// Three exports died with the twin — verifyJwt, hasPermission, isPublicRoute.
-// Nothing imports them; server/auth/index.ts already carries a note saying they
-// are not part of middleware/auth.ts's surface.
-export * from './auth.ts';
-export { default } from './auth.ts';
+/**
+ * PURE RE-EXPORT SHIM — the canonical auth middleware is ./auth.ts.
+ *
+ * KNOWN_ISSUES_LEDGER M-5 consolidation. This file used to carry a diverged
+ * legacy implementation of the same export names, so the runtimes disagreed
+ * about which middleware a route ran (measured, scripts/ci/check-js-ts-shadows.mjs):
+ * esbuild (prod bundle) and vitest loaded THIS file for explicit
+ * '../middleware/auth.js' specifiers while tsx (dev) loaded auth.ts — and
+ * vitest resolved even the extensionless '../middleware/auth' here. Tests
+ * could therefore exercise a different middleware than production shipped.
+ *
+ * The file is kept (rather than deleted) because ~26 .ts routes and several
+ * plain .js modules import '../middleware/auth.js' explicitly, and vite/vitest
+ * resolve an explicit '.js' specifier from a .js importer to the literal .js
+ * file without falling back to .ts. As a pure re-export every resolver now
+ * executes the same auth.ts code. Do NOT add logic here.
+ *
+ * Dispositions of the legacy-only behaviors (audited 2026-08-28):
+ *  - organizationId required in JWT (403): superseded — canonical
+ *    authenticateToken re-checks LIVE org membership (enforceOrgMembership,
+ *    AUTH_009) when the claim is present, and establishRequestTenantScope +
+ *    RLS fail closed when it is absent; a hard 403 would break platform-level
+ *    tokens that legitimately carry no org claim (orgMembership.ts:270-275).
+ *  - x-organization-id impersonation warn-log: covered — the canonical chain
+ *    never reads that header (org comes only from the JWT + membership row);
+ *    the header-forgery logging control lives in middleware/tenantIsolation.ts.
+ *  - isPublicRoute bypass: dropped, deliberately NOT ported. The global /api
+ *    gate (bootstrap/register-platform-routes.ts) already 401s unauthenticated
+ *    requests to every non-allowlisted route before any router-level guard
+ *    runs, so no production consumer could depend on the bypass. Porting it
+ *    would punch path-shaped unauthenticated holes ('/health', '/auth/login',
+ *    …) into every router that mounts canonical auth. Fail closed.
+ *  - verifyJwt / hasPermission / isPublicRoute exports: no importer anywhere
+ *    in the live tree (the @server/auth barrel takes hasPermission from
+ *    middleware/tenantIsolation.ts; the routes that used verifyJwt were
+ *    deleted before this consolidation). Dropped rather than re-aliased.
+ *  - requireSameOrganization (req.organizationId comparison): production
+ *    always ran auth.ts's alias (= requireOrgAccess) via the bare specifier;
+ *    the .js semantics were only ever reachable under vitest. No route
+ *    imports the name (only the platform-role-escalation test, updated).
+ */
+
+export {
+  extractBearerToken,
+  nonAccessTokenReason,
+  invalidateOrgMembershipCache,
+  authenticateToken,
+  authenticateJWT,
+  authenticate,
+  requireAuth,
+  PLATFORM_SCOPED_ROLES,
+  requireRole,
+  requireOrgAccess,
+  requireSameOrganization,
+  requirePermission,
+  optionalAuth,
+  default,
+} from './auth.ts';

@@ -57,7 +57,10 @@ beforeEach(() => {
   URL.createObjectURL = createObjectURL as never;
   URL.revokeObjectURL = revokeObjectURL as never;
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 describe('useCerExport', () => {
   it('POSTs the ident + useProjectContent body with auth headers and an HONEST unreviewed attestation', async () => {
@@ -107,6 +110,7 @@ describe('useCerExport', () => {
 
   it('turns downloadable_output_ref into a browser download and reports governed', async () => {
     fetchMock.mockResolvedValue(jsonResponse(GOVERNED_OK));
+    vi.useFakeTimers();
     const { result } = renderHook(() => useCerExport());
 
     let outcome: CerExportOutcome | null = null;
@@ -122,6 +126,12 @@ describe('useCerExport', () => {
       error: null,
     });
     expect(createObjectURL).toHaveBeenCalledTimes(1);
+    /* The shared helper (v2/download.ts) revokes the object URL on a 1s timer,
+       NOT synchronously after click() — a synchronous revoke races the download
+       in Safari and yields a zero-byte file. So the revoke must be deferred... */
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+    /* ...and must still happen exactly once, so the blob is not leaked. */
+    vi.advanceTimersByTime(1000);
     expect(revokeObjectURL).toHaveBeenCalledTimes(1);
   });
 

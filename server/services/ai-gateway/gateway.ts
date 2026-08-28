@@ -65,6 +65,7 @@ import {
 import {
   decideSensitivePlacement,
   readProviderPlacementApprovals,
+  type ProviderPlacementApproval,
 } from './sensitive-placement-policy';
 import { recordApiUsageSafe, usdToCents } from '../usage-recorder.js';
 import { createScopedLogger } from '../../utils/logger.js';
@@ -816,9 +817,46 @@ export class AIGateway {
     const detectedDataClass = request.sensitiveDataClass ?? 'unknown';
     // Development retains audit-only usefulness; production always uses the
     // explicit deployment contract and fails closed on unknown classification.
-    if (process.env.NODE_ENV !== 'production' && getPiiEnforcement() !== 'block') return;
+    // AI_SENSITIVE_DATA_POLICY_MODE is the same deployment contract the
+    // production boot assert requires (strictly 'enforce'): any environment
+    // that declares it — staging included — gets dispatch-time enforcement,
+    // not just a passing boot check. AI_PII_ENFORCEMENT=block keeps its
+    // existing meaning as an equivalent opt-in.
+    const enforcement = getPiiEnforcement();
+    const enforced =
+      process.env.NODE_ENV === 'production' ||
+      process.env.AI_SENSITIVE_DATA_POLICY_MODE === 'enforce' ||
+      enforcement === 'block';
+    if (!enforced) {
+      // 'off' disables screening entirely. 'audit' exists to make otherwise
+      // invisible exposure visible, so it still RECORDS the placement signal
+      // (content-free, below) even though it never blocks.
+      if (enforcement !== 'audit' || detectedDataClass === 'none') return;
+    }
     const placement = resolvePlacement(modelConfig.provider);
-    const approvals = readProviderPlacementApprovals();
+    let approvals: Record<string, ProviderPlacementApproval>;
+    try {
+      approvals = readProviderPlacementApprovals();
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      if (enforced) {
+        // Malformed operator configuration is a governance failure, not a
+        // provider outage. GatewayPolicyError is terminal — never retried and
+        // never walked down the fallback chain — so the request fails closed
+        // and is reported as the config error it is.
+        throw new GatewayPolicyError(
+          'AI provider placement approvals are misconfigured ' +
+            `(AI_PROVIDER_PLACEMENT_APPROVALS: ${detail}). Sensitive dispatch fails closed ` +
+            'until the configuration is fixed.'
+        );
+      }
+      // Audit-only mode never blocks: record the config failure and evaluate
+      // the decision against an empty approval set so the signal stays honest.
+      log.warn('[ai-gateway] sensitive-data screen: AI_PROVIDER_PLACEMENT_APPROVALS is malformed', {
+        error: detail,
+      });
+      approvals = {};
+    }
     const region = request.dataResidency && request.dataResidency !== 'any'
       ? request.dataResidency
       : placement.regions[0];
@@ -843,6 +881,22 @@ export class AIGateway {
       intendedUse: request.taskType,
       providerApproval: approval,
     });
+    if (!enforced) {
+      // Audit-only (non-production): the deleted route-level screen warned
+      // whenever PHI/PII headed to a provider without zero-retention approval;
+      // that signal is what audit mode exists for. Content-free by
+      // construction — classes/provider/region/approval and the would-be
+      // decision, never message content. Never blocks.
+      log.warn('[ai-gateway] sensitive-data screen', {
+        classes: [decision.dataClass],
+        provider: decision.provider,
+        region: decision.region,
+        zeroRetentionApproved: approval?.zeroRetentionApproved === true,
+        reasonCode: decision.reasonCode,
+        enforcement,
+      });
+      return;
+    }
     log.info('[ai-gateway] sensitive placement decision', {
       reasonCode: decision.reasonCode,
       provider: decision.provider,

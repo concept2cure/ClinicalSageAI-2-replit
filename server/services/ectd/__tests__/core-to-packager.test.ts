@@ -47,9 +47,13 @@ describe('mapCoreLeafToEctdLeaf', () => {
     });
   });
 
-  it('falls back to the leaf checksum when the resolved file has no md5', () => {
+  it('never adopts the DB leaf.checksum as the manifest md5 — leaves it undefined for byte-hashing downstream', () => {
+    // leaf.checksum is a caller-settable DB value with no tie to the file bytes;
+    // it must NOT become the manifest checksum. When the resolver produced no
+    // md5, md5 stays undefined so the packager hashes the real bytes.
     const out = mapCoreLeafToEctdLeaf(leaf({ sectionCode: '2.7', checksum: 'corechk' }), file({ md5: undefined }));
-    expect(out.md5).toBe('corechk');
+    expect(out.md5).toBeUndefined();
+    expect(out.md5).not.toBe('corechk');
   });
 
   it('defaults an unknown lifecycle op to new', () => {

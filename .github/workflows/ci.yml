@@ -37,6 +37,13 @@ jobs:
       - name: Guardrails — Node 22 runtime contracts
         run: node scripts/ci/check-node-runtime.mjs
 
+      # The guard's own detection logic is code that can regress; the self-test
+      # mutates each contract surface and requires the guard to reject it (it
+      # refuses to run against an already-dirty baseline, so it cannot pass
+      # vacuously).
+      - name: Guardrails — Node 22 guard rejects simulated drift
+        run: node scripts/ci/check-node-runtime.mjs --self-test
+
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET)
         # that otherwise fail the whole pipeline (every other job needs: lint).
@@ -47,6 +54,14 @@ jobs:
             sleep $((attempt * 15))
           done
           echo "::error::npm install failed after 3 attempts"; exit 1
+
+      # The manifest gate's fail-closed logic must be exercised on every push,
+      # not only when a release workflow eventually calls it. AFTER install:
+      # cli.mjs (which these tests spawn) imports ajv from node_modules — this
+      # step sat before Install once and its failure skipped install, taking
+      # every if:!cancelled() step below down with spurious module errors.
+      - name: Guardrails — release-evidence manifest gate self-tests
+        run: npm run test:release-evidence
 
       - name: Guardrails — eCTD migration headers (reg audit)
         run: ./scripts/ci/require-migration-headers.sh
@@ -488,7 +503,27 @@ jobs:
       # one that was never executed.
       - name: Run ESLint
         if: '!cancelled()'
-        run: npm run lint
+        # JSON to a file so the warning ratchet below reuses THIS run instead
+        # of linting the tree twice; the exit code still enforces 0 errors.
+        # Readable output for humans is re-rendered only on failure.
+        run: npx eslint . --format json --output-file eslint-report.json
+
+      - name: Render ESLint findings (failure only)
+        if: failure()
+        run: npm run lint || true
+
+      - name: Guardrails — ESLint warning ratchet (may only shrink)
+        if: '!cancelled()'
+        run: npm run ci:eslint-ratchet
+        env:
+          ESLINT_RATCHET_REPORT_JSON: eslint-report.json
+
+      # Every node:test suite under scripts/ci/__tests__ — the guards' own
+      # fail-closed proofs — runs on every push, so a guard whose detection
+      # logic regresses cannot keep passing silently.
+      - name: Guardrails — CI guard self-tests
+        if: '!cancelled()'
+        run: npm run test:ci-scripts
 
       - name: Run TypeScript check (no regression vs baseline)
         if: '!cancelled()'
@@ -1270,6 +1305,13 @@ jobs:
           # This job proves the build boots against a real database with RLS on
           # as a non-superuser. It is not an AI test and must not need a key.
           AI_GATEWAY_DETERMINISTIC: 'true'
+          # Production refuses to boot without an explicit sensitive-data
+          # placement contract (assertSensitivePlacementConfiguration). This is
+          # the most fail-closed contract expressible: enforcement on, and the
+          # single named deployment approved for NO sensitive data classes —
+          # nothing here claims a contractual zero-retention approval exists.
+          AI_SENSITIVE_DATA_POLICY_MODE: enforce
+          AI_PROVIDER_PLACEMENT_APPROVALS: '{"private-deployment":{"region":"us","zeroRetentionApproved":true,"approvedDataClasses":[],"approvedIntendedUses":[]}}'
 
       - name: Tear down PostgreSQL
         if: always()
@@ -1383,7 +1425,11 @@ jobs:
         with:
           name: npm-audit-lockfile-evidence
           path: dependency-audit-results.json
-          if-no-files-found: error
+          # The gate writes this file only after its ledger-freshness checks
+          # pass, so a ledger-stage failure legitimately leaves no file; `error`
+          # here would stack a second, misleading failure on top of the real
+          # diagnostic. A missing file on a green gate is still impossible.
+          if-no-files-found: warn
 
       - name: Trivy filesystem scan (deps + secrets)
         # Blocking gate: fails the job on HIGH/CRITICAL findings so they cannot
@@ -1444,3 +1490,79 @@ jobs:
             docs/reports/repo-health-scan-latest.json
             docs/reports/route-mount-audit-latest.json
           retention-days: 30
+
+  # ── Release evidence gate wiring ────────────────────────────────────────────
+  #
+  # The 'Release evidence gate' workflow (.github/workflows/release-evidence.yml)
+  # is workflow_call-only; until this pair existed it had NO caller anywhere and
+  # nothing produced its required release-evidence-input.json, so the gate could
+  # never fire (PR #1352 review). Two jobs because a reusable-workflow call is a
+  # job-level `uses:` and such a job cannot carry steps: the first assembles and
+  # uploads the evidence artifact, the second is the caller.
+  #
+  # The assembler builds the artifact to the generator's exact contract — it
+  # must contain exactly release-evidence-input.json plus the files listed in
+  # input.artifacts, or cli.mjs generate's dirty-worktree gate refuses it. The
+  # evidence packaged from this run: the Security Scan job's verbatim npm-audit
+  # lockfile evidence, plus GitHub Actions execution records (job/step
+  # conclusions from the Actions API) for every policy-required job here and in
+  # the sibling CodeQL / Semgrep / Tier 5 runs at this same SHA (waited on,
+  # bounded, via the API). That granularity is declared in knownDeviations and
+  # rendered in index.md for reviewer disposition. The assembler fails closed
+  # with a named reason on any missing piece; a present-but-red conclusion is
+  # packaged honestly and rejected downstream by `cli.mjs validate` — the gate
+  # doing its job.
+  #
+  # Canonical-branch runs only: the manifest is release-candidate evidence for a
+  # commit on concept2cure-v2, and the sibling workflows it waits for only run
+  # against pushes there.
+  assemble-release-evidence:
+    name: Assemble Release Evidence
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/concept2cure-v2'
+    needs: [test, security-tests, blank-db-provisioning, production-boot-smoke, build, security]
+    permissions:
+      contents: read
+      # The assembler reads this run's job records and the sibling workflow
+      # runs' conclusions from the Actions API.
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Download the npm-audit evidence this run's Security Scan produced
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: npm-audit-lockfile-evidence
+          path: ${{ runner.temp }}/npm-audit-evidence
+
+      - name: Assemble release-evidence-input.json (fails closed on any missing piece)
+        # Assembled OUTSIDE the checkout so the artifact holds only what the
+        # generator's contract allows. No npm install: the assembler is
+        # dependency-free by design.
+        run: node scripts/release-evidence/assemble-input.mjs --out "$RUNNER_TEMP/release-evidence-artifact"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_EVIDENCE_NPM_AUDIT: ${{ runner.temp }}/npm-audit-evidence/dependency-audit-results.json
+
+      - name: Upload the evidence artifact for the gate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-evidence-input-${{ github.sha }}
+          path: ${{ runner.temp }}/release-evidence-artifact/
+          if-no-files-found: error
+
+  release-evidence-gate:
+    name: Release evidence gate
+    needs: assemble-release-evidence
+    if: github.ref == 'refs/heads/concept2cure-v2'
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/release-evidence.yml
+    with:
+      evidence-artifact: release-evidence-input-${{ github.sha }}

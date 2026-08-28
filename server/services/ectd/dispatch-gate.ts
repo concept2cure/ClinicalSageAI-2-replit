@@ -30,8 +30,41 @@ export interface DispatchGateResult {
 /** Evaluate the hard dispatch gate. Cleared only when every blocker is absent. */
 export function evaluateDispatchGate(input: DispatchGateInput): DispatchGateResult {
   const blockers: string[] = [];
-  const validationErrors = Number.isFinite(input.validationErrors) ? input.validationErrors : 0;
-  const shadowCriticals = Number.isFinite(input.unacknowledgedShadowCriticals) ? input.unacknowledgedShadowCriticals : 0;
+
+  /* A count that is not a finite number is not a count of zero — it is a count
+     nobody has. NaN is what an arithmetic failure leaves behind, and undefined
+     is what a read that did not happen leaves behind; both used to be coerced
+     to 0, which CLEARS this gate. In the one function whose whole job is to be
+     the provable pre-transmit rule, that made "we could not determine whether
+     there are blockers" indistinguishable from "there are none", and sent the
+     sequence to the agency.
+     
+     NOT reachable from any caller today, and each one was checked:
+     AnaToolExecutor rejects a non-finite count before calling; the
+     /dispatch-qc route parses with z.number().int().min(0); and
+     assess-dispatch-readiness derives its counts from SQL count(*)::int. So
+     this is the DIRECTION of a defensive default, not a live defect. It is
+     worth inverting anyway: the repo's rule is fail closed, never fabricate,
+     and the previous test asserted the open direction — which would have
+     defended the landmine against anyone who tried to fix it later. */
+  const unknown: string[] = [];
+  if (!Number.isFinite(input.validationErrors)) {
+    unknown.push('the count of open validation findings could not be determined');
+  }
+  if (!Number.isFinite(input.unacknowledgedShadowCriticals)) {
+    unknown.push('the count of unacknowledged Shadow Review criticals could not be determined');
+  }
+  if (unknown.length > 0) {
+    return {
+      cleared: false,
+      blockers: unknown.map(
+        (what) => `Dispatch is blocked because ${what}. An undetermined count is not a count of zero.`,
+      ),
+    };
+  }
+
+  const validationErrors = input.validationErrors;
+  const shadowCriticals = input.unacknowledgedShadowCriticals;
 
   if (validationErrors > 0) {
     blockers.push(`${validationErrors} open error-severity validation finding(s) must be resolved before dispatch.`);

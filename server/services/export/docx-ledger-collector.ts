@@ -136,7 +136,9 @@ export interface LedgerAuthoringPlan {
   title: string | null;
   summary: string | null;
   generatorVersion: string;
-  score: number;
+  /** null when the plan's readiness/consistency assessment failed to
+   * fetch — not assessed, must not be rendered as a passing score. */
+  score: number | null;
   sourceCount: number;
   riskFactorCount: number;
   contradictionCount: number;

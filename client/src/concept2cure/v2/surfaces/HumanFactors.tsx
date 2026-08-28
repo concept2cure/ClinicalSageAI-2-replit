@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
+import { assessmentState } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
@@ -154,6 +155,37 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
   const risk = useMemo(() => hfAnalyzeRisk(scenarios), [scenarios]);
   const compPct = Math.round(hfe.completenessScore * 100);
   const firstUnmit = risk.criticalTasks.find(t => !t.mitigated);
+
+  /* ── The gate had two branches, so it could not tell silence from safety ────
+     `risk.residualRiskAcceptable` is `unmitigatedCriticalTasks === 0`, and that
+     count is a filter over `scenarios`. Over an HFE/UE file with no scenarios
+     recorded the filter is vacuously empty, so a file nothing had ever examined
+     took exactly the branch of one that had been examined and found controlled:
+     the gate read CLEAR and the lead said "you're clear to run summative" about
+     an analysis that had never run. That is the substitution assessmentState.ts
+     exists to make unrepresentable — an empty findings set is not a finding of
+     "none".
+
+     `risk.totalScenarios > 0` is the positive evidence it asks for: hazard-
+     related use scenarios actually on the record, which only exist because
+     someone recorded them. It is deliberately NOT the emptiness that produced
+     the bug — a file can hold scenarios and still have unmitigated critical
+     tasks, and it can hold none at all, and those are now different states. */
+  const hfState = assessmentState({
+    loading: hf.loading,
+    unreadable: Boolean(hf.error),
+    scopeExists: Boolean(file),
+    findingCount: risk.unmitigatedCriticalTasks,
+    assessmentRan: risk.totalScenarios > 0,
+  });
+  /* What this screen is entitled to report is the CRITICAL-TASK position, and
+     only that. Under IEC 62366-1 residual-risk acceptability is a documented
+     manufacturer determination, and summative readiness rests on the whole
+     HFE/UE file — neither follows automatically from a count of unmitigated
+     critical tasks, so neither is asserted here. */
+  const gateClear = hfState === 'assessed-clear';
+  const gateBlocked = hfState === 'assessed-with-findings';
+  const gateUnassessed = hfState === 'not-assessed';
 
   /* Ticking an HFE/UE element moves the file-completeness percentage this screen
      prints, so it is a claim about the record and must reach the record. This was
@@ -325,7 +357,14 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
         `Human factors (IEC 62366-1) for ${device || 'this device'}: HFE/UE file ${compPct}% complete ` +
         `(${hfe.gaps.length} element(s) still open). ${risk.totalScenarios} use scenario(s), ` +
         `${risk.criticalTaskCount} critical task(s), ${risk.unmitigatedCriticalTasks} unmitigated — ` +
-        `residual risk ${risk.residualRiskAcceptable ? 'acceptable' : 'NOT acceptable for summative testing'}.`,
+        (gateUnassessed
+          ? 'the critical-task gate is NOT ASSESSED: no hazard-related use scenarios are recorded, so no ' +
+            'use-related risk analysis has run. An empty scenario set is not a finding that residual ' +
+            'use-related risk is acceptable.'
+          : gateBlocked
+            ? 'the critical-task gate is BLOCKED until each unmitigated critical task is controlled.'
+            : 'the critical-task gate is clear. Residual-risk acceptability and summative readiness are ' +
+              'determinations documented across the whole HFE/UE file, not consequences of this count.'),
       facts: {
         device: device || null,
         completenessPercent: compPct,
@@ -334,7 +373,15 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
         totalScenarios: risk.totalScenarios,
         criticalTaskCount: risk.criticalTaskCount,
         unmitigatedCriticalTasks: risk.unmitigatedCriticalTasks,
-        residualRiskAcceptable: risk.residualRiskAcceptable,
+        /* Was `residualRiskAcceptable: risk.residualRiskAcceptable` — the raw
+           `unmitigatedCriticalTasks === 0`, which is TRUE over a file holding no
+           scenarios at all. The prose summary alongside it was corrected, but a
+           structured fact is the thing an assistant quotes verbatim, so leaving
+           the boolean meant AnA could still state the determination the screen
+           had just stopped making. The gate's own three states are the honest
+           fact, and residual-risk acceptability is not reported at all because
+           this surface does not know it. */
+        criticalTaskGate: gateUnassessed ? 'not-assessed' : gateBlocked ? 'blocked' : 'clear',
         firstUnmitigatedCriticalTask: firstUnmit
           ? {
               task: firstUnmit.task, useError: firstUnmit.useError,
@@ -392,29 +439,56 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
         <button className="sp-primary" onClick={() => setForm(true)}>{I.plus} Add use scenario</button>
       </div>
 
+      {/* Three branches, because there are three states. The middle one — an
+          HFE/UE file with no hazard-related use scenarios on it — used to fall
+          through to the cleared copy, so a file nothing had examined read as one
+          examined and found controlled. It now says what is true of it, offers
+          the step that would make an answer possible, and carries NO reassurance:
+          reassurance is the one thing an absent analysis can never justify. */}
       <AnswerLead
-        tone={risk.unmitigatedCriticalTasks > 0 ? 'urgent' : 'calm'}
+        tone={gateBlocked ? 'urgent' : gateClear ? 'good' : 'calm'}
         eyebrow="Whether you can run the summative usability study yet"
-        headline={risk.unmitigatedCriticalTasks > 0
+        headline={gateBlocked
           ? <><b>{risk.unmitigatedCriticalTasks}</b> critical task{risk.unmitigatedCriticalTasks === 1 ? '' : 's'} still {risk.unmitigatedCriticalTasks === 1 ? 'has' : 'have'} no mitigation — summative testing shouldn't start until {risk.unmitigatedCriticalTasks === 1 ? 'it is' : 'they are'} controlled.</>
-          : <>Every critical task has a documented mitigation — residual use-related risk is acceptable and you're clear to run summative.</>}
-        body={<>You've analysed <b>{risk.totalScenarios}</b> use scenarios; <b>{risk.criticalTaskCount}</b> {risk.criticalTaskCount === 1 ? 'is a' : 'are'} critical task{risk.criticalTaskCount === 1 ? '' : 's'} (serious or critical harm). The HFE/UE file is <b>{compPct}%</b> complete against IEC 62366-1{hfe.gaps.length ? ` -- ${hfe.gaps.length} element${hfe.gaps.length === 1 ? '' : 's'} still open` : ''}.</>}
-        reassure="I'll draft the mitigation for each critical task, tie it to the risk control, and assemble the HFE/UE report — you approve each one."
+          : gateUnassessed
+            ? <>No hazard-related use scenarios are recorded, so no use-related risk analysis has run — nothing here establishes whether critical tasks are controlled.</>
+            : <>Every critical task has a documented mitigation. The critical-task gate is clear.</>}
+        body={gateUnassessed
+          ? <>The HFE/UE file is <b>{compPct}%</b> complete against IEC 62366-1{hfe.gaps.length ? ` -- ${hfe.gaps.length} element${hfe.gaps.length === 1 ? '' : 's'} still open` : ''}. An empty scenario set is not a finding of “no unmitigated critical tasks”, so nothing is claimed here either way.</>
+          : <>You've analysed <b>{risk.totalScenarios}</b> use scenarios; <b>{risk.criticalTaskCount}</b> {risk.criticalTaskCount === 1 ? 'is a' : 'are'} critical task{risk.criticalTaskCount === 1 ? '' : 's'} (serious or critical harm). The HFE/UE file is <b>{compPct}%</b> complete against IEC 62366-1{hfe.gaps.length ? ` -- ${hfe.gaps.length} element${hfe.gaps.length === 1 ? '' : 's'} still open` : ''}.</>}
+        reassure={gateUnassessed
+          ? undefined
+          : "I'll draft the mitigation for each critical task, tie it to the risk control, and assemble the HFE/UE report — you approve each one."}
         action={firstUnmit
           ? { label: 'Mitigate ' + firstUnmit.task, onClick: () => setMitigating(firstUnmit) }
-          : { label: 'Draft the HFE/UE report', onClick: () => ask('Assemble the HFE/UE report from the completed elements') }}
-        secondary="Or work the use-related risk table and HFE checklist below."
+          : gateUnassessed
+            ? { label: 'Record a hazard-related use scenario', onClick: () => setForm(true) }
+            : { label: 'Draft the HFE/UE report', onClick: () => ask('Assemble the HFE/UE report from the completed elements') }}
+        secondary={gateUnassessed
+          ? 'Identify the hazard-related use scenarios first — the risk analysis and the HFE/UE report are built from them.'
+          : 'Or work the use-related risk table and HFE checklist below.'}
       />
 
       {/* Use-related risk -- the hero */}
-      <div className="pj-seclbl">Use-related risk analysis <span className="s">{I.dot} {risk.criticalTaskCount} critical of {risk.totalScenarios} scenarios {I.dot} summative gate: {risk.residualRiskAcceptable ? 'clear' : 'blocked'}</span></div>
-      <div className={'hf-gate tone-' + (risk.residualRiskAcceptable ? 'ok' : 'err')}>
-        <span className="hf-gate-ic">{risk.residualRiskAcceptable ? I.shieldCheck : I.alertTriangle}</span>
+      {/* The card reports the CRITICAL-TASK position and stops there. It used to
+          title itself "Residual use-related risk acceptable" and say summative
+          testing "may proceed" — both conclusions belong to the manufacturer's
+          documented determination over the whole HFE/UE file (IEC 62366-1),
+          not to a count of unmitigated critical tasks. The not-assessed state
+          borrows neither the wording nor the treatment of the cleared one:
+          no shield, no success tone, no "clear". */}
+      <div className="pj-seclbl">Use-related risk analysis <span className="s">{I.dot} {risk.criticalTaskCount} critical of {risk.totalScenarios} scenarios {I.dot} critical-task gate: {gateUnassessed ? 'not assessed' : gateBlocked ? 'blocked' : 'clear'}</span></div>
+      <div className={'hf-gate tone-' + (gateBlocked ? 'err' : gateClear ? 'ok' : 'idle')}>
+        <span className="hf-gate-ic">{gateBlocked ? I.alertTriangle : gateClear ? I.shieldCheck : I.info}</span>
         <div>
-          <div className="hf-gate-t">{risk.residualRiskAcceptable ? 'Residual use-related risk acceptable' : 'Residual use-related risk not acceptable'}</div>
-          <div className="hf-gate-s">{risk.residualRiskAcceptable
-            ? 'All critical tasks are mitigated — summative usability testing may proceed.'
-            : risk.unmitigatedCriticalTasks + ' critical task' + (risk.unmitigatedCriticalTasks === 1 ? '' : 's') + ' must be mitigated before summative testing (IEC 62366-1 S5.9).'}</div>
+          <div className="hf-gate-t">{gateUnassessed
+            ? 'Critical-task gate not assessed'
+            : gateBlocked ? 'Unmitigated critical tasks' : 'No unmitigated critical tasks'}</div>
+          <div className="hf-gate-s">{gateUnassessed
+            ? 'No hazard-related use scenarios are recorded, so the use-related risk analysis has not run. This gate is neither clear nor blocked — it has nothing to read.'
+            : gateBlocked
+              ? risk.unmitigatedCriticalTasks + ' critical task' + (risk.unmitigatedCriticalTasks === 1 ? '' : 's') + ' must be mitigated before summative testing (IEC 62366-1 S5.9).'
+              : 'Every critical task on the record has a documented mitigation. Acceptability of residual use-related risk, and readiness for summative evaluation, remain determinations documented across the HFE/UE file; this gate does not establish either.'}</div>
         </div>
       </div>
       {scenarios.length === 0 ? (

@@ -107,7 +107,15 @@ const hoisted = vi.hoisted(() => {
 
     reset() {
       this.auditLogAction.mockReset();
-      this.auditLogAction.mockResolvedValue(undefined);
+      // logAction resolves an AuditWriteResult (server/services/auditService.ts)
+      // and the route dereferences it (.persisted / .error), so the mock must
+      // resolve the real success shape — resolving undefined makes the route
+      // throw a TypeError and 500.
+      this.auditLogAction.mockResolvedValue({
+        persisted: true,
+        chained: true,
+        tamperProof: true,
+      });
       this.selectCalls = [];
       this.selectLimitRows = [];
       this.insertCalls = [];
@@ -513,15 +521,27 @@ describe('POST /api/charters', () => {
     // and call out the deviation in the API-gaps summary. Tightening this to
     // a transactional rollback requires changing auditService and is tracked
     // as AUDIT_BEST_EFFORT_DOCUMENTED_BUT_RISKY in the route header.
+    //
+    // The service's real failure mode is NOT a rejection: logAction never
+    // throws by contract — it swallows persistence errors internally and
+    // resolves an AuditWriteResult with persisted:false + the error string.
+    // The route dereferences .persisted, logs the audit gap, and still
+    // returns the 201.
     hoisted.selectLimitRows = [[{ id: 9 }]];
     hoisted.insertReturningRows = [{ id: 555, approvalStatus: 'draft' }];
-    hoisted.auditLogAction.mockRejectedValueOnce(new Error('audit DB down'));
+    hoisted.auditLogAction.mockResolvedValueOnce({
+      persisted: false,
+      chained: false,
+      tamperProof: false,
+      error: 'audit DB down',
+    });
 
     const res = await request(makeApp({ organizationId: 100, userId: 7 }))
       .post('/api/charters')
       .send(VALID_BODY);
 
-    // Audit threw, but the route still returns 201 with the created id.
+    // Audit failed to persist, but the route still returns 201 with the
+    // created id.
     expect(res.status).toBe(201);
     expect(res.body).toEqual({ charterId: 555, status: 'draft' });
     // The INSERT fired and was NOT rolled back (we have no transaction to

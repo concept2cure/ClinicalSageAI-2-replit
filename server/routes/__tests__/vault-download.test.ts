@@ -56,11 +56,24 @@ function app(org: number | null = 7) {
   return a;
 }
 
-/** Program row found, then the document row (or not). */
+/**
+ * Program row found, then the document row (or not).
+ *
+ * Dispatch on what each query actually SELECTS, not merely which tables it
+ * mentions: the document lookup embeds an EXISTS (SELECT 1 FROM
+ * regulatory_programs rp …) tenant re-check, so it names BOTH tables. Only the
+ * document lookup reads `FROM vault.documents`, and only the standalone
+ * program check selects the program's own id (`SELECT id FROM
+ * regulatory_programs`); the embedded re-check selects `1` and aliases `rp`.
+ * The two patterns are mutually exclusive, so neither can shadow the other
+ * whatever order they are tested in.
+ */
 function store(doc: Record<string, unknown> | null, programFound = true) {
   query.mockImplementation(async (sql: string) => {
-    if (/FROM regulatory_programs/.test(sql)) return { rows: programFound ? [{ id: PROGRAM }] : [] };
     if (/FROM vault\.documents/.test(sql)) return { rows: doc ? [doc] : [] };
+    if (/SELECT\s+id\s+FROM\s+regulatory_programs/.test(sql)) {
+      return { rows: programFound ? [{ id: PROGRAM }] : [] };
+    }
     return { rows: [] };
   });
 }

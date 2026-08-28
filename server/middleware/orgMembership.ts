@@ -3,15 +3,16 @@
  * server/middleware/auth.ts so it can be imported by any route WITHOUT the
  * `.js`-twin resolver hazard.
  *
- * server/middleware/auth.js is a stale legacy twin. Under Vite/vitest an
+ * server/middleware/auth.js was a stale legacy twin: under Vite/vitest an
  * extensionless `import { enforceOrgMembership } from '../middleware/auth'`
- * resolves to auth.js (Vite prefers .js over .ts for a .js-less specifier),
- * which does NOT contain the membership re-check — so a router that composed
+ * resolved to auth.js (Vite prefers .js over .ts for a .js-less specifier),
+ * which did NOT contain the membership re-check — so a router that composed
  * canonical auth by importing from '../middleware/auth' would silently drop
- * the AUTH_009 control under test. This module has no `.js` twin, so TypeScript,
- * vitest, tsx, and the production build all resolve the SAME file. auth.ts now
- * imports enforceOrgMembership + invalidateOrgMembershipCache from here and
- * re-exports invalidateOrgMembershipCache, so its public surface is unchanged.
+ * the AUTH_009 control under test. Since the M-5 consolidation auth.js is a
+ * pure re-export shim of auth.ts, so every resolver executes the same code;
+ * this module keeps no `.js` twin either. auth.ts imports enforceOrgMembership
+ * + invalidateOrgMembershipCache from here and re-exports
+ * invalidateOrgMembershipCache, so its public surface is unchanged.
  *
  * The JWT carries an organizationId claim minted at login. Trusting it for the
  * whole token TTL (1d) meant a user removed from an organization kept tenant

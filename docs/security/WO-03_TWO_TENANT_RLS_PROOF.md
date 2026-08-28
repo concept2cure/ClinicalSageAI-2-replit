@@ -26,6 +26,19 @@ The API proof returns only identifiers and generic error codes. Sensitive
 fixture bodies are never serialized into responses, assertion messages, or
 logs.
 
+## Execution status
+
+A proof only counts once the suite has actually run. As merged, this suite had
+zero completed executions: the PR landed before any check started, its only CI
+runner (Integration Tests → `npm run test:db`) was skipped on the composed
+branch's unrelated Lint failures, and its original teardown ran a bare
+`DELETE FROM audit_logs` that the deploy path's append-only trigger
+(`trg_audit_logs_no_delete`, P0A02) aborts — so its first real run would have
+failed. The teardown now uses the trigger's authorized
+`app.audit_archive_bypass` door like the sibling dbtest suites. Cite a specific
+green Integration Tests run on `concept2cure-v2`, not this document, as the
+evidence that the proof has executed.
+
 ## Residual risk
 
 This is a representative proof, not an enumeration of every tenant entry

@@ -73,7 +73,7 @@ import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
-import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { apiRequest, serverMessage, ApiRequestError, redactInternals } from '@/lib/queryClient';
 import { AuthoringFilingBar } from './AuthoringFilingBar';
 import { AuthoringPlaceIntoFiling } from './AuthoringPlaceIntoFiling';
 import { AuthoringCollab } from './AuthoringCollab';
@@ -85,6 +85,8 @@ import { AuthoringExports } from './AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
 import type { SuggestionDecision } from '../editor/suggestions';
 import type { CommentAnchorPayload } from '../editor/commentAnchor';
+import { citedSourceIdsInHtml } from '../editor/citationNode';
+import type { CitationSource } from '@shared/authoring/citations';
 import { useAuth } from '@/services/portal/authService';
 import { getAuthToken } from '@/utils/authToken';
 import { describeRulePackProvenance } from '@shared/rule-pack-provenance';
@@ -1683,7 +1685,11 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     if (rail === 'history' && activeSectionId) void loadHistory(activeSectionId);
     if (rail === 'comments' && activeDocId) void loadComments(activeDocId);
     if (rail === 'audit' && activeDocId) void loadAudit(activeDocId);
-    if (rail === 'sources' && activeSectionId) {
+    /* Loaded whenever a section is open, not only when the Sources rail is:
+       the editor's citation picker offers this library, and a writer citing a
+       source mid-sentence should not have to open a rail first to make the
+       list exist. The rail re-reads on open through the same callbacks. */
+    if (activeSectionId) {
       void loadSources(activeSectionId);
       void loadProjectSources();
     }
@@ -1697,6 +1703,49 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     loadSources,
     loadProjectSources,
   ]);
+
+  /* ── The source library the editor's citation picker offers ──
+     The sources this section already cites, then the rest of the project's Data
+     Room. Merged rather than kept apart because a writer citing mid-sentence is
+     choosing a source, not choosing between two lists; de-duplicated on the
+     source's identity so a source already cited appears once.
+
+     Only the id and the title travel here. That is all the canvas needs — the
+     picker's label and the node's cached name — and the reference list a
+     reviewer reads is assembled server-side at export, where the source
+     registry's sponsor, date and identifier are available. Nothing here is
+     invented to fill a field the client cannot see. */
+  const citationLibrary = useMemo<CitationSource[]>(() => {
+    const out: CitationSource[] = [];
+    const seen = new Set<string>();
+    const add = (id: unknown, title: string | null | undefined) => {
+      if (id == null) return;
+      const key = String(id);
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push({ id: key, title: title ?? null });
+    };
+    for (const s of sources) if (s.source) add(s.source.id, s.source.title);
+    for (const p of projectSources) add(p.id, p.title);
+    return out;
+  }, [sources, projectSources]);
+
+  /* ── Where this section's citation numbering continues from ──
+     A citation's number is its position in the DOCUMENT's reference list, and
+     the editor holds one section. Without the sources cited above it, the canvas
+     would number from 1 and show "[1]" for a claim the filed document prints as
+     "[7]" — a plausible-looking wrong number, which is the failure the whole
+     design exists to remove. Read from the sections' SAVED content, in the
+     document's own order, which is what the export will read too. */
+  const precedingSourceIds = useMemo<string[]>(() => {
+    if (!activeSectionId) return [];
+    const ids: string[] = [];
+    for (const sec of sections) {
+      if (sec.id === activeSectionId) break;
+      ids.push(...citedSourceIdsInHtml(sec.content ?? ''));
+    }
+    return ids;
+  }, [sections, activeSectionId]);
 
   /* ── Record that this section is drafted from a source ── */
   const citeSource = useCallback(
@@ -1863,8 +1912,15 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
            whoever pressed accept. Read-and-clear: an author counts once, for
            the save that carried their text in. */
         const acceptedAuthors = editorRef.current?.takeAcceptedAuthors?.() ?? [];
+        /* The concurrency token. `updated_at` is the value THIS editor loaded;
+           the server refuses with 409 SECTION_CHANGED if the row has moved
+           since. Without it the PATCH is a blind last-write-wins, and two
+           authors on one CTD section — a writer and a reviewer on the same
+           §3.2.P.5 — end with the second save replacing the first's entire
+           section, recorded in the revision ledger as an ordinary edit. */
         const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
           content: serialized,
+          ...(activeSection.updated_at ? { expectedUpdatedAt: activeSection.updated_at } : {}),
           ...(acceptedAuthors.length ? { acceptedAuthors } : {}),
         });
         const json = await res.json().catch(() => null);
@@ -1872,15 +1928,27 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
           fireToast('Not saved — your session isn’t authenticated. Sign in and retry.', 'error');
           throw new Error('unauthenticated');
         }
-        if (!res.ok) {
-          fireToast(
-            'Couldn’t save the section — ' +
-              ((json as any)?.error ?? `HTTP ${res.status}`) +
-              '. Nothing was persisted.',
-            'error'
-          );
-          throw new Error('save failed');
-        }
+        /* The `!res.ok` branch that used to live here was UNREACHABLE, and with
+           it every sentence this surface had for a refused save.
+           `apiRequest` throws an ApiRequestError on any non-2xx except 401
+           (client/src/lib/queryClient.ts), so execution never arrived at a
+           non-ok `res`. The throw escaped this function — which has
+           try/finally and no catch — into RichSectionEditor's unbound
+           `catch { setSaveState('error') }`, where the error object, its
+           message and its correlation id were all discarded. The author saw
+           `Save failed — kept on this device` at 10px, in grey, and nothing
+           else.
+           On a Part 11 authoring surface that is the wrong failure to blur.
+           The server distinguishes these deliberately and phrases each one:
+             403 DOCUMENT_FROZEN     — with the lock's own reason
+             403                     — no edit permission for this section
+             500 LINEAGE_REQUIRED    — "the section was not saved: its data
+                                        lineage could not be recorded"
+           A frozen record and a flaky network need completely different
+           actions from the author, and they were indistinguishable.
+           The catch is in `doSave` below; this line documents why there is no
+           `!res.ok` test here any more. */
+        void json;
         const adopted = (json as { section?: AuthSection })?.section;
         const persisted = adopted?.content ?? serialized;
         // Adopt the server row (revision counter, updated_at) into the tree.
@@ -1898,6 +1966,45 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
            the rail re-reads on mount, so bumping while it is closed simply
            means it opens on the truth rather than on a cached verdict. */
         setExportsEpoch(e => e + 1);
+      } catch (err) {
+        /* THE AUTHOR IS TOLD WHY THE RECORD REFUSED THEIR WORK.
+           `apiRequest` throws ApiRequestError for every non-2xx except 401, so
+           this is where a frozen document, a permission refusal and a lineage
+           failure actually arrive. `message` has already been through
+           `extractApiError`, so it is the server's own sentence with SQL,
+           relation names, routes and env vars filtered out — safe to render
+           verbatim, which is the point: "This document is frozen. Its content
+           is sealed under a content hash" tells the author to create a new
+           version, and "HTTP 403" tells them to file a bug.
+           `correlationId` is the X-Request-Id the server echoed; it is the one
+           string that makes an outage diagnosable without describing the
+           schema to whoever is looking.
+           Re-thrown either way: the editor's own save-state must still go to
+           'error' and keep the text cached on the device. This adds the
+           explanation; it does not swallow the failure. */
+        const e = err as Partial<ApiRequestError> & { message?: string };
+        /* A collision is not a failure to report like the others. The author's
+           text is intact on this device and nothing of theirs was lost — what
+           they must NOT do is press save again expecting it to work, and what
+           they must know is that someone else's version is now the record.
+           Reloading is the only safe next step, so the message says so instead
+           of offering a retry that would either fail again or clobber. */
+        if (e?.status === 409) {
+          fireToast(
+            `Not saved — ${activeSection.code} was changed by someone else while you were editing. ` +
+              'Your text is still here and theirs was not overwritten. Reload the section to see ' +
+              'their version, then reapply your changes.',
+            'error',
+          );
+          throw err;
+        }
+        const why = redactInternals(e?.message, 'the server did not accept the change');
+        fireToast(
+          `Couldn’t save ${activeSection.code} — ${why} Nothing was persisted.` +
+            (e?.correlationId ? ` Reference ${e.correlationId}.` : ''),
+          'error',
+        );
+        throw err;
       } finally {
         setSaving(false);
       }
@@ -3382,6 +3489,46 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                       onOpen: openCommentFromAnchor,
                     }}
                     imagesApi={{ upload: uploadSectionImage }}
+                    /* The document's own sections, as they stand right now.
+                       A cross-reference stores the target's id and resolves its
+                       number and title from this list, so renumbering or
+                       retitling a section corrects every reference to it in
+                       place — no referring section is edited, and no revision
+                       is minted for a change nobody made to its words. The
+                       same list the export resolves against server-side, so
+                       the canvas and the filed document say the same thing. */
+                    crossRefsApi={{
+                      sections: sections.map(s => ({
+                        id: s.id,
+                        code: s.code,
+                        title: s.title,
+                      })),
+                    }}
+                    /* The governed sources this document can cite, and the
+                       numbering already used above this section. A citation
+                       stores the source's id and derives its number from
+                       position, so inserting one earlier renumbers the rest
+                       with no section's stored content touched. Inserting one
+                       also records the section→source link the Sources rail
+                       and the change report already read, so the prose and the
+                       recorded lineage cannot drift apart. */
+                    citationsApi={{
+                      sources: citationLibrary,
+                      precedingSourceIds,
+                      onCite: (sourceId: string) => {
+                        /* Only when the link is not already recorded: citing
+                           the same source a second time in the prose is not a
+                           new fact about this section's lineage, and re-posting
+                           it would announce a record that did not change. */
+                        const already = sources.some(
+                          s => s.source && String(s.source.id) === sourceId
+                        );
+                        const numeric = Number(sourceId);
+                        if (!already && Number.isInteger(numeric) && numeric > 0) {
+                          void citeSource(numeric);
+                        }
+                      },
+                    }}
                     collab={
                       liveCoedit && activeDoc
                         ? {

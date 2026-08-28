@@ -39,6 +39,7 @@ import { promises as fs } from 'node:fs';
 
 import { Router, Request, Response } from 'express';
 import { pool } from '../db';
+import { buildLeafManifest } from '../services/ectd/sequence-manifest';
 
 const router = Router();
 
@@ -836,6 +837,11 @@ async function compileFromSpine(
   let dtdSelfContained: boolean | null = null;
   let packageSha256: string | null = null;
   let assembleFailure: string | null = null;
+  // Per-sequence leaf manifest → persisted so the NEXT sequence can load it and
+  // compute real replace/append/delete lifecycle ops (loadPriorSequenceManifest).
+  // Without this write-half, prior-sequence load always returned [] and every
+  // leaf stayed `new` — no amendments/supplements were producible.
+  let leafManifestJson: string | null = null;
 
   try {
     const assembled = await assembleSequence({
@@ -860,6 +866,9 @@ async function compileFromSpine(
       );
       dtdSelfContained = assembled.bundle.dtdStatus?.selfContained ?? null;
       packageSha256 = assembled.bundle.sha256;
+      // Snapshot this sequence's shipped leaves as its immutable manifest.
+      const manifest = buildLeafManifest(assembled.bundle.leafManifest ?? []);
+      leafManifestJson = manifest.length > 0 ? JSON.stringify(manifest) : null;
     } finally {
       await assembled.cleanup();
     }
@@ -923,8 +932,8 @@ async function compileFromSpine(
       `INSERT INTO ectd_compilations
          (organization_id, compilation_name, compilation_type, status,
           xml_backbone, validation_results, compiled_at, version,
-          application_number, sequence_number)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), '1.0', $7, $8)`,
+          application_number, sequence_number, leaf_manifest)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW(), '1.0', $7, $8, $9)`,
       [
         orgId,
         compilationName,
@@ -934,6 +943,7 @@ async function compileFromSpine(
         JSON.stringify(validationResults),
         anchor.programCode ?? `SEQ-${seq.id}`,
         seq.sequenceNumber,
+        leafManifestJson,
       ],
     );
   } catch (err: any) {

@@ -81,6 +81,20 @@ export function checkRuntimeContracts({ read = readText, workflows = trackedWork
         errors.push(`${path}: env.NODE_VERSION selector has no Node ${NODE_MAJOR} declaration`);
       }
     }
+    // A workflow that runs npm/node without setup-node or NODE_VERSION runs
+    // whatever Node the runner image ships that week — the exact drift class
+    // this guard exists for, and (with engine-strict=true) a future install
+    // failure. database-dr-restore-proof.yml shipped this way and every check
+    // above passed on it: zero selectors, zero setup-node uses, no signal.
+    // Line-based on purpose: a multiline regex over whole workflow bodies
+    // backtracks catastrophically.
+    const runsNode = content.split('\n').some((line) => {
+      const code = line.split('#')[0];
+      return /(?:^|[\s"'(&|;])(?:npm|npx|node)(?:\s|$)/.test(code);
+    });
+    if (runsNode && setupNodeUses === 0 && declaredEnv.length === 0) {
+      errors.push(`${path}: runs npm/node without actions/setup-node or NODE_VERSION — pins nothing, drifts with the runner image`);
+    }
   }
   return errors;
 }
@@ -88,6 +102,14 @@ export function checkRuntimeContracts({ read = readText, workflows = trackedWork
 function runSelfTest() {
   const originals = new Map();
   const read = (path) => originals.get(path) ?? readText(path);
+  // Each case below only asserts errors exist AFTER a mutation, so a repo that
+  // is already in violation would satisfy every case without the mutation ever
+  // being detected. Require a clean baseline first, or the self-test proves
+  // nothing about the mutations it claims to reject.
+  const baseline = checkRuntimeContracts({ read });
+  if (baseline.length > 0) {
+    throw new Error(`self-test requires a clean baseline; the repo already violates:\n${baseline.map((e) => `  ${e}`).join('\n')}`);
+  }
   const cases = [
     ['package engine downgrade', 'package.json', (value) => value.replace(NODE_ENGINE, '>=20.0.0')],
     ['package engine broadening', 'package.json', (value) => value.replace(NODE_ENGINE, '>=22.0.0')],

@@ -46,7 +46,13 @@ jobs:
       DR_APP_DATABASE_URL: postgresql://c2c_dr_app@localhost:5432/c2c_dr_restored
       DR_EVIDENCE_DIR: ${{ github.workspace }}/.dr-evidence
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      # engine-strict=true makes npm ci hard-fail off the supported line, so the
+      # runtime must be pinned here like every other npm-running workflow — the
+      # runner-image default Node is whatever GitHub ships that week.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
       - name: Install locked application dependencies
         run: npm ci --ignore-scripts
       - name: Prove destructive guardrails
@@ -55,9 +61,12 @@ jobs:
         run: npm run db:dr:restore-proof
       - name: Retain non-sensitive evidence only
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: database-dr-evidence-${{ github.run_id }}
           path: .dr-evidence/dr-evidence.json
-          if-no-files-found: error
+          # Evidence is written at the end of a successful drill; a drill that
+          # died earlier legitimately has none, and `error` would bury the real
+          # failure under a second one.
+          if-no-files-found: warn
           retention-days: 7

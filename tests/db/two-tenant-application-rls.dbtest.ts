@@ -51,20 +51,21 @@ let savedQueryB: number;
 /**
  * Mint an access token with the SAME secret the server will verify it against.
  *
- * This used to sign with `process.env.JWT_SECRET` directly, which is not the
- * secret the verifier resolves. Both server/config/environment.ts
- * (getJwtSecret, the signing side) and server/utils/jwtVerify.ts
- * (currentSecret, the verifying side) read `JWT_SECRET_<SUFFIX>` FIRST and only
- * fall back to `JWT_SECRET` — and NODE_ENV=test maps to the DEV suffix. So on
- * any machine whose .env sets JWT_SECRET_DEV (this repo's .env does), the token
- * was signed with one secret and verified with another: every request in this
- * file came back 401 "invalid signature", and the twelve isolation assertions
- * below reported an auth failure rather than the cross-tenant result they
- * exist to prove. CI has no .env, so both resolved to JWT_SECRET there and the
- * suite passed — which is why this only ever failed locally.
+ * This signed with `process.env.JWT_SECRET` directly, which is not necessarily
+ * the secret the verifier resolves. Both getJwtSecret (server/config/
+ * environment.ts, the signing side) and currentSecret (server/utils/
+ * jwtVerify.ts, the verifying side) read `JWT_SECRET_<SUFFIX>` FIRST and only
+ * fall back to `JWT_SECRET` — and NODE_ENV=test maps to the DEV suffix. config
+ * resolves once at module import; the verifier resolves on every call. A .env
+ * load between those two moments makes them disagree, and on this repo's own
+ * .env (which sets JWT_SECRET_DEV) they did: every request in this file came
+ * back 401 "invalid signature", so the twelve isolation assertions below
+ * reported an auth failure instead of the cross-tenant result they exist to
+ * prove. CI has no .env, so both resolved to JWT_SECRET there and the suite was
+ * green — which is why this only ever failed locally.
  *
  * activeJwtSecret() resolves the secret the same way, at the same moment, as
- * the verifier that will check the token — so the two cannot drift.
+ * the verifier that will check the token, so the two cannot drift.
  */
 function accessToken(userId: number, organizationId: number): string {
   return jwt.sign(
@@ -308,54 +309,39 @@ afterAll(async () => {
     if (cleanup) {
       try {
         await cleanup.query("SELECT set_config('app.rls_enforce','off',false)");
-
-        // ── Why the audit delete needs an explicit exemption ───────────────
-        // public.audit_logs carries a Part 11 immutability trigger
-        // (db/migrations/20260617_audit_logs_immutability.sql): DELETE raises
-        // P0A02 unless the caller takes the documented archival path, which is
-        // to set app.audit_archive_bypass. Without it this was the FIRST
-        // statement in the block, so it threw, none of the deletes below ever
-        // ran, and every fixture leaked. The next run of this file then failed
-        // in beforeAll on a duplicate project_industry_profiles.program_id and
-        // reported a screen of 401s that had nothing to do with tenant
-        // isolation. SET LOCAL scopes the exemption to this transaction, so it
-        // cannot outlive the teardown.
+        // audit_logs is append-only on the deploy path: trg_audit_logs_no_delete
+        // (20260617_audit_logs_immutability.sql) aborts a bare DELETE with
+        // P0A02, which would kill every remaining cleanup statement and leak
+        // the fixtures. Use the trigger's authorized archive door, SET LOCAL so
+        // the bypass dies with this transaction — the same pattern the sibling
+        // dbtest suites adopted after hitting exactly this failure.
         await cleanup.query('BEGIN');
         try {
           await cleanup.query("SET LOCAL app.audit_archive_bypass = 'on'");
-          await cleanup.query('DELETE FROM audit_logs WHERE tenant_id=ANY($1::int[])', [
-            [ORG_A, ORG_B],
-          ]);
+          await cleanup.query('DELETE FROM audit_logs WHERE record_id LIKE $1', [`${TAG}%`]);
           await cleanup.query('COMMIT');
         } catch (err) {
-          await cleanup.query('ROLLBACK').catch(() => {});
-          throw err;
+          // ROLLBACK so the connection leaves the aborted transaction and the
+          // remaining fixture deletes below still run instead of all dying.
+          // Not rethrown: unlike the sibling suites (audit delete last), nine
+          // deletes follow this one — orgs, users, documents — and leaking all
+          // of them to report a failed audit-row sweep inverts the priority.
+          // The tagged audit rows are inert and LIKE-scoped if they survive.
+          await cleanup.query('ROLLBACK');
+          console.warn('[wo-03] audit_logs teardown skipped:', err);
         }
-
-        // Deleting by fixture ORGANISATION rather than by this run's TAG makes
-        // the teardown self-healing: tenant-scoped rows left behind by an
-        // earlier aborted run are removed too, instead of accumulating until
-        // they collide. Both ids are dedicated to this file, so the wider
-        // predicate cannot reach real data.
-        await cleanup.query('DELETE FROM documents WHERE organization_id=ANY($1::int[])', [
-          [ORG_A, ORG_B],
-        ]);
-        await cleanup.query('DELETE FROM projects WHERE organization_id=ANY($1::int[])', [
-          [ORG_A, ORG_B],
-        ]);
-        await cleanup.query(
-          'DELETE FROM saved_precedent_queries WHERE organization_id=ANY($1::int[])',
-          [[ORG_A, ORG_B]]
-        );
+        await cleanup.query('DELETE FROM documents WHERE document_code LIKE $1', [`${TAG}%`]);
+        await cleanup.query('DELETE FROM projects WHERE name LIKE $1', [`${TAG}%`]);
+        await cleanup.query('DELETE FROM saved_precedent_queries WHERE label LIKE $1', [`${TAG}%`]);
         await cleanup.query(
           'DELETE FROM project_industry_profiles WHERE program_id=ANY($1::uuid[])',
           [[programA, programB]]
         );
-        await cleanup.query('DELETE FROM client_workspaces WHERE organization_id=ANY($1::int[])', [
-          [ORG_A, ORG_B],
+        await cleanup.query('DELETE FROM client_workspaces WHERE id=ANY($1::int[])', [
+          [workspaceA, workspaceB],
         ]);
-        await cleanup.query('DELETE FROM organization_users WHERE organization_id=ANY($1::int[])', [
-          [ORG_A, ORG_B],
+        await cleanup.query('DELETE FROM organization_users WHERE user_id=ANY($1::int[])', [
+          [userA, userB],
         ]);
         await cleanup.query('DELETE FROM users WHERE id=ANY($1::int[])', [[userA, userB]]);
         await cleanup.query('DELETE FROM organizations WHERE id=ANY($1::int[])', [[ORG_A, ORG_B]]);

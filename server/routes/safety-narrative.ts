@@ -252,14 +252,30 @@ router.post('/aggregate', async (req: Request, res: Response) => {
       });
     }
 
+    // The safety datasets must be supplied EXPLICITLY as arrays. An omitted
+    // field must not be coerced to [] — downstream the empty array renders the
+    // affirmative claims "No SAEs were reported during the study." / "No deaths
+    // were reported during the study." into an ICH E3 §12 / DSUR section. A
+    // caller that simply failed to attach the data (a broken upstream join, a
+    // client bug) would otherwise ship a false "zero events" statement that is
+    // indistinguishable from a study that genuinely had none. The caller must
+    // affirmatively declare "none" by sending [], never by omission.
+    if (!Array.isArray(teaeData) || !Array.isArray(saeData) || !Array.isArray(deaths)) {
+      return res.status(400).json({
+        success: false,
+        error:
+          'teaeData, saeData, and deaths must each be provided as an array (use [] to affirmatively declare none — omission is rejected so a missing dataset is never reported as "no events").',
+      });
+    }
+
     const result = await safetyNarrativeService.generateAggregateSafetyNarrative({
       studyId,
       studyTitle,
       indication,
       treatmentArms: treatmentArms || [],
-      teaeData: teaeData || [],
-      saeData: saeData || [],
-      deaths: deaths || [],
+      teaeData,
+      saeData,
+      deaths,
       discontinuationsDueToAE: discontinuationsDueToAE || {},
       labFindings,
       narrativeType,
@@ -300,7 +316,9 @@ router.post('/sae', async (req: Request, res: Response) => {
 
     const narrative = await safetyNarrativeService.generateSAENarrative({
       caseId,
-      patientAge: patientAge || 0,
+      // null = not reported. Never fabricate a "0-year-old" patient from an
+      // omitted age; the narrative builder renders "age not reported".
+      patientAge: patientAge ?? null,
       patientSex: patientSex || 'Unknown',
       relevantMedicalHistory: relevantMedicalHistory || [],
       treatmentArm: treatmentArm || 'Unknown',
@@ -309,7 +327,8 @@ router.post('/sae', async (req: Request, res: Response) => {
       eventTerm,
       eventDescription: eventDescription || '',
       onsetDate: onsetDate || 'Unknown',
-      onsetStudyDay: onsetStudyDay || 0,
+      // null = not reported. Never fabricate "Study Day 0" from an omitted day.
+      onsetStudyDay: onsetStudyDay ?? null,
       seriousnessCriteria: seriousnessCriteria || [],
       severity: severity || 'Unknown',
       actionTaken: actionTaken || 'unknown',
@@ -357,7 +376,16 @@ router.post('/benefit-risk', async (req: Request, res: Response) => {
       treatmentName,
       efficacySummary,
       safetySummary,
-      context: context || { availableTherapies: [], diseaseSeverity: 'moderate', patientPopulation: 'adults' },
+      // Do not fabricate the disease severity / patient population the
+      // benefit-risk argument is weighed against. An omitted context yields
+      // honest "not specified" markers (rendered verbatim by the service),
+      // never a clinically specific default like "moderate" / "adults" that
+      // would misstate the population for a severe or pediatric indication.
+      context: context || {
+        availableTherapies: [],
+        diseaseSeverity: 'not specified',
+        patientPopulation: 'not specified',
+      },
     });
 
     res.json({ success: true, data: result });

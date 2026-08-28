@@ -5,16 +5,21 @@ const JOURNEY = {
   password: process.env.GOLDEN_JOURNEY_PASSWORD ?? 'Author123!test',
   reviewerEmail: process.env.GOLDEN_JOURNEY_REVIEWER_EMAIL ?? 'e2e-reviewer@trialsage.test',
   reviewerPassword: process.env.GOLDEN_JOURNEY_REVIEWER_PASSWORD ?? 'Reviewer123!test',
+  adminEmail: process.env.GOLDEN_JOURNEY_ADMIN_EMAIL ?? 'e2e-admin@trialsage.test',
+  adminPassword: process.env.GOLDEN_JOURNEY_ADMIN_PASSWORD ?? 'Admin123!test',
   projectName: 'Synthetic demo — governed evidence draft',
   artifactTitle: 'Synthetic evidence assessment — DRAFT',
   sourceRef: 'synthetic://golden-journey/source-001',
 } as const;
 
 async function login(page: Page, email: string, password: string) {
+  // The live login is a single-step form (email + password + Sign in). The
+  // original helper clicked a 'continue' button from an imagined two-step
+  // flow, which does not exist — discovered on this journey's first real
+  // browser execution.
   await page.goto('/concept2cure/login');
-  await page.locator('input[type="email"], input#email').fill(email);
-  await page.getByRole('button', { name: /continue/i }).click();
-  await page.locator('input[type="password"], input#password').fill(password);
+  await page.locator('input[type="email"], input#email').first().fill(email);
+  await page.locator('input[type="password"], input#password').first().fill(password);
   await page.getByRole('button', { name: /sign in/i }).click();
   await expect(page).not.toHaveURL(/\/login/);
 }
@@ -94,8 +99,10 @@ test('fixture-free golden journey persists evidence, review, provenance, and gov
     'POST',
     `/api/concept2cure/projects/${project.id}/artifacts`,
     {
+      // Valid category on purpose: the invalidity under test must be exactly
+      // one thing (empty content), not a category zod rejects first.
       type: 'document',
-      category: 'regulatory',
+      category: 'document',
       title: JOURNEY.artifactTitle,
       content: '',
     }
@@ -124,7 +131,10 @@ test('fixture-free golden journey persists evidence, review, provenance, and gov
     `/api/concept2cure/projects/${project.id}/artifacts`,
     {
       type: 'document',
-      category: 'regulatory',
+      // 'document', not 'regulatory': the category enum has no 'regulatory',
+      // and a schema 400 here would mask the SOURCE_EVIDENCE_NOT_FOUND gate
+      // this case exists to prove.
+      category: 'document',
       title: JOURNEY.artifactTitle,
       content: 'This write must fail because its asserted evidence does not exist.',
       metadata: {
@@ -143,7 +153,7 @@ test('fixture-free golden journey persists evidence, review, provenance, and gov
     `/api/concept2cure/projects/${project.id}/artifacts`,
     {
       type: 'document',
-      category: 'regulatory',
+      category: 'document',
       title: JOURNEY.artifactTitle,
       content: 'Synthetic source finding: the test compound requires qualified human assessment.',
       metadata: {
@@ -181,8 +191,17 @@ test('fixture-free golden journey persists evidence, review, provenance, and gov
   expect(deniedExport.status).toBe(403);
   expect(JSON.stringify(deniedExport.body)).toContain('HUMAN_REVIEW_REQUIRED');
 
+  // The reviewers route requires role admin/approver/reviewer AND live
+  // project access. A reviewer not yet assigned has no project-access row —
+  // assignment is what would grant it — so the live model needs the org
+  // ADMIN to make the assignment (discovered on this journey's first real
+  // execution: the reviewer session 404s exactly as verifyProjectAccess
+  // says it should). The decision below still runs as the reviewer, under
+  // separation-of-duties.
+  const adminContext = await browser.newContext();
+  const adminPage = await authenticatedPage(adminContext, JOURNEY.adminEmail, JOURNEY.adminPassword);
   const assignment = await browserApi<any>(
-    page,
+    adminPage,
     'POST',
     `/api/concept2cure/projects/${project.id}/artifacts/${artifact.id}/reviewers`,
     { reviewerIds: [reviewerId], notes: 'Synthetic golden-journey review assignment.' }
@@ -216,13 +235,16 @@ test('fixture-free golden journey persists evidence, review, provenance, and gov
   expect(JSON.stringify(payload(persisted))).toContain(JOURNEY.artifactTitle);
   expect(JSON.stringify(payload(persisted))).toContain('review');
 
-  const artifactsNavigation = page.getByText('Artifacts Center', { exact: true }).first();
-  await expect(artifactsNavigation).toBeVisible();
-  await artifactsNavigation.click();
-  await expect(page.getByText(JOURNEY.artifactTitle, { exact: true })).toBeVisible();
-  await expect(page.getByTestId(`artifact-governance-${artifact.id}`)).toHaveText(
-    '1 cited source · Human review recorded'
-  );
+  // Click the sidebar BUTTON by its accessible name: the bare text locator
+  // matched a hidden label node, and a direct URL load bounces back to Home
+  // (the shell restores its own state on a cold load).
+  await page.getByRole('button', { name: 'Artifacts Center' }).first().click();
+  // Anchor on the row's testid, not the exact title: the listing truncates
+  // long titles in the cell text, so an exact-text locator can never match.
+  // The governance label is the claim under test and is asserted verbatim.
+  const governance = page.getByTestId(`artifact-governance-${artifact.id}`);
+  await expect(governance).toBeVisible();
+  await expect(governance).toHaveText('1 cited source · Human review recorded');
   await testInfo.attach('golden-journey-after-review.png', {
     body: await page.screenshot({ fullPage: true }),
     contentType: 'image/png',

@@ -52,16 +52,15 @@ interface JWTPayload {
 }
 
 // Re-exported for callers that import the guard from the auth middleware.
-// The implementation lives in ./tokenType (a module with no `.js` twin) so
-// that TypeScript and the test/runtime resolvers agree on the same file.
+// The implementation lives in ./tokenType so any composition path reaches the
+// same file. (./auth.js is a pure re-export shim of this module since the M-5
+// consolidation, so every resolver now executes this implementation.)
 export { nonAccessTokenReason };
 
 // Re-exported so the external importers (tenants.ts, tenants-simple.ts,
 // tenant-users.ts) and this module's default export keep working unchanged.
 // The org-membership re-check (audit finding M1) that authenticateToken relies
-// on now lives in ./orgMembership — a module with no `.js` twin — so a route
-// that composes canonical auth can import enforceOrgMembership without the Vite
-// resolver binding it to the stale auth.js twin (which lacks that control).
+// on lives in ./orgMembership so route code can compose it directly.
 export { invalidateOrgMembershipCache };
 
 // Extend Request type to include user

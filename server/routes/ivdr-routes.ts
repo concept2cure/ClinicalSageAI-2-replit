@@ -14,6 +14,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { createHash } from 'crypto';
 import { Pool } from 'pg';
 import { z } from 'zod';
 import { registerExportGovernanceQuick } from '../services/compute/exportGovernance';
@@ -330,6 +331,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
       res.setHeader('Content-Disposition', `attachment; filename="ivdr-classification-${safeId}.json"`);
 
       // Register governed export (fail-closed for governed flows)
+      const reportJson = JSON.stringify(report);
       const user = (req as any).user;
       if (!user?.id) {
         return res.status(401).json({ error: 'Authenticated user context required' });
@@ -342,7 +344,11 @@ export default function createIVDRRoutes(pool: Pool): Router {
         title: `IVDR Classification Report: ${record.device_name}`,
         exportFormat: 'zip', // JSON report mapped to zip for governance
         exportFilename: `ivdr-classification-${safeId}.json`,
-        exportFileSize: Buffer.byteLength(JSON.stringify(report), 'utf-8'),
+        exportFileSize: Buffer.byteLength(reportJson, 'utf-8'),
+        // Over the JSON actually returned below. `res.json(report)` serializes
+        // the same object, so this digest identifies the delivered report
+        // rather than its title and length.
+        exportHash: createHash('sha256').update(reportJson, 'utf-8').digest('hex'),
         docType: 'ivdr_classification_report',
         backendRoute: `/api/ivdr/classify/${id}/report`,
         ipAddress: req.ip,

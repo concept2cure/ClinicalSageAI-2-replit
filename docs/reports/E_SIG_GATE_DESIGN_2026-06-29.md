@@ -125,24 +125,27 @@ Final `payloadDigest = sha256(leafManifestDigest || validatorDigest || submissio
 > backbone is now bound into the digest (the OQ-5 deferral is resolved for the
 > real-packager path; fallback regions have no backbone and omit it consistently).
 >
-> **Residual authenticity gap (GATES resume route-wiring).** The integrity guard
-> proves the snapshot is *internally consistent* with the digest, but both live in
-> the mutable `submission_orchestrator_runs.steps` JSONB column. An adversary with
-> DB write to that column could replace the snapshot AND recompute a matching
-> digest, then have a legitimate signer bind a real §11.70 signature to the forged
-> record (the signer is shown a digest, not the manifest). The legacy re-derive
-> path resisted this because it re-anchored to source; the hydrate path does not.
-> This requires DB-level write privilege (a very high bar — such an adversary can
-> already forge signature rows directly), and the resume path is **not yet
-> route-wired** (test-only today), so it is latent. Before the resume path is
-> exposed to production, the snapshot must be anchored to something the
-> steps-column writer cannot forge — either (a) the signer attests to the actual
-> manifest/backbone hash they were shown at sign time (content attestation in the
-> signing UX), or (b) the snapshot digest is HMAC'd with a server-side secret /
-> mirrored into the append-only ledger (`submission_orchestrator_steps`, which has
-> the immutability trigger) and cross-checked on resume. Tracked as an OQ-5
-> follow-up; do not route-wire `runOrchestrator(_, { resumeRunId })` for the
-> release-signature flow until it lands.
+> **Authenticity of the persisted snapshot (CLOSED via a server-keyed seal).**
+> The integrity guard proves the snapshot is *internally consistent* with the
+> digest, but both live in the mutable `submission_orchestrator_runs.steps` JSONB
+> column, so self-consistency alone is not authenticity: an adversary with DB
+> write to that column could replace the snapshot AND recompute a matching digest,
+> then have a legitimate signer bind a real §11.70 signature to the forged record.
+> This is now closed by option (b): at sign-prep the payload digest is sealed with
+> an **HMAC-SHA256 keyed by `AUDIT_HMAC_KEY`** — the server-held secret (KMS /
+> secrets manager, outside the DB) that also seals the audit ledger — and resume
+> verifies the seal (`server/services/ectd/sign-payload-seal.ts`). A steps-column
+> tamperer cannot forge the seal without the key, so a forged snapshot+digest
+> fails `signature_seal_verification_failed` on resume even though it is internally
+> self-consistent. Enforcement is posture-aware: when the key is configured
+> (**always in production** — `assertAuditSealPostureForProduction` requires it at
+> boot) a snapshot-bearing run MUST carry a valid seal, and *stripping* the seal is
+> itself a fail-closed downgrade; dev/staging without the key skip the seal and
+> rely on the integrity guard. This raises the bar from "DB steps-column write" to
+> "DB write AND app-secret exfiltration" — the same guarantee `audit-hmac-seal`
+> gives the ledger. (A future defense-in-depth layer — the signer attesting to the
+> actual manifest hash they were shown in the signing UX — remains a reasonable
+> option (a), but is no longer required to route-wire the resume path.)
 
 When `runOrchestrator(inputs, { resumeRunId })` is invoked and finds `package.sign` in `awaiting-signature` (legacy, pre-snapshot runs):
 

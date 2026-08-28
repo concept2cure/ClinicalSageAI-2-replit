@@ -84,6 +84,21 @@ import {
 } from './roundTrip';
 import { FindReplace, getFindState } from './findReplace';
 import { AuthoringImage } from './imageNode';
+import { CrossReference } from './crossReferenceNode';
+import { Citation, citationOrderKey } from './citationNode';
+import {
+  crossReferenceLookupFor,
+  crossReferenceText,
+  normalizeCrossReferenceDisplay,
+  type CrossReferenceDisplay,
+  type CrossReferenceLookup,
+} from '@shared/authoring/cross-references';
+import {
+  citationLookupFor,
+  citationSourceName,
+  type CitationLookup,
+  type CitationSource,
+} from '@shared/authoring/citations';
 import { I } from '../icons';
 
 /* ── Public contract ──────────────────────────────────────────── */
@@ -170,6 +185,47 @@ export interface RichSectionEditorProps {
      *  section's HTML will carry. Reject with a reason on refusal. */
     upload: (file: File) => Promise<{ id: string; url: string }>;
   } | null;
+  /**
+   * Cross-references to other sections of the same document.
+   *
+   * The host owns the list because the host owns the document — this component
+   * never fetches one. `sections` is LIVE: renumber or retitle a section and
+   * every reference to it in the canvas re-renders, because a reference stores
+   * the target's id and resolves its text, which is the entire point of the
+   * capability. Omit to hide it; references already in the content still
+   * render, and say plainly that they could not be checked.
+   */
+  crossRefsApi?: {
+    sections: { id: string; code?: string | null; title?: string | null }[];
+  } | null;
+  /**
+   * Citations of the platform's governed sources.
+   *
+   * The host owns the library because the host owns the document and the
+   * tenant's source registry — this component never fetches one. `sources` is
+   * LIVE: a citation stores the source's id and resolves its number and name
+   * from this list, so a source that leaves the library makes every citation of
+   * it say so rather than print a number for something that is gone.
+   *
+   * `precedingSourceIds` is the source ids already cited by the sections
+   * ORDERED ABOVE this one, in reading order. It exists because the reference
+   * list belongs to the DOCUMENT while this editor holds one section: without
+   * it the canvas would number its own citations from 1 and show "[1]" for a
+   * claim the filing prints as "[7]", which is the plausible-looking wrong
+   * number the whole design exists to remove.
+   *
+   * `onCite` records the section→source link the platform already keeps (the
+   * Sources rail, and the change-propagation report that reads it), so an
+   * in-text citation and the section's recorded lineage cannot drift apart.
+   *
+   * Omit to hide the capability; citations already in the content still render,
+   * and say plainly that they could not be checked.
+   */
+  citationsApi?: {
+    sources: CitationSource[];
+    precedingSourceIds: readonly string[];
+    onCite?: (sourceId: string) => void | Promise<void>;
+  } | null;
   /** Live co-editing over the server's /collab Hocuspocus socket. */
   collab?: {
     /** Server grammar: `authoring:<docUuid>` or `authoring:<docUuid>:<sectionUuid>`. */
@@ -227,6 +283,18 @@ function serializeEditor(
 function jsonDocText(node: JSONContent): string {
   if (node.type === 'text') return node.text ?? '';
   if (node.type === 'hardBreak') return '\n';
+  /* A cross-reference is a leaf: its text is RESOLVED at render time and is not
+     in the parsed content. Without this the fidelity gate would compare the
+     stored `<a data-xref>2.7.4.2</a>` against nothing, call the parse lossy,
+     and drop every section holding a reference into raw source mode — the
+     capability would disable the editor it ships in. The cached label is the
+     right thing to compare here precisely because the gate's question is
+     "did the parse keep what was stored", not "is the cache current". */
+  if (node.type === 'crossReference') return String(node.attrs?.label ?? '');
+  /* A citation is a leaf for the same reason, and the same cache answers the
+     gate's question — "did the parse keep what was stored", not "is the number
+     current". The number is never in the stored content at all. */
+  if (node.type === 'citation') return String(node.attrs?.label ?? '');
   const inner = (node.content ?? []).map(jsonDocText).join('');
   return node.type === 'doc' ? inner : inner + '\n';
 }
@@ -318,6 +386,8 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       track = null,
       commentsApi = null,
       imagesApi = null,
+      crossRefsApi = null,
+      citationsApi = null,
       collab = null,
     },
     ref,
@@ -376,6 +446,76 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       onResolveRef.current = track?.onResolve;
     });
 
+    /* ── Cross-reference directory ──
+       The extension set is built once per mount, but the document's sections
+       change WHILE the editor is open — renumbering one is exactly what every
+       reference to it has to survive. So the node reads the directory through
+       a ref on each resolve, and every live reference in the canvas is
+       repainted when the list changes. Nothing about the stored content is
+       touched by a repaint: the reference holds the target's id, and only its
+       displayed text is recomputed. */
+    const crossRefSections = crossRefsApi?.sections ?? null;
+    /* Keyed on the CONTENT of the directory, not the array's identity: the host
+       re-derives its list on every render, and repainting every reference on
+       every keystroke because of that would be a pointless cost. What matters
+       is whether a code or a title actually changed. */
+    const crossRefKey = crossRefSections
+      ? crossRefSections
+          .map((sec) => `${sec.id}\u0000${sec.code ?? ''}\u0000${sec.title ?? ''}`)
+          .join('\u0001')
+      : '';
+    const crossRefLookup = useMemo<CrossReferenceLookup | null>(
+      () => (crossRefSections ? crossReferenceLookupFor(crossRefSections) : null),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [crossRefKey],
+    );
+    const crossRefLookupRef = useRef<CrossReferenceLookup | null>(crossRefLookup);
+    crossRefLookupRef.current = crossRefLookup;
+    /** Live node views to repaint when the directory changes. */
+    const crossRefRepaint = useRef<Set<() => void>>(new Set());
+    useEffect(() => {
+      for (const paint of crossRefRepaint.current) paint();
+    }, [crossRefKey]);
+
+    /* ── Citation library and numbering ──
+       Same shape as the cross-reference directory above, and for the same
+       reason: the extension set is built once per mount while the library and
+       the sections above this one change WHILE the editor is open, and a
+       citation's number is derived from position rather than stored.
+
+       A citation renumbers on more occasions than a cross-reference does: any
+       citation inserted or deleted anywhere earlier in the DOCUMENT moves it.
+       So the views are repainted when the library changes, when the sections
+       above this one change, and when this section's own citation order
+       changes — and not on every keystroke, which is what the order key is
+       for. */
+    const citationSources = citationsApi?.sources ?? null;
+    const citationKeyOfSources = citationSources
+      ? citationSources
+          .map((src) => `${src.id}\u0000${citationSourceName(src)}`)
+          .join('\u0001')
+      : '';
+    const citationLookup = useMemo<CitationLookup | null>(
+      () => (citationSources ? citationLookupFor(citationSources) : null),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [citationKeyOfSources],
+    );
+    const citationLookupRef = useRef<CitationLookup | null>(citationLookup);
+    citationLookupRef.current = citationLookup;
+
+    /** The sources cited above this section — where this section's numbering
+     *  continues from. Read through a ref for the same reason the lookup is. */
+    const precedingKey = (citationsApi?.precedingSourceIds ?? []).join('\u0001');
+    const precedingRef = useRef<readonly string[]>(citationsApi?.precedingSourceIds ?? []);
+    precedingRef.current = citationsApi?.precedingSourceIds ?? [];
+
+    /** Live citation node views, and the order they were last painted in. */
+    const citationRepaint = useRef<Set<() => void>>(new Set());
+    const [citationOrder, setCitationOrder] = useState('');
+    useEffect(() => {
+      for (const paint of citationRepaint.current) paint();
+    }, [citationKeyOfSources, precedingKey, citationOrder]);
+
     /* ── Live co-editing runtime (one Y.Doc + provider per mount) ── */
     const collabRuntime = useMemo(() => {
       if (!collab) return null;
@@ -410,7 +550,13 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const extensions = useMemo(() => {
       const exts: any[] = [
         StarterKit.configure({
-          heading: { levels: [1, 2, 3] },
+          /* CTD sections nest to five levels — 2.7.3.1.2 — and the schema
+             stopped at three, so a writer could not build the hierarchy the
+             document is navigated by. The parser clamped anything deeper with
+             Math.min(3, …), which flattened an H4 that was already stored and
+             passed the round-trip fidelity gate untouched: that gate compares
+             TEXT, and a demoted heading keeps every character. */
+          heading: { levels: [1, 2, 3, 4, 5] },
           // A link in the canvas is a mark being edited, not a navigation:
           // clicking it must place the caret, and the ribbon's Link control
           // is where the href is read or changed.
@@ -432,6 +578,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         // The schema can hold a figure now; the fidelity gate stops refusing
         // rich mode for content that contains one (see `boot` below).
         AuthoringImage,
+        CrossReference.configure({
+          lookup: () => crossRefLookupRef.current,
+          repaint: crossRefRepaint.current,
+        }),
+        Citation.configure({
+          lookup: () => citationLookupRef.current,
+          preceding: () => precedingRef.current,
+          repaint: citationRepaint.current,
+        }),
         TrackChanges.configure({
           enabled: (track?.enabled ?? false) && !readOnly,
           author: track?.author ?? { id: 'unknown', name: 'Unknown author' },
@@ -551,6 +706,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           setWords(wordsOf(ed.getText()));
           setDocEmpty(ed.isEmpty);
           setSuggestions(collectSuggestions(ed.state.doc));
+          /* A citation added, deleted or moved renumbers the ones after it.
+             Comparing the order key rather than repainting unconditionally
+             keeps a keystroke from repainting every marker in the section. */
+          setCitationOrder(citationOrderKey(ed.state.doc));
           cacheDraft(serialized);
           if (autosaveMs != null && isDirty) {
             if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
@@ -570,6 +729,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           setWords(wordsOf(ed.getText()));
           setDocEmpty(ed.isEmpty);
           setSuggestions(collectSuggestions(ed.state.doc));
+          setCitationOrder(citationOrderKey(ed.state.doc));
           setEditorReady(true);
         },
       },
@@ -801,12 +961,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       }
     }, [commentsApi, editor, doSave]);
 
-    /* ── Cite the selection (parity with the retired DocCanvas) ── */
-    const citeSelection = useCallback(() => {
+    /* ── Ask the assistant for a source (parity with the retired DocCanvas) ──
+       This asks a question in the AnA pane. It is NOT the citation control —
+       see the ribbon note where it is rendered. */
+    const askForSource = useCallback(() => {
       if (!editor || !onAsk) return;
-      const { from, to } = editor.state.selection;
-      const s = editor.state.doc.textBetween(from, to, ' ').trim();
-      if (s) onAsk(`Cite this claim: "${s}"`);
+      const s = editor.state.doc
+        .textBetween(editor.state.selection.from, editor.state.selection.to, ' ')
+        .trim();
+      if (s) onAsk(`Suggest a source for this claim: "${s}"`);
     }, [editor, onAsk]);
 
     /* ── Find & replace ──
@@ -847,8 +1010,38 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       ref,
       () => ({
         save: doSave,
-        insertSuggestion: (text: string, author: SuggestionAuthor) =>
-          editor ? editor.chain().focus().insertSuggestedContent(text, author).run() : false,
+        /* REPORTS SUCCESS ONLY IF THE TEXT CAN REACH THE SAVED DOCUMENT.
+         *
+         * This was `editor ? chain().insertSuggestedContent(…).run() : false`,
+         * and both halves lied in source mode. The TipTap instance still EXISTS
+         * there — it is constructed empty and non-editable while the raw
+         * <textarea> is what the author sees — so `editor` is truthy;
+         * `focus()` does not check editability and `insertSuggestedContent`
+         * unconditionally returns true, so `run()` returned true as well.
+         *
+         * Meanwhile `doSave` in source mode serializes `sourceText` and never
+         * the editor. So an AnA draft landed in an invisible ProseMirror
+         * document that is never rendered and never saved — discarded — and the
+         * caller, seeing `true`, told the author "Draft inserted as tracked
+         * suggestions — review each edit in the canvas, then save." They were
+         * sent to look for regulatory text in a canvas that does not show it,
+         * on precisely the sections the fidelity gate flagged as most delicate.
+         *
+         * The same held for a FROZEN section: this control is not disabled by
+         * `docSealed`, unlike the surrounding Draft-with-AnA button, so the
+         * insert silently went nowhere there too.
+         *
+         * The call site has always had an honest failure branch — "Couldn't
+         * insert — the canvas is not editable right now." It simply never
+         * fired. */
+        insertSuggestion: (text: string, author: SuggestionAuthor) => {
+          if (!editor || editor.isDestroyed) return false;
+          // Source mode: the textarea is the document; the editor is a shell.
+          if (boot.mode !== 'rich') return false;
+          // Frozen / read-only: the save path would refuse it anyway.
+          if (!editor.isEditable) return false;
+          return editor.chain().focus().insertSuggestedContent(text, author).run();
+        },
         getContent: () =>
           boot.mode === 'source' ? sourceText : editor ? serialize(editor) : '',
         takeAcceptedAuthors: () => {
@@ -978,6 +1171,116 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       setLinkOpen(false);
     }, [editor]);
 
+    /* ── Cross-reference bar ──
+       Insert-by-picking, never by typing a number: the writer chooses a
+       SECTION and the editor stores that section's id. There is deliberately no
+       field in which to type "2.7.4.2", because a typed number is the unmanaged
+       text this replaces.
+
+       The list is the host's live directory, so the codes shown are the codes
+       as they stand right now. Choosing a section that has since been removed
+       is refused with the reason on screen rather than inserting a reference
+       that is broken from the moment it is written. */
+    const [xrefOpen, setXrefOpen] = useState(false);
+    const [xrefTarget, setXrefTarget] = useState('');
+    const [xrefDisplay, setXrefDisplay] = useState<CrossReferenceDisplay>('code-title');
+    const [xrefError, setXrefError] = useState<string | null>(null);
+    const xrefSelectRef = useRef<HTMLSelectElement>(null);
+
+    const openXref = useCallback(() => {
+      setXrefError(null);
+      setXrefTarget((t) => t || crossRefSections?.[0]?.id || '');
+      setXrefOpen(true);
+    }, [crossRefSections]);
+
+    useEffect(() => {
+      if (xrefOpen) xrefSelectRef.current?.focus();
+    }, [xrefOpen]);
+
+    const closeXref = useCallback(() => {
+      setXrefOpen(false);
+      editor?.commands.focus();
+    }, [editor]);
+
+    /* ── Cite a source ──
+       Same shape as the cross-reference picker beside it, deliberately: this is
+       the third control in the editor that inserts an identity and renders a
+       derived string, and it should read like its siblings rather than invent a
+       third idiom. The pinpoint is free text because it is authored content —
+       "p. 142, Table 14.2.1" is a judgement about the source, not a value any
+       renderer could compute. */
+    const [citeOpen, setCiteOpen] = useState(false);
+    const [citeSource, setCiteSource] = useState('');
+    const [citeLocator, setCiteLocator] = useState('');
+    const [citeError, setCiteError] = useState<string | null>(null);
+    const citeSelectRef = useRef<HTMLSelectElement>(null);
+
+    const openCite = useCallback(() => {
+      setCiteError(null);
+      setCiteSource((cur) => cur || citationSources?.[0]?.id || '');
+      setCiteOpen(true);
+    }, [citationSources]);
+
+    useEffect(() => {
+      if (citeOpen) citeSelectRef.current?.focus();
+    }, [citeOpen]);
+
+    const closeCite = useCallback(() => {
+      setCiteOpen(false);
+      setCiteError(null);
+    }, []);
+
+    const applyCite = useCallback(() => {
+      if (!editor) return;
+      if (!citeSource) {
+        setCiteError('Choose the source to cite.');
+        return;
+      }
+      const inserted = editor
+        .chain()
+        .focus()
+        .insertCitation({ source: citeSource, locator: citeLocator })
+        .run();
+      if (!inserted) {
+        /* The picker offers the live library, so a refusal means it moved under
+           the writer. Inserting a citation that is already broken is not
+           something to do quietly. */
+        setCiteError(
+          'That source is no longer available to this document. Nothing was inserted.',
+        );
+        return;
+      }
+      /* Record the section→source link the platform already keeps, so the
+         Sources rail and the prose cannot drift apart — and so this citation
+         participates in the change report when the source's content moves.
+         Fire-and-forget: the citation is in the canvas either way, and the host
+         reports its own failure. */
+      void citationsApi?.onCite?.(citeSource);
+      setCiteLocator('');
+      setCiteOpen(false);
+      setCiteError(null);
+    }, [editor, citeSource, citeLocator, citationsApi]);
+
+    const applyXref = useCallback(() => {
+      if (!editor) return;
+      if (!xrefTarget) {
+        setXrefError('Choose the section to reference.');
+        return;
+      }
+      const inserted = editor
+        .chain()
+        .focus()
+        .insertCrossReference({ target: xrefTarget, display: xrefDisplay })
+        .run();
+      if (!inserted) {
+        setXrefError(
+          'That section is no longer in this document. Nothing was inserted — reopen the list and choose again.',
+        );
+        return;
+      }
+      setXrefOpen(false);
+    }, [editor, xrefTarget, xrefDisplay]);
+
     /* ── Image insertion (ribbon button, paste, drop) ──
        Validation runs client-side for fast refusal and server-side as the
        authority. FAIL CLOSED: a refused or failed upload inserts nothing and
@@ -1065,7 +1368,11 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           ? 'h2'
           : editor.isActive('heading', { level: 3 })
             ? 'h3'
-            : 'p';
+            : editor.isActive('heading', { level: 4 })
+              ? 'h4'
+              : editor.isActive('heading', { level: 5 })
+                ? 'h5'
+                : 'p';
 
     return (
       <div className="rse-root" onKeyDown={onKeyDown}>
@@ -1112,13 +1419,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 const v = e.target.value;
                 if (!editor) return;
                 if (v === 'p') editor.chain().focus().setParagraph().run();
-                else editor.chain().focus().toggleHeading({ level: Number(v.slice(1)) as 1 | 2 | 3 }).run();
+                else editor.chain().focus().toggleHeading({ level: Number(v.slice(1)) as 1 | 2 | 3 | 4 | 5 }).run();
               }}
             >
               <option value="p">Paragraph</option>
               <option value="h1">Heading 1</option>
               <option value="h2">Heading 2</option>
               <option value="h3">Heading 3</option>
+              <option value="h4">Heading 4</option>
+              <option value="h5">Heading 5</option>
             </select>
             <span className="rse-sep" />
             <RB title="Bold" shortcut="⌘B" active={editor?.isActive('bold')} onClick={() => editor?.chain().focus().toggleBold().run()}>
@@ -1172,6 +1481,24 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             >
               {I.link}
             </RB>
+            {crossRefsApi && (
+              <RB
+                title="Insert a cross-reference to another section"
+                active={xrefOpen}
+                onClick={() => (xrefOpen ? closeXref() : openXref())}
+              >
+                § Ref
+              </RB>
+            )}
+            {citationsApi && (
+              <RB
+                title="Cite a source — inserts a numbered citation and adds the source to this document’s reference list"
+                active={citeOpen}
+                onClick={() => (citeOpen ? closeCite() : openCite())}
+              >
+                Cite
+              </RB>
+            )}
             <span className="rse-sep" />
             {/* A CTD dossier is a tabular document — Module 3 most of all. The
                 editor could round-trip and export tables before it could make
@@ -1266,8 +1593,19 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             {onAsk && (
               <>
                 <span className="rse-sep" />
-                <RB title="Cite the selected claim" onClick={citeSelection}>
-                  Cite
+                {/* THIS CONTROL WAS LABELLED "Cite" AND CITED NOTHING. It sends
+                    the selected sentence to the assistant pane as a question;
+                    it creates no citation, stores nothing, numbers nothing and
+                    puts nothing in the reference list. With a control beside it
+                    that does cite, a label claiming this one does too is not a
+                    naming quibble — it is a writer believing a claim is sourced
+                    when the filed document has no record of it. The label now
+                    says what it does. */}
+                <RB
+                  title="Ask AnA to suggest a source for the selected claim — this does not insert a citation"
+                  onClick={askForSource}
+                >
+                  Ask for a source
                 </RB>
               </>
             )}
@@ -1482,6 +1820,169 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           </div>
         )}
 
+        {/* ── Cross-reference bar ── */}
+        {xrefOpen && crossRefsApi && boot.mode === 'rich' && !readOnly && (
+          <div
+            className="rse-find"
+            role="group"
+            aria-label="Cross-reference"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                closeXref();
+              }
+            }}
+          >
+            <span className="rse-find-label">§ Cross-reference</span>
+            {crossRefSections && crossRefSections.length > 0 ? (
+              <>
+                <select
+                  ref={xrefSelectRef}
+                  className="rse-sel"
+                  style={{ flex: '0 1 320px', height: 24 }}
+                  aria-label="Section to reference"
+                  value={xrefTarget}
+                  onChange={(e) => {
+                    setXrefTarget(e.target.value);
+                    setXrefError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      applyXref();
+                    }
+                  }}
+                >
+                  {crossRefSections.map((sec) => (
+                    <option key={sec.id} value={sec.id}>
+                      {crossReferenceText(sec, 'code-title') || 'Untitled section'}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="rse-sel"
+                  aria-label="How much of the section to show"
+                  value={xrefDisplay}
+                  onChange={(e) =>
+                    setXrefDisplay(normalizeCrossReferenceDisplay(e.target.value))
+                  }
+                >
+                  <option value="code-title">Number and title</option>
+                  <option value="code">Number only</option>
+                </select>
+                <button type="button" className="rse-link" onClick={applyXref}>
+                  Insert
+                </button>
+              </>
+            ) : (
+              /* No sections to reference is a real state, said plainly rather
+                 than shown as an empty picker that looks broken. */
+              <span className="rse-find-note">
+                This document has no other sections to reference yet.
+              </span>
+            )}
+            {xrefError && (
+              <span className="rse-find-err" role="alert">
+                {xrefError}
+              </span>
+            )}
+            <span style={{ flex: 1 }} />
+            <button
+              type="button"
+              className="rse-link"
+              aria-label="Close cross-reference picker"
+              onClick={closeXref}
+            >
+              {I.close}
+            </button>
+          </div>
+        )}
+
+        {/* ── Citation bar ── */}
+        {citeOpen && citationsApi && boot.mode === 'rich' && !readOnly && (
+          <div
+            className="rse-find"
+            role="group"
+            aria-label="Cite a source"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                closeCite();
+              }
+            }}
+          >
+            <span className="rse-find-label">Cite</span>
+            {citationSources && citationSources.length > 0 ? (
+              <>
+                <select
+                  ref={citeSelectRef}
+                  className="rse-sel"
+                  style={{ flex: '0 1 320px', height: 24 }}
+                  aria-label="Source to cite"
+                  value={citeSource}
+                  onChange={(e) => {
+                    setCiteSource(e.target.value);
+                    setCiteError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      applyCite();
+                    }
+                  }}
+                >
+                  {citationSources.map((src) => (
+                    <option key={src.id} value={src.id}>
+                      {citationSourceName(src) || 'Untitled source'}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  className="rse-find-input"
+                  type="text"
+                  style={{ flex: '0 1 180px' }}
+                  aria-label="Page or table within the source (optional)"
+                  placeholder="p. 142, Table 3 (optional)"
+                  value={citeLocator}
+                  onChange={(e) => setCiteLocator(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      applyCite();
+                    }
+                  }}
+                />
+                <button type="button" className="rse-link" onClick={applyCite}>
+                  Insert
+                </button>
+              </>
+            ) : (
+              /* No sources is a real state, said plainly rather than shown as an
+                 empty picker that looks broken. */
+              <span className="rse-find-note">
+                No sources are available to this document yet. Add one in the
+                Sources panel, then cite it here.
+              </span>
+            )}
+            {citeError && (
+              <span className="rse-find-err" role="alert">
+                {citeError}
+              </span>
+            )}
+            <span style={{ flex: 1 }} />
+            <button
+              type="button"
+              className="rse-link"
+              aria-label="Close the citation picker"
+              onClick={closeCite}
+            >
+              {I.close}
+            </button>
+          </div>
+        )}
+
         {/* ── Canvas ── */}
         <div className="rse-body" ref={editorHostRef}>
           {boot.mode === 'source' ? (
@@ -1650,6 +2151,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         .rse-ins { background:color-mix(in srgb, var(--success,#067647) 14%, transparent); text-decoration:underline; text-decoration-color:var(--success,#067647); }
         .rse-del { background:color-mix(in srgb, var(--error,#b42318) 12%, transparent); text-decoration:line-through; text-decoration-color:var(--error,#b42318); }
         .rse-comment-anchor { background:color-mix(in srgb, var(--accent-100,#2563eb) 14%, transparent); border-bottom:1px dotted var(--accent-100,#2563eb); cursor:pointer; }
+        /* A resolved cross-reference reads as a reference; a broken one reads as
+           broken, in words. Colour is never the only signal — the missing state
+           says what is wrong in full. */
+        .rse-xref { color:var(--accent-100,#2563eb); border-bottom:1px solid color-mix(in srgb, var(--accent-100,#2563eb) 40%, transparent); white-space:nowrap; }
+        .rse-xref[data-missing="1"] { color:var(--error,#b42318); border-bottom:1px dashed var(--error,#b42318); font-style:italic; white-space:normal; }
+        /* A citation shows the number its source holds in this document's
+           reference list — derived from position, never stored. */
+        .rse-cite { color:var(--accent-100,#2563eb); white-space:nowrap; }
+        .rse-cite[data-missing="1"] { color:var(--error,#b42318); border-bottom:1px dashed var(--error,#b42318); font-style:italic; white-space:normal; }
         .rse-source { width:100%; min-height:320px; resize:vertical; border:none; outline:none; padding:18px 20px; font-size:13px; line-height:1.6; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--text-100,#101828); background:var(--bg-000,#fff); }
         .rse-empty-cta { padding:10px 20px 0; }
         .rse-foot { display:flex; align-items:center; gap:8px; padding:6px 12px; background:var(--bg-000,#fff); border-top:1px solid var(--border,#e4e7ec); font-size:10px; color:var(--text-400,#667085); flex-wrap:wrap; }

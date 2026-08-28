@@ -2172,6 +2172,48 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       });
     }
 
+    /* LAST WRITE NO LONGER SILENTLY WINS.
+     *
+     * This UPDATE was `WHERE id = $n AND tenant_id = $n` and nothing else, and
+     * the client sent only `{ content }`. So two authors on one section — the
+     * normal case for a CTD module, where a writer and a reviewer work the same
+     * §3.2.P.5 at once — ended with whoever saved second replacing the OTHER'S
+     * ENTIRE SECTION. No 409, no warning, no merge, no "this changed while you
+     * were editing". The overwrite then entered the hash-chained revision
+     * ledger as an ordinary authored revision, so the record does not show a
+     * collision either; the only way back is for someone to notice and revert.
+     *
+     * `updated_at` is the concurrency token because it is already on the row
+     * the client loaded, already returned by every read, and already bumped by
+     * every write — no new column, no new migration, nothing to keep in sync.
+     *
+     * OPT-IN, deliberately. A client that sends no `expectedUpdatedAt` keeps
+     * the old behaviour rather than being refused: several callers (the MDX
+     * dossier drawer among them) PATCH sections without having read a
+     * timestamp, and failing those closed would break saving to fix a race
+     * they cannot hit. The editor sends it; anything that does not is exactly
+     * as safe as it was yesterday and no less. */
+    const expectedUpdatedAt = req.body?.expectedUpdatedAt;
+    if (typeof expectedUpdatedAt === 'string' && expectedUpdatedAt.trim()) {
+      const current = currentSection.rows[0]?.updated_at;
+      const currentMs = current ? new Date(current).getTime() : NaN;
+      const expectedMs = new Date(expectedUpdatedAt).getTime();
+      if (Number.isFinite(currentMs) && Number.isFinite(expectedMs) && currentMs !== expectedMs) {
+        return res.status(409).json({
+          success: false,
+          error: {
+            code: 'SECTION_CHANGED',
+            message:
+              'This section was changed by someone else while you were editing. ' +
+              'Your text has not been saved and nothing was overwritten — reload the ' +
+              'section to see their version, then reapply your changes.',
+          },
+          /* The caller can show WHEN it moved under them without another read. */
+          currentUpdatedAt: current,
+        });
+      }
+    }
+
     // Build update query dynamically
     const updates = [];
     const values = [];
@@ -4768,7 +4810,19 @@ router.delete('/export-history/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const tenantId = getTenantId(req);
-    const userEmail = (req.headers['x-user-email'] as string) || 'system';
+    /* SECURITY (21 CFR Part 11): DELETING a filing's export-history record is a
+       governed action and must be attributed to the VERIFIED principal. This
+       read `x-user-email || 'system'` — a header the router's middleware clears,
+       falling through to the anonymous 'system' that is nobody, and the value
+       drove BOTH the permission check (`entry.exported_by !== userEmail`) and
+       the EXPORT_HISTORY_DELETED audit event. Use getActorEmail, the JWT-derived
+       accessor every other governed mutation here uses, and fail closed when the
+       token carries no identity rather than record a record-deletion against
+       'system'. */
+    const userEmail = getActorEmail(req);
+    if (!userEmail) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
     // Check if user has permission (only QA or the original exporter can delete)
     const roles = ((req.headers as any)['x-roles'] || '').toString().toUpperCase();
@@ -5320,6 +5374,36 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
 
     const doc = docResult.rows[0];
 
+    /* SECURITY (21 CFR Part 11 §11.50): EXPORT IS A FILING ARTIFACT, NOT A
+       PREVIEW — gate it on the record being sealed. This handler rendered
+       sections LIVE with no status gate, so a DRAFT / IN_REVIEW document
+       exported byte-for-byte like an approved one AND had the §11.50 signature
+       manifest appended below — presenting whatever reviewer signatures exist
+       as if they certify a final, immutable record when the content is still
+       editable and has no frozen snapshot behind it. That is "an export of
+       unapproved content" and a manifest attributed to content nobody approved.
+
+       Fail closed, the way the section-write path already does: refuse unless
+       the document is in a LOCKED/sealed state — the same canonical
+       LOCKED_DOCUMENT_STATUSES set ({FROZEN, APPROVED}) the write gate uses,
+       plus an explicit locked_at, mirroring document-lock's own check. An
+       editable document has no immutable snapshot to certify, so there is
+       nothing honest to export as a Part 11 artifact yet; 409 Conflict says the
+       document's state — not the caller's authority — forbids the action, so it
+       reads distinctly from the 401s above. Freeze or approve it first. */
+    const sealedForExport =
+      LOCKED_DOCUMENT_STATUSES.has(String(doc.status ?? '').toUpperCase()) ||
+      doc.locked_at != null;
+    if (!sealedForExport) {
+      return res.status(409).json({
+        error: 'Document not approved for export',
+        message:
+          `Only an approved or frozen document can be exported as a 21 CFR Part 11 filing artifact. ` +
+          `This document is still editable (status: ${doc.status ?? 'unknown'}) — it has no immutable ` +
+          `snapshot and no certified electronic-signature manifest. Freeze or approve it first.`,
+      });
+    }
+
     const sectionsResult = await pool.query(
       'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
       [docId, tenantId]
@@ -5369,6 +5453,66 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
             tenantId
           )
         : new Map();
+
+    /* CROSS-REFERENCES resolve against the sections THIS export is writing,
+       resolved ONCE here for the same reason the figures are — the DOCX and PDF
+       branches consume the same directory, so the two filed formats cannot
+       disagree about what a reference says.
+
+       A reference stores the target section's id and never its printed number,
+       so a section renumbered since the reference was written comes out with
+       its current number without one byte of the referring section's stored
+       content changing. A target that is not in this document resolves to a
+       stated line rather than to a number that would look right and be wrong. */
+    const { crossReferenceLookupFor, crossReferenceAnchorId } = await import(
+      '@shared/authoring/cross-references'
+    );
+    const crossRefs = crossReferenceLookupFor(
+      sectionsResult.rows.map((s: { id: string; code: string; title: string }) => ({
+        id: String(s.id),
+        code: s.code,
+        title: s.title,
+      }))
+    );
+
+    /* CITATIONS are numbered by POSITION, once for the whole document.
+       The stored content carries the SOURCE'S ID and never the number a
+       reviewer reads: "[3]" describes where that source currently sits in this
+       document's reference list, and a citation inserted in an earlier section
+       moves it. So the content is parsed here, once, before the format
+       branches; the sources it actually cites are resolved against what this
+       tenant may see; and ONE registry numbers every marker in reading order
+       and yields the reference list at the end. Both filed formats consume the
+       same registry, so a DOCX and a PDF of the same frozen document cannot
+       disagree about what "[3]" means.
+
+       A citation whose source does not resolve — deleted, or another tenant's —
+       takes no number and no entry, and is stated in place. A number with no
+       entry behind it would send a reviewer looking for a reference that is not
+       there. */
+    const { sectionContentToBlocks, countPendingSuggestions, collectCitedSourceIds } =
+      await import('../export/authoring-section-content.js');
+    const { makeCitationRegistry, citationLookupFor } = await import(
+      '@shared/authoring/citations'
+    );
+    type ExportSection = { id: string; code: string; title: string; content: string | null };
+    const parsedSections =
+      format === 'docx' || format === 'pdf'
+        ? sectionsResult.rows.map((section: ExportSection) => ({
+            section,
+            blocks: sectionContentToBlocks(section.content),
+          }))
+        : [];
+    const citedSourceIds = parsedSections.flatMap((p) => collectCitedSourceIds(p.blocks));
+    const citationSources = citedSourceIds.length
+      ? await (async () => {
+          const { listCitationSources } = await import(
+            '../services/clinical-regulatory-evidence/source-usage.service.js'
+          );
+          return listCitationSources(tenantId, citedSourceIds);
+        })()
+      : [];
+    const citations = makeCitationRegistry(citationLookupFor(citationSources));
 
     // Generate export based on format
     let fileContent: Buffer | undefined;
@@ -5439,12 +5583,8 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
          wrong with the docx generation below it — it had simply never run. */
       const docxNs = await import('docx');
       const { Document, Packer, Paragraph, HeadingLevel, TextRun } = docxNs;
-      const { blocksToDocx, orderedListNumbering } = await import(
-        '../export/authoring-blocks-to-docx.js'
-      );
-      const { sectionContentToBlocks, countPendingSuggestions } = await import(
-        '../export/authoring-section-content.js'
-      );
+      const { blocksToDocx, orderedListNumbering, sectionHeadingParagraph, referenceListParagraphs } =
+        await import('../export/authoring-blocks-to-docx.js');
 
       const exportedAt = new Date().toISOString();
       const children = [];
@@ -5465,13 +5605,15 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
          when we wrote the file, not when someone made the edit. */
       let pendingIns = 0;
       let pendingDel = 0;
-      const sectionBlocks = sectionsResult.rows.map((section: any) => {
-        const blocks = sectionContentToBlocks(section.content);
+      /* Parsed ONCE, above the format branches, because the citation registry
+         has to know which sources this document cites before a single marker
+         can be numbered. */
+      const sectionBlocks = parsedSections;
+      for (const { blocks } of sectionBlocks) {
         const pending = countPendingSuggestions(blocks);
         pendingIns += pending.insertions;
         pendingDel += pending.deletions;
-        return { section, blocks };
-      });
+      }
       if (pendingIns + pendingDel > 0) {
         children.push(
           new Paragraph({
@@ -5487,15 +5629,45 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
           })
         );
       }
+      /* Word holds footnotes on the DOCUMENT, keyed by an id the referencing
+         run cites, so they are collected across ALL sections here and handed to
+         `new Document({ footnotes })` below. Ids must be unique across the file;
+         one counter for the whole export is the only way to guarantee that.
+         Identical note text cited twice reuses its id — that is what a writer
+         means by "the same note", and it is what Word does natively. */
+      const footnoteText = new Map<string, number>();
+      const footnoteSink = (noteText: string): number => {
+        const hit = footnoteText.get(noteText);
+        if (hit !== undefined) return hit;
+        const id = footnoteText.size + 1;
+        footnoteText.set(noteText, id);
+        return id;
+      };
       for (const { section, blocks } of sectionBlocks) {
+        /* The heading carries the Word bookmarks every REF field to this
+           section cites. Emitted for EVERY section, so a reference that
+           resolved above always finds its anchor — a REF to a bookmark that
+           was never written shows a word processor's own error string in a
+           filed document, which is not a sentence a reviewer should ever
+           read. */
+        children.push(sectionHeadingParagraph(docxNs, section));
         children.push(
-          new Paragraph({
-            text: `${section.code} - ${section.title}`,
-            heading: HeadingLevel.HEADING_1,
+          ...blocksToDocx(docxNs, blocks, exportImages, {
+            revisionDate: exportedAt,
+            footnoteSink,
+            crossRefs,
+            citations,
           })
         );
-        children.push(...blocksToDocx(docxNs, blocks, exportImages, { revisionDate: exportedAt }));
       }
+
+      /* The reference list: every source the document's citations actually
+         resolved to, once each, numbered in first-appearance order. Filed after
+         the content that cites it and before the attestation, which is where a
+         reviewer expects to find it. Nothing is emitted when nothing was
+         cited — a heading over an empty list would claim a bibliography this
+         document does not have. */
+      children.push(...referenceListParagraphs(docxNs, citations));
 
       /* §11.50(b) manifestation. Ordered after the content so the record reads
          document-then-attestation, which is how a reviewer expects a signed
@@ -5516,6 +5688,20 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
            inert and numbered steps silently render unnumbered — which is the
            shape of the bug this replaced. */
         numbering: orderedListNumbering(docxNs),
+        /* Real Word footnotes: auto-numbered, at the foot of the page they are
+           cited on, and renumbered by Word when content moves. Every Module 3
+           specification, batch-analysis and stability table in a submission
+           carries them, and until now the editor could not express one at all. */
+        ...(footnoteText.size > 0
+          ? {
+              footnotes: Object.fromEntries(
+                [...footnoteText.entries()].map(([text, id]) => [
+                  String(id),
+                  { children: [new Paragraph({ text })] },
+                ])
+              ),
+            }
+          : {}),
         sections: [{ children }],
       });
       fileContent = await Packer.toBuffer(docxDoc);
@@ -5526,12 +5712,8 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
       // template render path uses). The previous implementation returned DOCX
       // bytes under a PDF label — a mislabeled file is worse than no file.
       const { renderHtmlToPdf } = await import('../export/renderers');
-      const { sectionContentToBlocks, countPendingSuggestions } = await import(
-        '../export/authoring-section-content.js'
-      );
-      const { blocksToHtml, escapeHtml: esc, PRINT_STYLES } = await import(
-        '../export/authoring-blocks-to-html.js'
-      );
+      const { blocksToHtml, renderReferenceListHtml, escapeHtml: esc, PRINT_STYLES } =
+        await import('../export/authoring-blocks-to-html.js');
       /* Section content parsed to typed runs and re-emitted as a WHITELISTED
          structure with every text node escaped — stored markup never reaches
          the renderer raw (the previous escape-everything approach printed
@@ -5539,16 +5721,22 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
          render as redline with an up-front notice, same as the DOCX branch. */
       let pdfPendingIns = 0;
       let pdfPendingDel = 0;
-      const pdfSections = sectionsResult.rows.map(
-        (s: { code: string; title: string; content: string | null }) => {
-          const blocks = sectionContentToBlocks(s.content);
-          const pending = countPendingSuggestions(blocks);
-          pdfPendingIns += pending.insertions;
-          pdfPendingDel += pending.deletions;
-          const body = blocksToHtml(blocks, exportImages);
-          return `<h2>${esc(s.code)} — ${esc(s.title)}</h2>${body}`;
-        }
-      );
+      /* The same parse and the SAME citation registry the DOCX branch uses, so
+         the two filed formats cannot number one source differently. */
+      const pdfSections = parsedSections.map(({ section: s, blocks }) => {
+        const pending = countPendingSuggestions(blocks);
+        pdfPendingIns += pending.insertions;
+        pdfPendingDel += pending.deletions;
+        const body = blocksToHtml(blocks, exportImages, { crossRefs, citations });
+        // The heading is the anchor a resolved cross-reference links to.
+        return `<h2 id="${esc(crossReferenceAnchorId(String(s.id)))}">${esc(s.code)} — ${esc(
+          s.title
+        )}</h2>${body}`;
+      });
+      /* Assembled after every section has been rendered, because the list is
+         built from the citations actually used and their order is reading
+         order. Empty when nothing was cited. */
+      const referenceListHtml = renderReferenceListHtml(citations);
       const html = `<!doctype html><html><head><meta charset="utf-8"><style>
           body { font-family: Georgia, 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; margin: 1in; }
           h1 { font-size: 18pt; } h2 { font-size: 14pt; margin-top: 1.2em; } h3 { font-size: 12.5pt; margin-top: 1em; }
@@ -5565,6 +5753,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
             : ''
         }
         ${pdfSections.join('\n')}
+        ${referenceListHtml}
         <h2>Electronic signatures</h2>
         ${manifest.length === 0
           ? '<p>No electronic signatures are recorded against this document.</p>'
@@ -5577,6 +5766,18 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
       contentType = 'application/pdf';
     }
 
+    /* §11.10(b): record a hash of the DELIVERED ARTIFACT BYTES. `fileHash`
+       (doc_sha256) is computeDocHash over the SOURCE section rows — it stays,
+       because GET /docs/:docId/exports compares it against the live document to
+       answer content_changed_since_last_export, which only works source-to-
+       source. But nothing hashed the actual file the caller received, so the
+       export record could not attest that a re-download is the identical
+       artifact. Hash the real bytes here and carry it on the record's metadata
+       alongside the source hash. */
+    const artifactSha256 = fileContent
+      ? crypto.createHash('sha256').update(fileContent).digest('hex')
+      : null;
+
     // Durable export record — the same table GET /docs/:docId/exports lists and
     // GET /docs/:docId/diff-since-export baselines against.
     await logExport(
@@ -5586,7 +5787,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
       exportedBy as string,
       fileName,
       fileContent?.length,
-      { options, exportId },
+      { options, exportId, artifactSha256 },
       tenantId
     );
 
@@ -5898,6 +6099,44 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
              SET status = 'APPROVED', approved_at = NOW()
              WHERE id = $1 AND tenant_id = $2`,
             [docId, tenantId]
+          );
+
+          // Auto-freeze on approval — the final workflow signature approving the
+          // document must leave the same immutable legal record the e-sign
+          // APPROVER path produces. Without this the /sign workflow ended a
+          // document APPROVED with NO frozen_documents row: the approved content
+          // survived only in the editable authoring_sections table, and this
+          // approval signature's covered_freeze_version / covered_content_hash
+          // (bound above to `covered`, the pre-existing snapshot) were null —
+          // an approval that attests to "no snapshot". Mirror the proven e-sign
+          // pattern exactly: capture the FULL {document, sections, approvedBy,
+          // documentHash, frozenAt} snapshot, set content_hash to sha256 of the
+          // SNAPSHOT BYTES (so GET /docs/:docId/frozen's recompute-and-compare
+          // verifies), and INSERT ... ON CONFLICT DO NOTHING on THIS transaction
+          // client so the freeze lands with the status flip or rolls back with it.
+          const approvedDoc = await client.query(
+            'SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+            [docId, tenantId]
+          );
+          const approvedSections = await client.query(
+            'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+            [docId, tenantId]
+          );
+          const frozenContent = JSON.stringify({
+            document: approvedDoc.rows[0] ?? null,
+            sections: approvedSections.rows,
+            approvedBy: signerEmail,
+            documentHash: contentHash,
+            frozenAt: new Date().toISOString(),
+          });
+          const frozenContentHash = crypto.createHash('sha256').update(frozenContent).digest('hex');
+
+          await client.query(
+            `INSERT INTO frozen_documents
+             (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (document_id, version, tenant_id) DO NOTHING`,
+            [docId, 'approved', frozenContent, frozenContentHash, signerEmail, 'Approved and frozen', tenantId]
           );
         }
       }

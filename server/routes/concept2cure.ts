@@ -43,6 +43,11 @@ import multer from 'multer';
 import path from 'path';
 import { type GovernedDocumentActionContract } from '../../shared/types/document-contract';
 import {
+  applyExportGovernanceHeaders,
+  evaluateExportGovernance,
+  type ExportGovernance,
+} from '../services/export/exportReviewGate';
+import {
   regulatoryAuditLogs,
   projects,
   users,
@@ -475,10 +480,35 @@ function calculateSignatureHash(payload: Record<string, unknown>): string {
  * Recomputes SHA-256 for each version's content and verifies it matches the stored hash.
  * Returns detailed verification results.
  */
-function verifyIntegrityChain(
+/**
+ * What this check actually covers, stated once and carried into every response.
+ *
+ * `verifyIntegrityChain` recomputes SHA-256 over `artifact.content` and each
+ * version's `content` — both read from the database — and compares each to the
+ * hash stored beside it. That is a real check: it catches a stored row whose
+ * content and recorded hash disagree. It is NOT verification of the originating
+ * document, because no source bytes are read here; nothing in this path
+ * re-derives a hash from an uploaded file, a vault object, or a filed leaf.
+ *
+ * The distinction matters because of where this lands. The audit-report route
+ * emits this block under `standard: '21 CFR Part 11 · ICH M8 eCTD v4.0'` and
+ * directly beside a `sourceLineage` section, and the export persists that as a
+ * governed artifact an inspector reads. "verified: true, SHA-256" next to a
+ * source-lineage list reads as "the source documents were checked". They were
+ * not. Naming the scope is the whole fix — the check is fine, the claim was
+ * broader than the check.
+ */
+const INTEGRITY_CHECK_SCOPE =
+  'Compares each stored artifact version against the SHA-256 recorded with it. ' +
+  'Detects a stored record altered without its hash being updated. Does NOT read ' +
+  'or verify the bytes of the originating source document.';
+
+export function verifyIntegrityChain(
   artifact: { content: string | null; contentHash: string | null; version: number },
   versions: Array<{ version: number; content: string; contentHash: string; createdAt: Date | null }>
 ): {
+  scope: string;
+  sourceDocumentBytesVerified: false;
   chainIntact: boolean;
   currentHashVerified: boolean;
   computedHash: string;
@@ -518,6 +548,11 @@ function verifyIntegrityChain(
   }
 
   return {
+    scope: INTEGRITY_CHECK_SCOPE,
+    // Always false, and present rather than omitted: a reader must be able to
+    // see that source-document verification did not happen, not infer it from
+    // the absence of a field.
+    sourceDocumentBytesVerified: false,
     chainIntact,
     currentHashVerified,
     computedHash,
@@ -1106,22 +1141,53 @@ function getUserId(req: Request): number {
 }
 
 /**
- * Get client workspace ID if available.
- * Returns 1 as default for development.
+ * Resolve the caller's client workspace — validated, never fabricated.
+ *
+ * The previous implementation returned a hardcoded workspace 1 outside
+ * production ("dev fallback"), which is a fabricated tenant anchor: on any
+ * database whose workspace ids do not start at 1 it broke with an FK
+ * violation, and wherever id 1 happened to exist it silently attached rows to
+ * whatever tenant owned workspace 1. It also trusted the x-client-id header
+ * (tenantContext.clientWorkspaceId) without checking the workspace belongs to
+ * the caller's organization, so a tenant could plant rows into another org's
+ * workspace. Both are gone:
+ *   - a claimed workspace id is accepted only after a same-statement
+ *     ownership check against the caller's org (fail closed on mismatch);
+ *   - with no claim, the caller org's own workspace is resolved from the
+ *     database (deterministic: lowest id);
+ *   - no workspace resolvable → error, in every environment.
  */
-function getClientWorkspaceId(req: Request): number {
-  // Check if tenantContext has clientWorkspaceId (from tenant middleware)
+async function resolveClientWorkspaceId(req: Request): Promise<number> {
   const ctx = req.tenantContext as Record<string, unknown> | undefined;
-  if (ctx?.clientWorkspaceId) {
-    const id =
-      typeof ctx.clientWorkspaceId === 'number'
-        ? ctx.clientWorkspaceId
-        : parseInt(String(ctx.clientWorkspaceId), 10);
-    if (!isNaN(id)) return id;
+  const orgId = Number(ctx?.organizationId ?? req.user?.organizationId);
+  const hasOrg = Number.isInteger(orgId) && orgId > 0;
+
+  const claimed = ctx?.clientWorkspaceId;
+  if (claimed != null && claimed !== '') {
+    const id = Number(claimed);
+    if (Number.isInteger(id) && id > 0) {
+      if (!hasOrg) {
+        throw new Error('Client workspace context requires an authenticated organization');
+      }
+      const owned = await pool.query(
+        'SELECT id FROM client_workspaces WHERE id = $1 AND organization_id = $2',
+        [id, orgId]
+      );
+      if (owned.rows.length === 0) {
+        // Fail closed: never accept a workspace outside the caller's org, and
+        // do not disclose whether the id exists elsewhere.
+        throw new Error('Client workspace does not belong to the caller organization');
+      }
+      return id;
+    }
   }
-  // Dev fallback: return default workspace 1 so routes work without full tenant setup
-  if (process.env.NODE_ENV !== 'production') {
-    return 1;
+
+  if (hasOrg) {
+    const own = await pool.query(
+      'SELECT id FROM client_workspaces WHERE organization_id = $1 ORDER BY id LIMIT 1',
+      [orgId]
+    );
+    if (own.rows.length > 0) return Number(own.rows[0].id);
   }
   throw new Error('Client workspace context required');
 }
@@ -1224,6 +1290,26 @@ async function loadProjectAccessRow(params: {
   });
 
   if (!hasAccess) {
+    // A reviewer with a live assignment on an artifact in this project has
+    // access BECAUSE of that assignment. Without this, assignment granted
+    // nothing: the assigned reviewer's own decision submission 404'd on this
+    // very predicate (creator/owner/sharing only), making the review flow
+    // unusable for any reviewer who is not also on the project team —
+    // discovered on the golden journey's first real browser execution.
+    const assigned = await pool.query(
+      `SELECT 1
+         FROM concept2cure_review_assignments ra
+         JOIN concept2cure_artifacts a ON a.id = ra.artifact_id
+        WHERE ra.reviewer_id = $1
+          AND ra.organization_id = $2
+          AND a.project_id = $3
+          AND ra.status = 'pending'
+        LIMIT 1`,
+      [params.userId, params.organizationId, params.projectId]
+    );
+    if (assigned.rows.length > 0) {
+      return { project, legacyFallbackApplied: sharing.legacyFallbackApplied };
+    }
     return { project: null, legacyFallbackApplied: sharing.legacyFallbackApplied };
   }
 
@@ -1806,7 +1892,7 @@ router.get(
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
       const actorRole = getActorRole(req);
-      const clientWorkspaceId = getClientWorkspaceId(req);
+      const clientWorkspaceId = await resolveClientWorkspaceId(req);
 
       // Use raw SQL to avoid Drizzle ORM schema mismatch (parent_project_id doesn't exist in DB)
       const result = await pool.query(
@@ -1963,7 +2049,7 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
     const actorRole = getActorRole(req);
-    const clientWorkspaceId = getClientWorkspaceId(req);
+    const clientWorkspaceId = await resolveClientWorkspaceId(req);
     const scope = getProjectScope(req.params.id);
     if (!scope) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
@@ -2069,7 +2155,7 @@ router.post('/projects', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
-    const clientWorkspaceId = getClientWorkspaceId(req);
+    const clientWorkspaceId = await resolveClientWorkspaceId(req);
     const data = createProjectSchema.parse(req.body);
 
     // Auto-populate custom instructions based on registry entry or submission type
@@ -2744,7 +2830,7 @@ router.get('/projects/:id/sharing', async (req: Request, res: Response) => {
 
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId: getClientWorkspaceId(req),
+      clientWorkspaceId: await resolveClientWorkspaceId(req),
       projectId: scope.numericId,
       userId,
       actorRole,
@@ -2905,7 +2991,7 @@ router.patch('/projects/:id/sharing/visibility', async (req: Request, res: Respo
 
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId: getClientWorkspaceId(req),
+      clientWorkspaceId: await resolveClientWorkspaceId(req),
       projectId: scope.numericId,
       userId,
       actorRole,
@@ -3002,7 +3088,7 @@ router.put('/projects/:id/sharing/members/:userId', async (req: Request, res: Re
 
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId: getClientWorkspaceId(req),
+      clientWorkspaceId: await resolveClientWorkspaceId(req),
       projectId: scope.numericId,
       userId: actorUserId,
       actorRole,
@@ -3127,7 +3213,7 @@ router.delete('/projects/:id/sharing/members/:userId', async (req: Request, res:
 
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId: getClientWorkspaceId(req),
+      clientWorkspaceId: await resolveClientWorkspaceId(req),
       projectId: scope.numericId,
       userId: actorUserId,
       actorRole,
@@ -3195,7 +3281,7 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
     // First verify access and capture state for audit
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId: getClientWorkspaceId(req),
+      clientWorkspaceId: await resolveClientWorkspaceId(req),
       projectId: scope.numericId,
       userId,
       actorRole,
@@ -3448,7 +3534,7 @@ router.get('/projects/:projectId/knowledge', async (req: Request, res: Response)
 
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId: getClientWorkspaceId(req),
+      clientWorkspaceId: await resolveClientWorkspaceId(req),
       projectId: scope.numericId,
       userId,
       actorRole,
@@ -3938,7 +4024,7 @@ router.patch('/projects/:projectId/knowledge', async (req: Request, res: Respons
 
     const projectAccess = await loadProjectAccessRow({
       organizationId,
-      clientWorkspaceId: getClientWorkspaceId(req),
+      clientWorkspaceId: await resolveClientWorkspaceId(req),
       projectId: scope.numericId,
       userId,
       actorRole,
@@ -6548,7 +6634,7 @@ async function verifyProjectAccess(
   const organizationId = getOrganizationId(req);
   const userId = getUserId(req);
   const actorRole = getActorRole(req);
-  const clientWorkspaceId = getClientWorkspaceId(req);
+  const clientWorkspaceId = await resolveClientWorkspaceId(req);
   try {
     const scope = getProjectScope(projectId);
     if (!scope) {
@@ -7085,6 +7171,17 @@ router.post(
           'SOURCE_EVIDENCE_NOT_FOUND'
         );
       }
+      // Persist the VALIDATED deduped citation list, never the raw caller
+      // array. The artifacts-center listing renders json_array_length over
+      // metadata.sourceArtifactIds as "N cited sources"; storing the raw
+      // array would let ['a','a','',42] (with only 'a' existing) surface as
+      // 4 cited sources — fabricated governance metadata.
+      const metadataWithValidatedSources = data.metadata
+        ? {
+            ...data.metadata,
+            ...('sourceArtifactIds' in data.metadata ? { sourceArtifactIds } : {}),
+          }
+        : undefined;
       const governedResolution = resolveGovernedContext({
         req,
         projectId: numericProjectId,
@@ -7172,7 +7269,9 @@ router.post(
           version: 1,
           templateId: data.templateId || null,
           metadata: {
-            ...(data.metadata || {}),
+            // The validated variant, not raw data.metadata: the persisted row
+            // is what the artifacts-center listing counts citations from.
+            ...(metadataWithValidatedSources || {}),
             harness: {
               clientTrack: governedResolution.contract.clientTrack,
               submissionProgram: governedResolution.contract.submissionProgram,
@@ -7216,7 +7315,7 @@ router.post(
         ctdSection: data.ctdSection || null,
         version: 1,
         versions: [{ version: 1, content: sanitizedContent, createdAt: newDbArtifact.createdAt }],
-        metadata: data.metadata,
+        metadata: metadataWithValidatedSources,
         createdAt: newDbArtifact.createdAt,
         updatedAt: newDbArtifact.updatedAt,
       };
@@ -8759,6 +8858,12 @@ router.get(
           ...(() => {
             const verification = verifyIntegrityChain(artifact, versions);
             return {
+              // Scope travels with the verdict. This block is emitted under a
+              // 21 CFR Part 11 heading and directly above sourceLineage; without
+              // it, "chainIntact: true" reads as a statement about the source
+              // documents listed below, which this check never touches.
+              scope: verification.scope,
+              sourceDocumentBytesVerified: verification.sourceDocumentBytesVerified,
               chainIntact: verification.chainIntact,
               currentHashVerified: verification.currentHashVerified,
               failureReason: verification.failureReason,
@@ -8944,6 +9049,12 @@ router.post(
           ...(() => {
             const verification = verifyIntegrityChain(artifact, versions);
             return {
+              // Scope travels with the verdict. This block is emitted under a
+              // 21 CFR Part 11 heading and directly above sourceLineage; without
+              // it, "chainIntact: true" reads as a statement about the source
+              // documents listed below, which this check never touches.
+              scope: verification.scope,
+              sourceDocumentBytesVerified: verification.sourceDocumentBytesVerified,
               chainIntact: verification.chainIntact,
               currentHashVerified: verification.currentHashVerified,
               failureReason: verification.failureReason,
@@ -9900,7 +10011,15 @@ router.get(
         title: artifact.title,
         currentVersion: artifact.version,
         algorithm: 'SHA-256',
-        verified: verification.chainIntact,
+        // Was `verified`. A bare "verified: true" beside "algorithm: SHA-256"
+        // names no subject, and the subject is the point: this establishes that
+        // the STORED record is self-consistent, not that the document it came
+        // from is intact. Renamed rather than kept as an alias — nothing in the
+        // client or the test suite reads it, so there is no reason to keep the
+        // ambiguous name alive.
+        storedRecordSelfConsistent: verification.chainIntact,
+        scope: verification.scope,
+        sourceDocumentBytesVerified: verification.sourceDocumentBytesVerified,
         currentHashVerified: verification.currentHashVerified,
         computedHash: verification.computedHash,
         storedHash: verification.storedHash,
@@ -12048,92 +12167,21 @@ router.get('/regulatory-catalog/search', async (req: Request, res: Response) => 
 const EXPORT_REVIEW_NOTICE =
   'DRAFT — NOT AGENCY-VALIDATED. This document may contain AI-generated content and is not an agency submission or agency decision. Qualified human review and approval are required before use in regulated submissions, clinical/safety decisions, or external communications.';
 
-const exportGovernanceSchema = z.object({
-  aiGenerated: z.boolean().default(true),
-  humanReviewApproved: z.boolean().default(false),
-  reviewerName: z.string().trim().min(1).max(200).optional(),
-  reviewerRole: z.string().trim().min(1).max(200).optional(),
-  reviewTimestamp: z.string().datetime().optional(),
-});
-
-function shouldEnforceExportReviewGate(): boolean {
-  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'true') return true;
-  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'false') return false;
-  return process.env.NODE_ENV === 'production';
-}
-
-function applyExportGovernanceHeaders(
-  res: Response,
-  governance: z.infer<typeof exportGovernanceSchema>
-): void {
-  res.setHeader('X-Concept2Cure-AI-Generated', String(governance.aiGenerated));
-  res.setHeader('X-Concept2Cure-Human-Review-Approved', String(governance.humanReviewApproved));
-  res.setHeader('X-Concept2Cure-Review-Required', 'true');
-  if (governance.reviewerName) {
-    res.setHeader('X-Concept2Cure-Reviewer', encodeURIComponent(governance.reviewerName));
-  }
-  if (governance.reviewTimestamp) {
-    res.setHeader('X-Concept2Cure-Review-Timestamp', governance.reviewTimestamp);
-  }
-}
-
-function validateExportGovernance(
-  req: Request,
-  res: Response
-): z.infer<typeof exportGovernanceSchema> | null {
-  const parsed = exportGovernanceSchema.safeParse(req.body?.governance ?? {});
-  if (!parsed.success) {
-    sendError(
-      res,
-      400,
-      'Invalid export governance payload',
-      parsed.error.flatten(),
-      'VALIDATION_ERROR'
-    );
+/**
+ * Thin adapter over the canonical export review gate
+ * (server/services/export/exportReviewGate.ts). All decision logic lives
+ * there; this only renders a rejection into this router's `sendError`
+ * envelope.
+ */
+function validateExportGovernance(req: Request, res: Response): ExportGovernance | null {
+  const evaluation = evaluateExportGovernance(req.body?.governance);
+  if (!evaluation.ok) {
+    sendError(res, evaluation.status, evaluation.message, evaluation.details, evaluation.code);
     return null;
   }
 
-  const governance = parsed.data;
-  if (
-    governance.humanReviewApproved &&
-    (!governance.reviewerName || !governance.reviewerRole || !governance.reviewTimestamp)
-  ) {
-    sendError(
-      res,
-      400,
-      'Reviewer identity, role, and timestamp are required when human review is approved',
-      {
-        required: [
-          'governance.reviewerName',
-          'governance.reviewerRole',
-          'governance.reviewTimestamp',
-        ],
-      },
-      'INCOMPLETE_HUMAN_REVIEW'
-    );
-    return null;
-  }
-  const strictGateEnabled = shouldEnforceExportReviewGate();
-  if (strictGateEnabled && !governance.humanReviewApproved) {
-    sendError(
-      res,
-      403,
-      'Human review approval is required before export in this environment',
-      {
-        required: 'governance.humanReviewApproved=true',
-        reviewerFields: [
-          'governance.reviewerName',
-          'governance.reviewerRole',
-          'governance.reviewTimestamp',
-        ],
-      },
-      'HUMAN_REVIEW_REQUIRED'
-    );
-    return null;
-  }
-
-  applyExportGovernanceHeaders(res, governance);
-  return governance;
+  applyExportGovernanceHeaders(res, evaluation.governance);
+  return evaluation.governance;
 }
 
 /**
