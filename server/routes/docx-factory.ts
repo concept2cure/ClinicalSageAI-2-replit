@@ -437,6 +437,23 @@ router.get(
       // "title:filename:0" over a zero size (a Part 11 record that proves nothing
       // about the file it governs).
       const contentLengthHeader = Number(response.headers.get('content-length'));
+      /* No digest, no governed export. This route streams the artifact straight
+         from the shadow service, so `x-artifact-sha256` is the only place the
+         delivered bytes are ever hashed — buffering the stream to compute one
+         here would defeat the streaming.
+         `sha256Header ?? undefined` used to send nothing and let
+         registerExportGovernanceQuick synthesize sha256("title:filename:size").
+         That fallback is gone, and refusing is what should have happened: the
+         sibling regulated routes already answer a failed governance
+         registration with EXPORT_GOVERNANCE_REQUIRED rather than shipping the
+         file under a record that cannot identify it. */
+      if (!sha256Header || !/^[0-9a-f]{64}$/i.test(sha256Header)) {
+        return res.status(500).json({
+          error:
+            'The document service did not return an artifact digest, so this export cannot be recorded against the file it delivers.',
+          code: 'EXPORT_GOVERNANCE_REQUIRED',
+        });
+      }
       await registerExportGovernanceQuick({
         organizationId: Number(orgIdRaw),
         // NOTE: projectId lineage for a uuid-keyed regulatory program cannot be
@@ -451,7 +468,7 @@ router.get(
         exportFormat: 'docx',
         exportFilename: `artifact-${req.params.artifactId}.docx`,
         exportFileSize: Number.isFinite(contentLengthHeader) ? contentLengthHeader : 0,
-        exportHash: sha256Header ?? undefined,
+        exportHash: sha256Header,
         docType: 'docx_artifact',
         backendRoute: `/api/docx-factory/artifacts/${req.params.artifactId}/download`,
         ipAddress: req.ip,

@@ -23,7 +23,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import { z } from 'zod';
 import { assembleSubmissionEctd } from '../services/ectd/assemble-from-core';
 import { validateEctdPackage } from '../services/submission-gateways/ectd-structural-validator';
@@ -438,6 +438,18 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
     if (user?.id == null) {
       return res.status(403).json({ error: 'Tenant context required for governed export' });
     }
+    /* The integrity hash must cover the PACKAGE, not the words describing it.
+       Without `exportHash`, registerExportGovernanceQuick falls back to
+       sha256(`${title}:${filename}:${size}`) — a digest over metadata, which
+       cannot answer the only question a governed export record exists to
+       answer: is this file the file that was exported. Two different packages
+       of the same byte-length under the same name hash identically, and the
+       delivered bytes are never covered at all.
+       `result.buffer` is exactly what `res.send` returns below, so hashing it
+       here binds the record to the artifact the agency receives. The same
+       defect was fixed on the DOCX route (20dc3980b); this is the eCTD package,
+       where it matters most. */
+    const packageSha256 = createHash('sha256').update(result.buffer).digest('hex');
     const governanceResult = await registerExportGovernanceQuick({
       organizationId,
       projectId: submissionId,
@@ -447,6 +459,7 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       exportFormat: 'zip',
       exportFilename: result.filename,
       exportFileSize: result.buffer.length,
+      exportHash: packageSha256,
       docType: 'ectd_package',
       backendRoute: `/api/ectd/export/${submissionId}`,
       ipAddress: req.ip,
@@ -463,6 +476,9 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
     // generation is the §11.10(e) event we need to record.
     await auditEctdAccess(req, organizationId, submissionId, 'ectd_export_generated', {
       packageSizeBytes: result.buffer?.length,
+      // Same digest as the governance record above, so the §11.10(e) event and
+      // the export record identify one artifact rather than two descriptions.
+      packageSha256,
       region: result.region,
       sequenceNumber: result.sequenceNumber,
     });
