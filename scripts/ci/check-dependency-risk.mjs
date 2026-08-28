@@ -11,10 +11,14 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 
 const root = new URL('../../', import.meta.url);
+// DEPENDENCY_RISK_LEDGER / DEPENDENCY_RISK_LOCKFILE / DEPENDENCY_RISK_PACKAGE_JSON
+// are test-fixture overrides: the self-test proves the script's logic against
+// fully synthetic state instead of re-validating the committed repo state.
+// CI callers of the real gate must not set them.
 const ledger = JSON.parse(readFileSync(process.env.DEPENDENCY_RISK_LEDGER || new URL('docs/security/dependency-risk-ledger.json', root)));
-const packageLock = JSON.parse(readFileSync(new URL('package-lock.json', root)));
-const packageJson = JSON.parse(readFileSync(new URL('package.json', root)));
-const lockBytes = readFileSync(new URL('package-lock.json', root));
+const lockBytes = readFileSync(process.env.DEPENDENCY_RISK_LOCKFILE || new URL('package-lock.json', root));
+const packageLock = JSON.parse(lockBytes);
+const packageJson = JSON.parse(readFileSync(process.env.DEPENDENCY_RISK_PACKAGE_JSON || new URL('package.json', root)));
 
 function fail(message) {
   console.error(`Dependency risk gate: ${message}`);
