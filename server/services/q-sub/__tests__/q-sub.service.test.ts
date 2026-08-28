@@ -38,7 +38,7 @@ vi.mock('../../../db', () => ({
 }));
 
 vi.mock('../../auditService', () => ({
-  default: { logAction: vi.fn().mockResolvedValue(undefined) },
+  default: { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
 }));
 
 import {

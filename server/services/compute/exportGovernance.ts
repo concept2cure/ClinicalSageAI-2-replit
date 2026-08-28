@@ -344,7 +344,24 @@ export async function registerExportGovernanceQuick(opts: {
   exportFormat: 'pdf' | 'docx' | 'zip' | 'csv' | 'xml' | 'markdown' | 'bibtex' | 'ris';
   exportFilename: string;
   exportFileSize: number;
-  exportHash?: string;
+  /**
+   * sha256 of the bytes the caller is about to send. REQUIRED.
+   *
+   * This was optional, and the fallback below computed
+   * sha256(`${title}:${filename}:${size}`) when it was absent — a digest over
+   * the words describing the artifact, in the field a governed export record
+   * keeps in order to identify the artifact. It is a plausible-looking hash
+   * that cannot verify anything: two different packages of the same length
+   * under the same name produce it identically, and the delivered bytes are
+   * never covered.
+   *
+   * Three of the four call sites were on that fallback — the eCTD package, the
+   * RTM matrix and the IVDR classification report — so the integrity hash on a
+   * filing-package export proved nothing. Making it required is what stops the
+   * next export route from shipping the same way: there is no longer a default
+   * that looks like it worked.
+   */
+  exportHash: string;
   docType: string;
   backendRoute: string;
   ctdSection?: string;
@@ -352,12 +369,17 @@ export async function registerExportGovernanceQuick(opts: {
   allowDegradedMode?: boolean;
 }): Promise<ExportGovernanceResult | null> {
   try {
-    const contentHash =
-      opts.exportHash ??
-      crypto
-        .createHash('sha256')
-        .update(`${opts.title}:${opts.exportFilename}:${opts.exportFileSize}`)
-        .digest('hex');
+    /* No fallback. An export record with a metadata digest is worse than one
+       with no digest: it reports an integrity guarantee it does not hold, and
+       nothing downstream can tell the two apart. Fail closed instead — the
+       caller has the bytes and can hash them. */
+    const contentHash = opts.exportHash;
+    if (!contentHash || !/^[0-9a-f]{64}$/i.test(contentHash)) {
+      throw new Error(
+        'registerExportGovernanceQuick requires exportHash: sha256 of the exported bytes. ' +
+          'A governed export record must identify the artifact, not its filename.',
+      );
+    }
 
     const normalizedFormat = (
       ['pdf', 'docx', 'zip'].includes(opts.exportFormat) ? opts.exportFormat : 'zip'

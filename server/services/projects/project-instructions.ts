@@ -16,6 +16,7 @@
  * @module server/services/projects/project-instructions
  */
 import { pool } from '../../db.js';
+import { parseIntegerProjectId } from '../../lib/project-id.js';
 
 /** Heading used for the injected block. Kept here so both call sites match. */
 const PROJECT_INSTRUCTIONS_HEADING =
@@ -37,11 +38,10 @@ export async function getProjectInstructions(
   const empty: ProjectInstructions = { customInstructions: '', context: '' };
   if (projectId === null || projectId === undefined || projectId === '') return empty;
 
-  const pid =
-    typeof projectId === 'string'
-      ? parseInt(projectId.replace(/^proj_/, ''), 10)
-      : projectId;
-  if (!Number.isFinite(pid) || (pid as number) <= 0) return empty;
+  // Fail closed on a non-integer id (ADR-0011): a regulatory_programs UUID must
+  // NOT be prefix-truncated to a valid-but-wrong integer projects.id.
+  const pid = parseIntegerProjectId(projectId);
+  if (pid === null) return empty;
 
   // Tenant isolation: never read a project without an org filter. Production
   // callers always pass the authenticated org; absent one we fail closed

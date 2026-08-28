@@ -1,11 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { assessmentState } from '../assessmentState';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AnswerLead } from '../AnswerLead';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { severityTone } from '../fixtures/precedent-engine-data';
 import '../styles/project-home-v2.css';
+import { C2CForm } from '../C2CForm';
 
 /*
  * Precedent intelligence — wired to the real precedent read-model.
@@ -112,6 +115,44 @@ function parseSavedQuery(s: SavedPeQuery): PeQuery {
   };
 }
 
+/* ── The board's two failure sentinels, and the one section that has none ─────
+ *
+ * GET /api/precedent-engine-board runs its seven service calls under
+ * Promise.allSettled and answers HTTP 200 `{success:true}` even when some of
+ * them REJECT: a rejected call is substituted with an EMPTY section and the
+ * reason is logged server-side only. `board.error` is therefore undefined, and
+ * a section that failed arrives looking exactly like a section that ran and
+ * found nothing. Copy written off `length === 0` cannot tell them apart, and
+ * only one of the two may say "nothing was found".
+ *
+ * Two of those substitutions carry a value the real service cannot produce, so
+ * for those two the distinction IS recoverable from the payload:
+ *
+ *   risk.overall === 'unknown'
+ *       analyzeRisk() rejected. The service's own result type is
+ *       'low' | 'medium' | 'high' | 'critical' (server/services/precedent-engine.ts),
+ *       so 'unknown' is written only by the route's empty-risk substitution.
+ *
+ *   strategy.recommendation === 'Insufficient precedent data'
+ *       recommendStrategy() rejected. The service derives its recommendation
+ *       from approved precedents and falls back to 'Standard submission
+ *       approach'; this literal is written only by the empty-strategy
+ *       substitution.
+ *
+ * Those sentinels are the `assessmentRan` evidence assessmentState.ts asks for.
+ * It is never taken from `factors.length` / `rationale.length` — inferring "an
+ * analysis ran" from the same empty array whose emptiness is the question is
+ * the defect itself, wearing a new API.
+ *
+ * The SEARCH sub-call has no such sentinel: a rejected search is mapped to
+ * `results: []`, which is byte-identical to a search that ran and matched
+ * nothing. Nothing else in the payload distinguishes them. So the empty-result
+ * copy may not assert either reading, and no longer does — it states what came
+ * back and says plainly that the two cannot be told apart from here.
+ */
+const RISK_NOT_RUN = 'unknown';
+const STRATEGY_NOT_RUN = 'Insufficient precedent data';
+
 /* ════ PrecedentEngine — precedent intelligence workbench ════ */
 
 export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
@@ -150,6 +191,87 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
 
   const results = board.data?.results ?? [];
   const sel = results.find((r) => r.clearanceNumber === selK) || results[0];
+
+  /* ── Ingest and Compare, against the endpoints that already existed ────────
+     Both were `ask(...)`. `POST /api/precedent-engine/compare` runs the real
+     comparison (precedentEngine.compare) and `POST /ingest` writes the
+     precedent — neither had a caller, so the surface's two primary verbs were
+     conversation. */
+  const [ingestOpen, setIngestOpen] = React.useState(false);
+  const [ingesting, setIngesting] = React.useState(false);
+  const [peNote, setPeNote] = React.useState<{ text: string; tone: 'ok' | 'error' } | null>(null);
+  const [comparing, setComparing] = React.useState('');
+  const [comparison, setComparison] = React.useState<{ k: string; result: unknown } | null>(null);
+
+  const ingestPrecedent = async (v: Record<string, string>) => {
+    if (ingesting) return;
+    setIngesting(true);
+    setPeNote(null);
+    try {
+      const body: Record<string, unknown> = {
+        submissionType: v.submissionType,
+        decisionOutcome: v.decisionOutcome,
+      };
+      for (const k of ['clearanceNumber', 'deviceName', 'applicant', 'indication', 'productType', 'predicateKNumber'] as const) {
+        if (v[k]?.trim()) body[k] = v[k].trim();
+      }
+      const res = await apiRequest('POST', '/api/precedent-engine/ingest', body);
+      const j = await res.json().catch(() => null);
+      if (!res.ok || (j as { success?: boolean } | null)?.success !== true) {
+        setPeNote({
+          text: 'The precedent was not ingested — ' + (serverMessage(j) ?? `the server refused it (HTTP ${res.status})`) + '.',
+          tone: 'error',
+        });
+        return;
+      }
+      setIngestOpen(false);
+      setPeNote({ text: `Precedent ${v.clearanceNumber || v.submissionType} added to the registry.`, tone: 'ok' });
+    } catch (e) {
+      setPeNote({
+        text: 'The precedent was not ingested — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        tone: 'error',
+      });
+    } finally {
+      setIngesting(false);
+    }
+  };
+
+  const runCompare = async (target: { clearanceNumber: string; submissionType?: string; deviceName?: string; indication?: string }) => {
+    if (comparing) return;
+    setComparing(target.clearanceNumber);
+    setPeNote(null);
+    setComparison(null);
+    try {
+      const res = await apiRequest('POST', '/api/precedent-engine/compare', {
+        precedentId: target.clearanceNumber,
+        // The comparison needs a submission type; the precedent's own is the
+        // honest default and is what the user is comparing against.
+        submissionType: target.submissionType || '510k',
+        deviceName: target.deviceName || undefined,
+        indication: target.indication || undefined,
+      });
+      const j = await res.json().catch(() => null);
+      const payload = (j as { success?: boolean; data?: unknown } | null);
+      if (!res.ok || payload?.success !== true || payload.data == null) {
+        setPeNote({
+          text: `The comparison against ${target.clearanceNumber} did not run — ` +
+            (serverMessage(j) ?? `the server refused it (HTTP ${res.status})`) + '.',
+          tone: 'error',
+        });
+        return;
+      }
+      setComparison({ k: target.clearanceNumber, result: payload.data });
+    } catch (e) {
+      setPeNote({
+        text: `The comparison against ${target.clearanceNumber} did not run — ` +
+          (e instanceof Error ? e.message : String(e)) + '.',
+        tone: 'error',
+      });
+    } finally {
+      setComparing('');
+    }
+  };
+
 
   const runSearch = () => setApplied(q);
 
@@ -219,6 +341,26 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
     }
   }, [board.data, tab]);
 
+  /* The honest state of the risk and strategy sections, from the sentinels
+     documented above the component. `scopeExists` is "the section is present in
+     the payload at all"; `unreadable` is "it is present and it is the failure
+     substitution"; `assessmentRan` is the sentinel's ABSENCE, never an empty
+     factor/rationale array. */
+  const riskOverall = board.data?.risk?.overall;
+  const riskState = assessmentState({
+    unreadable: riskOverall === RISK_NOT_RUN,
+    scopeExists: riskOverall != null,
+    findingCount: board.data?.risk?.factors?.length ?? 0,
+    assessmentRan: riskOverall != null && riskOverall !== RISK_NOT_RUN,
+  });
+  const strategyRec = board.data?.strategy?.recommendation;
+  const strategyState = assessmentState({
+    unreadable: strategyRec === STRATEGY_NOT_RUN,
+    scopeExists: strategyRec != null,
+    findingCount: board.data?.strategy?.rationale?.length ?? 0,
+    assessmentRan: strategyRec != null && strategyRec !== STRATEGY_NOT_RUN,
+  });
+
   // Real claim check — POST /api/precedent-engine/check-claim. No fabricated
   // verdict; a failed check surfaces nothing rather than a canned result.
   const checkClaim = async () => {
@@ -282,11 +424,15 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
           registry precedents.
         </p>
       </div>
-      <button
-        className="sp-primary"
-        onClick={() => ask('Ingest a new precedent into the registry')}
-      >
-        {I.plus} Ingest precedent
+      {/* ── "Ingest precedent" ingested nothing ────────────────────────────
+          The surface's primary CTA — the one its own empty states repeatedly
+          tell the user to press ("or ingest a precedent to seed the
+          registry") — typed a sentence into the chat rail. No precedent was
+          ever added, so the registry could not be seeded the way the screen
+          said to seed it. POST /api/precedent-engine/ingest and its schema
+          existed with no caller. */}
+      <button className="sp-primary" onClick={() => setIngestOpen(true)} disabled={ingesting}>
+        {I.plus} {ingesting ? 'Ingesting…' : 'Ingest precedent'}
       </button>
     </div>
   );
@@ -361,6 +507,57 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
     </div>
   );
 
+  /* WHAT ANA SEES HERE — published above the honest-state early returns so one
+     call covers every branch (a hook below a conditional return would not). */
+  const anaContext = useMemo(() => {
+    if (!applied) {
+      // Nothing from the typed-but-unrun form: a pre-filled query once told an
+      // org which predicate to cite for a device it did not have.
+      return {
+        summary:
+          'Precedent intelligence: no search has been run; nothing is on screen but the empty search form.',
+        facts: { searchRun: false },
+      };
+    }
+    if (board.loading && !board.data) {
+      return {
+        summary: `Precedent intelligence: the applied ${applied.submissionType} search is still loading; no board is on screen yet.`,
+      };
+    }
+    if (board.error && !board.data) {
+      return {
+        summary:
+          'Precedent intelligence: the precedent read-model did not respond — a failed read, not an empty corpus.',
+      };
+    }
+    return {
+      summary:
+        `Precedent intelligence for the applied ${applied.submissionType} search` +
+        (applied.indication.trim() ? ` (${applied.indication.trim()})` : '') +
+        `: ${results.length} precedent(s)` +
+        (sel ? `; ${sel.clearanceNumber} selected` : '') +
+        `; the ${tab} analysis tab is open.`,
+      facts: {
+        query: {
+          submissionType: applied.submissionType,
+          therapeuticArea: applied.therapeuticArea,
+          indication: applied.indication,
+          productCode: applied.productCode,
+        },
+        resultCount: results.length,
+        ...(sel ? { selected: sel.clearanceNumber } : {}),
+        tab,
+        // `cycle` is nullable on the real record — no range unless one exists.
+        ...(lo != null && hi != null ? { cycleDaysMin: lo, cycleDaysMax: hi } : {}),
+      },
+      availableActions: [
+        'Select a result; switch the analysis tab',
+        'Running a search commits a query; ingesting a precedent, comparing, saved-query changes and claim checks are writes or verdicts — AnA proposes them in conversation, never through screen controls.',
+      ],
+    };
+  }, [applied, board.loading, board.error, board.data, results.length, sel, tab, lo, hi]);
+  usePublishSurfaceContext('precedent-intelligence', anaContext);
+
   /* Four honest states on the real read-model — never a fixture, and never a
      seeded search standing in for one the user has not run. */
   if (!applied) {
@@ -404,6 +601,53 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
     <div className="sp" style={{ maxWidth: 1160 }}>
       {head}
 
+      {peNote && (
+        <div
+          className="scaf-note"
+          role="status"
+          style={{ margin: '0 0 12px', color: peNote.tone === 'error' ? 'var(--error)' : undefined }}
+        >
+          {peNote.text}
+        </div>
+      )}
+
+      {ingestOpen && (
+        <C2CForm
+          config={{
+            eyebrow: 'Precedent registry',
+            title: 'Ingest a precedent',
+            sub: 'A cleared or approved submission to compare against. Only the two fields the registry requires are mandatory; the rest sharpen the comparison and are recorded as given.',
+            submitLabel: ingesting ? 'Ingesting…' : 'Ingest precedent',
+            fields: [
+              { key: 'submissionType', label: 'Submission type', type: 'text', placeholder: 'e.g. 510k, PMA, De Novo', required: true, half: true },
+              { key: 'decisionOutcome', label: 'Decision outcome', type: 'text', placeholder: 'e.g. Cleared, Approved, NSE', required: true, half: true },
+              { key: 'clearanceNumber', label: 'Clearance / approval number', type: 'text', placeholder: 'e.g. K243117', half: true },
+              { key: 'deviceName', label: 'Device or product name', type: 'text', half: true },
+              { key: 'applicant', label: 'Applicant', type: 'text', half: true },
+              { key: 'predicateKNumber', label: 'Predicate K-number', type: 'text', half: true },
+              { key: 'indication', label: 'Indication', type: 'textarea' },
+            ],
+          }}
+          onCancel={() => setIngestOpen(false)}
+          onSubmit={ingestPrecedent}
+        />
+      )}
+
+      {comparison && (
+        <div className="pj-card" style={{ marginBottom: 14 }}>
+          <div className="pj-card-h">
+            <span className="t">Comparison against {comparison.k}</span>
+            <button type="button" className="pj-card-h-go" onClick={() => setComparison(null)}>Close</button>
+          </div>
+          <div className="pj-card-b">
+            {/* The engine's own answer, rendered as it came back. This surface
+                does not re-score or summarise it — a comparison the reader
+                cannot trace to the engine is worth less than none. */}
+            <pre className="pe-compare">{JSON.stringify(comparison.result, null, 2)}</pre>
+          </div>
+        </div>
+      )}
+
       <AnswerLead
         tone={strong ? 'good' : 'calm'}
         eyebrow={
@@ -422,7 +666,21 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
               .
             </>
           ) : results.length === 0 ? (
-            <>No cleared precedents matched this search yet — widen the criteria or ingest a precedent.</>
+            /* This headline used to read "No cleared precedents matched this
+               search yet — widen the criteria or ingest a precedent." Both
+               halves are claims the surface cannot support: that a search ran
+               and matched nothing, and that the remedy is the user's criteria.
+               A search that REJECTS server-side is mapped to `results: []` and
+               returned under HTTP 200 with no sentinel anywhere in the payload,
+               so an unrun search reads here exactly like an empty one. The
+               headline now states only what arrived, and names the ambiguity
+               instead of resolving it in the direction that flatters the
+               product. */
+            <>
+              No precedents came back for this search — and this board cannot tell an empty
+              result from a precedent search that did not complete, so nothing here establishes
+              that no precedent exists.
+            </>
           ) : (
             <>
               No single strong predicate yet — worth a search or a De Novo look before you
@@ -437,6 +695,13 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
               <b>{topRisk.label.toLowerCase()}</b>. Bring it up front and you take their biggest
               question off the table before they raise it.
             </>
+          ) : riskState === 'unreadable' ? (
+            /* Same defect as the risk panel below, one level up: with no scored
+               factors this invited the reader to "run the risk analysis" when
+               the risk analysis had already run for this search and failed.
+               Telling them to do the thing that just failed, without saying it
+               failed, is the part that misleads. */
+            'The risk analysis did not complete for this search, so there is nothing here about what reviewers are likely to push back on. Run the search again before reading anything into the silence.'
           ) : (
             "Run the risk analysis below and I'll tell you exactly what reviewers tend to push back on for this kind of submission."
           )
@@ -470,10 +735,18 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
           </div>
           <div className="pj-card-b" style={{ padding: 8 }}>
             {results.length === 0 ? (
+              /* The hint used to read "No cleared precedents in the corpus
+                 matched this submission type and criteria." That is a finding
+                 about the corpus, and the panel has no evidence for it: a
+                 search that fails server-side is substituted with an empty
+                 result list under a 200, so this branch is reached by a failed
+                 search and a genuinely empty one alike. The remedy is still
+                 offered — widening or ingesting is what the user can do either
+                 way — but it is no longer presented as the diagnosis. */
               <EmptyState
                 icon={I.search}
-                title="No matching precedents"
-                hint="No cleared precedents in the corpus matched this submission type and criteria. Widen the search, or ingest a precedent to seed the registry."
+                title="No precedents returned"
+                hint="This search returned no precedents. That is not the same as none existing: an empty result and a precedent search that did not complete are indistinguishable from here, so treat it as unconfirmed rather than as an empty corpus. Re-run the search, widen the criteria, or ingest a precedent to seed the registry."
               />
             ) : (
               <div className="sp-list">
@@ -523,14 +796,16 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
                 <span className="t">
                   {sel.clearanceNumber} -- {sel.deviceName}
                 </span>
+                {/* Was `ask('Compare our submission against precedent …')` —
+                    it bypassed POST /api/precedent-engine/compare, which runs
+                    the real comparison. */}
                 <button
                   className="pj-card-h-go"
                   style={{ fontSize: 11, color: 'var(--accent-200)' }}
-                  onClick={() =>
-                    ask('Compare our submission against precedent ' + sel.clearanceNumber)
-                  }
+                  onClick={() => void runCompare(sel)}
+                  disabled={comparing === sel.clearanceNumber}
                 >
-                  Compare {I.arrowRight}
+                  {comparing === sel.clearanceNumber ? 'Comparing…' : <>Compare {I.arrowRight}</>}
                 </button>
               </div>
               <div className="pj-card-b">
@@ -585,15 +860,38 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
                   <div className="ub-row" style={{ marginBottom: 8 }}>
                     <div className="ub-row-l">
                       <div className="ub-row-t">Overall risk</div>
-                      <div className="ub-row-s">{analysis.overall}</div>
+                      {/* This line printed `analysis.overall` raw, so a risk
+                          analysis that failed server-side rendered the bare
+                          word "unknown" beside a "0%" chip in the warn tone —
+                          a failed read shown as the lowest possible score. */}
+                      <div className="ub-row-s">
+                        {riskState === 'unreadable'
+                          ? 'Not assessed — the risk analysis did not complete'
+                          : analysis.overall}
+                      </div>
                     </div>
-                    <span className="rd-chip tone-warn">
-                      {Math.round((analysis.score || 0) * 100)}%
-                    </span>
+                    {riskState === 'unreadable' ? (
+                      <span className="rd-chip tone-idle">no score</span>
+                    ) : (
+                      <span className="rd-chip tone-warn">
+                        {Math.round((analysis.score || 0) * 100)}%
+                      </span>
+                    )}
                   </div>
-                  {analysis.factors.length === 0 ? (
-                    <div className="scaf-note">No scored risk factors for this submission context yet — nothing is inferred without a real signal.</div>
-                  ) : (
+                  {/* This branch was `analysis.factors.length === 0` alone, and
+                      read "No scored risk factors for this submission context
+                      yet — nothing is inferred without a real signal." It is
+                      false in exactly one state: analyzeRisk() rejected, the
+                      board substituted an empty risk section, and no signal was
+                      ever obtained — so the sentence describing restraint
+                      became a description of a clean risk profile. `overall`
+                      separates the two, and it is a real sentinel rather than a
+                      restatement of the empty array. */}
+                  {riskState === 'unreadable' ? (
+                    <div className="scaf-note">The risk analysis did not complete for this search, so no factors were scored. This is an unread result, not a clear one — nothing here should be taken as an absence of reviewer risk. Run the search again.</div>
+                  ) : riskState === 'assessed-clear' ? (
+                    <div className="scaf-note">The risk analysis ran for this submission context and scored no factors — nothing is inferred without a real signal.</div>
+                  ) : riskState === 'assessed-with-findings' ? (
                     <div className="sp-list">
                       {analysis.factors.map((f, i) => (
                         <div key={i} className="sp-row">
@@ -613,6 +911,12 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
                         </div>
                       ))}
                     </div>
+                  ) : (
+                    /* No overall risk value arrived at all — the section is
+                       neither a scored result nor the known failure
+                       substitution, so the only honest reading is that nothing
+                       has been assessed. */
+                    <div className="scaf-note">No risk assessment is present in this board for the search — nothing about reviewer risk has been established.</div>
                   )}
                 </div>
               )}
@@ -628,17 +932,44 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
                       marginBottom: 10,
                     }}
                   >
-                    <b>Recommended:</b> {analysis.recommendation}
-                    {analysis.predicate ? ' -- citing ' + analysis.predicate : ''}
+                    {/* Unchanged in the normal case. In the failure case this
+                        rendered "Recommended: Insufficient precedent data",
+                        which reads as a conclusion drawn from a thin corpus;
+                        the string is in fact the marker of a strategy analysis
+                        that never ran. */}
+                    {strategyState === 'unreadable' ? (
+                      <><b>No recommendation:</b> the strategy analysis did not complete for this search.</>
+                    ) : (
+                      <>
+                        <b>Recommended:</b> {analysis.recommendation}
+                        {analysis.predicate ? ' -- citing ' + analysis.predicate : ''}
+                      </>
+                    )}
                   </div>
-                  {analysis.rationale.length === 0 ? (
-                    <div className="scaf-note">Not enough supporting precedent data to assemble a rationale — run a search that returns precedents first.</div>
-                  ) : (
+                  {/* This branch was `analysis.rationale.length === 0` alone,
+                      and read "Not enough supporting precedent data to assemble
+                      a rationale — run a search that returns precedents first."
+                      It puts the cause on the user's search at the one moment
+                      the cause is server-side: recommendStrategy() rejected and
+                      the board substituted an empty strategy section, which has
+                      no relation to what the search returned. `recommendation`
+                      already carries the marker for that state and is displayed
+                      immediately above; it is what the copy branches on now. */}
+                  {strategyState === 'unreadable' ? (
+                    <div className="scaf-note">No rationale is shown because the strategy analysis did not complete for this search — not because the precedent set was thin. Run the search again; until it completes there is no recommendation here to weigh either way.</div>
+                  ) : strategyState === 'assessed-clear' ? (
+                    <div className="scaf-note">The strategy analysis ran and found no supporting precedent detail to build a rationale from. Widen the search so precedents come back, and the rationale fills in.</div>
+                  ) : strategyState === 'assessed-with-findings' ? (
                     <ul className="pe-ul">
                       {analysis.rationale.map((p, i) => (
                         <li key={i}>{p}</li>
                       ))}
                     </ul>
+                  ) : (
+                    /* No recommendation value arrived at all — neither a real
+                       one nor the known failure substitution. Nothing ran that
+                       this panel can speak for. */
+                    <div className="scaf-note">No strategy assessment is present in this board for the search — no pathway recommendation has been established.</div>
                   )}
                 </div>
               )}

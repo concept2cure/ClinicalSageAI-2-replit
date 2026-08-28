@@ -15,6 +15,10 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+/* The real class. The mock below spreads `importOriginal`, so this is the
+   same ApiRequestError the transport actually throws — which is the point:
+   the fixture has to fail the way production fails. */
+import { ApiRequestError } from '@/lib/queryClient';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -135,7 +139,23 @@ describe('DocumentAuthoring — real editable canvas', () => {
       if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
       if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
       if (method === 'PATCH' && url === '/api/authoring/sections/S1') {
-        return { ok: false, status: 500, json: async () => ({ error: 'db unavailable' }) } as Response;
+        /* THROWS, because the real `apiRequest` throws.
+           This used to return `{ ok: false, status: 500 }`, which
+           client/src/lib/queryClient.ts never produces for a non-2xx — it
+           raises ApiRequestError. So the assertion below was exercising a
+           branch in DocumentAuthoring that PRODUCTION COULD NOT REACH, and the
+           surface's real behaviour on a failed save (an unbound catch, a 10px
+           grey line, no reason) went untested and unnoticed while this stayed
+           green. A fixture that cannot happen is worse than no fixture: it
+           reports coverage of the case it is hiding. */
+        const err = new ApiRequestError(
+          'The section was not saved: its data lineage could not be recorded.',
+          500,
+          { error: { code: 'LINEAGE_REQUIRED' } },
+          'LINEAGE_REQUIRED',
+          'req-abc123',
+        );
+        throw err;
       }
       return ok({ success: true });
     });
@@ -149,10 +169,65 @@ describe('DocumentAuthoring — real editable canvas', () => {
     await waitFor(() => expect(saveBtn.disabled).toBe(false));
     fireEvent.click(saveBtn);
 
-    expect(await screen.findByText(/Couldn’t save the section/i)).toBeTruthy();
+    /* The server's OWN sentence reaches the author, with its correlation id —
+       not "HTTP 500", and not a silent grey line. A lineage failure and a
+       frozen record need different actions and must read differently. */
+    expect(await screen.findByText(/its data lineage could not be recorded/i)).toBeTruthy();
+    expect(screen.getByText(/Nothing was persisted/i)).toBeTruthy();
+    expect(screen.getByText(/req-abc123/)).toBeTruthy();
     // The edit is preserved (not discarded, not replaced by a fake success).
     expect(canvasText()).toBe('My unsaved edit');
     // And the canvas says so: not persisted, still on this device.
     expect(await screen.findByText(/Save failed — kept on this device/i)).toBeTruthy();
+  });
+  it('moves the open section — server-validated reorder, tree redrawn from the canonical order', async () => {
+    /* order_index is what the export assembles by, and nothing could change
+       it before the reorder endpoint existed. This drives the real seam: the
+       swap goes up as the FULL permutation, and the tree redraws from the
+       canonical GET, never from a local echo. */
+    const S2 = {
+      id: 'S2', doc_id: 'D1', code: '3.2.S.2', title: 'Manufacture', content: 'Made carefully.',
+      order_index: 1, comment_count: 0, revision_count: 1, citation_count: 0,
+      updated_at: '2026-07-20T10:00:00Z',
+    };
+    const reorder = vi.fn();
+    let order = ['S1', 'S2'];
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && url.startsWith('/api/authoring/docs?')) {
+        return ok({ ...DOCS, documents: [{ ...DOCS.documents[0], section_count: 2 }] });
+      }
+      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') {
+        const byId: Record<string, unknown> = { S1: SECTIONS.sections[0], S2 };
+        return ok({
+          success: true,
+          sections: order.map((id, i) => ({ ...(byId[id] as object), order_index: i })),
+        });
+      }
+      if (method === 'POST' && url === '/api/authoring/docs/D1/sections/reorder') {
+        reorder(body);
+        order = (body as { section_ids: string[] }).section_ids;
+        return ok({ success: true, order });
+      }
+      return ok({ success: true, revisions: [], comments: [], sources: [] });
+    });
+
+    render(<DocumentAuthoring {...props()} />);
+    const down = await screen.findByRole('button', { name: 'Move 3.2.S.1 down' });
+    fireEvent.click(down);
+
+    await waitFor(() => expect(reorder).toHaveBeenCalledWith({ section_ids: ['S2', 'S1'] }));
+    // The tree now lists 3.2.S.2 before 3.2.S.1 — the server's order, refetched.
+    await waitFor(() => {
+      const codes = Array.from(document.querySelectorAll('.ed-tree-row .ed-num')).map(
+        (n) => n.textContent,
+      );
+      const a = codes.indexOf('3.2.S.2');
+      const b = codes.indexOf('3.2.S.1');
+      expect(a).toBeGreaterThan(-1);
+      expect(b).toBeGreaterThan(-1);
+      expect(a).toBeLessThan(b);
+    });
+    // The moved section stays open.
+    expect(document.querySelector('.ed-mast-num')?.textContent).toBe('3.2.S.1');
   });
 });

@@ -26,12 +26,17 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
+import { randomBytes } from 'node:crypto';
 import { createJourneyDb, JourneyRecorder, type JourneyDb } from './harness';
 
 // The authoring router carries its own jose JWT verification (HS256 over
 // JWT_SECRET) — so this journey authenticates with REAL signed tokens, and the
 // signature check stays fully active. A forged-secret token is a known-bad step.
-const JWT_SECRET = 'journey-a-test-secret-0725';
+const JWT_SECRET = randomBytes(32).toString('hex');
+const FORGED_JWT_SECRET = randomBytes(32).toString('hex');
+const AUTHOR_PIN = randomBytes(12).toString('hex');
+const APPROVER_PIN = randomBytes(12).toString('hex');
+const WRONG_PIN = randomBytes(12).toString('hex');
 process.env.JWT_SECRET = JWT_SECRET;
 // The authoring router now verifies via the CANONICAL verifyJwtWithRotation,
 // which in test env (NODE_ENV=test → suffix DEV) reads JWT_SECRET_DEV ?? JWT_SECRET.
@@ -69,31 +74,37 @@ vi.mock('../../server/db', () => ({
 }));
 
 const AUTHOR = {
-  id: '3f1c2a10-0000-4000-8000-000000000001',
+  id: '3',
   organizationId: 1,
   email: 'author@journey.example',
   name: 'Avery Author',
 };
 const APPROVER = {
-  id: '3f1c2a10-0000-4000-8000-000000000002',
+  id: '4',
   organizationId: 1,
   email: 'approver@journey.example',
   name: 'Quinn Approver',
 };
 const OUTSIDER = {
-  id: '3f1c2a10-0000-4000-8000-000000000099',
+  id: '99',
   organizationId: 2,
   email: 'outsider@other.example',
   name: 'Iris Intruder',
 };
 
-// The authoring router re-checks live org membership (enforceOrgMembership),
-// coercing the token's userId with Number.parseInt (orgMembership.parseFiniteInt).
-// All three journey subjects share the '3f1c2a10…' prefix, so each coerces to
-// the same leading integer; seed organization_users under that id or every
-// authenticated request is refused as membership-indeterminate (503) — which is
-// exactly what made the first step return 503 instead of the honest 400.
-const MEMBERSHIP_ID = Number.parseInt(AUTHOR.id, 10); // 3f1c2a10-… → 3
+// Subject ids are INTEGERS because that is what the product has: users.id is a
+// serial (shared/schema.ts) and organization_users.user_id is an integer
+// referencing it. These were UUIDs sharing a '3f1c2a10…' prefix, seeded under
+// one membership row derived with Number.parseInt(AUTHOR.id, 10) — which
+// truncates that UUID to 3.
+//
+// No server code does that any more, and none should: truncating an id to its
+// leading digits makes '3f1c…' and '3a9b…' the same member, which is an
+// authorization answer arrived at by string accident. parseFiniteInt rejects
+// anything not wholly digits, and the signing gate reads
+// Number(getActorId(req)) — a UUID gives NaN and the gate fails closed. Both
+// are right. The fixture was modelling an identity shape production does not
+// have, and the §11.10(g) gate is what finally made that visible.
 
 const PREREQ = `
   -- The canonical audit ledger auditService.logAction writes on every governed
@@ -122,9 +133,11 @@ const PREREQ = `
     user_agent    TEXT
   );
   CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
-  -- users.id is UUID here: the history handler joins users ON
-  -- u.id = doc_revisions.created_by::uuid, and created_by holds JWT subject ids.
-  CREATE TABLE users (id UUID PRIMARY KEY, name TEXT, email TEXT);
+  -- users.id is INTEGER, standing in for the production serial. It was UUID for
+  -- a history join that read u.id = r.created_by::uuid; that join was removed
+  -- (Postgres rejects integer = uuid at parse time) and now compares as text,
+  -- u.id::text = r.created_by, which matches either shape.
+  CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT);
   CREATE TABLE organization_users (
     organization_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
@@ -138,9 +151,21 @@ const PREREQ = `
   -- AUTHOR + APPROVER are in org 1; OUTSIDER is a genuine member of org 2 (its
   -- own org) — tenant isolation to org 1 is enforced separately by the router,
   -- not by this membership row.
+  -- Roles, not just membership: §11.10(g) asks whether the signer has the
+  -- AUTHORITY to sign, and DEFAULT_SIGNING_ROLES is admin/approver/reviewer.
+  -- Both signers were seeded 'member', so once that gate landed neither could
+  -- sign — the wrong-PIN step got 403 from the authority check before the PIN
+  -- was ever read, and the happy-path step got the same 403.
+  --
+  -- The org role is not the signature's MEANING: a 'reviewer' applying a
+  -- signature that means AUTHOR is the intended shape, identity and authority
+  -- being separate from what the signature asserts. OUTSIDER stays 'member' —
+  -- they never sign here, and their steps must be refused by tenant isolation
+  -- rather than by a role check standing in front of it.
   INSERT INTO organization_users (organization_id, user_id, role) VALUES
-    (1, ${MEMBERSHIP_ID}, 'member'),
-    (2, ${MEMBERSHIP_ID}, 'member');
+    (1, ${AUTHOR.id}, 'reviewer'),
+    (1, ${APPROVER.id}, 'approver'),
+    (2, ${OUTSIDER.id}, 'member');
 `;
 
 let jdb: JourneyDb;
@@ -344,7 +369,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
 
     // ── KNOWN-BAD: token signed with the WRONG secret → 401 ──────────────────
     await R.expectBlocked('forged-jwt-rejected', async () => {
-      const forged = await mint(AUTHOR, 'not-the-server-secret');
+      const forged = await mint(AUTHOR, FORGED_JWT_SECRET);
       const res = await request(app)
         .get(`/api/authoring/docs/${docId}`)
         .set('Authorization', `Bearer ${forged}`);
@@ -354,8 +379,8 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
     // ── 7. Part 11: PIN from the VERIFIED identity ───────────────────────────
     await R.step('create-signing-pin', async () => {
       const res = await asUser(AUTHOR)(
-        request(app).post(`/api/authoring/docs/${docId}/create-pin`),
-      ).send({ pin: 'jrny-482913' });
+        request(app).post('/api/authoring/users/pin'),
+      ).send({ pin: AUTHOR_PIN });
       expect(res.status).toBe(200);
       return { pinCreated: true, identitySource: 'verified JWT (getActorEmail)' };
     });
@@ -380,7 +405,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
     await R.expectBlocked('e-sign-wrong-pin', async () => {
       const res = await asUser(AUTHOR)(
         request(app).post(`/api/authoring/docs/${docId}/e-sign`),
-      ).send({ pin: 'wrong-pin-000', meaning: 'AUTHOR', intent: 'I authored this document' });
+      ).send({ pin: WRONG_PIN, meaning: 'AUTHOR', intent: 'I authored this document' });
       return { blocked: res.status === 401, status: res.status };
     });
 
@@ -393,7 +418,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
     await R.step('e-sign-author', async () => {
       const res = await asUser(AUTHOR)(
         request(app).post(`/api/authoring/docs/${docId}/e-sign`),
-      ).send({ pin: 'jrny-482913', meaning: 'AUTHOR', intent: 'I authored this document' });
+      ).send({ pin: AUTHOR_PIN, meaning: 'AUTHOR', intent: 'I authored this document' });
       expect(res.status).toBe(200);
 
       // Independent recomputation of the signature hash from durable state.
@@ -428,11 +453,11 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
     // ── 10. Approver signs — status APPROVED + auto-freeze 'approved' ────────
     await R.step('e-sign-approver', async () => {
       await asUser(APPROVER)(
-        request(app).post(`/api/authoring/docs/${docId}/create-pin`),
-      ).send({ pin: 'appr-771002' });
+        request(app).post('/api/authoring/users/pin'),
+      ).send({ pin: APPROVER_PIN });
       const res = await asUser(APPROVER)(
         request(app).post(`/api/authoring/docs/${docId}/e-sign`),
-      ).send({ pin: 'appr-771002', meaning: 'APPROVER', intent: 'Approved for submission' });
+      ).send({ pin: APPROVER_PIN, meaning: 'APPROVER', intent: 'Approved for submission' });
       expect(res.status).toBe(200);
       const doc = await asUser(APPROVER)(request(app).get(`/api/authoring/docs/${docId}`));
       const rows = await jdb.pool.query(
@@ -672,7 +697,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       'Fixed while building this journey: POST /docs/:docId/export inserted into `authoring_exports` and GET /docs/:docId/diff-since-export read `doc_exports` — NEITHER table is created by any migration or any runtime DDL in this repo, and both queries were unguarded. Every export request and every diff request returned 500. The flagship authoring loop could draft, freeze and sign a document but could not export one (ledger C-14).',
       'Fixed while building this journey: the export record is now written by logExport() AFTER the bytes are generated, so file_name and file_size are the real ones rather than placeholders, and ANA-initiated exports (command-executor) record to the same table instead of the phantom one.',
       'Fixed while building this journey: freeze queried authoring_sections.document_id — a column that does not exist (doc_id everywhere else). Freeze had never been executable.',
-      'Fixed while building this journey: create-pin, freeze and e-sign took signer identity from the attacker-controlled x-user-email header; they now use the verified JWT via getActorEmail — the same fix the file had already applied to every other attribution column (Part 11 §11.100).',
+      'Fixed while building this journey: the canonical user PIN enrollment route, freeze and e-sign take signer identity from the verified JWT via getActorEmail. The former document-scoped create-pin route, which trusted an attacker-controlled x-user-email header and duplicated PIN enrollment, remains deleted (Part 11 §11.100).',
       'Fixed while building this journey (was recorded here as an INTEGRITY GAP): freeze and signature hashes each verified independently but nothing said WHICH snapshot a signature attested to, which is exactly what 21 CFR Part 11 §11.70 requires. Signatures now carry the covered snapshot version and hash, and signature_digest is computed over durable columns only — no timestamp — so an auditor can recompute it from the stored row and detect tampering with the signer, the meaning, the content, or the snapshot binding (ledger C-11 residual 2).',
     );
     R.limitations.push(

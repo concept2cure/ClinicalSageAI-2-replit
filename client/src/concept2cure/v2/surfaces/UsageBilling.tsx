@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState, hasKeys, type DataState, type ShapeGuard } from '../dataConnect';
+import { apiCall, apiErrorText } from '../apiCall';
+import { C2CToast, useToast } from '../toast';
+import { GovernedConfirmDialog } from '../../_shared/components/GovernedConfirmDialog';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
 /* ── Per-tier rate limits — canonical rate card, verbatim from the server's
@@ -261,11 +265,73 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
     ['/api/billing/invoices'],
     isInvoices,
   );
+  /* Re-read nonce. `useLiveData` re-fetches when its dependency array changes,
+     which is how a surface refreshes after a governed write — the same idiom
+     MasterLicensing uses. Bumping it is the only honest way to learn the
+     resulting auto-reload rule: the server owns it, and this surface must not
+     display a rule it inferred rather than received. */
+  const [reload, setReload] = useState(0);
+  const refreshCredits = () => setReload((n) => n + 1);
   const creditsState = useLiveData<LiveCredits>(
     '/api/billing/credits',
-    ['/api/billing/credits'],
+    ['/api/billing/credits', reload],
     isCredits,
   );
+  const [toast, fireToast] = useToast();
+  /** The auto-reload change awaiting its reason-for-change, or null. The server
+   *  requires a reason on this endpoint and audits it verbatim, so the dialog is
+   *  not decoration — a PATCH without one can only 400. */
+  const [reloadEdit, setReloadEdit] = useState<{ enabled: boolean } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  /* Credit top-up goes through Stripe's own portal rather than a bespoke
+     purchase screen, because ledger credits move money-equivalent value:
+     POST /api/billing/credits/adjust is platform-admin only precisely so a
+     tenant cannot self-issue them. The portal is the one place a customer can
+     actually put money in. Opened in a new tab so the workspace is not lost. */
+  const buyMore = async () => {
+    setBusy(true);
+    const res = await apiCall<{ portalUrl?: string }>('POST', '/api/billing/portal', {
+      returnUrl: window.location.href,
+    });
+    setBusy(false);
+    const url = res.ok ? res.body?.portalUrl : null;
+    if (url) {
+      window.open(url, '_blank', 'noopener');
+      return;
+    }
+    // No URL back means no portal session was created. Never report one that
+    // was not — this button used to do nothing at all, and silently doing
+    // nothing while looking successful would be the same defect wearing a
+    // handler.
+    fireToast(
+      res.ok
+        ? 'Billing portal did not return a link. Try again shortly.'
+        : apiErrorText(res, 'Could not open the billing portal.'),
+      'error',
+    );
+  };
+
+  const saveAutoReload = async ({ reason }: { reason: string }) => {
+    const edit = reloadEdit;
+    if (!edit) return;
+    setReloadEdit(null);
+    setBusy(true);
+    const res = await apiCall('PUT', '/api/billing/credits/auto-reload', {
+      enabled: edit.enabled,
+      reason,
+    });
+    setBusy(false);
+    if (!res.ok) {
+      // 403 here is the real and common case: the endpoint is admin/owner only.
+      fireToast(apiErrorText(res, 'Auto-reload was not changed.'), 'error');
+      return;
+    }
+    fireToast(edit.enabled ? 'Auto-reload is on.' : 'Auto-reload is off.');
+    // Only the server knows the resulting rule; re-read rather than assume it.
+    refreshCredits();
+  };
+
   const snap = usageState.data;
 
   // Real org tier drives the plan label + the rate-limit table highlight;
@@ -275,6 +341,76 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
   /* Was a dead write to `c2c_open_surface`, a key with no reader — so "View
      all plans" did nothing. The shell's `onNav` is what navigates. */
   const nav = (id: string) => onNav(id);
+
+  /* What AnA can see of this screen.
+     ONE component, TWO routable ids. `billing` and `usage` are separate
+     registry entries rendering this same file, and the shell reads context by
+     EXACT id — so publishing under a single literal would leave whichever id
+     was not chosen blind, with no symptom. Both hooks are therefore called
+     unconditionally (React requires that anyway) and the inactive one publishes
+     null, which clears only if it still owns the slot. The literals stay
+     literal so the CI gate can still see which ids this file claims.
+
+     `surface` is `getSurface(activeId)`, so `surface.id` IS the mounted id.
+
+     Each of the three reads fails independently, and each publishes its own
+     state: a balance or an invoice list invented from a failed read would be a
+     financial claim about the customer's account. */
+  const activeId = surface && surface.id === 'billing' ? 'billing' : 'usage';
+  const anaContext = useMemo(() => {
+    const inv = invoicesState.data;
+    const cr = creditsState.data;
+    return {
+      summary:
+        `Usage and billing, "${tab}" tab. ` +
+        (usageState.loading
+          ? 'The usage snapshot is still loading.'
+          : usageState.error || !snap
+            ? 'The usage snapshot could not be read, so no plan or limit figures are on screen — a failure, not a zero.'
+            : `Plan "${snap.planLabel}"` +
+              (snap.session ? `, session window ${snap.session.pctUsed}% used over ${snap.session.windowHours}h` : '') +
+              `, ${(snap.weekly ?? []).length} weekly cap bucket(s).`) +
+        ' ' +
+        (creditsState.loading
+          ? 'Credits are still loading.'
+          : creditsState.error || !cr || cr.balanceCents == null
+            ? 'The credit balance is unavailable.'
+            : `Credit balance ${(cr.balanceCents / 100).toFixed(2)}.`) +
+        ' ' +
+        (invoicesState.loading
+          ? 'Invoices are still loading.'
+          : invoicesState.error || !inv
+            ? 'The invoice list could not be read.'
+            : `${inv.invoices.length} invoice(s).`),
+      facts: {
+        openTab: tab,
+        plan: snap ? { tier: snap.plan, label: snap.planLabel, lastUpdated: snap.lastUpdated } : null,
+        planUnavailable: usageState.error ? 'the usage snapshot read failed' : null,
+        sessionWindow: snap?.session ?? null,
+        weeklyCaps: snap?.weekly ?? null,
+        credits: cr && cr.balanceCents != null
+          ? { balanceCents: cr.balanceCents, autoReload: cr.autoReload }
+          : null,
+        creditsUnavailable: creditsState.error ? 'the credits read failed' : null,
+        invoices: inv
+          ? inv.invoices.slice(0, 10).map((iv) => ({
+              number: iv.number, date: iv.date, amount: iv.amount,
+              currency: iv.currency, status: iv.status,
+            }))
+          : null,
+        invoicesUnavailable: invoicesState.error ? 'the invoice read failed' : null,
+      },
+      availableActions: [
+        'Switch between the usage and billing tabs',
+        'Read plan usage limits, the session window and the weekly caps',
+        'Read the credit balance and its auto-reload settings',
+        'Open an invoice (hosted page or PDF) from the invoice list',
+        'View all plans on the licensing surface',
+      ],
+    };
+  }, [tab, usageState.loading, usageState.error, snap, invoicesState.loading, invoicesState.error, invoicesState.data, creditsState.loading, creditsState.error, creditsState.data]);
+  usePublishSurfaceContext('usage', activeId === 'usage' ? anaContext : null);
+  usePublishSurfaceContext('billing', activeId === 'billing' ? anaContext : null);
 
   return (
     <div className="sp" style={{ maxWidth: 1000 }}>
@@ -432,9 +568,13 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
                       <div className="ub-bal-n">${(cents(c.balanceCents)! / 100).toFixed(2)}</div>
                       <div className="ub-bal-l">Current balance</div>
                     </div>
-                    <button className="ub-buy">
+                    <button className="ub-buy" onClick={buyMore} disabled={busy}>
                       Buy more{' '}
-                      <span className="ub-buy-tag">Up to 30% off</span>
+                      {/* The discount claim is gone. Nothing in the product
+                          computes or applies it: no volume tier, no coupon, no
+                          promotion code reaches Stripe from here. It was a
+                          number on a button, and a price claim a customer
+                          cannot get is worse than no claim. */}
                     </button>
                   </>
                 )}
@@ -473,7 +613,13 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
                           {_usd(reloadTo)} when your balance is ${_usd(reloadAt)}
                         </div>
                       </div>
-                      <button className="sp-ask">Manage</button>
+                      <button
+                        className="sp-ask"
+                        disabled={busy}
+                        onClick={() => setReloadEdit({ enabled: reloadOff })}
+                      >
+                        {reloadOff ? 'Turn on' : 'Turn off'}
+                      </button>
                     </>
                   );
                 }}
@@ -541,21 +687,23 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
               </Panel>
             </div>
           </div>
-          <div className="pj-card" style={{ marginTop: 14 }}>
-            <div className="pj-card-b ub-referral">
-              <div className="ub-ref-ic">{I.gift || I.sparkles}</div>
-              <div className="ub-ref-b">
-                <div className="ub-row-t">Give AnA, get more AnA</div>
-                <div className="ub-row-s">
-                  Send a colleague a free week. If they subscribe, you both
-                  get $10 in usage credits. Terms apply.
-                </div>
-              </div>
-              <button className="sp-ask">
-                {I.link || I.copy} Copy link
-              </button>
-            </div>
-          </div>
+          {/* THE REFERRAL CARD IS DELETED, not repaired.
+              It read "Send a colleague a free week. If they subscribe, you both
+              get $10 in usage credits." with a "Copy link" button that had no
+              onClick. The button being dead was the smaller half of the problem.
+
+              There is no referral programme behind it — no invite issuance, no
+              referral code, no attribution of a signup to a referrer, and no
+              path that could credit either account. `POST /credits/adjust` is
+              platform-admin only precisely because ledger credits move
+              money-equivalent value and tenants may not self-issue them, so
+              nothing in the product could honour this even manually.
+
+              A dead button wastes a click. An offer of $10 that the product
+              cannot pay is a commitment made to a customer on behalf of a
+              programme that does not exist, and no copy edit fixes that — only
+              building the programme, or not making the offer. Removed until the
+              former. */}
         </div>
       )}
 
@@ -620,6 +768,28 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
           </div>
         </div>
       )}
+
+      {reloadEdit && (
+        /* The server requires a reason on this endpoint and writes it verbatim
+           into the audit trail, so the prompt is the contract, not a courtesy.
+           minReason 3 matches the server's floor exactly: stricter would refuse
+           writes the platform allows, looser would produce a round trip that
+           can only fail. */
+        <GovernedConfirmDialog
+          open
+          action={reloadEdit.enabled ? 'Turn auto-reload on' : 'Turn auto-reload off'}
+          target={
+            reloadEdit.enabled
+              ? 'Credit balance will top up automatically at the configured threshold'
+              : 'Credit balance will no longer top up automatically'
+          }
+          resource="credit auto-reload"
+          minReason={3}
+          onCancel={() => setReloadEdit(null)}
+          onConfirm={saveAutoReload}
+        />
+      )}
+      <C2CToast msg={toast} />
     </div>
   );
 }

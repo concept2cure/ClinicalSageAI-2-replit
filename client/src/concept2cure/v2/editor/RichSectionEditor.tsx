@@ -57,6 +57,8 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { TableKit } from '@tiptap/extension-table';
 import Superscript from '@tiptap/extension-superscript';
 import Subscript from '@tiptap/extension-subscript';
+import TextAlign from '@tiptap/extension-text-align';
+import Highlight from '@tiptap/extension-highlight';
 import { Collaboration } from '@tiptap/extension-collaboration';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import * as Y from 'yjs';
@@ -66,6 +68,7 @@ import {
   TrackChanges,
   collectSuggestions,
   type SuggestionAuthor,
+  type SuggestionDecision,
   type SuggestionRange,
 } from './suggestions';
 import {
@@ -77,7 +80,11 @@ import {
   assessFidelity,
   looksLikeHtml,
   plainTextToHtml,
+  htmlVisibleText,
 } from './roundTrip';
+import { FindReplace, getFindState } from './findReplace';
+import { AuthoringImage } from './imageNode';
+import { I } from '../icons';
 
 /* ── Public contract ──────────────────────────────────────────── */
 
@@ -88,9 +95,23 @@ export interface RichSectionEditorHandle {
   insertSuggestion: (text: string, author: SuggestionAuthor) => boolean;
   /** Current serialized content (unsaved included). */
   getContent: () => string;
+  /**
+   * Authors whose insertions were ACCEPTED since the last call, then cleared.
+   *
+   * Accepting an insertion strips the mark that named its author, so after the
+   * click nothing in the content says an AI drafted the words. The host reads
+   * this at save time and sends it with the write, so the revision records who
+   * the accepted text came from instead of attributing it to whoever pressed
+   * accept.
+   */
+  takeAcceptedAuthors: () => SuggestionAuthor[];
   /** Select + scroll to a comment's anchored range. False when the annotated
    *  text no longer exists in the current draft. */
   selectCommentAnchor: (commentId: string) => boolean;
+  /** Open the find bar, pre-seeded with `query` when given (otherwise from the
+   *  current selection). False in source mode, where the bar deliberately does
+   *  not render — the browser's own find works on a plain textarea. */
+  openFind: (query?: string) => boolean;
   focus: () => void;
 }
 
@@ -129,6 +150,10 @@ export interface RichSectionEditorProps {
     author: SuggestionAuthor;
     /** Persist the toggle (PATCH track_changes). Reject to refuse the flip. */
     onToggle?: (enabled: boolean) => void | Promise<void>;
+    /** Every accept/reject, so the host can record it as a governed act.
+     *  Rejections in particular change no text and are otherwise unrecorded
+     *  anywhere. Fire-and-forget: it must not block or undo the edit. */
+    onResolve?: (decision: SuggestionDecision) => void;
   } | null;
   /** Range-anchored comments. Omit to hide the capability. */
   commentsApi?: {
@@ -136,6 +161,14 @@ export interface RichSectionEditorProps {
     onCreate: (anchor: CommentAnchorPayload) => Promise<string | null>;
     /** A click on annotated text — open the thread in the host's rail. */
     onOpen?: (commentId: string) => void;
+  } | null;
+  /** Image insertion. The host owns the upload (the governed image store is
+   *  the authoring API's; the MDX drawer's plain-text store has none). Omit
+   *  to hide the capability — existing images still display read-only. */
+  imagesApi?: {
+    /** Upload the file to the tenant's image store; resolve the reference the
+     *  section's HTML will carry. Reject with a reason on refusal. */
+    upload: (file: File) => Promise<{ id: string; url: string }>;
   } | null;
   /** Live co-editing over the server's /collab Hocuspocus socket. */
   collab?: {
@@ -159,6 +192,12 @@ const SAVE_META: Record<SaveState, { dot: string; label: string }> = {
 };
 
 const cacheKeyFor = (storageKey: string) => 'dc::' + storageKey;
+
+/** What the image store accepts — the formats a Word export can embed. SVG is
+ *  deliberately absent (a script container, not a picture) and so is WebP
+ *  (DOCX cannot carry it; refusing at upload beats dropping at export). */
+const IMG_MIME = /^image\/(png|jpeg|gif)$/;
+const IMG_MAX_BYTES = 8 * 1024 * 1024;
 
 function wordsOf(text: string): number {
   const t = text.trim();
@@ -194,6 +233,72 @@ function jsonDocText(node: JSONContent): string {
 
 /* ── Component ────────────────────────────────────────────────── */
 
+/**
+ * A ribbon button.
+ *
+ * ── Why this lives OUTSIDE the component ─────────────────────────────────────
+ * It was declared inside the render body, so every render produced a new
+ * component TYPE and React tore down and rebuilt all twelve-to-seventeen ribbon
+ * buttons' DOM nodes. `onUpdate` fires four state setters per keystroke, so
+ * that was every character typed — and because the pressed button's node was
+ * destroyed under the pointer, focus fell to `<body>`. Measured: after one
+ * keystroke the Bold button is a different DOM node and `document.activeElement`
+ * is BODY.
+ *
+ * ── Why `onClick`, not `onMouseDown` ─────────────────────────────────────────
+ * It bound `onMouseDown` and nothing else. Keyboard activation of a <button>
+ * (Enter or Space) dispatches only `click`, so every one of these controls was
+ * MOUSE-ONLY. TipTap's own keymaps happen to rescue nine of them (⌘B, ⌘I, ⌘U,
+ * the lists, undo/redo), which is why this went unnoticed — but Insert table,
+ * Cite the selected claim, Comment on the selection, and all six table controls
+ * had no keyboard path at all. On a surface for authoring CTD modules, "build a
+ * table" being pointer-exclusive fails WCAG 2.1.1 outright.
+ *
+ * `onMouseDown` with `preventDefault` was doing one necessary job: keeping the
+ * editor selection from collapsing when the button takes focus. That is
+ * preserved — the mousedown handler now ONLY prevents the default, and `click`
+ * does the work, so both input methods run the same path exactly once.
+ *
+ * `aria-pressed` is `false` rather than absent when off: omitting it tells a
+ * screen reader "not a toggle" instead of "not pressed".
+ */
+const RB = React.memo(function RB({
+  onClick,
+  active,
+  title,
+  shortcut,
+  children,
+  disabled,
+}: {
+  onClick: () => void;
+  active?: boolean;
+  title: string;
+  /** Shown in the tooltip so the shortcut is discoverable. */
+  shortcut?: string;
+  children: React.ReactNode;
+  disabled?: boolean;
+}) {
+  const label = shortcut ? `${title} (${shortcut})` : title;
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      aria-pressed={active ?? false}
+      disabled={disabled}
+      /* Keeps the editor selection alive when focus moves to the button; the
+         activation itself is `click`, so keyboard and pointer agree. */
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={() => { if (!disabled) onClick(); }}
+      className="rse-rb"
+      data-active={active || undefined}
+      data-testid={`rse-rb-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+    >
+      {children}
+    </button>
+  );
+});
+
 export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSectionEditorProps>(
   function RichSectionEditor(
     {
@@ -212,6 +317,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       lineage = null,
       track = null,
       commentsApi = null,
+      imagesApi = null,
       collab = null,
     },
     ref,
@@ -227,6 +333,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     // authoringAnaPane's test in CI: two buttons named "Draft with AnA" on
     // screen at once, the second of which should not have been there at all.
     const [editorReady, setEditorReady] = useState(false);
+    /** TipTap's own emptiness verdict, not "0 words": a section holding only
+     *  a figure has zero words and is NOT empty — offering "Draft with AnA"
+     *  over it would assert an empty state that is false. */
+    const [docEmpty, setDocEmpty] = useState(false);
     const [trackOn, setTrackOn] = useState<boolean>(track?.enabled ?? false);
     const [suggestions, setSuggestions] = useState<SuggestionRange[]>([]);
     const [reviewOpen, setReviewOpen] = useState(false);
@@ -234,9 +344,37 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       'off' | 'connecting' | 'connected' | 'disconnected' | 'denied'
     >(collab ? 'connecting' : 'off');
     const [restoreOffer, setRestoreOffer] = useState<string | null>(null);
+    /* ── Find & replace bar state ──
+       The query text lives here; the matches and the focused index live in
+       the editor's plugin state (the one source of truth for what is
+       highlighted) and are mirrored into `findInfo` for the counter. */
+    const [findOpen, setFindOpen] = useState(false);
+    const [findQuery, setFindQuery] = useState('');
+    const [findCase, setFindCase] = useState(false);
+    const [replaceWith, setReplaceWith] = useState('');
+    const [findInfo, setFindInfo] = useState({ count: 0, active: -1 });
+    const findInputRef = useRef<HTMLInputElement>(null);
     const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastSavedRef = useRef<string>(value ?? '');
     const editorHostRef = useRef<HTMLDivElement>(null);
+    /** Content a debounced autosave has been armed for but not yet written.
+     *  Held so an unmount inside the debounce window flushes it instead of
+     *  dropping it — see the unmount effect below. */
+    const pendingAutosaveRef = useRef<string | null>(null);
+    /** `onSave` as of the last render, readable from the unmount cleanup
+     *  (which closes over the first render's props otherwise). */
+    const onSaveRef = useRef(onSave);
+    useEffect(() => {
+      onSaveRef.current = onSave;
+    });
+
+    /** `track.onResolve` as of the last render. The extension list is built
+     *  once per mount, so configuring the callback directly would freeze the
+     *  first render's closure and post decisions against a stale document id. */
+    const onResolveRef = useRef(track?.onResolve);
+    useEffect(() => {
+      onResolveRef.current = track?.onResolve;
+    });
 
     /* ── Live co-editing runtime (one Y.Doc + provider per mount) ── */
     const collabRuntime = useMemo(() => {
@@ -272,7 +410,17 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const extensions = useMemo(() => {
       const exts: any[] = [
         StarterKit.configure({
-          heading: { levels: [1, 2, 3] },
+          /* CTD sections nest to five levels — 2.7.3.1.2 — and the schema
+             stopped at three, so a writer could not build the hierarchy the
+             document is navigated by. The parser clamped anything deeper with
+             Math.min(3, …), which flattened an H4 that was already stored and
+             passed the round-trip fidelity gate untouched: that gate compares
+             TEXT, and a demoted heading keeps every character. */
+          heading: { levels: [1, 2, 3, 4, 5] },
+          // A link in the canvas is a mark being edited, not a navigation:
+          // clicking it must place the caret, and the ribbon's Link control
+          // is where the href is read or changed.
+          link: { openOnClick: false, autolink: true },
           // Yjs owns undo/redo when live co-editing is on.
           ...(collabRuntime ? { undoRedo: false } : {}),
         }),
@@ -282,13 +430,24 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         // flattened to plain text (BP-W1-1).
         Superscript,
         Subscript,
+        // Same defect class as sup/sub: installed, declared, imported nowhere —
+        // so an author could not centre a table caption and stored <mark>
+        // highlights flattened to plain text on the next save.
+        TextAlign.configure({ types: ['heading', 'paragraph'] }),
+        Highlight,
+        // The schema can hold a figure now; the fidelity gate stops refusing
+        // rich mode for content that contains one (see `boot` below).
+        AuthoringImage,
         TrackChanges.configure({
           enabled: (track?.enabled ?? false) && !readOnly,
           author: track?.author ?? { id: 'unknown', name: 'Unknown author' },
+          // Stable identity reading the latest handler — see onResolveRef.
+          onResolve: (d: SuggestionDecision) => onResolveRef.current?.(d),
         }),
         CommentAnchor.configure({
           onAnchorClick: commentsApi?.onOpen ?? null,
         }),
+        FindReplace,
       ];
       if (placeholder) exts.push(Placeholder.configure({ placeholder }));
       if (collabRuntime) exts.push(Collaboration.configure({ document: collabRuntime.doc }));
@@ -305,12 +464,13 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       }
       const html = looksLikeHtml(stored) ? stored : plainTextToHtml(stored);
       // The fidelity gate below compares TEXT, so markup that carries no text
-      // — an <img>, most of a <figure> — passes the gate, is dropped by the
-      // parse, and is silently rewritten out of the record on the next save.
-      // The schema has no image node yet (image support needs a governed
-      // storage decision), so content holding one is edited in source mode,
-      // where the raw string round-trips byte-for-byte.
-      if (/<(img|figure|svg|video|embed|object)[\s/>]/i.test(stored)) {
+      // passes the gate, is dropped by the parse, and is silently rewritten
+      // out of the record on the next save. <img> is representable now — the
+      // schema holds an image node backed by the governed image store — but
+      // figure/svg/video/embed/object still are not, so content holding one
+      // of those is edited in source mode, where the raw string round-trips
+      // byte-for-byte.
+      if (/<(figure|svg|video|embed|object)[\s/>]/i.test(stored)) {
         return { mode: 'source' as const, html: null, verdict: null };
       }
       try {
@@ -328,15 +488,62 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     /* ── Source mode state (raw stored string, same save path) ── */
     const [sourceText, setSourceText] = useState<string>(value ?? '');
 
+    /* The footer's word count comes from the TipTap editor, which in source
+       mode is constructed EMPTY — so a 120-word section under the fidelity
+       gate reported "0 words". Fabricated metadata, on exactly the sections the
+       gate flagged as most delicate. In source mode the textarea is the
+       document, so it is what gets counted. */
+    const displayWords = boot.mode === 'source' ? wordsOf(htmlVisibleText(sourceText)) : words;
+
     const editor = useEditor(
       {
         extensions,
+        /* THE RIBBON HAS TO FOLLOW THE CARET.
+           Without this, TipTap re-renders the component only when the DOCUMENT
+           changes — never on a bare selection move — so every control that
+           reflects where the caret IS was stale until you typed a character:
+           click into a table and the +Row/+Col/Hdr/delete controls never
+           appeared (while "Insert table" stayed on offer, so pressing it nested
+           a table inside a cell); select bold text and B did not light; put the
+           caret in an H2 and the style picker still read "Paragraph"; arm bold
+           on a collapsed caret and nothing indicated it.
+           This option is a boolean in TipTap 3, so the cost is a re-render per
+           transaction — including caret movement. That is affordable now and
+           was not before: `RB` is hoisted to module scope and memoized, so a
+           re-render no longer tears down and rebuilds every ribbon button's DOM
+           (it did, on every keystroke, dropping focus to <body>). If this ever
+           needs to be cheaper, the answer is to memoize what the ribbon reads,
+           not to go back to a toolbar that does not know where the caret is. */
+        shouldRerenderOnTransaction: true,
         editable: !readOnly && boot.mode === 'rich',
         editorProps: {
           attributes: {
             role: 'textbox',
             'aria-multiline': 'true',
             ...(ariaLabel ? { 'aria-label': ariaLabel } : {}),
+          },
+          // A pasted or dropped image file goes through the same validated
+          // upload as the ribbon button. When images are not enabled here,
+          // fall through to the default handling instead of swallowing it.
+          handlePaste: (_view, event) => {
+            if (!imagesEnabledRef.current) return false;
+            const file = Array.from(event.clipboardData?.files ?? []).find((f) =>
+              f.type.startsWith('image/'),
+            );
+            if (!file) return false;
+            event.preventDefault();
+            void insertImageFileRef.current(file);
+            return true;
+          },
+          handleDrop: (_view, event) => {
+            if (!imagesEnabledRef.current) return false;
+            const file = Array.from(event.dataTransfer?.files ?? []).find((f) =>
+              f.type.startsWith('image/'),
+            );
+            if (!file) return false;
+            event.preventDefault();
+            void insertImageFileRef.current(file);
+            return true;
           },
         },
         // With Yjs, content comes from the synced doc (seeded below), never
@@ -348,10 +555,12 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           setDirty(isDirty);
           setSaveState((s) => (isDirty ? (s === 'saving' ? s : 'dirty') : 'saved'));
           setWords(wordsOf(ed.getText()));
+          setDocEmpty(ed.isEmpty);
           setSuggestions(collectSuggestions(ed.state.doc));
           cacheDraft(serialized);
           if (autosaveMs != null && isDirty) {
             if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+            pendingAutosaveRef.current = serialized;
             autosaveTimer.current = setTimeout(() => void doSave(), autosaveMs);
           }
         },
@@ -365,12 +574,38 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             lastSavedRef.current = serializeEditor(ed, format);
           }
           setWords(wordsOf(ed.getText()));
+          setDocEmpty(ed.isEmpty);
           setSuggestions(collectSuggestions(ed.state.doc));
           setEditorReady(true);
         },
       },
       [],
     );
+
+    /* THE EDITOR MUST STOP ACCEPTING KEYSTROKES WHEN THE RECORD SEALS.
+     *
+     * `editable` above is read ONCE, at construction, and never again. With an
+     * empty dependency array TipTap re-applies changed options on each render
+     * but deliberately pins editability to its current value
+     * (@tiptap/react: `setOptions({ ...options, editable: editor.isEditable })`),
+     * so a later `readOnly` prop change had no effect whatsoever. Nothing
+     * remounts the editor on a freeze either: the host keys it on
+     * `sectionId + contentEpoch`, and freezing bumps neither.
+     *
+     * What the author saw: they freeze or e-sign the open document — or a
+     * colleague does and the list refreshes — the banner appears, the ribbon
+     * disappears, the Save button greys out, AND THE CANVAS KEEPS TAKING TEXT.
+     * They write into a signed record that no longer has any way to accept it,
+     * and the save path is refused server-side, so every word is lost.
+     *
+     * DocumentAuthoring carries a 16-line comment asserting this was fixed and
+     * that "the canvas stops accepting keystrokes rather than accepting them
+     * and losing them at save time". It did not; this is that fix. */
+    useEffect(() => {
+      if (!editor || editor.isDestroyed) return;
+      const shouldEdit = !readOnly && boot.mode === 'rich';
+      if (editor.isEditable !== shouldEdit) editor.setEditable(shouldEdit);
+    }, [editor, readOnly, boot.mode]);
 
     /* Seed a first-ever collab doc from the stored content once synced. */
     useEffect(() => {
@@ -456,6 +691,12 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       const serialized =
         boot.mode === 'source' ? sourceText : editor ? serialize(editor) : null;
       if (serialized == null) return false;
+      // Whatever a debounce was armed for, this write supersedes it.
+      if (autosaveTimer.current) {
+        clearTimeout(autosaveTimer.current);
+        autosaveTimer.current = null;
+      }
+      pendingAutosaveRef.current = null;
       if (serialized === lastSavedRef.current) return true;
       setSaveState('saving');
       try {
@@ -483,6 +724,58 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     useEffect(() => {
       onDirtyChange?.(dirty);
     }, [dirty, onDirtyChange]);
+
+    /* ── Leaving the page over unsaved work ──
+       The device crash cache above survives a reload, but it is device-local:
+       it is not the record, it does not travel to another machine, and a
+       colleague opening the section sees the last SAVED text. Closing the tab
+       on an unsaved paragraph therefore loses it from everywhere that matters,
+       silently. The browser's own discard prompt is the only guard that fires
+       before the decision is irreversible, so it is armed here — in the one
+       component that knows whether there is unsaved work — rather than in each
+       host surface. Armed only while genuinely dirty: a page that always
+       refuses to close teaches people to click through the dialog. */
+    useEffect(() => {
+      if (!dirty || readOnly) return;
+      const onBeforeUnload = (e: BeforeUnloadEvent) => {
+        e.preventDefault();
+        // Older engines show the prompt only when returnValue is set; the
+        // string itself has been ignored by every browser for years.
+        e.returnValue = '';
+        return '';
+      };
+      window.addEventListener('beforeunload', onBeforeUnload);
+      return () => window.removeEventListener('beforeunload', onBeforeUnload);
+    }, [dirty, readOnly]);
+
+    /* ── A pending autosave must not die with the mount ──
+       Hosts that pass `autosaveMs` (the MDX dossier drawer) debounce their
+       write. Unmounting inside that window — closing the drawer, switching
+       what is open — used to clear nothing and fire nothing: the timer was
+       dropped with the component and the last edits never reached the server.
+       Flush it directly instead of through `doSave`, which sets state on a
+       component that is going away. A rejection is not swallowed silently: the
+       device cache still holds the text and the next mount offers it back. */
+    useEffect(
+      () => () => {
+        if (autosaveTimer.current) {
+          clearTimeout(autosaveTimer.current);
+          autosaveTimer.current = null;
+        }
+        const pending = pendingAutosaveRef.current;
+        pendingAutosaveRef.current = null;
+        if (pending != null && pending !== lastSavedRef.current) {
+          void (async () => {
+            try {
+              await onSaveRef.current(pending);
+            } catch {
+              /* kept on this device; offered back on the next mount */
+            }
+          })();
+        }
+      },
+      [],
+    );
 
     /* ── Track changes toggle (server column first, then the plugin) ── */
     const toggleTrack = useCallback(async () => {
@@ -522,6 +815,39 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       if (s) onAsk(`Cite this claim: "${s}"`);
     }, [editor, onAsk]);
 
+    /* ── Find & replace ──
+       Declared ahead of the imperative handle, which exposes openFind. Open
+       seeds the query from an explicit preset (the handle's caller knows what
+       it is looking for) or, absent one, from the current selection (the
+       phrase you just noticed is the phrase you want to find). Close clears
+       the plugin state so no stale highlight outlives the bar. Focus stays in
+       the bar's input throughout — findNext moves the editor SELECTION, not
+       the focus, so Enter keeps cycling. Returns false in source mode, where
+       the bar does not render, so a caller can refuse honestly instead of
+       claiming a find it never opened. */
+    const openFind = useCallback((presetQuery?: string) => {
+      if (boot.mode !== 'rich') return false;
+      let seed: string | null = presetQuery?.trim() ? presetQuery.trim() : null;
+      if (seed == null && editor) {
+        const { from, to } = editor.state.selection;
+        if (to > from && to - from <= 120) {
+          const sel = editor.state.doc.textBetween(from, to, ' ').trim();
+          if (sel) seed = sel;
+        }
+      }
+      setFindOpen(true);
+      const q = seed ?? findQuery;
+      if (seed != null) setFindQuery(seed);
+      if (q) editor?.commands.setFindQuery(q, findCase);
+      return true;
+    }, [editor, boot.mode, findQuery, findCase]);
+
+    const closeFind = useCallback(() => {
+      setFindOpen(false);
+      editor?.commands.clearFind();
+      editor?.commands.focus();
+    }, [editor]);
+
     /* ── Imperative handle ── */
     useImperativeHandle(
       ref,
@@ -531,6 +857,17 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           editor ? editor.chain().focus().insertSuggestedContent(text, author).run() : false,
         getContent: () =>
           boot.mode === 'source' ? sourceText : editor ? serialize(editor) : '',
+        takeAcceptedAuthors: () => {
+          /* TipTap types `storage` as a closed map of the extensions it ships
+             with, so a custom extension's slot is reached through the record
+             shape rather than by property access. */
+          const store = (editor?.storage as unknown as
+            | Record<string, { acceptedAuthors?: SuggestionAuthor[] } | undefined>
+            | undefined)?.c2cTrackChanges;
+          const taken = store?.acceptedAuthors ?? [];
+          if (store?.acceptedAuthors) store.acceptedAuthors = [];
+          return taken;
+        },
         selectCommentAnchor: (commentId: string) => {
           if (!editor) return false;
           const range = collectCommentAnchors(editor.state.doc).get(commentId);
@@ -538,20 +875,168 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           editor.chain().focus().setTextSelection(range).scrollIntoView().run();
           return true;
         },
+        openFind,
         focus: () => editor?.commands.focus(),
       }),
-      [doSave, editor, boot.mode, sourceText, serialize],
+      [doSave, editor, boot.mode, sourceText, serialize, openFind],
     );
+
+    /* Mirror the plugin's matches into the counter — on every transaction
+       while the bar is open, because typing, replacing and accepting
+       suggestions all move the matches. */
+    useEffect(() => {
+      if (!findOpen || !editor) return;
+      const refresh = () => {
+        const st = getFindState(editor.state);
+        setFindInfo({ count: st.matches.length, active: st.activeIndex });
+      };
+      refresh();
+      editor.on('transaction', refresh);
+      return () => {
+        editor.off('transaction', refresh);
+      };
+    }, [findOpen, editor]);
+
+    useEffect(() => {
+      if (findOpen) {
+        findInputRef.current?.focus();
+        findInputRef.current?.select();
+      }
+    }, [findOpen]);
+
+    const onFindQueryChange = useCallback(
+      (q: string) => {
+        setFindQuery(q);
+        editor?.commands.setFindQuery(q, findCase);
+      },
+      [editor, findCase],
+    );
+
+    const toggleFindCase = useCallback(() => {
+      const next = !findCase;
+      setFindCase(next);
+      if (findQuery) editor?.commands.setFindQuery(findQuery, next);
+    }, [editor, findCase, findQuery]);
 
     const onKeyDown = useCallback(
       (e: React.KeyboardEvent) => {
         if ((e.metaKey || e.ctrlKey) && e.key === 's') {
           e.preventDefault();
           void doSave();
+        } else if ((e.metaKey || e.ctrlKey) && (e.key === 'f' || e.key === 'F')) {
+          if (boot.mode !== 'rich') return; // source mode: the browser's find works
+          e.preventDefault();
+          openFind();
         }
       },
-      [doSave],
+      [doSave, openFind, boot.mode],
     );
+
+    /* ── Link bar ──
+       The ribbon's Link control opens a small inline bar (no window.prompt):
+       the input reads the selection's current href when the caret is on a
+       link, Apply writes it back through setLink, Remove unsets it. Only
+       http(s) and mailto go in — a scheme-less entry is completed to https,
+       anything else is refused with the reason on screen. */
+    const [linkOpen, setLinkOpen] = useState(false);
+    const [linkHref, setLinkHref] = useState('');
+    const [linkError, setLinkError] = useState<string | null>(null);
+    const linkInputRef = useRef<HTMLInputElement>(null);
+
+    const openLink = useCallback(() => {
+      if (!editor) return;
+      const existing = (editor.getAttributes('link').href as string | undefined) ?? '';
+      setLinkHref(existing);
+      setLinkError(null);
+      setLinkOpen(true);
+    }, [editor]);
+
+    useEffect(() => {
+      if (linkOpen) {
+        linkInputRef.current?.focus();
+        linkInputRef.current?.select();
+      }
+    }, [linkOpen]);
+
+    const closeLink = useCallback(() => {
+      setLinkOpen(false);
+      editor?.commands.focus();
+    }, [editor]);
+
+    const applyLink = useCallback(() => {
+      if (!editor) return;
+      const raw = linkHref.trim();
+      if (!raw) {
+        setLinkError('Enter a URL.');
+        return;
+      }
+      const href = /^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : 'https://' + raw;
+      if (!/^(https?:|mailto:)/i.test(href)) {
+        setLinkError('Only http(s) and mailto links can be inserted.');
+        return;
+      }
+      editor.chain().focus().extendMarkRange('link').setLink({ href }).run();
+      setLinkOpen(false);
+    }, [editor, linkHref]);
+
+    const removeLink = useCallback(() => {
+      editor?.chain().focus().extendMarkRange('link').unsetLink().run();
+      setLinkOpen(false);
+    }, [editor]);
+
+    /* ── Image insertion (ribbon button, paste, drop) ──
+       Validation runs client-side for fast refusal and server-side as the
+       authority. FAIL CLOSED: a refused or failed upload inserts nothing and
+       says why in the notice bar; success inserts the store's reference at
+       the caret. The upload itself is the host's (`imagesApi.upload`) — this
+       component never talks to a store directly. */
+    const [imgNotice, setImgNotice] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const insertImageFile = useCallback(
+      async (file: File): Promise<boolean> => {
+        if (!imagesApi || !editor || readOnly) return false;
+        if (!IMG_MIME.test(file.type)) {
+          setImgNotice(
+            `“${file.name}” is ${file.type || 'of unknown type'} — only PNG, JPEG and GIF images can be inserted, because they are the formats a Word export can embed. Nothing was uploaded.`,
+          );
+          return false;
+        }
+        if (file.size > IMG_MAX_BYTES) {
+          setImgNotice(
+            `“${file.name}” is ${(file.size / (1024 * 1024)).toFixed(1)} MB — the image store accepts up to 8 MB. Nothing was uploaded.`,
+          );
+          return false;
+        }
+        setImgNotice(null);
+        try {
+          const { url } = await imagesApi.upload(file);
+          editor
+            .chain()
+            .focus()
+            .insertAuthoringImage({ src: url, alt: file.name.replace(/\.[a-z0-9]+$/i, '') })
+            .run();
+          return true;
+        } catch (e) {
+          setImgNotice(
+            'The image was not uploaded — ' +
+              (e instanceof Error ? e.message : String(e)) +
+              '. Nothing was inserted.',
+          );
+          return false;
+        }
+      },
+      [imagesApi, editor, readOnly],
+    );
+
+    /* Paste/drop handlers are constructed once inside useEditor; these refs
+       keep them reading the current props instead of the first render's. */
+    const insertImageFileRef = useRef(insertImageFile);
+    const imagesEnabledRef = useRef(!!imagesApi && !readOnly);
+    useEffect(() => {
+      insertImageFileRef.current = insertImageFile;
+      imagesEnabledRef.current = !!imagesApi && !readOnly;
+    });
 
     /* ── Suggestion review actions ── */
     const resolveOne = useCallback(
@@ -574,39 +1059,9 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       [editor],
     );
 
-    const isEmpty = editorReady && words === 0;
+    const isEmpty = editorReady && docEmpty;
     const full = chrome === 'full';
 
-    /* ── Ribbon button helper ── */
-    const RB = ({
-      onClick,
-      active,
-      title,
-      children,
-      disabled,
-    }: {
-      onClick: () => void;
-      active?: boolean;
-      title: string;
-      children: React.ReactNode;
-      disabled?: boolean;
-    }) => (
-      <button
-        type="button"
-        title={title}
-        aria-label={title}
-        aria-pressed={active || undefined}
-        disabled={disabled}
-        onMouseDown={(e) => {
-          e.preventDefault();
-          if (!disabled) onClick();
-        }}
-        className="rse-rb"
-        data-active={active || undefined}
-      >
-        {children}
-      </button>
-    );
 
     const blockValue = !editor
       ? 'p'
@@ -616,7 +1071,11 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           ? 'h2'
           : editor.isActive('heading', { level: 3 })
             ? 'h3'
-            : 'p';
+            : editor.isActive('heading', { level: 4 })
+              ? 'h4'
+              : editor.isActive('heading', { level: 5 })
+                ? 'h5'
+                : 'p';
 
     return (
       <div className="rse-root" onKeyDown={onKeyDown}>
@@ -626,6 +1085,16 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             Rich editing is off for this section: its stored content could not be
             represented without altering text (the round-trip check failed), so
             you are editing the raw source instead. Nothing was rewritten.
+          </div>
+        )}
+
+        {/* ── Image refusal / failure notice (fail closed, stated) ── */}
+        {imgNotice && (
+          <div className="rse-gate" role="status">
+            <span style={{ flex: 1 }}>{imgNotice}</span>
+            <button type="button" className="rse-link" onClick={() => setImgNotice(null)}>
+              Dismiss
+            </button>
           </div>
         )}
 
@@ -653,40 +1122,67 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 const v = e.target.value;
                 if (!editor) return;
                 if (v === 'p') editor.chain().focus().setParagraph().run();
-                else editor.chain().focus().toggleHeading({ level: Number(v.slice(1)) as 1 | 2 | 3 }).run();
+                else editor.chain().focus().toggleHeading({ level: Number(v.slice(1)) as 1 | 2 | 3 | 4 | 5 }).run();
               }}
             >
               <option value="p">Paragraph</option>
               <option value="h1">Heading 1</option>
               <option value="h2">Heading 2</option>
               <option value="h3">Heading 3</option>
+              <option value="h4">Heading 4</option>
+              <option value="h5">Heading 5</option>
             </select>
             <span className="rse-sep" />
-            <RB title="Bold" active={editor?.isActive('bold')} onClick={() => editor?.chain().focus().toggleBold().run()}>
+            <RB title="Bold" shortcut="⌘B" active={editor?.isActive('bold')} onClick={() => editor?.chain().focus().toggleBold().run()}>
               <b>B</b>
             </RB>
-            <RB title="Italic" active={editor?.isActive('italic')} onClick={() => editor?.chain().focus().toggleItalic().run()}>
+            <RB title="Italic" shortcut="⌘I" active={editor?.isActive('italic')} onClick={() => editor?.chain().focus().toggleItalic().run()}>
               <i>I</i>
             </RB>
-            <RB title="Underline" active={editor?.isActive('underline')} onClick={() => editor?.chain().focus().toggleUnderline().run()}>
+            <RB title="Underline" shortcut="⌘U" active={editor?.isActive('underline')} onClick={() => editor?.chain().focus().toggleUnderline().run()}>
               <span style={{ textDecoration: 'underline' }}>U</span>
             </RB>
-            <RB title="Superscript" active={editor?.isActive('superscript')} onClick={() => editor?.chain().focus().toggleSuperscript().run()}>
+            <RB title="Superscript" shortcut="⌘." active={editor?.isActive('superscript')} onClick={() => editor?.chain().focus().toggleSuperscript().run()}>
               <span>
                 x<sup>2</sup>
               </span>
             </RB>
-            <RB title="Subscript" active={editor?.isActive('subscript')} onClick={() => editor?.chain().focus().toggleSubscript().run()}>
+            <RB title="Subscript" shortcut="⌘," active={editor?.isActive('subscript')} onClick={() => editor?.chain().focus().toggleSubscript().run()}>
               <span>
                 x<sub>2</sub>
               </span>
             </RB>
-            <span className="rse-sep" />
-            <RB title="Bullet list" active={editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
-              {'☰'}
+            <RB title="Highlight" active={editor?.isActive('highlight')} onClick={() => editor?.chain().focus().toggleHighlight().run()}>
+              <span className="rse-hl-glyph">ab</span>
             </RB>
-            <RB title="Numbered list" active={editor?.isActive('orderedList')} onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
-              1.
+            <span className="rse-sep" />
+            <RB title="Bullet list" shortcut="⌘⇧8" active={editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
+              {I.listBullet}
+            </RB>
+            <RB title="Numbered list" shortcut="⌘⇧7" active={editor?.isActive('orderedList')} onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
+              {I.listOrdered}
+            </RB>
+            <span className="rse-sep" />
+            <RB title="Align left" active={editor?.isActive({ textAlign: 'left' })} onClick={() => editor?.chain().focus().setTextAlign('left').run()}>
+              {I.alignLeft}
+            </RB>
+            <RB title="Align center" active={editor?.isActive({ textAlign: 'center' })} onClick={() => editor?.chain().focus().setTextAlign('center').run()}>
+              {I.alignCenter}
+            </RB>
+            <RB title="Align right" active={editor?.isActive({ textAlign: 'right' })} onClick={() => editor?.chain().focus().setTextAlign('right').run()}>
+              {I.alignRight}
+            </RB>
+            <RB
+              title={editor?.isActive('link') ? 'Edit or remove the link' : 'Insert a link'}
+              active={editor?.isActive('link') || linkOpen}
+              disabled={
+                !linkOpen &&
+                !editor?.isActive('link') &&
+                editor?.state.selection.from === editor?.state.selection.to
+              }
+              onClick={() => (linkOpen ? closeLink() : openLink())}
+            >
+              {I.link}
             </RB>
             <span className="rse-sep" />
             {/* A CTD dossier is a tabular document — Module 3 most of all. The
@@ -697,7 +1193,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 title="Insert table (3 columns × 3 rows, header row)"
                 onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
               >
-                {'⊞'} Table
+                {I.table} Table
               </RB>
             ) : (
               <>
@@ -713,13 +1209,42 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 <RB title="Delete column" onClick={() => editor?.chain().focus().deleteColumn().run()}>
                   −Col
                 </RB>
+                {/* A CTD specification table is written with spanning headers
+                    ("Acceptance criteria" over three columns). The commands
+                    shipped with TableKit from day one; the ribbon never
+                    offered them. */}
+                <RB
+                  title="Merge the selected cells"
+                  disabled={!editor?.can().mergeCells()}
+                  onClick={() => editor?.chain().focus().mergeCells().run()}
+                >
+                  Merge
+                </RB>
+                <RB
+                  title="Split the merged cell"
+                  disabled={!editor?.can().splitCell()}
+                  onClick={() => editor?.chain().focus().splitCell().run()}
+                >
+                  Split
+                </RB>
                 <RB title="Toggle header row" onClick={() => editor?.chain().focus().toggleHeaderRow().run()}>
                   Hdr
                 </RB>
+                <RB title="Toggle header column" onClick={() => editor?.chain().focus().toggleHeaderColumn().run()}>
+                  HdrCol
+                </RB>
                 <RB title="Delete table" onClick={() => editor?.chain().focus().deleteTable().run()}>
-                  {'⊟'}
+                  {I.close}
                 </RB>
               </>
+            )}
+            {imagesApi && (
+              <RB
+                title="Insert an image (PNG, JPEG or GIF — stored in the tenant's governed image store)"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {I.image}
+              </RB>
             )}
             <select
               className="rse-sel"
@@ -740,11 +1265,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
               ))}
             </select>
             <span className="rse-sep" />
-            <RB title="Undo" onClick={() => editor?.chain().focus().undo().run()}>
-              {'↩'}
+            <RB title="Undo" shortcut="⌘Z" onClick={() => editor?.chain().focus().undo().run()}>
+              {I.undo}
             </RB>
-            <RB title="Redo" onClick={() => editor?.chain().focus().redo().run()}>
-              {'↪'}
+            <RB title="Redo" shortcut="⌘⇧Z" onClick={() => editor?.chain().focus().redo().run()}>
+              {I.redo}
+            </RB>
+            <span className="rse-sep" />
+            <RB title="Find & replace (Ctrl/⌘-F)" active={findOpen} onClick={() => (findOpen ? closeFind() : openFind())}>
+              {I.search}
             </RB>
             {onAsk && (
               <>
@@ -812,6 +1341,159 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           </div>
         )}
 
+        {/* ── Find & replace bar ──
+            Works read-only too (finding is not editing); the replace half is
+            drawn only when the canvas is editable. Enter finds the next match,
+            Shift-Enter the previous, Escape closes and clears the highlights.
+            The editor selection follows the focused match; DOM focus stays
+            here so the keys keep cycling. */}
+        {findOpen && boot.mode === 'rich' && (
+          <div
+            className="rse-find"
+            role="search"
+            aria-label="Find in this section"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                closeFind();
+              }
+            }}
+          >
+            <input
+              ref={findInputRef}
+              className="rse-find-input"
+              type="text"
+              placeholder="Find in this section…"
+              aria-label="Text to find"
+              value={findQuery}
+              onChange={(e) => onFindQueryChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (e.shiftKey) editor?.commands.findPrevious();
+                  else editor?.commands.findNext();
+                }
+              }}
+            />
+            <span className="rse-find-count" aria-live="polite">
+              {findQuery
+                ? findInfo.count === 0
+                  ? 'No matches'
+                  : `${findInfo.active + 1} of ${findInfo.count}`
+                : ''}
+            </span>
+            <RB title="Previous match (Shift-Enter)" disabled={findInfo.count === 0} onClick={() => editor?.commands.findPrevious()}>
+              ‹
+            </RB>
+            <RB title="Next match (Enter)" disabled={findInfo.count === 0} onClick={() => editor?.commands.findNext()}>
+              ›
+            </RB>
+            <RB title="Match case" active={findCase} onClick={toggleFindCase}>
+              Aa
+            </RB>
+            {!readOnly && (
+              <>
+                <span className="rse-sep" />
+                <input
+                  className="rse-find-input"
+                  type="text"
+                  placeholder="Replace with…"
+                  aria-label="Replacement text"
+                  value={replaceWith}
+                  onChange={(e) => setReplaceWith(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      editor?.commands.replaceActiveMatch(replaceWith);
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="rse-link"
+                  disabled={findInfo.active < 0}
+                  onClick={() => editor?.commands.replaceActiveMatch(replaceWith)}
+                >
+                  Replace
+                </button>
+                <button
+                  type="button"
+                  className="rse-link"
+                  disabled={findInfo.count === 0}
+                  title="One transaction — a single undo restores everything"
+                  onClick={() => editor?.commands.replaceAllMatches(replaceWith)}
+                >
+                  Replace all{findInfo.count > 1 ? ` (${findInfo.count})` : ''}
+                </button>
+                {trackOn && findInfo.count > 0 && (
+                  <span className="rse-find-note" title="Replacements are captured as attributed suggestions; the replaced text stays visible, struck through, until each edit is accepted or rejected.">
+                    replacements are tracked
+                  </span>
+                )}
+              </>
+            )}
+            <span style={{ flex: 1 }} />
+            <button type="button" className="rse-link" aria-label="Close find" onClick={closeFind}>
+              {I.close}
+            </button>
+          </div>
+        )}
+
+        {/* ── Link bar ── */}
+        {linkOpen && boot.mode === 'rich' && !readOnly && (
+          <div
+            className="rse-find"
+            role="group"
+            aria-label="Link"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                closeLink();
+              }
+            }}
+          >
+            <span className="rse-find-label">{I.link} Link</span>
+            <input
+              ref={linkInputRef}
+              className="rse-find-input"
+              type="text"
+              inputMode="url"
+              placeholder="https://…"
+              aria-label="Link URL"
+              value={linkHref}
+              onChange={(e) => {
+                setLinkHref(e.target.value);
+                setLinkError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  applyLink();
+                }
+              }}
+            />
+            <button type="button" className="rse-link" onClick={applyLink}>
+              Apply
+            </button>
+            {editor?.isActive('link') && (
+              <button type="button" className="rse-link" onClick={removeLink}>
+                Remove link
+              </button>
+            )}
+            {linkError && (
+              <span className="rse-find-err" role="alert">
+                {linkError}
+              </span>
+            )}
+            <span style={{ flex: 1 }} />
+            <button type="button" className="rse-link" aria-label="Close link editor" onClick={closeLink}>
+              {I.close}
+            </button>
+          </div>
+        )}
+
         {/* ── Canvas ── */}
         <div className="rse-body" ref={editorHostRef}>
           {boot.mode === 'source' ? (
@@ -835,6 +1517,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 }
                 if (autosaveMs != null && isDirty) {
                   if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+                  pendingAutosaveRef.current = e.target.value;
                   autosaveTimer.current = setTimeout(() => void doSave(), autosaveMs);
                 }
               }}
@@ -876,7 +1559,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
               {SAVE_META[saveState].label}
             </span>
             <span className="rse-foot-sep">{'·'}</span>
-            <span>{words.toLocaleString()} words</span>
+            <span>{displayWords.toLocaleString()} words</span>
             {trackOn && (
               <>
                 <span className="rse-foot-sep">{'·'}</span>
@@ -906,6 +1589,22 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           </div>
         )}
 
+        {imagesApi && (
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/gif"
+            style={{ display: 'none' }}
+            aria-hidden="true"
+            tabIndex={-1}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void insertImageFile(f);
+              e.target.value = '';
+            }}
+          />
+        )}
+
         <style>{`
         .rse-root { display:flex; flex-direction:column; min-height:0; background:var(--bg-000,#fff); border-radius:inherit; }
         .rse-gate { display:flex; gap:10px; align-items:baseline; padding:8px 12px; font-size:12px; color:var(--text-300,#475467); background:var(--bg-50,#f9fafb); border-bottom:1px solid var(--border,#e4e7ec); }
@@ -927,8 +1626,20 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         .rse-review-txt { color:var(--text-300,#475467); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .rse-link { font-size:11px; border:none; background:none; color:var(--accent-100,#2563eb); cursor:pointer; padding:2px 4px; }
         .rse-link:disabled { color:var(--text-400,#667085); cursor:default; }
+        .rse-find { display:flex; align-items:center; gap:6px; padding:6px 10px; background:var(--bg-50,#f9fafb); border-bottom:1px solid var(--border,#e4e7ec); flex-wrap:wrap; }
+        .rse-find-label { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:var(--text-300,#475467); }
+        .rse-find-input { flex:0 1 220px; min-width:120px; height:24px; font-size:12px; padding:2px 8px; border:1px solid var(--border-control,#d0d5dd); border-radius:4px; background:var(--bg-000,#fff); color:var(--text-100,#101828); }
+        .rse-find-count { font-size:11px; color:var(--text-400,#667085); min-width:64px; }
+        .rse-find-err { font-size:11px; color:var(--error,#b42318); }
+        .rse-find-note { font-size:10px; color:var(--warning,#b54708); }
+        .rse-find-hit { background:color-mix(in srgb, var(--warning,#b54708) 25%, transparent); border-radius:2px; }
+        .rse-find-hit-active { background:color-mix(in srgb, var(--warning,#b54708) 50%, transparent); box-shadow:0 0 0 1px var(--warning,#b54708); }
+        .rse-hl-glyph { background:color-mix(in srgb, var(--warning,#b54708) 30%, transparent); padding:0 3px; border-radius:2px; }
         .rse-body { flex:1; min-height:0; overflow-y:auto; }
-        .rse-body .tiptap { outline:none; min-height:320px; padding:18px 20px; font-size:14px; line-height:1.75; color:var(--text-100,#101828); font-family:Georgia,"Times New Roman",serif; }
+        .rse-body .tiptap { outline:none; min-height:320px; padding:18px 20px; font-size:14px; line-height:1.75; color:var(--text-100,#101828); font-family:var(--font-serif,Georgia,"Times New Roman",serif); }
+        /* Measure lives on the prose blocks, not the canvas: a CTD table must be
+           free to use the full column while paragraphs keep a readable line. */
+        .rse-body .tiptap > p, .rse-body .tiptap > h1, .rse-body .tiptap > h2, .rse-body .tiptap > h3, .rse-body .tiptap > ul, .rse-body .tiptap > ol, .rse-body .tiptap > blockquote { max-width:78ch; }
         .rse-body .tiptap p { margin:0 0 12px; }
         .rse-body .tiptap h1 { font-size:18px; font-weight:700; margin:0 0 8px; }
         .rse-body .tiptap h2 { font-size:15px; font-weight:700; margin:20px 0 8px; }
@@ -938,6 +1649,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         .rse-body .tiptap table { width:100%; border-collapse:collapse; margin:16px 0; font-size:13px; }
         .rse-body .tiptap th { padding:8px 12px; background:var(--bg-50,#f9fafb); border:1px solid var(--border,#e4e7ec); font-weight:600; text-align:left; }
         .rse-body .tiptap td { padding:7px 12px; border:1px solid var(--border,#e4e7ec); }
+        .rse-body .tiptap mark { background:color-mix(in srgb, var(--warning,#b54708) 28%, transparent); padding:0 1px; border-radius:2px; }
+        .rse-img { margin:16px auto; max-width:100%; text-align:center; }
+        .rse-img img { max-width:100%; height:auto; border-radius:4px; }
+        .rse-img img:not([src]) { display:none; }
+        .rse-img-status { display:block; font-size:11px; color:var(--text-400,#667085); padding:16px 12px; background:var(--bg-50,#f9fafb); border:1px dashed var(--border-control,#d0d5dd); border-radius:4px; }
+        .rse-img[data-error="1"] .rse-img-status { color:var(--error,#b42318); border-color:var(--error,#b42318); }
+        .rse-body .tiptap .ProseMirror-selectednode { outline:2px solid var(--accent-100,#2563eb); outline-offset:2px; border-radius:4px; }
+        .rse-body .tiptap a { color:var(--accent-100,#2563eb); text-decoration:underline; text-underline-offset:2px; }
+        .rse-body .tiptap .selectedCell { outline:2px solid color-mix(in srgb, var(--accent-100,#2563eb) 55%, transparent); outline-offset:-2px; }
         .rse-body .tiptap p.is-editor-empty:first-child::before { content:attr(data-placeholder); float:left; color:var(--text-400,#667085); pointer-events:none; height:0; }
         .rse-ins { background:color-mix(in srgb, var(--success,#067647) 14%, transparent); text-decoration:underline; text-decoration-color:var(--success,#067647); }
         .rse-del { background:color-mix(in srgb, var(--error,#b42318) 12%, transparent); text-decoration:line-through; text-decoration-color:var(--error,#b42318); }

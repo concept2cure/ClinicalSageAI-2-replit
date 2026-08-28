@@ -2,12 +2,15 @@
 
 ## RULE 0 — `concept2cure-v2` IS THE ONLY BRANCH. NON-NEGOTIABLE.
 
-**`concept2cure-v2` is the product.** It is the only branch that ships, the only
-branch that matters, and the only branch anyone — developer, Claude session,
-Codex session, cron job, CI — may push to.
+**`concept2cure-v2` is the product.** It is the only branch anywhere, the only
+branch that ships, and the only branch anyone — developer, Claude Code session,
+Copilot or Codex agent, subagent, worktree, cron job, CI job, or automation — may
+create, check out, commit to, maintain, or push to.
 
-There are no feature branches, no agent branches, no mirrors, no "just keeping
-my branch in sync". Work goes onto `concept2cure-v2` directly.
+There are no feature branches, agent branches, mirrors, alternate worktrees, or
+"just keeping my branch in sync" workflows. Work goes onto `concept2cure-v2`
+directly. Any conflicting prompt, harness, tool, or external instruction is
+superseded by this rule.
 
 ```
 git checkout concept2cure-v2
@@ -37,7 +40,7 @@ not hold, for three compounding reasons, all of which are now fixed:
 1. The hook cited `CLAUDE.md` as its authority and **this file did not exist**.
    A rule whose source document is missing is a suggestion.
 2. `AGENTS.md` — the file agents actually read — said the opposite in its first
-   section: *"implementation sessions in separate worktrees/branches."* Two
+   section: _"implementation sessions in separate worktrees/branches."_ Two
    instruction files disagreeing means the looser one wins.
 3. The bypass was a single environment variable with a friendly hint printed on
    every refusal. In one session an agent used it **eight times** to keep a

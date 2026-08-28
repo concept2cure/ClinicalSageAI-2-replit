@@ -262,6 +262,10 @@
    neither, so the truth is stated where the user is about to act on it. */
 .c2c-v2 .rv-reject-note{margin-top:7px;font-size:11.5px;line-height:1.5;color:var(--text-300);}
 .c2c-v2 .rv-reject-row{display:flex;justify-content:flex-end;gap:8px;margin-top:9px;}
+/* The review-decision modal now writes, so it can be refused — the refusal is
+   announced where the reviewer is looking. */
+.c2c-v2 .esign-err{margin-top:8px;font-size:12px;line-height:1.5;color:var(--error);background:var(--error-muted,transparent);border-radius:var(--radius-md);padding:7px 9px;}
+.c2c-v2 .esign-field textarea{width:100%;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);padding:8px 10px;font-family:var(--font-sans);font-size:13px;line-height:1.5;color:var(--text-100);resize:vertical;box-sizing:border-box;}
 .c2c-v2 .rv-reply{display:flex;gap:8px;align-items:center;padding:0 20px 20px;}
 .c2c-v2 .rv-reply-in{flex:1;height:36px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);padding:0 12px;font:inherit;font-size:13px;color:var(--text-100);}
 .c2c-v2 .rv-reply-in:focus{outline:none;border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
@@ -277,6 +281,11 @@
 .c2c-v2 .cmt-when{color:var(--text-500);}
 .c2c-v2 .cmt-body{font-size:12.5px;line-height:1.55;color:var(--text-200);}
 .c2c-v2 .cmt-actions{display:flex;gap:6px;margin-top:9px;}
+/* Threaded replies: indented under the head comment, joined by a rail line so
+   a thread reads as one conversation, not adjacent guestbook entries. */
+.c2c-v2 .cmt-replies{margin:8px 0 2px 9px;padding-left:12px;border-left:2px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+.c2c-v2 .cmt-resolution{font-size:11.5px;color:var(--text-400);margin:2px 0 4px;}
+.c2c-v2 .cmt-reply .cmt-meta{margin-bottom:3px;}
 
 /* The `.c2c-v2 .kanban` rule that stood here is deleted, not moved. Nothing in
    the v2 tree renders that class — the task board is `.tb-kanban`, which takes

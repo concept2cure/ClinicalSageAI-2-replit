@@ -265,28 +265,27 @@ export interface DomainHistoryLink {
  * Never throws: a failure here costs an index entry, not the history.
  */
 export async function linkDomainHistory(link: DomainHistoryLink): Promise<void> {
-  try {
-    await auditService.logAction({
-      organizationId: link.organizationId ?? undefined,
-      userId: link.userId ?? undefined,
-      action: `domain.${link.domainTable}.${link.action}`,
-      // table_name / record_id are what the coverage query counts on.
-      resourceType: link.domainTable,
-      resourceId: String(link.domainRowId ?? link.subjectId),
-      details: {
-        domainTable: link.domainTable,
-        domainRowId: link.domainRowId ?? null,
-        subjectType: link.subjectType,
-        subjectId: String(link.subjectId),
-        domainAction: link.action,
-        ...(link.details ?? {}),
-      },
-    });
-  } catch (err) {
+  const domainLinkAudit = await auditService.logAction({
+    organizationId: link.organizationId ?? undefined,
+    userId: link.userId ?? undefined,
+    action: `domain.${link.domainTable}.${link.action}`,
+    // table_name / record_id are what the coverage query counts on.
+    resourceType: link.domainTable,
+    resourceId: String(link.domainRowId ?? link.subjectId),
+    details: {
+      domainTable: link.domainTable,
+      domainRowId: link.domainRowId ?? null,
+      subjectType: link.subjectType,
+      subjectId: String(link.subjectId),
+      domainAction: link.action,
+      ...(link.details ?? {}),
+    },
+  });
+  if (!domainLinkAudit.persisted) {
     logger.error('Domain history chain link failed (history itself is unaffected)', {
       domainTable: link.domainTable,
       subjectId: String(link.subjectId),
-      error: err instanceof Error ? err.message : String(err),
+      error: domainLinkAudit.error ?? 'no durable store accepted the row',
     });
   }
 }

@@ -5,6 +5,8 @@
 -- detection during document authoring sessions.
 -- =============================================================================
 
+CREATE SCHEMA IF NOT EXISTS precedent;
+
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS precedent.quality_checkpoints (

@@ -15,7 +15,7 @@ const { svc, audit } = vi.hoisted(() => ({
     assessSufficiency: vi.fn(),
     runReviewerSimulation: vi.fn(),
   },
-  audit: { logAction: vi.fn().mockResolvedValue(undefined) },
+  audit: { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
 }));
 
 vi.mock('../../gspr-postmarket/gspr.service', () => ({

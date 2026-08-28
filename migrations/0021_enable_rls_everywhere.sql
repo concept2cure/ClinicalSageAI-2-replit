@@ -27,10 +27,11 @@
 --     -- — every read and every write of every integer tenant-keyed table, on
 --     -- any connection carrying a real request scope, in EVERY RLS mode (the
 --     -- shadow bypass above is just another disjunct; it does not stop the cast
---     -- being evaluated). It stayed invisible because the app still connects as
---     -- the owner, a superuser for whom RLS is inert, and because every test
---     -- that sets these GUCs sets app.current_org_id to '' — the one value that
---     -- avoids it. It surfaces the moment the runtime uses the non-superuser
+--     -- being evaluated). It stayed invisible because RLS only filters for a
+--     -- connection that is neither a superuser nor the table's owner, so nothing
+--     -- evaluates the policy until the split role is in use — and because every
+--     -- test that sets these GUCs sets app.current_org_id to '' — the one value
+--     -- that avoids it. It surfaces the moment the runtime uses the non-superuser
 --     -- app_service role, which production requires.
 --     --
 --     -- `substring(… from '^[0-9]+$')` EXTRACTS an integer instead of casting
@@ -162,11 +163,9 @@ BEGIN
       CONTINUE;
     END IF;
 
-    -- Refuse to attach a policy to a non-integer column. 0020 should have
-    -- coerced these. If we still see a TEXT column, fail loud — silent
-    -- type cast failures inside RLS are exactly the failure mode this
-    -- whole rollout is designed to avoid.
-    IF rec.data_type NOT IN ('integer', 'bigint', 'smallint') THEN
+    -- TEXT tenant columns must be resolved before this migration. UUID tenant
+    -- columns are valid in UUID-native schemas and use app.current_org_id.
+    IF rec.data_type NOT IN ('integer', 'bigint', 'smallint', 'uuid') THEN
       skipped_drift := skipped_drift + 1;
       RAISE EXCEPTION
         '[rls] %.% column % has type % — run 0020_coerce_text_tenant_columns.sql first',
@@ -184,7 +183,28 @@ BEGIN
     EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I',
                    policy_name, rec.table_schema, rec.table_name);
 
-    policy_sql := format(
+    IF rec.data_type = 'uuid' THEN
+      policy_sql := format(
+      $f$
+        CREATE POLICY %I ON %I.%I
+          FOR ALL
+          USING (
+            NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+            OR %I = NULLIF(current_setting('app.current_org_id', TRUE), '')::UUID
+            OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
+          )
+          WITH CHECK (
+            NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+            OR %I = NULLIF(current_setting('app.current_org_id', TRUE), '')::UUID
+            OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
+          )
+      $f$,
+      policy_name,
+      rec.table_schema, rec.table_name,
+      rec.column_name, rec.column_name
+    );
+    ELSE
+      policy_sql := format(
       $f$
         CREATE POLICY %I ON %I.%I
           FOR ALL
@@ -205,7 +225,8 @@ BEGIN
       rec.table_schema, rec.table_name,
       rec.column_name, rec.column_name,  -- USING
       rec.column_name, rec.column_name   -- WITH CHECK
-    );
+      );
+    END IF;
 
     EXECUTE policy_sql;
 

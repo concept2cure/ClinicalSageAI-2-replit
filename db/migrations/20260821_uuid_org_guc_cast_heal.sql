@@ -24,7 +24,8 @@
 --
 -- This is the integer-side defect from migrations/0021_enable_rls_everywhere.sql
 -- in the other direction, and it was invisible for the same reason: the
--- application connects as the owner, a superuser for whom RLS is inert.
+-- policy is only ever evaluated for a connection that is neither a superuser
+-- nor the table's owner — so nothing exercises it until the split role is in use.
 --
 -- ── The fix ──────────────────────────────────────────────────────────────────
 -- identity.current_org_id() now EXTRACTS a uuid instead of casting whatever is
@@ -101,6 +102,19 @@ DECLARE
   unsafe_bare   CONSTANT TEXT :=
     '(current_setting(''app.current_org_id''::text, true))::uuid';
   safe_call     CONSTANT TEXT := 'identity.current_org_id()';
+  -- The INTEGER-cast form of the same mistake. migrations/0005_csr_knowledge_database.sql
+  -- generates nine `rls_org_*` policies that cast app.current_org_id to int, and
+  -- the tenant sweep never repaired them because it only rebuilds a policy named
+  -- tenant_isolation_policy. Being PERMISSIVE beside the canonical policy does
+  -- not help: PostgreSQL evaluates both sides of the OR, so the raise lands
+  -- first. Same remedy as everywhere else — extract an integer instead of
+  -- casting whatever is in the GUC.
+  unsafe_int_nullif CONSTANT TEXT :=
+    '(NULLIF(current_setting(''app.current_org_id''::text, true), ''''::text))::integer';
+  unsafe_int_bare   CONSTANT TEXT :=
+    '(current_setting(''app.current_org_id''::text, true))::integer';
+  safe_int          CONSTANT TEXT :=
+    '("substring"(current_setting(''app.current_org_id''::text, true), ''^[0-9]+$''::text))::integer';
 BEGIN
   IF to_regprocedure('identity.current_org_id()') IS NULL THEN
     RAISE NOTICE '[uuid-guc-heal] identity.current_org_id() is absent; nothing to repoint. '
@@ -122,16 +136,44 @@ BEGIN
     -- are already correct — and then report each one as an unrecognised spelling
     -- needing review, which is noise that trains people to ignore the notice.
     -- The '[0-9a-fA-F]{8}' marker appears only in the extraction pattern.
+    -- UNGUARDED casts only, and each cast type excludes its OWN guarded marker.
+    --
+    -- A single blanket exclusion does not work: the guarded forms still name the
+    -- GUC and still end in ::uuid / ::integer, so selecting on those alone drags
+    -- in every already-correct expression, finds nothing to replace, and reports
+    -- each as an unrecognised spelling needing review — noise that teaches
+    -- people to ignore the one notice that matters. Splitting the branches also
+    -- keeps a policy that is guarded on one cast and unguarded on the other
+    -- eligible for the half that still needs repair.
+    --
+    -- Markers: '[0-9a-fA-F]{8}' appears only in the uuid extraction pattern,
+    -- '^[0-9]+$' only in the integer one.
     WHERE (
-           COALESCE(pg_get_expr(pol.polqual, pol.polrelid), '')      LIKE '%current_setting(''app.current_org_id''%::uuid%'
-        OR COALESCE(pg_get_expr(pol.polwithcheck, pol.polrelid), '') LIKE '%current_setting(''app.current_org_id''%::uuid%'
+        -- unguarded uuid cast
+        (
+          (    COALESCE(pg_get_expr(pol.polqual, pol.polrelid), '')      LIKE '%current_setting(''app.current_org_id''%::uuid%'
+            OR COALESCE(pg_get_expr(pol.polwithcheck, pol.polrelid), '') LIKE '%current_setting(''app.current_org_id''%::uuid%')
+          AND COALESCE(pg_get_expr(pol.polqual, pol.polrelid), '')       NOT LIKE '%[0-9a-fA-F]{8}%'
+          AND COALESCE(pg_get_expr(pol.polwithcheck, pol.polrelid), '')  NOT LIKE '%[0-9a-fA-F]{8}%'
+        )
+        -- unguarded integer cast
+        OR (
+          (    COALESCE(pg_get_expr(pol.polqual, pol.polrelid), '')      LIKE '%current_setting(''app.current_org_id''%::integer%'
+            OR COALESCE(pg_get_expr(pol.polwithcheck, pol.polrelid), '') LIKE '%current_setting(''app.current_org_id''%::integer%')
+          AND COALESCE(pg_get_expr(pol.polqual, pol.polrelid), '')       NOT LIKE '%^[0-9]+$%'
+          AND COALESCE(pg_get_expr(pol.polwithcheck, pol.polrelid), '')  NOT LIKE '%^[0-9]+$%'
+        )
       )
-      AND COALESCE(pg_get_expr(pol.polqual, pol.polrelid), '')       NOT LIKE '%[0-9a-fA-F]{8}%'
-      AND COALESCE(pg_get_expr(pol.polwithcheck, pol.polrelid), '')  NOT LIKE '%[0-9a-fA-F]{8}%'
     ORDER BY 1, 2, 3
   LOOP
+    -- uuid casts route through the guarded helper; integer casts get the
+    -- guarded extraction inline (there is no integer helper, and the public
+    -- policy family already spells it this way). Longest fragment first in each
+    -- pair: the NULLIF form contains the bare form as a substring.
     new_qual  := replace(replace(rec.qual,       unsafe_nullif, safe_call), unsafe_bare, safe_call);
     new_check := replace(replace(rec.with_check, unsafe_nullif, safe_call), unsafe_bare, safe_call);
+    new_qual  := replace(replace(new_qual,  unsafe_int_nullif, safe_int), unsafe_int_bare, safe_int);
+    new_check := replace(replace(new_check, unsafe_int_nullif, safe_int), unsafe_int_bare, safe_int);
 
     -- Nothing actually changed (an unrecognised spelling): leave the policy be
     -- rather than rewrite it to itself, and say so.
@@ -155,9 +197,16 @@ BEGIN
     END IF;
 
     healed_count := healed_count + 1;
-    RAISE NOTICE '[uuid-guc-heal] repointed %.% [%] at identity.current_org_id()',
-      rec.schema_name, rec.table_name, rec.policy_name;
+    -- Says which remedy applied: uuid casts route through the helper, integer
+    -- casts get the inline extraction. Reporting "at identity.current_org_id()"
+    -- for an integer cast would send the next reader to the wrong function.
+    RAISE NOTICE '[uuid-guc-heal] repaired %.% [%] — app.current_org_id is now %',
+      rec.schema_name, rec.table_name, rec.policy_name,
+      CASE WHEN new_qual LIKE '%identity.current_org_id()%'
+                OR new_check LIKE '%identity.current_org_id()%'
+           THEN 'read through identity.current_org_id()'
+           ELSE 'extracted with substring(… ''^[0-9]+$'')' END;
   END LOOP;
 
-  RAISE NOTICE '[uuid-guc-heal] % policy expression(s) repointed at the guarded helper', healed_count;
+  RAISE NOTICE '[uuid-guc-heal] % policy expression(s) repaired (uuid casts via identity.current_org_id(), integer casts via substring extraction)', healed_count;
 END $$;

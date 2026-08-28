@@ -23,7 +23,11 @@ import { createMockRequest, createMockResponse } from '../setup';
 const { mockSelectRows, mockInsertReturning, auditLog } = vi.hoisted(() => ({
   mockSelectRows: vi.fn<[], unknown[]>(() => []),
   mockInsertReturning: vi.fn(async () => [{ id: 5 }]),
-  auditLog: vi.fn(async () => {}),
+  // logAction resolves an AuditWriteResult (server/services/auditService.ts)
+  // and the governed path dereferences it (.persisted / .error), so the mock
+  // must resolve the real success shape — resolving undefined makes the route
+  // throw a TypeError and 500.
+  auditLog: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })),
 }));
 
 // Fake drizzle db, built inside vi.hoisted per the 510k-device-routes idiom.
@@ -217,6 +221,24 @@ describe('POST /:formId/artifact — program-spine ident (audited-unplaced degra
     expect(res.status).toHaveBeenCalledWith(500);
     const payload = res.json.mock.calls[0][0];
     expect(JSON.stringify(payload)).not.toContain('"audited":true');
+    expect(fakeDb.insert).not.toHaveBeenCalled();
+  });
+
+  it('FAILS CLOSED when the audit write resolves unpersisted — the real service reports failure this way', async () => {
+    // logAction does not reject on a persistence failure; it resolves
+    // { persisted: false, ... }. The route must read the outcome, or it
+    // answers audited:true over nothing.
+    mockSelectRows.mockReturnValue([{ id: UUID, code: 'BX-204', name: 'BX-204 CGM' }]);
+    auditLog.mockResolvedValueOnce({ persisted: false, chained: false, tamperProof: false, error: 'audit store down' });
+    const req = makeReq({ projectIdent: UUID, sponsorName: 'Acme Bio' });
+    const res = createMockResponse() as any;
+
+    await artifactHandler()(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    const payload = res.json.mock.calls[0][0];
+    expect(JSON.stringify(payload)).not.toContain('"audited":true');
+    expect(payload.error).toBe('AUDIT_WRITE_FAILED');
     expect(fakeDb.insert).not.toHaveBeenCalled();
   });
 

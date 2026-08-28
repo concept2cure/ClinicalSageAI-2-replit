@@ -8,6 +8,7 @@
  * it directly.
  */
 import React from 'react';
+import { registerCeremonyOpen } from './ceremony';
 import { I } from './icons';
 
 export interface C2CFormFieldOption {
@@ -108,6 +109,10 @@ export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onCancel]);
+
+  // The ceremony channel: while this form is mounted, AnA's surface actions
+  // can refuse view changes that would disturb it (see v2/ceremony.ts).
+  React.useEffect(() => registerCeremonyOpen(), []);
 
   const renderField = (f: C2CFormField) => {
     const common = {

@@ -8,6 +8,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { createHash } from 'crypto';
 import { registerExportGovernanceQuick } from '../services/compute/exportGovernance';
 import { db } from '../db';
 import { eq, and, isNull } from 'drizzle-orm';
@@ -214,6 +215,9 @@ router.get('/programs/:programId/rtm/csv', async (req: Request, res: Response) =
       exportFormat: 'csv',
       exportFilename: filename,
       exportFileSize: Buffer.byteLength(csvContent, 'utf-8'),
+      // Over the CSV actually sent below, not over its name and size — see the
+      // note on the eCTD route for what the metadata fallback cannot prove.
+      exportHash: createHash('sha256').update(csvContent, 'utf-8').digest('hex'),
       docType: 'rtm_export',
       backendRoute: `/api/rtm/programs/${programId}/rtm/csv`,
       ipAddress: req.ip,

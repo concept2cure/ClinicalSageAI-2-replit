@@ -6,6 +6,7 @@ import { useAuth } from '@/services/portal/authService';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import {
   // TB_PROJECTS (three invented programmes) is gone — the board, the project
   // filter, the detail label and the workflow picker all read the org's real
@@ -319,6 +320,127 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   const byCol = (id: string) => list.filter(t => t.status === id);
   const byId = (id: string) => tasks.find(t => t.taskId === id);
 
+  /* ── AnA's hands on this screen — the surface-action bus ──────────────────
+     Registered under this surface's OWN surfaceViews id ('tasks'); the bus
+     alias-resolves the registry's 'tasking' surfaceId onto it, the same
+     resolution nav() applies. Every handler drives the SAME state the human's
+     own controls drive (setView / setProj / setMod / setMine / setSel);
+     programme and task names resolve against the REAL rows with honest
+     misses, never guesses. Governed work (move/create/archive/sign/workflow)
+     stays human-operated and untouched. */
+  /* One guard for all three: while a signature ceremony, the new-task form,
+     or the workflow picker owns the canvas, AnA operating the board would
+     race or bury the person's in-progress work. Honest refusal instead. */
+  const boardBusyGuard = (): { ok: false; reason: string } | null => {
+    if (signReq) return { ok: false, reason: 'A signature is in progress — finish or cancel it first.' };
+    if (creating) return { ok: false, reason: 'The new-task form is open — close it first.' };
+    if (wf) return { ok: false, reason: 'The workflow picker is open — close it first.' };
+    return null;
+  };
+  useSurfaceActionHandlers('tasks', {
+    'tasking.set-view': (params) => {
+      const guarded = boardBusyGuard();
+      if (guarded) return guarded;
+      const target = (params.view ?? '').trim();
+      if (!['board', 'path', 'analytics', 'table'].includes(target)) {
+        return { ok: false, reason: `No board view named "${params.view}".` };
+      }
+      if (liveTasks.error) return { ok: false, reason: 'The task board could not be read.' };
+      // Not-ready, not failed: the views render only after the read settles,
+      // so the bus holds the directive for the ready signal below.
+      if (liveTasks.loading)
+        return { ok: false, reason: 'The task board is still loading.', retry: true };
+      setView(target);
+      return { ok: true, detail: `Switched to the ${target} view` };
+    },
+    'tasking.filter': (params) => {
+      const guarded = boardBusyGuard();
+      if (guarded) return guarded;
+      if (liveTasks.error) return { ok: false, reason: 'The task board could not be read.' };
+      if (liveTasks.loading || projectOpts.loading)
+        return { ok: false, reason: 'The task board is still loading.', retry: true };
+      const applied: string[] = [];
+      if (params.project) {
+        const wanted = params.project.trim();
+        if (wanted.toLowerCase() === 'all') {
+          setProj('all');
+          applied.push('all programmes');
+        } else {
+          const lower = wanted.toLowerCase();
+          const exact = projectOpts.rows.find(
+            (p) => String(p.id) === wanted || p.name.toLowerCase() === lower,
+          );
+          const contains = exact
+            ? []
+            : projectOpts.rows.filter((p) => p.name.toLowerCase().includes(lower));
+          const match = exact ?? (contains.length === 1 ? contains[0] : null);
+          if (!match) {
+            return {
+              ok: false,
+              reason:
+                contains.length > 1
+                  ? `"${params.project}" matches ${contains.length} programmes — name one exactly.`
+                  : `No programme named "${params.project}" on this board.`,
+            };
+          }
+          setProj(String(match.id));
+          applied.push(`programme ${match.name}`);
+        }
+      }
+      if (params.module) {
+        const wanted = params.module.trim().toLowerCase();
+        const match = modules.find((m) => m.toLowerCase() === wanted);
+        if (!match) return { ok: false, reason: `No module named "${params.module}" on this board.` };
+        setMod(match);
+        applied.push(match === 'all' ? 'all modules' : `module ${match}`);
+      }
+      if (params.mine) {
+        setMine(params.mine === 'true');
+        applied.push(params.mine === 'true' ? 'my tasks only' : "everyone's tasks");
+      }
+      if (applied.length === 0) return { ok: false, reason: 'No filter named.' };
+      return { ok: true, detail: `Filtered to ${applied.join(', ')}` };
+    },
+    'tasking.open-task': (params) => {
+      const guarded = boardBusyGuard();
+      if (guarded) return guarded;
+      /* The detail panel's archive form holds child-local Part 11 justification
+         text — replacing `sel` under it would silently destroy a half-typed
+         reason the parent cannot see. Refuse while any detail is open. */
+      if (sel) return { ok: false, reason: 'A task detail is open — close it first.' };
+      const wanted = (params.task ?? '').trim();
+      if (!wanted) return { ok: false, reason: 'No task named.' };
+      if (liveTasks.error) return { ok: false, reason: 'The task board could not be read.' };
+      if (liveTasks.loading)
+        return { ok: false, reason: 'The task board is still loading.', retry: true };
+      if (liveTasks.empty) return { ok: false, reason: 'There are no tasks on the board.' };
+      const lower = wanted.toLowerCase();
+      // Scoped to `list` — the tasks on screen under the active filters — so
+      // AnA can only open what the person can see.
+      const exact = list.find(
+        (t) => t.taskId.toLowerCase() === lower || t.title.toLowerCase() === lower,
+      );
+      const contains = exact ? [] : list.filter((t) => t.title.toLowerCase().includes(lower));
+      const match = exact ?? (contains.length === 1 ? contains[0] : null);
+      if (!match) {
+        return {
+          ok: false,
+          reason:
+            contains.length > 1
+              ? `"${params.task}" matches ${contains.length} tasks — name one exactly.`
+              : `No task named "${params.task}" on the board under the current filters.`,
+        };
+      }
+      setSel(match);
+      return { ok: true, detail: `Opened ${match.taskId} — ${match.title}` };
+    },
+  });
+  /* The ready signal for the retry contract above: a held directive gets its
+     re-attempt when the board and programme reads settle. */
+  useEffect(() => {
+    if (!liveTasks.loading && !projectOpts.loading) notifySurfaceActionReady('tasks');
+  }, [liveTasks.loading, projectOpts.loading]);
+
   // Move a card between base's columns, then persist through the server task
   // state machine (server/services/tasking/task-state-machine.ts). The column
   // step stays base's index arithmetic over TB_COLS; the WRITE now surfaces the
@@ -466,7 +588,18 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
      "task-board" and nothing more, so "what should I do next?" had to be
      answered from the message text — on the one surface whose entire purpose is
      answering that question. Published as the nouns and numbers a user would
-     point at, never raw API bodies and never anything the screen is hiding. */
+     point at, never raw API bodies and never anything the screen is hiding.
+
+     PUBLISHED AS 'tasks', NOT 'task-board'. This board is registered under both
+     ids, but `DEEP_LINK_ALIASES['task-board'] === 'tasks'` and
+     `surfaceIdFromLocation` applies that rewrite BEFORE the shell has an
+     `activeId` — so `activeId` is always 'tasks' here, and
+     `useActiveSurfaceContext` compares keys exactly. Publishing under
+     'task-board' therefore matched nothing on every single render since this
+     call was written: the context above was built, stored, and read past. It
+     cost nothing and was indistinguishable from working, which is why
+     scripts/ci/check-ana-surface-context.mjs now resolves aliases and fails a
+     publish into an alias source rather than merely checking membership. */
   const anaContext = useMemo(() => {
     // `t.due` is server data, not a local invariant: a task row without it is a
     // plausible response and must not crash the board. Same class as the
@@ -509,7 +642,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       ],
     };
   }, [list, stats, sel, view]);
-  usePublishSurfaceContext('task-board', anaContext);
+  usePublishSurfaceContext('tasks', anaContext);
 
   /* Critical path: topological-ish chain over dependsOn, criticalPath:true */
   const critChain = useMemo(() => {
@@ -540,6 +673,19 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   const heaviest = workload[0];
   const critOpen = critChain.filter(t => t.status !== 'completed');
   const critBlocked = critChain.find(t => t.blocked);
+  /* Has anything actually been DESIGNATED critical-path?
+     `unified_tasks.critical_path` is a real column that defaults FALSE, and no
+     write path in the repo ever sets it true — not the three insert sites, not
+     the workflow-template instantiation the "clear" branch itself offers as its
+     call to action. So `critChain` is permanently empty, and the headline
+     asserted "The critical path is clear — nothing open is blocking the
+     milestone" in AnA's voice over every board, with a forward commitment ("I
+     will flag the moment anything threatens") that no watcher implements —
+     while the Blocked column on the same screen showed a non-zero count.
+
+     An empty designation is not a cleared path. Nothing designated means the
+     question has not been asked. */
+  const critDesignated = list.some(t => t.criticalPath);
   const milestone = critChain[critChain.length - 1];
 
   return (
@@ -587,13 +733,23 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           ? <>Your path to {milestone ? <b>"{milestone.title}"</b> : 'the milestone'} is <b>blocked</b> at "{critBlocked.title}".</>
           : critOpen.length
             ? <>{critOpen.length} {critOpen.length === 1 ? 'task stands' : 'tasks stand'} between you and <b>{milestone ? '"' + milestone.title + '"' : 'the milestone'}</b>{overdue.length ? <>, and <b>{overdue.length} {overdue.length === 1 ? 'task is' : 'tasks are'} overdue</b></> : ''}.</>
-            : <>The critical path is clear — nothing open is blocking the milestone right now.</>}
+            : critDesignated
+              ? <>The critical path is clear — nothing open is blocking the milestone right now.</>
+              : <>No task on this board is marked critical-path, so there is no path to report on yet.</>}
         body={critBlocked
           ? <>{critBlocked.blockedReason || 'It is blocked'} -- nothing downstream on the path can move until it clears. {heaviest && heaviest.open > 3 ? <>{nameOf(heaviest.k)} is also carrying {heaviest.open} open tasks; auto-assign can rebalance.</> : null}</>
           : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{heaviest && heaviest.open >= 3 ? <>{nameOf(heaviest.k)} is the busiest at {heaviest.open} open tasks — workload-balanced auto-assign can spread the next batch.</> : <>Workload is balanced across the team.</>} {stats.appr ? <>{stats.appr} approval{stats.appr > 1 ? 's' : ''} pending an e-signature.</> : null}</>}
-        reassure={critBlocked || overdue.length ? "I will help you unblock the path and rebalance the team, one step at a time." : "You are on track. I will flag the moment anything threatens the milestone."}
+        reassure={
+          critBlocked || overdue.length
+            ? 'I will help you unblock the path and rebalance the team, one step at a time.'
+            : critDesignated
+              ? 'I will flag the moment anything threatens the milestone.'
+              /* No "You are on track" over an undesignated board, and no promise
+                 to watch a path that does not exist. */
+              : undefined
+        }
         action={{
-          label: critBlocked ? 'Unblock the critical path' : overdue.length ? 'Triage the overdue work' : 'Start a workflow from a template',
+          label: critBlocked ? 'Unblock the critical path' : overdue.length ? 'Triage the overdue work' : critDesignated ? 'Start a workflow from a template' : 'Mark the tasks that gate the milestone',
           onClick: () => { if (critBlocked || overdue.length) { setView('path'); } else { setWf(true); } },
           alt: { label: 'Auto-balance assignments', onClick: () => onAsk && onAsk('Rebalance open task assignments by workload using getOptimalAssignee') },
         }}

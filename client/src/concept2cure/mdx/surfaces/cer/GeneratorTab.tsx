@@ -19,6 +19,7 @@
 
 import * as React from 'react';
 import { I } from '../../icons';
+import { EmptyState } from '../../../v2/dataConnect';
 import { AskAnaChip } from '../AskAnaChip';
 import { AnaDraftBanner } from '../../components/AnaDraftBanner';
 import { CER_EXPORT } from '../../data/cer';
@@ -37,6 +38,7 @@ import { SampleDataBanner } from '../../components/SampleDataBanner';
 import { useSampleMode } from '../../components/DataGate';
 import { useSampleRows } from '../../lib/useSampleRows';
 import type { EditorSectionRef } from '../../../v2/editorTarget';
+import { downloadCsv } from '../../../v2/download';
 
 export interface GeneratorTabProps {
   program: Program | null;
@@ -60,18 +62,11 @@ export interface GeneratorTabProps {
 
 function downloadSectionsCsv(rows: Array<{ label: string; status: string }>) {
   const headers = ['Section', 'Status'];
-  const csv = [headers, ...rows.map((s) => [s.label, String(s.status)])]
-    .map((line) => line.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
-    .join('\r\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `cer-sections-${new Date().toISOString().slice(0, 10)}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  downloadCsv(
+    `cer-sections-${new Date().toISOString().slice(0, 10)}.csv`,
+    headers,
+    rows.map((s) => [s.label, String(s.status)]),
+  );
 }
 
 export function GeneratorTab({
@@ -343,15 +338,20 @@ export function GeneratorTab({
               </div>
             </div>
             {sections !== null && sections.length === 0 && !usingSampleSections ? (
-              <div
-                role="status"
-                style={{ padding: '24px 16px', textAlign: 'center', fontSize: 12, color: 'var(--text-300)' }}
-              >
-                <div style={{ fontWeight: 600, color: 'var(--text-200)', marginBottom: 4 }}>
-                  No CER sections created yet
-                </div>
-                Sections appear here once the document is scaffolded for this program.
-              </div>
+              /* No CTA and nothing to press. The panel named the thing that
+                 would fix it — scaffolding the document — and left the reader
+                 to find it. `refreshSections` is already a prop on this
+                 component, so a real control was one line away the whole time.
+                 It is the weaker of the two possible actions (re-read rather
+                 than scaffold), and it is a real one. */
+              <EmptyState
+                icon={I.fileText}
+                title="No CER sections created yet"
+                hint="Sections appear here once the document is scaffolded for this program."
+                action={{ label: 'Check again', onAct: refreshSections }}
+                regulation="Serves the clinical evaluation report (MDR Annex XIV Part A)"
+                testId="cer-no-sections"
+              />
             ) : (
               <div className="estar">
                 {sourceSections.map((s, i) => (

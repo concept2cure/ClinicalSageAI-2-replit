@@ -14,32 +14,30 @@
 
 import express from 'express';
 import { getPool } from '../../db';
+import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
+import { getSectionLabels } from '../../services/module3-convergence-service';
+import { MODULE3_SECTION_RULES } from '../../services/module3Composer';
 
 const router = express.Router();
 
-// ── Section Labels ────────────────────────────────────────────────────────────
+// ── Canonical section constants — imported, never copied ──────────────────────
+//
+// This file used to carry its OWN copies of the section-label map and the
+// section→source-type rules, and the copies drifted: '3.2.S.4' and '3.2.P.5'
+// here lacked `qc_result`, which the composer counts — so the build screen
+// undercounted a section's sources relative to the compile that consumes them.
+// A build board that disagrees with its own compiler about what feeds a
+// section is the duplication Rule "zero duplication" exists to prevent. The
+// labels come from the convergence service and the rules from the composer;
+// there is nothing left here to drift.
 
-const SECTION_LABELS: Record<string, string> = {
-  '3.1': 'Quality — Table of Contents',
-  '3.2.S.1': 'General Information',
-  '3.2.S.2': 'Manufacture (Drug Substance)',
-  '3.2.S.3': 'Characterisation',
-  '3.2.S.4': 'Control of Drug Substance',
-  '3.2.S.5': 'Reference Standards (Drug Substance)',
-  '3.2.S.6': 'Container Closure System (Drug Substance)',
-  '3.2.S.7': 'Stability (Drug Substance)',
-  '3.2.P.1': 'Description & Composition',
-  '3.2.P.2': 'Pharmaceutical Development',
-  '3.2.P.3': 'Manufacture (Drug Product)',
-  '3.2.P.4': 'Control of Excipients',
-  '3.2.P.5': 'Control of Drug Product',
-  '3.2.P.6': 'Reference Standards (Drug Product)',
-  '3.2.P.7': 'Container Closure System (Drug Product)',
-  '3.2.P.8': 'Stability (Drug Product)',
-  '3.3': 'Literature References',
-};
-
+const SECTION_LABELS = getSectionLabels();
 const ALL_SECTION_KEYS = Object.keys(SECTION_LABELS);
+
+/** section → the source types that feed it, straight from the composer. */
+const SECTION_SOURCE_TYPES: Record<string, string[]> = Object.fromEntries(
+  MODULE3_SECTION_RULES.map((r) => [r.sectionKey, [...r.requiredSourceTypes]]),
+);
 
 // ── Build state derivation ────────────────────────────────────────────────────
 
@@ -99,6 +97,15 @@ router.get('/build-state/:projectId', async (req, res) => {
     const { projectId } = req.params;
     const pool = getPool();
 
+    /* The CMC tables key project_id as TEXT (the shell passes the program
+       uuid); concept2cure_artifacts keys the INTEGER projects.id. Querying the
+       integer column with the raw uuid aborts the statement (22P02) and took
+       this whole Promise.all — and the endpoint — down for every
+       wizard-created program. Resolve the spine first; when it cannot be
+       resolved, the artifact queries are skipped and the response says so. */
+    const spine = await resolveCmcArtifactProject(orgId, projectId);
+    const noArtifacts = Promise.resolve({ rows: [] as any[] });
+
     // Parallel queries for all data sources
     const [sourceObjectsRes, compiledSectionsRes, contradictionsRes, artifactsRes, uploadedSourcesRes] =
       await Promise.all([
@@ -130,25 +137,29 @@ router.get('/build-state/:projectId', async (req, res) => {
           [orgId, projectId]
         ),
         // 4. Governed artifacts placed in Module 3 sections
-        pool.query(
-          `SELECT id, artifact_id as "artifactId", ctd_section as "ctdSection",
-                  status, title, updated_at as "updatedAt"
-           FROM concept2cure_artifacts
-           WHERE organization_id = $1 AND project_id = $2
-                 AND (ctd_section LIKE '3.2.%' OR ctd_section IN ('3.1', '3.3'))`,
-          [orgId, projectId]
-        ),
+        spine.state === 'linked'
+          ? pool.query(
+              `SELECT id, artifact_id as "artifactId", ctd_section as "ctdSection",
+                      status, title, updated_at as "updatedAt"
+               FROM concept2cure_artifacts
+               WHERE organization_id = $1 AND project_id = $2
+                     AND (ctd_section LIKE '3.2.%' OR ctd_section IN ('3.1', '3.3'))`,
+              [orgId, spine.artifactProjectId]
+            )
+          : noArtifacts,
         // 5. Uploaded source documents classified for Module 3
-        pool.query(
-          `SELECT id, artifact_id as "artifactId", ctd_section as "ctdSection",
-                  metadata, title
-           FROM concept2cure_artifacts
-           WHERE organization_id = $1 AND project_id = $2
-                 AND category = 'source'
-                 AND (metadata->>'dossierClassification' IS NOT NULL)
-                 AND (metadata->'dossierClassification'->>'feedsModule3')::text = 'true'`,
-          [orgId, projectId]
-        ),
+        spine.state === 'linked'
+          ? pool.query(
+              `SELECT id, artifact_id as "artifactId", ctd_section as "ctdSection",
+                      metadata, title
+               FROM concept2cure_artifacts
+               WHERE organization_id = $1 AND project_id = $2
+                     AND category = 'source'
+                     AND (metadata->>'dossierClassification' IS NOT NULL)
+                     AND (metadata->'dossierClassification'->>'feedsModule3')::text = 'true'`,
+              [orgId, spine.artifactProjectId]
+            )
+          : noArtifacts,
       ]);
 
     // Build lookup maps
@@ -189,26 +200,8 @@ router.get('/build-state/:projectId', async (req, res) => {
       }
     }
 
-    // Section-to-source-type mapping (must match the composer's rules)
-    const SECTION_SOURCE_TYPES: Record<string, string[]> = {
-      '3.2.S.1': ['drug_substance'],
-      '3.2.S.2': ['drug_substance', 'manufacturing_process', 'process_validation'],
-      '3.2.S.3': ['drug_substance', 'characterization', 'impurity_profile'],
-      '3.2.S.4': ['specification', 'method', 'impurity_profile'],
-      '3.2.S.5': ['drug_substance', 'reference_standard'],
-      '3.2.S.6': ['container_closure'],
-      '3.2.S.7': ['stability'],
-      '3.2.P.1': ['drug_product', 'formulation_record'],
-      '3.2.P.2': ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile'],
-      '3.2.P.3': ['drug_product', 'batch', 'change_control', 'process_validation'],
-      '3.2.P.4': ['excipient', 'raw_material_spec'],
-      '3.2.P.5': ['specification', 'method', 'dissolution_profile', 'impurity_profile'],
-      '3.2.P.6': ['drug_product', 'reference_standard'],
-      '3.2.P.7': ['container_closure'],
-      '3.2.P.8': ['stability', 'comparability'],
-    };
-
-    // Assemble build status for every section
+    // Assemble build status for every section (SECTION_SOURCE_TYPES is the
+    // composer's own rules, imported at module scope — see the note up top)
     const sections = ALL_SECTION_KEYS.map((sectionKey) => {
       const compiled = compiledMap.get(sectionKey);
       const artifact = artifactMap.get(sectionKey);
@@ -294,6 +287,13 @@ router.get('/build-state/:projectId', async (req, res) => {
       success: true,
       data: {
         sections,
+        /* Honest-state contract: when the registry could not be addressed,
+           every artifactId above is null BECAUSE of that — not because the
+           project has no artifacts. The client must render the distinction. */
+        artifactRegistry:
+          spine.state === 'linked'
+            ? { state: 'linked' }
+            : { state: spine.state, detail: spine.detail },
         summary: {
           totalSections,
           readySections,
@@ -332,6 +332,17 @@ router.get('/uploaded-sources/:projectId', async (req, res) => {
     const { projectId } = req.params;
     const pool = getPool();
 
+    // Same spine translation as build-state: the registry keys integer
+    // projects.id; the raw TEXT id aborts the query for uuid programs.
+    const spine = await resolveCmcArtifactProject(orgId, projectId);
+    if (spine.state !== 'linked') {
+      return res.json({
+        success: true,
+        data: [],
+        artifactRegistry: { state: spine.state, detail: spine.detail },
+      });
+    }
+
     const { rows } = await pool.query(
       `SELECT id, artifact_id as "artifactId", title, ctd_section as "ctdSection",
               status, metadata, created_at as "createdAt"
@@ -340,11 +351,12 @@ router.get('/uploaded-sources/:projectId', async (req, res) => {
              AND category = 'source'
              AND (metadata->'dossierClassification'->>'feedsModule3')::text = 'true'
        ORDER BY created_at DESC`,
-      [orgId, projectId]
+      [orgId, spine.artifactProjectId]
     );
 
     return res.json({
       success: true,
+      artifactRegistry: { state: 'linked' },
       data: rows.map((r: any) => ({
         id: r.id,
         artifactId: r.artifactId,

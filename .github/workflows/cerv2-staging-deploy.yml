@@ -34,7 +34,7 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   STAGING_PORT: 5000
   STAGING_URL: http://localhost:5000
 
@@ -127,7 +127,7 @@ jobs:
 
       - name: Security audit (production deps)
         continue-on-error: true
-        run: npm audit --omit=dev --audit-level=high
+        run: npm run ci:dependency-risk
 
   # ─── Gate 2: Build ─────────────────────────────────────────────────────
   build:

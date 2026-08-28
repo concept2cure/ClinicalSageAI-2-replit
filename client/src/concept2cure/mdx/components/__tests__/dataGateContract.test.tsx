@@ -257,6 +257,84 @@ describe('the synthesized Part 11 record is gone, and cannot be reintroduced', (
     expect(store).not.toContain('isSampleMode');
   });
 
+  it('no MDX surface hand-rolls a failure panel any more', () => {
+    /* The gate covers the 33 panels that go through it. These files never did —
+       they drew their own divs — so converging DataGate left them standing, and
+       four of them were the worst cases in the lane: a failure announced as a
+       polite `role="status"`, a raw `error` interpolated into the copy, and an
+       empty state whose only instruction was to go and find a button forty
+       lines up.
+
+       Asserted against source, because the defect is structural: what must not
+       come back is a bare `role="alert"` div or an interpolated error where a
+       shared primitive belongs. */
+    const CONVERTED = [
+      'surfaces/pathway/PathwayPanes.tsx',
+      'surfaces/cer/PmsPmcfTab.tsx',
+      'surfaces/cer/GsprMatrixTab.tsx',
+      'surfaces/cer/GeneratorTab.tsx',
+      'surfaces/cer/EquivalenceTab.tsx',
+      'surfaces/EstarFilingPanel.tsx',
+      'presub/PreSubManager.tsx',
+      'workbench/Workbench.tsx',
+      'MdxSurfaceHost.tsx',
+    ];
+    const offenders: string[] = [];
+    for (const rel of CONVERTED) {
+      const src = code(read(rel));
+      src.split('\n').forEach((line, i) => {
+        /* A hand-rolled alert, or a server error dropped straight into JSX. */
+        if (/role=["']alert["']/.test(line) && !/ErrorState/.test(src.slice(0, 0))) {
+          offenders.push(`${rel}:${i + 1} bare role="alert"`);
+        }
+        /* JSX TEXT only. `message={x.error}` is a PROP handed to <ErrorState>,
+           which is exactly the right thing to do with a server error and the
+           whole point of the conversion — flagging it would make the check
+           punish the fix. The distinguishing character is the `=` before the
+           brace; a raw interpolation into the element's children has none. */
+        if (/(^|[^=$\w])\{\s*(?:\w+\.)?error\s*\}/.test(line)) {
+          offenders.push(`${rel}:${i + 1} interpolates a raw error into JSX text`);
+        }
+      });
+      /* Each of these files must now reach the shared surfaces. */
+      expect(src, `${rel} no longer imports the shared state primitives`).toMatch(
+        /(EmptyState|ErrorState)/,
+      );
+    }
+    expect(offenders, `hand-rolled failure UI:\n${offenders.join('\n')}`).toEqual([]);
+  });
+
+  it('no MDX surface names a schema object or an endpoint in its copy', () => {
+    /* Guardrail: a reader cannot act on a column name or a route, and both
+       describe the implementation rather than the record. `EquivalenceTab`
+       carried "equivalent_devices via the programs API" as visible panel copy;
+       `GsprMatrixTab` told the reader to "seed the GSPR catalog", an operator
+       action nobody on that screen can take.
+
+       Scoped to JSX text and template literals, not comments — the files
+       document what they removed by naming it, and a check that punished that
+       would push the explanation out of the code. */
+    const offenders: string[] = [];
+    const LEAKY = /\b(?:equivalent_devices|gspr_requirements|regulatory_programs|concept2cure_artifacts|vault\.documents)\b|\bvia the [a-z]+ API\b/;
+    const walk = (dir: string) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (entry.name === '__tests__') continue;
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) { walk(full); continue; }
+        if (!/\.tsx$/.test(entry.name)) continue;
+        code(fs.readFileSync(full, 'utf8')).split('\n').forEach((line, i) => {
+          /* Only where the string can reach a screen: JSX text, or a template
+             literal / quoted string being rendered. Import paths and type
+             annotations are neither. */
+          if (/^\s*import\b/.test(line)) return;
+          if (LEAKY.test(line)) offenders.push(`${path.relative(mdx, full)}:${i + 1} ${line.trim().slice(0, 90)}`);
+        });
+      }
+    };
+    walk(path.join(mdx, 'surfaces'));
+    expect(offenders, `schema object or endpoint in user-facing copy:\n${offenders.join('\n')}`).toEqual([]);
+  });
+
   it('the passive instruction is retired from the whole lane', () => {
     /* Asserted against source across the lane, so reintroducing it anywhere —
        a hook's idleReason, a surface's prose, a disabled control's tooltip —

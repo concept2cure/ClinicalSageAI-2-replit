@@ -5,8 +5,11 @@
  * default-permissive so pilot/dev flows are not broken by the heuristics' false
  * positives:
  *   - AI_PII_ENFORCEMENT (server/services/ai-gateway/pii-screen.ts) defaults to
- *     'audit' — PHI/PII is detected and recorded but NOT blocked, so it can still
- *     reach a provider without a zero-data-retention guarantee.
+ *     'audit' — in NON-PRODUCTION, PHI/PII is detected and recorded but not
+ *     blocked. In production the last-mile placement contract
+ *     (sensitive-placement-policy.ts) is enforced at dispatch regardless of
+ *     this setting; the toggle only governs non-production behavior, so the
+ *     warning below is about posture hygiene, not an open dispatch path.
  *   - AI_GROUNDEDNESS_ENFORCE (server/services/ai-governance/groundedness.ts) is
  *     ON by default as of 2026-08-13 — low-citation AI content is blocked on
  *     accept unless a human acknowledges it. It stays listed here because it
@@ -86,8 +89,12 @@ export function assertAiGovernancePostureForProduction(
   const permissive: string[] = [];
   if (piiEnforcement !== 'block') {
     permissive.push(
-      `AI_PII_ENFORCEMENT is "${piiEnforcement}" (not "block") — PHI/PII may reach a ` +
-        'provider without a zero-data-retention guarantee',
+      `AI_PII_ENFORCEMENT is "${piiEnforcement}" (not "block") — in production the ` +
+        'sensitive-data placement contract is still enforced at dispatch (PHI/PII cannot ' +
+        'reach a provider outside AI_PROVIDER_PLACEMENT_APPROVALS); in non-production ' +
+        (piiEnforcement === 'audit'
+          ? 'this setting records detections without blocking'
+          : 'this setting disables the screen entirely'),
     );
   }
   if (!groundednessEnforced) {

@@ -10,9 +10,12 @@ import { describe, expect, it } from 'vitest';
 import {
   MAX_NAVIGATION_ACTIONS,
   directiveFromToolResult,
+  surfaceActionFromToolResult,
   toNavigationActions,
+  toSurfaceActionChips,
 } from '../navigation-actions';
 import { resolveNavigation, NAVIGATION_TARGETS } from '../../../../shared/navigation/index';
+import { resolveSurfaceAction } from '../../../../shared/navigation/surface-actions';
 
 /** A real target from the governed registry — not a fixture id. */
 const REAL_TARGET = NAVIGATION_TARGETS.find(t => t.scope === 'global')!;
@@ -100,5 +103,79 @@ describe('toNavigationActions', () => {
 
   it('omits params entirely when there are none, rather than sending an empty object', () => {
     expect(toNavigationActions([directive('cmc')])[0]).not.toHaveProperty('params');
+  });
+});
+
+describe('surfaceActionFromToolResult', () => {
+  const actionReady = () => {
+    const res = resolveSurfaceAction('vault.search', { query: 'stability' });
+    if (!res.ok) throw new Error('fixture action vault.search does not resolve');
+    return JSON.stringify({ status: 'action_ready', directive: res.directive });
+  };
+
+  it('reads the directive out of a successful act_on_screen result', () => {
+    const d = surfaceActionFromToolResult('act_on_screen', actionReady());
+    expect(d).not.toBeNull();
+    expect(d!.actionId).toBe('vault.search');
+    expect(d!.surfaceId).toBe('vault');
+    expect(d!.actionType).toBe('surface_action');
+  });
+
+  it('returns null for a refusal — governed_refused, unknown, or needs_parameters', () => {
+    for (const status of ['governed_refused', 'unknown_action', 'needs_parameters']) {
+      expect(
+        surfaceActionFromToolResult('act_on_screen', JSON.stringify({ status, message: 'no' })),
+      ).toBeNull();
+    }
+  });
+
+  it('returns null for any tool that is not act_on_screen', () => {
+    expect(surfaceActionFromToolResult('navigate_to', actionReady())).toBeNull();
+  });
+
+  it('returns null on unparseable or structurally wrong output', () => {
+    expect(surfaceActionFromToolResult('act_on_screen', 'not json')).toBeNull();
+    expect(
+      surfaceActionFromToolResult('act_on_screen', JSON.stringify({ status: 'action_ready' })),
+    ).toBeNull();
+    expect(
+      surfaceActionFromToolResult(
+        'act_on_screen',
+        JSON.stringify({ status: 'action_ready', directive: { actionType: 'navigate' } }),
+      ),
+    ).toBeNull();
+  });
+});
+
+describe('toSurfaceActionChips', () => {
+  const actionDirective = (actionId: string, params?: Record<string, string>) => ({
+    actionType: 'surface_action' as const,
+    actionId,
+    surfaceId: actionId.split('.')[0],
+    label: `Do ${actionId}`,
+    ...(params ? { params } : {}),
+  });
+
+  it('carries the action id and surface, because the bus performs by id', () => {
+    const [c] = toSurfaceActionChips([actionDirective('vault.search', { query: 'x' })]);
+    expect(c).toMatchObject({
+      actionType: 'surface_action',
+      actionId: 'vault.search',
+      surfaceId: 'vault',
+      executed: true,
+      params: { query: 'x' },
+    });
+  });
+
+  it('dedups identical operations and caps like the navigation chips', () => {
+    expect(
+      toSurfaceActionChips([actionDirective('vault.search'), actionDirective('vault.search')]),
+    ).toHaveLength(1);
+    const many = ['a.x', 'b.x', 'c.x', 'd.x', 'e.x'].map(id => actionDirective(id));
+    expect(toSurfaceActionChips(many)).toHaveLength(MAX_NAVIGATION_ACTIONS);
+  });
+
+  it('omits params entirely when there are none', () => {
+    expect(toSurfaceActionChips([actionDirective('vault.search')])[0]).not.toHaveProperty('params');
   });
 });

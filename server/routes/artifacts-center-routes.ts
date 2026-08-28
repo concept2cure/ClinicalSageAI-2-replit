@@ -51,12 +51,20 @@ import { Router, Request, Response } from 'express';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { pool } from '../db.js';
+import { generateDocxBuffer } from '../services/docxGenerator.js';
 
 const logger = createScopedLogger('artifacts-center-routes');
 
 /** Hard cap on rendered rows — this is a gallery, mirrors the existing
  *  /api/concept2cure/artifacts read (LIMIT 200). */
 const MAX_ROWS = 200;
+
+function shouldEnforceArtifactExportReview(): boolean {
+  if (process.env.NODE_ENV === 'production') return true;
+  if (process.env.EXPORT_REVIEW_GATE === 'enforce') return true;
+  if (process.env.EXPORT_REVIEW_GATE === 'off') return false;
+  return false;
+}
 
 // ── Display-shape row (mirrors ArtifactEntry in fixtures/admin-data.ts) ──────────
 
@@ -75,6 +83,8 @@ interface ArtifactCenterRow {
   when: string;
   ver: string;
   sig: boolean;
+  reviewed: boolean;
+  sourceCount: number;
   prog: string;
 }
 
@@ -92,6 +102,8 @@ interface RawArtifactRow {
   model: string | null;
   program: string | null;
   is_signed: boolean;
+  is_reviewed: boolean;
+  source_count: number | string;
   /** Version the newest active signature covers; null when unsigned or when
    *  the signature's version row is missing. */
   signed_version: number | string | null;
@@ -204,6 +216,18 @@ export default function createArtifactsCenterRoutes(): Router {
                 AND s.organization_id = a.organization_id
                 AND s.status = 'active'
            )                                               AS is_signed,
+           EXISTS (
+             SELECT 1 FROM concept2cure_review_decisions d
+              WHERE d.artifact_id = a.id
+                AND d.organization_id = a.organization_id
+                AND d.decision = 'approve'
+                AND d.version_reviewed = a.version
+           )                                               AS is_reviewed,
+           CASE
+             WHEN json_typeof(a.metadata -> 'sourceArtifactIds') = 'array'
+             THEN json_array_length(a.metadata -> 'sourceArtifactIds')
+             ELSE 0
+           END                                             AS source_count,
            /* Which version the newest active signature actually covers.
               is_signed above is EXISTS-any: it says a signature exists, not
               that it covers what you are looking at. An artifact signed at v3
@@ -234,7 +258,7 @@ export default function createArtifactsCenterRoutes(): Router {
          WHERE a.organization_id = $1
          ORDER BY a.updated_at DESC
          LIMIT ${MAX_ROWS}`,
-        [orgId],
+        [orgId]
       );
 
       const rawRows = result.rows as RawArtifactRow[];
@@ -254,6 +278,8 @@ export default function createArtifactsCenterRoutes(): Router {
           when: relativeTime(r.updated_at),
           ver: `v${Number.isFinite(version) ? version : 1}`,
           sig: r.is_signed === true,
+          reviewed: r.is_reviewed === true,
+          sourceCount: Number(r.source_count) || 0,
           /* The version the signature covers, and whether that is still the
              current one. `sigStale` is only asserted when BOTH numbers are
              known — an unresolvable signed_version reports null rather than
@@ -284,6 +310,155 @@ export default function createArtifactsCenterRoutes(): Router {
         err: error instanceof Error ? error.message : String(error),
       });
       return res.status(500).json({ success: false, error: 'Failed to load artifacts center' });
+    }
+  });
+
+  /**
+   * Download one governed artifact as a file.
+   *
+   * ── Why this exists ────────────────────────────────────────────────────────
+   * The Artifacts Center's per-row "Download" button ran
+   * `onAsk('Download <name> (PDF, 24 KB)')` — it typed the file's name into the
+   * chat rail as a sentence. No file was produced. The gallery read above
+   * deliberately returns `octet_length(a.content)` rather than the content, so
+   * the client had nothing to render even if it had wanted to, and there was no
+   * per-artifact endpoint to ask.
+   *
+   * This is that endpoint. It re-reads the artifact org-scoped (never trusting
+   * an id the client supplies to reach across tenants), renders the stored
+   * content, and streams it back.
+   *
+   * ── The export-review gate is NOT skipped ──────────────────────────────────
+   * Governed regulatory content must not leave the system without a persisted
+   * decision covering its current version. A download route that trusted a
+   * caller-supplied approval boolean would fabricate governance. This route
+   * derives authorization from an active signature or current-version review
+   * decision, scoped to the artifact's organization.
+   */
+  router.get('/:artifactId/export', async (req: Request, res: Response) => {
+    try {
+      const orgId = getOrgId(req);
+      const artifactId = String(req.params.artifactId || '').trim();
+      if (!artifactId) {
+        return res.status(400).json({ success: false, error: 'An artifact id is required.' });
+      }
+
+      const format = String(req.query.format || 'docx').toLowerCase();
+      if (format !== 'docx' && format !== 'txt') {
+        // PDF rendering for artifacts goes through the chat exporter, which
+        // takes a different payload; offering it here without wiring it would
+        // be the same empty promise this route replaces.
+        return res.status(400).json({
+          success: false,
+          error: 'Unsupported format. This endpoint renders docx or txt.',
+        });
+      }
+
+      const { rows } = await pool.query(
+        `SELECT a.title,
+                a.content,
+                a.version,
+                EXISTS (
+                  SELECT 1
+                    FROM concept2cure_signatures s
+                    JOIN concept2cure_artifact_versions v
+                      ON v.id = s.artifact_version_id
+                   WHERE s.artifact_id = a.id
+                     AND s.organization_id = a.organization_id
+                     AND s.status = 'active'
+                     AND v.version = a.version
+                ) AS is_signed,
+                EXISTS (
+                  SELECT 1 FROM concept2cure_review_decisions d
+                   WHERE d.artifact_id = a.id
+                     AND d.organization_id = a.organization_id
+                     AND d.decision = 'approve'
+                     AND d.version_reviewed = a.version
+                ) AS is_reviewed
+           FROM concept2cure_artifacts a
+          WHERE a.artifact_id = $1 AND a.organization_id = $2`,
+        [artifactId, orgId]
+      );
+      if (rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'That artifact was not found in your organization.',
+        });
+      }
+
+      const row = rows[0] as {
+        title: string | null;
+        content: string | null;
+        version: number;
+        is_signed: boolean;
+        is_reviewed: boolean;
+      };
+
+      const content = typeof row.content === 'string' ? row.content : '';
+      if (!content.trim()) {
+        // An artifact row with no content is a real state (a placeholder minted
+        // before drafting). Reported as what it is, rather than shipping an
+        // empty file the user has to open to discover was empty.
+        return res.status(409).json({
+          success: false,
+          error: 'That artifact has no content to export yet.',
+        });
+      }
+
+      /* The export-review gate is read from persisted state, never asserted by
+         the caller. The approval must cover the current artifact version. */
+      if (!row.is_signed && !row.is_reviewed && shouldEnforceArtifactExportReview()) {
+        return res.status(403).json({
+          success: false,
+          error: 'HUMAN_REVIEW_REQUIRED',
+          message:
+            'The current artifact version has no persisted approval decision or active signature.',
+        });
+      }
+
+      const notice =
+        'DRAFT — NOT AGENCY-VALIDATED. This artifact is not an agency submission, agency decision, or evidence of agency acceptance.';
+      const exportContent = `${notice}\n\n${content}`;
+      res.setHeader('X-Concept2Cure-Draft', 'true');
+      res.setHeader('X-Concept2Cure-Agency-Validated', 'false');
+      res.setHeader(
+        'X-Concept2Cure-Human-Review-Recorded',
+        String(row.is_reviewed || row.is_signed)
+      );
+      res.setHeader(
+        'X-Concept2Cure-Export-Authorization',
+        row.is_reviewed
+          ? 'persisted-review-decision'
+          : row.is_signed
+          ? 'current-version-signature'
+          : 'none'
+      );
+
+      const title = row.title || 'artifact';
+      const safeTitle = title.replace(/[^\w.-]+/g, '_').slice(0, 80) || 'artifact';
+
+      if (format === 'txt') {
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.txt"`);
+        return res.send(exportContent);
+      }
+
+      const buffer = await generateDocxBuffer(title, exportContent);
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      );
+      res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.docx"`);
+      return res.send(buffer);
+    } catch (error) {
+      logger.error('artifact export failed', {
+        err: error instanceof Error ? error.message : String(error),
+        artifactId: String(req.params.artifactId || ''),
+      });
+      return res.status(500).json({
+        success: false,
+        error: 'The artifact could not be exported.',
+      });
     }
   });
 

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { connected, useLiveRows, EmptyState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
@@ -565,6 +566,9 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
    */
   const openingRef = useRef(false);
   const [opening, setOpening] = useState(false);
+  const attachingRef = useRef(false);
+  const [attaching, setAttaching] = useState(false);
+
   const openEditor = async () => {
     if (openingRef.current) return; // a second click must not create a second document
     const title = docDef?.label || 'Statistical document';
@@ -587,9 +591,115 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       openingRef.current = false; setOpening(false);
     }
   };
-  const attach = () => { fireToast((docDef?.label || 'Document') + ' attached to dossier'); ask('Attach the ' + (docDef?.label || 'document') + ' to the submission dossier statistical section'); };
+  /**
+   * Ask AnA to attach the document — which is what this control does, and now
+   * what it says.
+   *
+   * It used to fire `'<Label> attached to dossier'` with the default 'ok' tone,
+   * i.e. the green success tick, SYNCHRONOUSLY and BEFORE `ask(...)` was even
+   * called. At the instant that tick painted, not one byte had left the browser.
+   *
+   * And nothing was attached even after it did. `ask()` returns void — it
+   * streams a natural-language sentence into the AnA conversation. The real
+   * path, attachToDossier in
+   * server/services/ana-biostats/workflow-integrator.ts, needs an artifactId and
+   * a dossierSectionId. This control is only reachable once `res && jud &&
+   * docDef`, so the document is GENERATED — but generated is not saved: there is
+   * no artifactId until `openEditor` writes one through saveToAuthoring, and
+   * this surface has no dossier-section picker at all. So there is no success to
+   * report, and no failure path to report one from either.
+   *
+   * `openEditor`, directly above, is this file's own proof of the right pattern:
+   * it awaits the real write and refuses to navigate or announce on anything but
+   * a confirmed `r.ok`. This is the same rule applied to a control whose honest
+   * description is "a request was sent", not "it is done" — so the toast now
+   * follows `ask()` rather than preceding it, and says what AnA still has to do.
+   *
+   * The `!md.trim()` guard mirrors openEditor's and is belt-and-braces for the
+   * same reason its twin is: both controls live in one AnswerLead gated on
+   * `res && jud && docDef`, so it only bites if `docDef.gen()` returns empty.
+   */
+  const attach = async () => {
+    const label = docDef?.label || 'Document';
+    if (!md.trim()) {
+      fireToast('Nothing to attach yet — the document has not been generated.', 'error');
+      return;
+    }
+    if (attachingRef.current) return; // a second click must not file a second copy
+    attachingRef.current = true;
+    setAttaching(true);
+    try {
+      /* This used to hand the request to the conversation — `ask('Attach the
+         … to the submission dossier statistical section')` — and then toast
+         that an attachment had been "requested". `ask()` returns void: it
+         streams a sentence into the AnA panel. Nothing was filed, and the user
+         was left waiting for a confirmation that had no producer.
+
+         `saveToAuthoring` is the real filing path and the sibling button beside
+         this one already uses it: it POSTs /api/authoring/docs with
+         window.C2C_PROJECT.id as client_program_id, which is what binds the
+         document to the project's dossier, then writes the content. Same call,
+         same module (statistical documentation files under M5), same failure
+         reporting — the only difference from "Open in editor" is that this one
+         does not navigate away. */
+      const r = await saveToAuthoring({
+        title: label, module: 'M5', code: docDef?.id || 'statistical_document',
+        content: md, subject: 'the document',
+      });
+      if (!r.ok) { fireToast(r.message, 'error'); return; }
+      fireToast(label + ' filed to the dossier under Module 5 — open it from Document authoring.');
+    } finally {
+      attachingRef.current = false;
+      setAttaching(false);
+    }
+  };
   const groups = BiostatDocs.REGISTRY.reduce<Record<string, DocDef[]>>((m, d) => { (m[d.group] = m[d.group] || []).push(d); return m; }, {});
   const vTone = (v: string) => v === 'adequate' ? 'ok' : v === 'marginal' ? 'warn' : 'err';
+
+  /* WHAT ANA SEES HERE. The design engine is pure and in-browser, so its
+     numbers are always current; the govDocs read scopes ONLY the
+     persisted-documents claim — its error must never read as zero rows. When
+     the engine itself returns null the screen shows no n/power/verdict, so
+     none is published either. */
+  const anaContext = useMemo(() => {
+    const presetLabel = BS_PRESETS[preset]?.label ?? preset;
+    const gov = govDocs.loading
+      ? 'the governed statistical document list is still loading'
+      : govDocs.error
+        ? 'the governed statistical document list did not load, so the count of persisted documents is unknown'
+        : govDocs.empty
+          ? 'no governed statistical documents persisted yet'
+          : govDocs.rows.length + ' governed statistical document(s) persisted (org-scoped)';
+    const govFacts = !govDocs.loading && !govDocs.error ? { governedDocumentsPersisted: govDocs.rows.length } : {};
+    if (!res || !jud) {
+      return {
+        summary:
+          'Biostatistics — the design engine could not compute a result for the current inputs, so no sample size, power or verdict is on screen; ' + gov + '.',
+        facts: { documentType: docDef?.label ?? null, preset: presetLabel, designComputed: false, ...govFacts },
+      };
+    }
+    return {
+      summary:
+        'Biostatistics — a ' + (docDef?.label ?? 'statistical document') + ' drafted for a ' + input.studyType.replace(/_/g, ' ')
+        + ' design (' + presetLabel + ' preset): ' + n + ' subjects, ' + (res.power * 100).toFixed(0) + '% power, overall verdict '
+        + jud.overallVerdict + '; ' + gov + '.',
+      facts: {
+        documentType: docDef?.label ?? null,
+        preset: presetLabel,
+        subjectsN: n,
+        achievedPowerPct: Number((res.power * 100).toFixed(1)),
+        overallVerdict: jud.overallVerdict,
+        ...govFacts,
+      },
+      availableActions: [
+        'Adjust any design input or preset — the document rewrites deterministically',
+        'Pick a different statistical document type to generate',
+        'Refine the document with AnA',
+        'Opening in the editor and attaching to the dossier both file a real governed document (genesis revision + Part 11 audit row) — AnA proposes them in conversation, never through screen controls.',
+      ],
+    };
+  }, [res, jud, docDef, preset, input.studyType, n, govDocs.loading, govDocs.error, govDocs.empty, govDocs.rows]);
+  usePublishSurfaceContext('biostatistics', anaContext);
 
   return (
     <div className="bs">
@@ -608,7 +718,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           headline={<>I've drafted the <b>{docDef.label}</b> for your {input.studyType.replace(/_/g, ' ')} design -- <b>{n} subjects</b>, {(res.power * 100).toFixed(0)}% power, and the design reads as <b>{jud.overallVerdict}</b>.</>}
           body={<>Everything below is written, not just calculated — the method, assumptions, and {jud.fragility.category.replace('_', ' ')} fragility are already in the prose, with a provenance footer for the reviewer. Change any design input and the document rewrites itself.</>}
           reassure={jud.overallVerdict === 'inadequate' ? "I flagged the underpowering honestly in the risk section — better the reviewer sees you addressed it than found it." : "It's drafted to " + (input.regulatoryBody || 'FDA') + " expectations. Read it, adjust, and send it straight to the editor."}
-          action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: 'Attach to dossier', onClick: attach } }}
+          action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: attaching ? 'Filing to the dossier…' : 'File it to the dossier', onClick: () => void attach() } }}
           secondary="Or pick a different document and adjust the design on the left."
         />
       )}
@@ -664,7 +774,16 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         {/* Center: the DOCUMENT -- the deliverable */}
         <div className="bs-doc">
           <div className="bs-doc-bar">
-            <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{live ? '/api/ana-biostats' : 'Deterministic engine'} -- v1.0.0 — draft</span></div>
+            <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{/* Provenance describes where THIS document came from, and that never
+                  varies: `md` is always BiostatDocs.gen() over BiostatEngine.compute(),
+                  both defined in this file and ported verbatim from
+                  server/services/ana-biostats/*. `live` is connected() — a global
+                  API-reachability flag that has no bearing on how the document was
+                  produced — so naming the service there stamped a browser-computed
+                  document with a server origin, on the one line a reviewer reads to
+                  find out exactly that. It also printed an API route into customer
+                  UI, which the work order forbids outright. */}
+                Deterministic engine -- v1.0.0 — draft</span></div>
             <div className="bs-doc-bar-a">
               <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ': ' + (docDef?.blurb || ''))}>{I.sparkles} Refine with AnA</button>
               <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
@@ -702,10 +821,25 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
               {govDocs.rows.map((p) => {
                 const def = p.doc ? BiostatDocs.byId(p.doc) : undefined;
                 return (
-                  <button key={p.id} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => { if (p.doc && BiostatDocs.byId(p.doc)) setDocType(p.doc); }}>
+                  /* `doc` is null whenever statisticalDocumentType was not
+                     recorded on the artifact — a condition this type declares as
+                     normal. The row was still a <button> in that case, so
+                     clicking a perfectly ordinary persisted document did
+                     nothing at all. It now says so: a row we cannot open is
+                     rendered as a row, disabled, with the reason in its title,
+                     rather than as a control that silently declines. */
+                  <button
+                    key={p.id}
+                    className="sp-row"
+                    style={{ width: '100%', textAlign: 'left' }}
+                    disabled={!def}
+                    title={def ? `Open the ${def.label} generator` : 'This document has no recorded statistical type, so there is no generator to open for it.'}
+                    onClick={() => { if (p.doc && def) setDocType(p.doc); }}
+                  >
                     <span className="sp-tag" style={{ fontFamily: 'var(--font-mono)' }}>{p.id}</span>
                     <span className="sp-row-b"><span className="sp-row-t">{p.study}</span><span className="sp-row-s">{p.endpoint ? p.endpoint + ' -- ' : ''}{def?.label || 'Statistical document'}</span></span>
                     <span className={'rd-chip tone-' + (p.status === 'approved' ? 'ok' : 'warn')}>{p.status}</span>
+                    {!def && <span className="sp-row-note">no recorded type</span>}
                   </button>
                 );
               })}

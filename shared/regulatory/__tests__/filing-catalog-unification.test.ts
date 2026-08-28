@@ -132,3 +132,41 @@ describe('BP-W1-4 — every module assignment is traceable to a named authority'
     expect(untraced).toEqual([]);
   });
 });
+
+describe('W2-1 / W2-2 — the EMA does not assess devices, and a device dossier is not a CTD', () => {
+  const EU_DEVICE = /MDR|IVDR|DEVICE|CER|PMCF|SSCP|DOC|FSCA|CLIN_INVEST|PSUR_DEVICE/;
+
+  it('no EU device or IVD filing is attributed to the EMA, except the two consultations that are', () => {
+    const wrong = FILING_CATALOG.filter(
+      (e) =>
+        e.registryId.startsWith('EU_') &&
+        EU_DEVICE.test(e.registryId) &&
+        /\bEMA\b/.test(e.agency) &&
+        !e.registryId.includes('ART117') &&
+        !e.registryId.includes('ART48'),
+    ).map((e) => e.registryId);
+    expect(wrong, `attributed to the EMA: ${wrong.join(', ')}`).toEqual([]);
+  });
+
+  it('keeps the EMA exactly where the Regulations put it', () => {
+    /* MDR Art. 117 — the Notified Body ISSUES the opinion, which is then filed
+       with the MAA. IVDR Art. 48(6) — the Notified Body must consult the EMA on
+       a companion diagnostic. These are the only two device-adjacent rows where
+       a medicines agency legitimately appears, and W2-1's scope names both. */
+    const nbop = FILING_CATALOG.find((e) => e.registryId === 'EU_MDR_ART117_NBOP');
+    const art48 = FILING_CATALOG.find((e) => e.registryId === 'EU_IVDR_ART48_CONSULT');
+    expect(nbop, 'MDR Art. 117 Notified Body Opinion is not modelled').toBeTruthy();
+    expect(art48, 'IVDR Art. 48(6) consultation is not modelled').toBeTruthy();
+    /* The catalog's `agency` is the display string the surfaces render. */
+    expect(nbop!.agency).toMatch(/Notified Body/);
+    expect(art48!.agency).toMatch(/EMA/);
+  });
+
+  it('no device or IVD filing carries a CTD or eCTD dossier standard', () => {
+    const DEVICE_ID = /PMA|HDE|IDE|510K|DENOVO|DEVICE|SHONIN|NINTEI|IVD|CDX|MDR/;
+    const wrong = FILING_CATALOG.filter(
+      (e) => DEVICE_ID.test(e.registryId) && (e.dossierStandard === 'CTD' || e.dossierStandard === 'eCTD'),
+    ).map((e) => `${e.registryId}=${e.dossierStandard}`);
+    expect(wrong, `device filings tagged CTD/eCTD: ${wrong.join(', ')}`).toEqual([]);
+  });
+});

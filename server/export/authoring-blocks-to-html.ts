@@ -16,6 +16,7 @@
  * PDF, and the version before that passed it through.
  */
 import type { ContentBlock, InlineRun } from './authoring-section-content.js';
+import type { ResolvedImage } from './authoring-images.js';
 
 export function escapeHtml(s: string): string {
   return String(s ?? '')
@@ -24,10 +25,64 @@ export function escapeHtml(s: string): string {
     .replace(/>/g, '&gt;');
 }
 
-function inline(runs: InlineRun[]): string {
+/**
+ * Collects the footnotes cited while a section renders, and hands back the
+ * marker to print at the citation.
+ *
+ * Lettered (a, b, c … z, aa) rather than numbered: that is the convention
+ * regulatory tables use, and it keeps table notes visually distinct from any
+ * numbered references in the prose around them.
+ *
+ * The marker is derived from POSITION at render time, never stored. That is the
+ * whole point of holding the note on its own reference — move a row, cut a
+ * paragraph, reorder two tables, and the letters come out right without anyone
+ * renumbering them by hand. The stored content carries the note's TEXT; the
+ * ordering is a rendering decision.
+ *
+ * Identical note text cited twice gets ONE letter, cited twice — matching what
+ * a writer means by "same note", and what Word's own footnote reuse does.
+ */
+interface FootnoteCollector {
+  marker(noteText: string): string;
+  notes(): { marker: string; text: string }[];
+}
+function makeFootnoteCollector(): FootnoteCollector {
+  const seen = new Map<string, string>();
+  const letter = (i: number): string => {
+    let out = '';
+    let n = i;
+    do {
+      out = String.fromCharCode(97 + (n % 26)) + out;
+      n = Math.floor(n / 26) - 1;
+    } while (n >= 0);
+    return out;
+  };
+  return {
+    marker(noteText) {
+      const hit = seen.get(noteText);
+      if (hit) return hit;
+      const m = letter(seen.size);
+      seen.set(noteText, m);
+      return m;
+    },
+    notes() {
+      return [...seen.entries()].map(([text, marker]) => ({ marker, text }));
+    },
+  };
+}
+
+function inline(runs: InlineRun[], fn?: FootnoteCollector): string {
   return runs
     .map((r) => {
       let t = escapeHtml(r.text);
+      /* A footnote reference renders as its marker, not as whatever character
+         happened to be typed — the letter belongs to the note's position. With
+         no collector the reference degrades to plain superscript rather than
+         disappearing: a note the author wrote must not vanish from a filed
+         document just because this path could not letter it. */
+      if (r.footnote && fn) {
+        return `<sup class="fn-ref">${escapeHtml(fn.marker(r.footnote))}</sup>`;
+      }
       if (r.superScript) t = `<sup>${t}</sup>`;
       if (r.subScript) t = `<sub>${t}</sub>`;
       if (r.bold) t = `<b>${t}</b>`;
@@ -43,7 +98,7 @@ function inline(runs: InlineRun[]): string {
     .join('');
 }
 
-function tableHtml(b: ContentBlock): string {
+function tableHtml(b: ContentBlock, fn?: FootnoteCollector): string {
   const rows = (b.rows ?? [])
     .map(
       (row) =>
@@ -52,7 +107,7 @@ function tableHtml(b: ContentBlock): string {
             const tag = c.header ? 'th' : 'td';
             const cs = c.colSpan ? ` colspan="${c.colSpan}"` : '';
             const rs = c.rowSpan ? ` rowspan="${c.rowSpan}"` : '';
-            return `<${tag}${cs}${rs}>${inline(c.runs)}</${tag}>`;
+            return `<${tag}${cs}${rs}>${inline(c.runs, fn)}</${tag}>`;
           })
           .join('')}</tr>`
     )
@@ -66,8 +121,12 @@ function tableHtml(b: ContentBlock): string {
  * one real list, so a numbered procedure keeps its numbering instead of
  * becoming a run of bulleted paragraphs.
  */
-export function blocksToHtml(blocks: ContentBlock[]): string {
+export function blocksToHtml(
+  blocks: ContentBlock[],
+  images?: Map<string, ResolvedImage>,
+): string {
   const parts: string[] = [];
+  const fn = makeFootnoteCollector();
   let openList: 'ol' | 'ul' | null = null;
   const closeList = () => {
     if (openList) parts.push(`</${openList}>`);
@@ -82,15 +141,53 @@ export function blocksToHtml(blocks: ContentBlock[]): string {
         parts.push(`<${want}>`);
         openList = want;
       }
-      parts.push(`<li>${inline(b.runs)}</li>`);
+      parts.push(`<li>${inline(b.runs, fn)}</li>`);
       continue;
     }
     closeList();
-    if (b.kind === 'table') parts.push(tableHtml(b));
-    else if (b.kind === 'heading') parts.push(`<h3>${inline(b.runs)}</h3>`);
-    else parts.push(`<p>${inline(b.runs)}</p>`);
+    if (b.kind === 'table') parts.push(tableHtml(b, fn));
+    else if (b.kind === 'image') {
+      /* The bytes ride into the print engine as a data URI — no network
+         fetch happens inside the renderer, so the auth boundary is never
+         in play. Emitted markup stays whitelisted: the src is built here
+         from resolved bytes, never copied from stored markup. */
+      const resolved = b.src ? images?.get(b.src) : undefined;
+      if (resolved) {
+        const alt = b.alt ? ` alt="${escapeHtml(b.alt)}"` : '';
+        parts.push(
+          `<figure><img src="data:${resolved.mimeType};base64,${resolved.buffer.toString('base64')}"${alt}>` +
+            (b.alt ? `<figcaption>${escapeHtml(b.alt)}</figcaption>` : '') +
+            `</figure>`
+        );
+      } else {
+        parts.push(
+          `<p class="img-missing">[Figure not exported: ${escapeHtml(b.alt || b.src || 'unresolved image reference')}]</p>`
+        );
+      }
+    } else if (b.kind === 'heading') {
+      /* Every heading used to render as <h3>, whatever its level: the document's
+         entire hierarchy collapsed to one rank in the HTML and PDF paths. Offset
+         by one for the same reason the DOCX path does — the section title is the
+         h1 above this content. */
+      const h = Math.min(Math.max((b.level ?? 1) + 1, 2), 6);
+      parts.push(`<h${h}>${inline(b.runs, fn)}</h${h}>`);
+    }
+    else parts.push(`<p>${inline(b.runs, fn)}</p>`);
   }
   closeList();
+  /* The notes themselves, after the content that cites them.
+     HTML has no page, so there is nowhere to put a true page-foot note: they
+     are rendered as a labelled block at the end of the section, which is where
+     a table's notes sit in a printed submission anyway. The DOCX path does not
+     do this — Word has real footnotes and gets them (FootnoteReferenceRun). */
+  const notes = fn.notes();
+  if (notes.length > 0) {
+    parts.push('<section class="footnotes"><h6>Notes</h6><dl>');
+    for (const n of notes) {
+      parts.push(`<dt>${escapeHtml(n.marker)}</dt><dd>${escapeHtml(n.text)}</dd>`);
+    }
+    parts.push('</dl></section>');
+  }
   return parts.join('');
 }
 
@@ -103,4 +200,8 @@ export const PRINT_STYLES = `
   th { background: #f2f4f5; font-weight: bold; }
   tr { page-break-inside: avoid; }
   caption { caption-side: bottom; font-style: italic; font-size: 10pt; padding-top: 4px; }
+  figure { margin: 0.8em 0; text-align: center; page-break-inside: avoid; }
+  figure img { max-width: 100%; height: auto; }
+  figcaption { font-style: italic; font-size: 10pt; padding-top: 4px; }
+  .img-missing { color: #6b7280; font-style: italic; }
 `;

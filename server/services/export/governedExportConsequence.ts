@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { registerArtifactWithGovernance } from '../compute/artifactWriteback';
 
 export type ExportSourceType =
@@ -46,6 +47,12 @@ export interface GovernedExportConsequence {
   suggested_placement: string | null;
   provenance_ref: string;
   audit_ref: string;
+  // SHA-256 over the exact bytes returned in `downloadable_output_ref.data`
+  // (the delivered PDF/DOCX/ZIP). This — NOT the source-content hash the
+  // artifact record stores in `content_hash` — is what a recipient checks the
+  // delivered file against, mirroring the `sha256` returned by the sibling
+  // respondAuditedUnplaced delivery path.
+  delivered_artifact_sha256: string;
   downloadable_output_ref: {
     encoding: 'base64';
     mime_type: string;
@@ -92,6 +99,20 @@ export async function createGovernedExportConsequence(
 ): Promise<GovernedExportConsequence> {
   assertValidGovernedExportInput(input);
 
+  // Hash the actually-delivered bytes (the binary PDF/DOCX/ZIP handed back to
+  // the user), NOT the JSON source content. registerArtifactWithGovernance
+  // hashes input.content into the artifact record's content_hash for source
+  // provenance; that hash does not cover the delivered file, so on its own a
+  // recipient cannot verify the download against the governed record. Compute
+  // the delivered-artifact hash here — consistent with respondAuditedUnplaced,
+  // which does sha256(buffer) over the real delivered bytes — and persist it
+  // alongside the source provenance (in the artifact/provenance/audit metadata)
+  // as well as returning it to the caller.
+  const deliveredArtifactSha256 = crypto
+    .createHash('sha256')
+    .update(input.binaryOutput)
+    .digest('hex');
+
   const consequence = await registerArtifactWithGovernance({
     organizationId: input.organizationId,
     projectId: input.projectId,
@@ -109,12 +130,16 @@ export async function createGovernedExportConsequence(
     metadata: {
       source: input.sourceType,
       ...input.metadata,
+      // Computed hash is authoritative — keep it last so caller metadata cannot
+      // shadow the delivered-artifact integrity hash.
+      deliveredArtifactSha256,
     },
     auditMetadata: {
       sourceType: input.sourceType,
       filename: input.filename,
       mimeType: input.mimeType,
       ...input.metadata,
+      deliveredArtifactSha256,
     },
   });
 
@@ -128,6 +153,7 @@ export async function createGovernedExportConsequence(
     suggested_placement: input.suggestedPlacement ?? null,
     provenance_ref: consequence.provenanceEventId,
     audit_ref: consequence.auditId,
+    delivered_artifact_sha256: deliveredArtifactSha256,
     downloadable_output_ref: {
       encoding: 'base64',
       mime_type: input.mimeType,

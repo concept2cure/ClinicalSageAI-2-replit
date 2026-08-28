@@ -24,6 +24,7 @@ import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { AnswerLead, UnresolvedLead } from '../AnswerLead';
 import { assessmentStateFor, hasAnswer } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
@@ -225,6 +226,34 @@ interface PedPrea {
   due: string;
 }
 
+/**
+ * How a live read is doing, for the context published to AnA.
+ *
+ * These four surfaces each stack two or three independent reads, and any one of
+ * them can fail on its own. Collapsing "the store did not answer" into "there
+ * are no rows" is the exact substitution `assessmentState` exists to prevent on
+ * screen — the same rule has to hold for what AnA is told, because she speaks
+ * the result back to the user as fact. So each read publishes its own state and
+ * an unreadable one publishes NULL rows plus the reason, never an empty list.
+ */
+function readContext<T>(
+  read: { loading: boolean; error?: string | null },
+  rows: T[],
+  project: (r: T) => Record<string, unknown>,
+  cap = 12,
+): { state: 'loading' | 'unreadable' | 'ready'; count: number | null; rows: Record<string, unknown>[] | null } {
+  if (read.loading) return { state: 'loading', count: null, rows: null };
+  if (read.error) return { state: 'unreadable', count: null, rows: null };
+  return { state: 'ready', count: rows.length, rows: rows.slice(0, cap).map(project) };
+}
+
+/** One sentence for a read that has not produced an answer yet. */
+function readLine(label: string, c: { state: string; count: number | null }): string {
+  if (c.state === 'loading') return `${label} are still loading`;
+  if (c.state === 'unreadable') return `${label} could not be read`;
+  return `${c.count} ${label}`;
+}
+
 export function Pediatric({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
   /* Real rows — org-scoped pediatric plans and PREA/PIP milestones. */
@@ -284,6 +313,33 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
     findingCount: prea.length,
     assessmentRan: false,
   });
+
+  /* What AnA can see of this screen. Two independent reads, published
+     independently — see `readContext`. */
+  const anaContext = useMemo(() => {
+    const p = readContext(livePlans, plans, (x) => ({
+      id: x.id ?? null, product: x.product, planType: x.kind, ageRange: x.ageRange,
+      deferrals: x.deferrals, waivers: x.waivers, milestones: x.milestones,
+      due: x.due, status: x.status,
+    }));
+    const m = readContext(livePrea, prea, (x) => ({ product: x.product, milestone: x.ms, due: x.due }));
+    return {
+      summary:
+        `Pediatric strategy (\u00a7505B PREA, EMA PIP): ${readLine('pediatric plan(s)', p)}; ` +
+        `${readLine('PREA/PIP milestone(s)', m)}.` +
+        (p.state === 'ready' && drafts.length ? ` ${drafts.length} plan(s) are still in draft.` : ''),
+      facts: {
+        plans: p.rows, planCount: p.count, plansReadState: p.state,
+        draftPlans: p.state === 'ready' ? drafts.length : null,
+        preaMilestones: m.rows, preaReadState: m.state,
+      },
+      availableActions: [
+        'Open a pediatric plan (iPSP, PIP or PREA waiver) — note the add form is local, not persisted',
+        'Read PREA / PIP milestones and their due dates',
+      ],
+    };
+  }, [livePlans, plans, livePrea, prea, drafts.length]);
+  usePublishSurfaceContext('pediatric', anaContext);
 
   return (
     <BpComposer
@@ -487,6 +543,37 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
     findingCount: des.length,
     assessmentRan: false,
   });
+
+  /* What AnA can see of this screen. Three independent reads, published
+     independently — see `readContext`. */
+  const anaContext = useMemo(() => {
+    const d = readContext(liveDes, des, (x) => ({
+      product: x.product, agency: x.agency, indication: x.indication,
+      requestedOrGranted: x.date, prevalence: x.prevalence, benefit: x.benefit, status: x.status,
+    }));
+    const r = readContext(liveRpd, rpd, (x) => ({ product: x.product, kind: x.kind, value: x.value, status: x.status, notes: x.notes }));
+    const v = readContext(liveAdv, adv, (x) => ({ product: x.product, organisation: x.org, engagement: x.engagement }));
+    return {
+      summary:
+        `Orphan and rare disease: ${readLine('designation record(s)', d)}; ` +
+        `${readLine('RPD voucher / grant record(s)', r)}; ${readLine('advocacy engagement(s)', v)}.` +
+        (d.state === 'ready'
+          ? ` ${designated.length} designated, ${pending.length} still pending.`
+          : ''),
+      facts: {
+        designations: d.rows, designationCount: d.count, designationsReadState: d.state,
+        designated: d.state === 'ready' ? designated.length : null,
+        pending: d.state === 'ready' ? pending.length : null,
+        rpdVouchersAndGrants: r.rows, rpdReadState: r.state,
+        advocacy: v.rows, advocacyReadState: v.state,
+      },
+      availableActions: [
+        'Open an orphan designation application — note the add form is local, not persisted',
+        'Read RPD voucher / grant records and advocacy engagements',
+      ],
+    };
+  }, [liveDes, des, liveRpd, rpd, liveAdv, adv, designated.length, pending.length]);
+  usePublishSurfaceContext('orphan', anaContext);
 
   return (
     <BpComposer
@@ -743,6 +830,49 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
     assessmentRan: false,
   });
 
+  /* What AnA can see of this screen. Three independent reads, published
+     independently — see `readContext`. Unlike the narrative above, which may
+     only speak once all three have answered, the context reports each read's
+     own state, so a question about supplements is still answerable while the
+     renewals read is in flight. */
+  const anaContext = useMemo(() => {
+    const sp = readContext(liveSupp, supp, (x) => ({
+      id: x.id, agency: x.agency, product: x.product, subject: x.subject,
+      filed: x.filed, due: x.due, status: x.status,
+    }));
+    const ch = readContext(liveCmc, cmc, (x) => ({
+      title: x.title, area: x.area, programs: x.programs, riskBand: x.risk,
+      fdaReportingCategory: x.fdaCategory ?? null, emaCategory: x.emaCategory ?? null, status: x.status,
+    }));
+    const rn = readContext(liveRen, ren, (x) => ({
+      authority: x.authority, product: x.product, next: x.next, interval: x.interval, due: x.due,
+    }));
+    return {
+      summary:
+        `Lifecycle management (post-approval): ${readLine('supplement(s) / variation(s)', sp)}; ` +
+        `${readLine('proposed CMC change(s)', ch)}; ${readLine('recurring renewal obligation(s)', rn)}.` +
+        (sp.state === 'ready' && inReview.length ? ` ${inReview.length} supplement(s) are in review.` : '') +
+        (ch.state === 'ready' && highChg.length ? ` ${highChg.length} CMC change(s) are classified high risk.` : '') +
+        (rn.state === 'ready' && nextRen ? ` The next renewal is ${nextRen.product} with ${nextRen.authority}, due ${nextRen.due}.` : ''),
+      facts: {
+        supplements: sp.rows, supplementsReadState: sp.state,
+        supplementsInReview: sp.state === 'ready' ? inReview.length : null,
+        cmcChanges: ch.rows, cmcChangesReadState: ch.state,
+        highRiskCmcChanges: ch.state === 'ready' ? highChg.length : null,
+        renewals: rn.rows, renewalsReadState: rn.state,
+        nextRenewal: rn.state === 'ready' && nextRen
+          ? { authority: nextRen.authority, product: nextRen.product, next: nextRen.next, due: nextRen.due }
+          : null,
+      },
+      availableActions: [
+        'Create a supplement or variation — note the add form is local, not persisted',
+        'Read a proposed CMC change and its classified FDA reporting category and risk band',
+        'Read the recurring renewal obligations and their due dates',
+      ],
+    };
+  }, [liveSupp, supp, liveCmc, cmc, liveRen, ren, inReview.length, highChg.length, nextRen]);
+  usePublishSurfaceContext('lifecycle-mgmt', anaContext);
+
   return (
     <BpComposer
       eyebrow="Post-approval · supplements · variations"
@@ -983,6 +1113,48 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
   });
   const highPrr = Boolean(top && prrOf(top) >= 3);
   const nothingOnFile = sigs.length === 0 && aggs.length === 0;
+
+  /* What AnA can see of this screen.
+     One read feeds both lists, so both share its state — and on a safety
+     surface the distinction matters more than anywhere else in the product: a
+     board that did not load must never be published as "no signals", because
+     the assistant will say it back as an absence of safety findings. That is
+     the same substitution the lead above was fixed for. */
+  const anaContext = useMemo(() => {
+    const sg = readContext(board, sigs, (x) => ({
+      product: x.product, meddraTerm: x.term, cases: x.count, prr: x.prr,
+      owner: x.owner, age: x.age, disposition: x.status,
+    }));
+    const ag = readContext(board, aggs, (x) => ({
+      product: x.product, cycle: x.cycle, due: x.due, author: x.by, reviewers: x.reviewers, status: x.status,
+    }));
+    return {
+      summary:
+        `Safety surveillance (PSUR / PBRER, signal management): ${readLine('safety signal(s)', sg)}; ` +
+        `${readLine('aggregate report(s)', ag)}.` +
+        (sg.state === 'ready' && top
+          ? ` The highest-PRR signal is "${topTerm}" at PRR ${prrOf(top)}${highPrr ? ' — at or above the PRR 3 disproportionality threshold' : ''}.`
+          : sg.state === 'ready'
+            ? ' No disproportionality screen has produced a signal.'
+            : ''),
+      facts: {
+        signals: sg.rows, signalCount: sg.count, boardReadState: sg.state,
+        topSignal: sg.state === 'ready' && top
+          ? { product: top.product, meddraTerm: top.term, cases: top.count, prr: prrOf(top), disposition: top.status }
+          : null,
+        aggregateReports: ag.rows,
+        aggregateInFlight: ag.state === 'ready' && agg
+          ? { product: agg.product, cycle: agg.cycle, due: agg.due, status: agg.status }
+          : null,
+      },
+      availableActions: [
+        'Log a safety signal (a governed record — creates a \u00a711 audit entry and routes causality assessment)',
+        'Read the ranked signals with their case counts and PRR',
+        'Read the aggregate report cycle, its due date and status',
+      ],
+    };
+  }, [board, sigs, aggs, top, topTerm, highPrr, agg]);
+  usePublishSurfaceContext('pharmacovigilance', anaContext);
 
   return (
     <BpComposer

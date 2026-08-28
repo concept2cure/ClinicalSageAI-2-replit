@@ -28,7 +28,7 @@ const { qSubSvc, sectionPool, governedTransmit, audit, TenantAccessError } = vi.
     governedTransmit: {
       executeGovernedTransmit: vi.fn(),
     },
-    audit: { logAction: vi.fn().mockResolvedValue(undefined) },
+    audit: { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
     TenantAccessError,
   };
 });

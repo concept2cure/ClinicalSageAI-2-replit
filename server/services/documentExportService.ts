@@ -392,15 +392,27 @@ export async function assembleECTDPackage(options: ECTDPackageOptions): Promise<
     for (const section of sections) {
       const ectdPath = mapSectionToECTDPath(section.sectionCode, options.region || 'us');
       const content = section.content || '';
-      const checksum = crypto.createHash('md5').update(content).digest('hex');
+
+      // The eCTD backbone MUST checksum the exact bytes that will be filed for
+      // each path — a recipient verifies the delivered file against this hash.
+      // No PDF conversion happens here yet: the bytes emitted for this entry
+      // ARE the raw source text, so checksum ↔ size ↔ mimeType ↔ extension must
+      // all describe that text, not a PDF that was never produced. Emitting a
+      // `.pdf` path with `application/pdf` and an md5 over source text would
+      // advertise a checksum over the wrong bytes. When a real PDF publisher is
+      // wired in, it must convert first and then checksum the produced PDF
+      // bytes (and restore the `.pdf` extension + `application/pdf` mimeType).
+      const fileBytes = Buffer.from(content, 'utf-8');
+      const checksum = crypto.createHash('md5').update(fileBytes).digest('hex');
+      const filedPath = ectdPath.replace(/\.pdf$/i, '.txt');
 
       files.push({
-        path: ectdPath,
+        path: filedPath,
         title: section.title,
         operation: options.lifecycleOperation,
         checksum,
-        size: Buffer.byteLength(content, 'utf-8'),
-        mimeType: 'application/pdf', // Would be PDF after conversion
+        size: fileBytes.length,
+        mimeType: 'text/plain; charset=utf-8', // honest: bytes are source text, not a converted PDF
       });
     }
 
@@ -488,7 +500,12 @@ function generateECTDIndexXml(
 <ectd:ectd xmlns:ectd="urn:hl7-org:v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="urn:hl7-org:v3 ${dtdVersion}.xsd">
   <ectd:id root="${crypto.randomUUID()}" />
-  <ectd:code code="${submissionType}" codeSystem="2.16.840.1.113883.3.989.5.1.3.1" displayName="${submissionType} Submission" />
+  <!-- submissionType arrives raw from req.body, and the very next line already
+       escapes submissionTitle. An ampersand or a quote here produces XML no
+       parser accepts. This module never writes to disk today (the real eCTD
+       publisher is elsewhere) so the blast radius is small — which is exactly
+       why it should be fixed before anyone wires it to one. -->
+  <ectd:code code="${escapeXml(submissionType)}" codeSystem="2.16.840.1.113883.3.989.5.1.3.1" displayName="${escapeXml(submissionType)} Submission" />
   <ectd:title>${escapeXml(submissionTitle)}</ectd:title>
   <ectd:effectiveTime value="${now.replace(/[-:T]/g, '').slice(0, 14)}" />
   <ectd:setId root="${crypto.randomUUID()}" />

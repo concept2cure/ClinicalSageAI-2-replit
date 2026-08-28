@@ -21,7 +21,7 @@ import type {
 
 const holder = vi.hoisted(() => ({ db: null as any }));
 vi.mock('../../../db', () => ({ get db() { return holder.db; } }));
-vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => {}) } }));
+vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) } }));
 
 import { createSubmission, listSubmissions, listSequences, listLeaves } from '../../submission-service/submission-service';
 import { persistAnnualReport, persistSafetyReportIntent } from '../ind-lifecycle-persistence';

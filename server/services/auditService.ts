@@ -340,11 +340,25 @@ class AuditService {
     entry.resourceType = resolvedResourceType;
     entry.resourceId = resolvedResourceId;
 
-    // Outcome trackers. Optimistic, and demoted by whichever section fails —
-    // a store that is not configured at all leaves its flag false without
-    // recording a failure, which is not the same as an error.
-    let chained = true;
-    let tamperProof = true;
+    // Outcome trackers.
+    //
+    // These were initialised to `true` and only ever demoted inside a catch —
+    // so they tracked "nothing threw", not "a store accepted the row". When
+    // neither store was configured, both `if` blocks below were skipped, no
+    // catch ran, and this returned `{persisted: true, chained: true,
+    // tamperProof: true}` for a row that was written NOWHERE. The comment that
+    // stood here claimed the opposite ("a store that is not configured at all
+    // leaves its flag false"), and AuditWriteResult documents `persisted` as
+    // "true when at least one durable store accepted the row".
+    //
+    // That is the failure mode this whole result type exists to expose: every
+    // `if (!audit.persisted)` check in the codebase — including the one that
+    // aborts a governed Part 11 action in routes/ana-ri/utility.ts — was being
+    // handed a success it could not have earned. So the flags now start false
+    // and are raised only by a write that actually completed.
+    let chained = false;
+    let tamperProof = false;
+    let tamperProofAttempted = false;
     let failure: string | undefined;
 
     // Always log to structured console for observability
@@ -372,6 +386,7 @@ class AuditService {
           await client.query('BEGIN');
           await writeChainedAuditRow(client, entry, resolvedTenantId, resolvedResourceId);
           await client.query('COMMIT');
+          chained = true;
         } catch (txErr) {
           try {
             await client.query('ROLLBACK');
@@ -391,6 +406,11 @@ class AuditService {
       failure = error instanceof Error ? error.message : String(error);
       logger.error('Failed to write chained audit_logs row', error);
     }
+    if (!chained && !failure) {
+      // Reached only when `pool` was absent, so nothing was attempted. Silence
+      // here is what let an unwritten row report itself as persisted.
+      failure = 'no database pool: the chained audit_logs row was not attempted';
+    }
 
     // -----------------------------------------------------------------------
     // 2. Persist to tamper-proof hash-chain log
@@ -398,6 +418,7 @@ class AuditService {
     try {
       const tpLog = await ensureInitialized();
       if (tpLog) {
+        tamperProofAttempted = true;
         await tpLog.log(
           mapEventType(entry.action),
           entry.action,
@@ -414,11 +435,15 @@ class AuditService {
             userAgent: entry.userAgent,
           }
         );
+        tamperProof = true;
       }
     } catch (error) {
       tamperProof = false;
       failure = failure ?? (error instanceof Error ? error.message : String(error));
       logger.error('Failed to write tamper-proof audit entry', error);
+    }
+    if (!tamperProof && !tamperProofAttempted) {
+      failure = failure ?? 'no tamper-proof log configured: the hash-chain entry was not attempted';
     }
 
     return {

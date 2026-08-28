@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://concept2cure.example/schemas/release-evidence-manifest.v1.schema.json",
+  "title": "Release Evidence Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "policy", "repository", "runtime", "fingerprints", "artifacts", "workflows", "automatedEvidence", "knownDeviations", "humanApprovals", "disclaimer"],
+  "properties": {
+    "schemaVersion": {"const": "1.0.0"},
+    "policy": {"type":"object","additionalProperties":false,"required":["version","sha256"],"properties":{"version":{"const":"1.0.0"},"sha256":{"$ref":"#/$defs/hash"}}},
+    "repository": {"type":"object","additionalProperties":false,"required":["url","commit","tree","dirty"],"properties":{"url":{"type":"string"},"commit":{"type":"string","pattern":"^[0-9a-f]{40}$"},"tree":{"type":"string","pattern":"^[0-9a-f]{40}$"},"dirty":{"const":false}}},
+    "runtime": {"type":"object","additionalProperties":false,"required":["node","npm","platform","architecture"],"properties":{"node":{"type":"string"},"npm":{"type":"string"},"platform":{"type":"string"},"architecture":{"type":"string"}}},
+    "fingerprints": {"type":"object","additionalProperties":false,"required":["dependencyLockSha256","migrationSetSha256","schemaSha256"],"properties":{"dependencyLockSha256":{"$ref":"#/$defs/hashOrMissing"},"migrationSetSha256":{"$ref":"#/$defs/hashOrMissing"},"schemaSha256":{"$ref":"#/$defs/hashOrMissing"}}},
+    "artifacts": {"type":"array","minItems":1,"items":{"type":"object","additionalProperties":false,"required":["id","kind","path","sha256","commit","tree","status"],"properties":{"id":{"type":"string","minLength":1},"kind":{"type":"string","minLength":1},"path":{"type":"string","minLength":1},"sha256":{"$ref":"#/$defs/hashOrMissing"},"commit":{"type":"string"},"tree":{"type":"string"},"status":{"enum":["verified","missing","stale","unknown"]}}}},
+    "workflows": {"type":"array","minItems":1,"items":{"type":"object","additionalProperties":false,"required":["workflow","job","required","conclusion","headSha","runId"],"properties":{"workflow":{"type":"string","minLength":1},"job":{"type":"string","minLength":1},"required":{"const":true},"conclusion":{"enum":["success","failure","cancelled","skipped","timed_out","action_required","neutral","missing","unknown"]},"headSha":{"type":"string"},"runId":{"anyOf":[{"type":"integer"},{"type":"string"},{"type":"null"}]}}}},
+    "automatedEvidence": {"type":"object","additionalProperties":{"$ref":"#/$defs/result"},"required":["tests","securityScan","blankDatabase","upgrade","productionBoot","browserSmoke"]},
+    "knownDeviations": {"type":"array","items":{"type":"object","required":["id","description","disposition"],"properties":{"id":{"type":"string"},"description":{"type":"string"},"disposition":{"enum":["unreviewed","open"]}},"additionalProperties":false}},
+    "humanApprovals": {"type":"array","minItems":5,"maxItems":5,"items":{"type":"object","additionalProperties":false,"required":["role","status","signer","signedAt","signature","authorizationEvidence"],"properties":{"role":{"enum":["engineering","security","regulatoryQA","operations","legal"]},"status":{"const":"unapproved"},"signer":{"type":"null"},"signedAt":{"type":"null"},"signature":{"type":"null"},"authorizationEvidence":{"type":"null"}}}},
+    "disclaimer": {"const":"Automated evidence does not establish that the product is validated, compliant, production-ready, or agency-ready; those conclusions require governed review by authorized people."}
+  },
+  "$defs": {
+    "hash":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "hashOrMissing":{"anyOf":[{"$ref":"#/$defs/hash"},{"enum":["missing","unknown"]}]},
+    "result":{"type":"object","additionalProperties":false,"required":["status","count","artifactId","summary"],"properties":{"status":{"enum":["passed","failed","missing","unknown"]},"count":{"type":["integer","null"],"minimum":0},"artifactId":{"type":["string","null"]},"summary":{"type":"object","additionalProperties":false,"required":["total","passed","failed","skipped","unknown"],"properties":{"total":{"type":"integer","minimum":0},"passed":{"type":"integer","minimum":0},"failed":{"type":"integer","minimum":0},"skipped":{"type":"integer","minimum":0},"unknown":{"type":"integer","minimum":0}}}}}
+  }
+}

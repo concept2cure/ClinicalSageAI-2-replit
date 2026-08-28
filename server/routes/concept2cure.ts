@@ -43,6 +43,11 @@ import multer from 'multer';
 import path from 'path';
 import { type GovernedDocumentActionContract } from '../../shared/types/document-contract';
 import {
+  applyExportGovernanceHeaders,
+  evaluateExportGovernance,
+  type ExportGovernance,
+} from '../services/export/exportReviewGate';
+import {
   regulatoryAuditLogs,
   projects,
   users,
@@ -132,6 +137,7 @@ const sendSuccess = <T>(res: Response, data: T, meta?: Record<string, unknown>) 
   return res.json({ success: true, data });
 };
 import { ai } from '../lib/unified-ai-client';
+import { parseIntegerProjectId } from '../lib/project-id.js';
 import { registerCommunicationCenterRoutes } from './concept2cure-communication-center';
 
 const sendError = (
@@ -260,8 +266,8 @@ function parseProjectParam(projectParam: string | string[] | undefined): number 
   if (typeof raw !== 'string') {
     throw new Error('Invalid project ID');
   }
-  const numericId = Number.parseInt(raw.replace('proj_', ''), 10);
-  if (!Number.isFinite(numericId) || numericId <= 0) {
+  const numericId = parseIntegerProjectId(raw);
+  if (numericId === null) {
     throw new Error('Invalid project ID');
   }
   return numericId;
@@ -1145,8 +1151,8 @@ function getProjectScope(
   const raw = Array.isArray(projectParam) ? projectParam[0] : projectParam;
   if (typeof raw !== 'string') return null;
   const projectId = raw.replace('proj_', '');
-  const numericId = parseInt(projectId, 10);
-  if (isNaN(numericId)) {
+  const numericId = parseIntegerProjectId(projectId);
+  if (numericId === null) {
     return null;
   }
   return { numericId };
@@ -1694,8 +1700,8 @@ async function getOwnershipDerivationData(
     .orderBy(desc(regulatoryAuditLogs.timestamp))
     .limit(500);
   for (const row of auditRows) {
-    const numeric = Number.parseInt((row.entityId || '').replace('proj_', ''), 10);
-    if (!numeric || Number.isNaN(numeric)) continue;
+    const numeric = parseIntegerProjectId(row.entityId);
+    if (numeric === null) continue;
     const list = activitiesByProject.get(numeric) || [];
     if (list.length >= 50) continue;
     list.push({
@@ -1796,7 +1802,10 @@ async function getArtifactsFromDb(projectId: number, organizationId: number): Pr
  */
 router.get(
   '/projects',
-  cacheResponse({ ttl: 30_000, keyGenerator: req => `projects:${(req as any).organizationId}` }),
+  // The organization half of the key is supplied by cacheResponse itself.
+  // This read used to be `(req as any).organizationId`, which the global /api
+  // gate never sets, so every tenant keyed to `projects:undefined`.
+  cacheResponse({ ttl: 30_000, keyGenerator: () => 'projects' }),
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
@@ -2449,9 +2458,9 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.id).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -2561,8 +2570,8 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.id).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
-    if (isNaN(numericId)) {
+    const numericId = parseIntegerProjectId(projectId);
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -2659,9 +2668,9 @@ router.get('/projects/:projectId/collaborators', async (req: Request, res: Respo
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -2793,9 +2802,9 @@ router.put('/projects/:projectId/collaborators', async (req: Request, res: Respo
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -3244,8 +3253,8 @@ router.post('/projects/:id/export', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const rawId = String(req.params.id ?? '');
-    const numericId = parseInt(rawId.replace('proj_', ''), 10);
-    if (isNaN(numericId)) {
+    const numericId = parseIntegerProjectId(rawId);
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -3296,8 +3305,8 @@ router.post('/projects/:id/duplicate', async (req: Request, res: Response) => {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
     const rawId = String(req.params.id ?? '');
-    const numericId = parseInt(rawId.replace('proj_', ''), 10);
-    if (isNaN(numericId)) {
+    const numericId = parseIntegerProjectId(rawId);
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -3366,8 +3375,8 @@ router.post('/projects/:id/transfer', async (req: Request, res: Response) => {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
     const rawId = String(req.params.id ?? '');
-    const numericId = parseInt(rawId.replace('proj_', ''), 10);
-    if (isNaN(numericId)) {
+    const numericId = parseIntegerProjectId(rawId);
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -3479,14 +3488,15 @@ router.get(
   '/projects/:projectId/activity',
   cacheResponse({
     ttl: 30_000,
-    keyGenerator: req => `activity:${(req as any).organizationId}:${req.params.projectId}`,
+    // Organization prefix comes from cacheResponse; see /projects above.
+    keyGenerator: req => `activity:${req.params.projectId}`,
   }),
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+      const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
-      if (isNaN(numericProjectId)) {
+      if (numericProjectId === null) {
         return sendError(res, 400, 'Invalid project ID');
       }
 
@@ -3569,9 +3579,9 @@ router.get(
 router.get('/projects/:projectId/linked', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+    const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
-    if (isNaN(numericProjectId)) {
+    if (numericProjectId === null) {
       return sendError(res, 400, 'Invalid project ID');
     }
 
@@ -3650,9 +3660,9 @@ router.get('/projects/:projectId/linked', async (req: Request, res: Response) =>
 router.post('/projects/:projectId/linked', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+    const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
-    if (isNaN(numericProjectId)) {
+    if (numericProjectId === null) {
       return sendError(res, 400, 'Invalid project ID');
     }
 
@@ -3671,8 +3681,8 @@ router.post('/projects/:projectId/linked', async (req: Request, res: Response) =
       return sendError(res, 400, 'targetProjectId and kind are required');
     }
 
-    const numericTargetId = parseInt(String(targetProjectId).replace('proj_', ''), 10);
-    if (isNaN(numericTargetId)) {
+    const numericTargetId = parseIntegerProjectId(targetProjectId);
+    if (numericTargetId === null) {
       return sendError(res, 400, 'Invalid targetProjectId');
     }
 
@@ -4082,9 +4092,9 @@ router.get('/projects/:projectId/apps', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -4120,9 +4130,9 @@ router.post('/projects/:projectId/apps', async (req: Request, res: Response) => 
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -4214,9 +4224,9 @@ router.delete('/projects/:projectId/apps/:appId', async (req: Request, res: Resp
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -4292,8 +4302,8 @@ router.post(
         return sendError(res, 400, 'Project ID is required');
       }
 
-      const numericId = parseInt(projectIdRaw.replace('proj_', ''), 10);
-      if (isNaN(numericId)) {
+      const numericId = parseIntegerProjectId(projectIdRaw);
+      if (numericId === null) {
         return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
       }
 
@@ -6570,10 +6580,10 @@ router.post('/projects/:projectId/conversations', async (req: Request, res: Resp
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
-    const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+    const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-    if (!hasAccess || isNaN(numericProjectId)) {
+    if (!hasAccess || numericProjectId === null) {
       return sendError(res, 404, 'Project not found');
     }
 
@@ -6782,9 +6792,9 @@ router.patch(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+      const numericProjectId = parseIntegerProjectId(req.params.projectId);
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess || Number.isNaN(numericProjectId)) {
+      if (!hasAccess || numericProjectId === null) {
         return sendError(res, 404, 'Project not found');
       }
 
@@ -6859,9 +6869,9 @@ router.delete(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+      const numericProjectId = parseIntegerProjectId(req.params.projectId);
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess || Number.isNaN(numericProjectId)) {
+      if (!hasAccess || numericProjectId === null) {
         return sendError(res, 404, 'Project not found');
       }
 
@@ -6923,7 +6933,8 @@ router.delete(
  */
 router.get(
   '/artifacts',
-  cacheResponse({ ttl: 60_000, keyGenerator: req => `artifacts:${(req as any).organizationId}` }),
+  // Organization prefix comes from cacheResponse; see /projects above.
+  cacheResponse({ ttl: 60_000, keyGenerator: () => 'artifacts' }),
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
@@ -7006,10 +7017,10 @@ router.get('/projects/all/artifacts-summary', async (req: Request, res: Response
 router.get('/projects/:projectId/artifacts', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+    const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-    if (!hasAccess || isNaN(numericProjectId)) {
+    if (!hasAccess || numericProjectId === null) {
       return sendError(res, 404, 'Project not found');
     }
 
@@ -7033,10 +7044,10 @@ router.post(
     try {
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
-      const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+      const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess || isNaN(numericProjectId)) {
+      if (!hasAccess || numericProjectId === null) {
         return sendError(res, 404, 'Project not found');
       }
 
@@ -7045,6 +7056,51 @@ router.post(
       // Sanitize content
       const sanitizedContent = sanitizeContent(data.content);
       const sanitizedTitle = sanitizeContent(data.title);
+      const sourceArtifactIds = Array.isArray(data.metadata?.sourceArtifactIds)
+        ? [
+            ...new Set(
+              data.metadata.sourceArtifactIds.filter(
+                (id): id is string => typeof id === 'string' && id.trim().length > 0
+              )
+            ),
+          ]
+        : [];
+      const sourceArtifacts = sourceArtifactIds.length
+        ? await db
+            .select({
+              artifactId: concept2cureArtifacts.artifactId,
+              title: concept2cureArtifacts.title,
+            })
+            .from(concept2cureArtifacts)
+            .where(
+              and(
+                eq(concept2cureArtifacts.organizationId, organizationId),
+                eq(concept2cureArtifacts.projectId, numericProjectId),
+                inArray(concept2cureArtifacts.artifactId, sourceArtifactIds)
+              )
+            )
+        : [];
+      if (sourceArtifacts.length !== sourceArtifactIds.length) {
+        const foundIds = new Set(sourceArtifacts.map(source => source.artifactId));
+        return sendError(
+          res,
+          400,
+          'One or more source evidence artifacts were not found in this project',
+          { missingSourceArtifactIds: sourceArtifactIds.filter(id => !foundIds.has(id)) },
+          'SOURCE_EVIDENCE_NOT_FOUND'
+        );
+      }
+      // Persist the VALIDATED deduped citation list, never the raw caller
+      // array. The artifacts-center listing renders json_array_length over
+      // metadata.sourceArtifactIds as "N cited sources"; storing the raw
+      // array would let ['a','a','',42] (with only 'a' existing) surface as
+      // 4 cited sources — fabricated governance metadata.
+      const metadataWithValidatedSources = data.metadata
+        ? {
+            ...data.metadata,
+            ...('sourceArtifactIds' in data.metadata ? { sourceArtifactIds } : {}),
+          }
+        : undefined;
       const governedResolution = resolveGovernedContext({
         req,
         projectId: numericProjectId,
@@ -7132,7 +7188,9 @@ router.post(
           version: 1,
           templateId: data.templateId || null,
           metadata: {
-            ...(data.metadata || {}),
+            // The validated variant, not raw data.metadata: the persisted row
+            // is what the artifacts-center listing counts citations from.
+            ...(metadataWithValidatedSources || {}),
             harness: {
               clientTrack: governedResolution.contract.clientTrack,
               submissionProgram: governedResolution.contract.submissionProgram,
@@ -7176,7 +7234,7 @@ router.post(
         ctdSection: data.ctdSection || null,
         version: 1,
         versions: [{ version: 1, content: sanitizedContent, createdAt: newDbArtifact.createdAt }],
-        metadata: data.metadata,
+        metadata: metadataWithValidatedSources,
         createdAt: newDbArtifact.createdAt,
         updatedAt: newDbArtifact.updatedAt,
       };
@@ -7209,6 +7267,7 @@ router.post(
           contentHash,
           ctdSection: ctdSection || null,
           conversationId: data.conversationId || null,
+          sourceArtifactIds,
         },
         sourceDescription: data.conversationId
           ? `Created from conversation ${data.conversationId}`
@@ -7257,6 +7316,29 @@ router.post(
             logger.warn('Failed to record artifact lineage (conversation -> artifact)', {
               artifactId,
               conversationId: data.conversationId,
+              err: err instanceof Error ? err.message : String(err),
+            });
+          });
+        }
+        for (const source of sourceArtifacts) {
+          recordLineage({
+            organizationId,
+            projectId: numericProjectId,
+            sourceObjectType: 'artifact',
+            sourceObjectId: source.artifactId,
+            sourceTitle: source.title,
+            targetObjectType: 'artifact',
+            targetObjectId: artifactId,
+            targetTitle: sanitizedTitle,
+            targetField: ctdSection || undefined,
+            linkageType: 'cited_by',
+            transformationType: 'manual_reference',
+            createdById: userId,
+            metadata: { contentHash, version: 1 },
+          }).catch((err: unknown) => {
+            logger.warn('Failed to record artifact lineage (evidence artifact -> draft artifact)', {
+              artifactId,
+              sourceArtifactId: source.artifactId,
               err: err instanceof Error ? err.message : String(err),
             });
           });
@@ -7889,7 +7971,8 @@ router.get(
   '/projects/:projectId/dossier-metrics',
   cacheResponse({
     ttl: 90_000,
-    keyGenerator: req => `dossier-metrics:${(req as any).organizationId}:${req.params.projectId}`,
+    // Organization prefix comes from cacheResponse; see /projects above.
+    keyGenerator: req => `dossier-metrics:${req.params.projectId}`,
   }),
   async (req: Request, res: Response) => {
     try {
@@ -11981,75 +12064,23 @@ router.get('/regulatory-catalog/search', async (req: Request, res: Response) => 
 // ─────────────────────────────────────────────────────────────────────────────
 
 const EXPORT_REVIEW_NOTICE =
-  'REGULATORY SAFETY NOTICE: This document may contain AI-generated content. Qualified human review and approval are required before use in regulated submissions, clinical/safety decisions, or external communications.';
+  'DRAFT — NOT AGENCY-VALIDATED. This document may contain AI-generated content and is not an agency submission or agency decision. Qualified human review and approval are required before use in regulated submissions, clinical/safety decisions, or external communications.';
 
-const exportGovernanceSchema = z.object({
-  aiGenerated: z.boolean().default(true),
-  humanReviewApproved: z.boolean().default(false),
-  reviewerName: z.string().trim().min(1).max(200).optional(),
-  reviewerRole: z.string().trim().min(1).max(200).optional(),
-  reviewTimestamp: z.string().datetime().optional(),
-});
-
-function shouldEnforceExportReviewGate(): boolean {
-  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'true') return true;
-  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'false') return false;
-  return process.env.NODE_ENV === 'production';
-}
-
-function applyExportGovernanceHeaders(
-  res: Response,
-  governance: z.infer<typeof exportGovernanceSchema>
-): void {
-  res.setHeader('X-Concept2Cure-AI-Generated', String(governance.aiGenerated));
-  res.setHeader('X-Concept2Cure-Human-Review-Approved', String(governance.humanReviewApproved));
-  res.setHeader('X-Concept2Cure-Review-Required', 'true');
-  if (governance.reviewerName) {
-    res.setHeader('X-Concept2Cure-Reviewer', encodeURIComponent(governance.reviewerName));
-  }
-  if (governance.reviewTimestamp) {
-    res.setHeader('X-Concept2Cure-Review-Timestamp', governance.reviewTimestamp);
-  }
-}
-
-function validateExportGovernance(
-  req: Request,
-  res: Response
-): z.infer<typeof exportGovernanceSchema> | null {
-  const parsed = exportGovernanceSchema.safeParse(req.body?.governance ?? {});
-  if (!parsed.success) {
-    sendError(
-      res,
-      400,
-      'Invalid export governance payload',
-      parsed.error.flatten(),
-      'VALIDATION_ERROR'
-    );
+/**
+ * Thin adapter over the canonical export review gate
+ * (server/services/export/exportReviewGate.ts). All decision logic lives
+ * there; this only renders a rejection into this router's `sendError`
+ * envelope.
+ */
+function validateExportGovernance(req: Request, res: Response): ExportGovernance | null {
+  const evaluation = evaluateExportGovernance(req.body?.governance);
+  if (!evaluation.ok) {
+    sendError(res, evaluation.status, evaluation.message, evaluation.details, evaluation.code);
     return null;
   }
 
-  const governance = parsed.data;
-  const strictGateEnabled = shouldEnforceExportReviewGate();
-  if (strictGateEnabled && !governance.humanReviewApproved) {
-    sendError(
-      res,
-      403,
-      'Human review approval is required before export in this environment',
-      {
-        required: 'governance.humanReviewApproved=true',
-        reviewerFields: [
-          'governance.reviewerName',
-          'governance.reviewerRole',
-          'governance.reviewTimestamp',
-        ],
-      },
-      'HUMAN_REVIEW_REQUIRED'
-    );
-    return null;
-  }
-
-  applyExportGovernanceHeaders(res, governance);
-  return governance;
+  applyExportGovernanceHeaders(res, evaluation.governance);
+  return evaluation.governance;
 }
 
 /**
@@ -12066,7 +12097,7 @@ router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
     const { title, content } = schema.parse(req.body);
     const governance = validateExportGovernance(req, res);
     if (!governance) return;
-    const exportBody = governance.aiGenerated ? `${EXPORT_REVIEW_NOTICE}\n\n${content}` : content;
+    const exportBody = `${EXPORT_REVIEW_NOTICE}\n\n${content}`;
 
     // Dynamic import to avoid circular dependency issues
     const { generateDocxBuffer } = await import('../services/docxGenerator');
@@ -12151,7 +12182,7 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
     });
     y -= 30;
 
-    if (governance.aiGenerated) {
+    {
       const noticeLines = EXPORT_REVIEW_NOTICE.match(/.{1,110}(\s|$)/g) ?? [EXPORT_REVIEW_NOTICE];
       for (const noticeLine of noticeLines) {
         page.drawText(noticeLine.trim(), {
@@ -12342,7 +12373,7 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
     const { title, content, nanoBanana } = schema.parse(req.body);
     const governance = validateExportGovernance(req, res);
     if (!governance) return;
-    const exportBody = governance.aiGenerated ? `${EXPORT_REVIEW_NOTICE}\n\n${content}` : content;
+    const exportBody = `${EXPORT_REVIEW_NOTICE}\n\n${content}`;
 
     // If Nano Banana is enabled and configured, generate the full presentation with cover
     if (nanoBanana) {
@@ -13756,6 +13787,97 @@ router.post('/projects/:projectId/agency-communications', async (req: Request, r
     );
   }
 });
+
+/**
+ * Advance an agency communication through triage.
+ *
+ * ── Why this route exists ────────────────────────────────────────────────────
+ * The Communication Center's "Triage" / "Advance" button — the only action on
+ * every agency-communication card — moved the status in React state and stopped
+ * there. Nothing was persisted, so the triage a regulatory lead performed
+ * vanished on reload, and a second person opening the same screen saw an
+ * untouched queue. On a surface whose entire purpose is tracking what the
+ * agency asked for and whether anyone has answered, that is a record-keeping
+ * failure rather than a UI one.
+ *
+ * The columns were always there — `human_review_status` and `closure_status`
+ * are written by the POST above and read by the GET above. Only the transition
+ * was missing.
+ *
+ * ── The transition is computed here, not accepted from the client ────────────
+ * The client sends WHICH event to advance, not what to advance it to. Letting
+ * the caller name the next status would let a card jump from pending_review
+ * straight to actioned, skipping the triage step the audit trail is supposed to
+ * record. The pairing (review status, closure status) advances together because
+ * that is what the button means: triaging opens work, actioning closes it.
+ */
+const AGENCY_COMM_ADVANCE: Record<string, { humanReviewStatus: string; closureStatus: string }> = {
+  pending_review: { humanReviewStatus: 'triaged', closureStatus: 'in_progress' },
+  triaged: { humanReviewStatus: 'actioned', closureStatus: 'closed' },
+};
+
+router.patch(
+  '/projects/:projectId/agency-communications/:eventId/advance',
+  async (req: Request, res: Response) => {
+    try {
+      await ensureCommunicationCenterTables();
+      const organizationId = getOrganizationId(req);
+      const projectId = parseProjectParam(req.params.projectId);
+      const eventId = String(req.params.eventId || '').trim();
+      if (!eventId) {
+        return sendError(res, 400, 'An event id is required.');
+      }
+
+      // Read the current state inside the same request so the transition is
+      // computed from what is stored, not from what the client last rendered.
+      const current = await pool.query(
+        `SELECT human_review_status
+           FROM concept2cure_agency_communications
+          WHERE organization_id = $1 AND project_id = $2 AND event_id = $3`,
+        [organizationId, projectId, eventId]
+      );
+      if (current.rowCount === 0) {
+        return sendError(res, 404, 'That communication was not found in this project.');
+      }
+
+      const from = String(current.rows[0].human_review_status || 'pending_review');
+      const next = AGENCY_COMM_ADVANCE[from];
+      if (!next) {
+        // Already actioned. Refused rather than silently re-applied, so the
+        // audit trail never carries a transition that did not change anything.
+        return sendError(res, 409, 'That communication has already been actioned.');
+      }
+
+      const updated = await pool.query(
+        `UPDATE concept2cure_agency_communications
+            SET human_review_status = $4, closure_status = $5, updated_at = NOW()
+          WHERE organization_id = $1 AND project_id = $2 AND event_id = $3
+          RETURNING event_id, human_review_status, closure_status`,
+        [organizationId, projectId, eventId, next.humanReviewStatus, next.closureStatus]
+      );
+
+      await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, undefined, {
+        agencyCommunicationEventId: eventId,
+        humanReviewStatusFrom: from,
+        humanReviewStatusTo: next.humanReviewStatus,
+        closureStatusTo: next.closureStatus,
+      });
+
+      const row = updated.rows[0];
+      return sendSuccess(res, {
+        id: row.event_id,
+        humanReviewStatus: row.human_review_status,
+        closureStatus: row.closure_status,
+      });
+    } catch (error: any) {
+      return sendError(
+        res,
+        communicationCenterErrorStatus(error),
+        error?.message || 'Failed to advance the agency communication'
+      );
+    }
+  }
+);
 
 router.get('/projects/:projectId/publishops/services', async (req: Request, res: Response) => {
   try {

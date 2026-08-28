@@ -352,9 +352,10 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
         const programContentHash = crypto.createHash('sha256').update(programContent).digest('hex');
         const ready = builtForProgram.missingRequired.length === 0;
         // The audit row is the ONLY persisted trace on this path — it is required,
-        // not best-effort. If it throws, the catch below answers 500 and the
-        // response never claims `audited: true` over nothing.
-        await auditService.logAction({
+        // not best-effort. logAction resolves an outcome instead of throwing on
+        // a persistence failure, so the outcome must be checked: without it the
+        // response claims `audited: true` over nothing.
+        const unplacedAudit = await auditService.logAction({
           action: 'ind_form.artifact.unplaced',
           userId: ctx.userId,
           organizationId: ctx.organizationId,
@@ -372,6 +373,13 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
             artifactRegistry: 'unplaced_pending_document_identity_contract',
           },
         });
+        if (!unplacedAudit?.persisted) {
+          return res.status(500).json({
+            error: 'AUDIT_WRITE_FAILED',
+            message:
+              'the unplaced-artifact audit row is the only persisted trace on this path and it was not persisted',
+          });
+        }
         return res.status(200).json({
           governed: false,
           audited: true,
@@ -453,17 +461,16 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
     // row already carries provenance (createdById, contentHash, timestamps), so a
     // transient audit-log hiccup must not fail an otherwise-successful creation.
     // (Making the two atomic is the writeMutation transaction-boundary follow-on.)
-    try {
-      await auditService.logAction({
-        action: 'ind_form.artifact.create',
-        userId: ctx.userId,
-        organizationId: ctx.organizationId,
-        resourceType: 'concept2cure_artifact',
-        resourceId: artifactId,
-        metadata: { formId, projectId: effectiveProjectId, ready, contentHash },
-      });
-    } catch (auditErr) {
-      logger.warn('audit log failed for ind-form artifact', { err: auditErr instanceof Error ? auditErr.message : String(auditErr) });
+    const artifactAudit = await auditService.logAction({
+      action: 'ind_form.artifact.create',
+      userId: ctx.userId,
+      organizationId: ctx.organizationId,
+      resourceType: 'concept2cure_artifact',
+      resourceId: artifactId,
+      metadata: { formId, projectId: effectiveProjectId, ready, contentHash },
+    });
+    if (!artifactAudit.persisted) {
+      logger.warn('ind-form artifact audit row was not persisted', { err: artifactAudit.error ?? 'no durable store accepted the row' });
     }
 
     res.status(201).json({ artifactId, formId, projectId: effectiveProjectId, ready, missingRequired: built.missingRequired, contentHash });
@@ -605,17 +612,16 @@ router.post('/:formId/artifact-all', limiter, requireRole(AUTHOR), async (req, r
     // the rows already carry provenance; a transient audit hiccup must not undo a
     // committed creation.
     for (const r of rows) {
-      try {
-        await auditService.logAction({
-          action: 'ind_form.artifact.create',
-          userId: ctx.userId,
-          organizationId: ctx.organizationId,
-          resourceType: 'concept2cure_artifact',
-          resourceId: r.artifactId,
-          metadata: { formId, projectId, ready: r.ready, contentHash: r.contentHash, investigatorIndex: r.idx },
-        });
-      } catch (auditErr) {
-        logger.warn('audit log failed for ind-form artifact (batch)', { err: auditErr instanceof Error ? auditErr.message : String(auditErr) });
+      const batchArtifactAudit = await auditService.logAction({
+        action: 'ind_form.artifact.create',
+        userId: ctx.userId,
+        organizationId: ctx.organizationId,
+        resourceType: 'concept2cure_artifact',
+        resourceId: r.artifactId,
+        metadata: { formId, projectId, ready: r.ready, contentHash: r.contentHash, investigatorIndex: r.idx },
+      });
+      if (!batchArtifactAudit.persisted) {
+        logger.warn('ind-form artifact audit row was not persisted (batch)', { err: batchArtifactAudit.error ?? 'no durable store accepted the row' });
       }
     }
 

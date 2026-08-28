@@ -841,7 +841,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // Was 'kit-only', which Coverage renders to customers as "Design prototype
+    // exists; backend binding map being assembled". Untrue: BiopharmaSpecialty.tsx binds 12 live reads/writes
+    // against audited routes. sharedContract is still null, so this stops at
+    // routes-ready rather than contract-ready.
+    readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'FDA §505B PREA / iPSP and EMA PIP: plans, deferrals, waivers, extrapolation rationale and PREA milestones.',
   },
@@ -857,7 +861,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // Was 'kit-only', which Coverage renders to customers as "Design prototype
+    // exists; backend binding map being assembled". Untrue: BiopharmaSpecialty.tsx binds 12 live reads/writes
+    // against audited routes. sharedContract is still null, so this stops at
+    // routes-ready rather than contract-ready.
+    readiness: 'routes-ready',
     compliance: [A11Y, TONE],
     notes: 'Orphan-drug / rare-disease designations across FDA/EMA/PMDA, RPD priority-review vouchers & grants, and patient-advocacy engagement.',
   },
@@ -873,7 +881,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     anaToolFamilies: ['assess_change_impact'],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // Was 'kit-only', which Coverage renders to customers as "Design prototype
+    // exists; backend binding map being assembled". Untrue: BiopharmaSpecialty.tsx binds 12 live reads/writes
+    // against audited routes. sharedContract is still null, so this stops at
+    // routes-ready rather than contract-ready.
+    readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'Post-approval: supplements/variations (sBLA, Type II/IB, CBE-30), CMC change control classified against ICH Q12, and renewal cycles (PADER, 5-year, re-examination).',
   },
@@ -889,7 +901,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     anaToolFamilies: ['assess_site_risk'],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // Was 'kit-only', which Coverage renders to customers as "Design prototype
+    // exists; backend binding map being assembled". Untrue: ClinicalOps.tsx binds 5 live reads/writes
+    // against audited routes. sharedContract is still null, so this stops at
+    // routes-ready rather than contract-ready.
+    readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'Clinical-development operations: studies & enrollment, study sites with RBM risk linkage, DSMB / interim reviews, and protocol deviations with CAPA. Structured data entry for sites and deviations.',
   },
@@ -905,7 +921,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     anaToolFamilies: ['get_nonclinical_template', 'calculate_ttc'],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // Was 'kit-only', which Coverage renders to customers as "Design prototype
+    // exists; backend binding map being assembled". Untrue: Nonclinical.tsx binds 7 live reads/writes
+    // against audited routes. sharedContract is still null, so this stops at
+    // routes-ready rather than contract-ready.
+    readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'IND-enabling & CTD Module 4: GLP study registry with finding classification and SEND status, SEND 12-domain conformance, the Module 2.6 written/tabulated summary builder, and Module 4 placement. Structured data entry for studies.',
   },
@@ -1150,6 +1170,54 @@ export const UI_V2_SURFACES: UiSurface[] = [
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
     notes: 'Plan tiers, seat licensing, module entitlements, upgrade/downgrade.',
+  },
+  {
+    /* Routable but unregistered until now: the account menu's "Licensing"
+       entry (Shell.tsx ACCT_ITEMS, org-admin gated) navigated here, and
+       `getSurface('master-licensing')` returned undefined — so the platform
+       licensing console rendered under a breadcrumb reading "Home" and had no
+       ⌘K row. Distinct from `licensing` (Plans & licensing), which is the
+       customer-facing plan/upgrade view; this is the platform-admin control
+       room that DEFINES the tiers. The surface re-checks platform-admin
+       server-side on every read and write; registration only names it. */
+    id: 'master-licensing',
+    label: 'Master licensing',
+    navTier: 'admin',
+    layoutMode: 'master-licensing',
+    group: 'admin',
+    icon: 'checkSquare',
+    uiKit: null,
+    apiPrefixes: ['/api/admin/master/licensing', '/api/admin/master/feature-flags', '/api/module-access-requests'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'Platform-admin licensing control room (MasterLicensing.tsx): the module × tier packaging matrix (minTier per module), per-tenant tier + module-by-module effective verdicts with reasons, the platform-scope access-request queue, trials, feature_toggles flags, enforcement observations and the decision history. Every list is a live read of /api/admin/master/* — a failed read renders ErrorState with retry, never an empty table — and every mutation goes through GovernedConfirmDialog with the server’s own reason-for-change floor (min 3 chars), audit-logged verbatim.',
+  },
+  {
+    /* Where a member’s request for a locked module lands. The queue shipped as
+       a registered SURFACE_VIEWS component with an account-menu entry
+       (Shell.tsx, org-admin gated) but no registry row, so the administrator
+       arrived under a breadcrumb reading "Home" with no ⌘K row. Org-scoped
+       server-side; scope="all" of the same component is the panel inside
+       master-licensing (licensing/AccessRequestsPanel.tsx). */
+    id: 'access-requests',
+    label: 'Access requests',
+    navTier: 'admin',
+    layoutMode: 'access-requests',
+    group: 'admin',
+    icon: 'clipboardList',
+    uiKit: null,
+    apiPrefixes: ['/api/module-access-requests'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'The org-admin queue for module access requests (AccessRequests.tsx): who asked for which locked app, in their own words, with approve/decline through GovernedConfirmDialog (reason stored with the decision, written to the Part 11 chain server-side). Nothing optimistic — an approval renders granted only after the server grants. Fail closed: a failed read is ErrorState with retry, never mistaken for "nobody is waiting".',
   },
   {
     id: 'training',

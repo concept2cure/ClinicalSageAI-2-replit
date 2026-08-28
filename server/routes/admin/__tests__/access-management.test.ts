@@ -18,7 +18,7 @@ import request from 'supertest';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const queryMock = vi.fn();
-const logActionMock = vi.fn();
+const logActionMock = vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true }));
 
 vi.mock('../../../db', () => ({
   query: (...args: unknown[]) => queryMock(...args),

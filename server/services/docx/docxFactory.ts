@@ -717,72 +717,12 @@ function styledRuns(runs: StyledRun[] | undefined, style: DocxStyle): TextRun[] 
   );
 }
 
-/**
- * Render a StyledDocModel to DOCX bytes. Pair with convertDocxToPdf() for the
- * canonical, deterministic, audit-bound PDF path.
- */
-export async function renderStyledDocx(
-  model: StyledDocModel,
-  style: DocxStyle = DEFAULT_DOCX_STYLE,
-): Promise<Buffer> {
-  const children: Paragraph[] = model.blocks.map((block) => {
-    switch (block.kind) {
-      case 'rule':
-        return new Paragraph({
-          border: {
-            bottom: { style: BorderStyle.SINGLE, size: 6, color: style.colors.borderGray, space: 1 },
-          },
-          spacing: { before: 60, after: 160 },
-        });
-      case 'spacer':
-        return new Paragraph({ spacing: { after: 120 } });
-      case 'heading':
-        return new Paragraph({
-          children: styledRuns(block.runs, style),
-          spacing: { before: 240, after: 100 },
-        });
-      case 'paragraph':
-      default:
-        return new Paragraph({
-          children: styledRuns(block.runs, style),
-          spacing: { after: 80, line: style.lineSpacing },
-        });
-    }
-  });
 
-  const footerRuns: TextRun[] = [
-    new TextRun({
-      text: `${model.footerLabel}  ·  `,
-      font: style.fonts.body,
-      size: style.fontSizes.footer,
-      color: style.colors.textMuted,
-    }),
-    new TextRun({
-      children: ['Page ', PageNumber.CURRENT, ' of ', PageNumber.TOTAL_PAGES],
-      font: style.fonts.body,
-      size: style.fontSizes.footer,
-      color: style.colors.textMuted,
-    }),
-  ];
-
-  const doc = new Document({
-    sections: [
-      {
-        properties: {
-          page: {
-            margin: style.margins,
-            pageNumbers: { start: 1, formatType: NumberFormat.DECIMAL },
-          },
-        },
-        footers: {
-          default: new Footer({
-            children: [new Paragraph({ children: footerRuns, alignment: AlignmentType.CENTER })],
-          }),
-        },
-        children,
-      },
-    ],
-  });
-
-  return Packer.toBuffer(doc);
-}
+/* `renderStyledDocx` was removed here — dead, and misleading while it sat in a
+   live module.
+   Zero callers repo-wide. Its docstring advertised the canonical audit-bound
+   PDF path, and its one historical caller had been REVERTED because the
+   renderer proved non-deterministic — the exact property the docstring claimed.
+   The unreferenced-modules ratchet cannot see it: that gate detects unreachable
+   FILES, and this was an unreferenced export inside a file that is very much
+   reachable. Its presence told any reader the styled path existed and worked. */

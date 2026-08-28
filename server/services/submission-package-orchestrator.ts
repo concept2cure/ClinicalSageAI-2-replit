@@ -63,6 +63,7 @@ import {
 } from './ectd/ectd-validator-hardening.js';
 import type { ECTDLeaf } from './ectd/ectd4-validator.js';
 import { assembleRealPackage, isPackagerBuildableRegion } from './ectd/orchestrator-real-package.js';
+import { isSignSealConfigured, sealSignPayloadDigest, verifySignPayloadSeal } from './ectd/sign-payload-seal.js';
 import { launchCSRBuildAsync } from './csr-builder.js';
 import { getCSRBuildJobStatus } from './csr/csr-job-runner.js';
 import {
@@ -817,6 +818,11 @@ interface SignedPackageSnapshot {
  */
 interface PackageSignStepPayload {
   payloadDigest: string;
+  /** Server-keyed HMAC seal over payloadDigest (AUDIT_HMAC_KEY). Present when
+   *  sealing is configured (always in production). Binds the digest to server
+   *  authority so a mutable-steps-column tamper cannot forge a self-consistent
+   *  snapshot+digest — see sign-payload-seal.ts. Absent when unsealed (dev). */
+  payloadSeal?: string;
   /** When complete, the electronic_signatures.id that satisfied the gate. */
   signatureId?: number;
   /** ISO timestamp when the step first transitioned to awaiting-signature. */
@@ -1866,6 +1872,11 @@ export async function runOrchestrator(
             inputs.organizationId,
           );
 
+          // Seal the digest with the server-held key so a mutable-steps-column
+          // tamper cannot forge a self-consistent snapshot+digest (null when
+          // unsealed — dev/staging without AUDIT_HMAC_KEY). See sign-payload-seal.
+          const payloadSeal = sealSignPayloadDigest(payloadDigest, inputs.organizationId) ?? undefined;
+
           // OQ-7: tenant-scoped lookup — WHERE organization_id = $1.
           const existing = await findActiveReleaseSignature({
             organizationId: inputs.organizationId,
@@ -1878,6 +1889,7 @@ export async function runOrchestrator(
             // forcing a re-sign — that's the regenerate-after-sign invariant.
             const completePayload: PackageSignStepPayload = {
               payloadDigest,
+              payloadSeal,
               signatureId: existing.id,
               awaitingSince: new Date().toISOString(),
               signedSnapshot,
@@ -1901,6 +1913,7 @@ export async function runOrchestrator(
             // awaiting-signature.
             const awaitingPayload: PackageSignStepPayload = {
               payloadDigest,
+              payloadSeal,
               awaitingSince: new Date().toISOString(),
               signedSnapshot,
             };
@@ -2537,6 +2550,24 @@ async function resumeAwaitingSignature(
     if (recomputedDigest !== persistedPayload.payloadDigest) {
       return failResumeSignStep(signStep, previousRun, outputs, 'signature_snapshot_integrity_failure');
     }
+
+    // Authenticity guard: the integrity check above only proves the snapshot is
+    // self-consistent with a digest stored in the SAME mutable steps column. The
+    // server-keyed seal proves that digest was produced by the server (a
+    // steps-column tamperer cannot forge the seal without AUDIT_HMAC_KEY).
+    //   - 'failed'   → present but wrong (tamper), or key gone: fail closed.
+    //   - 'unsealed' AND a key IS configured → a snapshot-bearing run under a
+    //     sealed posture MUST carry a valid seal; its absence is a strip-the-seal
+    //     downgrade attempt, so fail closed too.
+    //   - 'unsealed' with no key (dev/staging) → skip; rely on the integrity guard.
+    const sealVerdict = verifySignPayloadSeal(
+      recomputedDigest,
+      snap.organizationId,
+      persistedPayload.payloadSeal,
+    );
+    if (sealVerdict === 'failed' || (sealVerdict === 'unsealed' && isSignSealConfigured())) {
+      return failResumeSignStep(signStep, previousRun, outputs, 'signature_seal_verification_failed');
+    }
   } else {
     // ── (B) LEGACY re-derive path (runs suspended before snapshot support) ──
     // Re-derive sync outputs. This includes module3Sections (composeFullModule3)
@@ -2667,6 +2698,7 @@ async function resumeAwaitingSignature(
   // the frozen record rather than falling back to re-derivation.
   const completePayload: PackageSignStepPayload = {
     payloadDigest: recomputedDigest,
+    payloadSeal: persistedPayload.payloadSeal,
     signatureId: found.id,
     awaitingSince: persistedPayload.awaitingSince,
     signedSnapshot: persistedPayload.signedSnapshot,

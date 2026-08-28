@@ -20,11 +20,13 @@
  * bytes the server streamed.
  */
 import React, { useEffect, useState } from 'react';
+import { NEW_DOCUMENT_EVENT } from '../newDocumentAction';
 import { I } from '../icons';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
 import { unboundNotice } from '../governanceNotice';
+import { downloadBlob, safeFileName } from '../download';
 
 interface AuthoringTemplate { id: string | number; name?: string | null; title?: string | null; }
 
@@ -39,13 +41,32 @@ export interface AuthoringCreateExportProps {
   /** Called with the server's persisted row after a successful create. */
   onDocCreated: (doc: { id: string; title: string }) => void;
   onSectionCreated: (section: { id: string; code: string }) => void;
+  /** Fired after the server streamed an export. The export wrote an
+   *  `authoring_export_history` row and re-baselined this document, so any
+   *  surface showing "changed since the last export" is now stale. */
+  onExported?: (format: string) => void;
 }
 
 const NONE = '(blank document)';
 
-export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDocCreated, onSectionCreated }: AuthoringCreateExportProps) {
+export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDocCreated, onSectionCreated, onExported }: AuthoringCreateExportProps) {
   const [dialog, setDialog] = useState<'doc' | 'section' | null>(null);
+
+  /* The dialog is owned here, and the panels that most need it — the empty
+     document tree and the empty canvas — are siblings with no way to reach it.
+     Rather than lift this state up through DocumentAuthoring so two empty
+     states can call it, they raise an event and this listens. Same idiom as
+     ../programAction.ts; see ../newDocumentAction.ts for what it fixes. */
+  useEffect(() => {
+    const open = () => setDialog('doc');
+    window.addEventListener(NEW_DOCUMENT_EVENT, open);
+    return () => window.removeEventListener(NEW_DOCUMENT_EVENT, open);
+  }, []);
   const [templates, setTemplates] = useState<AuthoringTemplate[]>([]);
+  // 'unavailable' = the server said the shared reference catalog failed to
+  // read (its fail-soft still lists the org's own templates). A SHORT list
+  // and a FAILED half are different facts; the dialog states which.
+  const [globalCatalog, setGlobalCatalog] = useState<'ok' | 'unavailable'>('ok');
 
   // Template roster for create-from-template; an unavailable list simply means
   // the picker offers only a blank document — never a fabricated template.
@@ -54,7 +75,12 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
       try {
         const res = await apiRequest('GET', '/api/authoring/templates');
         const body = await res.json().catch(() => null);
-        if (res.ok && Array.isArray(body?.templates)) setTemplates(body.templates as AuthoringTemplate[]);
+        if (res.ok && Array.isArray(body?.templates)) {
+          setTemplates(body.templates as AuthoringTemplate[]);
+          if ((body as { globalCatalog?: string })?.globalCatalog === 'unavailable') {
+            setGlobalCatalog('unavailable');
+          }
+        }
       } catch { /* picker stays blank-only */ }
     })();
   }, []);
@@ -64,7 +90,11 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
   const DOC_FORM: C2CFormConfig = {
     eyebrow: 'Authoring · ' + module,
     title: 'New document',
-    sub: 'Creates a governed document in the authoring store. Choosing a template seeds its sections server-side.',
+    sub:
+      'Creates a governed document in the authoring store. Choosing a template seeds its sections server-side.' +
+      (globalCatalog === 'unavailable'
+        ? ' The shared template catalog didn’t load — Start from lists only your organization’s templates right now.'
+        : ''),
     submitLabel: 'Create document',
     fields: [
       { key: 'title', label: 'Document title', type: 'text', required: true, placeholder: 'e.g. 2.6.6 Toxicology Written Summary' },
@@ -105,9 +135,14 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
       // project's governed filing. Unbound is legitimate; unbound and unsaid is
       // how the two document stores drifted apart, so the reason rides along on
       // the confirmation rather than being dropped.
+      // The server reports how many sections the template actually seeded —
+      // state the count rather than implying a seed that may not have happened.
+      const seeded = typeof (json as { sections_seeded?: unknown }).sections_seeded === 'number'
+        ? (json as { sections_seeded: number }).sections_seeded
+        : null;
       fireToast(
         'Document created · ' + json.document.title +
-        (tpl ? ' (seeded from ' + templateLabel(tpl) + ')' : '') +
+        (tpl && seeded != null ? ` (${seeded} section${seeded === 1 ? '' : 's'} from ${templateLabel(tpl)})` : '') +
         unboundNotice((json as { governance?: unknown }).governance),
       );
       onDocCreated({ id: String(json.document.id), title: String(json.document.title) });
@@ -147,14 +182,12 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
         fireToast('Export failed — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. No file was produced; the document is unchanged. Try again, or export a single section to narrow it down.', 'error');
         return;
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = (docTitle ?? 'document').replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '_') + '.' + format;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(safeFileName(docTitle ?? 'document') + '.' + format, await res.blob());
       fireToast('Published ' + format.toUpperCase() + ' — assembled from the governed sections and recorded in the export history.');
+      /* Only after the stream succeeded. Announcing a new baseline for an
+         export that failed would tell the Exports rail this document is
+         current when no file was produced. */
+      onExported?.(format);
     } catch (e) {
       fireToast('Export failed — ' + (e instanceof Error ? e.message : String(e)) + '. No file was produced; the document is unchanged. Check your connection and try again.', 'error');
     }

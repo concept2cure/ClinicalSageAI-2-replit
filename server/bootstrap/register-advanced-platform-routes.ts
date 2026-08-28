@@ -64,9 +64,20 @@ export async function registerAdvancedPlatformRoutes({
 }: AdvancedPlatformBootstrapContext) {
   // ── Innovation + Notifications ──
   try {
-    const innovationRoutes = await import('../routes/innovation-routes');
-    app.use('/api/innovation', authenticateToken, innovationRoutes.default);
-    console.log('✅ Innovation routes mounted at /api/innovation');
+    /* NOT MOUNTED — deliberately, and the router file is kept.
+       All 61 routes dereference eight service handles that
+       `initializeInnovationRoutes(pool)` assigns, and that function has ZERO
+       callers repo-wide including tests. So every endpoint threw a TypeError
+       and answered 500, while `grep -rn "innovation" client/src` returns
+       nothing: no product path has ever called them.
+       Mounting 61 authenticated, HTTP-reachable endpoints that cannot execute
+       is attack surface backed by nothing, and it makes the platform advertise
+       a capability it does not have. Calling the initializer to turn the 500s
+       into 200s would be worse — it would make an unused feature LOOK live to
+       anyone reading migration state.
+       Whether Innovation ships is a roadmap decision, so the code stays. When
+       it does, mount it here WITH the initializer and a client. */
+    void 0;
   } catch (error) {
     console.error('Failed to mount innovation routes:', error);
   }

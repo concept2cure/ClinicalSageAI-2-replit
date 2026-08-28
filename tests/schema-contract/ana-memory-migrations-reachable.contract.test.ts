@@ -29,7 +29,7 @@ import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { C2C_MIGRATION_FILES } from '../../scripts/db/migration-set.mjs';
+import { C2C_MIGRATION_FILES, TENANT_ISOLATION_SWEEP } from '../../scripts/db/migration-set.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -38,7 +38,8 @@ const EMBEDDINGS = 'migrations/20260602_working_memory_embeddings.sql';
 const RELATIONAL = 'migrations/20260612_ana_relational_external_intel.sql';
 const RIM_PATTERNS = 'migrations/20260820b_rim_learned_patterns.sql';
 const OUTCOME_LOG = 'migrations/0013_ana_intelligence_system.sql';
-const SWEEP = 'db/migrations/20260801_tenant_isolation_sweep.sql';
+// Imported rather than re-typed — see the note in tenant-isolation-sweep.contract.test.ts.
+const SWEEP = TENANT_ISOLATION_SWEEP;
 
 const readMig = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
 

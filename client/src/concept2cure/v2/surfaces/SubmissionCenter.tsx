@@ -32,7 +32,10 @@
 import React from 'react';
 import { SUBMISSION_WORKSPACES } from '@shared/types/submission-ui';
 import { I } from '../icons';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
+import { assessmentStateFor } from '../assessmentState';
 import { useLiveRows, useLiveData, hasKeys, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { EsignModal } from '../../_shared/components/EsignModal';
 import type { EsigMeaning } from '../../hooks/useEsignature';
@@ -60,6 +63,7 @@ import {
   type SeqRow,
 } from './SubmissionSeqWorkspaces';
 import '../styles/submission-v2.css';
+import { C2CForm } from '../C2CForm';
 
 /* ── Display types aligned to the canonical submission core's ACTUAL columns
    (shared/schema/submissions.ts; server/services/submission-service). Only
@@ -182,9 +186,32 @@ export function SubmissionCenter({
   const [selSub, setSelSub] = React.useState<number | null>(null);
 
   // GET /api/submissions — real DB rows, honest empty, honest error (no fixture).
-  const subs = useLiveRows<SubRow>('/api/submissions');
+  const [subsBump, setSubsBump] = React.useState(0);
+  const subs = useLiveRows<SubRow>('/api/submissions', ['/api/submissions', subsBump]);
+  /* The org's programmes, so the required projectId is PICKED rather than typed
+     as a uuid — createSubmissionSchema takes a uuid and a customer does not
+     have one to hand. */
+  const programmes = useLiveRows<{ id: string; title: string; code: string }>('/api/c2c/projects');
   const list = subs.rows;
   const sub = list.find((s) => s.id === selSub) ?? list[0];
+
+  /* ── Which of the three things an empty `list` means ────────────────────────
+     `subs.rows` is the SAME empty array while the read is in flight, when the
+     read FAILED, and when this organization genuinely has no submissions — so
+     `!sub` on its own cannot say which is true, and copy written off `!sub`
+     states as fact something nobody established. The Portfolio table below
+     already branches loading → error → empty → rows; the per-sequence gate
+     further down did not. This is the one discriminator both now read.
+
+     `assessmentRan: false` deliberately: a submission list is a RECORD of what
+     exists, not the outcome of an evaluation, so zero rows is 'not-assessed'
+     ("nothing is recorded") and never 'assessed-clear'. Nothing here is
+     entitled to clearance vocabulary. ── */
+  const subsState = assessmentStateFor(subs, {
+    scopeExists: true,
+    findingCount: list.length,
+    assessmentRan: false,
+  });
 
   // GET /api/510k/estar/submissions — the org's tracked eSTAR device filings.
   // { submissions } envelope (not the `{ data }` convention), so the shape is
@@ -232,6 +259,21 @@ export function SubmissionCenter({
   const seqPath = sub ? `/api/submissions/${sub.id}/sequences` : null;
   const seqs = useLiveRows<SeqRow>(seqPath, [seqPath, seqBump]);
 
+  /* The same discriminator for THIS submission's sequences, for the same reason:
+     `seqs.rows.length === 0` is true in flight, on failure, and on a genuine
+     zero-sequence submission, and only the third may be spoken about.
+       'loading'                 → the read has not settled
+       'unreadable'              → the read failed
+       'assessed-with-findings'  → sequences came back
+       'not-assessed'            → the read settled and none are recorded
+     `assessmentRan: false` again: a sequence list is a record, and an empty one
+     means nothing has been planned yet — which is exactly 'not-assessed'. */
+  const seqState = assessmentStateFor(seqs, {
+    scopeExists: Boolean(sub),
+    findingCount: seqs.rows.length,
+    assessmentRan: false,
+  });
+
   // The selected working sequence — the selector feeding Builder / Validation /
   // Shadow Review / Cross-region / Dispatch. Defaults to the first real row.
   const [selSeq, setSelSeq] = React.useState<number | null>(null);
@@ -250,6 +292,82 @@ export function SubmissionCenter({
     setSelSeq(null);
     setNotice(null);
   }, [subId]);
+
+  /**
+   * Create a submission — POST /api/submissions.
+   *
+   * "+ New submission" is the ONLY create control on this surface, and on an
+   * empty tenant the empty state beside it says "Create your first
+   * submission". It did `onAsk('Start a new submission — create the canonical
+   * submission record.')`: a sentence into the chat rail. No record was
+   * created, so the one route into the Submission Center was closed and the
+   * empty state was instructing the user to press a button that could not do
+   * what it said.
+   *
+   * The route and its schema existed the whole time — createSubmissionSchema
+   * takes { type, projectId, targetAgency, targetDate? } — so this is a form
+   * over what the server already requires, with the project picked from the
+   * org's own programmes rather than typed as a uuid.
+   */
+  const [newOpen, setNewOpen] = React.useState(false);
+  const [creating, setCreating] = React.useState(false);
+  const createSubmission = async (v: Record<string, string>) => {
+    if (creating) return;
+    const projectId = (v.projectId ?? '').trim();
+    if (!projectId) {
+      setNotice({ tone: 'err', text: 'Pick the programme this submission belongs to.' });
+      return;
+    }
+    setCreating(true);
+    setNotice(null);
+    const r = await mutateVerbatim<SubRow>('POST', '/api/submissions', {
+      type: v.type,
+      projectId,
+      targetAgency: (v.targetAgency ?? '').trim(),
+      targetDate: v.targetDate || undefined,
+    });
+    setCreating(false);
+    if (r.data && (r.data as { id?: unknown }).id != null) {
+      setNewOpen(false);
+      // Re-read rather than appending a client-built row: what appears is the
+      // record the server created.
+      setSubsBump((b) => b + 1);
+      setNotice({ tone: 'ok', text: `Submission created — ${v.type} for ${v.targetAgency}.` });
+    } else {
+      setNotice({ tone: 'err', text: `Submission not created — ${r.error ?? 'the request failed'}.` });
+    }
+  };
+
+  /**
+   * Create the original eCTD sequence — POST /api/submissions/:id/sequences.
+   *
+   * The empty state beside this button TELLS the user to create sequence 0000
+   * to begin assembling, and the button asked the assistant to do it: no
+   * sequence row was ever written, so the workspace it gates could not be
+   * entered.
+   *
+   * Every field the schema wants is already on the submission being viewed —
+   * its region, and 'original' for the first sequence — so there is nothing to
+   * ask the user for. The verdict is the server's, verbatim.
+   */
+  const [creatingSeq, setCreatingSeq] = React.useState(false);
+  const startFirstSequence = async (target: SubRow) => {
+    if (creatingSeq) return;
+    setCreatingSeq(true);
+    setNotice(null);
+    const r = await mutateVerbatim<SeqRow>('POST', `/api/submissions/${target.id}/sequences`, {
+      region: target.primaryRegion,
+      sequenceNumber: '0000',
+      type: 'original',
+    });
+    setCreatingSeq(false);
+    if (r.data && (r.data as { id?: unknown }).id != null) {
+      setSeqBump((b) => b + 1);
+      setNotice({ tone: 'ok', text: `Sequence 0000 created for ${target.title} — server-confirmed.` });
+    } else {
+      setNotice({ tone: 'err', text: `Sequence 0000 not created — ${r.error ?? 'the request failed'}.` });
+    }
+  };
 
   /** Non-governed lifecycle transition — the REAL endpoint, verdict verbatim.
    *  The server refuses frozen/dispatched here (GOVERNED_REQUIRED); those two
@@ -327,8 +445,202 @@ export function SubmissionCenter({
     };
   };
 
+  /* AnA's hands on this screen — the surface-action bus (shared registry:
+     submissions.*; the bus alias-resolves that nav-target id onto this
+     surface's own 'submission-center' registration). Every handler drives the
+     SAME state the human's own controls drive (setWs / setSelSub / setSelSeq);
+     names are resolved against the REAL portfolio and sequence rows with
+     honest misses, never guesses. View state only: the governed chain
+     (doTransition / runGoverned, freeze/dispatch e-sign) and the create paths
+     stay human-operated and untouched. */
+  /* One guard for all three: while the Part 11 e-sign dialog is open a person
+     is mid-ceremony, and while a lifecycle transition POST is in flight the
+     rows are about to change under any selection — AnA operating the center
+     in either window would race a governed act. Honest refusal instead. */
+  const busyGuard = () => {
+    if (flow != null)
+      return { ok: false as const, reason: 'An e-signature dialog is open — finish or cancel it first.' };
+    if (acting != null)
+      return { ok: false as const, reason: 'A sequence transition is in flight — wait for it to finish.' };
+    return null;
+  };
+  useSurfaceActionHandlers('submission-center', {
+    'submissions.set-workspace': (params) => {
+      const guarded = busyGuard();
+      if (guarded) return guarded;
+      const target = (params.workspace ?? '').trim();
+      const meta = SUBMISSION_WORKSPACES.find((w) => w.id === target);
+      if (!meta) return { ok: false, reason: `No workspace named "${params.workspace}".` };
+      // Not-ready, not failed: whether a per-sequence workspace has a
+      // submission to operate on is unknowable until the portfolio lands. The
+      // bus holds the directive and re-attempts on the ready signal below.
+      if (subs.loading)
+        return { ok: false, reason: 'The submission portfolio is still loading.', retry: true };
+      if (PER_SEQ_WS.has(target) && !sub)
+        return { ok: false, reason: 'No submission is selected — select one first.' };
+      setWs(target);
+      return { ok: true, detail: `Opened the ${meta.label} workspace` };
+    },
+    'submissions.select-submission': (params) => {
+      const guarded = busyGuard();
+      if (guarded) return guarded;
+      const wanted = (params.submission ?? '').trim().toLowerCase();
+      if (!wanted) return { ok: false, reason: 'No submission named.' };
+      if (subs.loading)
+        return { ok: false, reason: 'The submission portfolio is still loading.', retry: true };
+      if (subs.error) return { ok: false, reason: 'The submission portfolio could not be read.' };
+      // Resolved over the same `list` the portfolio picker renders: exact
+      // title/product match first (case-insensitive), then unique containment.
+      const exact = list.find(
+        (s) => s.title.toLowerCase() === wanted || (s.productName ?? '').toLowerCase() === wanted,
+      );
+      const contains = exact
+        ? []
+        : list.filter(
+            (s) =>
+              s.title.toLowerCase().includes(wanted) ||
+              (s.productName ?? '').toLowerCase().includes(wanted),
+          );
+      const match = exact ?? (contains.length === 1 ? contains[0] : null);
+      if (!match) {
+        return {
+          ok: false,
+          reason:
+            contains.length > 1
+              ? `"${params.submission}" matches ${contains.length} submissions — name one exactly.`
+              : `No submission named "${params.submission}" in this portfolio.`,
+        };
+      }
+      const already = match.id === sub?.id;
+      setSelSub(match.id);
+      // Changing submission runs the reset effect above (selSeq + notice
+      // cleared); say so — and never claim a reset that re-selecting the
+      // already-current submission skips.
+      return {
+        ok: true,
+        detail: already
+          ? `${match.title} is already the selected submission`
+          : `Selected ${match.title} — the working sequence and any verdict notice were cleared`,
+      };
+    },
+    'submissions.select-sequence': (params) => {
+      const guarded = busyGuard();
+      if (guarded) return guarded;
+      const wanted = (params.sequence ?? '').trim();
+      if (!wanted) return { ok: false, reason: 'No sequence named.' };
+      // The portfolio decides whether a submission is even selected; until it
+      // lands, "no submission" would be a false refusal — hold instead.
+      if (subs.loading)
+        return { ok: false, reason: 'The submission portfolio is still loading.', retry: true };
+      if (!sub) return { ok: false, reason: 'No submission is selected — select one first.' };
+      if (seqs.loading)
+        return { ok: false, reason: "This submission's sequences are still loading.", retry: true };
+      if (seqs.error) return { ok: false, reason: "This submission's sequences could not be read." };
+      if (seqs.rows.length === 0)
+        return { ok: false, reason: 'This submission has no sequences yet.' };
+      // Matched on the sequence number exactly as the list renders it ("0000").
+      const match = seqs.rows.find((r) => r.sequenceNumber === wanted);
+      if (!match) return { ok: false, reason: `No sequence "${params.sequence}" in ${sub.title}.` };
+      setSelSeq(match.id);
+      return { ok: true, detail: `Selected sequence ${match.sequenceNumber} as the working sequence` };
+    },
+  });
+  /* The ready signal for the retry contract above: a held directive gets its
+     re-attempt when the portfolio read settles AND again when the selected
+     submission's sequence read settles — select-sequence legitimately waits
+     through both reads in turn. */
+  React.useEffect(() => {
+    if (!subs.loading || !seqs.loading) notifySurfaceActionReady('submission-center');
+  }, [subs.loading, seqs.loading]);
+
   const appL = (v: string) => SC_APPTYPES.find((a) => a.v === v)?.l ?? v;
   const regL = (v: string) => SC_REGIONS.find((a) => a.v === v)?.l ?? v;
+
+  /* What AnA can see of this screen.
+     The Submission Center is eight workspaces over one selected submission and
+     one selected sequence, and every question a user asks here is about THAT
+     pair — "is this ready to dispatch?", "what is blocking 0002?". Until now she
+     was told only that the surface was called "submission-center", so she could
+     not name the submission the user was looking at, let alone its sequences.
+
+     A FAILED read publishes the failure. `list` and `seqs.rows` are both []
+     when the read threw, and reporting "no submissions" over an outage would be
+     a confident claim about a customer's filing portfolio that nobody made. */
+  const anaContext = React.useMemo(() => {
+    if (subs.loading) {
+      return { summary: 'The submission portfolio is still loading; nothing on screen is final yet.' };
+    }
+    if (subs.error) {
+      return {
+        summary:
+          'The submission portfolio could not be read, so this screen is showing no submissions ' +
+          'because of a failure, not because there are none.',
+        availableActions: ['Reload the Submission Center to retry the portfolio read'],
+      };
+    }
+    const seqLine = seqs.loading
+      ? 'its sequences are still loading'
+      : seqs.error
+        ? 'its sequences could not be read'
+        : `${seqs.rows.length} eCTD sequence(s) tracked`;
+    return {
+      summary:
+        `Submission Center, "${SUBMISSION_WORKSPACES.find((w) => w.id === ws)?.label ?? ws}" workspace: ` +
+        `${list.length} submission(s) in the portfolio` +
+        (sub
+          ? `, "${sub.title}" selected — a ${regL(sub.primaryRegion)} ${appL(sub.applicationType)} at the ` +
+            `${sub.lifecycleStage} stage, ${seqLine}` +
+            (seq ? `, working sequence ${seq.sequenceNumber} (${seq.status})` : '')
+          : ', none selected'),
+      facts: {
+        workspace: ws,
+        totalSubmissions: list.length,
+        selectedSubmission: sub
+          ? {
+              id: sub.id, title: sub.title, product: sub.productName,
+              applicationType: sub.applicationType, clientType: sub.clientType,
+              primaryRegion: sub.primaryRegion, status: sub.status,
+              lifecycleStage: sub.lifecycleStage,
+            }
+          : null,
+        sequences: seqs.loading || seqs.error
+          ? null
+          : seqs.rows.slice(0, 12).map((r) => ({
+              id: r.id, number: r.sequenceNumber, type: r.type,
+              status: r.status, region: r.region, validation: r.validationStatus,
+            })),
+        sequencesUnavailable: seqs.error ? 'the sequence read failed' : null,
+        workingSequence: seq
+          ? { id: seq.id, number: seq.sequenceNumber, status: seq.status, validation: seq.validationStatus }
+          : null,
+        deviceFilings: deviceRes.loading
+          ? null
+          : deviceRes.error
+            ? null
+            : deviceFilings.length,
+        deviceFilingsUnavailable: deviceRes.error ? 'the eSTAR tracker read failed' : null,
+        deviceAssemblyVerdict:
+          assembly.state === 'ready'
+            ? { artifactKind: assembly.artifactKind, blockerCount: assembly.blockerCount }
+            : assembly.state === 'error'
+              ? 'unavailable'
+              : 'loading',
+        lastServerNotice: notice ? { tone: notice.tone, text: notice.text } : null,
+      },
+      availableActions: [
+        'Switch workspace — planner, sequences, builder, validation, shadow review, cross-region, dispatch',
+        'Select a different submission from the portfolio picker',
+        'Select the working sequence the build and validation workspaces act on',
+        'Move a sequence through its non-governed lifecycle transitions',
+        'Freeze or dispatch a sequence (each requires a Part 11 e-signature and passes the dispatch gate)',
+        'Open a tracked eSTAR device filing in the 510(k) surface',
+      ],
+    };
+  }, [
+    subs.loading, subs.error, list, sub, ws, seqs.loading, seqs.error, seqs.rows, seq,
+    deviceRes.loading, deviceRes.error, deviceFilings.length, assembly, notice,
+  ]);
+  usePublishSurfaceContext('submission-center', anaContext);
 
   return (
     <div className="sp sc-page">
@@ -386,10 +698,26 @@ export function SubmissionCenter({
             )
           }
           reassure="I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you."
-          action={{
-            label: seqs.rows.length ? 'Open the sequences' : 'Plan the submission',
-            onClick: () => setWs(seqs.rows.length ? 'sequences' : 'planner'),
-          }}
+          /* ── The lead's action used to branch on `seqs.rows.length` alone ────
+             It read `seqs.rows.length ? 'Open the sequences' : 'Plan the
+             submission'`, with the same expression choosing the destination —
+             and `rows` is empty in flight, on a failed read, and on a genuine
+             zero-sequence submission alike. So the reader could see the body
+             copy two props above say "Loading this submission's sequences…" or
+             "couldn't be loaded" while the button directly below offered to plan
+             the submission from zero, and clicking it opened the Planner: the
+             right destination only when zero is the KNOWN count, not the unknown
+             one. The Planner is now offered from 'not-assessed' only — a settled
+             read with no sequences recorded. While the count is unknown the
+             button names the workspace it opens and claims nothing about what is
+             in it; that workspace reports the loading or failed read itself. ── */
+          action={
+            seqState === 'not-assessed'
+              ? { label: 'Plan the submission', onClick: () => setWs('planner') }
+              : seqState === 'assessed-with-findings'
+                ? { label: 'Open the sequences', onClick: () => setWs('sequences') }
+                : { label: 'Open the Sequences workspace', onClick: () => setWs('sequences') }
+          }
           secondary="Or move through the workspaces below — plan, build, validate, dispatch."
         />
       )}
@@ -412,6 +740,40 @@ export function SubmissionCenter({
       {/* The latest server verdict (transition / governed outcome) — verbatim. */}
       <VerdictNote notice={notice} />
 
+      {newOpen && (
+        <C2CForm
+          config={{
+            eyebrow: 'Submission',
+            title: 'Create a submission',
+            sub: 'The canonical submission record. Its sequences, validation profile and regional Module 1 are derived from the type and agency chosen here.',
+            submitLabel: creating ? 'Creating…' : 'Create submission',
+            fields: [
+              {
+                key: 'type', label: 'Submission type', type: 'select',
+                // The server's own enum — a type it would refuse is never offered.
+                options: ['510k', 'PMA', 'De_Novo', 'IND', 'NDA', 'BLA'],
+                default: 'IND', required: true, half: true,
+              },
+              {
+                key: 'targetAgency', label: 'Target agency', type: 'text',
+                placeholder: 'e.g. FDA CDER', required: true, half: true,
+              },
+              {
+                key: 'projectId', label: 'Programme', type: 'select',
+                options: programmes.rows.map((p) => ({
+                  value: p.id,
+                  label: [p.code, p.title].filter(Boolean).join(' · ') || p.id,
+                })),
+                required: true,
+              },
+              { key: 'targetDate', label: 'Target date (optional)', type: 'date', half: true },
+            ],
+          }}
+          onCancel={() => setNewOpen(false)}
+          onSubmit={createSubmission}
+        />
+      )}
+
       {ws === 'portfolio' && (
         <>
         <div className="pj-card">
@@ -420,7 +782,13 @@ export function SubmissionCenter({
             <button
               type="button"
               className="pj-card-h-go"
-              onClick={() => onAsk('Start a new submission — create the canonical submission record.')}
+              onClick={() => setNewOpen(true)}
+              disabled={creating || programmes.rows.length === 0}
+              title={
+                programmes.rows.length === 0
+                  ? 'A submission belongs to a programme, and this organization has none yet. Create one in Projects first.'
+                  : undefined
+              }
             >
               + New submission
             </button>
@@ -614,7 +982,24 @@ export function SubmissionCenter({
       {/* Builder / Validation / Shadow review / Cross-region / Dispatch — the
           per-sequence workspaces. One selector (SeqPicker) chooses the working
           sequence; each workspace then reads/writes the REAL endpoints for it. */}
-      {PER_SEQ_WS.has(ws) && !sub && !subs.loading && (
+      {/* ── "No submission selected" is a claim about the reader's portfolio ──
+          The guard was `PER_SEQ_WS.has(ws) && !sub && !subs.loading`, which never
+          inspected `subs.error`. `sub` falls back to `list[0]`, and `list` is the
+          same empty array after a failed read as after a genuinely empty one, so
+          once a failed fetch settled this panel told a regulatory director that
+          nothing was selected — implying the list had been read and they simply
+          had not picked from it — when the list had not been read at all. The
+          Portfolio table thirty lines above already branched on the failure
+          first; this is that same branch, taken from the shared discriminator. ── */}
+      {PER_SEQ_WS.has(ws) && !sub && subsState === 'unreadable' && (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the submissions"
+          hint="These workspaces operate on one submission's sequences, and the submission list didn't load — nothing here says whether you have any. Retry from the Portfolio workspace, or check the service is reachable."
+        />
+      )}
+      {PER_SEQ_WS.has(ws) && !sub && subsState === 'not-assessed' && (
         <EmptyState
           icon={I.fileText}
           title="No submission selected"
@@ -678,13 +1063,10 @@ export function SubmissionCenter({
                   <button
                     type="button"
                     className="sp-primary sc-btn"
-                    onClick={() =>
-                      onAsk(
-                        `Create the original eCTD sequence (0000) for the ${regL(sub.primaryRegion)} ${appL(sub.applicationType)} submission ${sub.title}.`
-                      )
-                    }
+                    onClick={() => void startFirstSequence(sub)}
+                    disabled={creatingSeq}
                   >
-                    {I.sparkles} Start sequence 0000
+                    {I.sparkles} {creatingSeq ? 'Creating…' : 'Start sequence 0000'}
                   </button>
                 </div>
               </>

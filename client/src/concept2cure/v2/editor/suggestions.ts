@@ -26,6 +26,16 @@
  * HTML: a pending redline survives reload, revision snapshots and export
  * exactly as written.
  *
+ * `insertSuggestedContent` is the door AnA's drafts come through. An LLM answer
+ * about a Module 3 section is not prose — it is a specification table, a
+ * heading, a numbered list of controls. Those arrive as a markdown subset, so
+ * this module converts that subset into REAL ProseMirror nodes (table /
+ * heading / bulletList / orderedList, bold and italic marks) before inserting
+ * it, every node still carrying the pending `insertion` mark so the human
+ * accepts or rejects it exactly as before. Anything the converter does not
+ * recognise falls back to the original paragraph behaviour: text is never
+ * dropped, only ever left as-is.
+ *
  * KNOWN v1 LIMITS (deliberate, documented rather than hidden):
  *   - Only same-textblock deletions are reinterpreted as suggestions.
  *     Structural edits (joining/splitting paragraphs, deleting across block
@@ -34,12 +44,16 @@
  *   - Undo/redo and remote collaboration transactions pass through untouched:
  *     an undo must restore the previous state, not generate counter-suggestions,
  *     and a collaborator's edits arrive already marked by their editor.
+ *   - The markdown subset is a SUBSET (see MARKDOWN SUBSET below): no nested
+ *     lists, no code fences, no images (the schema has no image node), no
+ *     underscore emphasis, no inline links. Unsupported syntax survives
+ *     verbatim as paragraph text rather than being reinterpreted or dropped.
  */
 
 import { Extension, Mark } from '@tiptap/core';
 import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
 import type { Transaction } from '@tiptap/pm/state';
-import { ReplaceStep } from '@tiptap/pm/transform';
+import { ReplaceStep, Transform } from '@tiptap/pm/transform';
 import { Fragment, Slice } from '@tiptap/pm/model';
 import type { Node as PMNode, Mark as PMMark, Schema } from '@tiptap/pm/model';
 
@@ -189,11 +203,375 @@ function markFragmentDeleted(
   return Fragment.from(nodes);
 }
 
+/* ── Emptied-structure cleanup ────────────────────────────────── */
+
+/**
+ * Containers that exist only to hold content. When resolving a suggestion
+ * empties one completely — rejecting a drafted table, accepting the deletion
+ * of a whole list — the husk is removed with it. Paragraphs are NOT in this
+ * set: an empty paragraph is a legitimate thing for an author to keep, and
+ * leaving it is the behaviour that shipped.
+ */
+const PRUNABLE_CONTAINERS = new Set([
+  'table',
+  'bulletList',
+  'orderedList',
+  'taskList',
+  'heading',
+]);
+
+/**
+ * After deletions at `probes` (positions recorded BEFORE the deletions), drop
+ * any prunable container those deletions left with no text at all. Outermost
+ * empty container wins, so a rejected table goes as a table rather than
+ * leaving rows behind.
+ */
+function pruneEmptiedContainers(tr: Transaction, probes: number[]): void {
+  const targets: Array<{ from: number; to: number }> = [];
+  for (const probe of probes) {
+    try {
+      const pos = Math.min(Math.max(tr.mapping.map(probe, -1), 0), tr.doc.content.size);
+      const $pos = tr.doc.resolve(pos);
+      for (let d = 1; d <= $pos.depth; d++) {
+        const node = $pos.node(d);
+        if (!PRUNABLE_CONTAINERS.has(node.type.name)) continue;
+        if (node.textContent.trim().length > 0) continue;
+        targets.push({ from: $pos.before(d), to: $pos.after(d) });
+        break;
+      }
+    } catch {
+      // A probe that no longer resolves is a probe with nothing to clean up.
+    }
+  }
+  // Descending, skipping anything that overlaps a range already removed.
+  targets.sort((a, b) => b.from - a.from);
+  let lowestRemoved = Number.POSITIVE_INFINITY;
+  for (const t of targets) {
+    if (t.to > lowestRemoved) continue;
+    try {
+      tr.delete(t.from, t.to);
+      lowestRemoved = t.from;
+    } catch {
+      // Geometry this v1 does not model; the husk stands rather than crashing.
+    }
+  }
+}
+
+/* ── MARKDOWN SUBSET → ProseMirror structure (AnA drafts) ─────── */
+
+/**
+ * Deliberately hand-rolled and dependency-free, and deliberately a SUBSET —
+ * exactly what a regulatory answer contains:
+ *
+ *   GFM pipe tables (header row + `---|---` separator)  → table/tableRow/
+ *                                                          tableHeader/tableCell
+ *   ATX headings `#`/`##`/`###` (deeper clamps to 3)    → heading
+ *   `-`/`*`/`+` bullets, `1.`/`1)` ordered items        → bulletList/orderedList
+ *   `**bold**`, `*italic*`                              → bold / italic marks
+ *   everything else                                     → paragraph, as before
+ *
+ * NOT supported, on purpose: nested lists (flattened to one level), code
+ * fences, blockquotes, links, images (the editor schema has no image node),
+ * and `_underscore_` emphasis — regulatory text is full of identifiers like
+ * `batch_id` and `3.2.P.5_1`, and reinterpreting those would corrupt content
+ * to gain nothing. Unsupported syntax is left verbatim.
+ */
+
+const MD_HEADING = /^ {0,3}(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$/;
+const MD_BULLET = /^ {0,3}[-*+][ \t]+(\S.*)$/;
+const MD_ORDERED = /^ {0,3}(\d{1,9})[.)][ \t]+(\S.*)$/;
+/** `| --- | :---: |` — the row that makes the line above it a table header. */
+const MD_TABLE_RULE = /^ {0,3}\|?[ \t]*:?-+:?[ \t]*(\|[ \t]*:?-+:?[ \t]*)*\|?[ \t]*$/;
+/**
+ * `**bold**` / `*italic*`. Content may not begin or end with whitespace or a
+ * star, which is what keeps a `* ` bullet marker and a bare `3 * 4` out of it.
+ * No lookbehind — that syntax is unsupported in older Safari and would throw
+ * at parse time, taking the whole editor with it.
+ */
+const MD_EMPHASIS = /\*\*([^\s*](?:[^*]*[^\s*])?)\*\*|\*([^\s*](?:[^*]*[^\s*])?)\*/g;
+
+type MdBlock =
+  | { kind: 'paragraph'; lines: string[] }
+  | { kind: 'heading'; level: number; text: string }
+  | { kind: 'bulletList'; items: string[] }
+  | { kind: 'orderedList'; items: string[]; start: number }
+  | { kind: 'table'; rows: string[][]; raw: string[] };
+
+/** Split one table line into cells, honouring `\|` as a literal pipe. */
+function splitTableRow(line: string): string[] {
+  let s = line.trim();
+  if (s.startsWith('|')) s = s.slice(1);
+  if (s.endsWith('|') && !s.endsWith('\\|')) s = s.slice(0, -1);
+  const cells: string[] = [];
+  let cur = '';
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === '\\' && s[i + 1] === '|') {
+      cur += '|';
+      i++;
+      continue;
+    }
+    if (ch === '|') {
+      cells.push(cur.trim());
+      cur = '';
+      continue;
+    }
+    cur += ch;
+  }
+  cells.push(cur.trim());
+  return cells;
+}
+
+/** Is `lines[i]` a table header whose separator row follows? */
+function tableStartsAt(lines: string[], i: number): boolean {
+  const header = lines[i];
+  const rule = lines[i + 1];
+  if (!header || !rule) return false;
+  if (!header.includes('|') || !rule.includes('|')) return false;
+  if (!MD_TABLE_RULE.test(rule)) return false;
+  return splitTableRow(header).length === splitTableRow(rule).length;
+}
+
+/** `lines[i]` is a table header; consume it and its body rows. */
+function consumeTable(lines: string[], i: number): { block: MdBlock; end: number } {
+  const rows = [splitTableRow(lines[i])];
+  const raw = [lines[i], lines[i + 1]];
+  let j = i + 2;
+  for (; j < lines.length; j++) {
+    const l = lines[j];
+    if (!l.trim() || !l.includes('|')) break;
+    rows.push(splitTableRow(l));
+    raw.push(l);
+  }
+  return { block: { kind: 'table', rows, raw }, end: j - 1 };
+}
+
+/** `lines[i]` is a list item; consume the run of items and any lazy
+ *  continuation lines hanging off them. */
+function consumeList(
+  lines: string[],
+  i: number,
+  bullet: RegExpExecArray | null,
+  ordered: RegExpExecArray | null,
+): { block: MdBlock; end: number } {
+  const isBullet = Boolean(bullet);
+  const items: string[] = [bullet ? bullet[1] : ordered![2]];
+  const start = ordered ? Number(ordered[1]) : 1;
+  let j = i + 1;
+  for (; j < lines.length; j++) {
+    const l = lines[j];
+    if (!l.trim()) break;
+    const nb = MD_BULLET.exec(l);
+    const no = nb ? null : MD_ORDERED.exec(l);
+    if (isBullet && nb) {
+      items.push(nb[1]);
+      continue;
+    }
+    if (!isBullet && no) {
+      items.push(no[2]);
+      continue;
+    }
+    // A switch of marker, a heading or a table ends this list…
+    if (nb || no || MD_HEADING.test(l) || tableStartsAt(lines, j)) break;
+    // …anything else is a lazy continuation of the item above it.
+    items[items.length - 1] += ' ' + l.trim();
+  }
+  return {
+    block: isBullet ? { kind: 'bulletList', items } : { kind: 'orderedList', items, start },
+    end: j - 1,
+  };
+}
+
+function parseMarkdownBlocks(src: string): MdBlock[] {
+  const lines = src.replace(/\r\n?/g, '\n').split('\n');
+  const blocks: MdBlock[] = [];
+  let para: string[] = [];
+  const flush = () => {
+    if (para.length) {
+      blocks.push({ kind: 'paragraph', lines: para });
+      para = [];
+    }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) {
+      flush();
+      continue;
+    }
+
+    if (tableStartsAt(lines, i)) {
+      const { block, end } = consumeTable(lines, i);
+      flush();
+      blocks.push(block);
+      i = end;
+      continue;
+    }
+
+    const h = MD_HEADING.exec(line);
+    if (h) {
+      flush();
+      blocks.push({ kind: 'heading', level: Math.min(h[1].length, 3), text: h[2] });
+      continue;
+    }
+
+    const bullet = MD_BULLET.exec(line);
+    const ordered = bullet ? null : MD_ORDERED.exec(line);
+    if (bullet || ordered) {
+      const { block, end } = consumeList(lines, i, bullet, ordered);
+      flush();
+      blocks.push(block);
+      i = end;
+      continue;
+    }
+
+    para.push(line);
+  }
+  flush();
+  return blocks;
+}
+
+/** One line of inline markdown → text nodes carrying `insMark` (+ emphasis). */
+function inlineFragment(schema: Schema, text: string, insMark: PMMark): Fragment {
+  const bold = schema.marks.bold ?? null;
+  const italic = schema.marks.italic ?? null;
+  const nodes: PMNode[] = [];
+  const push = (raw: string, extra: PMMark | null) => {
+    if (!raw) return;
+    const marks = extra ? extra.addToSet([insMark]) : [insMark];
+    nodes.push(schema.text(raw, marks));
+  };
+
+  MD_EMPHASIS.lastIndex = 0;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = MD_EMPHASIS.exec(text)) !== null) {
+    if (m.index > last) push(text.slice(last, m.index), null);
+    if (m[1] != null) push(m[1], bold ? bold.create() : null);
+    else push(m[2], italic ? italic.create() : null);
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) push(text.slice(last), null);
+  return nodes.length ? Fragment.fromArray(nodes) : Fragment.empty;
+}
+
+/**
+ * Today's behaviour, kept verbatim as the floor everything falls back to:
+ * blank lines split paragraphs, single newlines collapse to spaces.
+ */
+function plainParagraphNodes(schema: Schema, clean: string, mark: PMMark): PMNode[] {
+  const paras = clean.replace(/\r\n/g, '\n').split(/\n{2,}/);
+  return paras.map((p) =>
+    schema.nodes.paragraph.create(
+      null,
+      p
+        ? Fragment.from(schema.text(p.replace(/\n+/g, ' '), [mark]))
+        : Fragment.empty,
+    ),
+  );
+}
+
+/** Builds one paragraph of inline content carrying the pending mark. */
+type ParaFn = (text: string) => PMNode;
+
+function listNode(
+  schema: Schema,
+  block: Extract<MdBlock, { kind: 'bulletList' | 'orderedList' }>,
+  para: ParaFn,
+): PMNode[] {
+  const N = schema.nodes;
+  const listType = block.kind === 'bulletList' ? N.bulletList : N.orderedList;
+  if (!listType || !N.listItem) return block.items.map((item) => para(item));
+  const items = block.items.map((t) => N.listItem.createChecked(null, Fragment.from(para(t))));
+  // A list that starts at 3 renders as 3 — the numbering in a regulatory
+  // answer is often a continuation, not a fresh count.
+  const start = block.kind === 'orderedList' ? block.start : 1;
+  const wantsStart =
+    start !== 1 && Number.isFinite(start) && Boolean(listType.spec.attrs?.start);
+  return [listType.createChecked(wantsStart ? { start } : null, Fragment.fromArray(items))];
+}
+
+function tableNode(
+  schema: Schema,
+  block: Extract<MdBlock, { kind: 'table' }>,
+  para: ParaFn,
+): PMNode[] {
+  const { table, tableRow, tableHeader, tableCell } = schema.nodes;
+  if (!table || !tableRow || !tableHeader || !tableCell) {
+    // A schema without tables keeps the markdown as text — the pipes are ugly,
+    // losing the numbers would be worse.
+    return [para(block.raw.join(' '))];
+  }
+  // Square the grid off the widest row: a ragged answer is padded, never
+  // truncated, because truncation is exactly how an acceptance limit goes
+  // missing from a specification.
+  const cols = block.rows.reduce((m, r) => Math.max(m, r.length), 0);
+  const rowNodes = block.rows.map((cells, idx) => {
+    const cellType = idx === 0 ? tableHeader : tableCell;
+    const cellNodes: PMNode[] = [];
+    for (let c = 0; c < cols; c++) {
+      cellNodes.push(cellType.createChecked(null, Fragment.from(para(cells[c] ?? ''))));
+    }
+    return tableRow.createChecked(null, Fragment.fromArray(cellNodes));
+  });
+  return [table.createChecked(null, Fragment.fromArray(rowNodes))];
+}
+
+/**
+ * Markdown subset → nodes. `createChecked` throughout, so a structure the
+ * schema will not accept throws here and the caller falls back to paragraphs
+ * rather than producing an invalid document.
+ */
+function structuredNodes(schema: Schema, clean: string, mark: PMMark): PMNode[] {
+  const N = schema.nodes;
+  const para: ParaFn = (text) =>
+    N.paragraph.createChecked(null, inlineFragment(schema, text, mark));
+  const out: PMNode[] = [];
+
+  for (const block of parseMarkdownBlocks(clean)) {
+    if (block.kind === 'heading') {
+      out.push(
+        N.heading
+          ? N.heading.createChecked(
+              { level: block.level },
+              inlineFragment(schema, block.text, mark),
+            )
+          : para(block.text),
+      );
+    } else if (block.kind === 'bulletList' || block.kind === 'orderedList') {
+      out.push(...listNode(schema, block, para));
+    } else if (block.kind === 'table') {
+      out.push(...tableNode(schema, block, para));
+    } else {
+      out.push(para(block.lines.join(' ')));
+    }
+  }
+  return out;
+}
+
 /* ── The tracking plugin ──────────────────────────────────────── */
 
 interface TrackChangesStorage {
   enabled: boolean;
   author: SuggestionAuthor;
+  /**
+   * Authors whose INSERTIONS have been accepted since the last save.
+   *
+   * Accepting an insertion strips its mark — that is what accepting a tracked
+   * change means — and the mark is the only place the author was recorded. So
+   * the moment a reviewer accepts an AnA draft, the text becomes
+   * indistinguishable from text they typed themselves, and the revision the
+   * save then writes is attributed wholly to them.
+   *
+   * For a §11.10(e) record that is a real attribution defect: the audit trail
+   * says a human authored words a model produced. Collecting the authors here
+   * lets the save carry them into the revision, so the ledger records who the
+   * accepted text actually came from.
+   *
+   * Deletions are not collected: accepting a deletion removes text, and the
+   * resulting content carries no contribution from the proposer.
+   */
+  acceptedAuthors: SuggestionAuthor[];
 }
 
 const trackKey = new PluginKey('c2cTrackChanges');
@@ -212,24 +590,155 @@ declare module '@tiptap/core' {
       /**
        * Insert proposed content (e.g. an AnA draft) at the selection as a
        * pending insertion attributed to `author` — never as settled text.
+       * `text` is read as the markdown subset documented above: tables,
+       * headings and lists become real nodes, anything else becomes
+       * paragraphs, and every node carries the pending `insertion` mark.
        */
       insertSuggestedContent: (text: string, author: SuggestionAuthor) => ReturnType;
     };
   }
 }
 
+/**
+ * Record an accepted insertion's author, once per distinct author.
+ *
+ * Called before the mark is stripped, because stripping it is what erases the
+ * attribution this exists to preserve.
+ */
+export function rememberAcceptedAuthor(
+  store: TrackChangesStorage,
+  kind: SuggestionRange['kind'],
+  action: 'accept' | 'reject',
+  authorId: string | null,
+  authorName: string | null,
+): void {
+  if (kind !== 'insertion' || action !== 'accept') return;
+  if (!authorId && !authorName) return;
+  const id = authorId ?? authorName!;
+  if (store.acceptedAuthors.some((a) => a.id === id)) return;
+  store.acceptedAuthors.push({ id, name: authorName ?? id });
+}
+
+/**
+ * A stable identifier for one tracked change, derived from its content.
+ *
+ * ── Why this is derived and not stored on the mark ───────────────────────────
+ * The obvious design — mint an id when the mark is created and carry it in a
+ * `data-change-id` attribute — breaks the redline. ProseMirror merges adjacent
+ * marks only when their attributes are equal, and `minuteBucket` exists
+ * precisely so one continuous typing run stays ONE suggestion. A per-mark id
+ * differs on every keystroke, so every character would become its own
+ * suggestion and the review strip would list a hundred of them for a sentence.
+ *
+ * Deriving the id from the merge key instead (kind + author + bucket) preserves
+ * merging, but then two separate runs by the same author in the same minute
+ * share an id — and `authoring_tracked_change_decisions` has a UNIQUE index on
+ * (artifact_id, change_id, tenant_id), so accepting one and rejecting the other
+ * would silently overwrite the first reviewer decision with the second. A
+ * compliance record that loses a decision is worse than no record.
+ *
+ * So the id is the merge key PLUS a digest of the change's own text. Two runs
+ * in the same minute with different words get different ids, the editor's mark
+ * schema is untouched, and nothing about merging changes. The remaining
+ * collision — the same author proposing the identical text twice inside one
+ * minute — is genuinely the same change by every field that identifies one, and
+ * the decision for it is the same either way.
+ *
+ * FNV-1a rather than SHA-256 because this must be synchronous (WebCrypto's
+ * digest is not) and it is an index key, not a security boundary: the change's
+ * full text travels with the decision and is what the audit record is read on.
+ */
+function fnv1a(input: string, seed: number): string {
+  let h = seed >>> 0;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    // 32-bit FNV prime (16777619) by shift-add, staying inside 32 bits.
+    h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+  }
+  return h.toString(16).padStart(8, '0');
+}
+
+export function changeIdOf(range: SuggestionRange): string {
+  const key = [range.kind, range.authorId ?? '', range.at ?? '', range.text].join('\u0000');
+  // Two differently-seeded 32-bit passes → 64 bits of digest.
+  return `${range.kind}:${fnv1a(key, 0x811c9dc5)}${fnv1a(key, 0x01000193)}`;
+}
+
+/** What the host needs to record a decision: the id, the verdict, and enough
+ *  context that the id can be resolved back to what was actually decided. */
+export interface SuggestionDecision {
+  changeId: string;
+  decision: 'accept' | 'reject';
+  changeType: SuggestionRange['kind'];
+  /** The proposed text itself. Without it the audit record names a change that
+   *  no longer exists in the document — accepting one strips its mark. */
+  text: string;
+  authorId: string | null;
+  authorName: string | null;
+  at: string | null;
+}
+
+/** Build the decision record for one resolved range. */
+export function decisionOf(
+  range: SuggestionRange,
+  decision: 'accept' | 'reject',
+): SuggestionDecision {
+  return {
+    changeId: changeIdOf(range),
+    decision,
+    changeType: range.kind,
+    text: range.text,
+    authorId: range.authorId,
+    authorName: range.authorName,
+    at: range.at,
+  };
+}
+
+/**
+ * Hand one decision to the host, never letting it break the edit.
+ *
+ * The callback crosses into application code that will post to a network. A
+ * throw there would propagate out of a ProseMirror command and abort the
+ * transaction, so the reviewer's click would appear to do nothing — the
+ * recording of a decision undoing the decision itself.
+ */
+export function notifyResolved(
+  onResolve: ((d: SuggestionDecision) => void) | undefined,
+  range: SuggestionRange,
+  action: 'accept' | 'reject',
+): void {
+  if (!onResolve) return;
+  try {
+    onResolve(decisionOf(range, action));
+  } catch {
+    /* Reporting a decision is additive; the edit stands either way. */
+  }
+}
+
 export const TrackChanges = Extension.create<
-  { author: SuggestionAuthor; enabled: boolean },
+  {
+    author: SuggestionAuthor;
+    enabled: boolean;
+    /** Called for every resolved suggestion, accept OR reject.
+     *
+     *  Rejections are the reason this exists. An accepted insertion at least
+     *  reaches the record indirectly — the text lands in the next revision. A
+     *  REJECTED change alters nothing, so "the reviewer considered and refused
+     *  this deletion of the safety paragraph" has, until now, had no home in
+     *  the record at all. Fire-and-forget by contract: recording a decision
+     *  must never block or undo the editor action the reviewer just took. */
+    onResolve?: (decision: SuggestionDecision) => void;
+  },
   TrackChangesStorage
 >({
   name: 'c2cTrackChanges',
 
   addOptions() {
-    return { author: { id: 'unknown', name: 'Unknown author' }, enabled: false };
+    return { author: { id: 'unknown', name: 'Unknown author' }, enabled: false, onResolve: undefined };
   },
 
   addStorage() {
-    return { enabled: this.options.enabled, author: this.options.author };
+    return { enabled: this.options.enabled, author: this.options.author, acceptedAuthors: [] };
   },
 
   addExtensions() {
@@ -255,12 +764,18 @@ export const TrackChanges = Extension.create<
         (range: SuggestionRange, action: 'accept' | 'reject') =>
         ({ state, tr, dispatch }) => {
           const { insertion, deletion } = state.schema.marks;
+          rememberAcceptedAuthor(this.storage, range.kind, action, range.authorId, range.authorName);
+          /* Before the mark is stripped, for the same reason
+             rememberAcceptedAuthor is: stripping it erases the text and the
+             attribution the decision record is about. */
+          notifyResolved(this.options.onResolve, range, action);
           const keepText =
             (range.kind === 'insertion') === (action === 'accept');
           if (keepText) {
             tr.removeMark(range.from, range.to, range.kind === 'insertion' ? insertion : deletion);
           } else {
             tr.delete(range.from, range.to);
+            pruneEmptiedContainers(tr, [range.from]);
           }
           tr.setMeta(SUGGESTION_ACTION_META, true);
           if (dispatch) dispatch(tr);
@@ -272,15 +787,20 @@ export const TrackChanges = Extension.create<
           const ranges = collectSuggestions(state.doc);
           if (!ranges.length) return false;
           const { insertion, deletion } = state.schema.marks;
+          const removedAt: number[] = [];
           // Descending order so earlier positions stay valid as text is removed.
           for (const r of [...ranges].sort((a, b) => b.from - a.from)) {
+            rememberAcceptedAuthor(this.storage, r.kind, action, r.authorId, r.authorName);
+            notifyResolved(this.options.onResolve, r, action);
             const keepText = (r.kind === 'insertion') === (action === 'accept');
             if (keepText) {
               tr.removeMark(r.from, r.to, r.kind === 'insertion' ? insertion : deletion);
             } else {
               tr.delete(r.from, r.to);
+              removedAt.push(r.from);
             }
           }
+          pruneEmptiedContainers(tr, removedAt);
           tr.setMeta(SUGGESTION_ACTION_META, true);
           if (dispatch) dispatch(tr);
           return true;
@@ -296,16 +816,35 @@ export const TrackChanges = Extension.create<
             authorName: author.name,
             at: minuteBucket(),
           });
-          const paras = clean.replace(/\r\n/g, '\n').split(/\n{2,}/);
-          const nodes = paras.map((p) =>
-            state.schema.nodes.paragraph.create(
-              null,
-              p
-                ? Fragment.from(state.schema.text(p.replace(/\n+/g, ' '), [mark]))
-                : Fragment.empty,
-            ),
-          );
-          tr.replaceSelection(new Slice(Fragment.from(nodes), 0, 0));
+          // AnA answers in markdown; a Module 3 answer IS a table. Convert the
+          // subset we understand into real nodes, and fall back to flat
+          // paragraphs — the behaviour that shipped — the moment anything about
+          // that conversion is not sound. Text is never dropped either way.
+          let nodes: PMNode[];
+          try {
+            nodes = structuredNodes(state.schema, clean, mark);
+          } catch {
+            nodes = [];
+          }
+          if (!nodes.length) nodes = plainParagraphNodes(state.schema, clean, mark);
+
+          let slice = new Slice(Fragment.fromArray(nodes), 0, 0);
+          try {
+            // Probe on a scratch Transform — NOT on `state.tr`, which inside a
+            // command IS this very transaction (tiptap's chainable state), so
+            // probing there would apply the draft twice. If this geometry
+            // cannot be fitted at the selection (a table inside a table cell,
+            // say), the real transaction must not be left half-applied.
+            const { from, to } = state.selection;
+            new Transform(state.doc).replaceRange(from, to, slice);
+          } catch {
+            slice = new Slice(
+              Fragment.fromArray(plainParagraphNodes(state.schema, clean, mark)),
+              0,
+              0,
+            );
+          }
+          tr.replaceSelection(slice);
           tr.setMeta(SUGGESTION_ACTION_META, true);
           if (dispatch) dispatch(tr);
           return true;

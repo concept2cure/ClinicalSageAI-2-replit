@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -72,7 +73,7 @@ type DjSnap = DjBriefLine | DjOutlineSnap | DjQcCheck | DjAssembleSnap | DjDocSn
 
 /* ── Sub-component: snapshot renderer ── */
 
-function DJSnapshot({ snap }: { snap: DjSnap }) {
+function DJSnapshot({ snap, doc }: { snap: DjSnap; doc?: DjDocIdentity | null }) {
   const m = snap.mode;
 
   if (m === 'brief') {
@@ -145,51 +146,76 @@ function DJSnapshot({ snap }: { snap: DjSnap }) {
   const s = snap as DjDocSnap;
   return (
     <>
-      {/* The toolbar is the visual language of a document preview and stays —
-          but its buttons are DISABLED, not wired to anything. They used to
-          fire document.execCommand against a non-editable region: inert by
-          accident. A control that cannot act renders as one that cannot act.
-          (That also removed the last execCommand calls in the client — the
-          canonical editor is v2/editor/RichSectionEditor.) */}
+      {/* ── The formatting toolbar is gone ─────────────────────────────────
+          It was a paragraph-style select and eight buttons — bold, italic,
+          underline, two list kinds, quote, table, and a "Track changes" pill —
+          on a preview that has no save path of any kind (its only request is
+          GET /api/doc-journey).
+
+          ── Deleted, not disabled properly, and that was the choice ─────────
+          The alternative was real: keep the nine, give them a genuine
+          `:disabled` treatment, drop the hover highlights, and title each one
+          with what it is and where to edit. It was rejected because it had
+          already been tried HERE and had already failed. A previous pass DID
+          mark all nine `disabled` and DID give each `title="Read-only
+          preview"` — attribute-correct, and still a live-looking toolbar,
+          because the cascade never followed. No `.dj-tb-*` rule carried a
+          `:disabled` state, `.dj-tb-b:hover` still lifted every button, and
+          `.dj-tb-tc:hover` still turned the Track-changes pill accent-coloured
+          — an armable-looking Part 11 audit-trail toggle on a regulated
+          document view.
+
+          That is the case against the disabled treatment in this file: it
+          requires the same truth in three places at once — the attribute, the
+          tooltip, and a stylesheet 2,700 lines away — and those three drifted
+          apart inside one commit. Deletion needs one place. And the tooltip
+          only speaks to a mouse: a correctly-disabled row of nine still tells
+          every reader who never hovers that this screen formats documents.
+          The affordance is the message, so the affordance goes.
+
+          What replaces them is what is true, and the way out. The stage header
+          above already carries the real "Open in editor" — this states the
+          constraint the toolbar was pantomiming around. The dead `.dj-tb-*`
+          rules were deleted with it (app-v2.css, beside `.dj-toolbar`);
+          leaving them would have left the resurrection kit behind. Both halves
+          are pinned by __tests__/docJourneyPreviewIsHonest.test.tsx, which
+          also holds the door open honestly: restore the toolbar and it must be
+          really disabled, with a title naming both facts. */}
+      {/* One statement, not two. The version beside it is the DOCUMENT's, from
+          the record — it used to be the literal 'v1.0' whenever the stage was
+          sealed, so a frozen document at v3 was labelled v1.0. */}
       <div className="dj-toolbar">
-        <select className="dj-tb-sel" defaultValue="h" title="Read-only preview" disabled>
-          <option value="t">Title</option>
-          <option value="h">Heading 1</option>
-          <option value="h2">Heading 2</option>
-          <option value="b">Body text</option>
-        </select>
-        <span className="dj-tb-sep" />
-        <button className="dj-tb-b" title="Read-only preview" disabled><b>B</b></button>
-        <button className="dj-tb-b" title="Read-only preview" disabled><i>I</i></button>
-        <button className="dj-tb-b" title="Read-only preview" disabled><span style={{ textDecoration: 'underline' }}>U</span></button>
-        <span className="dj-tb-sep" />
-        <button className="dj-tb-b" title="Read-only preview" disabled>{I.list}</button>
-        <button className="dj-tb-b" title="Read-only preview" disabled>1.</button>
-        <span className="dj-tb-sep" />
-        <button className="dj-tb-b" title="Read-only preview" disabled>{I.quote}</button>
-        <button className="dj-tb-b" title="Read-only preview" disabled>{I.grid}</button>
-        <span className="dj-tb-sep" />
-        <button className="dj-tb-tc" title="Read-only preview" disabled><span className="dj-tb-dot" />Track changes</button>
-        {/* Was: a green-check "Autosaved · v1.0" pill. This surface has no save
-            path of any kind — its only request is GET /api/doc-journey. The
-            page below carried `contentEditable` with no onInput, no state and
-            no write, so anything typed was lost on reload AND on any re-render
-            (selecting another stage re-renders s.body straight over the DOM).
-            The pill asserted the opposite of what happened. */}
-        <span className="dj-tb-save" title="This preview does not save. Author in Document Authoring.">
-          Read-only preview · {s.seal ? 'v1.0' : s.wm ? s.wm.replace('DRAFT ', '') : 'v0.x'}
+        <span className="dj-tb-ro">
+          {I.lock} Read-only preview{doc?.version ? ' · v' + doc.version : ''} — open this section
+          in the editor to change it.
         </span>
       </div>
-      {/* contentEditable removed with the same justification: an editable
-          surface that cannot save is a trap, not a feature. The formatting
-          toolbar above is left in place because it is the visual language of
-          this preview, and execCommand on a non-editable region is inert. */}
+      {/* contentEditable was removed for the same reason the toolbar was: an
+          editable surface that cannot save is a trap, not a feature. */}
       <div className={'dj-page' + (s.wm ? ' has-wm' : '')} spellCheck={false}>
         {s.wm && <div className="dj-wm" contentEditable={false}>{s.wm}</div>}
+        {/* ── The masthead was three string literals ──────────────────────────
+            "Concept2Cure Biosciences, Inc." / "2.5 Clinical Overview" /
+            "BX-204 (rezatinib) · BLA 761xyz". Every tenant opening any stage of
+            their OWN document read an invented sponsor, product and application
+            number as its header — with real content printed underneath, which
+            is what made it credible.
+
+            The identity now comes from the document record (title, module,
+            product code, version). The SPONSOR line is gone rather than
+            replaced: authoring_documents carries no sponsor, and naming the
+            wrong company on a regulatory document header is the single worst
+            thing this masthead could do. What is absent stays absent. */}
         <div className="dj-doc-mast">
-          <div className="dj-doc-spon">Concept2Cure Biosciences, Inc.</div>
-          <div className="dj-doc-title">2.5 Clinical Overview</div>
-          <div className="dj-doc-meta">BX-204 (rezatinib) · BLA 761xyz · CTD Module 2.5 · ICH M4E(R2) · {s.seal ? 'Final v1.0' : s.wm || 'Draft'}</div>
+          <div className="dj-doc-title">{doc?.title || s.heading || 'Untitled document'}</div>
+          <div className="dj-doc-meta">
+            {[
+              doc?.productCode,
+              doc?.module ? 'CTD ' + doc.module : null,
+              doc?.version ? 'v' + doc.version : null,
+              s.seal ? 'Final' : s.wm || 'Draft',
+            ].filter(Boolean).join(' · ')}
+          </div>
         </div>
         {s.seal && <div className="dj-seal">{I.checkCircle} {s.seal}</div>}
         <div className="dj-page-h">{s.heading}</div>
@@ -227,7 +253,15 @@ function DJSnapshot({ snap }: { snap: DjSnap }) {
    authoring store (authoring_documents + doc_revisions + authoring_comments +
    frozen_documents); every when/who/ver is a real column value, never
    fabricated, and a milestone the store never recorded yields no stage. */
-type DjJourneyRow = DjStage & { snap?: DjSnap | null };
+/** The document's own identity, sent on every stage row by the assembler. */
+interface DjDocIdentity {
+  title: string | null;
+  module: string | null;
+  productCode: string | null;
+  version: string | null;
+}
+
+type DjJourneyRow = DjStage & { snap?: DjSnap | null; doc?: DjDocIdentity | null };
 
 export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
   const openEditor = () =>
@@ -257,6 +291,65 @@ export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
   const inProgress = stages.find((s) => s.active);
   const currentStage = inProgress?.label ?? (total > 0 ? 'Complete' : '—');
   const headWhen = (inProgress ?? stages[stages.length - 1])?.when || '—';
+
+  /* WHAT ANA SEES HERE. Branches mirror the render; a failed read is a
+     failure, not an empty journey. A '—' the screen shows for an unrecorded
+     value is published as absent, not as a value; the store carries no
+     sponsor, so none is ever synthesized. Read-only surface — the actions must
+     not imply editing here. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'Document journey — loading the document lifecycle; nothing is on screen yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'Document journey — the document lifecycle did not load, so no stages are on screen — a failed read, not an empty journey.',
+      };
+    }
+    if (live.empty || total === 0) {
+      return { summary: 'Document journey — no document journey recorded yet; nothing authored in this workspace has a lifecycle to show.' };
+    }
+    const d = stage?.doc;
+    const docFacts = {
+      ...(d?.title ? { title: d.title } : {}),
+      ...(d?.module ? { module: d.module } : {}),
+      ...(d?.productCode ? { productCode: d.productCode } : {}),
+      ...(d?.version ? { version: d.version } : {}),
+    };
+    return {
+      summary:
+        'Document journey — ' + doneCount + ' of ' + total + ' lifecycle stage(s) recorded, current stage ' + currentStage
+        + (currentVer !== '—' ? ' at v' + currentVer : '')
+        + (stage ? '; viewing ‘' + stage.label + '’' : '')
+        + '. Read-only reconstruction of the real audit trail.',
+      facts: {
+        stagesRecorded: doneCount,
+        stagesTotal: total,
+        ...(currentVer !== '—' ? { currentVersion: currentVer } : {}),
+        currentStage,
+        ...(headWhen !== '—' ? { lastUpdate: headWhen } : {}),
+        ...(stage
+          ? {
+              activeStage: {
+                id: stage.id,
+                label: stage.label,
+                ...(stage.ver && stage.ver !== '—' ? { ver: stage.ver } : {}),
+                ...(stage.when ? { when: stage.when } : {}),
+                ...(stage.who ? { who: stage.who } : {}),
+              },
+            }
+          : {}),
+        ...(Object.keys(docFacts).length ? { document: docFacts } : {}),
+      },
+      availableActions: [
+        'Select a stage on the rail to view its recorded snapshot',
+        'This surface is a read-only reconstruction of the audit trail — nothing on it edits the document',
+        '‘Open in editor’ exists as navigation to Document Authoring, where changes are made',
+      ],
+    };
+  }, [live.loading, live.error, live.empty, total, doneCount, currentVer, currentStage, headWhen, stage]);
+  usePublishSurfaceContext('doc-journey', anaContext);
 
   return (
     <div className="reg-wrap dj">
@@ -347,7 +440,7 @@ export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                 </div>
               )}
-              {snap && <DJSnapshot snap={snap} />}
+              {snap && <DJSnapshot snap={snap} doc={stage?.doc ?? null} />}
             </div>
           </div>
         </>

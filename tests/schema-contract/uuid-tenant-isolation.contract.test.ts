@@ -26,10 +26,15 @@ import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { C2C_MIGRATION_FILES } from '../../scripts/db/migration-set.mjs';
+import {
+  C2C_MIGRATION_FILES,
+  TENANT_ISOLATION_SWEEP,
+  UUID_TENANT_ISOLATION_NONPUBLIC,
+} from '../../scripts/db/migration-set.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const UUID_RLS = 'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql';
+// Imported rather than re-typed — see the note in tenant-isolation-sweep.contract.test.ts.
+const UUID_RLS = UUID_TENANT_ISOLATION_NONPUBLIC;
 const T = 180_000;
 const readMig = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
 
@@ -42,7 +47,7 @@ describe('C-46: the uuid RLS migration is wired and deploy-positioned', () => {
   });
 
   it('sits alongside the public integer sweep (both isolation steps at the end)', () => {
-    const SWEEP = 'db/migrations/20260801_tenant_isolation_sweep.sql';
+    const SWEEP = TENANT_ISOLATION_SWEEP;
     // Both isolation steps are the FINAL PAIR of the set, after every
     // table-creating migration. Their mutual order is immaterial — they touch
     // disjoint schemas (integer/public vs uuid/non-public) and neither creates a

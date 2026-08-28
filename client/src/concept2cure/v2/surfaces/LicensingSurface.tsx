@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData, liveMutateOrNull, type DataResult } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import { takeUnlockIntent, type UnlockIntent } from '../unlockIntent';
 import type { SurfaceViewProps } from '../surfaceViews';
 // Canonical price list, NOT fabricated per-tenant data: LIC_DTC / LIC_PRICING /
 // LIC_ARCHETYPES / licBundle are the product's fixed pricing catalog — the same
@@ -79,6 +81,14 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
   // reads the organizations row (server getSubscriptionStatus) and reconciles
   // live Stripe state. Real object -> honest error -> no fixture. useLiveData
   // unwraps the success envelope; this route returns the status object directly.
+  /* What the customer was trying to open, when they arrived from a lock.
+     Read ONCE on mount and cleared in the same step — the intent is a fact
+     about one navigation, and a customer who comes back here later from the
+     account menu must not be told they were unlocking something they stopped
+     thinking about. Null on every other route into this page, which is the
+     common case. */
+  const [unlock] = useState<UnlockIntent | null>(() => takeUnlockIntent());
+
   const statusState = useLiveData<BillingStatus>('/api/billing/status');
   const status = statusState.data;
 
@@ -126,6 +136,71 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
     });
   };
 
+  /* WHAT ANA SEES HERE. On a failed status read `curTier` silently falls back
+     to 'free' and the free card wears the Current tag — the error branch
+     exists so that fallback is never reported as the organization's plan.
+     Payment status is the raw value, never dunning language; choosing a plan
+     and the seats input are checkout acts and are never offered. */
+  const anaContext = useMemo(() => {
+    const lockLead = unlock
+      ? `The user arrived here from a lock on "${unlock.label}", which ${
+          unlock.requiredTier
+            ? `needs the ${unlock.requiredTier} plan or above`
+            : 'has no plan remedy — changing plan may not resolve it on its own'
+        }. `
+      : '';
+    const view = `Viewing the ${model === 'dtc' ? 'self-service' : 'enterprise per-user'} catalog on the ${cycle} cycle.`;
+    const shared = {
+      pricingModel: model,
+      cycle,
+      ...(model === 'b2b' ? { archetype: arch } : {}),
+      arrivedFromLock: unlock ? { label: unlock.label, requiredTier: unlock.requiredTier } : null,
+    };
+    if (statusState.loading) {
+      return { summary: lockLead + 'The current plan is still loading. ' + view, facts: shared };
+    }
+    if (statusState.error) {
+      return {
+        summary:
+          lockLead +
+          'The subscription status could not be read, so no current plan is shown — any "Current" marker on the ' +
+          'free card is the silent fallback of the failed read, NOT a finding that the organization is on the ' +
+          'free tier. ' + view,
+        facts: { ...shared, planUnavailable: true },
+      };
+    }
+    if (!status) {
+      return {
+        summary: lockLead + 'No subscription record was returned for this organization. ' + view,
+        facts: { ...shared, planUnavailable: true },
+      };
+    }
+    return {
+      summary:
+        lockLead +
+        `Plans & licensing: current plan "${status.tier}", payment status "${status.paymentStatus}", ` +
+        `${status.seats} seat(s), billed ${status.billingCycle}` +
+        (status.currentPeriodEnd
+          ? `, current period ends ${new Date(status.currentPeriodEnd).toLocaleDateString()}`
+          : '') +
+        '. ' + view,
+      facts: {
+        ...shared,
+        currentTier: status.tier,
+        paymentStatus: status.paymentStatus,
+        billingCycle: status.billingCycle,
+        seats: status.seats,
+        currentPeriodEnd: status.currentPeriodEnd ?? null,
+        planUnavailable: false,
+      },
+      availableActions: [
+        'Switch between the self-service and enterprise catalogs and the monthly/annual cycle (view state only)',
+        'Choosing a plan opens Stripe checkout; changing or cancelling runs through the billing portal — human acts',
+      ],
+    };
+  }, [unlock, model, cycle, arch, statusState.loading, statusState.error, status]);
+  usePublishSurfaceContext('licensing', anaContext);
+
   return (
     <div className="sp" style={{ maxWidth: 1120 }}>
       <div className="sp-head">
@@ -144,6 +219,26 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
           </button>
         )}
       </div>
+
+      {unlock && (
+        /* Says the thing the customer came here to find out. Every value is the
+           server's own verdict, carried across the navigation — the module's
+           real name and the real minimum tier. When requiredTier is null the
+           lock has no plan remedy (an administrator disabled it, or it is
+           outside this workspace's industry mode) and this must NOT offer a plan
+           that would change nothing. */
+        <div className="lic-unlock" role="note">
+          <span className="lic-unlock-ic" aria-hidden="true">{I.lock}</span>
+          <div className="lic-unlock-mid">
+            <div className="lic-unlock-t">{unlock.label}</div>
+            <div className="lic-unlock-b">
+              {unlock.requiredTier
+                ? `Included from the ${unlock.requiredTier.charAt(0).toUpperCase()}${unlock.requiredTier.slice(1)} plan upward. Your current plan does not include it.`
+                : 'Not included in your plan. Changing plan may not resolve this on its own — check with your administrator.'}
+            </div>
+          </div>
+        </div>
+      )}
 
       {statusState.loading ? (
         <div className="scaf-note" style={{ marginBottom: 16 }}>

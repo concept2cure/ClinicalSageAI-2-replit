@@ -39,6 +39,7 @@ import {
   CC_CLOSURE,
 } from '../fixtures/commcenter';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/commcenter-v2.css';
 import { C2CToast, useToast } from '../toast';
 
@@ -233,6 +234,100 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
     : null;
   const profState = useLiveRows<AuthProfileRow>(profPath);
 
+  /* What AnA can see of this screen.
+     Four independent reads, two of them project-scoped. NO PROJECT is its own
+     state and is published as itself: the agency inbox and the authority
+     profiles are empty for want of a project id, not because the regulator has
+     sent nothing — and "you have no open agency correspondence" is a claim a
+     user would act on.
+
+     `responseRequired` with a due date is the fact worth carrying: it is what
+     turns this screen from a list into a clock. */
+  const anaContext = React.useMemo(() => {
+    const inbox = !commsPath
+      ? { state: 'no-project' as const }
+      : liveComms.loading
+        ? { state: 'loading' as const }
+        : liveComms.error
+          ? { state: 'unreadable' as const }
+          : { state: 'ready' as const };
+    const inboxLine =
+      inbox.state === 'no-project'
+        ? 'no project is selected, so the agency inbox is not scoped to anything'
+        : inbox.state === 'loading'
+          ? 'the agency inbox is still loading'
+          : inbox.state === 'unreadable'
+            ? 'the agency inbox could not be read'
+            : `${comms.length} agency communication(s), ${open.length} open, ${responseDue.length} awaiting a response, ${critical.length} critical`;
+    return {
+      summary:
+        `Communication centre, "${tab}" tab (${owner === 'mine' ? 'my items' : 'all owners'}): ${inboxLine}.` +
+        (inbox.state === 'ready' && soonest
+          ? ` The soonest response is due ${soonest.dueDate}.`
+          : '') +
+        ' ' +
+        (interState.loading
+          ? 'Health-authority interactions are still loading.'
+          : interState.error
+            ? 'Health-authority interactions could not be read.'
+            : `${interState.rows.length} health-authority interaction(s).`) +
+        ' ' +
+        (commitState.loading
+          ? 'Commitments are still loading.'
+          : commitState.error
+            ? 'Commitments could not be read.'
+            : `${commitments.length} commitment(s).`),
+      facts: {
+        openTab: tab,
+        ownerFilter: owner,
+        projectScoped: Boolean(projectId),
+        agencyInboxState: inbox.state,
+        agencyInbox: inbox.state === 'ready'
+          ? {
+              total: comms.length,
+              open: open.length,
+              awaitingResponse: responseDue.length,
+              critical: critical.length,
+              soonestDue: soonest ? { id: soonest.id, type: soonest.communicationType, due: soonest.dueDate, urgency: soonest.urgency } : null,
+              items: comms.slice(0, 10).map((c) => ({
+                id: c.id, type: c.communicationType, channel: c.sourceChannel,
+                received: c.receivedDate, due: c.dueDate ?? null, urgency: c.urgency,
+                responseRequired: c.responseRequired, issues: c.extractedIssues,
+                reviewStatus: c.humanReviewStatus, closureStatus: c.closureStatus,
+              })),
+            }
+          : null,
+        interactions: interState.loading || interState.error
+          ? null
+          : interState.rows.slice(0, 10).map((r) => ({
+              id: r.id, type: r.interaction_type, agency: r.agency, title: r.title,
+              status: r.status, requested: r.requested_date, scheduled: r.scheduled_date, held: r.held_date,
+            })),
+        commitments: commitState.loading || commitState.error
+          ? null
+          : commitments.slice(0, 10).map((c) => ({
+              id: c.id, type: c.commitment_type, description: c.description,
+              regulatoryBasis: c.regulatory_basis, due: c.due_date,
+              status: c.status, effectiveStatus: c.effectiveStatus, fulfilled: c.fulfilled_date,
+            })),
+        authorityProfiles: profState.loading || profState.error
+          ? null
+          : profState.rows.map((pr) => ({
+              authority: pr.authority, centerOrDivision: pr.centerOrDivision,
+              channel: pr.channelType, transport: pr.submissionTransport,
+              acceptedFormats: pr.acceptedFormats ?? [],
+            })),
+      },
+      availableActions: [
+        'Log an agency communication (a governed write — persists the event, auto-creates a response task when one is required, and writes the audit entry)',
+        'Switch tab between the inbox, interactions, commitments and authority profiles',
+        'Filter to my items or all owners',
+        'Read a communication\u2019s extracted issues, urgency and response due date',
+      ],
+    };
+  }, [commsPath, liveComms.loading, liveComms.error, comms, open.length, responseDue.length, critical.length, soonest, tab, owner, projectId, interState.loading, interState.error, interState.rows, commitState.loading, commitState.error, commitments, profState.loading, profState.error, profState.rows]);
+  usePublishSurfaceContext('communication-center', anaContext);
+
   // logComm — REAL, audited write. POSTs to
   // /api/concept2cure/projects/:pid/agency-communications, which persists the
   // event, auto-creates a response task + notification when a response is
@@ -295,24 +390,60 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
-  // triage — FLAG (deferred): there is no mounted PATCH for agency-communication
-  // review/closure status, so this only flips the row in the CURRENT view. The
-  // toast states that plainly; the change is not persisted and reverts on reload
-  // once the live read re-seeds. No false claim of a saved status transition.
-  const triage = (id: string) => {
-    setComms((cs) =>
-      cs.map((c) =>
-        c.id === id
-          ? {
-              ...c,
-              humanReviewStatus:
-                c.humanReviewStatus === 'pending_review' ? 'triaged' : 'actioned',
-              closureStatus: c.closureStatus === 'open' ? 'in_progress' : 'closed',
-            }
-          : c,
-      ),
-    );
-    fire('Updated in this view only — status changes aren’t persisted yet (no server endpoint).');
+  /* ── Triage now persists ──────────────────────────────────────────────────
+     This flipped the row in React state and told the user so in a toast:
+     "status changes aren't persisted yet (no server endpoint)". Honest, but it
+     meant the only action on this surface did nothing durable — a triage
+     vanished on reload, and a second reviewer opening the same queue saw it
+     untouched. On a screen whose whole job is tracking what the agency asked
+     and whether anyone answered, that is a record-keeping failure.
+
+     PATCH .../agency-communications/:eventId/advance now exists (added in this
+     change, beside the GET and POST that already read and wrote these columns).
+     The server computes the transition from the STORED status, so a card cannot
+     skip triage on its way to actioned, and it writes an audit entry naming the
+     from/to. The row is adopted from the server's response rather than guessed,
+     so what the screen shows is what was stored. */
+  const triage = async (id: string) => {
+    if (!projectId) return;
+    try {
+      const res = await apiRequest(
+        'PATCH',
+        `/api/concept2cure/projects/${encodeURIComponent(projectId)}/agency-communications/${encodeURIComponent(id)}/advance`,
+      );
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        fire(
+          'Not advanced — ' +
+            (serverMessage(body) ?? `the server refused the change (HTTP ${res.status})`) +
+            '. Nothing was stored.',
+          'error',
+        );
+        return;
+      }
+      const row = (body as { data?: { humanReviewStatus?: string; closureStatus?: string } } | null)?.data;
+      if (!row?.humanReviewStatus) {
+        fire('Not advanced — the server did not confirm the new status.', 'error');
+        return;
+      }
+      setComms((cs) =>
+        cs.map((c) =>
+          c.id === id
+            ? {
+                ...c,
+                humanReviewStatus: row.humanReviewStatus as typeof c.humanReviewStatus,
+                closureStatus: (row.closureStatus ?? c.closureStatus) as typeof c.closureStatus,
+              }
+            : c,
+        ),
+      );
+      fire(`Advanced to ${String(row.humanReviewStatus).replace('_', ' ')} — recorded with an audit entry.`);
+    } catch (e) {
+      fire(
+        'Not advanced — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was stored.',
+        'error',
+      );
+    }
   };
 
   const shown = owner === 'mine' ? open.filter((c) => c.responseRequired) : comms;
@@ -341,6 +472,14 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
             <>Open a project to load its agency communications.</>
           ) : liveComms.error ? (
             <>Couldn't load this project's agency communications.</>
+          ) : liveComms.loading ? (
+            /* The ternary had an `error` arm and no `loading` one, so while the
+               read was in flight `critical` and `responseDue` were both empty
+               and it fell through to the final arm — an authoritative all-clear
+               on IR and CRL response clocks, under the eyebrow "What the FDA is
+               waiting on from you". Transient, but it is the first thing on the
+               surface and it is the one sentence a user acts on. */
+            <>Reading this project's agency communications…</>
           ) : critical.length ? (
             <>
               The FDA issued a <b>{critical[0].communicationType}</b>
@@ -579,7 +718,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                         </button>
                       )}
                       {c.closureStatus !== 'closed' && (
-                        <button className="cc-btn sm" onClick={() => triage(c.id)}>
+                        <button className="cc-btn sm" onClick={() => void triage(c.id)}>
                           {c.humanReviewStatus === 'pending_review' ? 'Triage' : 'Advance'}
                         </button>
                       )}

@@ -53,6 +53,14 @@
 
   /* chips */
   .rd-chip{ font-size:10.5px; font-weight:600; padding:2px 8px; border-radius:20px; white-space:nowrap; }
+  /* An entitlement status is a short SENTENCE ("Included from Professional",
+     "Turned off for this workspace"), not the one-word state `.rd-chip` was
+     sized for. coverage-v2.css additionally sets `text-transform:uppercase` and
+     `white-space:nowrap` on the same class, which turns those into a shouted
+     line that runs off the edge of a 280px launch card in the Apps catalog.
+     Two classes so the override beats either sheet regardless of import order;
+     shape, colour and weight are still the chip's. */
+  .rd-chip.rd-chip-sentence{ white-space:normal; text-transform:none; letter-spacing:0; }
   /* Inline single-line input for the collaboration toolbar (lock-takeover
      reason). Matches .tb-field's input treatment so the two surfaces do not
      drift, but sized for a toolbar row rather than a form column. */
@@ -409,4 +417,227 @@
   .vd-ev-row{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-300); }
   .vd-ev-row svg{ width:13px; height:13px; color:var(--text-400); }
   .vd-d-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
+
+  /* ── Data room lane (capture → classify → file pipeline) ── */
+  .vd-dr{ border-bottom:1px solid var(--border); background:var(--bg-050); padding:10px 24px; }
+  .vd-dr-head{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .vd-dr-title{ display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--text-200); }
+  .vd-dr-title svg{ width:14px; height:14px; color:var(--text-400); }
+  .vd-dr-meta{ font-size:11.5px; color:var(--text-400); }
+  .vd-dr-stages{ display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--text-300); }
+  .vd-dr-stage b{ font-weight:600; color:var(--text-100); font-variant-numeric:tabular-nums; }
+  .vd-dr-arrow{ color:var(--text-400); }
+  .vd-dr-toggle{ margin-left:auto; border:none; background:none; font-size:11.5px; font-weight:600; color:var(--accent-200); cursor:pointer; padding:2px 0; }
+  .vd-dr-toggle:hover{ text-decoration:underline; }
+  .vd-dr-empty{ font-size:11.5px; color:var(--text-400); padding:6px 0 2px; }
+  .vd-dr-err{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--error); padding:6px 0 2px; }
+  .vd-dr-err svg{ width:13px; height:13px; flex-shrink:0; }
+  .vd-dr-err-strip{ padding:8px 24px; border-bottom:1px solid var(--border); }
+  .vd-dr-rows{ display:flex; flex-direction:column; gap:2px; margin-top:8px; max-height:180px; overflow-y:auto; }
+  .vd-dr-row{ display:flex; align-items:center; gap:10px; padding:5px 8px; border-radius:7px; font-size:12px; }
+  .vd-dr-row:hover{ background:var(--bg-000); }
+  .vd-dr-kind{ font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-400); min-width:38px; }
+  .vd-dr-name{ color:var(--text-100); font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:32%; }
+  .vd-dr-detail{ color:var(--text-400); font-size:11px; }
+  .vd-dr-suggest{ color:var(--text-300); font-size:11px; margin-left:auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .vd-dr-row .rd-chip{ flex-shrink:0; }
+  .vd-dr-suggest + .rd-chip{ margin-left:8px; }
+  .vd-dr-row > .rd-chip:last-child{ margin-left:auto; }
+  .vd-dr-suggest ~ .rd-chip:last-child{ margin-left:8px; }
+
+  /* ── Dossier filing block (detail drawer, uploads) ── */
+  .vd-d-filing{ display:flex; flex-direction:column; gap:6px; font-size:12px; }
+  .vd-d-filing-row{ display:flex; gap:10px; align-items:baseline; }
+  .vd-d-filing-row .k{ min-width:82px; color:var(--text-400); font-size:11px; }
+  .vd-d-filing-row .v{ color:var(--text-100); }
+  .vd-d-filing-row .v.mono{ font-family:var(--font-mono,ui-monospace,monospace); font-size:11px; }
+  .vd-d-hash{ word-break:break-all; }
+  .vd-d-filing-why{ font-size:11.5px; color:var(--text-300); line-height:1.45; padding:8px 10px; background:var(--bg-050); border-radius:7px; }
+  .vd-d-filing-acts{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:4px; }
+  .vd-d-move{ display:inline-flex; gap:6px; align-items:center; }
+  .vd-d-move-sel{ font-size:11.5px; color:var(--text-200); background:var(--bg-000); border:1px solid var(--border-control,var(--border)); border-radius:7px; padding:6px 8px; max-width:190px; }
 }
+
+/* ══ Master Licensing console ══════════════════════════════════════════════
+   The licensing control room shipped with 30 of its 37 class names undeclared:
+   the tab strip rendered as three bare buttons, every `role="table"` grid
+   collapsed into a single stacked column, and `.ml-vh` — the visually-hidden
+   span that disambiguates "Turn off" for a screen reader — printed on screen
+   after every button label. Markup carrying ARIA table semantics with no grid
+   under it is worse than a plain list: it announces columns that do not exist.
+
+   Layout is CSS grid on the container with the header row and every data row
+   sharing one template, so a header cell and its column stay aligned without
+   either side knowing the widths. Each table declares its own template; the
+   base `.ml-table` is the packaging one. */
+
+.c2c-v2 .ml-lic{ display:flex; flex-direction:column; gap:18px; }
+
+/* ── Tab strip ─────────────────────────────────────────────────────────────
+   aria-current="page" is the selected state the markup already sets, so it is
+   also the selector — no parallel data attribute that could disagree with it. */
+.c2c-v2 .ml-tabs{ display:flex; gap:4px; border-bottom:1px solid var(--border); }
+.c2c-v2 .ml-tab{
+  display:inline-flex; align-items:center; gap:7px;
+  padding:9px 14px; margin-bottom:-1px;
+  border:none; border-bottom:2px solid transparent; background:none;
+  font-size:13px; font-weight:500; color:var(--text-300);
+  cursor:pointer; transition:color 200ms var(--ease,ease-out);
+}
+.c2c-v2 .ml-tab:hover{ color:var(--text-100); }
+.c2c-v2 .ml-tab[aria-current="page"]{ color:var(--text-100); font-weight:600; border-bottom-color:var(--accent-100); }
+.c2c-v2 .ml-tab-ic{ display:inline-flex; }
+.c2c-v2 .ml-tab-ic svg{ width:15px; height:15px; }
+
+/* ── Section shell ───────────────────────────────────────────────────────── */
+.c2c-v2 .ml-sec{ display:flex; flex-direction:column; gap:14px; }
+.c2c-v2 .ml-sec-h{ margin:0; font-size:15px; font-weight:600; color:var(--text-100); }
+.c2c-v2 .ml-banner{
+  display:flex; align-items:flex-start; gap:10px;
+  padding:11px 13px; border:1px solid var(--border); border-radius:var(--radius-md);
+  background:var(--bg-050);
+}
+.c2c-v2 .ml-banner p{ margin:0; font-size:12px; line-height:1.55; color:var(--text-300); max-width:78ch; }
+.c2c-v2 .ml-banner-ic{ display:inline-flex; flex-shrink:0; margin-top:1px; color:var(--text-300); }
+.c2c-v2 .ml-banner-ic svg{ width:14px; height:14px; }
+.c2c-v2 .ml-loading{ font-size:12.5px; color:var(--text-300); padding:14px 2px; }
+
+/* ── Toolbar (filters) ───────────────────────────────────────────────────── */
+.c2c-v2 .ml-toolbar{ display:flex; flex-wrap:wrap; align-items:flex-end; gap:12px; }
+.c2c-v2 .ml-field{ display:flex; flex-direction:column; gap:4px; min-width:150px; }
+.c2c-v2 .ml-field-grow{ flex:1 1 220px; }
+.c2c-v2 .ml-label{ font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--text-300); }
+/* --border-control, not --border: this is an interactive boundary and the
+   3:1 non-text floor applies to it. See app-v2.css on why --border keeps its
+   divider job unchanged. */
+.c2c-v2 .ml-select,
+.c2c-v2 .ml-input{
+  padding:7px 9px; font-size:12.5px; color:var(--text-100);
+  background:var(--bg-000); border:1px solid var(--border-control);
+  border-radius:var(--radius-md);
+}
+.c2c-v2 .ml-count{ margin-left:auto; font-size:12px; color:var(--text-300); font-variant-numeric:tabular-nums; }
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
+.c2c-v2 .ml-scroll{ overflow-x:auto; }
+.c2c-v2 .ml-table{
+  --ml-cols: minmax(230px,2fr) minmax(330px,auto) minmax(140px,.7fr);
+  min-width:760px; border:1px solid var(--border); border-radius:var(--radius-md);
+  background:var(--bg-000); overflow:hidden;
+}
+.c2c-v2 .ml-table-orgs{ --ml-cols: minmax(200px,2fr) 120px 130px 110px minmax(150px,1fr); min-width:820px; }
+.c2c-v2 .ml-table-verdict{ --ml-cols: minmax(210px,2fr) minmax(200px,1.4fr) 130px; min-width:640px; }
+.c2c-v2 .ml-table-flags{ --ml-cols: minmax(260px,2.4fr) 100px 130px; min-width:600px; }
+.c2c-v2 .ml-table-enforce{ --ml-cols: minmax(170px,1.2fr) minmax(230px,1.8fr) 110px 150px; min-width:760px; }
+.c2c-v2 .ml-table-trials{ --ml-cols: minmax(150px,1fr) minmax(150px,1fr) 140px minmax(230px,1.6fr) 160px; min-width:900px; }
+
+.c2c-v2 .ml-thead,
+.c2c-v2 .ml-row{ display:grid; grid-template-columns:var(--ml-cols); gap:14px; align-items:start; }
+.c2c-v2 .ml-thead{
+  padding:9px 14px; background:var(--bg-050); border-bottom:1px solid var(--border);
+  font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--text-300);
+}
+.c2c-v2 .ml-row{ padding:11px 14px; border-bottom:1px solid var(--border); font-size:12.5px; color:var(--text-100); }
+.c2c-v2 .ml-row:last-child{ border-bottom:none; }
+
+/* A workspace row IS the control that selects one, so it is a real <button>
+   and needs the button chrome reset before the grid above applies. */
+.c2c-v2 .ml-row-btn{
+  width:100%; text-align:left; border-left:none; border-right:none; border-top:none;
+  background:none; font:inherit; color:inherit; cursor:pointer;
+  transition:background 200ms var(--ease,ease-out);
+}
+.c2c-v2 .ml-row-btn:hover{ background:var(--bg-050); }
+.c2c-v2 .ml-row-btn[data-on]{ background:var(--accent-000); }
+.c2c-v2 .ml-row-btn > span{ display:block; min-width:0; }
+
+.c2c-v2 .ml-name{ display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:600; color:var(--text-100); }
+.c2c-v2 .ml-name.mono,
+.c2c-v2 .ml-sub .mono{ font-family:var(--font-mono,ui-monospace,monospace); }
+/* --text-300, not --text-400: measured 3.37:1 on --bg-000, which fails SC
+   1.4.3 at this size. The ramp below it (--text-500, 2.11:1) is never text. */
+.c2c-v2 .ml-sub{ margin-top:3px; font-size:11.5px; line-height:1.5; color:var(--text-300); word-break:break-word; }
+
+.c2c-v2 .ml-chip{
+  display:inline-flex; align-items:center; gap:5px; padding:2px 8px;
+  border-radius:99px; border:1px solid var(--border);
+  font-size:11px; font-weight:600; color:var(--text-200); background:var(--bg-050);
+}
+.c2c-v2 .ml-chip[data-tone="ok"]{ color:var(--success); border-color:color-mix(in srgb, var(--success) 34%, transparent); background:color-mix(in srgb, var(--success) 10%, transparent); }
+.c2c-v2 .ml-chip[data-tone="warn"]{ color:var(--warning); border-color:color-mix(in srgb, var(--warning) 34%, transparent); background:color-mix(in srgb, var(--warning) 10%, transparent); }
+.c2c-v2 .ml-chip[data-tone="off"]{ color:var(--text-300); }
+
+/* ── Tier picker ─────────────────────────────────────────────────────────── */
+.c2c-v2 .ml-seg{ display:inline-flex; flex-wrap:wrap; gap:4px; }
+.c2c-v2 .ml-seg-btn{
+  display:inline-flex; align-items:center; gap:4px; padding:4px 9px;
+  border:1px solid var(--border-control); border-radius:99px;
+  background:var(--bg-000); font-size:11.5px; font-weight:500; color:var(--text-200);
+  cursor:pointer; white-space:nowrap; transition:background 200ms var(--ease,ease-out);
+}
+.c2c-v2 .ml-seg-btn:hover{ background:var(--bg-050); }
+/* The tick is a redundant cue, not the only one: selection also changes the
+   fill and the border, so the state does not rest on colour alone. */
+.c2c-v2 .ml-seg-btn[data-on]{ background:var(--accent-strong); border-color:var(--accent-100); color:var(--accent-on-strong); font-weight:600; }
+.c2c-v2 .ml-seg-tick{ display:inline-flex; }
+.c2c-v2 .ml-seg-tick svg{ width:12px; height:12px; }
+
+/* ── Tenants split ───────────────────────────────────────────────────────── */
+.c2c-v2 .ml-split{ display:flex; flex-direction:column; gap:16px; }
+.c2c-v2 .ml-detail{ display:flex; flex-direction:column; gap:12px; padding-top:4px; border-top:1px solid var(--border); }
+.c2c-v2 .ml-detail-head{ display:flex; flex-wrap:wrap; align-items:flex-end; gap:14px; padding-top:10px; }
+.c2c-v2 .ml-detail-head > div:first-child{ flex:1 1 220px; }
+
+/* Screen-reader-only. Undeclared, this printed the module name after every
+   "Turn off" on screen. */
+.c2c-v2 .ml-vh{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
+
+/* ── Enforcement report ──────────────────────────────────────────────────── */
+.c2c-v2 .ml-enf-state{
+  display:flex; align-items:flex-start; gap:11px;
+  padding:13px 15px; border:1px solid var(--border); border-radius:var(--radius-md);
+  background:var(--bg-050);
+}
+.c2c-v2 .ml-enf-state[data-tone="unknown"]{
+  border-color:color-mix(in srgb, var(--warning) 34%, transparent);
+  background:color-mix(in srgb, var(--warning) 7%, transparent);
+}
+.c2c-v2 .ml-enf-ic{ display:inline-flex; flex-shrink:0; margin-top:1px; color:var(--text-300); }
+.c2c-v2 .ml-enf-state[data-tone="unknown"] .ml-enf-ic{ color:var(--warning); }
+.c2c-v2 .ml-enf-ic svg{ width:16px; height:16px; }
+.c2c-v2 .ml-enf-h{ font-size:13px; font-weight:600; color:var(--text-100); }
+.c2c-v2 .ml-enf-body{ margin:4px 0 0; font-size:12px; line-height:1.55; color:var(--text-300); max-width:78ch; }
+.c2c-v2 .ml-enf-stats{ display:flex; flex-wrap:wrap; gap:20px; }
+.c2c-v2 .ml-enf-stat{ display:flex; flex-direction:column; gap:2px; }
+.c2c-v2 .ml-enf-stat b{ font-size:18px; font-weight:600; color:var(--text-100); font-variant-numeric:tabular-nums; }
+.c2c-v2 .ml-enf-stat span{ font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:var(--text-300); }
+.c2c-v2 .ml-enf-acts{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+
+/* ── Master Licensing · provisioning outcome ──────────────────────────────
+   Reports what a provisioning run ACTUALLY did. Both halves render together on
+   purpose: "provisioned" alone reads as "the plan now applies", and after a
+   downgrade that is false — provisioning grants and never revokes, so the
+   tenant keeps what it already held. The retained list is how the operator sees
+   that gap instead of assuming capability was withdrawn. */
+.c2c-v2 .ml-note{margin:10px 0 0;font-size:12px;line-height:1.55;color:var(--text-300);max-width:70ch;}
+.c2c-v2 .ml-provision-result{margin-top:12px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-050);}
+.c2c-v2 .ml-provision-line{font-size:13px;font-weight:500;color:var(--text-100);}
+.c2c-v2 .ml-provision-retained{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.c2c-v2 .ml-provision-retained-h{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-300);}
+.c2c-v2 .ml-provision-retained .ml-sub{margin:4px 0 8px;}
+.c2c-v2 .ml-provision-list{margin:0;padding-left:18px;font-size:12.5px;line-height:1.7;color:var(--text-200);}
+
+/* ── Plans page · what the customer came to unlock ────────────────────────
+   Rendered only when the customer arrived from a lock, carrying the server's
+   own verdict. Before this they landed on a generic price list that had never
+   heard of the module they had just clicked, and had to hold the module name
+   and required tier in their head to work out which column applied. */
+.c2c-v2 .lic-unlock{display:flex;align-items:flex-start;gap:11px;margin:0 0 18px;padding:13px 15px;border:1px solid var(--accent-muted);background:var(--accent-000);border-radius:var(--radius-lg);}
+.c2c-v2 .lic-unlock-ic{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:var(--radius-md);background:var(--bg-000);color:var(--accent-200);}
+.c2c-v2 .lic-unlock-ic svg{width:14px;height:14px;}
+.c2c-v2 .lic-unlock-mid{min-width:0;}
+.c2c-v2 .lic-unlock-t{font-size:13.5px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .lic-unlock-b{margin-top:3px;font-size:12.5px;line-height:1.55;color:var(--text-200);max-width:72ch;}

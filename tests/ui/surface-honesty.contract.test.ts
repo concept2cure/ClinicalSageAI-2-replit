@@ -67,6 +67,7 @@ function sourceFiles(): string[] {
 const A_DRAFTER = 'client/src/concept2cure/mdx/components/AnaDrafter.tsx';
 const DOC_JOURNEY = 'client/src/concept2cure/v2/surfaces/DocJourney.tsx';
 const PROTOCOL_DEV = 'client/src/concept2cure/v2/surfaces/ProtocolDev.tsx';
+const REGISTER_FORMS = 'client/src/concept2cure/v2/surfaces/ProtocolRegisterForms.tsx';
 
 describe('no surface mints its own audit identifier', () => {
   it('audit ids come from the server or not at all', () => {
@@ -123,14 +124,61 @@ describe('DocJourney does not claim to autosave', () => {
 });
 
 describe('ProtocolDev does not present unpersisted actions as filed', () => {
-  it('its governed-action dialog discloses that nothing is written', () => {
-    // onConfirm is still `() => {}`; the disclosure is what makes that honest.
-    expect(raw(PROTOCOL_DEV)).toMatch(/not yet connected to the record/i);
+  /* e0e041080 ("the e-signature dialog wrote nothing — six dead controls")
+     wired add-objective, add-criterion, finalize and export to the governed
+     endpoints that had existed all along, and deleted GovernedActionDialog —
+     whose one mount was `onConfirm={() => {}}`. The two contracts that used to
+     hold this surface honest ("must disclose that nothing is written", "must
+     force esign false") flipped polarity: the acts are REAL now, so the old
+     disclosures would be false in the other direction. What is pinned instead:
+     the real write path, its fail-closed shape, and that no client-side
+     signature ceremony returns. */
+
+  it('its governed acts reach the server — the no-op dialog and its disclosure are gone together', () => {
+    const src = code(PROTOCOL_DEV);
+    // The old honest disclosure must not reappear (it would now be a false
+    // claim of NON-persistence), and neither may the dialog it excused.
+    expect(src).not.toMatch(/not yet connected to the record/i);
+    expect(src).not.toMatch(/GovernedActionDialog/);
+    // The one real path: the governed register form (POST + server-enforced
+    // reason). Its success copy lives in onDone — which fires only after the
+    // 201 — and the surface then RE-READS the governed row (onChanged) rather
+    // than appending locally.
+    expect(src).toMatch(/<ProtocolRegisterForm/);
+    const mount = src.slice(src.indexOf('<ProtocolRegisterForm'), src.indexOf('<C2CToast'));
+    expect(mount).toContain('onDone=');
+    expect(mount).toContain('was written to the governed register');
+    expect(mount).toContain('onChanged?.()');
   });
 
-  it('does not offer an e-signature for an action it cannot record', () => {
-    // Signing implies a Part 11 record exists. govAct forces esign false.
-    expect(code(PROTOCOL_DEV)).toMatch(/esign:\s*false/);
+  it('the write path fails closed: reason floor, no success without the server', () => {
+    // ProtocolRegisterForms is the module every governed act on this surface
+    // routes through. If "was written to the governed register" is ever shown,
+    // these are the properties that make it true.
+    const forms = code(REGISTER_FORMS);
+    expect(forms).toMatch(/reason\.length\s*<\s*8/);
+    expect(forms).toMatch(/if \(!res\.ok\)/);
+    expect(forms).toMatch(/Nothing was persisted/);
+    // onDone (the only success callback) is reached only after the awaited
+    // write resolves — a throw above it never announces anything.
+    expect(forms.indexOf('await submitProtocolRegister')).toBeGreaterThan(-1);
+    expect(forms.indexOf('onDone(kind, result)')).toBeGreaterThan(forms.indexOf('await submitProtocolRegister'));
+  });
+
+  it('offers no client-side e-signature — governed acts are audited server-side, not "signed" in the browser', () => {
+    const src = code(PROTOCOL_DEV);
+    // The deleted dialog's ceremony (esign flag, password re-auth, a claimed
+    // Part 11 signature with nothing behind it) must not come back in either
+    // polarity.
+    expect(src).not.toMatch(/\besign\s*[:=]/);
+    expect(src).not.toMatch(/type="password"/);
+    expect(src).not.toMatch(/Part 11 e-signature/);
+    // What IS offered instead: the SoA grid stays read-only until a governed
+    // reason of at least 8 characters is given, and every tick posts to the
+    // audited SoA router.
+    expect(src).toMatch(/reason\.trim\(\)\.length >= 8/);
+    expect(src).toContain("'/api/protocol-soa/cells'");
+    expect(src).toContain("'/api/protocol-soa/cells/clear'");
   });
 
   it('does not claim the document body autosaves', () => {

@@ -18,7 +18,9 @@ import {
   CER_EQUIV_MATRIX,
 } from '../../data/cer';
 import type { DeviceProfileView } from '../../hooks/useDeviceProfile';
+import { I } from '../../icons';
 import { SampleDataBanner } from '../../components/SampleDataBanner';
+import { EmptyState } from '../../../v2/dataConnect';
 import { useSampleMode } from '../../components/DataGate';
 
 /** The equivalent_devices json element shape (shared/schema/programs.ts). */
@@ -103,9 +105,14 @@ export function EquivalenceTab({
           <div className="panel-hdr">
             <div>
               <div className="t">Claimed equivalent devices</div>
+              {/* Was: "From the program record (equivalent_devices) · editing
+                  requires the programs API — the device-profile form does not
+                  write this field yet." Three implementation facts, none of
+                  them actionable by the reader, on a panel a notified body's
+                  reviewer may be looking at. The fact that MATTERS to them is
+                  that this view is read-only, and that survives. */}
               <div className="s">
-                From the program record (equivalent_devices) · editing requires the programs API —
-                the device-profile form does not write this field yet
+                Read-only — this view shows the claim recorded on the program and does not edit it
               </div>
             </div>
           </div>
@@ -157,17 +164,24 @@ export function EquivalenceTab({
 
       {devices.length === 0 && !usingSample && !profileLoading && (
         <div className="panel">
-          <div
-            role="status"
-            style={{ padding: '24px 16px', textAlign: 'center', fontSize: 12, color: 'var(--text-300)' }}
-          >
-            <div style={{ fontWeight: 600, color: 'var(--text-200)', marginBottom: 4 }}>
-              No equivalence claim recorded
-            </div>
-            Record claimed equivalent devices on the program (equivalent_devices via the programs
-            API) to populate this view. A per-criterion equivalence matrix backend does not exist
-            yet — until it does, this tab reads the program record only.
-          </div>
+          {/* The copy here named a JSON column and an API endpoint —
+              "equivalent_devices via the programs API" — on screen, to a
+              regulatory reviewer. That is the information-disclosure class
+              guardrail, not a wording preference: the reader cannot act on
+              either name, and both describe the implementation rather than the
+              record.
+              No CTA, deliberately. The tab is read-only by necessity (the
+              profile PUT does not accept equivalentDevices and no per-criterion
+              matrix backend exists), so a button here would be a control that
+              cannot do the thing it names. The panel says where the claim is
+              actually kept instead. */}
+          <EmptyState
+            icon={I.fileText}
+            title="No equivalence claim recorded"
+            hint="Equivalent devices are recorded on the device profile for this program. This tab reads that record; it does not edit it."
+            regulation="Serves the MDR Annex XIV Part A clinical evaluation, MDCG 2020-5 equivalence"
+            testId="equivalence-empty"
+          />
         </div>
       )}
 

@@ -20,6 +20,7 @@ import React from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
 /** The per-section display contract GET /api/investigator-brochure returns
@@ -83,6 +84,51 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
     ? Math.round((readyRequired / required.length) * 100)
     : 0;
   const openCount = rows.filter((s) => s.status !== 'rendered').length;
+
+  /* What AnA can see of this screen. The Ask button hands her "draft the OPEN
+     sections" — which requires knowing which ones are open and what each is
+     missing. Every gap the backend recorded travels with the section, because
+     "why is 4.2 partial?" is answerable only from those strings.
+
+     A FAILED read publishes the failure: a 0% completeness figure derived from
+     an unreachable store is a filing-readiness claim nobody computed. */
+  const anaContext = React.useMemo(() => {
+    if (loading) {
+      return { summary: 'The Investigator\u2019s Brochure section structure is still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The Investigator\u2019s Brochure structure could not be read, so this screen is showing no ' +
+          'sections because of a failure, not because none exist.',
+        availableActions: ['Retry the IB structure read'],
+      };
+    }
+    return {
+      summary:
+        `Investigator's Brochure (ICH E6(R2) \u00a77): ${rows.length} section(s), ` +
+        `${required.length} required — ${readyRequired} rendered, so required-section completeness is ` +
+        `${completeness}%. ${openCount} section(s) are not yet rendered.` +
+        (empty ? ' No program is provisioned, so this is the deterministic ICH skeleton with every data-bearing section marked missing.' : ''),
+      facts: {
+        totalSections: rows.length,
+        requiredSections: required.length,
+        renderedRequired: readyRequired,
+        completenessPercent: completeness,
+        openSections: openCount,
+        isDeterministicSkeleton: empty,
+        sections: rows.slice(0, 24).map((sec) => ({
+          number: sec.number, title: sec.title, required: sec.required,
+          status: sec.status, gaps: sec.gaps ?? [], depth: sec.depth,
+        })),
+      },
+      availableActions: [
+        'Draft an open IB section from the linked M2.4 / M2.5 / M2.7 summaries and integrated safety',
+        'Read a section\u2019s recorded gaps and what it still needs',
+      ],
+    };
+  }, [loading, error, empty, rows, required.length, readyRequired, completeness, openCount]);
+  usePublishSurfaceContext('investigator-brochure', anaContext);
 
   return (
     <div className="page-inner">

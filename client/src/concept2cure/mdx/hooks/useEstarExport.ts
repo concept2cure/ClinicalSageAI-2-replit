@@ -19,6 +19,7 @@
 import { useCallback, useState } from 'react';
 import { serverMessage } from '@/lib/queryClient';
 import { buildAuthHeaders } from './useFetchJson';
+import { downloadBase64 } from '../../v2/download';
 
 interface DownloadRef {
   encoding: 'base64';
@@ -79,17 +80,12 @@ export function exportStatusLine(busy: boolean, outcome: EstarExportOutcome | nu
 
 const IDLE: EstarExportOutcome | null = null;
 
+/* Was a local copy of the save-a-blob dance, byte-identical to the one in the
+   sibling export hook — and both revoked the object URL synchronously right
+   after click(), which races the download and can produce a zero-byte file.
+   `downloadBase64` owns the decode and the timing. */
 function triggerDownload(ref: DownloadRef): void {
-  const bytes = Uint8Array.from(atob(ref.data), (c) => c.charCodeAt(0));
-  const blob = new Blob([bytes], { type: ref.mime_type });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = ref.filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  downloadBase64(ref.filename, ref.data, ref.mime_type);
 }
 
 export interface ProgramRef {

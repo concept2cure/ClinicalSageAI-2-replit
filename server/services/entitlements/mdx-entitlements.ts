@@ -65,6 +65,10 @@ export const TIERS: readonly Tier[] = ['free', 'standard', 'professional', 'ente
  *   - crl_rtf_premortem          → professional: same premium prediction tier.
  *   - scheduled_reports          → professional: recurring/drift automation is a
  *                                  scale feature, not an entry feature.
+ *   - ana_live_drive             → professional: watching AnA drive the screens
+ *                                  live is a premium subscriber experience above
+ *                                  the standard advisory chat (and below the
+ *                                  enterprise ana_autonomous_actions surface).
  *   - portfolio_rollup           → enterprise: cross-pathway/account portfolio
  *                                  rollup is the enterprise/CRO surface.
  */
@@ -103,6 +107,11 @@ const FEATURE_ENTITLEMENTS: readonly FeatureEntitlement[] = [
     feature: 'scheduled_reports',
     minTier: 'professional',
     label: 'Scheduled & drift-triggered reports',
+  },
+  {
+    feature: 'ana_live_drive',
+    minTier: 'professional',
+    label: 'AnA Live Drive (watch AnA navigate & work on screen)',
   },
   {
     feature: 'portfolio_rollup',

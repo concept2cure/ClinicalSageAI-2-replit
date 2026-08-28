@@ -141,11 +141,30 @@ describe('checkoutRequestFor', () => {
     }
   });
 
-  it('reports the DTC free tier as unavailable — the route schema rejects tier "free"', () => {
+  /* This case used to assert the opposite, on the premise named in its own
+     title: "the route schema rejects tier free". That premise was removed by
+     the commit that made the free tier provision for real — the DTC endpoint
+     now sets the tier, invalidates the posture and provisions the modules
+     without touching Stripe, and says so in a comment on checkoutRequestFor.
+     The assertion outlived the reason for it and started failing on the branch.
+
+     Realigned rather than deleted: the behaviour still needs pinning, and the
+     interesting property is that free goes to the DTC endpoint like every other
+     self-service tier instead of being special-cased into a dead end. */
+  it('sends the DTC free tier to checkout like any other self-service tier', () => {
     const req = checkoutRequestFor('dtc', 'free', 'monthly', 1);
-    expect('unavailable' in req).toBe(true);
-    if ('unavailable' in req) {
-      expect(req.unavailable).toMatch(/no plan was provisioned/i);
+    expect('unavailable' in req).toBe(false);
+    if (!('unavailable' in req)) {
+      expect(req.path).toBe('/api/billing/dtc-checkout');
+      expect(req.body).toMatchObject({ tier: 'free', billingCycle: 'monthly' });
     }
+  });
+
+  it('still refuses enterprise on the DTC path — custom pricing has no checkout', () => {
+    // The neighbouring case above covers both models; this one guards the
+    // specific branch order, so that widening the free tier did not also let
+    // enterprise through the DTC path.
+    const req = checkoutRequestFor('dtc', 'enterprise', 'monthly', 1);
+    expect('unavailable' in req).toBe(true);
   });
 });

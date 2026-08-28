@@ -21,7 +21,9 @@ import {
   type DossierLink,
 } from '../data/presub';
 import { usePresubList, usePresubDetail } from '../hooks/usePresub';
+import { EmptyState, ErrorState } from '../../v2/dataConnect';
 import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
+import { downloadCsv } from '../../v2/download';
 
 interface PreSubTypeChipProps {
   type: PresubTypeId;
@@ -170,7 +172,7 @@ function PreSubDetail({ row, onJumpToDossier, onAskAna }: PreSubDetailProps) {
      /api/q-sub/:id. Until the fetch resolves, the strip + meeting card +
      summary + tabs all render with the row's aggregate counts (already
      hydrated from the list response). */
-  const { detail, loading, error } = usePresubDetail(row.id);
+  const { detail, loading, error, refresh } = usePresubDetail(row.id);
   const [tab, setTab] = React.useState<DetailTab>('questions');
 
   if (!detail) {
@@ -188,16 +190,31 @@ function PreSubDetail({ row, onJumpToDossier, onAskAna }: PreSubDetailProps) {
             <div className="ps-detail-target">FDA team · {row.fdaTeam}</div>
           </div>
         </div>
-        <div className="ps-empty">
-          <div className="ps-empty-t">{loadingState ? 'Loading detail…' : error ? 'Detail unavailable' : 'Package in draft'}</div>
-          <div className="ps-empty-s">
-            {loadingState
-              ? 'Fetching questions, timeline and commitments.'
-              : error
-              ? error
-              : 'Question list and FDA response will appear once the Q-Sub is filed.'}
-          </div>
-        </div>
+        {/* THREE STATES, ONE SHELL — and the middle one was a failure dressed
+            as the other two. `ps-empty` rendered loading, error and genuinely-
+            empty identically: same markup, same politeness, no retry on the
+            error, and `{error}` interpolated verbatim (useFetchJson's
+            `HTTP ${status}: ${body.slice(0,200)}`, so up to 200 characters of
+            unparsed response body). A reviewer could not tell "we could not
+            reach the server" from "this Q-Sub has not been filed yet", which
+            are opposite facts about a regulatory package. */}
+        {loadingState ? (
+          <EmptyState busy title="Loading Q-Sub detail" hint="Fetching questions, timeline and commitments." />
+        ) : error ? (
+          <ErrorState
+            variant="panel"
+            title="Couldn't load this Q-Sub's detail"
+            retry={refresh}
+            testId="presub-detail-error"
+          />
+        ) : (
+          <EmptyState
+            icon={I.fileText}
+            title="Package in draft"
+            hint="The question list and the FDA response appear here once the Q-Sub is filed."
+            regulation="Serves the pre-submission record (FDA Q-Submission programme)"
+          />
+        )}
       </div>
     );
   }
@@ -391,18 +408,11 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
                 r.qNumber, r.prog, r.type, r.title, r.stage, String(r.daysIn),
                 String(r.questions), String(r.answered), String(r.commitments), String(r.rolledIn),
               ]);
-              const csv = [headers, ...rows]
-                .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
-                .join('\r\n');
-              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `presub-export-${new Date().toISOString().slice(0, 10)}.csv`;
-              document.body.appendChild(a);
-              a.click();
-              a.remove();
-              URL.revokeObjectURL(url);
+              downloadCsv(
+                `presub-export-${new Date().toISOString().slice(0, 10)}.csv`,
+                headers,
+                rows,
+              );
             }}
           >
             {I.download} Export

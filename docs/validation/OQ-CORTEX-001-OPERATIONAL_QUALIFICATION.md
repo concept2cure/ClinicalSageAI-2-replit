@@ -55,7 +55,7 @@ This Operational Qualification (OQ) Protocol verifies that the Cortex Prime AI S
 |-----------|--------------|--------|----------|
 | Environment Type | Validation | | ☐ |
 | Database Server | PostgreSQL 15.x | | ☐ |
-| Application Server | Node.js 20.x | | ☐ |
+| Application Server | Node.js 22.x LTS | | ☐ |
 | Test Data Set | VAL-DATA-001 | | ☐ |
 
 ### 3.2 Test Data Requirements

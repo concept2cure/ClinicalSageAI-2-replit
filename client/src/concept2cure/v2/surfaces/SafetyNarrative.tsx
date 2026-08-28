@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -26,6 +27,12 @@ const CAUSALITIES = ['related', 'probably related', 'possibly related', 'unlikel
    kept alongside them); the nullable clock fields are `| null` and rendered
    null-safe. */
 type LiveSaeCase = SaeCase & {
+  /* Case facts the assembler returns that `SaeCase` (the composer's input
+     shape) does not declare, because the composer does not read them. The
+     save path does — `expectedness` is one of the four inputs to the expedited
+     clock, so a version that dropped it would silently reset it. */
+  awarenessDate?: string;
+  expectedness?: string;
   reportingCategory?: '7-day' | '15-day' | 'none';
   reportingClockStart?: string | null;
   reportingDueDate?: string | null;
@@ -124,7 +131,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
       },
       availableActions: [
         'Open an SAE case to see its narrative and its reporting clock',
-        'Complete a missing ICH E3 §16 field on the selected case (drafting only — there is no case-write endpoint, so edits are not persisted)',
+        'Complete a missing ICH E3 §16 field on the selected case and save it under an audited reason for change (PATCH /api/safety-narratives/cases/:id)',
         'QC the composed narrative before handing it off',
       ],
     };
@@ -174,6 +181,68 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
        its event facts landed has no criteria to toggle off, only on. */
     const cur = sel.event?.seriousnessCriteria || [];
     setField('event.seriousnessCriteria', cur.includes(crit) ? cur.filter((x) => x !== crit) : cur.concat([crit]));
+  };
+
+  /* ── "Save version" ────────────────────────────────────────────────────────
+     This button fired the toast "Narrative versioning isn't wired to the safety
+     store yet — nothing was saved", and that was true: a safety writer
+     completed the structured case, composed the ICH E3 §16 narrative, and lost
+     every edit on reload. PATCH /api/safety-narratives/cases/:id is now that
+     write.
+
+     What is sent is the structured case AND the composed narrative, under a
+     required reason for change — a causality or seriousness edit can move a
+     case between a 7-day and a 15-day expedited obligation, so the audit trail
+     records the grounds alongside both sides of every changed field. The saved
+     case comes back with its clock RECOMPUTED by the server, and it replaces
+     the local copy, so the writer sees the deadline their edit produced rather
+     than the one they started with. */
+  const [saveReason, setSaveReason] = useState('');
+  const [saving, setSaving] = useState(false);
+  const saveVersion = async () => {
+    if (!sel || !result || saving) return;
+    if (saveReason.trim().length < 8) {
+      fire('Enter a reason for change (at least 8 characters) before saving this version.', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await apiRequest('PATCH', `/api/safety-narratives/cases/${encodeURIComponent(sel.id)}`, {
+        reasonForChange: saveReason.trim(),
+        fields: {
+          causality: sel.event?.causality ?? null,
+          outcome: sel.event?.outcome ?? null,
+          expectedness: sel.expectedness ?? null,
+          reactionPt: sel.event?.term ?? null,
+          onsetDate: sel.event?.onsetDate ?? null,
+          seriousnessCriteria: sel.event?.seriousnessCriteria ?? [],
+          narrative: result.narrative,
+        },
+      });
+      const json = (await res.json().catch(() => null)) as { data?: LiveSaeCase } | null;
+      if (!res.ok || !json?.data) {
+        fire(
+          'The version was not saved — ' +
+            (serverMessage(json) ?? `the server refused it (HTTP ${res.status})`) +
+            '. The case is unchanged.',
+          'error',
+        );
+        return;
+      }
+      const saved = json.data;
+      setCases((cs) => cs.map((c) => (c.id === saved.id ? saved : c)));
+      setSaveReason('');
+      fire(
+        `Saved — ${sel.id} and its narrative are in the safety store. Reporting clock: ${saved.clock}, due ${saved.due}.`,
+      );
+    } catch (e) {
+      fire(
+        'The version was not saved — ' + (e instanceof Error ? e.message : String(e)) + '. The case is unchanged.',
+        'error',
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -304,11 +373,20 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                 <button className="bs-da" onClick={() => ask('Review this SAE narrative for ' + sel.id + (sel.event?.term ? ' (' + sel.event?.term + ')' : '') + ' and flag any medical-review or consistency issues before I file it.')}>
                   {I.sparkles} Review with AnA
                 </button>
-                {/* MOCK ACTION (flagged): no case-narrative version-write endpoint
-                    exists, so this button persists nothing. Copy softened so it does
-                    not claim a save that did not occur. */}
-                <button className="bs-da alt" onClick={() => fire('Narrative versioning isn’t wired to the safety store yet — nothing was saved', 'error')}>
-                  {I.check} Save version
+                <input
+                  className="sn-fi sn-save-reason"
+                  value={saveReason}
+                  onChange={(e) => setSaveReason(e.target.value)}
+                  placeholder="Reason for change (audited)"
+                  aria-label="Reason for change, required to save this narrative version"
+                />
+                <button
+                  className="bs-da alt"
+                  onClick={() => void saveVersion()}
+                  disabled={saving || saveReason.trim().length < 8}
+                  title={saveReason.trim().length < 8 ? 'Enter a reason for change to save' : 'Save the case and its narrative to the safety store'}
+                >
+                  {I.check} {saving ? 'Saving…' : 'Save version'}
                 </button>
               </div>
             </div>

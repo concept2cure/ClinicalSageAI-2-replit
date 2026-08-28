@@ -44,6 +44,7 @@ import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { downloadBlob } from '../download';
 
 interface GatewayInfo { region?: string; gateway?: string; name?: string; configured?: boolean; environment?: string; [k: string]: unknown; }
 interface Transmittal {
@@ -168,15 +169,12 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
         return;
       }
       const provenance = res.headers.get('X-Ack-Provenance');
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = provenance === 'agency'
-        ? `agency-acknowledgement-${id}.txt`
-        : `concept2cure-transmittal-record-${id}-NOT-AN-AGENCY-ACK.txt`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(
+        provenance === 'agency'
+          ? `agency-acknowledgement-${id}.txt`
+          : `concept2cure-transmittal-record-${id}-NOT-AN-AGENCY-ACK.txt`,
+        await res.blob(),
+      );
       fireToast(provenance === 'agency'
         ? 'Agency acknowledgment downloaded — the agency’s own bytes.'
         : 'Downloaded this platform’s transmittal record. It is NOT an agency acknowledgment — obtain the agency receipt from the agency portal.');

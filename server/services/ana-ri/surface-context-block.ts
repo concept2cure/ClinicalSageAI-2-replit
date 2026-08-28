@@ -79,6 +79,16 @@ export interface SurfaceContextInput {
   summary?: unknown;
   facts?: unknown;
   available_actions?: unknown;
+  /**
+   * The screen's OPERABLE vocabulary — act_on_screen action ids the client
+   * says are wireable here (shipped by the shell from the shared
+   * surface-action registry). Rendered so AnA can act without a
+   * list_screen_actions round-trip. Untrusted like everything else in this
+   * payload — and safely so: acting on an id goes through act_on_screen,
+   * which validates against the server's own copy of the shared registry, so
+   * a fabricated or tampered id yields a refusal, never an operation.
+   */
+  screen_actions?: unknown;
 }
 
 /**
@@ -121,6 +131,40 @@ export function buildSurfaceContextBlock(input: unknown): string {
     if (actions.length) {
       lines.push('The user can do these here:');
       for (const a of actions) lines.push(`  - ${a}`);
+    }
+  }
+
+  if (Array.isArray(ctx.screen_actions)) {
+    const ops = ctx.screen_actions
+      .slice(0, MAX_ACTIONS)
+      .map((entry) => {
+        if (!entry || typeof entry !== 'object') return '';
+        const e = entry as { id?: unknown; label?: unknown; params?: unknown };
+        const id = sanitizeLine(e.id, MAX_ACTION);
+        if (!id) return '';
+        const label = sanitizeLine(e.label, MAX_ACTION);
+        const params = Array.isArray(e.params)
+          ? e.params
+              .slice(0, 6)
+              .map((p) => {
+                if (!p || typeof p !== 'object') return '';
+                const pp = p as { name?: unknown; required?: unknown; enum?: unknown };
+                const name = sanitizeLine(pp.name, MAX_FACT_KEY);
+                if (!name) return '';
+                const en = Array.isArray(pp.enum)
+                  ? `=${pp.enum.slice(0, 8).map((v) => sanitizeLine(v, 40)).join('|')}`
+                  : '';
+                return `${name}${pp.required === true ? '*' : ''}${en}`;
+              })
+              .filter(Boolean)
+              .join(', ')
+          : '';
+        return `  - ${id}${label ? ` — ${label}` : ''}${params ? ` (${params})` : ''}`;
+      })
+      .filter(Boolean);
+    if (ops.length) {
+      lines.push('Operable by AnA via act_on_screen (validated server-side; * = required param):');
+      lines.push(...ops);
     }
   }
 

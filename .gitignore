@@ -92,6 +92,7 @@ tesseract-cache/
 
 # Generated SBOM (produced in CI, published as an artifact)
 sbom.cyclonedx.json
+/release-evidence/
 docs/reports/workflow-audit-results.json
 
 # Golden-journey run artifacts (regenerated every run; the committed docs in
@@ -124,3 +125,6 @@ scripts/visual-qa/probe-*.spec.tsx
 # committed or pushed with the source. (See SUPPLY-CHAIN / PRIVACY hardening.)
 .backups/
 *.sql.gz
+
+# DR restore drill evidence (local runs; CI uploads it as an artifact)
+.dr-evidence/

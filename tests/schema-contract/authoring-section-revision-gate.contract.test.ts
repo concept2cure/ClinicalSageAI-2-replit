@@ -27,10 +27,11 @@
  * the handler could never reach its UPDATE, and nothing in the client called it.
  *
  * ── Mechanism ─────────────────────────────────────────────────────────────────
- * Source-derived: every `UPDATE authoring_sections` in the router is located,
- * the enclosing route handler is bounded by the surrounding `router.<verb>(`
- * registrations, and a createRevision call must appear inside it. Comments are
- * stripped first, so prose describing the rule cannot satisfy the rule.
+ * Source-derived: every content-capable `UPDATE authoring_sections` in the
+ * router is located, the enclosing route handler is bounded by the surrounding
+ * `router.<verb>(` registrations, and a createRevision call must appear inside
+ * it. Metadata-only order changes are excluded. Comments are stripped first,
+ * so prose describing the rule cannot satisfy the rule.
  *
  * This is a static gate and says so: it proves the snapshot call is PRESENT, not
  * that it ran. The behaviour is covered separately —
@@ -80,6 +81,11 @@ const updateSites: Site[] = [];
   const re = /\bUPDATE\s+authoring_sections\b/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(src)) !== null) {
+    const statementEnd = src.indexOf('`', m.index);
+    const sql = src.slice(m.index, statementEnd === -1 ? undefined : statementEnd);
+    // Reordering sections changes presentation metadata, not section content.
+    // Keep content-capable statements in the gate, including dynamic SET lists.
+    if (/\bSET\s+order_index\b/i.test(sql) && !/\bcontent\b/i.test(sql)) continue;
     const span = enclosingHandler(STARTS, m.index);
     updateSites.push({
       index: m.index,

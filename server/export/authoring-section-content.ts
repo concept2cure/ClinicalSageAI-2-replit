@@ -50,6 +50,27 @@ export interface InlineRun {
   subScript?: boolean;
   /** Present when this run is an unresolved tracked change. */
   suggestion?: 'insertion' | 'deletion';
+  /** Who made it, and when — from the mark's data-author-name / data-at.
+   *  Carried so the DOCX export can emit a REAL Word revision (w:ins / w:del),
+   *  which Word will only attribute and let a reviewer accept or reject if it
+   *  has an author and a date. Without these the export can do no better than
+   *  colour the text. */
+  suggestionAuthor?: string;
+  suggestionAt?: string;
+  /** The note text, when this run is a footnote REFERENCE.
+   *
+   *  Regulatory tables are built on footnotes — every Module 3 specification,
+   *  batch-analysis and stability table carries them ("a Determined by HPLC;
+   *  b n=3; ITT population"), and so does every efficacy summary. The editor
+   *  had no footnote of any kind, so the only way to write one was a superscript
+   *  letter and a loose paragraph underneath, which detaches the moment the
+   *  table moves.
+   *
+   *  The note travels WITH its reference rather than in a separate list, so a
+   *  cut-and-paste of the row carries its own note and cannot orphan it. The
+   *  marker a reader sees is derived at render time from position, so notes
+   *  renumber themselves when content moves. */
+  footnote?: string;
 }
 
 export interface TableCell {
@@ -61,20 +82,33 @@ export interface TableCell {
 }
 
 export interface ContentBlock {
-  kind: 'paragraph' | 'heading' | 'list-item' | 'table';
-  /** Heading level 1–3 (headings only). */
-  level?: 1 | 2 | 3;
+  kind: 'paragraph' | 'heading' | 'list-item' | 'table' | 'image';
+  /** Heading level 1–5 (headings only), relative to the section title.
+   *
+   *  Was 1–3, and the parser clamped with `Math.min(3, …)`. CTD sections nest
+   *  deeper than that — 2.7.3.1.2 is five levels — so an H4 a writer had
+   *  legitimately stored came back as an H3 and the document's structure was
+   *  quietly flattened. The round-trip fidelity gate could not catch it either:
+   *  it compares TEXT, and a heading demoted from H4 to H3 keeps every
+   *  character. The words survived; the hierarchy did not, and hierarchy is
+   *  what a reviewer navigates a submission by. */
+  level?: 1 | 2 | 3 | 4 | 5;
   /** List items only: true when the item came from an `ol`. */
   ordered?: boolean;
   /**
    * Inline content. Always present so every consumer can iterate it
-   * unconditionally; empty for a `table`, whose text lives in `rows`.
+   * unconditionally; empty for a `table` (text lives in `rows`) and for an
+   * `image` (a figure has no runs).
    */
   runs: InlineRun[];
   /** Tables only: rows of cells, in document order. */
   rows?: TableCell[][];
   /** Tables only: the `caption` text, when the author gave one. */
   caption?: string;
+  /** Images only: the stored reference (`/api/authoring/images/<id>`, a data
+   *  URI, or a foreign URL) and the author's alt text. */
+  src?: string;
+  alt?: string;
 }
 
 /** Every run in a block, including the ones inside a table's cells. */
@@ -103,6 +137,9 @@ interface InlineState {
   superScript?: boolean;
   subScript?: boolean;
   suggestion?: 'insertion' | 'deletion';
+  suggestionAuthor?: string;
+  suggestionAt?: string;
+  footnote?: string;
 }
 
 const BLOCK_TAGS = new Set(['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'tr', 'blockquote', 'pre']);
@@ -118,7 +155,10 @@ function pushRun(runs: InlineRun[], text: string, st: InlineState): void {
     !!prev.strike === !!st.strike &&
     !!prev.superScript === !!st.superScript &&
     !!prev.subScript === !!st.subScript &&
-    prev.suggestion === st.suggestion
+    prev.suggestion === st.suggestion &&
+    prev.suggestionAuthor === st.suggestionAuthor &&
+    prev.suggestionAt === st.suggestionAt &&
+    prev.footnote === st.footnote
   ) {
     prev.text += text;
     return;
@@ -132,25 +172,45 @@ function pushRun(runs: InlineRun[], text: string, st: InlineState): void {
     ...(st.superScript ? { superScript: true } : {}),
     ...(st.subScript ? { subScript: true } : {}),
     ...(st.suggestion ? { suggestion: st.suggestion } : {}),
+    ...(st.suggestionAuthor ? { suggestionAuthor: st.suggestionAuthor } : {}),
+    ...(st.suggestionAt ? { suggestionAt: st.suggestionAt } : {}),
+    ...(st.footnote ? { footnote: st.footnote } : {}),
   });
 }
 
-/** Inline tags that carry attribution; shared by the block walk and cells. */
-function applyMark(tag: string, st: InlineState): InlineState {
+/** Inline tags that carry attribution; shared by the block walk and cells.
+ *
+ * `el` is threaded in so `<ins>` / `<del>` can keep their data-author-name and
+ * data-at. The editor's suggestion marks have always written both
+ * (v2/editor/suggestions.ts); this parser dropped them, so by the time the DOCX
+ * renderer saw a tracked change all it knew was the KIND. That is why redlines
+ * exported as coloured text rather than as Word revisions. */
+function applyMark(tag: string, st: InlineState, el?: { getAttribute(name: string): string | null | undefined }): InlineState {
   const next: InlineState = { ...st };
   if (tag === 'b' || tag === 'strong') next.bold = true;
   if (tag === 'i' || tag === 'em') next.italics = true;
   if (tag === 'u') next.underline = true;
   if (tag === 's' || tag === 'strike') next.strike = true;
-  if (tag === 'sup') next.superScript = true;
-  if (tag === 'sub') next.subScript = true;
-  if (tag === 'ins') {
-    next.underline = true;
-    next.suggestion = 'insertion';
+  if (tag === 'sup') {
+    next.superScript = true;
+    /* A footnote reference is a `sup` carrying its note. Anything else in a
+       `sup` is ordinary superscript (cm², t½) and stays that way. */
+    const note = el?.getAttribute('data-note');
+    if (note) next.footnote = note;
   }
-  if (tag === 'del') {
-    next.strike = true;
-    next.suggestion = 'deletion';
+  if (tag === 'sub') next.subScript = true;
+  if (tag === 'ins' || tag === 'del') {
+    if (tag === 'ins') {
+      next.underline = true;
+      next.suggestion = 'insertion';
+    } else {
+      next.strike = true;
+      next.suggestion = 'deletion';
+    }
+    const who = el?.getAttribute('data-author-name');
+    const when = el?.getAttribute('data-at');
+    if (who) next.suggestionAuthor = who;
+    if (when) next.suggestionAt = when;
   }
   return next;
 }
@@ -177,7 +237,7 @@ function inlineRunsOf(node: HTMLElement, st: InlineState): InlineRun[] {
     }
     const isBlock = BLOCK_TAGS.has(tag) || tag === 'ol' || tag === 'ul';
     if (isBlock && runs.length) pushRun(runs, ' ', state);
-    for (const child of n.childNodes) visit(child, applyMark(tag, state));
+    for (const child of n.childNodes) visit(child, applyMark(tag, state, n));
   };
   for (const child of node.childNodes) visit(child, st);
   return trimRuns(runs);
@@ -250,7 +310,7 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
   const blocks: ContentBlock[] = [];
   let current: ContentBlock | null = null;
 
-  const ensureBlock = (kind: ContentBlock['kind'] = 'paragraph', level?: 1 | 2 | 3): ContentBlock => {
+  const ensureBlock = (kind: ContentBlock['kind'] = 'paragraph', level?: 1 | 2 | 3 | 4 | 5): ContentBlock => {
     if (!current) {
       current = { kind, ...(level ? { level } : {}), runs: [] };
       blocks.push(current);
@@ -286,7 +346,7 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
       return;
     }
 
-    const nextState: InlineState = applyMark(tag, st);
+    const nextState: InlineState = applyMark(tag, st, node as unknown as { getAttribute(n: string): string | null | undefined });
 
     if (tag === 'ol' || tag === 'ul') {
       closeBlock();
@@ -305,11 +365,26 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
       return;
     }
 
+    if (tag === 'img') {
+      /* An <img> is void — the generic recursion below visits zero children,
+         so before this branch existed the figure contributed nothing and the
+         whitespace filter at the bottom then deleted it from every DOCX and
+         PDF export, silently. A filed document missing a figure the editor
+         shows is the exact fabrication this parser exists to prevent. */
+      const src = (node.getAttribute('src') ?? '').trim();
+      if (src) {
+        closeBlock();
+        const alt = (node.getAttribute('alt') ?? '').trim();
+        blocks.push({ kind: 'image', runs: [], src, ...(alt ? { alt } : {}) });
+      }
+      return;
+    }
+
     if (BLOCK_TAGS.has(tag)) {
       closeBlock();
       const heading = /^h([1-6])$/.exec(tag);
       if (heading) {
-        const level = Math.min(3, Number(heading[1])) as 1 | 2 | 3;
+        const level = Math.min(5, Number(heading[1])) as 1 | 2 | 3 | 4 | 5;
         current = { kind: 'heading', level, runs: [] };
         blocks.push(current);
       } else if (tag === 'li') {
@@ -338,9 +413,11 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
   // Drop blocks that are only whitespace, trim run edges per block. A table
   // keeps its rows untouched — its cells were trimmed as they were read, and
   // its emptiness test is over the cells, not over the (always empty) runs.
+  // An image block is textless BY KIND — testing it for text would delete
+  // every figure here, which is the defect the img branch above closed.
   return blocks
-    .map((b) => (b.kind === 'table' ? b : { ...b, runs: trimRuns(b.runs) }))
-    .filter((b) => blockRuns(b).some((r) => r.text.trim().length > 0));
+    .map((b) => (b.kind === 'table' || b.kind === 'image' ? b : { ...b, runs: trimRuns(b.runs) }))
+    .filter((b) => b.kind === 'image' || blockRuns(b).some((r) => r.text.trim().length > 0));
 }
 
 /** Parse a stored section content string into export blocks. */

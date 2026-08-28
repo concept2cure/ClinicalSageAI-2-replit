@@ -22,7 +22,7 @@ vi.hoisted(() => {
 
 // vi.hoisted so `audit` is initialized before the vi.mock factory runs.
 const { audit } = vi.hoisted(() => ({
-  audit: { logAction: vi.fn().mockResolvedValue(undefined) },
+  audit: { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
 }));
 vi.mock('../../auditService', () => ({ default: audit }));
 

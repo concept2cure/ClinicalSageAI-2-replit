@@ -93,7 +93,33 @@ export interface UiSurface {
   sharedContract: string | null;
   /** One-call discovery endpoint returning nav + dynamic-form schema, or null. */
   discoveryCatalog: string | null;
-  /** Install readiness. */
+  /**
+   * Install readiness. CUSTOMER-VISIBLE — this is not an internal planning note.
+   *
+   * The value is rendered verbatim to anyone who opens Codebase coverage: the
+   * chip at client/src/concept2cure/v2/surfaces/Coverage.tsx:164 turns it into
+   * "Kit-only" / "Routes-ready" / "Contract-ready" using the same four labels
+   * READINESS_META declares (client/src/concept2cure/v2/registryModel.ts:318),
+   * where `kit-only` reads on screen as "Design prototype exists; backend
+   * binding map being assembled". `notes` below rides along on the same card
+   * (Coverage.tsx:188) and on the scaffold heading (Surfaces.tsx:747), so a note
+   * that still says "prototyped" makes the same claim in prose.
+   *
+   * It drifted, and in the direction that costs a regulated buyer the most
+   * trust: nine surfaces still declared `kit-only` after their components had
+   * been bound to live REST — labeling, risk, crl-library and pdev in this file,
+   * plus nonclinical, clinical-ops, orphan, pediatric and lifecycle-mgmt in
+   * ./ui-surface-registry.ui-v2.ts. Each of the nine fetches real tenant rows
+   * and mutates through audited routes, and the product was telling the customer
+   * they were prototypes.
+   *
+   * Nothing checks this field against the component that actually renders the
+   * surface — the union above only constrains the spelling — so binding a
+   * surface to REST, or unbinding one, means editing this in the same change.
+   * The overstating direction is worse than the understating one: `routes-ready`
+   * or `contract-ready` on a surface with no live binding is a capability claim,
+   * not an apology.
+   */
   readiness: ReadinessTier;
   /** Compliance rails that gate this surface. */
   compliance: ComplianceRail[];
@@ -225,13 +251,13 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'vault',
     group: 'evidence',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/corpus', '/api/device-data-center', '/api/evidence'],
+    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE, PART11],
-    notes: 'Drag-drop upload, chunking/embedding progress, semantic search, version history, evidence linking.',
+    notes: 'The program dossier tree (rule-pack builds) plus the filing cabinet: uploads are virus-scanned, SHA-256 hashed, auto-classified to a suggested dossier folder per the program\'s client-type taxonomy (CTD modules / device submission folders / TMF zones), and confirmed or moved via the governed, audited /file route. Includes the data room lane — every captured source with its derived captured→classified→filed stage.',
   },
   {
     id: 'review',
@@ -391,7 +417,10 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Module 3 operating system: blueprint, specifications, stability, batch records, convergence.',
+    notes:
+      'Module 3 operating system: registers, specifications, stability, batch records, build/compile, ' +
+      'contradictions, Part 11 approval, export gate, and placement into the IND submission spine. ' +
+      'Promoted to the rail (RAIL_SPECIALIST) 2026-08-23; entitlement-gated via the cmc catalog row.',
   },
   {
     id: 'ind-checklist',
@@ -421,9 +450,18 @@ export const UI_SURFACES: UiSurface[] = [
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // routes-ready, not kit-only: the kit stopped being a prototype when
+    // PdevSurfaces mounted it inside the shell. client/src/concept2cure/pdev/
+    // App.tsx:100/152/153 call usePdevIndPrograms / usePdevProgram /
+    // usePdevReadiness, which fetch /api/pdev/... (hooks/usePdevData.ts:133/
+    // 183/244) from the router mounted at
+    // server/bootstrap/register-regulatory-routes.ts:397, and the governed
+    // mutations post a reason into the audit chain (usePdevData.ts:833/853).
+    // No @shared contract and no discovery catalog, so routes-ready is the
+    // ceiling here, not contract-ready.
+    readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'See PDEV_IND_DESIGN_BRIEF.md. Activity → AI draft → evidence → confirm flow prototyped in ui_kits/pdev.',
+    notes: 'See PDEV_IND_DESIGN_BRIEF.md. Activity → AI draft → evidence → confirm, bound to /api/pdev; state changes and evidence links carry a reason into the audit chain.',
   },
   {
     id: 'template-library',
@@ -545,10 +583,18 @@ export const UI_SURFACES: UiSurface[] = [
     // modelled on. (The design handoff proposed navTier:'biopharma' — that is a
     // client-type rail group, a different axis; see registryModel.NAV_GROUP_OF.)
     //
-    // readiness is `kit-only` deliberately: the routes exist behind
+    // readiness was held at `kit-only` deliberately: the routes existed behind
     // ENABLE_CLINICAL_REGULATORY_GRAPH but the ingestion that gives them a
-    // corpus is phase 4. Promote to `routes-ready` when phase 4 lands and the
-    // route tests pass — claiming it earlier would misreport install state.
+    // corpus was phase 4, and the note here said to promote to `routes-ready`
+    // once phase 4 landed and the route tests passed. Both conditions are met —
+    // the ingest route is server/routes/clinical-regulatory-evidence-routes.ts:410
+    // and the tests are server/routes/__tests__/clinical-regulatory-evidence.test.ts
+    // plus -ingest.test.ts — and the surface reads live: useLiveData at
+    // client/src/concept2cure/v2/surfaces/CrlLibrary.tsx:292 against the router
+    // mounted at server/bootstrap/register-clinical-intel-routes.ts:242. Promoted
+    // as directed. The feature flag still gates the rail entry (Shell.tsx:288);
+    // whether a surface is switched on is a different axis from whether its
+    // backend binding exists, and only the second one is what this field states.
     id: 'crl-library',
     label: 'FDA CRL library',
     navTier: 'specialist',
@@ -560,7 +606,7 @@ export const UI_SURFACES: UiSurface[] = [
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    readiness: 'routes-ready',
     compliance: [A11Y, TONE, PART11],
     notes:
       'Searchable view over the shared clinical-regulatory evidence graph — the same findings CSR workflow, study design and AnA read. Not a separate corpus, retrieval path or agent. Behind ENABLE_CLINICAL_REGULATORY_GRAPH.',
@@ -678,9 +724,15 @@ export const UI_SURFACES: UiSurface[] = [
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // routes-ready: useLiveRows('/api/mdx/labeling') at
+    // client/src/concept2cure/v2/surfaces/Labeling.tsx:136, with symbols at :146
+    // and translations at :155, and apiRequest POST/PATCH writing translations at
+    // :199/:238 — against server/routes/mdx-labeling.ts:82/104/225/255. The kit
+    // is the surface's origin, not its current state. sharedContract is still
+    // null, so this stops at routes-ready.
+    readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Labeling/IFU authoring + compliance. ui_kits/labeling prototyped.',
+    notes: 'Labeling/IFU authoring + compliance. Documents, symbols and translations read and write against /api/mdx/labeling.',
   },
   {
     id: 'risk',
@@ -694,9 +746,14 @@ export const UI_SURFACES: UiSurface[] = [
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // routes-ready: useLiveRows('/api/mdx/risk-items') at
+    // client/src/concept2cure/v2/surfaces/Risk.tsx:152, with apiRequest creating
+    // items, adding controls and changing status at :265/:298/:335 — against
+    // server/routes/mdx-risk-management.ts:98/126/280/183. sharedContract is
+    // still null, so this stops at routes-ready.
+    readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'ISO 14971 risk file, hazard analysis. ui_kits/risk prototyped.',
+    notes: 'ISO 14971 risk file, hazard analysis. Risk items and their controls read and write against /api/mdx/risk-items.',
   },
   {
     id: 'deep-research',

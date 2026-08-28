@@ -1,11 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { downloadBlob, safeFileName } from '../download';
 
 /* ── TemplateSpec types (templateSpec.ts) ── */
 
@@ -267,6 +270,62 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [flash, note] = useToast();
 
+  /* ── AnA's hands on this screen — the surface-action bus ──────────────────
+     Registered under 'template-library' (identity-mapped nav target). Both
+     handlers drive the SAME state the human's own row clicks and tab buttons
+     drive (setSel + setTab); names resolve against the REAL template store
+     with honest misses. Extraction, saving, verifying, rendering, and
+     applying stay human acts, untouched. */
+  useSurfaceActionHandlers('template-library', {
+    'template-library.select-template': (params) => {
+      /* An unsaved extraction preview carries a Save and an unrecoverable
+         Discard — moving the selection under it is disorienting. Refuse. */
+      if (extract) {
+        return { ok: false, reason: 'An unsaved extraction preview is open — save or discard it first.' };
+      }
+      const wanted = (params.template ?? '').trim();
+      if (!wanted) return { ok: false, reason: 'No template named.' };
+      if (live.loading && rows.length === 0)
+        return { ok: false, reason: 'The template store is still loading.', retry: true };
+      if (live.error && rows.length === 0)
+        return { ok: false, reason: 'The template store could not be read.' };
+      if (rows.length === 0) return { ok: false, reason: 'No templates saved yet.' };
+      const lower = wanted.toLowerCase();
+      const exact = rows.find((t) => t.name.toLowerCase() === lower);
+      const contains = exact ? [] : rows.filter((t) => t.name.toLowerCase().includes(lower));
+      const match = exact ?? (contains.length === 1 ? contains[0] : null);
+      if (!match) {
+        return {
+          ok: false,
+          reason:
+            contains.length > 1
+              ? `"${params.template}" matches ${contains.length} templates — name one exactly.`
+              : `No template named "${params.template}" in the library.`,
+        };
+      }
+      // The human's own row handler: select and land on the preview. Selection
+      // also re-points the render/verify/apply toolbar — said in the detail.
+      setSel(match.id);
+      setTab('preview');
+      return { ok: true, detail: `Selected ${match.name} — the toolbar now acts on it` };
+    },
+    'template-library.open-tab': (params) => {
+      const target = (params.tab ?? '').trim();
+      if (!['preview', 'spec', 'fields', 'styles', 'extract'].includes(target)) {
+        return { ok: false, reason: `No template tab named "${params.tab}".` };
+      }
+      if (live.loading && rows.length === 0)
+        return { ok: false, reason: 'The template store is still loading.', retry: true };
+      if (rows.length === 0 || !sel) return { ok: false, reason: 'No template is selected.' };
+      setTab(target);
+      return { ok: true, detail: `Opened the ${target} tab` };
+    },
+  });
+  /* The ready signal for the retry contract above. */
+  useEffect(() => {
+    if (!live.loading) notifySurfaceActionReady('template-library');
+  }, [live.loading]);
+
   const startExtract = () => fileRef.current?.click();
 
   // REAL extraction: POST the picked file to /api/c2c/templates/extract
@@ -370,13 +429,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
         note(res.status === 401 ? 'Sign in to render.' : 'Render failed — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.', 'error');
         return;
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = t.name.replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '_') + '_specimen.' + format;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(safeFileName(t.name) + '_specimen.' + format, await res.blob());
       note('Rendered ' + format.toUpperCase() + ' with the real template engine.');
     } catch (e) {
       note('Render failed — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
@@ -393,6 +446,71 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
     ['preview', 'Live preview'], ['spec', 'Specification'], ['fields', 'Form fields'],
     ['styles', 'Named styles'], ['extract', 'Extraction'],
   ];
+
+  /* What AnA can see of this screen. The "Adjust this template" box below sends
+     her a free-text instruction about `sel` — which she could not identify.
+
+     The VERIFIED flag and the extraction confidence travel together on purpose:
+     an unverified, machine-extracted spec is a draft of a template, and an
+     assistant that discusses it as the organisation's approved house style
+     would launder a confidence score into an approval. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'The template library is still loading; nothing on screen is final yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'The template store could not be read, so this screen is showing no templates because of a ' +
+          'failure, not because none are saved.',
+        availableActions: ['Retry the template read'],
+      };
+    }
+    return {
+      summary:
+        `Template library: ${rows.length} template(s), ${rows.filter((t) => t.verified).length} verified. ` +
+        (sel
+          ? `"${sel.name}" is selected and its "${(TABS.find((t) => t[0] === tab) ?? [])[1] ?? tab}" tab is open; ` +
+            `it is ${sel.verified ? 'verified' : 'NOT verified'}` +
+            (sel.extractionConfidence != null ? `, extraction confidence ${sel.extractionConfidence}` : '') +
+            ((sel.extractionWarnings ?? []).length ? `, ${(sel.extractionWarnings ?? []).length} extraction warning(s)` : '') +
+            '.'
+          : 'No template is selected.') +
+        (extract ? ` A preview extraction of "${extract.name}" is on screen and has not been saved.` : ''),
+      facts: {
+        totalTemplates: rows.length,
+        verifiedTemplates: rows.filter((t) => t.verified).length,
+        openTab: tab,
+        templates: rows.slice(0, 12).map((t) => ({
+          id: t.id, name: t.name, verified: t.verified,
+          sourceFile: t.sourceFileName, sourceType: t.sourceFileType,
+          extractionConfidence: t.extractionConfidence,
+          extractionWarnings: (t.extractionWarnings ?? []).length,
+          docTypes: t.docTypes, updatedAt: t.updatedAt,
+        })),
+        selected: sel
+          ? {
+              id: sel.id, name: sel.name, description: sel.description,
+              verified: sel.verified, sourceFile: sel.sourceFileName,
+              extractionConfidence: sel.extractionConfidence,
+              extractionWarnings: sel.extractionWarnings ?? [],
+              docTypes: sel.docTypes, updatedAt: sel.updatedAt,
+            }
+          : null,
+        unsavedExtractionPreview: extract
+          ? { name: extract.name, confidence: extract.confidence, warnings: extract.warnings }
+          : null,
+        uploading,
+      },
+      availableActions: [
+        'Upload a DOCX or PDF and extract a template specification from it (preview first, then save)',
+        'Mark a template verified or unverified (a persisted write)',
+        'Render a labelled specimen document in DOCX or PDF to proof the template',
+        'Describe an adjustment to the selected template in words',
+      ],
+    };
+  }, [live.loading, live.error, rows, sel, tab, TABS, extract, uploading]);
+  usePublishSurfaceContext('template-library', anaContext);
 
   return (
     <div className="sp" style={{ maxWidth: 1180 }}>
