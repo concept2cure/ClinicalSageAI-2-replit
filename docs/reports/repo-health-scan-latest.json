@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-28T02:49:35.510Z",
+  "generatedAt": "2026-08-28T02:57:22.103Z",
   "git": {
-    "sha": "cc1298b65e2fe4d09d40dd4156a4c7b11b408e3a",
+    "sha": "b95445c3f5c6e3de3622186f0ea6bc8ba134de94",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2209,16 +2209,16 @@
         "bytes": 138123
       },
       {
+        "file": "server/services/submission-package-orchestrator.ts",
+        "bytes": 137182
+      },
+      {
         "file": "server/routes/authoring-actions.ts",
         "bytes": 136607
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
         "bytes": 136488
-      },
-      {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 135234
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2363,12 +2363,12 @@
         "lines": 3113
       },
       {
-        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
-        "lines": 3067
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 3092
       },
       {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3060
+        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
+        "lines": 3067
       },
       {
         "file": "server/src/routes/stability.router.ts",
