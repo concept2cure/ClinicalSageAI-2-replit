@@ -72,6 +72,39 @@ export interface DispatchReadinessAssessment {
   leafCount: number;
 }
 
+/**
+ * NODE_ENV values that are RECOGNIZED as non-production. Anything else — unset,
+ * misspelled, 'prod' — is treated as production so the fail-closed eValidator
+ * rule is not silently disabled by a misconfiguration.
+ */
+const NON_PRODUCTION_NODE_ENVS = new Set(['development', 'test', 'staging']);
+
+/**
+ * Resolve the environment for the fail-closed eValidator rule. Fails toward
+ * 'production': only a RECOGNIZED non-production NODE_ENV yields 'staging', so an
+ * unset/misspelled value keeps production enforcement on. Pure + exported for test.
+ */
+export function resolveDispatchEnvironment(
+  nodeEnv: string | undefined,
+): 'production' | 'staging' {
+  return NON_PRODUCTION_NODE_ENVS.has(nodeEnv ?? '') ? 'staging' : 'production';
+}
+
+/**
+ * Gate on Shadow Review having actually run. Zero completed runs is UNASSESSED,
+ * not clean — it must block dispatch, never clear it. Pure + exported for test.
+ */
+export function evaluateShadowPresenceGate(shadowReviewRunCount: number): DispatchGateResult {
+  return shadowReviewRunCount > 0
+    ? { cleared: true, blockers: [] }
+    : {
+        cleared: false,
+        blockers: [
+          'No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.',
+        ],
+      };
+}
+
 /** Flatten a region profile's Module-1 tree to the section codes marked required. */
 function requiredModule1Codes(region: string): string[] {
   const profile = getSubmissionRegionProfile(region);
@@ -135,6 +168,21 @@ export async function assessSequenceDispatchReadiness(
     }
   );
 
+  // Fail-visible on an unrecognized region: requiredModule1Codes returns [] for a
+  // region with no registered profile, so NO required-section is checked and the
+  // absence of MISSING_REQUIRED_SECTION findings does NOT mean the required
+  // sections are present. Surface it as a warning rather than reporting nothing
+  // missing.
+  if (!getSubmissionRegionProfile(sequence.region)) {
+    readiness.findings.push({
+      severity: 'warning',
+      code: 'UNKNOWN_REGION_PROFILE',
+      sectionCode: null,
+      message: `No submission region profile is registered for region "${sequence.region}"; required Module 1 section checking could not be performed.`,
+    });
+    readiness.warnings += 1;
+  }
+
   // 4. Open CRITICAL Shadow Review findings for this sequence (server truth).
   const [{ value: criticalCount }] = await db
     .select({ value: sql<number>`count(*)::int` })
@@ -181,7 +229,7 @@ export async function assessSequenceDispatchReadiness(
     report: params.externalValidationReport ?? null,
     configured: externalConfigured,
     requireEvalidator: evalidatorRequiredFromEnv(),
-    environment: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
+    environment: resolveDispatchEnvironment(process.env.NODE_ENV),
   });
 
   // 6. Hard gate over the server-computed inputs, composed with the external gate.
@@ -189,10 +237,21 @@ export async function assessSequenceDispatchReadiness(
     validationErrors: readiness.errors,
     unacknowledgedShadowCriticals,
   });
-  const gate = mergeDispatchGates(structuralGate, {
-    cleared: externalGate.cleared,
-    blockers: externalGate.blockers,
-  });
+
+  // 6b. Never-Shadow-Reviewed is not clean, it is UNASSESSED. A sequence with
+  //     zero completed Shadow Review runs has zero open criticals for the same
+  //     reason an unread document has zero findings: nothing ran to produce any.
+  //     Like an undetermined count in the hard gate, that must not clear
+  //     dispatch — otherwise a dossier that was never adversarially reviewed is
+  //     transmitted to the agency with a `cleared: true` verdict. Block until at
+  //     least one completed Shadow Review run exists.
+  const shadowPresenceGate = evaluateShadowPresenceGate(shadowReviewRunCount);
+
+  const gate = mergeDispatchGates(
+    structuralGate,
+    { cleared: externalGate.cleared, blockers: externalGate.blockers },
+    shadowPresenceGate,
+  );
 
   return {
     sequenceId,
@@ -208,9 +267,10 @@ export async function assessSequenceDispatchReadiness(
       cleared: externalGate.cleared,
       blockers: externalGate.blockers,
     },
-    /** True when the gate is clear but no Shadow Review has run — dispatch is
-     *  permitted, but the dossier was never adversarially reviewed. */
-    shadowReviewMissing: gate.cleared && shadowReviewRunCount === 0,
+    /** True when no completed Shadow Review has run for this sequence. This now
+     *  also blocks the gate (§6b), so it is informational: it reports WHY the
+     *  gate is blocked when that is the only blocker. */
+    shadowReviewMissing: shadowReviewRunCount === 0,
     gate,
     readiness,
     leafCount: leaves.length,
