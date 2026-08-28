@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-28T02:57:22.103Z",
+  "generatedAt": "2026-08-28T03:04:08.122Z",
   "git": {
-    "sha": "b95445c3f5c6e3de3622186f0ea6bc8ba134de94",
+    "sha": "44d66f5e17886838c6b1dd836553d708809d4787",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -17,7 +17,7 @@
     "duplicateBasenames": 221,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 38,
+    "largeFilesByBytes": 39,
     "largeFilesByLines": 89
   },
   "findings": {
@@ -2154,7 +2154,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 691842
+        "bytes": 690658
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2265,6 +2265,10 @@
         "bytes": 109447
       },
       {
+        "file": "shared/regulatory/project-bootstrap.ts",
+        "bytes": 109047
+      },
+      {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "bytes": 108892
       },
@@ -2289,12 +2293,12 @@
         "bytes": 104369
       },
       {
-        "file": "shared/regulatory/project-bootstrap.ts",
-        "bytes": 104306
-      },
-      {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "bytes": 104021
+      },
+      {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "bytes": 100092
       }
     ],
     "largeFilesByLines": [
@@ -2308,7 +2312,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 18586
+        "lines": 18533
       },
       {
         "file": "server/statistics-service.ts",
@@ -2399,12 +2403,12 @@
         "lines": 2559
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
-        "lines": 2504
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 2511
       },
       {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2465
+        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+        "lines": 2504
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2661,7 +2665,7 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 400,
-      "largeByBytes": 30,
+      "largeByBytes": 31,
       "largeByLines": 73
     },
     {
