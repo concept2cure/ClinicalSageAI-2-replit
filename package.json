@@ -78,6 +78,7 @@
     "ci:insert-columns-declared": "node scripts/ci/check-insert-columns-declared.mjs",
     "ci:insert-columns-declared:selftest": "node scripts/ci/check-insert-columns-declared.selftest.mjs",
     "ci:insert-columns-declared:write-baseline": "node scripts/ci/check-insert-columns-declared.mjs --write-baseline",
+    "ci:audit-logs-fixture": "node scripts/ci/check-audit-logs-fixture.mjs",
     "ci:model-migration-agreement": "node scripts/ci/check-model-migration-agreement.mjs",
     "ci:model-migration-agreement:list": "node scripts/ci/check-model-migration-agreement.mjs --list",
     "ci:model-migration-agreement:write-baseline": "node scripts/ci/check-model-migration-agreement.mjs --write-baseline",
