@@ -237,8 +237,15 @@ class Part11ComplianceService {
       // transaction and non-throwing. The durable §11.10(e) record is the
       // device_audit_trail row committed atomically above; a failure of this
       // convenience log must never orphan the signature nor fail the signing.
+      // logAction resolves an outcome rather than rejecting when a write does
+      // not persist, so the previous bare try/catch here could never fire: a
+      // silently unpersisted secondary log read as handled. The outcome is now
+      // inspected, with the catch kept only as belt-and-braces for a promise
+      // documented never to reject — and recorded into the same variable the
+      // check below reads, so either failure path is actually observable.
+      let secondaryAudit: { persisted?: boolean; error?: string } | undefined;
       try {
-        await auditService.logAction({
+        secondaryAudit = await auditService.logAction({
           userId: resolvedAuditUserId,
           action: 'ELECTRONIC_SIGNATURE_CREATED',
           resourceType: documentType,
@@ -251,10 +258,16 @@ class Part11ComplianceService {
           },
         });
       } catch (secondaryErr) {
+        secondaryAudit = {
+          persisted: false,
+          error: secondaryErr instanceof Error ? secondaryErr.message : String(secondaryErr),
+        };
+      }
+      if (!secondaryAudit?.persisted) {
         console.error(
-          '[part11] secondary audit log (best-effort) failed for signature',
+          '[part11] secondary audit log (best-effort) did NOT persist for signature',
           electronicSig.id,
-          secondaryErr,
+          secondaryAudit?.error,
         );
       }
 
