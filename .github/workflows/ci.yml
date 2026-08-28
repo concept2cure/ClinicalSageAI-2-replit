@@ -209,6 +209,16 @@ jobs:
       - name: Guardrails — i18n locale integrity (key/placeholder/markup parity)
         run: node scripts/ci/check-i18n-integrity.mjs
 
+      - name: Guardrails — audit_logs fixtures accept the audit writer's columns
+        # The chained audit write is fail-closed: the §11.10(e) row and the
+        # mutation it records commit together or neither does. A test fixture
+        # whose audit_logs lacks a column writeChainedAuditRow writes does not
+        # merely skip the log — it rolls the mutation back, so the suite can
+        # only stay green by never reaching a governed write. Eleven fixtures
+        # were in that state, which is how the section save went un-chained
+        # without a single test noticing. Zero baseline.
+        run: npm run ci:audit-logs-fixture
+
       - name: Guardrails — tenant column types (no TEXT-typed tenant cols)
         run: npm run ci:tenant-column-types
 

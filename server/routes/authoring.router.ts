@@ -616,6 +616,21 @@ async function documentExistsForTenant(
 }
 
 // Comprehensive audit logging for 21 CFR Part 11 compliance
+interface CreateAuditTrailOptions {
+  /**
+   * Set when the CALLER writes its own, richer `writeChainedAuditRow` for this
+   * act — freeze, e-sign and sign each do, with action-specific detail worth
+   * keeping. Without this they would get TWO entries in the hash chain for one
+   * act, which is not a cosmetic duplicate: the chain is the tamper-evidence,
+   * and a reader counting governed events would double-count exactly the three
+   * that matter most.
+   *
+   * One act, one entry. Anything that does not set this gets its chained entry
+   * written here.
+   */
+  chainedRowWrittenByCaller?: true;
+}
+
 const createAuditTrail = async (
   req: Request,
   docId: string | string[] | undefined,
@@ -628,7 +643,8 @@ const createAuditTrail = async (
   // When part of a lifecycle transaction, the caller passes its BEGIN'd client
   // so the audit row commits (or rolls back) atomically with the mutation it
   // records. Defaults to the pool for standalone callers.
-  executor: Queryable = pool
+  executor: Queryable = pool,
+  auditOpts: CreateAuditTrailOptions = {}
 ) => {
   try {
     const actorEmail = (req.headers as any)['x-user-email'] || 'unknown';
@@ -693,25 +709,74 @@ const createAuditTrail = async (
     // caller's client; it commits and rolls back atomically with the mutation.
     // The secondary index is skipped for transactional mutations rather than
     // written on a competing transaction that can disagree with the outcome.
+    const chainDetails = {
+      docId,
+      sectionId,
+      operationType,
+      contentHashBefore: hashBefore,
+      contentHashAfter: hashAfter,
+      changeReason: changeReason ?? null,
+      actorRole,
+      sessionId,
+    };
+    const action = `authoring.section.${operationType}`;
+    const resourceType = sectionId ? 'authoring_section' : 'authoring_document';
+    const resourceId = String(sectionId ?? docId ?? '');
+
     if (executor === pool) {
       void auditService.logAction({
         tenantId,
         userId: actorEmail,
-        action: `authoring.section.${operationType}`,
-        resourceType: sectionId ? 'authoring_section' : 'authoring_document',
-        resourceId: String(sectionId ?? docId ?? ''),
+        action,
+        resourceType,
+        resourceId,
         ipAddress,
         userAgent,
-        details: {
-          docId,
-          sectionId,
-          operationType,
-          contentHashBefore: hashBefore,
-          contentHashAfter: hashAfter,
-          changeReason: changeReason ?? null,
-          actorRole,
-          sessionId,
-        },
+        details: chainDetails,
+      });
+    } else if (!auditOpts.chainedRowWrittenByCaller) {
+      /* §11.10(e) — ENLISTED IN THE CALLER'S TRANSACTION.
+       *
+       * This branch did not exist: a transactional mutation wrote the
+       * unchained `authoring_audit_trail` row above and NOTHING else. The
+       * reasoning for skipping the mirror is sound and still stands for
+       * `auditService.logAction` — it opens its own connection and runs its own
+       * BEGIN/COMMIT/ROLLBACK, so on a caller's transaction it is a second,
+       * competing transaction that can commit an audit row for an action the
+       * caller rolls back, or tear the caller's transaction down mid-flight.
+       *
+       * But `writeChainedAuditRow` is not that. It takes a client and issues
+       * plain statements on it, which is precisely why it was reached for at
+       * the freeze, e-sign and sign handlers — the audit row lands or the whole
+       * mutation rolls back, and the two can never disagree. Those three were
+       * fixed one at a time at their call sites; the rest of the transactional
+       * handlers were left with no chained entry at all, and the guard above
+       * meant they had no soft mirror either.
+       *
+       * Three governed acts were affected, and they are not marginal ones:
+       *   PATCH /sections/:id        the section save — the most frequent
+       *                              governed act in the product, and the one
+       *                              that changes what the filing SAYS;
+       *   PATCH /comments/:id        resolving a reviewer's comment;
+       *   POST  /docs/:id/sections/reorder   reordering a filing's sections.
+       *
+       * All three existed only in `authoring_audit_trail`, which carries no
+       * chain, no HMAC and no immutability trigger — so `verifyAuditChain` had
+       * nothing to attest for them, and an edit to a filed document left no
+       * tamper-evident trace anywhere.
+       *
+       * Awaited, not fire-and-forget: an audit row that cannot be written must
+       * take the mutation down with it (the catch below rethrows on the
+       * transactional path for exactly this reason). */
+      await writeChainedAuditRow(executor, {
+        tenantId,
+        userId: getActorId(req) ?? undefined,
+        action,
+        resourceType,
+        resourceId,
+        ipAddress,
+        userAgent,
+        details: chainDetails,
       });
     }
   } catch (error) {
@@ -738,7 +803,8 @@ const createAuditEvent = async (
   tenantId: number,
   // Threaded through to createAuditTrail so this legacy wrapper can enlist in a
   // lifecycle transaction (see POST /docs/:docId/sign). Defaults to the pool.
-  executor: Queryable = pool
+  executor: Queryable = pool,
+  auditOpts: CreateAuditTrailOptions = {}
 ) => {
   // Synthesize the request shape createAuditTrail reads from. `user` is the
   // important part: getTenantId sources the tenant from the VERIFIED JWT
@@ -768,7 +834,8 @@ const createAuditEvent = async (
     null,
     'Legacy audit event',
     metadata,
-    executor
+    executor,
+    auditOpts
   );
 };
 
@@ -4136,6 +4203,8 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
         reason || 'Document frozen for compliance',
         { contentHash, version: versionNumber },
         client,
+        // This handler writes its own richer chained row below.
+        { chainedRowWrittenByCaller: true },
       );
 
       /* §11.10(e) — the HASH-CHAINED ledger, on this transaction.
@@ -4292,7 +4361,9 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         meaning,
         documentHash: docHash,
         timestamp: new Date().toISOString(),
-      }, client);
+      }, client,
+      // This handler writes its own richer chained row below.
+      { chainedRowWrittenByCaller: true });
 
       // Update document status based on signature meaning
       if (meaning === 'APPROVER') {
@@ -6102,7 +6173,9 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
         signerEmail as string,
         { signatureId, meaning, reason, contentHash },
         tenantId,
-        client
+        client,
+        // This handler writes its own richer chained row below.
+        { chainedRowWrittenByCaller: true }
       );
 
       /* §11.10(e) — the HASH-CHAINED ledger, on this transaction.
