@@ -85,6 +85,8 @@ import { AuthoringExports } from './AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
 import type { SuggestionDecision } from '../editor/suggestions';
 import type { CommentAnchorPayload } from '../editor/commentAnchor';
+import { citedSourceIdsInHtml } from '../editor/citationNode';
+import type { CitationSource } from '@shared/authoring/citations';
 import { useAuth } from '@/services/portal/authService';
 import { getAuthToken } from '@/utils/authToken';
 import { describeRulePackProvenance } from '@shared/rule-pack-provenance';
@@ -1683,7 +1685,11 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     if (rail === 'history' && activeSectionId) void loadHistory(activeSectionId);
     if (rail === 'comments' && activeDocId) void loadComments(activeDocId);
     if (rail === 'audit' && activeDocId) void loadAudit(activeDocId);
-    if (rail === 'sources' && activeSectionId) {
+    /* Loaded whenever a section is open, not only when the Sources rail is:
+       the editor's citation picker offers this library, and a writer citing a
+       source mid-sentence should not have to open a rail first to make the
+       list exist. The rail re-reads on open through the same callbacks. */
+    if (activeSectionId) {
       void loadSources(activeSectionId);
       void loadProjectSources();
     }
@@ -1697,6 +1703,49 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     loadSources,
     loadProjectSources,
   ]);
+
+  /* ── The source library the editor's citation picker offers ──
+     The sources this section already cites, then the rest of the project's Data
+     Room. Merged rather than kept apart because a writer citing mid-sentence is
+     choosing a source, not choosing between two lists; de-duplicated on the
+     source's identity so a source already cited appears once.
+
+     Only the id and the title travel here. That is all the canvas needs — the
+     picker's label and the node's cached name — and the reference list a
+     reviewer reads is assembled server-side at export, where the source
+     registry's sponsor, date and identifier are available. Nothing here is
+     invented to fill a field the client cannot see. */
+  const citationLibrary = useMemo<CitationSource[]>(() => {
+    const out: CitationSource[] = [];
+    const seen = new Set<string>();
+    const add = (id: unknown, title: string | null | undefined) => {
+      if (id == null) return;
+      const key = String(id);
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push({ id: key, title: title ?? null });
+    };
+    for (const s of sources) if (s.source) add(s.source.id, s.source.title);
+    for (const p of projectSources) add(p.id, p.title);
+    return out;
+  }, [sources, projectSources]);
+
+  /* ── Where this section's citation numbering continues from ──
+     A citation's number is its position in the DOCUMENT's reference list, and
+     the editor holds one section. Without the sources cited above it, the canvas
+     would number from 1 and show "[1]" for a claim the filed document prints as
+     "[7]" — a plausible-looking wrong number, which is the failure the whole
+     design exists to remove. Read from the sections' SAVED content, in the
+     document's own order, which is what the export will read too. */
+  const precedingSourceIds = useMemo<string[]>(() => {
+    if (!activeSectionId) return [];
+    const ids: string[] = [];
+    for (const sec of sections) {
+      if (sec.id === activeSectionId) break;
+      ids.push(...citedSourceIdsInHtml(sec.content ?? ''));
+    }
+    return ids;
+  }, [sections, activeSectionId]);
 
   /* ── Record that this section is drafted from a source ── */
   const citeSource = useCallback(
@@ -3454,6 +3503,31 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                         code: s.code,
                         title: s.title,
                       })),
+                    }}
+                    /* The governed sources this document can cite, and the
+                       numbering already used above this section. A citation
+                       stores the source's id and derives its number from
+                       position, so inserting one earlier renumbers the rest
+                       with no section's stored content touched. Inserting one
+                       also records the section→source link the Sources rail
+                       and the change report already read, so the prose and the
+                       recorded lineage cannot drift apart. */
+                    citationsApi={{
+                      sources: citationLibrary,
+                      precedingSourceIds,
+                      onCite: (sourceId: string) => {
+                        /* Only when the link is not already recorded: citing
+                           the same source a second time in the prose is not a
+                           new fact about this section's lineage, and re-posting
+                           it would announce a record that did not change. */
+                        const already = sources.some(
+                          s => s.source && String(s.source.id) === sourceId
+                        );
+                        const numeric = Number(sourceId);
+                        if (!already && Number.isInteger(numeric) && numeric > 0) {
+                          void citeSource(numeric);
+                        }
+                      },
                     }}
                     collab={
                       liveCoedit && activeDoc

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-28T15:02:52.540Z",
+  "generatedAt": "2026-08-28T15:16:43.070Z",
   "git": {
-    "sha": "82e3e523e1904f7f0e5e75eb00d13a85e71ca3f0",
+    "sha": "f5c1634386ee520f2024c996e94b10d34eef9fd3",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -14,7 +14,7 @@
     "design-system/"
   ],
   "summary": {
-    "duplicateBasenames": 221,
+    "duplicateBasenames": 222,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 39,
@@ -1198,6 +1198,14 @@
         ]
       },
       {
+        "basename": "citations",
+        "count": 2,
+        "paths": [
+          "server/routes/citations.ts",
+          "shared/authoring/citations.ts"
+        ]
+      },
+      {
         "basename": "cli",
         "count": 2,
         "paths": [
@@ -2166,19 +2174,19 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 288856
+        "bytes": 291634
       },
       {
         "file": "server/statistics-service.ts",
         "bytes": 221753
       },
       {
-        "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 202559
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "bytes": 204067
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 199967
+        "file": "server/services/ana-ri/command-executor.ts",
+        "bytes": 202559
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2315,12 +2323,12 @@
         "lines": 18634
       },
       {
-        "file": "server/statistics-service.ts",
-        "lines": 6920
+        "file": "server/routes/authoring.router.ts",
+        "lines": 6954
       },
       {
-        "file": "server/routes/authoring.router.ts",
-        "lines": 6908
+        "file": "server/statistics-service.ts",
+        "lines": 6920
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2336,7 +2344,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 4511
+        "lines": 4585
       },
       {
         "file": "server/storage.ts",
@@ -2439,6 +2447,10 @@
         "lines": 2177
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 2174
+      },
+      {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
         "lines": 2166
       },
@@ -2509,10 +2521,6 @@
       {
         "file": "server/services/ana-ri/orchestrator.ts",
         "lines": 1917
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 1915
       },
       {
         "file": "server/routes/regulatory-digital-twin.ts",
@@ -2668,7 +2676,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 400,
+      "duplicateGroups": 401,
       "largeByBytes": 31,
       "largeByLines": 74
     },
@@ -2680,7 +2688,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 72,
+      "duplicateGroups": 73,
       "largeByBytes": 3,
       "largeByLines": 2
     },

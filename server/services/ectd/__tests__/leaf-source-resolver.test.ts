@@ -112,6 +112,30 @@ describe('materializeLeafSources', () => {
     await readPdf(stageDir, resolved.fileName);
   });
 
+  it('counts a materialized-but-draft source as unfinalized (approved is not counted)', async () => {
+    await harness.pglite.exec(`
+      INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status)
+      VALUES
+        (200, ${ORG}, 'Approved Leaf', '<p>final</p>', '2.6', 'approved'),
+        (201, ${ORG}, 'Draft Leaf',    '<p>wip</p>',   '2.7', 'draft');
+    `);
+    const stageDir = await stage();
+    const res = await materializeLeafSources({
+      leaves: [
+        { documentTable: 'coauthor_documents', documentId: 200 },
+        { documentTable: 'coauthor_documents', documentId: 201 },
+      ],
+      organizationId: ORG,
+      stageDir,
+    });
+    // Both render to PDF; only the draft is unfinalized. Before the fix this was
+    // untracked (the completeness call hardcoded unfinalized = 0).
+    expect(res.materialized).toBe(2);
+    expect(res.unfinalized).toBe(1);
+    expect(res.unfinalizedSections.map((s) => s.sectionCode)).toContain('2.7');
+    expect(res.unfinalizedSections.every((s) => s.status !== 'approved')).toBe(true);
+  });
+
   it('renders a unified_documents leaf (latest version content) to a real PDF', async () => {
     const stageDir = await stage();
     const res = await materializeLeafSources({

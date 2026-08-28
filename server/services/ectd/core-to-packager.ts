@@ -90,7 +90,14 @@ export function mapCoreLeafToEctdLeaf(leaf: CoreLeaf, resolved: ResolvedFile): E
     sourcePath: resolved.sourcePath,
     fileName: resolved.fileName,
     title: leaf.title,
-    md5: resolved.md5 ?? leaf.checksum ?? undefined,
+    // ONLY the resolver's byte-derived md5 may become the manifest checksum.
+    // leaf.checksum is a DB column that ordinary callers set verbatim (e.g. PUT
+    // /sequences/:id/leaves) with no tie to the file's bytes; using it as a
+    // fallback would let an unverified, caller-settable string become the
+    // index-md5.txt hash for a leaf that resolved to a real file — a manifest
+    // that does not match the shipped bytes. When resolved.md5 is absent, leave
+    // md5 undefined; the packager computes it from the actual bytes downstream.
+    md5: resolved.md5 ?? undefined,
   };
 }
 

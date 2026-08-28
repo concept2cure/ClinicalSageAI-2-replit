@@ -71,6 +71,15 @@ export interface AssembleSequenceResult extends PackageFromCoreResult {
    */
   unresolvedLeaves: UnresolvedLeaf[];
   /**
+   * Number of MATERIALIZED leaves whose source document is still a draft/review
+   * artifact (not approved/finalized). These render into the package but a
+   * submission-grade package must have zero of them — carried through to the
+   * completeness verdict so `requireComplete` fails on an un-finalized dossier.
+   */
+  unfinalized: number;
+  /** The unfinalized leaves' section + source status, for the completeness report. */
+  unfinalizedSections: Array<{ sectionCode: string; status: string }>;
+  /**
    * Path to the SHA-256 governance manifest (per-leaf md5+sha256 + package
    * sha256), written OUTSIDE the eCTD backbone. The regulatory index.xml/md5.txt
    * remain md5-only for agency compatibility; this file is the modern-hash
@@ -113,7 +122,13 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
   let assembleReturned = false;
   try {
 
-  const { byKey, unresolved: unresolvedLeaves, materialized } = await materializeLeafSources({
+  const {
+    byKey,
+    unresolved: unresolvedLeaves,
+    materialized,
+    unfinalized,
+    unfinalizedSections,
+  } = await materializeLeafSources({
     leaves: leaves.map((l) => ({ documentTable: l.documentTable, documentId: l.documentId })),
     organizationId,
     stageDir,
@@ -220,7 +235,7 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
   };
 
   assembleReturned = true;
-  return { ...result, cleanup, materialized, unresolvedLeaves, governanceManifestPath };
+  return { ...result, cleanup, materialized, unresolvedLeaves, unfinalized, unfinalizedSections, governanceManifestPath };
   } finally {
     if (!assembleReturned) {
       await fs.rm(outputDir, { recursive: true, force: true }).catch(() => {});
@@ -369,16 +384,28 @@ export async function assembleSubmissionEctd(
     // Completeness over what ACTUALLY materialized. `skipped` is the packager's
     // view of every leaf without a staged file (a superset of the resolver's
     // `unresolvedLeaves`), so it is the honest "unfinished leaf" count.
-    const incompleteSections: IncompleteLeaf[] = assembled.skipped.map((s) => ({
-      granuleId: s.sectionCode,
-      granuleName: s.sectionCode,
-      status: s.reason,
-    }));
+    const incompleteSections: IncompleteLeaf[] = [
+      ...assembled.skipped.map((s) => ({
+        granuleId: s.sectionCode,
+        granuleName: s.sectionCode,
+        status: s.reason,
+      })),
+      // Materialized-but-unfinalized leaves are ALSO incomplete: a draft/review
+      // document rendered to PDF is not a submission-ready leaf.
+      ...assembled.unfinalizedSections.map((s) => ({
+        granuleId: s.sectionCode,
+        granuleName: s.sectionCode,
+        status: `source not finalized (${s.status})`,
+      })),
+    ];
     const completeness = computeEctdCompleteness(
       assembled.materialized + assembled.skipped.length,
       assembled.skipped.length,
       incompleteSections,
-      0,
+      // Real count of materialized leaves whose source is still a draft — NOT a
+      // hardcoded 0. A package of all-draft documents is not submission-complete,
+      // and requireComplete must fail on it.
+      assembled.unfinalized,
     );
     if (params.requireComplete) assertEctdSubmissionComplete(completeness);
 
