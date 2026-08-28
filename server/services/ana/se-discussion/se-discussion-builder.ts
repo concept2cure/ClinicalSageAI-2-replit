@@ -54,7 +54,8 @@ export interface SEDiscussionInput {
   subjectDeviceName?: string;
   /**
    * Where this matrix came from. Drives the honesty gate — only 'analyzed'
-   * matrices yield a sealable/exportable document. Default 'analyzed'.
+   * matrices yield a sealable/exportable document. Omitted provenance fails
+   * closed to 'not_assessed' (never sealable); pass 'analyzed' explicitly.
    */
   provenance?: SEMatrixProvenance;
 }
@@ -102,7 +103,12 @@ export interface HonestyGuardResult {
  * the narrative is allowed to assert overall substantial equivalence. Pure.
  */
 export function evaluateHonesty(input: SEDiscussionInput): HonestyGuardResult {
-  const provenance = input.provenance ?? 'analyzed';
+  // Fail closed: an omitted provenance must NOT default to 'analyzed' (the one
+  // value that unlocks sealable/exportable). This function is the single
+  // authority on whether the document may leave the building; a future caller
+  // that forgets to pass provenance must be treated as un-assessed, not fully
+  // analyzed. The sole current caller passes provenance explicitly.
+  const provenance = input.provenance ?? 'not_assessed';
   const rows = input.matrix?.comparison_rows ?? [];
 
   const unresolvedCharacteristics = rows
@@ -329,12 +335,36 @@ export function renderSEDiscussionMarkdown(input: SEDiscussionInput): string {
   // Overall conclusion — gated on the matrix actually being clean.
   parts.push('### Conclusion');
   if (honesty.supportsOverallEquivalence) {
-    parts.push(
-      `Across all ${rows.length} characteristic${rows.length === 1 ? '' : 's'} the analyzed matrix ` +
-        `evaluated, ${subject} is found substantially equivalent to ${predicateName} ` +
-        `(510(k) ${predicateK}). This conclusion reflects the matrix verdicts above and is not ` +
-        `extended to any characteristic the matrix did not assess.`,
-    );
+    if (discussion.length > 0) {
+      // DISCUSSION_REQUIRED rows are not hard-unresolved (they don't block the
+      // overall SE position), but the matrix records NO equivalence verdict for
+      // them and the "Characteristics requiring discussion" section above
+      // explicitly asserts "no conclusion of equivalence is asserted for these".
+      // The conclusion must not then sweep them into an unqualified "across all
+      // N ... substantially equivalent" claim — that self-contradiction inside
+      // the exhibit is exactly what draws an FDA Additional Information request.
+      // Scope the equivalence finding to the characteristics the matrix actually
+      // found equivalent, and state that the discussion-required characteristics
+      // are addressed above and are not asserted as equivalent here.
+      parts.push(
+        `${subject} is found substantially equivalent to ${predicateName} (510(k) ${predicateK}) ` +
+          `for the ${equivalent.length} characteristic${equivalent.length === 1 ? '' : 's'} the ` +
+          `matrix evaluated as equivalent. The ${discussion.length} characteristic` +
+          `${discussion.length === 1 ? '' : 's'} requiring discussion ` +
+          `${discussion.length === 1 ? 'is' : 'are'} addressed in the section above and ` +
+          `${discussion.length === 1 ? 'is' : 'are'} not asserted as equivalent here; the overall ` +
+          `substantial-equivalence determination for ${discussion.length === 1 ? 'it' : 'them'} ` +
+          `rests on the adequacy of that discussion. This conclusion reflects the matrix verdicts ` +
+          `above and is not extended to any characteristic the matrix did not assess.`,
+      );
+    } else {
+      parts.push(
+        `Across all ${rows.length} characteristic${rows.length === 1 ? '' : 's'} the analyzed matrix ` +
+          `evaluated, ${subject} is found substantially equivalent to ${predicateName} ` +
+          `(510(k) ${predicateK}). This conclusion reflects the matrix verdicts above and is not ` +
+          `extended to any characteristic the matrix did not assess.`,
+      );
+    }
   } else {
     const open = honesty.unresolvedCharacteristics.join(', ');
     parts.push(

@@ -149,6 +149,42 @@ describe('narrative reflects the matrix verdicts (no invention beyond matrix)', 
   });
 });
 
+describe('SE conclusion does not contradict itself over discussion-required rows', () => {
+  it('scopes the SE finding to the equivalent characteristics; the discussion-required one is not folded in', () => {
+    // CLEAN_SE_MATRIX = 3 EQUIVALENT + 1 DISCUSSION_REQUIRED. The old code
+    // concluded "Across all 4 characteristics ... found substantially
+    // equivalent", contradicting the per-row "no conclusion of equivalence is
+    // asserted for these".
+    const md = renderSEDiscussionMarkdown({ matrix: CLEAN_SE_MATRIX, provenance: 'analyzed' });
+    expect(md).not.toMatch(/Across all 4 characteristic/i);
+    expect(md).toMatch(/for the 3 characteristics the matrix evaluated as equivalent/i);
+    expect(md).toMatch(/not asserted as equivalent here/i);
+    // The row-level disclaimer and the conclusion must now agree.
+    expect(md).toMatch(/no\s+conclusion of equivalence is asserted for these/i);
+  });
+
+  it('still uses the unqualified "across all N" phrasing when every row is equivalent', () => {
+    const allEquivalent = {
+      ...CLEAN_SE_MATRIX,
+      comparison_rows: CLEAN_SE_MATRIX.comparison_rows.filter(
+        (r) => r.equivalence_status === 'EQUIVALENT',
+      ),
+    };
+    const md = renderSEDiscussionMarkdown({ matrix: allEquivalent, provenance: 'analyzed' });
+    expect(md).toMatch(/Across all 3 characteristics/i);
+    expect(md).toMatch(/is found substantially equivalent/i);
+  });
+});
+
+describe('evaluateHonesty fails closed on omitted provenance', () => {
+  it('an omitted provenance is treated as not-assessed (never sealable)', () => {
+    const h = evaluateHonesty({ matrix: CLEAN_SE_MATRIX }); // provenance omitted
+    expect(h.sealable).toBe(false);
+    expect(h.exportable).toBe(false);
+    expect(h.blockingReasons.join(' ')).toMatch(/not been assessed/i);
+  });
+});
+
 describe('buildSEDocumentPlan', () => {
   it('assembles a title, a body containing the narrative + comparison table, and required_strings', () => {
     const plan = buildSEDocumentPlan({ matrix: CLEAN_SE_MATRIX, provenance: 'analyzed' });

@@ -150,6 +150,42 @@ function AnaTurn({ turn, onRefine, onNav }: AnaTurnProps) {
 
 /* ---- Artifact card ---- */
 
+/** The card id a draft carries until the server reports a stored version for it. */
+function unsavedDraftId(messageId: string): string {
+  return `unsaved:${messageId}`;
+}
+
+/**
+ * What a missing artifact id actually establishes — the one place this is said.
+ *
+ * ── What the copy used to claim, and the state in which it was false ─────────
+ * The disabled Route control read "This draft is not in the governed record, so
+ * there is nothing to route." That is a verdict on the governed record, drawn
+ * from the absence of one SSE event, and the absence does not carry it. The
+ * stream emits `artifact_version_saved` only from inside `if (saved.created)`
+ * in its post-processing, so it is withheld in three different states that the
+ * client cannot tell apart:
+ *
+ *   · the turn is still running and the write has not been attempted yet;
+ *   · the write ran and found the draft's content hash identical to the stored
+ *     head — the draft IS in the record, under an id this turn was never told;
+ *   · the write failed, and the record state is unknown.
+ *
+ * Only the third is anywhere near "not in the governed record", and in the
+ * second the sentence was simply false. `conversationArtifacts` below already
+ * refuses that diagnosis for exactly this reason; the control's reason was the
+ * one place it was still being made.
+ *
+ * `settled` is the positive evidence, and it is deliberately NOT the absence
+ * that produced the bug: it is the producing turn having FINISHED, after which
+ * no further save report is coming for that draft.
+ */
+function unstoredDraftReason(settled: boolean): string {
+  return settled
+    ? 'No stored version was reported for this draft, so there is nothing here for the review workflow to act on.'
+    : 'This turn is still running — whether a version was stored has not been reported yet.';
+}
+
 /**
  * The conversation's governed drafts, from the only real source there is.
  *
@@ -162,9 +198,11 @@ function AnaTurn({ turn, onRefine, onNav }: AnaTurnProps) {
  * unset because the stream does not report them, and `prov.audit` is left unset
  * because no audit id is issued for a draft write.
  *
- * A draft with no `artifactId` is one the server did NOT persist — it says so,
- * and its workflow control is disabled with the reason, rather than posting a
- * status change for an artifact that has no row.
+ * A draft with no `artifactId` is one no stored version was REPORTED for. That
+ * is what the note and the disabled workflow control say — not that the server
+ * failed to persist it, which is only one of the states that produce it
+ * ({@link unstoredDraftReason}) — and the control stays disabled either way,
+ * rather than posting a status change against an id this turn does not have.
  */
 export function conversationArtifacts(messages: AnaChatMessage[]): CtArtifact[] {
   const out: CtArtifact[] = [];
@@ -172,7 +210,7 @@ export function conversationArtifacts(messages: AnaChatMessage[]): CtArtifact[] 
     const d = m.generatedDraft;
     if (!d || !d.title) continue;
     out.push({
-      id: d.artifactId || `unsaved:${m.id}`,
+      id: d.artifactId || unsavedDraftId(m.id),
       kind: 'document',
       type: d.documentType || 'Document draft',
       title: d.title,
@@ -188,9 +226,11 @@ export function conversationArtifacts(messages: AnaChatMessage[]): CtArtifact[] 
          wrong every time it was the second. */
       note: d.artifactId
         ? undefined
-        : 'No stored version was reported for this draft, so there is nothing to route. '
-          + 'AnA files a draft against the open program, and does not re-file one that is '
-          + 'identical to the version already stored.',
+        : m.streaming
+          ? unstoredDraftReason(false)
+          : unstoredDraftReason(true)
+            + ' AnA files a draft against the open program, and does not re-file one that is '
+            + 'identical to the version already stored.',
     });
   }
   return out;
@@ -203,10 +243,16 @@ interface ArtifactCardProps {
   onNav?: (id: string) => void;
   /** The open program. Null when none is open — the status route is scoped by it. */
   projectId: string | number | null;
+  /**
+   * Has the turn that produced this draft finished? Until it has, the absence
+   * of a stored version is a report that has not arrived, not a fact about the
+   * governed record. See {@link unstoredDraftReason}.
+   */
+  saveSettled: boolean;
   fireToast: FireToast;
 }
 
-function ArtifactCard({ art, expanded, onToggle, onNav, projectId, fireToast }: ArtifactCardProps) {
+function ArtifactCard({ art, expanded, onToggle, onNav, projectId, saveSettled, fireToast }: ArtifactCardProps) {
   /* Seeded from the artifact and then owned here, because a successful
      transition is a fact the server confirmed and the message that produced
      the draft will never carry. The card is keyed on the artifact id, so the
@@ -292,8 +338,14 @@ function ArtifactCard({ art, expanded, onToggle, onNav, projectId, fireToast }: 
      does not appear tells them nothing. */
   const routable = status === 'draft' || status === 'unsaved';
   const canRoute = Boolean(art.artifactId) && projectId != null && status === 'draft';
+  /* Was: 'This draft is not in the governed record, so there is nothing to
+     route.' — a verdict on the record asserted from a missing SSE event, false
+     outright whenever the write found an identical content hash and the draft
+     was already stored under an id this turn was never told. What is reported
+     is now what is said, and the two states the client can actually tell apart
+     are told apart. See {@link unstoredDraftReason}. */
   const routeBlockedBecause = !art.artifactId
-    ? 'This draft is not in the governed record, so there is nothing to route.'
+    ? unstoredDraftReason(saveSettled)
     : projectId == null
       ? 'Open a program first — the review workflow is scoped to one.'
       : null;
@@ -457,10 +509,12 @@ interface ArtifactPanelProps {
   collapsed: boolean;
   setCollapsed: (v: boolean) => void;
   projectId: string | number | null;
+  /** Card ids whose producing turn has not finished — see {@link unstoredDraftReason}. */
+  pendingDraftIds: ReadonlySet<string>;
   fireToast: FireToast;
 }
 
-function ArtifactPanel({ artifacts, openId, setOpenId, onNav, collapsed, setCollapsed, projectId, fireToast }: ArtifactPanelProps) {
+function ArtifactPanel({ artifacts, openId, setOpenId, onNav, collapsed, setCollapsed, projectId, pendingDraftIds, fireToast }: ArtifactPanelProps) {
   if (collapsed) {
     return (
       <button className="ct-art-rail" onClick={() => setCollapsed(false)} title="Show artifacts">
@@ -495,6 +549,7 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, collapsed, setColl
             onToggle={() => setOpenId(openId === a.id ? null : a.id)}
             onNav={onNav}
             projectId={projectId}
+            saveSettled={!pendingDraftIds.has(a.id)}
             fireToast={fireToast}
           />
         ))}
@@ -576,6 +631,17 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
      unreachable code that nonetheless looked finished. The drafts were already
      on the messages; nothing read them. */
   const artifacts: CtArtifact[] = conversationArtifacts(anaChat.messages);
+  /* Card ids of drafts whose producing turn is STILL RUNNING. `artifact_draft`
+     is emitted mid-stream and `artifact_version_saved` only later, from the
+     turn's post-processing, so a draft with no id on an unfinished turn is one
+     whose save has not been REPORTED yet — a different fact from one whose turn
+     finished without a report, and the evidence the card's disabled reason is
+     gated on. */
+  const pendingDraftIds = new Set(
+    anaChat.messages
+      .filter((m) => m.streaming && m.generatedDraft?.title)
+      .map((m) => unsavedDraftId(m.id)),
+  );
 
   const firstUser = turns.find((t) => t.role === 'user');
   const title = isNew
@@ -753,7 +819,7 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
 
         <ArtifactPanel artifacts={artifacts} openId={openId} setOpenId={setOpenId} onNav={onNav}
           collapsed={panelCollapsed} setCollapsed={setPanelCollapsed}
-          projectId={shellProjectId} fireToast={fireToast} />
+          projectId={shellProjectId} pendingDraftIds={pendingDraftIds} fireToast={fireToast} />
       </div>
       <C2CToast msg={toast} />
     </div>

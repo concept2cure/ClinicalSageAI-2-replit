@@ -1,35 +1,44 @@
 /**
  * FDA Electronic Submissions Gateway (ESG) — AS2 over HTTPS + SFTP fallback.
  *
- * Real protocol code per FDA ESG Technical Specification (current 2024).
- * Two transports are supported:
+ * AS2 (RFC 4130) transport scaffolding over mTLS. It makes a REAL network call
+ * to the configured FDA AS2 endpoint (no simulation), credential-gated and
+ * fail-closed. Two transports:
  *
  *   1. AS2 over HTTPS (preferred for IND/NDA/BLA, 510(k), DMF):
  *      - mTLS handshake against the FDA AS2 endpoint
- *      - AS2 envelope: MIME message with application/EDI-X12 or
- *        application/octet-stream content, signed (PKCS#7), encrypted
- *        (PKCS#7), with AS2-From / AS2-To / Message-ID headers
+ *      - AS2-From / AS2-To / Message-ID / Disposition-Notification headers
  *      - Synchronous MDN (Message Disposition Notification) returned in
- *        the HTTP response; or asynchronous MDN delivered via callback
+ *        the HTTP response body, persisted verbatim (mdnRaw)
  *
  *   2. SFTP (used for very large submissions + by orgs without AS2):
- *      - SSH key auth against esg-sftp.fda.gov
- *      - PUT to /incoming/<application-id>/<sequence>/<filename.zip>
- *      - FDA picks up and emits ack1/ack2/ack3 over the same SFTP path
+ *      - SSH key auth against esg-sftp.fda.gov, PUT to /incoming/…
+ *      - FDA picks up and emits ack1/ack2/ack3 over /outgoing/ later
  *
- * Both transports require credentials set in the platform secrets store
- * (env vars in dev, vault in prod). The gateway flags presence + emits
- * CredentialError when missing rather than silently failing.
+ * ── KNOWN CONFORMANCE GAP (not yet production-conformant) ────────────────────
+ * The AS2 *message envelope* is NOT yet a PKCS#7/CMS S/MIME structure. The body
+ * is posted as `application/octet-stream`; `signAs2Body` computes a detached
+ * RSA-SHA256 signature but it is NOT attached as an S/MIME `multipart/signed` or
+ * `application/pkcs7-mime` part, and there is no PKCS#7 *encryption*. FDA ESG
+ * (Axway/Cyclone AS2) requires an S/MIME PKCS#7-signed message, so a real FDA
+ * endpoint would REJECT this envelope (a non-2xx, surfaced honestly as a
+ * GatewayError — the success path below only runs on a 2xx, which a conformant
+ * gateway will not return to a non-conformant message). Likewise the synchronous
+ * MDN is persisted but NOT cryptographically verified, and checkStatus() does
+ * not poll FDA for async ack1/ack2/ack3. Closing this needs a real CMS
+ * implementation (a vendored ASN.1/CMS library) + MDN signature verification +
+ * an ack poller. Do not represent AS2 transmission as production-ready until
+ * that lands; SFTP is the nearer-term real path (and requires ssh2-sftp-client,
+ * currently absent from package.json).
+ *
+ * Both transports require credentials in the platform secrets store; the gateway
+ * flags presence + emits CredentialError when missing rather than silently
+ * failing.
  *
  * Acks:
  *   ack1 — receipt-of-transmission (FDA gateway received the bytes)
  *   ack2 — virus scan + structure check passed (FDA AS2 accepted)
  *   ack3 — center-specific (CDER / CDRH / CBER) acceptance into review
- *
- * This file deliberately keeps the AS2 envelope hand-rolled rather than
- * pulling a heavy dependency — the AS2 spec is simple enough (RFC 4130)
- * that a 200-line implementation is more auditable than a vendored
- * library, and we already lean on Node's tls/crypto modules.
  */
 
 import { promises as fs } from 'fs';

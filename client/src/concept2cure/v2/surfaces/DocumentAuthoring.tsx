@@ -3440,6 +3440,21 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                       onOpen: openCommentFromAnchor,
                     }}
                     imagesApi={{ upload: uploadSectionImage }}
+                    /* The document's own sections, as they stand right now.
+                       A cross-reference stores the target's id and resolves its
+                       number and title from this list, so renumbering or
+                       retitling a section corrects every reference to it in
+                       place — no referring section is edited, and no revision
+                       is minted for a change nobody made to its words. The
+                       same list the export resolves against server-side, so
+                       the canvas and the filed document say the same thing. */
+                    crossRefsApi={{
+                      sections: sections.map(s => ({
+                        id: s.id,
+                        code: s.code,
+                        title: s.title,
+                      })),
+                    }}
                     collab={
                       liveCoedit && activeDoc
                         ? {

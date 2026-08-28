@@ -616,38 +616,73 @@ export class CrossReferenceMapper {
       device_name: workflowData.deviceInfo?.deviceName || workflowData.deviceName || '',
       device_class: workflowData.regulatoryInfo?.deviceClass || workflowData.deviceClassification || '',
       product_code: workflowData.regulatoryInfo?.productCode || workflowData.productCode || '',
-      submission_type: workflowData.regulatoryInfo?.submissionType || workflowData.submissionType || 'Traditional 510(k)',
+      // 'Traditional 510(k)' was asserted when nothing said so. Special and
+      // Abbreviated 510(k)s carry different content requirements and review
+      // clocks, so this declares the pathway to the agency; it is not cosmetic.
+      submission_type: workflowData.regulatoryInfo?.submissionType || workflowData.submissionType || 'Not Specified',
       establishment_registration: workflowData.manufacturerInfo?.establishmentNumber || ''
     };
 
     // FDA Form 3601 - User Fee Cover Sheet
     fdaFormData['FDA_3601'] = {
       applicant_name: workflowData.manufacturerInfo?.name || workflowData.applicantName || '',
-      fee_category: workflowData.feeInfo?.category || 'Standard 510(k)',
-      payment_method: workflowData.feeInfo?.paymentMethod || 'Check',
+      // MDUFA posture, unset until stated. Defaulting these misstated the fee
+      // owed by a small-business or differently-categorized filer — and
+      // small_business: false is an affirmative "not a small business", which
+      // is a claim about the applicant, not a missing value. fee_amount 0 read
+      // as "no fee due".
+      fee_category: workflowData.feeInfo?.category || 'Not Specified',
+      payment_method: workflowData.feeInfo?.paymentMethod || 'Not Specified',
       reference_number: workflowData.feeInfo?.referenceNumber || '',
-      small_business: workflowData.feeInfo?.smallBusiness || false,
-      fee_amount: workflowData.feeInfo?.amount || 0
+      small_business: workflowData.feeInfo?.smallBusiness,
+      fee_amount: workflowData.feeInfo?.amount ?? null
     };
 
     // FDA Form 3881 - Indications for Use
     fdaFormData['FDA_3881'] = {
       device_name: workflowData.deviceInfo?.deviceName || workflowData.deviceName || '',
       indications_for_use: workflowData.deviceInfo?.indicationsForUse || workflowData.intendedUse || '',
-      prescription_use: workflowData.deviceInfo?.prescriptionUse !== false,
-      over_counter_use: workflowData.deviceInfo?.overCounterUse === true,
+      // `!== false` made an UNSET field TRUE — the one default in this file
+      // that fabricated in the affirmative from pure absence, ticking
+      // "Prescription Use (21 CFR 801 Subpart D)" on Form 3881 and thereby
+      // declaring the device's labeling regime. Now tri-state: neither box is
+      // ticked until someone answers.
+      prescription_use: workflowData.deviceInfo?.prescriptionUse,
+      over_counter_use: workflowData.deviceInfo?.overCounterUse,
       patient_population: workflowData.deviceInfo?.patientPopulation || '',
       comparison_predicate: workflowData.predicateInfo?.comparison || ''
     };
 
     // FDA Form 3654 - Certification/Disclosure
+    //
+    // NOTHING HERE IS ASSUMED. Every field on this form is a statement the
+    // SIGNER makes, under 18 U.S.C. penalty — the debarment warning is printed
+    // directly beneath it — and the assembled text is persisted to
+    // fda510k_documents.content and then hash-sealed by lockDocument(). A value
+    // invented here does not stay a default: it becomes part of a sealed 510(k)
+    // record that an FDA reviewer reads as the applicant's own certification.
+    //
+    // Previously: certification_statement was hardcoded `true` ("Always true
+    // when submitting"), the title fell back to 'Regulatory Affairs Manager'
+    // (the legal capacity in which the person certifies), the two disclosure
+    // answers defaulted to `false` — turning "nobody answered" into the
+    // affirmative negatives "no clinical studies" and "no financial interests
+    // to disclose" — and the execution date was stamped from the render clock
+    // for a signature that had not been applied.
+    //
+    // These are tri-state on purpose: `undefined` means unanswered and is
+    // rendered as an EMPTY box, never as a "No". Same treatment the sibling
+    // FDAFormGenerator already applies.
     fdaFormData['FDA_3654'] = {
       certifier_name: workflowData.certificationInfo?.certifierName || workflowData.manufacturerInfo?.contactPerson || '',
-      certifier_title: workflowData.certificationInfo?.certifierTitle || 'Regulatory Affairs Manager',
-      certification_statement: true, // Always true when submitting
-      clinical_studies: workflowData.clinicalData?.hasStudies || false,
-      financial_interests: workflowData.certificationInfo?.financialInterests || false,
-      signature_date: new Date().toISOString().split('T')[0]
+      certifier_title: workflowData.certificationInfo?.certifierTitle || '',
+      certification_statement: workflowData.certificationInfo?.certificationStatement,
+      clinical_studies: workflowData.clinicalData?.hasStudies,
+      financial_interests: workflowData.certificationInfo?.financialInterests,
+      // Never fabricate an execution date. A signature date comes from the
+      // actual signing event (21 CFR Part 11), not from when the form was
+      // rendered; blank until something signs it.
+      signature_date: workflowData.certificationInfo?.signatureDate || ''
     };
 
     return fdaFormData;
@@ -845,7 +880,7 @@ FEE INFORMATION
 Fee Category: ${data.fee_category}
 Payment Method: ${data.payment_method}
 Reference Number: ${data.reference_number || 'Pending'}
-Small Business Certification: ${data.small_business ? 'Yes' : 'No'}
+Small Business Certification: ${data.small_business === undefined || data.small_business === null ? 'Not stated' : (data.small_business ? 'Yes' : 'No')}
 Fee Amount: $${data.fee_amount || 'TBD'}
     `.trim();
   }
@@ -854,20 +889,31 @@ Fee Amount: $${data.fee_amount || 'TBD'}
    * Helper: Assemble FDA Form 3654 content
    */
   private assembleFDA3654(data: any): string {
+    // A box is ticked only when the signer actually made the statement. These
+    // three were literal ☑ in the template — the form asserted, on the signer's
+    // behalf and in a sealed record, that they had reviewed the submission and
+    // certified it complete and accurate. Nobody was ever asked.
+    const box = (v: unknown) => (v === true ? '☑' : '☐');
+    // Tri-state: an unanswered disclosure prints "Not stated", not "No".
+    // "No financial interests to disclose" is itself a certification under
+    // 21 CFR Part 54, and absence of an answer is not that answer.
+    const answered = (v: unknown, yes: string, no: string) =>
+      v === undefined || v === null ? 'Not stated' : (v ? yes : no);
+    const certified = data.certification_statement === true;
     return `
 FDA FORM 3654 - CERTIFICATION/DISCLOSURE STATEMENT
 
-I, ${data.certifier_name}, ${data.certifier_title}, certify that:
+I, ${data.certifier_name || '(Name)'}, ${data.certifier_title || '(Title)'}, certify that:
 
-☑ I have reviewed the information contained in this 510(k) submission
-☑ The information provided is complete and accurate
-☑ All required documentation is included
+${box(certified)} I have reviewed the information contained in this 510(k) submission
+${box(certified)} The information provided is complete and accurate
+${box(certified)} All required documentation is included
 
-Clinical Studies Conducted: ${data.clinical_studies ? 'Yes' : 'No'}
-Financial Interests Disclosure: ${data.financial_interests ? 'Yes - See attached disclosure' : 'No financial interests to disclose'}
+Clinical Studies Conducted: ${answered(data.clinical_studies, 'Yes', 'No')}
+Financial Interests Disclosure: ${answered(data.financial_interests, 'Yes - See attached disclosure', 'No financial interests to disclose')}
 
 Signature: _______________________
-Date: ${data.signature_date}
+Date: ${data.signature_date || 'Not signed'}
     `.trim();
   }
 

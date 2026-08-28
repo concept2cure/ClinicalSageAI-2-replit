@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState, connected, liveGetOrNull, unwrapList, useLiveData } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { assessmentState } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
@@ -26,6 +27,21 @@ interface OrchReadiness {
     validation: OrchFinding[];
     ai: OrchFinding[];
   };
+  /**
+   * Positive evidence, taken from the assessment's OWN document inventory,
+   * that each findings class below had something to be computed from.
+   *
+   * The two groups are a partition of one blocker list, not the output of two
+   * checks that each ran, so the size of a group carries no information about
+   * whether its subject was examined. These do, and neither is derived from
+   * that size — deriving it would be the defect (assessmentState.ts).
+   *
+   * `documentsInventoried` — documents the assessment inventoried for this
+   * program. `documentsValidated` — of those, how many carry a recorded
+   * validation result.
+   */
+  documentsInventoried: number;
+  documentsValidated: number;
 }
 
 interface OrchStep {
@@ -155,6 +171,15 @@ export function mapReadiness(payload: unknown): OrchReadiness | null {
     !Array.isArray(d.blockers) || typeof d.assessedAt !== 'string'
   ) return null;
   const blockers = d.blockers as LiveBlocker[];
+  /* `documentInventory` is part of every ReadinessAssessment the engine
+     returns, and it is what tells "this class was evaluated and produced
+     nothing" apart from "there was nothing for it to evaluate". Read
+     defensively: it is not one of the four fields this mapper fails closed on,
+     so a payload without it yields zero evidence — which makes the view
+     decline to claim clearance, the correct outcome rather than a limitation. */
+  const inventory = Array.isArray((d as { documentInventory?: unknown }).documentInventory)
+    ? ((d as { documentInventory?: unknown }).documentInventory as Array<{ isValidated?: unknown }>)
+    : [];
   const toFinding = (b: LiveBlocker): OrchFinding => ({
     rule: String(b.message ?? ''),
     type: String(b.category ?? 'finding'),
@@ -175,6 +200,8 @@ export function mapReadiness(payload: unknown): OrchReadiness | null {
       // never a fabricated finding.
       ai: [],
     },
+    documentsInventoried: inventory.length,
+    documentsValidated: inventory.filter((x) => x != null && x.isValidated === true).length,
   };
 }
 
@@ -737,29 +764,64 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   const stepIc = (st: string): React.ReactElement | null =>
     st === 'done' ? I.check : st === 'failed' ? I.close : st === 'awaiting' ? I.clock : st === 'paused' ? I.pause : null;
 
-  const findGroup = (label: string, sub: string, list: OrchFinding[]) => (
-    <div style={{ marginBottom: 18 }}>
-      <div className="orch-sec-l">{label} <span style={{ color: 'var(--text-500)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>{I.dot} {sub}</span></div>
-      {list.length === 0 ? (
-        <div className="orch-run-m" style={{ marginBottom: 6 }}>No findings in this class.</div>
-      ) : null}
-      {list.map((f, i) => (
-        <div key={i} className="orch-find">
-          <span className={'orch-find-dot ' + (SEV_TONE[f.sev] || 'idle')} />
-          <div className="orch-find-b">
-            <div className="orch-find-r">{f.rule}</div>
-            <div className="orch-find-d">{f.detail}</div>
+  /* ── An empty class is not a clean class ──────────────────────────────────
+     This read `list.length === 0 ? "No findings in this class." : null`, and
+     the sentence was chosen BY the emptiness. The two groups below are a
+     PARTITION of the one blocker list the assessment returned, not the output
+     of two checks that each ran, so an empty group has two causes and this said
+     the same thing about both.
+
+     On "Validation findings — eCTD · CDISC · hyperlink integrity" that
+     difference is the entire claim. The readiness engine raises a
+     validation-class blocker only for a document that CARRIES a recorded
+     validation result; a program in which nothing has ever been validated
+     therefore produces zero of them, and the group read as a clean validation
+     pass over documents no validator had ever opened.
+
+     `assessed` is the positive evidence, from the assessment's own inventory
+     rather than from the size of `list`: documents inventoried for the rules
+     class, documents carrying a validation result for the validation class.
+     'assessed-clear' stays reachable — a program whose documents are validated
+     and raise nothing still reads "No findings in this class." */
+  const findGroup = (
+    label: string,
+    sub: string,
+    list: OrchFinding[],
+    assessed: boolean,
+    notAssessed: string,
+  ) => {
+    const state = assessmentState({
+      scopeExists: true,
+      findingCount: list.length,
+      assessmentRan: assessed,
+    });
+    return (
+      <div style={{ marginBottom: 18 }}>
+        <div className="orch-sec-l">{label} <span style={{ color: 'var(--text-500)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>{I.dot} {sub}</span></div>
+        {state === 'assessed-clear' ? (
+          <div className="orch-run-m" style={{ marginBottom: 6 }}>No findings in this class.</div>
+        ) : null}
+        {state === 'not-assessed' ? (
+          <div className="orch-run-m" style={{ marginBottom: 6 }}>{notAssessed}</div>
+        ) : null}
+        {list.map((f, i) => (
+          <div key={i} className="orch-find">
+            <span className={'orch-find-dot ' + (SEV_TONE[f.sev] || 'idle')} />
+            <div className="orch-find-b">
+              <div className="orch-find-r">{f.rule}</div>
+              <div className="orch-find-d">{f.detail}</div>
+            </div>
+            <div className="orch-find-meta">
+              <span className="rd-chip tone-idle">{f.type.replace(/_/g, ' ')}</span>
+              <span className={'rd-chip tone-' + (ORCH_TONE[f.status === 'fail' ? 'failed' : f.status === 'warn' ? 'paused' : 'completed'] || 'idle')}>
+                {f.status === 'fail' ? 'Fail' : f.status === 'warn' ? 'Warn' : 'Pass'}
+              </span>
+            </div>
           </div>
-          <div className="orch-find-meta">
-            <span className="rd-chip tone-idle">{f.type.replace(/_/g, ' ')}</span>
-            <span className={'rd-chip tone-' + (ORCH_TONE[f.status === 'fail' ? 'failed' : f.status === 'warn' ? 'paused' : 'completed'] || 'idle')}>
-              {f.status === 'fail' ? 'Fail' : f.status === 'warn' ? 'Warn' : 'Pass'}
-            </span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="page-inner orch">
@@ -1146,8 +1208,20 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
               {I.rotateCw} {rdState.loading ? 'Evaluating…' : 'Re-evaluate'}
             </button>
           </div>
-          {findGroup('Rules-based findings', 'readinessRules · required_item / quality_gate', r.findings.rules)}
-          {findGroup('Validation findings', 'eCTD · CDISC · hyperlink integrity', r.findings.validation)}
+          {findGroup(
+            'Rules-based findings',
+            'readinessRules · required_item / quality_gate',
+            r.findings.rules,
+            r.documentsInventoried > 0,
+            'This evaluation inventoried no documents for the program, so the readiness rules had nothing to examine. That is not a clean rules pass.',
+          )}
+          {findGroup(
+            'Validation findings',
+            'eCTD · CDISC · hyperlink integrity',
+            r.findings.validation,
+            r.documentsValidated > 0,
+            'No document in this program carries a recorded validation result, so no validation finding could be produced. That is not a clean validation pass.',
+          )}
           <div style={{ marginBottom: 18 }}>
             <div className="orch-sec-l">AI-inferred findings <span style={{ color: 'var(--text-500)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>{I.dot} cross-reference · claim-evidence</span></div>
             <div className="orch-run-m" style={{ marginBottom: 6 }}>Not yet available — the readiness engine does not compute an AI-inferred findings class. Cross-document consistency and claim-evidence findings will appear here once that capability ships.</div>

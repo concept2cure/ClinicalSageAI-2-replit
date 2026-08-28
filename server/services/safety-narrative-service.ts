@@ -81,7 +81,9 @@ export interface SafetyNarrative {
 
 export interface SAECaseData {
   caseId: string;
-  patientAge: number;
+  // null = not reported. Never coerce a missing age to 0 — a narrative that
+  // states "a 0-year-old subject" is a fabricated clinical fact.
+  patientAge: number | null;
   patientSex: string;
   relevantMedicalHistory: string[];
   treatmentArm: string;
@@ -90,7 +92,8 @@ export interface SAECaseData {
   eventTerm: string;
   eventDescription: string;
   onsetDate: string;
-  onsetStudyDay: number;
+  // null = not reported. Never coerce a missing onset day to 0 ("Study Day 0").
+  onsetStudyDay: number | null;
   seriousnessCriteria: string[];
   severity: string;
   actionTaken: string;
@@ -549,11 +552,14 @@ Style requirements:
 
     const actionReadable = this.formatActionTaken(saeData.actionTaken);
     const outcomeReadable = this.formatOutcome(saeData.outcome);
+    const ageStr = saeData.patientAge != null ? `${saeData.patientAge}-year-old` : 'age not reported';
+    const onsetDayStr =
+      saeData.onsetStudyDay != null ? `Study Day ${saeData.onsetStudyDay}` : 'study day not reported';
 
     const userPrompt = `Generate an SAE narrative for the following case.
 
 CASE ID: ${saeData.caseId}
-PATIENT: ${saeData.patientAge}-year-old ${saeData.patientSex}
+PATIENT: ${ageStr} ${saeData.patientSex}
 TREATMENT ARM: ${saeData.treatmentArm}
 STUDY DRUG: ${saeData.drugName}, ${saeData.dose}
 RELEVANT MEDICAL HISTORY: ${medHistoryStr}
@@ -561,7 +567,7 @@ CONCOMITANT MEDICATIONS: ${conmedsStr}
 
 EVENT: ${saeData.eventTerm}
 EVENT DESCRIPTION: ${saeData.eventDescription}
-ONSET DATE: ${saeData.onsetDate} (Study Day ${saeData.onsetStudyDay})
+ONSET DATE: ${saeData.onsetDate} (${onsetDayStr})
 SERIOUSNESS CRITERIA: ${seriousnessStr}
 SEVERITY: ${saeData.severity}
 ACTION TAKEN: ${actionReadable}
@@ -623,13 +629,16 @@ Write the complete SAE narrative in regulatory format.`;
 
     const actionReadable = this.formatActionTaken(saeData.actionTaken);
     const outcomeReadable = this.formatOutcome(saeData.outcome);
+    const ageStr = saeData.patientAge != null ? `${saeData.patientAge}-year-old` : 'age not reported';
+    const onsetDayStr =
+      saeData.onsetStudyDay != null ? `Study Day ${saeData.onsetStudyDay}` : 'study day not reported';
 
     const lines = [
       AI_NARRATIVE_WITHHELD_MARKER,
       '',
-      `Case ${saeData.caseId}: ${saeData.patientAge}-year-old ${saeData.patientSex}, treatment arm ${saeData.treatmentArm}, receiving ${saeData.drugName} ${saeData.dose}.`,
+      `Case ${saeData.caseId}: ${ageStr} ${saeData.patientSex}, treatment arm ${saeData.treatmentArm}, receiving ${saeData.drugName} ${saeData.dose}.`,
       `Relevant medical history: ${medHistoryStr}. Concomitant medications: ${conmedsStr}.`,
-      `Event: ${saeData.eventTerm} — ${saeData.eventDescription || 'no description provided'}. Onset: ${saeData.onsetDate} (Study Day ${saeData.onsetStudyDay}).`,
+      `Event: ${saeData.eventTerm} — ${saeData.eventDescription || 'no description provided'}. Onset: ${saeData.onsetDate} (${onsetDayStr}).`,
       `Seriousness criteria: ${saeData.seriousnessCriteria.join(', ') || 'not specified'}. Severity: ${saeData.severity}. Action taken: ${actionReadable}. Causality assessment: ${saeData.causalityAssessment}.`,
       saeData.dechallenge ? `Dechallenge: ${saeData.dechallenge}.` : '',
       saeData.rechallenge ? `Rechallenge: ${saeData.rechallenge}.` : '',

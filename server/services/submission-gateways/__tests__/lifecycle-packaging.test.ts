@@ -118,6 +118,41 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
     }
   });
 
+  it('writes the ICH-required root index-md5.txt = MD5(index.xml) on the canonical packager', async () => {
+    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-rootmd5-'));
+    try {
+      const docPath = path.join(work, 'general.pdf');
+      await fs.writeFile(docPath, pdf('general'));
+      const bundle = await packageEctdSubmission({
+        region: 'fda',
+        applicationId: 'IND000001',
+        sequence: '0000',
+        submissionType: 'IND',
+        sponsorId: 'IND000001',
+        sponsorName: 'Sponsor',
+        productName: 'Product',
+        outputDir: path.join(work, 'out'),
+        environment: 'staging',
+        leaves: [
+          {
+            ctdSection: '3.2.S.1', operation: 'new', sourcePath: docPath, fileName: 'general.pdf',
+            title: 'Drug Substance — General Information', md5: md5(pdf('general')),
+          },
+        ],
+      });
+      const zip = await JSZip.loadAsync(await fs.readFile(bundle.path));
+      const indexXml = await zip.file('index.xml')!.async('string');
+      // Root file present and equal to the bare MD5 of index.xml (FDA eValidator
+      // rejects a sequence whose root index-md5.txt is missing/mismatched).
+      const rootMd5 = await zip.file('index-md5.txt')!.async('string');
+      expect(rootMd5).toBe(createHash('md5').update(indexXml).digest('hex'));
+      // The util/ full-file manifest still ships alongside it.
+      expect(zip.file('util/index-md5.txt')).not.toBeNull();
+    } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  });
+
   it('packages a bytes-less delete (empty sourcePath) without crashing and ships no file for it', async () => {
     const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-lifecycle-del-'));
     try {

@@ -84,6 +84,14 @@ import {
 } from './roundTrip';
 import { FindReplace, getFindState } from './findReplace';
 import { AuthoringImage } from './imageNode';
+import { CrossReference } from './crossReferenceNode';
+import {
+  crossReferenceLookupFor,
+  crossReferenceText,
+  normalizeCrossReferenceDisplay,
+  type CrossReferenceDisplay,
+  type CrossReferenceLookup,
+} from '@shared/authoring/cross-references';
 import { I } from '../icons';
 
 /* ── Public contract ──────────────────────────────────────────── */
@@ -170,6 +178,19 @@ export interface RichSectionEditorProps {
      *  section's HTML will carry. Reject with a reason on refusal. */
     upload: (file: File) => Promise<{ id: string; url: string }>;
   } | null;
+  /**
+   * Cross-references to other sections of the same document.
+   *
+   * The host owns the list because the host owns the document — this component
+   * never fetches one. `sections` is LIVE: renumber or retitle a section and
+   * every reference to it in the canvas re-renders, because a reference stores
+   * the target's id and resolves its text, which is the entire point of the
+   * capability. Omit to hide it; references already in the content still
+   * render, and say plainly that they could not be checked.
+   */
+  crossRefsApi?: {
+    sections: { id: string; code?: string | null; title?: string | null }[];
+  } | null;
   /** Live co-editing over the server's /collab Hocuspocus socket. */
   collab?: {
     /** Server grammar: `authoring:<docUuid>` or `authoring:<docUuid>:<sectionUuid>`. */
@@ -227,6 +248,14 @@ function serializeEditor(
 function jsonDocText(node: JSONContent): string {
   if (node.type === 'text') return node.text ?? '';
   if (node.type === 'hardBreak') return '\n';
+  /* A cross-reference is a leaf: its text is RESOLVED at render time and is not
+     in the parsed content. Without this the fidelity gate would compare the
+     stored `<a data-xref>2.7.4.2</a>` against nothing, call the parse lossy,
+     and drop every section holding a reference into raw source mode — the
+     capability would disable the editor it ships in. The cached label is the
+     right thing to compare here precisely because the gate's question is
+     "did the parse keep what was stored", not "is the cache current". */
+  if (node.type === 'crossReference') return String(node.attrs?.label ?? '');
   const inner = (node.content ?? []).map(jsonDocText).join('');
   return node.type === 'doc' ? inner : inner + '\n';
 }
@@ -318,6 +347,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       track = null,
       commentsApi = null,
       imagesApi = null,
+      crossRefsApi = null,
       collab = null,
     },
     ref,
@@ -375,6 +405,37 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     useEffect(() => {
       onResolveRef.current = track?.onResolve;
     });
+
+    /* ── Cross-reference directory ──
+       The extension set is built once per mount, but the document's sections
+       change WHILE the editor is open — renumbering one is exactly what every
+       reference to it has to survive. So the node reads the directory through
+       a ref on each resolve, and every live reference in the canvas is
+       repainted when the list changes. Nothing about the stored content is
+       touched by a repaint: the reference holds the target's id, and only its
+       displayed text is recomputed. */
+    const crossRefSections = crossRefsApi?.sections ?? null;
+    /* Keyed on the CONTENT of the directory, not the array's identity: the host
+       re-derives its list on every render, and repainting every reference on
+       every keystroke because of that would be a pointless cost. What matters
+       is whether a code or a title actually changed. */
+    const crossRefKey = crossRefSections
+      ? crossRefSections
+          .map((sec) => `${sec.id}\u0000${sec.code ?? ''}\u0000${sec.title ?? ''}`)
+          .join('\u0001')
+      : '';
+    const crossRefLookup = useMemo<CrossReferenceLookup | null>(
+      () => (crossRefSections ? crossReferenceLookupFor(crossRefSections) : null),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [crossRefKey],
+    );
+    const crossRefLookupRef = useRef<CrossReferenceLookup | null>(crossRefLookup);
+    crossRefLookupRef.current = crossRefLookup;
+    /** Live node views to repaint when the directory changes. */
+    const crossRefRepaint = useRef<Set<() => void>>(new Set());
+    useEffect(() => {
+      for (const paint of crossRefRepaint.current) paint();
+    }, [crossRefKey]);
 
     /* ── Live co-editing runtime (one Y.Doc + provider per mount) ── */
     const collabRuntime = useMemo(() => {
@@ -438,6 +499,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         // The schema can hold a figure now; the fidelity gate stops refusing
         // rich mode for content that contains one (see `boot` below).
         AuthoringImage,
+        CrossReference.configure({
+          lookup: () => crossRefLookupRef.current,
+          repaint: crossRefRepaint.current,
+        }),
         TrackChanges.configure({
           enabled: (track?.enabled ?? false) && !readOnly,
           author: track?.author ?? { id: 'unknown', name: 'Unknown author' },
@@ -984,6 +1049,57 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       setLinkOpen(false);
     }, [editor]);
 
+    /* ── Cross-reference bar ──
+       Insert-by-picking, never by typing a number: the writer chooses a
+       SECTION and the editor stores that section's id. There is deliberately no
+       field in which to type "2.7.4.2", because a typed number is the unmanaged
+       text this replaces.
+
+       The list is the host's live directory, so the codes shown are the codes
+       as they stand right now. Choosing a section that has since been removed
+       is refused with the reason on screen rather than inserting a reference
+       that is broken from the moment it is written. */
+    const [xrefOpen, setXrefOpen] = useState(false);
+    const [xrefTarget, setXrefTarget] = useState('');
+    const [xrefDisplay, setXrefDisplay] = useState<CrossReferenceDisplay>('code-title');
+    const [xrefError, setXrefError] = useState<string | null>(null);
+    const xrefSelectRef = useRef<HTMLSelectElement>(null);
+
+    const openXref = useCallback(() => {
+      setXrefError(null);
+      setXrefTarget((t) => t || crossRefSections?.[0]?.id || '');
+      setXrefOpen(true);
+    }, [crossRefSections]);
+
+    useEffect(() => {
+      if (xrefOpen) xrefSelectRef.current?.focus();
+    }, [xrefOpen]);
+
+    const closeXref = useCallback(() => {
+      setXrefOpen(false);
+      editor?.commands.focus();
+    }, [editor]);
+
+    const applyXref = useCallback(() => {
+      if (!editor) return;
+      if (!xrefTarget) {
+        setXrefError('Choose the section to reference.');
+        return;
+      }
+      const inserted = editor
+        .chain()
+        .focus()
+        .insertCrossReference({ target: xrefTarget, display: xrefDisplay })
+        .run();
+      if (!inserted) {
+        setXrefError(
+          'That section is no longer in this document. Nothing was inserted — reopen the list and choose again.',
+        );
+        return;
+      }
+      setXrefOpen(false);
+    }, [editor, xrefTarget, xrefDisplay]);
+
     /* ── Image insertion (ribbon button, paste, drop) ──
        Validation runs client-side for fast refusal and server-side as the
        authority. FAIL CLOSED: a refused or failed upload inserts nothing and
@@ -1184,6 +1300,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             >
               {I.link}
             </RB>
+            {crossRefsApi && (
+              <RB
+                title="Insert a cross-reference to another section"
+                active={xrefOpen}
+                onClick={() => (xrefOpen ? closeXref() : openXref())}
+              >
+                § Ref
+              </RB>
+            )}
             <span className="rse-sep" />
             {/* A CTD dossier is a tabular document — Module 3 most of all. The
                 editor could round-trip and export tables before it could make
@@ -1494,6 +1619,85 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           </div>
         )}
 
+        {/* ── Cross-reference bar ── */}
+        {xrefOpen && crossRefsApi && boot.mode === 'rich' && !readOnly && (
+          <div
+            className="rse-find"
+            role="group"
+            aria-label="Cross-reference"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                closeXref();
+              }
+            }}
+          >
+            <span className="rse-find-label">§ Cross-reference</span>
+            {crossRefSections && crossRefSections.length > 0 ? (
+              <>
+                <select
+                  ref={xrefSelectRef}
+                  className="rse-sel"
+                  style={{ flex: '0 1 320px', height: 24 }}
+                  aria-label="Section to reference"
+                  value={xrefTarget}
+                  onChange={(e) => {
+                    setXrefTarget(e.target.value);
+                    setXrefError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      applyXref();
+                    }
+                  }}
+                >
+                  {crossRefSections.map((sec) => (
+                    <option key={sec.id} value={sec.id}>
+                      {crossReferenceText(sec, 'code-title') || 'Untitled section'}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="rse-sel"
+                  aria-label="How much of the section to show"
+                  value={xrefDisplay}
+                  onChange={(e) =>
+                    setXrefDisplay(normalizeCrossReferenceDisplay(e.target.value))
+                  }
+                >
+                  <option value="code-title">Number and title</option>
+                  <option value="code">Number only</option>
+                </select>
+                <button type="button" className="rse-link" onClick={applyXref}>
+                  Insert
+                </button>
+              </>
+            ) : (
+              /* No sections to reference is a real state, said plainly rather
+                 than shown as an empty picker that looks broken. */
+              <span className="rse-find-note">
+                This document has no other sections to reference yet.
+              </span>
+            )}
+            {xrefError && (
+              <span className="rse-find-err" role="alert">
+                {xrefError}
+              </span>
+            )}
+            <span style={{ flex: 1 }} />
+            <button
+              type="button"
+              className="rse-link"
+              aria-label="Close cross-reference picker"
+              onClick={closeXref}
+            >
+              {I.close}
+            </button>
+          </div>
+        )}
+
         {/* ── Canvas ── */}
         <div className="rse-body" ref={editorHostRef}>
           {boot.mode === 'source' ? (
@@ -1662,6 +1866,11 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         .rse-ins { background:color-mix(in srgb, var(--success,#067647) 14%, transparent); text-decoration:underline; text-decoration-color:var(--success,#067647); }
         .rse-del { background:color-mix(in srgb, var(--error,#b42318) 12%, transparent); text-decoration:line-through; text-decoration-color:var(--error,#b42318); }
         .rse-comment-anchor { background:color-mix(in srgb, var(--accent-100,#2563eb) 14%, transparent); border-bottom:1px dotted var(--accent-100,#2563eb); cursor:pointer; }
+        /* A resolved cross-reference reads as a reference; a broken one reads as
+           broken, in words. Colour is never the only signal — the missing state
+           says what is wrong in full. */
+        .rse-xref { color:var(--accent-100,#2563eb); border-bottom:1px solid color-mix(in srgb, var(--accent-100,#2563eb) 40%, transparent); white-space:nowrap; }
+        .rse-xref[data-missing="1"] { color:var(--error,#b42318); border-bottom:1px dashed var(--error,#b42318); font-style:italic; white-space:normal; }
         .rse-source { width:100%; min-height:320px; resize:vertical; border:none; outline:none; padding:18px 20px; font-size:13px; line-height:1.6; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--text-100,#101828); background:var(--bg-000,#fff); }
         .rse-empty-cta { padding:10px 20px 0; }
         .rse-foot { display:flex; align-items:center; gap:8px; padding:6px 12px; background:var(--bg-000,#fff); border-top:1px solid var(--border,#e4e7ec); font-size:10px; color:var(--text-400,#667085); flex-wrap:wrap; }

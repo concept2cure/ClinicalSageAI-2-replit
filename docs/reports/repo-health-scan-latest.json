@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-28T14:03:33.742Z",
+  "generatedAt": "2026-08-28T14:25:03.812Z",
   "git": {
-    "sha": "99ef62db7498ef5925717f3dcb752d080ca5e700",
+    "sha": "eaf48866ce8831c69319c6bb1cd9bb80257c81f7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2146,7 +2146,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 977675
+        "bytes": 978409
       },
       {
         "file": "shared/schema.ts",
@@ -2166,11 +2166,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 287283
+        "bytes": 288856
       },
       {
         "file": "server/statistics-service.ts",
-        "bytes": 220035
+        "bytes": 221753
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2178,7 +2178,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 199093
+        "bytes": 199967
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2308,7 +2308,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19029
+        "lines": 19041
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2316,11 +2316,11 @@
       },
       {
         "file": "server/statistics-service.ts",
-        "lines": 6893
+        "lines": 6920
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6879
+        "lines": 6908
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2336,7 +2336,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 4496
+        "lines": 4511
       },
       {
         "file": "server/storage.ts",
@@ -2519,6 +2519,10 @@
         "lines": 1888
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 1885
+      },
+      {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
         "lines": 1881
       },
@@ -2601,10 +2605,6 @@
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
         "lines": 1678
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 1676
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",

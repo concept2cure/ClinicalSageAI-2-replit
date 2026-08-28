@@ -35,9 +35,21 @@
  * Ordered and unordered lists are also distinguished here. They were not, so a
  * numbered procedure — the form most test methods and instructions-for-use take
  * — exported as bullets and silently lost its step numbers.
+ *
+ * CROSS-REFERENCES carry the TARGET SECTION'S ID and not its printed number.
+ * The run's `text` is the editor's cache and is not what either renderer
+ * prints: both resolve the id against the document's sections at render time,
+ * so renumbering a section fixes every reference to it without any referring
+ * section's stored content changing. See @shared/authoring/cross-references.
  */
 
 import { parse, HTMLElement, TextNode, Node } from 'node-html-parser';
+import {
+  CROSS_REF_TARGET_ATTR,
+  CROSS_REF_DISPLAY_ATTR,
+  normalizeCrossReferenceDisplay,
+  type CrossReferenceDisplay,
+} from '@shared/authoring/cross-references';
 
 export interface InlineRun {
   text: string;
@@ -71,6 +83,21 @@ export interface InlineRun {
    *  marker a reader sees is derived at render time from position, so notes
    *  renumber themselves when content moves. */
   footnote?: string;
+  /** Present when this run is a CROSS-REFERENCE to another section.
+   *
+   *  `crossRefTarget` is the target section's ID — never its printed number.
+   *  "2.7.4.2" is a rendering of where a section currently sits; storing it is
+   *  precisely the bug this closes, because a renumber then leaves every
+   *  reference silently wrong with no way to find them but by eye.
+   *
+   *  `text` on this run is the editor's CACHED rendering and both renderers
+   *  ignore it: they resolve the target through the export's section directory
+   *  and print what it says now. That is why renumbering a section corrects
+   *  every reference to it without one byte of the referring sections'
+   *  stored content changing. */
+  crossRefTarget?: string;
+  /** How much of the target to print — see CrossReferenceDisplay. */
+  crossRefDisplay?: CrossReferenceDisplay;
 }
 
 export interface TableCell {
@@ -140,6 +167,8 @@ interface InlineState {
   suggestionAuthor?: string;
   suggestionAt?: string;
   footnote?: string;
+  crossRefTarget?: string;
+  crossRefDisplay?: CrossReferenceDisplay;
 }
 
 const BLOCK_TAGS = new Set(['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'tr', 'blockquote', 'pre']);
@@ -158,7 +187,12 @@ function pushRun(runs: InlineRun[], text: string, st: InlineState): void {
     prev.suggestion === st.suggestion &&
     prev.suggestionAuthor === st.suggestionAuthor &&
     prev.suggestionAt === st.suggestionAt &&
-    prev.footnote === st.footnote
+    prev.footnote === st.footnote &&
+    /* Two references to DIFFERENT sections must never merge into one run —
+       the second target would be silently discarded and the filed document
+       would carry one reference where the author wrote two. */
+    prev.crossRefTarget === st.crossRefTarget &&
+    prev.crossRefDisplay === st.crossRefDisplay
   ) {
     prev.text += text;
     return;
@@ -175,6 +209,26 @@ function pushRun(runs: InlineRun[], text: string, st: InlineState): void {
     ...(st.suggestionAuthor ? { suggestionAuthor: st.suggestionAuthor } : {}),
     ...(st.suggestionAt ? { suggestionAt: st.suggestionAt } : {}),
     ...(st.footnote ? { footnote: st.footnote } : {}),
+    ...(st.crossRefTarget ? { crossRefTarget: st.crossRefTarget } : {}),
+    ...(st.crossRefTarget && st.crossRefDisplay ? { crossRefDisplay: st.crossRefDisplay } : {}),
+  });
+}
+
+/**
+ * A cross-reference whose cached text is empty still contributes a run.
+ *
+ * `pushRun` drops empty text, and correctly so for every other run kind. But a
+ * reference's text is RESOLVED at render time — the stored text is only a cache
+ * — so an empty one is a reference the author wrote, not whitespace. Dropping
+ * it here would delete it from the filed document in silence, which is the one
+ * outcome this feature may never produce.
+ */
+function pushEmptyCrossRef(runs: InlineRun[], st: InlineState): void {
+  if (!st.crossRefTarget) return;
+  runs.push({
+    text: '',
+    crossRefTarget: st.crossRefTarget,
+    ...(st.crossRefDisplay ? { crossRefDisplay: st.crossRefDisplay } : {}),
   });
 }
 
@@ -199,6 +253,17 @@ function applyMark(tag: string, st: InlineState, el?: { getAttribute(name: strin
     if (note) next.footnote = note;
   }
   if (tag === 'sub') next.subScript = true;
+  /* An `a` carrying the target attribute is a cross-reference. Any other
+     anchor is an ordinary link and keeps its text unchanged, as before. */
+  if (tag === 'a') {
+    const target = el?.getAttribute(CROSS_REF_TARGET_ATTR);
+    if (target && target.trim()) {
+      next.crossRefTarget = target.trim();
+      next.crossRefDisplay = normalizeCrossReferenceDisplay(
+        el?.getAttribute(CROSS_REF_DISPLAY_ATTR),
+      );
+    }
+  }
   if (tag === 'ins' || tag === 'del') {
     if (tag === 'ins') {
       next.underline = true;
@@ -237,7 +302,12 @@ function inlineRunsOf(node: HTMLElement, st: InlineState): InlineRun[] {
     }
     const isBlock = BLOCK_TAGS.has(tag) || tag === 'ol' || tag === 'ul';
     if (isBlock && runs.length) pushRun(runs, ' ', state);
-    for (const child of n.childNodes) visit(child, applyMark(tag, state, n));
+    const inner = applyMark(tag, state, n);
+    if (tag === 'a' && inner.crossRefTarget && !n.text) {
+      pushEmptyCrossRef(runs, inner);
+      return;
+    }
+    for (const child of n.childNodes) visit(child, inner);
   };
   for (const child of node.childNodes) visit(child, st);
   return trimRuns(runs);
@@ -253,7 +323,8 @@ function trimRuns(runs: InlineRun[]): InlineRun[] {
         '',
       ),
     }))
-    .filter((r) => r.text.length > 0);
+    // A reference is kept whatever its cached text says — see pushEmptyCrossRef.
+    .filter((r) => r.text.length > 0 || Boolean(r.crossRefTarget));
 }
 
 /**
@@ -396,6 +467,11 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
       return;
     }
 
+    if (tag === 'a' && nextState.crossRefTarget && !node.text) {
+      pushEmptyCrossRef(ensureBlock().runs, nextState);
+      return;
+    }
+
     /* A `td`/`th` reaching here is outside any `table` (malformed stored
        markup). Keep the old tab join so its words still survive. */
     if (tag === 'td' || tag === 'th') {
@@ -417,7 +493,16 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
   // every figure here, which is the defect the img branch above closed.
   return blocks
     .map((b) => (b.kind === 'table' || b.kind === 'image' ? b : { ...b, runs: trimRuns(b.runs) }))
-    .filter((b) => b.kind === 'image' || blockRuns(b).some((r) => r.text.trim().length > 0));
+    .filter(
+      (b) =>
+        b.kind === 'image' ||
+        blockRuns(b).some((r) => r.text.trim().length > 0) ||
+        /* A block whose only content is a cross-reference has no text of its
+           own — the reference's text is RESOLVED at render time. Testing it for
+           text here would delete the reference from the filed document, which
+           is the silent-vanish this feature must never do. */
+        blockRuns(b).some((r) => r.crossRefTarget),
+    );
 }
 
 /** Parse a stored section content string into export blocks. */

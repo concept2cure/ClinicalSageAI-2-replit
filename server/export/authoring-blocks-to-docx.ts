@@ -14,6 +14,13 @@
  */
 import type { ContentBlock, InlineRun } from './authoring-section-content.js';
 import type { ResolvedImage } from './authoring-images.js';
+import {
+  crossReferenceBookmarkId,
+  normalizeCrossReferenceDisplay,
+  resolveCrossReference,
+  type CrossReferenceLookup,
+  type CrossReferenceTarget,
+} from '@shared/authoring/cross-references';
 
 /** The slice of the `docx` module namespace this renderer needs. */
 export type DocxNs = typeof import('docx');
@@ -108,6 +115,84 @@ export interface DocxRenderOptions {
    * wrote, and dropping it silently from a filed document is the worse failure.
    */
   footnoteSink?: (noteText: string) => number;
+  /**
+   * Resolves a cross-reference's target section id to what that section is
+   * called NOW, in the document being exported.
+   *
+   * Threaded in for the same reason `footnoteSink` and `revisionDate` are: the
+   * answer belongs to the DOCUMENT, not to one section's runs, and a renderer
+   * that guessed it would be inventing part of a filed record. Absent, a
+   * reference renders as unresolved — it never falls back to the text the
+   * editor cached, because that cached number is precisely what goes stale.
+   */
+  crossRefs?: CrossReferenceLookup | null;
+}
+
+/**
+ * The bookmarks a section heading carries, and that every REF field to it cites.
+ *
+ * TWO bookmarks, side by side and never overlapping: one over the section CODE
+ * and one over its TITLE, with the heading's separator left outside both. That
+ * shape is forced and it is also the right one:
+ *
+ *   - a REF field prints the TEXT ITS BOOKMARK COVERS. A reference that shows
+ *     only the number and a reference that shows number-and-title therefore
+ *     need different bookmarks, or one of the two would silently rewrite itself
+ *     into the other form the first time a reviewer pressed F9 in Word;
+ *   - `docx@9.5.1` cannot nest one `Bookmark` inside another — a nested one
+ *     serializes a stray `<bookmarkUniqueNumericId>` element and DROPS the
+ *     inner children, which was verified against the packed document.xml before
+ *     this shape was chosen. Two adjacent bookmarks and a plain separator run
+ *     between them express exactly the same thing and do serialize.
+ *
+ * A `code-title` reference is then two REF fields with a space between, and
+ * each one prints exactly what this export resolved.
+ */
+export function sectionBookmarkIds(sectionId: string): { code: string; title: string } {
+  const base = crossReferenceBookmarkId(sectionId);
+  return { code: base, title: `Ttl${base}` };
+}
+
+/** The bookmarked pieces of a target, in the order a heading prints them.
+ *  Shared by the heading writer and the reference renderer so a field can
+ *  never cite a bookmark the heading did not write. */
+function targetSegments(
+  target: { id: string; code?: string | null; title?: string | null },
+): { bookmark: string; text: string }[] {
+  const ids = sectionBookmarkIds(String(target.id));
+  const out: { bookmark: string; text: string }[] = [];
+  const code = String(target.code ?? '').trim();
+  const title = String(target.title ?? '').trim();
+  if (code) out.push({ bookmark: ids.code, text: code });
+  if (title) out.push({ bookmark: ids.title, text: title });
+  return out;
+}
+
+/**
+ * The heading paragraph for one section, carrying the bookmarks its
+ * cross-references point at.
+ *
+ * A REF field whose bookmark does not exist renders in Word as "Error!
+ * Reference source not found." — so bookmark and field must come from the SAME
+ * set of sections. They do: the export resolves references against exactly the
+ * sections it writes headings for, so a reference that resolved always has its
+ * anchor, and one that did not resolve emits stated text and no field at all.
+ */
+export function sectionHeadingParagraph(
+  D: DocxNs,
+  section: { id: string; code?: string | null; title?: string | null },
+): InstanceType<DocxNs['Paragraph']> {
+  const segments = targetSegments(section);
+  const children: unknown[] = [];
+  segments.forEach((seg, i) => {
+    // The separator sits OUTSIDE both bookmarks, so neither field prints it.
+    if (i > 0) children.push(new D.TextRun(' - '));
+    children.push(new D.Bookmark({ id: seg.bookmark, children: [new D.TextRun(seg.text)] }));
+  });
+  return new D.Paragraph({
+    heading: D.HeadingLevel.HEADING_1,
+    children: children as never,
+  });
 }
 
 /** Word requires a unique id per revision within the document. */
@@ -123,8 +208,12 @@ function runsOf(
   revisionId: () => number = makeRevisionIds(),
   revisionDate = '1970-01-01T00:00:00Z',
   footnoteSink?: (noteText: string) => number,
+  crossRefs?: CrossReferenceLookup | null,
 ) {
-  return runs.map((r) => {
+  /* flatMap, not map: a cross-reference showing number AND title is two REF
+     fields with a separator between them, because each field prints the text of
+     the bookmark it cites. Every other run kind still yields exactly one. */
+  return runs.flatMap((r) => {
     const props = {
       text: r.text,
       bold: r.bold || forceBold || undefined,
@@ -134,6 +223,35 @@ function runsOf(
       superScript: r.superScript,
       subScript: r.subScript,
     };
+    /* A CROSS-REFERENCE becomes REAL Word REF fields citing the target
+       section's heading bookmarks, each carrying the text THIS export resolved
+       as its cached result. So the reviewer sees what the platform resolved,
+       clicking it jumps to the section (\h makes the field a hyperlink), and
+       updating fields in Word re-reads the live bookmark. The one thing it is
+       never built from is the number the editor cached — that stale value is
+       what this feature exists to remove.
+
+       A reference whose target is not in this export gets no field at all: a
+       REF to a bookmark that was never written renders in Word as that program's
+       own error string, and a filed document must state the problem in words a
+       reviewer can read. */
+    if (r.crossRefTarget) {
+      const display = normalizeCrossReferenceDisplay(r.crossRefDisplay);
+      const ref = resolveCrossReference(r.crossRefTarget, display, crossRefs);
+      if (!ref.found) {
+        return [new D.TextRun({ text: ref.text, italics: true, color: 'B42318' })];
+      }
+      const segments = targetSegments(ref.target as CrossReferenceTarget);
+      // `code` prints the first segment only — the code, or the title when the
+      // section has no code (which is what crossReferenceText resolves to).
+      const wanted = display === 'code' ? segments.slice(0, 1) : segments;
+      const out: unknown[] = [];
+      wanted.forEach((seg, i) => {
+        if (i > 0) out.push(new D.TextRun(' '));
+        out.push(new D.SimpleField(` REF ${seg.bookmark} \\h `, seg.text));
+      });
+      return out as never[];
+    }
     /* A real Word footnote reference — the auto-numbered superscript a reader
        can click, that Word renumbers when content moves and that carries the
        note to the bottom of the page. Emitted before the tracked-change branch
@@ -187,6 +305,7 @@ function tableOf(
   revisionId: () => number,
   revisionDate: string,
   footnoteSink?: (noteText: string) => number,
+  crossRefs?: CrossReferenceLookup | null,
 ) {
   const border = { style: D.BorderStyle.SINGLE, size: 4, color: 'BFBFBF' };
   const rows = (block.rows ?? []).map(
@@ -202,7 +321,7 @@ function tableOf(
                 ? { type: D.ShadingType.CLEAR, fill: 'F2F4F5', color: 'auto' }
                 : undefined,
               borders: { top: border, bottom: border, left: border, right: border },
-              children: [new D.Paragraph({ children: runsOf(D, cell.runs, Boolean(cell.header), revisionId, revisionDate, footnoteSink) })],
+              children: [new D.Paragraph({ children: runsOf(D, cell.runs, Boolean(cell.header), revisionId, revisionDate, footnoteSink, crossRefs) })],
             })
         ),
       })
@@ -231,6 +350,7 @@ export function blocksToDocx(
   const revisionId = makeRevisionIds();
   const revisionDate = opts.revisionDate ?? '1970-01-01T00:00:00Z';
   const footnoteSink = opts.footnoteSink;
+  const crossRefs = opts.crossRefs ?? null;
   const out: (InstanceType<DocxNs['Paragraph']> | InstanceType<DocxNs['Table']>)[] = [];
   for (const block of blocks) {
     if (block.kind === 'image') {
@@ -277,7 +397,7 @@ export function blocksToDocx(
       continue;
     }
     if (block.kind === 'table') {
-      out.push(tableOf(D, block, revisionId, revisionDate, footnoteSink));
+      out.push(tableOf(D, block, revisionId, revisionDate, footnoteSink, crossRefs));
       if (block.caption) {
         out.push(
           new D.Paragraph({
@@ -299,7 +419,7 @@ export function blocksToDocx(
             ? { numbering: { reference: ORDERED_LIST_REFERENCE, level: 0 } }
             : { bullet: { level: 0 } }
           : {}),
-        children: runsOf(D, block.runs, false, revisionId, revisionDate, footnoteSink),
+        children: runsOf(D, block.runs, false, revisionId, revisionDate, footnoteSink, crossRefs),
       })
     );
   }
