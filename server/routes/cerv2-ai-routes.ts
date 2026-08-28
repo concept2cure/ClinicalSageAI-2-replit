@@ -608,7 +608,7 @@ const enhancedMockContent: Record<string, Record<string, (ctx: any) => string>> 
         `The device meets all applicable requirements of IEC 60601-1:2005+A1:2012 and IEC 60601-1-2:2014 (EMC). Leakage currents and dielectric strength are within specified limits.`,
         ``,
         `### Software Verification & Validation (IEC 62304)`,
-        `Software lifecycle processes comply with IEC 62304:2006+A1:2015. Unit, integration, and system testing achieved ≥95% code coverage with zero critical defects.`,
+        `Software lifecycle processes comply with IEC 62304:2006+A1:2015. Unit, integration, and system testing achieved [CODE COVERAGE]% code coverage with [DEFECT COUNT] critical defects noted.`,
         ``,
         `### Performance Specifications`,
         `Quantitative performance testing confirms ${ctx.deviceName || 'the device'} meets or exceeds all design input specifications under normal and fault conditions.`,
@@ -627,22 +627,22 @@ const enhancedMockContent: Record<string, Record<string, (ctx: any) => string>> 
         `A prospective, randomized, double-blind, controlled, multi-center pivotal trial was conducted to evaluate the safety and effectiveness of ${ctx.deviceName || '[DEVICE NAME]'}.`,
         ``,
         `### Enrollment`,
-        `A total of 300 subjects were enrolled at 15 investigational sites. The Intent-to-Treat (ITT) population comprised 285 subjects and the Per-Protocol (PP) population comprised 270 subjects.`,
+        `A total of [SUBJECT COUNT] subjects were enrolled at [SITE COUNT] investigational sites. The Intent-to-Treat (ITT) population comprised [ITT COUNT] subjects and the Per-Protocol (PP) population comprised [PP COUNT] subjects.`,
         ``,
         `### Primary Endpoint`,
-        `The primary effectiveness endpoint was met with a responder rate of 78.5% in the active group vs. 42.3% in the control group (p < 0.001). The pre-specified performance goal of 60% was exceeded.`,
+        `The primary effectiveness endpoint status is [ENDPOINT STATUS] with a responder rate of [RESPONDER RATE]% in the active group vs. [CONTROL RATE]% in the control group ([P-VALUE]). The pre-specified performance goal of [PERFORMANCE GOAL]% was [GOAL RESULT].`,
         ``,
         `### Safety`,
-        `The overall adverse event rate was 12.8% (active) vs. 11.5% (control), with no statistically significant difference between groups. No unanticipated adverse device effects (UADEs) were reported.`,
+        `The overall adverse event rate was [AE RATE]% (active) vs. [CONTROL AE RATE]% (control) ([AE P-VALUE]). [UADE SUMMARY].`,
       ].join('\n'),
 
     risk: ctx =>
       [
         `## Benefit-Risk Determination`,
         ``,
-        `The probable benefits of ${ctx.deviceName || '[DEVICE NAME]'} include clinically meaningful improvement in primary efficacy outcomes, demonstrated by a statistically significant difference from control (p < 0.001). The benefit is durable through the 12-month follow-up period.`,
+        `The probable benefits of ${ctx.deviceName || '[DEVICE NAME]'} include clinically meaningful improvement in primary efficacy outcomes, demonstrated by [STATISTICAL SIGNIFICANCE] from control ([P-VALUE]). The benefit is durable through the [FOLLOW-UP PERIOD] follow-up period.`,
         ``,
-        `Probable risks include device-related adverse events occurring at a rate consistent with the predicate/comparator (12.8% vs. 11.5%). All risks are mitigatable through proper patient selection, labeling, and post-market surveillance.`,
+        `Probable risks include device-related adverse events occurring at a rate of [AE RATE]% vs. [CONTROL AE RATE]% for the predicate/comparator. All risks are mitigatable through proper patient selection, labeling, and post-market surveillance.`,
         ``,
         `**Determination:** The probable benefits to health from use of ${ctx.deviceName || '[DEVICE NAME]'} outweigh its probable risks when used as intended, providing a reasonable assurance of safety and effectiveness.`,
       ].join('\n'),
@@ -655,14 +655,14 @@ const enhancedMockContent: Record<string, Record<string, (ctx: any) => string>> 
         ``,
         `### Clinical Benefits`,
         `The clinical evaluation demonstrates that ${ctx.deviceName || '[DEVICE NAME]'} provides the following clinical benefits:`,
-        `- Reduction in procedure time by approximately 30% vs. standard of care`,
-        `- Improvement in primary clinical outcome measure (effect size: 0.65, 95% CI: 0.42–0.88)`,
-        `- Enhanced patient quality of life scores at 6 and 12 months post-intervention`,
+        `- Reduction in procedure time by approximately [PROCEDURE TIME REDUCTION]% vs. standard of care`,
+        `- Improvement in primary clinical outcome measure (effect size: [EFFECT SIZE], 95% CI: [CONFIDENCE INTERVAL])`,
+        `- Enhanced patient quality of life scores at [FOLLOW-UP TIMEPOINTS] post-intervention`,
         ``,
         `### Residual Risks`,
         `After implementation of risk controls per ISO 14971:2019, the following residual risks remain:`,
-        `- Minor procedural complications: 3.2% (comparable to State of the Art)`,
-        `- Device-related adverse events: 1.8% (below the threshold established in MEDDEV 2.7/1 rev. 4)`,
+        `- Minor procedural complications: [COMPLICATION RATE]% (comparable to state of the art)`,
+        `- Device-related adverse events: [AE RATE]% (relative to the threshold established in MEDDEV 2.7/1 rev. 4)`,
         ``,
         `### Conclusion`,
         `The benefit-risk ratio is favorable. The demonstrated clinical benefits significantly outweigh the residual risks, supporting conformity with the General Safety and Performance Requirements of MDR 2017/745 Annex I.`,
@@ -694,7 +694,7 @@ const enhancedMockContent: Record<string, Record<string, (ctx: any) => string>> 
         `### Current Clinical Knowledge`,
         `The current state of the art for devices in this therapeutic area is characterized by:`,
         `- Established clinical pathways with well-documented outcomes`,
-        `- Multiple device options from various manufacturers with at least 5 years of market history`,
+        `- Multiple device options from various manufacturers with [MARKET HISTORY YEARS]+ years of market history`,
         `- Published consensus standards and clinical guidelines (e.g., ESC, AHA, NICE)`,
         ``,
         `### Available Alternatives`,
@@ -983,5 +983,15 @@ router.get('/health', (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// ── Exposed for tests only ───────────────────────────────────────────────────
+// The AI-unavailable fallback content and the completeness gate that must
+// flag it as incomplete are exercised directly by tests, without needing a
+// live AI gateway, RAG service, or authenticated request/response cycle.
+export const __testInternals = {
+  enhancedMockContent,
+  validateSectionServer,
+  PLACEHOLDER_REGEX,
+};
 
 export default router;

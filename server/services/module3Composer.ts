@@ -120,6 +120,65 @@ function valArr(sources: CanonicalSource[], field: string): any[] {
   return [];
 }
 
+/**
+ * Deterministic stability outcome read from the matched stability source(s).
+ *
+ * A CMC filing must never assert "the substance/product is stable" unless the
+ * recorded results establish it. This inspects the result-bearing fields of the
+ * stability payload(s) and returns one of:
+ *
+ *   - `'concern'` — a negative signal is present (OOS, degradation, failure,
+ *                   out-of-specification). The stability conclusion must be
+ *                   deferred and the concern surfaced.
+ *   - `'pass'`    — result data is present, carries a clear in-spec / pass
+ *                   signal, and carries NO negative signal. Stability may be
+ *                   asserted for the reported time points.
+ *   - `'defer'`   — no result data, or data with neither a clear pass nor a
+ *                   clear fail signal (e.g. ongoing). Defer the conclusion.
+ *
+ * When in doubt this returns `'defer'`: a passing stability conclusion is only
+ * ever emitted on an explicit, unambiguous positive signal.
+ */
+type StabilityOutcome = 'pass' | 'concern' | 'defer';
+
+function readStabilitySignal(stabilitySources: CanonicalSource[]): StabilityOutcome {
+  const NEG = /\b(oos|out[\s-]?of[\s-]?spec(?:ification)?|fail(?:ed|ing|ure)?|degrad\w*|non[\s-]?conform\w*|does not (?:meet|conform)|not within|exceed\w*|reject\w*|unstable)\b/i;
+  const POS = /\b(pass(?:ed|ing)?|meets?|within (?:the )?(?:spec(?:ification)?|acceptance|limits?|criteria)|conform\w*|compl(?:ies|iant|y)|no significant change|satisfactory|in[\s-]?spec(?:ification)?)\b/i;
+
+  const texts: string[] = [];
+  const collect = (v: unknown, depth = 0): void => {
+    if (v === undefined || v === null || depth > 5) return;
+    if (typeof v === 'string') { if (v.trim()) texts.push(v); return; }
+    if (typeof v === 'number' || typeof v === 'boolean') { texts.push(String(v)); return; }
+    if (Array.isArray(v)) { for (const item of v) collect(item, depth + 1); return; }
+    if (typeof v === 'object') {
+      for (const inner of Object.values(v as Record<string, unknown>)) collect(inner, depth + 1);
+    }
+  };
+
+  let sawResult = false;
+  const RESULT_KEYS = [
+    'status', 'conclusion', 'overallResult', 'stabilityConclusion',
+    'result', 'results', 'stabilityParameters', 'stabilityData', 'stability_data',
+  ];
+  for (const s of stabilitySources) {
+    const payload = s.sourcePayload || {};
+    for (const key of RESULT_KEYS) {
+      const v = payload[key];
+      if (v !== undefined && v !== null && v !== '') {
+        sawResult = true;
+        collect(v);
+      }
+    }
+  }
+
+  if (!sawResult) return 'defer';
+  const joined = texts.join(' | ');
+  if (NEG.test(joined)) return 'concern';
+  if (POS.test(joined)) return 'pass';
+  return 'defer';
+}
+
 function kvTable(title: string, data: Record<string, any>): GeneratedTable {
   return {
     title,
@@ -222,7 +281,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         headers: ['Quality Attribute', 'Test Method', 'Acceptance Criteria', 'Validation Status'],
         rows: Object.entries(criteria).map(([test, crit]) => [
           test,
-          methodName || 'Per monograph',
+          methodName || 'Not specified',
           String(crit),
           status || 'Pending',
         ]),
@@ -323,11 +382,22 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         }),
       });
     }
+    // Do NOT assert a passing stability conclusion the data does not establish.
+    // Read a deterministic pass/concern signal from the matched stability
+    // source(s); assert stability only on a clear positive signal, flag a clear
+    // negative one, and otherwise defer to review of the summarized data.
+    const signal = readStabilitySignal(m);
+    const conclusion =
+      signal === 'pass'
+        ? `The stability results summarized above remain within the acceptance criteria at the reported time points, supporting stability of the drug substance under the proposed storage conditions.`
+        : signal === 'concern'
+        ? `The stability results summarized above include out-of-specification or degradation findings; the stability conclusion and proposed storage period are not established by this section and are subject to review of these data.`
+        : `The stability conclusion and proposed storage period are subject to review of the stability results summarized above and are not asserted in this section.`;
     return {
       narrative: `Stability studies for the drug substance were conducted under ${condition || '[condition not specified]'} ` +
         (timePoints.length > 0 ? `at time points: ${timePoints.join(', ')} months. ` : '. ') +
         (batchesStudied.length > 0 ? `${batchesStudied.length} batch(es) were placed on stability. ` : '') +
-        `Results demonstrate that the drug substance is stable under the proposed storage conditions.`,
+        conclusion,
       tables,
     };
   },
@@ -529,7 +599,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
           if (typeof t === 'object' && t !== null) {
             return [
               t.attribute || t.test || 'Unknown',
-              t.method || method || 'Per monograph',
+              t.method || method || 'Not specified',
               t.releaseCriteria || t.release || '—',
               t.shelfLifeCriteria || t.shelfLife || '—',
             ];
@@ -624,6 +694,13 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const comp = val(m, 'comparabilityStatus');
     const condition = val(m, 'storageCondition');
     const timePoints = valArr(m, 'timePoints');
+    // 3.2.P.8 requiredSourceTypes is ['stability','comparability'], so this
+    // section fires when ONLY a comparability source is present (no stability
+    // study). Claim stability studies / a shelf life only when a stability
+    // source is actually present; otherwise report comparability alone.
+    const stabilitySources = m.filter((s) => s.sourceType === 'stability');
+    const hasStability = stabilitySources.length > 0;
+    const hasComparability = m.some((s) => s.sourceType === 'comparability');
     const tables: GeneratedTable[] = [];
     tables.push({
       title: 'Stability Summary — Drug Product',
@@ -635,10 +712,29 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         ...(timePoints.length > 0 ? [['Time Points (months)', timePoints.join(', ')]] : []),
       ],
     });
+    let narrative = '';
+    if (hasStability) {
+      narrative += `Stability studies for the drug product were conducted under ${condition || '[condition not specified]'}` +
+        (timePoints.length > 0 ? ` at time points: ${timePoints.join(', ')} months` : '') + `. `;
+      narrative += shelf
+        ? `A shelf life of ${shelf} is proposed, subject to review of the stability data summarized above. `
+        : `The proposed shelf life is subject to review of the stability data summarized above. `;
+      const signal = readStabilitySignal(stabilitySources);
+      narrative += signal === 'pass'
+        ? `The stability results summarized above remain within the acceptance criteria at the reported time points, supporting stability of the drug product under the proposed storage conditions. `
+        : signal === 'concern'
+        ? `The stability results summarized above include out-of-specification or degradation findings; the stability conclusion is not established by this section and is subject to review of these data. `
+        : `The stability conclusion is subject to review of the stability results summarized above and is not asserted in this section. `;
+    } else {
+      narrative += `No drug product stability study is present in this section; a shelf life and the stability of the drug product are not established here. `;
+    }
+    if (hasComparability) {
+      narrative += comp
+        ? `Comparability assessment status: ${comp}. `
+        : `A comparability assessment is included; its status is not specified. `;
+    }
     return {
-      narrative: `Stability studies support a shelf life of ${shelf || '[not specified]'} for the drug product. ` +
-        (comp ? `Comparability assessment status: ${comp}. ` : '') +
-        `The drug product is stable under the proposed storage conditions.`,
+      narrative: narrative.trim(),
       tables,
     };
   },
