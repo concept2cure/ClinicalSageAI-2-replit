@@ -3,14 +3,15 @@ import { assembleDeviceSubmission } from '../assemble-device-submission';
 import type { EstarInputLeaf } from '../../estar/estar-mapper';
 
 // Leaves that satisfy every REQUIRED 510(k) eSTAR section (per estar-mapper).
+// All finalized/substantive content.
 const complete510kLeaves: EstarInputLeaf[] = [
-  { sectionCode: '1', title: 'Cover letter' },
-  { sectionCode: '2', title: 'Indications for use' },
-  { sectionCode: '3', title: 'Device description' },
-  { sectionCode: '4', title: 'Proposed labeling and instructions for use' },
-  { sectionCode: '5', title: 'Biocompatibility evaluation' },
-  { sectionCode: '6', title: 'Performance testing — bench' },
-  { sectionCode: '7', title: 'Substantial equivalence comparison to predicate' },
+  { sectionCode: '1', title: 'Cover letter', substantive: true },
+  { sectionCode: '2', title: 'Indications for use', substantive: true },
+  { sectionCode: '3', title: 'Device description', substantive: true },
+  { sectionCode: '4', title: 'Proposed labeling and instructions for use', substantive: true },
+  { sectionCode: '5', title: 'Biocompatibility evaluation', substantive: true },
+  { sectionCode: '6', title: 'Performance testing — bench', substantive: true },
+  { sectionCode: '7', title: 'Substantial equivalence comparison to predicate', substantive: true },
 ];
 
 const TEMPLATE_510K_DEVICE = 'eSTAR-510k-non-ivd.pdf';
@@ -50,7 +51,7 @@ describe('assembleDeviceSubmission (B5)', () => {
     const r = assembleDeviceSubmission({
       pathway: '510k',
       variant: 'device',
-      leaves: [{ sectionCode: '1', title: 'Cover letter' }],
+      leaves: [{ sectionCode: '1', title: 'Cover letter', substantive: true }],
       presentTemplates: [TEMPLATE_510K_DEVICE],
       environment: 'production',
       requireTemplate: true,

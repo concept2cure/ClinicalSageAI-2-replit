@@ -61,16 +61,44 @@
 -- ::uuid, <col>) OR <col> IS NULL`). Two properties matter and are why this shape
 -- is used verbatim rather than the stricter identity.can_access_org() form:
 --
---   1. NON-BREAKING FOR CONTEXT-LESS READS. Most of these subsystems query on the
---      RAW pool and never run set_config('app.current_org_id', …); their isolation
---      today is the explicit `WHERE <col> = $caller_org` in the service code. When
---      no context is set, COALESCE(NULL, <col>) = <col> is TRUE for every row, so
---      the policy does NOT filter — the background/service reads that never set a
---      GUC keep working. A strict `<col> = current_setting(...)::uuid` policy would
---      filter those to zero rows and break the subsystem (the exact failure that
---      broke api-key auth in C-44). This policy is therefore defense-in-depth for
---      any SCOPED reader, layered over the app-level WHERE, never a replacement
---      that assumes a context these services do not set.
+--   1. NON-BREAKING FOR CONTEXT-LESS READS — but NOT via a COALESCE fallback.
+--      REVISED 2026-08-28. This emitted
+--         `<col> = COALESCE(substring(current_setting(...))::uuid, <col>)`
+--      so that an unset GUC made the predicate `<col> = <col>`, TRUE for every
+--      row, and the background/service reads that never set a GUC kept working.
+--      The cost was not theoretical. Measured on this schema as the
+--      non-superuser app_service role with app.rls_enforce=on, two rows under
+--      different org_ids in cortex.knowledge_gaps:
+--
+--          app.current_org_id unset  -> BOTH tenants' rows
+--          app.current_org_id = '42' -> BOTH tenants' rows
+--          app.current_org_id = <A>  -> tenant A only
+--
+--      Both failing inputs are reachable: establishRequestTenantScope writes the
+--      GUC as `orgUuid ?? ''`, and '42' is exactly what an INTEGER org id looks
+--      like arriving at a UUID-keyed schema. A tenant predicate whose failure
+--      mode is "return everything" is not defense-in-depth; it is a policy that
+--      cannot fail closed no matter what goes wrong above it.
+--
+--      The non-breaking property is kept, but taken from the SAME switch the 793
+--      public-schema policies already use — the app.rls_enforce shadow clause:
+--
+--          (NULLIF(current_setting('app.rls_enforce', true), '') IS DISTINCT FROM 'on')
+--          OR <col> = substring(current_setting('app.current_org_id', true) from '<uuid>')::uuid
+--          OR <col> IS NULL
+--
+--      With enforcement OFF the policy does not filter, so an unscoped
+--      raw-pool reader behaves exactly as before. With enforcement ON it
+--      filters strictly — and an unscoped connection never reaches SQL anyway,
+--      because poolInstrumentation fails closed on a connection with no tenant
+--      scope under RLS_ENFORCE=on (that guard is what surfaced, and blocked,
+--      the unscoped sentinel/feature-toggle/template-seed jobs). So the
+--      fallback was buying no availability in the posture that matters; it was
+--      only widening reads.
+--
+--      This does NOT reopen C-44. That break was api_key lookups running
+--      PRE-AUTH, before any scope can exist; those tables are on the RLS
+--      allowlist and are not policied by this sweep at all.
 --   2. SHARED NULL-OWNER ROWS STAY VISIBLE. `<col> IS NULL` is always allowed, so
 --      federation-wide signals (federated_ml.safety_signals, org_id NULL by design)
 --      remain readable by every participant.
@@ -173,16 +201,18 @@ BEGIN
         CREATE POLICY tenant_isolation_policy ON %I.%I
           FOR ALL
           USING (
-            %I = COALESCE(substring(current_setting('app.current_org_id', TRUE) from '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')::uuid, %I)
+            (NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on')
+            OR %I = substring(current_setting('app.current_org_id', TRUE) from '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')::uuid
             OR %I IS NULL
           )
           WITH CHECK (
-            %I = COALESCE(substring(current_setting('app.current_org_id', TRUE) from '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')::uuid, %I)
+            (NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on')
+            OR %I = substring(current_setting('app.current_org_id', TRUE) from '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')::uuid
             OR %I IS NULL
           )
       $pol$, rec.sch, rec.tbl,
-             rec.col, rec.col, rec.col,
-             rec.col, rec.col, rec.col);
+             rec.col, rec.col,
+             rec.col, rec.col);
       applied_count := applied_count + 1;
       RAISE NOTICE '[uuid-rls] policied %.% on %', rec.sch, rec.tbl, rec.col;
     END IF;
