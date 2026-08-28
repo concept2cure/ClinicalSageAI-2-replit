@@ -1,3 +1,25 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Let core.get_program_org_id resolve the canonical program registry so
+--          vault.documents RLS policies can authorize the runtime role on a
+--          fresh install.
+--
+-- eCTD/CTD Context:
+--   - Module(s): cross-cutting (vault document store backing all modules)
+--   - Integrity Risk Addressed: tenant isolation — vault RLS denied every
+--     runtime-role write because ownership resolved only from empty GCC tables
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Function replacement only; no table shape changes, no spec version bump.
+--
+-- Notes:
+--   - RLS policies must enforce program_id isolation where applicable.
+--   - CREATE OR REPLACE FUNCTION is idempotent by construction.
+-- =============================================================================
+--
 -- Program→org resolution must see the canonical program registry.
 --
 -- core.get_program_org_id() resolved ownership from core.programs and
