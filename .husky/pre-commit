@@ -7,6 +7,40 @@
 
 echo "🔍 Running pre-commit checks..."
 
+# ============================================
+# CONFLICT MARKERS — refuse, do not warn
+# ============================================
+# On 2026-08-24 an unresolved merge was committed to concept2cure-v2: four
+# files, fourteen `<<<<<<< HEAD` hunks, in shellProject.ts, Projects.tsx,
+# CmcModule.tsx and a test — plus one file "resolved" by concatenating BOTH
+# sides, which redeclared a const and broke the typecheck a different way.
+# The branch that ships did not compile.
+#
+# Nothing caught it, because nothing looked. Anchored to the line start so a
+# string or comment that merely contains the characters is not a false
+# positive, and only over the files being committed.
+CONFLICTED=$(git diff --cached --name-only --diff-filter=ACM | while read -r f; do
+  [ -f "$f" ] || continue
+  case "$f" in
+    *.md|*.mdx) continue ;;   # documentation legitimately shows merge output
+  esac
+  if git show ":$f" 2>/dev/null | grep -qE '^(<{7}|={7}|>{7})( |$)'; then echo "$f"; fi
+done)
+
+if [ -n "$CONFLICTED" ]; then
+  echo ""
+  echo "🚫 ERROR: unresolved merge conflict markers in staged files:"
+  echo "$CONFLICTED" | sed 's/^/    /'
+  echo ""
+  echo "Resolve the conflict — pick a side or merge the two — and remove the"
+  echo "<<<<<<< / ======= / >>>>>>> lines before committing."
+  echo "Keeping BOTH sides is not a resolution either; it is how a duplicated"
+  echo "declaration got onto concept2cure-v2 the same day."
+  echo ""
+  exit 1
+fi
+
+
 # Check for console.log in staged files (excluding tests, deprecated, and config files)
 CONSOLE_LOGS=$(git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' | grep -v '_deprecated' | grep -v '\.test\.' | grep -v '__tests__' | grep -v '\.config\.' | grep -v 'eslintrc' | xargs grep -l 'console\.log' 2>/dev/null || true)
 

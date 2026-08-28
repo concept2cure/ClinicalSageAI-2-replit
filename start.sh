@@ -9,26 +9,26 @@ echo "=== Concept2Cure.RI AI Startup ==="
 
 # 1. Start PostgreSQL if not running
 echo "[1/3] Starting PostgreSQL..."
-if ! pg_ctlcluster 15 main status 2>/dev/null | grep -q "server is running"; then
-  pg_ctlcluster 15 main start
+if ! pg_ctlcluster 16 main status 2>/dev/null | grep -q "server is running"; then
+  pg_ctlcluster 16 main start
   sleep 3
 fi
 echo "  ✅ PostgreSQL running"
 
 # 2. Verify DB connection
 echo "[2/3] Checking database..."
-if ! PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c '\q' trialsage 2>/dev/null; then
+if ! PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c '\q' concept2cure-ri 2>/dev/null; then
   echo "  ⚠️  DB not responding — waiting 5s..."
   sleep 5
 fi
-echo "  ✅ Database: trialsage"
+echo "  ✅ Database: concept2cure-ri"
 
 # 3. Start app server
 echo "[3/3] Starting app server on port 5000..."
 pkill -f "tsx server/index.ts" 2>/dev/null || true
 sleep 1
 
-export DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/trialsage?sslmode=disable"
+export DATABASE_URL="${DATABASE_URL:-postgresql://postgres:postgres@127.0.0.1:5432/concept2cure-ri?sslmode=disable}"
 export SKIP_DB_STARTUP_TEST=true
 export NODE_ENV=development
 export PORT=5000
@@ -63,7 +63,7 @@ done
 echo ""
 echo "=== Ready ==="
 echo "  URL:      http://localhost:5000"
-echo "  Login:    jm.smith@concept2cure.pro"
+echo "  Login:    jonmichaelpsmith@gmail.com"
 echo "  Password: demo123"
 echo ""
 echo "  Logs: tail -f /tmp/app.log"

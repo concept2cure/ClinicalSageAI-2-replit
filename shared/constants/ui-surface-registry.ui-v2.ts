@@ -841,7 +841,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // Was 'kit-only', which Coverage renders to customers as "Design prototype
+    // exists; backend binding map being assembled". Untrue: BiopharmaSpecialty.tsx binds 12 live reads/writes
+    // against audited routes. sharedContract is still null, so this stops at
+    // routes-ready rather than contract-ready.
+    readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'FDA §505B PREA / iPSP and EMA PIP: plans, deferrals, waivers, extrapolation rationale and PREA milestones.',
   },
@@ -857,7 +861,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // Was 'kit-only', which Coverage renders to customers as "Design prototype
+    // exists; backend binding map being assembled". Untrue: BiopharmaSpecialty.tsx binds 12 live reads/writes
+    // against audited routes. sharedContract is still null, so this stops at
+    // routes-ready rather than contract-ready.
+    readiness: 'routes-ready',
     compliance: [A11Y, TONE],
     notes: 'Orphan-drug / rare-disease designations across FDA/EMA/PMDA, RPD priority-review vouchers & grants, and patient-advocacy engagement.',
   },
@@ -873,7 +881,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     anaToolFamilies: ['assess_change_impact'],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // Was 'kit-only', which Coverage renders to customers as "Design prototype
+    // exists; backend binding map being assembled". Untrue: BiopharmaSpecialty.tsx binds 12 live reads/writes
+    // against audited routes. sharedContract is still null, so this stops at
+    // routes-ready rather than contract-ready.
+    readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'Post-approval: supplements/variations (sBLA, Type II/IB, CBE-30), CMC change control classified against ICH Q12, and renewal cycles (PADER, 5-year, re-examination).',
   },
@@ -889,7 +901,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     anaToolFamilies: ['assess_site_risk'],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // Was 'kit-only', which Coverage renders to customers as "Design prototype
+    // exists; backend binding map being assembled". Untrue: ClinicalOps.tsx binds 5 live reads/writes
+    // against audited routes. sharedContract is still null, so this stops at
+    // routes-ready rather than contract-ready.
+    readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'Clinical-development operations: studies & enrollment, study sites with RBM risk linkage, DSMB / interim reviews, and protocol deviations with CAPA. Structured data entry for sites and deviations.',
   },
@@ -905,7 +921,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     anaToolFamilies: ['get_nonclinical_template', 'calculate_ttc'],
     sharedContract: null,
     discoveryCatalog: null,
-    readiness: 'kit-only',
+    // Was 'kit-only', which Coverage renders to customers as "Design prototype
+    // exists; backend binding map being assembled". Untrue: Nonclinical.tsx binds 7 live reads/writes
+    // against audited routes. sharedContract is still null, so this stops at
+    // routes-ready rather than contract-ready.
+    readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'IND-enabling & CTD Module 4: GLP study registry with finding classification and SEND status, SEND 12-domain conformance, the Module 2.6 written/tabulated summary builder, and Module 4 placement. Structured data entry for studies.',
   },

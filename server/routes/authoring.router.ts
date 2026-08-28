@@ -34,6 +34,7 @@ import {
   sha256Hex,
   verifyLedger,
   type RevisionOrigin,
+  machineContributors,
 } from '../services/authoring/revision-ledger';
 import {
   checkSectionWritable,
@@ -43,6 +44,7 @@ import {
 const logger = createScopedLogger('authoring-router');
 
 const router = Router();
+
 
 // REQUIRED JWT verification middleware for 21 CFR Part 11 compliance.
 //
@@ -988,25 +990,6 @@ const resolveSignerName = async (email: string): Promise<string | null> => {
 };
 
 // Helper to create or update user PIN
-const createUserPin = async (email: string, pin: string, tenantId: number): Promise<boolean> => {
-  try {
-    const pinHash = await bcrypt.hash(pin, 10);
-    const pinExpiry = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // 90 days
-
-    await pool.query(
-      `INSERT INTO user_pins (email, pin_hash, tenant_id, pin_expires_at)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (email, tenant_id)
-       DO UPDATE SET pin_hash = $2, pin_expires_at = $4, updated_at = NOW(), failed_attempts = 0, locked_until = NULL`,
-      [email, pinHash, tenantId, pinExpiry]
-    );
-
-    return true;
-  } catch (error) {
-    console.error('Error creating PIN:', error);
-    return false;
-  }
-};
 
 // Helper function to create revision automatically.
 //
@@ -1029,7 +1012,17 @@ const createRevision = async (
   // so the revision commits atomically with the section update. Defaults to the
   // pool for standalone callers.
   executor: Queryable = pool,
-  origin: RevisionOrigin = 'human-edit'
+  origin: RevisionOrigin = 'human-edit',
+  /**
+   * Non-human authors whose insertions this save incorporated.
+   *
+   * Accepting a tracked suggestion strips the mark that named its author, so
+   * by the time the content reaches here nothing in it says a model drafted
+   * the words. Without this the ledger records the reviewer as the sole author
+   * of text they only approved — a §11.10(e) attribution the record cannot
+   * support. Empty for an ordinary edit.
+   */
+  contributors: { id: string; name: string }[] = []
 ) => {
   try {
     const revisionId = crypto.randomUUID();
@@ -1060,7 +1053,10 @@ const createRevision = async (
         ORDER BY created_at ASC`,
       [sectionId, tenantId]
     );
-    const inputs = JSON.stringify({ citations: cites.rows });
+    const inputs = JSON.stringify({
+      citations: cites.rows,
+      ...(contributors.length ? { contributors } : {}),
+    });
 
     await executor.query(
       `INSERT INTO doc_revisions
@@ -1234,12 +1230,76 @@ router.get('/templates', async (req: Request, res: Response) => {
 
     const result = await pool.query(query, params);
 
+    // ── Merge in the GLOBAL regulatory reference templates ──
+    //
+    // POST /docs resolves template_id against intelligence.document_templates
+    // first — the deliberately untenanted store of agency-expectation
+    // skeletons (CTD section sets, response letters). A picker that lists only
+    // the org's own rows offers a different universe from the one create
+    // consumes; with authoring_templates shipping empty, it offered NOTHING
+    // for the life of the feature. Org rows stay first (customer content
+    // before reference data); shape is aliased to the same contract.
+    //
+    // FAIL SOFT on the global read: the intelligence schema is a separate
+    // bundle, absent in some deployments and in the authoring test harness. An
+    // org's own templates must not vanish because the reference store is
+    // unreachable.
+    let globalRows: any[] = [];
+    let globalCatalog: 'ok' | 'unavailable' = 'ok';
+    try {
+      let globalQuery = `
+        SELECT
+          t.id,
+          t.template_name AS name,
+          t.template_name,
+          t.document_type AS template_type,
+          'Regulatory reference' AS category,
+          ARRAY[t.agency]::text[] AS regions,
+          t.description,
+          (SELECT count(*)::int FROM intelligence.template_sections ts WHERE ts.template_id = t.id) AS section_count,
+          t.created_at,
+          true AS active
+        FROM intelligence.document_templates t
+        WHERE t.status = 'active'
+      `;
+      const globalParams: any[] = [];
+      if (category) {
+        // Globals carry the synthetic category 'Regulatory reference'; a
+        // category filter for anything else excludes them.
+        if (String(category) !== 'Regulatory reference') globalQuery += ` AND false`;
+      }
+      if (template_type) {
+        globalParams.push(template_type);
+        globalQuery += ` AND t.document_type = $${globalParams.length}`;
+      }
+      if (search) {
+        globalParams.push(`%${search}%`);
+        globalQuery += ` AND LOWER(t.template_name) LIKE LOWER($${globalParams.length})`;
+      }
+      globalQuery += ` ORDER BY t.template_name ASC`;
+      const globalResult = await pool.query(globalQuery, globalParams);
+      // A template with zero sections cannot seed anything — offering it in
+      // "Start from" would recreate the sectionless-document lie server-side.
+      globalRows = globalResult.rows.filter((r: any) => Number(r.section_count) > 0);
+    } catch (globalErr) {
+      logger.warn('Global template store unavailable; listing org templates only', {
+        error: globalErr instanceof Error ? globalErr.message : String(globalErr),
+      });
+      // The fail-soft is deliberate (an unreachable reference catalog must not
+      // hide the org's own templates) — but the caller must be able to tell a
+      // SHORT list from a FAILED half: the picker says so instead of letting
+      // "no shared templates" and "the catalog read failed" render identically.
+      globalCatalog = 'unavailable';
+    }
+
+    const merged = [...result.rows, ...globalRows];
     res.json({
       success: true,
-      templates: result.rows,
+      templates: merged,
+      globalCatalog,
       // rows.length, not rowCount: rowCount is a node-postgres field and is not
       // populated by every driver this code is exercised against.
-      count: result.rows.length,
+      count: merged.length,
     });
   } catch (error) {
     console.error('Error listing templates:', error);
@@ -1337,74 +1397,14 @@ router.post(
   }
 );
 
-// POST /api/authoring/templates/apply/:id - Apply template to document
-router.post('/templates/apply/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { document_id } = req.body;
-    const tenantId = getTenantId(req);
-    const userId = req.headers['x-user-email'] || 'system';
-
-    // Get template
-    const templateResult = await pool.query(
-      `SELECT id, template_name, template_type, category, regions, template_content, guidance_content, metadata, is_active, usage_count, created_at, updated_at, created_by, tenant_id FROM authoring_templates WHERE id = $1 AND tenant_id = $2`,
-      [id, tenantId]
-    );
-
-    if (((templateResult.rowCount ?? 0) === 0)) {
-      return res.status(404).json({ error: 'Template not found' });
-    }
-
-    const template = templateResult.rows[0];
-
-    // Update usage count — same tenant predicate as the SELECT above; without
-    // it this was the one write in the handler that crossed tenants.
-    await pool.query(
-      `UPDATE authoring_templates SET usage_count = usage_count + 1 WHERE id = $1 AND tenant_id = $2`,
-      [id, tenantId]
-    );
-
-    // Track usage
-    await pool.query(
-      `INSERT INTO template_usage (template_id, document_id, used_by, tenant_id)
-       VALUES ($1, $2, $3, $4)`,
-      [id, document_id, userId, tenantId]
-    );
-
-    // Apply template content to document sections
-    if (template.template_content?.sections) {
-      for (const section of template.template_content.sections) {
-        await pool.query(
-          `INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, tenant_id)
-           VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6)
-           ON CONFLICT (doc_id, code, tenant_id)
-           DO UPDATE SET content = $4, title = $3`,
-          [
-            document_id,
-            section.code,
-            section.title,
-            section.content,
-            section.order_index || 0,
-            tenantId,
-          ]
-        );
-      }
-    }
-
-    res.json({
-      success: true,
-      message: 'Template applied successfully',
-      template_id: id,
-      document_id,
-    });
-  } catch (error) {
-    console.error('Error applying template:', error);
-    res.status(500).json({
-      error: 'Failed to apply template',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
+/* POST /templates/apply/:id is DELETED, not moved. It upserted section
+ * content with no revision, no audit row, no lock check and no role gate —
+ * an ungoverned overwrite of regulated content on a FROZEN or signed
+ * document included — and nothing in the client ever called it (it is in
+ * the orphan-endpoints report). The governed equivalent already exists:
+ * POST /docs/:docId/apply-template takes a pre-template snapshot revision,
+ * records 'template-apply' attribution, and runs in a transaction. Anything
+ * that wants apply-onto-existing-document wires there, never here. */
 
 // GET /api/authoring/guidance/:sectionId - Get contextual guidance
 router.get('/guidance/:sectionId', async (req: Request, res: Response) => {
@@ -1644,6 +1644,68 @@ router.post('/docs', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'client_program_id must be a valid UUID' });
     }
 
+    // ── Resolve the template BEFORE anything is written ──
+    //
+    // Two template stores are legitimate here and the picker offers both: the
+    // GLOBAL regulatory reference store (intelligence.document_templates —
+    // structure + guidance, no prose) and the org's own authoring_templates
+    // (tenant-scoped, sections WITH content). The old order created the
+    // document first and looked the template up after, in the global store
+    // only — so an org-template id, or any id that resolved nothing, produced
+    // a SECTIONLESS document while the confirmation said "seeded from <name>".
+    // A create that cannot honor its chosen template must refuse before the
+    // INSERT, not lie after it.
+    type TemplateSectionSeed = { code: string; title: string; content: string; ordering: number };
+    let templateSections: TemplateSectionSeed[] | null = null;
+    if (template_id) {
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(template_id))) {
+        return res.status(400).json({ success: false, error: 'template_id must be a valid UUID' });
+      }
+      // (a) The global reference store. Deliberately no tenant filter — these
+      // templates describe agency expectations, not customer content; tenancy
+      // comes from the document being created.
+      const globalSections = await pool.query(
+        `SELECT ts.section_code, ts.section_title, ts.ordering
+           FROM intelligence.template_sections ts
+          WHERE ts.template_id = $1
+          ORDER BY ts.ordering`,
+        [template_id],
+      );
+      if (globalSections.rows.length > 0) {
+        templateSections = globalSections.rows.map((r: any, i: number) => ({
+          code: String(r.section_code),
+          title: String(r.section_title),
+          // Structure and guidance only — the honest scaffold starts empty.
+          content: '',
+          ordering: Number.isFinite(Number(r.ordering)) ? Number(r.ordering) : i,
+        }));
+      } else {
+        // (b) The org's own template store (tenant-scoped, carries content).
+        const orgTemplate = await pool.query(
+          `SELECT template_content FROM authoring_templates
+            WHERE id = $1 AND tenant_id = $2 AND is_active = true`,
+          [template_id, tenantId],
+        );
+        const orgSections = orgTemplate.rows[0]?.template_content?.sections;
+        if (Array.isArray(orgSections) && orgSections.length > 0) {
+          templateSections = orgSections.map((s: any, i: number) => ({
+            code: String(s.code ?? ''),
+            title: String(s.title ?? ''),
+            content: typeof s.content === 'string' ? s.content : '',
+            ordering: Number.isFinite(Number(s.order_index)) ? Number(s.order_index) : i,
+          }));
+        }
+      }
+      if (!templateSections) {
+        return res.status(404).json({
+          success: false,
+          // The client appends its own "Nothing was persisted." on every failed
+          // create — the reason must not restate it (double-period, said twice).
+          error: 'No template with this id has any sections in your organization or the global reference store.',
+        });
+      }
+    }
+
     // Build the INSERT so the new program-scope column is referenced ONLY when
     // supplied. A create without client_program_id (the org-wide path and the
     // golden-journey harness) emits the exact original statement, so databases
@@ -1701,20 +1763,123 @@ router.post('/docs', async (req: Request, res: Response) => {
       cols.push('client_program_id');
       vals.push(`$${args.length}`);
     }
-    // Referenced ONLY when a binding resolved, for the same reason
-    // client_program_id is: a database without the 20260728 migration emits the
-    // original statement and keeps working.
+    /* Referenced only when the binding resolved AND the column exists.
+     *
+     * The existence check is the load-bearing half, and it was missing. This
+     * guarded on `binding.documentId` alone, on the reasoning that a database
+     * without the 20260728 migration "emits the original statement and keeps
+     * working" — which assumes binding resolution and column existence rise
+     * and fall together. They do not. Resolution depends on the governance
+     * store (c2c_documents / regulatory_programs) answering; the column
+     * depends on an ALTER that lives in the root `migrations/` tree while the
+     * authoring tables live in `db/migrations/`, and which the canonical
+     * authoring migration set does not include.
+     *
+     * On a deployment where the governance store resolves and that ALTER never
+     * ran, this INSERT named a column that does not exist — inside the
+     * BEGIN/COMMIT below, so the whole create rolled back and NEW DOCUMENTS
+     * COULD NOT BE CREATED AT ALL. The most critical path in the editor,
+     * broken by a schema difference the code believed it was tolerating.
+     *
+     * commit-section-to-filing.ts — the write half of the same binding —
+     * already checks information_schema for this exact column before touching
+     * the filing. This is the same check on the read half, so both halves
+     * degrade the same way: unbound, with the reason recorded, rather than
+     * refusing to create a document. */
+    let bindingColumnPresent = false;
+    if (binding.documentId) {
+      try {
+        const col = await pool.query<{ ok: boolean }>(
+          `SELECT EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema = 'public'
+                             AND table_name = 'authoring_documents'
+                             AND column_name = 'c2c_document_id') AS ok`,
+        );
+        bindingColumnPresent = col.rows[0]?.ok === true;
+      } catch {
+        /* Unable to ask — treat as absent. Creating the document unbound is
+           recoverable; failing the create is not. */
+        bindingColumnPresent = false;
+      }
+      if (!bindingColumnPresent) {
+        /* The caller is told the truth about what it got: a document that is
+           NOT bound to a filing, and why. Silently dropping the binding while
+           reporting `bound: true` would be the worse failure — every later
+           save would look for a filing that was never linked. */
+        binding = {
+          documentId: null,
+          reason:
+            'This deployment has no c2c_document_id column on authoring_documents, so the ' +
+            'document was created without a binding to a filing.',
+        };
+      }
+    }
     if (binding.documentId) {
       args.push(binding.documentId);
       cols.push('c2c_document_id');
       vals.push(`$${args.length}`);
     }
-    const result = await pool.query(
-      `INSERT INTO authoring_documents (${cols.join(', ')})
-       VALUES (${vals.join(', ')})
-       RETURNING *`,
-      args,
-    );
+    // ── One transaction: the document, its skeleton, and their evidence ──
+    //
+    // These writes ran as independent pool queries, so a failure midway
+    // through the seeding loop left a committed document with some of its
+    // sections — while the client told the author "Nothing was persisted."
+    // A refusal that leaks partial state is the failure family the sibling
+    // lifecycle handlers (section save, freeze, sign) already close with a
+    // BEGIN/COMMIT client; a create-with-skeleton is the same shape of
+    // multi-statement mutation and takes the same treatment. The revision
+    // and audit helpers route through the transaction's executor, so the
+    // Part 11 evidence commits (or rolls back) atomically with the rows it
+    // records.
+    const txClient = await pool.connect();
+    let result: { rows: any[] };
+    try {
+      await txClient.query('BEGIN');
+      result = await txClient.query(
+        `INSERT INTO authoring_documents (${cols.join(', ')})
+         VALUES (${vals.join(', ')})
+         RETURNING *`,
+        args,
+      );
+
+      // Seed the document's section skeleton from the template resolved ABOVE
+      // (before any write — an unresolvable template refuses the create rather
+      // than producing a sectionless document behind a "seeded from" toast).
+      // Global templates seed structure with empty content (the honest
+      // scaffold: the section exists with its regulatory code, title and
+      // ordering, and the author writes it); org templates seed the content
+      // their rows carry.
+      //
+      // Every write to a regulated section produces its Part 11 evidence — the
+      // sibling POST /sections handler does exactly this, and a section that
+      // appears in a document with no record of how it got there is precisely
+      // the §11.10(e) gap the audit trail exists to close. Seeding is a CREATE
+      // like any other. `createdBy` is the verified actor already resolved
+      // (and null-guarded) at the top of this handler.
+      if (templateSections) {
+        for (const s of templateSections) {
+          const seededRow = await txClient.query(
+            `INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, created_at, updated_at, tenant_id)
+             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW(), NOW(), $6)
+             RETURNING id, code, content`,
+            [docId, s.code, s.title, s.content, s.ordering, tenantId],
+          );
+          const row = seededRow.rows[0];
+          await createRevision(row.id, row.content ?? '', createdBy, tenantId, txClient, 'genesis');
+          await createAuditTrail(req, docId, row.id, 'CREATE', null, row.content ?? '', 'Seeded from template', {
+            template_id,
+            section_code: row.code,
+            seeded: true,
+          }, txClient);
+        }
+      }
+      await txClient.query('COMMIT');
+    } catch (txErr) {
+      await txClient.query('ROLLBACK').catch(() => {});
+      throw txErr;
+    } finally {
+      txClient.release();
+    }
 
     // Creator auto-grant — the mandatory companion to sectionPermsEnforced().
     //
@@ -1728,8 +1893,9 @@ router.post('/docs', async (req: Request, res: Response) => {
     // a different value whenever the JWT carries an email claim; granting on that
     // would silently lock the creator out of their own document.
     //
-    // Best-effort: a failed grant must not fail document creation (the document is
-    // already committed and is valid without it), but it is logged loudly because a
+    // Best-effort AND outside the transaction, deliberately: a failed grant
+    // must not fail (or roll back) document creation — the document is
+    // committed and valid without it — but it is logged loudly because a
     // grant-store outage means the creator will hit a 403 on their next edit.
     const creatorEmail = getActorEmail(req);
     if (creatorEmail) {
@@ -1747,57 +1913,13 @@ router.post('/docs', async (req: Request, res: Response) => {
       }
     }
 
-    // If template_id provided, scaffold the document's section skeleton.
-    //
-    // This query could never run. It selected `code, title, content, order_index`
-    // from an unqualified `template_sections` filtered by `tenant_id` — but the
-    // only such table is `intelligence.template_sections`
-    // (db/migrations/20260520_document_templates.sql:78), whose columns are
-    // `section_code`, `section_title` and `ordering`, with NO `content` and NO
-    // `tenant_id`. Every column named was wrong and the relation was unresolvable,
-    // so a create-from-template always fell into the catch below and 500'd.
-    //
-    // Templates are GLOBAL regulatory reference data — `intelligence.document_templates`
-    // carries no tenancy column, deliberately, because they describe agency
-    // expectations rather than customer content. So there is no tenant filter to
-    // apply on the read; tenancy comes from the document being created, and every
-    // seeded row carries that tenant.
-    //
-    // Templates store section STRUCTURE and authoring guidance, not prose, so a
-    // seeded section starts empty. That is the honest scaffold: the section exists
-    // with its regulatory code, title and ordering, and the author writes it.
-    if (template_id) {
-      const seeded = await pool.query(
-        `INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, created_at, updated_at, tenant_id)
-         SELECT gen_random_uuid(), $1, ts.section_code, ts.section_title, '', ts.ordering, NOW(), NOW(), $2
-         FROM intelligence.template_sections ts
-         WHERE ts.template_id = $3
-         ORDER BY ts.ordering
-         RETURNING id, code, content`,
-        [docId, tenantId, template_id]
-      );
-
-      // Every write to a regulated section produces its Part 11 evidence — the
-      // sibling POST /sections handler does exactly this, and a section that
-      // appears in a document with no record of how it got there is precisely
-      // the §11.10(e) gap the audit trail exists to close. Seeding is a CREATE
-      // like any other.
-      // `createdBy` is the verified actor already resolved (and null-guarded)
-      // at the top of this handler — not re-derived, so a seeded section is
-      // attributed to exactly the principal the document is.
-      for (const row of seeded.rows) {
-        await createRevision(row.id, row.content ?? '', createdBy, tenantId, pool, 'genesis');
-        await createAuditTrail(req, docId, row.id, 'CREATE', null, row.content ?? '', 'Seeded from template', {
-          template_id,
-          section_code: row.code,
-          seeded: true,
-        });
-      }
-    }
-
     res.status(201).json({
       success: true,
       document: result.rows[0],
+      // How many sections the chosen template actually seeded (absent for a
+      // blank create) — the client's confirmation states it instead of
+      // implying it.
+      ...(templateSections ? { sections_seeded: templateSections.length } : {}),
       message: 'Document created successfully',
       // The binding outcome, always present. A document that is NOT attached to
       // a governed filing must say so at the moment it is created — an unbound
@@ -2026,6 +2148,11 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
   try {
     const { sectionId } = req.params;
     const { content, track_changes, title, code } = req.body;
+    /* Who authored the accepted suggestions this save carries in. The client
+       reads them off the marks before accepting strips them; the server keeps
+       only the ones it recognises as non-human, because a human co-author is
+       already named by created_by. */
+    const contributors = machineContributors(req.body?.acceptedAuthors);
     const tenantId = getTenantId(req);
     const updatedByUser = getActorId(req);
     if (!updatedByUser) {
@@ -2113,7 +2240,18 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       // edit path agree with it. The prior content is not lost — it is the
       // preceding row. Only when content changed.
       if (recordRevision) {
-        await createRevision(sectionId, content, updatedByUser, tenantId, client, 'human-edit');
+        /* A save that incorporates accepted machine-authored text is not a
+           plain human edit, and saying so is the whole point: the origin marks
+           it in the chain hash, the contributor list names who drafted it. */
+        await createRevision(
+          sectionId,
+          content,
+          updatedByUser,
+          tenantId,
+          client,
+          contributors.length ? 'ai-draft-accept' : 'human-edit',
+          contributors,
+        );
       }
 
       result = await client.query(updateQuery, values);
@@ -2520,7 +2658,11 @@ router.patch('/comments/:commentId', async (req: Request, res: Response) => {
       if (status === 'resolved') {
         paramCount++;
         updates.push(`resolved_at = NOW(), resolved_by = $${paramCount}`);
-        values.push(resolvedBy);
+        // The same principal convention comment CREATION records (user_name =
+        // verified email, falling back to the actor id): the rail displays
+        // this value, and "Resolved by 1" is an attribution no reader can use.
+        // Still JWT-sourced either way — never a header, never the body.
+        values.push(req.user?.email ?? resolvedBy);
       }
     }
 
@@ -2530,28 +2672,66 @@ router.patch('/comments/:commentId', async (req: Request, res: Response) => {
       values.push(resolution_note);
     }
 
-    values.push(commentId, tenantId);
-
-    const result = await pool.query(
-      `UPDATE authoring_comments
-       SET ${updates.join(', ')}
-       WHERE id = $${paramCount + 1} AND tenant_id = $${paramCount + 2}
-       RETURNING *`,
-      values
-    );
-
-    if (((result.rowCount ?? 0) === 0)) {
-      return res.status(404).json({
-        success: false,
-        error: 'Comment not found',
-      });
+    if (updates.length === 0) {
+      return res.status(400).json({ success: false, error: 'No comment changes supplied' });
     }
 
-    res.json({
-      success: true,
-      comment: result.rows[0],
-      message: 'Comment updated successfully',
-    });
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const before = await client.query(
+        `SELECT doc_id, section_id, status, resolution_note
+           FROM authoring_comments
+          WHERE id = $1 AND tenant_id = $2
+          FOR UPDATE`,
+        [commentId, tenantId]
+      );
+      if (((before.rowCount ?? 0) === 0)) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ success: false, error: 'Comment not found' });
+      }
+
+      values.push(commentId, tenantId);
+      const result = await client.query(
+        `UPDATE authoring_comments
+            SET ${updates.join(', ')}, updated_at = NOW()
+          WHERE id = $${paramCount + 1} AND tenant_id = $${paramCount + 2}
+          RETURNING *`,
+        values
+      );
+
+      const updated = result.rows[0];
+      const eventType = status === 'resolved' ? 'comment_resolved' : 'comment_updated';
+      const actor = req.user?.email ?? resolvedBy;
+      await createAuditEvent(
+        updated.doc_id,
+        eventType,
+        actor,
+        {
+          comment_id: commentId,
+          section_id: updated.section_id,
+          previous_status: before.rows[0].status,
+          status: updated.status,
+          previous_resolution_note: before.rows[0].resolution_note ?? null,
+          resolution_note: updated.resolution_note ?? null,
+        },
+        tenantId,
+        client
+      );
+
+      await client.query('COMMIT');
+      res.json({
+        success: true,
+        comment: updated,
+        message: 'Comment updated successfully',
+      });
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   } catch (error) {
     console.error('Error updating comment:', error);
     res.status(500).json({
@@ -2801,155 +2981,18 @@ router.get('/documents/:id/comments', async (req: Request, res: Response) => {
   }
 });
 
-// PUT /api/authoring/comments/:id - Update comment
-router.put('/comments/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { body, status, resolution_note } = req.body;
-    const tenantId = getTenantId(req);
-    // SECURITY (21 CFR Part 11): resolver attribution must come from the JWT.
-    const userId = getActorId(req);
-    if (!userId) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
-    }
-    const userName = req.user?.email || userId;
-
-    // Build dynamic update query
-    const updates = [];
-    const params = [];
-    let paramIndex = 1;
-
-    if (body !== undefined) {
-      updates.push(`body = $${paramIndex}`);
-      params.push(body);
-      paramIndex++;
-    }
-
-    if (status !== undefined) {
-      updates.push(`status = $${paramIndex}`);
-      params.push(status);
-      paramIndex++;
-
-      if (status === 'resolved') {
-        updates.push(`resolved_by = $${paramIndex}`);
-        params.push(userId);
-        paramIndex++;
-        updates.push(`resolved_at = NOW()`);
-
-        if (resolution_note) {
-          updates.push(`resolution_note = $${paramIndex}`);
-          params.push(resolution_note);
-          paramIndex++;
-        }
-      }
-    }
-
-    updates.push(`updated_at = NOW()`);
-    params.push(id);
-    params.push(tenantId);
-
-    const result = await pool.query(
-      `UPDATE authoring_comments
-       SET ${updates.join(', ')}
-       WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1}
-       RETURNING *`,
-      params
-    );
-
-    if (((result.rowCount ?? 0) === 0)) {
-      return res.status(404).json({
-        success: false,
-        error: 'Comment not found',
-      });
-    }
-
-    // Log activity to the ONE audit ledger. This used to INSERT into
-    // authoring_comment_activity — a second, parallel activity log that no
-    // migration ever created, so every resolve/reopen threw 42P01 AFTER the
-    // comment had already been updated: the change landed and the caller was
-    // told it failed. authoring_audit_trail is the ledger that exists, is on
-    // the durable migration path, and is what GET /docs/:docId/audit reads.
-    const activityType =
-      status === 'resolved'
-        ? 'comment_resolved'
-        : status === 'open'
-        ? 'comment_reopened'
-        : 'comment_edited';
-
-    await createAuditEvent(
-      result.rows[0].doc_id,
-      activityType,
-      userName,
-      { comment_id: id, status, resolution_note },
-      tenantId
-    );
-
-    res.json({
-      success: true,
-      comment: result.rows[0],
-      message: 'Comment updated successfully',
-    });
-  } catch (error) {
-    console.error('Error updating comment:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update comment',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-// DELETE /api/authoring/comments/:id - Delete comment
-router.delete('/comments/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const tenantId = getTenantId(req);
-    // SECURITY (21 CFR Part 11): activity-log actor must come from the JWT.
-    const userId = getActorId(req);
-    if (!userId) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
-    }
-    const userName = req.user?.email || userId;
-
-    // Get comment details before deletion for activity log
-    const commentResult = await pool.query(
-      'SELECT doc_id FROM authoring_comments WHERE id = $1 AND tenant_id = $2',
-      [id, tenantId]
-    );
-
-    if (((commentResult.rowCount ?? 0) === 0)) {
-      return res.status(404).json({
-        success: false,
-        error: 'Comment not found',
-      });
-    }
-
-    const docId = commentResult.rows[0].doc_id;
-
-    // Delete comment (cascades to replies due to FK constraint)
-    await pool.query('DELETE FROM authoring_comments WHERE id = $1 AND tenant_id = $2', [
-      id,
-      tenantId,
-    ]);
-
-    // Same ledger as every other authoring mutation — see the note on resolve.
-    // A deletion that leaves no trace is the one activity record a Part 11
-    // system cannot afford to lose.
-    await createAuditEvent(docId, 'comment_deleted', userName, { comment_id: id }, tenantId);
-
-    res.json({
-      success: true,
-      message: 'Comment deleted successfully',
-    });
-  } catch (error) {
-    console.error('Error deleting comment:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to delete comment',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
+/* PUT /comments/:id and DELETE /comments/:id are DELETED, not moved. Neither
+ * was reachable from the client (the rail's only status writer is
+ * PATCH /comments/:id), and both let any authenticated tenant member rewrite
+ * or hard-delete ANY user's review comment: the PUT updated `body` in place
+ * with no prior-text capture anywhere (the audit event logged that an edit
+ * happened, never what changed), and the DELETE removed the row and its
+ * replies for good with only the comment id in the ledger — the reviewer's
+ * actual words unrecoverable even from the audit trail. Review history is
+ * immutable here: threads are resolved or reopened through PATCH (verified
+ * resolver, resolved_at, note kept), never rewritten, never erased. If
+ * retraction is ever wanted, it is a tombstone that retains and renders the
+ * original content as retracted — a new capability, not these routes. */
 
 // GET /api/authoring/documents/:id/reviews - Get review status
 router.get('/documents/:id/reviews', async (req: Request, res: Response) => {
@@ -3659,21 +3702,40 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
     const section = sectionResult.rows[0];
 
     // Perform deficiency analysis
-    const deficiencies = [];
+    const deficiencies: Array<Record<string, unknown>> = [];
     const content = section.content || '';
     const contentLength = content.length;
 
-    // Basic content checks
-    if (contentLength < 100) {
-      deficiencies.push({
-        type: 'content_length',
-        severity: 'high',
-        message:
-          'Section content appears insufficient. Regulatory sections typically require detailed information.',
-        recommendation: 'Expand content to include all required regulatory elements.',
-        location: 'entire_section',
-      });
-    }
+    /* Which distinct checks ran, and which of them flagged.
+       The score was `(10 - deficiencies.length) / 10`, where 10 was a constant
+       unrelated to the checks actually performed. The module-keyword check
+       alone pushes one deficiency PER missing term — six of them — so a poor
+       section reached thirteen deficiencies and scored -30%. A percentage
+       below zero is not a signal, it is a bug wearing one. Counting distinct
+       checks makes the denominator mean something and keeps the range 0-100,
+       and it lets the response say "passed N of M" instead of asking a reader
+       to trust a bare number. */
+    const checks: Array<{ id: string; flagged: boolean }> = [];
+    const runCheck = (id: string, fn: () => void) => {
+      const before = deficiencies.length;
+      fn();
+      checks.push({ id, flagged: deficiencies.length > before });
+    };
+
+    const contentLower = content.toLowerCase();
+
+    runCheck('content_length', () => {
+      if (contentLength < 100) {
+        deficiencies.push({
+          type: 'content_length',
+          severity: 'high',
+          message:
+            'Section content appears insufficient. Regulatory sections typically require detailed information.',
+          recommendation: 'Expand content to include all required regulatory elements.',
+          location: 'entire_section',
+        });
+      }
+    });
 
     // Check for required regulatory keywords based on module
     const requiredKeywords: Record<string, string[]> = {
@@ -3684,68 +3746,108 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
       M1: ['form', 'administrative', 'regulatory'],
     };
 
-    const moduleKeywords = requiredKeywords[section.module] || requiredKeywords['M3'];
-    const contentLower = content.toLowerCase();
+    runCheck('module_keywords', () => {
+      const moduleKeywords = requiredKeywords[section.module] || requiredKeywords['M3'];
+      moduleKeywords.forEach(keyword => {
+        if (!contentLower.includes(keyword)) {
+          deficiencies.push({
+            type: 'missing_keyword',
+            severity: 'medium',
+            message: `Missing expected regulatory term: "${keyword}"`,
+            recommendation: `Include discussion of ${keyword} as required by ${region} guidelines`,
+            location: 'content',
+          });
+        }
+      });
+    });
 
-    moduleKeywords.forEach(keyword => {
-      if (!contentLower.includes(keyword)) {
+    /* CTD required-element check, migrated from POST /ai/validate-compliance.
+       That endpoint was a second, callerless implementation of this same
+       capability — heuristic keyword presence over section content — and it
+       reported `overall_compliance: 'PASS'` whenever its list came back empty.
+       Its list was only ever populated for five hardcoded 3.2.S.* codes, so
+       for every other section in the CTD it checked nothing and answered PASS.
+       The useful half is these per-section element lists; they belong on the
+       one scan that has a caller and an honest frame, and the endpoint is
+       deleted in the same change (zero duplication). */
+    const ctdRequiredElements: Record<string, string[]> = {
+      '3.2.S.1': ['nomenclature', 'structure', 'general properties'],
+      '3.2.S.2': ['manufacturer', 'manufacturing process', 'controls'],
+      '3.2.S.3': ['elucidation of structure', 'impurities'],
+      '3.2.S.4': ['specifications', 'analytical procedures', 'validation'],
+      '3.2.S.7': ['stability data', 'post-approval stability', 'storage conditions'],
+    };
+    const ctdElements = ctdRequiredElements[String(section.code)];
+    /* Only counted as a check when there IS a list for this section code.
+       Running it against a section it has no expectations for and recording a
+       pass would inflate the score with a check that never looked at anything
+       — the exact arithmetic that let the deleted endpoint answer PASS. */
+    if (ctdElements) {
+      runCheck('ctd_required_elements', () => {
+        ctdElements.forEach(element => {
+          if (!contentLower.includes(element)) {
+            deficiencies.push({
+              type: 'missing_ctd_element',
+              severity: 'medium',
+              message: `Section ${section.code} would normally discuss ${element}`,
+              recommendation: `Add information about ${element} to ${section.code}`,
+              location: 'content',
+            });
+          }
+        });
+      });
+    }
+
+    runCheck('data_presence', () => {
+      if (!content.includes('[') && !content.includes('Table') && !content.includes('Figure')) {
         deficiencies.push({
-          type: 'missing_keyword',
+          type: 'missing_data',
           severity: 'medium',
-          message: `Missing expected regulatory term: "${keyword}"`,
-          recommendation: `Include discussion of ${keyword} as required by ${region} guidelines`,
+          message: 'No data tables or figures detected',
+          recommendation: 'Consider adding supporting data, tables, or figures',
           location: 'content',
         });
       }
     });
 
-    // Check for data completeness
-    if (!content.includes('[') && !content.includes('Table') && !content.includes('Figure')) {
-      deficiencies.push({
-        type: 'missing_data',
-        severity: 'medium',
-        message: 'No data tables or figures detected',
-        recommendation: 'Consider adding supporting data, tables, or figures',
-        location: 'content',
+    runCheck('placeholder_text', () => {
+      const placeholderPatterns = [/\[.*?\]/g, /TBD/gi, /TODO/gi, /XXX/gi];
+      placeholderPatterns.forEach(pattern => {
+        const matches = content.match(pattern);
+        if (matches && matches.length > 0) {
+          deficiencies.push({
+            type: 'placeholder_text',
+            severity: 'high',
+            message: `Found placeholder text: ${matches.slice(0, 3).join(', ')}${
+              matches.length > 3 ? '...' : ''
+            }`,
+            recommendation: 'Replace all placeholder text with actual content',
+            location: 'multiple',
+          });
+        }
       });
-    }
+    });
 
-    // Check for placeholder text
-    const placeholderPatterns = [/\[.*?\]/g, /TBD/gi, /TODO/gi, /XXX/gi];
-    placeholderPatterns.forEach(pattern => {
-      const matches = content.match(pattern);
-      if (matches && matches.length > 0) {
+    runCheck('structure', () => {
+      if (!content.includes('\n') || content.split('\n').length < 5) {
         deficiencies.push({
-          type: 'placeholder_text',
-          severity: 'high',
-          message: `Found placeholder text: ${matches.slice(0, 3).join(', ')}${
-            matches.length > 3 ? '...' : ''
-          }`,
-          recommendation: 'Replace all placeholder text with actual content',
-          location: 'multiple',
+          type: 'poor_structure',
+          severity: 'low',
+          message: 'Content lacks proper structure and formatting',
+          recommendation: 'Add headings, paragraphs, and proper formatting',
+          location: 'formatting',
         });
       }
     });
-
-    // Structure checks
-    if (!content.includes('\n') || content.split('\n').length < 5) {
-      deficiencies.push({
-        type: 'poor_structure',
-        severity: 'low',
-        message: 'Content lacks proper structure and formatting',
-        recommendation: 'Add headings, paragraphs, and proper formatting',
-        location: 'formatting',
-      });
-    }
 
     // Heuristic quality/completeness signal — NOT a 21 CFR compliance
     // determination. It is derived purely from word-count and keyword presence
     // and cannot prove regulatory compliance; labelling a section "compliant" /
     // "non_compliant" on that basis overstates what the check establishes. It is
     // reported as a review signal ('review required' / 'heuristic quality').
-    const totalChecks = 10;
-    const passedChecks = totalChecks - deficiencies.length;
-    const qualityScore = Math.round((passedChecks / totalChecks) * 100);
+    const checksRun = checks.length;
+    const checksPassed = checks.filter(c => !c.flagged).length;
+    const qualityScore = checksRun > 0 ? Math.round((checksPassed / checksRun) * 100) : 0;
 
     res.json({
       success: true,
@@ -3761,6 +3863,11 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
         signal_type: 'heuristic_quality',
         quality_score: qualityScore,
         compliance_score: qualityScore,
+        /* The denominator, so a reader is never asked to take the percentage
+           on trust — and so the UI can name how many checks actually ran
+           rather than hardcoding a number that drifts from the code. */
+        checks_run: checksRun,
+        checks_passed: checksPassed,
         status:
           qualityScore >= 80
             ? 'heuristic_ok'
@@ -3873,49 +3980,36 @@ async function buildPdfFromDocx(docxBuffer: Buffer): Promise<Buffer> {
 
 // ============= 21 CFR Part 11 Compliance Endpoints =============
 
-// POST /api/authoring/docs/:docId/create-pin - Create/update PIN for user
-router.post('/docs/:docId/create-pin', async (req: Request, res: Response) => {
-  try {
-    const { pin } = req.body;
-    // Part 11 attribution: signer identity comes from the verified JWT only.
-    // The previous x-user-email header source was attacker-controlled (same
-    // class as the getActorId fix above) — a caller could mint a PIN for any
-    // email and later sign as that identity.
-    const email = getActorEmail(req);
-    const tenantId = getTenantId(req);
+/* POST /api/authoring/docs/:docId/create-pin has been DELETED.
+ *
+ * It was a second endpoint for the same thing POST /users/pin does — setting
+ * the signing PIN that gates every electronic signature in this router — with
+ * no caller anywhere, and it bypassed both controls the canonical one exists
+ * to enforce.
+ *
+ * NO OLD-PIN CHECK. /users/pin requires the current PIN, bcrypt-verified,
+ * before it will overwrite an existing one; its own header records why, citing
+ * §11.200(a)(1): possession of a session must not become possession of the
+ * signing credential. This route called createUserPin() straight through, so
+ * any authenticated session could replace another sitting PIN it did not know.
+ *
+ * IT CLEARED THE LOCKOUT. createUserPin's upsert ended in
+ * `failed_attempts = 0, locked_until = NULL`. verifyUserPin enforces three
+ * attempts and a thirty-minute lockout, and this endpoint reset both — so the
+ * brute-force control could be cleared between guesses by the same session
+ * doing the guessing.
+ *
+ * createUserPin() is deleted with it: this was its only call site.
+ *
+ * NOTE, deliberately left as a finding rather than fixed here: `pin_expires_at`
+ * was written ONLY by createUserPin (90 days) and is read by nothing —
+ * verifyUserPin selects pin_hash, failed_attempts and locked_until and never
+ * consults it. PIN aging therefore looks implemented and is not enforced, and
+ * after this deletion the column has no writer either. Enforcing expiry would
+ * start locking real signers out of a governed action, which is a product
+ * decision and not a cleanup.
+ */
 
-    if (!email) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    if (!pin || pin.length < 6) {
-      return res.status(400).json({ error: 'PIN must be at least 6 characters' });
-    }
-
-    const success = await createUserPin(email, pin, tenantId);
-
-    if (success) {
-      // Log PIN creation in audit trail
-      await createAuditTrail(
-        req,
-        req.params.docId,
-        null,
-        'PIN_CREATED',
-        null,
-        null,
-        'User PIN created or updated',
-        { email }
-      );
-
-      res.json({ success: true, message: 'PIN created successfully' });
-    } else {
-      res.status(500).json({ error: 'Failed to create PIN' });
-    }
-  } catch (error) {
-    console.error('Error creating PIN:', error);
-    res.status(500).json({ error: 'Failed to create PIN' });
-  }
-});
 
 // POST /api/authoring/docs/:docId/freeze - Freeze document with immutable snapshot
 router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
@@ -4544,6 +4638,16 @@ router.get('/docs/:docId/exports', async (req: Request, res: Response) => {
   try {
     const tenantId = getTenantId(req);
 
+    /* An unknown or cross-tenant docId used to return `exports: []` — the same
+       answer as a real document nobody has exported yet. Those are opposite
+       facts, and the second one is the whole point of the rail. Refuse instead.
+       This also protects the hash below: computeDocHash walks the section rows
+       and hashes the empty string when there are none, so an unguarded call
+       would hand back sha256("") as if it described a document. */
+    if (!(await documentExistsForTenant(req.params.docId, tenantId))) {
+      return res.status(404).json({ success: false, error: 'Document not found' });
+    }
+
     // Ensure table exists
     await ensureExportHistoryTableExists();
 
@@ -4601,15 +4705,40 @@ router.get('/docs/:docId/exports', async (req: Request, res: Response) => {
       [req.params.docId, tenantId]
     );
 
+    /* Is the most recently exported file still the current document?
+       `doc_sha256` on each row is computeDocHash at export time, so the same
+       function now answers it for the live document and the two are directly
+       comparable. Returned as the two hashes AND the derived verdict: the
+       verdict is what a reader acts on, the hashes are what makes it checkable.
+
+       `content_changed_since_last_export` is null — not false — when there is
+       no export to compare against, or when the stored row carried no hash.
+       "Nothing to compare" is not "nothing has changed", and a UI that renders
+       the second for the first tells an author their stale file is current.
+
+       Scope, stated because the verdict is narrower than it sounds: this
+       compares section CODE and CONTENT in order. It says nothing about
+       citations, attachments, or signatures — the citation drift that
+       …/diff-since-export reports is a separate question with a separate
+       answer. */
+    const lastExport = result.rows[0] || null;
+    const currentContentHash = await computeDocHash(req.params.docId, tenantId);
+    const lastHash =
+      typeof lastExport?.doc_sha256 === 'string' && lastExport.doc_sha256.length > 0
+        ? lastExport.doc_sha256
+        : null;
+
     res.json({
       success: true,
       exports: result.rows,
       total: parseInt(countResult.rows[0]?.total || '0'),
-      last_export: result.rows[0] || null,
+      last_export: lastExport,
+      current_content_hash: currentContentHash,
+      content_changed_since_last_export: lastHash === null ? null : lastHash !== currentContentHash,
     });
   } catch (error) {
     console.error('GET /docs/:id/exports', error);
-    res.status(500).json({ error: 'Failed to list exports' });
+    res.status(500).json({ success: false, error: 'Failed to list exports' });
   }
 });
 
@@ -4675,6 +4804,17 @@ router.get('/docs/:docId/diff-since-export', async (req: Request, res: Response)
     // catch below turned every call into a 500. See ledger C-14.
     await ensureExportHistoryTableExists();
     const tenantId = getTenantId(req);
+    /* Same guard as GET …/exports, for the same reason: an unknown or
+       cross-tenant docId answered `{ baseline: null, changed: [] }`, which is
+       the response a real document with no export yet gets. Those are opposite
+       facts. Nothing surfaces the difference today — the Exports rail renders
+       citation drift only when `baseline` is non-null — but a future caller
+       reading "no exports" for a document it cannot see is a defect waiting on
+       a caller, which is precisely how the rest of this router accumulated its
+       silent 500s. */
+    if (!(await documentExistsForTenant(req.params.docId, tenantId))) {
+      return res.status(404).json({ success: false, error: 'Document not found' });
+    }
     const lastExportResult = await pool.query(
       `
       SELECT COALESCE(exported_at, created_at) AS exported_at
@@ -4953,143 +5093,41 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
   }
 });
 
-// GET /api/authoring/guidance/compose - Get guidance for a section
-router.get('/guidance/compose', async (req: Request, res: Response) => {
-  try {
-    const { section, region = 'ICH' } = req.query;
+/* REMOVED: GET /guidance/compose — unreachable by construction since the day
+   it was written. Express matches in registration order and GET
+   /guidance/:sectionId registers ~3,600 lines earlier, so this path bound
+   sectionId='compose'; that handler then ran `WHERE s.id = 'compose'` against
+   a UUID column, which is a Postgres 22P02 on every call — a permanent 500.
+   Even if it had been reachable, its body was a hardcoded two-entry guidance
+   map presented as a guidance service. The real per-section guidance read is
+   GET /guidance/:sectionId (section_guidance + template_guidance tables). */
 
-    if (!section) {
-      return res.status(400).json({ error: 'section parameter required' });
-    }
+/* POST /api/authoring/docs/:docId/seed-stability has been DELETED.
+ *
+ * It spawned `node scripts/seed-stability.mjs` from a request handler, with no
+ * caller anywhere and no environment guard of any kind — so a UAT fixture
+ * seeder, defaulting to product_code 'UAT-PROD' and study_code 'SS-UAT-001',
+ * was reachable over HTTP by any authenticated user in any deployment
+ * including production. CLAUDE.md's working agreement is explicit: no fixture
+ * data in governed paths. This was the mechanism for putting it there.
+ *
+ * It was also broken in a way that would have hidden its own failures. The
+ * handler ended with
+ *
+ *     process.on('error', …)
+ *
+ * — the GLOBAL Node process, not the spawned child. A child that failed to
+ * start emits 'error' on `childProcess`, which nothing listened to, so the
+ * request hung rather than answering; and every call added another permanent
+ * listener to the global process, each closing over a response object long
+ * since finished.
+ *
+ * scripts/seed-stability.mjs is KEPT. Its own header documents it as a command
+ * an operator runs (`node scripts/seed-stability.mjs`), which is the right
+ * shape for a seeder: a deliberate act at a terminal, not an endpoint on the
+ * governed authoring API.
+ */
 
-    // Sample guidance - in production, this would query a guidance database
-    const guidanceMap: Record<string, string> = {
-      '3.2.P.5': `## ${region} Guidance for Drug Product Specifications
-
-### Requirements:
-- Establish specifications per ICH Q6A
-- Include tests for identity, strength, quality, and purity
-- Justify acceptance criteria based on clinical lots
-- Consider stability-indicating methods
-
-### Key Points:
-- Link to analytical methods in 3.2.P.5.2
-- Reference batch data in 3.2.P.5.4
-- Ensure consistency with stability protocol`,
-
-      '3.2.P.8': `## ${region} Guidance for Stability Studies
-
-### Requirements:
-- Follow ICH Q1A(R2) for stability testing
-- Include long-term, accelerated, and intermediate conditions
-- Cover photostability per ICH Q1B if applicable
-- Justify shelf life and storage conditions
-
-### Data Presentation:
-- Tabulate all stability data
-- Include graphical trends for key parameters
-- Discuss any out-of-specification results`,
-    };
-
-    const guidance =
-      guidanceMap[section as string] ||
-      `Generic guidance for section ${section} in region ${region}`;
-
-    res.json({ guidance_md: guidance });
-  } catch (error) {
-    console.error('GET /guidance/compose', error);
-    res.status(500).json({ error: 'Failed to get guidance' });
-  }
-});
-
-// POST /docs/:docId/seed-stability - Seed stability data and insert P.8 tokens
-router.post('/docs/:docId/seed-stability', async (req: Request, res: Response) => {
-  try {
-    const { docId } = req.params;
-    const {
-      product_code = 'UAT-PROD',
-      study_code = 'SS-UAT-001',
-      study_name = 'UAT Stability 24M',
-    } = req.body;
-
-    if (!docId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Document ID is required',
-      });
-    }
-
-    // Run the stability seeder script with the provided parameters.
-    // BP-W0-6: same CommonJS `require` under "type": "module" as the docx export
-    // branch had — this route would have thrown ReferenceError the first time
-    // anyone called it. Found while fixing the export; converted rather than
-    // left as the next instance of the same 500.
-    const { spawn } = await import('node:child_process');
-    /* The `require` this replaced returned `any`, so nothing typechecked the
-       call — and it was wrong. Every one of these values comes off req.body and
-       is `string | undefined`, which no `spawn` overload accepts. Passing
-       undefined into a child's env is not a type nicety either: the child reads
-       process.env.PRODUCT_CODE and would get the string "undefined" or nothing
-       at all, depending on the platform. Coerced explicitly. */
-    const childProcess = spawn('node', ['scripts/seed-stability.mjs'], {
-      env: {
-        ...process.env,
-        BASE_URL: `http://localhost:${process.env.PORT || 5000}`,
-        PRODUCT_CODE: String(product_code ?? ''),
-        STUDY_CODE: String(study_code ?? ''),
-        STUDY_NAME: String(study_name ?? ''),
-        DOC_ID: String(docId ?? ''),
-      },
-    });
-
-    let output = '';
-    let errorOutput = '';
-
-    childProcess.stdout.on('data', (data: any) => {
-      output += data.toString();
-    });
-
-    childProcess.stderr.on('data', (data: any) => {
-      errorOutput += data.toString();
-    });
-
-    childProcess.on('close', (code: number) => {
-      if (code === 0) {
-        res.json({
-          success: true,
-          message: 'Stability data seeded successfully',
-          study_code,
-          product_code,
-          doc_id: docId,
-          output: output.trim(),
-        });
-      } else {
-        console.error('Stability seeder failed:', errorOutput);
-        res.status(500).json({
-          success: false,
-          error: 'Stability seeding failed',
-          details: errorOutput.trim(),
-        });
-      }
-    });
-
-    process.on('error', (err: any) => {
-      console.error('Failed to start stability seeder:', err);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to start stability seeder',
-        details: err.message,
-      });
-    });
-  } catch (error) {
-    console.error('Stability seeding error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to seed stability data',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
 
 // DELETE /docs/:docId (UAT-only; admin-guarded) - Step 12: Fixture Cleanup
 router.delete('/docs/:docId', async (req: Request, res: Response) => {
@@ -5296,6 +5334,21 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
     const exportSignatures = await readSignaturesForExport(String(docId), tenantId);
     const manifest = signatureManifestLines(exportSignatures);
 
+    /* Figure references become bytes ONCE, here, under this tenant, before
+       the format branches — DOCX and PDF consume the same map, so the two
+       filed formats cannot disagree about which figures they carry. XML keeps
+       the raw reference inside CDATA and needs no bytes. A reference that
+       does not resolve stays out of the map and the renderers file an honest
+       "[Figure not exported: …]" line instead of dropping it silently. */
+    const { resolveAuthoringImages } = await import('../export/authoring-images.js');
+    const exportImages =
+      format === 'docx' || format === 'pdf'
+        ? await resolveAuthoringImages(
+            sectionsResult.rows.map((s: { content: string | null }) => s.content),
+            tenantId
+          )
+        : new Map();
+
     // Generate export based on format
     let fileContent: Buffer | undefined;
     let fileName: string = 'export';
@@ -5372,6 +5425,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
         '../export/authoring-section-content.js'
       );
 
+      const exportedAt = new Date().toISOString();
       const children = [];
       children.push(new Paragraph({ text: doc.title, heading: HeadingLevel.TITLE }));
 
@@ -5379,9 +5433,15 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
          (which can carry ins/del track-changes marks). It used to be written
          into one paragraph verbatim, so markup rendered literally in a filed
          Word document. It is parsed to typed runs now; an unresolved
-         suggestion exports AS redline (insertion underlined, deletion struck)
-         with an up-front notice — settling it silently either way at export
-         time would fabricate a decision nobody made. */
+         suggestion exports as a REAL Word revision (w:ins / w:del) with an
+         up-front notice — settling it silently either way at export time would
+         fabricate a decision nobody made.
+
+         The revision carries the mark's own author and timestamp. The date
+         passed here is only the fallback for legacy marks written before the
+         editor recorded data-at; those export as "Unattributed", and dating
+         them to the export is the closest honest statement available — we know
+         when we wrote the file, not when someone made the edit. */
       let pendingIns = 0;
       let pendingDel = 0;
       const sectionBlocks = sectionsResult.rows.map((section: any) => {
@@ -5413,7 +5473,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
             heading: HeadingLevel.HEADING_1,
           })
         );
-        children.push(...blocksToDocx(docxNs, blocks));
+        children.push(...blocksToDocx(docxNs, blocks, exportImages, { revisionDate: exportedAt }));
       }
 
       /* §11.50(b) manifestation. Ordered after the content so the record reads
@@ -5464,7 +5524,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
           const pending = countPendingSuggestions(blocks);
           pdfPendingIns += pending.insertions;
           pdfPendingDel += pending.deletions;
-          const body = blocksToHtml(blocks);
+          const body = blocksToHtml(blocks, exportImages);
           return `<h2>${esc(s.code)} — ${esc(s.title)}</h2>${body}`;
         }
       );
@@ -6130,80 +6190,32 @@ router.post('/ai/suggestions', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/authoring/ai/validate-compliance - Validate regulatory compliance
-router.post('/ai/validate-compliance', async (req: Request, res: Response) => {
-  try {
-    const { document_id, section_code, content } = req.body;
-    const tenantId = getTenantId(req);
-
-    const validationResults: {
-      ich_compliance: any[];
-      fda_compliance: any[];
-      ctd_structure: any[];
-      missing_elements: any[];
-      recommendations: any[];
-    } = {
-      ich_compliance: [],
-      fda_compliance: [],
-      ctd_structure: [],
-      missing_elements: [],
-      recommendations: [],
-    };
-
-    // Check CTD structure requirements
-    if (section_code && section_code.startsWith('3.2.')) {
-      const requiredSections: Record<string, string[]> = {
-        '3.2.S.1': ['nomenclature', 'structure', 'general properties'],
-        '3.2.S.2': ['manufacturer', 'manufacturing process', 'controls'],
-        '3.2.S.3': ['elucidation of structure', 'impurities'],
-        '3.2.S.4': ['specifications', 'analytical procedures', 'validation'],
-        '3.2.S.7': ['stability data', 'post-approval stability', 'storage conditions'],
-      };
-
-      const required = requiredSections[section_code] || [];
-      required.forEach((element: any) => {
-        if (!content.toLowerCase().includes(element)) {
-          validationResults.missing_elements.push({
-            element,
-            section: section_code,
-            severity: 'important',
-            message: `Section ${section_code} should include information about ${element}`,
-          });
-        }
-      });
-    }
-
-    // ICH guideline applicability. There is no automated ICH-guideline
-    // conformance engine wired, so we do NOT assert a pass/fail verdict or a
-    // score — the prior implementation fabricated both with Math.random()
-    // (`compliant: Math.random() > 0.3`, `score: 75 + Math.random() * 25`),
-    // randomly claiming conformance to ICH Q1A/Q3A/Q6A/E6/M4. We surface the
-    // applicable guidelines for the section and flag them for manual review
-    // instead of inventing a verdict.
-    const ichGuidelines = ['Q1A', 'Q3A', 'Q6A', 'E6', 'M4'];
-    ichGuidelines.forEach(guideline => {
-      validationResults.ich_compliance.push({
-        guideline,
-        compliant: null,
-        assessment: 'not_assessed',
-        issues: [],
-        score: null,
-        note: 'Automated ICH conformance assessment is not available — manual review required.',
-      });
-    });
-
-    res.json({
-      success: true,
-      validation: validationResults,
-      overall_compliance:
-        validationResults.missing_elements.length === 0 ? 'PASS' : 'NEEDS_IMPROVEMENT',
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('Compliance validation error:', error);
-    res.status(500).json({ error: 'Failed to validate compliance' });
-  }
-});
+/* POST /api/authoring/ai/validate-compliance has been DELETED.
+ *
+ * It was a second implementation of the capability POST
+ * /sections/:sectionId/ai/deficiency-scan already provides — heuristic keyword
+ * presence over a section's text — with no caller anywhere in the repository,
+ * and it ended in a verdict it could not support:
+ *
+ *     overall_compliance: missing_elements.length === 0 ? 'PASS' : 'NEEDS_IMPROVEMENT'
+ *
+ * `missing_elements` was only ever populated for five hardcoded 3.2.S.* codes.
+ * For every other section in the CTD — all of M1, M2, M4, M5, and most of M3 —
+ * the array was empty because nothing had been examined, and the response said
+ * PASS. A check that ran zero assertions reporting a compliance pass is the
+ * defect this repository keeps finding, and this one named the field
+ * `overall_compliance`.
+ *
+ * Its ICH block had already been repaired once: it used to fabricate
+ * `compliant: Math.random() > 0.3` and a random score against Q1A/Q3A/Q6A/E6/M4,
+ * and was changed to report `not_assessed`. That left the endpoint returning an
+ * honest "we did not assess ICH" beside a dishonest "PASS" in the same body.
+ *
+ * The one part worth keeping — the per-section CTD required-element lists — is
+ * now a check inside the deficiency scan, which has a caller and frames its
+ * output as signals rather than a determination. Migrated and deleted in the
+ * same change, per the zero-duplication rule.
+ */
 
 // ── Tracked Change Decisions (persist accept/reject) ──────────────────────────
 
@@ -6258,12 +6270,36 @@ router.post('/documents/:id/tracked-change-decisions', async (req: Request, res:
       [artifactId, changeId, decision, userId, userName, tenantId]
     );
 
-    // Audit trail for regulatory compliance
+    /* Audit trail for regulatory compliance.
+       `authoring_tracked_change_decisions` stores the id and the verdict and
+       nothing about the change itself — and accepting a suggestion STRIPS its
+       mark, so by the time anyone reads the row the id it names no longer
+       exists in the document. The row is an index; this is where the change is
+       actually recorded, so the decision can be read back as a sentence rather
+       than as an opaque key. The text is bounded: an audit row is not a place
+       to mirror a section. */
     await createAuditEvent(
       artifactId,
       'tracked_change_decision',
       userName,
-      { changeId, decision },
+      {
+        changeId,
+        decision,
+        ...(typeof req.body?.changeType === 'string' ? { changeType: req.body.changeType } : {}),
+        ...(typeof req.body?.text === 'string' && req.body.text.length > 0
+          ? { text: req.body.text.slice(0, 500) }
+          : {}),
+        ...(typeof req.body?.sectionId === 'string' ? { sectionId: req.body.sectionId } : {}),
+        /* Who PROPOSED the change, which is not who decided it — that is the
+           audit row's own actor. A redline record that cannot tell the two
+           apart says nothing about review at all. */
+        ...(typeof req.body?.authorName === 'string'
+          ? { proposedBy: req.body.authorName }
+          : typeof req.body?.authorId === 'string'
+            ? { proposedBy: req.body.authorId }
+            : {}),
+        ...(typeof req.body?.at === 'string' ? { proposedAt: req.body.at } : {}),
+      },
       tenantId
     );
 
@@ -6327,12 +6363,38 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
       results.push(result.rows[0]);
     }
 
-    // Single audit event for bulk action
+    /* Single audit event for the bulk action.
+       Ids alone would make this row unresolvable for exactly the case that
+       needs it most: rejecting changes alters no text, so no revision records
+       what was refused. A bounded per-change summary travels with it, and when
+       it is bounded the row SAYS how many it left out — a truncated record
+       that looks complete is worse than one that admits its limit. */
+    const MAX_SUMMARISED = 20;
+    const rawChanges = Array.isArray(req.body?.changes) ? req.body.changes : [];
+    const summarised = rawChanges.slice(0, MAX_SUMMARISED).map((c: any) => ({
+      changeId: typeof c?.changeId === 'string' ? c.changeId : null,
+      changeType: typeof c?.changeType === 'string' ? c.changeType : null,
+      proposedBy:
+        typeof c?.authorName === 'string'
+          ? c.authorName
+          : typeof c?.authorId === 'string'
+            ? c.authorId
+            : null,
+      text: typeof c?.text === 'string' ? c.text.slice(0, 200) : null,
+    }));
     await createAuditEvent(
       artifactId,
       'tracked_change_bulk_decision',
       userName,
-      { changeIds, decision, count: changeIds.length },
+      {
+        changeIds,
+        decision,
+        count: changeIds.length,
+        ...(summarised.length > 0 ? { changes: summarised } : {}),
+        ...(rawChanges.length > MAX_SUMMARISED
+          ? { changesOmittedFromSummary: rawChanges.length - MAX_SUMMARISED }
+          : {}),
+      },
       tenantId
     );
 
@@ -6373,6 +6435,258 @@ router.get('/documents/:id/tracked-change-decisions', async (req: Request, res: 
       success: false,
       error: 'Failed to fetch tracked change decisions',
     });
+  }
+});
+
+/* ════ Section order ═════════════════════════════════════════════════════════
+ *
+ * Every reader of a document — the tree, the export assembler, the PDF and
+ * DOCX branches — orders sections by `order_index`, and nothing could ever
+ * change it: POST /sections defaulted it and PATCH does not accept it, so a
+ * document whose sections were created out of order ASSEMBLED out of order,
+ * permanently. Order is part of the filed record, so the write is governed
+ * like one: refused on FROZEN/APPROVED (the sealed assembly is what the
+ * signatures attest to), the submitted list must be an exact permutation of
+ * the document's sections (a partial or foreign list is refused, never
+ * partially applied), the renumbering commits in one transaction, and the
+ * audit trail records the new order under the actor.
+ */
+router.post('/docs/:docId/sections/reorder', async (req: Request, res: Response) => {
+  try {
+    const { docId } = req.params;
+    const tenantId = getTenantId(req);
+    const actor = getActorEmail(req);
+    if (!actor) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    const ids: unknown = (req.body ?? {}).section_ids;
+    if (
+      !Array.isArray(ids) ||
+      ids.length === 0 ||
+      !ids.every((x): x is string => typeof x === 'string' && x.length > 0)
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: 'section_ids must be a non-empty array of section ids in the desired order.',
+      });
+    }
+
+    const parentDoc = await pool.query(
+      `SELECT status FROM authoring_documents WHERE id = $1 AND tenant_id = $2`,
+      [docId, tenantId]
+    );
+    if ((parentDoc.rowCount ?? 0) === 0) {
+      return res.status(404).json({ success: false, error: 'Document not found' });
+    }
+    const parentStatus = String(
+      (parentDoc.rows[0] as { status?: string | null }).status ?? ''
+    ).toUpperCase();
+    if (LOCKED_DOCUMENT_STATUSES.has(parentStatus)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Document is FROZEN/APPROVED; its section order is part of the sealed record.',
+      });
+    }
+
+    const current = await pool.query(
+      `SELECT id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2`,
+      [docId, tenantId]
+    );
+    const currentIds = new Set<string>(current.rows.map((r: { id: string }) => String(r.id)));
+    const submitted = new Set(ids);
+    const isPermutation =
+      submitted.size === ids.length && // no duplicates
+      submitted.size === currentIds.size &&
+      ids.every((id) => currentIds.has(id));
+    if (!isPermutation) {
+      return res.status(409).json({
+        success: false,
+        error:
+          'section_ids must list exactly this document’s sections, each once. ' +
+          'The document’s sections changed since you loaded them — reload and retry. Nothing was reordered.',
+      });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (let i = 0; i < ids.length; i++) {
+        await client.query(
+          `UPDATE authoring_sections SET order_index = $1, updated_at = NOW()
+             WHERE id = $2 AND doc_id = $3 AND tenant_id = $4`,
+          [i, ids[i], docId, tenantId]
+        );
+      }
+      await createAuditEvent(docId, 'REORDER_SECTIONS', actor, { order: ids }, tenantId, client);
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw e;
+    } finally {
+      client.release();
+    }
+
+    return res.json({ success: true, order: ids });
+  } catch (error) {
+    logger.error('section reorder failed', { error });
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to reorder sections. The previous order is unchanged.',
+    });
+  }
+});
+
+/* ════ Section images — the governed figure store ═══════════════════════════
+ *
+ * Section HTML stores a figure as a REFERENCE (`/api/authoring/images/<id>`),
+ * never as base64: the append-only revision ledger and the Part 11 audit rows
+ * copy section content on every save, so inlined bytes would multiply every
+ * figure by every revision, and the editor's per-keystroke device cache would
+ * blow the browser's storage quota on the first chromatogram.
+ *
+ * Storage REUSES the canonical upload store (`file_uploads` +
+ * `uploads/org-{id}/{id}` on disk, via saveDerivedUpload/loadUploadedFile in
+ * server/services/ana/uploaded-file-access.ts — the single sanctioned
+ * upload-id→bytes resolver, which enforces tenancy on both the org column and
+ * the path prefix). A second binary store for the same capability is exactly
+ * the parallel path CLAUDE.md rules out.
+ *
+ * The accepted formats are the ones the DOCX exporter can embed (PNG, JPEG,
+ * GIF). WebP is refused at upload rather than dropped at export; SVG is
+ * refused because it is a script container, not a picture.
+ */
+
+const AUTHORING_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+
+const imageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: AUTHORING_IMAGE_MAX_BYTES, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype === 'image/png' || file.mimetype === 'image/jpeg' || file.mimetype === 'image/gif') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PNG, JPEG and GIF images are accepted — they are the formats a Word export can embed.'));
+    }
+  },
+});
+
+/** Multer refusals (size, type) arrive as errors; they are client mistakes,
+ *  not server faults, and must say so as a 400 with the reason. */
+const imageUploadErrors = (err: unknown, _req: Request, res: Response, next: (e?: unknown) => void) => {
+  if (!err) return next();
+  const message =
+    (err as { code?: string })?.code === 'LIMIT_FILE_SIZE'
+      ? 'The image is larger than 8 MB. Nothing was uploaded.'
+      : err instanceof Error
+        ? err.message
+        : 'Upload refused';
+  return res.status(400).json({ success: false, error: message });
+};
+
+router.post(
+  '/images',
+  imageUpload.single('file'),
+  imageUploadErrors as never,
+  async (req: Request, res: Response) => {
+    try {
+      const tenantId = getTenantId(req);
+      const actorId = getActorId(req);
+      if (!actorId) {
+        return res.status(401).json({ success: false, error: 'Authentication required' });
+      }
+      const file = (req as { file?: { buffer?: Buffer; mimetype?: string; originalname?: string } }).file;
+      if (!file?.buffer || file.buffer.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Send the image as multipart/form-data under the field name "file".',
+        });
+      }
+
+      // Magic-number check: an executable or HTML payload uploaded under an
+      // image mime is refused on its bytes, not its label.
+      const { verifyFileSignature } = await import('../utils/fileSignature');
+      const sig = verifyFileSignature(file.buffer, file.mimetype ?? '');
+      if (!sig.ok) {
+        return res.status(400).json({
+          success: false,
+          error: 'The file content does not match its declared image type. Nothing was uploaded.',
+        });
+      }
+      const { scanBuffer } = await import('../utils/virusScan');
+      const scan = await scanBuffer(file.buffer);
+      if (!scan.clean) {
+        logger.warn('authoring image rejected by content scan', { tenantId });
+        return res.status(400).json({
+          success: false,
+          error: 'The file was rejected by the content scan. Nothing was uploaded.',
+        });
+      }
+
+      /* Multer's busboy parse breaks the AsyncLocalStorage tenant scope the
+         middleware opened (its stream listeners run in the socket's context),
+         so under RLS enforcement every query from here on would fail closed.
+         Re-enter the exact scope this request was granted — the same repair
+         vault-ingest documents. */
+      const { runWithTenantScope } = await import('../db/tenantStore');
+      const rawUserId = Number((req.user as { id?: unknown; userId?: unknown })?.id ?? (req.user as { userId?: unknown })?.userId);
+      const saved = await runWithTenantScope(
+        {
+          tenantId: String(tenantId),
+          orgUuid: (req as { tenantContext?: { organizationUuid?: string | null } }).tenantContext?.organizationUuid ?? null,
+          role: (req.user as { role?: string | null })?.role ?? null,
+          source: 'request',
+          caller: 'server/routes/authoring.router.ts:images',
+        },
+        async () => {
+          const { saveDerivedUpload } = await import('../services/ana/uploaded-file-access.js');
+          return saveDerivedUpload({
+            buffer: file.buffer!,
+            fileName: file.originalname || 'figure',
+            mimeType: file.mimetype || 'application/octet-stream',
+            organizationId: tenantId,
+            userId: Number.isFinite(rawUserId) ? rawUserId : null,
+          });
+        }
+      );
+
+      return res.status(201).json({
+        success: true,
+        image: {
+          id: saved.fileId,
+          url: `/api/authoring/images/${saved.fileId}`,
+          mimeType: file.mimetype,
+          byteSize: file.buffer.length,
+        },
+      });
+    } catch (error) {
+      logger.error('authoring image upload failed', { error });
+      return res.status(500).json({ success: false, error: 'Failed to store the image. Nothing was saved.' });
+    }
+  }
+);
+
+router.get('/images/:id', async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantId(req);
+    const { loadUploadedFile } = await import('../services/ana/uploaded-file-access.js');
+    const { AUTHORING_IMAGE_MIMES } = await import('../export/authoring-images.js');
+    // Throws for an unknown id, a foreign tenant's id, or bytes gone from
+    // disk — all collapse to the same 404 below, confirming nothing.
+    const file = await loadUploadedFile(String(req.params.id), tenantId);
+    if (!AUTHORING_IMAGE_MIMES.has(file.mimeType)) {
+      // This endpoint serves figures, not arbitrary tenant uploads.
+      return res.status(404).json({ success: false, error: 'Image not found' });
+    }
+    // The store is append-only from the editor's side (nothing rewrites an
+    // upload's bytes), so the reference can be cached hard — per user, since
+    // the fetch rides the caller's Authorization header.
+    res.setHeader('Content-Type', file.mimeType);
+    res.setHeader('Content-Length', String(file.buffer.length));
+    res.setHeader('Cache-Control', 'private, max-age=31536000, immutable');
+    res.setHeader('ETag', `"${file.fileId}"`);
+    return res.end(file.buffer);
+  } catch {
+    return res.status(404).json({ success: false, error: 'Image not found' });
   }
 });
 

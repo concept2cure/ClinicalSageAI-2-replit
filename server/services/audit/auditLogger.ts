@@ -9,7 +9,7 @@
  */
 
 import { createScopedLogger } from '../../utils/logger';
-import auditService from '../auditService';
+import auditService, { type AuditWriteResult } from '../auditService';
 
 const logger = createScopedLogger('audit');
 
@@ -64,7 +64,7 @@ function generateAuditId(): string {
 /**
  * Log an audit event
  */
-export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>): Promise<string> {
+export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>): Promise<AuditWriteResult> {
   const auditEvent: AuditEvent = {
     ...event,
     id: generateAuditId(),
@@ -94,19 +94,9 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>)
   // caller (an audit-trail outage must not break the user action it records).
   // resourceType is required there; fall back to the event category when a
   // resource is not named.
-  /* A REJECTION is an outage too, and the comment above promises the caller is
-     never broken by one. `logAction` is documented to resolve with
-     `persisted: false` on a persistence failure, which is why the old
-     try/catch was removed — but "resolves on a HANDLED failure" is not "never
-     throws", and an unhandled one (a bug in the store, a pool error raised
-     rather than returned) would propagate straight through a governed action
-     that had already happened.
-     Catching it back into the same shape is what keeps the promise without
-     reintroducing the double swallow that was fixed here: there is still
-     exactly ONE place below that reports a lost §11.10(e) record, and both
-     failure modes now reach it with a reason. */
-  const canonical = await auditService
-    .logAction({
+  let canonical: AuditWriteResult | undefined;
+  try {
+    canonical = await auditService.logAction({
       action: `${event.category}.${event.action}`,
       resourceType: event.resourceType ?? event.category,
       resourceId: event.resourceId,
@@ -123,13 +113,20 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>)
         ...(event.newValue !== undefined ? { newValue: event.newValue } : {}),
         ...(event.errorMessage ? { errorMessage: event.errorMessage } : {}),
       },
-    })
-    .catch((err: unknown) => ({
+    });
+  } catch (err) {
+    /* logAction is documented never to throw, and the general call sites rely on
+       that. "Documented" is not "guaranteed": a bug below it, or a store that
+       rejects before its own guard runs, still lands here. An audit-trail outage
+       must not crash the user action it records, so the throw stops at this
+       boundary — and it stops as a KNOWN failure, not a silent one. */
+    canonical = {
       persisted: false,
       chained: false,
       tamperProof: false,
       error: err instanceof Error ? err.message : String(err),
-    }));
+    };
+  }
 
   /* This was `try { await logAction } catch { logger.error(...) }` — a DOUBLE
      swallow, and the outer half could never fire, because logAction resolves
@@ -143,16 +140,42 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>)
      lost §11.10(e) record now says so, loudly, with the reason — and the
      in-memory event carries the outcome so the store is not claiming a
      durability it does not have. */
-  if (!canonical.persisted) {
+  if (!canonical?.persisted) {
     logger.error('Audit event NOT persisted to the canonical store', {
       auditEventId: auditEvent.id,
       action: `${event.category}.${event.action}`,
-      reason: canonical.error,
+      reason: canonical?.error ?? 'the canonical store returned no write result',
     });
   }
-  (auditEvent as { persisted?: boolean }).persisted = canonical.persisted;
+  (auditEvent as { persisted?: boolean }).persisted = canonical?.persisted === true;
 
-  return auditEvent.id;
+  /* Returns the OUTCOME, not `auditEvent.id`.
+   *
+   * That id came from `generateAuditId()` — `audit_<Date.now()>_<random>` — and
+   * identified nothing retrievable. It is not the `audit_logs` primary key (that
+   * INSERT has no RETURNING clause), and the in-memory `auditStore` is only ever
+   * read wholesale, never looked up by id. So eight exported functions were
+   * typed `Promise<string>`, described as returning the audit event's
+   * identifier, and each handed back a token that resolved nowhere. A caller
+   * storing it as a Part 11 cross-reference would have stored a dead pointer.
+   *
+   * Nothing consumed it: all 27 call sites ignore the value, and the only reader
+   * anywhere was one test asserting `typeof id === 'string'`. So the contract is
+   * now the fact a caller can actually act on — whether the §11.10(e) record
+   * survived. `generateAuditId` still stamps the in-memory cache entry, which is
+   * the one thing that id was ever really for. */
+  /* Normalised rather than returned raw: a caller must never have to ask
+     whether the absent case means "not written" or "unknown". The guard above
+     already treats an absent result as a lost record; this says the same thing
+     in the type. */
+  return (
+    canonical ?? {
+      persisted: false,
+      chained: false,
+      tamperProof: false,
+      error: 'the canonical store returned no write result',
+    }
+  );
 }
 
 /**
@@ -296,7 +319,7 @@ export async function logLogin(
   organizationId: string,
   success: boolean,
   metadata?: Record<string, unknown>
-): Promise<string> {
+): Promise<AuditWriteResult> {
   return logAuditEvent({
     category: 'authentication',
     severity: success ? 'info' : 'warning',
@@ -308,7 +331,7 @@ export async function logLogin(
   });
 }
 
-export async function logLogout(userId: string, organizationId: string): Promise<string> {
+export async function logLogout(userId: string, organizationId: string): Promise<AuditWriteResult> {
   return logAuditEvent({
     category: 'authentication',
     severity: 'info',
@@ -324,7 +347,7 @@ export async function logDocumentAccess(
   organizationId: string,
   documentId: string,
   action: 'view' | 'download' | 'print'
-): Promise<string> {
+): Promise<AuditWriteResult> {
   return logAuditEvent({
     category: 'document',
     severity: 'info',
@@ -345,7 +368,7 @@ export async function logDataChange(
   action: 'create' | 'update' | 'delete',
   previousValue?: unknown,
   newValue?: unknown
-): Promise<string> {
+): Promise<AuditWriteResult> {
   return logAuditEvent({
     category: 'data_change',
     severity: 'info',
@@ -365,7 +388,7 @@ export async function logExport(
   organizationId: string,
   exportType: string,
   resourceIds: string[]
-): Promise<string> {
+): Promise<AuditWriteResult> {
   return logAuditEvent({
     category: 'export',
     severity: 'info',
@@ -384,7 +407,7 @@ export async function logSecurityEvent(
   action: string,
   severity: AuditSeverity,
   metadata?: Record<string, unknown>
-): Promise<string> {
+): Promise<AuditWriteResult> {
   return logAuditEvent({
     category: 'authorization',
     severity,
@@ -424,7 +447,7 @@ export interface AuditLogInput {
  * hash-chain log) for 21 CFR Part 11 durability.
  */
 export class AuditLogger {
-  async log(input: AuditLogInput): Promise<string> {
+  async log(input: AuditLogInput): Promise<AuditWriteResult> {
     return logAuditEvent({
       category: input.category ?? 'system',
       severity: input.severity ?? 'info',

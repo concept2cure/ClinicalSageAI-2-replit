@@ -99,6 +99,7 @@ export const RAIL_CORE = [
 ];
 /** Specialist science apps promoted to the rail (also in the Apps catalog) */
 export const RAIL_SPECIALIST = [
+  { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker' },
   { id: 'rbm', label: 'Risk-based monitoring', icon: 'shieldCheck' },
   { id: 'crl-library', label: 'FDA CRL library', icon: 'gavel' },
 ];
@@ -146,7 +147,6 @@ export const NAV_HIDDEN: ReadonlySet<string> = new Set([
   'haq-manager',
   'global-ri',
   'safety-narrative',
-  'cmc',
   'labeling',
   'risk',
   'design-controls',
@@ -333,9 +333,23 @@ export const READINESS_META = {
   },
   planned: { label: 'Planned', tone: 'idle', blurb: 'Routes exist; surface not yet prioritized.' },
 };
-/** Entitlements sample: module ids this org is NOT licensed for (fixture until /api/module-subscriptions wiring in Phase 6; rail shows lock + upgrade CTA, never a dead button) */
-export const LICENSE_UNLICENSED: string[] = ['labeling', 'risk', 'pdev'];
-export const isLicensed = (id: string) => !LICENSE_UNLICENSED.includes(id);
+/* Entitlements are NOT declared here.
+ *
+ * This slot used to hold `LICENSE_UNLICENSED = ['labeling', 'risk', 'pdev']`
+ * and an `isLicensed()` built from it — three module ids named in client
+ * source, applied identically to every tenant, under a comment promising real
+ * wiring "in Phase 6". Nothing ever called `isLicensed`, so the fixture gated
+ * nothing while making the file look like it carried a tenant's licence state.
+ *
+ * The real answer is per-organization and lives on the server:
+ *   server/services/entitlements/navigation-entitlements.ts
+ *   GET /api/module-subscriptions/navigation
+ *   client/src/concept2cure/v2/navEntitlements.tsx (the rail's consumer)
+ *
+ * Per this file's own header rule — "nothing in this file may describe a
+ * particular organization's programmes" — a licence verdict may never come
+ * back here.
+ */
 
 /** AnA modes (intent → engine label, resolved server-side; no vendor names on screen) */
 /**
@@ -1026,6 +1040,24 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
   // resolves to the kit's entry surface rather than silently falling through to
   // home. `pdev` needs no alias — it is a real registered surface id now.
   mdx: 'device-workstream',
+  /* shared/navigation NAVIGATION_TARGETS reconciliation (README step 2, and
+     the precondition for AnA Live Drive): these ten registry ids are what AnA
+     navigates by — `navigate_to` refuses everything else — but they predate
+     the v2 surface ids, so without an alias each one landed on the
+     KitSurfaceScaffold fallback: AnA saying "taking you to Intelligence" and
+     the person arriving at a scaffold. Each maps to the surface that IS that
+     capability today. Guarded by __tests__/navigationReachability.test.ts,
+     which fails the moment a registry id and this table drift apart again. */
+  biopharma: 'program-journey',
+  documents: 'vault',
+  submissions: 'submission-center',
+  'section-workspace': 'document-authoring',
+  'review-readiness': 'review',
+  tasking: 'tasks',
+  'submission-gateway': 'gateway-transmittals',
+  intelligence: 'global-ri',
+  authoring: 'document-authoring',
+  safety: 'pv-cockpit',
 };
 
 /** Registry meta lookup with the kit's fallback shape. */
@@ -1078,7 +1110,7 @@ export const ANA_SUGGESTIONS: Record<string, string[]> = {
   'submission-center': ['Validate the OR-902 package', 'What gates transmit?', 'Compare ESG vs eSTAR export'],
   'document-authoring': ['Draft §2.5 from the predicate', 'Check claims against evidence', 'Rewrite for FDA tone'],
   projects: ['Which programs are blocked?', 'Portfolio readiness report', 'Flag filing risks this week'],
-  vault: ['Find the latest biocompat report', 'Surface unsigned documents', 'Search by SHA-256'],
+  vault: ['Find the latest biocompat report', 'What is still unfiled in the cabinet?', 'Search by SHA-256'],
   tasks: ['What is due this week?', 'Open reviews assigned to me', 'Summarize blockers'],
   'crl-library': [
     'Findings on this endpoint class',

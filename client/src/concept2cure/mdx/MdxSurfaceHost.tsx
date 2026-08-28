@@ -63,6 +63,8 @@ import './app.css';
 import './pathway-tabs.css';
 import './files-tree.css';
 import './drafter.css';
+import { publishShellProject } from '../v2/shellProject';
+import { usePublishSurfaceContext } from '../v2/surfaceContext';
 
 /* The id list lives in `./surfaceIds` with no component or stylesheet imports,
    so the v2 registry can read it at module scope without pulling this file —
@@ -86,6 +88,90 @@ const PATHWAY_ANCHOR: Partial<Record<MdxSurfaceId, Program['pathway'] | null>> =
   // completeness summary can load when nothing is selected.
   'device-software': 'k510',
 };
+
+/**
+ * What each device screen IS, for AnA's screen-state channel — the title in the
+ * words the surface's own heading uses, and a one-line blurb describing what
+ * the leaf renders. Blurbs describe the screen; they never claim data values —
+ * the host does not hold the leaves' counts, and absent beats guessed.
+ */
+const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }> = {
+  'device-workstream': {
+    title: 'Device portfolio',
+    blurb: 'the device portfolio overview — program cards and portfolio health KPIs.',
+  },
+  'device-510k': {
+    title: '510(k) pathway',
+    blurb:
+      'the 510(k) pathway workspace — predicate intelligence, the substantial-equivalence matrix and eSTAR sections.',
+  },
+  'device-pma': {
+    title: 'PMA pathway',
+    blurb: 'the PMA pathway workspace — premarket-approval modules for the program in context.',
+  },
+  'device-cer': {
+    title: 'Clinical Evaluation Report',
+    blurb: 'the CER pathway workspace for clinical evaluation under EU MDR.',
+  },
+  'device-diagnostics': {
+    title: 'IVD pathway',
+    blurb: 'the IVD pathway workspace for in-vitro diagnostic programs.',
+  },
+  'device-clinical-studies': {
+    title: 'Clinical studies',
+    blurb: 'the clinical studies register for device programs.',
+  },
+  'device-software': {
+    title: 'Software lifecycle',
+    blurb: 'software documentation completeness for the program in context.',
+  },
+  'device-engineering': {
+    title: 'Device engineering',
+    blurb: 'the engineering and design-controls workspace.',
+  },
+  'device-udi': {
+    title: 'UDI and labeling',
+    blurb: 'the UDI register.',
+  },
+  'device-postmarket': {
+    title: 'Post-market vigilance',
+    blurb: 'postmarket surveillance with its triage queue.',
+  },
+  'device-presub': {
+    title: 'Pre-Sub manager',
+    blurb: 'the pre-submission manager.',
+  },
+  'device-vault': {
+    title: 'Document vault',
+    blurb: 'device vault artifacts.',
+  },
+  'device-tasks': {
+    title: 'Tasks and reviews',
+    blurb: 'the device task workbench.',
+  },
+  'device-validation': {
+    title: 'Validation center',
+    blurb: 'the validation workbench.',
+  },
+  'device-submission': {
+    title: 'Submission center',
+    blurb: 'the submission-packages workbench.',
+  },
+  'device-analytics': {
+    title: 'Analytics',
+    blurb: 'device analytics panels.',
+  },
+};
+
+/**
+ * The two things a user can truthfully do from any device screen. No operable
+ * screen actions are advertised because none are registered for the device
+ * surfaces; governed operations are proposed by AnA in conversation only.
+ */
+const DEVICE_SCREEN_ACTIONS: string[] = [
+  "Ask AnA about what is on this screen — the registers and counts render from the org's live device data",
+  'Signatures, transmissions, uploads and profile changes are governed — AnA proposes them in conversation, never through screen controls',
+];
 
 export interface MdxSurfaceHostProps extends SurfaceViewProps {
   /** Which surface to render. Supplied by the registry entry, not by state. */
@@ -136,7 +222,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
         // v2/surfaces/Projects.tsx:389 replaces the whole object; this now
         // matches it, and omits keys it cannot honestly supply rather than
         // inheriting stale ones.
-        window.C2C_PROJECT = { id: String(prog.id), title: prog.title };
+        publishShellProject({ id: String(prog.id), title: prog.title });
       }
       onNav('project-home');
     },
@@ -173,7 +259,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
     (section?: EditorSectionRef) => {
       if (typeof window !== 'undefined' && programForContext) {
         // REPLACE, never merge — same rule and same reason as openProgram above.
-        window.C2C_PROJECT = { id: String(programForContext.id), title: programForContext.title };
+        publishShellProject({ id: String(programForContext.id), title: programForContext.title });
       }
       const docType = programForContext?.pathway ?? PATHWAY_ANCHOR[nav] ?? null;
       if (docType && section && (section.code != null || section.label)) {
@@ -191,6 +277,81 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
     },
     [onNav, programForContext, nav],
   );
+
+  /**
+   * What AnA can see of the device screen the user is on.
+   *
+   * Load and failure are stated as themselves — "still loading" and "could not
+   * be read" are different claims from "there are no programs", and publishing
+   * the wrong one makes AnA confidently wrong. The program named in the
+   * context comes only from `programForContext`, which already carries the
+   * honesty rule above: only `device-software` may borrow a program; every
+   * other surface reports nothing rather than something false. No leaf-level
+   * counts are published — the host does not hold them.
+   */
+  const programCount = programs.length;
+  const anaContext = React.useMemo(() => {
+    const meta = DEVICE_SCREEN_META[nav];
+    if (liveProgramsResult.loading) {
+      return {
+        summary: `${meta.title} — the regulatory-program read is still loading; nothing program-scoped is final yet.`,
+        facts: { screen: nav },
+        availableActions: DEVICE_SCREEN_ACTIONS,
+      };
+    }
+    if (liveProgramsResult.error) {
+      return {
+        summary: `${meta.title} — the regulatory programs could not be read — program-scoped content is missing because of a failure, not because none exists.`,
+        facts: { screen: nav },
+        availableActions: DEVICE_SCREEN_ACTIONS,
+      };
+    }
+    return {
+      summary:
+        `${meta.title} — ${meta.blurb}` +
+        (programForContext
+          ? ` Program in context: ${programForContext.title}.`
+          : ' No device program is in context; program-scoped registers show their empty states.'),
+      facts: {
+        screen: nav,
+        program: programForContext
+          ? {
+              id: programForContext.id,
+              code: programForContext.code,
+              title: programForContext.title,
+            }
+          : null,
+        programCount,
+      },
+      availableActions: DEVICE_SCREEN_ACTIONS,
+    };
+  }, [nav, liveProgramsResult.loading, liveProgramsResult.error, programForContext, programCount]);
+
+  /*
+   * One builder, sixteen literal publish calls. The AnA coverage gate counts
+   * single-quoted literal surface ids, so a single dynamic
+   * `usePublishSurfaceContext(nav, …)` would register as covering nothing —
+   * this is the sanctioned multi-id shape from v2/surfaces/UsageBilling.tsx.
+   * Only the call whose id matches `nav` publishes; the store treats the
+   * fifteen null calls as no-ops (each clears only its own id), and hook order
+   * stays fixed because every call runs unconditionally on every render.
+   */
+  usePublishSurfaceContext('device-workstream', nav === 'device-workstream' ? anaContext : null);
+  usePublishSurfaceContext('device-510k', nav === 'device-510k' ? anaContext : null);
+  usePublishSurfaceContext('device-pma', nav === 'device-pma' ? anaContext : null);
+  usePublishSurfaceContext('device-cer', nav === 'device-cer' ? anaContext : null);
+  usePublishSurfaceContext('device-diagnostics', nav === 'device-diagnostics' ? anaContext : null);
+  usePublishSurfaceContext('device-clinical-studies', nav === 'device-clinical-studies' ? anaContext : null);
+  usePublishSurfaceContext('device-software', nav === 'device-software' ? anaContext : null);
+  usePublishSurfaceContext('device-engineering', nav === 'device-engineering' ? anaContext : null);
+  usePublishSurfaceContext('device-udi', nav === 'device-udi' ? anaContext : null);
+  usePublishSurfaceContext('device-postmarket', nav === 'device-postmarket' ? anaContext : null);
+  usePublishSurfaceContext('device-presub', nav === 'device-presub' ? anaContext : null);
+  usePublishSurfaceContext('device-vault', nav === 'device-vault' ? anaContext : null);
+  usePublishSurfaceContext('device-tasks', nav === 'device-tasks' ? anaContext : null);
+  usePublishSurfaceContext('device-validation', nav === 'device-validation' ? anaContext : null);
+  usePublishSurfaceContext('device-submission', nav === 'device-submission' ? anaContext : null);
+  usePublishSurfaceContext('device-analytics', nav === 'device-analytics' ? anaContext : null);
 
   let surface: React.ReactNode;
   switch (nav) {

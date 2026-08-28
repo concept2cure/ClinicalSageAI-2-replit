@@ -69,20 +69,21 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
-import { useAnaChat } from '../../components/ana/useAnaChat';
+import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { AuthoringFilingBar } from './AuthoringFilingBar';
 import { AuthoringPlaceIntoFiling } from './AuthoringPlaceIntoFiling';
 import { AuthoringCollab } from './AuthoringCollab';
 import { AuthoringCreateExport } from './AuthoringCreateExport';
+import { newDocumentAction } from '../newDocumentAction';
 import { AuthoringRevisionDiff } from './AuthoringRevisionDiff';
-import {
-  RichSectionEditor,
-  type RichSectionEditorHandle,
-} from '../editor/RichSectionEditor';
+import { AuthoringAiDraft, type AcceptedAttribution } from './AuthoringAiDraft';
+import { AuthoringExports } from './AuthoringExports';
+import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
+import type { SuggestionDecision } from '../editor/suggestions';
 import type { CommentAnchorPayload } from '../editor/commentAnchor';
 import { useAuth } from '@/services/portal/authService';
 import { getAuthToken } from '@/utils/authToken';
@@ -97,10 +98,19 @@ import {
   peekEditorTarget,
   type EditorTarget,
 } from '../editorTarget';
+import { consumeNavParams } from '../navParams';
+import {
+  advertisedScreenActions,
+  notifySurfaceActionReady,
+  useSurfaceActionHandlers,
+} from '../surfaceActions';
 import { isFeatureEnabled } from '@/flags/featureFlags';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { AuthoringSignatures } from './AuthoringSignatures';
+import { useDialog } from '../useDialog';
+import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
+import { AuthoredHtml } from '../editor/AuthoredHtml';
 
 /* ── Server row shapes (mirror server/routes/authoring.router.ts) ── */
 
@@ -161,6 +171,159 @@ interface LedgerVerdict {
   breaks: Array<{ revisionId: string; reason: string }>;
 }
 
+/** A row from GET /docs/:docId/audit — the Part 11 audit trail the server has
+ *  written on every governed act since the store shipped, readable by no
+ *  surface until this rail. Field names are the endpoint's aliases. */
+interface AuthAuditEvent {
+  id: string;
+  section_id: string | null;
+  event_type: string | null;
+  actor: string | null;
+  actor_role: string | null;
+  change_reason: string | null;
+  content_hash_before: string | null;
+  content_hash_after: string | null;
+  created_at: string | null;
+  /** The endpoint has always returned this and no surface read it, so the
+   *  richest part of several governed records — which model produced a draft,
+   *  which redline a reviewer refused — was written and unreadable. */
+  metadata: Record<string, unknown> | null;
+}
+
+/** How each recorded operation reads to a reviewer. Unknown operations are
+ *  humanized from the raw value, never hidden. */
+const AUDIT_EVENT_LABELS: Record<string, string> = {
+  CREATE: 'created',
+  EDIT: 'content saved',
+  UPDATE: 'updated',
+  COMMIT: 'committed to filing',
+  REVERT: 'reverted to a prior revision',
+  tracked_change_decision: 'tracked change decided',
+  tracked_change_bulk_decision: 'tracked changes decided in bulk',
+  REORDER_SECTIONS: 'sections reordered',
+  FREEZE: 'frozen',
+  SIGN: 'signed',
+  E_SIGN: 'e-signed',
+  EXPORT: 'exported',
+  EXPORT_HISTORY_DELETED: 'export record deleted',
+  SUBMIT: 'submitted',
+};
+
+/**
+ * The readable part of an audit row's `metadata`, or null when it carries
+ * nothing a reviewer would act on.
+ *
+ * Two recorded shapes were being written and shown to nobody, and both answer
+ * the first question an assessor asks:
+ *
+ *   tracked_change_decision — a reviewer accepted or REFUSED a redline. A
+ *     rejection changes no text, so this row is the only place it exists.
+ *   ai-draft-accept — which model and provider produced the text, and whether
+ *     the author edited it before accepting (so "accepted AI draft" cannot
+ *     vouch for words the model never wrote).
+ *
+ * Unrecognised metadata is left alone rather than dumped as JSON: a rail is a
+ * reading surface, and raw payloads are not read.
+ */
+export function describeAuditMetadata(
+  eventType: string | null,
+  metadata: Record<string, unknown> | null,
+): string | null {
+  if (!metadata || typeof metadata !== 'object') return null;
+  const str = (k: string): string | null => {
+    const v = (metadata as Record<string, unknown>)[k];
+    return typeof v === 'string' && v.trim().length > 0 ? v : null;
+  };
+
+  if (eventType === 'tracked_change_decision') {
+    const decision = str('decision');
+    const kind = str('changeType');
+    const text = str('text');
+    const proposedBy = str('proposedBy');
+    if (!decision) return null;
+    const verb = decision === 'accept' ? 'accepted' : 'rejected';
+    const what = kind === 'deletion' ? 'a proposed deletion' : kind === 'insertion' ? 'a proposed insertion' : 'a tracked change';
+    /* The quoted text is what makes the row resolvable — accepting a
+       suggestion strips its mark, so the document no longer holds it. */
+    const quoted = text ? ` — “${text.length > 160 ? text.slice(0, 160) + '…' : text}”` : '';
+    const by = proposedBy ? ` (proposed by ${proposedBy})` : '';
+    return `${verb} ${what}${by}${quoted}`;
+  }
+
+  if (eventType === 'tracked_change_bulk_decision') {
+    const decision = str('decision');
+    const count = typeof metadata.count === 'number' ? metadata.count : null;
+    if (!decision || count === null) return null;
+    const verb = decision === 'accept' ? 'accepted' : 'rejected';
+    const omitted =
+      typeof metadata.changesOmittedFromSummary === 'number'
+        ? metadata.changesOmittedFromSummary
+        : 0;
+    const changes = Array.isArray(metadata.changes) ? metadata.changes : [];
+    const sample = changes
+      .slice(0, 3)
+      .map(c => (c && typeof (c as any).text === 'string' ? (c as any).text : null))
+      .filter((t): t is string => !!t)
+      .map(t => `“${t.length > 80 ? t.slice(0, 80) + '…' : t}”`);
+    /* When the stored summary was capped, the row says so. A truncated record
+       that reads as complete is worse than one that admits its limit. */
+    return (
+      `${verb} ${count} tracked change${count === 1 ? '' : 's'} in one action` +
+      (sample.length > 0 ? ` — including ${sample.join(', ')}` : '') +
+      (omitted > 0 ? ` (${omitted} more not summarised on this row)` : '')
+    );
+  }
+
+  if (metadata.source === 'ai-draft-accept') {
+    const gen = (metadata.generator ?? null) as Record<string, unknown> | null;
+    const model = gen && typeof gen.model === 'string' ? gen.model : null;
+    const provider = gen && typeof gen.provider === 'string' ? gen.provider : null;
+    const who = [model, provider].filter(Boolean).join(' · ');
+    const edited = metadata.draft_modified_on_accept === true;
+    return (
+      'accepted an AI draft' +
+      (who ? ` generated by ${who}` : ' whose generating model was not recorded') +
+      (edited ? ', edited before accepting — the saved text is not the model’s wording' : '')
+    );
+  }
+
+  return null;
+}
+
+function auditEventLabel(raw: string | null): string {
+  if (!raw) return 'recorded';
+  return AUDIT_EVENT_LABELS[raw] ?? raw.replace(/_/g, ' ').toLowerCase();
+}
+
+/** POST /sections/:id/ai/deficiency-scan — a handful of mechanical checks over the
+ *  SAVED section (length, module keywords, tables/figures, placeholders,
+ *  structure). The handler itself refuses to call this a compliance
+ *  determination (`signal_type: 'heuristic_quality'`); the panel keeps that
+ *  framing rather than dressing regexes up as review. */
+interface ScanDeficiency {
+  type: string;
+  severity: 'high' | 'medium' | 'low' | string;
+  message: string;
+  recommendation?: string | null;
+  location?: string | null;
+}
+interface ScanResults {
+  section_id: string;
+  section_code?: string;
+  quality_score?: number;
+  status?: string;
+  deficiencies: ScanDeficiency[];
+  deficiency_count?: number;
+  /** The denominator behind `quality_score`, and how many of those passed. The
+   *  panel names the server's count rather than a literal, so the sentence
+   *  cannot drift from the checks the handler actually runs. */
+  checks_run?: number;
+  checks_passed?: number;
+  scanned_at?: string;
+}
+
+const SEVERITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
+
 interface AuthComment {
   id: string;
   section_id: string | null;
@@ -172,6 +335,15 @@ interface AuthComment {
   created_at: string | null;
   /** Range anchor recorded at creation (authoring_comments.anchor JSONB). */
   anchor?: unknown;
+  /** Threaded replies — the server nests them under each top-level comment
+   *  (GET /documents/:id/comments), oldest first. Absent on reply rows. */
+  replies?: AuthComment[];
+  /** Resolution record — the server has captured all three since the store
+   *  shipped (PATCH /comments/:id), and a status chip alone is not a record:
+   *  the rail shows WHO resolved a thread, when, and their stated reason. */
+  resolved_by?: string | null;
+  resolved_at?: string | null;
+  resolution_note?: string | null;
 }
 
 /** Runtime guard over the JSONB the server returns verbatim. */
@@ -181,6 +353,138 @@ function asTextRangeAnchor(v: unknown): CommentAnchorPayload | null {
   return a.kind === 'text-range' && typeof a.quote === 'string'
     ? (a as unknown as CommentAnchorPayload)
     : null;
+}
+
+/* ── AnA's answer, rendered as prose ──────────────────────────────────────
+   The pane used to render `m.text` under `white-space: pre-wrap`, so on the
+   one surface whose entire job is producing formatted regulatory prose, the
+   assistant's prose was the only unformatted text on screen: `## Drug
+   Substance`, `**must**` and `| Attribute | Limit |` reached the author as
+   their own source.
+
+   TWO STAGES, on purpose.
+
+   Stage 1 is `renderSafeMarkdown` — the codebase's ONE audited markdown path
+   (marked → DOMPurify tag/attribute allowlist, covered by its own tests). It is
+   reused rather than reimplemented: this repo already deleted three hand-rolled
+   `mdToHtml` regexes feeding three injection sinks, and adding a fourth markdown
+   parser here would reintroduce exactly that (CLAUDE.md: zero duplication).
+
+   Stage 2 walks the sanitized fragment into REACT ELEMENTS. No
+   `dangerouslySetInnerHTML` anywhere on this path, so a model-authored string
+   never becomes markup React did not construct — and the render map below is a
+   second, independent allowlist: a tag DOMPurify let through that this map does
+   not name is dropped to its text. Two allowlists have to fail together before
+   anything reaches the DOM, and only `href` survives as an attribute, http(s)
+   and mailto only.
+
+   Deliberately NOT rendered as markdown: the author's own turn. Those are their
+   words as typed, not a document, and formatting them would rewrite what they
+   said back at them. */
+
+const MD_TAGS: Record<string, keyof React.JSX.IntrinsicElements> = {
+  P: 'p',
+  BR: 'br',
+  STRONG: 'strong',
+  B: 'strong',
+  EM: 'em',
+  I: 'em',
+  U: 'u',
+  CODE: 'code',
+  PRE: 'pre',
+  UL: 'ul',
+  OL: 'ol',
+  LI: 'li',
+  H1: 'h3',
+  H2: 'h4',
+  // AnA's "# heading" is a heading INSIDE a rail whose own header is the
+  // document's h-level; demoting keeps the page outline honest for a screen
+  // reader instead of scattering h1s through a log.
+  H3: 'h5',
+  H4: 'h5',
+  H5: 'h6',
+  H6: 'h6',
+  BLOCKQUOTE: 'blockquote',
+  HR: 'hr',
+  TABLE: 'table',
+  THEAD: 'thead',
+  TBODY: 'tbody',
+  TR: 'tr',
+  TH: 'th',
+  TD: 'td',
+  A: 'a',
+  SUP: 'sup',
+  SUB: 'sub',
+  SPAN: 'span',
+  DIV: 'div',
+};
+/** Elements that must not be given children (React throws otherwise). */
+const MD_VOID = new Set(['br', 'hr']);
+
+/** Only a link that goes somewhere a link may go. */
+function safeHref(raw: string | null): string | undefined {
+  if (!raw) return undefined;
+  const v = raw.trim();
+  return /^(https?:|mailto:)/i.test(v) ? v : undefined;
+}
+
+function mdChildren(parent: Node, keyPrefix: string): React.ReactNode[] {
+  const out: React.ReactNode[] = [];
+  parent.childNodes.forEach((node, i) => {
+    const key = `${keyPrefix}.${i}`;
+    if (node.nodeType === 3) {
+      if (node.nodeValue) out.push(node.nodeValue);
+      return;
+    }
+    if (node.nodeType !== 1) return;
+    const el = node as Element;
+    const tag = MD_TAGS[el.tagName];
+    if (!tag) {
+      // Not in the render allowlist: keep the words, drop the element.
+      const text = el.textContent;
+      if (text) out.push(<React.Fragment key={key}>{text}</React.Fragment>);
+      return;
+    }
+    if (MD_VOID.has(tag)) {
+      out.push(React.createElement(tag, { key }));
+      return;
+    }
+    const props: Record<string, unknown> = { key };
+    if (tag === 'a') {
+      const href = safeHref(el.getAttribute('href'));
+      if (!href) {
+        // A link with nowhere legitimate to go is text, not a link.
+        out.push(<React.Fragment key={key}>{el.textContent}</React.Fragment>);
+        return;
+      }
+      props.href = href;
+      props.target = '_blank';
+      props.rel = 'noopener noreferrer';
+    }
+    out.push(React.createElement(tag, props, ...mdChildren(el, key)));
+  });
+  return out;
+}
+
+/** Markdown → React nodes. Returns plain text if anything in the chain fails —
+ *  the author sees the answer either way, never a blank where prose was. */
+function AnaMarkdown({ text }: { text: string }): React.ReactElement {
+  const nodes = useMemo(() => {
+    if (!text) return null;
+    try {
+      const html = renderSafeMarkdown(text);
+      if (!html) return null;
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      return mdChildren(doc.body, 'md');
+    } catch {
+      return null;
+    }
+  }, [text]);
+  return (
+    <div className="cmt-body ana-md">
+      {nodes ?? <span style={{ whiteSpace: 'pre-wrap' }}>{text}</span>}
+    </div>
+  );
 }
 
 /**
@@ -217,7 +521,11 @@ interface ProjectSource {
 }
 
 /** How each citation state reads to an author. */
-function sourceStateLabel(s: SectionSource): { text: string; tone: 'ok' | 'warn' | 'muted'; hint: string } {
+function sourceStateLabel(s: SectionSource): {
+  text: string;
+  tone: 'ok' | 'warn' | 'muted';
+  hint: string;
+} {
   switch (s.state) {
     case 'current':
       return {
@@ -229,8 +537,7 @@ function sourceStateLabel(s: SectionSource): { text: string; tone: 'ok' | 'warn'
       return {
         text: 'Source changed since cited',
         tone: 'warn',
-        hint:
-          'This section was drafted from earlier content. Nothing has been rewritten — re-read the source and decide whether it changes what this section says.',
+        hint: 'This section was drafted from earlier content. Nothing has been rewritten — re-read the source and decide whether it changes what this section says.',
       };
     case 'unresolved':
       return {
@@ -250,7 +557,9 @@ function sourceStateLabel(s: SectionSource): { text: string; tone: 'ok' | 'warn'
 /* ── Helpers ── */
 
 /** GET via apiRequest without throwing — honest {ok,status,body}. */
-async function readJson<T = any>(path: string): Promise<{ ok: boolean; status: number; body: T | null }> {
+async function readJson<T = any>(
+  path: string
+): Promise<{ ok: boolean; status: number; body: T | null }> {
   try {
     const res = await apiRequest('GET', path);
     const body = (await res.json().catch(() => null)) as T | null;
@@ -306,7 +615,196 @@ function AuthoringSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
   );
 }
 
-export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
+function AnaActivity({
+  message,
+  onSuggestedAction,
+}: {
+  message: AnaChatMessage;
+  onSuggestedAction: (action: string) => void;
+}) {
+  const toolCalls = message.toolCalls ?? [];
+  const evidence = message.evidence;
+  const groundingSources = message.groundingSources ?? [];
+  const warnings = message.warnings ?? [];
+  const suggestedActions = message.suggestedActions ?? [];
+  const hasMeta =
+    message.detectedLens ||
+    message.effortUsed ||
+    message.fallback ||
+    (!message.streaming && message.latencyMs != null) ||
+    message.stopped;
+
+  if (
+    !hasMeta &&
+    toolCalls.length === 0 &&
+    !evidence &&
+    groundingSources.length === 0 &&
+    warnings.length === 0 &&
+    suggestedActions.length === 0
+  ) {
+    return null;
+  }
+
+  return (
+    <div className="ana-activity" aria-label="AnA activity and evidence">
+      {hasMeta && (
+        <div className="ana-meta" aria-label="AnA response details">
+          {message.detectedLens && (
+            <span className="ana-meta-chip">Lens: {message.detectedLens}</span>
+          )}
+          {message.effortUsed && (
+            <span className="ana-meta-chip">Effort: {message.effortUsed}</span>
+          )}
+          {message.fallback && (
+            <span className="ana-meta-chip ana-meta-chip-warn">Fallback provider</span>
+          )}
+          {!message.streaming && message.latencyMs != null && (
+            <span className="ana-meta-chip">
+              Response: {(message.latencyMs / 1000).toFixed(1)}s
+            </span>
+          )}
+          {message.stopped && (
+            <span className="ana-meta-chip ana-meta-chip-warn">Stopped before completion</span>
+          )}
+        </div>
+      )}
+
+      {toolCalls.length > 0 && (
+        <details className="ana-activity-group" open={message.streaming || undefined}>
+          <summary className="ana-activity-summary">
+            <span>{I.workflow} Work log</span>
+            <span className="ana-activity-count">
+              {toolCalls.length} step{toolCalls.length === 1 ? '' : 's'}
+            </span>
+          </summary>
+          <div className="ana-tool-list" role="list">
+            {toolCalls.map((tool, toolIndex) => {
+              const stateLabel =
+                tool.status === 'running'
+                  ? 'Running'
+                  : tool.status === 'error'
+                  ? 'Failed'
+                  : 'Complete';
+              return (
+                <div
+                  key={`${tool.name}-${toolIndex}`}
+                  className="ana-tool"
+                  data-status={tool.status}
+                  role="listitem"
+                >
+                  <span className="ana-tool-state" aria-hidden="true">
+                    {tool.status === 'error'
+                      ? I.alertTriangle
+                      : tool.status === 'running'
+                      ? I.clock
+                      : I.check}
+                  </span>
+                  <span className="ana-tool-label">{tool.label}</span>
+                  <span className="ana-tool-status">{stateLabel}</span>
+                  {tool.round != null && <span className="ana-tool-round">Round {tool.round}</span>}
+                  {tool.result && (
+                    <details className="ana-tool-result">
+                      <summary>View result</summary>
+                      <pre>{tool.result}</pre>
+                    </details>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </details>
+      )}
+
+      {evidence && (
+        <div
+          className="ana-evidence"
+          data-validated={evidence.validated}
+          role="status"
+          aria-live="polite"
+        >
+          <div className="ana-evidence-head">
+            <span>{evidence.validated ? I.shieldCheck : I.alertTriangle}</span>
+            <strong>{evidence.validated ? 'Evidence grounded' : 'Evidence needs review'}</strong>
+          </div>
+          <div className="ana-evidence-summary">
+            {evidence.sourceCount} source{evidence.sourceCount === 1 ? '' : 's'} ·{' '}
+            {evidence.groundedClaims} grounded claim{evidence.groundedClaims === 1 ? '' : 's'} ·{' '}
+            {evidence.weakClaims} weak
+          </div>
+          {evidence.riskSummary && <div className="ana-evidence-risk">{evidence.riskSummary}</div>}
+          {evidence.flaggedClaims && evidence.flaggedClaims.length > 0 && (
+            <details className="ana-flagged-claims">
+              <summary>
+                {evidence.flaggedClaims.length} flagged claim
+                {evidence.flaggedClaims.length === 1 ? '' : 's'}
+              </summary>
+              <ul>
+                {evidence.flaggedClaims.map((claim, claimIndex) => (
+                  <li key={`${claim.kind}-${claimIndex}`}>
+                    <strong>{claim.kind}</strong>: {claim.text}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
+      )}
+
+      {groundingSources.length > 0 && (
+        <details className="ana-activity-group">
+          <summary className="ana-activity-summary">
+            <span>{I.link} Context used</span>
+            <span className="ana-activity-count">{groundingSources.length}</span>
+          </summary>
+          <ul className="ana-context-list">
+            {groundingSources.map(source => (
+              <li key={source}>{source}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+
+      {warnings.map((warning, warningIndex) => (
+        <div
+          key={`${warning}-${warningIndex}`}
+          className="ana-warning"
+          role="status"
+          aria-live="polite"
+        >
+          {I.alertTriangle}
+          <span>{warning}</span>
+        </div>
+      ))}
+
+      {suggestedActions.length > 0 && (
+        <div className="ana-next-actions">
+          <div className="ana-next-label">Next actions</div>
+          <div className="ana-next-list">
+            {suggestedActions.map(action => (
+              <button
+                key={action}
+                type="button"
+                className="ana-next-action"
+                disabled={message.streaming}
+                title={
+                  message.streaming
+                    ? 'Available after AnA finishes this response'
+                    : `Ask AnA: ${action}`
+                }
+                onClick={() => onSuggestedAction(action)}
+              >
+                {I.arrowRight}
+                <span>{action}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   // `module` is no longer a filter the user drives — the filing outline is. It
   // survives only as the value AuthoringCreateExport needs when creating a new
   // document, and it now follows the selected section instead of a dropdown
@@ -336,7 +834,9 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
 
   // Sections of the active document.
   const [sections, setSections] = useState<AuthSection[]>([]);
-  const [sectionsState, setSectionsState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [sectionsState, setSectionsState] = useState<'idle' | 'loading' | 'ready' | 'error'>(
+    'idle'
+  );
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
 
   // The canonical editor owns the in-flight buffer; the section row in
@@ -348,6 +848,10 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   /** Bumped when the server replaces content out from under the editor
    *  (revert) so the canvas remounts on the new truth. */
   const [contentEpoch, setContentEpoch] = useState(0);
+  /* The RAG-grounded drafting panel. Open state only — the panel owns the
+     draft, because a draft that outlives its own panel is a draft whose
+     section scope nobody is enforcing. */
+  const [aiDraftOpen, setAiDraftOpen] = useState(false);
   const editorRef = useRef<RichSectionEditorHandle | null>(null);
   /** The signed-in author, for suggestion attribution and comment anchors. */
   const { user } = useAuth();
@@ -365,15 +869,45 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   /** The comment whose anchored range was last clicked in the canvas. */
   const [focusedCommentId, setFocusedCommentId] = useState<string | null>(null);
 
+  /* Section view edits ONE section in a box. Document view assembles every
+     section into one continuous read, which is the thing an author is actually
+     building and the thing a reviewer receives. Editing stays section-scoped —
+     clicking a section in the document takes you to it. */
+  const [viewMode, setViewMode] = useState<'section' | 'document'>('section');
+
   // Right rail: AnA, revision history, comments, or the section's sources.
-  const [rail, setRail] = useState<'ana' | 'history' | 'comments' | 'sources' | 'signatures' | null>(null);
+  const [rail, setRail] = useState<
+    'ana' | 'history' | 'comments' | 'sources' | 'signatures' | 'audit' | 'exports' | null
+  >('ana');
+  /* Bumped after a save or an export so the Exports rail re-reads. A save
+     changes the live content hash, which is exactly what its verdict compares
+     against — a rail left stale would keep saying "matches the last export"
+     about text that no longer matches it. */
+  const [exportsEpoch, setExportsEpoch] = useState(0);
+  /** The open section, readable from the tracked-change callback. That callback
+   *  is configured once per editor mount, so closing over the state value would
+   *  attribute a decision to whichever section was open when the canvas
+   *  mounted. */
+  const activeSectionIdRef = useRef<string | null>(null);
+  /** Decisions awaiting their coalesced flush, and whether one is scheduled. */
+  const pendingDecisionsRef = useRef<SuggestionDecision[]>([]);
+  const decisionFlushRef = useRef(false);
+  useEffect(() => {
+    activeSectionIdRef.current = activeSectionId ?? null;
+  });
   const [revisions, setRevisions] = useState<AuthRevision[]>([]);
   // 'error' is a distinct state on purpose: an empty list because the read
   // failed and an empty list because there are no revisions are the same value
   // and opposite facts.
   const [revisionsState, setRevisionsState] = useState<'ready' | 'error'>('ready');
   const [comments, setComments] = useState<AuthComment[]>([]);
+  const [commentsState, setCommentsState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [newComment, setNewComment] = useState('');
+  /* The document's Part 11 audit trail. 'error' is distinct from empty on
+     purpose: a failed read of the compliance record must never render as "no
+     governed acts have occurred". */
+  const [auditEvents, setAuditEvents] = useState<AuthAuditEvent[]>([]);
+  const [auditState, setAuditState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   /* The revision ledger's recomputed verdict — null until asked, 'error' on a
      failed read (which is a failure to CHECK, never a claim about the chain). */
   const [ledger, setLedger] = useState<LedgerVerdict | 'error' | 'checking' | null>(null);
@@ -383,6 +917,13 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const [sources, setSources] = useState<SectionSource[]>([]);
   const [sourcesState, setSourcesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [projectSources, setProjectSources] = useState<ProjectSource[]>([]);
+  /** Citations the last document-wide re-read could NOT refresh, with the
+   *  server's reason. Held rather than toasted away: "3 could not be re-read"
+   *  is the finding, and a message that fades in four seconds is not where a
+   *  finding belongs. */
+  const [skippedRefreshes, setSkippedRefreshes] = useState<
+    Array<{ cite_id: string; reason: string }>
+  >([]);
   const [picking, setPicking] = useState(false);
 
   const [toast, fireToast] = useToast();
@@ -394,6 +935,39 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
      CLEARED on mount: the channel is one-shot, so a target that isn't honoured
      now can never ambush a later, unrelated visit to the editor. */
   const [editorTarget] = useState<EditorTarget | null>(() => peekEditorTarget());
+  /* ── Navigation-directive target (window.C2C_NAV_PARAMS) ──
+     AnA's navigate_to (Live Drive or a chip click) can name a sectionCode
+     ('section-workspace' / 'authoring' registry targets, e.g. "3.2.P.8").
+     Consumed once on mount; resolved through the SAME bounded search and
+     honest-miss notices as an editor-target hand-off — one resolution flow,
+     two senders. Carries no docType/program claim, so those guards below
+     simply don't apply to it. */
+  const [navHandOff] = useState<{ sectionCode: string | null; docQuery: string | null }>(() => {
+    const p = consumeNavParams('document-authoring');
+    const code = p?.sectionCode?.trim();
+    const doc = p?.authoringDocType?.trim();
+    return {
+      sectionCode: code && code.length > 0 ? code : null,
+      docQuery: doc && doc.length > 0 ? doc : null,
+    };
+  });
+  const navSectionCode = navHandOff.sectionCode;
+  /** Unified open-on-mount target: a workbench editor-target wins (it carries
+   *  the stronger claim); otherwise the navigation directive's section. */
+  const sectionOpenTarget = useMemo(
+    () =>
+      editorTarget ??
+      (navSectionCode
+        ? {
+            docType: null,
+            sectionCode: navSectionCode,
+            sectionLabel: null,
+            programId: null,
+            programTitle: null,
+          }
+        : null),
+    [editorTarget, navSectionCode],
+  );
   /** The honest miss: why the deep-link did not open what it named. Rendered
    *  as a dismissible notice over the DEFAULT view — never a silent
    *  wrong-document open. */
@@ -407,43 +981,88 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     clearEditorTarget();
   }, []);
 
-  const activeDoc = docs.find((d) => d.id === activeDocId) ?? null;
-  const activeSection = sections.find((s) => s.id === activeSectionId) ?? null;
-
-  /* ── Is the open document sealed? (21 CFR 11 — MDX UAT item A4) ──
-     The toolbar has always READ this status — `AuthoringFilingBar` renders
-     "Frozen" from exactly these two values — but nothing connected it to the
-     canvas. So a frozen document's section was fully typeable: characters went
-     into the content, the meta line flipped to "unsaved changes", and the
-     author only discovered the document was sealed when Save was refused.
-
-     The server has always refused that write (the `/sections/:sectionId` guard
-     in authoring.router.ts), so no sealed record was ever altered — the defect
-     is that the UI invited an edit it knew could not land, against a document
-     the product tells the user is frozen by an approval signature. Letting
-     someone type a paragraph into a signed record and then discarding it is
-     its own kind of dishonesty, even when the record survives.
-
-     Kept in the same vocabulary as the server and the filing bar: FROZEN, and
-     APPROVED (an approval signature freezes the document). */
-  const docSealed = activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
+  const activeDoc = docs.find(d => d.id === activeDocId) ?? null;
+  const activeSection = sections.find(s => s.id === activeSectionId) ?? null;
+  const docSealed =
+    activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
   const dirty = activeSection != null && editorDirty && !docSealed;
-
-  /* ── Scroll position is per-document, not per-pane (MDX UAT item A8) ──
-     The scroll offset lives on the pane, which does not remount when the
-     section does, so opening a new section from the tree left the reader
-     partway down a document they had not read the top of — and on a shorter
-     section, past its end entirely, which looks like an empty document rather
-     than a scrolled one. On a regulated surface "looks empty" is the wrong
-     thing for a navigation to produce.
-
-     Keyed on the section id, and on contentEpoch so a revert (which replaces
-     content under the same id) also returns to the top of what it replaced. */
   const docScrollRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     const pane = docScrollRef.current;
     if (pane) pane.scrollTop = 0;
   }, [activeSectionId, activeDocId, contentEpoch]);
+
+  /* ── Navigating away from unsaved work ────────────────────────────────────
+     Clicking another section used to call setActiveSectionId directly. The
+     canvas is keyed on the section id, so that unmounted it — and with it the
+     only copy of everything typed since the last save. Nothing asked, nothing
+     said; the work was simply not there on return unless the author happened
+     to notice the device-cache restore offer.
+
+     It is NOT fixed by saving on the way out. This surface's save is
+     PATCH /api/authoring/sections/:id, which mints a doc_revisions row, writes
+     a Part 11 audit record and commits the text into the filing. A save the
+     author did not ask for is an attributable act they did not perform — the
+     same defect as losing the text, pointed the other way. So the navigation is
+     HELD and the author decides: save (deliberate, attributable), leave it on
+     this device, or stay. */
+  type LeaveTarget =
+    | { kind: 'section'; id: string; module?: string }
+    | { kind: 'document'; id: string; module?: string };
+  const [pendingLeave, setPendingLeave] = useState<LeaveTarget | null>(null);
+  const [leaving, setLeaving] = useState(false);
+
+  const applyNav = useCallback((target: LeaveTarget) => {
+    // The editor's dirty flag belongs to the mount that is going away; clear
+    // it first so the guard cannot re-fire against the section just left.
+    setEditorDirty(false);
+    // The create/export module follows where the author actually IS, so it
+    // moves with the navigation and not with the click that proposed one.
+    if (target.module) setModule(target.module);
+    if (target.kind === 'section') setActiveSectionId(target.id);
+    else setActiveDocId(target.id);
+  }, []);
+
+  /** Every in-surface navigation that unmounts the canvas goes through here. */
+  const requestLeave = useCallback(
+    (target: LeaveTarget) => {
+      const alreadyThere =
+        target.kind === 'section' ? target.id === activeSectionId : target.id === activeDocId;
+      if (alreadyThere) return;
+      if (!dirty) {
+        applyNav(target);
+        return;
+      }
+      setPendingLeave(target);
+    },
+    [dirty, activeSectionId, activeDocId, applyNav]
+  );
+
+  /** Save through the editor's one save path, then move. A refused save keeps
+   *  the author here with the text intact — the toast says why. */
+  const saveAndLeave = useCallback(async () => {
+    const target = pendingLeave;
+    if (!target) return;
+    setLeaving(true);
+    try {
+      const saved = await editorRef.current?.save();
+      if (!saved) return; // stay put; the failure has already been reported
+      setPendingLeave(null);
+      applyNav(target);
+    } finally {
+      setLeaving(false);
+    }
+  }, [pendingLeave, applyNav]);
+
+  /** Leave it unsaved. The editor's device cache (`dc::<sectionId>`) still
+   *  holds the text and offers it back explicitly on return. */
+  const leaveUnsaved = useCallback(() => {
+    const target = pendingLeave;
+    if (!target) return;
+    setPendingLeave(null);
+    applyNav(target);
+  }, [pendingLeave, applyNav]);
 
   /* ── The editor's own conversation ──
      Grounded on what is open: `authoringContext` is the contract the server's
@@ -471,28 +1090,73 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       activeDoc?.module,
       activeSection?.code,
       activeSection?.title,
-    ],
+    ]
   );
   /* With no project open there is no AuthoringContextPack to build (it requires
      a projectId), so the document/section identity still travels as module
      context rather than being dropped. */
-  const moduleContext = useMemo(
-    () => ({
+  const moduleContext = useMemo(() => {
+    const base: Record<string, unknown> = {
       surface: 'document-authoring',
       documentId: activeDocId,
       documentTitle: activeDoc?.title ?? null,
       sectionId: activeSectionId,
       sectionCode: activeSection?.code ?? null,
       sectionTitle: activeSection?.title ?? null,
-    }),
-    [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title],
-  );
+    };
+    /* The screen's OPERABLE vocabulary from the shared surface-action registry
+       (aliases applied), folded exactly as the shell folds it for railed
+       surfaces (V2App) — this surface owns its conversation, so its own chat
+       must advertise what the rail would have. Omitted entirely when empty
+       rather than sending an empty claim. */
+    const screenActions = advertisedScreenActions('document-authoring');
+    return screenActions.length > 0 ? { ...base, screen_actions: screenActions } : base;
+  }, [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title]);
   const ana = useAnaChat({
     screenName: 'document-authoring',
     projectId: projectIdForOutline,
     authoringContext,
     moduleContext,
+    /* Live Drive rides the shell's bridge (SurfaceViewProps.liveDrive): this
+       dock's turns carry the same opt-in and feed the same shell-level
+       apply/take-over machine as the rail's turns. */
+    liveDrive: liveDrive?.on,
+    onDriveEvent: liveDrive?.onDriveEvent,
+    onArtifactSaved: liveDrive?.onWorkSaved,
   });
+  const anaComposerRef = useRef<HTMLTextAreaElement>(null);
+  const anaReturnFocusRef = useRef<HTMLElement | null>(null);
+  const anaWasOpenRef = useRef(false);
+  /* The pane ships open, so the first paint is not an "open" the user asked
+     for: moving focus there would take the caret out of the document before
+     they have typed a word. Every later open still focuses the composer. */
+  const anaFirstPaintRef = useRef(true);
+
+  const rememberAnaTrigger = useCallback(() => {
+    const active = document.activeElement;
+    if (
+      active instanceof HTMLElement &&
+      !active.closest('[aria-label="AnA — document authoring"]')
+    ) {
+      anaReturnFocusRef.current = active;
+    }
+  }, []);
+
+  const openAna = useCallback(
+    (trigger?: HTMLElement | null) => {
+      if (trigger) {
+        anaReturnFocusRef.current = trigger;
+      } else {
+        rememberAnaTrigger();
+      }
+      setRail('ana');
+    },
+    [rememberAnaTrigger]
+  );
+
+  const closeAna = useCallback(() => {
+    setRail(null);
+  }, []);
 
   /* Every ask on this surface goes here. It OPENS the pane first — the whole
      defect was a question with no visible destination, so a silent send would
@@ -501,10 +1165,10 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     (text: string) => {
       const clean = (text ?? '').trim();
       if (!clean) return;
-      setRail('ana');
+      openAna();
       void ana.send(clean);
     },
-    [ana],
+    [ana, openAna]
   );
 
   useEffect(() => {
@@ -512,6 +1176,32 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     const el = anaScrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [rail, ana.messages.length, ana.isStreaming]);
+
+  useEffect(() => {
+    if (rail !== 'ana') return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      closeAna();
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [closeAna, rail]);
+
+  useEffect(() => {
+    if (anaFirstPaintRef.current) {
+      anaFirstPaintRef.current = false;
+      anaWasOpenRef.current = rail === 'ana';
+      return;
+    }
+    if (rail === 'ana') {
+      anaComposerRef.current?.focus({ preventScroll: true });
+    } else if (anaWasOpenRef.current) {
+      anaReturnFocusRef.current?.focus({ preventScroll: true });
+      anaReturnFocusRef.current = null;
+    }
+    anaWasOpenRef.current = rail === 'ana';
+  }, [rail]);
 
   /* ── Load documents for the current module/status ── */
   const loadDocs = useCallback(async () => {
@@ -530,23 +1220,33 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       `/api/authoring/docs?status=${encodeURIComponent(status)}` +
       (programId ? `&programId=${encodeURIComponent(programId)}` : '');
     const { ok, body } = await readJson<{ documents?: AuthDoc[] }>(url);
-    if (!ok || !body) { setDocsState('error'); setDocs([]); return; }
+    if (!ok || !body) {
+      setDocsState('error');
+      setDocs([]);
+      return;
+    }
     const list = Array.isArray(body.documents) ? body.documents : [];
     setDocs(list);
     setDocsState('ready');
     // Keep the active doc if it survives the new filter; else pick the first.
-    setActiveDocId((cur) => (cur && list.some((d) => d.id === cur) ? cur : list[0]?.id ?? null));
+    setActiveDocId(cur => (cur && list.some(d => d.id === cur) ? cur : list[0]?.id ?? null));
   }, [status]);
 
-  useEffect(() => { void loadDocs(); }, [loadDocs]);
+  useEffect(() => {
+    void loadDocs();
+  }, [loadDocs]);
 
   /* ── Load sections when the active document changes ── */
   const loadSections = useCallback(async (docId: string) => {
     setSectionsState('loading');
     const { ok, body } = await readJson<{ sections?: AuthSection[] }>(
-      `/api/authoring/docs/${encodeURIComponent(docId)}/sections`,
+      `/api/authoring/docs/${encodeURIComponent(docId)}/sections`
     );
-    if (!ok || !body) { setSectionsState('error'); setSections([]); return; }
+    if (!ok || !body) {
+      setSectionsState('error');
+      setSections([]);
+      return;
+    }
     const list = Array.isArray(body.sections) ? body.sections : [];
     setSections(list);
     setSectionsState('ready');
@@ -558,16 +1258,21 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     // document must not swallow the target.
     const target = targetSectionRef.current;
     const landTarget =
-      target != null && target.docId === docId && list.some((s) => s.id === target.sectionId);
+      target != null && target.docId === docId && list.some(s => s.id === target.sectionId);
     if (target != null && target.docId === docId) targetSectionRef.current = null;
-    setActiveSectionId((cur) => {
+    setActiveSectionId(cur => {
       if (landTarget) return target!.sectionId;
-      return cur && list.some((s) => s.id === cur) ? cur : list[0]?.id ?? null;
+      return cur && list.some(s => s.id === cur) ? cur : list[0]?.id ?? null;
     });
   }, []);
 
   useEffect(() => {
-    if (!activeDocId) { setSections([]); setSectionsState('idle'); setActiveSectionId(null); return; }
+    if (!activeDocId) {
+      setSections([]);
+      setSectionsState('idle');
+      setActiveSectionId(null);
+      return;
+    }
     void loadSections(activeDocId);
   }, [activeDocId, loadSections]);
 
@@ -597,24 +1302,28 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const aliveRef = useRef(true);
   useEffect(() => {
     aliveRef.current = true;
-    return () => { aliveRef.current = false; };
+    return () => {
+      aliveRef.current = false;
+    };
   }, []);
   const [treeScrollNonce, setTreeScrollNonce] = useState(0);
   useEffect(() => {
     if (targetAttemptedRef.current) return;
-    if (!editorTarget || docsState === 'loading' || filing.loading) return;
+    if (!sectionOpenTarget || docsState === 'loading' || filing.loading) return;
     targetAttemptedRef.current = true;
-    const t = editorTarget;
+    const t = sectionOpenTarget;
     // A hand-off that named no section carried only program scope, which
     // window.C2C_PROJECT already delivered. Nothing more was claimed.
     if (!t.sectionCode && !t.sectionLabel) return;
-    const family = EDITOR_TARGET_DOC_LABELS[t.docType];
+    // A navigation-directive target claims no document family; the guards and
+    // notices below only speak of one when the sender actually named it.
+    const family = t.docType ? EDITOR_TARGET_DOC_LABELS[t.docType] : null;
     const wanted = describeEditorTarget(t);
     if (docsState === 'error') {
       // The tree pane already reports the failed read; this says what it cost.
       setTargetNotice(
         `Couldn’t open ${wanted} — the document list failed to load, so nothing was resolved. ` +
-          'Retry once documents load.',
+          'Retry once documents load.'
       );
       return;
     }
@@ -622,15 +1331,15 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       setTargetNotice(
         `Couldn’t open ${wanted} — it belongs to ${t.programTitle ?? 'a different program'}, ` +
           'which is not the project this editor is scoped to. Open that project and retry. ' +
-          'Showing the editor’s default view instead.',
+          'Showing the editor’s default view instead.'
       );
       return;
     }
-    if (filing.document && filing.document.doc_type !== t.docType) {
+    if (t.docType && filing.document && filing.document.doc_type !== t.docType) {
       setTargetNotice(
         `Couldn’t open ${wanted} — this project’s governed dossier is ` +
           `${filing.document.doc_type.toUpperCase()}, not ${family}. ` +
-          'Showing the editor’s default view instead.',
+          'Showing the editor’s default view instead.'
       );
       return;
     }
@@ -640,13 +1349,13 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       // defensively rather than paged.
       for (const d of docs.slice(0, 8)) {
         const { ok, body } = await readJson<{ sections?: AuthSection[] }>(
-          `/api/authoring/docs/${encodeURIComponent(d.id)}/sections`,
+          `/api/authoring/docs/${encodeURIComponent(d.id)}/sections`
         );
         if (!aliveRef.current) return;
         if (!ok || !body) continue;
         const match = matchEditorTargetSection(
           Array.isArray(body.sections) ? body.sections : [],
-          t,
+          t
         );
         if (match) {
           // Route the selection through loadSections (via targetSectionRef) so
@@ -656,20 +1365,23 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
           targetSectionRef.current = { docId: d.id, sectionId: match.id };
           if (d.id === activeDocId) void loadSections(d.id);
           else setActiveDocId(d.id);
-          setTreeScrollNonce((n) => n + 1);
-          fireToast(`Opened ${match.code} · ${match.title} — from the ${family} workspace.`);
+          setTreeScrollNonce(n => n + 1);
+          fireToast(
+            `Opened ${match.code} · ${match.title}` +
+              (family ? ` — from the ${family} workspace.` : ' — as requested in chat.')
+          );
           return;
         }
       }
       if (!aliveRef.current) return;
       setTargetNotice(
-        `Couldn’t find ${wanted} in the ${family} documents in scope ` +
+        `Couldn’t find ${wanted} in the ${family ? `${family} ` : ''}documents in scope ` +
           `(status filter: ${status.replace('_', ' ')}). Showing the editor’s default view — ` +
-          'the section may not be drafted here yet, or may sit under another status.',
+          'the section may not be drafted here yet, or may sit under another status.'
       );
     })();
   }, [
-    editorTarget,
+    sectionOpenTarget,
     docsState,
     docs,
     filing.loading,
@@ -681,6 +1393,42 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     fireToast,
   ]);
 
+  /* ── Open-by-document-type hand-off (navigate_to `authoringDocType`) ──
+     "AnA, open the Clinical Overview for authoring" → the directive names a
+     document, not a section. Matched against the REAL documents in scope by
+     title (normalized exact first, then containment) — never a fabricated
+     document, and an honest notice on a miss. A section hand-off wins when
+     both were named: its bounded search already spans every document. */
+  const docQueryAttemptedRef = useRef(false);
+  useEffect(() => {
+    if (docQueryAttemptedRef.current) return;
+    if (!navHandOff.docQuery || sectionOpenTarget || docsState === 'loading') return;
+    docQueryAttemptedRef.current = true;
+    const wanted = navHandOff.docQuery;
+    if (docsState === 'error') {
+      setTargetNotice(
+        `Couldn’t open “${wanted}” — the document list failed to load, so nothing was resolved. ` +
+          'Retry once documents load.'
+      );
+      return;
+    }
+    const norm = (s: string) => s.toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const want = norm(wanted);
+    const match =
+      docs.find(d => norm(d.title) === want) ?? docs.find(d => norm(d.title).includes(want));
+    if (match) {
+      if (match.id !== activeDocId) setActiveDocId(match.id);
+      setTreeScrollNonce(n => n + 1);
+      fireToast(`Opened “${match.title}” — as requested in chat.`);
+      return;
+    }
+    setTargetNotice(
+      `Couldn’t find a document matching “${wanted}” in scope ` +
+        `(status filter: ${status.replace('_', ' ')}). Showing the editor’s default view — ` +
+        'it may not be drafted here yet, or may sit under another status.'
+    );
+  }, [navHandOff.docQuery, sectionOpenTarget, docsState, docs, activeDocId, status, fireToast]);
+
   /* Bring the deep-linked section's tree row into view once it is active.
      Re-runs as the tree fills in; a no-op when nothing is active yet. */
   const rootRef = useRef<HTMLDivElement>(null);
@@ -689,6 +1437,132 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     const row = rootRef.current?.querySelector<HTMLElement>('.ed-tree-row[data-active]');
     if (row && typeof row.scrollIntoView === 'function') row.scrollIntoView({ block: 'nearest' });
   }, [treeScrollNonce, activeSectionId, sections]);
+
+  /* ── AnA's hands on this screen — the surface-action bus ──────────────────
+     Registered under this surface's OWN surfaceViews id ('document-authoring');
+     the bus alias-resolves the registry's 'authoring' surfaceId onto it, the
+     same resolution nav() applies. Both handlers drive the SAME path the
+     human's own tree clicks drive — requestLeave (the unsaved-work gate) plus
+     the tree-scroll nonce — never a second navigation path, and both answer
+     honest refusals instead of discarding a person's typing or resolving a
+     near-miss into the wrong document. */
+  /* One guard for both handlers: while a dialog or a write owns the canvas, an
+     AnA-driven switch would discard or race the person's work. Specific per
+     flag, because "busy" tells the subscriber nothing they can act on. */
+  const authoringGuard = (): { ok: false; reason: string } | null => {
+    if (pendingLeave)
+      return { ok: false, reason: 'An unsaved-changes dialog is open — resolve it first.' };
+    if (leaving)
+      return { ok: false, reason: 'A save-and-leave is in progress — let it finish first.' };
+    if (saving) return { ok: false, reason: 'A save is in progress — let it finish first.' };
+    if (picking)
+      return { ok: false, reason: 'The source picker is open — finish or cancel it first.' };
+    if (pendingAnchor)
+      return { ok: false, reason: 'A comment is being anchored — post or cancel it first.' };
+    return null;
+  };
+  /* Separate from the busy flags because it needs the honest specifics: AnA
+     never discards typing, and the refusal names the section holding it. */
+  const dirtyGuard = (): { ok: false; reason: string } | null => {
+    if (!dirty) return null;
+    const where = activeSection?.code ? `§${activeSection.code}` : 'the open section';
+    return { ok: false, reason: `There are unsaved edits in ${where} — save or leave them first.` };
+  };
+  useSurfaceActionHandlers('document-authoring', {
+    'authoring.open-document': params => {
+      const guarded = authoringGuard() ?? dirtyGuard();
+      if (guarded) return guarded;
+      const raw = (params.title ?? '').trim();
+      if (!raw) return { ok: false, reason: 'No document named.' };
+      // Not-ready, not failed: the bus holds the directive and re-attempts on
+      // this surface's ready signal below — the navigate→act gap.
+      if (docsState === 'loading')
+        return { ok: false, reason: 'The document list is still loading.', retry: true };
+      if (docsState === 'error') return { ok: false, reason: 'The document list could not be read.' };
+      /* The same resolution idiom as the deep-link hand-off above — normalized
+         exact, then containment — except that MULTIPLE containment hits are an
+         honest refusal here. The legacy inline path silently took the first;
+         an AnA-driven open must not guess between documents. */
+      const norm = (s: string) =>
+        s.toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+      const want = norm(raw);
+      const exact = docs.filter(d => norm(d.title) === want);
+      const pool = exact.length > 0 ? exact : docs.filter(d => norm(d.title).includes(want));
+      if (pool.length === 0) {
+        return {
+          ok: false,
+          reason: `No document matching "${raw}" in scope (status filter: ${status.replace('_', ' ')}).`,
+        };
+      }
+      if (pool.length > 1) {
+        return { ok: false, reason: `"${raw}" matches ${pool.length} documents — name one exactly.` };
+      }
+      const match = pool[0];
+      if (match.id === activeDocId) return { ok: true, detail: 'Already open' };
+      requestLeave({ kind: 'document', id: match.id });
+      setTreeScrollNonce(n => n + 1);
+      return { ok: true, detail: `Opened “${match.title}”` };
+    },
+    'authoring.open-section': params => {
+      const guarded = authoringGuard() ?? dirtyGuard();
+      if (guarded) return guarded;
+      const code = (params.sectionCode ?? '').trim();
+      if (!code) return { ok: false, reason: 'No section code given.' };
+      if (activeDocId == null || sectionsState === 'idle') {
+        return { ok: false, reason: 'No document is open — open one first.' };
+      }
+      if (sectionsState === 'loading')
+        return { ok: false, reason: 'The document’s sections are still loading.', retry: true };
+      if (sectionsState === 'error')
+        return { ok: false, reason: 'The document’s sections could not be read.' };
+      /* Resolved ONLY within the open document's loaded sections — the
+         cross-document search belongs to navigate_to, and the refusal says so
+         instead of quietly widening the scope. */
+      const match = matchEditorTargetSection(sections, { sectionCode: code, sectionLabel: null });
+      if (!match) {
+        const docName = activeDoc ? `“${activeDoc.title}”` : 'the open document';
+        return {
+          ok: false,
+          reason: `§${code} is not in ${docName} — for another document, ask me to navigate to authoring with that section code.`,
+        };
+      }
+      if (match.id === activeSectionId) return { ok: true, detail: 'Already open' };
+      requestLeave({ kind: 'section', id: match.id });
+      setTreeScrollNonce(n => n + 1);
+      return { ok: true, detail: `Opened §${match.code} · ${match.title}` };
+    },
+    'authoring.find': params => {
+      /* Read-only affordance: dirtyGuard deliberately does NOT apply — the
+         person's own Ctrl/⌘-F works over unsaved edits and opening the bar
+         discards nothing. The dialog/save guards still do. */
+      const guarded = authoringGuard();
+      if (guarded) return guarded;
+      if (docsState === 'loading' || sectionsState === 'loading')
+        return { ok: false, reason: 'The document is still loading.', retry: true };
+      const handle = editorRef.current;
+      if (!handle) {
+        return { ok: false, reason: 'No section is open in the editor — open a document first.' };
+      }
+      const q = (params.query ?? '').trim();
+      if (!handle.openFind(q || undefined)) {
+        return {
+          ok: false,
+          reason:
+            'This section is in raw-HTML source mode — the find bar is unavailable there (the browser\'s own find works).',
+        };
+      }
+      return { ok: true, detail: q ? `Find bar open — searching for "${q}"` : 'Find bar opened' };
+    },
+  });
+  /* The ready signal for the retry contract above: when the reads settle
+     (sections 'idle' — no document open — counts as settled; the handler
+     answers that case honestly), a held not-ready directive gets its one
+     re-attempt. */
+  useEffect(() => {
+    if (docsState !== 'loading' && sectionsState !== 'loading') {
+      notifySurfaceActionReady('document-authoring');
+    }
+  }, [docsState, sectionsState]);
 
   /* ── Load the right-rail data for the active section on demand ── */
   const loadHistory = useCallback(async (sectionId: string) => {
@@ -700,7 +1574,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     // author who had saved five times was told her edits were never versioned,
     // and a reviewer was told the section had never changed.
     const { ok, body } = await readJson<{ revisions?: AuthRevision[] }>(
-      `/api/authoring/sections/${encodeURIComponent(sectionId)}/history`,
+      `/api/authoring/sections/${encodeURIComponent(sectionId)}/history`
     );
     if (!ok) {
       setRevisionsState('error');
@@ -711,11 +1585,42 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     setRevisions(Array.isArray(body?.revisions) ? body!.revisions! : []);
   }, []);
 
+  /* Same contract as loadSources below: a failed read is an ERROR, never an
+     empty list. This loader used to discard `ok` and render every failure as
+     "No comments yet" — on a rail consulted to decide whether a document is
+     clear of open review threads before freezing it, that conflation is the
+     dangerous one. */
   const loadComments = useCallback(async (docId: string) => {
-    const { body } = await readJson<{ comments?: AuthComment[] }>(
-      `/api/authoring/documents/${encodeURIComponent(docId)}/comments`,
+    setCommentsState('loading');
+    const { ok, body } = await readJson<{ comments?: AuthComment[] }>(
+      `/api/authoring/documents/${encodeURIComponent(docId)}/comments`
     );
-    setComments(Array.isArray(body?.comments) ? body!.comments! : []);
+    if (!ok || !body) {
+      setCommentsState('error');
+      setComments([]);
+      return;
+    }
+    setCommentsState('ready');
+    setComments(Array.isArray(body.comments) ? body.comments : []);
+  }, []);
+
+  /* ── The document's audit trail ──
+     GET /docs/:docId/audit has served these rows — actor, role, operation,
+     reason, before/after content hashes — since the authoring store shipped,
+     and no surface ever called it: the record §11.10(e) exists for was being
+     written and could not be read. Newest first, as the server returns it. */
+  const loadAudit = useCallback(async (docId: string) => {
+    setAuditState('loading');
+    const { ok, body } = await readJson<{ events?: AuthAuditEvent[] }>(
+      `/api/authoring/docs/${encodeURIComponent(docId)}/audit?limit=100`
+    );
+    if (!ok || !body) {
+      setAuditState('error');
+      setAuditEvents([]);
+      return;
+    }
+    setAuditEvents(Array.isArray(body.events) ? body.events : []);
+    setAuditState('ready');
   }, []);
 
   /* ── The sources this section is drafted from ──
@@ -726,9 +1631,13 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const loadSources = useCallback(async (sectionId: string) => {
     setSourcesState('loading');
     const { ok, body } = await readJson<{ sources?: SectionSource[] }>(
-      `/api/authoring/sections/${encodeURIComponent(sectionId)}/sources`,
+      `/api/authoring/sections/${encodeURIComponent(sectionId)}/sources`
     );
-    if (!ok || !body) { setSourcesState('error'); setSources([]); return; }
+    if (!ok || !body) {
+      setSourcesState('error');
+      setSources([]);
+      return;
+    }
     setSources(Array.isArray(body.sources) ? body.sources : []);
     setSourcesState('ready');
   }, []);
@@ -740,9 +1649,12 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const loadProjectSources = useCallback(async () => {
     const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
     const pid = p?.id == null ? null : String(p.id);
-    if (!pid) { setProjectSources([]); return; }
+    if (!pid) {
+      setProjectSources([]);
+      return;
+    }
     const { ok, body } = await readJson<{ sources?: ProjectSource[] }>(
-      `/api/c2c/projects/${encodeURIComponent(pid)}/sources`,
+      `/api/c2c/projects/${encodeURIComponent(pid)}/sources`
     );
     setProjectSources(ok && Array.isArray(body?.sources) ? body!.sources! : []);
   }, []);
@@ -754,143 +1666,306 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const verifyLedger = useCallback(async (sectionId: string) => {
     setLedger('checking');
     const { ok, body } = await readJson<LedgerVerdict & { success?: boolean }>(
-      `/api/authoring/sections/${encodeURIComponent(sectionId)}/history/verify`,
+      `/api/authoring/sections/${encodeURIComponent(sectionId)}/history/verify`
     );
-    if (!ok || !body) { setLedger('error'); return; }
+    if (!ok || !body) {
+      setLedger('error');
+      return;
+    }
     setLedger(body);
   }, []);
 
-  useEffect(() => { setLedger(null); }, [activeSectionId]);
+  useEffect(() => {
+    setLedger(null);
+  }, [activeSectionId]);
 
   useEffect(() => {
     if (rail === 'history' && activeSectionId) void loadHistory(activeSectionId);
     if (rail === 'comments' && activeDocId) void loadComments(activeDocId);
+    if (rail === 'audit' && activeDocId) void loadAudit(activeDocId);
     if (rail === 'sources' && activeSectionId) {
       void loadSources(activeSectionId);
       void loadProjectSources();
     }
-  }, [rail, activeSectionId, activeDocId, loadHistory, loadComments, loadSources, loadProjectSources]);
+  }, [
+    rail,
+    activeSectionId,
+    activeDocId,
+    loadHistory,
+    loadComments,
+    loadAudit,
+    loadSources,
+    loadProjectSources,
+  ]);
 
   /* ── Record that this section is drafted from a source ── */
-  const citeSource = useCallback(async (sourceId: number) => {
-    if (!activeSectionId) return;
-    try {
-      const res = await apiRequest('POST', `/api/authoring/sections/${activeSectionId}/cite-source`, {
-        source_id: sourceId,
-      });
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        fireToast('Couldn’t record the source — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was saved.', 'error');
-        return;
+  const citeSource = useCallback(
+    async (sourceId: number) => {
+      if (!activeSectionId) return;
+      try {
+        const res = await apiRequest(
+          'POST',
+          `/api/authoring/sections/${activeSectionId}/cite-source`,
+          {
+            source_id: sourceId,
+          }
+        );
+        const json = await res.json().catch(() => null);
+        if (!res.ok) {
+          fireToast(
+            'Couldn’t record the source — ' +
+              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              '. Nothing was saved.',
+            'error'
+          );
+          return;
+        }
+        fireToast(
+          (json as any)?.created
+            ? 'Source recorded — this section now cites it, with the source’s current checksum.'
+            : 'Source re-resolved against its current content.'
+        );
+        setPicking(false);
+        void loadSources(activeSectionId);
+      } catch (e) {
+        fireToast(
+          'Couldn’t record the source — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'error'
+        );
       }
-      fireToast(
-        (json as any)?.created
-          ? 'Source recorded — this section now cites it, with the source’s current checksum.'
-          : 'Source re-resolved against its current content.',
-      );
-      setPicking(false);
-      void loadSources(activeSectionId);
-    } catch (e) {
-      fireToast('Couldn’t record the source — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
-    }
-  }, [activeSectionId, fireToast, loadSources]);
+    },
+    [activeSectionId, fireToast, loadSources]
+  );
 
   /* ── Stop citing a source ── */
-  const uncite = useCallback(async (sourceId: number) => {
-    if (!activeSectionId) return;
-    const res = await apiRequest('DELETE', `/api/authoring/sections/${activeSectionId}/cite-source/${sourceId}`);
-    if (!res.ok) {
-      fireToast('Couldn’t remove the citation — a frozen citation is immutable. Nothing was changed.', 'error');
-      return;
-    }
-    fireToast('Citation removed.');
-    void loadSources(activeSectionId);
-  }, [activeSectionId, fireToast, loadSources]);
+  const uncite = useCallback(
+    async (sourceId: number) => {
+      if (!activeSectionId) return;
+      const res = await apiRequest(
+        'DELETE',
+        `/api/authoring/sections/${activeSectionId}/cite-source/${sourceId}`
+      );
+      if (!res.ok) {
+        fireToast(
+          'Couldn’t remove the citation — a frozen citation is immutable. Nothing was changed.',
+          'error'
+        );
+        return;
+      }
+      fireToast('Citation removed.');
+      void loadSources(activeSectionId);
+    },
+    [activeSectionId, fireToast, loadSources]
+  );
 
   /* ── Re-read the source and record what it says now ──
      The server re-resolves against the stored source; it does not invent a hash.
      A citation whose source is gone, or which is frozen, is refused with a reason. */
-  const reresolve = useCallback(async (citationId: string) => {
-    if (!activeSectionId) return;
-    const res = await apiRequest('POST', `/api/authoring/sections/${activeSectionId}/refresh-token`, {
-      cite_id: citationId,
-    });
-    const json = await res.json().catch(() => null);
-    if (!res.ok) {
-      fireToast((json as any)?.message ?? 'Couldn’t re-read the source. Nothing was changed.', 'error');
-      return;
+  const reresolve = useCallback(
+    async (citationId: string) => {
+      if (!activeSectionId) return;
+      const res = await apiRequest(
+        'POST',
+        `/api/authoring/sections/${activeSectionId}/refresh-token`,
+        {
+          cite_id: citationId,
+        }
+      );
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        fireToast(
+          (json as any)?.message ?? 'Couldn’t re-read the source. Nothing was changed.',
+          'error'
+        );
+        return;
+      }
+      fireToast((json as any)?.message ?? 'Source re-read.');
+      void loadSources(activeSectionId);
+    },
+    [activeSectionId, fireToast, loadSources]
+  );
+
+  /* ── Re-read every source in the DOCUMENT ──
+     The per-citation "re-read" above answers one claim at a time, which is the
+     wrong granularity before an export or a sign-off: the question there is
+     "has anything I cite moved?", across the whole document.
+
+     The server re-resolves each unfrozen citation against its stored source and
+     reports three separate numbers — how many it refreshed, how many of those
+     actually CHANGED, and which it could not refresh and why. All three are
+     said. Collapsing `skipped` into the success count is the tempting summary
+     and the dishonest one: a citation whose source no longer exists is exactly
+     what the person about to file this needs to see. */
+  const [refreshingAll, setRefreshingAll] = useState(false);
+  const refreshAllSources = useCallback(async () => {
+    if (!activeDocId) return;
+    setRefreshingAll(true);
+    try {
+      const res = await apiRequest('POST', `/api/authoring/docs/${activeDocId}/refresh-all`, {});
+      const json = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        refreshed?: number;
+        changed?: number;
+        skipped?: Array<{ cite_id: string; reason: string }>;
+      } | null;
+      if (!res.ok || json?.ok !== true) {
+        fireToast(
+          'Couldn’t re-read this document’s sources — ' +
+            (serverMessage(json) ?? `HTTP ${res.status}`) +
+            '. Nothing was changed.',
+          'error',
+        );
+        return;
+      }
+      const refreshed = typeof json.refreshed === 'number' ? json.refreshed : 0;
+      const changed = typeof json.changed === 'number' ? json.changed : 0;
+      const skipped = Array.isArray(json.skipped) ? json.skipped : [];
+      setSkippedRefreshes(skipped);
+      /* A refresh that changed nothing is a real and useful outcome — it means
+         the citations still say what they said. It is reported as that, not as
+         a bare "done". */
+      fireToast(
+        `Re-read ${refreshed} citation${refreshed === 1 ? '' : 's'}: ` +
+          (changed === 0
+            ? 'none had changed'
+            : `${changed} had changed since they were recorded`) +
+          (skipped.length > 0
+            ? `. ${skipped.length} could not be re-read — see Sources.`
+            : '.'),
+        skipped.length > 0 ? 'error' : 'ok',
+      );
+      if (activeSectionId) void loadSources(activeSectionId);
+    } catch (e) {
+      fireToast(
+        'Couldn’t re-read this document’s sources — ' +
+          (e instanceof Error ? e.message : String(e)) +
+          '. Nothing was changed.',
+        'error',
+      );
+    } finally {
+      setRefreshingAll(false);
     }
-    fireToast((json as any)?.message ?? 'Source re-read.');
-    void loadSources(activeSectionId);
-  }, [activeSectionId, fireToast, loadSources]);
+  }, [activeDocId, activeSectionId, loadSources, fireToast]);
 
   /* ── Save the section content (real, awaited, auto-revisioned) ──
      The ONE save path: the canonical editor serializes and calls this; the
      header Save button and Cmd/Ctrl-S route through the editor's own save so
      the footer save-state, the device cache and this governed PATCH cannot
      disagree. Throwing on failure lets the editor report the truth. */
-  const saveSectionContent = useCallback(async (serialized: string) => {
-    if (!activeSection) throw new Error('No section open');
-    setSaving(true);
-    try {
-      const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
-        content: serialized,
-      });
-      const json = await res.json().catch(() => null);
-      if (res.status === 401) {
-        fireToast('Not saved — your session isn’t authenticated. Sign in and retry.', 'error');
-        throw new Error('unauthenticated');
+  const saveSectionContent = useCallback(
+    async (serialized: string) => {
+      if (!activeSection) throw new Error('No section open');
+      setSaving(true);
+      try {
+        /* Authors whose insertions this reviewer accepted since the last save.
+           Accepting a suggestion strips the mark that named its author, so
+           without this the revision would attribute an AnA draft entirely to
+           whoever pressed accept. Read-and-clear: an author counts once, for
+           the save that carried their text in. */
+        const acceptedAuthors = editorRef.current?.takeAcceptedAuthors?.() ?? [];
+        const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
+          content: serialized,
+          ...(acceptedAuthors.length ? { acceptedAuthors } : {}),
+        });
+        const json = await res.json().catch(() => null);
+        if (res.status === 401) {
+          fireToast('Not saved — your session isn’t authenticated. Sign in and retry.', 'error');
+          throw new Error('unauthenticated');
+        }
+        if (!res.ok) {
+          fireToast(
+            'Couldn’t save the section — ' +
+              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              '. Nothing was persisted.',
+            'error'
+          );
+          throw new Error('save failed');
+        }
+        const adopted = (json as { section?: AuthSection })?.section;
+        const persisted = adopted?.content ?? serialized;
+        // Adopt the server row (revision counter, updated_at) into the tree.
+        setSections(ss =>
+          ss.map(s =>
+            s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content: persisted } : s
+          )
+        );
+        fireToast('Section saved — a revision was recorded (' + activeSection.code + ').');
+        // Keep the history and audit rails fresh if open — a save writes both.
+        if (rail === 'history') void loadHistory(activeSection.id);
+        if (rail === 'audit' && activeDocId) void loadAudit(activeDocId);
+        /* A save changes the document's content hash, which is precisely what
+           the Exports rail compares against the last export. Unconditional:
+           the rail re-reads on mount, so bumping while it is closed simply
+           means it opens on the truth rather than on a cached verdict. */
+        setExportsEpoch(e => e + 1);
+      } finally {
+        setSaving(false);
       }
-      if (!res.ok) {
-        /* Prefer the server's SENTENCE over its CODE. `error` here is a machine
-           token (DOCUMENT_FROZEN, …) and rendering it put an internal enum into
-           user-facing copy — the same defect `extractApiError` in
-           lib/queryClient.ts was written to end. A frozen document now reads as
-           the explanation the server sent rather than as an enum. */
-        const why =
-          (typeof (json as any)?.message === 'string' && (json as any).message) ||
-          (typeof (json as any)?.error === 'string' && !/^[A-Z0-9_]+$/.test((json as any).error)
-            ? (json as any).error
-            : null) ||
-          `HTTP ${res.status}`;
-        fireToast('Couldn’t save the section — ' + why + ' Nothing was persisted.', 'error');
-        throw new Error('save failed');
-      }
-      const adopted = (json as { section?: AuthSection })?.section;
-      const persisted = adopted?.content ?? serialized;
-      // Adopt the server row (revision counter, updated_at) into the tree.
-      setSections((ss) => ss.map((s) => (s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content: persisted } : s)));
-      fireToast('Section saved — a revision was recorded (' + activeSection.code + ').');
-      // Keep the history rail fresh if it's open.
-      if (rail === 'history') void loadHistory(activeSection.id);
-    } finally {
-      setSaving(false);
+    },
+    [activeSection, rail, loadHistory, fireToast]
+  );
+
+  /* ── Upload a figure into the governed image store ──
+     Multipart, because apiRequest is JSON-only, with the Bearer attached
+     explicitly — cookies alone never authenticate /api/authoring. The editor
+     inserts the returned REFERENCE; section HTML never carries image bytes,
+     so the revision ledger stays lean and the device cache stays inside its
+     quota. Thrown reasons surface in the editor's own notice bar. */
+  const uploadSectionImage = useCallback(async (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    const token = getAuthToken();
+    const res = await fetch('/api/authoring/images', {
+      method: 'POST',
+      body: form,
+      credentials: 'include',
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    const json = (await res.json().catch(() => null)) as {
+      image?: { id?: unknown; url?: unknown };
+      error?: unknown;
+    } | null;
+    if (!res.ok || typeof json?.image?.url !== 'string') {
+      throw new Error(
+        typeof json?.error === 'string' ? json.error : `the image store returned HTTP ${res.status}`
+      );
     }
-  }, [activeSection, rail, loadHistory, fireToast]);
+    return { id: String(json.image.id), url: json.image.url };
+  }, []);
 
   /* ── Track changes: the store's own column drives the suggestion engine ──
      The server column is flipped FIRST; the editor enables suggestion capture
      only after the PATCH confirms, so the canvas never claims a mode the
      record does not hold. */
-  const toggleTrackChanges = useCallback(async (on: boolean) => {
-    if (!activeSection) throw new Error('No section open');
-    const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
-      track_changes: on,
-    });
-    const json = await res.json().catch(() => null);
-    if (!res.ok) {
-      fireToast('Couldn’t change track changes — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. The mode is unchanged.', 'error');
-      throw new Error('track toggle refused');
-    }
-    setSections((ss) => ss.map((s) => (s.id === activeSection.id ? { ...s, track_changes: on } : s)));
-    fireToast(on
-      ? 'Track changes on — edits are captured as attributed suggestions until accepted or rejected.'
-      : 'Track changes off — edits apply directly. Existing suggestions remain until resolved.');
-  }, [activeSection, fireToast]);
+  const toggleTrackChanges = useCallback(
+    async (on: boolean) => {
+      if (!activeSection) throw new Error('No section open');
+      const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
+        track_changes: on,
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        fireToast(
+          'Couldn’t change track changes — ' +
+            ((json as any)?.error ?? `HTTP ${res.status}`) +
+            '. The mode is unchanged.',
+          'error'
+        );
+        throw new Error('track toggle refused');
+      }
+      setSections(ss => ss.map(s => (s.id === activeSection.id ? { ...s, track_changes: on } : s)));
+      fireToast(
+        on
+          ? 'Track changes on — edits are captured as attributed suggestions until accepted or rejected.'
+          : 'Track changes off — edits apply directly. Existing suggestions remain until resolved.'
+      );
+    },
+    [activeSection, fireToast]
+  );
 
   /* ── Comment anchoring hand-off (editor → comments rail → editor) ── */
   const requestAnchoredComment = useCallback((anchor: CommentAnchorPayload) => {
-    return new Promise<string | null>((resolve) => {
+    return new Promise<string | null>(resolve => {
       pendingAnchorRef.current?.resolve(null); // supersede any prior request
       pendingAnchorRef.current = { anchor, resolve };
       setPendingAnchor(anchor);
@@ -917,26 +1992,46 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const liveCoedit = isFeatureEnabled('ENABLE_LIVE_COEDITING');
 
   /* ── Revert to a prior revision (server snapshots current first) ── */
-  const revert = useCallback(async (revId: string) => {
-    if (!activeSection) return;
-    try {
-      const res = await apiRequest('POST', `/api/authoring/sections/${activeSection.id}/revert`, { rev_id: revId });
-      const json = await res.json().catch(() => null);
-      if (res.status === 401) { fireToast('Not reverted — your session isn’t authenticated.', 'error'); return; }
-      if (!res.ok) { fireToast('Couldn’t revert — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.', 'error'); return; }
-      const adopted = (json as { section?: AuthSection })?.section;
-      const content = adopted?.content ?? '';
-      setSections((ss) => ss.map((s) => (s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content } : s)));
-      // The server replaced the content out from under the editor — remount
-      // the canvas on the new truth rather than leaving a stale buffer.
-      setContentEpoch((e) => e + 1);
-      setEditorDirty(false);
-      fireToast('Section reverted to the selected revision.');
-      void loadHistory(activeSection.id);
-    } catch (e) {
-      fireToast('Couldn’t revert — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
-    }
-  }, [activeSection, loadHistory, fireToast]);
+  const revert = useCallback(
+    async (revId: string) => {
+      if (!activeSection) return;
+      try {
+        const res = await apiRequest('POST', `/api/authoring/sections/${activeSection.id}/revert`, {
+          rev_id: revId,
+        });
+        const json = await res.json().catch(() => null);
+        if (res.status === 401) {
+          fireToast('Not reverted — your session isn’t authenticated.', 'error');
+          return;
+        }
+        if (!res.ok) {
+          fireToast(
+            'Couldn’t revert — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.',
+            'error'
+          );
+          return;
+        }
+        const adopted = (json as { section?: AuthSection })?.section;
+        const content = adopted?.content ?? '';
+        setSections(ss =>
+          ss.map(s => (s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content } : s))
+        );
+        // The server replaced the content out from under the editor — remount
+        // the canvas on the new truth rather than leaving a stale buffer.
+        setContentEpoch(e => e + 1);
+        setEditorDirty(false);
+        setExportsEpoch(e => e + 1);
+        fireToast('Section reverted to the selected revision.');
+        void loadHistory(activeSection.id);
+      } catch (e) {
+        fireToast(
+          'Couldn’t revert — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'error'
+        );
+      }
+    },
+    [activeSection, loadHistory, fireToast]
+  );
 
   /* ── Add a comment on the active section ──
      When a text-range anchor is pending (the editor's Comment button), it is
@@ -953,8 +2048,17 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
         ...(pending ? { anchor: pending.anchor } : {}),
       });
       const json = await res.json().catch(() => null);
-      if (res.status === 401) { fireToast('Comment not posted — your session isn’t authenticated.', 'error'); return; }
-      if (!res.ok) { fireToast('Couldn’t post the comment — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.', 'error'); return; }
+      if (res.status === 401) {
+        fireToast('Comment not posted — your session isn’t authenticated. Sign in and retry.', 'error');
+        return;
+      }
+      if (!res.ok) {
+        fireToast(
+          'Couldn’t post the comment — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.',
+          'error'
+        );
+        return;
+      }
       setNewComment('');
       const created = (json as { comment?: { id?: string } })?.comment;
       if (pending) {
@@ -967,9 +2071,408 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       }
       void loadComments(activeDocId);
     } catch (e) {
-      fireToast('Couldn’t post the comment — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast(
+        'Couldn’t post the comment — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'error'
+      );
     }
   }, [activeSection, activeDocId, newComment, loadComments, fireToast]);
+
+  /* ── Reply into a comment thread ──
+     The write endpoint has accepted `parent_comment_id` and the read has
+     returned nested `replies` since the duplicate-route collapse — and the
+     rail rendered neither, so every review "thread" was a guestbook: a
+     reviewer's question could only be answered by a NEW top-level comment
+     above it. One reply box open at a time; the reply posts against the
+     THREAD's section (not the section the author happens to have open), and
+     nothing local changes until the server confirms. */
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  /* Resolve opens a small confirm with an OPTIONAL reason — the platform's
+     reason-for-change convention, kept optional here because resolving a
+     comment is not an edit to governed content. Whatever is stated is
+     recorded as the thread's resolution_note and shown with the record. */
+  const [resolveFor, setResolveFor] = useState<string | null>(null);
+  const [resolveNote, setResolveNote] = useState('');
+  const addReply = useCallback(
+    async (parent: AuthComment) => {
+      if (!activeDocId || !replyText.trim() || !parent.section_id) return;
+      try {
+        const res = await apiRequest(
+          'POST',
+          `/api/authoring/sections/${encodeURIComponent(parent.section_id)}/comment`,
+          { body: replyText.trim(), doc_id: activeDocId, parent_comment_id: parent.id }
+        );
+        const json = await res.json().catch(() => null);
+        if (res.status === 401) {
+          fireToast('Reply not posted — your session isn’t authenticated. Sign in and retry.', 'error');
+          return;
+        }
+        if (!res.ok) {
+          fireToast(
+            'Couldn’t post the reply — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.',
+            'error'
+          );
+          return;
+        }
+        setReplyText('');
+        setReplyTo(null);
+        fireToast('Reply added to the thread.');
+        void loadComments(activeDocId);
+      } catch (e) {
+        fireToast(
+          'Couldn’t post the reply — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'error'
+        );
+      }
+    },
+    [activeDocId, replyText, loadComments, fireToast]
+  );
+
+  /* ── Resolve / reopen a comment thread ──
+     PATCH /api/authoring/comments/:id has recorded status changes with resolver
+     attribution (JWT actor, resolved_at) since the store shipped — and no
+     surface ever called it, so review threads could only accumulate. The row
+     is never deleted by this: a resolved comment stays in the record with who
+     resolved it; reopen is the honest undo. */
+  const setCommentStatus = useCallback(
+    async (commentId: string, statusTo: 'resolved' | 'open', note?: string) => {
+      if (!activeDocId) return;
+      try {
+        const res = await apiRequest(
+          'PATCH',
+          `/api/authoring/comments/${encodeURIComponent(commentId)}`,
+          {
+            status: statusTo,
+            // The server has kept resolution_note since the store shipped; the
+            // UI never sent one, so every resolution closed without a stated
+            // disposition. Optional — an empty note is not fabricated into one.
+            ...(statusTo === 'resolved' && note?.trim() ? { resolution_note: note.trim() } : {}),
+          }
+        );
+        const json = await res.json().catch(() => null);
+        if (res.status === 401) {
+          fireToast('Not changed — your session isn’t authenticated. Sign in and retry.', 'error');
+          return;
+        }
+        if (!res.ok) {
+          fireToast(
+            'Couldn’t update the comment — ' +
+              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              '. Its status is unchanged.',
+            'error'
+          );
+          return;
+        }
+        fireToast(
+          statusTo === 'resolved'
+            ? 'Comment resolved — recorded under your name. The thread stays in the record.'
+            : 'Comment reopened.'
+        );
+        void loadComments(activeDocId);
+      } catch (e) {
+        fireToast(
+          'Couldn’t update the comment — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'error'
+        );
+      }
+    },
+    [activeDocId, fireToast, loadComments]
+  );
+
+  /* ── Rename the open section (code and title) ──
+     PATCH /sections/:id has accepted `title` and `code` since the route was
+     written; only `content` ever had UI. A mistyped section title was
+     permanent unless someone edited the database. Renaming is metadata — the
+     server records no content revision for it — and it is held to the same
+     honesty contract: awaited, adopted from the server's row, nothing local
+     mutated on failure. */
+  const [renaming, setRenaming] = useState(false);
+  const [renameCode, setRenameCode] = useState('');
+  const [renameTitle, setRenameTitle] = useState('');
+  const [renameBusy, setRenameBusy] = useState(false);
+  useEffect(() => {
+    setRenaming(false);
+  }, [activeSectionId]);
+
+  const openRename = useCallback(() => {
+    if (!activeSection) return;
+    setRenameCode(activeSection.code);
+    setRenameTitle(activeSection.title);
+    setRenaming(true);
+  }, [activeSection]);
+
+  const saveRename = useCallback(async () => {
+    if (!activeSection) return;
+    const code = renameCode.trim();
+    const title = renameTitle.trim();
+    if (!code || !title) {
+      fireToast('Both the section code and the title are required.', 'error');
+      return;
+    }
+    if (code === activeSection.code && title === activeSection.title) {
+      setRenaming(false);
+      return;
+    }
+    setRenameBusy(true);
+    try {
+      const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
+        code,
+        title,
+      });
+      const json = await res.json().catch(() => null);
+      if (res.status === 401) {
+        fireToast('Not renamed — your session isn’t authenticated.', 'error');
+        return;
+      }
+      if (!res.ok) {
+        fireToast(
+          'Couldn’t rename the section — ' +
+            ((json as any)?.error ?? `HTTP ${res.status}`) +
+            '. Nothing was changed.',
+          'error'
+        );
+        return;
+      }
+      const adopted = (json as { section?: AuthSection })?.section;
+      setSections(ss =>
+        ss.map(s => (s.id === activeSection.id ? { ...s, ...(adopted ?? { code, title }) } : s))
+      );
+      setRenaming(false);
+      fireToast(`Section renamed — ${code} · ${title}. Its content and history are unchanged.`);
+    } catch (e) {
+      fireToast(
+        'Couldn’t rename the section — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'error'
+      );
+    } finally {
+      setRenameBusy(false);
+    }
+  }, [activeSection, renameCode, renameTitle, fireToast]);
+
+  /* ── Move the open section within its document ──
+     `order_index` is what the tree AND the export assembler order by, and
+     until the reorder endpoint existed nothing could change it — a document
+     whose sections were created out of order assembled out of order,
+     permanently. The server validates the full permutation and renumbers in
+     one transaction; the tree redraws from the canonical GET afterwards,
+     never from a local echo. */
+  const [reordering, setReordering] = useState(false);
+  const moveSection = useCallback(
+    async (dir: -1 | 1) => {
+      if (!activeDocId || !activeSection || sections.length < 2) return;
+      const idx = sections.findIndex(s => s.id === activeSection.id);
+      const to = idx + dir;
+      if (idx < 0 || to < 0 || to >= sections.length) return;
+      const ids = sections.map(s => s.id);
+      [ids[idx], ids[to]] = [ids[to], ids[idx]];
+      setReordering(true);
+      try {
+        const res = await apiRequest(
+          'POST',
+          `/api/authoring/docs/${encodeURIComponent(activeDocId)}/sections/reorder`,
+          { section_ids: ids }
+        );
+        const json = await res.json().catch(() => null);
+        if (res.status === 401) {
+          fireToast('Not moved — your session isn’t authenticated.', 'error');
+          return;
+        }
+        if (!res.ok) {
+          fireToast(
+            'Couldn’t move the section — ' +
+              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              ' The order is unchanged.',
+            'error'
+          );
+          // A 409 means the section list moved under us — adopt the truth.
+          if (res.status === 409) void loadSections(activeDocId);
+          return;
+        }
+        await loadSections(activeDocId);
+        fireToast(
+          `${activeSection.code} moved ${dir === -1 ? 'up' : 'down'} — the document assembles and exports in this order.`
+        );
+      } catch (e) {
+        fireToast(
+          'Couldn’t move the section — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'error'
+        );
+      } finally {
+        setReordering(false);
+      }
+    },
+    [activeDocId, activeSection, sections, fireToast, loadSections]
+  );
+
+  /* ── Heuristic section check ──
+     The endpoint has existed, worked, and needed no AI provider since it was
+     written — and no surface called it. Results describe the SAVED content
+     (the handler reads the stored row), so the panel says so when the canvas
+     is dirty rather than implying unsaved edits were checked. Cleared on
+     section switch: another section's flags must never linger. */
+  const [check, setCheck] = useState<ScanResults | null>(null);
+  const [checking, setChecking] = useState(false);
+  useEffect(() => {
+    setCheck(null);
+  }, [activeSectionId]);
+
+  const runCheck = useCallback(async () => {
+    if (!activeSection) return;
+    setChecking(true);
+    try {
+      const res = await apiRequest(
+        'POST',
+        `/api/authoring/sections/${activeSection.id}/ai/deficiency-scan`,
+        {}
+      );
+      const json = (await res.json().catch(() => null)) as {
+        scan_results?: ScanResults;
+        error?: unknown;
+      } | null;
+      if (!res.ok || !json?.scan_results) {
+        fireToast(
+          'Couldn’t check the section — ' +
+            (typeof json?.error === 'string' ? json.error : `HTTP ${res.status}`) +
+            '. No result is shown because none was produced.',
+          'error'
+        );
+        return;
+      }
+      setCheck(json.scan_results);
+    } catch (e) {
+      fireToast(
+        'Couldn’t check the section — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'error'
+      );
+    } finally {
+      setChecking(false);
+    }
+  }, [activeSection, fireToast]);
+
+  /* ── An accepted AI draft landed ──
+     The server replaced the section content AND recorded span-level source
+     lineage for it in one transaction, so this mirrors `revert`: adopt the
+     returned row as the new truth, remount the canvas on it (a stale editor
+     buffer would silently re-save over text that now has citations behind
+     it), and refresh the rails the write actually touched — history gained a
+     revision, the audit trail gained a row, and sources gained the citations
+     that are the whole point of accepting this way rather than saving. */
+  const onAiDraftAccepted = useCallback(
+    (section: Record<string, unknown>, attribution: AcceptedAttribution | null) => {
+      if (!activeSectionId) return;
+      const content = typeof section.content === 'string' ? section.content : '';
+      setSections(ss =>
+        ss.map(x => (x.id === activeSectionId ? { ...x, ...(section as Partial<AuthSection>), content } : x)),
+      );
+      setContentEpoch(e => e + 1);
+      setEditorDirty(false);
+      setExportsEpoch(e => e + 1);
+      /* The server's own count, not a claim of correctness: how much of the
+         saved text is a verified quote from a source, and how much is recorded
+         as author-original. Both numbers are the record, so both are said —
+         and when the server sent no summary, that is said instead of a zero. */
+      fireToast(
+        attribution
+          ? `Draft accepted and saved. ${attribution.sourceSpans} verified citation(s) across ` +
+            `${attribution.distinctSources} source(s); ${attribution.coverage}% of the content is ` +
+            'quoted from evidence, the rest recorded as author-original.'
+          : 'Draft accepted and saved. The server reported no lineage summary for it — open Sources to see what was recorded.',
+      );
+      void loadHistory(activeSectionId);
+      void loadSources(activeSectionId);
+      if (activeDocId) void loadAudit(activeDocId);
+    },
+    [activeSectionId, activeDocId, loadHistory, loadSources, loadAudit, fireToast],
+  );
+
+  /** Post one reviewer action — one decision, or a whole accept/reject-all.
+   *
+   *  Split by size rather than by caller: a batch of one is a single decision
+   *  however it arrived, and a batch of many is one bulk act however it was
+   *  produced. Both carry the change TEXT, because accepting a suggestion
+   *  strips its mark and the id alone would name something no longer in the
+   *  document. */
+  const flushDecisions = useCallback(
+    async (docId: string, batch: SuggestionDecision[]) => {
+      const sectionId = activeSectionIdRef.current ?? undefined;
+      const context = (d: SuggestionDecision) => ({
+        changeId: d.changeId,
+        changeType: d.changeType,
+        text: d.text,
+        authorId: d.authorId ?? undefined,
+        authorName: d.authorName ?? undefined,
+        at: d.at ?? undefined,
+      });
+      const decision = batch[0].decision;
+      try {
+        const res =
+          batch.length === 1
+            ? await apiRequest(
+                'POST',
+                `/api/authoring/documents/${docId}/tracked-change-decisions`,
+                { decision, sectionId, ...context(batch[0]) },
+              )
+            : await apiRequest(
+                'POST',
+                `/api/authoring/documents/${docId}/tracked-change-decisions/bulk`,
+                {
+                  decision,
+                  changeIds: batch.map(d => d.changeId),
+                  changes: batch.map(context),
+                  sectionId,
+                },
+              );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        /* The audit rail gained a row. Refresh it if the reviewer is looking. */
+        if (rail === 'audit') void loadAudit(docId);
+      } catch (e) {
+        /* The decision is already applied to the document — undoing the edit
+           because a POST failed would be worse than the missing row. But a
+           compliance record that vanishes quietly is not acceptable either, so
+           the gap is stated and counted. */
+        fireToast(
+          `${batch.length === 1 ? 'That decision was' : `${batch.length} decisions were`} applied ` +
+            'to the document but NOT recorded on the audit trail — ' +
+            (e instanceof Error ? e.message : String(e)) +
+            '. The content is still saved on the next save; report the missing record.',
+          'error',
+        );
+      }
+    },
+    [rail, loadAudit, fireToast],
+  );
+
+  /* ── A reviewer decided a tracked change ──
+     Posted per decision, accept AND reject. The rejection is the one that has
+     had no home in the record: refusing a proposed deletion changes no text,
+     writes no revision, and until now left nothing behind saying a reviewer
+     considered it.
+
+     Deliberately fire-and-forget with a VISIBLE failure. It must not block the
+     editor action the reviewer just took — the decision is already applied to
+     the document, and undoing it because a POST failed would be worse than the
+     missing row. But a silently-dropped compliance record is not acceptable
+     either, so a failure says so and names what was not recorded. */
+  const recordTrackedChangeDecision = useCallback(
+    (d: SuggestionDecision) => {
+      if (!activeDocId) return;
+      /* "Accept all" resolves every suggestion in one synchronous loop, so the
+         callback fires N times in a single tick. Posting per call would send
+         fifty requests for one click. Queue and flush on the microtask so one
+         reviewer action becomes one write — the bulk endpoint exists for
+         exactly this and records it as the single act it was. */
+      pendingDecisionsRef.current.push(d);
+      if (decisionFlushRef.current) return;
+      decisionFlushRef.current = true;
+      queueMicrotask(() => {
+        decisionFlushRef.current = false;
+        const batch = pendingDecisionsRef.current.splice(0);
+        if (batch.length > 0) void flushDecisions(activeDocId, batch);
+      });
+    },
+    [activeDocId, flushDecisions],
+  );
 
   const draftPrompt = activeSection
     ? `Draft ${activeSection.code} ${activeSection.title} from the linked section evidence.`
@@ -992,16 +2495,30 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
           </div>
           <div className="ed-tree-m">
             {filing.document
-              ? `${filing.document.doc_type.toUpperCase()} · ${filing.document.agency.toUpperCase()} · ${filing.flat.length} sections`
-              : `${docs.length} document${docs.length === 1 ? '' : 's'} · ${status.replace('_', ' ')}`}
+              ? `${filing.document.doc_type.toUpperCase()} · ${filing.document.agency.toUpperCase()} · ${
+                  filing.flat.length
+                } sections`
+              : `${docs.length} document${docs.length === 1 ? '' : 's'} · ${status.replace(
+                  '_',
+                  ' '
+                )}`}
           </div>
           <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
             {/* The Module select is gone. It defaulted every filing type to
                 "M3" and hid the rest of the dossier behind a dropdown; the
                 filing outline below is the navigation now. Status stays — it
                 is a view filter, not a definition of the tree. */}
-            <select className="c2c-input" style={{ height: 28, flex: 1 }} value={status} onChange={(e) => setStatus(e.target.value)}>
-              {STATUSES.map((s) => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+            <select
+              className="c2c-input"
+              style={{ height: 28, flex: 1 }}
+              value={status}
+              onChange={e => setStatus(e.target.value)}
+            >
+              {STATUSES.map(s => (
+                <option key={s} value={s}>
+                  {s.replace('_', ' ')}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -1029,8 +2546,11 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
             its 71 nested sections and a 510(k) shows A/B/C/D/E. Nodes bind to
             the authored section that holds the text by code. */}
         {filing.tree.length > 0 && (
-          <div className="ed-tree-scroll" style={{ flex: '0 0 auto', maxHeight: '46%', borderBottom: '1px solid var(--border)' }}>
-            {filing.flat.map((node) => {
+          <div
+            className="ed-tree-scroll"
+            style={{ flex: '0 0 auto', maxHeight: '46%', borderBottom: '1px solid var(--border)' }}
+          >
+            {filing.flat.map(node => {
               const bound = findSectionForNode(sections, node.key);
               const isActive = bound != null && bound.id === activeSectionId;
               return (
@@ -1046,13 +2566,20 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                   }
                   onClick={() => {
                     if (bound) {
-                      setActiveSectionId(bound.id);
-                      // Keep the create/export module in step with where the
-                      // author actually is, instead of a stale dropdown value.
+                      // The module rides with the navigation: a nav the guard
+                      // holds must not move the create/export default to a
+                      // section the author never opened.
                       const m = /^(\d)/.exec(node.key)?.[1];
-                      if (m) setModule(`M${m}`);
+                      requestLeave({
+                        kind: 'section',
+                        id: bound.id,
+                        module: m ? `M${m}` : undefined,
+                      });
                     } else {
-                      fireToast(`${node.key} ${node.label} — no draft yet in this document.`, 'error');
+                      fireToast(
+                        `${node.key} ${node.label} — no draft yet in this document.`,
+                        'error'
+                      );
                     }
                   }}
                 >
@@ -1061,7 +2588,11 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                     {node.label}
                   </span>
                   {node.mandatory && !bound && (
-                    <span className="rd-chip tone-idle" style={{ marginLeft: 'auto' }} title="Required by the rule pack">
+                    <span
+                      className="rd-chip tone-idle"
+                      style={{ marginLeft: 'auto' }}
+                      title="Required by the rule pack"
+                    >
                       required
                     </span>
                   )}
@@ -1084,59 +2615,100 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
             scaffolder skips them deliberately. */}
         {filing.reason === 'no-governed-document' && (
           <div className="scaf-note" style={{ padding: '10px 12px', fontSize: 12 }}>
-            This project has no governed filing document, so there is no section
-            outline to show. Projects created before scaffolding — and program
-            types with no rule pack — fall here.
+            This project has no governed filing document, so there is no section outline to show.
+            Projects created before scaffolding — and program types with no rule pack — fall here.
           </div>
         )}
 
         <div className="ed-tree-scroll">
           {docsState === 'loading' ? (
-            <div className="scaf-note" style={{ padding: 16 }}>Loading documents…</div>
+            <div className="scaf-note" style={{ padding: 16 }}>
+              Loading documents…
+            </div>
           ) : docsState === 'error' ? (
-            <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load documents"
-              hint="The document list didn’t respond. Sign in to your tenant and retry." />
+            <EmptyState
+              tone="error"
+              icon={I.alertTriangle}
+              title="Couldn’t load documents"
+              hint="The document list didn’t respond. Sign in to your tenant and retry."
+            />
           ) : docs.length === 0 ? (
-            <EmptyState icon={I.fileText} title="No documents here"
-              hint={`No ${status.replace('_', ' ')} documents in this project. Switch the status filter above.`} />
+            <>
+            {/* Was: `No ${status.replace('_',' ')} documents in this project.
+                Switch the status filter above.` — which renders "No ALL
+                documents in this project" on the default filter, because the
+                filter's own value is interpolated into the middle of a
+                sentence. It then instructed the reader to change a filter that
+                was already showing everything, so following the instruction
+                changed nothing.
+                The action that actually resolves this is New document. It
+                existed, in the toolbar directly above, and could not be reached
+                from here — see ../newDocumentAction.ts. */}
+            <EmptyState
+              icon={I.fileText}
+              title={status === 'all' ? 'No documents yet' : `Nothing at this stage`}
+              hint={status === 'all'
+                ? 'Documents you create in this project appear here.'
+                : `This project has no ${status.replace('_', ' ')} documents. Clear the filter to see the rest.`}
+              action={status === 'all'
+                ? newDocumentAction()
+                : { label: 'Show all documents', onAct: () => setStatus('all') }}
+            />
+            </>
           ) : (
-            docs.map((d) => {
+            docs.map(d => {
               const open = d.id === activeDocId;
               return (
                 <div key={d.id} className="ed-vol">
                   <button
                     className="ed-tree-row"
                     data-active={open || undefined}
-                    onClick={() => setActiveDocId(d.id)}
+                    onClick={() => requestLeave({ kind: 'document', id: d.id })}
                     style={{ fontWeight: 600 }}
                   >
                     <span className="ed-num">{d.module ?? '—'}</span>
                     <span className="ed-lbl">{d.title}</span>
-                    <span className="rd-chip tone-idle" style={{ marginLeft: 'auto' }}>{num(d.section_count)}</span>
+                    <span className="rd-chip tone-idle" style={{ marginLeft: 'auto' }}>
+                      {num(d.section_count)}
+                    </span>
                   </button>
-                  {open && (
-                    sectionsState === 'loading' ? (
-                      <div className="scaf-note" style={{ padding: '6px 12px' }}>Loading sections…</div>
+                  {open &&
+                    (sectionsState === 'loading' ? (
+                      <div className="scaf-note" style={{ padding: '6px 12px' }}>
+                        Loading sections…
+                      </div>
                     ) : sectionsState === 'error' ? (
-                      <div className="scaf-note" style={{ padding: '6px 12px', color: 'var(--c2c-err,#b42318)' }}>Couldn’t load sections.</div>
+                      <div
+                        className="scaf-note"
+                        style={{ padding: '6px 12px', color: 'var(--c2c-err,#b42318)' }}
+                      >
+                        Couldn’t load sections.
+                      </div>
                     ) : sections.length === 0 ? (
-                      <div className="scaf-note" style={{ padding: '6px 12px' }}>No sections yet in this document.</div>
+                      <div className="scaf-note" style={{ padding: '6px 12px' }}>
+                        No sections yet in this document.
+                      </div>
                     ) : (
-                      sections.map((s) => (
+                      sections.map(s => (
                         <button
                           key={s.id}
                           className="ed-tree-row"
                           data-active={activeSectionId === s.id || undefined}
-                          onClick={() => setActiveSectionId(s.id)}
+                          onClick={() => requestLeave({ kind: 'section', id: s.id })}
                           style={{ paddingLeft: 22 }}
                         >
                           <span className="ed-num">{s.code}</span>
                           <span className="ed-lbl">{s.title}</span>
-                          {num(s.comment_count) > 0 && <span className="ed-dot" data-s="review" title={`${num(s.comment_count)} comments`} />}
+                          {num(s.comment_count) > 0 && (
+                            <span
+                              className="ed-dot"
+                              data-s="review"
+                              title={`${num(s.comment_count)} comments`}
+                            />
+                          )}
                         </button>
                       ))
-                    )
-                  )}
+                    ))}
                 </div>
               );
             })
@@ -1150,14 +2722,15 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
           <div className="ed-crumbs">
             <span className="sep-first">{activeDoc?.module ?? 'eCTD'}</span>
             <span className="sep">›</span>
-            {/* Truncates rather than wrapping — see .ed-crumbs in
-                authoring-v2.css. `title` keeps the full name reachable, which
-                matters here because 510(k) and CTD titles carry the regulation
-                they answer to ("… — 510(k) Summary (21 CFR 807.92)"). */}
             <span className="doc-title" title={activeDoc?.title ?? undefined}>
               {activeDoc?.title ?? 'No document'}
             </span>
-            {activeSection && <><span className="sep">›</span><span className="here">{activeSection.code}</span></>}
+            {activeSection && (
+              <>
+                <span className="sep">›</span>
+                <span className="here">{activeSection.code}</span>
+              </>
+            )}
           </div>
           <div className="ed-doc-actions">
             <AuthoringCreateExport
@@ -1165,62 +2738,198 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
               docTitle={activeDoc?.title ?? null}
               module={module}
               fireToast={fireToast}
-              onDocCreated={(d) => {
+              onDocCreated={d => {
                 // Adopt the server's document: refetch the tree and open it.
-                void loadDocs().then(() => setActiveDocId(d.id));
+                // Through the leave guard — creating a document is a deliberate
+                // act, but it must not be the thing that discards the paragraph
+                // the author had half-written in the section they were in.
+                void loadDocs().then(() => requestLeave({ kind: 'document', id: d.id }));
               }}
-              onSectionCreated={(s) => {
-                if (activeDocId) void loadSections(activeDocId).then(() => setActiveSectionId(s.id));
+              onSectionCreated={s => {
+                if (activeDocId)
+                  void loadSections(activeDocId).then(() =>
+                    requestLeave({ kind: 'section', id: s.id })
+                  );
               }}
+              /* A successful export re-baselines this document, so the Exports
+                 rail's "changed since the last export" verdict is now stale. */
+              onExported={() => setExportsEpoch(e => e + 1)}
             />
-            <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'ana' ? null : 'ana')} data-active={rail === 'ana' || undefined}>
+            {/* Section / Document. An author writes a section but SHIPS a
+                document, and until now the whole document was never on screen
+                at any point in the workflow. */}
+            <div className="ed-viewtoggle" role="group" aria-label="Editor view">
+              <button
+                className="btn ghost"
+                style={{ height: 30 }}
+                onClick={() => setViewMode('section')}
+                data-active={viewMode === 'section' || undefined}
+                aria-pressed={viewMode === 'section'}
+                title="Edit one section"
+              >
+                {I.penLine} Section
+              </button>
+              <button
+                className="btn ghost"
+                style={{ height: 30 }}
+                onClick={() => setViewMode('document')}
+                data-active={viewMode === 'document' || undefined}
+                aria-pressed={viewMode === 'document'}
+                title="Read the whole document"
+                disabled={!activeDocId}
+              >
+                {I.fileText} Document
+              </button>
+            </div>
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={event => (rail === 'ana' ? closeAna() : openAna(event.currentTarget))}
+              data-active={rail === 'ana' || undefined}
+            >
               {I.sparkles} AnA{ana.messages.length > 0 ? ' ' + ana.messages.length : ''}
             </button>
-            <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'comments' ? null : 'comments')} data-active={rail === 'comments' || undefined}>
-              {I.checkCircle} Comments{activeSection && num(activeSection.comment_count) > 0 ? ' ' + num(activeSection.comment_count) : ''}
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => setRail(rail === 'comments' ? null : 'comments')}
+              data-active={rail === 'comments' || undefined}
+            >
+              {I.checkCircle} Comments
+              {activeSection && num(activeSection.comment_count) > 0
+                ? ' ' + num(activeSection.comment_count)
+                : ''}
             </button>
-            <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'history' ? null : 'history')} data-active={rail === 'history' || undefined}>
-              {I.clock} History{activeSection && num(activeSection.revision_count) > 0 ? ' ' + num(activeSection.revision_count) : ''}
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => setRail(rail === 'history' ? null : 'history')}
+              data-active={rail === 'history' || undefined}
+            >
+              {I.clock} History
+              {activeSection && num(activeSection.revision_count) > 0
+                ? ' ' + num(activeSection.revision_count)
+                : ''}
             </button>
-            <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'sources' ? null : 'sources')} data-active={rail === 'sources' || undefined}>
-              {I.fileText} Sources{activeSection && num(activeSection.citation_count) > 0 ? ' ' + num(activeSection.citation_count) : ''}
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => setRail(rail === 'sources' ? null : 'sources')}
+              data-active={rail === 'sources' || undefined}
+              data-testid="sources-rail-open"
+            >
+              {I.fileText} Sources
+              {activeSection && num(activeSection.citation_count) > 0
+                ? ' ' + num(activeSection.citation_count)
+                : ''}
             </button>
             {/* §11.50(b): the signature record was stored, exposed by
                 GET /docs/:docId/signatures, and read by nothing. The only
                 manifestation a signer saw was a toast that fades in 4.2s. */}
-            <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'signatures' ? null : 'signatures')} data-active={rail === 'signatures' || undefined}>
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => setRail(rail === 'signatures' ? null : 'signatures')}
+              data-active={rail === 'signatures' || undefined}
+            >
               {I.shieldCheck} Signatures
+            </button>
+            {/* §11.10(e): the audit trail has been WRITTEN on every governed
+                act since the store shipped — and readable by nothing. A
+                record that cannot be reviewed satisfies no regulation. */}
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => setRail(rail === 'audit' ? null : 'audit')}
+              data-active={rail === 'audit' || undefined}
+            >
+              {I.activity} Audit
+            </button>
+            {/* Every export writes an authoring_export_history row — actor,
+                time, format, and the document's content hash at that moment.
+                Three endpoints read that table and none had a caller, so the
+                product could hand someone a Word file and never tell them it
+                had gone out of date. */}
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => setRail(rail === 'exports' ? null : 'exports')}
+              data-active={rail === 'exports' || undefined}
+              data-testid="exports-rail-open"
+            >
+              {I.fileDown} Exports
             </button>
             <button
               className="btn primary"
               style={{ height: 30 }}
               onClick={() => void editorRef.current?.save()}
               disabled={!dirty || saving || docSealed}
-              title={docSealed ? 'This document is frozen — its content cannot be edited.' : undefined}
+              title={
+                docSealed ? 'This document is frozen — its content cannot be edited.' : undefined
+              }
             >
               {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : 'Saved'}
             </button>
-            {/* Drafting into a sealed section produces text with nowhere to go:
-                the accept path is refused by the same server gate as a typed
-                edit. Offering it would be inviting work the record cannot take. */}
             <button
               className="btn ghost"
               style={{ height: 30 }}
               onClick={() => askAna(draftPrompt)}
               disabled={docSealed}
-              title={docSealed ? 'This document is frozen — new drafts cannot be inserted.' : undefined}
+              title={
+                docSealed ? 'This document is frozen — new drafts cannot be inserted.' : undefined
+              }
             >
               {I.sparkles} Draft with AnA
             </button>
+            {/* Distinct from "Draft with AnA" on purpose, and named for the
+                difference: AnA is a conversation whose text you insert as a
+                tracked suggestion (author lineage). This retrieves the Data
+                Room and accepts through the ONE endpoint that records verified
+                span-level source citations alongside the content, in the same
+                transaction. Same act, different record — so it gets its own
+                control rather than being folded into the other. */}
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => {
+                /* The panel lives in the section view — document view assembles
+                   sections for reading and edits none of them. Toggling open
+                   state from here would be a click with no visible effect, so
+                   it goes to the section it is about to draft instead. */
+                if (viewMode === 'document') {
+                  setViewMode('section');
+                  setAiDraftOpen(true);
+                  return;
+                }
+                setAiDraftOpen(o => !o);
+              }}
+              data-active={(aiDraftOpen && viewMode === 'section') || undefined}
+              disabled={!activeSection || docSealed}
+              data-testid="ai-draft-open"
+              title={
+                docSealed
+                  ? 'This document is frozen — its content cannot be edited.'
+                  : 'Draft this section from Data Room evidence and accept it with recorded citations.'
+              }
+            >
+              {I.wand} Draft from sources
+            </button>
             {activeDoc && (
-              <AuthoringCollab documentId={activeDoc.id} sectionId={activeSectionId} fireToast={fireToast} />
+              <AuthoringCollab
+                documentId={activeDoc.id}
+                sectionId={activeSectionId}
+                fireToast={fireToast}
+              />
             )}
             {activeDoc && (
               <AuthoringFilingBar
                 docId={activeDoc.id}
                 docTitle={activeDoc.title}
                 docStatus={activeDoc.status}
-                onChanged={() => { void loadDocs(); if (activeDocId) void loadSections(activeDocId); }}
+                onChanged={() => {
+                  void loadDocs();
+                  if (activeDocId) void loadSections(activeDocId);
+                }}
                 fireToast={fireToast}
               />
             )}
@@ -1267,39 +2976,333 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
 
         <div className="ed-doc-scroll" ref={docScrollRef}>
           <div className="ed-doc-inner">
-            {!activeSection ? (
+            {viewMode === 'document' && activeDoc ? (
+              /* The whole document, in order, as one read. Sections are shown,
+                 not edited: editing is section-scoped because a revision, a
+                 signature and a lock are all section-scoped, and a view that
+                 let you type across all of them would be lying about what a
+                 save records. Click a section to go and edit it. */
+              <div className="ed-full" aria-label={`${activeDoc.title} — full document`}>
+                <div className="ed-full-mast">
+                  <div className="ed-mast-num">{activeDoc.module}</div>
+                  <h1 className="ed-mast-t">{activeDoc.title}</h1>
+                  <div className="ed-mast-meta">
+                    {sections.length} section{sections.length === 1 ? '' : 's'}
+                    {docSealed ? ' · frozen' : ''}
+                  </div>
+                </div>
+                {sectionsState === 'error' ? (
+                  <EmptyState
+                    tone="error"
+                    icon={I.alertTriangle}
+                    title="Couldn’t read this document’s sections"
+                    hint="The document is not empty — the read failed. Retry from the tree."
+                  />
+                ) : sections.length === 0 ? (
+                  <EmptyState
+                    icon={I.fileText}
+                    title="This document has no sections yet"
+                    hint="Add a section to begin drafting."
+                  />
+                ) : (
+                  sections.map(sec => {
+                    const html = (sec.content ?? '').trim();
+                    return (
+                      <section
+                        key={sec.id}
+                        className="ed-full-sec"
+                        data-active={sec.id === activeSectionId || undefined}
+                        aria-label={`${sec.code} ${sec.title}`}
+                      >
+                        <div className="ed-full-sec-h">
+                          <span className="ed-full-sec-num">{sec.code}</span>
+                          <h2 className="ed-full-sec-t">{sec.title}</h2>
+                          <button
+                            className="btn ghost ed-full-edit"
+                            style={{ height: 26 }}
+                            onClick={() => {
+                              setViewMode('section');
+                              requestLeave({ kind: 'section', id: sec.id });
+                            }}
+                          >
+                            {I.penLine} Edit
+                          </button>
+                        </div>
+                        {html ? (
+                          /* AuthoredHtml, not sanitizeChatHtml: the chat
+                             allowlist strips figures, so the assembled read
+                             showed a DIFFERENT document from the canvas when
+                             a section carried one. Same audited sanitiser
+                             module, authoring variant, auth-resolved refs. */
+                          <AuthoredHtml className="ed-full-sec-body" html={html} />
+                        ) : (
+                          /* Not "empty" as a finding — nothing has been written
+                             here yet, and the document view says which. */
+                          <p className="ed-full-sec-empty">Not drafted yet.</p>
+                        )}
+                      </section>
+                    );
+                  })
+                )}
+              </div>
+            ) : !activeSection ? (
               <div style={{ paddingTop: 48 }}>
-                <EmptyState icon={I.fileText}
-                  title={activeDoc ? 'Select a section to edit' : 'Select a document'}
+                {/* THE OTHER HALF OF THE CIRCLE. This said "Choose a document
+                    from the tree" while the tree said "no documents — switch
+                    the filter". Two empty states pointing at each other, on a
+                    project where the honest answer is that nothing has been
+                    created yet, next to a New document button neither of them
+                    offered. When there are no documents at all this now offers
+                    the action; when there IS a document open, "choose a
+                    section" is genuinely correct — the tree beside it is full. */}
+                <EmptyState
+                  icon={I.fileText}
+                  title={activeDoc ? 'Select a section to edit' : docs.length === 0 ? 'Nothing to edit yet' : 'Select a document'}
                   hint={activeDoc
                     ? 'Choose a section from the tree to open its content in the editor. Every save records an auditable revision.'
-                    : 'Choose a document from the tree to open its sections.'} />
+                    : docs.length === 0
+                      ? 'Create the first document for this project and its sections open here.'
+                      : 'Choose a document from the tree to open its sections.'}
+                  action={!activeDoc && docs.length === 0 ? newDocumentAction() : undefined}
+                  regulation={!activeDoc && docs.length === 0
+                    ? 'Every save records an auditable revision (21 CFR Part 11)'
+                    : undefined}
+                />
               </div>
             ) : (
               <>
                 <div className="ed-mast">
-                  <div className="ed-mast-num">{activeSection.code}</div>
-                  <h1 className="ed-mast-t">{activeSection.title}</h1>
+                  {renaming ? (
+                    <div
+                      role="group"
+                      aria-label={`Rename section ${activeSection.code}`}
+                      style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}
+                      onKeyDown={e => {
+                        if (e.key === 'Escape') {
+                          e.preventDefault();
+                          setRenaming(false);
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          void saveRename();
+                        }
+                      }}
+                    >
+                      <input
+                        className="c2c-input"
+                        style={{ width: 110, height: 30 }}
+                        aria-label="Section code"
+                        value={renameCode}
+                        autoFocus
+                        onChange={e => setRenameCode(e.target.value)}
+                      />
+                      <input
+                        className="c2c-input"
+                        style={{ flex: 1, minWidth: 200, height: 30 }}
+                        aria-label="Section title"
+                        value={renameTitle}
+                        onChange={e => setRenameTitle(e.target.value)}
+                      />
+                      <button
+                        className="btn primary"
+                        style={{ height: 30 }}
+                        disabled={renameBusy || !renameCode.trim() || !renameTitle.trim()}
+                        onClick={() => void saveRename()}
+                      >
+                        {renameBusy ? 'Renaming…' : 'Rename'}
+                      </button>
+                      <button
+                        className="btn ghost"
+                        style={{ height: 30 }}
+                        disabled={renameBusy}
+                        onClick={() => setRenaming(false)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="ed-mast-num">{activeSection.code}</div>
+                      <h1 className="ed-mast-t" style={{ display: 'inline' }}>
+                        {activeSection.title}
+                      </h1>
+                      {!docSealed && (
+                        <button
+                          className="nda-open"
+                          style={{ marginLeft: 8, verticalAlign: 'middle' }}
+                          title="Rename this section's code and title — its content and history are unchanged"
+                          onClick={openRename}
+                        >
+                          {I.penLine} Rename
+                        </button>
+                      )}
+                      {!docSealed &&
+                        sections.length > 1 &&
+                        (() => {
+                          const idx = sections.findIndex(s => s.id === activeSection.id);
+                          return (
+                            <span style={{ marginLeft: 4, verticalAlign: 'middle' }}>
+                              <button
+                                className="nda-open"
+                                disabled={reordering || idx <= 0}
+                                title="Move this section up — the document assembles and exports in tree order"
+                                aria-label={`Move ${activeSection.code} up`}
+                                onClick={() => void moveSection(-1)}
+                              >
+                                {I.arrowUp}
+                              </button>
+                              <button
+                                className="nda-open"
+                                disabled={reordering || idx >= sections.length - 1}
+                                title="Move this section down"
+                                aria-label={`Move ${activeSection.code} down`}
+                                onClick={() => void moveSection(1)}
+                              >
+                                {I.arrowDown}
+                              </button>
+                            </span>
+                          );
+                        })()}
+                      <button
+                        className="nda-open"
+                        style={{ marginLeft: 4, verticalAlign: 'middle' }}
+                        disabled={checking}
+                        title="Mechanical checks over the saved section — length, module keywords, CTD elements, tables, placeholders, structure. Heuristic signals, not a compliance determination."
+                        onClick={() => void runCheck()}
+                      >
+                        {I.checkCircle} {checking ? 'Checking…' : 'Check'}
+                      </button>
+                    </>
+                  )}
                   <div className="ed-mast-meta">
                     {activeDoc?.title ?? ''}
-                    {num(activeSection.revision_count) > 0 ? ` · ${num(activeSection.revision_count)} revisions` : ''}
-                    {num(activeSection.citation_count) > 0 ? ` · ${num(activeSection.citation_count)} citations` : ''}
-                    {dirty ? ' · unsaved changes' : activeSection.updated_at ? ` · saved ${relTime(activeSection.updated_at)}` : ''}
+                    {num(activeSection.revision_count) > 0
+                      ? ` · ${num(activeSection.revision_count)} revisions`
+                      : ''}
+                    {num(activeSection.citation_count) > 0
+                      ? ` · ${num(activeSection.citation_count)} citations`
+                      : ''}
+                    {/* "unsaved changes" alone reads as "the app will get to
+                        it". It will not — nothing on this surface leaves the
+                        device until the author saves, because a save here mints
+                        a Part 11 revision. Say which of the two it is. */}
+                    {dirty
+                      ? ' · unsaved changes — on this device only'
+                      : activeSection.updated_at
+                      ? ` · saved ${relTime(activeSection.updated_at)}`
+                      : ''}
                   </div>
                 </div>
-                {/* An inert editor with no explanation reads as a broken one.
-                    Says which state the document is in and what the way
-                    forward is, in the same words the server's refusal uses. */}
+                {/* ── Heuristic check results ──
+                    Framed exactly as the server frames them: mechanical
+                    signals over the SAVED content. Zero flags is reported as
+                    "passed N of M mechanical checks", never as "compliant" — and
+                    N and M come from the server's own count, so the sentence
+                    cannot drift from the checks the code actually runs. */}
+                {check && check.section_id === activeSection.id && (
+                  <div
+                    className="scaf-note"
+                    role="status"
+                    style={{ marginBottom: 12, display: 'grid', gap: 6 }}
+                    data-testid="section-check"
+                  >
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                      <b style={{ fontSize: 12 }}>
+                        Section check — heuristic signals, not a compliance determination
+                      </b>
+                      <span style={{ flex: 1 }} />
+                      {dirty && (
+                        <span style={{ fontSize: 11, color: 'var(--warning,#b54708)' }}>
+                          checked the last saved content — unsaved edits are not in it
+                        </span>
+                      )}
+                      <button className="nda-open" onClick={() => setCheck(null)}>
+                        Dismiss
+                      </button>
+                    </div>
+                    {check.deficiencies.length === 0 ? (
+                      <span style={{ fontSize: 12 }}>
+                        {typeof check.checks_run === 'number' && check.checks_run > 0
+                          ? `No flags. The section passed all ${check.checks_run} mechanical checks `
+                          : 'No flags. The section passed the mechanical checks '}
+                        (length, module keywords, CTD elements where defined, tables,
+                        placeholders, structure) — this is not a review.
+                      </span>
+                    ) : (
+                      [...check.deficiencies]
+                        .sort(
+                          (a, b) =>
+                            (SEVERITY_ORDER[a.severity] ?? 3) - (SEVERITY_ORDER[b.severity] ?? 3)
+                        )
+                        .map((d, i) => (
+                          <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12 }}>
+                            <span
+                              className={
+                                d.severity === 'high'
+                                  ? 'sp-tone-warn'
+                                  : d.severity === 'medium'
+                                    ? 'sp-tone-warn'
+                                    : undefined
+                              }
+                              style={{
+                                flexShrink: 0,
+                                fontWeight: 600,
+                                textTransform: 'uppercase',
+                                fontSize: 10,
+                                paddingTop: 2,
+                                ...(d.severity === 'high' ? { color: 'var(--c2c-err,#b42318)' } : {}),
+                              }}
+                            >
+                              {d.severity}
+                            </span>
+                            <span style={{ minWidth: 0 }}>
+                              {d.message}
+                              {d.recommendation && (
+                                <span style={{ opacity: 0.75 }}> — {d.recommendation}</span>
+                              )}
+                            </span>
+                          </div>
+                        ))
+                    )}
+                  </div>
+                )}
                 {docSealed && (
                   <div className="scaf-note" role="status" style={{ marginBottom: 12 }}>
                     {I.lock}{' '}
                     {String(activeDoc?.status).toUpperCase() === 'APPROVED'
                       ? 'This document has been approved and frozen. Its content is part of the signed record and cannot be edited.'
-                      : 'This document is frozen. Its content is sealed under a content hash and cannot be edited.'}
-                    {' '}Create a new version to make further changes.
+                      : 'This document is frozen. Its content is sealed under a content hash and cannot be edited.'}{' '}
+                    Create a new version to make further changes.
                   </div>
                 )}
-                <div style={{ minHeight: 460, border: '1px solid var(--c2c-line,#e4e7ec)', borderRadius: 10, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                {/* Above the canvas, at reading width: the accept decision is
+                    made by reading a full section of regulatory prose, which
+                    is not a thing the 300px rail can carry. Keyed to the
+                    section so switching sections rebuilds it empty — the
+                    panel's own effect discards the draft, and the key makes
+                    that structural rather than dependent on effect ordering. */}
+                {aiDraftOpen && !docSealed && (
+                  <AuthoringAiDraft
+                    key={activeSection.id}
+                    sectionId={activeSection.id}
+                    sectionCode={activeSection.code}
+                    sectionTitle={activeSection.title}
+                    docSealed={docSealed}
+                    editorDirty={dirty}
+                    onAccepted={onAiDraftAccepted}
+                    onClose={() => setAiDraftOpen(false)}
+                    fireToast={fireToast}
+                  />
+                )}
+                <div
+                  style={{
+                    minHeight: 460,
+                    border: '1px solid var(--c2c-line,#e4e7ec)',
+                    borderRadius: 10,
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                >
                   <RichSectionEditor
                     /* contentEpoch remounts the canvas when the server
                        replaces content out from under it (revert). */
@@ -1308,13 +3311,47 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                     value={activeSection.content ?? ''}
                     format="html"
                     onSave={saveSectionContent}
+                    /* ── Why there is no timed autosave here ──────────────
+                       RichSectionEditor supports one, and the MDX dossier
+                       drawer uses it (600ms). This surface must not.
+
+                       `saveSectionContent` PATCHes /api/authoring/sections/:id,
+                       and that handler is not a content write — it is a
+                       governed transaction. In one BEGIN/COMMIT it appends a
+                       `doc_revisions` row to a per-section hash chain whose
+                       UPDATE/DELETE the database refuses outright, records the
+                       Part 11 audit row (before/after with a SHA-256 of each
+                       side, actor, IP, session), asserts author lineage per
+                       clause, and commits the working copy into `c2c_documents`
+                       — the filing itself.
+
+                       A debounce against that would append a chain link per
+                       typing pause, so a section's history would read as
+                       hundreds of "edits" by one author within a minute, none
+                       of them an act that author performed; and half-typed
+                       sentences would be committed into the filing between
+                       them. Under §11.10(e) a record entry has to be traceable
+                       to a deliberate, attributable act. A debounce timer is
+                       not one.
+
+                       Coalescing into an open revision instead (updating the
+                       latest row within a time window) is not available and
+                       should not be: the ledger's immutability trigger refuses
+                       UPDATE by engine rule, and `…/history/verify` recomputes
+                       the whole chain — a revision that could be rewritten
+                       after the fact is the thing that check exists to prove
+                       impossible.
+
+                       So continuous protection is provided WITHOUT a server
+                       write: the editor caches every keystroke to
+                       `dc::<sectionId>` on this device and offers it back
+                       explicitly on return, arms the browser's discard prompt
+                       while dirty, and this surface holds any navigation that
+                       would unmount unsaved work (see `requestLeave`). The
+                       author saves; the ledger records authors, not timers. */
                     autosaveMs={null}
                     showSaveButton={false}
                     onDirtyChange={setEditorDirty}
-                    /* The seal, enforced where the content is actually mutated.
-                       RichSectionEditor threads this into TipTap's `editable`,
-                       so the canvas stops accepting keystrokes rather than
-                       accepting them and losing them at save time. */
                     readOnly={docSealed}
                     placeholder="Write the section content here. Cmd/Ctrl-S saves and records a revision."
                     storageKey={activeSection.id}
@@ -1338,11 +3375,13 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                         name: user?.displayName || user?.email || 'Unknown author',
                       },
                       onToggle: toggleTrackChanges,
+                      onResolve: recordTrackedChangeDecision,
                     }}
                     commentsApi={{
                       onCreate: requestAnchoredComment,
                       onOpen: openCommentFromAnchor,
                     }}
+                    imagesApi={{ upload: uploadSectionImage }}
                     collab={
                       liveCoedit && activeDoc
                         ? {
@@ -1367,12 +3406,41 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
           sign-off here rather than in a rail this screen does not draw. */}
       {rail === 'ana' && (
         <aside className="ed-comments" aria-label="AnA — document authoring">
-          <div className="ed-comments-h">
-            AnA{activeSection ? ` · ${activeSection.code}` : activeDoc ? ` · ${activeDoc.title}` : ''}
+          <div className="ed-comments-h ed-comments-h-row">
+            <span>
+              AnA
+              {activeSection
+                ? ` · ${activeSection.code}`
+                : activeDoc
+                ? ` · ${activeDoc.title}`
+                : ''}
+            </span>
+            <button
+              type="button"
+              className="ed-comments-close"
+              aria-label="Close AnA panel"
+              title="Close AnA panel"
+              onClick={closeAna}
+            >
+              {I.close}
+            </button>
           </div>
           <div
             ref={anaScrollRef}
-            style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '10px 12px', display: 'grid', gap: 12, alignContent: 'start' }}
+            role="log"
+            aria-label="AnA conversation"
+            aria-live="polite"
+            aria-relevant="additions text"
+            aria-busy={ana.isStreaming}
+            style={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: 'auto',
+              padding: '10px 12px',
+              display: 'grid',
+              gap: 12,
+              alignContent: 'start',
+            }}
           >
             {ana.messages.length === 0 ? (
               <EmptyState
@@ -1388,17 +3456,28 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
               ana.messages.map((m, i) =>
                 m.role === 'user' ? (
                   <div key={i} className="cmt">
-                    <div className="cmt-meta"><b>You</b></div>
+                    <div className="cmt-meta">
+                      <b>You</b>
+                    </div>
                     <div className="cmt-body">{m.text}</div>
                   </div>
                 ) : (
                   <div key={i} className="cmt">
-                    <div className="cmt-meta"><b>AnA</b></div>
-                    {/* Until the first token lands the server's status phase
-                        stands in — never an invented sentence. */}
-                    <div className="cmt-body" style={{ whiteSpace: 'pre-wrap' }}>
-                      {m.text || (m.streaming ? m.statusPhase || 'Thinking…' : '')}
+                    <div className="cmt-meta">
+                      <b>AnA</b>
                     </div>
+                    {/* Until the first token lands the server's status phase
+                        stands in — never an invented sentence. The phase is a
+                        server-authored label, not a document, so it is not put
+                        through the markdown path. */}
+                    {m.text ? (
+                      <AnaMarkdown text={m.text} />
+                    ) : (
+                      <div className="cmt-body">
+                        {m.streaming ? m.statusPhase || 'Thinking…' : ''}
+                      </div>
+                    )}
+                    <AnaActivity message={m} onSuggestedAction={askAna} />
                     {/* AI output enters the record ONLY as an attributed
                         in-text suggestion — struck-in green, pending until a
                         human accepts or rejects each edit in the canvas.
@@ -1413,9 +3492,14 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                               name: 'AnA (AI draft)',
                             });
                             if (ok) {
-                              fireToast('Draft inserted as tracked suggestions — review each edit in the canvas, then save.');
+                              fireToast(
+                                'Draft inserted as tracked suggestions — review each edit in the canvas, then save.'
+                              );
                             } else {
-                              fireToast('Couldn’t insert — the canvas is not editable right now.', 'error');
+                              fireToast(
+                                'Couldn’t insert — the canvas is not editable right now.',
+                                'error'
+                              );
                             }
                           }}
                         >
@@ -1426,7 +3510,9 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                     {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
                         {m.executedActions.map((a, ai) => (
-                          <span key={ai} className="rd-chip tone-ok" title={a.error || a.label}>{a.label}</span>
+                          <span key={ai} className="rd-chip tone-ok" title={a.error || a.label}>
+                            {a.label}
+                          </span>
                         ))}
                       </div>
                     )}
@@ -1434,16 +3520,18 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                       <AuthoringSignoffs signoffs={m.pendingSignoffs} />
                     )}
                   </div>
-                ),
+                )
               )
             )}
           </div>
           <div style={{ padding: '10px 12px', borderTop: '1px solid var(--c2c-line,#e4e7ec)' }}>
             <textarea
               className="c2c-input"
+              ref={anaComposerRef}
+              aria-label={activeSection ? `Ask AnA about ${activeSection.code}` : 'Ask AnA'}
               value={anaDraft}
-              onChange={(e) => setAnaDraft(e.target.value)}
-              onKeyDown={(e) => {
+              onChange={e => setAnaDraft(e.target.value)}
+              onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   const t = anaDraft.trim();
@@ -1455,7 +3543,15 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
               placeholder={activeSection ? `Ask about ${activeSection.code}…` : 'Ask AnA…'}
               style={{ width: '100%', minHeight: 56, resize: 'vertical', fontSize: 13 }}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 6 }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 8,
+                marginTop: 6,
+              }}
+            >
               <span style={{ fontSize: 11, opacity: 0.7 }}>
                 {I.lock} AnA proposes; you accept and save.
               </span>
@@ -1486,42 +3582,77 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
               edit; this control recomputes the whole chain from stored content
               and reports exactly what it found. */}
           {activeSection && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 8, padding: '0 2px', fontSize: 11.5 }}>
-              <button className="nda-open" onClick={() => void verifyLedger(activeSection.id)} disabled={ledger === 'checking'}>
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'baseline',
+                gap: 8,
+                padding: '0 2px',
+                fontSize: 11.5,
+              }}
+            >
+              <button
+                className="nda-open"
+                onClick={() => void verifyLedger(activeSection.id)}
+                disabled={ledger === 'checking'}
+              >
                 {I.shieldCheck} {ledger === 'checking' ? 'Recomputing ledger…' : 'Verify ledger'}
               </button>
               {ledger === 'error' && (
                 <span style={{ color: 'var(--c2c-err,#b42318)' }}>
-                  Couldn’t recompute the ledger — this is a failed check, not a verdict about the record.
+                  Couldn’t recompute the ledger — this is a failed check, not a verdict about the
+                  record.
                 </span>
               )}
-              {ledger != null && ledger !== 'error' && ledger !== 'checking' && (
-                ledger.intact ? (
+              {ledger != null &&
+                ledger !== 'error' &&
+                ledger !== 'checking' &&
+                (ledger.intact ? (
                   <span className="sp-tone-ok">
-                    Ledger intact — {ledger.chainedCount} chained revision{ledger.chainedCount === 1 ? '' : 's'} recomputed and verified
+                    Ledger intact — {ledger.chainedCount} chained revision
+                    {ledger.chainedCount === 1 ? '' : 's'} recomputed and verified
                     {ledger.preLedgerCount > 0 ? `; ${ledger.preLedgerCount} pre-ledger` : ''}.
                   </span>
                 ) : (
                   <span style={{ color: 'var(--c2c-err,#b42318)', fontWeight: 600 }}>
-                    Ledger BROKEN at {ledger.breaks.length} point{ledger.breaks.length === 1 ? '' : 's'} — {ledger.breaks.map((b) => b.reason).join(', ')}. The history has been altered or forked; treat this section’s record as disputed.
+                    Ledger BROKEN at {ledger.breaks.length} point
+                    {ledger.breaks.length === 1 ? '' : 's'} —{' '}
+                    {ledger.breaks.map(b => b.reason).join(', ')}. The history has been altered or
+                    forked; treat this section’s record as disputed.
                   </span>
-                )
-              )}
+                ))}
             </div>
           )}
           {!activeSection ? (
-            <EmptyState icon={I.clock} title="No section selected" hint="Select a section to see its revision history." />
+            <EmptyState
+              icon={I.clock}
+              title="No section selected"
+              hint="Select a section to see its revision history."
+            />
           ) : revisionsState === 'error' ? (
-            <EmptyState icon={I.alertTriangle} title="Revision history unavailable"
-              hint="The history could not be loaded. This is a failure to read the record — it does not mean the section has no revisions." />
+            <EmptyState
+              icon={I.alertTriangle}
+              title="Revision history unavailable"
+              hint="The history could not be loaded. This is a failure to read the record — it does not mean the section has no revisions."
+            />
           ) : revisions.length === 0 ? (
-            <EmptyState icon={I.clock} title="No prior revisions"
-              hint="Each save records the new content here under its author, so you can compare and revert." />
+            <EmptyState
+              icon={I.clock}
+              title="No prior revisions"
+              hint="Each save records the new content here under its author, so you can compare and revert."
+            />
           ) : (
             revisions.map((r, i) => (
               <div key={r.id} className="cmt">
                 <div className="cmt-meta">
-                  <span className="cmt-av">{(r.created_by_name ?? '·').split(' ').map((x) => x[0]).join('').slice(0, 2)}</span>
+                  <span className="cmt-av">
+                    {(r.created_by_name ?? '·')
+                      .split(' ')
+                      .map(x => x[0])
+                      .join('')
+                      .slice(0, 2)}
+                  </span>
                   <b>{r.created_by_name ?? r.created_by_email ?? 'Unknown author'}</b>
                   {/* Which write path produced this state — the input's kind,
                       from the ledger, never inferred. */}
@@ -1530,13 +3661,26 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                   )}
                   <span className="cmt-when">· {relTime(r.created_at)}</span>
                   {r.chain_sha256 && (
-                    <span className="cmt-when" style={{ fontFamily: 'var(--font-mono, monospace)' }} title={`Ledger link ${r.chain_sha256}`}>
+                    <span
+                      className="cmt-when"
+                      style={{ fontFamily: 'var(--font-mono, monospace)' }}
+                      title={`Ledger link ${r.chain_sha256}`}
+                    >
                       · {r.chain_sha256.slice(0, 8)}
                     </span>
                   )}
-                  <button className="nda-open" style={{ marginLeft: 'auto' }} onClick={() => revert(r.id)}>{I.rotateCcw} Revert</button>
+                  <button
+                    className="nda-open"
+                    style={{ marginLeft: 'auto' }}
+                    onClick={() => revert(r.id)}
+                  >
+                    {I.rotateCcw} Revert
+                  </button>
                 </div>
-                <div className="cmt-body" style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'hidden' }}>
+                <div
+                  className="cmt-body"
+                  style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'hidden' }}
+                >
                   {(r.content ?? '').slice(0, 400) || <span style={{ opacity: 0.6 }}>(empty)</span>}
                 </div>
                 {/* The word-level redline against the revision before this
@@ -1565,37 +3709,240 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
         </aside>
       )}
 
+      {/* ── Right: what left this document, and whether it is still current ──
+          Two drifts, reported separately because they answer different
+          questions: the section text against the last export's content hash,
+          and the citations added since that export. A single "out of date"
+          badge would have merged them. */}
+      {rail === 'exports' && (
+        <aside className="ed-comments">
+          <div className="ed-comments-h">Exports{activeDoc ? ` · ${activeDoc.title}` : ''}</div>
+          <AuthoringExports docId={activeDocId} refreshKey={exportsEpoch} />
+        </aside>
+      )}
+
+      {/* ── Right: the document's Part 11 audit trail ──
+          Every row is a governed act the SERVER recorded — actor and role
+          from the verified JWT, operation, reason, and the content hashes on
+          either side of the change. Nothing here is composed client-side. */}
+      {rail === 'audit' && (
+        <aside className="ed-comments">
+          <div className="ed-comments-h ed-comments-h-row">
+            <span>Audit trail{activeDoc ? ` · ${activeDoc.title}` : ''}</span>
+            <button
+              type="button"
+              className="nda-open"
+              onClick={() => activeDocId && void loadAudit(activeDocId)}
+              disabled={!activeDocId || auditState === 'loading'}
+            >
+              {auditState === 'loading' ? 'Loading…' : 'Refresh'}
+            </button>
+          </div>
+          {!activeDocId ? (
+            <EmptyState
+              icon={I.activity}
+              title="No document selected"
+              hint="Select a document to review its audit trail."
+            />
+          ) : auditState === 'error' ? (
+            <EmptyState
+              tone="error"
+              icon={I.alertTriangle}
+              title="Couldn’t load the audit trail"
+              hint="The read failed. This is a failure to READ the record — it does not mean no governed acts occurred. Retry, or check the service is reachable."
+            />
+          ) : auditState === 'loading' && auditEvents.length === 0 ? (
+            <div className="scaf-note" style={{ padding: 12 }}>
+              Loading the audit trail…
+            </div>
+          ) : auditEvents.length === 0 ? (
+            <EmptyState
+              icon={I.activity}
+              title="No audit events yet"
+              hint="Governed acts on this document — saves, reverts, reorders, freezes, signatures, exports — are recorded here by the server as they happen."
+            />
+          ) : (
+            auditEvents.map(ev => {
+              const section = ev.section_id
+                ? sections.find(s => s.id === ev.section_id) ?? null
+                : null;
+              return (
+                <div key={ev.id} className="cmt">
+                  <div className="cmt-meta">
+                    <span className="cmt-av">
+                      {(ev.actor ?? '·')
+                        .split(/[@\s.]/)
+                        .filter(Boolean)
+                        .map(x => x[0])
+                        .join('')
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </span>
+                    <b
+                      style={{
+                        minWidth: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {ev.actor ?? 'Unknown actor'}
+                    </b>
+                    {ev.actor_role && <span className="cmt-role">{ev.actor_role}</span>}
+                    <span className="cmt-when">· {relTime(ev.created_at)}</span>
+                  </div>
+                  <div className="cmt-body" style={{ display: 'grid', gap: 3 }}>
+                    <span>
+                      {auditEventLabel(ev.event_type)}
+                      {section && (
+                        <>
+                          {' — '}
+                          <button
+                            className="nda-open"
+                            title={`Open ${section.code} ${section.title}`}
+                            onClick={() => requestLeave({ kind: 'section', id: section.id })}
+                          >
+                            §{section.code}
+                          </button>
+                        </>
+                      )}
+                    </span>
+                    {/* The metadata the endpoint has always returned and no
+                        surface read — the redline a reviewer refused, the model
+                        that produced an accepted draft. */}
+                    {(() => {
+                      const detail = describeAuditMetadata(ev.event_type, ev.metadata);
+                      return detail ? (
+                        <span
+                          style={{ fontSize: 12, opacity: 0.85 }}
+                          data-testid="audit-metadata"
+                        >
+                          {detail}
+                        </span>
+                      ) : null;
+                    })()}
+                    {ev.change_reason && (
+                      <span style={{ fontSize: 12, opacity: 0.85 }}>{ev.change_reason}</span>
+                    )}
+                    {(ev.content_hash_before || ev.content_hash_after) && (
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-mono, monospace)',
+                          fontSize: 10.5,
+                          opacity: 0.7,
+                        }}
+                        title={`Content hash before: ${ev.content_hash_before ?? '—'}\nContent hash after: ${ev.content_hash_after ?? '—'}`}
+                      >
+                        {(ev.content_hash_before ?? '—').slice(0, 8)} →{' '}
+                        {(ev.content_hash_after ?? '—').slice(0, 8)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </aside>
+      )}
+
       {rail === 'sources' && (
         <aside className="ed-comments">
-          <div className="ed-comments-h">Drafted from</div>
+          <div className="ed-comments-h ed-comments-h-row">
+            <span>Drafted from</span>
+            {/* Document-wide, not section-wide, because the question before an
+                export or a sign-off is "has anything I cite moved?" across the
+                whole document — not one claim at a time. */}
+            <button
+              className="nda-open"
+              onClick={() => void refreshAllSources()}
+              disabled={!activeDocId || refreshingAll}
+              data-testid="refresh-all-sources"
+              title="Re-read every unfrozen citation in this document against its stored source. Frozen citations are left alone."
+            >
+              {refreshingAll ? 'Re-reading…' : 'Re-read all'}
+            </button>
+          </div>
+          {/* The findings from the last document-wide re-read. Kept on the rail
+              rather than in a toast: a citation whose source is gone is the
+              thing the person about to file this needs to see, and it must not
+              fade after four seconds. */}
+          {skippedRefreshes.length > 0 && (
+            <div
+              className="scaf-note"
+              role="alert"
+              data-testid="refresh-skipped"
+              style={{ margin: 12, fontSize: 12, borderLeftColor: 'var(--c2c-err,#b42318)' }}
+            >
+              <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                <b>
+                  {skippedRefreshes.length} citation
+                  {skippedRefreshes.length === 1 ? '' : 's'} could not be re-read
+                </b>
+                <span style={{ flex: 1 }} />
+                <button className="nda-open" onClick={() => setSkippedRefreshes([])}>
+                  Dismiss
+                </button>
+              </div>
+              {skippedRefreshes.slice(0, 8).map(sk => (
+                <div key={sk.cite_id} style={{ marginTop: 4 }}>
+                  {sk.reason}
+                </div>
+              ))}
+              {skippedRefreshes.length > 8 && (
+                <div style={{ marginTop: 4, opacity: 0.75 }}>
+                  and {skippedRefreshes.length - 8} more.
+                </div>
+              )}
+            </div>
+          )}
           {!activeSection ? (
-            <EmptyState icon={I.fileText} title="No section selected"
-              hint="Select a section to see the sources it is drafted from." />
+            <EmptyState
+              icon={I.fileText}
+              title="No section selected"
+              hint="Select a section to see the sources it is drafted from."
+            />
           ) : sourcesState === 'loading' ? (
-            <div className="scaf-note" style={{ padding: 12 }}>Loading this section’s sources…</div>
+            <div className="scaf-note" style={{ padding: 12 }}>
+              Loading this section’s sources…
+            </div>
           ) : sourcesState === 'error' ? (
-            <EmptyState icon={I.alertTriangle} title="Couldn’t load this section’s sources"
-              hint="The read failed, so nothing is shown — this is not the same as the section citing nothing. Sign in and retry, or check the service is reachable." />
+            <EmptyState
+              icon={I.alertTriangle}
+              title="Couldn’t load this section’s sources"
+              hint="The read failed, so nothing is shown — this is not the same as the section citing nothing. Sign in and retry, or check the service is reachable."
+            />
           ) : (
             <>
-              <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--c2c-line,#e4e7ec)' }}>
+              <div
+                style={{ padding: '10px 12px', borderBottom: '1px solid var(--c2c-line,#e4e7ec)' }}
+              >
                 {!picking ? (
-                  <button className="btn ghost" style={{ height: 28, fontSize: 12 }} onClick={() => setPicking(true)}>
+                  <button
+                    className="btn ghost"
+                    style={{ height: 28, fontSize: 12 }}
+                    onClick={() => setPicking(true)}
+                  >
                     {I.plus} Record a source
                   </button>
                 ) : projectSources.length === 0 ? (
                   <div style={{ fontSize: 12, opacity: 0.8 }}>
                     No project sources available. Add documents to the project’s data room first, or
                     open this document from its project so the data room is in context.
-                    <button className="nda-open" style={{ marginLeft: 8 }} onClick={() => setPicking(false)}>Close</button>
+                    <button
+                      className="nda-open"
+                      style={{ marginLeft: 8 }}
+                      onClick={() => setPicking(false)}
+                    >
+                      Close
+                    </button>
                   </div>
                 ) : (
                   <div style={{ display: 'grid', gap: 4 }}>
                     <span style={{ fontSize: 11.5, opacity: 0.75 }}>
-                      Choose a source from this project’s data room. Its current checksum is recorded
-                      with the citation.
+                      Choose a source from this project’s data room. Its current checksum is
+                      recorded with the citation.
                     </span>
-                    {projectSources.map((ps) => (
+                    {projectSources.map(ps => (
                       <button
                         key={ps.id}
                         className="nda-open"
@@ -1612,31 +3959,54 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                         {ps.extractionStatus !== 'extracted' ? ' — text not readable' : ''}
                       </button>
                     ))}
-                    <button className="nda-open" onClick={() => setPicking(false)}>Cancel</button>
+                    <button className="nda-open" onClick={() => setPicking(false)}>
+                      Cancel
+                    </button>
                   </div>
                 )}
               </div>
 
               {sources.length === 0 ? (
-                <EmptyState icon={I.fileText} title="No sources recorded for this section"
-                  hint="Record the documents this section is written from. Each citation stores the source’s content identity, so if the source later changes this section is flagged rather than quietly left behind." />
+                <EmptyState
+                  icon={I.fileText}
+                  title="No sources recorded for this section"
+                  hint="Record the documents this section is written from. Each citation stores the source’s content identity, so if the source later changes this section is flagged rather than quietly left behind."
+                />
               ) : (
-                sources.map((s) => {
+                sources.map(s => {
                   const st = sourceStateLabel(s);
                   return (
                     <div key={s.citationId} className="cmt">
                       <div className="cmt-meta">
-                        <b style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <b
+                          style={{
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
                           {s.source?.title ?? `Source ${s.citationId.slice(0, 8)}`}
                         </b>
                         <span className="cmt-when">· cited {relTime(s.citedAt)}</span>
                       </div>
                       <div className="cmt-body" style={{ display: 'grid', gap: 4 }}>
-                        <span className={st.tone === 'ok' ? 'sp-tone-ok' : st.tone === 'warn' ? 'sp-tone-warn' : undefined}
-                          style={{ fontSize: 12 }} title={st.hint}>
+                        <span
+                          className={
+                            st.tone === 'ok'
+                              ? 'sp-tone-ok'
+                              : st.tone === 'warn'
+                              ? 'sp-tone-warn'
+                              : undefined
+                          }
+                          style={{ fontSize: 12 }}
+                          title={st.hint}
+                        >
                           {st.text}
                         </span>
-                        {s.citationText && <span style={{ fontSize: 12, opacity: 0.85 }}>{s.citationText}</span>}
+                        {s.citationText && (
+                          <span style={{ fontSize: 12, opacity: 0.85 }}>{s.citationText}</span>
+                        )}
                         <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                           <button className="nda-open" onClick={() => void reresolve(s.citationId)}>
                             {I.rotateCcw} Re-read source
@@ -1647,9 +4017,18 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                             </button>
                           )}
                           {s.state === 'changed' && (
-                            <button className="nda-open" onClick={() => askAna(
-                              `The source "${s.source?.title ?? 'this document'}" changed after section ${activeSection.code} was drafted from it. Read the current source and tell me what in this section no longer matches. Do not rewrite it yet.`,
-                            )}>
+                            <button
+                              className="nda-open"
+                              onClick={() =>
+                                askAna(
+                                  `The source "${
+                                    s.source?.title ?? 'this document'
+                                  }" changed after section ${
+                                    activeSection.code
+                                  } was drafted from it. Read the current source and tell me what in this section no longer matches. Do not rewrite it yet.`
+                                )
+                              }
+                            >
                               {I.sparkles} Ask what changed
                             </button>
                           )}
@@ -1668,50 +4047,207 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
         <aside className="ed-comments">
           <div className="ed-comments-h">Comments</div>
           {activeSection && (
-            <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--c2c-line,#e4e7ec)' }}>
+            <div
+              style={{ padding: '10px 12px', borderBottom: '1px solid var(--c2c-line,#e4e7ec)' }}
+            >
               {/* The range being commented on, handed over by the editor's
                   Comment button. Posting resolves the server id back to the
                   canvas so the highlight mark can be applied and saved. */}
               {pendingAnchor && (
-                <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 6, fontSize: 12 }}>
-                  <span className="rd-chip tone-idle" style={{ flexShrink: 0 }}>Anchoring to</span>
-                  <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontStyle: 'italic' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 8,
+                    alignItems: 'baseline',
+                    marginBottom: 6,
+                    fontSize: 12,
+                  }}
+                >
+                  <span className="rd-chip tone-idle" style={{ flexShrink: 0 }}>
+                    Anchoring to
+                  </span>
+                  <span
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      fontStyle: 'italic',
+                    }}
+                  >
                     “{pendingAnchor.quote}”
                   </span>
-                  <button className="nda-open" onClick={cancelAnchoredComment}>Cancel</button>
+                  <button className="nda-open" onClick={cancelAnchoredComment}>
+                    Cancel
+                  </button>
                 </div>
               )}
               <textarea
-                className="c2c-input" value={newComment} onChange={(e) => setNewComment(e.target.value)}
-                placeholder={pendingAnchor ? 'Comment on the selected text…' : `Comment on ${activeSection.code}…`}
+                className="c2c-input"
+                value={newComment}
+                onChange={e => setNewComment(e.target.value)}
+                placeholder={
+                  pendingAnchor
+                    ? 'Comment on the selected text…'
+                    : `Comment on ${activeSection.code}…`
+                }
                 style={{ width: '100%', minHeight: 56, resize: 'vertical', fontSize: 13 }}
               />
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
-                <button className="btn primary" style={{ height: 28 }} onClick={addComment} disabled={!newComment.trim()}>{I.plus} Add comment</button>
+                <button
+                  className="btn primary"
+                  style={{ height: 28 }}
+                  onClick={addComment}
+                  disabled={!newComment.trim()}
+                >
+                  {I.plus} Add comment
+                </button>
               </div>
             </div>
           )}
           {comments.length === 0 ? (
-            <EmptyState icon={I.checkCircle} title="No comments yet" hint="Review comments on this document appear here." />
+            /* Three different facts, three different renders: still reading,
+               the read FAILED, and genuinely no comments. This rail used to
+               render every failure as "No comments yet" — on the panel a
+               reviewer consults before freezing a document, the most dangerous
+               conflation on the surface. */
+            commentsState === 'loading' ? (
+              <EmptyState icon={I.checkCircle} title="Loading comments…" busy />
+            ) : commentsState === 'error' ? (
+              <EmptyState
+                tone="error"
+                icon={I.alertTriangle}
+                title="Couldn’t load this document’s comments"
+                hint="The document may have open review threads that did not load — this is a failed read, not an empty record. Reopen the rail to retry."
+              />
+            ) : (
+              <EmptyState
+                icon={I.checkCircle}
+                title="No comments yet"
+                hint="Comments on this document appear here. Add one above."
+              />
+            )
           ) : (
-            comments.map((c) => {
+            comments.map(c => {
               const anchor = asTextRangeAnchor(c.anchor);
               return (
-                <div key={c.id} className="cmt" data-active={focusedCommentId === c.id || undefined}
-                  style={focusedCommentId === c.id ? { background: 'color-mix(in srgb, var(--accent-100,#2563eb) 7%, transparent)' } : undefined}>
+                <div
+                  key={c.id}
+                  className="cmt"
+                  data-active={focusedCommentId === c.id || undefined}
+                  style={
+                    focusedCommentId === c.id
+                      ? {
+                          background:
+                            'color-mix(in srgb, var(--accent-100,#2563eb) 7%, transparent)',
+                        }
+                      : undefined
+                  }
+                >
                   <div className="cmt-meta">
-                    <span className="cmt-av">{(c.author_name ?? '·').split(' ').map((x) => x[0]).join('').slice(0, 2)}</span>
+                    <span className="cmt-av">
+                      {(c.author_name ?? '·')
+                        .split(' ')
+                        .map(x => x[0])
+                        .join('')
+                        .slice(0, 2)}
+                    </span>
                     <b>{c.author_name ?? 'Unknown'}</b>
                     {c.section_code && <span className="cmt-role">{c.section_code}</span>}
                     <span className="cmt-when">· {relTime(c.created_at)}</span>
-                    {c.status && c.status !== 'open' && <span className="rd-chip tone-ok" style={{ marginLeft: 'auto' }}>{c.status}</span>}
+                    {/* The thread's lifecycle. Resolving records the resolver
+                        and keeps the row; reopen is the honest undo. Neither
+                        deletes anything. */}
+                    {c.status && c.status !== 'open' ? (
+                      <>
+                        <span className="rd-chip tone-ok" style={{ marginLeft: 'auto' }}>
+                          {c.status}
+                        </span>
+                        <button
+                          className="nda-open"
+                          title="Reopen this comment thread"
+                          onClick={() => void setCommentStatus(c.id, 'open')}
+                        >
+                          Reopen
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        className="nda-open"
+                        style={{ marginLeft: 'auto' }}
+                        title="Mark this comment resolved — recorded under your name; the thread stays in the record"
+                        onClick={() => {
+                          setResolveFor(c.id);
+                          setResolveNote('');
+                        }}
+                      >
+                        Resolve
+                      </button>
+                    )}
                   </div>
+                  {/* The resolution RECORD, not just a chip: who closed the
+                      thread, when, and their stated reason — the facts the
+                      server has kept all along and the rail never showed. */}
+                  {c.status === 'resolved' && (c.resolved_by || c.resolved_at) && (
+                    <div className="cmt-resolution">
+                      Resolved{c.resolved_by ? ` by ${c.resolved_by}` : ''}
+                      {c.resolved_at ? ` · ${relTime(c.resolved_at)}` : ''}
+                      {c.resolution_note ? <em> — “{c.resolution_note}”</em> : null}
+                    </div>
+                  )}
+                  {resolveFor === c.id && (
+                    <div style={{ margin: '4px 0 6px' }}>
+                      <textarea
+                        className="c2c-input"
+                        value={resolveNote}
+                        autoFocus
+                        onChange={e => setResolveNote(e.target.value)}
+                        placeholder="Reason for resolving (optional)"
+                        aria-label="Reason for resolving"
+                        style={{ width: '100%', minHeight: 40, resize: 'vertical', fontSize: 13 }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 4 }}>
+                        <button className="nda-open" onClick={() => setResolveFor(null)}>
+                          Cancel
+                        </button>
+                        <button
+                          className="btn primary"
+                          style={{ height: 26 }}
+                          onClick={() => {
+                            setResolveFor(null);
+                            void setCommentStatus(c.id, 'resolved', resolveNote);
+                          }}
+                        >
+                          Resolve
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {/* The quoted range this thread is anchored to, with a jump
                       into the canvas. An anchor whose text no longer exists is
                       reported as exactly that — never silently repointed. */}
                   {anchor && (
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'baseline', margin: '2px 0 4px', fontSize: 11.5 }}>
-                      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontStyle: 'italic', opacity: 0.8 }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: 6,
+                        alignItems: 'baseline',
+                        margin: '2px 0 4px',
+                        fontSize: 11.5,
+                      }}
+                    >
+                      <span
+                        style={{
+                          flex: 1,
+                          minWidth: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          fontStyle: 'italic',
+                          opacity: 0.8,
+                        }}
+                      >
                         “{anchor.quote}”
                       </span>
                       {c.section_id === activeSectionId && (
@@ -1721,7 +4257,10 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                             setFocusedCommentId(c.id);
                             const found = editorRef.current?.selectCommentAnchor(c.id);
                             if (!found) {
-                              fireToast('The annotated text no longer exists in the current draft — the comment is kept, its highlight is gone.', 'error');
+                              fireToast(
+                                'The annotated text no longer exists in the current draft — the comment is kept, its highlight is gone.',
+                                'error'
+                              );
                             }
                           }}
                         >
@@ -1731,6 +4270,75 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                     </div>
                   )}
                   <div className="cmt-body">{c.body}</div>
+                  {/* The thread under its head: replies the server nests,
+                      oldest first, each with its own server-side attribution. */}
+                  {(c.replies?.length ?? 0) > 0 && (
+                    <div className="cmt-replies">
+                      {c.replies!.map(r => (
+                        <div key={r.id} className="cmt-reply">
+                          <div className="cmt-meta">
+                            <span className="cmt-av">
+                              {(r.author_name ?? '·')
+                                .split(' ')
+                                .map(x => x[0])
+                                .join('')
+                                .slice(0, 2)}
+                            </span>
+                            <b>{r.author_name ?? 'Unknown'}</b>
+                            <span className="cmt-when">· {relTime(r.created_at)}</span>
+                          </div>
+                          <div className="cmt-body">{r.body}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {/* Reply — posts into THIS thread (parent_comment_id), against
+                      the thread's own section. One box open at a time. */}
+                  {c.section_id &&
+                    (replyTo === c.id ? (
+                      <div style={{ marginTop: 6 }}>
+                        <textarea
+                          className="c2c-input"
+                          value={replyText}
+                          autoFocus
+                          onChange={e => setReplyText(e.target.value)}
+                          placeholder={`Reply to ${c.author_name ?? 'this thread'}…`}
+                          aria-label={`Reply to ${c.author_name ?? 'this thread'}`}
+                          style={{ width: '100%', minHeight: 44, resize: 'vertical', fontSize: 13 }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 4 }}>
+                          <button
+                            className="nda-open"
+                            onClick={() => {
+                              setReplyTo(null);
+                              setReplyText('');
+                            }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            className="btn primary"
+                            style={{ height: 26 }}
+                            disabled={!replyText.trim()}
+                            onClick={() => void addReply(c)}
+                          >
+                            Reply
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        className="nda-open"
+                        style={{ marginTop: 4 }}
+                        title="Reply into this thread"
+                        onClick={() => {
+                          setReplyTo(c.id);
+                          setReplyText('');
+                        }}
+                      >
+                        {I.messageSquare} Reply
+                      </button>
+                    ))}
                 </div>
               );
             })
@@ -1738,7 +4346,92 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
         </aside>
       )}
 
+      {pendingLeave && activeSection && (
+        <UnsavedWorkGuard
+          sectionCode={activeSection.code}
+          sectionTitle={activeSection.title}
+          destination={
+            pendingLeave.kind === 'document'
+              ? docs.find(d => d.id === pendingLeave.id)?.title ?? 'another document'
+              : sections.find(s => s.id === pendingLeave.id)?.code ?? 'another section'
+          }
+          saving={leaving}
+          onSave={() => void saveAndLeave()}
+          onLeave={leaveUnsaved}
+          onCancel={() => setPendingLeave(null)}
+        />
+      )}
+
       <C2CToast msg={toast} />
+    </div>
+  );
+}
+
+/* ── The unsaved-work decision ────────────────────────────────────────────
+   Three outcomes, all of them stated. The one thing this dialog must never do
+   is decide for the author: saving mints an attributable Part 11 revision, and
+   discarding loses text. Both are the author's call, so both are a button and
+   neither is the default action of walking away. */
+function UnsavedWorkGuard({
+  sectionCode,
+  sectionTitle,
+  destination,
+  saving,
+  onSave,
+  onLeave,
+  onCancel,
+}: {
+  sectionCode: string;
+  sectionTitle: string;
+  destination: string;
+  saving: boolean;
+  onSave: () => void;
+  onLeave: () => void;
+  onCancel: () => void;
+}) {
+  // Escape cancels (the safe outcome — it changes nothing either way) and
+  // focus returns to the tree row that was clicked.
+  const ref = useDialog(onCancel);
+  return (
+    <div
+      className="ed-guard-bd"
+      onMouseDown={e => {
+        if (e.target === e.currentTarget && !saving) onCancel();
+      }}
+    >
+      <div
+        className="ed-guard"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="ed-guard-t"
+        aria-describedby="ed-guard-d"
+        tabIndex={-1}
+        ref={ref}
+      >
+        <h2 className="ed-guard-t" id="ed-guard-t">
+          Unsaved changes in {sectionCode}
+        </h2>
+        <p className="ed-guard-d" id="ed-guard-d">
+          Your edits to {sectionCode} {sectionTitle} are cached on this device and are not in the
+          record. Opening {destination} closes this section.
+        </p>
+        <p className="ed-guard-d">
+          Saving records an auditable revision attributed to you. Leaving keeps the edits on this
+          device only — this browser, on this machine — and offers them back when you return to the
+          section.
+        </p>
+        <div className="ed-guard-acts">
+          <button className="btn ghost" onClick={onCancel} disabled={saving}>
+            Cancel
+          </button>
+          <button className="btn ghost" onClick={onLeave} disabled={saving}>
+            Leave without saving
+          </button>
+          <button className="btn primary" onClick={onSave} disabled={saving}>
+            {saving ? 'Saving…' : 'Save and continue'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

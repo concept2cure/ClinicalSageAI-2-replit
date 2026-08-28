@@ -1,11 +1,32 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
+import { downloadBlob, downloadText, safeFileName } from '../download';
 import { SampleTag, useLiveData, useLiveRows, EmptyState, liveMutateOrNull } from '../dataConnect';
 import { ApiRequestError, apiRequest, serverMessage } from '@/lib/queryClient';
 import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import {
+  applySurfaceAction,
+  notifySurfaceActionReady,
+  useSurfaceActionHandlers,
+} from '../surfaceActions';
+import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { getSurfaceMeta } from '../registryModel';
-import { LIC_ROLES } from '../fixtures/licensing';
+import { consumeNavParams } from '../navParams';
+// LIC_TIER_LEVEL is the client's one ascending tier ordering (free < standard <
+// professional < enterprise), mirroring TIER_LEVELS in license-manager.ts. The
+// Apps catalog needs it to tell a tier gap from an industry-mode mismatch, and
+// a private copy here would be a seventh place that ordering is written down.
+import { LIC_ROLES, LIC_TIER_LEVEL } from '../fixtures/licensing';
+// The shell's lock vocabulary, not a second one. A customer who is told on the
+// rail that an app is "turned off for this workspace" must not be told on the
+// catalog card that it is "not included in your plan"; both screens read these.
+import {
+  lockNotice,
+  lockShortReason,
+  type NavSurfaceEntitlement,
+} from '../navEntitlements';
 // Canonical config kept (not fixture DATA): AUDIT_KINDS is the audit-kind
 // filter taxonomy the server's deriveKind() mirrors; PLATFORM_SERVICES is the
 // static platform-capability catalog; ARTIFACT_FMT is the format→label display
@@ -444,6 +465,62 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
       txw.targets.includes(id) ? txw.targets.filter((x) => x !== id) : [...txw.targets, id],
     );
 
+  /* What AnA can see of this screen.
+     Setup is a governed editor: every control here writes to the organization
+     record under a reason, audited. So the fact that matters most is not what
+     the settings ARE but whether the administrator has UNSAVED changes and
+     whether the reason field is filled — the two things that decide whether the
+     save will be accepted. Publishing the settings without that would let AnA
+     describe as current a value nobody has committed.
+
+     A FAILED load publishes the failure: the working copy falls back to
+     TRANSLATION_DEFAULTS, and presenting a default as this organisation's
+     policy would misstate a governed configuration. */
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: 'The organization profile and settings are still loading; nothing on screen is final yet.' };
+    }
+    if (loadError) {
+      return {
+        summary:
+          'The organization record could not be read, so the controls on this screen are showing built-in ' +
+          'defaults rather than this organisation\u2019s saved settings, and nothing here can be edited.',
+        facts: { loadFailure: loadError },
+        availableActions: ['Retry the organization profile and settings read'],
+      };
+    }
+    return {
+      summary:
+        `Organization setup: name "${savedName}"` +
+        (clientType ? `, client type "${clientType}"` : '') +
+        `. Translation policy ${savedTxw.enabled ? 'enabled' : 'disabled'} across ` +
+        `${savedTxw.targets.length} target language(s) on ${savedTxw.defaultEngine}. ` +
+        (dirty
+          ? `There are UNSAVED changes (${[nameDirty && 'organization name', txwDirty && 'translation policy'].filter(Boolean).join(' and ')})` +
+            `, and a reason for change is ${reason.trim() ? 'entered' : 'still required before they can be saved'}.`
+          : 'Nothing is unsaved.'),
+      facts: {
+        savedOrganizationName: savedName,
+        editedOrganizationName: nameDirty ? name : null,
+        clientType: clientType || null,
+        clientTypeStatus,
+        savedTranslationPolicy: savedTxw,
+        editedTranslationPolicy: txwDirty ? txw : null,
+        hasUnsavedChanges: dirty,
+        reasonForChangeEntered: reason.trim().length > 0,
+        editable,
+        lastSaveNote: saveNote ? { tone: saveNote.tone, text: saveNote.text } : null,
+      },
+      availableActions: [
+        'Change the organization name or the translation policy, then save under an audited reason for change',
+        'Pick the client type, which is written to the governed org industry profile',
+        'Add or remove target languages and choose the default translation engine',
+        'Set the translation guardrails — back-translation, two-person rule, blocking machine approval',
+      ],
+    };
+  }, [loading, loadError, savedName, name, nameDirty, clientType, clientTypeStatus, savedTxw, txw, txwDirty, dirty, reason, editable, saveNote]);
+  usePublishSurfaceContext('setup', anaContext);
+
   return (
     <div className="page-inner">
       <AdminHeader
@@ -828,15 +905,12 @@ async function downloadSignedAuditExport(): Promise<{ ok: boolean; error?: strin
     }
     const json = (await res.json().catch(() => null)) as { export?: unknown } | null;
     if (!json?.export) return { ok: false, error: 'The export response was malformed.' };
-    const blob = new Blob([JSON.stringify(json.export, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'audit-trail-signed-export.json';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    const saved = downloadText(
+      'audit-trail-signed-export.json',
+      JSON.stringify(json.export, null, 2),
+      'application/json',
+    );
+    if (!saved) return { ok: false, error: 'The export was produced but the browser refused the download.' };
     return { ok: true };
   } catch {
     // Raw fetch: the only throw reachable here is the request itself failing,
@@ -911,6 +985,70 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
     }
     return { total: all.length, valid, intact: valid === all.length };
   })();
+
+  /* What AnA can see of this screen.
+     A FAILED read publishes the failure, and on this surface that is not a
+     nicety: the audit trail is the 21 CFR Part 11 §11.10(e) record, and an
+     assistant reporting "no audit events" because the ledger did not respond
+     would be asserting the absence of a regulated record. The surface itself
+     already refuses to render that as an empty state; the same rule applies to
+     what AnA is told.
+
+     The hash-chain verdict travels with it, because "intact" is the claim an
+     inspector acts on and it is computed here from the rows on screen. */
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: 'The audit trail is still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The append-only, hash-chained Part 11 ledger could not be read, so this screen is showing no ' +
+          'audit events because of a failure. That is NOT the same as the trail being empty and must not ' +
+          'be reported as one.',
+        availableActions: ['Retry the audit-trail read'],
+      };
+    }
+    const filtered = kind !== 'all' || term.length > 0;
+    return {
+      summary:
+        `Audit trail: ${entries.length} hash-chained entry(ies)` +
+        (filtered ? `, filtered to ${log.length} by kind "${kind}"${term ? ` and the search "${q}"` : ''}` : '') +
+        `. Hash chain ${chainStatus.intact ? 'verifies intact' : `has ${chainStatus.total - chainStatus.valid} link(s) that do not verify`}` +
+        ` over ${chainStatus.total} entry(ies).` +
+        (entry ? ` Entry ${entry.id} is open.` : ''),
+      facts: {
+        totalEntries: entries.length,
+        shownInList: log.length,
+        kindFilter: kind,
+        searchTerm: term || null,
+        entriesByKind: Object.fromEntries(kindCounts.map((k) => [k.id, k.n])),
+        hashChain: { total: chainStatus.total, verified: chainStatus.valid, intact: chainStatus.intact },
+        hashChainViewOpen: chainView,
+        // Enough to name an event back to the user, not the whole ledger.
+        recentEntries: log.slice(0, 10).map((e) => ({
+          id: e.id, when: e.when, actor: e.actor, event: e.event,
+          target: e.target, kind: e.kind, eSigned: e.sig,
+          reason: e.reason, meaning: e.meaning,
+        })),
+        selectedEntry: entry
+          ? {
+              id: entry.id, when: entry.when, actor: entry.actor, event: entry.event,
+              target: entry.target, kind: entry.kind, eSigned: entry.sig,
+              reason: entry.reason, meaning: entry.meaning,
+            }
+          : null,
+        lastExportFailure: exportErr || null,
+      },
+      availableActions: [
+        'Filter the ledger by event kind, or search actor, event, target or entry id',
+        'Open an entry to read its reason, signature meaning and chain links',
+        'Show the hash-chain view',
+        'Export the signed, inspection-ready audit bundle (data + manifest + HMAC signature)',
+      ],
+    };
+  }, [loading, error, entries, log, kind, term, q, kindCounts, chainStatus, chainView, entry, exportErr]);
+  usePublishSurfaceContext('audit-trail', anaContext);
 
   return (
     <div className="page-inner">
@@ -1325,7 +1463,17 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
    Fixture-free: the surface renders the real catalog + license, an honest empty
    state, or an honest error state — no APPS_CATALOG / APP_LICENSE fallback and no
    Sample-data pill. Fields the backend cannot truthfully supply (renewsAt — no
-   renewal column is read anywhere server-side) are left empty, never invented. */
+   renewal column is read anywhere server-side) are left empty, never invented.
+
+   ENTITLEMENT HONESTY. Every card states one of five things, and they are not
+   interchangeable: the module is on; it is in the plan and simply not switched
+   on; an administrator switched it off; the plan does not include it; it is not
+   offered for this workspace's industry. The reason and the remedy travel
+   together — the last one has no remedy on this screen and is given none,
+   rather than a plans button that would resolve nothing. The wording is the
+   shell's own (lockNotice / lockShortReason in navEntitlements.tsx), so the
+   rail's explanation for a lock and this catalog's explanation for the same
+   lock are the same sentence. */
 
 /** One live catalog row (ModuleCatalogEntry, server/services/license-manager.ts). */
 interface LiveModuleEntry {
@@ -1334,13 +1482,40 @@ interface LiveModuleEntry {
   description: string | null;
   category: string | null;
   isEnabled: boolean;
+  /* The subscription row's OWN state (ModuleSubscriptionState). `isEnabled`
+     collapses "an administrator switched this off" and "this organization never
+     had a row written" into one `false` — the right answer for "may they use
+     it", the wrong answer for "why not". The server keeps the two apart for
+     exactly that reason; this surface used to drop the field on the floor and
+     told the owner of EVERY off module that "an admin can re-enable it", which
+     invents an administrator's decision for modules nobody has ever touched.
+
+     Optional because a deployment whose server predates the field still returns
+     rows without it. `moduleVerdict` then falls back to 'none', which is the
+     branch that makes no accusation and claims no lock — see rule 1. */
+  subscriptionState?: 'enabled' | 'disabled' | 'none';
   isAvailable: boolean;
   requiredTier: string | null;
   sortOrder: number;
 }
 
-/** Display row — the fixture shape plus the live module's own name. */
-type AppRow = AppsCatalogApp & { name?: string };
+/**
+ * Display row — the fixture shape, plus the live module's name and the two
+ * entitlement facts the card has to keep apart.
+ *
+ * `lock` and `toggleable` are separate on purpose. A module an administrator
+ * switched OFF is locked (nobody can open it) AND toggleable (an admin turning
+ * it back on is precisely the remedy). A module above the org's tier is locked
+ * and NOT toggleable. Folding either into the other produces a card that either
+ * hides the fix or offers a button whose only outcome is a 403.
+ */
+type AppRow = AppsCatalogApp & {
+  name?: string;
+  /** Why this organization cannot open the module, or null when it can. */
+  lock: NavSurfaceEntitlement | null;
+  /** Whether PUT /:moduleId/toggle would be accepted — mirrors canAccessModule. */
+  toggleable: boolean;
+};
 type AppGroup = Omit<AppsCatalogGroup, 'apps'> & { apps: AppRow[] };
 
 function isLiveModuleEntry(m: unknown): m is LiveModuleEntry {
@@ -1354,24 +1529,99 @@ function isLiveModuleEntry(m: unknown): m is LiveModuleEntry {
   );
 }
 
-/** Truthful tier chip for a live module: within-plan modules show the lowest
-    tier that includes them ('Included' when unrestricted); modules the org's
-    tier does NOT include map to 'Add-on' — the same upgrade-path semantics the
-    fixture uses (and the same rule the server enforces on toggle). */
-function liveTierLabel(m: LiveModuleEntry): string {
-  if (!m.isAvailable) return 'Add-on';
+/**
+ * The payload is the catalog contract — `{ modules: [...] }` with a real array.
+ *
+ * Passed to `useLiveData` so a 200 that is NOT the catalog (an envelope change,
+ * a proxy's HTML login page, `{ data: [] }`) reaches the surface's error branch
+ * instead of its empty branch. Before this, `mapLiveCatalog` returned null for
+ * both a malformed body and an empty list, and the surface rendered "No apps
+ * enabled yet" — an error presented to a paying customer as the finding that
+ * their organization has no applications, and published to AnA as the same
+ * claim. Written inline rather than with `hasKeys('modules')` because the whole
+ * point is that `modules` must be an ARRAY, which a key check does not assert.
+ */
+function isCatalogPayload(v: unknown): v is { modules: LiveModuleEntry[] } {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return false;
+  return Array.isArray((v as { modules?: unknown }).modules);
+}
+
+/**
+ * The plan band a module sits in — the lowest tier that includes it, or
+ * 'Included' when the catalog attaches no tier requirement at all.
+ *
+ * This replaces `liveTierLabel`, which mapped `!isAvailable` to 'Add-on' BEFORE
+ * looking at `requiredTier`. That was defensible while every catalog row had an
+ * empty `tiers` array; since 20260823_module_catalog_commercial_packaging.sql
+ * gave all 84 rows a real band it is two separate lies. It threw away the one
+ * number a customer needs ("which plan do I need?") in favour of 'Add-on', a
+ * word that promises something purchasable — and it said that word just as
+ * loudly for a module withheld by INDUSTRY MODE, which no plan on the price
+ * list will ever unlock. What is not available and why is now `lock`'s job; the
+ * chip states the packaging fact and nothing else.
+ */
+function tierBandLabel(m: LiveModuleEntry): string {
   if (!m.requiredTier) return 'Included';
   return m.requiredTier.charAt(0).toUpperCase() + m.requiredTier.slice(1);
 }
 
-/** Map GET /catalog into the grouped display, or null when the payload does
-    not carry the display contract (→ fail closed to the fixture). */
-function mapLiveCatalog(payload: unknown): AppGroup[] | null {
-  if (!payload || typeof payload !== 'object') return null;
-  const modules = (payload as { modules?: unknown }).modules;
-  if (!Array.isArray(modules)) return null;
-  const rows = modules.filter(isLiveModuleEntry);
-  if (rows.length === 0) return null;
+/**
+ * Why this organization cannot open a module, as the shell's own lock verdict —
+ * or null when it can.
+ *
+ * The branch order mirrors `decideNavEntitlement`
+ * (server/services/entitlements/navigation-entitlements.ts) deliberately, down
+ * to its tier/industry tie-break, so the rail and this catalog never give one
+ * customer two different reasons for one lock. Two differences, both required:
+ *
+ *   - No `master_admin` branch. That grant answers "may this VIEWER open it",
+ *     and the platform owner may open everything. This screen answers "what has
+ *     this ORGANIZATION subscribed to", which is the state the toggle writes;
+ *     collapsing it to `entitled` would show a master admin every module as
+ *     available while the org's switches are off, and hide the switch that is
+ *     the entire purpose of the page.
+ *   - Read from GET /catalog, not from `useNavEntitlements()`. The nav payload
+ *     carries no verdict for the Apps catalog's own destinations by design
+ *     (rule 2: an unknown id is not licensable), and it is resolved once per
+ *     session, so it would not see the write this page just made.
+ *
+ * The tie-break inherits the server's bias on purpose: with the org's tier
+ * unknown (the licence read failed independently of the catalog read), it
+ * reports 'industry' rather than 'tier'. Being wrongly told to ask an
+ * administrator costs a conversation; being wrongly told to upgrade sells
+ * somebody a plan that changes nothing.
+ */
+function moduleVerdict(m: LiveModuleEntry, orgTier: string | null): NavSurfaceEntitlement | null {
+  const base = { id: m.moduleId, label: m.name, requiredTier: m.requiredTier };
+  const state = m.subscriptionState ?? (m.isEnabled ? 'enabled' : 'none');
+  if (state === 'enabled') return null; // 'subscribed'
+  if (state === 'disabled') return { ...base, entitled: false, source: 'disabled' };
+  if (m.isAvailable) return null; // 'included' — in the plan, no row written yet
+  const orgRank = orgTier != null ? LIC_TIER_LEVEL[orgTier] : undefined;
+  const needRank = m.requiredTier != null ? LIC_TIER_LEVEL[m.requiredTier] : undefined;
+  const belowTier = orgRank !== undefined && needRank !== undefined && orgRank < needRank;
+  return { ...base, entitled: false, source: belowTier ? 'tier' : 'industry' };
+}
+
+/**
+ * The `opts` lockNotice requires, for the fields that do not read it.
+ *
+ * Named rather than inlined so the constraint is visible at the call site: the
+ * Apps card renders `status` and the tier branch's CTA, and no branch of
+ * lockNotice consults `isOrgAdmin` to produce either. Reading `body`, or the
+ * 'disabled' / 'industry' CTAs, from this value WOULD be a fabricated claim
+ * about the viewer's role — see the comment where it is used.
+ */
+const ROLE_AGNOSTIC = { isOrgAdmin: false } as const;
+
+/**
+ * Map GET /catalog into the grouped display. Always an array: `isCatalogPayload`
+ * has already rejected anything that is not the contract, so `[]` here means
+ * the catalog is genuinely empty — the honest empty state, never a failure.
+ */
+function mapLiveCatalog(payload: unknown, orgTier: string | null): AppGroup[] {
+  if (!isCatalogPayload(payload)) return [];
+  const rows = payload.modules.filter(isLiveModuleEntry);
   const byCat = new Map<string, LiveModuleEntry[]>();
   for (const m of rows) {
     const cat = m.category || 'other';
@@ -1390,9 +1640,15 @@ function mapLiveCatalog(payload: unknown): AppGroup[] | null {
       apps: mods.map((m) => ({
         id: m.moduleId,
         name: m.name,
-        tier: liveTierLabel(m),
+        tier: tierBandLabel(m),
         on: m.isEnabled,
         desc: m.description || m.name,
+        lock: moduleVerdict(m, orgTier),
+        /* canAccessModule() allows the write when the module is already in the
+           org's enabled set OR its tier and industry match — so an org that
+           downgraded can still switch OFF a module it is currently running,
+           and nothing else outside the plan can be switched at all. */
+        toggleable: m.isAvailable || m.isEnabled,
       })),
     };
   });
@@ -1430,24 +1686,40 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
   const open = (id: string) => onNav(id);
   // Fixture-free live reads. Both endpoints return a bare (non-enveloped) object,
   // so useLiveData yields the payload directly ({ modules } / the license object).
-  const catState = useLiveData<{ modules: LiveModuleEntry[] }>('/api/module-subscriptions/catalog');
+  const catState = useLiveData<{ modules: LiveModuleEntry[] }>(
+    '/api/module-subscriptions/catalog',
+    ['/api/module-subscriptions/catalog'],
+    // A 200 that is not the catalog contract belongs in the error branch below,
+    // not in the empty one — see isCatalogPayload.
+    isCatalogPayload,
+  );
   const licState = useLiveData<Record<string, unknown>>('/api/module-subscriptions/license');
-  const liveGroups = useMemo(() => mapLiveCatalog(catState.data), [catState.data]);
   const lic = useMemo(() => mapLiveLicense(licState.data), [licState.data]);
-  // Editable copy for optimistic toggles, seeded once when the live catalog
-  // resolves. liveGroups is a stable reference until the fetch re-runs (useMemo
-  // over the resolved payload), so the seed effect fires once and never loops.
+  // The org's plan tier decides whether an unavailable module is a tier gap or
+  // an industry-mode mismatch, so the catalog mapping depends on the licence
+  // read as well as its own. Keyed on the tier STRING rather than the licence
+  // object so a re-fetch that returns the same tier does not re-seed below.
+  const orgTier = lic?.tier || null;
+  const liveGroups = useMemo(
+    () => mapLiveCatalog(catState.data, orgTier),
+    [catState.data, orgTier],
+  );
+  // Editable copy for optimistic toggles, re-seeded whenever the live mapping
+  // resolves to a new reference — once when the catalog lands, and once more if
+  // the licence lands after it and changes a tier/industry verdict. Both are
+  // one-shot per resolved input (useMemo over resolved payloads), so this
+  // settles rather than looping.
   const [cat, setCat] = useState<AppGroup[]>([]);
   const seededRef = useRef<AppGroup[] | null>(null);
   useEffect(() => {
-    if (liveGroups && seededRef.current !== liveGroups) {
+    if (liveGroups.length > 0 && seededRef.current !== liveGroups) {
       seededRef.current = liveGroups;
       setCat(liveGroups);
     }
   }, [liveGroups]);
   // Render from the optimistic copy once seeded, else straight from the live map
   // (avoids a one-frame blank between the fetch resolving and the seed effect).
-  const groups = cat.length > 0 ? cat : liveGroups ?? [];
+  const groups = cat.length > 0 ? cat : liveGroups;
   const [admin, setAdmin] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -1457,13 +1729,40 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
 
   const setOn = (groupIdx: number, appId: string, on: boolean) =>
     setCat((prev) => {
-      const base = prev.length > 0 ? prev : liveGroups ?? [];
+      const base = prev.length > 0 ? prev : liveGroups;
       return base.map((g, gi) =>
         gi !== groupIdx
           ? g
           : {
               ...g,
-              apps: g.apps.map((a) => (a.id === appId ? { ...a, on } : a)),
+              apps: g.apps.map((a) =>
+                a.id === appId
+                  ? {
+                      ...a,
+                      on,
+                      /* The optimistic row carries the REASON the write
+                         implies, not just the switch position. Setting `on`
+                         alone left `lock` at null, so a module an administrator
+                         had just switched off went on reading "Included in your
+                         plan. Not switched on for this organization" until a
+                         reload replaced it with the workspace decision that
+                         administrator had in fact just made. Only the 'disabled'
+                         source is reachable here — the toggle is never rendered
+                         for a tier or industry lock — and both directions revert
+                         cleanly, because the failure path calls this again with
+                         the previous value. */
+                      lock: on
+                        ? null
+                        : {
+                            id: a.id,
+                            label: a.name || a.id,
+                            requiredTier: a.lock?.requiredTier ?? null,
+                            entitled: false,
+                            source: 'disabled' as const,
+                          },
+                    }
+                  : a,
+              ),
             },
       );
     });
@@ -1499,12 +1798,89 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
+  /* What AnA can see of this screen.
+     The Apps catalog is where a user asks "why can't I open X?" — and the
+     answer is an entitlement fact on this page: the tier, whether the module is
+     available at that tier, and whether it is switched on for the org. Until
+     now AnA was told the surface was called "apps" and had none of it.
+
+     A FAILED read publishes the failure: `groups` is [] both when the catalog
+     is genuinely empty and when it did not load, and an assistant telling a
+     customer they have no apps because a fetch failed is exactly the
+     confidently-wrong answer this channel exists to prevent. */
+  const anaContext = useMemo(() => {
+    if (catState.loading || licState.loading) {
+      return { summary: 'The apps catalog and licence are still loading; nothing on screen is final yet.' };
+    }
+    if (catState.error) {
+      return {
+        summary:
+          'The apps catalog could not be read, so this screen is showing no applications because of a ' +
+          'failure, not because none are entitled.',
+        availableActions: ['Retry the catalog read'],
+      };
+    }
+    const all = groups.flatMap((g) => g.apps);
+    const on = all.filter((a) => a.on);
+    return {
+      summary:
+        `Apps catalog: ${all.length} application(s) across ${groups.length} group(s), ${on.length} enabled for ` +
+        `this organisation` +
+        (lic
+          ? `. Plan "${lic.tier}"${lic.industryMode ? ` (${lic.industryMode} mode)` : ''}, ` +
+            `${pj.current} of ${pj.limit} projects and ${us.current} of ${us.limit} users used`
+          : '. The licence could not be read, so no plan or usage figures are on screen') +
+        (admin ? '. Admin controls are switched on, so the enable/disable toggles are live.' : ''),
+      facts: {
+        adminControlsVisible: admin,
+        licence: lic
+          ? {
+              tier: lic.tier,
+              industryMode: lic.industryMode || null,
+              projects: { used: pj.current, limit: pj.limit },
+              users: { used: us.current, limit: us.limit },
+            }
+          : null,
+        licenceUnavailable: licState.error ? 'the licence read failed' : null,
+        totalApps: all.length,
+        enabledApps: on.length,
+        groups: groups.map((g) => ({
+          group: g.group,
+          apps: (g.apps ?? []).map((a) => ({
+            id: a.id,
+            name: a.name ?? null,
+            tier: a.tier,
+            enabled: a.on,
+            /* "Why can't I open X?" is the question this surface exists to
+               answer, and until now AnA could see only that X was off. The
+               reason comes from the same helper the rail and the card use, so
+               she cannot answer with a fifth phrasing — or, worse, reach for
+               "not included in your plan" when the real cause was an
+               administrator switching it off. Null means nothing is blocking
+               it beyond the switch itself. */
+            unavailableBecause: a.lock ? lockShortReason(a.lock) : null,
+            /* Whether the enable/disable write would be accepted. She must not
+               tell someone to ask an administrator to switch on a module the
+               server would refuse with MODULE_NOT_AVAILABLE. */
+            anAdminCanSwitchItOn: a.toggleable && !a.on,
+          })),
+        })),
+      },
+      availableActions: [
+        'Open an enabled application',
+        'Show the admin controls and enable or disable a module for this organisation (admin only, persisted)',
+        'Read the plan tier and the project / user usage against their limits',
+      ],
+    };
+  }, [catState.loading, catState.error, licState.loading, licState.error, groups, lic, pj, us, admin]);
+  usePublishSurfaceContext('apps', anaContext);
+
   return (
     <div className="page-inner">
       <AdminHeader
         eyebrow="Workspace -- /api/module-subscriptions"
         title="Apps catalog"
-        sub="Every application — the destinations you open and work in — entitlement-aware. Active apps launch; add-ons show an upgrade path, never a dead button. Platform services (below) are the capabilities that run inside these apps."
+        sub="Every application — the destinations you open and work in — entitlement-aware. Active apps launch; anything you cannot open states which of the reasons applies and the step that resolves it, never a dead button. Platform services (below) are the capabilities that run inside these apps."
         actions={
           <button
             className="btn ghost"
@@ -1566,13 +1942,19 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
         </div>
         <div className="lic-band-spacer"></div>
         {lic.renewsAt && <div className="lic-renew">Renews {lic.renewsAt}</div>}
-        <a
+        {/* Was <a href="/settings/subscription">. That path matches no route,
+            so the browser did a FULL page reload and the SPA router landed the
+            admin back on the app home — a hard reload, a lost place in the
+            product, and no billing screen. `licensing` is a real registered
+            surface and `onNav` is already in scope here. */}
+        <button
           className="btn ghost"
-          style={{ height: 28, textDecoration: 'none' }}
-          href="/settings/subscription"
+          style={{ height: 28 }}
+          onClick={() => open('licensing')}
+          data-testid="admin-manage-plan"
         >
           {I.creditCard || I.zap} Manage plan
-        </a>
+        </button>
       </div>
       ) : (
         <div
@@ -1584,13 +1966,14 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
             License &amp; entitlement details are unavailable right now
             {licState.error ? " -- the billing service didn't respond" : ''}.
           </span>
-          <a
+          <button
             className="btn ghost"
-            style={{ height: 28, textDecoration: 'none', marginLeft: 'auto' }}
-            href="/settings/subscription"
+            style={{ height: 28, marginLeft: 'auto' }}
+            onClick={() => open('licensing')}
+            data-testid="admin-manage-plan-fallback"
           >
             {I.creditCard || I.zap} Manage plan
-          </a>
+          </button>
         </div>
       )}
 
@@ -1608,8 +1991,8 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
       ) : groups.length === 0 ? (
         <EmptyState
           icon={I.grid}
-          title="No apps enabled yet"
-          hint="Modules auto-provision by tier. Once provisioned, your apps appear here entitlement-aware — active apps launch and add-ons show an upgrade path."
+          title="No apps in the catalog"
+          hint="The module catalog for this organization is empty. Modules auto-provision by tier; once the catalog is seeded, your apps appear here with their entitlement state."
         />
       ) : (
         groups.map((g, gi) => (
@@ -1622,13 +2005,31 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
             {g.apps.map((a) => {
               const surf = getSurfaceMeta(a.id);
               const label = a.name || surf.label || a.id;
-              const isCore = a.tier === 'Core';
-              const isAddOn = a.tier === 'Add-on';
-              /* Mirrors the server gate (canAccessModule): a within-plan module
-                 toggles freely; an out-of-plan module ('Add-on') can only be
-                 switched OFF -- re-enabling it would 403, so the card shows the
-                 upgrade path instead. */
-              const showToggle = admin && !isCore && (isAddOn ? a.on : true);
+              /* The lock's own words, from the shell's lock vocabulary.
+
+                 Only the role-INVARIANT parts of lockNotice are read here:
+                 `status` for the chip, and the 'tier' branch's CTA. Neither
+                 reads `opts`. The parts that DO fork on it — every `body`, and
+                 the CTAs on the 'disabled' and 'industry' branches — are
+                 deliberately unused, for two reasons. This surface holds no
+                 auth dependency and cannot answer "is the viewer an org admin"
+                 without adding one (the server is the real gate and already
+                 reports its refusal on the write). And lockNotice's 'disabled'
+                 CTA is "Open Apps catalog", which is this screen: the remedy
+                 for that lock is the switch a few pixels away, not a link back
+                 to where the reader already is. The sentence therefore comes
+                 from lockShortReason, which is documented to stand alone
+                 precisely because the rail appends it to a button with no
+                 context around it. */
+              const notice = a.lock ? lockNotice(a.lock, ROLE_AGNOSTIC) : null;
+              /* Mirrors canAccessModule() rather than the chip's LABEL. The
+                 previous gate was `a.tier === 'Add-on'`, so the question "would
+                 the server accept this write" was answered by string-matching
+                 display copy — one wording change away from putting a switch on
+                 a module whose only possible response is 403
+                 MODULE_NOT_AVAILABLE. `toggleable` is computed from isAvailable
+                 / isEnabled, the same two facts the server decides on. */
+              const showToggle = admin && a.toggleable;
               return (
                 <div key={a.id} className="launch" data-locked={!a.on || undefined}>
                   {!a.on && <span className="launch-lock">{I.lock}</span>}
@@ -1639,17 +2040,26 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                   <div className="launch-title">{label}</div>
                   <div className="launch-desc">
-                    {!a.on
-                      ? isAddOn
-                        ? `Upgrade your plan to unlock ${label}.`
-                        : `Disabled for this organization — an admin can re-enable it.`
-                      : a.desc}
+                    {/* Three different facts, three different sentences. An
+                        upsell, a workspace decision and an unprovisioned module
+                        used to share two strings between them, so an org was
+                        told to buy a plan for a module their administrator had
+                        switched off — and told an administrator had switched
+                        off a module nobody had ever touched. */}
+                    {a.lock
+                      ? `${label} is ${lockShortReason(a.lock)}.`
+                      : a.on
+                        ? a.desc
+                        : 'Included in your plan. Not switched on for this organization.'}
                   </div>
                   <div className="launch-foot">
                     <span
-                      className={`rd-chip tone-${isCore ? 'ok' : isAddOn && !a.on ? 'idle' : 'ai'}`}
+                      className={`rd-chip rd-chip-sentence tone-${a.lock ? 'idle' : a.on ? 'ai' : 'ok'}`}
                     >
-                      {a.tier}
+                      {/* Locked: the reason, which for a tier gap names the
+                          plan that includes it ("Included from Professional").
+                          Otherwise the packaging band the module sits in. */}
+                      {notice ? notice.status : a.tier}
                     </span>
                     {showToggle ? (
                       <button
@@ -1671,16 +2081,10 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
                       >
                         Open
                       </button>
-                    ) : isAddOn ? (
-                      <a
-                        className="btn primary"
-                        style={{ height: 26, marginLeft: 'auto', textDecoration: 'none' }}
-                        href="/settings/subscription"
-                        title={`Upgrade your plan to unlock ${label}`}
-                      >
-                        Upgrade plan
-                      </a>
-                    ) : (
+                    ) : a.toggleable ? (
+                      /* Off and switchable — either an administrator turned it
+                         off or it was never provisioned. Both are resolved by
+                         the switch above, which needs admin controls showing. */
                       <button
                         className="btn ghost"
                         style={{ height: 26, marginLeft: 'auto' }}
@@ -1689,7 +2093,23 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
                       >
                         Admin controls
                       </button>
-                    )}
+                    ) : notice?.ctaLabel && notice.ctaTarget ? (
+                      /* Only the tier branch reaches here with a CTA, and its
+                         target is the licensing surface. It is a button, not
+                         the old <a href="/settings/subscription">: that path
+                         matched no route, so the browser did a full reload and
+                         the SPA router landed the admin back on the app home. */
+                      <button
+                        className="btn primary"
+                        style={{ height: 26, marginLeft: 'auto' }}
+                        onClick={() => open(notice.ctaTarget as string)}
+                        data-testid="admin-upgrade-plan"
+                      >
+                        {notice.ctaLabel}
+                      </button>
+                    ) : null /* Industry mismatch: no plan and no switch on this
+                                screen changes it, so the card offers no step
+                                rather than a button that resolves nothing. */}
                   </div>
                 </div>
               );
@@ -1753,12 +2173,179 @@ interface ArtifactRow {
   when: string;
   ver: string;
   sig: boolean;
+  reviewed: boolean;
+  sourceCount: number;
   prog: string;
+}
+
+/* CSV cell: quote always, double any embedded quote. Artifact names carry
+   commas and parentheses ("… — 510(k) Summary, rev 2"), which is exactly the
+   text that silently corrupts a hand-rolled CSV. */
+function csvCell(v: unknown): string {
+  return `"${String(v ?? '').replace(/"/g, '""')}"`;
 }
 
 export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
   // Real cross-project artifact gallery, unwrapped from { success, data }.
   const { rows, loading, error } = useLiveRows<ArtifactRow>('/api/artifacts-center');
+  /* Follow-the-work hand-off (Live Drive): a driven turn that just persisted a
+     draft lands here with its artifactId, and the gallery brings that row into
+     view, highlighted — the subscriber watches the document ARRIVE. Consumed
+     once; a stale or absent hand-off changes nothing. The setter now also
+     serves artifacts-center.focus-artifact, which drives the SAME focus
+     mechanism by name. */
+  const [focusId, setFocusId] = useState<string | null>(
+    () => consumeNavParams('artifacts-center')?.artifactId ?? null,
+  );
+  const focusRowRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    /* Guarded like Review's queue scroll: `scrollIntoView` is absent in jsdom
+       and some embedded webviews, and an unguarded call throws out of the
+       effect — taking the focus highlight down with it. The highlight is the
+       part that matters; the scroll is a courtesy. */
+    try {
+      if (focusId && focusRowRef.current) {
+        focusRowRef.current.scrollIntoView({ block: 'center' });
+      }
+    } catch { /* no scrollIntoView here — the row is still highlighted */ }
+  }, [focusId, rows.length]);
+
+  /* AnA's hands on this screen — the surface-action bus (shared registry:
+     artifacts-center.focus-artifact, identity-resolved). Focus/scroll only —
+     nothing on this surface mutates; downloads and exports stay human acts
+     behind their governance gate. */
+  useSurfaceActionHandlers('artifacts-center', {
+    'artifacts-center.focus-artifact': (params) => {
+      const wanted = (params.artifact ?? '').trim();
+      if (!wanted) return { ok: false, reason: 'No artifact named.' };
+      if (loading)
+        return { ok: false, reason: 'The artifact gallery is still loading.', retry: true };
+      if (error) return { ok: false, reason: 'The artifact gallery could not be read.' };
+      if (rows.length === 0) return { ok: false, reason: 'No artifacts in this gallery.' };
+      const lower = wanted.toLowerCase();
+      const exact = rows.find((a) => a.name.toLowerCase() === lower);
+      const contains = exact ? [] : rows.filter((a) => a.name.toLowerCase().includes(lower));
+      const match = exact ?? (contains.length === 1 ? contains[0] : null);
+      if (!match) {
+        return {
+          ok: false,
+          reason:
+            contains.length > 1
+              ? `"${params.artifact}" matches ${contains.length} artifacts — name one exactly.`
+              : `No artifact named "${params.artifact}" in the gallery.`,
+        };
+      }
+      setFocusId(match.id);
+      return { ok: true, detail: `Focused ${match.name}` };
+    },
+  });
+  /* The ready signal for the retry contract above. */
+  useEffect(() => {
+    if (!loading) notifySurfaceActionReady('artifacts-center');
+  }, [loading]);
+
+  /* What AnA can see of this screen.
+     This is the gallery of what SHE drafted, so "where is the SAP I wrote?" and
+     "has that memo been signed?" are the questions it exists to answer — and
+     until now she could not see a single row of it.
+
+     A FAILED read publishes the failure: an empty gallery and an unreachable
+     one look identical from here, and telling a user they have drafted nothing
+     because a fetch failed is a claim about their evidence record. */
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: 'The artifact gallery is still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The governed artifact gallery could not be read, so this screen is showing no artifacts ' +
+          'because of a failure, not because none exist.',
+        availableActions: ['Retry the artifact gallery read'],
+      };
+    }
+    const signed = rows.filter((a) => a.sig).length;
+    const programs = [...new Set(rows.map((a) => a.prog).filter(Boolean))];
+    return {
+      summary:
+        `Artifacts Center: ${rows.length} artifact(s) across ${programs.length} program(s), ` +
+        `${signed} carrying a Part 11 e-signature.`,
+      facts: {
+        totalArtifacts: rows.length,
+        eSignedArtifacts: signed,
+        programs,
+        // Enough to name an artifact back to the user, not the whole gallery.
+        artifacts: rows.slice(0, 15).map((a) => ({
+          id: a.id, name: a.name, kind: a.kind, format: a.fmt,
+          version: a.ver, program: a.prog, model: a.model,
+          updated: a.when, eSigned: a.sig,
+        })),
+      },
+      availableActions: [
+        'Open a DOCX artifact in the document editor',
+        'Download a rendered artifact',
+        'Read an artifact\u2019s version chain, provenance and signature status',
+      ],
+    };
+  }, [loading, error, rows]);
+  usePublishSurfaceContext('artifacts-center', anaContext);
+
+  /* ── "Export all" was inert, and the code said so ──────────────────────────
+     The two lines above it read: "MOCK ACTION (flagged): 'Export all' has no
+     handler and no bulk-export endpoint exists — inert button, left for a later
+     actions pass." An admin clicked it and got nothing: no file, no error, no
+     toast.
+
+     It exports the MANIFEST, and is labelled that way. There is genuinely no
+     bulk-file endpoint — /api/artifacts-center returns a gallery with no
+     content, and the three single-document exporters in routes/concept2cure.ts
+     take { title, content } for one document behind an export-governance gate
+     that a bulk loop must not skip. Building that is a backend change, not a
+     button fix. What this surface HAS is the index, and an index is a real,
+     useful thing to hand someone — so the button now delivers exactly that and
+     its label no longer promises the files. */
+  const downloadArtifact = async (a: ArtifactRow) => {
+    try {
+      const token = getAuthToken();
+      const res = await fetch(
+        `/api/artifacts-center/${encodeURIComponent(a.id)}/export?format=docx`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+      );
+      if (!res.ok) {
+        const b = await res.json().catch(() => null);
+        const why = (b as { message?: string; error?: string } | null);
+        // eslint-disable-next-line no-alert
+        window.alert(
+          'Not downloaded — ' +
+            (why?.message || why?.error || `the server refused it (HTTP ${res.status})`) + '.',
+        );
+        return;
+      }
+      downloadBlob(safeFileName(a.name, 'artifact').slice(0, 80) + '.docx', await res.blob());
+    } catch (e) {
+      // eslint-disable-next-line no-alert
+      window.alert('Not downloaded — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
+  };
+
+  const exportManifest = () => {
+    const cols: Array<[string, (r: ArtifactRow) => unknown]> = [
+      ['Name', (r) => r.name],
+      ['Kind', (r) => r.kind],
+      ['Format', (r) => r.fmt ?? ''],
+      ['Size', (r) => r.size],
+      ['Model', (r) => r.model ?? ''],
+      ['Version', (r) => r.ver],
+      ['Signed', (r) => (r.sig ? 'yes' : 'no')],
+      ['Program', (r) => r.prog],
+      ['Updated', (r) => r.when],
+    ];
+    const csv = [
+      cols.map((c) => csvCell(c[0])).join(','),
+      ...rows.map((r) => cols.map((c) => csvCell(c[1](r))).join(',')),
+    ].join('\n');
+    downloadText('artifacts-manifest.csv', csv, 'text/csv;charset=utf-8');
+  };
   return (
     <div className="page-inner">
       <AdminHeader
@@ -1766,9 +2353,21 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
         title="Artifacts Center"
         sub="Every artifact AnA has drafted — across projects, with version chain, provenance and signature status. Open a DOCX to edit it, or download a PDF."
         actions={
-          // MOCK ACTION (flagged): "Export all" has no handler and no bulk-export
-          // endpoint exists — inert button, left for a later actions pass.
-          <button className="btn ghost">{I.externalLink} Export all</button>
+          <button
+            className="btn ghost"
+            onClick={exportManifest}
+            /* Disabled on empty or failed, so it can never present as a
+               no-op again: with no rows there is no manifest to export. */
+            disabled={loading || Boolean(error) || rows.length === 0}
+            title={
+              rows.length === 0
+                ? 'No artifacts to export yet'
+                : 'Download the artifact index as CSV (names, versions, signature status — not the files)'
+            }
+            data-testid="artifacts-export-manifest"
+          >
+            {I.download || I.externalLink} Export manifest
+          </button>
         }
       />
       {loading ? (
@@ -1813,7 +2412,8 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
           return (
             <div
               key={a.id}
-              className="ct-row art-row"
+              ref={a.id === focusId ? focusRowRef : undefined}
+              className={`ct-row art-row${a.id === focusId ? ' is-focus' : ''}`}
               style={{ gridTemplateColumns: '1.7fr 78px 90px 96px 84px 60px 132px' }}
             >
               <div className="vn">
@@ -1825,6 +2425,10 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
                 </span>
                 <span className="ct-strong">{a.name}</span>
                 <span className="art-kind">{a.kind}</span>
+                <span className="art-kind" data-testid={`artifact-governance-${a.id}`}>
+                  {a.sourceCount ?? 0} cited source{a.sourceCount === 1 ? '' : 's'} ·{' '}
+                  {a.reviewed ? 'Human review recorded' : 'Human review required'}
+                </span>
               </div>
               <div>
                 {/* No format on the row -> no badge, rather than an empty pill
@@ -1850,13 +2454,32 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
                 )}
               </div>
               <div className="art-acts">
+                {/* The non-docx branch used to run
+                    onAsk('Download <name> (PDF, 24 KB)') — it typed the file's
+                    name into the chat rail. No file was produced, and none
+                    could be: the gallery read returns octet_length(a.content),
+                    not the content, and there was no per-artifact endpoint to
+                    ask for it. GET /api/artifacts-center/:id/export now exists
+                    and renders the stored content behind the same
+                    export-review gate the other exporters use. */}
                 <button
                   className="art-act pri"
-                  onClick={() =>
-                    isDoc
-                      ? onNav('document-authoring')
-                      : onAsk(`Download ${a.name} (${f.label}, ${a.size})`)
-                  }
+                  onClick={() => {
+                    if (!isDoc) {
+                      void downloadArtifact(a);
+                      return;
+                    }
+                    /* Open used to navigate empty-handed: the editor landed on
+                       its default document, not this artifact. It now rides the
+                       same authoring.open-document directive AnA rides — the
+                       bus stashes it across the navigate→mount gap and the
+                       editor resolves the name with its own honest-miss rules.
+                       An unresolvable name still lands on the editor (what the
+                       bare navigation always did), never a fabricated open. */
+                    const res = resolveSurfaceAction('authoring.open-document', { title: a.name });
+                    if (res.ok) applySurfaceAction(res.directive, (t) => onNav(t));
+                    else onNav('document-authoring');
+                  }}
                 >
                   {isDoc ? I.penLine : I.download}
                   {f.action}
@@ -1935,21 +2558,35 @@ function vkitBadge(status: string | null): string {
 
 /** Authenticated download — the endpoint is Bearer-gated, so an <a href> can't
     carry the JWT; fetch with the token and stream the blob to a download. */
-async function downloadValidationDoc(docId: string, filename: string): Promise<void> {
-  const token = getAuthToken();
-  const res = await fetch(`/api/validation-kit/${encodeURIComponent(docId)}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-  if (!res.ok) return;
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
+/**
+ * Fetch one GAMP 5 validation document and hand it to the browser.
+ *
+ * `if (!res.ok) return;` was the whole error path: a 401, 403 or 500 produced
+ * no file, no message and no sign anything had happened, so an auditor clicking
+ * IQ/OQ/PQ on a computer-system-validation file saw a dead button. Returns a
+ * message on failure, null on success, so the caller can say so.
+ */
+async function downloadValidationDoc(docId: string, filename: string): Promise<string | null> {
+  try {
+    const token = getAuthToken();
+    const res = await fetch(`/api/validation-kit/${encodeURIComponent(docId)}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      return res.status === 401 || res.status === 403
+        ? `${docId} was not downloaded — your account is not authorised to read the validation kit.`
+        : `${docId} was not downloaded — the validation kit refused the request (HTTP ${res.status}).`;
+    }
+    const blob = await res.blob();
+    if (blob.size === 0) {
+      return `${docId} came back empty — nothing was downloaded.`;
+    }
+    return downloadBlob(filename, blob)
+      ? null
+      : `${docId} was fetched but the browser refused the download.`;
+  } catch (e) {
+    return `${docId} was not downloaded — ${e instanceof Error ? e.message : String(e)}.`;
+  }
 }
 
 /* Platform role grants — live from GET /api/admin/access/grants (the audited
@@ -1987,6 +2624,9 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
   // honest empty state, or an honest error state — never a fixture.
   const vkit = useLiveData<ValidationKit>(sec === 'validation' ? '/api/validation-kit' : null);
   const vkitDocs = vkit.data?.artifacts ?? [];
+  /* A refused validation-kit download. Announced beside the document list —
+     the button used to swallow 401/403/500 entirely (`if (!res.ok) return;`). */
+  const [vkitError, setVkitError] = useState('');
   const grantsState = useLiveData<{ grants?: LiveGrant[] }>(
     sec === 'access' ? '/api/admin/access/grants' : null,
   );
@@ -2321,6 +2961,9 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                         Release-by-release validation documentation for your
                         computer-system-validation file.
                       </span>
+                      {vkitError && (
+                        <div className="ac-val-err" role="alert">{vkitError}</div>
+                      )}
                       {vkitDocs.length > 0 && (
                         <div className="ac-val-docs">
                           {vkitDocs.map((d) => (
@@ -2329,7 +2972,10 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                               type="button"
                               className="ac-val-doc"
                               title={d.status || undefined}
-                              onClick={() => downloadValidationDoc(d.docId, `${d.docId}.md`)}
+                              onClick={async () => {
+                                const problem = await downloadValidationDoc(d.docId, `${d.docId}.md`);
+                                setVkitError(problem ?? '');
+                              }}
                             >
                               {I.download}
                               <span className="ac-val-doc-t">{d.type}</span>
@@ -2500,7 +3146,27 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
             )}
 
             {sec === 'sso' && (
-              <div className="ac-cards">
+              <>
+                {/* ── This section had no field, button or link ──────────────
+                    Three static description cards and nothing to act on, so SSO
+                    and SCIM could not be configured anywhere in the product —
+                    on the screen named for them. Two of the three DO have real,
+                    mounted admin APIs (/api/admin/scim-tenants and
+                    /api/admin/scim-ip-allowlist, both admin-gated), and SAML/OIDC
+                    runs through authEnterprise.
+
+                    Building three configuration UIs is its own piece of work and
+                    is not smuggled in here. What is fixed now is the dishonesty:
+                    the section says where each control actually lives and stops
+                    presenting itself as a settings page that simply has no
+                    settings. */}
+                <div className="scaf-note" style={{ marginBottom: 10 }}>
+                  SSO and SCIM are configured through the platform admin APIs, not from this
+                  page — SAML/OIDC via authEnterprise, and SCIM provisioning and its IP
+                  allowlist via the admin SCIM endpoints. The cards below describe what each
+                  one covers.
+                </div>
+                <div className="ac-cards">
                 {(
                   [
                     [
@@ -2526,11 +3192,34 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     <span className="ac-card-tag">{tag}</span>
                   </div>
                 ))}
-              </div>
+                </div>
+              </>
             )}
 
             {sec === 'security' && (
-              <div className="ac-cards">
+              <>
+                {/* ── These describe controls; they never read this org's config ──
+                    Two of the tags used to assert a posture: "IP allowlist —
+                    Off" and "Session policy — 7-day refresh". Both were string
+                    literals in this array. An admin opening Security &
+                    IP allowlist read them as their organisation's real settings
+                    — and would have reported "our IP allowlist is off" on a
+                    security questionnaire on the strength of a constant.
+
+                    No governed read exists for MFA policy, IP allowlist or
+                    session policy (unlike modules and API keys below, which are
+                    live). Rather than fabricate a posture, the two state-shaped
+                    tags now describe the control like the others do, and the
+                    note says plainly that this is a catalogue. When a read is
+                    wired, this section takes the loading/error/empty shape the
+                    modules section already uses. */}
+                <div className="scaf-note" style={{ marginBottom: 10 }}>
+                  These are the security controls available on this platform, not a readout of
+                  this organization&rsquo;s current configuration — no governed read is wired for
+                  MFA, IP allowlist or session policy yet. Module entitlements and API keys below
+                  are live.
+                </div>
+                <div className="ac-cards">
                 {(
                   [
                     [
@@ -2541,12 +3230,12 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     [
                       'IP allowlist',
                       'Restrict app access to corporate ranges (CIDR)',
-                      'Off',
+                      'CIDR ranges',
                     ],
                     [
                       'Session policy',
-                      'JWT sliding 7-day refresh — idle timeout',
-                      '7-day refresh',
+                      'JWT sliding refresh — idle timeout',
+                      'Refresh + idle timeout',
                     ],
                     [
                       'Audit to SIEM',
@@ -2561,7 +3250,8 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     <span className="ac-card-tag">{tag}</span>
                   </div>
                 ))}
-              </div>
+                </div>
+              </>
             )}
 
             {sec === 'modules' && (

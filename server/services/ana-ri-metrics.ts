@@ -55,6 +55,7 @@ interface AnaRiMetricsState {
     orchestration: Histogram;
     context: Histogram;
     gateway: Histogram;
+    firstToken: Histogram;
   };
   semanticSearchHistogram: Histogram;
   memoryLayerOutcomes: Record<LayerName, Record<LayerOutcome, number>>;
@@ -78,6 +79,7 @@ const state: AnaRiMetricsState = {
     orchestration: makeHistogram(PHASE_BUCKETS_MS),
     context: makeHistogram(PHASE_BUCKETS_MS),
     gateway: makeHistogram(PHASE_BUCKETS_MS),
+    firstToken: makeHistogram(PHASE_BUCKETS_MS),
   },
   semanticSearchHistogram: makeHistogram(SEMANTIC_BUCKETS_MS),
   memoryLayerOutcomes: {
@@ -94,6 +96,7 @@ export interface RecordTurnInput {
     orchestrationMs?: number;
     contextMs?: number;
     gatewayMs?: number;
+    firstTokenMs?: number;
   };
   cache?: {
     hit?: boolean | undefined;
@@ -125,6 +128,9 @@ export function recordAnaTurn(input: RecordTurnInput): void {
   }
   if (typeof p.gatewayMs === 'number') {
     observeHistogram(state.phaseHistograms.gateway, PHASE_BUCKETS_MS, p.gatewayMs);
+  }
+  if (typeof p.firstTokenMs === 'number') {
+    observeHistogram(state.phaseHistograms.firstToken, PHASE_BUCKETS_MS, p.firstTokenMs);
   }
 
   if (input.memory) {
@@ -209,6 +215,14 @@ export function renderAnaRiMetrics(): string[] {
       'ana_ri_gateway',
       'Wall clock for gateway.route() (full streamed response)',
       state.phaseHistograms.gateway,
+      PHASE_BUCKETS_MS
+    )
+  );
+  lines.push(
+    ...renderHistogram(
+      'ana_ri_time_to_first_token',
+      'Wall clock from stream start to the first model output delta',
+      state.phaseHistograms.firstToken,
       PHASE_BUCKETS_MS
     )
   );

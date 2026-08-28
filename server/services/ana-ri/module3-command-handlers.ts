@@ -95,8 +95,8 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
           completeness: section.completeness,
           missingInputs: section.missingInputs,
           lineage: section.lineage,
-        });
-        if (result) bridged.push({ sectionKey: section.sectionKey, artifactId: result.artifactId, isNew: result.isNew });
+        }, { createdById: ctx.userId ?? null });
+        if (result.bridged) bridged.push({ sectionKey: section.sectionKey, artifactId: result.artifactId, isNew: result.isNew });
       } catch { /* non-fatal */ }
     }
 
@@ -204,13 +204,14 @@ export async function module3BuildSection(ctx: CommandContext, params: Record<st
   // Bridge to governed artifact
   let bridgedArtifact: { artifactId: string; isNew: boolean } | null = null;
   try {
-    bridgedArtifact = await bridgeCompileToArtifact(orgId, projectId, sectionKey, {
+    const result = await bridgeCompileToArtifact(orgId, projectId, sectionKey, {
       narrativeDraft: section.narrativeDraft,
       tables: section.tables,
       completeness: section.completeness,
       missingInputs: section.missingInputs,
       lineage: section.lineage,
-    });
+    }, { createdById: ctx.userId ?? null });
+    if (result.bridged) bridgedArtifact = { artifactId: result.artifactId, isNew: result.isNew };
   } catch { /* non-fatal */ }
 
   const missingLine = section.missingInputs.length > 0 ? `\n\nMissing inputs: ${section.missingInputs.join(', ')}` : '';
@@ -231,7 +232,7 @@ export async function module3MissingInputs(ctx: CommandContext, params: Record<s
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
   if (!projectId) return { success: false, action: 'module3_missing_inputs', message: 'Project ID required' };
 
-  const statuses = await getModule3BuildStatus(orgId, projectId);
+  const { sections: statuses } = await getModule3BuildStatus(orgId, projectId);
   const withMissing = statuses.filter(s => s.missingInputs.length > 0);
 
   if (withMissing.length === 0) {
@@ -254,7 +255,7 @@ export async function module3StaleSections(ctx: CommandContext, params: Record<s
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
   if (!projectId) return { success: false, action: 'module3_stale_sections', message: 'Project ID required' };
 
-  const statuses = await getModule3BuildStatus(orgId, projectId);
+  const { sections: statuses } = await getModule3BuildStatus(orgId, projectId);
   const stale = statuses.filter(s => s.isStale);
 
   if (stale.length === 0) {
@@ -278,7 +279,7 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
   if (!projectId) return { success: false, action: 'module3_refresh_stale', message: 'Project ID required' };
 
-  const statuses = await getModule3BuildStatus(orgId, projectId);
+  const { sections: statuses } = await getModule3BuildStatus(orgId, projectId);
   const stale = statuses.filter(s => s.isStale);
   if (stale.length === 0) {
     return { success: true, action: 'module3_refresh_stale', message: 'No stale sections to refresh.' };
@@ -310,7 +311,7 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
         completeness: section.completeness,
         missingInputs: section.missingInputs,
         lineage: section.lineage,
-      });
+      }, { createdById: ctx.userId ?? null });
     } catch { /* non-fatal */ }
     refreshed.push(section.sectionKey);
   }

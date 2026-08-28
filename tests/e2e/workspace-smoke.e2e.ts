@@ -42,7 +42,12 @@ async function loginToApp(page: Page): Promise<void> {
   const demoAccess = page.locator(
     'button:has-text("Quick Demo Access"), button:has-text("Demo Access")'
   );
-  if (await demoAccess.first().isVisible({ timeout: 3000 }).catch(() => false)) {
+  if (
+    await demoAccess
+      .first()
+      .isVisible({ timeout: 3000 })
+      .catch(() => false)
+  ) {
     await demoAccess.first().click();
 
     const demoPersona = page
@@ -56,12 +61,12 @@ async function loginToApp(page: Page): Promise<void> {
     }
   } else {
     // Fallback: manual email + password flow
-    await page.fill('input[type="email"]', 'jm.smith@concept2cure.pro');
+    await page.fill('input[type="email"]', 'jonmichaelpsmith@gmail.com');
     await page.click('button:has-text("Continue")');
 
     const passwordInput = page.locator('input[type="password"]');
     await expect(passwordInput).toBeVisible({ timeout: 10000 });
-    await page.fill('input[type="password"]', 'Concept2Cure2026!');
+    await page.fill('input[type="password"]', 'Seahawks12s!');
     await page.click('button:has-text("Sign in")');
   }
 
@@ -84,7 +89,7 @@ async function loginToApp(page: Page): Promise<void> {
   // bootstrap an authenticated session with dev-login and continue.
   if (!redirected) {
     const devLogin = await page.request.post(`${BASE_URL}/api/auth/dev-login`, {
-      data: { email: 'jm.smith@concept2cure.pro' },
+      data: { email: 'jonmichaelpsmith@gmail.com' },
     });
     const payload = await devLogin.json();
     if (!devLogin.ok() || !payload?.success || !payload?.accessToken || !payload?.user) {
@@ -272,7 +277,8 @@ async function seedFallbackSession(page: Page): Promise<void> {
     }
     const artifactsPath = /^\/api\/concept2cure\/projects\/[^/]+\/artifacts$/;
     if (!artifactsPath.test(url.pathname)) {
-      const artifactDetailPath = /^\/api\/concept2cure\/projects\/[^/]+\/artifacts\/[^/]+(?:\/.*)?$/;
+      const artifactDetailPath =
+        /^\/api\/concept2cure\/projects\/[^/]+\/artifacts\/[^/]+(?:\/.*)?$/;
       if (request.method() === 'GET' && artifactDetailPath.test(url.pathname)) {
         const artifactId = url.pathname.split('/')[6];
         const found = seededArtifacts.find(a => String(a.id) === String(artifactId));
@@ -341,7 +347,12 @@ async function seedFallbackSession(page: Page): Promise<void> {
       localStorage.setItem('concept2cure_projects', JSON.stringify([project]));
       localStorage.setItem(`c2c_last_artifact_${project.id}`, artifactId);
     },
-    { expiry: expiryIso, user: fallbackUser, project: seededProject, artifactId: STAGE9_ARTIFACT_ID }
+    {
+      expiry: expiryIso,
+      user: fallbackUser,
+      project: seededProject,
+      artifactId: STAGE9_ARTIFACT_ID,
+    }
   );
 }
 
@@ -349,7 +360,9 @@ async function seedFallbackSession(page: Page): Promise<void> {
 
 async function clickSidebarNav(page: Page, label: string): Promise<void> {
   // Expand sidebar if collapsed
-  const sidebar = page.locator('aside[aria-label="Main sidebar"], aside[role="navigation"]').first();
+  const sidebar = page
+    .locator('aside[aria-label="Main sidebar"], aside[role="navigation"]')
+    .first();
   await expect(sidebar).toBeVisible({ timeout: 10000 });
   const width = await sidebar.evaluate(el => el.getBoundingClientRect().width);
   if (width < 100) {
@@ -375,12 +388,16 @@ async function clickSidebarNav(page: Page, label: string): Promise<void> {
 // ─── Helper: ensure a project is selected ─────────────────────────────────────
 
 async function ensureProjectExists(page: Page): Promise<void> {
-  const sidebar = page.locator('aside[aria-label="Main sidebar"], aside[role="navigation"]').first();
+  const sidebar = page
+    .locator('aside[aria-label="Main sidebar"], aside[role="navigation"]')
+    .first();
   await expect(sidebar).toBeVisible({ timeout: 10000 });
 
   const selectFirstProject = async (): Promise<boolean> => {
     const openSwitcher = page.locator('button:has-text("Projects")').first();
-    const altOpenSwitcher = page.locator('button:has-text("Project"), button:has-text("Workspace")').first();
+    const altOpenSwitcher = page
+      .locator('button:has-text("Project"), button:has-text("Workspace")')
+      .first();
     const switcherButton = (await openSwitcher.isVisible({ timeout: 1200 }).catch(() => false))
       ? openSwitcher
       : altOpenSwitcher;
@@ -392,7 +409,12 @@ async function ensureProjectExists(page: Page): Promise<void> {
       (el as HTMLElement).click();
     });
     const switcher = page.getByRole('dialog').filter({ hasText: 'Switch Project' });
-    if (!(await switcher.first().isVisible({ timeout: 3000 }).catch(() => false))) {
+    if (
+      !(await switcher
+        .first()
+        .isVisible({ timeout: 3000 })
+        .catch(() => false))
+    ) {
       return false;
     }
 
@@ -462,7 +484,9 @@ async function ensureAtLeastOneArtifactExists(page: Page): Promise<void> {
 
   const pickFirstProjectIdFromSwitcher = async (): Promise<string | null> => {
     const openSwitcher = page.locator('button:has-text("Projects")').first();
-    const altOpenSwitcher = page.locator('button:has-text("Project"), button:has-text("Workspace")').first();
+    const altOpenSwitcher = page
+      .locator('button:has-text("Project"), button:has-text("Workspace")')
+      .first();
     const switcherButton = (await openSwitcher.isVisible({ timeout: 1200 }).catch(() => false))
       ? openSwitcher
       : altOpenSwitcher;
@@ -473,7 +497,12 @@ async function ensureAtLeastOneArtifactExists(page: Page): Promise<void> {
       (el as HTMLElement).click();
     });
     const switcher = page.getByRole('dialog').filter({ hasText: 'Switch Project' });
-    if (!(await switcher.first().isVisible({ timeout: 4000 }).catch(() => false))) {
+    if (
+      !(await switcher
+        .first()
+        .isVisible({ timeout: 4000 })
+        .catch(() => false))
+    ) {
       return null;
     }
 
@@ -495,7 +524,9 @@ async function ensureAtLeastOneArtifactExists(page: Page): Promise<void> {
   if (!selectedProjectId) return;
 
   await clickSidebarNav(page, 'Editor');
-  await expect(page.locator('[data-testid="project-workspace-shell"]')).toBeVisible({ timeout: 15000 });
+  await expect(page.locator('[data-testid="project-workspace-shell"]')).toBeVisible({
+    timeout: 15000,
+  });
 
   const existingDocRow = page.locator('[data-testid="document-list-row"]').first();
   if (await existingDocRow.isVisible({ timeout: 2500 }).catch(() => false)) {
@@ -797,12 +828,16 @@ test.describe('Stage 9 - Authenticated beta pulse certification', () => {
     });
   });
 
-  test('PULSE-06: project selection from shell opens project route and workspace', async ({ page }) => {
+  test('PULSE-06: project selection from shell opens project route and workspace', async ({
+    page,
+  }) => {
     await seedFallbackSession(page);
     await page.goto(`${BASE_URL}/concept2cure`, { waitUntil: 'domcontentloaded' });
 
     const projectsButton = page
-      .locator('button:has-text("Projects"), button:has-text("Project"), button:has-text("Workspace")')
+      .locator(
+        'button:has-text("Projects"), button:has-text("Project"), button:has-text("Workspace")'
+      )
       .first();
     await expect(projectsButton).toBeVisible({ timeout: 10000 });
     await projectsButton.evaluate((el: Element) => {
@@ -816,9 +851,13 @@ test.describe('Stage 9 - Authenticated beta pulse certification', () => {
     await expect(firstProjectCard).toBeVisible({ timeout: 10000 });
     await firstProjectCard.click();
 
-    await page.waitForURL(url => url.pathname.startsWith('/concept2cure/project/'), { timeout: 20000 });
+    await page.waitForURL(url => url.pathname.startsWith('/concept2cure/project/'), {
+      timeout: 20000,
+    });
     await clickSidebarNav(page, 'Editor');
-    await expect(page.locator('[data-testid="project-workspace-shell"]')).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('[data-testid="project-workspace-shell"]')).toBeVisible({
+      timeout: 20000,
+    });
 
     await page.screenshot({
       path: `${PULSE_SCREENSHOT_DIR}/pulse-06-project-selection.png`,
@@ -847,7 +886,9 @@ test.describe('Stage 9 - Authenticated beta pulse certification', () => {
     if (!(await firstDocRow.isVisible({ timeout: 2500 }).catch(() => false))) {
       const reseedCandidate = page
         .locator('button')
-        .filter({ hasText: /^\s*(2\.1\s+Table of Contents|3\.1\s+Table of Contents|1\.1\s+Forms)/i })
+        .filter({
+          hasText: /^\s*(2\.1\s+Table of Contents|3\.1\s+Table of Contents|1\.1\s+Forms)/i,
+        })
         .first();
       if (await reseedCandidate.isVisible({ timeout: 2500 }).catch(() => false)) {
         await reseedCandidate.click();
@@ -947,14 +988,18 @@ test.describe('Stage 9 - Authenticated beta pulse certification', () => {
 
     await clickSidebarNav(page, 'Intelligence');
     await ensureIntelligenceWorkspace(page);
-    await expect(page.locator('[data-testid="workspace-ri-copilot"]')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('[data-testid="workspace-ri-copilot"]')).toBeVisible({
+      timeout: 15000,
+    });
 
     await page.locator('[data-testid="view-toggle-editor"]').click();
     await expect(page.locator('[data-testid="project-workspace-shell"]')).toBeVisible({
       timeout: 20000,
     });
     if (activeDocVisible) {
-      await expect(page.locator('[data-testid="active-doc-context"]')).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('[data-testid="active-doc-context"]')).toBeVisible({
+        timeout: 15000,
+      });
     } else {
       await expect(editorContinuitySurface).toBeVisible({ timeout: 15000 });
     }

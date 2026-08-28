@@ -1,0 +1,212 @@
+/**
+ * Agency questions — the WRITE half of the correspondence loop.
+ *
+ * The board (cmc-module3-board.routes) reads reg_questions org-scoped and the
+ * CMC surface triages, drafts responses, tasks and closes work from it — but
+ * nothing in the product could WRITE the store. The only writers were a Gmail
+ * ingest and a legacy IR router (server/api/cmc/regulatoryIR.ts) written
+ * against a reg_questions shape this schema does not have (sub_id/q_id/
+ * final_md…): every call it served failed, it carried no tenant scoping, and
+ * its delete was "gated" by a client-controlled header. That router is
+ * deleted in the same change that adds this one — the live table is the
+ * canonical shape, and these are its governed writes.
+ *
+ * Mounted at /api/cmc/agency-questions behind authenticateToken.
+ *   POST  /      — log a question the agency asked (org stamped from the
+ *                  verified JWT, never the body; status starts OPEN).
+ *   PATCH /:id   — triage updates: status / assignee / due date / priority /
+ *                  section reference. WHERE id AND organization_id — a row in
+ *                  another org is a 404, indistinguishable from absent.
+ * No DELETE, deliberately: an agency question is answered and closed, never
+ * erased. CLOSED rows drop out of the board's open filter and stay in the
+ * record.
+ *
+ * @module server/routes/cmc-agency-questions.routes
+ */
+import { Router, type Request, type Response } from 'express';
+import { z } from 'zod';
+
+import { query as q } from '../db.js';
+import { getSecureOrgId } from '../utils/tenantContext.js';
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('cmc-agency-questions');
+
+/** Resolve the JWT-derived org id as the integer organization_id, or null. */
+function resolveTenantId(req: Request): number | null {
+  const orgId = getSecureOrgId(req);
+  const tenantId = orgId == null ? NaN : Number(orgId);
+  return Number.isFinite(tenantId) ? tenantId : null;
+}
+
+/** The lifecycle the board's open filter reads (OPEN/DRAFTED/IN_REVIEW = open). */
+const STATUSES = ['OPEN', 'DRAFTED', 'IN_REVIEW', 'CLOSED'] as const;
+
+const createBody = z.object({
+  questionText: z.string().trim().min(1, 'The question text is required').max(8000),
+  sectionReference: z.string().trim().max(40).optional(),
+  region: z.string().trim().max(40).optional(),
+  priority: z.enum(['low', 'medium', 'high']).optional(),
+  severity: z.enum(['MINOR', 'MAJOR', 'CRITICAL']).optional(),
+  /** ISO date (the agency's response deadline). */
+  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'dueDate must be YYYY-MM-DD').optional(),
+  assignedTo: z.string().trim().max(200).optional(),
+});
+
+const patchBody = z
+  .object({
+    status: z.enum(STATUSES).optional(),
+    sectionReference: z.string().trim().max(40).nullable().optional(),
+    region: z.string().trim().max(40).nullable().optional(),
+    priority: z.enum(['low', 'medium', 'high']).optional(),
+    severity: z.enum(['MINOR', 'MAJOR', 'CRITICAL']).optional(),
+    dueDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'dueDate must be YYYY-MM-DD')
+      .nullable()
+      .optional(),
+    assignedTo: z.string().trim().max(200).nullable().optional(),
+  })
+  .refine((b) => Object.values(b).some((v) => v !== undefined), {
+    message: 'At least one field to update is required',
+  });
+
+interface RegQuestionRow {
+  id: number;
+  question_text: string;
+  section_reference: string | null;
+  priority: string | null;
+  severity: string | null;
+  status: string;
+  region: string | null;
+  due_date: string | Date | null;
+  assigned_to: string | null;
+  created_at: string | Date;
+  updated_at: string | Date;
+}
+
+/** The same camelCase shape the board's correspondence rows use. */
+function mapRow(r: RegQuestionRow) {
+  return {
+    id: r.id,
+    question: r.question_text,
+    sectionRef: r.section_reference,
+    priority: r.priority,
+    severity: r.severity,
+    status: r.status,
+    region: r.region,
+    dueDate: r.due_date ? new Date(r.due_date).toISOString() : null,
+    assignedTo: r.assigned_to,
+    createdAt: r.created_at ? new Date(r.created_at).toISOString() : null,
+    updatedAt: r.updated_at ? new Date(r.updated_at).toISOString() : null,
+  };
+}
+
+export default function createCmcAgencyQuestionRoutes(): Router {
+  const router = Router();
+
+  router.post('/', async (req: Request, res: Response) => {
+    const tenantId = resolveTenantId(req);
+    if (tenantId == null) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
+    const parsed = createBody.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: parsed.error.issues[0]?.message ?? 'Invalid request body',
+        details: parsed.error.issues,
+      });
+    }
+    const b = parsed.data;
+    try {
+      const { rows } = await q(
+        `insert into reg_questions
+           (organization_id, question_text, section_reference, region, priority,
+            severity, status, due_date, assigned_to)
+         values ($1, $2, $3, $4, coalesce($5, 'medium'), coalesce($6, 'MAJOR'),
+                 'OPEN', $7, $8)
+         returning id, question_text, section_reference, priority, severity,
+                   status, region, due_date, assigned_to, created_at, updated_at`,
+        [
+          tenantId,
+          b.questionText,
+          b.sectionReference ?? null,
+          b.region ?? null,
+          b.priority ?? null,
+          b.severity ?? null,
+          b.dueDate ?? null,
+          b.assignedTo ?? null,
+        ],
+      );
+      return res.status(201).json({ success: true, data: mapRow(rows[0] as RegQuestionRow) });
+    } catch (err) {
+      logger.error('agency-question create failed', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return res
+        .status(500)
+        .json({ success: false, error: 'The agency question could not be recorded.' });
+    }
+  });
+
+  router.patch('/:id', async (req: Request, res: Response) => {
+    const tenantId = resolveTenantId(req);
+    if (tenantId == null) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid question id' });
+    }
+    const parsed = patchBody.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: parsed.error.issues[0]?.message ?? 'Invalid request body',
+        details: parsed.error.issues,
+      });
+    }
+    const b = parsed.data;
+    // Build the SET list only from fields the caller actually sent, so a
+    // triage update never nulls what it did not mention.
+    const sets: string[] = [];
+    const params: unknown[] = [];
+    const set = (col: string, val: unknown) => {
+      params.push(val);
+      sets.push(`${col} = $${params.length}`);
+    };
+    if (b.status !== undefined) set('status', b.status);
+    if (b.sectionReference !== undefined) set('section_reference', b.sectionReference);
+    if (b.region !== undefined) set('region', b.region);
+    if (b.priority !== undefined) set('priority', b.priority);
+    if (b.severity !== undefined) set('severity', b.severity);
+    if (b.dueDate !== undefined) set('due_date', b.dueDate);
+    if (b.assignedTo !== undefined) set('assigned_to', b.assignedTo);
+    params.push(id, tenantId);
+    try {
+      const { rows } = await q(
+        `update reg_questions
+            set ${sets.join(', ')}, updated_at = now()
+          where id = $${params.length - 1} and organization_id = $${params.length}
+          returning id, question_text, section_reference, priority, severity,
+                    status, region, due_date, assigned_to, created_at, updated_at`,
+        params,
+      );
+      if (rows.length === 0) {
+        // Another org's row and a nonexistent row answer identically.
+        return res.status(404).json({ success: false, error: 'Question not found' });
+      }
+      return res.json({ success: true, data: mapRow(rows[0] as RegQuestionRow) });
+    } catch (err) {
+      logger.error('agency-question update failed', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return res
+        .status(500)
+        .json({ success: false, error: 'The agency question could not be updated.' });
+    }
+  });
+
+  return router;
+}

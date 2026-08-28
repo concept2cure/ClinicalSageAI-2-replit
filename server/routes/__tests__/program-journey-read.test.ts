@@ -19,7 +19,7 @@ const { createProgramJourney, listProgramJourneys, updateJourneyStage, ProgramJo
     listProgramJourneys: vi.fn(),
     updateJourneyStage: vi.fn(),
     ProgramJourneyValidationError,
-    logAction: vi.fn(),
+    logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })),
   };
 });
 vi.mock('../../services/program-journey/program-journey-service', () => ({

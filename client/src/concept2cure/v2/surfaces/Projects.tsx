@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState, ErrorState } from '../dataConnect';
 import { apiRequest, ApiRequestError } from '@/lib/queryClient';
@@ -8,6 +8,9 @@ import {
   workstreamForFilingType,
 } from '@shared/constants/domain/product-types';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { publishShellProject } from '../shellProject';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import { usePublishSurfaceContext } from '../surfaceContext';
 // The New-Project wizard drives off the global regulatory registry. Import the
 // picker + the submission-type lookup DIRECTLY from the modules that own them,
 // rather than depending on window globals that another surface may or may not
@@ -17,6 +20,10 @@ import type { SurfaceViewProps } from '../surfaceViews';
 // window.GLOBAL_REGISTRY / REG_SEGMENTS that RegistryPicker reads.
 import { RegistryPicker } from './AnaVerbs';
 import { getSubmissionTypeContext } from './RegistryBridge';
+import {
+  DEVICE_CLASSES, DEVICE_FLAGS, REVIEW_PANELS,
+  usesDeviceClassification, type DeviceFlagId,
+} from '../../../../../shared/constants/domain/device-classification';
 import '../styles/project-home-v2.css';
 
 /* ── Window global owned by this surface (the app shell sets it to auto-open
@@ -86,6 +93,14 @@ function productTypeForSelection(programType: string, uiSeg: string): string {
 }
 
 // UI segment → human label, for the wizard's "Tailored for …" banner.
+/* Registry tab → UI segment, so the banner can follow a tab change. Only the
+   lanes that map 1:1 back; pharma_biotech is ambiguous (biotech and pharma both
+   point at it) and keeps whatever lane the user actually arrived in. */
+const REG2SEG: Record<string, string> = {
+  medical_devices: 'medtech',
+  diagnostics_ivd: 'diagnostics',
+};
+
 const SEG_LABELS: Record<string, string> = {
   biotech: 'Biotech', pharma: 'Pharma', medtech: 'Medical Devices',
   diagnostics: 'Diagnostics & IVD', cro: 'CRO / Services', health: 'Digital Health',
@@ -174,17 +189,44 @@ export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   return uiSeg === 'medtech' ? '510k' : uiSeg === 'diagnostics' ? 'ivd' : 'ind';
 }
 
+/** The three steps, in order. One list, read by the step rail, the sub-heading
+ *  and the bounds checks below, so a step cannot be renamed in one place and
+ *  stay stale in another. */
+const STEP_LABELS = ['Choose filing type', 'Configure project', 'Review & create'] as const;
+
 /** Exported for the failure-path test: the wizard's error surface is an
  *  acceptance criterion in its own right (a failed write must be visible and
  *  must offer a way out), and driving it through the whole Projects surface
  *  would test the registry loader rather than the banner. */
-export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id: string) => void }) {
-  const dialogRef = useDialog(onClose);
+export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => void; onNav: (id: string) => void; segment?: string }) {
+  /* `useDialog` on something that is deliberately not a dialog, and on purpose.
+     The hook sets no ARIA of its own — it is three keyboard behaviours: focus
+     the container on mount, call onClose on Escape, hand focus back to the
+     opener on unmount. All three are exactly as required of a full-canvas view
+     that replaces the portfolio and must give the keyboard back when it leaves.
+     Writing a second hook with the same body so this one could be named
+     differently would be the duplication, not the reuse. The dialog SEMANTICS
+     — role, aria-modal — are what this view drops, and those live in the JSX
+     below, not in here. */
+  const viewRef = useDialog(onClose);
   const [step, setStep] = useState(0);
   const [tpl, setTpl] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [product, setProduct] = useState('');
   const [ta, setTa] = useState('onc_general');
+  /* The device taxonomy. Step 2 offered a therapeutic-area dropdown and nothing
+     else — an oncology / vaccines list, defaulting to "Oncology (general)",
+     shown to someone filing a peak flow meter. These are the fields a device
+     reviewer opens the file to find. */
+  const [productCode, setProductCode] = useState('');
+  const [regulationNumber, setRegulationNumber] = useState('');
+  const [deviceClass, setDeviceClass] = useState('');
+  const [reviewPanel, setReviewPanel] = useState('');
+  const [predicateK, setPredicateK] = useState('');
+  const [intendedUse, setIntendedUse] = useState('');
+  const [deviceFlags, setDeviceFlags] = useState<DeviceFlagId[]>([]);
+  const toggleFlag = (id: DeviceFlagId) =>
+    setDeviceFlags(f => (f.includes(id) ? f.filter(x => x !== id) : [...f, id]));
   // Team assignment needs a persisted project id (GET /:id/team); no endpoint
   // lists selectable org members for a not-yet-created project, so the wizard
   // creates the project solo and teammates are added afterward.
@@ -207,13 +249,28 @@ export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNa
   const fail = (message: string, correlationId?: string) =>
     setOutcome({ kind: 'error', message, correlationId });
 
-  const uiSeg = (typeof window !== 'undefined' && window.__C2C_SEGMENT) || 'biotech';
+  /* The SHELL's active client category, passed down. This used to read
+     window.__C2C_SEGMENT, which only BiopharmaJourney ever writes and which it
+     can only set to 'biotech' or 'pharma' — so opening New project from the
+     Medical Device or Diagnostics lane showed "Tailored for Biotech" and
+     defaulted to the pharma template tab. The global is kept as a fallback for
+     the two callers that still open the wizard without a segment. */
+  const arrivedSeg = segment || (typeof window !== 'undefined' && window.__C2C_SEGMENT) || 'biotech';
+  /* The tab the user is LOOKING at, which is the lane they arrived in until
+     they switch. The banner reads this, not the arrival lane. */
+  const [tabSeg, setTabSeg] = useState<string | null>(null);
+  const uiSeg = tabSeg ?? arrivedSeg;
   const regSeg = SEG2REG[uiSeg];
   const segLabel = SEG_LABELS[uiSeg] || uiSeg;
   const ctx = tpl ? getSubmissionTypeContext(tpl) : null;
   const selTpl: SelTpl | null = ctx
     ? { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey || 'ctd' }
     : null;
+  /* From the FILING TYPE, not the lane: a 510(k) picked from any tab is a
+     device filing, and a pharma filing picked from the device tab is not. */
+  const isDeviceFiling = usesDeviceClassification(
+    productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg),
+  );
 
   // Persist a real regulatory program (POST /api/c2c/projects → regulatory_programs)
   // then navigate into it using the id the store assigns. On failure we surface
@@ -229,7 +286,16 @@ export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNa
       productType: productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg),
       primaryAgency: selTpl?.agency || 'FDA',
       submissionTypeId: selTpl?.id,
-      indication: taLabel,
+      indication: isDeviceFiling ? (intendedUse || undefined) : taLabel,
+      ...(isDeviceFiling
+        ? {
+            deviceClassification: {
+              productCode, regulationNumber, deviceClass,
+              reviewPanel, predicateK, intendedUse,
+              flags: deviceFlags,
+            },
+          }
+        : {}),
       targetSubmissionDate: target || null,
       teamMembers: team,
     };
@@ -280,14 +346,14 @@ export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNa
 
       const created = (j?.data ?? {}) as Partial<ProjPortfolioEntry> & { id?: string };
       try {
-        window.C2C_PROJECT = {
+        publishShellProject({
           id: created.id || 'new',
           title: created.title || body.name,
           product: body.productName,
           code: created.code || '',
           ws: created.ws || SEG2WS[uiSeg] || 'Biotech',
           status: created.status || 'active',
-        };
+        });
       } catch { /* noop */ }
       onClose();
       onNav('project-home');
@@ -315,101 +381,268 @@ export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNa
   const taList = TA_LIST;
 
   return (
-    <div className="esign-bd" onClick={onClose}>
-      {/* `useDialog` is the v2 modal primitive that was already in this
-          directory and that this wizard never used: it focuses the panel on
-          open, closes on Escape, and hands focus back to the opener on unmount.
-          Without it the wizard was a plain div — no keyboard exit, no focus
-          hand-off, no dialog semantics — which is the surface a failed create
-          now has to announce into. Not a full focus trap; Tab can still leave
-          the panel, and closing that is a shared-modal change, not this task's. */}
-      <div
-        ref={dialogRef}
-        className="esign-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="new-project-title"
-        tabIndex={-1}
-        onClick={e => e.stopPropagation()}
-        style={{ width: 880, maxWidth: '94vw', maxHeight: '90vh', overflow: 'auto' }}
-      >
-        {/* Header */}
-        <div className="esign-h" style={{ borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-          <span className="ico" style={{ fontSize: 18 }}>{I.plus}</span>
-          <div style={{ flex: 1 }}>
-            <span className="t" id="new-project-title" style={{ fontSize: 15 }}>New project</span>
-            <div style={{ fontSize: 11, color: 'var(--text-300)', marginTop: 2 }}>
-              Step {step + 1} of 3 — {['Choose template', 'Configure project', 'Review & create'][step]}
-            </div>
-          </div>
-          {/* The icon is aria-hidden, so without this label the control had no
-              accessible name at all. */}
-          <button className="tbtn" onClick={onClose} aria-label="Close">{I.close}</button>
-        </div>
+    /* ── Full canvas, not a modal ────────────────────────────────────────────
+       This wizard used to be an 880px `.esign-modal` floating over the very
+       portfolio it was about to write into, with a 440px scroll pane inside it
+       for the registry. Choosing a filing type is the longest-lived decision
+       this product asks anyone to make — it selects the rule pack, the dossier
+       outline and the agency the whole programme is then governed against, and
+       `programTypeFor` above is where that choice is fixed — and it was being
+       taken through a letterbox: a scrolling pane over the registry, a form
+       column narrower than the table behind it, and a review step that had to
+       be scrolled to be read at all.
 
-        {/* Step indicators */}
-        <div style={{ display: 'flex', gap: 4, padding: '12px 20px 8px' }}>
-          {[0, 1, 2].map(i => (
-            <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= step ? 'var(--accent-200)' : 'var(--bg-300)', transition: 'background 0.2s' }} />
+       `projects` is registered `full: true` (see the note beside it in
+       surfaceViews.ts), so the surface already owns the whole canvas. The
+       wizard now takes it, as a VIEW of that surface rather than a route of its
+       own: no registry id, no entitlement, no deep link. That is deliberate —
+       Cancel stays a state change back to the portfolio rather than a
+       navigation, so a half-filled form cannot be stranded behind history.
+
+       It is therefore NOT `role="dialog"` and NOT `aria-modal`. Nothing sits
+       behind it to be made inert, and announcing a modal boundary that spans
+       the entire screen would describe a containment that does not exist. It
+       is a labelled region headed by an <h1>, which is what it now is. The
+       keyboard contract is unchanged from the modal: focus lands here on open,
+       Escape backs out, focus returns to the control that opened it. */
+    <section ref={viewRef} className="npw" aria-labelledby="new-project-title" tabIndex={-1}>
+      <div className="pd-topbar">
+        <button type="button" className="pd-crumb-back" onClick={onClose}>
+          {I.left} Projects
+        </button>
+        <span className="pd-crumb-sep" aria-hidden="true">/</span>
+        <span className="pd-crumb-here">New project</span>
+      </div>
+
+      <header className="npw-head">
+        <div className="npw-head-inner">
+          <div className="ph-eyebrow">Workspace</div>
+          <h1 className="ph-title" id="new-project-title">New project</h1>
+          <p className="ph-sub">
+            Choose the filing type, describe the product, then review what will be recorded.
+            The filing type decides the dossier outline this programme is built against.
+          </p>
+        </div>
+      </header>
+
+      {/* Step rail — replaces the three flat progress bars the modal used, which
+          carried the entire step state in the fill colour of an unlabelled
+          strip. Position is stated three ways here: the number or tick, the
+          step's own name, and aria-current. Nothing is signalled by colour
+          alone. A finished step is re-openable; a step ahead of the current one
+          is not, because nothing has been entered into it yet. */}
+      <nav className="npw-steps" aria-label="New project steps">
+        <ol>
+          {STEP_LABELS.map((label, i) => (
+            <li
+              key={label}
+              className="npw-step"
+              data-state={i < step ? 'done' : i === step ? 'current' : 'todo'}
+              aria-current={i === step ? 'step' : undefined}
+            >
+              <button
+                type="button"
+                className="npw-step-btn"
+                disabled={i > step}
+                onClick={() => setStep(i)}
+              >
+                <span className="npw-step-n" aria-hidden="true">{i < step ? I.check : i + 1}</span>
+                <span className="npw-step-l">
+                  <span className="npw-step-k">Step {i + 1}</span>
+                  <span className="npw-step-t">{label}</span>
+                </span>
+              </button>
+            </li>
           ))}
-        </div>
+        </ol>
+      </nav>
 
-        <div style={{ padding: '8px 20px 20px' }}>
+      <div className="npw-scroll">
+        {/* The registry step is a catalogue and wants the width; the two form
+            steps are read line by line and want a measure. One container, two
+            widths, rather than one compromise that serves neither. */}
+        <div className="npw-inner" data-measure={step === 0 ? 'wide' : 'form'}>
           {/* Step 0: Choose template */}
           {step === 0 && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 13px', marginBottom: 12, borderRadius: 8, background: 'var(--accent-000)', border: '1px solid var(--accent-muted)' }}>
-                <span className="ico" style={{ fontSize: 15, color: 'var(--accent-200)' }}>{I.sparkles}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-100)' }}>Tailored for {segLabel}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-300)' }}>Showing the filing types that fit your client type. Switch the tab to browse other segments.</div>
+              <div className="npw-seg-note">
+                <span className="ico" aria-hidden="true">{I.sparkles}</span>
+                <div>
+                  <div className="npw-seg-t">Tailored for {segLabel}</div>
+                  <div className="npw-seg-s">Showing the filing types that fit your client type. Switch the tab to browse other segments.</div>
                 </div>
               </div>
-              <div style={{ maxHeight: 440, overflowY: 'auto' }}>
-                <RegistryPicker value={tpl ?? ''} onChange={(id) => setTpl(id)} initialSegment={regSeg || undefined} />
-              </div>
+              {/* No inner scroll pane. The picker was capped at 440px inside an
+                  880px modal, so the global registry — every agency, every
+                  pathway — was read four rows at a time. The page scrolls now
+                  and the picker is as tall as it needs to be. */}
+              <RegistryPicker
+                value={tpl ?? ''}
+                onChange={(id) => setTpl(id)}
+                initialSegment={regSeg || undefined}
+                onSegmentChange={(next) => setTabSeg(REG2SEG[next] ?? arrivedSeg)}
+              />
             </div>
           )}
 
           {/* Step 1: Configure */}
           {step === 1 && selTpl && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>Configure your {selTpl.label} project</div>
+            <div className="npw-form">
+              <h2 className="npw-h2">Configure your {selTpl.label} project</h2>
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-300)' }}>Project name</span>
-                <input value={name} onChange={e => setName(e.target.value)}
-                  placeholder={`e.g. ${selTpl.id === '510k' ? 'Aurora CGM — 510(k)' : 'BX-204 — ' + selTpl.label}`}
-                  style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-control)', background: 'var(--bg-100)', fontSize: 13 }} />
-              </label>
+              <div className="npw-fields">
+                <label className="npw-field">
+                  <span className="npw-field-l">Project name</span>
+                  <input
+                    className="c2c-input"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder={`e.g. ${selTpl.id === '510k' ? 'Aurora CGM — 510(k)' : 'BX-204 — ' + selTpl.label}`}
+                  />
+                </label>
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-300)' }}>Product name</span>
-                <input value={product} onChange={e => setProduct(e.target.value)} placeholder="e.g. BX-204"
-                  style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-control)', background: 'var(--bg-100)', fontSize: 13 }} />
-              </label>
+                <label className="npw-field">
+                  <span className="npw-field-l">Product name</span>
+                  <input
+                    className="c2c-input"
+                    value={product}
+                    onChange={e => setProduct(e.target.value)}
+                    placeholder="e.g. BX-204"
+                  />
+                </label>
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-300)' }}>Therapeutic area</span>
-                <select value={ta} onChange={e => setTa(e.target.value)}
-                  style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-control)', background: 'var(--bg-100)', fontSize: 13 }}>
-                  {taGroups.map(g => {
-                    const items = taList.filter(t => t.group === g.id);
-                    return items.length
-                      ? <optgroup key={g.id} label={g.label}>{items.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</optgroup>
-                      : null;
-                  })}
-                </select>
-              </label>
+                {/* A device files under a product code, not a therapeutic area.
+                    The pharma axis is wrong for it in both directions: there is
+                    no oncology peak flow meter, and the fields a CDRH reviewer
+                    actually opens the file for had nowhere to live. */}
+                {isDeviceFiling ? (
+                  <label className="npw-field">
+                    <span className="npw-field-l">Device class</span>
+                    <select
+                      className="c2c-input"
+                      value={deviceClass}
+                      onChange={e => setDeviceClass(e.target.value)}
+                    >
+                      <option value="">Not yet determined</option>
+                      {DEVICE_CLASSES.map(c => (
+                        <option key={c} value={c}>Class {c}</option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <label className="npw-field">
+                    <span className="npw-field-l">Therapeutic area</span>
+                    <select className="c2c-input" value={ta} onChange={e => setTa(e.target.value)}>
+                      {taGroups.map(g => {
+                        const items = taList.filter(t => t.group === g.id);
+                        return items.length
+                          ? <optgroup key={g.id} label={g.label}>{items.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</optgroup>
+                          : null;
+                      })}
+                    </select>
+                  </label>
+                )}
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-300)' }}>Target submission date</span>
-                <input type="date" value={target} onChange={e => setTarget(e.target.value)}
-                  style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-control)', background: 'var(--bg-100)', fontSize: 13 }} />
-              </label>
+                <label className="npw-field">
+                  <span className="npw-field-l">Target submission date</span>
+                  <input className="c2c-input" type="date" value={target} onChange={e => setTarget(e.target.value)} />
+                </label>
+              </div>
 
-              <div>
-                <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-300)', display: 'block', marginBottom: 6 }}>Team members</span>
+              {isDeviceFiling && (
+                <div className="npw-grid">
+                  <label className="npw-field">
+                    <span className="npw-field-l">Product code</span>
+                    <input
+                      className="c2c-input"
+                      value={productCode}
+                      onChange={e => setProductCode(e.target.value.toUpperCase().slice(0, 3))}
+                      placeholder="e.g. BZH"
+                      maxLength={3}
+                      aria-describedby="npw-pc-help"
+                    />
+                    <span className="npw-field-help" id="npw-pc-help">
+                      Three letters. It decides the regulation number, the review panel and which
+                      predicates you can compare against.
+                    </span>
+                  </label>
+
+                  <label className="npw-field">
+                    <span className="npw-field-l">Regulation number</span>
+                    <input
+                      className="c2c-input"
+                      value={regulationNumber}
+                      onChange={e => setRegulationNumber(e.target.value)}
+                      placeholder="e.g. 868.1860"
+                      aria-describedby="npw-rn-help"
+                    />
+                    <span className="npw-field-help" id="npw-rn-help">21 CFR — the part is the panel.</span>
+                  </label>
+
+                  <label className="npw-field">
+                    <span className="npw-field-l">Review panel</span>
+                    <select className="c2c-input" value={reviewPanel} onChange={e => setReviewPanel(e.target.value)}>
+                      <option value="">Not yet determined</option>
+                      {REVIEW_PANELS.map(pnl => <option key={pnl} value={pnl}>{pnl}</option>)}
+                    </select>
+                  </label>
+
+                  <label className="npw-field">
+                    <span className="npw-field-l">Predicate device</span>
+                    <input
+                      className="c2c-input"
+                      value={predicateK}
+                      onChange={e => setPredicateK(e.target.value.toUpperCase())}
+                      placeholder="e.g. K181234"
+                      aria-describedby="npw-pk-help"
+                    />
+                    <span className="npw-field-help" id="npw-pk-help">
+                      The cleared device this one is substantially equivalent to.
+                    </span>
+                  </label>
+                </div>
+              )}
+
+              {isDeviceFiling && (
+                <>
+                  <div className="npw-field npw-field-wide">
+                    <span className="npw-field-l">Indications for use</span>
+                    <textarea
+                      className="c2c-input"
+                      rows={3}
+                      value={intendedUse}
+                      onChange={e => setIntendedUse(e.target.value)}
+                      placeholder="The statement that will appear on FDA Form 3881."
+                    />
+                  </div>
+
+                  <fieldset className="npw-field npw-field-wide npw-flags">
+                    <legend className="npw-field-l">Product characteristics</legend>
+                    <span className="npw-field-help">
+                      Each of these adds required content to the submission, so they are recorded
+                      now rather than discovered at assembly.
+                    </span>
+                    <div className="npw-flag-grid">
+                      {DEVICE_FLAGS.map(f => (
+                        <label key={f.id} className="npw-flag" title={f.because}>
+                          <input
+                            type="checkbox"
+                            checked={deviceFlags.includes(f.id)}
+                            onChange={() => toggleFlag(f.id)}
+                          />
+                          <span>
+                            <span className="npw-flag-l">{f.label}</span>
+                            <span className="npw-flag-w">{f.because}</span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                </>
+              )}
+
+              <div className="npw-field npw-field-wide">
+                <span className="npw-field-l">Team members</span>
                 {/* Backend gap: no endpoint lists selectable org members for a
                     not-yet-created project (GET /api/c2c/projects/:id/team needs a
                     persisted project id). Rather than show a fabricated roster, the
@@ -425,118 +658,185 @@ export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNa
 
           {/* Step 2: Review & create */}
           {step === 2 && selTpl && (
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 14 }}>Review & create</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: '10px 16px', fontSize: 12.5, padding: 16, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-100)' }}>
-                <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Filing type</span>
-                <span style={{ fontWeight: 500 }}>{selTpl.label}</span>
-                {selTpl.agency && <>
-                  <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Agency / Region</span>
-                  <span>{selTpl.agency} · {selTpl.region}</span>
-                </>}
-                {selTpl.dossierStandard && selTpl.dossierStandard !== '—' && <>
-                  <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Dossier</span>
-                  <span>{selTpl.dossierStandard}{selTpl.ctdModule && selTpl.ctdModule !== '—' ? ' · ' + selTpl.ctdModule : ''}</span>
-                </>}
-                <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Project name</span>
-                <span>{name || '(unnamed)'}</span>
-                <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Product</span>
-                <span>{product || '—'}</span>
-                <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Therapeutic area</span>
-                <span>{taList.find(t => t.id === ta)?.label || ta}</span>
-                <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Target date</span>
-                <span>{target || 'Not set'}</span>
-                <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Pathway</span>
-                <span>{(selTpl.pathway || '').toUpperCase()}{selTpl.submissionFormat && selTpl.submissionFormat !== '—' ? ' — ' + selTpl.submissionFormat : ''}</span>
-                <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Workstream</span>
+            <div className="npw-form">
+              <h2 className="npw-h2">Review &amp; create</h2>
+              <dl className="npw-review">
+                <div className="npw-review-row">
+                  <dt>Filing type</dt>
+                  <dd className="npw-review-strong">{selTpl.label}</dd>
+                </div>
+                {selTpl.agency && (
+                  <div className="npw-review-row">
+                    <dt>Agency / Region</dt>
+                    <dd>{selTpl.agency} · {selTpl.region}</dd>
+                  </div>
+                )}
+                {selTpl.dossierStandard && selTpl.dossierStandard !== '—' && (
+                  <div className="npw-review-row">
+                    <dt>Dossier</dt>
+                    <dd>{selTpl.dossierStandard}{selTpl.ctdModule && selTpl.ctdModule !== '—' ? ' · ' + selTpl.ctdModule : ''}</dd>
+                  </div>
+                )}
+                <div className="npw-review-row">
+                  <dt>Project name</dt>
+                  <dd>{name || '(unnamed)'}</dd>
+                </div>
+                <div className="npw-review-row">
+                  <dt>Product</dt>
+                  <dd>{product || '—'}</dd>
+                </div>
+                <div className="npw-review-row">
+                  <dt>Therapeutic area</dt>
+                  <dd>{taList.find(t => t.id === ta)?.label || ta}</dd>
+                </div>
+                <div className="npw-review-row">
+                  <dt>Target date</dt>
+                  <dd>{target || 'Not set'}</dd>
+                </div>
+                <div className="npw-review-row">
+                  <dt>Pathway</dt>
+                  <dd>{(selTpl.pathway || '').toUpperCase()}{selTpl.submissionFormat && selTpl.submissionFormat !== '—' ? ' — ' + selTpl.submissionFormat : ''}</dd>
+                </div>
                 {/* Both lines are derived exactly as the create call derives
                     them, so the review step shows what will actually persist.
                     They were read off the UI segment before, which is why this
                     pane said "Workstream: Biotech / Recorded as: 510K · biologic"
                     for a device filing — and then stored it. */}
-                <span>{workstreamForFilingType(programTypeFor(selTpl, uiSeg)) ?? SEG2WS[uiSeg] ?? 'Biotech'}</span>
-                <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Recorded as</span>
-                <span>{programTypeFor(selTpl, uiSeg).toUpperCase().replace(/_/g, ' ')} · {productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg)}</span>
-              </div>
+                <div className="npw-review-row">
+                  <dt>Workstream</dt>
+                  <dd>{workstreamForFilingType(programTypeFor(selTpl, uiSeg)) ?? SEG2WS[uiSeg] ?? 'Biotech'}</dd>
+                </div>
+                <div className="npw-review-row">
+                  <dt>Recorded as</dt>
+                  <dd>{programTypeFor(selTpl, uiSeg).toUpperCase().replace(/_/g, ' ')} · {productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg)}</dd>
+                </div>
+                {/* Only what was actually entered. A device row that reads
+                    "Not recorded" is the truth about the programme; filling it
+                    with a default here would put a classification nobody chose
+                    into the record the reviewer reads. */}
+                {isDeviceFiling && (
+                  <>
+                    <div className="npw-review-row">
+                      <dt>Classification</dt>
+                      <dd>
+                        {[
+                          productCode && `Product code ${productCode}`,
+                          regulationNumber && `21 CFR ${regulationNumber}`,
+                          deviceClass && `Class ${deviceClass}`,
+                          reviewPanel,
+                        ].filter(Boolean).join(' · ') || 'Not recorded'}
+                      </dd>
+                    </div>
+                    <div className="npw-review-row">
+                      <dt>Predicate</dt>
+                      <dd>{predicateK || 'Not recorded'}</dd>
+                    </div>
+                    {deviceFlags.length > 0 && (
+                      <div className="npw-review-row">
+                        <dt>Adds required content</dt>
+                        <dd>
+                          {deviceFlags
+                            .map(id => DEVICE_FLAGS.find(f => f.id === id)?.label ?? id)
+                            .join(' · ')}
+                        </dd>
+                      </div>
+                    )}
+                  </>
+                )}
+              </dl>
 
-              <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 6, background: 'color-mix(in srgb,var(--success) 8%,transparent)', border: '1px solid var(--success)', fontSize: 11.5, display: 'flex', gap: 8, alignItems: 'center' }}>
-                {I.sparkles}<span>Your project is saved to the portfolio and opens in its workspace, where you can add documents and author sections with AnA.</span>
+              <div className="npw-next">
+                <span className="ico" aria-hidden="true">{I.sparkles}</span>
+                <span>Your project is saved to the portfolio and opens in its workspace, where you can add documents and author sections with AnA.</span>
+              </div>
+            </div>
+          )}
+
+          {/* Announcement is separated from presentation on purpose.
+
+              These two regions are PERMANENT and empty until there is something
+              to say. A live region that is inserted into the DOM together with
+              its text is the higher-risk pattern under SC 4.1.3 — some AT/browser
+              pairs never announce it, because the region did not exist to be
+              watched. Mounting them once and writing text into them is the
+              portable form. Two regions rather than one because a failure must
+              interrupt (assertive) and a succeeded-but-degraded write must not
+              (polite), and swapping `aria-live` on a single live element is
+              itself unreliable.
+
+              The visual banner below stays in the accessibility tree — it holds
+              the Try again and Dismiss controls, so hiding it would strand them —
+              it simply is not the thing that announces. */}
+          <div className="sr-only" role="alert" aria-live="assertive">
+            {outcome?.kind === 'error' ? outcome.message : ''}
+          </div>
+          <div className="sr-only" role="status" aria-live="polite">
+            {outcome?.kind === 'notice' ? outcome.message : ''}
+          </div>
+
+          {/* The wizard's outcome — surfaced honestly instead of a fake "created"
+              toast, and never silently.
+
+              A FAILURE renders the shared <ErrorState variant="inline">, the same
+              component every failed load and failed write in the client now uses,
+              which is where the internals filter lives. A SUCCESS-with-caveat is
+              not an error and must not borrow its styling: the project exists,
+              there is nothing to retry, and offering "Try again" there would
+              create a second copy of a program that is already saved. */}
+          {outcome?.kind === 'error' && (
+            <div className="npw-outcome">
+              <ErrorState
+                variant="inline"
+                title="The project was not created"
+                message={outcome.message}
+                correlationId={outcome.correlationId}
+                retry={doCreate}
+                busy={creating}
+                onDismiss={() => setOutcome(null)}
+                testId="new-project-outcome"
+              />
+            </div>
+          )}
+          {outcome?.kind === 'notice' && (
+            <div className="npw-outcome">
+              <div className="c2c-wizard-notice" data-testid="new-project-outcome">
+                <span className="ico" aria-hidden="true">{I.info}</span>
+                <div>{outcome.message}</div>
+                <button
+                  type="button"
+                  className="c2c-error-dismiss"
+                  onClick={() => setOutcome(null)}
+                  aria-label="Dismiss this message"
+                >
+                  {I.close}
+                </button>
               </div>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Announcement is separated from presentation on purpose.
-
-            These two regions are PERMANENT and empty until there is something
-            to say. A live region that is inserted into the DOM together with
-            its text is the higher-risk pattern under SC 4.1.3 — some AT/browser
-            pairs never announce it, because the region did not exist to be
-            watched. Mounting them once and writing text into them is the
-            portable form. Two regions rather than one because a failure must
-            interrupt (assertive) and a succeeded-but-degraded write must not
-            (polite), and swapping `aria-live` on a single live element is
-            itself unreliable.
-
-            The visual banner below stays in the accessibility tree — it holds
-            the Try again and Dismiss controls, so hiding it would strand them —
-            it simply is not the thing that announces. */}
-        <div className="sr-only" role="alert" aria-live="assertive">
-          {outcome?.kind === 'error' ? outcome.message : ''}
-        </div>
-        <div className="sr-only" role="status" aria-live="polite">
-          {outcome?.kind === 'notice' ? outcome.message : ''}
-        </div>
-
-        {/* The wizard's outcome — surfaced honestly instead of a fake "created"
-            toast, and never silently.
-
-            A FAILURE renders the shared <ErrorState variant="inline">, the same
-            component every failed load and failed write in the client now uses,
-            which is where the internals filter lives. A SUCCESS-with-caveat is
-            not an error and must not borrow its styling: the project exists,
-            there is nothing to retry, and offering "Try again" there would
-            create a second copy of a program that is already saved. */}
-        {outcome?.kind === 'error' && (
-          <div style={{ margin: '0 20px' }}>
-            <ErrorState
-              variant="inline"
-              title="The project was not created"
-              message={outcome.message}
-              correlationId={outcome.correlationId}
-              retry={doCreate}
-              busy={creating}
-              onDismiss={() => setOutcome(null)}
-              testId="new-project-outcome"
-            />
-          </div>
-        )}
-        {outcome?.kind === 'notice' && (
-          <div className="c2c-wizard-notice" data-testid="new-project-outcome">
-            <span className="ico" aria-hidden="true">{I.info}</span>
-            <div>{outcome.message}</div>
-            <button
-              type="button"
-              className="c2c-error-dismiss"
-              onClick={() => setOutcome(null)}
-              aria-label="Dismiss this message"
-            >
-              {I.close}
+      {/* Footer. Fixed to the bottom of the canvas rather than scrolling away at
+          the end of a long registry: the primary action of a three-step form
+          should not have to be hunted for. */}
+      <div className="npw-foot">
+        <div className="npw-foot-inner">
+          <button type="button" className="btn ghost" onClick={onClose}>Cancel</button>
+          {step > 0 && <button type="button" className="btn ghost" onClick={() => setStep(s => s - 1)}>Back</button>}
+          <span className="npw-foot-gap" />
+          {step < 2 && (
+            <button type="button" className="btn primary" disabled={step === 0 && !tpl} onClick={() => setStep(s => s + 1)}>
+              Continue
             </button>
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="esign-f" style={{ borderTop: '1px solid var(--border)', padding: '12px 20px' }}>
-          {step > 0 && <button className="btn ghost" style={{ flex: 0 }} onClick={() => setStep(s => s - 1)}>Back</button>}
-          <span style={{ flex: 1 }} />
-          {step < 2 && <button className="btn primary" disabled={step === 0 && !tpl} onClick={() => setStep(s => s + 1)}>Continue</button>}
-          {step === 2 && <button className="btn primary" disabled={creating} onClick={doCreate}>
-            {creating ? 'Creating project...' : <>{I.plus} Create project</>}
-          </button>}
+          )}
+          {step === 2 && (
+            <button type="button" className="btn primary" disabled={creating} onClick={doCreate}>
+              {creating ? 'Creating project…' : <>{I.plus} Create project</>}
+            </button>
+          )}
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -587,24 +887,181 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const projects = live.rows;
 
   const list = projects.filter(p => (ws === 'all' || p.ws === ws) && (status === 'all' || p.status === status));
+  /* Gated on the read, not just on the row count.
+     `projects` is empty while the portfolio read is in flight AND when it has
+     failed, so every figure here resolved to a settled 0 — and the `|| 1`
+     divisor turned what would at least have been a visible NaN into a clean
+     "0%", a portfolio-mean readiness computed over no programs. A director
+     reading the header learned they run nothing and have nothing blocked. */
+  const kv = (v: string) => (live.loading || live.error ? '—' : v);
   const health = [
-    { l: 'Active programs', n: String(projects.length), m: 'across MDX, Biotech, Pharma', t: '' },
-    { l: 'Average readiness', n: Math.round(projects.reduce((s, p) => s + p.readiness, 0) / (projects.length || 1)) + '%', m: 'portfolio mean', t: '' },
-    { l: 'Blocked', n: String(projects.filter(p => p.status === 'blocked').length), m: 'need attention', t: 'err' },
-    { l: 'Filing < 60 days', n: String(projects.filter(p => /days/.test(p.due)).length), m: 'near-term submissions', t: 'warn' },
+    { l: 'Active programs', n: kv(String(projects.length)), m: 'across MDX, Biotech, Pharma', t: '' },
+    { l: 'Average readiness', n: kv(Math.round(projects.reduce((s, p) => s + p.readiness, 0) / (projects.length || 1)) + '%'), m: 'portfolio mean', t: '' },
+    { l: 'Blocked', n: kv(String(projects.filter(p => p.status === 'blocked').length)), m: 'need attention', t: 'err' },
+    { l: 'Filing < 60 days', n: kv(String(projects.filter(p => /days/.test(p.due)).length)), m: 'near-term submissions', t: 'warn' },
   ];
   const wss = ['all', 'MDX', 'Biotech', 'Pharma'];
 
+  /* What AnA can see of this screen.
+     The portfolio is the screen a user is most likely to ask a general question
+     on — "which programs are at risk?", "what should I do next?" — and until now
+     she was told only that the surface was called "projects". The button in the
+     header literally sends her "Which programs are at risk this week?" with no
+     way to know which programs exist.
+
+     A FAILED read publishes the failure. `projects` is [] both when the org has
+     no programmes and when the read threw, and a summary saying "0 programs"
+     over an outage would make AnA confidently wrong about a customer's whole
+     portfolio. */
+  const anaContext = useMemo(() => {
+    /* The wizard is a full-canvas view now, so when it is open the portfolio is
+       NOT on screen. Publishing "Projects portfolio: 14 programs, 3 blocked"
+       while the person is looking at a filing-type catalogue would describe a
+       screen that is not there — the same class of untruth as reporting an
+       empty portfolio over a failed read, two branches down. */
+    if (wizardOpen) {
+      return {
+        summary:
+          'The new-project wizard has the screen; the portfolio list is not visible. It walks ' +
+          `three steps — ${STEP_LABELS.join(', ')} — and the step the person is on is the ` +
+          'wizard\'s own state, which this surface does not hold.',
+        availableActions: [
+          'Explain what a filing type commits the programme to',
+          'Cancel the wizard and go back to the portfolio',
+        ],
+      };
+    }
+    if (live.loading) {
+      return { summary: 'The project portfolio is still loading; nothing on screen is final yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'The project portfolio could not be read, so this screen is showing no programs because of a ' +
+          'failure, not because there are none.',
+        availableActions: ['Retry the portfolio read'],
+      };
+    }
+    const blocked = projects.filter(p => p.status === 'blocked');
+    const filtered = ws !== 'all' || status !== 'all';
+    return {
+      summary:
+        `Projects portfolio: ${projects.length} regulatory program(s)` +
+        (filtered ? `, filtered to ${list.length} by workstream "${ws}" and status "${status}"` : '') +
+        `. ${blocked.length} blocked, average readiness ${health[1].n}. Shown as a ${view}.`,
+      facts: {
+        totalPrograms: projects.length,
+        shownInList: list.length,
+        workstreamFilter: ws,
+        statusFilter: status,
+        blockedCount: blocked.length,
+        averageReadiness: health[1].n,
+        // Enough to name a programme back to the user, not the whole row set.
+        programs: list.slice(0, 12).map(p => ({
+          id: p.id, code: p.code, title: p.title, workstream: p.ws, stage: p.stage,
+          status: p.status, readiness: p.readiness, lead: p.lead, due: p.due,
+          blocker: p.blocker ?? null,
+        })),
+      },
+      availableActions: [
+        'Open a program to enter its project home',
+        'Filter the portfolio by workstream (MDX, Biotech, Pharma) or by status',
+        'Switch between the grid and list views',
+        'Create a new project through the new-project wizard',
+      ],
+    };
+  }, [wizardOpen, live.loading, live.error, projects, list, ws, status, view, health]);
+  usePublishSurfaceContext('projects', anaContext);
+
   const openProj = (pr: ProjPortfolioEntry) => {
     try {
-      window.C2C_PROJECT = { id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status };
+      publishShellProject({ id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status });
       if (window.C2C?.setSurface) window.C2C.setSurface('project-home', pr.title);
     } catch (_) { /* noop */ }
     onNav('project-home');
   };
 
+  /* AnA's hands on this screen — the surface-action bus (shared registry:
+     projects.*). Every handler drives the SAME state the human's own controls
+     drive (openProj / setWs / setStatus / setView), so there is no second
+     path; misses are honest refusals, never guesses. */
+  /* One guard for all three: while the wizard owns the canvas, a person may be
+     mid-form — AnA operating the portfolio underneath (or navigating away)
+     would discard their work. Honest refusal instead. */
+  const wizardGuard = () =>
+    wizardOpen ? { ok: false as const, reason: 'The new-project wizard is open — close it first.' } : null;
+  useSurfaceActionHandlers('projects', {
+    'projects.open-program': (params) => {
+      const guarded = wizardGuard();
+      if (guarded) return guarded;
+      const wanted = (params.program ?? '').trim().toLowerCase();
+      if (!wanted) return { ok: false, reason: 'No program named.' };
+      // Not-ready, not failed: the bus holds the directive and re-attempts on
+      // this surface's ready signal below — the navigate→act gap.
+      if (live.loading)
+        return { ok: false, reason: 'The portfolio is still loading.', retry: true };
+      if (live.error) return { ok: false, reason: 'The portfolio could not be read.' };
+      const exact = projects.find(
+        (p) => p.code.toLowerCase() === wanted || p.title.toLowerCase() === wanted,
+      );
+      const contains = exact
+        ? []
+        : projects.filter(
+            (p) => p.title.toLowerCase().includes(wanted) || p.code.toLowerCase().includes(wanted),
+          );
+      const match = exact ?? (contains.length === 1 ? contains[0] : null);
+      if (!match) {
+        return {
+          ok: false,
+          reason:
+            contains.length > 1
+              ? `"${params.program}" matches ${contains.length} programs — name one exactly.`
+              : `No program named "${params.program}" in this portfolio.`,
+        };
+      }
+      openProj(match);
+      return { ok: true, detail: `Opened ${match.code} — ${match.title}` };
+    },
+    'projects.filter': (params) => {
+      const guarded = wizardGuard();
+      if (guarded) return guarded;
+      const applied: string[] = [];
+      if (params.workstream) { setWs(params.workstream); applied.push(`workstream ${params.workstream}`); }
+      if (params.status) { setStatus(params.status); applied.push(`status ${params.status}`); }
+      if (applied.length === 0) return { ok: false, reason: 'No filter named.' };
+      return { ok: true, detail: `Filtered to ${applied.join(', ')}` };
+    },
+    'projects.set-view': (params) => {
+      const guarded = wizardGuard();
+      if (guarded) return guarded;
+      if (params.view !== 'grid' && params.view !== 'list') {
+        return { ok: false, reason: 'View must be grid or list.' };
+      }
+      setView(params.view);
+      return { ok: true, detail: `Switched to the ${params.view} view` };
+    },
+  });
+  /* The ready signal for the retry contract above: when the portfolio read
+     settles, a held not-ready open-program gets its one re-attempt. */
+  useEffect(() => {
+    if (!live.loading) notifySurfaceActionReady('projects');
+  }, [live.loading]);
+
+  /* The wizard takes the canvas instead of floating over it. Placed after every
+     hook above, so the hook order is identical in both branches. It is a state
+     swap and not a navigation on purpose: `onNav` would push a surface change
+     the shell persists, and backing out of a half-filled form would then have to
+     unwind that too. */
+  if (wizardOpen) {
+    return <NewProjectWizard onClose={() => setWizardOpen(false)} onNav={onNav} segment={segment} />;
+  }
+
   return (
-    <div className="page-inner">
+    /* `.page-full` on the shell sets `display:flex; padding:0`, so this is the
+       flex child that has to claim the row and carry its own padding. Using
+       `.page-inner` here is what capped the workspace index at a 1160px reading
+       measure — see the note beside `projects:` in surfaceViews.ts. */
+    <div className="pj-index">
       <div className="ph">
         <div>
           <div className="ph-eyebrow">Workspace</div>
@@ -616,8 +1073,6 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           <button className="btn primary" onClick={() => setWizardOpen(true)}>{I.plus} New project</button>
         </div>
       </div>
-
-      {wizardOpen && <NewProjectWizard onClose={() => setWizardOpen(false)} onNav={onNav} />}
 
       <div className="metrics">
         {health.map((h, i) => (

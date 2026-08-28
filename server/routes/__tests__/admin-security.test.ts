@@ -31,7 +31,7 @@ const fakePool: any = { query: vi.fn().mockResolvedValue({ rows: [] }) };
 vi.mock('../../db.js', () => ({ getPool: () => fakePool, pool: fakePool }));
 
 // Spy on the audit service so we can assert the route logged.
-const auditLogAction = vi.fn().mockResolvedValue(undefined);
+const auditLogAction = vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true }));
 vi.mock('../../services/auditService', () => ({
   default: { logAction: auditLogAction },
 }));

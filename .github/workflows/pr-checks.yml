@@ -34,7 +34,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       # `npm ci` rather than `npm install`: it installs exactly what the
       # lockfile pins instead of resolving and rewriting it, which is both the
@@ -118,6 +118,26 @@ jobs:
         # between them was nobody's test. Adoption may rise and may never fall;
         # the remaining backlog is reported, not failed.
         run: npm run ci:ana-surface-context
+
+      - name: No server error carries the failure text to the client
+        # Ratchet, not a hard requirement. serverError() copied err.message into
+        # the response body while its docstring claimed the envelope was
+        # sanitized, so a route with a missing relation answered the browser
+        # with `relation "software_lifecycle_items" does not exist` — the exact
+        # string the MDX work order's verify step forbids, delivered to whoever
+        # holds the session. Fixing that helper closed 272 call sites and left
+        # 843 that answer a 5xx without it, mostly a copy-pasted local fail().
+        # Client-side redaction does not close this: it scrubs at render time
+        # while the API still ships the string to a proxy log or a saved HAR.
+        # The baseline may shrink and may never grow.
+        run: npm run ci:server-error-leaks
+
+      - name: No API route or table name in user-visible copy
+        # Hard gate, and it was running nowhere. The script has existed since
+        # W0-4 and was referenced only from package.json — absent from all 19
+        # workflows and both husky hooks — so the rule it enforces was checked
+        # only when somebody remembered to run it by hand.
+        run: npm run ci:internals-in-copy
 
       - name: Verify tests for changed code
         run: bash scripts/ai/verify-tests.sh

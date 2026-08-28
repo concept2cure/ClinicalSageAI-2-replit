@@ -3,6 +3,8 @@ import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
@@ -21,6 +23,7 @@ import {
 } from '../fixtures/deep-research-data';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { downloadBlob } from '../download';
 
 /* Real deep-research contract — GET /api/deep-research/board (credits) and
    POST/GET /api/deep-research/jobs (launch + poll). No fabricated fields;
@@ -92,6 +95,50 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
   const [form, setForm] = useState<ConnectorState | null>(null);
   const [depth, setDepth] = useState<ResearchDepth>('standard');
   const [toast, fireToast] = useToast();
+
+  /* ── "Export brief" asked the assistant for a PDF ─────────────────────────
+     `onClick={() => ask('Export this deep-research brief as a PDF.')}` — a
+     download icon that opened a chat turn. The renderer exists:
+     POST /api/concept2cure/artifacts/export-pdf takes { title, content },
+     renders with pdf-lib and responds with the file.
+
+     The brief that gets rendered is the synthesis plus its citation list,
+     assembled from the SAME `job.results` the source table above renders — so
+     what downloads is what is on screen, not a re-derivation. */
+  const [exporting, setExporting] = useState(false);
+
+  const exportBrief = async () => {
+    if (!job?.synthesis || exporting) return;
+    setExporting(true);
+    try {
+      const cited = (job.results || [])
+        .map((r, i) => `[SRC-${i + 1}] ${r.title || r.source || 'Source'}${r.url ? ` — ${r.url}` : ''}`)
+        .join('\n');
+      const content =
+        `${job.synthesis}\n\n` +
+        (cited ? `Sources\n${cited}\n` : 'Sources\nNo sources were returned for this run.\n');
+      const res = await apiRequest('POST', '/api/concept2cure/artifacts/export-pdf', {
+        title: 'Deep research brief',
+        content,
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => null);
+        fireToast(
+          'Brief not exported — ' + (serverMessage(b) ?? `the server refused it (HTTP ${res.status})`) + '.',
+          'error',
+        );
+        return;
+      }
+      downloadBlob('deep-research-brief.pdf', await res.blob());
+    } catch (e) {
+      fireToast(
+        'Brief not exported — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'error',
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
   const [jobId, setJobId] = useState<number | null>(null);
   const [job, setJob] = useState<DrRunJob | null>(null);
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -267,6 +314,88 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
      are absent (not zero) until the board resolves — see `connectorsReady`. */
   const configuredCount = board.data?.configuredCount ?? conn.filter((c) => c.configured).length;
   const connectorCount = board.data?.connectorCount ?? conn.length;
+
+  /* ── AnA's hands + eyes on this screen ────────────────────────────────────
+     The ONE drivable control is the tab switch. The research question, source
+     selection, and depth are never driven from here: filling any of them
+     pre-arms the surface's primary button, which POSTs straight to
+     /api/deep-research/jobs and spends metered research credits — the exact
+     incident the note on `query` above records. Launching stays a human click.
+
+     Refusals are specific: an open credential drawer holds possibly-unsaved
+     values; an in-flight credential save shouldn't be reshuffled under; and a
+     switch away from a running research job would hide a live, metered spend
+     (the person's own tab buttons can — AnA uninvited must not). */
+  useSurfaceActionHandlers('deep-research', {
+    'deep-research.open-tab': (params) => {
+      const target = params.tab === 'connectors' ? 'connectors' : 'research';
+      if (form !== null) {
+        return {
+          ok: false,
+          reason:
+            `The "Configure ${form.name}" credential drawer is open with possibly unsaved values — ` +
+            'close or save it first.',
+        };
+      }
+      if (connBusy !== '') {
+        return { ok: false, reason: 'A connector credential save is in flight — let it finish first.' };
+      }
+      if (tab === target) return { ok: true, detail: `Already on the ${target} tab` };
+      if (target === 'connectors' && phase === 'running') {
+        return {
+          ok: false,
+          reason:
+            'A research run is in progress on the research tab — switching away would hide a live, ' +
+            'credit-metered job. The person can switch themselves if they want to.',
+        };
+      }
+      setTab(target);
+      return { ok: true, detail: `Opened the ${target} tab` };
+    },
+  });
+  /* What AnA can see of this screen, published as itself. The three not-ready
+     states stay distinct: a loading board, a failed board read, and a real
+     inventory — "0 connectors" after an error would turn a failure into a
+     fabricated empty state, and a fabricated credits figure is a spend claim. */
+  const anaContext = React.useMemo(() => {
+    if (board.loading) {
+      return {
+        summary:
+          'The deep-research board is still loading; credits and the connector inventory are not readable yet.',
+      };
+    }
+    if (board.error) {
+      return {
+        summary:
+          'The deep-research board could not be read — credits and the connector inventory are unknown ' +
+          'because of a failure, not because the organization has none.',
+        availableActions: ['Retry the board read'],
+      };
+    }
+    return {
+      summary:
+        `Deep research: the ${tab} tab is open. ` +
+        (credits
+          ? credits.remaining < 0
+            ? 'Research credits this period: unlimited.'
+            : `Research credits this period: ${credits.remaining} of ${credits.limit} remaining.`
+          : 'Credits are not readable from the plan yet.') +
+        ` ${connectorCount} connector(s) for this organization, ${configuredCount} configured.` +
+        (phase === 'running' ? ' A research run is in progress.' : ''),
+      facts: {
+        tab,
+        credits,
+        connectorCount,
+        configuredCount,
+        researchRun: phase,
+      },
+      availableActions: [
+        'Switch between the research and connectors tabs',
+        'Typing the research question, choosing sources and depth, and launching stay human clicks — a launch spends metered research credits',
+      ],
+    };
+  }, [board.loading, board.error, tab, credits, connectorCount, configuredCount, phase]);
+  usePublishSurfaceContext('deep-research', anaContext);
 
   /**
    * Open the credential drawer. Nothing is marked configured here.
@@ -590,12 +719,28 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                             {[r.conn || r.source, r.meta, r.date].filter(Boolean).join(' -- ')}
                           </span>
                         </span>
-                        <button
-                          className="sp-go"
-                          onClick={() => ask('Open source SRC-' + (i + 1) + ': ' + (r.title || r.url || ''))}
-                        >
-                          {I.externalLink}
-                        </button>
+                        {/* Was a chat prompt: "Open source SRC-1: <title>",
+                            which asked the assistant to talk about a source the
+                            user was pointing at. The URL is on the record — the
+                            row above renders from it — so the link opens it. A
+                            record that arrived without one renders no link
+                            rather than a control that cannot go anywhere. */}
+                        {r.url ? (
+                          <a
+                            className="sp-go"
+                            href={r.url}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            aria-label={'Open ' + (r.title || r.source || 'source ' + (i + 1)) + ' in a new tab'}
+                            title={r.url}
+                          >
+                            {I.externalLink}
+                          </a>
+                        ) : (
+                          <span className="sp-go" aria-hidden="true" style={{ opacity: 0.35 }} title="This source arrived without a link">
+                            {I.externalLink}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -641,9 +786,12 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                     </button>
                     <button
                       className="sp-ask"
-                      onClick={() => ask('Export this deep-research brief as a PDF.')}
+                      onClick={() => void exportBrief()}
+                      disabled={exporting || !job?.synthesis}
+                      title={job?.synthesis ? 'Download the synthesis and its citations as a PDF' : 'No synthesis to export yet'}
+                      data-testid="dr-export-brief"
                     >
-                      {I.download} Export brief
+                      {I.download} {exporting ? 'Exporting…' : 'Export brief'}
                     </button>
                   </div>
                 </div>

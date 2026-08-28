@@ -201,3 +201,7 @@
   .c2c-v2 .py-strip{grid-template-columns:repeat(2,1fr);}
   .c2c-v2 .py-glob-grid{grid-template-columns:1fr;}
 }
+
+/* A refused task-status write. Announced where the board is, because the revert
+   would otherwise read as the dropdown snapping back on its own. */
+.py-status-err{margin:0 0 10px;padding:8px 11px;border-radius:var(--radius-md,8px);font-size:12px;line-height:1.5;color:var(--error,#b42318);background:color-mix(in srgb, var(--error,#b42318) 8%, transparent);border:1px solid color-mix(in srgb, var(--error,#b42318) 30%, transparent);}

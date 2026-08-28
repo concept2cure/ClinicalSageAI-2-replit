@@ -6,6 +6,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { saveToAuthoring } from '../authoringHandoff';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
+import { assessmentState, mayReassure } from '../assessmentState';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 
@@ -133,12 +134,173 @@ function genStatisticalInsights(a: ParsedProtocol): string {
   return s;
 }
 
-function genIndReadiness(_a: ParsedProtocol): string {
+/* ── The two design thresholds this reader applies ───────────────────────────
+   Shared with parseProtocol() below, which is where they came from. The IND
+   readiness document now cites the threshold in the sentence that clears a
+   parameter, so the number that raises the risk and the number that clears it
+   must be one constant, not two literals that can drift apart. */
+const SMALL_SAMPLE_N = 60;
+const SHORT_DURATION_WK = 12;
+
+/** One design check the reader actually performs on a parsed protocol. */
+interface ReadinessCheck {
+  /** Was a value for this parameter read out of the protocol at all? */
+  read: boolean;
+  /** Read AND not flagged by the threshold parseProtocol applies. */
+  passed: boolean;
+  /** Line for the Strengths list. Emitted only when `read && passed`. */
+  strength: string;
+  /** Line for the Not Assessed list. Emitted only when `!read`. */
+  gap: string;
+}
+
+/**
+ * The three design checks that exist on this path — the three rules in
+ * parseProtocol() — and, for each, whether there was a value to check.
+ *
+ * `read` is the honest denominator. A check with no value did not run, and a
+ * check that did not run is not a check that passed.
+ */
+function readinessChecks(a: ParsedProtocol): ReadinessCheck[] {
+  const n = a.sample_size || 0;
+  const wk = a.duration_weeks || 0;
+  const ep = (a.primary_endpoint || '').trim();
+  return [
+    {
+      read: Boolean(ep),
+      passed: Boolean(ep),
+      strength: `**Primary endpoint is stated** -- "${ep}". This reader checks that a single primary endpoint is stated; it does not evaluate whether that endpoint is validated, clinically meaningful, or adequately powered.`,
+      gap: `**Primary endpoint** -- no primary endpoint was read from the text, so the endpoints of this protocol have not been assessed.`,
+    },
+    {
+      read: n > 0,
+      passed: n >= SMALL_SAMPLE_N,
+      strength: `**Sample size** -- N=${n}, at or above the ${SMALL_SAMPLE_N} participants below which this reader raises a power risk. This is a threshold check, not a power calculation; the Statistical Insights document carries the power estimates.`,
+      gap: `**Sample size** -- no sample size was read from the text, so no adequacy check could run.`,
+    },
+    {
+      read: wk > 0,
+      passed: wk >= SHORT_DURATION_WK,
+      strength: `**Study duration** -- ${wk} weeks, at or above the ${SHORT_DURATION_WK} weeks below which this reader raises a durability risk.`,
+      gap: `**Study duration** -- no study duration was read from the text, so no follow-up adequacy check could run.`,
+    },
+  ];
+}
+
+/* ── IND readiness: only what the protocol actually supports ─────────────────
+ *
+ * `genIndReadiness(_a)` never read its parameter. The document was a constant,
+ * so every protocol pasted into this surface — any phase, any indication, a
+ * synopsis with no endpoint line at all — produced these same sentences:
+ *
+ *   "## Strengths -- Well-defined primary and secondary endpoints / Clear
+ *    inclusion/exclusion criteria / Appropriate statistical analysis plan /
+ *    Adequate safety monitoring provisions"
+ *   "## Regulatory Guidance -- Aligns with FDA guidance for Phase 2 trials in
+ *    this indication"
+ *
+ * Both were false in concrete, reachable states:
+ *
+ *  - parseProtocol() pushes "Primary endpoint not clearly stated" into
+ *    risk_factors whenever the pasted text carries no `primary endpoint:` line.
+ *    genRecommendations and the AnswerLead headline both surface that as a real
+ *    design risk, while this tab — the same analysis object, the same session —
+ *    called the endpoints well-defined. One document consulted the parse and
+ *    the other was a literal, so the two contradicted each other about the same
+ *    protocol.
+ *  - "Phase 2" was printed over a Phase 1, Phase 3, Phase 4 or phase-unknown
+ *    protocol. `a.phase` is parsed and is used elsewhere in this file
+ *    (genStatisticalInsights, the lead headline, the parsed-parameter strip),
+ *    so the datum was available and simply not consulted here.
+ *
+ * Inclusion/exclusion criteria, the statistical analysis plan and safety
+ * monitoring provisions are read by nothing on this path — no parser field, no
+ * server field. They were never findings of adequacy, so they are not strengths;
+ * they are unassessed, and they now appear under that heading.
+ *
+ * The state follows assessmentState.ts. `assessmentRan` is the number of design
+ * parameters the parse actually extracted — a real denominator — and never
+ * `risk_factors.length === 0`, which is the emptiness this file must not read as
+ * clearance. It is genuinely reachable as false: the live analyzer can return a
+ * protocol_data carrying no sample size, no duration and no endpoint, and in
+ * that state this document now says nothing was assessed instead of asserting
+ * four strengths.
+ */
+function genIndReadiness(a: ParsedProtocol): string {
+  const risks = a.risk_factors || [];
+  const checks = readinessChecks(a);
+  const readChecks = checks.filter((c) => c.read);
+  const strengths = readChecks.filter((c) => c.passed);
+  const gaps = checks.filter((c) => !c.read);
+  const phaseKnown = Boolean(a.phase) && a.phase !== 'Unknown';
+  const indKnown = Boolean(a.indication) && a.indication !== 'Unspecified';
+  const state = assessmentState({
+    scopeExists: readChecks.length > 0 || phaseKnown || indKnown || risks.length > 0,
+    findingCount: risks.length,
+    assessmentRan: readChecks.length > 0,
+  });
+  const coveragePct = Math.round((readChecks.length / checks.length) * 100);
+
   let s = `# IND Readiness Assessment\n\n*Qualitative regulatory guidance — no numeric readiness score is emitted (the codebase returns null until a real scorer is wired).*\n\n`;
-  s += `## Strengths\n\n- Well-defined primary and secondary endpoints\n- Clear inclusion/exclusion criteria\n- Appropriate statistical analysis plan\n- Adequate safety monitoring provisions\n\n`;
-  s += `## Improvement Areas\n\n- Additional details needed on concomitant medication management (FDA 21 CFR 312.23(a)(6))\n- Consider adding interim analysis points (ICH E9, Section 4.5)\n- Strengthen data management plan section (ICH E6(R2), Section 5.5)\n- Expand on randomization implementation details (EMA Guideline on multiplicity issues)\n\n`;
-  s += `## Regulatory Guidance\n\n- Aligns with FDA guidance for Phase 2 trials in this indication\n- Consistent with ICH E6(R2) requirements for Good Clinical Practice\n- Meets basic requirements for EMA Scientific Advice submissions\n- May require additional ethnic considerations for PMDA submission\n\n`;
-  s += `## Citations\n\n- U.S. FDA (2023). IND Application Procedures: Clinical Hold. 21 CFR 312.42\n- EMA (2022). Guideline on the clinical evaluation of anticancer medicinal products. EMA/CHMP/205/95 Rev.6\n- ICH (2016). Integrated Addendum to ICH E6(R1): Guideline for GCP E6(R2)\n\n---\n*Reviewed against FDA/EMA/PMDA guidance. Numeric scoring intentionally omitted.*\n`;
+
+  s += `## Assessment Coverage\n\nThis assessment reads the protocol text as parsed, and nothing else. ${readChecks.length} of ${checks.length} design checks could be run against it.\n\n`;
+  if (state === 'not-assessed') {
+    s += `No design parameter could be read, so none of the checks ran. This document records no strengths and no findings, and neither of those is a statement about your protocol.\n\n`;
+  }
+
+  s += `## Strengths\n\n`;
+  if (strengths.length) {
+    strengths.forEach((c) => { s += `- ${c.strength}\n`; });
+    s += `\n`;
+  } else {
+    /* The second clause is true by construction: the endpoint check passes
+       whenever it can be read, so a read-but-unpassed check is always a sample
+       size or duration below the threshold above. */
+    s += `No strength has been established. ${readChecks.length === 0 ? 'No design parameter was read from the protocol text.' : 'Every parameter that could be read falls below the threshold this reader applies.'}\n\n`;
+  }
+
+  s += `## Points to Address\n\n`;
+  if (risks.length) {
+    risks.forEach((r, i) => { s += `${i + 1}. **${r.description}** (${(r.severity || 'unspecified').toLowerCase()} severity)${r.mitigation ? ` -- Suggested mitigation: ${r.mitigation}` : ''}\n`; });
+    s += `\n`;
+  } else if (mayReassure(state, coveragePct)) {
+    /* The one reassuring sentence in this document, and the only state that may
+       carry it: checks that genuinely ran and raised nothing. It still states
+       its own scope, because clearing 1 of 3 checks is not IND readiness. */
+    s += `The ${readChecks.length === 1 ? 'check' : `${readChecks.length} checks`} that could run raised nothing to address.${gaps.length ? ` That covers ${readChecks.length} of ${checks.length} checks — the rest are under Not Assessed below.` : ''}\n\n`;
+  } else {
+    s += `Nothing is listed here because nothing has been assessed. An empty list is not a finding that the design is sound.\n\n`;
+  }
+
+  /* The four standing IND checklist items below were previously "Improvement
+     Areas" — "Additional details needed on…", "Strengthen…", "Expand on…" —
+     which asserted specific deficiencies in a protocol the function never read.
+     The regulatory citations are carried over verbatim; only the unearned
+     deficiency claim around each one is removed. */
+  s += `## Not Assessed\n\n`;
+  gaps.forEach((c) => { s += `- ${c.gap}\n`; });
+  s += `- **Inclusion/exclusion criteria** -- not read by this analysis.\n`;
+  s += `- **Statistical analysis plan** -- not read by this analysis.\n`;
+  s += `- **Safety monitoring provisions** -- not read by this analysis.\n`;
+  s += `- **Concomitant medication management** (FDA 21 CFR 312.23(a)(6))\n`;
+  s += `- **Interim analysis points** (ICH E9, Section 4.5)\n`;
+  s += `- **Data management plan** (ICH E6(R2), Section 5.5)\n`;
+  s += `- **Randomization implementation details** (EMA Guideline on multiplicity issues)\n\n`;
+  s += `None of the above has been examined against your protocol. Their absence from the findings above is not a finding of adequacy.\n\n`;
+
+  /* Was: "- Aligns with FDA guidance for Phase 2 trials in this indication",
+     emitted for every phase including none. Phase now comes from the parse, and
+     the claim is what is APPLICABLE rather than what was conformed to — nothing
+     on this path checks conformance with any guidance. */
+  s += `## Regulatory Guidance\n\n`;
+  s += phaseKnown
+    ? `- The protocol reads as **Phase ${a.phase}**, so FDA's phase-specific guidance for Phase ${a.phase} studies${indKnown ? ` in ${a.indication}` : ''} is the applicable set. Conformance with it has not been assessed here.\n`
+    : `- No study phase could be read from the protocol text, so no phase-specific FDA guidance has been identified. State the phase in the synopsis and it will be named here.\n`;
+  s += `- ICH E6(R2) Good Clinical Practice applies to this study; conformance is not evaluated by this analysis.\n`;
+  s += `- EMA Scientific Advice has its own submission requirements; this analysis has not checked the protocol against them.\n`;
+  s += `- A PMDA submission may raise ethnic-factor considerations; this analysis has not evaluated them.\n\n`;
+
+  s += `## Citations\n\n- U.S. FDA (2023). IND Application Procedures: Clinical Hold. 21 CFR 312.42\n- EMA (2022). Guideline on the clinical evaluation of anticancer medicinal products. EMA/CHMP/205/95 Rev.6\n- ICH (2016). Integrated Addendum to ICH E6(R1): Guideline for GCP E6(R2)\n\n---\n*The guidance above names what applies to a study of this description. Nothing here has been reviewed against FDA, EMA or PMDA guidance, and no numeric score is emitted.*\n`;
   return s;
 }
 
@@ -210,8 +372,10 @@ function parseProtocol(text: string): ParsedProtocol {
   const dur = num(/(\d{1,3})\s*weeks?/i, 0);
   const endpoint = g(/primary endpoint[:\-]\s*(.+)/i, '');
   const risks: RiskFactor[] = [];
-  if (sample && sample < 60) risks.push({ description: 'Small sample size may limit statistical power', severity: 'high', mitigation: 'Run a formal power analysis and increase enrollment' });
-  if (dur && dur < 12) risks.push({ description: 'Short study duration may miss durable effects', severity: 'medium', mitigation: 'Extend follow-up or add a long-term extension' });
+  /* Thresholds are the shared constants so the IND readiness document can cite
+     the same number that raises the risk here. Values unchanged (60, 12). */
+  if (sample && sample < SMALL_SAMPLE_N) risks.push({ description: 'Small sample size may limit statistical power', severity: 'high', mitigation: 'Run a formal power analysis and increase enrollment' });
+  if (dur && dur < SHORT_DURATION_WK) risks.push({ description: 'Short study duration may miss durable effects', severity: 'medium', mitigation: 'Extend follow-up or add a long-term extension' });
   if (!endpoint) risks.push({ description: 'Primary endpoint not clearly stated', severity: 'medium', mitigation: 'State a single, validated primary endpoint' });
   return { title, indication, phase, sample_size: sample, duration_weeks: dur, primary_endpoint: endpoint, risk_factors: risks };
 }
@@ -278,9 +442,17 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
       if (docType === 'recommendations' && analysis.recommendations) return analysis.recommendations;
       if (docType === 'statistical' && analysis.statistical_insights) return analysis.statistical_insights;
     }
-    return docType === 'recommendations' ? genRecommendations(a, analysis.similar_protocols || [])
-      : docType === 'statistical' ? genStatisticalInsights(a)
-        : genIndReadiness(a);
+    /* Was a three-way ternary whose FINAL branch was `: genIndReadiness(a)`, so
+       every doc type other than 'recommendations' and 'statistical' fell through
+       to it. With the Clinical-Regulatory Graph flag on, that includes the three
+       governed-evidence tabs — Evidence chain, Design risk, Regulatory precedent
+       — which therefore rendered the generic IND Readiness Assessment (and the
+       two false claims it used to carry) under a doc-bar promising sourced,
+       audit-id-carrying evidence. `DocDef.gen` is the registry field that routes
+       those three to genGovernedEvidenceReport(), the function written to say
+       "No trace is available for this document yet" in exactly this situation;
+       it had zero call sites in this file. Dispatching through it is the fix. */
+    return docDef.gen(a, analysis.similar_protocols || []);
   }, [analysis, docType, docDef]);
   const html = useMemo(() => analysis ? renderSafeMarkdown(md) : '', [md, analysis]);
   const a = analysis && analysis.protocol_data;

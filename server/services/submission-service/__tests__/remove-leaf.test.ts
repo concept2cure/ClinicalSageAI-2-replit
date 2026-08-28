@@ -45,7 +45,7 @@ vi.mock('../../../db', () => {
   };
 });
 
-const logAction = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const logAction = vi.hoisted(() => vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }));
 vi.mock('../../auditService', () => ({
   default: { logAction },
 }));

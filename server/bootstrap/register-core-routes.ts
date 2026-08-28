@@ -22,8 +22,8 @@ import cmcModule3AutoDraftRoutes from '../api/cmc/module3AutoDraftRoutes';
 import cmcCollaborationRoutes from '../api/cmc/collaborationRoutes';
 import cmcDocumentRoutes from '../api/cmc/documentRoutes';
 import cmcModule3BoardRoutes from '../routes/cmc-module3-board.routes';
+import cmcAgencyQuestionRoutes from '../routes/cmc-agency-questions.routes';
 import aiAssistanceRoutes, { setAIService } from '../routes/ai-assistance';
-import intelligentDocsRoutes from '../routes/intelligentDocs';
 import controlPlaneRouter from '../src/routes/control-plane.router';
 import pmSettingsRouter from '../src/routes/pm-settings.router';
 import { getAIRouter } from '../services/aiProviderRouter.js';
@@ -85,6 +85,9 @@ export function registerCoreRoutes({
     app.use('/api/cmc/documents', cmcDocumentRoutes);
     // Module 3 board — portfolio + governed section read-model for the ui-v2 cmc surface.
     app.use('/api/cmc/module3-board', authenticateToken, cmcModule3BoardRoutes());
+    // Agency questions — the org-scoped WRITE half of the correspondence loop
+    // the board reads (log a question, triage status/assignee/due date).
+    app.use('/api/cmc/agency-questions', authenticateToken, cmcAgencyQuestionRoutes());
     // /api/cmc/dashboard removed — backed by Prisma which was excised in
     // 066acdb. Route file (cmc-dashboard-prisma.ts) had zero callers.
     console.log('✅ CMC Module API routes mounted');
@@ -103,13 +106,17 @@ export function registerCoreRoutes({
   }
 
   try {
-    // Mount-level auth (H2): both families are tenant/admin surfaces whose
-    // handlers assume an authenticated req.user (getSecureOrgId /
-    // requireControlPlaneAccess) — no public endpoints inside.
-    app.use('/api/intelligent-docs', authenticateToken, intelligentDocsRoutes);
+    // Mount-level auth (H2): the control plane is a tenant/admin surface whose
+    // handlers assume an authenticated req.user (requireControlPlaneAccess) —
+    // no public endpoints inside.
+    // REMOVED: /api/intelligent-docs (routes/intelligentDocs.ts) — mounted,
+    // auth-gated, and unreachable: zero callers anywhere in the repository
+    // (client, server, tests). It fronted its own source/link tables beside
+    // the canonical authoring citation store; deleted per the zero-duplication
+    // rule rather than left as a parallel write path nothing reads.
     app.use('/api/control-plane', authenticateToken, controlPlaneRouter);
     app.use('/api/pm-settings', pmSettingsRouter);
-    console.log('✅ Intelligent Docs + PM Settings routes mounted');
+    console.log('✅ Control Plane + PM Settings routes mounted');
   } catch (error) {
     console.error('❌ Failed to mount core feature routes:', error);
   }

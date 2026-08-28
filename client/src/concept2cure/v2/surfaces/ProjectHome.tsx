@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData, hasKeys, liveMutateOrNull, type DataState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { getSegmentModules, getSurfaceMeta } from '../registryModel';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
 import { useChatUpload, attachmentReadLabel as readLabel } from '../../hooks/useChatUpload';
@@ -17,7 +19,18 @@ import '../styles/project-home-v2.css';
    (parseInt of a UUID would load a different project in the same org). */
 declare global {
   interface Window {
-    C2C_PROJECT?: Record<string, string>;
+    /* Typed by its owner, `../shellProject` (ShellProject), not re-declared as
+       a string map here.
+
+       This read `Record<string, string>`, which was harmless while nothing else
+       typed the global — but a `declare global` block MERGES, so when
+       shellProject.ts became the channel's owner and assigned a real
+       `ShellProject`, TypeScript intersected the two into
+       `Record<string, string> & ShellProject` and rejected every write: a
+       ShellProject has no string index signature. That broke the typecheck for
+       the whole repository from a file neither end of the assignment mentions,
+       which is the specific cost of declaring another module's global. */
+    C2C_PROJECT?: import('../shellProject').ShellProject;
     C2C_CONVO?: Record<string, string>;
     /** cre_evidence_sources ids the user pinned in the data room as AnA context. */
     C2C_SOURCE_PINS?: string[];
@@ -1038,7 +1051,22 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   // Selected-project identity handed off from the Projects surface. Its `id` is
   // the C2C regulatory_programs UUID, which keys the /api/c2c/projects/:id
   // read-models. 'new' (wizard transient) has no persisted record → no fetch.
-  const pid = sel?.id && sel.id !== 'new' ? sel.id : null;
+  //
+  // The `typeof === 'string'` test is the id-SPACE guard this file's header
+  // asks for, and it only became expressible once the global stopped being
+  // declared here as `Record<string, string>` and started carrying its owner's
+  // real `ShellProject` type — whose `id` is `string | number`.
+  //
+  // A NUMBER here is a `projects.id`, not a `regulatory_programs` UUID: a
+  // different id-space, and one this surface's read-models are not keyed on.
+  // Coercing it with `String(...)` would compile and then fetch
+  // /api/c2c/projects/42 — a well-formed request for a DIFFERENT project in the
+  // same organization, returning a real, plausible, wrong program with no error
+  // anywhere. That is the mirror of the hazard the header already warns about
+  // ("parseInt of a UUID would load a different project in the same org"), and
+  // it is why this resolves to null instead: no project is a state the surface
+  // renders honestly, whereas the wrong project is not.
+  const pid = typeof sel?.id === 'string' && sel.id !== 'new' ? sel.id : null;
 
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
   const progState = useLiveData<ProgramRow>(pid ? `/api/c2c/projects/${pid}` : null);
@@ -1072,6 +1100,127 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
 
   const noProject = !pid;
 
+  /* What AnA can see of this screen.
+     Project home is where "what should I do next?" is most likely to be asked
+     and least answerable from a screen name — the whole page is one programme's
+     state. Five reads back it, each able to fail alone, so each publishes its
+     own state rather than one merged verdict.
+
+     NO PROJECT SELECTED is published as itself. Every panel below is empty in
+     that case, and reporting that as "this programme has no team, no drafts and
+     no activity" would describe a customer's programme from a missing handoff. */
+  const anaContext = useMemo(() => {
+    if (noProject) {
+      return {
+        summary:
+          'Project home has no project selected, so none of the panels on screen are populated. This is a ' +
+          'missing selection, not an empty programme.',
+        availableActions: ['Open a project from All projects to load its governed workspace'],
+      };
+    }
+    if (progState.error) {
+      return {
+        summary:
+          'This project record could not be read, so the workspace below is empty because of a failure, ' +
+          'not because the programme has nothing in it.',
+        facts: { projectId: pid, stage },
+        availableActions: ['Return to All projects and try again'],
+      };
+    }
+    if (progState.loading) {
+      return { summary: 'The project record is still loading; nothing on screen is final yet.', facts: { projectId: pid, stage } };
+    }
+    const team = teamState.data?.team;
+    const activity = activityState.data?.activity;
+    const workstreams = wsState.data?.workstreams;
+    const drafts = draftsState.data?.drafts;
+    return {
+      summary:
+        `Project home for "${title}"${submissionType ? ` (${submissionType})` : ''}: ` +
+        [status && `status ${status}`, phase && `phase ${phase}`, priority && `priority ${priority}`,
+         region && `primary agency ${region}`, indication && `indication ${indication}`,
+         completion != null && `${completion}% complete`].filter(Boolean).join(', ') +
+        `. The "${stage}" stage is open.`,
+      facts: {
+        projectId: pid,
+        openStage: stage,
+        program: {
+          title, product: productName, code: submissionType, description: desc,
+          clientType, primaryAgency: region, indication, status, priority, phase,
+          progressPercent: completion,
+          targetSubmissionDate: prog?.target_submission_date ?? null,
+        },
+        team: teamState.loading || teamState.error || !Array.isArray(team)
+          ? null
+          : team.slice(0, 12).map((t) => ({ name: t.name, role: t.role })),
+        teamUnavailable: teamState.error ? 'the team read failed' : null,
+        workstreams: wsState.loading || wsState.error || !Array.isArray(workstreams)
+          ? null
+          : workstreams.map((w) => ({
+              module: w.module, total: w.total, todo: w.todo,
+              completionPercent: w.completion_pct, lastUpdated: w.last_updated,
+            })),
+        workstreamsUnavailable: wsState.error ? 'the workstream rollup read failed' : null,
+        recentDrafts: draftsState.loading || draftsState.error || !Array.isArray(drafts)
+          ? null
+          : drafts.slice(0, 10).map((d) => ({
+              id: d.id, section: d.section_key, label: d.label, status: d.status,
+              version: d.version, documentTitle: d.document_title,
+              docType: d.doc_type, updated: d.updated_at,
+            })),
+        draftsUnavailable: draftsState.error ? 'the drafts read failed' : null,
+        recentActivity: activityState.loading || activityState.error || !Array.isArray(activity)
+          ? null
+          : activity.slice(0, 10).map((a) => ({
+              action: a.action, resourceType: a.resource_type, occurredAt: a.occurred_at,
+            })),
+        activityUnavailable: activityState.error ? 'the activity read failed' : null,
+      },
+      availableActions: [
+        'Move through the programme lifecycle stages',
+        'Open a recent draft section in the document editor',
+        'Open this project\u2019s documents in the Vault surface, or its filings in the Submission Center',
+        'Read the per-module completion rollup and the recent audited activity',
+      ],
+    };
+  }, [noProject, pid, stage, progState.loading, progState.error, prog, title, productName, desc, clientType,
+      submissionType, region, indication, status, priority, phase, completion,
+      teamState.loading, teamState.error, teamState.data,
+      activityState.loading, activityState.error, activityState.data,
+      wsState.loading, wsState.error, wsState.data,
+      draftsState.loading, draftsState.error, draftsState.data]);
+  usePublishSurfaceContext('project-home', anaContext);
+
+  /* AnA's hands on this screen — the surface-action bus (shared registry:
+     project-home.*, identity-resolved). The one action drives the SAME state
+     the StageTracker's own buttons drive (setStage). Stage is pure view state:
+     it selects which panels render over whatever the five reads deliver, so —
+     same reasoning as vault.search — applying it mid-load is correct, not
+     early, and there is no loading refusal and no retry.
+
+     Known gap, not expressible today: leaving the 'author' stage unmounts its
+     composer, whose in-progress draft is child-local state this handler cannot
+     see — a mid-message guard would need that state lifted out of the child.
+     The registry entry's description already warns AnA not to switch away from
+     author uninvited. */
+  useSurfaceActionHandlers('project-home', {
+    'project-home.set-stage': (params) => {
+      if (noProject)
+        return { ok: false, reason: 'No project is selected — open one from All projects.' };
+      const target = (params.stage ?? '').trim();
+      const meta = PJ_LIFECYCLE.find((s) => s.id === target);
+      if (!meta) return { ok: false, reason: `No lifecycle stage named "${params.stage}".` };
+      setStage(meta.id);
+      return { ok: true, detail: `Opened the ${meta.id} stage` };
+    },
+  });
+  /* Ready signal — harmless even though set-stage never answers retry: a
+     directive stashed across the navigate→mount gap is re-attempted by the
+     registration itself, and this keeps the surface on the uniform contract. */
+  useEffect(() => {
+    if (!progState.loading) notifySurfaceActionReady('project-home');
+  }, [progState.loading]);
+
   return (
     <div className="page-inner pj">
       <button className="pj-back" onClick={() => onNav('projects')}>{I.left} All projects</button>
@@ -1095,9 +1244,22 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
             {phase && <span className="rd-chip tone-idle">{phase}</span>}
           </div>
         </div>
-        <div className="pj-top-actions">
-          <button className="pj-icon" title="Project settings" onClick={() => onNav('projects')}>{I.more}</button>
-        </div>
+        {/* ── The ⋯ button called "Project settings" is gone ─────────────────
+            Its handler was `onNav('projects')`: it did not open settings, it
+            threw the user out of the project workspace they were in and back
+            to the all-projects list — the exact opposite of what its tooltip
+            promised, and a duplicate of the "All projects" control two rows
+            above it.
+
+            It is removed rather than relabelled or rewired because there is
+            nothing behind it: `shared/constants/ui-surface-registry.ts` has no
+            project-settings surface, and `server/routes/c2c/projects.ts`
+            exposes no PATCH/PUT for a regulatory program at all (only POST /,
+            POST /:id/evidence and DELETE /:id/evidence/:evId). A project's
+            settings cannot be edited anywhere in the product today, so any
+            destination this button reached would be a second lie in place of
+            the first. When a settings surface and its governed write exist,
+            this is where the control belongs. */}
       </div>
 
       <StageTracker stage={stage} setStage={setStage} />

@@ -38,12 +38,12 @@ async function loginAndNavigate(page: Page): Promise<void> {
   await page.goto(`${BASE_URL}/concept2cure/login`, { waitUntil: 'domcontentloaded' });
 
   // Fill login form
-  await page.fill('input[type="email"]', 'jm.smith@concept2cure.pro');
+  await page.fill('input[type="email"]', 'jonmichaelpsmith@gmail.com');
   await page.click('button:has-text("Continue")');
 
   const passwordInput = page.locator('input[type="password"]');
   await expect(passwordInput).toBeVisible({ timeout: 10000 });
-  await page.fill('input[type="password"]', 'Concept2Cure2026!');
+  await page.fill('input[type="password"]', 'Seahawks12s!');
   await page.click('button:has-text("Sign in")');
 
   // Wait for auth redirect to main app

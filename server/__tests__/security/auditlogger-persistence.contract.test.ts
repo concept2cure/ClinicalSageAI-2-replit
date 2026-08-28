@@ -13,26 +13,33 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-/** What the real `auditService.logAction` resolves with (AuditWriteResult). */
-const WROTE = { persisted: true, chained: true, tamperProof: true } as const;
-
 const { logAction } = vi.hoisted(() => ({
   // Typed param so `logAction.mock.calls[0][0]` is the forwarded entry (not an
   // empty-tuple element) — keeps the field-mapping assertions below type-safe.
-  //
-  // It RESOLVES WITH THE RESULT, because that is what the real one does.
-  // This double used to resolve `undefined`, from before `logAction` reported
-  // its own outcome; the caller reads `canonical.persisted` and every test here
-  // died on `Cannot read properties of undefined`. A stand-in that does not
-  // honour the contract it stands in for tests nothing about the real thing.
-  logAction: vi.fn(async (_entry: Record<string, any>) => ({
-    persisted: true, chained: true, tamperProof: true,
-  })),
+  // Typed to the real AuditWriteResult shape — including the optional `error`
+  // — so mockResolvedValueOnce can express a failed write below.
+  logAction: vi.fn(
+    async (
+      _entry: Record<string, any>,
+    ): Promise<{ persisted: boolean; chained: boolean; tamperProof: boolean; error?: string }> => ({
+      persisted: true,
+      chained: true,
+      tamperProof: true,
+    }),
+  ),
 }));
 
 // auditLogger imports auditService via '../auditService'; intercept that module.
 vi.mock('../../services/auditService', () => ({
   default: { logAction },
+}));
+
+/* The module builds its logger at import time with createScopedLogger('audit'),
+   so the only way to observe the "record was lost" line is to own the factory. */
+const { logError } = vi.hoisted(() => ({ logError: vi.fn() }));
+vi.mock('../../utils/logger', () => ({
+  createScopedLogger: () => ({ info: vi.fn(), error: logError, warn: vi.fn(), debug: vi.fn() }),
+  createContextLogger: () => ({ info: vi.fn(), error: logError, warn: vi.fn(), debug: vi.fn() }),
 }));
 
 import {
@@ -44,12 +51,12 @@ import {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  logAction.mockImplementation(async () => ({ ...WROTE }));
+  logAction.mockImplementation(async () => ({ persisted: true, chained: true, tamperProof: true }));
 });
 
 describe('Part 11 — auditLogger forwards every event to the persistent store', () => {
   it('logAuditEvent persists through auditService with a mapped entry', async () => {
-    const id = await logAuditEvent({
+    const outcome = await logAuditEvent({
       category: 'document',
       severity: 'info',
       action: 'opened',
@@ -61,7 +68,11 @@ describe('Part 11 — auditLogger forwards every event to the persistent store',
       success: true,
     });
 
-    expect(typeof id).toBe('string');
+    // The return is the persistence OUTCOME. It used to be `audit_<ts>_<rand>`,
+    // an id that indexed nothing — not the audit_logs key, and never looked up
+    // in the in-memory store either — so `typeof id === 'string'` was the only
+    // assertion it could support.
+    expect(outcome).toMatchObject({ persisted: true, chained: true });
     expect(logAction).toHaveBeenCalledTimes(1);
     const entry = logAction.mock.calls[0]![0];
     expect(entry).toMatchObject({
@@ -118,11 +129,33 @@ describe('Part 11 — auditLogger forwards every event to the persistent store',
     });
   });
 
-  it('a persistence failure never breaks the caller (best-effort)', async () => {
-    logAction.mockRejectedValueOnce(new Error('db down'));
-    // logExport must still resolve with an id even if the persistent write rejects.
-    const id = await logExport('u1', 'org7', 'pdf', ['r1', 'r2']);
-    expect(typeof id).toBe('string');
+  /**
+   * This asserted resilience to a REJECTION, which auditService.logAction cannot
+   * produce. Every await inside it — the chained audit_logs transaction and the
+   * tamper-proof log — sits in its own try/catch, and it ends in a plain
+   * `return`; that is the documented contract the dead-audit-catch CI gate
+   * enforces elsewhere, and it was re-verified against the source here rather
+   * than assumed. Mocking a rejection therefore tested a state the system has no
+   * way to reach, while the state it DOES reach — a write that resolves having
+   * persisted nothing — went unasserted.
+   */
+  it('a lost audit record never breaks the caller, and is reported', async () => {
+    logAction.mockResolvedValueOnce({
+      persisted: false,
+      chained: false,
+      tamperProof: false,
+      error: 'db down',
+    });
+
+    const outcome = await logExport('u1', 'org7', 'pdf', ['r1', 'r2']);
+
+    // The export itself must survive — an audit outage may not destroy the user
+    // action it exists to record.
+    expect(outcome.persisted).toBe(false);
     expect(logAction).toHaveBeenCalledTimes(1);
+    // …and the loss must be loud. A §11.10(e) record that vanished silently is
+    // the failure this whole module was rewritten to prevent.
+    expect(logError).toHaveBeenCalled();
+    expect(String(logError.mock.calls[0]?.[0])).toMatch(/NOT persisted/i);
   });
 });

@@ -1,5 +1,25 @@
 import { FDAFormsRegistry, FDA_FORMS_RELEASE_READINESS, FormField, FDAFormDefinition, governedFormDefinition, getRequiredForms, getFormsForStage } from '../config/FDAFormsRegistry';
 
+/**
+ * HTML-escape one interpolated value.
+ *
+ * This existed already — scoped INSIDE `generateUniversalFormHTML`, where the
+ * four legacy builders (3514, 3601, 3881, 3654) could not reach it. They
+ * interpolated applicant, device and certifier fields raw into stored FDA form
+ * drafts, and those builders are LIVE: `server/routes/fda-forms.routes.ts`
+ * calls all four from a router mounted unconditionally at `/api/fda-forms`.
+ *
+ * An applicant named "Smith & Nephew", or a device name containing `<`, silently
+ * corrupts a stored Form 3514 draft that carries a compliance score and an audit
+ * entry asserting it was generated correctly. Stored-XSS is latent (no renderer
+ * for these drafts exists today); the confirmed harm is document integrity, on a
+ * document that goes to an agency.
+ */
+const escapeHtml = (value: unknown): string =>
+  String(value ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 export default class FDAFormGenerator {
   /**
    * Universal SMART Form Generator
@@ -126,9 +146,6 @@ export default class FDAFormGenerator {
    * Generate universal HTML for any form
    */
   private generateUniversalFormHTML(formDefinition: FDAFormDefinition, formData: any): string {
-    const escapeHtml = (value: unknown) => String(value ?? '')
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     let html = `
 <!DOCTYPE html>
 <html>
@@ -261,7 +278,11 @@ export default class FDAFormGenerator {
     // Extract data from various sources
     const applicantName = organization?.name || 'Not Specified';
     const deviceName = fda510kProject?.deviceName || formData?.device_specs?.deviceName || 'Not Specified';
-    const deviceClass = fda510kProject?.deviceClassification || formData?.device_specs?.deviceClassification || 'Class II';
+    // Never fabricate a device classification. Class determines the entire
+    // premarket pathway; asserting "Class II" for an unclassified device misstates
+    // the regulatory class to CDRH. Absent an established classification, render it
+    // as unset (and the completeness filter below correctly counts it unfilled).
+    const deviceClass = fda510kProject?.deviceClassification || formData?.device_specs?.deviceClassification || 'Not Specified';
     const productCode = fda510kProject?.productCode || formData?.device_specs?.productCode || '';
     const regulationNumber = fda510kProject?.regulationNumber || formData?.device_specs?.regulationNumber || '';
     
@@ -311,11 +332,18 @@ export default class FDAFormGenerator {
     const formData3601 = {
       applicantName: organization?.name || 'Not Specified',
       deviceName: fda510kProject?.deviceName || 'Not Specified',
-      feeCategory: 'Standard 510(k)',
-      paymentMethod: workflowData?.feeInfo?.paymentMethod || 'Check',
+      // Never assert a fee posture the filer did not provide. A hardcoded
+      // "Standard 510(k)" / $19,870 / not-small-business misstates the User Fee
+      // Cover Sheet for a small-business or differently-categorized filer. Absent
+      // explicit fee info, render unset (completeness below counts it unfilled).
+      feeCategory: workflowData?.feeInfo?.feeCategory || 'Not Specified',
+      paymentMethod: workflowData?.feeInfo?.paymentMethod || 'Not Specified',
       referenceNumber: workflowData?.feeInfo?.referenceNumber || '',
-      smallBusiness: workflowData?.feeInfo?.smallBusiness || false,
-      feeAmount: workflowData?.feeInfo?.feeAmount || 19870, // FY2025 standard fee
+      smallBusiness:
+        typeof workflowData?.feeInfo?.smallBusiness === 'boolean'
+          ? workflowData.feeInfo.smallBusiness
+          : undefined,
+      feeAmount: workflowData?.feeInfo?.feeAmount ?? null,
       // Certification date comes from the actual signing/submission event, not now().
       submissionDate: ''
     };
@@ -396,7 +424,15 @@ export default class FDAFormGenerator {
       // true. Source each from an explicit input and default to false (unchecked)
       // so a generated draft never pre-certifies compliance the user hasn't affirmed.
       certificationStatement: workflowData?.certification?.certificationStatement === true,
-      clinicalStudies: fda510kProject?.hasClinicalData || false,
+      // Tri-state, never inferred from whether data was uploaded. The signer must
+      // explicitly state whether clinical studies were conducted; until they do,
+      // this is undefined and NEITHER box is checked (see render). Deriving "WERE
+      // NOT conducted" from an absent `hasClinicalData` would put an affirmative
+      // negative certification the signer never made onto a Part 11 statement.
+      clinicalStudies:
+        typeof workflowData?.certification?.clinicalStudiesConducted === 'boolean'
+          ? workflowData.certification.clinicalStudiesConducted
+          : undefined,
       financialInterests: workflowData?.certification?.financialInterests || false,
       deviceCompliance: workflowData?.certification?.deviceCompliance === true,
       truthfulStatement: workflowData?.certification?.truthfulStatement === true,
@@ -456,23 +492,23 @@ export default class FDAFormGenerator {
     <div class="section-title">APPLICANT INFORMATION</div>
     <div class="field-group">
       <span class="field-label">Applicant Name:</span>
-      <span class="field-value">${data.applicantName}</span>
+      <span class="field-value">${escapeHtml(data.applicantName)}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Contact Person:</span>
-      <span class="field-value">${data.contactName || 'Not Provided'}</span>
+      <span class="field-value">${escapeHtml(data.contactName || 'Not Provided')}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Phone Number:</span>
-      <span class="field-value">${data.contactPhone || 'Not Provided'}</span>
+      <span class="field-value">${escapeHtml(data.contactPhone || 'Not Provided')}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Email Address:</span>
-      <span class="field-value">${data.contactEmail || 'Not Provided'}</span>
+      <span class="field-value">${escapeHtml(data.contactEmail || 'Not Provided')}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Establishment Registration:</span>
-      <span class="field-value">${data.establishmentNumber || 'Not Provided'}</span>
+      <span class="field-value">${escapeHtml(data.establishmentNumber || 'Not Provided')}</span>
     </div>
   </div>
 
@@ -480,19 +516,19 @@ export default class FDAFormGenerator {
     <div class="section-title">DEVICE INFORMATION</div>
     <div class="field-group">
       <span class="field-label">Device Trade Name:</span>
-      <span class="field-value">${data.deviceName}</span>
+      <span class="field-value">${escapeHtml(data.deviceName)}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Device Classification:</span>
-      <span class="field-value">${data.deviceClass}</span>
+      <span class="field-value">${escapeHtml(data.deviceClass)}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Product Code:</span>
-      <span class="field-value">${data.productCode || 'Not Provided'}</span>
+      <span class="field-value">${escapeHtml(data.productCode || 'Not Provided')}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Regulation Number:</span>
-      <span class="field-value">${data.regulationNumber || 'Not Provided'}</span>
+      <span class="field-value">${escapeHtml(data.regulationNumber || 'Not Provided')}</span>
     </div>
   </div>
 
@@ -500,11 +536,11 @@ export default class FDAFormGenerator {
     <div class="section-title">SUBMISSION INFORMATION</div>
     <div class="field-group">
       <span class="field-label">Submission Type:</span>
-      <span class="field-value">${data.submissionType}</span>
+      <span class="field-value">${escapeHtml(data.submissionType)}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Date Prepared:</span>
-      <span class="field-value">${data.submissionDate}</span>
+      <span class="field-value">${escapeHtml(data.submissionDate)}</span>
     </div>
   </div>
 
@@ -553,11 +589,11 @@ export default class FDAFormGenerator {
     <div class="section-title">APPLICANT INFORMATION</div>
     <div class="field-group">
       <span class="field-label">Applicant Name:</span>
-      <span class="field-value">${data.applicantName}</span>
+      <span class="field-value">${escapeHtml(data.applicantName)}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Device Name:</span>
-      <span class="field-value">${data.deviceName}</span>
+      <span class="field-value">${escapeHtml(data.deviceName)}</span>
     </div>
   </div>
 
@@ -565,15 +601,15 @@ export default class FDAFormGenerator {
     <div class="section-title">FEE INFORMATION</div>
     <div class="field-group">
       <span class="field-label">Fee Category:</span>
-      <span class="field-value">${data.feeCategory}</span>
+      <span class="field-value">${escapeHtml(data.feeCategory)}</span>
     </div>
     <div class="fee-box">
       <div class="field-group">
         <span class="field-label">FY 2025 Fee Amount:</span>
-        <span class="field-value">$${data.feeAmount?.toLocaleString() || '19,870'}</span>
+        <span class="field-value">${data.feeAmount != null ? '$' + Number(data.feeAmount).toLocaleString() : 'Not Specified'}</span>
       </div>
       <div class="checkbox-group">
-        <input type="checkbox" class="checkbox" ${data.smallBusiness ? 'checked' : ''}>
+        <input type="checkbox" class="checkbox" ${data.smallBusiness === true ? 'checked' : ''}>
         <label>Small Business Qualified (Reduced Fee Applies)</label>
       </div>
     </div>
@@ -595,7 +631,7 @@ export default class FDAFormGenerator {
     </div>
     <div class="field-group" style="margin-top: 15px;">
       <span class="field-label">Payment Reference:</span>
-      <span class="field-value">${data.referenceNumber || 'Will be provided upon payment'}</span>
+      <span class="field-value">${escapeHtml(data.referenceNumber || 'Will be provided upon payment')}</span>
     </div>
   </div>
 
@@ -604,7 +640,7 @@ export default class FDAFormGenerator {
     <p>I certify that the information provided is complete and accurate and that the appropriate user fee has been paid.</p>
     <div class="field-group" style="margin-top: 20px;">
       <span class="field-label">Date:</span>
-      <span class="field-value">${data.submissionDate}</span>
+      <span class="field-value">${escapeHtml(data.submissionDate)}</span>
     </div>
   </div>
 
@@ -656,7 +692,7 @@ export default class FDAFormGenerator {
     </div>
     <div class="field-group">
       <span class="field-label">Device Name:</span>
-      <span class="field-value" style="min-height: 30px;">${data.deviceName}</span>
+      <span class="field-value" style="min-height: 30px;">${escapeHtml(data.deviceName)}</span>
     </div>
   </div>
 
@@ -664,16 +700,16 @@ export default class FDAFormGenerator {
     <div class="section-title">INDICATIONS FOR USE</div>
     <div class="field-group">
       <span class="field-label">Intended Use:</span>
-      <div class="field-value">${data.intendedUse}</div>
+      <div class="field-value">${escapeHtml(data.intendedUse)}</div>
     </div>
     <div class="field-group">
       <span class="field-label">Indications for Use:</span>
-      <div class="field-value">${data.indications}</div>
+      <div class="field-value">${escapeHtml(data.indications)}</div>
     </div>
     ${data.patientPopulation ? `
     <div class="field-group">
       <span class="field-label">Patient Population:</span>
-      <div class="field-value">${data.patientPopulation}</div>
+      <div class="field-value">${escapeHtml(data.patientPopulation)}</div>
     </div>
     ` : ''}
   </div>
@@ -695,16 +731,16 @@ export default class FDAFormGenerator {
     <div class="section-title">COMPARISON TO PREDICATE DEVICE</div>
     <div class="field-group">
       <span class="field-label">Predicate Device:</span>
-      <div class="field-value" style="min-height: 30px;">${data.predicateDevice || 'Not Provided'}</div>
+      <div class="field-value" style="min-height: 30px;">${escapeHtml(data.predicateDevice || 'Not Provided')}</div>
     </div>
     <div class="field-group">
       <span class="field-label">Predicate 510(k) Number:</span>
-      <div class="field-value" style="min-height: 30px;">${data.predicateK || 'Not Provided'}</div>
+      <div class="field-value" style="min-height: 30px;">${escapeHtml(data.predicateK || 'Not Provided')}</div>
     </div>
     ${data.comparisonStatement ? `
     <div class="field-group">
       <span class="field-label">Comparison Statement:</span>
-      <div class="field-value">${data.comparisonStatement}</div>
+      <div class="field-value">${escapeHtml(data.comparisonStatement)}</div>
     </div>
     ` : ''}
   </div>
@@ -764,19 +800,19 @@ export default class FDAFormGenerator {
     <div class="section-title">SUBMISSION INFORMATION</div>
     <div class="field-group">
       <span class="field-label">Applicant/Sponsor:</span>
-      <span class="field-value">${data.applicantName}</span>
+      <span class="field-value">${escapeHtml(data.applicantName)}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Device Name:</span>
-      <span class="field-value">${data.deviceName}</span>
+      <span class="field-value">${escapeHtml(data.deviceName)}</span>
     </div>
   </div>
 
   <div class="certification-box">
     <div class="section-title">CERTIFICATION</div>
     <p style="text-align: justify; line-height: 1.6;">
-      I certify that, in my capacity as <strong>${data.certifierTitle || '(Title)'}</strong> of 
-      <strong>${data.applicantName}</strong>, I believe to the best of my knowledge, that all data and 
+      I certify that, in my capacity as <strong>${escapeHtml(data.certifierTitle || '(Title)')}</strong> of 
+      <strong>${escapeHtml(data.applicantName)}</strong>, I believe to the best of my knowledge, that all data and 
       information submitted in the premarket notification are truthful and accurate and that no material 
       fact has been omitted.
     </p>
@@ -795,11 +831,11 @@ export default class FDAFormGenerator {
   <div class="section">
     <div class="section-title">CLINICAL INVESTIGATIONS</div>
     <div class="checkbox-group">
-      <input type="checkbox" class="checkbox" ${data.clinicalStudies ? 'checked' : ''}>
+      <input type="checkbox" class="checkbox" ${data.clinicalStudies === true ? 'checked' : ''}>
       <label><strong>Clinical studies WERE conducted</strong> to support this 510(k)</label>
     </div>
     <div class="checkbox-group">
-      <input type="checkbox" class="checkbox" ${!data.clinicalStudies ? 'checked' : ''}>
+      <input type="checkbox" class="checkbox" ${data.clinicalStudies === false ? 'checked' : ''}>
       <label><strong>Clinical studies WERE NOT conducted</strong> to support this 510(k)</label>
     </div>
     
@@ -830,18 +866,18 @@ export default class FDAFormGenerator {
       </div>
       <div>
         <span style="display: inline-block; width: 300px;">
-          <strong>Signature:</strong> ${data.certifierName || ''}
+          <strong>Signature:</strong> ${escapeHtml(data.certifierName || '')}
         </span>
         <span style="display: inline-block; width: 300px;">
-          <strong>Date:</strong> ${data.signatureDate}
+          <strong>Date:</strong> ${escapeHtml(data.signatureDate)}
         </span>
       </div>
       <div style="margin-top: 10px;">
         <span style="display: inline-block; width: 300px;">
-          <strong>Typed Name:</strong> ${data.certifierName || ''}
+          <strong>Typed Name:</strong> ${escapeHtml(data.certifierName || '')}
         </span>
         <span style="display: inline-block; width: 300px;">
-          <strong>Title:</strong> ${data.certifierTitle}
+          <strong>Title:</strong> ${escapeHtml(data.certifierTitle)}
         </span>
       </div>
     </div>

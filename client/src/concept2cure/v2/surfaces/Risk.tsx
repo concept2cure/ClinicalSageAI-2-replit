@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { I } from '../icons';
 import { EmptyState, useLiveRows } from '../dataConnect';
 import { apiRequest, extractApiError } from '@/lib/queryClient';
@@ -186,6 +187,105 @@ export function Risk({ onAsk }: SurfaceViewProps) {
   const rowProb = (r: RiskRow) => view === 'residual' ? (r.probR || r.prob) : r.prob;
   const zone = (si: number, pi: number) => { const score = (si + 1) * (pi + 1); return score >= 15 ? 'err' : score >= 8 ? 'warn' : 'ok'; };
   const row = rows.find(r => r.id === sel) || rows[0];
+
+  /* ── AnA's hands on this screen — the surface-action bus ──────────────────
+     Registered under 'risk' (identity-mapped nav target). Every handler
+     drives the SAME state the human's own controls drive (setView, setSel via
+     the matrix dots and register rows); hazards resolve against the REAL risk
+     file with honest misses. Accepting residual risk, adding hazards, and
+     adding controls stay governed human acts, untouched. */
+  const riskFormGuard = (): { ok: false; reason: string } | null => {
+    if (form) return { ok: false, reason: 'The new-hazard form is open — close it first.' };
+    if (ctrlForm) return { ok: false, reason: 'The add-control form is open — close it first.' };
+    return null;
+  };
+  useSurfaceActionHandlers('risk', {
+    'risk.set-matrix-view': (params) => {
+      const guarded = riskFormGuard();
+      if (guarded) return guarded;
+      const target = (params.view ?? '').trim();
+      if (target !== 'initial' && target !== 'residual') {
+        return { ok: false, reason: 'View must be initial or residual.' };
+      }
+      // The matrix renders only once a row exists; until the read settles a
+      // refusal would be false, so the bus holds the directive instead.
+      if (live.loading && !row)
+        return { ok: false, reason: 'The risk file is still loading.', retry: true };
+      if (live.error && !row) return { ok: false, reason: 'The risk file could not be read.' };
+      if (!row) return { ok: false, reason: 'The risk file is empty.' };
+      setView(target);
+      return { ok: true, detail: `Showing the ${target} matrix` };
+    },
+    'risk.select-hazard': (params) => {
+      const guarded = riskFormGuard();
+      if (guarded) return guarded;
+      const wanted = (params.hazard ?? '').trim();
+      if (!wanted) return { ok: false, reason: 'No hazard named.' };
+      // MANDATORY hold while loading: the seed effect overwrites `sel` when
+      // the read lands, so an early select would be silently clobbered.
+      if (live.loading)
+        return { ok: false, reason: 'The risk file is still loading.', retry: true };
+      if (live.error) return { ok: false, reason: 'The risk file could not be read.' };
+      if (rows.length === 0) return { ok: false, reason: 'The risk file is empty.' };
+      const lower = wanted.toLowerCase();
+      const exact = rows.find((r) => r.id.toLowerCase() === lower);
+      const contains = exact
+        ? []
+        : rows.filter(
+            (r) => r.id.toLowerCase().includes(lower) || (r.hazard || '').toLowerCase().includes(lower),
+          );
+      const match = exact ?? (contains.length === 1 ? contains[0] : null);
+      if (!match) {
+        return {
+          ok: false,
+          reason:
+            contains.length > 1
+              ? `"${params.hazard}" matches ${contains.length} hazards — name one exactly.`
+              : `No hazard matching "${params.hazard}" in the risk file.`,
+        };
+      }
+      setSel(match.id);
+      return { ok: true, detail: `Opened ${match.id} — ${match.hazard || 'hazard'}` };
+    },
+    'risk.focus-cell': (params) => {
+      const guarded = riskFormGuard();
+      if (guarded) return guarded;
+      if (live.loading)
+        return { ok: false, reason: 'The risk file is still loading.', retry: true };
+      if (live.error) return { ok: false, reason: 'The risk file could not be read.' };
+      if (rows.length === 0) return { ok: false, reason: 'The risk file is empty.' };
+      const sev = (params.severity ?? '').trim();
+      const prob = (params.probability ?? '').trim();
+      const si = SEV_LABELS.indexOf(sev as (typeof SEV_LABELS)[number]);
+      const pi = PROB_LABELS.indexOf(prob as (typeof PROB_LABELS)[number]);
+      if (si < 0 || pi < 0) return { ok: false, reason: 'Unknown severity or probability band.' };
+      const requestedView =
+        params.view === 'initial' || params.view === 'residual' ? params.view : view;
+      if (requestedView !== view) setView(requestedView);
+      // The SAME derivation the matrix dots render from, against the requested band.
+      const bandProb = (r: RiskRow) =>
+        requestedView === 'residual' ? (r.probR || r.prob) : r.prob;
+      const hz = rows.filter((r) => sevI(r.sev) === si && probI(bandProb(r)) === pi);
+      if (hz.length === 0) {
+        return {
+          ok: false,
+          reason: `No hazard sits at ${sev} × ${prob} in the ${requestedView} matrix.`,
+        };
+      }
+      setSel(hz[0].id);
+      return {
+        ok: true,
+        detail:
+          hz.length === 1
+            ? `Focused ${hz[0].id} at ${sev} × ${prob}`
+            : `Focused ${hz[0].id} — first of ${hz.length} hazards at ${sev} × ${prob}`,
+      };
+    },
+  });
+  /* The ready signal for the retry contract above. */
+  useEffect(() => {
+    if (!live.loading) notifySurfaceActionReady('risk');
+  }, [live.loading]);
 
   const summary = useMemo(() => {
     const prod = (r: RiskRow, resid: boolean) => { const si = sevI(r.sev) + 1; const pi = (probI(resid ? (r.probR || r.prob) : r.prob)) + 1; return si * pi; };

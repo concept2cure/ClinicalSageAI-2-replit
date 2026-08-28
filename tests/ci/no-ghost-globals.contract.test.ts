@@ -98,7 +98,14 @@ const FILES = walk(CLIENT);
 /**
  * Ghosts that are now fully gone. Any read is a regression.
  */
-const ELIMINATED = ['C2C_API', 'C2C_SIGNED'];
+/* `C2C_AUTHORING` joined this list when AnaVerbs' `StreamingRenderer` was
+   deleted. That component was its last reader, and it was UNREACHABLE: the
+   `canLive` gate required `window.C2C_AUTHORING.streamDraft`, which this
+   repository assigns nowhere, so the condition could never be true. A ghost
+   with no reader is not fenced, it is gone — and it belongs here, where the
+   test is that it stays gone, rather than in FENCED, where an entry that
+   outlives its reader silently re-authorises the next one. */
+const ELIMINATED = ['C2C_API', 'C2C_SIGNED', 'C2C_AUTHORING'];
 
 /**
  * Ghosts that still exist, confined to files that DECLARE them and degrade
@@ -117,11 +124,17 @@ const ELIMINATED = ['C2C_API', 'C2C_SIGNED'];
  * Shrink the list when a channel is ported; never extend it.
  */
 const FENCED: Record<string, string[]> = {
-  C2C_AUTHORING: [
-    'client/src/concept2cure/v2/surfaces/AnaVerbs.tsx',
-    'client/src/concept2cure/v2/surfaces/BatchDraft.tsx',
-  ],
-  __C2C_DOC_ID: ['client/src/concept2cure/v2/surfaces/BatchDraft.tsx'],
+  /* EMPTY, and that is the finished state.
+
+     `C2C_AUTHORING` was fenced to BatchDraft and AnaVerbs. BatchDraft's reader
+     was the offline path that FABRICATED regulatory prose; AnaVerbs' was
+     `StreamingRenderer`, whose `canLive` gate required the channel and could
+     therefore never be true. Both are deleted, so the ghost moved to
+     ELIMINATED. `__C2C_DOC_ID` went the same way.
+
+     A fence is a holding pen, not a destination: it shrinks as readers leave,
+     and when the last one goes the ghost is GONE, not fenced. Leaving an entry
+     behind silently re-authorises the next reader. */
 };
 
 /**
@@ -264,12 +277,27 @@ describe('fenced ghosts cannot spread', () => {
     expect(writers).toEqual([]);
   });
 
-  it('BatchDraft still says out loud that these are unported', () => {
-    // The fence is only defensible while the file is honest about degrading.
-    const raw = fs.readFileSync(
-      path.join(REPO_ROOT, 'client/src/concept2cure/v2/surfaces/BatchDraft.tsx'), 'utf8',
-    );
-    expect(raw).toMatch(/no typed provider yet|until those modules port/i);
+  /* Was: "BatchDraft still says out loud that these are unported", asserting
+     the file carried a disclosure sentence. That assertion was correct while
+     BatchDraft READ a ghost it could not provide. It no longer does, so the
+     sentence would now be a disclosure about nothing — and a gate satisfied by
+     a comment is satisfied by deleting the code and keeping the comment.
+
+     What replaces it is the stronger statement the change actually earned. */
+  it.each([
+    'client/src/concept2cure/v2/surfaces/BatchDraft.tsx',
+    'client/src/concept2cure/v2/surfaces/AnaVerbs.tsx',
+  ])('%s reads no ghost channel at all', (file) => {
+    const code = codeOf(path.join(REPO_ROOT, file));
+    for (const ghost of ['C2C_AUTHORING', '__C2C_DOC_ID']) {
+      expect(code, `${file} is reading ${ghost} again`).not.toMatch(
+        new RegExp(`\\b${ghost}\\b`),
+      );
+    }
+  });
+
+  it('__C2C_DOC_ID is read nowhere, so it needs no fence', () => {
+    expect(readersOf('__C2C_DOC_ID')).toEqual([]);
   });
 });
 
@@ -281,7 +309,10 @@ describe('the ported surfaces use the sanctioned convention', () => {
     ['client/src/concept2cure/v2/surfaces/ReportEngine.tsx', /liveMutateOrNull</],
     ['client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx', /liveMutateOrNull</],
     ['client/src/concept2cure/v2/surfaces/AnaMemory.tsx', /liveMutateOrNull\(/],
-    ['client/src/concept2cure/v2/surfaces/AnaVerbs.tsx', /\bconnected\(\)/],
+    /* AnaVerbs is no longer listed. `connected()` lived in StreamingRenderer's
+       `canLive`; with that component deleted the file makes no data access at
+       all, and a surface that reads nothing needs no read convention. Asserting
+       otherwise would force an import back in to satisfy a gate. */
   ];
 
   it.each(ported)('%s goes through dataConnect', (file, needle) => {

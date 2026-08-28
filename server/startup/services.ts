@@ -360,6 +360,23 @@ export async function initializeEarlyServices(): Promise<void> {
         console.warn('⚠️ AnA Capability Registry seeding failed (non-blocking):', err?.message);
       });
   }, 3000);
+
+  // Seed the global regulatory template store when it is missing seed rows
+  // (fire-and-forget, count-guarded — a normal boot is one SELECT). Without
+  // this the store only ever filled via a manual authed POST, so every fresh
+  // estate's "Start from" picker offered nothing but a blank document.
+  setTimeout(() => {
+    import('../services/intelligence/template-seeds.js')
+      .then(({ seedTemplatesIfMissing }) => seedTemplatesIfMissing())
+      .then((r) => {
+        if (r.ran) {
+          console.log(`✅ Regulatory templates seeded (${r.inserted} new, ${r.updated} refreshed, ${r.sections} sections)`);
+        }
+      })
+      .catch((err: any) => {
+        console.warn('⚠️ Regulatory template seeding failed (non-blocking):', err?.message);
+      });
+  }, 3000);
 }
 
 /**

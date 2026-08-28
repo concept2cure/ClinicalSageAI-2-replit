@@ -28,6 +28,7 @@ import React from 'react';
    This one is already scoped, so it costs one line. */
 import '../styles/intelligence-v2.css';
 import { I } from '../icons';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import {
   // Reference config only: the tool catalog (what AnA can run) and the pedigree
   // /trust vocabulary. INTEL_DEMOS, INTEL_VALIDATION and INTEL_STATS are no
@@ -217,6 +218,52 @@ export function CapabilityIndex({ onAsk }: { onAsk: (text: string) => void }) {
     return { waves: INTEL_CATALOG.length, domains, tools };
   }, []);
 
+  /* One filtered structure for the render AND the published context — a second
+     filter implementation would drift from what the screen actually shows. */
+  const filteredWaves = React.useMemo(
+    () =>
+      INTEL_CATALOG.map((w) => ({
+        w,
+        domains: w.domains
+          .map((d) => ({
+            ...d,
+            tools: term ? d.tools.filter((t) => t.includes(term) || d.name.toLowerCase().includes(term)) : d.tools,
+          }))
+          .filter((d) => !term || d.name.toLowerCase().includes(term) || d.tools.length > 0),
+      })),
+    [term],
+  );
+
+  /* WHAT ANA SEES HERE. Static catalog + a live filter — no reads, so there is
+     no loading or error state to speak from. The "Run" tiles only hand words
+     into the conversation; the disclaimer says so, because "AnA ran a tool by
+     itself" is the claim this surface must never support. */
+  const anaContext = React.useMemo(() => {
+    const visibleDomains = filteredWaves.reduce((n, x) => n + x.domains.length, 0);
+    const visibleTools = filteredWaves.reduce(
+      (n, x) => n + x.domains.reduce((m, d) => m + d.tools.length, 0),
+      0,
+    );
+    return {
+      summary:
+        `AnA capability catalog — ${S.waves} waves, ${S.domains} domains, ${S.tools} deterministic tools.` +
+        (term ? ` Filtered by "${query.trim()}" — ${visibleDomains} domains / ${visibleTools} tools visible.` : ''),
+      facts: {
+        waves: S.waves,
+        domains: S.domains,
+        tools: S.tools,
+        // A whitespace-only query filters nothing, so it is published as no filter.
+        filter: query.trim() || null,
+        visibleDomains,
+        visibleTools,
+        disclaimer:
+          'Each tile\'s "Run" hands a request into the conversation as the user\'s own words — AnA never fires one uninvited.',
+      },
+      availableActions: ['Filter the catalog by name'],
+    };
+  }, [S, term, query, filteredWaves]);
+  usePublishSurfaceContext('intelligence-catalog', anaContext);
+
   return (
     <div className="cap">
       <div className="cap-hero">
@@ -263,13 +310,7 @@ export function CapabilityIndex({ onAsk }: { onAsk: (text: string) => void }) {
       </div>
       <div className="cap-gap" />
 
-      {INTEL_CATALOG.map((w, wi) => {
-        const domains = w.domains
-          .map((d) => ({
-            ...d,
-            tools: term ? d.tools.filter((t) => t.includes(term) || d.name.toLowerCase().includes(term)) : d.tools,
-          }))
-          .filter((d) => !term || d.name.toLowerCase().includes(term) || d.tools.length > 0);
+      {filteredWaves.map(({ w, domains }, wi) => {
         if (term && domains.length === 0) return null;
         return (
           <div key={wi} className="cap-wave">

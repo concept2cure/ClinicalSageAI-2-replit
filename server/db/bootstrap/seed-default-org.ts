@@ -12,19 +12,21 @@
 
 import type { PoolClient } from 'pg';
 import bcrypt from 'bcryptjs';
+import crypto from 'node:crypto';
 import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('database');
 
-// bcrypt hash of "pass-word" with 12 rounds (pre-computed for startup speed).
-// Seeded onto the GA demo user, but only as the fallback: set DEMO_USER_PASSWORD
-// to have that value hashed at the same cost instead (see resolveDemoPasswordHash).
-// Production deployments that don't want this demo user can delete the user row
-// after startup; the seed is idempotent.
-const DEMO_EMAIL = 'jm.smith@concept2cure.pro';
+// Production deployments that don't want a demo user leave SEED_DEMO_USER off.
+// When the seed is enabled, an operator-supplied DEMO_USER_PASSWORD is hashed at
+// startup. Without one, a fresh account receives a non-recoverable random
+// credential: development token-based helpers still work, but the repository
+// no longer publishes a password that can authenticate as an administrator.
+const DEMO_EMAIL = (process.env.DEMO_USER_EMAIL ?? 'jonmichaelpsmith@gmail.com')
+  .trim()
+  .toLowerCase();
 const DEMO_NAME = 'JM Smith';
-const DEMO_PASSWORD_HASH = '$2b$12$ZE1acJqmLIAbDLl2h2eUiOeXLXCunsidscRZDA7Wt4.kiYBiNgFnu';
-const DEMO_PASSWORD_ROUNDS = 12; // same cost as the pre-computed hash above
+const DEMO_PASSWORD_ROUNDS = 12;
 
 export async function seedOrganizations(client: PoolClient): Promise<void> {
   // Guarantee at least one org exists.
@@ -45,14 +47,14 @@ export async function seedOrganizations(client: PoolClient): Promise<void> {
 }
 
 /**
- * Whether to seed the GA demo admin. The demo user carries a publicly-known
- * password hash (bcrypt of "pass-word"), so it must never appear on a real
- * production deployment by accident.
+ * Whether to seed the GA demo admin. This is a privileged convenience
+ * identity, so it must never appear on a real production deployment by
+ * accident.
  *
  * Production is FAIL-CLOSED: the seed runs only when SEED_DEMO_USER is
  * explicitly truthy (true/1/yes/on). Unset or blank disables it — so a
- * hand-configured prod deploy that forgets the flag does NOT get a
- * known-password admin over real data.
+ * hand-configured production deployment cannot create the privileged demo
+ * identity by omission.
  *
  * Non-production keeps the convenience default: seed unless explicitly
  * disabled (false/0/no/off), so local dev and demo environments are unchanged.
@@ -73,20 +75,16 @@ function demoUserSeedDisabled(): boolean {
 /**
  * Resolve the password hash to seed onto the demo admin.
  *
- * DEMO_USER_PASSWORD overrides the built-in known-password default: when it
- * is set to a non-blank value, that password is hashed here at the same bcrypt
- * cost (12) as the pre-computed constant. This exists so a staging or pilot
- * environment — which seeds the demo admin by default and may hold real
- * people's data — can stand up the account with a credential nobody can guess.
- *
- * With no override we fall back to the pre-computed hash of "pass-word". That
- * password is published in this repo, so every environment except a local
- * development default gets a loud warning naming the account.
+ * When DEMO_USER_PASSWORD is set to a non-blank value, hash that operator-held
+ * credential. With no override, hash a cryptographically random value and
+ * discard the plaintext. That leaves password login unavailable for a fresh
+ * demo account until an operator deliberately configures it, while token-based
+ * development helpers can still exercise the seeded identity.
  *
  * Note this only decides what a *fresh* seed writes: the INSERT below keeps its
  * existing ON CONFLICT semantics and never overwrites a password already on the
- * row, so an environment that previously seeded the known password must have
- * that credential rotated (or the row deleted) out of band.
+ * row, so operators must rotate credentials in any environment initialized by
+ * an earlier release.
  */
 async function resolveDemoPasswordHash(): Promise<string> {
   const override = (process.env.DEMO_USER_PASSWORD ?? '').trim();
@@ -97,22 +95,13 @@ async function resolveDemoPasswordHash(): Promise<string> {
     return bcrypt.hash(override, DEMO_PASSWORD_ROUNDS);
   }
 
-  // Local dev keeps its quiet convenience login; everything else — staging,
-  // pilot, demo, prod-with-opt-in — hears about it on every boot.
-  const nodeEnv = (process.env.NODE_ENV ?? '').trim().toLowerCase();
-  const isLocalDevDefault = nodeEnv === '' || nodeEnv === 'development';
-  if (!isLocalDevDefault) {
-    logger.warn(
-      `ensureAuthTables: SECURITY — demo admin ${DEMO_EMAIL} is being seeded with the ` +
-        `built-in demo password, which is PUBLICLY KNOWN (it is committed to this repo). ` +
-        `This account is a real human identity and must NOT carry a known password anywhere ` +
-        `real people or pilot data exist. Set DEMO_USER_PASSWORD to a non-guessable value, ` +
-        `or set SEED_DEMO_USER=false to skip the demo admin entirely. ` +
-        `(NODE_ENV=${nodeEnv})`
-    );
-  }
-
-  return DEMO_PASSWORD_HASH;
+  logger.warn(
+    `ensureAuthTables: DEMO_USER_PASSWORD is unset; a fresh ${DEMO_EMAIL} account ` +
+      `will receive a random, non-recoverable password. Set DEMO_USER_PASSWORD ` +
+      `to enable deliberate password login, or SEED_DEMO_USER=false to skip the account.`
+  );
+  const nonRecoverablePassword = crypto.randomBytes(32).toString('base64url');
+  return bcrypt.hash(nonRecoverablePassword, DEMO_PASSWORD_ROUNDS);
 }
 
 /**
@@ -149,10 +138,9 @@ export async function seedGaDemoUser(client: PoolClient): Promise<void> {
     [DEMO_EMAIL, DEMO_NAME, demoPasswordHash, c2cOrgId]
   );
 
-  const demoUser = await client.query(
-    `SELECT id FROM users WHERE email = $1 LIMIT 1`,
-    [DEMO_EMAIL]
-  );
+  const demoUser = await client.query(`SELECT id FROM users WHERE email = $1 LIMIT 1`, [
+    DEMO_EMAIL,
+  ]);
   if (demoUser.rows[0]) {
     await client.query(
       `

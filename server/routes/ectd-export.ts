@@ -187,21 +187,21 @@ async function auditEctdAccess(
   // by resourceType without colliding with real submissions.
   resourceType: 'ectd_submission' | 'ectd_preflight' = 'ectd_submission',
 ): Promise<void> {
-  try {
-    const user = (req as any).user;
-    await auditService.logAction({
-      tenantId: organizationId,
-      userId: user?.id ?? user?.userId,
-      action,
-      resourceType,
-      resourceId: String(submissionId),
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'] as string | undefined,
-      details,
-    });
-  } catch (err) {
+  const user = (req as any).user;
+
+  const ectdAudit = await auditService.logAction({
+    tenantId: organizationId,
+    userId: user?.id ?? user?.userId,
+    action,
+    resourceType,
+    resourceId: String(submissionId),
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'] as string | undefined,
+    details,
+  });
+  if (!ectdAudit.persisted) {
     log.warn('eCTD audit write failed (non-fatal)', {
-      err: err instanceof Error ? err.message : String(err),
+      err: ectdAudit.error ?? 'no durable store accepted the row',
       action,
       submissionId,
     });

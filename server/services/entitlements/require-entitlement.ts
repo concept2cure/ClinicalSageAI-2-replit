@@ -124,6 +124,76 @@ function resolveOrgId(req: Request): number | null {
 }
 
 /**
+ * The gate's evaluation core, shared with non-middleware callers (e.g. the
+ * AnA streaming route's Live Drive per-request flag, which cannot use an
+ * Express gate because entitlement decides an SSE event, not a 403). Runs the
+ * EXACT decision the middleware enforces — matrix tier first, then a
+ * 'toggle'-sourced pilot grant — and never fabricates a tier.
+ */
+export interface EntitlementEvaluation {
+  /** True when the org's plan (or a pilot toggle grant) unlocks the feature. */
+  allowed: boolean;
+  /** True when `allowed` came from a feature_toggles pilot grant below tier. */
+  viaToggle: boolean;
+  /** The matrix minimum for the feature (null = unknown key, a wiring bug). */
+  requiredTier: Tier | null;
+  /** The org's real plan tier, or null when it genuinely cannot be known. */
+  tier: Tier | null;
+  /** Why the tier is unknown (null when `tier` resolved). */
+  reason: string | null;
+  /** Human-readable denial detail (null when allowed). */
+  detail: string | null;
+}
+
+export async function evaluateOrgEntitlement(
+  feature: FeatureKey,
+  organizationId: number | null,
+): Promise<EntitlementEvaluation> {
+  // The real minimum tier from the matrix — never fabricated. A null here
+  // means the key is not in the matrix at all (a wiring bug, not a customer
+  // state); it is treated as an unverifiable entitlement below.
+  const requiredTier = featureTier(feature);
+
+  const { tier, reason } =
+    requiredTier === null
+      ? { tier: null, reason: `unknown capability key '${String(feature)}'` }
+      : organizationId === null
+        ? { tier: null, reason: 'organization context missing' }
+        : await lookupOrgTier(organizationId);
+
+  if (tier !== null && isEntitled(feature, tier)) {
+    return { allowed: true, viaToggle: false, requiredTier, tier, reason: null, detail: null };
+  }
+
+  // Tier alone denies (or is unknown with a KNOWN org): honor a pilot
+  // feature_toggles grant below tier via the composed resolver. Only a
+  // 'toggle'-sourced enable counts — the resolver defaults an unknown tier
+  // to 'standard', and that fabricated tier verdict must not open the gate.
+  if (requiredTier !== null && organizationId !== null && tier !== null) {
+    try {
+      const caps = await resolveCapabilities(organizationId);
+      const row = caps.features.find((f) => f.feature === feature);
+      if (row?.enabled && row.source === 'toggle') {
+        return { allowed: true, viaToggle: true, requiredTier, tier, reason, detail: null };
+      }
+    } catch (err) {
+      // Resolver failure grants nothing; the tier verdict stands.
+      logger.warn('toggle-grant resolution failed; tier verdict stands', {
+        feature,
+        organizationId,
+        err: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  const detail =
+    tier === null
+      ? `tier unknown (${reason})`
+      : `tier '${tier}' is below the '${requiredTier}' minimum`;
+  return { allowed: false, viaToggle: false, requiredTier, tier, reason, detail };
+}
+
+/**
  * Gate a route on `feature` per the mode above. Applied AFTER auth/org
  * middleware so it evaluates the same org the route will act for.
  */
@@ -136,44 +206,12 @@ export function requireEntitlement(feature: FeatureKey) {
     const mode = resolveEntitlementsEnforceMode();
     if (mode === 'off') return next();
 
-    // The real minimum tier from the matrix — never fabricated. A null here
-    // means the key is not in the matrix at all (a wiring bug, not a customer
-    // state); it is treated as an unverifiable entitlement below.
-    const requiredTier = featureTier(feature);
-
     const organizationId = resolveOrgId(req);
-    const { tier, reason } =
-      requiredTier === null
-        ? { tier: null, reason: `unknown capability key '${String(feature)}'` }
-        : organizationId === null
-          ? { tier: null, reason: 'organization context missing' }
-          : await lookupOrgTier(organizationId);
-
-    if (tier !== null && isEntitled(feature, tier)) return next();
-
-    // Tier alone denies (or is unknown with a KNOWN org): honor a pilot
-    // feature_toggles grant below tier via the composed resolver. Only a
-    // 'toggle'-sourced enable counts — the resolver defaults an unknown tier
-    // to 'standard', and that fabricated tier verdict must not open the gate.
-    if (requiredTier !== null && organizationId !== null && tier !== null) {
-      try {
-        const caps = await resolveCapabilities(organizationId);
-        const row = caps.features.find((f) => f.feature === feature);
-        if (row?.enabled && row.source === 'toggle') return next();
-      } catch (err) {
-        // Resolver failure grants nothing; the tier verdict stands.
-        logger.warn('toggle-grant resolution failed; tier verdict stands', {
-          feature,
-          organizationId,
-          err: err instanceof Error ? err.message : String(err),
-        });
-      }
-    }
-
-    const detail =
-      tier === null
-        ? `tier unknown (${reason})`
-        : `tier '${tier}' is below the '${requiredTier}' minimum`;
+    const { allowed, requiredTier, tier, reason, detail } = await evaluateOrgEntitlement(
+      feature,
+      organizationId,
+    );
+    if (allowed) return next();
 
     if (mode === 'warn') {
       logger.warn(

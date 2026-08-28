@@ -45,6 +45,7 @@ import request from 'supertest';
 import { SignJWT } from 'jose';
 import fs from 'node:fs';
 import path from 'node:path';
+import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { createJourneyDb, type JourneyDb } from '../golden-journeys/harness';
 import { stripComments } from '../ui/_strip-comments';
@@ -52,7 +53,7 @@ import { stripComments } from '../ui/_strip-comments';
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ROUTER_SRC = path.join(REPO_ROOT, 'server/routes/authoring.router.ts');
 
-const JWT_SECRET = 'review-audit-comment-contract-secret';
+const JWT_SECRET = randomBytes(32).toString('hex');
 process.env.JWT_SECRET = JWT_SECRET;
 process.env.JWT_SECRET_DEV = JWT_SECRET;
 
@@ -299,7 +300,7 @@ describe('comments: one write path, attributed, and in the one ledger', () => {
     const list = await as(AUTHOR)(request(app).get(`/api/authoring/documents/${docId}/comments`));
     const target = list.body.comments[0];
 
-    const res = await as(AUTHOR)(request(app).put(`/api/authoring/comments/${target.id}`))
+    const res = await as(AUTHOR)(request(app).patch(`/api/authoring/comments/${target.id}`))
       .send({ status: 'resolved', resolution_note: 'Citation added.' });
     // The comment UPDATE committed and the activity INSERT then threw 42P01, so
     // the caller was told the resolve failed while it had in fact happened.

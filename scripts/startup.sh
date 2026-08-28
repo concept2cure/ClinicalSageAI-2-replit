@@ -296,7 +296,7 @@ ensure_native_postgres() {
         if [[ ! -d "$build_dir" ]]; then
             git clone --branch v0.7.4 --depth 1 https://github.com/pgvector/pgvector.git "$build_dir" >/dev/null 2>&1
         fi
-        sudo apt-get install -y -qq postgresql-server-dev-15 >/dev/null 2>&1 || true
+        sudo apt-get install -y -qq postgresql-server-dev-16 >/dev/null 2>&1 || true
         (cd "$build_dir" && make -j"$(nproc)" >/dev/null 2>&1 && sudo make install >/dev/null 2>&1)
         PGPASSWORD="${DB_PASSWORD}" psql -h localhost -U "${DB_USER}" -d "${DB_NAME}" -c "CREATE EXTENSION IF NOT EXISTS vector;" >/dev/null 2>&1
         log_success "pgvector extension installed"
@@ -361,21 +361,8 @@ CREATE TABLE IF NOT EXISTS organization_users (
   updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
   CONSTRAINT unique_user_org UNIQUE (user_id, organization_id)
 );
-INSERT INTO organizations (name, slug, domain, industry_mode, tier)
-  VALUES ('Concept2Cure Inc.', 'concept2cure', 'concept2cure.pro', 'biotech', 'enterprise')
-  ON CONFLICT (slug) DO NOTHING;
-INSERT INTO users (email, name, password_hash, title, department, status, default_organization_id)
-  VALUES ('jm.smith@concept2cure.pro', 'JM Smith',
-    '$2b$10$trZaDVYb2r3RQClw8LoI1u/PY/Bawe1mvOXJsv2fcy/1DXyRW0zgq',
-    'Founder', 'Executive', 'active',
-    (SELECT id FROM organizations WHERE slug = 'concept2cure'))
-  ON CONFLICT (email) DO NOTHING;
-INSERT INTO organization_users (organization_id, user_id, role)
-  VALUES (
-    (SELECT id FROM organizations WHERE slug = 'concept2cure'),
-    (SELECT id FROM users WHERE email = 'jm.smith@concept2cure.pro'),
-    'admin')
-  ON CONFLICT ON CONSTRAINT unique_user_org DO NOTHING;
+-- Organization and demo-admin identity convergence is owned by the
+-- canonical TypeScript bootstrap, not by a second SQL seed path.
 
 SEED_SQL
 

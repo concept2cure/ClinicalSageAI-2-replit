@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import type { PoolClient } from 'pg';
 import bcrypt from 'bcryptjs';
+import crypto from 'node:crypto';
 
 // Captured so the demo-password warning can be asserted (and kept out of the
 // test output). Declared with `var` so the hoisted vi.mock factory can see it.
@@ -58,12 +59,25 @@ describe('seedGaDemoUser — SEED_DEMO_USER gate', () => {
     expect(client.query).toHaveBeenCalledTimes(1);
   });
 
+  it('never deletes an existing auth principal during startup seeding', async () => {
+    process.env.NODE_ENV = 'development';
+    delete process.env.SEED_DEMO_USER;
+    const client = mockClient([{ id: 7 }]);
+
+    await seedGaDemoUser(client);
+
+    const sql = (client.query as unknown as { mock: { calls: unknown[][] } }).mock.calls.map(
+      call => String(call[0])
+    );
+    expect(sql.some(statement => /DELETE\s+FROM\s+users/i.test(statement))).toBe(false);
+  });
+
   it('PRODUCTION: skips the seed when SEED_DEMO_USER is unset (fail-closed)', async () => {
     process.env.NODE_ENV = 'production';
     delete process.env.SEED_DEMO_USER;
     const client = mockClient();
     await seedGaDemoUser(client);
-    // No known-password admin unless explicitly opted in.
+    // No privileged demo identity unless explicitly opted in.
     expect(client.query).not.toHaveBeenCalled();
   });
 
@@ -77,75 +91,70 @@ describe('seedGaDemoUser — SEED_DEMO_USER gate', () => {
 });
 
 describe('seedGaDemoUser — demo password source', () => {
-  // The seed's fallback is a pre-computed bcrypt of this password. Asserted by
-  // COMPARING against it rather than pinning the hash literal: a bcrypt string in
-  // source is flagged as a secret by scanners, and comparing proves the thing that
-  // actually matters — which password the seeded credential accepts.
-  const KNOWN_PASSWORD = 'pass-word';
-
-  /** True when the seeded hash is the publicly-known fallback credential. */
-  async function isKnownFallback(hash: unknown): Promise<boolean> {
-    return typeof hash === 'string' && bcrypt.compare(KNOWN_PASSWORD, hash);
-  }
-
   /** Params of the `INSERT INTO users` call. */
   function insertedUserParams(client: PoolClient): unknown[] {
     const calls = (client.query as unknown as { mock: { calls: unknown[][] } }).mock.calls;
     const insert = calls.find(
-      (c) => typeof c[0] === 'string' && (c[0] as string).includes('INSERT INTO users')
+      c => typeof c[0] === 'string' && (c[0] as string).includes('INSERT INTO users')
     );
     return (insert?.[1] ?? []) as unknown[];
   }
 
-  it('hashes DEMO_USER_PASSWORD at cost 12 instead of using the known hash', async () => {
+  it('hashes an operator-supplied DEMO_USER_PASSWORD at cost 12', async () => {
     process.env.NODE_ENV = 'staging';
-    process.env.DEMO_USER_PASSWORD = 'a-non-guessable-pilot-secret';
+    const suppliedPassword = `pilot-${crypto.randomUUID()}-${crypto.randomUUID()}`;
+    process.env.DEMO_USER_PASSWORD = suppliedPassword;
     const client = mockClient([{ id: 7 }]);
 
     await seedGaDemoUser(client);
 
     const hash = insertedUserParams(client)[2] as string;
-    expect(await isKnownFallback(hash)).toBe(false);
     expect(hash.startsWith('$2')).toBe(true);
-    expect(hash.split('$')[2]).toBe('12'); // same bcrypt cost as the built-in fallback
-    expect(await bcrypt.compare('a-non-guessable-pilot-secret', hash)).toBe(true);
-    // Override in play: nothing publicly known was seeded, so no warning.
+    expect(hash.split('$')[2]).toBe('12');
+    expect(await bcrypt.compare(suppliedPassword, hash)).toBe(true);
     expect(mockLog.warn).not.toHaveBeenCalled();
   });
 
-  it('ignores a blank DEMO_USER_PASSWORD and keeps the known-hash path working', async () => {
+  it('uses a random non-recoverable password when DEMO_USER_PASSWORD is blank', async () => {
     process.env.NODE_ENV = 'development';
     process.env.DEMO_USER_PASSWORD = '   ';
     const client = mockClient([{ id: 7 }]);
 
     await seedGaDemoUser(client);
 
-    expect(await isKnownFallback(insertedUserParams(client)[2])).toBe(true);
+    const hash = insertedUserParams(client)[2] as string;
+    expect(hash.startsWith('$2')).toBe(true);
+    expect(hash.split('$')[2]).toBe('12');
+    expect(mockLog.warn).toHaveBeenCalledTimes(1);
+    expect(mockLog.warn.mock.calls[0][0]).toContain('random, non-recoverable password');
   });
 
-  it('warns loudly when the publicly-known password is seeded outside local dev', async () => {
+  it('never treats local development as permission to publish a default credential', async () => {
+    process.env.NODE_ENV = 'development';
+    delete process.env.DEMO_USER_PASSWORD;
+    const first = mockClient([{ id: 7 }]);
+    const second = mockClient([{ id: 7 }]);
+
+    await seedGaDemoUser(first);
+    await seedGaDemoUser(second);
+
+    const firstHash = insertedUserParams(first)[2] as string;
+    const secondHash = insertedUserParams(second)[2] as string;
+    expect(firstHash).not.toBe(secondHash);
+    expect(mockLog.warn).toHaveBeenCalledTimes(2);
+  });
+
+  it('warns when an opted-in non-production seed has no operator-held password', async () => {
     process.env.NODE_ENV = 'staging';
     delete process.env.DEMO_USER_PASSWORD;
     const client = mockClient([{ id: 7 }]);
 
     await seedGaDemoUser(client);
 
-    expect(await isKnownFallback(insertedUserParams(client)[2])).toBe(true);
     expect(mockLog.warn).toHaveBeenCalledTimes(1);
     const warning = mockLog.warn.mock.calls[0][0] as string;
-    expect(warning).toContain('jm.smith@concept2cure.pro');
-    expect(warning).toContain('PUBLICLY KNOWN');
+    expect(warning).toContain('jonmichaelpsmith@gmail.com');
+    expect(warning).toContain('random, non-recoverable password');
     expect(warning).toContain('DEMO_USER_PASSWORD');
-  });
-
-  it('stays quiet on the local development default (dev convenience unchanged)', async () => {
-    process.env.NODE_ENV = 'development';
-    delete process.env.DEMO_USER_PASSWORD;
-    const client = mockClient([{ id: 7 }]);
-
-    await seedGaDemoUser(client);
-
-    expect(await isKnownFallback(insertedUserParams(client)[2])).toBe(true);
-    expect(mockLog.warn).not.toHaveBeenCalled();
   });
 });

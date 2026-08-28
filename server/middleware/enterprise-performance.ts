@@ -18,6 +18,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import compressionLib from 'compression';
+import { getSecureOrgId } from '../utils/tenantContext';
 
 // ============================================================================
 // CONFIGURATION
@@ -189,6 +190,11 @@ interface CacheOptions {
   /**
    * When false (default), requests with authorization/session headers are never cached
    * to prevent cross-tenant or cross-user response leakage.
+   *
+   * When true, cacheResponse requires a verified organization and prefixes the
+   * key with it; a request whose organization cannot be resolved is not cached.
+   * `keyGenerator` therefore must NOT try to add the organization itself —
+   * the middleware has already done it, from the canonical accessor.
    */
   allowAuthorizedRequestCaching?: boolean;
 }
@@ -222,10 +228,30 @@ export function cacheResponse(options: CacheOptions = {}) {
     // Check condition
     if (options.condition && !options.condition(req)) return next();
 
+    // ── Tenant scoping ───────────────────────────────────────────────────────
+    //
+    // The middleware owns the tenant half of the key. Leaving it to each
+    // keyGenerator is what armed the trap this closes: four call sites in
+    // routes/concept2cure.ts built keys from `(req as any).organizationId`, a
+    // field the global /api auth gate never sets — it sets req.tenantId,
+    // req.user.organizationId and req.tenantContext.organizationId. Those keys
+    // stringified to `projects:undefined` for every tenant alike. Nothing
+    // leaked, only because the authorization-header check above bypassed the
+    // cache before the key was ever built; the day a route set
+    // allowAuthorizedRequestCaching those four became one shared bucket.
+    //
+    // So: derive the organization here, from the canonical accessor, and
+    // prefix the key with it. A route that opts into caching authorized
+    // requests and cannot resolve an organization gets no cache participation
+    // at all rather than an unscoped key.
+    const orgId = getSecureOrgId(req);
+    if (allowAuthorizedRequestCaching && !orgId) return next();
+    const tenantPrefix = orgId ? `org:${orgId}|` : '';
+
     // Generate cache key
-    const key = options.keyGenerator
-      ? options.keyGenerator(req)
-      : createDeterministicQueryKey(req);
+    const key =
+      tenantPrefix +
+      (options.keyGenerator ? options.keyGenerator(req) : createDeterministicQueryKey(req));
 
     // Check cache
     const cached = apiCache.get(key);

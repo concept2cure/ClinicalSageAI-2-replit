@@ -38,6 +38,7 @@ import { SampleDataBanner } from '../../components/SampleDataBanner';
 import { useSampleMode } from '../../components/DataGate';
 import { useSampleRows } from '../../lib/useSampleRows';
 import type { EditorSectionRef } from '../../../v2/editorTarget';
+import { downloadCsv } from '../../../v2/download';
 
 export interface GeneratorTabProps {
   program: Program | null;
@@ -61,18 +62,11 @@ export interface GeneratorTabProps {
 
 function downloadSectionsCsv(rows: Array<{ label: string; status: string }>) {
   const headers = ['Section', 'Status'];
-  const csv = [headers, ...rows.map((s) => [s.label, String(s.status)])]
-    .map((line) => line.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
-    .join('\r\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `cer-sections-${new Date().toISOString().slice(0, 10)}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  downloadCsv(
+    `cer-sections-${new Date().toISOString().slice(0, 10)}.csv`,
+    headers,
+    rows.map((s) => [s.label, String(s.status)]),
+  );
 }
 
 export function GeneratorTab({

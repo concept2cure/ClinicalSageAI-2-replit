@@ -91,8 +91,24 @@
   .ec-composer textarea{ width:100%; resize:none; border:0; outline:none; background:transparent; padding:12px 14px 6px; font-size:13px; line-height:1.55; color:var(--text-100); min-height:20px; max-height:180px; font-family:inherit; }
   .ec-composer textarea::placeholder{ color:var(--text-500); }
   .ec-composer-row{ display:flex; align-items:center; justify-content:space-between; padding:4px 8px 6px; }
-  .ec-chip{ display:inline-flex; align-items:center; gap:4px; padding:4px 8px; border-radius:6px; font-size:11.5px; color:var(--text-400); }
+  /* Now a real <button> — it used to be a <span>, i.e. a paperclip and the word
+     "Sources" that could not be clicked. Reset the UA button chrome and give it
+     the affordances a control owes: pointer, hover, and a visible focus ring. */
+  .ec-chip{ display:inline-flex; align-items:center; gap:4px; padding:4px 8px; border-radius:6px; font-size:11.5px; color:var(--text-400); background:none; border:1px solid transparent; font-family:inherit; cursor:pointer; }
+  .ec-chip:hover{ background:var(--bg-100); color:var(--text-200); }
+  .ec-chip:focus-visible{ outline:2px solid var(--accent-100); outline-offset:1px; }
   .ec-chip svg{ width:13px; height:13px; }
+
+  /* Attached sources, with how the server read each one. Status is in the text
+     as well as the colour. */
+  .ec-atts{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .ec-att-chip{ display:inline-flex; align-items:center; gap:5px; padding:3px 6px 3px 8px; border:1px solid var(--border); border-radius:8px; background:var(--bg-050); font-size:11.5px; color:var(--text-200); }
+  .ec-att-chip svg{ width:12px; height:12px; flex-shrink:0; }
+  .ec-att-chip em{ font-style:normal; color:var(--text-400); }
+  .ec-att-chip[data-status="error"]{ border-color:var(--error); }
+  .ec-att-chip[data-status="error"] em{ color:var(--error); }
+  .ec-att-x{ border:none; background:none; color:var(--text-400); cursor:pointer; font-size:14px; line-height:1; padding:0 2px; }
+  .ec-att-x:hover{ color:var(--text-100); }
   .ec-send{ width:28px; height:28px; border-radius:7px; background:var(--accent-100); color:#fff; display:inline-flex; align-items:center; justify-content:center; border:0; cursor:pointer; transition:background 160ms var(--ease), opacity 160ms var(--ease); }
   .ec-send svg{ width:15px; height:15px; }
   .ec-send:hover{ background:var(--accent-200); }
