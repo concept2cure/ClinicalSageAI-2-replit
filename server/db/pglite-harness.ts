@@ -281,19 +281,46 @@ CREATE TABLE IF NOT EXISTS submission_leaves (
 `;
 
 /**
- * Minimal audit_logs DDL (just the columns the chain + seal verifiers read),
- * for testing audit-integrity verification in-process.
+ * audit_logs DDL — EVERY COLUMN `writeChainedAuditRow` WRITES, not just the
+ * ones the chain + seal verifiers read.
+ *
+ * It used to be the reader's subset, described as "minimal … for testing
+ * audit-integrity verification in-process". That was true of the verifier and
+ * false of the fixture as a whole: `writeChainedAuditRow` INSERTs sixteen
+ * columns, so any suite that used this table and reached a governed write got
+ * `column "old_values" of relation "audit_logs" does not exist` — and because
+ * the chained write is deliberately fail-closed (the audit row and the mutation
+ * commit together or neither does), that error rolled the mutation back.
+ *
+ * The consequence was worse than a broken test: this fixture made the chained
+ * audit path UNEXERCISABLE. A suite could only stay green by never reaching it,
+ * so the two suites that do verify it (esignature-audit-atomicity, the IND
+ * authoring journey) each declared their own fuller copy, and everything else
+ * silently tested a world in which governed writes leave no chain entry.
+ *
+ * Keep this in agreement with the INSERT in `writeChainedAuditRow`
+ * (server/services/auditService.ts). `scripts/ci/check-audit-logs-fixture.mjs`
+ * enforces that agreement — a fixture the writer cannot write into is a fixture
+ * that hides the writer.
  */
 export const AUDIT_LOGS_PGLITE_DDL = `
 CREATE TABLE IF NOT EXISTS audit_logs (
   id           TEXT PRIMARY KEY,
+  tenant_id    INTEGER,
+  user_id      INTEGER,
   action       TEXT,
+  table_name   TEXT,
+  record_id    TEXT,
   actor_id     INTEGER,
   target       TEXT,
   payload_hash TEXT,
-  occurred_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   sha256_chain TEXT,
-  hmac_seal    TEXT
+  occurred_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  hmac_seal    TEXT,
+  old_values   JSON,
+  new_values   JSON,
+  ip_address   TEXT,
+  user_agent   TEXT
 );
 `;
 

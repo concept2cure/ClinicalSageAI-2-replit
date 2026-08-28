@@ -16,6 +16,8 @@ import {
   isUuid,
   type RpsMessageInput,
 } from '../index';
+import os from 'node:os';
+import path from 'node:path';
 import { packageRpsSubmission } from '../rps-packager';
 import { FDA_REGIONAL_IG_OID } from '../../controlled-vocab';
 import type { EctdLeaf } from '../../../submission-gateways/regional-packager';
@@ -246,7 +248,16 @@ describe('v3.2.2 → v4.0 forward compatibility', () => {
     // A truthy-but-empty buffer used to sail through the `!raw` check.
     const sources = new Map<string, Buffer>([[m.documents[0].id, Buffer.alloc(0)]]);
     await expect(
-      packageRpsSubmission({ message: m, sources, creationTime: '20260101000000' }),
+      // outputDir is required by RpsPackagerInput and was missing here. It is a
+      // scratch path on purpose: the zero-byte source must be refused BEFORE
+      // anything is written, so a run that leaves this directory behind would
+      // itself be the bug.
+      packageRpsSubmission({
+        message: m,
+        sources,
+        creationTime: '20260101000000',
+        outputDir: path.join(os.tmpdir(), 'rps-zero-byte-refusal'),
+      }),
     ).rejects.toThrow(/empty|0 bytes/i);
   });
 

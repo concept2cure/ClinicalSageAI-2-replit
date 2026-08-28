@@ -105,6 +105,35 @@ export function evaluateShadowPresenceGate(shadowReviewRunCount: number): Dispat
       };
 }
 
+/**
+ * Completed Shadow Review runs for a sequence.
+ *
+ * Zero open criticals means nothing different whether the dossier is clean OR
+ * was never reviewed — so the count is read separately and fed to the presence
+ * gate, which surfaces that blind spot instead of letting it read as clean.
+ *
+ * Extracted from assessSequenceDispatchReadiness only to keep that function
+ * under the max-lines-per-function ceiling; the query and its filters are
+ * unchanged, including `status = 'complete'` and the soft-delete exclusion.
+ */
+async function countCompletedShadowRuns(
+  sequenceId: number,
+  organizationId: number,
+): Promise<number> {
+  const [{ value }] = await db
+    .select({ value: sql<number>`count(*)::int` })
+    .from(shadowReviewRuns)
+    .where(
+      and(
+        eq(shadowReviewRuns.sequenceId, sequenceId),
+        eq(shadowReviewRuns.organizationId, organizationId),
+        eq(shadowReviewRuns.status, 'complete'),
+        isNull(shadowReviewRuns.deletedAt)
+      )
+    );
+  return value ?? 0;
+}
+
 /** Flatten a region profile's Module-1 tree to the section codes marked required. */
 function requiredModule1Codes(region: string): string[] {
   const profile = getSubmissionRegionProfile(region);
@@ -201,21 +230,8 @@ export async function assessSequenceDispatchReadiness(
 
   const unacknowledgedShadowCriticals = criticalCount ?? 0;
 
-  // 4b. Has this sequence ever been Shadow-Reviewed? Zero open criticals means
-  //     nothing different whether the dossier is clean OR was never reviewed —
-  //     surface that blind spot so a never-reviewed dossier isn't dispatched blind.
-  const [{ value: shadowRunCount }] = await db
-    .select({ value: sql<number>`count(*)::int` })
-    .from(shadowReviewRuns)
-    .where(
-      and(
-        eq(shadowReviewRuns.sequenceId, sequenceId),
-        eq(shadowReviewRuns.organizationId, organizationId),
-        eq(shadowReviewRuns.status, 'complete'),
-        isNull(shadowReviewRuns.deletedAt)
-      )
-    );
-  const shadowReviewRunCount = shadowRunCount ?? 0;
+  // 4b. Has this sequence ever been Shadow-Reviewed? See countCompletedShadowRuns.
+  const shadowReviewRunCount = await countCompletedShadowRuns(sequenceId, organizationId);
 
   // 5. External agency-grade validation gate (P0-4), composed with the structural
   //    + shadow gate. Default-off: behavior is identical to before unless

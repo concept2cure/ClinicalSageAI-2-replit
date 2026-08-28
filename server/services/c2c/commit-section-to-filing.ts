@@ -54,6 +54,21 @@
 
 import type { PoolClient } from 'pg';
 
+/**
+ * What the version ledger records when the save gave no reason.
+ *
+ * The snapshot trigger refuses an empty `app.reason`, so silence cannot be
+ * stored as silence — the record has to say, in words, that no reason was
+ * given. This says that and names how the change arrived, and it is
+ * deliberately NOT phrased as something a person would write, so it cannot be
+ * mistaken for one on the page an inspector reads.
+ *
+ * Exported so the assertion that this is what lands is made against the same
+ * constant the writer uses, rather than a copy that can drift out of agreement
+ * with it.
+ */
+export const REASON_NOT_STATED = 'Not stated — saved from the document editor';
+
 export interface CommitSectionInput {
   /** The caller's OPEN transaction. Everything here joins that transaction. */
   client: PoolClient;
@@ -65,7 +80,8 @@ export interface CommitSectionInput {
   actorId: string;
   /** Verified tenant. */
   tenantId: number;
-  /** Why, for the version ledger. */
+  /** Why, for the version ledger. Absent means the save did not state one, and
+   *  that is what the ledger records — see REASON_NOT_STATED. */
   reason?: string;
 }
 
@@ -155,8 +171,37 @@ export async function commitSectionToFiling(
   // every request before #1188. tests/schema-contract/c2c-section-save fences
   // the whole class repo-wide.
   await client.query(`SELECT set_config('app.actor_id', $1, true)`, [String(actorId)]);
+  /* THE REASON IS NEVER INVENTED.
+   *
+   * This defaulted to the literal 'authored in the document editor', and that
+   * string went into `c2c_document_section_versions.reason` — the immutable
+   * ledger an inspector reads to answer "why was this changed" — as though a
+   * person had given it. Nobody had. Only AuthoringAiDraft sends a reason at
+   * all; every ordinary save from the document editor sends none, so nearly
+   * every row in the reason column of the filing's version ledger was a
+   * sentence no human wrote and none of them was distinguishable from one that
+   * was.
+   *
+   * It also defeated the gate built to catch exactly this. The snapshot
+   * trigger RAISES on an empty app.reason — "Part 11 reason-for-change is
+   * mandatory" (migrations/20260814g) — and a constant supplied here satisfies
+   * that check on every save, so the mandatory-reason gate has never once
+   * fired for the editor most people use. And the two Part 11 records
+   * disagreed about the same act: `authoring_audit_trail.change_reason` was
+   * NULL for a save whose version-ledger row stated a reason.
+   *
+   * The trigger requires a non-empty value, so the honest answer cannot be
+   * empty — it has to SAY it was not stated. That is precisely the precedent
+   * set for `author_kind` in this same trigger, which records 'unspecified'
+   * rather than guessing 'human' (migrations/20260822), for the reason the
+   * draft_source comment below states: a guess is indistinguishable from a
+   * genuine assertion and cannot be audited back out.
+   *
+   * This does not make the editor stop needing a real reason-for-change
+   * prompt. It stops the record claiming to have one. */
+  const stated = reason && reason.trim() ? reason.trim() : null;
   await client.query(`SELECT set_config('app.reason', $1, true)`, [
-    reason && reason.trim() ? reason.trim() : 'authored in the document editor',
+    stated ?? REASON_NOT_STATED,
   ]);
 
   // Org-scoped through the document: c2c_document_sections has no org column of

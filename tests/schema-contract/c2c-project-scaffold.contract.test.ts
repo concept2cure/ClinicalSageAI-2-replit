@@ -64,7 +64,11 @@ beforeEach(async () => {
       ana_action_id text,
       sha256_chain  text,
       occurred_at   timestamptz DEFAULT now(),
-      hmac_seal     text
+      hmac_seal     text,
+      old_values   json,
+      new_values   json,
+      ip_address   text,
+      user_agent   text
     );
     INSERT INTO organizations DEFAULT VALUES;
     INSERT INTO users DEFAULT VALUES;
