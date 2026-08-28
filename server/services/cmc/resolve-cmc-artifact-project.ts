@@ -16,7 +16,10 @@
  *
  * This module is the one translation rule:
  *
- *   numeric string → that `projects.id` (legacy callers)
+ *   numeric string → that `projects.id`, but ONLY when the row belongs to the
+ *                    caller's org (legacy callers). A numeric id owned by
+ *                    another org is 'unaddressable', never resolved — the same
+ *                    tenant scoping the uuid branch gets from the anchor reader.
  *   UUID           → the program's anchored `projects.id` via
  *                    resolveProgramProjectAnchor — the canonical anchor
  *                    reader. No anchor is a real, reportable state
@@ -27,9 +30,14 @@
  * the null cases: skip the registry query and say why, never substitute the
  * raw id, and never render the absence as a plain empty result.
  */
+import { and, eq } from 'drizzle-orm';
 import { db as runtimeDb } from '../../db/runtime';
 import type { RequestDb } from '../../db/requestDb';
+import { projects } from '../../../shared/schema';
 import { resolveProgramProjectAnchor } from '../c2c/program-project-anchor';
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('cmc-artifact-spine');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -57,13 +65,44 @@ export async function resolveCmcArtifactProject(
 
   if (/^\d+$/.test(raw)) {
     const n = Number(raw);
-    if (Number.isSafeInteger(n) && n > 0) {
-      return { state: 'linked', artifactProjectId: n, via: 'numeric' };
+    if (!(Number.isSafeInteger(n) && n > 0)) {
+      return {
+        state: 'unaddressable',
+        artifactProjectId: null,
+        detail: `Project id ${raw} is not a valid projects.id.`,
+      };
     }
+
+    // Org-scope the numeric branch exactly as the uuid branch is org-scoped
+    // through resolveProgramProjectAnchor: a caller-supplied projects.id is only
+    // 'linked' when that row actually belongs to `orgId`. Without this check a
+    // caller could name ANOTHER tenant's projects.id and have the CMC artifact
+    // spine (and every provenance/compile write keyed to it) resolve against it —
+    // a cross-tenant read/write. An id that is not owned is not addressable for
+    // this caller, so we take the same honest unresolved path the function
+    // already uses, never leaking whether the row exists in some other org.
+    const database = deps.db ?? (runtimeDb as RequestDb);
+    try {
+      const rows = await database
+        .select({ id: projects.id })
+        .from(projects)
+        .where(and(eq(projects.id, n), eq(projects.organizationId, orgId)))
+        .limit(1);
+      if (rows.length > 0) {
+        return { state: 'linked', artifactProjectId: n, via: 'numeric' };
+      }
+    } catch (err) {
+      logger.warn('Numeric project-id ownership check failed; treating id as unaddressable', {
+        orgId,
+        projectId: n,
+        err: err instanceof Error ? err.message : String(err),
+      });
+    }
+
     return {
       state: 'unaddressable',
       artifactProjectId: null,
-      detail: `Project id ${raw} is not a valid projects.id.`,
+      detail: `Project id ${raw} is not a projects.id in this organization.`,
     };
   }
 

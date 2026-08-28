@@ -1,7 +1,11 @@
 import express from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
-import { dynamicContentAssembly, type AssemblyIdentity } from '../services/DynamicContentAssembly.js';
-import { authedOrgId } from '../utils/authedOrgId.js';
+import {
+  dynamicContentAssembly,
+  ProjectAccessError,
+  type AssemblyIdentity,
+} from '../services/DynamicContentAssembly.js';
+import { authedOrgId, requireAuthedOrgId } from '../utils/authedOrgId.js';
 import { createScopedLogger } from '../utils/logger.js';
 
 const log = createScopedLogger('content-assembly');
@@ -51,27 +55,33 @@ function resolveSseOrigin(req: express.Request): string | null {
  */
 router.post('/assemble/:projectId', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return; // 403 already sent — no tenant context.
     const { projectId } = req.params;
     const { documentType, options } = req.body;
-    
+
     if (!documentType) {
       return res.status(400).json({
         success: false,
         error: 'Document type is required'
       });
     }
-    
+
     const assembly = await dynamicContentAssembly.assembleDocument(
       parseInt(projectId),
       documentType,
+      guard.orgId,
       { ...options, identity: resolveAssemblyIdentity(req) }
     );
-    
+
     res.json({
       success: true,
       assembly
     });
   } catch (error) {
+    if (error instanceof ProjectAccessError) {
+      return res.status(404).json({ success: false, error: 'Project not found' });
+    }
     log.error('Error assembling document:', error);
     res.status(500).json({
       success: false,
@@ -85,18 +95,24 @@ router.post('/assemble/:projectId', async (req, res) => {
  */
 router.get('/completeness/:projectId', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return; // 403 already sent — no tenant context.
     const { projectId } = req.params;
-    
+
     const report = await dynamicContentAssembly.getCompletenessReport(
-      parseInt(projectId)
+      parseInt(projectId),
+      guard.orgId
     );
-    
+
     res.json({
       success: true,
       projectId,
       report
     });
   } catch (error) {
+    if (error instanceof ProjectAccessError) {
+      return res.status(404).json({ success: false, error: 'Project not found' });
+    }
     log.error('Error generating completeness report:', error);
     res.status(500).json({
       success: false,
@@ -110,12 +126,15 @@ router.get('/completeness/:projectId', async (req, res) => {
  */
 router.get('/preview/:projectId/:documentType', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return; // 403 already sent — no tenant context.
     const { projectId, documentType } = req.params;
     const format = (req.query.format as 'html' | 'markdown' | 'json') || 'html';
-    
+
     const preview = await dynamicContentAssembly.generatePreview(
       parseInt(projectId),
       documentType,
+      guard.orgId,
       format,
       resolveAssemblyIdentity(req)
     );
@@ -124,10 +143,13 @@ router.get('/preview/:projectId/:documentType', async (req, res) => {
     let contentType = 'text/html';
     if (format === 'markdown') contentType = 'text/markdown';
     if (format === 'json') contentType = 'application/json';
-    
+
     res.setHeader('Content-Type', contentType);
     res.send(preview);
   } catch (error) {
+    if (error instanceof ProjectAccessError) {
+      return res.status(404).json({ success: false, error: 'Project not found' });
+    }
     log.error('Error generating preview:', error);
     res.status(500).json({
       success: false,
@@ -141,19 +163,22 @@ router.get('/preview/:projectId/:documentType', async (req, res) => {
  */
 router.post('/validate/:projectId', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return; // 403 already sent — no tenant context.
     const { projectId } = req.params;
     const { documentType } = req.body;
-    
+
     if (!documentType) {
       return res.status(400).json({
         success: false,
         error: 'Document type is required'
       });
     }
-    
+
     const assembly = await dynamicContentAssembly.assembleDocument(
       parseInt(projectId),
       documentType,
+      guard.orgId,
       { validateOnly: true }
     );
     
@@ -175,6 +200,9 @@ router.post('/validate/:projectId', async (req, res) => {
       }
     });
   } catch (error) {
+    if (error instanceof ProjectAccessError) {
+      return res.status(404).json({ success: false, error: 'Project not found' });
+    }
     log.error('Error validating document:', error);
     res.status(500).json({
       success: false,
@@ -188,11 +216,34 @@ router.post('/validate/:projectId', async (req, res) => {
  */
 router.get('/live-preview/:projectId/:documentType', async (req, res) => {
   if (!authenticateSse(req, res)) return;
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return; // 403 already sent — no tenant context.
+  const orgId = guard.orgId;
   const allowedOrigin = resolveSseOrigin(req);
   if ((req.headers.origin as string) && !allowedOrigin) {
     return res.status(403).json({ success: false, error: 'Origin not allowed' });
   }
   const { projectId, documentType } = req.params;
+
+  // Verify tenant ownership BEFORE opening the SSE stream. generatePreview fails
+  // closed with ProjectAccessError for a foreign-org projectId, so the stream is
+  // never opened and no cross-tenant content is written.
+  let initialPreview: string;
+  try {
+    initialPreview = await dynamicContentAssembly.generatePreview(
+      parseInt(projectId),
+      documentType,
+      orgId,
+      'html',
+      resolveAssemblyIdentity(req)
+    );
+  } catch (error) {
+    if (error instanceof ProjectAccessError) {
+      return res.status(404).json({ success: false, error: 'Project not found' });
+    }
+    log.error('Error generating initial preview:', error);
+    return res.status(500).json({ success: false, error: 'Failed to generate preview' });
+  }
 
   // Set SSE headers
   res.writeHead(200, {
@@ -202,39 +253,30 @@ router.get('/live-preview/:projectId/:documentType', async (req, res) => {
     ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin } : {}),
     'Vary': 'Origin'
   });
-  
+
   // Send initial preview
-  try {
-    const preview = await dynamicContentAssembly.generatePreview(
-      parseInt(projectId),
-      documentType,
-      'html',
-      resolveAssemblyIdentity(req)
-    );
-    
-    res.write(`data: ${JSON.stringify({
-      type: 'preview',
-      content: preview,
-      timestamp: new Date()
-    })}\n\n`);
-  } catch (error) {
-    log.error('Error generating initial preview:', error);
-  }
-  
+  res.write(`data: ${JSON.stringify({
+    type: 'preview',
+    content: initialPreview,
+    timestamp: new Date()
+  })}\n\n`);
+
   // Set up interval for periodic updates
   const updateInterval = setInterval(async () => {
     try {
       const preview = await dynamicContentAssembly.generatePreview(
         parseInt(projectId),
         documentType,
+        orgId,
         'html',
         resolveAssemblyIdentity(req)
       );
-      
+
       const report = await dynamicContentAssembly.getCompletenessReport(
-        parseInt(projectId)
+        parseInt(projectId),
+        orgId
       );
-      
+
       res.write(`data: ${JSON.stringify({
         type: 'update',
         content: preview,
@@ -245,7 +287,7 @@ router.get('/live-preview/:projectId/:documentType', async (req, res) => {
       log.error('Error generating update:', error);
     }
   }, 5000); // Update every 5 seconds
-  
+
   // Clean up on disconnect
   req.on('close', () => {
     clearInterval(updateInterval);
