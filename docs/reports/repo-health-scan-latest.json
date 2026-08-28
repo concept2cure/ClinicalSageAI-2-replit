@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-28T14:17:31.723Z",
+  "generatedAt": "2026-08-28T14:25:03.812Z",
   "git": {
-    "sha": "fe323f20f0b16649aed062d5770b5b550f89cb75",
+    "sha": "eaf48866ce8831c69319c6bb1cd9bb80257c81f7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2166,7 +2166,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 287283
+        "bytes": 288856
       },
       {
         "file": "server/statistics-service.ts",
@@ -2178,7 +2178,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 199093
+        "bytes": 199967
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2320,7 +2320,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6879
+        "lines": 6908
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2336,7 +2336,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 4496
+        "lines": 4511
       },
       {
         "file": "server/storage.ts",
@@ -2519,6 +2519,10 @@
         "lines": 1888
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 1885
+      },
+      {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
         "lines": 1881
       },
@@ -2601,10 +2605,6 @@
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
         "lines": 1678
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 1676
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
