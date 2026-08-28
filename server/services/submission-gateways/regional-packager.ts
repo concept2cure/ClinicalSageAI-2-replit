@@ -684,9 +684,16 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
 
   /* Write the ICH M2-M5 index.xml + index-md5.txt. */
   const indexXml = buildIndexXml(input, m2to5, resolve);
+  const indexXmlMd5 = createHash('md5').update(indexXml).digest('hex');
   zip.file('index.xml', indexXml);
-  checksums.push({ relPath: 'index.xml', md5: createHash('md5').update(indexXml).digest('hex') });
+  checksums.push({ relPath: 'index.xml', md5: indexXmlMd5 });
 
+  // ICH eCTD v3.2.2 REQUIRES `index-md5.txt` at the SEQUENCE ROOT holding the
+  // bare MD5 of index.xml — regional validators (FDA eValidator / EMA / PMDA)
+  // reject a sequence whose backbone checksum file is missing. (The additional
+  // `util/index-md5.txt` full-file manifest below is a platform convenience, not
+  // the spec artifact, and is not a substitute for the root file.)
+  zip.file('index-md5.txt', indexXmlMd5);
   zip.file('util/index-md5.txt', buildMd5Index(checksums));
 
   /* Generate the zip + write to disk. */

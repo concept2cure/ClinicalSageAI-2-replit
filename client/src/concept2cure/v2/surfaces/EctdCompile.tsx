@@ -145,6 +145,11 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
   const [status, setStatus] = useState<StatusView | null>(null);
   const [statusState, setStatusState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [findings, setFindings] = useState<ValidationResult[] | null>(null);
+  // Distinguishes "validation ran and returned zero findings" (a real clean pass)
+  // from "validation did not run" (POST failed). Without this, an errored POST
+  // that set findings to [] rendered the same "No findings" panel as a clean
+  // pass — a false "validated clean" on the submission surface.
+  const [validationFailed, setValidationFailed] = useState(false);
   const [compileResult, setCompileResult] = useState<CompileResult | null>(null);
   const [history, setHistory] = useState<CompilationRow[]>([]);
   const [busy, setBusy] = useState<'validate' | 'compile' | null>(null);
@@ -175,8 +180,11 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
       );
       if (!ok || !body) {
         fireToast(st === 401 ? 'Sign in to your tenant to validate.' : `Validation didn’t run (HTTP ${st}).`, 'error');
-        setFindings([]); return;
+        // Do NOT collapse a failed run into an empty findings list — that reads
+        // as a clean pass. Flag the failure and keep any prior findings visible.
+        setValidationFailed(true); return;
       }
+      setValidationFailed(false);
       setFindings(body.results ?? []);
       fireToast(`Validation: ${body.summary.errors} error(s), ${body.summary.warnings} warning(s).`);
     } finally { setBusy(null); }
@@ -192,6 +200,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
         return;
       }
       setCompileResult(body);
+      setValidationFailed(false);
       setFindings(body.validationResults ?? null);
       fireToast(
         body.status === 'completed'
@@ -418,15 +427,17 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
       )}
 
       {/* ── Validation findings ── */}
-      {findings && (
+      {(findings || validationFailed) && (
         <div className="pj-card">
-          <div className="pj-card-h"><span className="t">Validation findings</span><span className="s" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{findings.length}{ask && findings.length > 0 && <button className="reg-cta" onClick={() => ask(`Triage these eCTD validation findings for ${region}: which are blocking versus advisory, what each rule actually requires, and the order to fix them in. Do not claim a finding is resolved without evidence.`)}>{I.sparkles} Triage findings</button>}</span></div>
+          <div className="pj-card-h"><span className="t">Validation findings</span><span className="s" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{validationFailed ? '—' : findings!.length}{ask && !validationFailed && findings && findings.length > 0 && <button className="reg-cta" onClick={() => ask(`Triage these eCTD validation findings for ${region}: which are blocking versus advisory, what each rule actually requires, and the order to fix them in. Do not claim a finding is resolved without evidence.`)}>{I.sparkles} Triage findings</button>}</span></div>
           <div className="pj-card-b" style={{ padding: 0 }}>
-            {findings.length === 0 ? (
+            {validationFailed ? (
+              <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Validation did not run" hint="The validation service did not return a result, so no findings are shown. This is NOT a clean result — re-run validation before relying on it." /></div>
+            ) : findings!.length === 0 ? (
               <div style={{ padding: 16 }}><EmptyState icon={I.checkCircle} title="No findings" hint="No blocking or advisory issues were raised for the selected region." /></div>
             ) : (
               <table className="reg-tbl"><thead><tr><th>Severity</th><th>Section</th><th>Message</th><th>Suggested fix</th></tr></thead>
-                <tbody>{findings.filter((f) => f.severity !== 'info').concat(findings.filter((f) => f.severity === 'info')).map((f, i) => (
+                <tbody>{findings!.filter((f) => f.severity !== 'info').concat(findings!.filter((f) => f.severity === 'info')).map((f, i) => (
                   <tr key={i}>
                     <td><span className={'rd-chip tone-' + sevTone(f.severity)}>{f.severity}</span></td>
                     <td className="mono">{f.sectionCode ?? '—'}</td>
