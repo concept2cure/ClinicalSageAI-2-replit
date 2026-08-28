@@ -392,15 +392,27 @@ export async function assembleECTDPackage(options: ECTDPackageOptions): Promise<
     for (const section of sections) {
       const ectdPath = mapSectionToECTDPath(section.sectionCode, options.region || 'us');
       const content = section.content || '';
-      const checksum = crypto.createHash('md5').update(content).digest('hex');
+
+      // The eCTD backbone MUST checksum the exact bytes that will be filed for
+      // each path — a recipient verifies the delivered file against this hash.
+      // No PDF conversion happens here yet: the bytes emitted for this entry
+      // ARE the raw source text, so checksum ↔ size ↔ mimeType ↔ extension must
+      // all describe that text, not a PDF that was never produced. Emitting a
+      // `.pdf` path with `application/pdf` and an md5 over source text would
+      // advertise a checksum over the wrong bytes. When a real PDF publisher is
+      // wired in, it must convert first and then checksum the produced PDF
+      // bytes (and restore the `.pdf` extension + `application/pdf` mimeType).
+      const fileBytes = Buffer.from(content, 'utf-8');
+      const checksum = crypto.createHash('md5').update(fileBytes).digest('hex');
+      const filedPath = ectdPath.replace(/\.pdf$/i, '.txt');
 
       files.push({
-        path: ectdPath,
+        path: filedPath,
         title: section.title,
         operation: options.lifecycleOperation,
         checksum,
-        size: Buffer.byteLength(content, 'utf-8'),
-        mimeType: 'application/pdf', // Would be PDF after conversion
+        size: fileBytes.length,
+        mimeType: 'text/plain; charset=utf-8', // honest: bytes are source text, not a converted PDF
       });
     }
 
