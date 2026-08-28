@@ -186,6 +186,54 @@ export async function provisionAppServiceRole(db, { env = process.env, log = () 
       await db.query(
         `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schemaIdent} GRANT USAGE, SELECT ON SEQUENCES TO ${roleIdent}`,
       );
+
+      // ── EXECUTE on functions ────────────────────────────────────────────
+      // Functions are executable by PUBLIC by default, so for a long time this
+      // helper did not need to say anything about them and the omission was
+      // invisible. It stops being invisible the moment a migration does
+      // `REVOKE EXECUTE ... FROM PUBLIC`, which is exactly what happened to the
+      // schema `core` tenancy helpers: core.can_access_program,
+      // core.can_write_program and core.get_program_org_id ended up with
+      // acl={postgres=X/postgres}, i.e. the owner and nobody else.
+      //
+      // The runtime role then cannot call them, and because they are the
+      // helpers the WRITE PATH consults, the failure surfaces as a governed
+      // refusal rather than a permission error: POST /api/vault/ingest answered
+      // 500 "program not owned by caller organization" with
+      // `permission denied for function can_write_program` underneath. A
+      // provisioning gap that reads as an authorization decision is the worst
+      // shape for one — nothing about the message suggests a missing GRANT.
+      //
+      // Granted per schema alongside the table grants, with ALTER DEFAULT
+      // PRIVILEGES for the same forward coverage: a helper added by a later
+      // migration is executable without anyone remembering to say so.
+      //
+      // Each is wrapped in a SAVEPOINT because the grantor must have rights on
+      // the function. On a managed provider (Neon) some functions in a schema
+      // may belong to an extension the admin role does not own, and a bare
+      // failure here would roll back the entire role provisioning — losing the
+      // table grants too. A schema that refuses is reported and skipped.
+      for (const [what, sql] of [
+        ['functions', `GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA ${schemaIdent} TO ${roleIdent}`],
+        [
+          'future functions',
+          `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schemaIdent} GRANT EXECUTE ON FUNCTIONS TO ${roleIdent}`,
+        ],
+      ]) {
+        await db.query('SAVEPOINT grant_exec');
+        try {
+          await db.query(sql);
+          await db.query('RELEASE SAVEPOINT grant_exec');
+        } catch (err) {
+          await db.query('ROLLBACK TO SAVEPOINT grant_exec');
+          log(
+            `  ⚠ could not grant EXECUTE on ${what} in schema ${schema}: ${err.message}. ` +
+              `Any function there that has had EXECUTE revoked from PUBLIC will be ` +
+              `unavailable to ${role}.`,
+          );
+        }
+      }
+
       grantedSchemas.push(`${schema}(${privList})`);
     }
 

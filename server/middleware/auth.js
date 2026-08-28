@@ -4,8 +4,19 @@
 // server/api/semantic-search.js, server/api/cmc/index.js) import
 // '../middleware/auth.js' with the .js extension, which Node ESM requires and
 // which vite's resolver will NOT rewrite to .ts when the importer is itself a
-// .js file. This file keeps that specifier resolvable. Production builds emit
-// auth.js from auth.ts and overwrite it — no runtime impact.
+// .js file. This file keeps that specifier resolvable.
+//
+// NB the sibling shims (environment.js, jwtVerify.js) each claim "production
+// builds emit X.js from X.ts and overwrite this shim". No such step exists:
+// package.json builds with `vite build && node scripts/build-server.mjs`, and
+// build-server.mjs is a single esbuild bundle (entry server/index.ts, bundle:
+// true, outfile dist/index.js) with no tsc emit into server/. THIS FILE IS WHAT
+// SHIPS. Which is precisely why the twin mattered in production and not only
+// under vitest: esbuild resolves an explicit './auth.js' literally, so the 29
+// .ts modules that import '../middleware/auth.js' — every bootstrap registrar
+// among them — bundled the twin. Confirmed by building both ways and grepping
+// dist/index.js: the twin's isPublicRoute bypass is present with it and absent
+// with this shim.
 //
 // ── What used to be here, and what it cost ───────────────────────────────────
 // This file was a hand-written LEGACY TWIN of auth.ts, not a shim: ~360 lines

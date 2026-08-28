@@ -57,7 +57,7 @@ const ALLOWED_SHADOWS = new Set([
   //    docs/proof/KNOWN_ISSUES_LEDGER.md M-5). Deleting or repointing these
   //    CHANGES PRODUCTION BEHAVIOR — do not touch without an owner decision.
   'server/db.js', // why: compat wrapper (dbStatus/pool proxy/retrying query); prod bundles it for 312 explicit '.js' imports.
-  'server/middleware/auth.js', // why: diverged legacy middleware; prod bundles it for ~26 .ts routes importing '../middleware/auth.js' (ledger M-5).
+  'server/middleware/auth.js', // why: re-export shim only (no longer a diverged twin); must exist because 4 first-party .js files import '../middleware/auth.js' and cannot fall back to .ts.
   'server/utils/logger.js', // why: hand-synced console mirror of pino logger.ts; prod bundles it for 178 explicit '.js' imports.
   'server/config/docushareConfig.js', // why: diverged config actually used in prod via docushareHealthCheck.js; .ts twin only reachable from orphaned config/index.ts barrel.
 ]);
