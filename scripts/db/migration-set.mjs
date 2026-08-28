@@ -1584,6 +1584,12 @@ export const C2C_MIGRATION_FILES = [
   // once the inline casts are gone.
   'db/migrations/20260821_uuid_org_guc_cast_heal.sql',
 
+  // core.get_program_org_id must resolve the canonical program registry
+  // (regulatory_programs → organizations.uuid), or every vault.documents RLS
+  // policy denies the runtime role on a fresh install (core.programs is empty
+  // there). Proven by tests/db/vault-ingest.dbtest.ts.
+  'db/migrations/20260828_program_org_resolution_canonical.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
