@@ -1086,14 +1086,24 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
   try {
     let compilations: any[] = [];
     try {
+      // Match the anchor label as a WHOLE token, not a bare substring. A
+      // `LIKE '%Project 5%'` matched "Project 50", "Project 500", etc., so
+      // GET /:projectId/history returned OTHER same-org projects' compilations
+      // as if they were this project's. Require a non-alphanumeric boundary (or
+      // string edge) on each side of the label so "Project 5" no longer matches
+      // inside "Project 50", while still finding the label anywhere in a longer
+      // compilation name. (ectd_compilations has no project/program id column to
+      // filter on exactly; that would be the stronger fix via a migration.)
+      const escapedLabel = anchor.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const labelTokenPattern = `(^|[^A-Za-z0-9])${escapedLabel}($|[^A-Za-z0-9])`;
       const result = await pool.query(
         `SELECT id, compilation_name, compilation_type, status, version,
                 compiled_at, created_at
          FROM ectd_compilations
-         WHERE organization_id = $1 AND compilation_name LIKE $2
+         WHERE organization_id = $1 AND compilation_name ~ $2
          ORDER BY created_at DESC
          LIMIT 20`,
-        [orgId, `%${anchor.label}%`]
+        [orgId, labelTokenPattern]
       );
       compilations = result.rows;
     } catch (err: any) {

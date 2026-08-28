@@ -1599,6 +1599,18 @@ export const C2C_MIGRATION_FILES = [
   // there). Proven by tests/db/vault-ingest.dbtest.ts.
   'db/migrations/20260828_program_org_resolution_canonical.sql',
 
+  // ── Orphaned org-GUC policies on the IND section-tracking tables ───────────
+  // 20260220_ind_section_tracking.sql created five *_org_policy policies keyed
+  // on `app.organization_id`, a GUC nothing in the application sets — so they
+  // have never granted anyone access. They are not an outage (the canonical
+  // tenant_isolation_policy is PERMISSIVE and ORs alongside them, measured: own
+  // org sees its row, another org sees none) but their cast is unguarded, so
+  // one `set_config('app.organization_id','')` anywhere takes all five tables
+  // down with 22P02 — both expressions are evaluated no matter which one grants.
+  // Dropped rather than repaired: a repair would restate what the sweep already
+  // says. Ordered before the sweep so a table is never left without a policy.
+  'db/migrations/20260828_drop_orphaned_org_guc_policies.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
