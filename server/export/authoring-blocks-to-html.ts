@@ -109,7 +109,14 @@ export function blocksToHtml(
           `<p class="img-missing">[Figure not exported: ${escapeHtml(b.alt || b.src || 'unresolved image reference')}]</p>`
         );
       }
-    } else if (b.kind === 'heading') parts.push(`<h3>${inline(b.runs)}</h3>`);
+    } else if (b.kind === 'heading') {
+      /* Every heading used to render as <h3>, whatever its level: the document's
+         entire hierarchy collapsed to one rank in the HTML and PDF paths. Offset
+         by one for the same reason the DOCX path does — the section title is the
+         h1 above this content. */
+      const h = Math.min(Math.max((b.level ?? 1) + 1, 2), 6);
+      parts.push(`<h${h}>${inline(b.runs)}</h${h}>`);
+    }
     else parts.push(`<p>${inline(b.runs)}</p>`);
   }
   closeList();

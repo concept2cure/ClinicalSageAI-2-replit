@@ -430,15 +430,28 @@ router.get(
       if (orgIdRaw == null || user?.id == null) {
         return res.status(403).json({ error: 'Tenant context required for governed export' });
       }
+      // The Part 11 export record's integrity hash MUST cover the delivered
+      // artifact bytes. The shadow service already returns the artifact's digest
+      // (x-artifact-sha256) and Content-Length — pass them so exportHash is a
+      // real content hash and the recorded size is truthful, instead of hashing
+      // "title:filename:0" over a zero size (a Part 11 record that proves nothing
+      // about the file it governs).
+      const contentLengthHeader = Number(response.headers.get('content-length'));
       await registerExportGovernanceQuick({
         organizationId: Number(orgIdRaw),
+        // NOTE: projectId lineage for a uuid-keyed regulatory program cannot be
+        // recorded through concept2cure_artifacts.project_id (an integer NOT NULL
+        // FK to projects(id)) — this is the ADR-0011 identity split, tracked and
+        // resolved there. Left unchanged so this fix stays scoped to export
+        // integrity and does not fabricate a mapping.
         projectId: Number(programId) || 0,
         userId: Number(user.id),
         userName: user?.name || user?.email || 'unknown',
         title: `DOCX Artifact: ${req.params.artifactId}`,
         exportFormat: 'docx',
         exportFilename: `artifact-${req.params.artifactId}.docx`,
-        exportFileSize: 0,
+        exportFileSize: Number.isFinite(contentLengthHeader) ? contentLengthHeader : 0,
+        exportHash: sha256Header ?? undefined,
         docType: 'docx_artifact',
         backendRoute: `/api/docx-factory/artifacts/${req.params.artifactId}/download`,
         ipAddress: req.ip,

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-28T02:39:00.470Z",
+  "generatedAt": "2026-08-28T02:49:35.510Z",
   "git": {
-    "sha": "0a88f3a7ee2394888b8979314b62287412dd0544",
+    "sha": "cc1298b65e2fe4d09d40dd4156a4c7b11b408e3a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2166,7 +2166,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 276375
+        "bytes": 277858
       },
       {
         "file": "server/statistics-service.ts",
@@ -2316,7 +2316,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6694
+        "lines": 6715
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2599,12 +2599,12 @@
         "lines": 1678
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1672
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 1676
       },
       {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 1664
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 1672
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
