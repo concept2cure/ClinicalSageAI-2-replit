@@ -918,8 +918,38 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       ref,
       () => ({
         save: doSave,
-        insertSuggestion: (text: string, author: SuggestionAuthor) =>
-          editor ? editor.chain().focus().insertSuggestedContent(text, author).run() : false,
+        /* REPORTS SUCCESS ONLY IF THE TEXT CAN REACH THE SAVED DOCUMENT.
+         *
+         * This was `editor ? chain().insertSuggestedContent(…).run() : false`,
+         * and both halves lied in source mode. The TipTap instance still EXISTS
+         * there — it is constructed empty and non-editable while the raw
+         * <textarea> is what the author sees — so `editor` is truthy;
+         * `focus()` does not check editability and `insertSuggestedContent`
+         * unconditionally returns true, so `run()` returned true as well.
+         *
+         * Meanwhile `doSave` in source mode serializes `sourceText` and never
+         * the editor. So an AnA draft landed in an invisible ProseMirror
+         * document that is never rendered and never saved — discarded — and the
+         * caller, seeing `true`, told the author "Draft inserted as tracked
+         * suggestions — review each edit in the canvas, then save." They were
+         * sent to look for regulatory text in a canvas that does not show it,
+         * on precisely the sections the fidelity gate flagged as most delicate.
+         *
+         * The same held for a FROZEN section: this control is not disabled by
+         * `docSealed`, unlike the surrounding Draft-with-AnA button, so the
+         * insert silently went nowhere there too.
+         *
+         * The call site has always had an honest failure branch — "Couldn't
+         * insert — the canvas is not editable right now." It simply never
+         * fired. */
+        insertSuggestion: (text: string, author: SuggestionAuthor) => {
+          if (!editor || editor.isDestroyed) return false;
+          // Source mode: the textarea is the document; the editor is a shell.
+          if (boot.mode !== 'rich') return false;
+          // Frozen / read-only: the save path would refuse it anyway.
+          if (!editor.isEditable) return false;
+          return editor.chain().focus().insertSuggestedContent(text, author).run();
+        },
         getContent: () =>
           boot.mode === 'source' ? sourceText : editor ? serialize(editor) : '',
         takeAcceptedAuthors: () => {
