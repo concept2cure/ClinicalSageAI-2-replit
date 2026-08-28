@@ -21,6 +21,13 @@ import {
   type CrossReferenceLookup,
   type CrossReferenceTarget,
 } from '@shared/authoring/cross-references';
+import {
+  CITATION_MISSING_TEXT,
+  REFERENCE_LIST_HEADING,
+  citationBookmarkId,
+  citationMarkerText,
+  type CitationRegistry,
+} from '@shared/authoring/citations';
 
 /** The slice of the `docx` module namespace this renderer needs. */
 export type DocxNs = typeof import('docx');
@@ -147,6 +154,18 @@ export interface DocxRenderOptions {
    * editor cached, because that cached number is precisely what goes stale.
    */
   crossRefs?: CrossReferenceLookup | null;
+  /**
+   * Numbers the citations, for the whole DOCUMENT.
+   *
+   * One registry across every section, for exactly the reason `footnoteSink` is
+   * one per file: a submission carries ONE reference list, and two sections
+   * citing the same study report must print the same number. The caller owns it
+   * and emits the list once, with `referenceListParagraphs`.
+   *
+   * Absent, a citation renders as unresolved rather than as a guessed number —
+   * the same refusal a cross-reference makes with no directory.
+   */
+  citations?: CitationRegistry | null;
 }
 
 /**
@@ -230,6 +249,7 @@ function runsOf(
   revisionDate = '1970-01-01T00:00:00Z',
   footnoteSink?: (noteText: string) => number,
   crossRefs?: CrossReferenceLookup | null,
+  citations?: CitationRegistry | null,
 ) {
   /* flatMap, not map: a cross-reference showing number AND title is two REF
      fields with a separator between them, because each field prints the text of
@@ -272,6 +292,32 @@ function runsOf(
         out.push(new D.SimpleField(` REF ${seg.bookmark} \\h `, seg.text));
       });
       return out as never[];
+    }
+    /* A CITATION becomes the number this document's registry gives its source,
+       inside a real Word internal hyperlink to that source's entry in the
+       reference list. So a reviewer can click a marker and land on the
+       reference, and the number itself comes from reading position rather than
+       from anything stored — insert a citation in an earlier section and every
+       marker after it moves, with no section's stored bytes touched.
+
+       The anchor is only ever emitted for a source that resolved, and the
+       reference list writes a bookmark for exactly the sources that resolved,
+       so a marker can never link into a bookmark Word does not have.
+
+       An unresolved source is STATED, in the filed document, in words a
+       reviewer can read — never a number (which would look right and be
+       wrong), and never nothing. */
+    if (r.citationSourceId) {
+      const cited = citations?.cite(r.citationSourceId);
+      if (!cited || !cited.found) {
+        return [new D.TextRun({ text: CITATION_MISSING_TEXT, italics: true, color: 'B42318' })];
+      }
+      return [
+        new D.InternalHyperlink({
+          anchor: citationBookmarkId(r.citationSourceId),
+          children: [new D.TextRun(citationMarkerText(cited.number, r.citationLocator))],
+        }),
+      ] as never[];
     }
     /* A real Word footnote reference — the auto-numbered superscript a reader
        can click, that Word renumbers when content moves and that carries the
@@ -334,6 +380,7 @@ function tableOf(
   revisionDate: string,
   footnoteSink?: (noteText: string) => number,
   crossRefs?: CrossReferenceLookup | null,
+  citations?: CitationRegistry | null,
   images?: Map<string, ResolvedImage>,
 ) {
   const border = { style: D.BorderStyle.SINGLE, size: 4, color: 'BFBFBF' };
@@ -348,7 +395,7 @@ function tableOf(
               new D.Paragraph({
                 children: runsOf(
                   D, cell.runs, Boolean(cell.header), revisionId, revisionDate, footnoteSink,
-                  crossRefs,
+                  crossRefs, citations,
                 ),
               })
             );
@@ -444,6 +491,7 @@ export function blocksToDocx(
   const revisionDate = opts.revisionDate ?? '1970-01-01T00:00:00Z';
   const footnoteSink = opts.footnoteSink;
   const crossRefs = opts.crossRefs ?? null;
+  const citations = opts.citations ?? null;
   const out: (InstanceType<DocxNs['Paragraph']> | InstanceType<DocxNs['Table']>)[] = [];
   for (const block of blocks) {
     if (block.kind === 'image') {
@@ -451,7 +499,9 @@ export function blocksToDocx(
       continue;
     }
     if (block.kind === 'table') {
-      out.push(tableOf(D, block, revisionId, revisionDate, footnoteSink, crossRefs, images));
+      out.push(
+        tableOf(D, block, revisionId, revisionDate, footnoteSink, crossRefs, citations, images),
+      );
       if (block.caption) {
         out.push(
           new D.Paragraph({
@@ -473,8 +523,55 @@ export function blocksToDocx(
             ? { numbering: { reference: ORDERED_LIST_REFERENCE, level: listLevel(block.depth) } }
             : { bullet: { level: listLevel(block.depth) } }
           : {}),
-        children: runsOf(D, block.runs, false, revisionId, revisionDate, footnoteSink, crossRefs),
+        children: runsOf(
+          D, block.runs, false, revisionId, revisionDate, footnoteSink, crossRefs, citations,
+        ),
       })
+    );
+  }
+  return out;
+}
+
+/**
+ * The document's reference list, as Word paragraphs.
+ *
+ * Emitted ONCE, by the caller, after every section's content — a submission
+ * carries one reference list, not one per section, and it is the caller that
+ * holds the whole document. Same division of labour as the footnotes, which
+ * Word also holds on the document rather than on the paragraph that cites them.
+ *
+ * What is in it: every source a citation actually resolved to, once each,
+ * numbered in first-appearance order. An uncited source is not here — the
+ * registry only ever learns of a source because a marker asked for its number.
+ * A source cited fifteen times appears once, under the number all fifteen
+ * markers print.
+ *
+ * Each entry carries the bookmark its in-text markers link to. Bookmark and
+ * link come from the same registry, so a marker cannot point at an anchor this
+ * list did not write.
+ *
+ * Empty when nothing was cited: no heading for a list with no entries.
+ */
+export function referenceListParagraphs(
+  D: DocxNs,
+  citations: CitationRegistry | null | undefined,
+): InstanceType<DocxNs['Paragraph']>[] {
+  const entries = citations?.entries() ?? [];
+  if (entries.length === 0) return [];
+  const out = [
+    new D.Paragraph({ text: REFERENCE_LIST_HEADING, heading: D.HeadingLevel.HEADING_1 }),
+  ];
+  for (const entry of entries) {
+    out.push(
+      new D.Paragraph({
+        children: [
+          new D.Bookmark({
+            id: citationBookmarkId(entry.source.id),
+            children: [new D.TextRun(`[${entry.number}]`)],
+          }),
+          new D.TextRun(`  ${entry.text}`),
+        ] as never,
+      }),
     );
   }
   return out;

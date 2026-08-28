@@ -23,6 +23,13 @@ import {
   resolveCrossReference,
   type CrossReferenceLookup,
 } from '@shared/authoring/cross-references';
+import {
+  CITATION_MISSING_TEXT,
+  REFERENCE_LIST_HEADING,
+  citationAnchorId,
+  citationMarkerText,
+  type CitationRegistry,
+} from '@shared/authoring/citations';
 
 export function escapeHtml(s: string): string {
   return String(s ?? '')
@@ -81,6 +88,7 @@ function inline(
   runs: InlineRun[],
   fn?: FootnoteCollector,
   crossRefs?: CrossReferenceLookup | null,
+  citations?: CitationRegistry | null,
 ): string {
   return runs
     .map((r) => {
@@ -103,6 +111,27 @@ function inline(
         return (
           `<a class="xref" href="#${escapeHtml(crossReferenceAnchorId(r.crossRefTarget))}">` +
           `${escapeHtml(ref.text)}</a>`
+        );
+      }
+      /* A CITATION prints the number the document's registry gives its source,
+         in reading order — never the editor's cached name and never a number
+         from stored content, because the number IS the position and the stored
+         content does not know it. The marker links to the source's entry in the
+         reference list, which the caller renders once for the whole document.
+
+         A source that does not resolve is STATED in place. It takes no number
+         (numbering it would leave a gap in the reference list) and it never
+         falls back to the cached name, which would read as a citation that
+         worked. With no registry at all every citation is unresolved, exactly
+         as a cross-reference is with no directory — neither state is silence. */
+      if (r.citationSourceId) {
+        const cited = citations?.cite(r.citationSourceId);
+        if (!cited || !cited.found) {
+          return `<span class="cite-missing">${escapeHtml(CITATION_MISSING_TEXT)}</span>`;
+        }
+        return (
+          `<a class="cite" href="#${escapeHtml(citationAnchorId(r.citationSourceId))}">` +
+          `${escapeHtml(citationMarkerText(cited.number, r.citationLocator))}</a>`
         );
       }
       /* A footnote reference renders as its marker, not as whatever character
@@ -158,6 +187,7 @@ function tableHtml(
   b: ContentBlock,
   fn?: FootnoteCollector,
   crossRefs?: CrossReferenceLookup | null,
+  citations?: CitationRegistry | null,
   images?: Map<string, ResolvedImage>,
 ): string {
   const rows = (b.rows ?? [])
@@ -172,7 +202,7 @@ function tableHtml(
                <img> left no trace, and a table whose cells held only figures
                was deleted from the export entirely. */
             const figs = (c.images ?? []).map((f) => figureHtml(f, images)).join('');
-            return `<${tag}${cs}${rs}>${inline(c.runs, fn, crossRefs)}${figs}</${tag}>`;
+            return `<${tag}${cs}${rs}>${inline(c.runs, fn, crossRefs, citations)}${figs}</${tag}>`;
           })
           .join('')}</tr>`
     )
@@ -191,6 +221,17 @@ export interface HtmlRenderOptions {
    * unresolved rather than falling back to the editor's cached text.
    */
   crossRefs?: CrossReferenceLookup | null;
+  /**
+   * Numbers the citations, for the whole DOCUMENT.
+   *
+   * One registry across every section, for the same reason the DOCX footnote
+   * sink is one per file: a submission carries ONE reference list, and two
+   * sections citing the same report must print the same number. The caller owns
+   * it and renders the list once, with `renderReferenceListHtml`.
+   *
+   * Absent, citations render as unresolved rather than as a guessed number.
+   */
+  citations?: CitationRegistry | null;
 }
 
 /**
@@ -212,6 +253,7 @@ export function blocksToHtml(
 ): string {
   const parts: string[] = [];
   const crossRefs = opts.crossRefs ?? null;
+  const citations = opts.citations ?? null;
   const fn = makeFootnoteCollector();
   /** The open list ancestry, innermost last. */
   const stack: ('ol' | 'ul')[] = [];
@@ -255,12 +297,12 @@ export function blocksToHtml(
 
       // A sibling at this rank: close the previous item first.
       if (openLi) parts.push('</li>');
-      parts.push(`<li>${inline(b.runs, fn, crossRefs)}`);
+      parts.push(`<li>${inline(b.runs, fn, crossRefs, citations)}`);
       openLi = true;
       continue;
     }
     closeLists();
-    if (b.kind === 'table') parts.push(tableHtml(b, fn, crossRefs, images));
+    if (b.kind === 'table') parts.push(tableHtml(b, fn, crossRefs, citations, images));
     else if (b.kind === 'image') parts.push(figureHtml(b, images));
     else if (b.kind === 'heading') {
       /* Every heading used to render as <h3>, whatever its level: the document's
@@ -268,9 +310,9 @@ export function blocksToHtml(
          by one for the same reason the DOCX path does — the section title is the
          h1 above this content. */
       const h = Math.min(Math.max((b.level ?? 1) + 1, 2), 6);
-      parts.push(`<h${h}>${inline(b.runs, fn, crossRefs)}</h${h}>`);
+      parts.push(`<h${h}>${inline(b.runs, fn, crossRefs, citations)}</h${h}>`);
     }
-    else parts.push(`<p>${inline(b.runs, fn, crossRefs)}</p>`);
+    else parts.push(`<p>${inline(b.runs, fn, crossRefs, citations)}</p>`);
   }
   closeLists();
   /* The notes themselves, after the content that cites them.
@@ -287,6 +329,38 @@ export function blocksToHtml(
     parts.push('</dl></section>');
   }
   return parts.join('');
+}
+
+/**
+ * The document's reference list.
+ *
+ * Rendered ONCE, by the caller, after every section — a submission carries one
+ * reference list, not one per section, and it is the caller that holds the
+ * whole document.
+ *
+ * What is in it: every source a citation actually resolved to, once each,
+ * numbered in first-appearance order. A source nobody cited is not here — the
+ * registry only ever learns about a source because a citation asked for its
+ * number. A source cited fifteen times appears once, under the number all
+ * fifteen markers print.
+ *
+ * Empty when nothing was cited: a document with no citations gets no heading
+ * for a list that would have no entries.
+ */
+export function renderReferenceListHtml(citations: CitationRegistry | null | undefined): string {
+  const entries = citations?.entries() ?? [];
+  if (entries.length === 0) return '';
+  const items = entries
+    .map(
+      (e) =>
+        `<li id="${escapeHtml(citationAnchorId(e.source.id))}" value="${e.number}">` +
+        `${escapeHtml(e.text)}</li>`,
+    )
+    .join('');
+  return (
+    `<section class="references"><h2>${escapeHtml(REFERENCE_LIST_HEADING)}</h2>` +
+    `<ol class="reference-list">${items}</ol></section>`
+  );
 }
 
 /** Print styles for the emitted structure. Kept with the markup it styles. */
@@ -319,4 +393,11 @@ export const PRINT_STYLES = `
   a.xref { color: #1d4ed8; text-decoration: none; }
   /* An unresolved one is STATED, in place. Not a number, not a blank. */
   .xref-missing { color: #b42318; font-style: italic; }
+  /* A resolved citation is a link into the reference list entry it numbers. */
+  a.cite { color: #1d4ed8; text-decoration: none; white-space: nowrap; }
+  /* An unresolved one is STATED, in place. Never a number that would look right. */
+  .cite-missing { color: #b42318; font-style: italic; }
+  .references { margin-top: 1.2em; page-break-inside: auto; }
+  .reference-list { margin: 0.4em 0 0 1.6em; padding: 0; }
+  .reference-list li { margin: 0.25em 0; }
 `;

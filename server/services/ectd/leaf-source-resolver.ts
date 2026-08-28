@@ -93,6 +93,26 @@ export interface MaterializeLeafSourcesResult {
   unresolved: UnresolvedLeaf[];
   /** Number of documents materialized to disk (deduplicated by table+id). */
   materialized: number;
+  /**
+   * Number of MATERIALIZED leaves whose source document is NOT finalized (its
+   * status is a draft/review artifact, not approved/finalized). These leaves DO
+   * render into the package, but a submission-grade package must have zero of
+   * them — a draft rendered to PDF is not a submission-ready leaf.
+   */
+  unfinalized: number;
+  /** The unfinalized leaves' section + source status, for the completeness report. */
+  unfinalizedSections: Array<{ sectionCode: string; status: string }>;
+}
+
+/**
+ * A source document is submission-FINALIZED only when its lifecycle status is
+ * approved or finalized. Every other status (draft, in-progress, review, or an
+ * absent status defaulting to draft) is unfinalized — it must not count toward a
+ * "complete" package.
+ */
+const FINALIZED_SOURCE_STATUSES = new Set(['approved', 'finalized']);
+function isFinalizedStatus(status: string | null | undefined): boolean {
+  return FINALIZED_SOURCE_STATUSES.has((status ?? '').toLowerCase());
 }
 
 function safeName(s: string): string {
@@ -151,7 +171,9 @@ export async function materializeLeafSources(
   const { organizationId, stageDir } = params;
   const byKey = new Map<string, ResolvedFile>();
   const unresolved: UnresolvedLeaf[] = [];
+  const unfinalizedSections: Array<{ sectionCode: string; status: string }> = [];
   let materialized = 0;
+  let unfinalized = 0;
 
   // Deduplicate leaves by their polymorphic document reference.
   const seen = new Set<string>();
@@ -189,6 +211,7 @@ export async function materializeLeafSources(
           title: coauthorDocuments.title,
           content: coauthorDocuments.content,
           moduleNumber: coauthorDocuments.moduleNumber,
+          status: coauthorDocuments.status,
         })
         .from(coauthorDocuments)
         .where(and(eq(coauthorDocuments.id, documentId), eq(coauthorDocuments.organizationId, organizationId)))
@@ -201,18 +224,26 @@ export async function materializeLeafSources(
         title: doc.title ?? undefined,
         sectionCode: doc.moduleNumber ?? undefined,
       });
+      if (!isFinalizedStatus(doc.status)) {
+        unfinalized++;
+        unfinalizedSections.push({ sectionCode: doc.moduleNumber || doc.title || `coauthor_documents:${documentId}`, status: doc.status ?? 'draft' });
+      }
       continue;
     }
 
     if (documentTable === 'unified_documents') {
       const [doc] = await db
-        .select({ title: unifiedDocuments.title })
+        .select({ title: unifiedDocuments.title, status: unifiedDocuments.status })
         .from(unifiedDocuments)
         .where(and(eq(unifiedDocuments.id, documentId), eq(unifiedDocuments.organizationId, organizationId)))
         .limit(1);
       if (!doc) {
         unresolved.push({ documentTable, documentId, reason: 'unified_documents row not found in this organization' });
         continue;
+      }
+      if (!isFinalizedStatus(doc.status)) {
+        unfinalized++;
+        unfinalizedSections.push({ sectionCode: doc.title || `unified_documents:${documentId}`, status: doc.status ?? 'draft' });
       }
       // Body lives in workflow_document_versions; render the latest version's
       // content, falling back to the title when no version content exists.
@@ -305,5 +336,5 @@ export async function materializeLeafSources(
     });
   }
 
-  return { byKey, unresolved, materialized };
+  return { byKey, unresolved, materialized, unfinalized, unfinalizedSections };
 }
