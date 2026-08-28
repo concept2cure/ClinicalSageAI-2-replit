@@ -178,7 +178,12 @@ describe('GET /:projectIdent/history — program idents filter by the program la
     await getHandler('/:projectIdent/history', 'get')(req, res);
 
     const historyCall = poolQuery.mock.calls.find((c) => String(c[0]).includes('FROM ectd_compilations'));
-    expect(historyCall![1]).toEqual([7, '%Program BX-204%']);
+    // The label is matched as a WHOLE TOKEN now, not as a bare substring.
+    // '%Program BX-204%' also matched "Program BX-2040", so this endpoint
+    // returned OTHER same-org projects' compilations as if they were this
+    // one's — a cross-project leak inside the tenant. The boundary pattern
+    // still finds the label anywhere in a longer compilation name.
+    expect(historyCall![1]).toEqual([7, '(^|[^A-Za-z0-9])Program BX-204($|[^A-Za-z0-9])']);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ projectId: null, programId: UUID, compilations: expect.any(Array) }),
     );
