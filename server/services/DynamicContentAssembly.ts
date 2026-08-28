@@ -535,9 +535,19 @@ export class DynamicContentAssembly {
         {
           id: 'substantial_equivalence',
           title: 'Substantial Equivalence',
-          template: 'The subject device is substantially equivalent to [Predicate Device]...',
+          // Substantial equivalence is a DETERMINATION FDA makes on review of a
+          // documented comparison — it is not established by naming a predicate.
+          // The template therefore frames SE as the sponsor's claim resting on
+          // an explicit comparison, and never asserts "the subject device IS
+          // substantially equivalent" as settled fact. The comparison and the
+          // differences-rationale are required fields (below), and the actual
+          // comparison is a dependency, so a section carrying only a predicate
+          // name + K-number stays incomplete (never 100%, status never flips to
+          // 'complete') instead of shipping a fabricated SE conclusion.
+          template:
+            'Substantial equivalence to the predicate device [Predicate Device] (510(k) [Predicate K Number]) is claimed on the basis of the following comparison of intended use and technological characteristics: [SE Comparison]. Differences from the predicate and their effect on safety and effectiveness are addressed as follows: [SE Differences Rationale]. A determination of substantial equivalence is made by FDA upon review of this comparison.',
           required: true,
-          dependencies: ['predicate.kNumber']
+          dependencies: ['predicate.kNumber', 'equivalence.comparison']
         },
         {
           id: 'performance_data',
@@ -653,7 +663,13 @@ export class DynamicContentAssembly {
       ],
       'substantial_equivalence': [
         { sourcePath: 'predicate.deviceName', fieldName: 'Predicate Device', placeholder: '[Predicate Device]', required: true },
-        { sourcePath: 'predicate.kNumber', fieldName: 'Predicate K Number', placeholder: '[XXXXXX]', required: true }
+        { sourcePath: 'predicate.kNumber', fieldName: 'Predicate K Number', placeholder: '[Predicate K Number]', required: true },
+        // The SE claim is only substantiated by an actual comparison, not by a
+        // named predicate. These two required fields carry the comparison of
+        // intended use / technological characteristics and the assessment of
+        // differences; until both are present the section cannot reach 100%.
+        { sourcePath: 'equivalence.comparison', fieldName: 'SE Comparison', placeholder: '[SE Comparison]', required: true },
+        { sourcePath: 'equivalence.differencesRationale', fieldName: 'SE Differences Rationale', placeholder: '[SE Differences Rationale]', required: true }
       ],
       'performance_data': [
         { sourcePath: 'testing.results', fieldName: 'Test Results', placeholder: '[Test Results]', required: false }
