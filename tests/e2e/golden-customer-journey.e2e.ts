@@ -11,10 +11,13 @@ const JOURNEY = {
 } as const;
 
 async function login(page: Page, email: string, password: string) {
+  // The live login is a single-step form (email + password + Sign in). The
+  // original helper clicked a 'continue' button from an imagined two-step
+  // flow, which does not exist — discovered on this journey's first real
+  // browser execution.
   await page.goto('/concept2cure/login');
-  await page.locator('input[type="email"], input#email').fill(email);
-  await page.getByRole('button', { name: /continue/i }).click();
-  await page.locator('input[type="password"], input#password').fill(password);
+  await page.locator('input[type="email"], input#email').first().fill(email);
+  await page.locator('input[type="password"], input#password').first().fill(password);
   await page.getByRole('button', { name: /sign in/i }).click();
   await expect(page).not.toHaveURL(/\/login/);
 }
