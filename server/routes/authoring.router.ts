@@ -4810,7 +4810,19 @@ router.delete('/export-history/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const tenantId = getTenantId(req);
-    const userEmail = (req.headers['x-user-email'] as string) || 'system';
+    /* SECURITY (21 CFR Part 11): DELETING a filing's export-history record is a
+       governed action and must be attributed to the VERIFIED principal. This
+       read `x-user-email || 'system'` — a header the router's middleware clears,
+       falling through to the anonymous 'system' that is nobody, and the value
+       drove BOTH the permission check (`entry.exported_by !== userEmail`) and
+       the EXPORT_HISTORY_DELETED audit event. Use getActorEmail, the JWT-derived
+       accessor every other governed mutation here uses, and fail closed when the
+       token carries no identity rather than record a record-deletion against
+       'system'. */
+    const userEmail = getActorEmail(req);
+    if (!userEmail) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
     // Check if user has permission (only QA or the original exporter can delete)
     const roles = ((req.headers as any)['x-roles'] || '').toString().toUpperCase();
@@ -5362,6 +5374,36 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
 
     const doc = docResult.rows[0];
 
+    /* SECURITY (21 CFR Part 11 §11.50): EXPORT IS A FILING ARTIFACT, NOT A
+       PREVIEW — gate it on the record being sealed. This handler rendered
+       sections LIVE with no status gate, so a DRAFT / IN_REVIEW document
+       exported byte-for-byte like an approved one AND had the §11.50 signature
+       manifest appended below — presenting whatever reviewer signatures exist
+       as if they certify a final, immutable record when the content is still
+       editable and has no frozen snapshot behind it. That is "an export of
+       unapproved content" and a manifest attributed to content nobody approved.
+
+       Fail closed, the way the section-write path already does: refuse unless
+       the document is in a LOCKED/sealed state — the same canonical
+       LOCKED_DOCUMENT_STATUSES set ({FROZEN, APPROVED}) the write gate uses,
+       plus an explicit locked_at, mirroring document-lock's own check. An
+       editable document has no immutable snapshot to certify, so there is
+       nothing honest to export as a Part 11 artifact yet; 409 Conflict says the
+       document's state — not the caller's authority — forbids the action, so it
+       reads distinctly from the 401s above. Freeze or approve it first. */
+    const sealedForExport =
+      LOCKED_DOCUMENT_STATUSES.has(String(doc.status ?? '').toUpperCase()) ||
+      doc.locked_at != null;
+    if (!sealedForExport) {
+      return res.status(409).json({
+        error: 'Document not approved for export',
+        message:
+          `Only an approved or frozen document can be exported as a 21 CFR Part 11 filing artifact. ` +
+          `This document is still editable (status: ${doc.status ?? 'unknown'}) — it has no immutable ` +
+          `snapshot and no certified electronic-signature manifest. Freeze or approve it first.`,
+      });
+    }
+
     const sectionsResult = await pool.query(
       'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
       [docId, tenantId]
@@ -5649,6 +5691,18 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
       contentType = 'application/pdf';
     }
 
+    /* §11.10(b): record a hash of the DELIVERED ARTIFACT BYTES. `fileHash`
+       (doc_sha256) is computeDocHash over the SOURCE section rows — it stays,
+       because GET /docs/:docId/exports compares it against the live document to
+       answer content_changed_since_last_export, which only works source-to-
+       source. But nothing hashed the actual file the caller received, so the
+       export record could not attest that a re-download is the identical
+       artifact. Hash the real bytes here and carry it on the record's metadata
+       alongside the source hash. */
+    const artifactSha256 = fileContent
+      ? crypto.createHash('sha256').update(fileContent).digest('hex')
+      : null;
+
     // Durable export record — the same table GET /docs/:docId/exports lists and
     // GET /docs/:docId/diff-since-export baselines against.
     await logExport(
@@ -5658,7 +5712,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
       exportedBy as string,
       fileName,
       fileContent?.length,
-      { options, exportId },
+      { options, exportId, artifactSha256 },
       tenantId
     );
 
@@ -5970,6 +6024,44 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
              SET status = 'APPROVED', approved_at = NOW()
              WHERE id = $1 AND tenant_id = $2`,
             [docId, tenantId]
+          );
+
+          // Auto-freeze on approval — the final workflow signature approving the
+          // document must leave the same immutable legal record the e-sign
+          // APPROVER path produces. Without this the /sign workflow ended a
+          // document APPROVED with NO frozen_documents row: the approved content
+          // survived only in the editable authoring_sections table, and this
+          // approval signature's covered_freeze_version / covered_content_hash
+          // (bound above to `covered`, the pre-existing snapshot) were null —
+          // an approval that attests to "no snapshot". Mirror the proven e-sign
+          // pattern exactly: capture the FULL {document, sections, approvedBy,
+          // documentHash, frozenAt} snapshot, set content_hash to sha256 of the
+          // SNAPSHOT BYTES (so GET /docs/:docId/frozen's recompute-and-compare
+          // verifies), and INSERT ... ON CONFLICT DO NOTHING on THIS transaction
+          // client so the freeze lands with the status flip or rolls back with it.
+          const approvedDoc = await client.query(
+            'SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+            [docId, tenantId]
+          );
+          const approvedSections = await client.query(
+            'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+            [docId, tenantId]
+          );
+          const frozenContent = JSON.stringify({
+            document: approvedDoc.rows[0] ?? null,
+            sections: approvedSections.rows,
+            approvedBy: signerEmail,
+            documentHash: contentHash,
+            frozenAt: new Date().toISOString(),
+          });
+          const frozenContentHash = crypto.createHash('sha256').update(frozenContent).digest('hex');
+
+          await client.query(
+            `INSERT INTO frozen_documents
+             (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (document_id, version, tenant_id) DO NOTHING`,
+            [docId, 'approved', frozenContent, frozenContentHash, signerEmail, 'Approved and frozen', tenantId]
           );
         }
       }
