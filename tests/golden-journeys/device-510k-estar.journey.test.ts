@@ -267,7 +267,13 @@ async function authorSection(s: {
     section_key: s.key,
     category: s.category,
     content: s.content,
-    status: 'in_progress',
+    // 'approved', not 'in_progress': eSTAR readiness counts only FINALIZED
+    // content, and "a long draft is still a draft" — an explicitly in-progress
+    // section is never substantive no matter how much text it holds. These
+    // sections are authored complete, so they say so. The deliberately EMPTY
+    // section below still proves its point: an approved status with a blank or
+    // placeholder body is not substantive either, so the gap is not invented.
+    status: 'approved',
   });
   expect(res.status, JSON.stringify(res.body)).toBe(201);
   return res.body.section;
@@ -451,6 +457,9 @@ describe('golden journey — device 510(k) eSTAR path', () => {
         content:
           'The subject device is substantially equivalent to predicate K123456; ' +
           'technological differences do not raise new questions of safety or effectiveness.',
+        // Finishing the section is what closes the gap — writing into a section
+        // that stays in progress does not, and should not.
+        status: 'approved',
       });
       expect(patched.status, JSON.stringify(patched.body)).toBe(200);
 
