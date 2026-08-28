@@ -43,6 +43,11 @@ import multer from 'multer';
 import path from 'path';
 import { type GovernedDocumentActionContract } from '../../shared/types/document-contract';
 import {
+  applyExportGovernanceHeaders,
+  evaluateExportGovernance,
+  type ExportGovernance,
+} from '../services/export/exportReviewGate';
+import {
   regulatoryAuditLogs,
   projects,
   users,
@@ -7085,6 +7090,17 @@ router.post(
           'SOURCE_EVIDENCE_NOT_FOUND'
         );
       }
+      // Persist the VALIDATED deduped citation list, never the raw caller
+      // array. The artifacts-center listing renders json_array_length over
+      // metadata.sourceArtifactIds as "N cited sources"; storing the raw
+      // array would let ['a','a','',42] (with only 'a' existing) surface as
+      // 4 cited sources — fabricated governance metadata.
+      const metadataWithValidatedSources = data.metadata
+        ? {
+            ...data.metadata,
+            ...('sourceArtifactIds' in data.metadata ? { sourceArtifactIds } : {}),
+          }
+        : undefined;
       const governedResolution = resolveGovernedContext({
         req,
         projectId: numericProjectId,
@@ -7172,7 +7188,9 @@ router.post(
           version: 1,
           templateId: data.templateId || null,
           metadata: {
-            ...(data.metadata || {}),
+            // The validated variant, not raw data.metadata: the persisted row
+            // is what the artifacts-center listing counts citations from.
+            ...(metadataWithValidatedSources || {}),
             harness: {
               clientTrack: governedResolution.contract.clientTrack,
               submissionProgram: governedResolution.contract.submissionProgram,
@@ -7216,7 +7234,7 @@ router.post(
         ctdSection: data.ctdSection || null,
         version: 1,
         versions: [{ version: 1, content: sanitizedContent, createdAt: newDbArtifact.createdAt }],
-        metadata: data.metadata,
+        metadata: metadataWithValidatedSources,
         createdAt: newDbArtifact.createdAt,
         updatedAt: newDbArtifact.updatedAt,
       };
@@ -12048,92 +12066,21 @@ router.get('/regulatory-catalog/search', async (req: Request, res: Response) => 
 const EXPORT_REVIEW_NOTICE =
   'DRAFT — NOT AGENCY-VALIDATED. This document may contain AI-generated content and is not an agency submission or agency decision. Qualified human review and approval are required before use in regulated submissions, clinical/safety decisions, or external communications.';
 
-const exportGovernanceSchema = z.object({
-  aiGenerated: z.boolean().default(true),
-  humanReviewApproved: z.boolean().default(false),
-  reviewerName: z.string().trim().min(1).max(200).optional(),
-  reviewerRole: z.string().trim().min(1).max(200).optional(),
-  reviewTimestamp: z.string().datetime().optional(),
-});
-
-function shouldEnforceExportReviewGate(): boolean {
-  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'true') return true;
-  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'false') return false;
-  return process.env.NODE_ENV === 'production';
-}
-
-function applyExportGovernanceHeaders(
-  res: Response,
-  governance: z.infer<typeof exportGovernanceSchema>
-): void {
-  res.setHeader('X-Concept2Cure-AI-Generated', String(governance.aiGenerated));
-  res.setHeader('X-Concept2Cure-Human-Review-Approved', String(governance.humanReviewApproved));
-  res.setHeader('X-Concept2Cure-Review-Required', 'true');
-  if (governance.reviewerName) {
-    res.setHeader('X-Concept2Cure-Reviewer', encodeURIComponent(governance.reviewerName));
-  }
-  if (governance.reviewTimestamp) {
-    res.setHeader('X-Concept2Cure-Review-Timestamp', governance.reviewTimestamp);
-  }
-}
-
-function validateExportGovernance(
-  req: Request,
-  res: Response
-): z.infer<typeof exportGovernanceSchema> | null {
-  const parsed = exportGovernanceSchema.safeParse(req.body?.governance ?? {});
-  if (!parsed.success) {
-    sendError(
-      res,
-      400,
-      'Invalid export governance payload',
-      parsed.error.flatten(),
-      'VALIDATION_ERROR'
-    );
+/**
+ * Thin adapter over the canonical export review gate
+ * (server/services/export/exportReviewGate.ts). All decision logic lives
+ * there; this only renders a rejection into this router's `sendError`
+ * envelope.
+ */
+function validateExportGovernance(req: Request, res: Response): ExportGovernance | null {
+  const evaluation = evaluateExportGovernance(req.body?.governance);
+  if (!evaluation.ok) {
+    sendError(res, evaluation.status, evaluation.message, evaluation.details, evaluation.code);
     return null;
   }
 
-  const governance = parsed.data;
-  if (
-    governance.humanReviewApproved &&
-    (!governance.reviewerName || !governance.reviewerRole || !governance.reviewTimestamp)
-  ) {
-    sendError(
-      res,
-      400,
-      'Reviewer identity, role, and timestamp are required when human review is approved',
-      {
-        required: [
-          'governance.reviewerName',
-          'governance.reviewerRole',
-          'governance.reviewTimestamp',
-        ],
-      },
-      'INCOMPLETE_HUMAN_REVIEW'
-    );
-    return null;
-  }
-  const strictGateEnabled = shouldEnforceExportReviewGate();
-  if (strictGateEnabled && !governance.humanReviewApproved) {
-    sendError(
-      res,
-      403,
-      'Human review approval is required before export in this environment',
-      {
-        required: 'governance.humanReviewApproved=true',
-        reviewerFields: [
-          'governance.reviewerName',
-          'governance.reviewerRole',
-          'governance.reviewTimestamp',
-        ],
-      },
-      'HUMAN_REVIEW_REQUIRED'
-    );
-    return null;
-  }
-
-  applyExportGovernanceHeaders(res, governance);
-  return governance;
+  applyExportGovernanceHeaders(res, evaluation.governance);
+  return evaluation.governance;
 }
 
 /**
