@@ -251,14 +251,12 @@ beforeEach(() => {
   // Default behaviors
   hoisted.findActiveReleaseSignature.mockResolvedValue(null);
   hoisted.loadSubmissionFkBySubmissionIdText.mockResolvedValue(null);
-  // logAction resolves an AuditWriteResult (server/services/auditService.ts)
-  // and the route dereferences it (.persisted / .error) to decide whether to
-  // attach the auditWriteFailed warning — so the mock must resolve the real
-  // success shape, not undefined.
+  // What the real auditService.logAction resolves with (AuditWriteResult). It
+  // stubbed `undefined` here, from before logAction reported its own outcome —
+  // and the route reads `auditWrite.persisted`, so the HAPPY PATH threw and
+  // came back 500 with an empty body while every failure case still passed.
   hoisted.auditLogAction.mockResolvedValue({
-    persisted: true,
-    chained: true,
-    tamperProof: true,
+    persisted: true, chained: true, tamperProof: true,
   });
 });
 
@@ -443,6 +441,43 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
     expect(auditCall.userId).toBe(7);
     expect(auditCall.action).toBe('release_signature_created');
     expect(auditCall.resourceId).toBe('run-123');
+  });
+
+  it('tells the signer when the signature is real but its audit entry is not', async () => {
+    // §11.10(e): the row committed on a separate connection before this point,
+    // so retracting it would be a worse lie than the one being reported. The
+    // route returns the signature AND says the audit trail does not have it.
+    // Nothing covered this branch, which is the one that matters most when it
+    // fires — a signer who is told nothing would rely on an audit trail that
+    // has no record of the release.
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
+    hoisted.findActiveReleaseSignature.mockResolvedValue(null);
+    hoisted.verifyUserCredentials.mockResolvedValue(true);
+    hoisted.createElectronicSignature.mockResolvedValue({
+      success: true,
+      signatureId: 999,
+      signedBy: 'Test User',
+      signedAt: new Date('2026-06-29T00:00:00.000Z'),
+      signatureHash: 'attribution-hash',
+      verificationCode: 'ABCD1234',
+    });
+    hoisted.auditLogAction.mockResolvedValue({
+      persisted: false, chained: false, tamperProof: false, error: 'audit store unreachable',
+    });
+
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-1/sign-release')
+      .send({
+        runId: 'run-123',
+        password: 'right-password',
+        signatureMeaning: 'approval',
+        reason: 'release authorization',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.signatureId).toBe(999);
+    expect(res.body.auditWriteFailed).toBe(true);
+    expect(res.body.auditWarning).toMatch(/audit-trail entry could not be written/i);
   });
 
   it('returns the existing signatureId without creating a duplicate when one already exists (idempotent)', async () => {

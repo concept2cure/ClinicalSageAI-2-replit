@@ -205,7 +205,11 @@ describe('a save in the editor reaches the filing', () => {
     // The shape the governed readers understand — the same one the mdx editor
     // writes, which sectionHasContentSql and sectionPlainText both handle.
     expect(row.content).toEqual({ text: 'The investigational product was well tolerated.' });
-    expect(row.draft_source).toBe('human');
+    // NULL, not 'human'. authoring_sections carries no provenance column, so
+    // this path cannot know who authored the text; it used to write 'human'
+    // anyway and this assertion pinned that guess in place. The governed store
+    // now records that the origin was not stated.
+    expect(row.draft_source).toBeNull();
   }, T);
 
   it('the governed outline now reports the section as written', async () => {

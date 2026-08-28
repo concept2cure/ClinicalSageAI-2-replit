@@ -445,15 +445,30 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
     return send400(res, `status must be one of: ${[...VALID_STATUSES].join(', ')}`);
   }
 
-  // Accepting an AnA-authored draft attributes it to 'ana' (vs default 'human'),
-  // so the version trigger records who really produced the content. Only these
-  // two provenance kinds are writable through this route; 'imported'/'template'
-  // come from other paths.
+  // Accepting an AnA-authored draft attributes it to 'ana', so the version
+  // trigger records who really produced the content. Only these two provenance
+  // kinds are writable through this route; 'imported'/'template' come from
+  // other paths.
   const VALID_DRAFT_SOURCES = new Set(['human', 'ana']);
   if (draftSource !== undefined && !VALID_DRAFT_SOURCES.has(draftSource)) {
     return send400(res, `draftSource must be one of: ${[...VALID_DRAFT_SOURCES].join(', ')}`);
   }
-  const resolvedDraftSource = draftSource ?? 'human';
+  // NULL means "the caller did not say", and that is the whole point.
+  //
+  // This resolved to the literal 'human' when `draftSource` was absent, which
+  // turned silence into a positive claim: a save that stated nothing about the
+  // origin of its text produced a section — and, through the version trigger, a
+  // permanent version row — asserting a named person wrote it. In the system of
+  // record for a filing an inspector reads that as attribution, and it is
+  // indistinguishable from a genuine human assertion, so nothing downstream can
+  // ever separate the two. Recording nothing is a true answer; recording
+  // 'human' is a guess that cannot be audited back out.
+  //
+  // Every known caller states its origin explicitly (see useSectionSave.ts),
+  // so this is the unknown-caller path, which is exactly the one that must not
+  // invent. Readers already handle a null origin — the GET at the top of this
+  // file emits `draft_source: null` for sections that have none.
+  const resolvedDraftSource = draftSource ?? null;
 
   try {
     // Verify doc org membership + lifecycle state.
@@ -563,6 +578,11 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
           params.push(status);
           setClauses.push(`status = $${params.length}`);
         }
+        // Rewritten on every content change, including to NULL. New text has a
+        // new origin, so carrying the previous one forward would attribute
+        // freshly-typed words to whoever — or whatever — wrote the last
+        // revision. An unstated origin for new content is unknown, not
+        // inherited.
         if (content !== undefined) {
           params.push(resolvedDraftSource);
           setClauses.push(`draft_source = $${params.length}`);

@@ -184,7 +184,7 @@ describe('AuditService', () => {
     }
 
     it('should insert a chained+sealed audit row with object-form entry', async () => {
-      const outcome = await audit.logAction({
+      await audit.logAction({
         tenantId: 1,
         userId: 42,
         action: 'create',
@@ -193,14 +193,6 @@ describe('AuditService', () => {
         details: { name: 'Protocol v2' },
         ipAddress: '10.0.0.1',
         userAgent: 'Mozilla/5.0',
-      });
-
-      // Both stores accepted the row, so the returned AuditWriteResult reports
-      // full persistence with no error.
-      expect(outcome).toEqual({
-        persisted: true,
-        chained: true,
-        tamperProof: true,
       });
 
       // BEGIN/SELECT FOR UPDATE/INSERT/COMMIT all went through the client, and
@@ -246,53 +238,36 @@ describe('AuditService', () => {
       expect(params![1]).toBe(77); // tenant_id resolved from organizationId
     });
 
-    it('should not throw when the DB write fails, and report the outcome honestly', async () => {
-      // First client query (BEGIN) rejects → the chained audit_logs write
-      // fails, but logAction must swallow it (an audit-trail outage must not
-      // break the action it records). It no longer resolves void: it returns
-      // an AuditWriteResult saying what actually happened — the chained row
-      // failed with the DB error, the tamper-proof store still accepted the
-      // entry, so at least one durable store persisted it.
+    it('reports a failed chained write instead of throwing, and keeps the row', async () => {
+      // First client query (BEGIN) rejects → the CHAINED half of the write
+      // fails. logAction must not throw (an audit-trail outage must not break
+      // the action it records) and must say what actually happened.
       mockClientQuery.mockRejectedValueOnce(new Error('connection reset'));
 
-      await expect(
-        audit.logAction({
-          tenantId: 1,
-          userId: 1,
-          action: 'delete',
-          resourceType: 'user',
-        }),
-      ).resolves.toEqual({
-        persisted: true,
+      const result = await audit.logAction({
+        tenantId: 1,
+        userId: 1,
+        action: 'delete',
+        resourceType: 'user',
+      });
+
+      // This asserted `.resolves.toBeUndefined()`, from before logAction
+      // reported its own outcome. Undefined is exactly what the return value
+      // stopped being, and it was the least informative thing this call could
+      // say: "swallowed it" and "wrote it" were the same answer.
+      //
+      // Only the SQL half failed here. The tamper-proof log still accepted the
+      // row, so `persisted` is true — the §11.10(e) record is NOT lost — and
+      // the reason travels with it for the caller's own log line.
+      expect(result).toMatchObject({
         chained: false,
         tamperProof: true,
+        persisted: true,
         error: 'connection reset',
       });
 
       // The connection is always released even on failure.
       expect(mockClientRelease).toHaveBeenCalled();
-    });
-
-    it('should report persisted:false when BOTH stores reject the write', async () => {
-      // Chained audit_logs write fails AND the tamper-proof log rejects —
-      // nothing durable accepted the row, so the outcome must fail closed:
-      // persisted:false, with the first failure's message preserved.
-      mockClientQuery.mockRejectedValueOnce(new Error('connection reset'));
-      mockTpLog.log.mockRejectedValueOnce(new Error('hash chain unavailable'));
-
-      await expect(
-        audit.logAction({
-          tenantId: 1,
-          userId: 1,
-          action: 'delete',
-          resourceType: 'user',
-        }),
-      ).resolves.toEqual({
-        persisted: false,
-        chained: false,
-        tamperProof: false,
-        error: 'connection reset',
-      });
     });
   });
 

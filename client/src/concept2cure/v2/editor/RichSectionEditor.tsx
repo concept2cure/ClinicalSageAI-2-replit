@@ -410,7 +410,13 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const extensions = useMemo(() => {
       const exts: any[] = [
         StarterKit.configure({
-          heading: { levels: [1, 2, 3] },
+          /* CTD sections nest to five levels — 2.7.3.1.2 — and the schema
+             stopped at three, so a writer could not build the hierarchy the
+             document is navigated by. The parser clamped anything deeper with
+             Math.min(3, …), which flattened an H4 that was already stored and
+             passed the round-trip fidelity gate untouched: that gate compares
+             TEXT, and a demoted heading keeps every character. */
+          heading: { levels: [1, 2, 3, 4, 5] },
           // A link in the canvas is a mark being edited, not a navigation:
           // clicking it must place the caret, and the ribbon's Link control
           // is where the href is read or changed.
@@ -1065,7 +1071,11 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           ? 'h2'
           : editor.isActive('heading', { level: 3 })
             ? 'h3'
-            : 'p';
+            : editor.isActive('heading', { level: 4 })
+              ? 'h4'
+              : editor.isActive('heading', { level: 5 })
+                ? 'h5'
+                : 'p';
 
     return (
       <div className="rse-root" onKeyDown={onKeyDown}>
@@ -1112,13 +1122,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 const v = e.target.value;
                 if (!editor) return;
                 if (v === 'p') editor.chain().focus().setParagraph().run();
-                else editor.chain().focus().toggleHeading({ level: Number(v.slice(1)) as 1 | 2 | 3 }).run();
+                else editor.chain().focus().toggleHeading({ level: Number(v.slice(1)) as 1 | 2 | 3 | 4 | 5 }).run();
               }}
             >
               <option value="p">Paragraph</option>
               <option value="h1">Heading 1</option>
               <option value="h2">Heading 2</option>
               <option value="h3">Heading 3</option>
+              <option value="h4">Heading 4</option>
+              <option value="h5">Heading 5</option>
             </select>
             <span className="rse-sep" />
             <RB title="Bold" shortcut="⌘B" active={editor?.isActive('bold')} onClick={() => editor?.chain().focus().toggleBold().run()}>

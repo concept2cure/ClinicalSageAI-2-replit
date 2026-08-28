@@ -69,8 +69,16 @@ export interface TableCell {
 
 export interface ContentBlock {
   kind: 'paragraph' | 'heading' | 'list-item' | 'table' | 'image';
-  /** Heading level 1–3 (headings only). */
-  level?: 1 | 2 | 3;
+  /** Heading level 1–5 (headings only), relative to the section title.
+   *
+   *  Was 1–3, and the parser clamped with `Math.min(3, …)`. CTD sections nest
+   *  deeper than that — 2.7.3.1.2 is five levels — so an H4 a writer had
+   *  legitimately stored came back as an H3 and the document's structure was
+   *  quietly flattened. The round-trip fidelity gate could not catch it either:
+   *  it compares TEXT, and a heading demoted from H4 to H3 keeps every
+   *  character. The words survived; the hierarchy did not, and hierarchy is
+   *  what a reviewer navigates a submission by. */
+  level?: 1 | 2 | 3 | 4 | 5;
   /** List items only: true when the item came from an `ol`. */
   ordered?: boolean;
   /**
@@ -279,7 +287,7 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
   const blocks: ContentBlock[] = [];
   let current: ContentBlock | null = null;
 
-  const ensureBlock = (kind: ContentBlock['kind'] = 'paragraph', level?: 1 | 2 | 3): ContentBlock => {
+  const ensureBlock = (kind: ContentBlock['kind'] = 'paragraph', level?: 1 | 2 | 3 | 4 | 5): ContentBlock => {
     if (!current) {
       current = { kind, ...(level ? { level } : {}), runs: [] };
       blocks.push(current);
@@ -353,7 +361,7 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
       closeBlock();
       const heading = /^h([1-6])$/.exec(tag);
       if (heading) {
-        const level = Math.min(3, Number(heading[1])) as 1 | 2 | 3;
+        const level = Math.min(5, Number(heading[1])) as 1 | 2 | 3 | 4 | 5;
         current = { kind: 'heading', level, runs: [] };
         blocks.push(current);
       } else if (tag === 'li') {
