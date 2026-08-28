@@ -57,6 +57,20 @@ export interface InlineRun {
    *  colour the text. */
   suggestionAuthor?: string;
   suggestionAt?: string;
+  /** The note text, when this run is a footnote REFERENCE.
+   *
+   *  Regulatory tables are built on footnotes — every Module 3 specification,
+   *  batch-analysis and stability table carries them ("a Determined by HPLC;
+   *  b n=3; ITT population"), and so does every efficacy summary. The editor
+   *  had no footnote of any kind, so the only way to write one was a superscript
+   *  letter and a loose paragraph underneath, which detaches the moment the
+   *  table moves.
+   *
+   *  The note travels WITH its reference rather than in a separate list, so a
+   *  cut-and-paste of the row carries its own note and cannot orphan it. The
+   *  marker a reader sees is derived at render time from position, so notes
+   *  renumber themselves when content moves. */
+  footnote?: string;
 }
 
 export interface TableCell {
@@ -125,6 +139,7 @@ interface InlineState {
   suggestion?: 'insertion' | 'deletion';
   suggestionAuthor?: string;
   suggestionAt?: string;
+  footnote?: string;
 }
 
 const BLOCK_TAGS = new Set(['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'tr', 'blockquote', 'pre']);
@@ -142,7 +157,8 @@ function pushRun(runs: InlineRun[], text: string, st: InlineState): void {
     !!prev.subScript === !!st.subScript &&
     prev.suggestion === st.suggestion &&
     prev.suggestionAuthor === st.suggestionAuthor &&
-    prev.suggestionAt === st.suggestionAt
+    prev.suggestionAt === st.suggestionAt &&
+    prev.footnote === st.footnote
   ) {
     prev.text += text;
     return;
@@ -158,6 +174,7 @@ function pushRun(runs: InlineRun[], text: string, st: InlineState): void {
     ...(st.suggestion ? { suggestion: st.suggestion } : {}),
     ...(st.suggestionAuthor ? { suggestionAuthor: st.suggestionAuthor } : {}),
     ...(st.suggestionAt ? { suggestionAt: st.suggestionAt } : {}),
+    ...(st.footnote ? { footnote: st.footnote } : {}),
   });
 }
 
@@ -174,7 +191,13 @@ function applyMark(tag: string, st: InlineState, el?: { getAttribute(name: strin
   if (tag === 'i' || tag === 'em') next.italics = true;
   if (tag === 'u') next.underline = true;
   if (tag === 's' || tag === 'strike') next.strike = true;
-  if (tag === 'sup') next.superScript = true;
+  if (tag === 'sup') {
+    next.superScript = true;
+    /* A footnote reference is a `sup` carrying its note. Anything else in a
+       `sup` is ordinary superscript (cm², t½) and stays that way. */
+    const note = el?.getAttribute('data-note');
+    if (note) next.footnote = note;
+  }
   if (tag === 'sub') next.subScript = true;
   if (tag === 'ins' || tag === 'del') {
     if (tag === 'ins') {

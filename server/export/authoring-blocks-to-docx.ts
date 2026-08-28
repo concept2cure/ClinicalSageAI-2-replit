@@ -93,6 +93,21 @@ const FALLBACK_AUTHOR = 'Unattributed';
 export interface DocxRenderOptions {
   /** ISO timestamp used when a suggestion mark carries no data-at. */
   revisionDate?: string;
+  /**
+   * Register one footnote and get back the Word footnote id to reference.
+   *
+   * Word holds footnotes on the DOCUMENT, not on the paragraph that cites them,
+   * so the renderer cannot own them: ids must be unique across the whole file
+   * and the collected notes have to reach `new Document({ footnotes })`. The
+   * caller therefore owns the numbering — the same reason `revisionDate` is
+   * threaded in rather than read from the clock — and this is how a run says
+   * "here is a note, tell me its number".
+   *
+   * Omitted (no sink), a footnote reference degrades to superscript text rather
+   * than vanishing: a note that cannot be attached is still a note the author
+   * wrote, and dropping it silently from a filed document is the worse failure.
+   */
+  footnoteSink?: (noteText: string) => number;
 }
 
 /** Word requires a unique id per revision within the document. */
@@ -107,6 +122,7 @@ function runsOf(
   forceBold = false,
   revisionId: () => number = makeRevisionIds(),
   revisionDate = '1970-01-01T00:00:00Z',
+  footnoteSink?: (noteText: string) => number,
 ) {
   return runs.map((r) => {
     const props = {
@@ -118,6 +134,14 @@ function runsOf(
       superScript: r.superScript,
       subScript: r.subScript,
     };
+    /* A real Word footnote reference — the auto-numbered superscript a reader
+       can click, that Word renumbers when content moves and that carries the
+       note to the bottom of the page. Emitted before the tracked-change branch
+       because a footnote inside a suggestion is vanishingly rare and Word has
+       no way to express a revised footnote reference anyway. */
+    if (r.footnote && footnoteSink) {
+      return new D.FootnoteReferenceRun(footnoteSink(r.footnote));
+    }
     if (r.suggestion === 'insertion' || r.suggestion === 'deletion') {
       const change = {
         id: revisionId(),
@@ -153,7 +177,17 @@ function headingFor(D: DocxNs, level: number | undefined) {
  * argument being filed; exporting them as tab-separated paragraphs — which is
  * what happened before — files a different document.
  */
-function tableOf(D: DocxNs, block: ContentBlock, revisionId: () => number, revisionDate: string) {
+/* The sink reaches tables deliberately: a footnote in a table cell is the
+   PRIMARY case, not an edge one. Every Module 3 specification, batch-analysis
+   and stability table carries lettered notes under it, and so does every
+   efficacy summary — that is what footnote support in this product is for. */
+function tableOf(
+  D: DocxNs,
+  block: ContentBlock,
+  revisionId: () => number,
+  revisionDate: string,
+  footnoteSink?: (noteText: string) => number,
+) {
   const border = { style: D.BorderStyle.SINGLE, size: 4, color: 'BFBFBF' };
   const rows = (block.rows ?? []).map(
     (row) =>
@@ -168,7 +202,7 @@ function tableOf(D: DocxNs, block: ContentBlock, revisionId: () => number, revis
                 ? { type: D.ShadingType.CLEAR, fill: 'F2F4F5', color: 'auto' }
                 : undefined,
               borders: { top: border, bottom: border, left: border, right: border },
-              children: [new D.Paragraph({ children: runsOf(D, cell.runs, Boolean(cell.header), revisionId, revisionDate) })],
+              children: [new D.Paragraph({ children: runsOf(D, cell.runs, Boolean(cell.header), revisionId, revisionDate, footnoteSink) })],
             })
         ),
       })
@@ -196,6 +230,7 @@ export function blocksToDocx(
   // revisions into one.
   const revisionId = makeRevisionIds();
   const revisionDate = opts.revisionDate ?? '1970-01-01T00:00:00Z';
+  const footnoteSink = opts.footnoteSink;
   const out: (InstanceType<DocxNs['Paragraph']> | InstanceType<DocxNs['Table']>)[] = [];
   for (const block of blocks) {
     if (block.kind === 'image') {
@@ -242,7 +277,7 @@ export function blocksToDocx(
       continue;
     }
     if (block.kind === 'table') {
-      out.push(tableOf(D, block, revisionId, revisionDate));
+      out.push(tableOf(D, block, revisionId, revisionDate, footnoteSink));
       if (block.caption) {
         out.push(
           new D.Paragraph({
@@ -264,7 +299,7 @@ export function blocksToDocx(
             ? { numbering: { reference: ORDERED_LIST_REFERENCE, level: 0 } }
             : { bullet: { level: 0 } }
           : {}),
-        children: runsOf(D, block.runs, false, revisionId, revisionDate),
+        children: runsOf(D, block.runs, false, revisionId, revisionDate, footnoteSink),
       })
     );
   }

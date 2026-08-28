@@ -652,8 +652,15 @@ class CerGenerationService {
     // must fail closed to review rather than auto-certify "Highly favorable".
     if (benefits === 0) return 'Needs review';
 
-    // Documented benefits with no documented risks is genuinely the best case.
-    if (risks === 0) return 'Highly favorable';
+    // An empty RISK analysis is not a zero-risk device — it is an unperformed
+    // (or not-yet-recorded) assessment. The data model carries no explicit
+    // "risk assessment completed" signal that could distinguish "risks assessed
+    // and found acceptable/zero" from "no risks recorded yet", so we fail closed:
+    // with no documented risks there is no evidentiary basis to assert that
+    // benefits outweigh residual risks, and returning "Highly favorable" here
+    // would fabricate a favorable benefit-risk verdict from an empty analysis.
+    // Mirror the empty-benefits guard above and return the honest review state.
+    if (risks === 0) return 'Needs review';
     const ratio = benefits / risks;
 
     if (ratio > 2) return 'Highly favorable';
