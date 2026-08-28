@@ -287,11 +287,44 @@ export function validateEvidence(
   response: string,
   provider: EvidenceVerdict['provider'] = 'ana-ri'
 ): EvidenceVerdict {
-  // Short responses get a quick pass — no claims to validate
+  /* A SHORT ANSWER IS UNASSESSED, NOT VERIFIED.
+   *
+   * This returned `attempted: true, validated: true` with every count zero,
+   * under the comment "Short responses get a quick pass — no claims to
+   * validate". That is an assumption about LENGTH presented as a finding about
+   * CONTENT: an answer of under 200 characters can carry a regulatory claim
+   * whole — "21 CFR 314.50(d)(5)(vi)(a) requires an integrated summary of
+   * safety" is 78.
+   *
+   * And the downstream surfaces read `validated` as the verdict, exactly as
+   * they are designed to. `buildTrustSummary` rendered
+   * "Verified · 0 grounded · 0 inferred/weak · 0 missing · 0 sources", and
+   * `AnaGrounding` — whose whole purpose is to stop a zero reading as a clean
+   * bill of health, and which gates every number on `validated` for that
+   * reason — was routed past its own "not assessed" branch and drew a green
+   * check reading "Claims grounded".
+   *
+   * So the surface people draft submissions from told them an answer's
+   * regulatory claims had been checked and were sound, on answers where the
+   * grounding pipeline had not run at all. The component's docstring names
+   * this precise failure as the one it exists to close; it was reopened from
+   * the server side by sending `validated: true`.
+   *
+   * `attempted: false` is the honest state and every consumer already handles
+   * it: the strip says "Grounding not assessed for this answer", and the trust
+   * summary says "Evidence check not run for this response — verify any
+   * regulatory claims before relying on them." Both are true. Neither claims a
+   * check that did not happen.
+   *
+   * The floor itself is kept: the claim and label extractors want sentence
+   * structure, and running them on a fragment produces noise rather than a
+   * verdict. Declining to judge is fine. Reporting the declined judgement as a
+   * pass is not.
+   */
   if (response.length < MIN_VALIDATION_LENGTH) {
     return {
-      attempted: true,
-      validated: true,
+      attempted: false,
+      validated: false,
       source_count: 0,
       source_types: [],
       grounded_claim_count: 0,
