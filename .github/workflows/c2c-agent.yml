@@ -200,8 +200,11 @@ jobs:
           fi
           echo "SSL check passed"
 
-      - name: Audit npm dependencies
-        run: npm audit --audit-level=high || true
+      - name: Audit npm dependencies (canonical ledger gate, advisory here)
+        # Same gate CI enforces (scripts/ci/check-dependency-risk.mjs) so there
+        # is one audit implementation; advisory in this workflow because the
+        # blocking run is CI's Security Scan job on the same commit.
+        run: npm run ci:dependency-risk || true
 
   # ═══════════════════════════════════════════════════════════════════════════
   # 5. 21 CFR PART 11 COMPLIANCE CHECK

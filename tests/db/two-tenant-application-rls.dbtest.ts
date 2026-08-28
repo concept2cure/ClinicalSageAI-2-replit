@@ -289,7 +289,27 @@ afterAll(async () => {
     if (cleanup) {
       try {
         await cleanup.query("SELECT set_config('app.rls_enforce','off',false)");
-        await cleanup.query('DELETE FROM audit_logs WHERE record_id LIKE $1', [`${TAG}%`]);
+        // audit_logs is append-only on the deploy path: trg_audit_logs_no_delete
+        // (20260617_audit_logs_immutability.sql) aborts a bare DELETE with
+        // P0A02, which would kill every remaining cleanup statement and leak
+        // the fixtures. Use the trigger's authorized archive door, SET LOCAL so
+        // the bypass dies with this transaction — the same pattern the sibling
+        // dbtest suites adopted after hitting exactly this failure.
+        await cleanup.query('BEGIN');
+        try {
+          await cleanup.query("SET LOCAL app.audit_archive_bypass = 'on'");
+          await cleanup.query('DELETE FROM audit_logs WHERE record_id LIKE $1', [`${TAG}%`]);
+          await cleanup.query('COMMIT');
+        } catch (err) {
+          // ROLLBACK so the connection leaves the aborted transaction and the
+          // remaining fixture deletes below still run instead of all dying.
+          // Not rethrown: unlike the sibling suites (audit delete last), nine
+          // deletes follow this one — orgs, users, documents — and leaking all
+          // of them to report a failed audit-row sweep inverts the priority.
+          // The tagged audit rows are inert and LIKE-scoped if they survive.
+          await cleanup.query('ROLLBACK');
+          console.warn('[wo-03] audit_logs teardown skipped:', err);
+        }
         await cleanup.query('DELETE FROM documents WHERE document_code LIKE $1', [`${TAG}%`]);
         await cleanup.query('DELETE FROM projects WHERE name LIKE $1', [`${TAG}%`]);
         await cleanup.query('DELETE FROM saved_precedent_queries WHERE label LIKE $1', [`${TAG}%`]);

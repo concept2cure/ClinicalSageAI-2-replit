@@ -1,80 +1,18 @@
 /**
- * PHI/PII placement screen — enforcement decision + text extraction.
+ * PHI/PII screening support — enforcement-mode resolution + text extraction.
  *
- * Guards the gate that makes the gateway's piiDetection flag real: protected
- * data must not silently reach a non-zero-retention provider.
+ * The placement DECISION itself is owned by sensitive-placement-policy.ts
+ * (`decideSensitivePlacement`) and tested in
+ * server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts.
+ * This file covers only the pii-screen module's live surface.
  */
 
 import { describe, it, expect } from 'vitest';
 import {
-  decideSensitiveDataPlacement,
   extractRequestText,
   getPiiEnforcement,
 } from '../../server/services/ai-gateway/pii-screen';
 import type { GatewayRequest } from '../../server/services/ai-gateway/types';
-
-const phi = { phi: true, pii: false, classes: ['phi' as const] };
-const pii = { phi: false, pii: true, classes: ['pii' as const] };
-const clean = { phi: false, pii: false, classes: ['public' as const] };
-
-describe('decideSensitiveDataPlacement', () => {
-  it("block mode: refuses PHI to a non-zero-retention provider", () => {
-    const d = decideSensitiveDataPlacement({
-      classification: phi,
-      zeroDataRetention: false,
-      enforcement: 'block',
-      provider: 'openai',
-    });
-    expect(d.block).toBe(true);
-    expect(d.detected).toBe(true);
-    expect(d.reason).toMatch(/PHI/);
-    expect(d.reason).toMatch(/openai/);
-  });
-
-  it('block mode: allows PHI to a zero-retention provider', () => {
-    const d = decideSensitiveDataPlacement({
-      classification: phi,
-      zeroDataRetention: true,
-      enforcement: 'block',
-      provider: 'bedrock',
-    });
-    expect(d.block).toBe(false);
-    expect(d.detected).toBe(true);
-  });
-
-  it('audit mode: detects but never blocks', () => {
-    const d = decideSensitiveDataPlacement({
-      classification: pii,
-      zeroDataRetention: false,
-      enforcement: 'audit',
-      provider: 'openai',
-    });
-    expect(d.block).toBe(false);
-    expect(d.detected).toBe(true);
-  });
-
-  it('off mode: never blocks (detection still reported from classification)', () => {
-    const d = decideSensitiveDataPlacement({
-      classification: phi,
-      zeroDataRetention: false,
-      enforcement: 'off',
-      provider: 'openai',
-    });
-    expect(d.block).toBe(false);
-    expect(d.detected).toBe(true);
-  });
-
-  it('clean content never blocks, even in block mode on a shared provider', () => {
-    const d = decideSensitiveDataPlacement({
-      classification: clean,
-      zeroDataRetention: false,
-      enforcement: 'block',
-      provider: 'openai',
-    });
-    expect(d.block).toBe(false);
-    expect(d.detected).toBe(false);
-  });
-});
 
 describe('extractRequestText', () => {
   it('concatenates message content and text content blocks', () => {

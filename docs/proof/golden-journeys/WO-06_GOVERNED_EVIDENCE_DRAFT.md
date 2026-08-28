@@ -23,7 +23,8 @@ surface and risk implying agency readiness.
 | Reject missing evidence link  | browser fetch                 | `POST .../artifacts` with unknown source ID  | none (fails closed)                                        |
 | Create sourced draft          | browser fetch                 | `POST .../artifacts` with source artifact ID | artifact/version rows plus `data_lineage_records`          |
 | Inspect provenance            | browser fetch                 | `GET .../artifacts/:id/provenance`           | `concept2cure_provenance_events`                           |
-| Request and assign review     | author browser context        | status transition + `POST .../reviewers`     | artifact status and `concept2cure_review_assignments`      |
+| Request review                | author browser context        | status transition to `review`                | artifact status                                            |
+| Assign reviewer               | reviewer browser context      | `POST .../reviewers` (role matrix permits admin/approver/reviewer — not the author) | `concept2cure_review_assignments`                          |
 | Reject unreviewed export      | author browser context        | `GET /api/artifacts-center/:id/export`       | none (fails closed)                                        |
 | Record human decision         | separate reviewer browser     | `POST .../reviews/submit`                    | `concept2cure_review_decisions`, audit, provenance         |
 | Export reviewed draft         | author browser context        | `GET /api/artifacts-center/:id/export`       | downloaded DOCX; governance headers                        |
@@ -72,7 +73,12 @@ Run from a fresh migrated database:
 
 ```bash
 DATABASE_URL=... node tests/e2e/seed-governed-workflow.cjs
-EXPORT_REVIEW_GATE=enforce BASE_URL=http://localhost:5000 npx playwright test tests/e2e/golden-customer-journey.e2e.ts --project=chromium
+# EXPORT_REVIEW_GATE=enforce must be set on the SERVER process (the
+# artifacts-center gate reads it server-side); setting it on the Playwright
+# process does nothing and the pre-review export-denial step would see the
+# gate off in dev.
+EXPORT_REVIEW_GATE=enforce npm run dev   # (server terminal)
+BASE_URL=http://localhost:5000 npx playwright test tests/e2e/golden-customer-journey.e2e.ts --project=chromium
 ```
 
 ## Explicitly out of scope

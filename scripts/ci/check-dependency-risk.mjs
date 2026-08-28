@@ -97,29 +97,39 @@ const blocking = [];
 const observed = [];
 const advisoryId = url => url?.match(/GHSA-[a-z0-9-]+/i)?.[0]?.toUpperCase();
 
-function covered(packageName, seen = new Set()) {
-  if (seen.has(packageName)) return false; // ambiguous advisory cycles fail closed
-  seen.add(packageName);
-  const vulnerability = report.vulnerabilities[packageName];
-  if (!vulnerability) return true;
-  let hasRelevantCause = false;
-  for (const via of vulnerability.via || []) {
-    if (typeof via === 'string') {
+function covered(packageName, path = new Set()) {
+  // `path` is the current DFS chain, not a global visited set: two siblings
+  // reaching the same reviewed leaf (a diamond, npm audit's normal shape for a
+  // shared transitive) must both be allowed to check it. Only a package that
+  // appears on its own causal chain — a true cycle — fails closed here.
+  if (path.has(packageName)) return false;
+  path.add(packageName);
+  try {
+    const vulnerability = report.vulnerabilities[packageName];
+    // A via-string naming a package the report does not list is a malformed
+    // or truncated scanner response; treat the unknown as unreviewed.
+    if (!vulnerability) return false;
+    let hasRelevantCause = false;
+    for (const via of vulnerability.via || []) {
+      if (typeof via === 'string') {
+        hasRelevantCause = true;
+        if (!covered(via, path)) return false;
+        continue;
+      }
+      if (!['high', 'critical'].includes(via.severity)) continue;
       hasRelevantCause = true;
-      if (!covered(via, seen)) return false;
-      continue;
+      const id = advisoryId(via.url);
+      const decision = id && decisions.get(id);
+      observed.push({ id, packageName, severity: via.severity });
+      // A row marked fixed must not continue to appear against the exact graph.
+      // Only an evidence-backed current decision can cover an observed finding.
+      if (!decision || decision.package !== packageName ||
+          !['unreachable', 'mitigated', 'exception'].includes(decision.disposition)) return false;
     }
-    if (!['high', 'critical'].includes(via.severity)) continue;
-    hasRelevantCause = true;
-    const id = advisoryId(via.url);
-    const decision = id && decisions.get(id);
-    observed.push({ id, packageName, severity: via.severity });
-    // A row marked fixed must not continue to appear against the exact graph.
-    // Only an evidence-backed current decision can cover an observed finding.
-    if (!decision || decision.package !== packageName ||
-        !['unreachable', 'mitigated', 'exception'].includes(decision.disposition)) return false;
+    return hasRelevantCause;
+  } finally {
+    path.delete(packageName);
   }
-  return hasRelevantCause;
 }
 
 for (const [name, vulnerability] of Object.entries(report.vulnerabilities)) {

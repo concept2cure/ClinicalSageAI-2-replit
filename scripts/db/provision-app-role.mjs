@@ -177,6 +177,15 @@ export async function provisionAppServiceRole(db, { env = process.env, log = () 
       await db.query(
         `GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA ${schemaIdent} TO ${roleIdent}`,
       );
+      // Functions too, not just tables: functions default to PUBLIC EXECUTE, so
+      // this looked redundant — until 069_gcc_multitenant_rls_expansion.sql
+      // REVOKEd PUBLIC on core.can_access_program/can_write_program and granted
+      // them back to nobody. Every RLS policy that calls those helpers then
+      // fails for the runtime role with "permission denied for function", which
+      // means every INSERT/UPDATE on the policied tables fails. The runtime
+      // role must be able to execute application functions; the functions
+      // themselves enforce their own logic.
+      await db.query(`GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA ${schemaIdent} TO ${roleIdent}`);
       // Forward coverage: tables/sequences the OWNER (the role running this)
       // creates later inherit the same grants, so a new migration never locks
       // the runtime out of a table it needs.
@@ -185,6 +194,9 @@ export async function provisionAppServiceRole(db, { env = process.env, log = () 
       );
       await db.query(
         `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schemaIdent} GRANT USAGE, SELECT ON SEQUENCES TO ${roleIdent}`,
+      );
+      await db.query(
+        `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schemaIdent} GRANT EXECUTE ON FUNCTIONS TO ${roleIdent}`,
       );
       grantedSchemas.push(`${schema}(${privList})`);
     }

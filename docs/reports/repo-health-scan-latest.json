@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-28T02:49:35.510Z",
+  "generatedAt": "2026-08-28T03:18:36.092Z",
   "git": {
-    "sha": "cc1298b65e2fe4d09d40dd4156a4c7b11b408e3a",
+    "sha": "c86724dfb88cdbd744b74651314a8d5c67b57682",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -17,7 +17,7 @@
     "duplicateBasenames": 221,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 38,
+    "largeFilesByBytes": 39,
     "largeFilesByLines": 89
   },
   "findings": {
@@ -2154,7 +2154,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 691842
+        "bytes": 690658
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2166,7 +2166,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 277858
+        "bytes": 280207
       },
       {
         "file": "server/statistics-service.ts",
@@ -2178,7 +2178,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 195023
+        "bytes": 199093
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2209,16 +2209,16 @@
         "bytes": 138123
       },
       {
+        "file": "server/services/submission-package-orchestrator.ts",
+        "bytes": 137182
+      },
+      {
         "file": "server/routes/authoring-actions.ts",
         "bytes": 136607
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
         "bytes": 136488
-      },
-      {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 135234
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2265,6 +2265,10 @@
         "bytes": 109447
       },
       {
+        "file": "shared/regulatory/project-bootstrap.ts",
+        "bytes": 109047
+      },
+      {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "bytes": 108892
       },
@@ -2289,12 +2293,12 @@
         "bytes": 104369
       },
       {
-        "file": "shared/regulatory/project-bootstrap.ts",
-        "bytes": 104306
-      },
-      {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "bytes": 104021
+      },
+      {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "bytes": 100092
       }
     ],
     "largeFilesByLines": [
@@ -2308,7 +2312,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 18586
+        "lines": 18533
       },
       {
         "file": "server/statistics-service.ts",
@@ -2316,7 +2320,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6715
+        "lines": 6757
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2331,12 +2335,12 @@
         "lines": 5211
       },
       {
-        "file": "server/storage.ts",
-        "lines": 4444
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "lines": 4496
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 4438
+        "file": "server/storage.ts",
+        "lines": 4444
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2363,12 +2367,12 @@
         "lines": 3113
       },
       {
-        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
-        "lines": 3067
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 3092
       },
       {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3060
+        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
+        "lines": 3067
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2399,12 +2403,12 @@
         "lines": 2559
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
-        "lines": 2504
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 2511
       },
       {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2465
+        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+        "lines": 2504
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2661,7 +2665,7 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 400,
-      "largeByBytes": 30,
+      "largeByBytes": 31,
       "largeByLines": 73
     },
     {

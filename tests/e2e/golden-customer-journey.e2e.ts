@@ -94,8 +94,10 @@ test('fixture-free golden journey persists evidence, review, provenance, and gov
     'POST',
     `/api/concept2cure/projects/${project.id}/artifacts`,
     {
+      // Valid category on purpose: the invalidity under test must be exactly
+      // one thing (empty content), not a category zod rejects first.
       type: 'document',
-      category: 'regulatory',
+      category: 'document',
       title: JOURNEY.artifactTitle,
       content: '',
     }
@@ -124,7 +126,10 @@ test('fixture-free golden journey persists evidence, review, provenance, and gov
     `/api/concept2cure/projects/${project.id}/artifacts`,
     {
       type: 'document',
-      category: 'regulatory',
+      // 'document', not 'regulatory': the category enum has no 'regulatory',
+      // and a schema 400 here would mask the SOURCE_EVIDENCE_NOT_FOUND gate
+      // this case exists to prove.
+      category: 'document',
       title: JOURNEY.artifactTitle,
       content: 'This write must fail because its asserted evidence does not exist.',
       metadata: {
@@ -143,7 +148,7 @@ test('fixture-free golden journey persists evidence, review, provenance, and gov
     `/api/concept2cure/projects/${project.id}/artifacts`,
     {
       type: 'document',
-      category: 'regulatory',
+      category: 'document',
       title: JOURNEY.artifactTitle,
       content: 'Synthetic source finding: the test compound requires qualified human assessment.',
       metadata: {
@@ -181,8 +186,12 @@ test('fixture-free golden journey persists evidence, review, provenance, and gov
   expect(deniedExport.status).toBe(403);
   expect(JSON.stringify(deniedExport.body)).toContain('HUMAN_REVIEW_REQUIRED');
 
+  // The reviewers route requires role admin/approver/reviewer; the seed's
+  // author is role 'author', so the assignment is made from the reviewer's own
+  // authenticated session (a reviewer claiming the review), which the role
+  // matrix permits. The decision below still runs under separation-of-duties.
   const assignment = await browserApi<any>(
-    page,
+    reviewerPage,
     'POST',
     `/api/concept2cure/projects/${project.id}/artifacts/${artifact.id}/reviewers`,
     { reviewerIds: [reviewerId], notes: 'Synthetic golden-journey review assignment.' }

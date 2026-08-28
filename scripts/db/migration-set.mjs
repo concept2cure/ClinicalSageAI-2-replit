@@ -1289,6 +1289,15 @@ export const C2C_MIGRATION_FILES = [
   // because they truthfully record that nothing was captured.
   'migrations/20260814g_section_version_reason_required.sql',
 
+  // ── An unstated author is recorded as unspecified, not as a human ──────────
+  // The same fix as 20260814g one column over: the section save defaulted an
+  // omitted `draftSource` to 'human' and the trigger's CASE fell through to
+  // 'human' for NULL, so a save that said nothing about where its text came
+  // from filed a version row asserting a named person wrote it. MUST stay last
+  // of the five definitions of c2c_snapshot_section_version() — it is built on
+  // 20260814g's body and carries its mandatory-reason RAISE.
+  'migrations/20260822_section_version_author_kind_unspecified.sql',
+
   // Constraint repair only: no table, no column, no data. 0001_phase13_full
   // meant to widen concept2cure_review_tasks.task_type to include
   // 'approval_task' but added a second CHECK instead of replacing phase13's
@@ -1583,6 +1592,12 @@ export const C2C_MIGRATION_FILES = [
   // on every super-admin / null-orgUuid scope. Idempotent — it matches nothing
   // once the inline casts are gone.
   'db/migrations/20260821_uuid_org_guc_cast_heal.sql',
+
+  // core.get_program_org_id must resolve the canonical program registry
+  // (regulatory_programs → organizations.uuid), or every vault.documents RLS
+  // policy denies the runtime role on a fresh install (core.programs is empty
+  // there). Proven by tests/db/vault-ingest.dbtest.ts.
+  'db/migrations/20260828_program_org_resolution_canonical.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

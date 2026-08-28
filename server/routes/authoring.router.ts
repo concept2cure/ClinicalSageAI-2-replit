@@ -2172,6 +2172,48 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       });
     }
 
+    /* LAST WRITE NO LONGER SILENTLY WINS.
+     *
+     * This UPDATE was `WHERE id = $n AND tenant_id = $n` and nothing else, and
+     * the client sent only `{ content }`. So two authors on one section — the
+     * normal case for a CTD module, where a writer and a reviewer work the same
+     * §3.2.P.5 at once — ended with whoever saved second replacing the OTHER'S
+     * ENTIRE SECTION. No 409, no warning, no merge, no "this changed while you
+     * were editing". The overwrite then entered the hash-chained revision
+     * ledger as an ordinary authored revision, so the record does not show a
+     * collision either; the only way back is for someone to notice and revert.
+     *
+     * `updated_at` is the concurrency token because it is already on the row
+     * the client loaded, already returned by every read, and already bumped by
+     * every write — no new column, no new migration, nothing to keep in sync.
+     *
+     * OPT-IN, deliberately. A client that sends no `expectedUpdatedAt` keeps
+     * the old behaviour rather than being refused: several callers (the MDX
+     * dossier drawer among them) PATCH sections without having read a
+     * timestamp, and failing those closed would break saving to fix a race
+     * they cannot hit. The editor sends it; anything that does not is exactly
+     * as safe as it was yesterday and no less. */
+    const expectedUpdatedAt = req.body?.expectedUpdatedAt;
+    if (typeof expectedUpdatedAt === 'string' && expectedUpdatedAt.trim()) {
+      const current = currentSection.rows[0]?.updated_at;
+      const currentMs = current ? new Date(current).getTime() : NaN;
+      const expectedMs = new Date(expectedUpdatedAt).getTime();
+      if (Number.isFinite(currentMs) && Number.isFinite(expectedMs) && currentMs !== expectedMs) {
+        return res.status(409).json({
+          success: false,
+          error: {
+            code: 'SECTION_CHANGED',
+            message:
+              'This section was changed by someone else while you were editing. ' +
+              'Your text has not been saved and nothing was overwritten — reload the ' +
+              'section to see their version, then reapply your changes.',
+          },
+          /* The caller can show WHEN it moved under them without another read. */
+          currentUpdatedAt: current,
+        });
+      }
+    }
+
     // Build update query dynamically
     const updates = [];
     const values = [];

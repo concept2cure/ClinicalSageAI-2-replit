@@ -75,7 +75,15 @@ const hoisted = vi.hoisted(() => {
         warnings: [],
       });
       this.registerExportGovernanceQuick.mockResolvedValue({ ok: true });
-      this.auditLogAction.mockResolvedValue(undefined);
+      // logAction resolves an AuditWriteResult (server/services/auditService.ts)
+      // and the route dereferences it (.persisted / .error), so the mock must
+      // resolve the real success shape — resolving undefined makes the route
+      // throw a TypeError and 500.
+      this.auditLogAction.mockResolvedValue({
+        persisted: true,
+        chained: true,
+        tamperProof: true,
+      });
     },
   };
 });

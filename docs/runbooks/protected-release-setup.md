@@ -52,6 +52,20 @@ unless the repository's written single-branch policy is amended to permit
 short-lived review heads (in-repository or fork-based) while keeping
 `concept2cure-v2` as the sole product/release branch.
 
+Amending the written policy is necessary but not sufficient: two active
+enforcement mechanisms will still block or destroy review heads afterward and
+must be changed in the same decision, or enabling require-pull-request
+deadlocks development (GitHub refuses direct pushes to `concept2cure-v2`
+while the local hook refuses pushing any review head):
+
+- `.husky/pre-push` refuses pushes to every non-canonical ref — agent-shaped
+  prefixes (`claude/*`, `codex/*`, `cursor/*`, `agent/*`, `ai/*`, `bot/*`)
+  unconditionally, all others unless `ALLOW_NON_CANONICAL_PUSH=1` for
+  genuinely external refs.
+- `.github/workflows/prune-agent-branches.yml` deletes agent-prefix branches
+  from the remote on a schedule, so even a successfully pushed review head
+  can be garbage-collected before its pull request merges.
+
 The repository owner must approve and record that policy decision before
 turning on a pull-request requirement. WO-02 did not silently weaken either
 policy.
@@ -114,6 +128,13 @@ jq -r '.check_runs[] | [.name, .conclusion, .app.slug, .html_url] | @tsv' \
 
 # Copy only exact .name values from the table above. Every selected check must
 # have conclusion "success" and collectively cover every WO-02 category.
+# The canonical machine-readable list of required release jobs is
+# config/release-evidence-policy.v1.json (the release-evidence manifest gate
+# validates against it); start from its requiredWorkflows entries and ADD the
+# per-commit checks it does not carry (Lint, typecheck, Integration Tests,
+# Security Scan) rather than composing a second independent list — two
+# divergent definitions of "which checks gate a release" is exactly the drift
+# this runbook exists to prevent.
 CHECKS_JSON='[
   {"context":"<exact live lint check name>"},
   {"context":"<exact live typecheck check name>"},
@@ -127,7 +148,11 @@ CHECKS_JSON='[
   {"context":"<exact live Tier-5 authenticated-browser check name>"}
 ]'
 
-jq -e --argjson checks "$CHECKS_JSON" \
+# -n is load-bearing: without it jq waits on stdin and never evaluates the
+# filter (interactively it hangs; with stdin closed it exits 4 regardless of
+# the data). Check $? explicitly — this gate is the only thing standing
+# between you and a hand-transcribed check name that never matches a real run.
+jq -n -e --argjson checks "$CHECKS_JSON" \
   --slurpfile evidence /tmp/c2c-check-runs.json '
   ($checks | length) >= 10 and
   ([$checks[].context] | all(type == "string" and
@@ -135,7 +160,9 @@ jq -e --argjson checks "$CHECKS_JSON" \
   ($checks | all(.context as $required |
     any($evidence[0].check_runs[];
       .name == $required and .conclusion == "success")))
-' >/dev/null
+' >/dev/null \
+  && echo 'CHECKS_JSON validated against live check-run evidence' \
+  || { echo 'CHECKS_JSON validation FAILED — a listed check is a placeholder or did not succeed on the audited commit'; exit 1; }
 
 jq -n --argjson checks "$CHECKS_JSON" '{
   name: "concept2cure-v2 protected release governance",
