@@ -39,12 +39,18 @@
 -- request middleware sets. The GCC branches stay first so any environment that
 -- does carry core.programs rows keeps its existing resolution.
 
+-- plpgsql, not LANGUAGE sql: sql bodies validate every referenced relation at
+-- CREATE time, and this migration must also apply on paths that build a
+-- partial schema (the schema-contract suites replay the durable set against a
+-- scratch database without the GCC core tables). plpgsql defers resolution to
+-- first execution; behavior on a fully-provisioned database is identical.
 CREATE OR REPLACE FUNCTION core.get_program_org_id(p_program_id uuid)
 RETURNS uuid
-LANGUAGE sql
+LANGUAGE plpgsql
 STABLE
 AS $$
-  SELECT COALESCE(
+BEGIN
+  RETURN COALESCE(
     (SELECT org_id FROM core.programs WHERE id = p_program_id),
     (SELECT org_id FROM core.program_ownerships
       WHERE program_id = p_program_id AND is_active = TRUE
@@ -54,4 +60,5 @@ AS $$
        JOIN public.organizations o ON o.id = rp.organization_id
       WHERE rp.id = p_program_id)
   );
+END;
 $$;
