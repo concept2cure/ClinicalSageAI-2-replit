@@ -27,6 +27,7 @@
 
 import { pool } from '../../db/runtime.js';
 import { createScopedLogger } from '../../utils/logger.js';
+import { runWithSystemTenantScope } from '../../db/tenantStore';
 
 const log = createScopedLogger('template-seeds');
 
@@ -566,14 +567,27 @@ export async function seedTemplates(): Promise<{ inserted: number; updated: numb
 export async function seedTemplatesIfMissing(): Promise<
   { ran: true; inserted: number; updated: number; sections: number } | { ran: false; present: number }
 > {
-  const codes = SEED_TEMPLATES.map((t) => t.templateCode);
-  const present = await pool.query(
-    `SELECT count(*)::int AS n FROM intelligence.document_templates
-      WHERE template_code = ANY($1) AND version = '1.0'`,
-    [codes],
-  );
-  const n: number = present.rows[0]?.n ?? 0;
-  if (n >= codes.length) return { ran: false, present: n };
-  const result = await seedTemplates();
-  return { ran: true, ...result };
+  // SYSTEM scope: intelligence.document_templates is platform reference data —
+  // no tenant column, no RLS policy (verified against a provisioned database) —
+  // so there is no tenant dimension here and no authority derived from a caller
+  // argument. Same reasoning as FeatureToggleService.initializeFeatureToggle,
+  // and the opposite of SentinelScheduler.scheduleOrg, which takes an
+  // organizationId and so scopes at its job boundary instead.
+  //
+  // Without it this boot-time seed is refused under RLS_ENFORCE=on
+  // ("[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope"),
+  // which left the "Start from" template picker empty on every enforcing
+  // estate — the exact emptiness this function exists to prevent.
+  return runWithSystemTenantScope('template-seeds:seed-if-missing', async () => {
+    const codes = SEED_TEMPLATES.map((t) => t.templateCode);
+    const present = await pool.query(
+      `SELECT count(*)::int AS n FROM intelligence.document_templates
+        WHERE template_code = ANY($1) AND version = '1.0'`,
+      [codes],
+    );
+    const n: number = present.rows[0]?.n ?? 0;
+    if (n >= codes.length) return { ran: false as const, present: n };
+    const result = await seedTemplates();
+    return { ran: true as const, ...result };
+  });
 }

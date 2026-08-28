@@ -140,6 +140,8 @@ jobs:
           [ "$COUNT" = "0" ] || { echo "::error::Target is not a blank database ($COUNT tables)"; exit 1; }
 
       - name: Mint an app_service password for this run
+        env:
+          TARGET_URL: ${{ steps.target.outputs.url }}
         run: |
           # Generated per run: setting it is what makes install-fresh provision
           # the non-superuser runtime role and assert its posture in step 8.
@@ -149,6 +151,21 @@ jobs:
           # GITHUB_ENV values are NOT masked automatically; mask before exporting.
           echo "::add-mask::$PW"
           echo "APP_SERVICE_DB_PASSWORD=$PW" >> "$GITHUB_ENV"
+
+          # The same target URL, but as app_service rather than the Neon admin
+          # role. tests/db/two-tenant-application-rls.dbtest.ts REFUSES to run
+          # without it — "owner execution is not an isolation proof" — because a
+          # superuser bypasses RLS, so a cross-tenant read it cannot see proves
+          # nothing. Without this the tenant-isolation step below fails outright,
+          # which is the correct behaviour and exactly why it is set here.
+          APP_URL=$(TARGET_URL="$TARGET_URL" PW="$PW" node -e '
+            const u = new URL(process.env.TARGET_URL);
+            u.username = "app_service";
+            u.password = process.env.PW;
+            console.log(u.toString());
+          ')
+          echo "::add-mask::$APP_URL"
+          echo "APP_DATABASE_URL=$APP_URL" >> "$GITHUB_ENV"
 
       - name: Deploy migration must REFUSE an unprovisioned database
         env:
@@ -207,6 +224,9 @@ jobs:
           RLS_ENFORCE: 'on'
           DATABASE_URL: ${{ steps.target.outputs.url }}
           TEST_DATABASE_URL: ${{ steps.target.outputs.url }}
+          # Exported by the password step above; the isolation suite connects as
+          # this non-superuser role, which is the only role RLS applies to.
+          APP_DATABASE_URL: ${{ env.APP_DATABASE_URL }}
         run: npm run test:db
 
       - name: Delete the Neon branch
