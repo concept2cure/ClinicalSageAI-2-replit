@@ -224,6 +224,22 @@ function isPreclinicalStudy(s: PreclinicalStudy | NonclinicalStudyInput): s is P
 }
 
 /** Map either supported input type into the internal study shape. */
+/**
+ * `doseGroups` is present on some study shapes and absent from the declared
+ * types of others, so it is read structurally rather than asserted onto them.
+ *
+ * This was written inline twice as a pair of casts, and the second one —
+ * `input as { doseGroups: Array<{ group, doseLevel }> }` — does not typecheck:
+ * neither declared input type overlaps that shape, so tsc rejects the
+ * conversion (TS2352). Going through `unknown` once, in one place, is both
+ * legal and the only honest description of what is happening: we do not know
+ * that this field exists, we look.
+ */
+function readDoseGroups(v: unknown): Array<{ group: string; doseLevel: string }> {
+  const dg = (v as { doseGroups?: unknown } | null | undefined)?.doseGroups;
+  return Array.isArray(dg) ? (dg as Array<{ group: string; doseLevel: string }>) : [];
+}
+
 export function normalizeStudy(input: PreclinicalStudy | NonclinicalStudyInput): NormalizedNSRStudy {
   if (isPreclinicalStudy(input)) {
     return {
@@ -234,9 +250,7 @@ export function normalizeStudy(input: PreclinicalStudy | NonclinicalStudyInput):
       routeOfAdministration: input.routeOfAdministration,
       durationWeeks: input.durationWeeks,
       glpCompliant: input.glpCompliant,
-      doseGroups: Array.isArray((input as { doseGroups?: unknown }).doseGroups)
-        ? ((input as { doseGroups: Array<{ group: string; doseLevel: string }> }).doseGroups)
-        : [],
+      doseGroups: readDoseGroups(input),
       noael: input.noael,
       loael: input.loael,
       mtd: input.mtd,
@@ -260,9 +274,7 @@ export function normalizeStudy(input: PreclinicalStudy | NonclinicalStudyInput):
     routeOfAdministration: null,
     durationWeeks: loose.durationWeeks ?? null,
     glpCompliant: loose.glpCompliant ?? (loose.glpStatus ? loose.glpStatus === 'GLP' : null),
-    doseGroups: Array.isArray((loose as { doseGroups?: unknown }).doseGroups)
-      ? ((loose as { doseGroups: Array<{ group: string; doseLevel: string }> }).doseGroups)
-      : [],
+    doseGroups: readDoseGroups(loose),
     noael: loose.noael ?? loose.noel ?? null,
     loael: null,
     mtd: null,
