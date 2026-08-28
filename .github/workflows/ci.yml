@@ -1488,3 +1488,79 @@ jobs:
             docs/reports/repo-health-scan-latest.json
             docs/reports/route-mount-audit-latest.json
           retention-days: 30
+
+  # ── Release evidence gate wiring ────────────────────────────────────────────
+  #
+  # The 'Release evidence gate' workflow (.github/workflows/release-evidence.yml)
+  # is workflow_call-only; until this pair existed it had NO caller anywhere and
+  # nothing produced its required release-evidence-input.json, so the gate could
+  # never fire (PR #1352 review). Two jobs because a reusable-workflow call is a
+  # job-level `uses:` and such a job cannot carry steps: the first assembles and
+  # uploads the evidence artifact, the second is the caller.
+  #
+  # The assembler builds the artifact to the generator's exact contract — it
+  # must contain exactly release-evidence-input.json plus the files listed in
+  # input.artifacts, or cli.mjs generate's dirty-worktree gate refuses it. The
+  # evidence packaged from this run: the Security Scan job's verbatim npm-audit
+  # lockfile evidence, plus GitHub Actions execution records (job/step
+  # conclusions from the Actions API) for every policy-required job here and in
+  # the sibling CodeQL / Semgrep / Tier 5 runs at this same SHA (waited on,
+  # bounded, via the API). That granularity is declared in knownDeviations and
+  # rendered in index.md for reviewer disposition. The assembler fails closed
+  # with a named reason on any missing piece; a present-but-red conclusion is
+  # packaged honestly and rejected downstream by `cli.mjs validate` — the gate
+  # doing its job.
+  #
+  # Canonical-branch runs only: the manifest is release-candidate evidence for a
+  # commit on concept2cure-v2, and the sibling workflows it waits for only run
+  # against pushes there.
+  assemble-release-evidence:
+    name: Assemble Release Evidence
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/concept2cure-v2'
+    needs: [test, security-tests, blank-db-provisioning, production-boot-smoke, build, security]
+    permissions:
+      contents: read
+      # The assembler reads this run's job records and the sibling workflow
+      # runs' conclusions from the Actions API.
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Download the npm-audit evidence this run's Security Scan produced
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: npm-audit-lockfile-evidence
+          path: ${{ runner.temp }}/npm-audit-evidence
+
+      - name: Assemble release-evidence-input.json (fails closed on any missing piece)
+        # Assembled OUTSIDE the checkout so the artifact holds only what the
+        # generator's contract allows. No npm install: the assembler is
+        # dependency-free by design.
+        run: node scripts/release-evidence/assemble-input.mjs --out "$RUNNER_TEMP/release-evidence-artifact"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_EVIDENCE_NPM_AUDIT: ${{ runner.temp }}/npm-audit-evidence/dependency-audit-results.json
+
+      - name: Upload the evidence artifact for the gate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-evidence-input-${{ github.sha }}
+          path: ${{ runner.temp }}/release-evidence-artifact/
+          if-no-files-found: error
+
+  release-evidence-gate:
+    name: Release evidence gate
+    needs: assemble-release-evidence
+    if: github.ref == 'refs/heads/concept2cure-v2'
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/release-evidence.yml
+    with:
+      evidence-artifact: release-evidence-input-${{ github.sha }}
