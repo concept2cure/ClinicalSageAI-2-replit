@@ -15576,12 +15576,16 @@ registerToolHandler('assemble_device_submission', async (input: Record<string, u
       return JSON.stringify({ status: 'needs_parameters', message: "variant must be 'device' or 'ivd'." });
     }
     if (!Array.isArray(input.leaves)) {
-      return JSON.stringify({ status: 'needs_parameters', message: 'leaves[] is required (each: { sectionCode, title, documentType? }).' });
+      return JSON.stringify({ status: 'needs_parameters', message: 'leaves[] is required (each: { sectionCode, title, documentType?, substantive? }).' });
     }
+    // Fails closed: a leaf is treated as a draft/placeholder (not substantive)
+    // unless the caller explicitly asserts it carries real, finalized content —
+    // a title match alone must never count as "present".
     const leaves = (input.leaves as Array<Record<string, unknown>>).map(l => ({
       sectionCode: String(l.sectionCode ?? ''),
       title: String(l.title ?? ''),
       documentType: typeof l.documentType === 'string' ? l.documentType : undefined,
+      substantive: l.substantive === true,
     }));
     const { assembleDeviceSubmission } = await import('../pathway-engines/device-assembly/assemble-device-submission.js');
     const result = assembleDeviceSubmission({

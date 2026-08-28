@@ -124,6 +124,7 @@
     "ci:migration-prefix-collisions:strict": "node scripts/ci/check-migration-prefix-collisions.mjs --strict",
     "ci:migration-prefix-collisions:write-baseline": "node scripts/ci/check-migration-prefix-collisions.mjs --write-baseline",
     "ci:rls-allowlist-sync": "node scripts/ci/check-rls-allowlist-sync.mjs",
+    "ci:session-scoped-rls-bypass": "node scripts/ci/check-session-scoped-rls-bypass.mjs",
     "ci:server-error-leaks": "node scripts/ci/check-server-error-leaks.mjs",
     "ci:server-error-leaks:list": "node scripts/ci/check-server-error-leaks.mjs --list",
     "ci:server-error-leaks:write-baseline": "node scripts/ci/check-server-error-leaks.mjs --write-baseline",

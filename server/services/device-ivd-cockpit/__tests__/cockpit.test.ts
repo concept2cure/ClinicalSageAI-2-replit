@@ -2,14 +2,15 @@ import { describe, it, expect } from 'vitest';
 import { assessDeviceProgram, type CockpitInputLeaf } from '../cockpit';
 
 // A 510(k)-complete content set (also covers most PMA/MDR shared sections).
+// All finalized/substantive content.
 const k510Complete: CockpitInputLeaf[] = [
-  { sectionCode: '1', title: 'Cover letter' },
-  { sectionCode: '2', title: 'Indications for use' },
-  { sectionCode: '3', title: 'Device description' },
-  { sectionCode: '4', title: 'Proposed labeling and instructions for use' },
-  { sectionCode: '5', title: 'Biocompatibility evaluation' },
-  { sectionCode: '6', title: 'Performance testing — bench' },
-  { sectionCode: '7', title: 'Substantial equivalence comparison to predicate' },
+  { sectionCode: '1', title: 'Cover letter', substantive: true },
+  { sectionCode: '2', title: 'Indications for use', substantive: true },
+  { sectionCode: '3', title: 'Device description', substantive: true },
+  { sectionCode: '4', title: 'Proposed labeling and instructions for use', substantive: true },
+  { sectionCode: '5', title: 'Biocompatibility evaluation', substantive: true },
+  { sectionCode: '6', title: 'Performance testing — bench', substantive: true },
+  { sectionCode: '7', title: 'Substantial equivalence comparison to predicate', substantive: true },
 ];
 
 describe('assessDeviceProgram (device cockpit)', () => {
@@ -29,7 +30,7 @@ describe('assessDeviceProgram (device cockpit)', () => {
   });
 
   it('computes per-pathway completeness and missing sections honestly', () => {
-    const a = assessDeviceProgram({ leaves: [{ sectionCode: '1', title: 'Cover letter' }], variant: 'device' });
+    const a = assessDeviceProgram({ leaves: [{ sectionCode: '1', title: 'Cover letter', substantive: true }], variant: 'device' });
     const pma = a.pathways.find((p) => p.pathway === 'pma');
     expect(pma?.ready).toBe(false);
     expect(pma?.completeness).toBeGreaterThanOrEqual(0);

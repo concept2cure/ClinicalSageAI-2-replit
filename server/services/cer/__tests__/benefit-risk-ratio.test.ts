@@ -29,8 +29,17 @@ describe('calculateBenefitRiskRatio — fails closed on an empty analysis', () =
     expect(ratio({ benefits: [], risks: [] })).toBe('Needs review');
   });
 
-  it('documented benefits with no documented risks remain highly favorable', () => {
-    expect(ratio({ benefits: [{}, {}], risks: [] })).toBe('Highly favorable');
+  it('documented benefits with NO documented risks is indeterminate, not favorable', () => {
+    // This asserted 'Highly favorable', which contradicted the case directly
+    // above it: an empty analysis is indeterminate, and an empty RISK analysis
+    // is no less empty than an empty benefit one. Zero documented risks is an
+    // unperformed — or not-yet-recorded — assessment, not a zero-risk device,
+    // and the data model carries no "risk assessment completed" signal that
+    // could tell those apart. Under MDR Annex I §1/§8 and MEDDEV 2.7/1 rev 4 the
+    // benefit-risk conclusion must rest on documented evidence, so a favorable
+    // verdict drawn from an absent risk analysis is fabricated — and it is
+    // fabricated INTO a Clinical Evaluation Report a notified body reads.
+    expect(ratio({ benefits: [{}, {}], risks: [] })).toBe('Needs review');
   });
 
   it('zero benefits against documented risks is not favorable', () => {
