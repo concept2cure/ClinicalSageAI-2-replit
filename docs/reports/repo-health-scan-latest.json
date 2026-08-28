@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-28T03:18:36.092Z",
+  "generatedAt": "2026-08-28T03:26:22.245Z",
   "git": {
-    "sha": "c86724dfb88cdbd744b74651314a8d5c67b57682",
+    "sha": "2f1beb39a4025c562417f5f1bbf501a914e82edc",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2596,7 +2596,7 @@
       },
       {
         "file": "server/routes/ivdr-routes.ts",
-        "lines": 1704
+        "lines": 1710
       },
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
