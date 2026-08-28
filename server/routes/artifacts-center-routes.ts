@@ -52,19 +52,13 @@ import { Router, Request, Response } from 'express';
 import { createScopedLogger } from '../utils/logger.js';
 import { pool } from '../db.js';
 import { generateDocxBuffer } from '../services/docxGenerator.js';
+import { shouldEnforceExportReviewGate } from '../services/export/exportReviewGate.js';
 
 const logger = createScopedLogger('artifacts-center-routes');
 
 /** Hard cap on rendered rows — this is a gallery, mirrors the existing
  *  /api/concept2cure/artifacts read (LIMIT 200). */
 const MAX_ROWS = 200;
-
-function shouldEnforceArtifactExportReview(): boolean {
-  if (process.env.NODE_ENV === 'production') return true;
-  if (process.env.EXPORT_REVIEW_GATE === 'enforce') return true;
-  if (process.env.EXPORT_REVIEW_GATE === 'off') return false;
-  return false;
-}
 
 // ── Display-shape row (mirrors ArtifactEntry in fixtures/admin-data.ts) ──────────
 
@@ -406,8 +400,11 @@ export default function createArtifactsCenterRoutes(): Router {
       }
 
       /* The export-review gate is read from persisted state, never asserted by
-         the caller. The approval must cover the current artifact version. */
-      if (!row.is_signed && !row.is_reviewed && shouldEnforceArtifactExportReview()) {
+         the caller. The approval must cover the current artifact version.
+         Whether the gate is ON comes from the ONE canonical enable decision
+         (server/services/export/exportReviewGate.ts): always enforced in
+         production, opt-in outside it. */
+      if (!row.is_signed && !row.is_reviewed && shouldEnforceExportReviewGate()) {
         return res.status(403).json({
           success: false,
           error: 'HUMAN_REVIEW_REQUIRED',
