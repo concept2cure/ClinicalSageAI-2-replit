@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-08-28T20:24:25.831Z",
+  "generatedAt": "2026-08-28T20:24:53.999Z",
   "git": {
-    "sha": "261990305a2f6f9ad1897bd4bab30127d1414b43",
+    "sha": "4484ece33552e25b1743586258642056df80d47d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500,
-    "ceilingLargeBytes": 33,
-    "ceilingLargeLines": 82
+    "ceilingLargeBytes": null,
+    "ceilingLargeLines": null
   },
   "managedMirrors": [
     "design-system/"
