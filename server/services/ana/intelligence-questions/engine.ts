@@ -267,6 +267,26 @@ function coerceForBooleanPredicate(actual: unknown): unknown {
   return actual;
 }
 
+/**
+ * Parse a number-field answer to a finite number for a numeric (gt/lt) predicate.
+ * number answers reach the engine as a real number from the UI but as a string
+ * ('4') from the AnA tool surface (a free-form `answers` object), and gt/lt
+ * previously required `typeof actual === 'number'` — so a string answer silently
+ * made every numeric gate return false. That defeats critical filing gates such
+ * as `evaluator_years_experience lt 5`, `vigilance_reports gt 10`, and
+ * `number_of_arms gt 3`. Returns null for anything not finitely numeric (an
+ * empty or non-numeric answer is not a valid trigger; required-field validation
+ * handles absence).
+ */
+function toFiniteNumber(actual: unknown): number | null {
+  if (typeof actual === 'number') return Number.isFinite(actual) ? actual : null;
+  if (typeof actual === 'string' && actual.trim() !== '') {
+    const n = Number(actual);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
 export function evaluatePredicate(
   pred: FieldPredicate,
   values: Record<string, unknown>,
@@ -286,10 +306,14 @@ export function evaluatePredicate(
       return Array.isArray(pred.value) && pred.value.includes(String(actual));
     case 'not_in':
       return Array.isArray(pred.value) && !pred.value.includes(String(actual));
-    case 'gt':
-      return typeof actual === 'number' && typeof pred.value === 'number' && actual > pred.value;
-    case 'lt':
-      return typeof actual === 'number' && typeof pred.value === 'number' && actual < pred.value;
+    case 'gt': {
+      const a = toFiniteNumber(actual);
+      return a !== null && typeof pred.value === 'number' && a > pred.value;
+    }
+    case 'lt': {
+      const a = toFiniteNumber(actual);
+      return a !== null && typeof pred.value === 'number' && a < pred.value;
+    }
     case 'contains':
       return typeof actual === 'string' && typeof pred.value === 'string' &&
         actual.toLowerCase().includes(pred.value.toLowerCase());
