@@ -73,7 +73,7 @@ const FIXTURES = path.join(ROOT, 'tests/fixtures/action-overclaim');
  * has told the truth.
  */
 const GOVERNED_VERB =
-  /^(attach|cite|route|promote|submit|sign|approve|reject|file|publish|transmit|freeze|lock|unlock|release|assign|accept|archive|delete|remove|send|dispatch|seal|lodge|register|certify|validate|verify|apply|commit|save|store|record|log|upload)\b/i;
+  /^(attach|cite|route|promote|submit|sign|approve|reject|file|publish|transmit|freeze|lock|unlock|release|assign|accept|archive|delete|remove|send|dispatch|seal|lodge|register|certify|validate|verify|apply|commit|save|store|record|log|upload|export|download)\b/i;
 
 /** A label already framed as a request is honest however it continues. */
 const REQUEST_FRAMED = /^(ask|request|draft|propose|suggest|explain|review|summari[sz]e|show|open|find|check with)\b/i;
@@ -93,7 +93,7 @@ const REAL_WORK = /\bawait\b|\bapiRequest\b|\bfetch\(|\bmutate|\bpersist|\bsaveT
  * worst possible outcome for a gate whose whole subject is honesty: telling a
  * developer that a correct, properly gated approval flow lies to its user.
  *
- * The chat ask always receives a sentence. A domain function receives a record.
+ * The chat ask (`ask(...)` / `onAsk?.(...)`) always receives a sentence. A domain function receives a record.
  * That is the discriminator, and it is exact on both real defects:
  *     ask('Attach the ' + label + ' to the submission dossier ...')   flagged
  *     onAsk(`Cite this claim: "${s}"`)                                flagged
@@ -103,7 +103,7 @@ const REAL_WORK = /\bawait\b|\bapiRequest\b|\bfetch\(|\bmutate|\bpersist|\bsaveT
  * elsewhere — `ask(buildPrompt())` — is not matched. Narrow and trusted beats
  * broad and ignored; a gate that cries wolf is one nobody reads.
  */
-const ASKS = /\b(?:on)?[Aa]sk\(\s*(?:'|"|`)/;
+const ASKS = /\b(?:on)?[Aa]sk(?:\?\.)?\(\s*(?:'|"|`)/;
 
 function sourceFiles() {
   return execSync("git ls-files 'client/src/**/*.tsx'", {
@@ -186,8 +186,12 @@ function scan(file, raw) {
   const ATTR = /title=["']([^"']{2,80})["'][^>]{0,200}?onClick=\{([^}]{1,80})\}/g;
   while ((m = ATTR.exec(code)) !== null) if (bound(m[2])) report(m.index, m[1]);
 
-  // `<button onClick={handler}>Attach to dossier</button>` — text child.
-  const CHILD = /onClick=\{([^}]{1,80})\}[^>]*>\s*([A-Za-z][^<>{}]{1,60}?)\s*</g;
+  // `<button onClick={handler}>Attach to dossier</button>` — text child, with
+  // an OPTIONAL leading icon expression: `>{I.download} Export<`. The icon
+  // `{I.download}` is exactly the tell here — it is the affordance of a real
+  // download button worn by an ask-only handler — so the matcher must step over
+  // it to read the label, not stop at the `{`.
+  const CHILD = /onClick=\{([^}]{1,120})\}[^>]*>\s*(?:\{[^{}]*\}\s*)?([A-Za-z][^<>{}]{1,60}?)\s*</g;
   while ((m = CHILD.exec(code)) !== null) if (bound(m[1])) report(m.index, m[2]);
 
   return out;
