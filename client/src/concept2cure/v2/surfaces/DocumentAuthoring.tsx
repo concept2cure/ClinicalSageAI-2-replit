@@ -205,6 +205,8 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
   tracked_change_decision: 'tracked change decided',
   tracked_change_bulk_decision: 'tracked changes decided in bulk',
   REORDER_SECTIONS: 'sections reordered',
+  RENAME: 'renamed',
+  TRACK_CHANGES: 'track changes toggled',
   FREEZE: 'frozen',
   SIGN: 'signed',
   E_SIGN: 'e-signed',
@@ -276,6 +278,26 @@ export function describeAuditMetadata(
       (sample.length > 0 ? ` — including ${sample.join(', ')}` : '') +
       (omitted > 0 ? ` (${omitted} more not summarised on this row)` : '')
     );
+  }
+
+  if (metadata.source === 'section-metadata') {
+    /* A rename or a track-changes toggle. Renders what moved, from and to, so
+       the row is resolvable without opening the section — the same standard the
+       tracked-change rows above hold. */
+    const changes = Array.isArray(metadata.changes) ? metadata.changes : [];
+    const parts = changes
+      .map((c) => {
+        const ch = (c ?? {}) as Record<string, unknown>;
+        const field = typeof ch.field === 'string' ? ch.field : null;
+        const from = ch.from == null ? '—' : String(ch.from);
+        const to = ch.to == null ? '—' : String(ch.to);
+        if (field === 'title') return `title “${from}” → “${to}”`;
+        if (field === 'code') return `code ${from} → ${to}`;
+        if (field === 'track_changes') return `track changes turned ${ch.to ? 'on' : 'off'}`;
+        return null;
+      })
+      .filter((p): p is string => !!p);
+    return parts.length ? parts.join('; ') : null;
   }
 
   if (metadata.source === 'ai-draft-accept') {
