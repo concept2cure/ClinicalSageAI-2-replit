@@ -254,6 +254,7 @@ const UUID_TENANT_EXEMPT = ['federated_ml.federation_participants', 'audit.event
     ['concept2cure_submission_snapshots', 'updated_at'],// compute/exportGovernance.ts
     ['knowledge_graph_nodes', 'organization_id'],       // routes/graphrag.ts
     ['knowledge_graph_edges', 'organization_id'],       // routes/graphrag.ts
+    ['file_uploads', 'checksum_sha256'],                // ana/uploaded-file-access.ts, chat/upload.ts
   ];
   const { rows } = await client.query(
     `SELECT p.tbl || '.' || p.col AS missing
