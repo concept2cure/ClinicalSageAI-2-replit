@@ -21,6 +21,7 @@
 
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { addBookmarks, type OutlineNode } from './pdf-bookmark-generator';
+import { inlineMarksToText } from '../../export/inline-marks-to-text.js';
 
 const PAGE_WIDTH = 612; // US Letter, points
 const PAGE_HEIGHT = 792;
@@ -210,7 +211,11 @@ export function toWinAnsiSafe(input: string): string {
  * which renders stored document HTML directly.
  */
 export function htmlToPlainText(input: string): string {
-  return input
+  /* Inline semantic marks first: `<sup>` and the editor's tracked-change
+     marks must become text BEFORE the generic strip below removes them and
+     inserts nothing. Shared with masterDocumentBuilder — the two pipelines
+     had already drifted apart on the identical table-cell defect once. */
+  return inlineMarksToText(input)
     .replace(/<\s*\/\s*(?:td|th)\s*>\s*<\s*(?:td|th)\b[^>]*>/gi, ' | ')
     .replace(/<\s*(br|\/p|\/div|\/li|\/h[1-6]|\/tr)\s*>/gi, '\n')
     .replace(/<\s*(p|div|li|h[1-6]|tr)\b[^>]*>/gi, '\n')
