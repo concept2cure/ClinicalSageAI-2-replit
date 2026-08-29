@@ -118,8 +118,28 @@ for (const rel of SEARCH_DIRS.flatMap((d) => walk(d))) {
   if (hits.length) found.set(rel, hits.length);
 }
 
+// A baselined file is only acceptable while it ALSO guarantees the flags are
+// cleared before the connection goes back to the pool. Freezing the count alone
+// would let the seventeen sit there forever; this ties the allowance to the fix.
+const RELEASE_GUARD = 'releaseWithoutBypass';
 const violations = [];
 for (const [file, count] of found) {
+  if (BASELINE.has(file)) {
+    const text = fs.readFileSync(path.join(repoRoot, file), 'utf8');
+    if (!text.includes(RELEASE_GUARD)) {
+      violations.push(
+        `${file}: sets the bypass but never calls ${RELEASE_GUARD}() — the connection ` +
+          `returns to the pool still carrying it`,
+      );
+    }
+    const bare = (text.match(/(?<!await\s)\bclient\.release\(\)/g) || []).length;
+    if (bare) {
+      violations.push(
+        `${file}: ${bare} bare client.release() — use await ${RELEASE_GUARD}(client) so the ` +
+          `privilege GUCs cannot outlive the borrower`,
+      );
+    }
+  }
   const allowed = BASELINE.get(file) ?? 0;
   if (count > allowed) {
     violations.push(
@@ -159,5 +179,6 @@ if (violations.length) {
 const total = [...found.values()].reduce((a, b) => a + b, 0);
 console.log(
   `${TAG} OK — no new session-scoped RLS bypass. ${total} baselined occurrence(s) remain in ` +
-    `${found.size} unmounted innovation service(s); the baseline may only shrink.`,
+    `${found.size} unmounted innovation service(s), every one of them releasing through ` +
+    `${RELEASE_GUARD}(); the baseline may only shrink.`,
 );
