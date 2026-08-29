@@ -133,3 +133,47 @@ export function plainTextToHtml(text: string): string {
     .map((p) => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`)
     .join('');
 }
+
+/**
+ * How many of the clipboard's words the parse kept.
+ *
+ * The gate above protects STORED content from a lossy parse. Paste is the other
+ * door into this editor, and it is the busier one: a medical writer drafts in
+ * Word, or lifts pages out of a previous CSR, and pastes. Whatever the schema
+ * cannot represent is dropped at that instant, and the gate never sees it —
+ * by the time the section is stored, the stored string and the parse agree with
+ * each other perfectly, because the loss happened before either existed.
+ *
+ * The comparison is deliberately the same one the gate makes: the WORDS the
+ * clipboard carried against the words that survived. It is a count, not a diff,
+ * so it can say that something was dropped and not what — which is why the
+ * notice it drives asks the writer to check their source rather than claiming
+ * to know what went missing.
+ *
+ * `lost` is only reported above a one-word margin. The two counts come from
+ * different tokenisers (a DOM text walk, and ProseMirror's slice text), and a
+ * one-word disagreement across several pages is their noise floor rather than a
+ * writer's missing sentence. Reporting it would put a warning on every ordinary
+ * paste, and a warning that cries wolf on every paste is one nobody reads.
+ */
+export interface PasteFidelity {
+  /** Words the clipboard HTML carried. 0 when the paste was not rich HTML. */
+  expected: number;
+  /** Words the parse kept. */
+  kept: number;
+  /** Words dropped, above the noise floor. 0 when nothing meaningful was lost. */
+  lost: number;
+}
+
+const wordCount = (text: string): number =>
+  normalizeForCompare(text).split(' ').filter(Boolean).length;
+
+export function assessPasteFidelity(clipboardHtml: string, keptText: string): PasteFidelity {
+  // Plain text has no structure to lose; comparing it would report its own
+  // tokenisation noise on every ordinary paste.
+  if (!looksLikeHtml(clipboardHtml)) return { expected: 0, kept: 0, lost: 0 };
+  const expected = wordCount(htmlVisibleText(clipboardHtml));
+  const kept = wordCount(keptText);
+  const diff = expected - kept;
+  return { expected, kept, lost: diff > 1 ? diff : 0 };
+}
