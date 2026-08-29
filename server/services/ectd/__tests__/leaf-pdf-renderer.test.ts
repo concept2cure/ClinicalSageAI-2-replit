@@ -72,6 +72,80 @@ describe('htmlToPlainText', () => {
  *                     en dashes, curly quotes and daggers with '?' even though
  *                     pdf-lib's WinAnsi encoder draws all of them.
  */
+describe('htmlToPlainText — a superscript is not silently dropped', () => {
+  /* The same failure as the table cells above — the tag is removed and nothing
+     is inserted — but the result is not merely run together, it is a DIFFERENT
+     VALUE that looks entirely normal. Nothing on the rendered page suggests
+     anything was lost, which is what makes it the worst kind of export defect:
+     plausible, confident and wrong. */
+  it('keeps the magnitude: 10^6, not 106', () => {
+    expect(htmlToPlainText('<p>Bioburden was 10<sup>6</sup> CFU/mL.</p>')).toBe(
+      'Bioburden was 10^6 CFU/mL.',
+    );
+  });
+
+  it('keeps an exponent in a unit', () => {
+    expect(htmlToPlainText('<p>Surface area 12 cm<sup>2</sup>.</p>')).toBe(
+      'Surface area 12 cm^2.',
+    );
+  });
+
+  it('leaves subscript inline, which is the conventional written form', () => {
+    /* The asymmetry is deliberate and is the reason this case is pinned:
+       dropping a superscript changes a magnitude, dropping a subscript does
+       not. `CO2` reads correctly; `CO_2` would be the unusual rendering. */
+    expect(htmlToPlainText('<p>Dissolved CO<sub>2</sub> was measured.</p>')).toBe(
+      'Dissolved CO2 was measured.',
+    );
+  });
+});
+
+describe('htmlToPlainText — an unresolved change is not settled for the author', () => {
+  /* Stripping ins/del silently ACCEPTED every pending suggestion. The DOCX
+     branch states the rule this restores: "an unresolved suggestion is part of
+     the record's human-readable form and silently settling it either way at
+     export time would fabricate a decision nobody made." */
+  it('does not fuse a proposed replacement into one garbled value', () => {
+    // Was "Administer 100 mg200 mg daily."
+    expect(
+      htmlToPlainText('<p>Administer <del>100 mg</del><ins>200 mg</ins> daily.</p>'),
+    ).toBe('Administer [-100 mg-][+200 mg+] daily.');
+  });
+
+  it('does not accept a proposed DELETION into the filed leaf', () => {
+    /* The most dangerous of the four: not garbled, just quietly wrong. The
+       leaf stated "Dose 100 mg daily." as settled fact while a reviewer had
+       proposed removing that dose. */
+    const out = htmlToPlainText('<p>Dose <del>100 mg</del> daily.</p>');
+    expect(out).toBe('Dose [-100 mg-] daily.');
+    expect(out, 'a pending deletion was rendered as settled text').not.toBe(
+      'Dose 100 mg daily.',
+    );
+  });
+
+  it('does not accept a proposed INSERTION either', () => {
+    expect(htmlToPlainText('<p>Dose <ins>200 mg</ins> daily.</p>')).toBe(
+      'Dose [+200 mg+] daily.',
+    );
+  });
+
+  it('handles the attributed marks the editor actually writes', () => {
+    /* The editor's suggestion marks carry data-author-name and data-at, so a
+       pattern that only matched a bare <ins> would miss every real one. */
+    expect(
+      htmlToPlainText(
+        '<p>x <del data-author-name="QA" data-at="2026-01-01T00:00:00Z">a</del>' +
+          '<ins data-author-name="QA">b</ins> y</p>',
+      ),
+    ).toBe('x [-a-][+b+] y');
+  });
+
+  it('leaves settled prose completely alone', () => {
+    // The working path: no marks, no brackets, no change.
+    expect(htmlToPlainText('<p>Administer 200 mg daily.</p>')).toBe('Administer 200 mg daily.');
+  });
+});
+
 describe('toWinAnsiSafe — submission text fidelity', () => {
   it('transliterates Greek letters instead of deleting them', () => {
     expect(toWinAnsiSafe('Spearman ρ = 0.42')).toBe('Spearman rho = 0.42');
@@ -138,6 +212,19 @@ describe('renderLeafPdf — the retained characters are drawable', () => {
       '<p>Range 10–20 mg — “primary” and ‘secondary’ • … † ‡ ™ €</p>' +
         '<p>χ² = 4.21, Spearman ρ = 0.42, Δ -2.4, 10⁶ CFU/mL, CO₂, 45 µg/mL ± 1.1</p>',
       { title: 'Statistics', sectionCode: 'm5.3.5.3' },
+    );
+    const doc = await PDFDocument.load(pdf);
+    expect(doc.getPageCount()).toBeGreaterThanOrEqual(1);
+  });
+
+  it('draws the redline brackets and the caret this renderer now emits', async () => {
+    /* Held to this file's own standard: a character htmlToPlainText emits is
+       only safe if pdf-lib's WinAnsi encoder can actually draw it, or the whole
+       submission export throws. `^ [ ] + -` are ASCII and encode, and that is
+       asserted rather than assumed — a string test alone cannot prove it. */
+    const pdf = await renderLeafPdf(
+      '<p>Administer <del>100 mg</del><ins>200 mg</ins> daily; 10<sup>6</sup> CFU/mL.</p>',
+      { title: 'Redline', sectionCode: 'm5.3.5.3' },
     );
     const doc = await PDFDocument.load(pdf);
     expect(doc.getPageCount()).toBeGreaterThanOrEqual(1);
