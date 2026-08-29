@@ -412,9 +412,8 @@ export const uploadHandler = async (req: Request, res: Response) => {
         // handler now refuses byte-less uploads outright, so this is
         // unconditional.
         const checksum = sha256Bytes(fileBuffer);
-        const { createSource, findSourceByChecksum } = await import(
-          '../../services/clinical-regulatory-evidence/evidence-spine.service.js'
-        );
+        const { createSource, createSupersedingSource, findSourceByChecksum, findSupersededCandidate } =
+          await import('../../services/clinical-regulatory-evidence/evidence-spine.service.js');
 
         const existing = await findSourceByChecksum(numericOrgId, checksum, {
           sourceType: 'client_document',
@@ -471,7 +470,38 @@ export const uploadHandler = async (req: Request, res: Response) => {
               fileId,
             });
           }
-          const created = await createSource(numericOrgId, {
+          // Is this a REVISION of a document this project already holds?
+          //
+          // A new checksum means new bytes, and until now that was the end of
+          // it: the revision became an unrelated source row, and every citation
+          // of the old one went on reporting "content unchanged since cited"
+          // forever, because a source's checksum is never rewritten. Linking the
+          // two is what makes a superseded citation visible at all.
+          //
+          // The lookup is deliberately narrow and declines to decide when two
+          // documents in the project share a filename — see
+          // findSupersededCandidate. It is also best-effort: on a database
+          // without the versioning migration it throws, and "no predecessor
+          // known" is the honest fallback rather than a failed upload.
+          let supersedes: { id: number } | null = null;
+          try {
+            supersedes = await findSupersededCandidate(numericOrgId, {
+              title: fileName,
+              sourceType: 'client_document',
+              programId: scope.programId,
+              workspaceId: scope.workspaceId,
+            });
+          } catch (verErr: any) {
+            logger.warn('Source version lookup unavailable — treating upload as a new document', {
+              fileId,
+              err: verErr?.message,
+            });
+          }
+
+          // Typed against createSource's parameter so pulling the literal out of
+          // the call keeps its string-union fields (sourceType, visibilityClass,
+          // the two statuses) instead of widening them to string.
+          const sourceParams: Parameters<typeof createSource>[1] = {
             sourceType: 'client_document',
             // Project uploads are scoped to the project; an unscoped chat
             // attachment stays tenant-private rather than leaking project-wide.
@@ -502,9 +532,35 @@ export const uploadHandler = async (req: Request, res: Response) => {
               artifactId,
               ...(dossier ? { dossier } : {}),
             },
-          });
+          };
+
+          // How the link was established travels WITH the record. A reviewer
+          // asking "why does this say my source was superseded" gets the answer
+          // from the row, not from this file.
+          const created = supersedes
+            ? (await createSupersedingSource(
+                numericOrgId,
+                {
+                  ...sourceParams,
+                  provenance: {
+                    ...sourceParams.provenance,
+                    supersedes: {
+                      sourceId: supersedes.id,
+                      matchedOn: 'title+projectScope+sourceType',
+                      decidedBy: 'chat_upload ingest',
+                    },
+                  },
+                },
+                supersedes.id,
+              )).source
+            : await createSource(numericOrgId, sourceParams);
           sourceId = created.id;
-          logger.info('Upload created a canonical source identity', { fileId, sourceId });
+          logger.info(
+            supersedes
+              ? 'Upload superseded an existing source identity'
+              : 'Upload created a canonical source identity',
+            { fileId, sourceId, supersededId: supersedes?.id ?? null },
+          );
         }
       } catch (sourceErr: any) {
         logger.error('Canonical source identity not created for upload', {

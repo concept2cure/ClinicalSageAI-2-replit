@@ -69,7 +69,7 @@ export class SourceUsageError extends Error {}
  *                is claimed
  *   unresolved   the reference does not resolve to a source this caller can see
  */
-export type UsageState = 'current' | 'changed' | 'unverified' | 'unresolved';
+export type UsageState = 'current' | 'changed' | 'superseded' | 'unverified' | 'unresolved';
 
 export interface SectionSourceUsage {
   citationId: string;
@@ -128,8 +128,26 @@ function numericIds(ids: Array<number | string>): number[] {
   return out;
 }
 
-function usageState(citedChecksum: string | null, currentChecksum: string | null, resolved: boolean): UsageState {
+function usageState(
+  citedChecksum: string | null,
+  currentChecksum: string | null,
+  resolved: boolean,
+  sourceIsCurrent: boolean | null,
+): UsageState {
   if (!resolved) return 'unresolved';
+  // SUPERSEDED OUTRANKS THE CHECKSUM COMPARISON, and has to.
+  //
+  // A source's checksum is never rewritten: a revised document is ingested as a
+  // NEW row and the old row keeps its bytes and its hash forever. So the cited
+  // and current checksums still MATCH on a source that has been replaced, and
+  // this would report 'current' — "content unchanged since cited" — for exactly
+  // the citation a reviewer most needs to look at.
+  //
+  // `is_current = FALSE` is the fact that says otherwise, recorded by the ingest
+  // path when it links a successor. NULL means the column was not read, or no
+  // successor is known; neither is evidence of supersession, so both fall
+  // through rather than being treated as one.
+  if (sourceIsCurrent === false) return 'superseded';
   if (!citedChecksum || !currentChecksum) return 'unverified';
   return citedChecksum === currentChecksum ? 'current' : 'changed';
 }
@@ -252,7 +270,15 @@ export async function listSectionSources(orgId: number, sectionId: string): Prom
             src.id AS source_id, src.title, src.checksum, src.source_type,
             src.ingestion_status, src.extraction_status, src.updated_at AS source_updated_at,
             src.metadata->>'mimeType'      AS mime_type,
-            src.provenance->>'fileUploadId' AS file_upload_id
+            src.provenance->>'fileUploadId' AS file_upload_id,
+            -- is_current comes from migrations/20260829_cre_source_versioning.sql,
+            -- which is separate from the spine that creates this table. Read
+            -- through to_jsonb so a database that has the spine but not that
+            -- migration yields NULL here instead of failing the whole query:
+            -- naming the column directly would turn every Source Tracer read
+            -- into a 500 mid-deploy. NULL means "not read", which usageState
+            -- treats as no evidence of supersession rather than as false.
+            (to_jsonb(src) ->> 'is_current')::boolean AS source_is_current
        FROM authoring_citations c
        LEFT JOIN cre_evidence_sources src
               ON src.id::text = c.reference_id
@@ -620,6 +646,7 @@ function adaptUsageRow(r: Record<string, unknown>): SectionSourceUsage {
       (r.payload_sha256 as string) ?? null,
       (r.checksum as string) ?? null,
       r.source_id != null,
+      r.source_is_current == null ? null : Boolean(r.source_is_current),
     ),
     source: adaptUsageSource(r),
   };

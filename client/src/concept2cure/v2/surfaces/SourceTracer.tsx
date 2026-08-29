@@ -25,7 +25,7 @@ import '../styles/project-home-v2.css';
 
 interface StCitedSource {
   citationId: string;
-  state: 'current' | 'changed' | 'unverified' | 'unresolved';
+  state: 'current' | 'changed' | 'superseded' | 'unverified' | 'unresolved';
   citedAt: string | null;
   citationText: string | null;
   citedChecksum: string | null;
@@ -60,6 +60,16 @@ function stateLabel(s: StCitedSource): { text: string; tone: string; hint: strin
         text: 'matches the source record as stored',
         tone: 'ok',
         hint: 'The checksum recorded at cite time still matches this source record. That is a statement about the RECORD, not the document: a revised document is ingested as a NEW source, which this citation does not point at, so a revision upstream is not detected here.',
+      };
+    case 'superseded':
+      return {
+        text: 'source has been replaced since cited',
+        tone: 'warn',
+        hint:
+          'A newer version of this document was ingested after this section cited it. The ' +
+          'checksum still matches, because a source keeps its bytes and its hash forever — ' +
+          'the revision was recorded as a successor, and that is what says this citation ' +
+          'points at a superseded version.',
       };
     case 'changed':
       return {

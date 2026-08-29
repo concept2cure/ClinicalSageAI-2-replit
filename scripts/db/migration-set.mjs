@@ -1298,6 +1298,15 @@ export const C2C_MIGRATION_FILES = [
   // 20260814g's body and carries its mandatory-reason RAISE.
   'migrations/20260822_section_version_author_kind_unspecified.sql',
 
+  // ── A revised source document is linked to the one it replaces (L21) ───────
+  // checksum is written once and never updated, so a revision is ingested as a
+  // wholly NEW row with nothing pointing back at what it replaced. That made
+  // the Source Tracer's "changed since cited" branch unreachable. Additive
+  // columns only, and no backfill: nothing in the existing data says which row
+  // superseded which, and inferring it would manufacture a lineage the system
+  // never observed.
+  'migrations/20260829_cre_source_versioning.sql',
+
   // Constraint repair only: no table, no column, no data. 0001_phase13_full
   // meant to widen concept2cure_review_tasks.task_type to include
   // 'approval_task' but added a second CHECK instead of replacing phase13's
