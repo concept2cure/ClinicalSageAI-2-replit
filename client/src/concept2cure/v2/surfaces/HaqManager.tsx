@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
@@ -250,7 +250,9 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
         | null;
       if (!res.ok || json?.success !== true || !json.data?.markdown) {
         fireToast(
-          'The package was not assembled — ' + (json?.error ?? `the server refused it (HTTP ${res.status})`),
+          // `json.error` was read raw — an enum token or internal string would
+          // have reached the toast. The canonical reader filters both.
+          'The package was not assembled — ' + (serverMessage(json) ?? `the server refused it (HTTP ${res.status})`),
           'error',
         );
         return;

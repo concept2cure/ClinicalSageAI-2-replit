@@ -2134,9 +2134,10 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       error?: unknown;
     } | null;
     if (!res.ok || typeof json?.image?.url !== 'string') {
-      throw new Error(
-        typeof json?.error === 'string' ? json.error : `the image store returned HTTP ${res.status}`
-      );
+      // The envelope's error goes through the canonical reader, which drops an
+      // enum token or internal text before it reaches the thrown message a toast
+      // will show. A hand-rolled `typeof error === 'string'` skips both filters.
+      throw new Error(serverMessage(json) ?? `the image store returned HTTP ${res.status}`);
     }
     return { id: String(json.image.id), url: json.image.url };
   }, []);
@@ -2541,7 +2542,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       if (!res.ok || !json?.scan_results) {
         fireToast(
           'Couldn’t check the section — ' +
-            (typeof json?.error === 'string' ? json.error : `HTTP ${res.status}`) +
+            (serverMessage(json) ?? `HTTP ${res.status}`) +
             '. No result is shown because none was produced.',
           'error'
         );

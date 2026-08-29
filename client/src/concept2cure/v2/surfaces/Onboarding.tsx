@@ -11,6 +11,7 @@ import {
   licBundle as licBundleOf,
 } from '../fixtures/onboarding-data';
 import { getAuthHeaders, getOrgId } from '@/utils/authToken';
+import { serverMessage } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 
 /* ── Helpers ── */
@@ -493,7 +494,9 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
             enterpriseRequest = 'failed';
             const body = await res.json().catch(() => null);
             const why =
-              (body && body.error && (body.error.message || body.error)) ||
+              // Was `body.error.message || body.error` — a by-hand envelope read
+              // that carried an enum token or internal text straight to the UI.
+              serverMessage(body) ??
               (res.status === 429
                 ? 'too many requests from here in the last hour'
                 : 'the intake did not say why');
