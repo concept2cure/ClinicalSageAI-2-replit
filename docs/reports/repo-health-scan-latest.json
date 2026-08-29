@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-29T02:07:39.179Z",
+  "generatedAt": "2026-08-29T10:21:18.607Z",
   "git": {
-    "sha": "f2e07276868f10e89b7d6c2bff2c871d92591376",
+    "sha": "2c2bd7dbd33732979210d0596a2494905df5dbb5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2174,7 +2174,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 299143
+        "bytes": 302960
       },
       {
         "file": "server/statistics-service.ts",
@@ -2182,7 +2182,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 204506
+        "bytes": 211360
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2253,6 +2253,10 @@
         "bytes": 117471
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "bytes": 116804
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 116241
       },
@@ -2283,10 +2287,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 102440
       }
     ],
     "largeFilesByLines": [
@@ -2304,7 +2304,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7105
+        "lines": 7180
       },
       {
         "file": "server/statistics-service.ts",
@@ -2324,7 +2324,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 4589
+        "lines": 4716
       },
       {
         "file": "server/storage.ts",
@@ -2387,6 +2387,10 @@
         "lines": 2582
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 2526
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "lines": 2504
       },
@@ -2419,10 +2423,6 @@
         "lines": 2254
       },
       {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2231
-      },
-      {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
         "lines": 2177
       },
@@ -2435,12 +2435,12 @@
         "lines": 2151
       },
       {
-        "file": "server/services/biomarkers/biomarker-knowledge.ts",
-        "lines": 2093
+        "file": "server/routes/auth.ts",
+        "lines": 2150
       },
       {
-        "file": "server/routes/auth.ts",
-        "lines": 2083
+        "file": "server/services/biomarkers/biomarker-knowledge.ts",
+        "lines": 2093
       },
       {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",

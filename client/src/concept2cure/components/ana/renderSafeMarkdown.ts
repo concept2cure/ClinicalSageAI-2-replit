@@ -69,9 +69,16 @@ const SANITIZE_CONFIG = {
  * tracking/exfil surface); authored sections carry their figures.
  *
  * The extra tags are the editor's own serialization set: img (the figure
- * reference), figure/figcaption (legacy stored content), s/mark (strike and
- * highlight marks), ins/del (track changes), and colspan/rowspan so merged
- * table cells don't silently un-merge in the read view.
+ * reference), figure/figcaption (legacy stored content), caption (a table's
+ * own), s/mark (strike and highlight marks), ins/del (track changes), and
+ * colspan/rowspan so merged table cells don't silently un-merge in the read
+ * view.
+ *
+ * `caption` was missing, and a missing tag here DELETES CONTENT: DOMPurify
+ * strips the element and its text, so a table's caption — the label a reviewer
+ * navigates by — was absent from every read-only view of a document whose
+ * editor and whose exported DOCX and PDF all show it. Same silent-loss class
+ * as the stripped figure above, and the same fix.
  *
  * API image references are rewritten `src` → `data-authsrc` during
  * sanitization: every API route authenticates by Authorization header only,
@@ -88,6 +95,7 @@ const AUTHORING_SANITIZE_CONFIG = {
     'img',
     'figure',
     'figcaption',
+    'caption',
     's',
     'mark',
     'ins',

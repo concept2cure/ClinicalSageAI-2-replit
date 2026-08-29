@@ -117,6 +117,11 @@ describe('DocumentAuthoring — real editable canvas', () => {
 
     canvasEditor().chain().focus().selectAll().insertContent('Revised substance description.').run();
     await waitFor(() => expect(canvasText()).toBe('Revised substance description.'));
+    /* §11.10(d) reason for change — Save stays disabled without one, so these
+       tests state a reason exactly as an author now must. */
+    fireEvent.change(screen.getByTestId('change-reason'), {
+      target: { value: 'Corrected the substance description.' },
+    });
     // The header Save button enables once the dirty state propagates.
     const saveBtn = screen.getByRole('button', { name: /Save/i }) as HTMLButtonElement;
     await waitFor(() => expect(saveBtn.disabled).toBe(false));
@@ -165,6 +170,10 @@ describe('DocumentAuthoring — real editable canvas', () => {
 
     canvasEditor().chain().focus().selectAll().insertContent('My unsaved edit').run();
     await waitFor(() => expect(canvasText()).toBe('My unsaved edit'));
+    /* §11.10(d) reason for change — Save stays disabled without one. */
+    fireEvent.change(screen.getByTestId('change-reason'), {
+      target: { value: 'Reworded the opening paragraph.' },
+    });
     const saveBtn = screen.getByRole('button', { name: /Save/i }) as HTMLButtonElement;
     await waitFor(() => expect(saveBtn.disabled).toBe(false));
     fireEvent.click(saveBtn);

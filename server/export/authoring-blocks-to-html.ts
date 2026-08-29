@@ -15,7 +15,12 @@
  * escaped the whole string and printed editor HTML as literal tags in a filed
  * PDF, and the version before that passed it through.
  */
-import { MAX_LIST_DEPTH, type ContentBlock, type InlineRun } from './authoring-section-content.js';
+import {
+  MAX_LIST_DEPTH,
+  blockCaption,
+  type ContentBlock,
+  type InlineRun,
+} from './authoring-section-content.js';
 import type { ResolvedImage } from './authoring-images.js';
 import {
   crossReferenceAnchorId,
@@ -30,6 +35,10 @@ import {
   citationMarkerText,
   type CitationRegistry,
 } from '@shared/authoring/citations';
+import {
+  captionLineText,
+  type CaptionNumbering,
+} from '@shared/authoring/captions';
 
 export function escapeHtml(s: string): string {
   return String(s ?? '')
@@ -157,6 +166,40 @@ function inline(
     .join('');
 }
 
+/**
+ * One numbered caption, as this render resolved it.
+ *
+ * `line` is the whole caption — "Table 3. Summary of adverse events" — because
+ * the number and the words are one label, and `anchor` is the fragment a
+ * cross-reference to this object links to. Both are computed by the caller from
+ * the DOCUMENT's counter; neither is ever read from stored content.
+ */
+interface RenderedCaption {
+  line: string;
+  /** Null when the object has no identity, so nothing can link to it. */
+  anchor: string | null;
+}
+
+/**
+ * The caption element, in the house position for its kind.
+ *
+ * `authored` is the words as stored. It is what prints when this render was
+ * given no numbering — the caption is authored content and must appear whether
+ * or not the caller asked for ordinals, exactly as a footnote reference
+ * degrades to plain superscript when there is no collector to letter it. What
+ * never happens is a number appearing from anywhere but the counter.
+ */
+function captionHtml(
+  tag: 'caption' | 'figcaption',
+  authored: string | undefined,
+  caption: RenderedCaption | null | undefined,
+): string {
+  const text = caption ? caption.line : String(authored ?? '');
+  if (!text) return '';
+  const id = caption?.anchor ? ` id="${escapeHtml(caption.anchor)}"` : '';
+  return `<${tag}${id}>${escapeHtml(text)}</${tag}>`;
+}
+
 /** One figure as print HTML: the bytes as a data URI when they resolved, a
  *  stated placeholder when they did not. Shared by the standalone image block
  *  and the in-cell figure so the two cannot disagree.
@@ -168,6 +211,7 @@ function inline(
 function figureHtml(
   fig: { src?: string; alt?: string },
   images?: Map<string, ResolvedImage>,
+  caption?: RenderedCaption | null,
 ): string {
   const resolved = fig.src ? images?.get(fig.src) : undefined;
   if (!resolved) {
@@ -175,10 +219,13 @@ function figureHtml(
       fig.alt || fig.src || 'unresolved image reference',
     )}]</p>`;
   }
+  /* `alt` stays the author's words. It is what a screen reader announces and
+     what a text extraction reads; prefixing it with "Figure 3" would put a
+     rendering of position into the accessibility text, where it means nothing. */
   const alt = fig.alt ? ` alt="${escapeHtml(fig.alt)}"` : '';
   return (
     `<figure><img src="data:${resolved.mimeType};base64,${resolved.buffer.toString('base64')}"${alt}>` +
-    (fig.alt ? `<figcaption>${escapeHtml(fig.alt)}</figcaption>` : '') +
+    captionHtml('figcaption', fig.alt, caption) +
     `</figure>`
   );
 }
@@ -189,6 +236,7 @@ function tableHtml(
   crossRefs?: CrossReferenceLookup | null,
   citations?: CitationRegistry | null,
   images?: Map<string, ResolvedImage>,
+  caption?: RenderedCaption | null,
 ): string {
   const rows = (b.rows ?? [])
     .map(
@@ -207,8 +255,7 @@ function tableHtml(
           .join('')}</tr>`
     )
     .join('');
-  const caption = b.caption ? `<caption>${escapeHtml(b.caption)}</caption>` : '';
-  return `<table>${caption}${rows}</table>`;
+  return `<table>${captionHtml('caption', b.caption, caption)}${rows}</table>`;
 }
 
 export interface HtmlRenderOptions {
@@ -232,6 +279,20 @@ export interface HtmlRenderOptions {
    * Absent, citations render as unresolved rather than as a guessed number.
    */
   citations?: CitationRegistry | null;
+  /**
+   * Numbers the captioned tables and figures, for the whole DOCUMENT.
+   *
+   * One counter across every section, for the same reason the citation registry
+   * is one per document: a submission's tables run 1..n from front to back, and
+   * a renderer that started its own would open every section with "Table 1".
+   * Tables and figures are counted separately — a document has a Table 1 AND a
+   * Figure 1.
+   *
+   * Absent, a caption prints its authored words with no ordinal. The words are
+   * the author's and appear either way; the number is only ever the caller's
+   * counter, never a guess made here.
+   */
+  captions?: CaptionNumbering | null;
 }
 
 /**
@@ -254,7 +315,23 @@ export function blocksToHtml(
   const parts: string[] = [];
   const crossRefs = opts.crossRefs ?? null;
   const citations = opts.citations ?? null;
+  const captions = opts.captions ?? null;
   const fn = makeFootnoteCollector();
+
+  /* The block's caption, numbered from the document's counter. `blockCaption`
+     is the SAME predicate the directory pass used to build the cross-reference
+     targets, so the ordinal a caption prints and the ordinal a reference to it
+     prints are the same ordinal by construction. */
+  const captionOf = (b: ContentBlock): RenderedCaption | null => {
+    if (!captions) return null;
+    const object = blockCaption(b);
+    if (!object) return null;
+    const ordinal = captions.next(object.kind);
+    return {
+      line: captionLineText(object.kind, ordinal, object.caption),
+      anchor: object.id ? crossReferenceAnchorId(String(object.id)) : null,
+    };
+  };
   /** The open list ancestry, innermost last. */
   const stack: ('ol' | 'ul')[] = [];
   /** True when the innermost list has an `<li>` not yet closed. A nested list
@@ -302,8 +379,8 @@ export function blocksToHtml(
       continue;
     }
     closeLists();
-    if (b.kind === 'table') parts.push(tableHtml(b, fn, crossRefs, citations, images));
-    else if (b.kind === 'image') parts.push(figureHtml(b, images));
+    if (b.kind === 'table') parts.push(tableHtml(b, fn, crossRefs, citations, images, captionOf(b)));
+    else if (b.kind === 'image') parts.push(figureHtml(b, images, captionOf(b)));
     else if (b.kind === 'heading') {
       /* Every heading used to render as <h3>, whatever its level: the document's
          entire hierarchy collapsed to one rank in the HTML and PDF paths. Offset
@@ -385,6 +462,10 @@ export const PRINT_STYLES = `
   th { background: #f2f4f5; font-weight: bold; }
   tr { page-break-inside: avoid; }
   caption { caption-side: bottom; font-style: italic; font-size: 10pt; padding-top: 4px; }
+  /* A caption is the object's label, so it is a jump target: a resolved
+     cross-reference links straight to it. Kept off-italic nothing — the number
+     is part of the same sentence and reads as one label. */
+  caption[id], figcaption[id] { scroll-margin-top: 1em; }
   figure { margin: 0.8em 0; text-align: center; page-break-inside: avoid; }
   figure img { max-width: 100%; height: auto; }
   figcaption { font-style: italic; font-size: 10pt; padding-top: 4px; }

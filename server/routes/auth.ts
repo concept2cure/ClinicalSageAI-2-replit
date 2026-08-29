@@ -1718,6 +1718,20 @@ async function handleForgotPassword(req: Request, res: Response) {
       .limit(1);
 
     if (!user.length) {
+      /* Audited even though no account matched. §11.10(e) wants the ATTEMPT —
+         a burst of reset requests against addresses that do not exist is the
+         signal an investigator is looking for, and it is exactly the record
+         that does not exist if only successes are logged. The RESPONSE is
+         unchanged, so this leaks nothing: enumeration protection is a property
+         of what we return, not of what we record. */
+      await auditAuthEvent({
+        action: 'user_password_reset_requested',
+        email: String(email).toLowerCase(),
+        outcome: 'failure',
+        reason: 'no account for this address',
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+      });
       // Don't reveal whether the email exists
       return res.json(successResponse);
     }
@@ -1739,6 +1753,20 @@ async function handleForgotPassword(req: Request, res: Response) {
     // Build the reset URL (frontend route)
     const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
     const resetUrl = `${baseUrl}/concept2cure/password-reset?token=${resetToken}`;
+
+    /* The reset email states "This request is logged per FDA 21 CFR Part
+       11.10(e)". Until this call existed that sentence was false — the flow
+       wrote no audit row of any kind, only a logger line on failure. The claim
+       is the right one to make about a credential-changing event, so it is made
+       true here rather than deleted from the email. */
+    await auditAuthEvent({
+      action: 'user_password_reset_requested',
+      userId: user[0].id,
+      email: user[0].email,
+      outcome: 'success',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+    });
 
     // Send the email (or log in dev)
     await sendPasswordResetEmail(user[0].email, resetToken, resetUrl);
@@ -1799,6 +1827,18 @@ async function handleResetPassword(req: Request, res: Response) {
       .limit(1);
 
     if (!user.length) {
+      /* A presented token that matches nothing. Recorded because repeated
+         attempts are how a stolen or guessed reset link shows up, and nothing
+         else in this flow would preserve that. No email is known here — the
+         token is all the caller supplied — so the row is attributed to the
+         token attempt rather than to a user we cannot identify. */
+      await auditAuthEvent({
+        action: 'user_password_reset_failed',
+        outcome: 'failure',
+        reason: 'reset token matched no account',
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+      });
       return res.status(400).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Invalid or expired reset token' },
@@ -1815,6 +1855,14 @@ async function handleResetPassword(req: Request, res: Response) {
         .set({ resetToken: null, resetTokenExpiresAt: null })
         .where(eq(users.id, userData.id));
 
+      await auditAuthEvent({
+        action: 'user_password_reset_failed',
+        userId: userData.id,
+        outcome: 'failure',
+        reason: 'reset token had expired',
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+      });
       return res.status(400).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Reset token has expired. Please request a new one.' },
@@ -1834,6 +1882,25 @@ async function handleResetPassword(req: Request, res: Response) {
         mustChangePassword: false,
       })
       .where(eq(users.id, userData.id));
+
+    /* THE CREDENTIAL CHANGE ITSELF. This was a `logger.info` and nothing more
+       — a line in an application log, which is not an audit trail: not
+       tamper-evident, not retained to record-retention rules, and not
+       queryable as one. §11.10(e) wants an independent, tamper-evident trail
+       for exactly this event, and this helper's own docstring names
+       "credential-changing event" as a case it exists to cover. It was simply
+       never called here.
+
+       The logger line stays: operators read logs, inspectors read audit
+       trails, and they are not substitutes for one another. */
+    await auditAuthEvent({
+      action: 'user_password_changed',
+      userId: userData.id,
+      outcome: 'success',
+      reason: 'password reset via emailed token',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+    });
 
     logger.info('Password reset completed', { userId: userData.id });
 

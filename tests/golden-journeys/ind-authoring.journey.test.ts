@@ -249,6 +249,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
   let docId: string;
   let sectionId: string;
   let firstRevisionId: string;
+  let commentId: string;
   let freezeHash: string;
 
   it('runs the authoring spine', async () => {
@@ -322,6 +323,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
         request(app).post(`/api/authoring/sections/${sectionId}/comment`),
       ).send({ doc_id: docId, body: 'Confirm the effect size against the SAP before freeze.' });
       expect(c.status).toBe(201);
+      commentId = c.body.comment.id;
       const cite = await asUser(AUTHOR)(
         request(app).post(`/api/authoring/sections/${sectionId}/cite`),
       ).send({
@@ -383,6 +385,20 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       ).send({ pin: AUTHOR_PIN });
       expect(res.status).toBe(200);
       return { pinCreated: true, identitySource: 'verified JWT (getActorEmail)' };
+    });
+
+    // ── 7b. Settle before the seal ───────────────────────────────────────────
+    // Freeze refuses to silently seal a document that is still asking questions:
+    // the reviewer's open comment must be resolved (or the freeze explicitly
+    // acknowledge it) before the content is hashed and signed. A pre-signature
+    // filing freeze is the clean-seal case, so the journey resolves the open
+    // review comment here rather than acknowledging an unfinished document.
+    await R.step('resolve-review-comment-before-seal', async () => {
+      const res = await asUser(AUTHOR)(
+        request(app).patch(`/api/authoring/comments/${commentId}`),
+      ).send({ status: 'resolved', resolution_note: 'Effect size confirmed against the SAP.' });
+      expect(res.status).toBe(200);
+      return { commentResolved: true, commentId };
     });
 
     // ── 8. Freeze — immutable snapshot with content hash ─────────────────────

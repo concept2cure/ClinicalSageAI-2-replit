@@ -169,6 +169,13 @@ async function renderDirty() {
   await waitFor(() => expect(canvasText()).toBe('The drug substance is a monoclonal antibody.'));
   canvasEditor().chain().focus().selectAll().insertContent('Half-written sentence that').run();
   await waitFor(() => expect(canvasText()).toBe('Half-written sentence that'));
+  /* §11.10(d) reason for change. Save stays disabled until it is given, so the
+     surface cannot move a governed record without one — stated here exactly as
+     an author now must, since this helper's job is to reach a SAVEABLE dirty
+     state, not to test the reason gate (which has its own suite). */
+  fireEvent.change(screen.getByTestId('change-reason'), {
+    target: { value: 'Continuing the drug-substance description.' },
+  });
   await waitFor(() => expect(headerSave().disabled).toBe(false));
 }
 

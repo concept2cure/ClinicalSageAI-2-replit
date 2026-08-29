@@ -149,6 +149,73 @@ jobs:
         # only when somebody remembered to run it by hand.
         run: npm run ci:internals-in-copy
 
+      - name: No clearance copy chosen by an empty collection
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # The same omission as the step above, one gate over. This one exists to
+        # make BIOPHARMA_WORK_ORDER.md's standing checklist item — "no AI
+        # narrative asserts readiness or absence of blockers over an empty state"
+        # — executable rather than checked by a human reading screens. It
+        # self-tests against the recovered pre-fix sources of NdaCockpit and
+        # BiopharmaSpecialty, carries a baseline that may only shrink, and until
+        # now ran nowhere. It caught real defects during the honest-state sweep
+        # only because someone ran it by hand.
+        run: npm run ci:empty-state-honesty
+
+      - name: No control promising an action it only asks about
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # Twice, months apart and in unrelated code, a control named a governed
+        # act and its handler only sent a sentence to the chat pane: an "Attach
+        # to dossier" button that attached nothing, and a "Cite" button that
+        # created no citation. Both were caught by a human reading screens. The
+        # self-test runs against those two recovered pre-fix sources, so the gate
+        # is proven on the code that actually shipped the defect.
+        run: npm run ci:action-overclaim
+
+      - name: No hand-rolled error-envelope reads
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # A surface that reads `json.error` / `typeof error === 'string'` by hand
+        # skips the two filters serverMessage applies — isErrorCode and
+        # looksInternal — so an enum token or an internal string reaches the UI.
+        # The gate existed with a baseline and ran nowhere; four fresh drift
+        # sites had already landed (DocumentAuthoring x2, HaqManager, Onboarding),
+        # each now routed through the canonical reader. Baseline 0.
+        run: npm run ci:error-envelope
+
+      - name: Filing-catalog copy stays canonical
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # Passes clean today and was running nowhere; wiring it stops the next
+        # drift silently.
+        run: npm run check:catalog-copy
+
+      - name: Gates that existed but ran nowhere
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # An audit of what CI actually executes found 88 gate files, 67 of them
+        # wired and 21 not. These twelve pass today and are enforced from here;
+        # several are load-bearing rather than cosmetic — session-scoped RLS
+        # bypass, ORM table reachability, governed export routes, and the
+        # ungated-fixture-fallback rule CLAUDE.md states as "no fixture data in
+        # governed paths".
+        #
+        # Three of the remaining unrun gates FAIL today and are deliberately not
+        # wired here, because wiring a failing gate breaks the build for
+        # everyone: ci:error-envelope, ci:insert-columns-declared and
+        # ci:tenant-resolvers. Each needs its violations resolved first, and
+        # ci:tenant-resolvers in particular reports a real tenant-isolation
+        # divergence that needs a decision, not a quick fix.
+        run: |
+          npm run ci:canonicalizers
+          npm run ci:commonjs-require
+          npm run ci:governed-export-consequence-shape
+          npm run ci:governed-export-routes
+          npm run ci:migration-set-order
+          npm run ci:model-migration-agreement
+          npm run ci:node-runtime
+          npm run ci:orm-reachability
+          npm run ci:reasoning-tier-ga-readiness
+          npm run ci:reasoning-tier-uat-evidence
+          npm run ci:session-scoped-rls-bypass
+          npm run ci:fixture-fallback
+
       - name: Verify tests for changed code
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: bash scripts/ai/verify-tests.sh
