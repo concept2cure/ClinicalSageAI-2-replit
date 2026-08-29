@@ -35,7 +35,7 @@ jobs:
           node-version: '22'
 
       - name: Guardrails — Node 22 runtime contracts
-        if: "!cancelled() && steps.install.conclusion == 'success'"
+        if: '!cancelled()'
         run: node scripts/ci/check-node-runtime.mjs
 
       # The guard's own detection logic is code that can regress; the self-test
@@ -43,7 +43,7 @@ jobs:
       # refuses to run against an already-dirty baseline, so it cannot pass
       # vacuously).
       - name: Guardrails — Node 22 guard rejects simulated drift
-        if: "!cancelled() && steps.install.conclusion == 'success'"
+        if: '!cancelled()'
         run: node scripts/ci/check-node-runtime.mjs --self-test
 
       - name: Install dependencies
