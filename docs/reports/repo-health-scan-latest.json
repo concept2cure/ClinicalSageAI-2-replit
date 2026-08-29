@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-29T10:48:10.966Z",
+  "generatedAt": "2026-08-29T11:26:15.791Z",
   "git": {
-    "sha": "02332cd24634675c905673f9182575a53e9844fc",
+    "sha": "74641984bc4088a77d1639e9ee6c8ba82b983e76",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2253,12 +2253,12 @@
         "bytes": 117471
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
-        "bytes": 116241
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "bytes": 116496
       },
       {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 115752
+        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+        "bytes": 116241
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2388,7 +2388,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2519
+        "lines": 2532
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
