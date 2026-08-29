@@ -65,8 +65,17 @@ BEGIN
       FROM pg_policy p
       JOIN pg_class c     ON c.oid = p.polrelid
       JOIN pg_namespace n ON n.oid = c.relnamespace
-     WHERE COALESCE(pg_get_expr(p.polqual, p.polrelid), '') ~ 'current_org_id'
-       AND COALESCE(pg_get_expr(p.polqual, p.polrelid), '') !~ 'app\.rls_enforce'
+     -- BOTH expressions, not just USING. An INSERT policy (polcmd='a') has a
+     -- WITH CHECK and NO qual at all, so a filter that reads only polqual skips
+     -- it entirely — which is how cortex.learning_experiences::learning_exp_write
+     -- survived the first pass of this migration and was caught only by
+     -- provisioning a blank database and running deploy-smoke-assert against it.
+     -- A fail-open WITH CHECK is the worse half of the pair: it lets an
+     -- unscoped caller INSERT rows under ANY tenant's org_id.
+     WHERE (COALESCE(pg_get_expr(p.polqual, p.polrelid), '') || ' ' ||
+            COALESCE(pg_get_expr(p.polwithcheck, p.polrelid), '')) ~ 'current_org_id'
+       AND (COALESCE(pg_get_expr(p.polqual, p.polrelid), '') || ' ' ||
+            COALESCE(pg_get_expr(p.polwithcheck, p.polrelid), '')) !~ 'app\.rls_enforce'
        AND n.nspname <> 'public'
   LOOP
     SELECT a.attname INTO col
