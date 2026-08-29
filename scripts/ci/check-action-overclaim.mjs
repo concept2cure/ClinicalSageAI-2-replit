@@ -208,7 +208,11 @@ if (process.argv.includes('--self-test')) {
   }
   // …and silent on the repaired sources.
   for (const f of ['client/src/concept2cure/v2/surfaces/Biostatistics.tsx',
-                   'client/src/concept2cure/v2/editor/RichSectionEditor.tsx']) {
+                   'client/src/concept2cure/v2/editor/RichSectionEditor.tsx',
+                   // RbmSurfacesA is the fixture that exercises the icon-prefix,
+                   // optional-chaining (onAsk?.) and export-verb coverage added
+                   // after those first two — its repaired form must stay silent.
+                   'client/src/concept2cure/v2/surfaces/RbmSurfacesA.tsx']) {
     const hits = scan(f, readFileSync(path.join(ROOT, f), 'utf8'));
     if (hits.length > 0) { console.error(`  ✗ ${f}: still flags ${hits.map((h) => h.label).join(', ')}`); ok = false; }
     else console.log(`  ✓ ${f}: silent on the repaired source`);
