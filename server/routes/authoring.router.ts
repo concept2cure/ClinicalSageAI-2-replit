@@ -2412,6 +2412,55 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
           { titleChanged: title !== undefined },
           client,
         );
+      } else {
+        /* A METADATA CHANGE IS STILL A CHANGE TO A GOVERNED RECORD.
+         *
+         * The audit block above fired only on a content change, so a save that
+         * renamed a section, re-coded it, or toggled its track-changes mode
+         * updated the row and left NO audit trail at all. Renaming a CTD code
+         * is not cosmetic — `commitSectionToFiling` matches a section to its
+         * filing slot BY that code — and §11.10(e) wants every change to a
+         * governed record recorded with who, when, and what moved.
+         *
+         * No revision (the revision ledger is for content, and none changed)
+         * and no reason prompt (the action names itself, exactly like the
+         * revert): the row records the field and its before/after, which is a
+         * complete answer to "what changed". It rides the same transaction, so
+         * a metadata change and its audit row commit together or neither does —
+         * and because it goes through createAuditTrail on the caller's client,
+         * it lands in the hash-chained ledger too, not only the soft table. */
+        const cur = currentSection.rows[0] ?? {};
+        const metaChanges: Array<{ field: string; from: unknown; to: unknown }> = [];
+        if (title !== undefined && String(title) !== String(cur.title ?? '')) {
+          metaChanges.push({ field: 'title', from: cur.title ?? null, to: title });
+        }
+        if (code !== undefined && String(code) !== String(cur.code ?? '')) {
+          metaChanges.push({ field: 'code', from: cur.code ?? null, to: code });
+        }
+        if (
+          track_changes !== undefined &&
+          Boolean(track_changes) !== Boolean(cur.track_changes)
+        ) {
+          metaChanges.push({
+            field: 'track_changes',
+            from: Boolean(cur.track_changes),
+            to: Boolean(track_changes),
+          });
+        }
+        if (metaChanges.length) {
+          const renamed = metaChanges.some((c) => c.field === 'title' || c.field === 'code');
+          await createAuditTrail(
+            req,
+            result.rows[0]?.doc_id,
+            sectionId,
+            renamed ? 'RENAME' : 'TRACK_CHANGES',
+            null,
+            null,
+            null,
+            { source: 'section-metadata', changes: metaChanges },
+            client,
+          );
+        }
       }
 
       await client.query('COMMIT');
@@ -3704,6 +3753,9 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
     let generator: Record<string, unknown> | null = null;
     /* Whether the caller's accepted text still IS the generated draft. */
     let draftModifiedOnAccept = false;
+    /* Whether the accepted content reached the bound filing, and when it did
+       not, why — surfaced on the response exactly as the manual save does. */
+    let governedCommit: CommitSectionResult | null = null;
     try {
       await client.query('BEGIN');
 
@@ -3750,6 +3802,36 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         sources,
       );
 
+      /* AND THE ACCEPTED DRAFT REACHES THE FILING.
+       *
+       * This call was missing, exactly as it was on the revert path, and with
+       * the same consequence: accepting an AI draft wrote the working copy
+       * (`authoring_sections`) and its lineage, and left `c2c_document_sections`
+       * — what the filing IS — holding the pre-draft content. So an author
+       * accepted a page of regulatory text, saw it in the editor, the audit
+       * trail recorded it, and the system of record still showed the old text.
+       * AI-assisted drafting is a primary use of this surface, which made this
+       * the widest instance of the working-copy/filing drift `commitSectionToFiling`
+       * exists to close.
+       *
+       * In THIS transaction, so the working copy and the filing move together
+       * or neither does — the same guarantee the manual save gives. The reason
+       * is the author's if they stated one, and otherwise NOT invented: the
+       * fact that it came from an AI draft is provenance, recorded on the
+       * revision origin and the audit metadata, not a justification for the
+       * change. */
+      governedCommit = await commitSectionToFiling({
+        client,
+        sectionId: String(sectionId),
+        content: String(acceptedContent ?? ''),
+        actorId: String(actor),
+        tenantId,
+        reason:
+          typeof req.body?.changeReason === 'string' && req.body.changeReason.trim()
+            ? req.body.changeReason
+            : undefined,
+      });
+
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
@@ -3787,17 +3869,27 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       'UPDATE',
       priorContent,
       acceptedContent,
-      typeof req.body?.changeReason === 'string' ? req.body.changeReason : 'Accepted AI draft',
+      /* THE REASON IS THE AUTHOR'S, OR NOT STATED — never "Accepted AI draft".
+         That fallback put a MECHANISM in the reason-for-change field, where it
+         read as a human's justification for the edit; it is the same pattern
+         removed from the manual save's `app.reason` default. Accepting an AI
+         draft is provenance (recorded on the revision origin 'ai-draft-accept'
+         and in the metadata below), not a reason WHY this regulatory text was
+         chosen. When the author states a reason it is used; when they do not,
+         the record says so rather than inventing one. */
+      typeof req.body?.changeReason === 'string' && req.body.changeReason.trim()
+        ? req.body.changeReason
+        : null,
       /* Which model, which provider, which prompt. All three existed at draft
          time and used to reach the browser and stop there, so "what produced
          this text?" was answerable for about as long as the tab stayed open —
          the first question an assessor asks about AI-assisted content, and the
          one piece of provenance being collected and then discarded. */
       /* draft_modified_on_accept: the accept endpoint allows the author to
-         hand-edit the draft before accepting, so "Accepted AI draft" on its
-         own could vouch for words the model never produced. True here means
-         the saved text differs from the generated candidate — the generator
-         metadata describes the draft's origin, not the final wording. */
+         hand-edit the draft before accepting, so the provenance must not vouch
+         for words the model never produced. True here means the saved text
+         differs from the generated candidate — the generator metadata
+         describes the draft's origin, not the final wording. */
       { source: 'ai-draft-accept', generator, draft_modified_on_accept: draftModifiedOnAccept },
     );
 
@@ -3806,6 +3898,16 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       section: saved.rows[0],
       attribution,
       message: `AI draft accepted — ${attribution.sourceSpans} verified source citation(s) across ${attribution.distinctSources} source(s); ${attribution.coverage}% of content quoted, the remainder recorded as author-original.`,
+      /* Whether the accepted text reached the filing — honest either way, the
+         same as the manual save. An unbound accept says it did not, rather than
+         letting the two stores drift apart in silence. */
+      ...(governedCommit
+        ? {
+            filing: governedCommit.committed
+              ? { committed: true, documentId: governedCommit.documentId, sectionKey: governedCommit.sectionKey }
+              : { committed: false, reason: governedCommit.reason },
+          }
+        : {}),
     });
   } catch (error) {
     console.error('Error accepting AI draft:', error);

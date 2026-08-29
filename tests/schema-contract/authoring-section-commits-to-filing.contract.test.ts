@@ -504,6 +504,92 @@ describe('a revert moves the filing too, not just the working copy', () => {
   }, T);
 });
 
+describe('a metadata change to a section is audited', () => {
+  /* The PATCH audit block fired only on a CONTENT change, so a save that
+     renamed a section, re-coded it, or toggled its track-changes mode updated
+     the row and left NO audit trail — a change to a governed record with no
+     record of the change, which §11.10(e) does not permit. Renaming a CTD code
+     is not cosmetic: `commitSectionToFiling` matches a section to its filing
+     slot BY that code. */
+  let metaSecId = '';
+
+  it('creates a section to rename', async () => {
+    const sec = await as(request(app).post('/api/authoring/sections')).send({
+      doc_id: authoringDocId, code: '3.2.P.5', title: 'Control of Drug Product',
+      content: '', order_index: 5,
+    });
+    expect(sec.status).toBe(201);
+    metaSecId = sec.body.section.id;
+  }, T);
+
+  it('records a RENAME, naming what moved, and creates NO content revision', async () => {
+    const before = await q<{ n: number }>(
+      `SELECT COUNT(*)::int AS n FROM doc_revisions WHERE section_id = $1`, [metaSecId],
+    );
+    const res = await as(request(app).patch(`/api/authoring/sections/${metaSecId}`))
+      .send({ title: 'Control of the Drug Product' });
+    expect(res.status).toBe(200);
+
+    const rows = await q<{ operation_type: string; change_reason: string | null; metadata: any }>(
+      `SELECT operation_type, change_reason, metadata FROM authoring_audit_trail
+        WHERE section_id = $1 AND operation_type = 'RENAME'`, [metaSecId],
+    );
+    expect(rows.length, 'a rename left no audit row').toBeGreaterThan(0);
+    const md = typeof rows[0].metadata === 'string' ? JSON.parse(rows[0].metadata) : rows[0].metadata;
+    expect(md.source).toBe('section-metadata');
+    expect(md.changes.some((c: any) => c.field === 'title' && c.to === 'Control of the Drug Product')).toBe(true);
+    /* No reason is invented for a self-describing metadata change. */
+    expect(rows[0].change_reason).toBeNull();
+
+    // A rename is not a content edit — the revision ledger did not grow.
+    const after = await q<{ n: number }>(
+      `SELECT COUNT(*)::int AS n FROM doc_revisions WHERE section_id = $1`, [metaSecId],
+    );
+    expect(after[0].n).toBe(before[0].n);
+  }, T);
+
+  it('reaches the hash-chained ledger, not only the soft table', async () => {
+    /* The metadata audit rides the transaction through createAuditTrail, so it
+       lands in `audit_logs` with a chain and a seal — the same guarantee a
+       content save now has. */
+    const rows = await q<{ action: string; sha256_chain: string; hmac_seal: string }>(
+      `SELECT action, sha256_chain, hmac_seal FROM audit_logs
+        WHERE record_id = $1 AND action = 'authoring.section.RENAME'`, [metaSecId],
+    );
+    expect(rows.length, 'the rename never reached the chain').toBeGreaterThan(0);
+    expect(rows[0].sha256_chain).toBeTruthy();
+    expect(rows[0].hmac_seal).toBeTruthy();
+  }, T);
+
+  it('records a TRACK_CHANGES toggle', async () => {
+    const res = await as(request(app).patch(`/api/authoring/sections/${metaSecId}`))
+      .send({ track_changes: true });
+    expect(res.status).toBe(200);
+    const rows = await q<{ metadata: any }>(
+      `SELECT metadata FROM authoring_audit_trail
+        WHERE section_id = $1 AND operation_type = 'TRACK_CHANGES'`, [metaSecId],
+    );
+    expect(rows.length).toBeGreaterThan(0);
+    const md = typeof rows[0].metadata === 'string' ? JSON.parse(rows[0].metadata) : rows[0].metadata;
+    expect(md.changes.some((c: any) => c.field === 'track_changes' && c.to === true)).toBe(true);
+  }, T);
+
+  it('does not audit a metadata PATCH that changes nothing', async () => {
+    /* Re-sending the current title is a no-op, and a no-op is not an event. An
+       audit trail full of "nothing changed" rows hides the changes that did. */
+    const before = await q<{ n: number }>(
+      `SELECT COUNT(*)::int AS n FROM authoring_audit_trail WHERE section_id = $1`, [metaSecId],
+    );
+    const res = await as(request(app).patch(`/api/authoring/sections/${metaSecId}`))
+      .send({ title: 'Control of the Drug Product' });
+    expect(res.status).toBe(200);
+    const after = await q<{ n: number }>(
+      `SELECT COUNT(*)::int AS n FROM authoring_audit_trail WHERE section_id = $1`, [metaSecId],
+    );
+    expect(after[0].n).toBe(before[0].n);
+  }, T);
+});
+
 describe('a freeze refuses a document that is still asking questions', () => {
   /* Freeze is the seal: after it the content is hash-sealed, signed under
      §11.50 and filed. Nothing checked whether the document was FINISHED, so a

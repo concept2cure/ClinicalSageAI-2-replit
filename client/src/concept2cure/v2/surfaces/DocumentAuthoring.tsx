@@ -205,6 +205,8 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
   tracked_change_decision: 'tracked change decided',
   tracked_change_bulk_decision: 'tracked changes decided in bulk',
   REORDER_SECTIONS: 'sections reordered',
+  RENAME: 'renamed',
+  TRACK_CHANGES: 'track changes toggled',
   FREEZE: 'frozen',
   SIGN: 'signed',
   E_SIGN: 'e-signed',
@@ -276,6 +278,26 @@ export function describeAuditMetadata(
       (sample.length > 0 ? ` — including ${sample.join(', ')}` : '') +
       (omitted > 0 ? ` (${omitted} more not summarised on this row)` : '')
     );
+  }
+
+  if (metadata.source === 'section-metadata') {
+    /* A rename or a track-changes toggle. Renders what moved, from and to, so
+       the row is resolvable without opening the section — the same standard the
+       tracked-change rows above hold. */
+    const changes = Array.isArray(metadata.changes) ? metadata.changes : [];
+    const parts = changes
+      .map((c) => {
+        const ch = (c ?? {}) as Record<string, unknown>;
+        const field = typeof ch.field === 'string' ? ch.field : null;
+        const from = ch.from == null ? '—' : String(ch.from);
+        const to = ch.to == null ? '—' : String(ch.to);
+        if (field === 'title') return `title “${from}” → “${to}”`;
+        if (field === 'code') return `code ${from} → ${to}`;
+        if (field === 'track_changes') return `track changes turned ${ch.to ? 'on' : 'off'}`;
+        return null;
+      })
+      .filter((p): p is string => !!p);
+    return parts.length ? parts.join('; ') : null;
   }
 
   if (metadata.source === 'ai-draft-accept') {
@@ -2144,9 +2166,10 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       error?: unknown;
     } | null;
     if (!res.ok || typeof json?.image?.url !== 'string') {
-      throw new Error(
-        typeof json?.error === 'string' ? json.error : `the image store returned HTTP ${res.status}`
-      );
+      // The envelope's error goes through the canonical reader, which drops an
+      // enum token or internal text before it reaches the thrown message a toast
+      // will show. A hand-rolled `typeof error === 'string'` skips both filters.
+      throw new Error(serverMessage(json) ?? `the image store returned HTTP ${res.status}`);
     }
     return { id: String(json.image.id), url: json.image.url };
   }, []);
@@ -2551,7 +2574,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       if (!res.ok || !json?.scan_results) {
         fireToast(
           'Couldn’t check the section — ' +
-            (typeof json?.error === 'string' ? json.error : `HTTP ${res.status}`) +
+            (serverMessage(json) ?? `HTTP ${res.status}`) +
             '. No result is shown because none was produced.',
           'error'
         );

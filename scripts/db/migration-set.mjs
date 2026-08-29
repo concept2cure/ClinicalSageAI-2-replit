@@ -1651,6 +1651,15 @@ export const C2C_MIGRATION_FILES = [
   // tenant columns, which turned out to be added dynamically by
   // 20260813_knowledge_graph_tenant_keys.sql and are NOT included.
   'db/migrations/20260828_align_written_columns_with_migrations.sql',
+
+  // ── file_uploads.checksum_sha256 (GA ledger L25) ──────────────────────────
+  // Nothing recorded a digest for an uploaded document, so no stored file was
+  // verifiable after the fact — bytes altered on disk, a truncated write or a
+  // bad restore were all served as the original, and keeping file_size
+  // consistent was enough to hide it. loadUploadedFile now re-derives SHA-256
+  // over the bytes it read and REFUSES a mismatch. Existing rows stay NULL by
+  // design: hashing today's bytes would record corruption as authentic.
+  'db/migrations/20260828_file_uploads_checksum.sql',
   // Must follow the sweep above: that one keys on polqual (USING), which an
   // INSERT policy does not have, so every write-only policy slipped through
   // with its fail-open COALESCE intact. This closes them on polwithcheck.
