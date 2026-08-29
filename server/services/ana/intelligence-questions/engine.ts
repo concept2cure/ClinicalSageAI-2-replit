@@ -247,6 +247,26 @@ function resolveNextNode(
   return null;
 }
 
+/**
+ * Coerce a yes_no answer to a boolean for comparison against a boolean
+ * predicate value. yes_no answers reach the engine as a real boolean from the
+ * UI but as a string ('yes'/'no') from the AnA tool surface, and a strict
+ * `'no' === false` is always false — which silently defeats every boolean gate,
+ * including the critical GSPR-mapping conformity gate (`eq false`) and every
+ * field `visibleWhen` (`eq true`). Recognised yes/no strings map to the boolean;
+ * an unrecognised value is returned unchanged so a non-yes_no field still
+ * compares by strict identity.
+ */
+function coerceForBooleanPredicate(actual: unknown): unknown {
+  if (typeof actual === 'boolean') return actual;
+  if (typeof actual === 'string') {
+    const v = actual.trim().toLowerCase();
+    if (v === 'yes' || v === 'true' || v === 'y' || v === '1') return true;
+    if (v === 'no' || v === 'false' || v === 'n' || v === '0') return false;
+  }
+  return actual;
+}
+
 export function evaluatePredicate(
   pred: FieldPredicate,
   values: Record<string, unknown>,
@@ -255,9 +275,13 @@ export function evaluatePredicate(
 
   switch (pred.operator) {
     case 'eq':
-      return actual === pred.value;
+      return typeof pred.value === 'boolean'
+        ? coerceForBooleanPredicate(actual) === pred.value
+        : actual === pred.value;
     case 'neq':
-      return actual !== pred.value;
+      return typeof pred.value === 'boolean'
+        ? coerceForBooleanPredicate(actual) !== pred.value
+        : actual !== pred.value;
     case 'in':
       return Array.isArray(pred.value) && pred.value.includes(String(actual));
     case 'not_in':
