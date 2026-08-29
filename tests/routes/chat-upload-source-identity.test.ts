@@ -24,12 +24,16 @@ const {
   mockGetEmbeddingService,
   mockCreateSource,
   mockFindSourceByChecksum,
+  mockFindSupersededCandidate,
+  mockCreateSupersedingSource,
 } = vi.hoisted(() => ({
   mockResolveGovernedContext: vi.fn(),
   mockPoolQuery: vi.fn(),
   mockGetEmbeddingService: vi.fn(),
   mockCreateSource: vi.fn(),
   mockFindSourceByChecksum: vi.fn(),
+  mockFindSupersededCandidate: vi.fn(),
+  mockCreateSupersedingSource: vi.fn(),
 }));
 
 vi.mock('../../server/services/concept2cure/governedDocumentContractService.js', () => ({
@@ -49,6 +53,11 @@ vi.mock('../../server/services/enhancedEmbeddingService.js', () => ({
 vi.mock('../../server/services/clinical-regulatory-evidence/evidence-spine.service.js', () => ({
   createSource: mockCreateSource,
   findSourceByChecksum: mockFindSourceByChecksum,
+  // The upload handler resolves whether this document supersedes an earlier
+  // source before it creates identity; a mocked ESM module THROWS on a missing
+  // export, so both must be present even when no predecessor is found.
+  findSupersededCandidate: mockFindSupersededCandidate,
+  createSupersedingSource: mockCreateSupersedingSource,
 }));
 
 // The chat router pulls a large graph; stub what the upload path never reaches.
@@ -142,6 +151,10 @@ beforeEach(() => {
   });
   mockFindSourceByChecksum.mockResolvedValue(null);
   mockCreateSource.mockResolvedValue({ id: 4242 });
+  // No predecessor by default: the upload is a new document, so the handler
+  // takes the createSource path (createSupersedingSource stays unused).
+  mockFindSupersededCandidate.mockResolvedValue(null);
+  mockCreateSupersedingSource.mockResolvedValue({ source: { id: 4242 } });
 });
 
 describe('chat upload → canonical source identity', () => {
