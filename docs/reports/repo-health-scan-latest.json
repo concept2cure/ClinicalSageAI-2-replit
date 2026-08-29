@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-29T03:16:19.742Z",
+  "generatedAt": "2026-08-29T10:21:18.607Z",
   "git": {
-    "sha": "b013bbbda7f40e51f2703702abd06721675f043d",
+    "sha": "2c2bd7dbd33732979210d0596a2494905df5dbb5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2182,7 +2182,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 211180
+        "bytes": 211360
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2324,7 +2324,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 4715
+        "lines": 4716
       },
       {
         "file": "server/storage.ts",
