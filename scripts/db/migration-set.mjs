@@ -1631,6 +1631,17 @@ export const C2C_MIGRATION_FILES = [
   // writer's own column list. Idempotent ADD COLUMN with the model's exact
   // type, nullability and default.
   'db/migrations/20260828_artifact_versions_updated_at.sql',
+
+  // ── Five more columns the app writes that no migration creates ────────────
+  // Same class as the entry above, found by diffing a drizzle-pushed database
+  // against every column the migration files create and keeping only those a
+  // raw INSERT in server/ actually names: concept2cure_signatures and
+  // regulatory_audit_logs (created_at/updated_at — the Part 11 signature and
+  // the audit row beside it) and concept2cure_submission_snapshots.updated_at.
+  // Each confirmed by hand; the detection also flagged the knowledge-graph
+  // tenant columns, which turned out to be added dynamically by
+  // 20260813_knowledge_graph_tenant_keys.sql and are NOT included.
+  'db/migrations/20260828_align_written_columns_with_migrations.sql',
   // Must follow the sweep above: that one keys on polqual (USING), which an
   // INSERT policy does not have, so every write-only policy slipped through
   // with its fail-open COALESCE intact. This closes them on polwithcheck.
