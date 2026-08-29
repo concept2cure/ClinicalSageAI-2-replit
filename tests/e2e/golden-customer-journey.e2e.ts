@@ -17,11 +17,28 @@ async function login(page: Page, email: string, password: string) {
   // original helper clicked a 'continue' button from an imagined two-step
   // flow, which does not exist — discovered on this journey's first real
   // browser execution.
-  await page.goto('/concept2cure/login');
-  await page.locator('input[type="email"], input#email').first().fill(email);
-  await page.locator('input[type="password"], input#password').first().fill(password);
-  await page.getByRole('button', { name: /sign in/i }).click();
-  await expect(page).not.toHaveURL(/\/login/);
+  //
+  // The retry is for the production login limiter (10 attempts / 15 min per
+  // IP), which this journey shares with whatever else drove the same server.
+  // Being rate-limited is the limiter working; the journey waits for its
+  // window rather than the product relaxing a brute-force control for tests.
+  for (let attempt = 1; ; attempt++) {
+    await page.goto('/concept2cure/login');
+    await page.locator('input[type="email"], input#email').first().fill(email);
+    await page.locator('input[type="password"], input#password').first().fill(password);
+    await page.getByRole('button', { name: /sign in/i }).click();
+    try {
+      await expect(page).not.toHaveURL(/\/login/, { timeout: 15_000 });
+      return;
+    } catch (err) {
+      const limited = await page
+        .getByText(/too many login attempts/i)
+        .isVisible()
+        .catch(() => false);
+      if (!limited || attempt >= 3) throw err;
+      await page.waitForTimeout(60_000);
+    }
+  }
 }
 
 async function browserApi<T>(
@@ -70,7 +87,10 @@ async function authenticatedPage(
 test('fixture-free golden journey persists evidence, review, provenance, and governed draft export', async ({
   browser,
 }, testInfo) => {
-  test.setTimeout(120_000);
+  // Generous, not arbitrary: this drives three authenticated browser contexts
+  // through a dozen governed round-trips, and a CI runner is several times
+  // slower than a developer machine. A ceiling that only a hang can reach.
+  test.setTimeout(300_000);
   const reviewerContext = await browser.newContext();
   const reviewerPage = await authenticatedPage(
     reviewerContext,

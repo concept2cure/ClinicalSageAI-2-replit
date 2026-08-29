@@ -83,7 +83,24 @@ export function v3GoldenInput(opts: {
       ? `../../../../${priorSequence}/m1/${sub}/${section.replace(/\./g, '-')}/${fileName}`
       : undefined;
 
+  // Form FDA 356h is a DOCUMENT in the package at 1.1, not only an entry in the
+  // fda.forms list, and it must be the SAME OBJECT in both places. The packager
+  // resolves a backbone reference through a Map keyed by leaf IDENTITY
+  // (refByLeaf.get(l) in regional-packager.ts), so an equivalent-but-distinct
+  // object does not match. This fixture previously declared the form only under
+  // fda.forms, so the backbone referenced a file the packager never read, hashed
+  // or wrote — which it now refuses outright rather than emitting a ref that
+  // declares a legally-required form present while it is absent from the zip.
+  const formLeaf: EctdLeaf = {
+    ctdSection: GOLDEN_FORM.ctdSection,
+    operation: 'new',
+    sourcePath: paths.byName[GOLDEN_FORM.fileName],
+    fileName: GOLDEN_FORM.fileName,
+    title: GOLDEN_FORM.title,
+  };
+
   const leaves: EctdLeaf[] = [
+    ...(region === 'fda' ? [formLeaf] : []),
     {
       ctdSection: '1.2', operation: op('replace'), sourcePath: paths.byName['cover-letter.pdf'],
       fileName: 'cover-letter.pdf', title: 'Cover Letter',
@@ -125,13 +142,8 @@ export function v3GoldenInput(opts: {
       submissionType: 'original application',
       submissionSubType: lifecycle ? 'amendment' : 'original',
       contacts: [{ type: 'regulatory', name: 'Jane Smith', email: 'jane@example.com' }],
-      forms: [{
-        formType: '356h',
-        leaf: {
-          ctdSection: '1.1', operation: 'new', sourcePath: paths.byName['form-356h.pdf'],
-          fileName: 'form-356h.pdf', title: 'Form FDA 356h',
-        },
-      }],
+      // Same object as the one in `leaves` above — see the note there.
+      forms: [{ formType: '356h', leaf: formLeaf }],
     } : undefined,
   };
 }

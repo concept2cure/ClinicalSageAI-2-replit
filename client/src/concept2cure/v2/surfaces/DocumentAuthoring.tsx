@@ -531,9 +531,13 @@ function sourceStateLabel(s: SectionSource): {
   switch (s.state) {
     case 'current':
       return {
-        text: 'Content unchanged since cited',
+        // Mirrors SourceTracer deliberately — see the note there. The old
+        // wording asserted the document was unchanged, which nothing here can
+        // establish: a revised document becomes a new source row rather than a
+        // changed checksum.
+        text: 'Matches the source record as stored',
         tone: 'ok',
-        hint: 'The checksum recorded when this section cited the source still matches the source today.',
+        hint: 'The checksum recorded at cite time still matches this source record. That is a statement about the RECORD, not the document: a revised document is ingested as a NEW source, which this citation does not point at, so a revision upstream is not detected here.',
       };
     case 'changed':
       return {

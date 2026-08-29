@@ -115,16 +115,19 @@ async function main() {
   try {
     await waitForServer(BASE_URL);
     const pw = resolvePlaywright();
-    await run(pw.cmd, [...pw.prefix, 'test', 'tests/e2e/authenticated-app-smoke.e2e.spec.ts'], {
-      env: { ...process.env, BASE_URL },
-    });
-    // The WO-06 golden journey, on the same booted server: governed evidence
-    // draft → citation gate → denied pre-review export → assignment →
-    // reviewer approval → persistence. One boot proves both surfaces; the
-    // combined login count (~5) stays inside the auth limiter's 10/15min.
-    await run(pw.cmd, [...pw.prefix, 'test', 'tests/e2e/golden-customer-journey.e2e.ts'], {
-      env: { ...process.env, BASE_URL },
-    });
+    // Which specs to drive comes from argv so the CI workflow can run each one
+    // as its OWN step. That is not cosmetic: a combined step reports only
+    // "exit code 1", and CI logs are not always retrievable, so a failure in
+    // one spec is indistinguishable from the other. Separate steps make the
+    // failing surface readable from the job's step list alone. Defaults to
+    // both specs for a one-command local run.
+    const specs = process.argv.slice(2).filter(a => !a.startsWith('-'));
+    const toRun = specs.length
+      ? specs
+      : ['tests/e2e/authenticated-app-smoke.e2e.spec.ts', 'tests/e2e/golden-customer-journey.e2e.ts'];
+    for (const spec of toRun) {
+      await run(pw.cmd, [...pw.prefix, 'test', spec], { env: { ...process.env, BASE_URL } });
+    }
   } catch (error) {
     console.error(
       '\nTier 5 smoke failed. Ensure Playwright is installed ' +
