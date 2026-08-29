@@ -153,9 +153,24 @@ export default [
         HTMLImageElement: 'readonly',
         HTMLAnchorElement: 'readonly',
         HTMLSpanElement: 'readonly',
+        HTMLOptionElement: 'readonly',
+        HTMLHeadingElement: 'readonly',
         Element: 'readonly',
         Node: 'readonly',
         NodeList: 'readonly',
+        // Standard DOM interfaces the config omitted — genuine browser globals
+        // used in type positions across client + jsdom tests (a config gap, not
+        // undefined variables). Declaring them removes false-positive no-undef.
+        DOMRect: 'readonly',
+        DOMRectList: 'readonly',
+        Range: 'readonly',
+        Text: 'readonly',
+        FileList: 'readonly',
+        ReadableStream: 'readonly',
+        Storage: 'readonly',
+        Window: 'readonly',
+        ErrorEvent: 'readonly',
+        BeforeUnloadEvent: 'readonly',
         // Web Worker globals
         worker: 'readonly',
         self: 'readonly',
