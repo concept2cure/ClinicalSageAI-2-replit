@@ -2281,6 +2281,41 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       }
     }
 
+    /* ── A SECTION'S CODE IS ITS IDENTITY IN THE FILING ──
+     *
+     * `commitSectionToFiling` matches `authoring_sections.code` to
+     * `c2c_document_sections.section_key`. So changing the code on a BOUND
+     * document does not rename anything — it silently re-points the section to
+     * a DIFFERENT filing slot (or to none), and the next content save lands
+     * there instead, orphaning the old slot's content. Nothing warned; the
+     * rename dialog offered the code as a freely editable field.
+     *
+     * Refused, fail-closed. The title renames freely — that is a label. The
+     * code is structure, and re-keying a bound section is not a rename. If a
+     * "move this section to another filing slot" operation is ever wanted, it
+     * is a deliberate feature with its own rules (is the target occupied? is it
+     * in the rule pack?), not a side effect of the rename field. An UNBOUND
+     * document has no filing linkage to break, so its codes stay editable. */
+    if (code !== undefined && String(code) !== String(currentSection.rows[0].code ?? '')) {
+      const bound = await pool.query(
+        `SELECT 1 FROM authoring_documents
+          WHERE id = $1 AND tenant_id = $2 AND c2c_document_id IS NOT NULL`,
+        [currentSection.rows[0].doc_id, tenantId],
+      );
+      if ((bound.rowCount ?? 0) > 0) {
+        return res.status(409).json({
+          success: false,
+          error: {
+            code: 'CODE_LOCKED_TO_FILING',
+            message:
+              'This section’s code is its place in the filing, so it cannot be changed here. ' +
+              'Re-coding it would break the link between this section and the filing slot it fills, ' +
+              'and its content would stop reaching the filing. The title can be renamed freely.',
+          },
+        });
+      }
+    }
+
     // Build update query dynamically
     const updates = [];
     const values = [];

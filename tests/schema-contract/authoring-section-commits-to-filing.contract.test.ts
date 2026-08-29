@@ -590,6 +590,65 @@ describe('a metadata change to a section is audited', () => {
   }, T);
 });
 
+describe('a section code is locked to the filing on a bound document', () => {
+  /* The code is the section's identity in the filing — commitSectionToFiling
+     matches it to c2c_document_sections.section_key. Re-coding a bound section
+     silently re-points it to a different slot (or none), so the next content
+     save lands elsewhere and the old slot's content is orphaned. The rename
+     dialog offered the code as a freely editable field. */
+  let boundSecId = '';
+
+  it('creates a section on the bound document', async () => {
+    const sec = await as(request(app).post('/api/authoring/sections')).send({
+      doc_id: authoringDocId, code: '3.2.S.1', title: 'General Information',
+      content: '', order_index: 6,
+    });
+    expect(sec.status).toBe(201);
+    boundSecId = sec.body.section.id;
+  }, T);
+
+  it('refuses a code change, and changes nothing', async () => {
+    const res = await as(request(app).patch(`/api/authoring/sections/${boundSecId}`))
+      .send({ code: '3.2.S.9' });
+    expect(res.status).toBe(409);
+    expect(res.body.error?.code).toBe('CODE_LOCKED_TO_FILING');
+    expect(res.body.error?.message).toMatch(/place in the filing/i);
+    // Discloses no schema object, query or route.
+    expect(JSON.stringify(res.body)).not.toMatch(/authoring_documents|c2c_document|SELECT|\/api\//i);
+    const [row] = await q<{ code: string }>(
+      `SELECT code FROM authoring_sections WHERE id = $1`, [boundSecId],
+    );
+    expect(row.code).toBe('3.2.S.1');
+  }, T);
+
+  it('allows a title-only rename — the code is present but unchanged', async () => {
+    const res = await as(request(app).patch(`/api/authoring/sections/${boundSecId}`))
+      .send({ code: '3.2.S.1', title: 'General Information (updated)' });
+    expect(res.status).toBe(200);
+    const [row] = await q<{ title: string; code: string }>(
+      `SELECT title, code FROM authoring_sections WHERE id = $1`, [boundSecId],
+    );
+    expect(row.title).toBe('General Information (updated)');
+    expect(row.code).toBe('3.2.S.1');
+  }, T);
+
+  it('allows a code change on an UNBOUND document — there is no filing to break', async () => {
+    const doc = await as(request(app).post('/api/authoring/docs')).send({
+      title: 'Unbound note', module: 'M2',
+    });
+    const sec = await as(request(app).post('/api/authoring/sections')).send({
+      doc_id: doc.body.document.id, code: '1.1', title: 'x', content: '', order_index: 1,
+    });
+    const res = await as(request(app).patch(`/api/authoring/sections/${sec.body.section.id}`))
+      .send({ code: '1.2' });
+    expect(res.status).toBe(200);
+    const [row] = await q<{ code: string }>(
+      `SELECT code FROM authoring_sections WHERE id = $1`, [sec.body.section.id],
+    );
+    expect(row.code).toBe('1.2');
+  }, T);
+});
+
 describe('a freeze refuses a document that is still asking questions', () => {
   /* Freeze is the seal: after it the content is hash-sealed, signed under
      §11.50 and filed. Nothing checked whether the document was FINISHED, so a

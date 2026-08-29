@@ -2462,19 +2462,9 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         title,
       });
       const json = await res.json().catch(() => null);
-      if (res.status === 401) {
-        fireToast('Not renamed — your session isn’t authenticated.', 'error');
-        return;
-      }
-      if (!res.ok) {
-        fireToast(
-          'Couldn’t rename the section — ' +
-            ((json as any)?.error ?? `HTTP ${res.status}`) +
-            '. Nothing was changed.',
-          'error'
-        );
-        return;
-      }
+      /* No `if (!res.ok)` branch: apiRequest THROWS on any non-2xx except 401,
+         so a refused rename lands in the catch below with the server's own
+         sentence and code, not this dead check. */
       const adopted = (json as { section?: AuthSection })?.section;
       setSections(ss =>
         ss.map(s => (s.id === activeSection.id ? { ...s, ...(adopted ?? { code, title }) } : s))
@@ -2482,8 +2472,25 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       setRenaming(false);
       fireToast(`Section renamed — ${code} · ${title}. Its content and history are unchanged.`);
     } catch (e) {
+      const err = e as Partial<ApiRequestError> & { message?: string };
+      if (err?.status === 401) {
+        fireToast('Not renamed — your session isn’t authenticated.', 'error');
+        return;
+      }
+      /* The code is locked to the filing on a bound document — the server sent
+         a complete sentence explaining why, so show it as-is rather than
+         wrapping it in a second "couldn't rename" clause. */
+      if (err?.code === 'CODE_LOCKED_TO_FILING') {
+        fireToast(
+          redactInternals(err.message, 'This section’s code cannot be changed on a filed document.'),
+          'error',
+        );
+        return;
+      }
       fireToast(
-        'Couldn’t rename the section — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'Couldn’t rename the section — ' +
+          redactInternals(err?.message, 'the server did not accept it') +
+          ' Nothing was changed.',
         'error'
       );
     } finally {
