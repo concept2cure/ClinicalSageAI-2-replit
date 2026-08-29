@@ -149,7 +149,7 @@ describe('DocumentAuthoring — the Sources rail', () => {
     mockApi({ sections: () => ok({ sources: [citation()] }) });
     await openSourcesRail();
     expect(await screen.findByText('protocol-v2.pdf')).toBeTruthy();
-    expect(screen.getByText('Content unchanged since cited')).toBeTruthy();
+    expect(screen.getByText('Matches the source record as stored')).toBeTruthy();
   });
 
   it('reports a changed source without rewriting anything', async () => {
@@ -188,7 +188,7 @@ describe('DocumentAuthoring — the Sources rail', () => {
     mockApi({ sections: () => ok({ sources: [citation({ state: 'unverified', citedChecksum: null })] }) });
     await openSourcesRail();
     expect(await screen.findByText('Not checked against content')).toBeTruthy();
-    expect(screen.queryByText('Content unchanged since cited')).toBeNull();
+    expect(screen.queryByText('Matches the source record as stored')).toBeNull();
   });
 
   it('says a source is gone instead of dropping the citation', async () => {
