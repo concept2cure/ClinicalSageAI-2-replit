@@ -91,3 +91,38 @@ export async function loadLatestPriorManifest(
     leaves: manifestToPriorLeaves(res.rows[0].leaf_manifest),
   };
 }
+
+/**
+ * Load the manifest of the MOST RECENT sequence strictly before `currentSequence`
+ * for this SUBMISSION — keyed on the stable `submission_id` (submissions.id)
+ * rather than the fragile `application_number`, which some compile paths set to a
+ * sequence-specific fallback that could never align across sequences. This is the
+ * canonical lifecycle lookup: given the submission being compiled and the sequence
+ * number about to ship, it returns the exact leaves the predecessor published.
+ * Organization-scoped; empty when there is no prior sequence.
+ */
+export async function loadLatestPriorManifestBySubmission(
+  pool: PoolLike,
+  args: { organizationId: number; submissionId: number; currentSequence: string },
+): Promise<{ priorSequenceNumber: string; leaves: PriorLeaf[] }> {
+  const { organizationId, submissionId, currentSequence } = args;
+  if (!organizationId || !submissionId || !currentSequence) {
+    return { priorSequenceNumber: '', leaves: [] };
+  }
+  const res = await pool.query(
+    `SELECT sequence_number, leaf_manifest
+       FROM ectd_compilations
+      WHERE organization_id = $1
+        AND submission_id = $2
+        AND sequence_number < $3
+        AND leaf_manifest IS NOT NULL
+      ORDER BY sequence_number DESC, compiled_at DESC NULLS LAST, id DESC
+      LIMIT 1`,
+    [organizationId, submissionId, currentSequence],
+  );
+  if (!res?.rows?.length) return { priorSequenceNumber: '', leaves: [] };
+  return {
+    priorSequenceNumber: String(res.rows[0].sequence_number ?? ''),
+    leaves: manifestToPriorLeaves(res.rows[0].leaf_manifest),
+  };
+}
