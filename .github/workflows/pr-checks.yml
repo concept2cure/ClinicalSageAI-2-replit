@@ -171,6 +171,35 @@ jobs:
         # is proven on the code that actually shipped the defect.
         run: npm run ci:action-overclaim
 
+      - name: Gates that existed but ran nowhere
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # An audit of what CI actually executes found 88 gate files, 67 of them
+        # wired and 21 not. These twelve pass today and are enforced from here;
+        # several are load-bearing rather than cosmetic — session-scoped RLS
+        # bypass, ORM table reachability, governed export routes, and the
+        # ungated-fixture-fallback rule CLAUDE.md states as "no fixture data in
+        # governed paths".
+        #
+        # Three of the remaining unrun gates FAIL today and are deliberately not
+        # wired here, because wiring a failing gate breaks the build for
+        # everyone: ci:error-envelope, ci:insert-columns-declared and
+        # ci:tenant-resolvers. Each needs its violations resolved first, and
+        # ci:tenant-resolvers in particular reports a real tenant-isolation
+        # divergence that needs a decision, not a quick fix.
+        run: |
+          npm run ci:canonicalizers
+          npm run ci:commonjs-require
+          npm run ci:governed-export-consequence-shape
+          npm run ci:governed-export-routes
+          npm run ci:migration-set-order
+          npm run ci:model-migration-agreement
+          npm run ci:node-runtime
+          npm run ci:orm-reachability
+          npm run ci:reasoning-tier-ga-readiness
+          npm run ci:reasoning-tier-uat-evidence
+          npm run ci:session-scoped-rls-bypass
+          npm run ci:fixture-fallback
+
       - name: Verify tests for changed code
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: bash scripts/ai/verify-tests.sh
