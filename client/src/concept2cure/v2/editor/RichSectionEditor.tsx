@@ -82,6 +82,7 @@ import {
   plainTextToHtml,
   htmlVisibleText,
   assessPasteFidelity,
+  editorHeldDoc,
   type StructuralSignature,
 } from './roundTrip';
 import { FindReplace, getFindState } from './findReplace';
@@ -735,12 +736,24 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       // figure/svg/video/embed/object still are not, so content holding one
       // of those is edited in source mode, where the raw string round-trips
       // byte-for-byte.
-      if (/<(figure|svg|video|embed|object|dl|dt|dd)[\s/>]/i.test(stored)) {
+      if (/<(figure|svg|video|embed|object)[\s/>]/i.test(stored)) {
         return { mode: 'source' as const, html: null, verdict: null };
       }
       try {
         const json = generateJSON(html, extensions);
-        const verdict = assessFidelity(stored, json);
+        // Compare against the doc the LIVE editor will hold, not the raw parse.
+        // generateJSON runs no plugins; the editor runs fixTables on first edit,
+        // padding a ragged table and clamping rowspan overflow into the record.
+        const held = editorHeldDoc(json, extensions);
+        const base = assessFidelity(stored, held.doc);
+        // A padded table shows as a cell-count drift; a rowspan/colspan clamp
+        // changes only an attribute and is invisible to every counter — so the
+        // rewrite boolean is ORed in, and when it is the only signal the notice
+        // names the table.
+        const verdict =
+          held.tablesRewritten && !base.lossy
+            ? { ...base, lossy: true, structuralDrift: ['tables' as const] }
+            : base;
         if (verdict.lossy) return { mode: 'source' as const, html: null, verdict };
         return { mode: 'rich' as const, html, verdict };
       } catch {

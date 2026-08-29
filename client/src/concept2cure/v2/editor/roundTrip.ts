@@ -1,4 +1,6 @@
-import type { JSONContent } from '@tiptap/core';
+import { getSchema, type JSONContent, type Extensions } from '@tiptap/core';
+import { EditorState } from '@tiptap/pm/state';
+import { fixTables, tableEditing } from '@tiptap/pm/tables';
 
 /**
  * Round-trip fidelity gate for the canonical section editor.
@@ -183,7 +185,7 @@ export function structuralSignatureFromDom(doc: Document): StructuralSignature {
     captions,
     headerCells: q('th').length + q('thead td').length,
     defItems: q('dt,dd').length,
-    images: q('img[src]').length,
+    images: q('img').length, // any <img>; a srcless one is DROPPED by the parse, so its drift is real
   };
 }
 
@@ -259,6 +261,71 @@ export function parsedDocText(node: JSONContent): string {
   return node.type === 'doc' ? inner : inner + '\n';
 }
 
+
+/**
+ * The document the LIVE editor will actually hold — which is NOT what
+ * generateJSON returns, and the difference silently rewrites the record.
+ *
+ * generateJSON parses HTML to a ProseMirror doc via DOMParser and runs no
+ * plugins. The Editor runs fixTables on its first transaction, which
+ * RECTANGULARIZES a ragged table — padding short rows with fabricated empty
+ * cells — and clamps a rowspan that overflows the table. So a non-rectangular
+ * stored table passes a generateJSON-based check, opens in rich mode, and is
+ * mutated into the governed record the instant the writer edits anything (the
+ * whole reason rich mode was opened). Every word survives; the geometry is
+ * silently reinterpreted — the exact class this gate exists to stop, missed
+ * because the gate modeled a lighter parse than the editor performs.
+ *
+ * This returns the fixTables-normalized doc when a table would be rewritten
+ * (so the signature comparison sees the padded cell count and refuses rich
+ * mode), and the input unchanged otherwise — including on any modeling failure,
+ * which is no worse than comparing the raw parse.
+ */
+export interface EditorHeldDoc {
+  /** The document as the editor will hold it after fixTables. */
+  doc: JSONContent;
+  /**
+   * True when fixTables produced a transaction — i.e. the editor WOULD rewrite a
+   * stored table on first edit. Ragged padding surfaces as a cell-count drift in
+   * the signature too, but a rowspan/colspan CLAMP changes only an attribute and
+   * no count, so it is invisible to any counter — yet it still rewrites the
+   * record. This boolean is the complete signal: if the editor would touch the
+   * table, refuse rich mode, whatever the counts say.
+   */
+  tablesRewritten: boolean;
+}
+
+export function editorHeldDoc(json: JSONContent, extensions: Extensions): EditorHeldDoc {
+  try {
+    const schema = getSchema(extensions);
+    const doc = schema.nodeFromJSON(json);
+    const state = EditorState.create({ doc, schema, plugins: [tableEditing()] });
+    const tx = fixTables(state);
+    return tx ? { doc: tx.doc.toJSON() as JSONContent, tablesRewritten: true } : { doc: json, tablesRewritten: false };
+  } catch {
+    return { doc: json, tablesRewritten: false };
+  }
+}
+
+/**
+ * ACCEPTED, DOCUMENTED GAPS — structural changes the signature deliberately
+ * does NOT flag, because a signature that caught them would false-positive on
+ * ordinary content and dump legitimate documents into the source-mode textarea
+ * (the harm the design fought hardest to avoid). Each is either cosmetic or
+ * vanishingly rare in stored content:
+ *   - <section>/<article>/<font> unwrapping and <div>→<p> normalization;
+ *   - inline-mark flattening (a <b>/<sup>/<mark> losing its mark) — the words
+ *     survive and the text axis is unaffected;
+ *   - an image's ALT/caption content (only image PRESENCE is signatured; a
+ *     srcless <img> is caught because it is dropped whole, but a changed alt is
+ *     not) — alt is a void-element attribute in neither text nor structure;
+ *   - list MARKER style set by CSS (list-style-type) rather than the tag;
+ *     <ol type>/<ol start> ARE preserved and need no signature;
+ *   - heading CONTAINMENT (a heading lifted out of a list item) and paragraph
+ *     BOUNDARIES — counted signatures would false-positive on legitimate reflow.
+ * These were confirmed low-exposure by an adversarial empirical sweep; adding
+ * fields for them was explicitly rejected.
+ */
 
 /**
  * Compare the stored content against what the editor's parse retained, on BOTH

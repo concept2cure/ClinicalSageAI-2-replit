@@ -36,7 +36,7 @@ import Superscript from '@tiptap/extension-superscript';
 import Subscript from '@tiptap/extension-subscript';
 import { CaptionNumbering, CaptionedTable } from '../captionNumbering';
 import { AuthoringImage } from '../imageNode';
-import { assessFidelity } from '../roundTrip';
+import { assessFidelity, editorHeldDoc } from '../roundTrip';
 
 /* The parser as it stood for each incident. Kept minimal but REAL — the same
    node set, with the one property that was wrong at the time. */
@@ -163,6 +163,79 @@ describe('structural fidelity — must NOT flag (the fix, and legitimate normali
     // expanded grid. If this ever reads 4, the signature is counting the grid.
     expect(v.storedSignature.cells).toBe(3);
     expect(v.parsedSignature.cells).toBe(3);
+    expect(v.structuralDrift).toEqual([]);
+    expect(v.lossy).toBe(false);
+  });
+});
+
+describe('structural fidelity — what the editor will ACTUALLY hold (fixTables)', () => {
+  /* generateJSON does not run plugins; the live Editor runs fixTables on first
+     edit, padding a ragged table and clamping rowspan overflow into the record.
+     editorHeldDoc models that, so the signature refuses a table the editor
+     would rewrite. Passing the RAW generateJSON doc would miss all of these —
+     which is exactly the blind spot an adversarial sweep found in the first cut. */
+  /* Mirror the boot composition: assess against the held doc, then OR the
+     table-rewrite boolean in exactly as the boot path does. */
+  const heldVerdict = (stored: string) => {
+    const held = editorHeldDoc(parse(stored, SHIPPED), SHIPPED);
+    const base = assessFidelity(stored, held.doc);
+    return held.tablesRewritten && !base.lossy
+      ? { ...base, lossy: true, structuralDrift: ['tables'] }
+      : base;
+  };
+
+  it('a ragged table (a short row) is refused — the editor would pad it', () => {
+    const stored = '<table><tbody><tr><td>a</td><td>b</td><td>c</td></tr><tr><td>d</td></tr></tbody></table>';
+    // Raw parse keeps 4 declared cells and would pass; the held doc has 6.
+    const raw = assessFidelity(stored, parse(stored, SHIPPED));
+    expect(raw.structuralDrift).toEqual([]); // proves the raw parse is blind
+    const v = heldVerdict(stored);
+    expect(v.storedSignature.cells).toBe(4);
+    expect(v.parsedSignature.cells).toBeGreaterThan(4); // fixTables fabricated cells
+    expect(v.structuralDrift).toContain('cells');
+    expect(v.lossy).toBe(true);
+  });
+
+  it('a rowspan that overflows the table is refused — the editor would clamp it', () => {
+    const stored = '<table><tbody><tr><td rowspan="5">tall</td><td>x</td></tr><tr><td>y</td></tr></tbody></table>';
+    const v = heldVerdict(stored);
+    // fixTables clamps rowspan 5->2; the change surfaces as structural drift.
+    expect(v.lossy).toBe(true);
+    expect(v.structuralDrift.length).toBeGreaterThan(0);
+  });
+
+  it('a well-formed rectangular table is NOT refused — fixTables leaves it alone', () => {
+    const stored = '<table><tbody><tr><th>Arm</th><th>N</th></tr><tr><td>Active</td><td>120</td></tr></tbody></table>';
+    const v = heldVerdict(stored);
+    expect(v.structuralDrift).toEqual([]);
+    expect(v.lossy).toBe(false);
+  });
+
+  it('a merged (colspan) table is NOT refused — declared cells agree, no fabrication', () => {
+    const stored = '<table><tbody><tr><td colspan="2">Combined</td></tr><tr><td>1</td><td>2</td></tr></tbody></table>';
+    const v = heldVerdict(stored);
+    expect(v.structuralDrift).toEqual([]);
+    expect(v.lossy).toBe(false);
+  });
+});
+
+describe('structural fidelity — a dropped image is caught', () => {
+  it('a srcless <img> (its alt caption lost) is flagged: any <img> is counted', () => {
+    // AuthoringImage parses img[src] only, so a srcless img emits no node and is
+    // dropped whole — alt included. Counting any <img> on the DOM side sees it.
+    const stored = '<p>Body.</p><img alt="Figure 7. Dissolution profile at 37C">';
+    const v = assessFidelity(stored, parse(stored, SHIPPED));
+    expect(v.storedSignature.images).toBe(1);
+    expect(v.parsedSignature.images).toBe(0);
+    expect(v.structuralDrift).toContain('images');
+    expect(v.lossy).toBe(true);
+  });
+
+  it('a normal img[src] still round-trips — not a false positive', () => {
+    const stored = '<img src="/api/authoring/images/77" alt="Chromatogram">';
+    const v = assessFidelity(stored, parse(stored, SHIPPED));
+    expect(v.storedSignature.images).toBe(1);
+    expect(v.parsedSignature.images).toBe(1);
     expect(v.structuralDrift).toEqual([]);
     expect(v.lossy).toBe(false);
   });
