@@ -88,6 +88,15 @@ import { AuthoringImage } from './imageNode';
 import { CrossReference } from './crossReferenceNode';
 import { Citation, citationOrderKey } from './citationNode';
 import {
+  CaptionNumbering,
+  CaptionedTable,
+  captionAt,
+  captionOrderKey,
+  captionTargets,
+} from './captionNumbering';
+import type { CaptionedObject } from '@shared/authoring/captions';
+import type { Node as PMNode } from '@tiptap/pm/model';
+import {
   crossReferenceLookupFor,
   crossReferenceText,
   normalizeCrossReferenceDisplay,
@@ -198,6 +207,23 @@ export interface RichSectionEditorProps {
    */
   crossRefsApi?: {
     sections: { id: string; code?: string | null; title?: string | null }[];
+    /**
+     * The document's captioned tables and figures OUTSIDE this section, split
+     * at it: everything in the sections ordered above, and everything below.
+     *
+     * Two lists rather than one because the ordinal is positional. This
+     * section's own objects are numbered BETWEEN them, so a table here shows
+     * the number the filing prints rather than restarting at 1 — the same
+     * reason the citation canvas is told which sources are cited above it.
+     * Both halves are also offered as reference targets, so "as shown in
+     * Table 7" can point at a table in another section.
+     *
+     * Omit to reference sections only; a reference already in the content that
+     * points at a table outside this section then says plainly that it could
+     * not be checked, rather than printing a number that would look right.
+     */
+    captionsBefore?: readonly CaptionedObject[];
+    captionsAfter?: readonly CaptionedObject[];
   } | null;
   /**
    * Citations of the platform's governed sources.
@@ -250,6 +276,10 @@ const SAVE_META: Record<SaveState, { dot: string; label: string }> = {
 
 const cacheKeyFor = (storageKey: string) => 'dc::' + storageKey;
 
+/** One shared empty list, so an absent caption directory does not produce a new
+ *  array identity on every render and re-run the memos that key on it. */
+const EMPTY_CAPTION_LIST: readonly CaptionedObject[] = Object.freeze([]);
+
 /** What the image store accepts — the formats a Word export can embed. SVG is
  *  deliberately absent (a script container, not a picture) and so is WebP
  *  (DOCX cannot carry it; refusing at upload beats dropping at export). */
@@ -297,6 +327,19 @@ function jsonDocText(node: JSONContent): string {
      current". The number is never in the stored content at all. */
   if (node.type === 'citation') return String(node.attrs?.label ?? '');
   const inner = (node.content ?? []).map(jsonDocText).join('');
+  /* A table's CAPTION is an attribute of the table node, not content — the
+     caption has to be an attribute because `prosemirror-tables` reads every
+     child of a table as a row (see captionNumbering.ts). It is real stored text
+     all the same: `<caption>Summary of adverse events</caption>` is in the
+     record and a reader sees it. Without this the gate would compare the stored
+     caption against nothing, call the parse lossy, and drop every section
+     holding a captioned table into raw source mode — the capability would
+     disable the editor it ships in. Emitted BEFORE the rows because that is
+     where the element sits in the stored markup. */
+  if (node.type === 'table') {
+    const caption = String(node.attrs?.caption ?? '');
+    return (caption ? caption + '\n' : '') + inner + '\n';
+  }
   return node.type === 'doc' ? inner : inner + '\n';
 }
 
@@ -465,18 +508,84 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           .map((sec) => `${sec.id}\u0000${sec.code ?? ''}\u0000${sec.title ?? ''}`)
           .join('\u0001')
       : '';
-    const crossRefLookup = useMemo<CrossReferenceLookup | null>(
-      () => (crossRefSections ? crossReferenceLookupFor(crossRefSections) : null),
+
+    /* ── Captioned tables and figures ──
+       A caption's number is its POSITION among the document's tables (or
+       figures), and this editor holds one section — so the host says what sits
+       above and below, and this section's objects are numbered between them.
+       Read through refs for the same reason the section directory is: the
+       extension set is built once per mount and these lists change while the
+       editor is open. */
+    const EMPTY_CAPTIONS: readonly CaptionedObject[] = EMPTY_CAPTION_LIST;
+    const captionsBefore = crossRefsApi?.captionsBefore ?? EMPTY_CAPTIONS;
+    const captionsAfter = crossRefsApi?.captionsAfter ?? EMPTY_CAPTIONS;
+    const captionsBeforeRef = useRef<readonly CaptionedObject[]>(captionsBefore);
+    captionsBeforeRef.current = captionsBefore;
+    const captionsAfterRef = useRef<readonly CaptionedObject[]>(captionsAfter);
+    captionsAfterRef.current = captionsAfter;
+    const captionsOutsideKey = [...captionsBefore, ...captionsAfter]
+      .map((o) => `${o.kind}\u0000${o.id ?? ''}\u0000${o.caption}`)
+      .join('\u0001');
+    /** This section's document as of the last transaction — what the live half
+     *  of the numbering is computed from. */
+    const liveDocRef = useRef<PMNode | null>(null);
+    /** The editor itself, for the effects declared above its construction. */
+    const editorRef = useRef<ReturnType<typeof useEditor> | null>(null);
+    /** This section's caption order, so a reference repaints when a table moves
+     *  and not on every keystroke. */
+    const [captionOrder, setCaptionOrder] = useState('');
+
+    const crossRefLookup = useMemo<CrossReferenceLookup | null>(() => {
+      if (!crossRefSections) return null;
+      const sections = crossReferenceLookupFor(crossRefSections);
+      return (targetId: string) => {
+        const section = sections(targetId);
+        if (section) return section;
+        /* A captioned TABLE or FIGURE is a cross-reference target exactly as a
+           section is — "Table 3" is its code and its caption is its title. The
+           same resolver, the same failure state, no second mechanism: see
+           @shared/authoring/captions. Recomputed per call because the live half
+           comes from the document being edited. */
+        const id = String(targetId);
+        return (
+          captionTargets(
+            captionsBeforeRef.current,
+            liveDocRef.current,
+            captionsAfterRef.current,
+          ).find((t) => t.id === id) ?? null
+        );
+      };
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [crossRefKey],
-    );
+    }, [crossRefKey]);
     const crossRefLookupRef = useRef<CrossReferenceLookup | null>(crossRefLookup);
     crossRefLookupRef.current = crossRefLookup;
-    /** Live node views to repaint when the directory changes. */
+    /** Live node views to repaint when the directory changes — including when a
+     *  table is inserted or captioned, which moves every number after it. */
     const crossRefRepaint = useRef<Set<() => void>>(new Set());
     useEffect(() => {
       for (const paint of crossRefRepaint.current) paint();
-    }, [crossRefKey]);
+    }, [crossRefKey, captionsOutsideKey, captionOrder]);
+
+    /* The canvas's numbers are drawn by a decoration, and decorations are
+       recomputed from EDITOR STATE — so a change to the objects OUTSIDE this
+       section (a colleague captions a table in an earlier section during a
+       live co-edit) would leave the numbers here stale until the next
+       keystroke. A meta-only transaction redraws them; it changes no content,
+       so it marks nothing dirty and mints no revision. */
+    useEffect(() => {
+      if (!editorRef.current || editorRef.current.isDestroyed) return;
+      const view = editorRef.current.view;
+      view.dispatch(editorRef.current.state.tr.setMeta('captionNumbering', true));
+    }, [captionsOutsideKey]);
+
+    /** The tables and figures this section can point at, numbered as the
+     *  document numbers them. What the reference picker offers. */
+    const captionTargetList = useMemo(
+      () =>
+        captionTargets(captionsBefore, liveDocRef.current, captionsAfter),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [captionsOutsideKey, captionOrder],
+    );
 
     /* ── Citation library and numbering ──
        Same shape as the cross-reference directory above, and for the same
@@ -565,7 +674,13 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           // Yjs owns undo/redo when live co-editing is on.
           ...(collabRuntime ? { undoRedo: false } : {}),
         }),
-        TableKit.configure({ table: { resizable: false } }),
+        /* The kit's own `table` node is switched off and replaced by the one
+           that can hold a caption. Two table nodes in one schema would be two
+           documents' worth of ambiguity — `prosemirror-tables` resolves every
+           command through `tableRole`, which both would claim. */
+        TableKit.configure({ table: false }),
+        CaptionedTable.configure({ resizable: false }),
+        CaptionNumbering.configure({ before: () => captionsBeforeRef.current }),
         // CTD text is dense with cm², t½, CO₂ — these were declared in
         // package.json and imported nowhere, so sup/sub in stored content
         // flattened to plain text (BP-W1-1).
@@ -738,6 +853,12 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
              Comparing the order key rather than repainting unconditionally
              keeps a keystroke from repainting every marker in the section. */
           setCitationOrder(citationOrderKey(ed.state.doc));
+          /* A table or figure captioned, inserted, deleted or moved renumbers
+             the objects after it and every reference to them. Same order-key
+             comparison the citations use, and for the same reason: a keystroke
+             must not repaint the section. */
+          liveDocRef.current = ed.state.doc;
+          setCaptionOrder(captionOrderKey(ed.state.doc));
           cacheDraft(serialized);
           if (autosaveMs != null && isDirty) {
             if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
@@ -758,11 +879,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           setDocEmpty(ed.isEmpty);
           setSuggestions(collectSuggestions(ed.state.doc));
           setCitationOrder(citationOrderKey(ed.state.doc));
+          liveDocRef.current = ed.state.doc;
+          setCaptionOrder(captionOrderKey(ed.state.doc));
           setEditorReady(true);
         },
       },
       [],
     );
+
+    editorRef.current = editor;
 
     /* THE EDITOR MUST STOP ACCEPTING KEYSTROKES WHEN THE RECORD SEALS.
      *
@@ -1215,11 +1340,20 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const [xrefError, setXrefError] = useState<string | null>(null);
     const xrefSelectRef = useRef<HTMLSelectElement>(null);
 
+    /** Everything this section can point at: the document's other sections, and
+     *  its captioned tables and figures. One list because a reference to a table
+     *  is the same kind of thing as a reference to a section — it stores the
+     *  target's identity and prints what the target is called now. */
+    const xrefChoices = useMemo(
+      () => [...(crossRefSections ?? []), ...captionTargetList],
+      [crossRefSections, captionTargetList],
+    );
+
     const openXref = useCallback(() => {
       setXrefError(null);
-      setXrefTarget((t) => t || crossRefSections?.[0]?.id || '');
+      setXrefTarget((t) => t || xrefChoices[0]?.id || '');
       setXrefOpen(true);
-    }, [crossRefSections]);
+    }, [xrefChoices]);
 
     useEffect(() => {
       if (xrefOpen) xrefSelectRef.current?.focus();
@@ -1289,6 +1423,55 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       setCiteError(null);
     }, [editor, citeSource, citeLocator, citationsApi]);
 
+    /* ── Caption bar ──
+       The one place a table's or a figure's caption can be written. It is
+       needed twice over: the editor's schema had no caption at all (a stored
+       `<caption>` was parsed into a CELL and written back into the record that
+       way), and a figure's caption was whatever the uploaded file happened to
+       be named.
+
+       There is deliberately no field in which to type a NUMBER. The number is
+       the object's position and is drawn beside the caption from it; a typed
+       one is the unmanaged text this replaces. */
+    const [captionOpen, setCaptionOpen] = useState(false);
+    const [captionText, setCaptionText] = useState('');
+    const [captionError, setCaptionError] = useState<string | null>(null);
+    const captionInputRef = useRef<HTMLInputElement>(null);
+
+    /** What the caret is on: a table, a selected figure, or neither. */
+    const captionSubject = editor ? captionAt(editor.state) : null;
+
+    const openCaption = useCallback(() => {
+      setCaptionError(null);
+      setCaptionText(editor ? (captionAt(editor.state)?.caption ?? '') : '');
+      setCaptionOpen(true);
+    }, [editor]);
+
+    useEffect(() => {
+      if (captionOpen) captionInputRef.current?.focus();
+    }, [captionOpen]);
+
+    const closeCaption = useCallback(() => {
+      setCaptionOpen(false);
+      setCaptionError(null);
+      editor?.commands.focus();
+    }, [editor]);
+
+    const applyCaption = useCallback(() => {
+      if (!editor) return;
+      const applied = editor.chain().focus().setObjectCaption(captionText).run();
+      if (!applied) {
+        /* The caret moved out of the object while the bar was open. Silently
+           captioning whatever it is on now would label the wrong table. */
+        setCaptionError(
+          'Put the cursor in a table, or select a figure, and try again. Nothing was changed.',
+        );
+        return;
+      }
+      setCaptionOpen(false);
+      setCaptionError(null);
+    }, [editor, captionText]);
+
     const applyXref = useCallback(() => {
       if (!editor) return;
       if (!xrefTarget) {
@@ -1302,7 +1485,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         .run();
       if (!inserted) {
         setXrefError(
-          'That section is no longer in this document. Nothing was inserted — reopen the list and choose again.',
+          'That target is no longer in this document. Nothing was inserted — reopen the list and choose again.',
         );
         return;
       }
@@ -1618,6 +1801,21 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 {I.image}
               </RB>
             )}
+            {/* A table and a figure in a CTD document are NUMBERED objects a
+                reviewer navigates by. The number is drawn from position; this
+                is where the words beside it are written. */}
+            <RB
+              title={
+                captionSubject
+                  ? `Caption this ${captionSubject.kind} — it is numbered by its position in the document`
+                  : 'Caption a table or figure — put the cursor in a table, or select a figure'
+              }
+              active={captionOpen}
+              disabled={!captionSubject}
+              onClick={() => (captionOpen ? closeCaption() : openCaption())}
+            >
+              Caption
+            </RB>
             <select
               className="rse-sel"
               value=""
@@ -1877,6 +2075,66 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           </div>
         )}
 
+        {/* ── Caption bar ── */}
+        {captionOpen && boot.mode === 'rich' && !readOnly && (
+          <div
+            className="rse-find"
+            role="group"
+            aria-label="Caption"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                closeCaption();
+              }
+            }}
+          >
+            <span className="rse-find-label">
+              {captionSubject?.kind === 'figure' ? 'Figure caption' : 'Table caption'}
+            </span>
+            <input
+              ref={captionInputRef}
+              className="rse-find-input"
+              style={{ flex: '1 1 320px' }}
+              aria-label="Caption text"
+              placeholder="Summary of adverse events"
+              value={captionText}
+              onChange={(e) => {
+                setCaptionText(e.target.value);
+                setCaptionError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  applyCaption();
+                }
+              }}
+            />
+            <button type="button" className="rse-link" onClick={applyCaption}>
+              Apply
+            </button>
+            {/* Said here rather than left for the writer to wonder about: the
+                number is not typed and cannot be. */}
+            <span className="rse-find-note">
+              Numbered automatically by position in the document.
+            </span>
+            {captionError && (
+              <span className="rse-find-err" role="alert">
+                {captionError}
+              </span>
+            )}
+            <span style={{ flex: 1 }} />
+            <button
+              type="button"
+              className="rse-link"
+              aria-label="Close caption editor"
+              onClick={closeCaption}
+            >
+              {I.close}
+            </button>
+          </div>
+        )}
+
         {/* ── Cross-reference bar ── */}
         {xrefOpen && crossRefsApi && boot.mode === 'rich' && !readOnly && (
           <div
@@ -1892,13 +2150,13 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             }}
           >
             <span className="rse-find-label">§ Cross-reference</span>
-            {crossRefSections && crossRefSections.length > 0 ? (
+            {xrefChoices.length > 0 ? (
               <>
                 <select
                   ref={xrefSelectRef}
                   className="rse-sel"
                   style={{ flex: '0 1 320px', height: 24 }}
-                  aria-label="Section to reference"
+                  aria-label="Section, table or figure to reference"
                   value={xrefTarget}
                   onChange={(e) => {
                     setXrefTarget(e.target.value);
@@ -1911,15 +2169,31 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                     }
                   }}
                 >
-                  {crossRefSections.map((sec) => (
-                    <option key={sec.id} value={sec.id}>
-                      {crossReferenceText(sec, 'code-title') || 'Untitled section'}
-                    </option>
-                  ))}
+                  {crossRefSections && crossRefSections.length > 0 && (
+                    <optgroup label="Sections">
+                      {crossRefSections.map((sec) => (
+                        <option key={sec.id} value={sec.id}>
+                          {crossReferenceText(sec, 'code-title') || 'Untitled section'}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {/* A captioned table or figure is a target exactly as a
+                      section is, and the number shown here is the one the
+                      filing prints — it is derived from position, not typed. */}
+                  {captionTargetList.length > 0 && (
+                    <optgroup label="Tables and figures">
+                      {captionTargetList.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {crossReferenceText(t, 'code-title')}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
                 <select
                   className="rse-sel"
-                  aria-label="How much of the section to show"
+                  aria-label="How much of the target to show"
                   value={xrefDisplay}
                   onChange={(e) =>
                     setXrefDisplay(normalizeCrossReferenceDisplay(e.target.value))
@@ -1933,10 +2207,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 </button>
               </>
             ) : (
-              /* No sections to reference is a real state, said plainly rather
+              /* Nothing to reference is a real state, said plainly rather
                  than shown as an empty picker that looks broken. */
               <span className="rse-find-note">
-                This document has no other sections to reference yet.
+                This document has no other sections, tables or figures to reference yet.
               </span>
             )}
             {xrefError && (
@@ -2211,6 +2485,13 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         /* A resolved cross-reference reads as a reference; a broken one reads as
            broken, in words. Colour is never the only signal — the missing state
            says what is wrong in full. */
+        /* The numbered caption a table or figure carries in the canvas. Drawn
+           by a decoration, never by content: the number is a rendering of
+           position, and putting it into the document would write it into the
+           governed record — the exact defect this feature removes. Placed below
+           the object, which is where the print stylesheet puts it. */
+        .rse-caption { display:block; margin:-8px 0 14px; font-size:11px; font-style:italic; color:var(--text-300,#475467); text-align:center; }
+        .rse-caption[data-kind="table"] { text-align:left; }
         .rse-xref { color:var(--accent-100,#2563eb); border-bottom:1px solid color-mix(in srgb, var(--accent-100,#2563eb) 40%, transparent); white-space:nowrap; }
         .rse-xref[data-missing="1"] { color:var(--error,#b42318); border-bottom:1px dashed var(--error,#b42318); font-style:italic; white-space:normal; }
         /* A citation shows the number its source holds in this document's
