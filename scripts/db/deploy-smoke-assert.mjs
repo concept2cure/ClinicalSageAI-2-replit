@@ -228,6 +228,55 @@ const UUID_TENANT_EXEMPT = ['federated_ml.federation_participants', 'audit.event
   }
 }
 
+// ── 1e. Every column the app WRITES exists on the deployed database ──────────
+// The L38/L30 class: shared/schema.ts declares a column, drizzle-push
+// (install-fresh) therefore creates it, and no migration ever does — so it is
+// present on a pushed database and absent on a migration-provisioned one, and
+// the INSERT fails 42703 on exactly the long-lived deployments nobody re-pushes.
+//
+// These are the pairs found by diffing a pushed database against every column
+// the migration files create and keeping only those a raw INSERT in server/
+// actually names. Each is written by the module in the comment. Asserted here
+// rather than trusted, because the failure is invisible until the write runs:
+// the table exists, the route exists, and only the column is missing.
+//
+// This assertion FAILS on a migration-provisioned database built before
+// 20260828_artifact_versions_updated_at.sql and
+// 20260828_align_written_columns_with_migrations.sql — which is the point; it
+// is what proves those two migrations are doing their job.
+{
+  const WRITTEN_COLUMNS = [
+    ['concept2cure_artifact_versions', 'updated_at'],   // ana/artifactVersionStore.ts
+    ['concept2cure_signatures', 'created_at'],          // ana/verifiedSealService.ts
+    ['concept2cure_signatures', 'updated_at'],          // ana/verifiedSealService.ts
+    ['regulatory_audit_logs', 'created_at'],            // ana/verifiedSealService.ts
+    ['regulatory_audit_logs', 'updated_at'],            // ana/verifiedSealService.ts
+    ['concept2cure_submission_snapshots', 'updated_at'],// compute/exportGovernance.ts
+    ['knowledge_graph_nodes', 'organization_id'],       // routes/graphrag.ts
+    ['knowledge_graph_edges', 'organization_id'],       // routes/graphrag.ts
+  ];
+  const { rows } = await client.query(
+    `SELECT p.tbl || '.' || p.col AS missing
+       FROM unnest($1::text[], $2::text[]) AS p(tbl, col)
+      WHERE to_regclass('public.' || p.tbl) IS NOT NULL
+        AND NOT EXISTS (
+              SELECT 1 FROM information_schema.columns c
+               WHERE c.table_schema = 'public'
+                 AND c.table_name   = p.tbl
+                 AND c.column_name  = p.col)
+      ORDER BY 1`,
+    [WRITTEN_COLUMNS.map((p) => p[0]), WRITTEN_COLUMNS.map((p) => p[1])],
+  );
+  if (rows.length === 0) {
+    ok(`every column the app writes exists (${WRITTEN_COLUMNS.length} checked)`);
+  } else {
+    fail(
+      `${rows.length} column(s) the app WRITES do not exist — those INSERTs fail 42703`,
+      rows.map((r) => r.missing).join(', '),
+    );
+  }
+}
+
 // ── 4. pgvector actually loaded and the C-37 tables exist ─────────────────────
 {
   const { rows } = await client.query(`SELECT extversion FROM pg_extension WHERE extname='vector'`);

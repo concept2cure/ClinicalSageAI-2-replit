@@ -932,8 +932,8 @@ async function compileFromSpine(
       `INSERT INTO ectd_compilations
          (organization_id, compilation_name, compilation_type, status,
           xml_backbone, validation_results, compiled_at, version,
-          application_number, sequence_number, leaf_manifest)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), '1.0', $7, $8, $9)`,
+          application_number, sequence_number, leaf_manifest, submission_id)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW(), '1.0', $7, $8, $9, $10)`,
       [
         orgId,
         compilationName,
@@ -944,6 +944,9 @@ async function compileFromSpine(
         anchor.programCode ?? `SEQ-${seq.id}`,
         seq.sequenceNumber,
         leafManifestJson,
+        // Stable per-submission key: lets the NEXT sequence locate this manifest
+        // via loadLatestPriorManifestBySubmission regardless of application_number.
+        spine.submissionId,
       ],
     );
   } catch (err: any) {

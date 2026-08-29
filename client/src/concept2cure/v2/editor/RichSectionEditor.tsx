@@ -81,6 +81,7 @@ import {
   looksLikeHtml,
   plainTextToHtml,
   htmlVisibleText,
+  assessPasteFidelity,
 } from './roundTrip';
 import { FindReplace, getFindState } from './findReplace';
 import { AuthoringImage } from './imageNode';
@@ -674,6 +675,33 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           // A pasted or dropped image file goes through the same validated
           // upload as the ribbon button. When images are not enabled here,
           // fall through to the default handling instead of swallowing it.
+          /* Runs before the parse: keep what the clipboard actually carried. */
+          transformPastedHTML: (html) => {
+            pastedHtmlRef.current = html;
+            return html;
+          },
+          /* Runs after the parse, on the slice actually about to be inserted.
+             Reports; never blocks or rewrites a paste — a writer mid-thought must
+             not be interrupted by a refusal, and the comparison is a count rather
+             than a diff, so it cannot say WHAT was dropped. */
+          transformPasted: (slice) => {
+            const html = pastedHtmlRef.current;
+            pastedHtmlRef.current = '';
+            if (html) {
+              const { expected, lost } = assessPasteFidelity(
+                html,
+                slice.content.textBetween(0, slice.content.size, ' ', ' '),
+              );
+              if (lost > 0) {
+                setPasteNotice(
+                  `About ${lost} of ${expected} pasted words could not be kept — the pasted content ` +
+                    'used formatting this editor cannot store. Check the pasted passage against ' +
+                    'your source before relying on it.',
+                );
+              }
+            }
+            return slice;
+          },
           handlePaste: (_view, event) => {
             if (!imagesEnabledRef.current) return false;
             const file = Array.from(event.clipboardData?.files ?? []).find((f) =>
@@ -1288,6 +1316,25 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
        the caret. The upload itself is the host's (`imagesApi.upload`) — this
        component never talks to a store directly. */
     const [imgNotice, setImgNotice] = useState<string | null>(null);
+
+    /* ── Paste fidelity ───────────────────────────────────────────────────────
+       The fail-closed gate at mount protects STORED content from a lossy parse.
+       Paste had no equivalent, and it is the highest-frequency way content
+       enters this editor: a medical writer drafts in Word, or lifts three pages
+       out of a previous CSR, and pastes. Anything the schema cannot represent is
+       dropped by the parse at that instant — the gate never sees it, because by
+       the time content is stored the loss has already happened and the stored
+       string and the parse agree with each other perfectly.
+
+       Word in particular carries constructs this schema has no node for. The
+       writer's own text is the one thing that must not disappear quietly, so the
+       paste is compared the same way the gate compares: the words the clipboard
+       carried against the words the parse kept. This REPORTS; it never blocks or
+       rewrites a paste, because a writer mid-thought must not be interrupted by
+       a refusal, and because the comparison is a word count rather than a
+       diff — precise enough to say "something was dropped", not to say what. */
+    const [pasteNotice, setPasteNotice] = useState<string | null>(null);
+    const pastedHtmlRef = useRef<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const insertImageFile = useCallback(
@@ -1390,6 +1437,16 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           <div className="rse-gate" role="status">
             <span style={{ flex: 1 }}>{imgNotice}</span>
             <button type="button" className="rse-link" onClick={() => setImgNotice(null)}>
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* ── Paste fidelity notice (reports, never blocks) ── */}
+        {pasteNotice && (
+          <div className="rse-gate" role="status">
+            <span style={{ flex: 1 }}>{pasteNotice}</span>
+            <button type="button" className="rse-link" onClick={() => setPasteNotice(null)}>
               Dismiss
             </button>
           </div>

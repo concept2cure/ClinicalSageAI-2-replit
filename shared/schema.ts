@@ -8388,6 +8388,12 @@ export const ectdCompilations = pgTable(
     // index.xml cannot serve as that exact prior state. Nullable: older rows and
     // metadata-only compilations have none.
     leafManifest: json('leaf_manifest'),
+    // Stable per-SUBMISSION key (submissions.id) so a later sequence can locate
+    // the correct prior sequence's leaf_manifest to diff against. application_number
+    // was not reliable for this — some compile paths set it to a sequence-specific
+    // fallback. Nullable: metadata-only / project-level compilations have none.
+    // See db/migrations/20260828_ectd_compilations_submission_id.sql.
+    submissionId: integer('submission_id'),
     // Nullable for the same reason: service-initiated compilations have no
     // interactive user. The one existing writer that set it used a hardcoded 1.
     compiledBy: integer('compiled_by'),
@@ -8404,6 +8410,7 @@ export const ectdCompilations = pgTable(
     compilationModuleIdx: index('ectd_compilations_module_idx').on(table.moduleId),
     compilationStatusIdx: index('ectd_compilations_status_idx').on(table.status),
     compilationDateIdx: index('ectd_compilations_date_idx').on(table.compiledAt),
+    compilationSubmissionSeqIdx: index('ectd_compilations_submission_seq_idx').on(table.submissionId, table.sequenceNumber),
   })
 );
 

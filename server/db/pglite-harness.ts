@@ -225,6 +225,7 @@ CREATE TABLE IF NOT EXISTS submissions (
   id               SERIAL PRIMARY KEY,
   title            TEXT NOT NULL,
   product_name     TEXT,
+  application_number TEXT,
   application_type TEXT NOT NULL,
   client_type      TEXT NOT NULL,
   primary_region   TEXT NOT NULL,
