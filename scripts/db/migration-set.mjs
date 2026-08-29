@@ -1621,6 +1621,16 @@ export const C2C_MIGRATION_FILES = [
   // not filter when enforcement is off and filter strictly when it is on.
   // Idempotent; matches on shape, not on policy name.
   'db/migrations/20260828_fail_closed_org_coalesce_policies.sql',
+
+  // ── concept2cure_artifact_versions.updated_at (GA ledger L38) ─────────────
+  // artifactVersionStore.ts names updated_at in both of its INSERTs and
+  // shared/schema.ts declares it, but none of the three migrations that create
+  // this table do — so the column exists on a drizzle-push (install-fresh)
+  // database and not on a migration-provisioned one, and the 42703 lands on the
+  // long-lived deployments. Reproduced by dropping the column and replaying the
+  // writer's own column list. Idempotent ADD COLUMN with the model's exact
+  // type, nullability and default.
+  'db/migrations/20260828_artifact_versions_updated_at.sql',
   // Must follow the sweep above: that one keys on polqual (USING), which an
   // INSERT policy does not have, so every write-only policy slipped through
   // with its fail-open COALESCE intact. This closes them on polwithcheck.
