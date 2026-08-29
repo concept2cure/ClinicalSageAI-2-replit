@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-29T01:34:20.143Z",
+  "generatedAt": "2026-08-29T01:57:29.839Z",
   "git": {
-    "sha": "fab4c2d03ad28384b9441ac0732632b004fbb266",
+    "sha": "2847dfee084bb1b1289810052a5a66871a64a8e2",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -17,7 +17,7 @@
     "duplicateBasenames": 222,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 33,
+    "largeFilesByBytes": 34,
     "largeFilesByLines": 82
   },
   "findings": {
@@ -2283,6 +2283,10 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
+      },
+      {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "bytes": 102440
       }
     ],
     "largeFilesByLines": [
@@ -2415,12 +2419,12 @@
         "lines": 2254
       },
       {
-        "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
-        "lines": 2177
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 2231
       },
       {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2174
+        "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
+        "lines": 2177
       },
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
@@ -2639,7 +2643,7 @@
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
-      "largeByBytes": 3,
+      "largeByBytes": 4,
       "largeByLines": 6
     },
     {
