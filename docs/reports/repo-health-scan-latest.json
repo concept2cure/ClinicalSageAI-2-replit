@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-29T15:05:22.505Z",
+  "generatedAt": "2026-08-29T16:03:14.248Z",
   "git": {
-    "sha": "41f5fa2f3fae22cf54dcf3d0f288d0820bf1b213",
+    "sha": "28fde6c0ef070110d38dad3fb967c5253098dd4b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2439,6 +2439,10 @@
         "lines": 2150
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "lines": 2129
+      },
+      {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
         "lines": 2093
       },
@@ -2449,10 +2453,6 @@
       {
         "file": "server/services/pharmacovigilance/pharmacovigilance-knowledge.ts",
         "lines": 2068
-      },
-      {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2050
       },
       {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
