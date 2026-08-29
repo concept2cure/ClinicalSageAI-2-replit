@@ -29,7 +29,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { IndLifecycle } from '../surfaces/IndLifecycle';
 
-const props = () => ({ surface: { id: 'ind-lifecycle' }, onAsk: vi.fn(), onNav: vi.fn() } as never);
+const props = () => ({ surface: { id: 'ind-lifecycle' }, onAsk: vi.fn(), onNav: vi.fn() } as any);
 
 /** A checklist row with the given forms/sections; empty = nothing to assess. */
 function mockChecklist(forms: unknown[], sections: unknown[]) {
