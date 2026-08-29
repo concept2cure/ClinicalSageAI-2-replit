@@ -313,3 +313,58 @@ describe('assessSufficiency — inputsHash', () => {
     expect(a.inputsHash).not.toBe(b.inputsHash);
   });
 });
+
+describe('claim health that was never assessed is not a clean claim health', () => {
+  /** The evidence set the "sufficient" case above uses, so only claimHealth varies. */
+  const fullEvidence = () => [
+    ev('risk_assessment'),
+    ev('device_profile'), ev('bench_test'), ev('clinical_trial'),
+    ev('literature_article'), ev('clinical_trial'), ev('statistical_analysis'),
+    ev('manufacturing_process'), ev('quality_control'),
+    ev('regulatory_compliance'), ev('regulatory_compliance'), ev('project_deliverable'),
+  ];
+  const base = {
+    organizationId: ORG,
+    programId: PROGRAM,
+    pathway: 'PMA' as const,
+    profile: { isSoftware: false, hasPatientContact: false, isElectrical: false, isSterile: false },
+    dryRun: true,
+  };
+
+  test('reports that claim health was NOT assessed when no claims are recorded', async () => {
+    // The claim store has no writer anywhere in the product, so this is the
+    // shape every real caller passes: zero orphans and zero contradictions
+    // because nothing was examined, not because nothing was found.
+    const r = await assessSufficiency({
+      ...base,
+      evidenceOverride: fullEvidence(),
+      claimHealth: { claimsRecorded: 0, assessed: false, orphanClaimCount: 0, contradictedClaimCount: 0 },
+    });
+    const codes = r.findings.map((f) => f.code);
+    expect(codes).toContain('SUFF-CLAIM-HEALTH-NOT-ASSESSED');
+    const finding = r.findings.find((f) => f.code === 'SUFF-CLAIM-HEALTH-NOT-ASSESSED')!;
+    expect(finding.message).toMatch(/not because nothing was found/i);
+    // A missing assessment is a gap in the evidence FOR the verdict, not a
+    // defect found in the submission — so it must not block approval on its own.
+    expect(finding.severity).toBe('warning');
+    expect(r.blocksApproval).toBe(false);
+  });
+
+  test('says nothing when claims WERE assessed and came back clean', async () => {
+    // The guard must not fire on a real, clean assessment — otherwise it just
+    // trades one false signal for another.
+    const r = await assessSufficiency({
+      ...base,
+      evidenceOverride: fullEvidence(),
+      claimHealth: { claimsRecorded: 12, assessed: true, orphanClaimCount: 0, contradictedClaimCount: 0 },
+    });
+    expect(r.findings.map((f) => f.code)).not.toContain('SUFF-CLAIM-HEALTH-NOT-ASSESSED');
+  });
+
+  test('says nothing when the caller makes no claim-health claim at all', async () => {
+    // Omitting claimHealth asserts nothing about it, so there is nothing to
+    // correct. Inventing a finding here would be its own overclaim.
+    const r = await assessSufficiency({ ...base, evidenceOverride: fullEvidence() });
+    expect(r.findings.map((f) => f.code)).not.toContain('SUFF-CLAIM-HEALTH-NOT-ASSESSED');
+  });
+});
