@@ -437,6 +437,73 @@ describe('a section save reaches the hash-chained ledger', () => {
   }, T);
 });
 
+describe('a revert moves the filing too, not just the working copy', () => {
+  /* `commitSectionToFiling` exists because the editing layer and the filing
+     had drifted. The PATCH path calls it; REVERT DID NOT.
+
+     So an author who reverted a bad edit saw the good text restored in the
+     editor, the revision ledger recorded the restoration and the audit trail
+     recorded a REVERT — while `c2c_document_sections`, which is what the
+     filing IS, still held the bad text. Every record agreed a revert had
+     happened and the one artifact that matters disagreed. Nothing surfaced
+     it, because each store was internally consistent with itself. */
+  it('restores the filing to the reverted content, not only authoring_sections', async () => {
+    // Two saves, so there is a prior revision to go back to.
+    expect((await save('2.6', '<p>Good text that belongs in the filing.</p>')).status).toBe(200);
+    expect((await save('2.6', '<p>BAD EDIT that must not survive the revert.</p>')).status).toBe(200);
+
+    const [before] = await q<{ text: string }>(
+      `SELECT content ->> 'text' AS text FROM c2c_document_sections
+        WHERE document_id = $1 AND section_key = '2.6'`, [DOC],
+    );
+    expect(before.text, 'the bad edit never reached the filing, so this proves nothing')
+      .toContain('BAD EDIT');
+
+    // The revision holding the good text.
+    const revs = await q<{ id: string; content: string }>(
+      `SELECT id, content FROM doc_revisions WHERE section_id = $1 ORDER BY created_at`,
+      [sectionIds['2.6']],
+    );
+    const good = revs.find((r) => (r.content ?? '').includes('Good text'));
+    expect(good, 'no revision carries the good text').toBeTruthy();
+
+    const res = await as(request(app).post(`/api/authoring/sections/${sectionIds['2.6']}/revert`))
+      .send({ rev_id: good!.id });
+    expect(res.status).toBe(200);
+
+    // The working copy went back.
+    const [working] = await q<{ content: string }>(
+      `SELECT content FROM authoring_sections WHERE id = $1`, [sectionIds['2.6']],
+    );
+    expect(working.content).toContain('Good text');
+
+    // THE DECISIVE ASSERTION: so did the filing.
+    const [filed] = await q<{ text: string }>(
+      `SELECT content ->> 'text' AS text FROM c2c_document_sections
+        WHERE document_id = $1 AND section_key = '2.6'`, [DOC],
+    );
+    expect(filed.text, 'the filing still holds the reverted-away text').toContain('Good text');
+    expect(filed.text).not.toContain('BAD EDIT');
+  }, T);
+
+  it('records WHY in the version ledger — a mechanism naming itself', async () => {
+    /* Not the fabrication REASON_NOT_STATED guards against. On an ordinary
+       save the system cannot know why a human changed the words, so it must
+       not invent one. Here it does know: this is a restoration of a named
+       revision, which is a complete and truthful answer. */
+    /* Asserted by existence rather than by "newest": other cases in this file
+       save the same document, so a positional read is a test that passes or
+       fails on execution order rather than on the property. */
+    const reasons = await q<{ reason: string }>(
+      `SELECT reason FROM c2c_document_section_versions`,
+    );
+    expect(
+      reasons.some((r) => /^Reverted to revision /.test(r.reason ?? '')),
+      'the revert left no reason of its own in the version ledger',
+    ).toBe(true);
+  }, T);
+});
+
 describe('a freeze refuses a document that is still asking questions', () => {
   /* Freeze is the seal: after it the content is hash-sealed, signed under
      §11.50 and filed. Nothing checked whether the document was FINISHED, so a

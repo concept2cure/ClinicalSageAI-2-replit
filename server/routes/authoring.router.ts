@@ -2608,6 +2608,38 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
       // content being replaced under the reverter's name — the same
       // misattribution the edit path had.
       await createRevision(sectionId, revision.content, revertedBy, tenantId, client, 'revert');
+
+      /* AND THE FILING MOVES WITH IT.
+       *
+       * This call was missing, and its absence reopened on the revert path the
+       * exact divergence `commitSectionToFiling` exists to close. Revert wrote
+       * the restored text to `authoring_sections` — the working copy — and left
+       * `c2c_document_sections`, which is what the filing IS, holding whatever
+       * the last PATCH had put there.
+       *
+       * So an author who reverted a bad edit saw the good text in the editor,
+       * the revision ledger recorded the restoration, the audit trail recorded
+       * a REVERT, and the filed document still contained the bad text. Every
+       * record agreed a revert had happened and the one artifact that matters
+       * disagreed — and nothing surfaced the disagreement, because each store
+       * was internally consistent.
+       *
+       * The reason is stated rather than defaulted, and that is not the
+       * fabrication REASON_NOT_STATED guards against: on an ordinary save the
+       * system does not know why a human changed the words, so it must not
+       * invent one. Here it does know — this is a restoration of a named
+       * revision, which is a complete and truthful answer to "why did this
+       * change". A mechanism describing itself is not a person being
+       * impersonated. */
+      await commitSectionToFiling({
+        client,
+        sectionId: String(sectionId),
+        content: String(revision.content ?? ''),
+        actorId: String(revertedBy),
+        tenantId,
+        reason: `Reverted to revision ${rev_id}`,
+      });
+
       await client.query('COMMIT');
     } catch (txErr) {
       await client.query('ROLLBACK').catch(() => {});
