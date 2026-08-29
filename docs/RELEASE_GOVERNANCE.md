@@ -45,16 +45,18 @@ This is release-*readiness* evidence for the engineering gate only. It is not
 GxP validation, not a penetration test, and not an approval to process real
 regulated data — those remain open and require human authority.
 
-No live check contexts or sample pull request could be read safely. Check names
-must be copied from successful, recent check runs—not inferred from workflow
-files—before protection is enabled. `config/release-evidence-policy.v1.json`
-is the canonical machine-readable list of required release jobs (already
-carrying the expanded live matrix names, e.g. `Analyze (CodeQL
-javascript-typescript)`); derive the protection list from it plus the
-per-commit checks it does not carry, rather than maintaining a second
-independent list. The workflow files currently in this
-checkout expose the following **unverified candidates** relevant to the
-requested policy:
+### How this list was originally derived (historical)
+
+At the 2026-08-25 inspection no live check contexts or sample pull request
+could be read safely, so the names below were **unverified candidates** read
+from workflow files. They are superseded by the verified list above, and are
+retained only to show where the recorded names came from. The rule they were
+written under still stands: check names must be copied from successful, recent
+check runs, never inferred from workflow files.
+`config/release-evidence-policy.v1.json` remains the canonical
+machine-readable list of required release jobs; derive the protection list from
+it plus the per-commit checks it does not carry, rather than maintaining a
+second independent list.
 
 - `Lint`, `typecheck`, `Test`, `Integration Tests`, and `Build`;
 - `Security Contract Tests`, `Security Scan`, `Analyze (CodeQL …)`, and
@@ -63,8 +65,11 @@ requested policy:
 - `Production Boot Smoke (RLS on, non-superuser role)`; and
 - `Authenticated app smoke (real browser + DB)`.
 
-These labels are discovery aids only. They are not a read-back of GitHub's
-current required status-check contexts.
+Those labels were discovery aids only, and were never a read-back of GitHub's
+required status-check contexts. The verified section above IS a read-back — of
+the check runs, from a commit on which each one succeeded. It is still not a
+read-back of GitHub's *configured* protection, which remains unset until an
+administrator applies the runbook.
 
 ## Enforced release policy
 
