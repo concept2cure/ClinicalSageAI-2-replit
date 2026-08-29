@@ -26,6 +26,64 @@ import { Writable, PassThrough } from 'stream';
 import { appendVeraPdfValidation } from './documentQuality/pdfValidationAttachment';
 import auditService from './auditService';
 
+/**
+ * Does this PDF actually carry its fonts, or does it name them and hope?
+ *
+ * ── What this replaced ───────────────────────────────────────────────────────
+ * A constant:
+ *
+ *     { check: 'font_embedding', status: 'pass',
+ *       details: 'Standard fonts used (Helvetica)' }
+ *
+ * It reported PASS on the exact fact that constitutes the FAILURE. Helvetica is
+ * one of the PDF "standard 14" faces: a standard-14 font is REFERENCED BY NAME
+ * and supplied by whatever reader opens the file — the one case in which the
+ * font is definitionally *not* embedded. So the check named font embedding, saw
+ * that nothing was embedded, and called it a pass on those grounds.
+ *
+ * This export writes Helvetica and Helvetica-Bold and nothing else, and no
+ * export path in this repository embeds a font at all — there is no .ttf, no
+ * .otf and no registerFont anywhere in the tree. The claim was therefore false
+ * on every PDF the platform has ever produced, and it is not an internal
+ * detail: the report is returned to the caller (cerv2-export-routes.ts) and is
+ * what a user reads to decide whether a submission is ready to file.
+ *
+ * ── Why a real check rather than a corrected constant ────────────────────────
+ * Flipping 'pass' to 'fail' would be true today and would rot the moment
+ * someone embeds a font properly — a constant that has to be remembered is the
+ * same defect wearing the opposite value. This reads the bytes that were
+ * actually produced, so it tells the truth before and after that work lands,
+ * and it starts reporting pass on its own when the fonts are really there.
+ *
+ * ── How ──────────────────────────────────────────────────────────────────────
+ * An embedded face is carried by a font descriptor whose stream key is
+ * /FontFile (Type 1), /FontFile2 (TrueType) or /FontFile3 (CFF / OpenType), so
+ * `/FontFile` as a prefix covers all three. PDFKit writes object dictionaries
+ * uncompressed — only stream CONTENT is deflated — so the key is present as
+ * literal bytes when a font is embedded. Read as latin1 because a PDF is binary
+ * and utf8 decoding would corrupt the surrounding bytes.
+ *
+ * The status is a plain statement of what is in the file. It deliberately does
+ * NOT cite a specific agency rule: the string a user reads should assert only
+ * what this function verified.
+ */
+export function assessFontEmbedding(pdfBuffer: Buffer): {
+  check: string;
+  status: 'pass' | 'fail' | 'warning';
+  details: string;
+} {
+  const embedded = pdfBuffer.toString('latin1').includes('/FontFile');
+  return {
+    check: 'font_embedding',
+    status: embedded ? 'pass' : 'fail',
+    details: embedded
+      ? 'Font programs are embedded in the file.'
+      : 'No font program is embedded. The text uses the PDF standard-14 faces ' +
+        '(Helvetica), which are referenced by name and supplied by the reader, ' +
+        'so the file does not carry the fonts it is set in.',
+  };
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -317,11 +375,7 @@ export async function generatePDF(options: PDFExportOptions): Promise<PDFExportR
       });
     }
 
-    validationReport.push({
-      check: 'font_embedding',
-      status: 'pass',
-      details: 'Standard fonts used (Helvetica)',
-    });
+    validationReport.push(assessFontEmbedding(pdfBuffer));
     validationReport.push({
       check: 'bookmarks',
       status: bookmarks.length > 0 ? 'pass' : 'warning',

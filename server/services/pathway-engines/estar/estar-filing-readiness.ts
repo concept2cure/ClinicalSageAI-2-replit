@@ -43,6 +43,13 @@ export interface FilingLeaf {
   sectionCode: string;
   title: string;
   documentType?: string;
+  /**
+   * True only when this leaf carries real, finalized authored content — never a
+   * draft/placeholder stub. Mirrors EstarInputLeaf/PmaInputLeaf/PreStarInputLeaf:
+   * required so a caller must consciously mark a leaf substantive rather than a
+   * title match silently counting as "present" (see those mappers' evalSlot).
+   */
+  substantive?: boolean; // optional: undefined ⇒ NOT substantive (fail-closed)
 }
 
 /** PMA catalog key → the pma-mapper submission type. */

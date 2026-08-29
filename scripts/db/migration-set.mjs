@@ -1621,6 +1621,10 @@ export const C2C_MIGRATION_FILES = [
   // not filter when enforcement is off and filter strictly when it is on.
   // Idempotent; matches on shape, not on policy name.
   'db/migrations/20260828_fail_closed_org_coalesce_policies.sql',
+  // Must follow the sweep above: that one keys on polqual (USING), which an
+  // INSERT policy does not have, so every write-only policy slipped through
+  // with its fail-open COALESCE intact. This closes them on polwithcheck.
+  'db/migrations/20260828_fail_closed_insert_withcheck_policies.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

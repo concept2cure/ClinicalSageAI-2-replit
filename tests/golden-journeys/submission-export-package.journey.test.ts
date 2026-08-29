@@ -84,10 +84,14 @@ beforeAll(async () => {
     INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by)
     VALUES (1, 1, 'fda', '0000', ${ORG_A}, ${USER});
 
-    INSERT INTO coauthor_documents (id, organization_id, title, content, module_number)
-    VALUES (100, ${ORG_A}, 'Clinical Overview', '<h1>Clinical Overview</h1><p>Benefit-risk narrative.</p>', '2.5');
-    INSERT INTO unified_documents (id, title, document_type, created_by, organization_id, latest_version)
-    VALUES (200, 'Drug Substance', 'summary', 'tester', ${ORG_A}, 1);
+    -- 'approved', not the default draft: this fixture is the COMPLETE dossier,
+    -- and completeness now counts a materialized-but-draft leaf as unfinished
+    -- (an all-draft package is not submission-complete). A fixture that claims
+    -- completeness has to carry approved source documents to earn it.
+    INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status)
+    VALUES (100, ${ORG_A}, 'Clinical Overview', '<h1>Clinical Overview</h1><p>Benefit-risk narrative.</p>', '2.5', 'approved');
+    INSERT INTO unified_documents (id, title, document_type, created_by, organization_id, latest_version, status)
+    VALUES (200, 'Drug Substance', 'summary', 'tester', ${ORG_A}, 1, 'approved');
     INSERT INTO workflow_document_versions (document_id, version, content, created_by, organization_id)
     VALUES (200, 1, '{"type":"doc","content":[{"type":"text","text":"Drug substance specification."}]}'::json, 'tester', ${ORG_A});
 

@@ -135,18 +135,40 @@ jq -r '.check_runs[] | [.name, .conclusion, .app.slug, .html_url] | @tsv' \
 # Security Scan) rather than composing a second independent list — two
 # divergent definitions of "which checks gate a release" is exactly the drift
 # this runbook exists to prevent.
+# These are no longer placeholders. Every name below was read from a run in
+# which it actually reported success — commit 16464f5e6, the first fully green
+# same-commit CI on concept2cure-v2 (20 jobs, 0 failures, 2026-08-28). Re-run
+# the discovery command above before enabling protection anyway: a check
+# renamed since then must be corrected here, and the validation gate below
+# fails closed if any name no longer matches a successful run.
 CHECKS_JSON='[
-  {"context":"<exact live lint check name>"},
-  {"context":"<exact live typecheck check name>"},
-  {"context":"<exact live build check name>"},
-  {"context":"<exact live test check name>"},
-  {"context":"<exact live integration check name>"},
-  {"context":"<exact live security-contract check name>"},
-  {"context":"<exact live security-scanning check name>"},
-  {"context":"<exact live blank-DB/deploy-migration check name>"},
-  {"context":"<exact live non-superuser-RLS production-boot check name>"},
-  {"context":"<exact live Tier-5 authenticated-browser check name>"}
+  {"context":"Lint"},
+  {"context":"typecheck"},
+  {"context":"Build"},
+  {"context":"Test"},
+  {"context":"Integration Tests"},
+  {"context":"Security Contract Tests"},
+  {"context":"Security Scan"},
+  {"context":"Blank DB Provisioning + Deploy Migration"},
+  {"context":"Production Boot Smoke (RLS on, non-superuser role)"},
+  {"context":"Authenticated app smoke (real browser + DB)"},
+  {"context":"Analyze (CodeQL javascript-typescript)"},
+  {"context":"Analyze (CodeQL python)"},
+  {"context":"Analyze (Semgrep)"},
+  {"context":"Assemble Release Evidence"},
+  {"context":"Release evidence gate / validate-release-evidence"}
 ]'
+
+# Why the release-evidence pair is on the list and "Coverage (advisory)" is
+# not: the gate re-validates that every job named in
+# config/release-evidence-policy.v1.json actually SUCCEEDED on this commit, so
+# requiring it makes the protection resistant to the failure mode a plain
+# check list cannot see — a required job that was CANCELLED rather than run.
+# That is not hypothetical: on commit 9c74ea12d the gate correctly refused
+# because CodeQL and Semgrep had been cancelled by a subsequent push, while
+# every other check on that commit was green. Coverage is advisory by design
+# (its thresholds are zeroed and it runs continue-on-error), so requiring it
+# would assert a guarantee it does not make.
 
 # -n is load-bearing: without it jq waits on stdin and never evaluates the
 # filter (interactively it hangs; with stdin closed it exits 4 regardless of

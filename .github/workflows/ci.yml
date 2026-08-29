@@ -35,6 +35,7 @@ jobs:
           node-version: '22'
 
       - name: Guardrails — Node 22 runtime contracts
+        if: '!cancelled()'
         run: node scripts/ci/check-node-runtime.mjs
 
       # The guard's own detection logic is code that can regress; the self-test
@@ -42,9 +43,11 @@ jobs:
       # refuses to run against an already-dirty baseline, so it cannot pass
       # vacuously).
       - name: Guardrails — Node 22 guard rejects simulated drift
+        if: '!cancelled()'
         run: node scripts/ci/check-node-runtime.mjs --self-test
 
       - name: Install dependencies
+        id: install
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET)
         # that otherwise fail the whole pipeline (every other job needs: lint).
         run: |
@@ -61,27 +64,34 @@ jobs:
       # step sat before Install once and its failure skipped install, taking
       # every if:!cancelled() step below down with spurious module errors.
       - name: Guardrails — release-evidence manifest gate self-tests
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run test:release-evidence
 
       - name: Guardrails — eCTD migration headers (reg audit)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: ./scripts/ci/require-migration-headers.sh
 
       - name: Guardrails — ban direct new Pool()
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: scripts/ci/ban-new-pool.sh
 
       - name: Guardrails — migration prefix collisions (no regressions)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:migration-prefix-collisions
 
       - name: Guardrails — RLS allowlist TS↔SQL parity
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:rls-allowlist-sync
 
       - name: Guardrails — duplicate CREATE TABLE across BOTH migration lineages
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # The prefix-collision guard scans migrations/ only and the manifest
         # generator scans db/migrations/ only — neither sees cross-lineage table
         # collisions, and neither checks table NAMES. See ADR-0006 / conflict C-6.
         run: npm run ci:duplicate-table-ddl
 
       - name: Guardrails — golden-journey migrations must be on a durable apply path
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # The C-6/C-8/C-10/C-11/C-16/C-17 class from the applier side: a migration
         # a golden journey provisions and depends on, that no real deploy runs —
         # merged, green, and applied to the throwaway journey DB only. The
@@ -91,6 +101,7 @@ jobs:
         run: npm run ci:journey-migration-reachability
 
       - name: Guardrails — server SQL references a table no APPLIER creates
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # The general case of the guard above (ledger C-32). ci:unbacked-tables
         # asks "does a .sql file create this table?" and counts any non-archived
         # migration — regardless of whether an applier ever RUNS it. So a file
@@ -101,6 +112,7 @@ jobs:
         run: npm run ci:migration-reachability
 
       - name: Guardrails — server SQL references a table nothing creates
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # The C-8/C-10/C-11/C-12/C-14 class: shipped code with no storage. Unit
         # tests vi.mock the db module so a mock accepts any table name; the
         # failure surfaces only in production, as a 500 (unguarded query) or as
@@ -108,6 +120,7 @@ jobs:
         run: npm run ci:unbacked-tables
 
       - name: Guardrails — source files nothing can reach
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # The inverse of the unbacked-table class: not a table with no code, but
         # code with no caller. Nothing imports the module, so its routes are
         # unmounted and nothing it contains can run — yet it greps like product.
@@ -119,6 +132,7 @@ jobs:
         run: npm run ci:unreferenced-modules
 
       - name: Guardrails — no live credentials committed to the tree
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # A live `neondb_owner` Postgres password sat in two tracked files from
         # 2026-01-23 (a getting-started doc, in plaintext AND as a URL; and a
         # seed script, as the fallback used whenever DATABASE_URL was unset).
@@ -130,6 +144,7 @@ jobs:
         run: npm run ci:committed-secrets
 
       - name: Guardrails — requirements.txt pins must install on the declared Python
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Dependabot #1014 proposed numpy 2.4.6 -> 2.5.1. numpy 2.5.1 is
         # requires_python >=3.12 and ships only cp312/cp313/cp314 wheels; this
         # project declares python-3.11 (.replit line 1, and every setup-python
@@ -147,6 +162,7 @@ jobs:
         run: npm run ci:requirements-pins
 
       - name: Guardrails — content cannot be saved without its data lineage
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Every span of a saved document must trace to where it came from. The
         # gate that enforces it is a few lines inside a 6,000-line router, so a
         # refactor, an "optimisation" that drops the transaction, or a bad merge
@@ -160,6 +176,7 @@ jobs:
         run: npm run ci:lineage-save-gate
 
       - name: Guardrails — every artifact producer emits a provenance event
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # A write to concept2cure_artifacts is a document the platform builds;
         # each must record a concept2cure_provenance_events row so the document's
         # lifecycle is uniformly traceable. Baseline-based: a shrinking set of
@@ -169,12 +186,14 @@ jobs:
         run: npm run ci:artifact-provenance
 
       - name: Guardrails — no direct Pool construction in runtime code
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Was enforced nowhere. Its scan list also named ten of server/'s ~35
         # directories, so server/src, server/bootstrap, server/lib and others
         # were invisible to it; it now scans server/ with exclusions instead.
         run: npm run ci:ban-new-pool
 
       - name: Guardrails — eCTD stub bundle + generated risk-code types
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Both were pre-push-hook only, so a `git push --no-verify` skipped them
         # and nothing checked the branch.
         run: |
@@ -182,6 +201,7 @@ jobs:
           npm run ci:risk-codes
 
       - name: Guardrails — security patterns (tenant / identity / role trust)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Existed only as a pre-commit hook, so it was skipped by any commit made
         # with --no-verify and never enforced on the branch. It now blocks in CI.
         # Covers the PR #496-500 tenant-trust rules plus identity-trust-header
@@ -191,6 +211,7 @@ jobs:
         run: npm run check:security-patterns
 
       - name: Guardrails — proof surface must not shrink or overclaim
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # The proof hierarchy (docs/architecture/PROOF_HIERARCHY.md) is only a
         # ladder if it stays standing. This fails if a baselined proof file is
         # deleted, if a journey/proof stops emitting its manifest, or if the
@@ -199,6 +220,7 @@ jobs:
         run: npm run ci:proof-tier
 
       - name: Proof tier — schema contracts + golden journeys + export contracts
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # These run inside `npm test` too, but they get their own blocking step
         # because they are the acceptance evidence for the C-8/C-10/C-11/C-12/
         # C-14/C-16 remediations and must fail loudly and early, not be buried in
@@ -209,9 +231,11 @@ jobs:
         run: npm run test:proof-tier
 
       - name: Guardrails — i18n locale integrity (key/placeholder/markup parity)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: node scripts/ci/check-i18n-integrity.mjs
 
       - name: Guardrails — audit_logs fixtures accept the audit writer's columns
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # The chained audit write is fail-closed: the §11.10(e) row and the
         # mutation it records commit together or neither does. A test fixture
         # whose audit_logs lacks a column writeChainedAuditRow writes does not
@@ -222,9 +246,11 @@ jobs:
         run: npm run ci:audit-logs-fixture
 
       - name: Guardrails — tenant column types (no TEXT-typed tenant cols)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:tenant-column-types
 
       - name: Guardrails — org path params are checked against the caller
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # IDOR class. RLS does not backstop it: organization_users, api_keys and
         # four other tables are deliberately unpoliced so they can be read
         # pre-auth, so for routes touching them the application check is the
@@ -232,6 +258,7 @@ jobs:
         run: npm run ci:org-path-param-guards
 
       - name: Guardrails — every biostat form field is one the server reads
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # The workbench declares its calculators as data; the handlers read
         # req.body untyped and ignore anything unrecognised. So a mistyped key
         # does not throw and does not 400 — the form renders, the request
@@ -241,6 +268,7 @@ jobs:
         run: npm run ci:biostat-calculator-keys
 
       - name: Guardrails — no tenant-blind Drizzle models
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Sibling to the gate above, and deliberately separate: that one checks
         # the TYPE of a declared tenant column and cannot see one that is
         # ABSENT. A model missing the column leaves every route built on it
@@ -248,6 +276,7 @@ jobs:
         run: npm run ci:tenant-blind-models
 
       - name: Guardrails — WCAG AA contrast on design tokens
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Contrast is arithmetic on two hex values, so this cannot drift into
         # false positives. It caught --error never being declared for dark mode:
         # the light red cascaded onto the dark page at 2.69:1, under even the
@@ -255,9 +284,11 @@ jobs:
         run: npm run ci:token-contrast
 
       - name: Guardrails — tenant-isolation in raw SQL (no regressions)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:tenant-isolation:no-regression
 
       - name: Guardrails — every tenant entry point considers entitlement
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Isolation asks "can A see B's data"; this asks "may A be operating at
         # all", on every way INTO tenant data — not just the /api chain the
         # lifecycle guard is mounted on. Four surfaces (the public API, two
@@ -266,6 +297,7 @@ jobs:
         run: npm run ci:tenant-entry-points
 
       - name: Guardrails — request values must not reach a path unconstrained
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # RLS protects rows; it does nothing for files. Three instances of the
         # same shape were found by hand in one afternoon — one of them MOUNTED,
         # with the per-tenant vault inside its allowlist, so one customer could
@@ -275,9 +307,11 @@ jobs:
         run: npm run ci:path-containment
 
       - name: Guardrails — workflows must not invoke files that do not exist
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:workflow-targets
 
       - name: Guardrails — ECS deploy uses pinned task-def revisions (rollback safety)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # The production deploy registers a pinned task-def revision
         # (image @sha256:<digest>) and updates the service by ARN.
         # --force-new-deployment is banned because it cannot guarantee a
@@ -285,65 +319,84 @@ jobs:
         run: bash scripts/check_no_force_new_deployment.sh
 
       - name: Guardrails — tenant baseline ↔ justification parity
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:baseline-justifications
 
       - name: Guardrails — requestDb (RLS) adoption (no regressions)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression
 
       - name: Guardrails — no leaky dev-auth gates in prod paths
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:no-dev-auth-in-prod
 
       - name: Guardrails — password hygiene
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:password-hygiene
 
       - name: Guardrails — SAML SSO fail-closed (no auth bypass)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:saml-fail-closed
 
       - name: Guardrails — design-system non-negotiables (Lucide-only, no spring)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:design-system
 
       - name: Guardrails — regulated-data delete audit coverage (Part 11)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:regulated-delete-audit
 
       - name: Guardrails — no unreachable catch around an audit write (Part 11)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: |
           npm run ci:dead-audit-catch:self-test
           npm run ci:dead-audit-catch
 
       - name: Guardrails — route mount authority audit (no regressions)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:audit-route-mounts:no-regression
 
       - name: Guardrails — route ownership matrix artifact (required review evidence)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:route-ownership-matrix:check
 
       - name: Guardrails — AI gateway bypass (no direct LLM clients)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:gateway-bypass
 
       - name: Guardrails — jwt.verify pins algorithms (no alg-confusion)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:jwt-verify-pinned
 
       - name: Guardrails — legacy dependency quarantine (supabase-js, aws-sdk v2)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:check-legacy-dep-quarantine
 
       - name: Guardrails — no mock data in prod routes (no regressions)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:no-mock-in-prod-routes
 
       - name: Guardrails — js/ts shadow guard (no new same-basename .js/.ts pairs)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:js-ts-shadows
 
       - name: Guardrails — DOCX runtime canonicality (approved runtimes only)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:check-docx-runtime
 
       - name: Guardrails — PDF runtime canonicality (approved entry points only)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:check-pdf-runtime
 
       - name: Guardrails — cross-shell CSS collisions (ratchet, may only shrink)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:check-shell-css-collisions
 
       # Same selector defined twice unconditionally in one file: the later rule
       # wins silently. jsdom applies no stylesheet, so a component test asserts
       # a correct DOM while the pixels are wrong — no other gate here sees it.
       - name: Guardrails — CSS selector shadowing (allowlist, may only shrink)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:check-css-selector-shadowing
 
       # A literal `tone-*` class with no CSS rule renders an unstyled chip.
@@ -351,6 +404,7 @@ jobs:
       # test passes while the chip has no appearance. A prose warning was tried
       # first and was copied past twice.
       - name: Guardrails — chip tones must have a CSS rule
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:check-chip-tones
 
       # `.de-toast .ico` is green, so a one-tone toast announces failures with a
@@ -360,12 +414,15 @@ jobs:
       # twenty-ninth — including the invisible case, a tone narrowed away at a
       # prop boundary, which TypeScript accepts without a word.
       - name: Guardrails — one toast implementation, and it can say "failed"
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:toast-canonicality
 
       - name: Guardrails — phantom design tokens (ratchet, may only shrink)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:check-phantom-tokens
 
       - name: Guardrails — client reachability from main.tsx (ratchet, may only shrink)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:check-client-reachability
 
       # The server-side counterpart, and the one that cost the most. Six bootstrap
@@ -376,6 +433,7 @@ jobs:
       # that regresses is caught before it ships rather than by a 404 in
       # production. ~40s — too slow for the unit suite, which is why it is a step.
       - name: Guardrails — every registered route + blueprint reaches the bundle
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:check-bundle-reachability
 
       # The level below the mount audit. Two routers sharing an app.use prefix is
@@ -384,6 +442,7 @@ jobs:
       # six duplicate ops endpoints, one layer deeper. 10 prefixes here carry more
       # than one router; this asserts none of them collides.
       - name: Guardrails — no route defined twice under a shared prefix
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:check-route-collisions
 
       # A rule pack is the outline a customer's submission gets built against,
@@ -394,6 +453,7 @@ jobs:
       # migrations/20260810c. This keeps a newly seeded pack from going back to
       # saying nothing about where it came from.
       - name: Guardrails — every rule pack declares what it was built from
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:check-rule-pack-provenance
 
       # The direction nobody was asking. `audit:orphaned-endpoints` finds server
@@ -402,18 +462,21 @@ jobs:
       # found twelve surfaces whose endpoints 404d while the UI showed fixture
       # data and no error.
       - name: Guardrails — every client /api call has a server route
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:check-client-api-calls
 
       # tsconfig's include does not cover tests/, so `tsc --noEmit` has never
       # looked at a test file. This is the piece of that coverage that matters:
       # a test importing a module that no longer exists cannot run at all.
       - name: Guardrails — every local import in every test file resolves
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:check-test-imports
 
       # A stylesheet nothing imports is never handed to the bundler, so it
       # styles nothing on any surface. Ratchet at the measured 17; may only
       # shrink, by deleting a dead sheet or restoring a missing import.
       - name: Guardrails — orphaned stylesheets (ratchet, may only shrink)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:check-orphaned-stylesheets
 
       # A test file whose name matches no include glob is not reported as
@@ -421,6 +484,7 @@ jobs:
       # file looks like coverage indefinitely. client/src/__tests__/
       # FileContext.test.jsx had never run once, covering live code.
       - name: Guardrails — every test file is reachable by a runner
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:check-unrun-tests
 
       # tests/setup.ts mocks `pg` for the whole default project, and the
@@ -431,21 +495,26 @@ jobs:
       # are now `*.dbtest.ts` under vitest.db.config.ts, excluded from every
       # mocked config. This fails the PR that would undo that separation.
       - name: Guardrails — real-database tests never inherit the pg mock
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:db-test-isolation
 
       - name: Guardrails — embedding runtime canonicality (corpus policy)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:check-embedding-runtime
 
       - name: Guardrails — editor extension integrity (@tiptap imports declared)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:check-editor-integrity
 
       - name: Guardrails — Reasoning Tier readiness suite (governed exports + GA evidence)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Aggregate of ci:governed-export-routes, ci:governed-export-consequence-shape,
         # ci:reasoning-tier-ga-readiness and ci:reasoning-tier-uat-evidence — the gate
         # named as a GA criterion in docs/release/REASONING_TIER_GA_GATES.md.
         run: npm run ci:reasoning-tier-readiness
 
       - name: Guardrails — design-token cascade (ADVISORY)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Advisory-only: 12 pre-existing unresolved var() references live in
         # client/src/concept2cure/{biopharma,pdev}/app.css and
         # client/src/styles/projects-prototype.css (module-scoped --rail-*/--pdev-*
@@ -456,9 +525,11 @@ jobs:
         run: npm run ci:token-cascade
 
       - name: Audit — repo health scan (no regressions)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run audit:repo-health:no-regression
 
       - name: Audit — orphaned endpoints (threshold 600)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Regenerates docs/reports/orphan-endpoints-latest.{json,md} and fails
         # if the orphan count exceeds 570 (current: 556). Ratchet the threshold
         # down in package.json as the backlog is triaged.
@@ -512,7 +583,7 @@ jobs:
       # report, so a green typecheck can never again be indistinguishable from
       # one that was never executed.
       - name: Run ESLint
-        if: '!cancelled()'
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # JSON to a file so the warning ratchet below reuses THIS run instead
         # of linting the tree twice; the exit code still enforces 0 errors.
         # Readable output for humans is re-rendered only on failure.
@@ -523,7 +594,7 @@ jobs:
         run: npm run lint || true
 
       - name: Guardrails — ESLint warning ratchet (may only shrink)
-        if: '!cancelled()'
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:eslint-ratchet
         env:
           ESLINT_RATCHET_REPORT_JSON: eslint-report.json
@@ -532,11 +603,11 @@ jobs:
       # fail-closed proofs — runs on every push, so a guard whose detection
       # logic regresses cannot keep passing silently.
       - name: Guardrails — CI guard self-tests
-        if: '!cancelled()'
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run test:ci-scripts
 
       - name: Run TypeScript check (no regression vs baseline)
-        if: '!cancelled()'
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # The .typecheck-baseline.json count has been ratcheted down to 0
         # (from ~2,598 when the server/routes/auth.ts parse error was fixed
         # and the pre-existing debt became visible), so this gate now fails
@@ -547,13 +618,29 @@ jobs:
         run: npm run ci:typecheck:no-regression
 
       - name: Run beta-slice TypeScript check
-        if: '!cancelled()'
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run beta:typecheck
 
   test:
     name: Test
     runs-on: ubuntu-latest
     needs: lint
+    # Runs even when `lint` fails. `needs` still orders it after lint, but
+    # without this a single broken guardrail SKIPS the entire suite — and a
+    # skipped job reports neither pass nor fail.
+    #
+    # That is not hypothetical. One failing step (Proof tier) held this job
+    # skipped for three days, and when it finally ran it was 35 failures across
+    # 20 files. None of them was a product bug: every one was a fixture that had
+    # not kept up with a fail-closed guard someone added deliberately. So each of
+    # those guards had shipped unverified, and the debt compounded silently
+    # because the suite that would have shown it never ran.
+    #
+    # The marginal cost is small and lands exactly where it is wanted: this job
+    # already runs on every push where lint passes, so the only ADDITIONAL runs
+    # are the ones where lint is broken — which is precisely when you most need
+    # to know whether the tests still pass.
+    if: '!cancelled()'
     # Primary test gate now runs against a real Postgres so the safety-critical
     # RLS/tenant-isolation/audit/migration suites EXECUTE here instead of
     # self-skipping on a missing DB (they previously "passed" by skipping —
