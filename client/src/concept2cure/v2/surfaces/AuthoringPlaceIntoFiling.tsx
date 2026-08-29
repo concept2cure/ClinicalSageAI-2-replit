@@ -235,6 +235,16 @@ export function AuthoringPlaceIntoFiling({
         title: docTitle,
         moduleNumber: section.trim(),
         content: body,
+        /* Names the source so the server can read ITS governed state. The
+           snapshot's status is derived there, never sent from here: a
+           client-supplied status would let any caller mark a draft approved
+           and make an incomplete package report itself complete.
+           Without this the snapshot was always 'draft', and the eCTD
+           completeness check — which correctly refuses to count a draft —
+           made this path structurally incapable of producing a filable
+           package, however thoroughly the document had been frozen and
+           signed. */
+        sourceAuthoringDocId: docId,
       });
       const snapshotId = snap.data?.document?.id;
       if (typeof snapshotId !== 'number') {
