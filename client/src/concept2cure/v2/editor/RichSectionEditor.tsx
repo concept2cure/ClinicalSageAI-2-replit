@@ -137,7 +137,18 @@ export interface RichSectionEditorProps {
   /** Serialization contract of the backing store. Default 'html'. */
   format?: 'html' | 'text';
   /** Governed write-through. Throw/reject on failure — the footer reports it. */
-  onSave: (serialized: string) => void | Promise<void>;
+  /** Persist the serialized content.
+   *
+   *  `systemReason` is set only when the SAVE ITSELF is a mechanism acting,
+   *  not a person editing prose — today, applying a comment anchor. The host
+   *  requires the author to state a reason for their own edits, and a comment
+   *  anchor is not one of those: the author is leaving a note, and the save is
+   *  a consequence of that. Asking "why did this section change" there would
+   *  be a question about an act they did not perform.
+   *
+   *  It is a SYSTEM reason, never a substitute for the author's: it names the
+   *  mechanism and cannot be mistaken for something a person wrote. */
+  onSave: (serialized: string, systemReason?: string) => void | Promise<void>;
   /** Debounced autosave in ms, or null for explicit save (button / Mod-S). */
   autosaveMs?: number | null;
   onDirtyChange?: (dirty: boolean) => void;
@@ -869,7 +880,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     }, [storageKey]);
 
     /* ── The one save path ── */
-    const doSave = useCallback(async (): Promise<boolean> => {
+    const doSave = useCallback(async (systemReason?: string): Promise<boolean> => {
       const serialized =
         boot.mode === 'source' ? sourceText : editor ? serialize(editor) : null;
       if (serialized == null) return false;
@@ -882,7 +893,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       if (serialized === lastSavedRef.current) return true;
       setSaveState('saving');
       try {
-        await onSave(serialized);
+        await onSave(serialized, systemReason);
         lastSavedRef.current = serialized;
         setDirty(false);
         onDirtyChange?.(false);
@@ -985,7 +996,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       const id = await commentsApi.onCreate({ kind: 'text-range', quote, from, to });
       if (id) {
         editor.chain().focus().setTextSelection({ from, to }).setCommentAnchor(id).run();
-        await doSave();
+        /* The save is a consequence of leaving a comment, not an edit to the
+           prose — so it states its own mechanism rather than borrowing whatever
+           reason the author gave for their last content change. */
+        await doSave('Comment anchor applied');
       }
     }, [commentsApi, editor, doSave]);
 

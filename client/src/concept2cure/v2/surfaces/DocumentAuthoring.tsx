@@ -851,6 +851,47 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   // the leave-guard on filing actions.
   const [editorDirty, setEditorDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  /* ── REASON FOR CHANGE — stated once per section, carried on every save ──
+   *
+   * §11.10(d)/(e) wants to know WHY a governed record changed. Nothing on this
+   * surface ever asked: only the AI-draft dialog sent `changeReason`, so every
+   * ordinary save arrived without one and the filing's version ledger recorded
+   * that it was not stated.
+   *
+   * Sticky rather than per-save, which is the shape this repo already settled
+   * on for the same problem in ProtocolDev's schedule-of-assessments grid: the
+   * governed router wants a reason on every write, and "prompting per tick
+   * would be unusable — so the reason is stated ONCE for the editing session…
+   * what the regulation does not ask for is the same sentence retyped forty
+   * times." Save and ⌘S can each fire many times while working through one
+   * section, and each one is a real write.
+   *
+   * It gates SAVE, not editing. The SoA grid can sit read-only until a reason
+   * is given because it is one small governed table; this is the surface a
+   * writer spends the day in, and locking the canvas would make the editor
+   * hostile to the work it exists for. So: type freely, and state why before
+   * the record moves.
+   *
+   * Cleared on section change, because it describes THAT section's edit. A
+   * reason carried silently from one section to the next would attach one
+   * author's stated intent to a different part of the filing — a fabrication
+   * of exactly the kind the absent-reason handling was built to avoid.
+   *
+   * The ref exists because `saveSectionContent` is a useCallback that
+   * `RichSectionEditor` holds across renders; reading state through it
+   * directly would capture whatever the reason was when the callback was
+   * built. */
+  const [changeReason, setChangeReason] = useState('');
+  const changeReasonRef = useRef('');
+  useEffect(() => {
+    changeReasonRef.current = changeReason;
+  }, [changeReason]);
+  /* A reason describes the edit to ONE section. Carrying it across a section
+     change would attach one stated intent to a different part of the filing. */
+  useEffect(() => {
+    setChangeReason('');
+  }, [activeSectionId]);
   /** Bumped when the server replaces content out from under the editor
    *  (revert) so the canvas remounts on the new truth. */
   const [contentEpoch, setContentEpoch] = useState(0);
@@ -1906,8 +1947,25 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      the footer save-state, the device cache and this governed PATCH cannot
      disagree. Throwing on failure lets the editor report the truth. */
   const saveSectionContent = useCallback(
-    async (serialized: string) => {
+    async (serialized: string, systemReason?: string) => {
       if (!activeSection) throw new Error('No section open');
+
+      /* THE FUNNEL. Every content save arrives here — the Save button, ⌘S, and
+         the unsaved-work guard's Save — so the reason is required here rather
+         than only on the button, which is the one path a disabled attribute
+         can cover. Without this, ⌘S saved silently with no reason and the
+         button's requirement was decorative.
+         Refused visibly, never silently: an author who pressed ⌘S and saw
+         nothing happen would reasonably conclude their work was saved. */
+      if (!systemReason && !changeReasonRef.current.trim()) {
+        fireToast(
+          'Not saved — say why this section changed. It is recorded with the ' +
+            'revision, and the filing keeps it.',
+          'error',
+        );
+        throw new Error('reason-for-change required');
+      }
+
       setSaving(true);
       try {
         /* Authors whose insertions this reviewer accepted since the last save.
@@ -1922,10 +1980,17 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
            authors on one CTD section — a writer and a reviewer on the same
            §3.2.P.5 — end with the second save replacing the first's entire
            section, recorded in the revision ledger as an ordinary edit. */
+        /* §11.10(d)/(e) reason for change. Stated once per section per editing
+           session and carried on every save of that section — see
+           `changeReason` below for why it is sticky rather than per-save.
+           When it is absent the server records that it was NOT STATED; it does
+           not invent one. */
+        const reasonForChange = systemReason ?? changeReasonRef.current.trim();
         const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
           content: serialized,
           ...(activeSection.updated_at ? { expectedUpdatedAt: activeSection.updated_at } : {}),
           ...(acceptedAuthors.length ? { acceptedAuthors } : {}),
+          ...(reasonForChange ? { changeReason: reasonForChange } : {}),
         });
         const json = await res.json().catch(() => null);
         if (res.status === 401) {
@@ -2970,14 +3035,35 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             >
               {I.fileDown} Exports
             </button>
+            {/* Reason for change, stated once per section and carried on every
+                save of it. Inline beside Save rather than a dialog: there is no
+                autosave here, but Save and ⌘S each fire many times while
+                working through a section, and a modal on each would be the
+                friction the regulation does not ask for. */}
+            {dirty && !docSealed && (
+              <input
+                className="de-input"
+                style={{ height: 30, width: 260 }}
+                value={changeReason}
+                onChange={e => setChangeReason(e.target.value)}
+                placeholder="Why this changed (required to save)"
+                aria-label="Reason for change"
+                data-testid="change-reason"
+              />
+            )}
             <button
               className="btn primary"
               style={{ height: 30 }}
               onClick={() => void editorRef.current?.save()}
-              disabled={!dirty || saving || docSealed}
+              disabled={!dirty || saving || docSealed || !changeReason.trim()}
               title={
-                docSealed ? 'This document is frozen — its content cannot be edited.' : undefined
+                docSealed
+                  ? 'This document is frozen — its content cannot be edited.'
+                  : dirty && !changeReason.trim()
+                    ? 'Say why this section changed — it is recorded with the revision.'
+                    : undefined
               }
+              data-testid="save-section"
             >
               {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : 'Saved'}
             </button>
