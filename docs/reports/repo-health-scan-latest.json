@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-29T03:15:39.165Z",
+  "generatedAt": "2026-08-29T10:21:18.607Z",
   "git": {
-    "sha": "8117d30faa8e03143eaa7d6cf9eb1307d81fa30a",
+    "sha": "2c2bd7dbd33732979210d0596a2494905df5dbb5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2174,7 +2174,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 301365
+        "bytes": 302960
       },
       {
         "file": "server/statistics-service.ts",
@@ -2182,7 +2182,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 206610
+        "bytes": 211360
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2253,12 +2253,12 @@
         "bytes": 117471
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
-        "bytes": 116241
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "bytes": 116804
       },
       {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 115845
+        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+        "bytes": 116241
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2304,7 +2304,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7148
+        "lines": 7180
       },
       {
         "file": "server/statistics-service.ts",
@@ -2324,7 +2324,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 4629
+        "lines": 4716
       },
       {
         "file": "server/storage.ts",
@@ -2388,7 +2388,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2512
+        "lines": 2526
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2435,12 +2435,12 @@
         "lines": 2151
       },
       {
-        "file": "server/services/biomarkers/biomarker-knowledge.ts",
-        "lines": 2093
+        "file": "server/routes/auth.ts",
+        "lines": 2150
       },
       {
-        "file": "server/routes/auth.ts",
-        "lines": 2083
+        "file": "server/services/biomarkers/biomarker-knowledge.ts",
+        "lines": 2093
       },
       {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",

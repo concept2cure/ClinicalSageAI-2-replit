@@ -23,6 +23,7 @@ import { sha256, sha256Bytes } from './provenance.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { verifyFileSignature } from '../../utils/fileSignature';
 import { scanBuffer as scanForViruses } from '../../utils/virusScan';
+import { sha256Hex } from '../../services/ana/uploaded-file-access';
 
 const logger = createScopedLogger('chat-upload');
 
@@ -182,9 +183,23 @@ export const uploadHandler = async (req: Request, res: Response) => {
     // INSERT previously did — made every `WHERE organization_id = $n` lookup in
     // the chat/stream paths match zero rows, silently dropping attachments.
     await pool.query(
-      `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, status, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'uploaded', NOW())`,
-      [fileId, userId, orgId != null ? Number(orgId) : null, fileName, mimeType, fileSize, storagePath]
+      `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'uploaded', NOW())`,
+      [
+        fileId,
+        userId,
+        orgId != null ? Number(orgId) : null,
+        fileName,
+        mimeType,
+        fileSize,
+        storagePath,
+        // SHA-256 of the bytes as received, so loadUploadedFile can later prove
+        // the file on disk is still the one that was uploaded. Nothing recorded
+        // a digest before this, which is why no stored document was verifiable
+        // after the fact (GA ledger L25). Null only if this route ever runs
+        // without a buffer — the checksum must describe real bytes or nothing.
+        fileBuffer ? sha256Hex(fileBuffer) : null,
+      ]
     );
 
     // ── Text extraction (runs for every upload with a buffer) ──
