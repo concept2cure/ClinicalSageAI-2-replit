@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-29T02:07:39.179Z",
+  "generatedAt": "2026-08-29T03:15:39.165Z",
   "git": {
-    "sha": "f2e07276868f10e89b7d6c2bff2c871d92591376",
+    "sha": "8117d30faa8e03143eaa7d6cf9eb1307d81fa30a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2174,7 +2174,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 299143
+        "bytes": 301365
       },
       {
         "file": "server/statistics-service.ts",
@@ -2182,7 +2182,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 204506
+        "bytes": 206610
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2257,6 +2257,10 @@
         "bytes": 116241
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "bytes": 115845
+      },
+      {
         "file": "server/services/intelligent-report-engine.ts",
         "bytes": 115224
       },
@@ -2283,10 +2287,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 102440
       }
     ],
     "largeFilesByLines": [
@@ -2304,7 +2304,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7105
+        "lines": 7148
       },
       {
         "file": "server/statistics-service.ts",
@@ -2324,7 +2324,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 4589
+        "lines": 4629
       },
       {
         "file": "server/storage.ts",
@@ -2387,6 +2387,10 @@
         "lines": 2582
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 2512
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "lines": 2504
       },
@@ -2417,10 +2421,6 @@
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
         "lines": 2254
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2231
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
