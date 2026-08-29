@@ -458,29 +458,58 @@ ALTER TABLE cortex.causal_discovery_runs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cortex.mechanism_library ENABLE ROW LEVEL SECURITY;
 
 -- Causal graphs: org-scoped + global readable
+-- ── Tenant policies here FAIL CLOSED (revised 2026-08-28) ──────────────────
+-- These policies were written as `org_id = COALESCE(identity.current_org_id(),
+-- org_id)`. identity.current_org_id() returns NULL when app.current_org_id is
+-- unset, empty or not a uuid, and COALESCE then substitutes the row's OWN
+-- org_id — so the predicate becomes `org_id = org_id`, TRUE for every row in
+-- the table. A scope that could not be resolved granted EVERYTHING.
+--
+-- Measured before the change, as the non-superuser app_service role with
+-- app.rls_enforce=on, on two rows under different org_ids: an unset GUC
+-- returned BOTH tenants' rows, and so did a GUC of '42' — which is exactly
+-- what an INTEGER org id looks like arriving at a uuid-keyed schema. Both
+-- inputs are reachable; establishRequestTenantScope writes the GUC as
+-- `orgUuid ?? ''`.
+--
+-- The fallback was there to keep unscoped raw-pool readers working. That is
+-- now carried by the app.rls_enforce shadow clause instead — the same switch
+-- the 793 public-schema policies use — so enforcement OFF does not filter and
+-- enforcement ON filters strictly. Under enforcement an unscoped connection
+-- never reaches SQL anyway: poolInstrumentation fails closed on one.
+--
+-- `OR org_id IS NULL` is deliberately kept where it appears: those are
+-- unattributed rows treated as shared reference data, which is a separate
+-- product decision.
+
 DROP POLICY IF EXISTS causal_graphs_isolation ON cortex.causal_graphs;
 CREATE POLICY causal_graphs_isolation ON cortex.causal_graphs
-    FOR ALL USING (org_id = COALESCE(identity.current_org_id(), org_id) OR org_id IS NULL);
+    FOR ALL USING ((NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on')
+        OR org_id = identity.current_org_id() OR org_id IS NULL);
 
 -- Causal effects: org-scoped + global readable
 DROP POLICY IF EXISTS causal_effects_isolation ON cortex.causal_effects;
 CREATE POLICY causal_effects_isolation ON cortex.causal_effects
-    FOR ALL USING (org_id = COALESCE(identity.current_org_id(), org_id) OR org_id IS NULL);
+    FOR ALL USING ((NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on')
+        OR org_id = identity.current_org_id() OR org_id IS NULL);
 
 -- Counterfactual scenarios: strict org isolation
 DROP POLICY IF EXISTS counterfactual_isolation ON cortex.counterfactual_scenarios;
 CREATE POLICY counterfactual_isolation ON cortex.counterfactual_scenarios
-    FOR ALL USING (org_id = COALESCE(identity.current_org_id(), org_id));
+    FOR ALL USING ((NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on')
+        OR org_id = identity.current_org_id());
 
 -- Interventions: strict org isolation
 DROP POLICY IF EXISTS interventions_isolation ON cortex.interventions;
 CREATE POLICY interventions_isolation ON cortex.interventions
-    FOR ALL USING (org_id = COALESCE(identity.current_org_id(), org_id));
+    FOR ALL USING ((NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on')
+        OR org_id = identity.current_org_id());
 
 -- Discovery runs: org-scoped + global readable
 DROP POLICY IF EXISTS discovery_runs_isolation ON cortex.causal_discovery_runs;
 CREATE POLICY discovery_runs_isolation ON cortex.causal_discovery_runs
-    FOR ALL USING (org_id = COALESCE(identity.current_org_id(), org_id) OR org_id IS NULL);
+    FOR ALL USING ((NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on')
+        OR org_id = identity.current_org_id() OR org_id IS NULL);
 
 -- Mechanism library: global read
 DROP POLICY IF EXISTS mechanism_library_read ON cortex.mechanism_library;

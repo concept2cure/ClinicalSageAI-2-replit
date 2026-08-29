@@ -42,6 +42,12 @@
  * document-scoped registry, and the reference list is assembled from the
  * citations actually used. See @shared/authoring/citations.
  *
+ * CAPTIONS carry THE OBJECT'S IDENTITY AND ITS WORDS, never its number. A
+ * table and a figure are numbered objects in a CTD document — "Table 3",
+ * "Figure 1" — and the ordinal is a rendering of where the object currently
+ * sits, assigned in reading order at render time by a document-scoped counter
+ * and counted separately for the two kinds. See @shared/authoring/captions.
+ *
  * CROSS-REFERENCES carry the TARGET SECTION'S ID and not its printed number.
  * The run's `text` is the editor's cache and is not what either renderer
  * prints: both resolve the id against the document's sections at render time,
@@ -60,6 +66,16 @@ import {
   CITATION_SOURCE_ATTR,
   CITATION_LOCATOR_ATTR,
 } from '@shared/authoring/citations';
+import {
+  CAPTION_ID_ATTR,
+  captionCrossReferenceTargets,
+  numberCaptions,
+  type CaptionKind,
+  type CaptionNumbering,
+  type CaptionedObject,
+  type NumberedCaption,
+} from '@shared/authoring/captions';
+import type { CrossReferenceTarget } from '@shared/authoring/cross-references';
 
 export interface InlineRun {
   text: string;
@@ -191,12 +207,27 @@ export interface ContentBlock {
   runs: InlineRun[];
   /** Tables only: rows of cells, in document order. */
   rows?: TableCell[][];
-  /** Tables only: the `caption` text, when the author gave one. */
+  /** Tables only: the `caption` text, when the author gave one.
+   *
+   *  The WORDS only. A caption never carries its number in stored content —
+   *  "Table 3" is a rendering of where this table currently sits, derived at
+   *  render time by a document-scoped counter. See @shared/authoring/captions. */
   caption?: string;
   /** Images only: the stored reference (`/api/authoring/images/<id>`, a data
-   *  URI, or a foreign URL) and the author's alt text. */
+   *  URI, or a foreign URL) and the author's alt text.
+   *
+   *  For a standalone figure the alt text IS the caption — it is the string
+   *  both renderers already print in the caption position, and giving a figure
+   *  a second, parallel caption field would be two stores for one sentence. */
   src?: string;
   alt?: string;
+  /** Tables and images: `data-caption-id`, the object's stable identity.
+   *
+   *  Present only so a CROSS-REFERENCE can point at this table or figure — it
+   *  is never printed and it is never the number. Absent on content written
+   *  before captions had an identity, which still numbers and prints correctly
+   *  and simply cannot be referenced. */
+  captionId?: string;
 }
 
 /** How deep a list may nest before the renderers clamp. Five ranks is the
@@ -466,6 +497,9 @@ function trimRuns(runs: InlineRun[]): InlineRun[] {
  */
 function parseTable(node: HTMLElement, st: InlineState): ContentBlock | null {
   const caption = node.querySelector('caption')?.text?.replace(/\s+/g, ' ').trim() || undefined;
+  /* The object's identity, so a cross-reference can point at this table. Never
+     its number, which is positional and computed at render time. */
+  const captionId = (node.getAttribute(CAPTION_ID_ATTR) ?? '').trim() || undefined;
   const rows: TableCell[][] = [];
 
   const readRow = (tr: HTMLElement, inHead: boolean): void => {
@@ -504,7 +538,13 @@ function parseTable(node: HTMLElement, st: InlineState): ContentBlock | null {
   scan(node, false);
 
   if (!rows.length) return null;
-  return { kind: 'table', runs: [], rows, ...(caption ? { caption } : {}) };
+  return {
+    kind: 'table',
+    runs: [],
+    rows,
+    ...(caption ? { caption } : {}),
+    ...(captionId ? { captionId } : {}),
+  };
 }
 
 function parseHtmlToBlocks(html: string): ContentBlock[] {
@@ -580,7 +620,14 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
       if (src) {
         closeBlock();
         const alt = (node.getAttribute('alt') ?? '').trim();
-        blocks.push({ kind: 'image', runs: [], src, ...(alt ? { alt } : {}) });
+        const captionId = (node.getAttribute(CAPTION_ID_ATTR) ?? '').trim();
+        blocks.push({
+          kind: 'image',
+          runs: [],
+          src,
+          ...(alt ? { alt } : {}),
+          ...(captionId ? { captionId } : {}),
+        });
       }
       return;
     }
@@ -668,6 +715,77 @@ export function sectionContentToBlocks(stored: string | null | undefined): Conte
       .map((line) => ({ kind: 'paragraph' as const, runs: [{ text: line }] }));
   }
   return parseHtmlToBlocks(s);
+}
+
+/**
+ * The captioned object a block is, or null when it is not one.
+ *
+ * ONE predicate, used by the collector that builds the cross-reference
+ * directory and by BOTH renderers. That is deliberate: the directory pass and
+ * the render pass walk the same blocks in the same order and must agree
+ * object-for-object, or a reference would print "Table 3" while the caption
+ * printed "Table 4" — a plausible-looking wrong number, which is the one
+ * outcome this whole design exists to prevent.
+ *
+ * What it encodes, in one place:
+ *   - a TABLE's caption is its `<caption>`; a FIGURE's is its alt text, which
+ *     is the string both renderers already print in the caption position;
+ *   - no caption text, no number (see @shared/authoring/captions);
+ *   - a figure INSIDE a table cell is not a numbered object. It is part of the
+ *     table it sits in — the subject device's photograph in a comparison row —
+ *     and it has no caption position of its own to print "Figure 4" in.
+ */
+export function blockCaption(b: ContentBlock): CaptionedObject | null {
+  const kind: CaptionKind | null =
+    b.kind === 'table' ? 'table' : b.kind === 'image' ? 'figure' : null;
+  if (!kind) return null;
+  const caption = String((kind === 'table' ? b.caption : b.alt) ?? '').trim();
+  if (!caption) return null;
+  return { kind, caption, ...(b.captionId ? { id: b.captionId } : {}) };
+}
+
+/**
+ * Number the captioned tables and figures in a set of blocks, in reading order.
+ *
+ * `numbering` is the DOCUMENT's counter, threaded in by the caller and shared
+ * across every section, for the same reason the citation registry and the DOCX
+ * footnote sink are: a submission's tables run 1..n across the whole document,
+ * and a renderer that started its own counter would open every section with
+ * "Table 1".
+ */
+export function numberBlockCaptions(
+  blocks: ContentBlock[],
+  numbering: CaptionNumbering,
+): NumberedCaption[] {
+  const objects: CaptionedObject[] = [];
+  for (const b of blocks) {
+    const c = blockCaption(b);
+    if (c) objects.push(c);
+  }
+  return numberCaptions(objects, numbering);
+}
+
+/**
+ * The captioned tables and figures of a set of blocks, as CROSS-REFERENCE
+ * TARGETS — merged by the export into the same directory the sections go into.
+ *
+ * The export needs this BEFORE it renders, and for the whole document: "as
+ * shown in Table 7" is routinely written above the table it names, so a
+ * reference cannot be resolved by counting as the renderer walks. The caller
+ * makes one pass over every section to build the directory and a second,
+ * identical pass to render — which is exactly what it already does for
+ * citations, whose reference list also cannot be assembled until every section
+ * has been read.
+ *
+ * An object with no `data-caption-id` is not a target (nothing can point at it)
+ * but still consumes its ordinal, so the objects after it carry the numbers the
+ * filed document prints.
+ */
+export function collectCaptionTargets(
+  blocks: ContentBlock[],
+  numbering: CaptionNumbering,
+): CrossReferenceTarget[] {
+  return captionCrossReferenceTargets(numberBlockCaptions(blocks, numbering));
 }
 
 /**

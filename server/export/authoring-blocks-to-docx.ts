@@ -12,7 +12,12 @@
  * dynamically (it is ESM-only and the route is hot), and a caller that already
  * holds the namespace should not load a second copy.
  */
-import { MAX_LIST_DEPTH, type ContentBlock, type InlineRun } from './authoring-section-content.js';
+import {
+  MAX_LIST_DEPTH,
+  blockCaption,
+  type ContentBlock,
+  type InlineRun,
+} from './authoring-section-content.js';
 import type { ResolvedImage } from './authoring-images.js';
 import {
   crossReferenceBookmarkId,
@@ -28,6 +33,11 @@ import {
   citationMarkerText,
   type CitationRegistry,
 } from '@shared/authoring/citations';
+import {
+  CAPTION_NUMBER_SEPARATOR,
+  captionCode,
+  type CaptionNumbering,
+} from '@shared/authoring/captions';
 
 /** The slice of the `docx` module namespace this renderer needs. */
 export type DocxNs = typeof import('docx');
@@ -166,6 +176,19 @@ export interface DocxRenderOptions {
    * the same refusal a cross-reference makes with no directory.
    */
   citations?: CitationRegistry | null;
+  /**
+   * Numbers the captioned tables and figures, for the whole DOCUMENT.
+   *
+   * One counter across every section, for exactly the reason `footnoteSink` is
+   * one per file: a submission's tables run 1..n from front to back, and a
+   * renderer that started its own counter would open every section with
+   * "Table 1". Tables and figures are counted separately.
+   *
+   * Absent, a caption prints its authored words with no ordinal — the words are
+   * the author's and are filed either way, while a number only ever comes from
+   * the caller's counter.
+   */
+  captions?: CaptionNumbering | null;
 }
 
 /**
@@ -187,6 +210,12 @@ export interface DocxRenderOptions {
  *
  * A `code-title` reference is then two REF fields with a space between, and
  * each one prints exactly what this export resolved.
+ *
+ * "Section" is the name it was born with and it now serves EVERY cross-reference
+ * target: a captioned table or figure is bookmarked by exactly this pair, over
+ * its "Table 3" and over its caption words, because a reference to a table is
+ * the same kind of thing as a reference to a section and is resolved by the same
+ * function. Target ids are distinct, so the two families cannot collide.
  */
 export function sectionBookmarkIds(sectionId: string): { code: string; title: string } {
   const base = crossReferenceBookmarkId(sectionId);
@@ -422,6 +451,82 @@ function tableOf(
   return new D.Table({ rows, width: { size: 100, type: D.WidthType.PERCENTAGE } });
 }
 
+/**
+ * One numbered caption, as this render resolved it. Never read from stored
+ * content: `ordinal` comes from the document's counter and `id` is the object's
+ * identity, which is what a REF field to it cites.
+ */
+interface RenderedCaption {
+  kind: 'table' | 'figure';
+  ordinal: number;
+  /** The authored words, without a number. */
+  words: string;
+  /** Null when the object has no identity, so nothing can point at it. */
+  id: string | null;
+}
+
+/**
+ * The caption paragraph a table or a figure carries, or null when there is
+ * nothing to print.
+ *
+ * ── Why it is bookmarked, and in two pieces ─────────────────────────────────
+ * A cross-reference to a table becomes a Word REF field, and a REF field prints
+ * THE TEXT ITS BOOKMARK COVERS. So the caption needs the same pair of adjacent,
+ * non-overlapping bookmarks a section heading carries — one over "Table 3" and
+ * one over the caption's words — or a reference showing only the number and a
+ * reference showing number-and-caption could not be told apart, and one of them
+ * would silently rewrite itself into the other the first time a reviewer
+ * pressed F9. The separator sits OUTSIDE both, so neither field prints it. See
+ * `sectionHeadingParagraph`, which this deliberately mirrors.
+ *
+ * ── Why the words print even with no numbering ──────────────────────────────
+ * The caption is authored content. A render given no counter still files it,
+ * unnumbered and unbookmarked — the same degradation a footnote reference makes
+ * when there is no sink to letter it. What never happens is a number from
+ * anywhere but the counter.
+ */
+function captionParagraph(
+  D: DocxNs,
+  authored: string | undefined,
+  caption: RenderedCaption | null | undefined,
+): InstanceType<DocxNs['Paragraph']> | null {
+  const style = { italics: true, size: 18 } as const;
+  if (!caption) {
+    const words = String(authored ?? '').trim();
+    if (!words) return null;
+    return new D.Paragraph({
+      alignment: D.AlignmentType.CENTER,
+      children: [new D.TextRun({ text: words, ...style })],
+    });
+  }
+  const code = captionCode(caption.kind, caption.ordinal);
+  const words = String(caption.words ?? '').trim();
+  const children: unknown[] = [];
+  if (caption.id) {
+    const ids = sectionBookmarkIds(caption.id);
+    children.push(
+      new D.Bookmark({ id: ids.code, children: [new D.TextRun({ text: code, ...style })] }),
+    );
+    if (words) {
+      children.push(new D.TextRun({ text: CAPTION_NUMBER_SEPARATOR, ...style }));
+      children.push(
+        new D.Bookmark({ id: ids.title, children: [new D.TextRun({ text: words, ...style })] }),
+      );
+    }
+  } else {
+    children.push(
+      new D.TextRun({
+        text: words ? `${code}${CAPTION_NUMBER_SEPARATOR}${words}` : code,
+        ...style,
+      }),
+    );
+  }
+  return new D.Paragraph({
+    alignment: D.AlignmentType.CENTER,
+    children: children as never,
+  });
+}
+
 /** One figure as DOCX paragraphs: the image and its caption when the bytes
  *  resolved, a stated placeholder when they did not. Shared by the standalone
  *  image block and the in-cell figure so the two cannot disagree about what a
@@ -430,6 +535,7 @@ function figureParagraphs(
   D: DocxNs,
   fig: { src?: string; alt?: string },
   images?: Map<string, ResolvedImage>,
+  caption?: RenderedCaption | null,
 ): InstanceType<DocxNs['Paragraph']>[] {
   const resolved = fig.src ? images?.get(fig.src) : undefined;
   const type = resolved ? DOCX_IMAGE_TYPE[resolved.mimeType] : undefined;
@@ -458,14 +564,8 @@ function figureParagraphs(
       ],
     }),
   ];
-  if (fig.alt) {
-    out.push(
-      new D.Paragraph({
-        alignment: D.AlignmentType.CENTER,
-        children: [new D.TextRun({ text: fig.alt, italics: true, size: 18 })],
-      })
-    );
-  }
+  const captionPara = captionParagraph(D, fig.alt, caption);
+  if (captionPara) out.push(captionPara);
   return out;
 }
 
@@ -492,24 +592,35 @@ export function blocksToDocx(
   const footnoteSink = opts.footnoteSink;
   const crossRefs = opts.crossRefs ?? null;
   const citations = opts.citations ?? null;
+  const captions = opts.captions ?? null;
+  /* The block's caption, numbered from the document's counter. `blockCaption`
+     is the SAME predicate the directory pass used to build the cross-reference
+     targets, so the ordinal printed on the caption and the ordinal printed by a
+     REF field to it are the same ordinal by construction. */
+  const captionOf = (b: ContentBlock): RenderedCaption | null => {
+    if (!captions) return null;
+    const object = blockCaption(b);
+    if (!object) return null;
+    return {
+      kind: object.kind,
+      ordinal: captions.next(object.kind),
+      words: object.caption,
+      id: object.id ? String(object.id) : null,
+    };
+  };
   const out: (InstanceType<DocxNs['Paragraph']> | InstanceType<DocxNs['Table']>)[] = [];
   for (const block of blocks) {
     if (block.kind === 'image') {
-      out.push(...figureParagraphs(D, block, images));
+      out.push(...figureParagraphs(D, block, images, captionOf(block)));
       continue;
     }
     if (block.kind === 'table') {
+      const caption = captionOf(block);
       out.push(
         tableOf(D, block, revisionId, revisionDate, footnoteSink, crossRefs, citations, images),
       );
-      if (block.caption) {
-        out.push(
-          new D.Paragraph({
-            alignment: D.AlignmentType.CENTER,
-            children: [new D.TextRun({ text: block.caption, italics: true, size: 18 })],
-          })
-        );
-      }
+      const captionPara = captionParagraph(D, block.caption, caption);
+      if (captionPara) out.push(captionPara);
       /* Word merges adjacent tables that no paragraph separates, so two
          consecutive tables would render as one with no visible boundary. */
       out.push(new D.Paragraph({ text: '' }));

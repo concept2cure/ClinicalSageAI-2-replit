@@ -36,6 +36,7 @@
 
 import { Node, mergeAttributes } from '@tiptap/core';
 import { apiRequest } from '@/lib/queryClient';
+import { CAPTION_ID_ATTR } from '@shared/authoring/captions';
 
 /* ── Authenticated display cache ──────────────────────────────── */
 
@@ -69,7 +70,14 @@ export function resolveImageSrc(src: string): Promise<string> {
 
 export interface AuthoringImageAttrs {
   src: string;
+  /** The figure's caption. It is the alt text because that is the one string
+   *  both export renderers already print in the caption position; a second
+   *  field would be two stores for one sentence. */
   alt?: string | null;
+  /** The figure's identity, so a cross-reference can point at it. Never its
+   *  number — "Figure 3" is a rendering of where the figure currently sits.
+   *  See @shared/authoring/captions. */
+  captionId?: string | null;
 }
 
 declare module '@tiptap/core' {
@@ -97,6 +105,16 @@ export const AuthoringImage = Node.create({
         parseHTML: (el: HTMLElement) => el.getAttribute('alt'),
         renderHTML: (attrs: Record<string, unknown>) =>
           attrs.alt ? { alt: String(attrs.alt) } : {},
+      },
+      /* The figure's identity as a numbered object. Present only so a
+         cross-reference can point at this figure; never printed, and never the
+         number. A figure without one still numbers — the ordinal is positional
+         — it simply cannot be referenced. */
+      captionId: {
+        default: null,
+        parseHTML: (el: HTMLElement) => el.getAttribute(CAPTION_ID_ATTR),
+        renderHTML: (attrs: Record<string, unknown>) =>
+          attrs.captionId ? { [CAPTION_ID_ATTR]: String(attrs.captionId) } : {},
       },
     };
   },
@@ -159,8 +177,13 @@ export const AuthoringImage = Node.create({
 
       return {
         dom,
-        // A src change is a different image — rebuild the view.
-        update: (updated) => updated.type.name === 'image' && updated.attrs.src === src,
+        /* A src change is a different image — rebuild the view. So is an alt
+           change: alt is the figure's caption AND what a screen reader
+           announces, and a stale one would describe the previous words. */
+        update: (updated) =>
+          updated.type.name === 'image' &&
+          updated.attrs.src === src &&
+          (updated.attrs.alt ?? '') === (node.attrs.alt ?? ''),
         destroy: () => {
           alive = false;
         },

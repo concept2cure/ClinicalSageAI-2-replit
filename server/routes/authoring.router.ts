@@ -5648,12 +5648,12 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
     const { crossReferenceLookupFor, crossReferenceAnchorId } = await import(
       '@shared/authoring/cross-references'
     );
-    const crossRefs = crossReferenceLookupFor(
-      sectionsResult.rows.map((s: { id: string; code: string; title: string }) => ({
+    const sectionTargets = sectionsResult.rows.map(
+      (s: { id: string; code: string; title: string }) => ({
         id: String(s.id),
         code: s.code,
         title: s.title,
-      }))
+      })
     );
 
     /* CITATIONS are numbered by POSITION, once for the whole document.
@@ -5671,8 +5671,12 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
        takes no number and no entry, and is stated in place. A number with no
        entry behind it would send a reviewer looking for a reference that is not
        there. */
-    const { sectionContentToBlocks, countPendingSuggestions, collectCitedSourceIds } =
-      await import('../export/authoring-section-content.js');
+    const {
+      sectionContentToBlocks,
+      countPendingSuggestions,
+      collectCitedSourceIds,
+      collectCaptionTargets,
+    } = await import('../export/authoring-section-content.js');
     const { makeCitationRegistry, citationLookupFor } = await import(
       '@shared/authoring/citations'
     );
@@ -5684,6 +5688,30 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
             blocks: sectionContentToBlocks(section.content),
           }))
         : [];
+    /* CAPTIONS make a table and a figure NUMBERED OBJECTS, and numbered objects
+       are things a cross-reference can point at. The ordinal is never stored:
+       it is assigned here, in one pass over every section in reading order,
+       counted separately for tables and figures — so inserting a table in an
+       earlier section renumbers every table after it, and every reference to
+       any of them, with no section's stored bytes touched.
+
+       This pass runs BEFORE rendering because "as shown in Table 7" is routinely
+       written above the table it names: a reference cannot be resolved by
+       counting as the renderer walks. Same reason the citation registry has to
+       know the whole document before it can number one marker.
+
+       The results are merged into the SAME directory the sections go into. A
+       table is a target whose code is "Table 3" and whose title is its caption;
+       nothing in the resolver, in either renderer's reference branch, or in the
+       editor knows that some targets are tables. There is no second mechanism
+       to keep in step. */
+    const { makeCaptionNumbering } = await import('@shared/authoring/captions');
+    const captionDirectory = makeCaptionNumbering();
+    const captionTargets = parsedSections.flatMap((p) =>
+      collectCaptionTargets(p.blocks, captionDirectory)
+    );
+    const crossRefs = crossReferenceLookupFor([...sectionTargets, ...captionTargets]);
+
     const citedSourceIds = parsedSections.flatMap((p) => collectCitedSourceIds(p.blocks));
     const citationSources = citedSourceIds.length
       ? await (async () => {
@@ -5824,6 +5852,12 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
         footnoteText.set(noteText, id);
         return id;
       };
+      /* ONE caption counter for the whole file, for the same reason there is one
+         footnote sink: a submission's tables run 1..n from front to back. It is
+         a SECOND counter over the same blocks in the same order as the directory
+         pass above — the two agree object-for-object because both ask
+         `blockCaption` what a block is. */
+      const captions = makeCaptionNumbering();
       for (const { section, blocks } of sectionBlocks) {
         /* The heading carries the Word bookmarks every REF field to this
            section cites. Emitted for EVERY section, so a reference that
@@ -5838,6 +5872,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
             footnoteSink,
             crossRefs,
             citations,
+            captions,
           })
         );
       }
@@ -5902,13 +5937,21 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
          render as redline with an up-front notice, same as the DOCX branch. */
       let pdfPendingIns = 0;
       let pdfPendingDel = 0;
+      /* One caption counter for the whole document, exactly as the DOCX branch
+         keeps one — the two formats of the same frozen document must not
+         disagree about which table is Table 3. */
+      const pdfCaptions = makeCaptionNumbering();
       /* The same parse and the SAME citation registry the DOCX branch uses, so
          the two filed formats cannot number one source differently. */
       const pdfSections = parsedSections.map(({ section: s, blocks }) => {
         const pending = countPendingSuggestions(blocks);
         pdfPendingIns += pending.insertions;
         pdfPendingDel += pending.deletions;
-        const body = blocksToHtml(blocks, exportImages, { crossRefs, citations });
+        const body = blocksToHtml(blocks, exportImages, {
+          crossRefs,
+          citations,
+          captions: pdfCaptions,
+        });
         // The heading is the anchor a resolved cross-reference links to.
         return `<h2 id="${esc(crossReferenceAnchorId(String(s.id)))}">${esc(s.code)} — ${esc(
           s.title

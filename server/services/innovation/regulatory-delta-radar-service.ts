@@ -21,6 +21,7 @@ import {
   resolveToRegistryEntry,
   getSubmissionTypeContext,
 } from '../../../shared/regulatory/submission-type-bridge.js';
+import { releaseWithoutBypass } from './rlsBypassSession';
 
 // Types
 export interface GuidanceDocument {
@@ -286,7 +287,7 @@ export class RegulatoryDeltaRadarService {
       console.error('[DeltaRadar] Failed to import guidance:', error);
       throw error;
     } finally {
-      client.release();
+      await releaseWithoutBypass(client);
     }
   }
 
@@ -316,7 +317,7 @@ export class RegulatoryDeltaRadarService {
       console.warn('[DeltaRadar] Failed to list guidance documents, using cache:', error);
       docs = [];
     } finally {
-      client.release();
+      await releaseWithoutBypass(client);
     }
 
     if (organizationId && !orgColumn) {
@@ -703,7 +704,7 @@ export class RegulatoryDeltaRadarService {
       console.error('[DeltaRadar] Scan failed:', error);
       throw error;
     } finally {
-      client.release();
+      await releaseWithoutBypass(client);
     }
   }
 

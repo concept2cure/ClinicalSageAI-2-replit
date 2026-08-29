@@ -58,7 +58,13 @@ export function normalizeCrossReferenceDisplay(value: unknown): CrossReferenceDi
   return value === 'code' ? 'code' : 'code-title';
 }
 
-/** What a target section is, as far as a reference is concerned. */
+/** What a target is, as far as a reference is concerned.
+ *
+ *  A SECTION is one: `code` is "2.7.4.2" and `title` is "Efficacy Summary". So
+ *  is a captioned TABLE or FIGURE: `code` is "Table 3" — a rendering of where it
+ *  currently sits, computed by the caller from position — and `title` is its
+ *  caption. Nothing below this line knows the difference, which is the point:
+ *  captions reuse this resolver rather than running a second one beside it. */
 export interface CrossReferenceTarget {
   id: string;
   code?: string | null;
@@ -78,9 +84,14 @@ export type CrossReferenceLookup = (
  * It is deliberately not a number, not the reference's last-known text, and not
  * an identifier. A reviewer reading a filed page must be able to see that a
  * reference could not be resolved; a medical writer must be able to find it.
+ *
+ * It says "the target" and not "the target section" because a target is not
+ * always a section: a captioned table or figure is a target too (see
+ * ./captions.ts), and a reference to a deleted TABLE that reported a missing
+ * section would be telling a reviewer to look for the wrong thing.
  */
 export const CROSS_REFERENCE_MISSING_TEXT =
-  '[Cross-reference unresolved — the target section is not part of this document]';
+  '[Cross-reference unresolved — the target is not part of this document]';
 
 export interface ResolvedCrossReference {
   /** True only when the target was found AND had something to print. */

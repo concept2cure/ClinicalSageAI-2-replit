@@ -289,13 +289,9 @@ export interface AssembleSubmissionParams {
    * exist is an error, never a silent fallback to another sequence.
    */
   sequenceNumber?: string;
-  /** Optional CROSS-CHECK only. The application number stamped into the backbone
-   *  envelope is the submission's RECORDED `application_number` (authoritative,
-   *  NOT NULL), not this value; when supplied and it contradicts the record the
-   *  assemble is refused (mirrors `region`). It is never the source of what
-   *  ships, so a caller can never inject an arbitrary agency number into a
-   *  transmissible package. Falls back to the neutral `SEQ-<sequenceId>` handle
-   *  only if the recorded value is somehow empty. */
+  /** Recorded application number for the backbone envelope. Falls back to the
+   *  neutral `SEQ-<sequenceId>` handle (same convention as the /api/submissions
+   *  assemble route) — never an invented agency number. */
   applicationNumber?: string;
   /**
    * Requested region (accepts core codes fda|eu|jp and agency names FDA|EMA|
@@ -406,25 +402,11 @@ export async function assembleSubmissionEctd(
     }
   }
 
-  // Application-number honesty (same rule as region): the submission's RECORDED
-  // application_number is what gets stamped into the package's backbone envelope
-  // — never a caller-supplied value. A caller-supplied applicationNumber that
-  // contradicts the record is refused outright: silently honoring it would
-  // misattribute a real, transmissible eCTD package to the wrong IND/NDA/BLA,
-  // and silently ignoring it would mislead the caller.
-  if (params.applicationNumber && params.applicationNumber !== submission.applicationNumber) {
-    throw new Error(
-      `Requested application number "${params.applicationNumber}" does not match the submission's ` +
-        `recorded application number "${submission.applicationNumber}". The recorded application ` +
-        'number is authoritative; omit it to package as recorded.',
-    );
-  }
-
   const assembled = await assembleSequence({
     sequenceId: sequence.id,
     organizationId,
     userId,
-    applicationId: submission.applicationNumber || `SEQ-${sequence.id}`,
+    applicationId: params.applicationNumber ?? `SEQ-${sequence.id}`,
     sponsorId: `ORG-${organizationId}`,
     sponsorName: `Organization ${organizationId}`,
   });

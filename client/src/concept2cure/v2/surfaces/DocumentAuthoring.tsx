@@ -86,6 +86,8 @@ import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichS
 import type { SuggestionDecision } from '../editor/suggestions';
 import type { CommentAnchorPayload } from '../editor/commentAnchor';
 import { citedSourceIdsInHtml } from '../editor/citationNode';
+import { captionedObjectsInHtml } from '../editor/captionNumbering';
+import type { CaptionedObject } from '@shared/authoring/captions';
 import type { CitationSource } from '@shared/authoring/citations';
 import { useAuth } from '@/services/portal/authService';
 import { getAuthToken } from '@/utils/authToken';
@@ -1790,6 +1792,36 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       ids.push(...citedSourceIdsInHtml(sec.content ?? ''));
     }
     return ids;
+  }, [sections, activeSectionId]);
+
+  /* ── The document's tables and figures, either side of the open section ──
+     A caption's number is the object's POSITION among the document's tables
+     (or figures), and the editor holds one section. Without the objects above
+     it the canvas would number from 1 and show "Table 1" for an object the
+     filing prints as "Table 7" — a plausible-looking wrong number, which is
+     the failure this design exists to remove. The ones BELOW are supplied too,
+     because "as shown in Table 9" is routinely written above the table it
+     names and must resolve.
+
+     Read from the sections' SAVED content, in the document's own order, which
+     is what the export will read too. The open section's own objects are not
+     here: the canvas numbers those from its live document, so a table gets its
+     number the moment it is captioned rather than at the next save. */
+  const captionsAround = useMemo<{
+    before: CaptionedObject[];
+    after: CaptionedObject[];
+  }>(() => {
+    const before: CaptionedObject[] = [];
+    const after: CaptionedObject[] = [];
+    let seen = false;
+    for (const sec of sections) {
+      if (sec.id === activeSectionId) {
+        seen = true;
+        continue;
+      }
+      (seen ? after : before).push(...captionedObjectsInHtml(sec.content ?? ''));
+    }
+    return { before, after };
   }, [sections, activeSectionId]);
 
   /* ── Record that this section is drafted from a source ── */
@@ -3593,6 +3625,14 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                         code: s.code,
                         title: s.title,
                       })),
+                      /* And the document's captioned tables and figures, which
+                         are cross-reference targets exactly as sections are —
+                         "Table 3" is a rendering of where a table currently
+                         sits, so a reference to one stores its identity and
+                         resolves its number from this ordering. Split at the
+                         open section because the number is positional. */
+                      captionsBefore: captionsAround.before,
+                      captionsAfter: captionsAround.after,
                     }}
                     /* The governed sources this document can cite, and the
                        numbering already used above this section. A citation

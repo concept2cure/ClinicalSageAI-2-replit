@@ -67,7 +67,7 @@ describe('inserting a cross-reference', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /insert a cross-reference/i }));
-    fireEvent.change(screen.getByLabelText(/section to reference/i), {
+    fireEvent.change(screen.getByLabelText(/section, table or figure to reference/i), {
       target: { value: SAFETY },
     });
     fireEvent.click(screen.getByRole('button', { name: /^insert$/i }));
@@ -89,7 +89,7 @@ describe('inserting a cross-reference', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: /insert a cross-reference/i }));
 
-    const picker = screen.getByLabelText(/section to reference/i) as HTMLSelectElement;
+    const picker = screen.getByLabelText(/section, table or figure to reference/i) as HTMLSelectElement;
     expect([...picker.options].map((o) => o.textContent)).toEqual([
       '2.7.5.2 Efficacy Summary',
       '2.7.5.3 Safety Summary',
@@ -202,7 +202,7 @@ describe('the fidelity gate', () => {
     /* Add a second reference, then save: the write must carry BOTH — the one
        that came in from the store and survived the parse, and the new one. */
     fireEvent.click(screen.getByRole('button', { name: /insert a cross-reference/i }));
-    fireEvent.change(screen.getByLabelText(/section to reference/i), {
+    fireEvent.change(screen.getByLabelText(/section, table or figure to reference/i), {
       target: { value: SAFETY },
     });
     fireEvent.click(screen.getByRole('button', { name: /^insert$/i }));
