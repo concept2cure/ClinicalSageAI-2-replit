@@ -1,3 +1,5 @@
+import type { JSONContent } from '@tiptap/core';
+
 /**
  * Round-trip fidelity gate for the canonical section editor.
  *
@@ -72,7 +74,13 @@ const BLOCK_TAGS = new Set([
  * whole job of this module is to notice exactly that class of difference.
  */
 export function htmlVisibleText(html: string): string {
-  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return htmlVisibleTextFromDoc(new DOMParser().parseFromString(html, 'text/html'));
+}
+
+/** The body-text walk, over an ALREADY-parsed document — so assessFidelity can
+ *  parse the stored HTML once and read both its text and its structural
+ *  signature off the same DOM. */
+function htmlVisibleTextFromDoc(doc: Document): string {
   const parts: string[] = [];
   const walk = (node: Node): void => {
     if (node.nodeType === Node.TEXT_NODE) {
@@ -98,26 +106,196 @@ export function normalizeForCompare(text: string): string {
     .join(' ');
 }
 
+/**
+ * A count of the STRUCTURE the record carries, in the exact shape ProseMirror
+ * preserves as document semantics — not tag counts. Text equality cannot see a
+ * heading demoted to a paragraph or a caption reparented into a data cell,
+ * because every word survives; these counters can. Every field is chosen to be
+ * INVARIANT under the normalization the gate must allow (a legacy <div>
+ * becoming <p>, <b> becoming <strong>): none of those creates, removes, or
+ * re-ranks a heading, table, row, declared cell, caption, header cell,
+ * definition item, or image.
+ */
+export interface StructuralSignature {
+  /** Heading ranks present, sorted ascending. A demotion changes the multiset. */
+  headingLevels: number[];
+  tables: number;
+  rows: number;
+  /** DECLARED td+th elements — never the colspan/rowspan-expanded grid. */
+  cells: number;
+  /** Tables carrying a non-empty caption. */
+  captions: number;
+  /** th, plus td inside thead — the export parser's own header rule. */
+  headerCells: number;
+  /** dt+dd. The parsed side is always 0: the schema has no definition-list node. */
+  defItems: number;
+  images: number;
+}
+
 export interface FidelityVerdict {
-  /** True when rich editing would lose or alter stored text — refuse it. */
+  /** True when rich editing would lose or alter stored text OR structure. */
   lossy: boolean;
   /** Normalized text of the stored content (what the record says). */
   storedText: string;
   /** Normalized text as the editor parsed it (what rich mode would keep). */
   parsedText: string;
+  /** Structure the stored content carries. */
+  storedSignature: StructuralSignature;
+  /** Structure the parse retained. */
+  parsedSignature: StructuralSignature;
+  /** Which signature fields diverged — drives the "why rich is off" notice. */
+  structuralDrift: (keyof StructuralSignature)[];
+}
+
+const EMPTY_SIGNATURE: StructuralSignature = {
+  headingLevels: [],
+  tables: 0,
+  rows: 0,
+  cells: 0,
+  captions: 0,
+  headerCells: 0,
+  defItems: 0,
+  images: 0,
+};
+
+/** Collapse whitespace and trim — a caption of only spaces is not a caption. */
+const cleanText = (t: string): string => t.replace(/\s+/g, ' ').trim();
+
+/**
+ * The structure a stored HTML string carries, read off its parsed DOM.
+ *
+ * Counts DECLARED elements, deliberately: a `<td colspan="2">` is ONE cell here
+ * and ONE tableCell node on the parsed side, so a merged-cell table reads equal
+ * on both sides. Counting the expanded grid instead would flag every merged
+ * table into source mode — the primary false-positive trap.
+ */
+export function structuralSignatureFromDom(doc: Document): StructuralSignature {
+  const q = (sel: string) => Array.from(doc.querySelectorAll(sel));
+  const headingLevels = q('h1,h2,h3,h4,h5,h6')
+    .map((el) => Number(el.tagName[1]))
+    .sort((a, b) => a - b);
+  const captions = q('table > caption').filter((el) => cleanText(el.textContent ?? '') !== '').length;
+  return {
+    headingLevels,
+    tables: q('table').length,
+    rows: q('tr').length,
+    cells: q('td,th').length,
+    captions,
+    headerCells: q('th').length + q('thead td').length,
+    defItems: q('dt,dd').length,
+    images: q('img[src]').length,
+  };
 }
 
 /**
- * Compare the stored content's readable text against the text the editor's
- * parse actually retained (`parsedText` should come from the parsed document,
- * e.g. TipTap's `getText`). Plain-text stored content compares as itself.
+ * The structure the editor's parse retained, read off the TipTap JSON document.
+ *
+ * Matched by node.type string. A stored heading that parsed to a paragraph
+ * contributes no heading here, so it drops out of the multiset and the drift is
+ * seen. The caption is read from `attrs.caption` — the same attribute
+ * `parsedDocText` reads — NOT from table content, or it would re-introduce the
+ * false positives that logic exists to prevent.
  */
-export function assessFidelity(stored: string, parsedDocText: string): FidelityVerdict {
-  const storedText = normalizeForCompare(
-    looksLikeHtml(stored) ? htmlVisibleText(stored) : stored,
-  );
-  const parsedText = normalizeForCompare(parsedDocText);
-  return { lossy: storedText !== parsedText, storedText, parsedText };
+export function structuralSignatureFromDoc(root: JSONContent): StructuralSignature {
+  const sig: StructuralSignature = {
+    headingLevels: [], tables: 0, rows: 0, cells: 0,
+    captions: 0, headerCells: 0, defItems: 0, images: 0,
+  };
+  const walk = (node: JSONContent): void => {
+    switch (node.type) {
+      case 'heading': sig.headingLevels.push(Number(node.attrs?.level ?? 1)); break;
+      case 'table':
+        sig.tables += 1;
+        if (cleanText(String(node.attrs?.caption ?? '')) !== '') sig.captions += 1;
+        break;
+      case 'tableRow': sig.rows += 1; break;
+      case 'tableCell': sig.cells += 1; break;
+      case 'tableHeader': sig.cells += 1; sig.headerCells += 1; break;
+      case 'image': sig.images += 1; break;
+      // No case for a definition list: the schema registers no node for one, so
+      // defItems is 0 on this side by construction — which is exactly why any
+      // stored dt/dd is a drift the gate must catch.
+      default: break;
+    }
+    (node.content ?? []).forEach(walk);
+  };
+  walk(root);
+  sig.headingLevels.sort((a, b) => a - b);
+  return sig;
+}
+
+/** The signature fields that differ. Empty when the structure round-trips. */
+export function signatureDrift(a: StructuralSignature, b: StructuralSignature): (keyof StructuralSignature)[] {
+  const drift: (keyof StructuralSignature)[] = [];
+  const eqArr = (x: number[], y: number[]) => x.length === y.length && x.every((v, i) => v === y[i]);
+  if (!eqArr(a.headingLevels, b.headingLevels)) drift.push('headingLevels');
+  for (const k of ['tables', 'rows', 'cells', 'captions', 'headerCells', 'defItems', 'images'] as const) {
+    if (a[k] !== b[k]) drift.push(k);
+  }
+  return drift;
+}
+
+/**
+ * The readable text of a parsed TipTap document — what the parse actually kept.
+ *
+ * Moved here from the editor so assessFidelity can take the parsed doc directly:
+ * the boot path already holds `generateJSON(html, extensions)`, and this is the
+ * single canonical reader of a parsed doc's record-text, shared with the gate.
+ * Leaf nodes whose text is RESOLVED at render time (a cross-reference or
+ * citation's number, a table's caption attribute) contribute their stored/cached
+ * value, because the gate's question is "did the parse keep what was stored",
+ * not "is the resolved value current".
+ */
+export function parsedDocText(node: JSONContent): string {
+  if (node.type === 'text') return node.text ?? '';
+  if (node.type === 'hardBreak') return '\n';
+  if (node.type === 'crossReference') return String(node.attrs?.label ?? '');
+  if (node.type === 'citation') return String(node.attrs?.label ?? '');
+  const inner = (node.content ?? []).map(parsedDocText).join('');
+  if (node.type === 'table') {
+    const caption = String(node.attrs?.caption ?? '');
+    return (caption ? caption + '\n' : '') + inner + '\n';
+  }
+  return node.type === 'doc' ? inner : inner + '\n';
+}
+
+
+/**
+ * Compare the stored content against what the editor's parse retained, on BOTH
+ * axes: the readable text (character-exact — the property this module was built
+ * for, unchanged) AND the document STRUCTURE. A mismatch on EITHER is lossy.
+ *
+ * Text equality alone has twice affirmed a corruption it could not see — a
+ * heading flattened one rank, a caption reparented into a data cell — because
+ * every word survived. The structural signature closes that class: it counts
+ * the constructs ProseMirror preserves as semantics and refuses rich mode when
+ * the parse changed one, so the next save cannot write a demoted structure into
+ * the governed record while the gate looks the other way.
+ *
+ * Structure is ORed IN, never substituted: a structural check that let text
+ * loss through would regress the property the module exists for.
+ *
+ * `parsedDoc` is the TipTap JSON the boot path already holds
+ * (`generateJSON(html, extensions)`) — so the stored HTML is parsed to a DOM
+ * exactly once here, and both the visible text and the structural signature are
+ * read off that one DOM.
+ */
+export function assessFidelity(stored: string, parsedDoc: JSONContent): FidelityVerdict {
+  const isHtml = looksLikeHtml(stored);
+  // Plain-text stored content has no markup — an all-zero signature, no DOM
+  // parse — exactly as the text side treats it as itself. plainTextToHtml
+  // output is paragraphs-only, so the parsed signature is all-zero too and they
+  // match; only the text governs, as before.
+  const doc = isHtml ? new DOMParser().parseFromString(stored, 'text/html') : null;
+  const storedText = normalizeForCompare(doc ? htmlVisibleTextFromDoc(doc) : stored);
+  const storedSignature = doc ? structuralSignatureFromDom(doc) : EMPTY_SIGNATURE;
+
+  const parsedText = normalizeForCompare(parsedDocText(parsedDoc));
+  const parsedSignature = structuralSignatureFromDoc(parsedDoc);
+
+  const structuralDrift = signatureDrift(storedSignature, parsedSignature);
+  const lossy = storedText !== parsedText || structuralDrift.length > 0;
+  return { lossy, storedText, parsedText, storedSignature, parsedSignature, structuralDrift };
 }
 
 /**

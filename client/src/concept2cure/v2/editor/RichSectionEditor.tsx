@@ -82,6 +82,7 @@ import {
   plainTextToHtml,
   htmlVisibleText,
   assessPasteFidelity,
+  type StructuralSignature,
 } from './roundTrip';
 import { FindReplace, getFindState } from './findReplace';
 import { AuthoringImage } from './imageNode';
@@ -319,39 +320,27 @@ function serializeEditor(
     : ed.getHTML();
 }
 
-/** Text of a parsed TipTap JSON doc, every element boundary a break — the
- *  comparison normalizes whitespace, so all that matters is that words from
- *  adjacent blocks never fuse. */
-function jsonDocText(node: JSONContent): string {
-  if (node.type === 'text') return node.text ?? '';
-  if (node.type === 'hardBreak') return '\n';
-  /* A cross-reference is a leaf: its text is RESOLVED at render time and is not
-     in the parsed content. Without this the fidelity gate would compare the
-     stored `<a data-xref>2.7.4.2</a>` against nothing, call the parse lossy,
-     and drop every section holding a reference into raw source mode — the
-     capability would disable the editor it ships in. The cached label is the
-     right thing to compare here precisely because the gate's question is
-     "did the parse keep what was stored", not "is the cache current". */
-  if (node.type === 'crossReference') return String(node.attrs?.label ?? '');
-  /* A citation is a leaf for the same reason, and the same cache answers the
-     gate's question — "did the parse keep what was stored", not "is the number
-     current". The number is never in the stored content at all. */
-  if (node.type === 'citation') return String(node.attrs?.label ?? '');
-  const inner = (node.content ?? []).map(jsonDocText).join('');
-  /* A table's CAPTION is an attribute of the table node, not content — the
-     caption has to be an attribute because `prosemirror-tables` reads every
-     child of a table as a row (see captionNumbering.ts). It is real stored text
-     all the same: `<caption>Summary of adverse events</caption>` is in the
-     record and a reader sees it. Without this the gate would compare the stored
-     caption against nothing, call the parse lossy, and drop every section
-     holding a captioned table into raw source mode — the capability would
-     disable the editor it ships in. Emitted BEFORE the rows because that is
-     where the element sits in the stored markup. */
-  if (node.type === 'table') {
-    const caption = String(node.attrs?.caption ?? '');
-    return (caption ? caption + '\n' : '') + inner + '\n';
-  }
-  return node.type === 'doc' ? inner : inner + '\n';
+/**
+ * Turn the structural drift the fidelity gate reported into the phrase the
+ * source-mode notice shows. Says WHAT changed, so a writer sees why rich mode
+ * was refused — a heading rank, a table's shape, a caption, a definition list —
+ * rather than a bare "the check failed".
+ */
+const STRUCTURAL_DRIFT_PHRASE: Record<keyof StructuralSignature, string> = {
+  headingLevels: 'a heading level',
+  tables: 'a table',
+  rows: 'a table row',
+  cells: 'a table cell',
+  captions: 'a table caption',
+  headerCells: 'a table header row',
+  defItems: 'a definition list',
+  images: 'an image',
+};
+function structuralDriftLabel(drift: (keyof StructuralSignature)[]): string {
+  const phrases = Array.from(new Set(drift.map((k) => STRUCTURAL_DRIFT_PHRASE[k])));
+  if (phrases.length === 0) return 'its structure';
+  if (phrases.length === 1) return phrases[0];
+  return phrases.slice(0, -1).join(', ') + ' and ' + phrases[phrases.length - 1];
 }
 
 /* ── Component ────────────────────────────────────────────────── */
@@ -746,12 +735,12 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       // figure/svg/video/embed/object still are not, so content holding one
       // of those is edited in source mode, where the raw string round-trips
       // byte-for-byte.
-      if (/<(figure|svg|video|embed|object)[\s/>]/i.test(stored)) {
+      if (/<(figure|svg|video|embed|object|dl|dt|dd)[\s/>]/i.test(stored)) {
         return { mode: 'source' as const, html: null, verdict: null };
       }
       try {
         const json = generateJSON(html, extensions);
-        const verdict = assessFidelity(stored, jsonDocText(json));
+        const verdict = assessFidelity(stored, json);
         if (verdict.lossy) return { mode: 'source' as const, html: null, verdict };
         return { mode: 'rich' as const, html, verdict };
       } catch {
@@ -1624,8 +1613,12 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         {boot.mode === 'source' && (
           <div className="rse-gate" role="status">
             Rich editing is off for this section: its stored content could not be
-            represented without altering text (the round-trip check failed), so
-            you are editing the raw source instead. Nothing was rewritten.
+            represented without altering{' '}
+            {boot.verdict && boot.verdict.structuralDrift.length > 0
+              ? structuralDriftLabel(boot.verdict.structuralDrift)
+              : 'text'}{' '}
+            (the round-trip check failed), so you are editing the raw source
+            instead. Nothing was rewritten.
           </div>
         )}
 

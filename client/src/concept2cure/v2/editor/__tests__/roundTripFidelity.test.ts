@@ -49,6 +49,16 @@ import {
 const GLOSSARY =
   '<dl><dt>AE</dt><dd>Adverse Event</dd><dt>MTD</dt><dd>Maximum Tolerated Dose</dd></dl>';
 
+/* assessFidelity now takes the PARSED TipTap document, not its text — it reads
+   both the retained text and the structural signature off it. These text-axis
+   tests build the trivial doc whose text is the string they used to pass; a
+   plain paragraph carries no structure, so the structural signature is all-zero
+   on both sides and only the text comparison governs, exactly as before. */
+const asParagraph = (text: string) => ({
+  type: 'doc',
+  content: [{ type: 'paragraph', content: text ? [{ type: 'text', text }] : [] }],
+});
+
 describe('markup the record can hold is recognised as markup', () => {
   /* ONE TAG PER CASE. The first version used the whole GLOSSARY fixture for
      the `dl` case — which also contains `<dt>` — so removing `dl` from the
@@ -94,8 +104,8 @@ describe('the gate does not affirm a corruption it caused', () => {
        text ("AE Adverse Event …") while the parse retained the literal tags.
        They differ, the verdict is lossy, and the editor drops to source mode
        where the raw string round-trips byte for byte. */
-    const parsedAsLiteral = normalizeForCompare(GLOSSARY);
-    const verdict = assessFidelity(GLOSSARY, parsedAsLiteral);
+    // The editor's parse of the escaped HTML yields the literal tag text back.
+    const verdict = assessFidelity(GLOSSARY, asParagraph(GLOSSARY));
     expect(
       verdict.lossy,
       'the gate called the escaped-tag rendering a faithful representation',
@@ -117,14 +127,14 @@ describe('the gate does not affirm a corruption it caused', () => {
        retained every word is not lossy, and must still open in rich mode. */
     const stored = '<p>The device met the acceptance criterion.</p>';
     const parsed = 'The device met the acceptance criterion.';
-    expect(assessFidelity(stored, parsed).lossy).toBe(false);
+    expect(assessFidelity(stored, asParagraph(parsed)).lossy).toBe(false);
   });
 
   it('still catches real text loss', () => {
     /* And the gate must still refuse when the parse actually dropped words —
        the property it was built for. */
     const stored = '<p>Kept.</p><script>dropped()</script>';
-    expect(assessFidelity(stored, 'Kept.').lossy).toBe(true);
+    expect(assessFidelity(stored, asParagraph('Kept.')).lossy).toBe(true);
   });
 });
 
