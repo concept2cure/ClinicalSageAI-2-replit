@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-29T11:26:15.791Z",
+  "generatedAt": "2026-08-29T12:52:44.895Z",
   "git": {
-    "sha": "74641984bc4088a77d1639e9ee6c8ba82b983e76",
+    "sha": "1df5af308266551eea46f940055f14289cdc23ca",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2427,12 +2427,12 @@
         "lines": 2177
       },
       {
-        "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
-        "lines": 2155
+        "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
+        "lines": 2175
       },
       {
-        "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
-        "lines": 2151
+        "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
+        "lines": 2155
       },
       {
         "file": "server/routes/auth.ts",
