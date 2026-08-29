@@ -4158,6 +4158,83 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
       [docId, tenantId]
     );
 
+    /* ── A FROZEN DOCUMENT IS NOT ALLOWED TO STILL BE ASKING QUESTIONS ──
+     *
+     * Freeze is the seal: after it the content is seseal-hashed, signed under
+     * §11.50 and filed. Nothing here checked whether the document was actually
+     * finished, so a section carrying forty open reviewer comments and a dozen
+     * unaccepted tracked changes could be frozen, signed and submitted.
+     *
+     * Both then disappear in a way nobody can see downstream. Comments are not
+     * part of the exported content at all, so the questions simply do not
+     * travel — the filed document looks settled and the forty unanswered
+     * queries exist only in a UI nobody opens after the seal. Unresolved
+     * suggestions do travel, and now travel visibly (they render as
+     * `[-old-][+new+]`), which means an unfinished sentence reaches a reviewer
+     * mid-argument.
+     *
+     * So the refusal is the honest default: a document with outstanding work is
+     * not ready to be sealed, and the seal is exactly the wrong moment to
+     * discover that.
+     *
+     * It is a refusal, not a prohibition. Freezing a draft with open comments
+     * is legitimate — an internal baseline before a review round is a real
+     * thing to want — so the caller may proceed by SAYING SO, and what they
+     * acknowledged is recorded in the audit trail and in the freeze reason.
+     * That is the Part 11 shape: you may act, but you must state that you know,
+     * and the record keeps it. Silently sealing an unfinished document is the
+     * only option removed. */
+    const openComments = await pool.query<{ n: string }>(
+      `SELECT COUNT(*)::text AS n FROM authoring_comments
+        WHERE doc_id = $1 AND tenant_id = $2 AND status = 'open'`,
+      [docId, tenantId]
+    );
+    const openCommentCount = Number(openComments.rows[0]?.n ?? 0);
+
+    /* The same census the export takes, from the same parser, so the two can
+       never disagree about whether a document has unsettled edits. */
+    const { sectionContentToBlocks: toBlocks, countPendingSuggestions: countPending } =
+      await import('../export/authoring-section-content.js');
+    let pendingEdits = 0;
+    for (const section of sectionsResult.rows) {
+      const p = countPending(toBlocks(section.content));
+      pendingEdits += p.insertions + p.deletions;
+    }
+
+    const acknowledged = req.body?.acknowledgeUnresolved === true;
+    if ((openCommentCount > 0 || pendingEdits > 0) && !acknowledged) {
+      const parts: string[] = [];
+      if (openCommentCount > 0) {
+        parts.push(
+          `${openCommentCount} unresolved comment${openCommentCount === 1 ? '' : 's'}`
+        );
+      }
+      if (pendingEdits > 0) {
+        parts.push(`${pendingEdits} tracked change${pendingEdits === 1 ? '' : 's'} nobody has accepted or rejected`);
+      }
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'DOCUMENT_NOT_SETTLED',
+          message:
+            `Not frozen — this document still has ${parts.join(' and ')}. ` +
+            'Freezing seals the content for signature and filing, so the questions ' +
+            'would go unanswered and the proposed edits would reach a reviewer ' +
+            'undecided. Resolve them, or freeze again confirming you intend to ' +
+            'seal it as it stands.',
+        },
+        unresolved: { openComments: openCommentCount, pendingEdits },
+      });
+    }
+
+    /* What was sealed over is part of why it was sealed, so it goes into the
+       reason the frozen record carries rather than only into the audit row. */
+    const acknowledgedNote =
+      acknowledged && (openCommentCount > 0 || pendingEdits > 0)
+        ? ` [Sealed with ${openCommentCount} unresolved comment(s) and ` +
+          `${pendingEdits} undecided tracked change(s), acknowledged by ${email}.]`
+        : '';
+
     // Create frozen content snapshot
     const frozenContent = JSON.stringify({
       document: doc,
@@ -4183,7 +4260,8 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
         `INSERT INTO frozen_documents
          (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [docId, versionNumber, frozenContent, contentHash, email, reason, tenantId]
+        [docId, versionNumber, frozenContent, contentHash, email,
+         `${reason ?? ''}${acknowledgedNote}`.trim() || null, tenantId]
       );
 
       // Update document status
@@ -4200,8 +4278,8 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
         'FREEZE',
         null,
         frozenContent,
-        reason || 'Document frozen for compliance',
-        { contentHash, version: versionNumber },
+        `${reason || 'Document frozen for compliance'}${acknowledgedNote}`,
+        { contentHash, version: versionNumber, openCommentCount, pendingEdits, acknowledged },
         client,
         // This handler writes its own richer chained row below.
         { chainedRowWrittenByCaller: true },

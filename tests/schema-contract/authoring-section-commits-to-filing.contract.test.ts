@@ -437,6 +437,121 @@ describe('a section save reaches the hash-chained ledger', () => {
   }, T);
 });
 
+describe('a freeze refuses a document that is still asking questions', () => {
+  /* Freeze is the seal: after it the content is hash-sealed, signed under
+     §11.50 and filed. Nothing checked whether the document was FINISHED, so a
+     section carrying open reviewer comments and unaccepted tracked changes
+     could be frozen, signed and submitted.
+
+     Both then vanish in a way nothing downstream can see. Comments are not part
+     of the exported content at all, so forty unanswered queries simply do not
+     travel and the filed document looks settled. Unresolved suggestions do
+     travel, so an unfinished sentence reaches a reviewer mid-argument. */
+
+  /** A fresh document with one section, so each case starts clean. */
+  async function freshDoc(content: string) {
+    const doc = await as(request(app).post('/api/authoring/docs')).send({
+      title: 'Freeze gate', module: 'M2',
+    });
+    const id = doc.body.document.id;
+    const sec = await as(request(app).post('/api/authoring/sections')).send({
+      doc_id: id, code: '2.5', title: '2.5', content, order_index: 1,
+    });
+    return { docId: id, sectionId: sec.body.section.id };
+  }
+
+  const freeze = (docId: string, body: Record<string, unknown> = {}) =>
+    as(request(app).post(`/api/authoring/docs/${docId}/freeze`)).send({
+      reason: 'Locked for submission.', ...body,
+    });
+
+  it('refuses while a reviewer comment is still open, and says how many', async () => {
+    const { docId, sectionId } = await freshDoc('<p>Settled prose.</p>');
+    await q(
+      `INSERT INTO authoring_comments (id, section_id, doc_id, body, status, created_by, tenant_id)
+       VALUES (gen_random_uuid(), $1, $2, 'Is 100 mg the right dose?', 'open', 'reviewer', 1)`,
+      [sectionId, docId],
+    );
+
+    const res = await freeze(docId);
+    expect(res.status, 'a document with an open question was sealed').toBe(409);
+    expect(res.body.error?.code).toBe('DOCUMENT_NOT_SETTLED');
+    expect(res.body.unresolved).toMatchObject({ openComments: 1 });
+    // The refusal names the situation rather than a status code.
+    expect(res.body.error?.message).toMatch(/1 unresolved comment\b/);
+    // And discloses no schema object, query or route.
+    expect(JSON.stringify(res.body)).not.toMatch(/authoring_comments|SELECT|\/api\//i);
+
+    // Nothing was sealed.
+    const [row] = await q<{ status: string }>(
+      `SELECT status FROM authoring_documents WHERE id = $1`, [docId],
+    );
+    expect(String(row.status).toUpperCase()).not.toBe('FROZEN');
+  });
+
+  it('refuses while a tracked change is undecided', async () => {
+    const { docId } = await freshDoc(
+      '<p>Administer <del>100 mg</del><ins>200 mg</ins> daily.</p>',
+    );
+    const res = await freeze(docId);
+    expect(res.status).toBe(409);
+    /* Two marks — one insertion, one deletion — counted by the same census the
+       export takes, so the gate and the export can never disagree about
+       whether a document has unsettled edits. */
+    expect(res.body.unresolved).toMatchObject({ pendingEdits: 2 });
+    expect(res.body.error?.message).toMatch(/accepted or rejected/i);
+  });
+
+  it('proceeds once the comment is resolved — the refusal is not permanent', async () => {
+    const { docId, sectionId } = await freshDoc('<p>Settled prose.</p>');
+    await q(
+      `INSERT INTO authoring_comments (id, section_id, doc_id, body, status, created_by, tenant_id)
+       VALUES (gen_random_uuid(), $1, $2, 'Question', 'open', 'reviewer', 1)`,
+      [sectionId, docId],
+    );
+    expect((await freeze(docId)).status).toBe(409);
+
+    await q(`UPDATE authoring_comments SET status = 'resolved' WHERE doc_id = $1`, [docId]);
+    expect((await freeze(docId)).status).toBe(200);
+  });
+
+  it('proceeds when the caller states they intend to seal it as it stands', async () => {
+    /* A refusal, not a prohibition. Freezing a draft with open comments is a
+       real thing to want — an internal baseline before a review round — so the
+       caller may proceed by SAYING SO. */
+    const { docId, sectionId } = await freshDoc('<p>Settled prose.</p>');
+    await q(
+      `INSERT INTO authoring_comments (id, section_id, doc_id, body, status, created_by, tenant_id)
+       VALUES (gen_random_uuid(), $1, $2, 'Question', 'open', 'reviewer', 1)`,
+      [sectionId, docId],
+    );
+
+    const res = await freeze(docId, { acknowledgeUnresolved: true });
+    expect(res.status).toBe(200);
+
+    /* And WHAT was sealed over is in the record, not only in someone's memory:
+       the frozen row's own reason carries it. */
+    const [frozen] = await q<{ frozen_reason: string }>(
+      `SELECT frozen_reason FROM frozen_documents WHERE document_id = $1`, [docId],
+    );
+    expect(frozen.frozen_reason).toMatch(/1 unresolved comment/i);
+    expect(frozen.frozen_reason).toMatch(/acknowledged by/i);
+  });
+
+  it('freezes a settled document with no ceremony at all', async () => {
+    /* The working path. A finished document must not have acquired a new
+       hurdle — nothing to acknowledge, nothing appended to its reason. */
+    const { docId } = await freshDoc('<p>Settled prose, no comments, no marks.</p>');
+    const res = await freeze(docId);
+    expect(res.status).toBe(200);
+
+    const [frozen] = await q<{ frozen_reason: string }>(
+      `SELECT frozen_reason FROM frozen_documents WHERE document_id = $1`, [docId],
+    );
+    expect(frozen.frozen_reason).toBe('Locked for submission.');
+  });
+});
+
 describe('what it deliberately does NOT do', () => {
   it('does not invent a section the rule pack does not define', async () => {
     const res = await save('ZZ-not-in-pack', 'Text under a code the filing has no slot for.');
