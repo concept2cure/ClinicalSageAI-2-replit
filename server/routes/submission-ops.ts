@@ -49,7 +49,13 @@ import { computePackageReadiness } from '../submission-ops/readiness-engine';
 import { runAutomationSweep } from '../submission-ops/automation-runner';
 import { getProjectSignals, analyzeCrossArtifactIntelligence } from '../services/intelligence/index.js';
 import { readCanonicalDueSoonAndWorkload } from '../services/regulatory-correspondence/operating-layer';
+import * as os from 'os';
 import { buildECTDZip } from '../src/services/ectd';
+// The canonical eCTD packaging path — eCTD-format bundles are built by the SAME
+// builder the compile/export/sign path uses, so the transmitted artifact is the
+// conformant one (see server/services/ectd/package-leaf-bytes.ts).
+import { packageLeafBytes } from '../services/ectd/package-leaf-bytes';
+import { resolveCtdSection } from '../services/ectd/section-to-ctd';
 import { recordGovernedAction } from './c2c/actions';
 import PDFDocument from 'pdfkit';
 import { PassThrough } from 'stream';
@@ -1590,6 +1596,11 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     const leafs: { path: string; mediaType: string; content: Buffer }[] = [];
     const emptyLeafPaths: string[] = [];
     let emptyLeafCount = 0;
+    // Parallel CTD-keyed view of the same leaves, for the CANONICAL packager
+    // (which places by CTD section, not by a precomputed path). Sections whose
+    // CTD section cannot be honestly resolved are recorded, never guessed.
+    const ctdLeaves: Array<{ ctdSection: string; fileName: string; bytes: Buffer; title: string }> = [];
+    const unplacedSections: string[] = [];
 
     for (const section of sections) {
       const mapped = await db
@@ -1599,6 +1610,9 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           title: concept2cureArtifacts.title,
           content: concept2cureArtifacts.content,
           version: concept2cureArtifacts.version,
+          // The artifact's declared eCTD placement — the most specific evidence
+          // for the leaf's real CTD section when the section key is a product label.
+          ctdSection: concept2cureArtifacts.ctdSection,
         })
         .from(c2cArtifactSectionMap)
         .innerJoin(
@@ -1639,11 +1653,30 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       }
 
       const leafTitle = `${section.sectionLabel} (${section.sectionKey})`;
+      const leafBytes = await buildLeafPdf(leafTitle, markdown);
       leafs.push({
         path: leafPath,
         mediaType: 'application/pdf',
-        content: await buildLeafPdf(leafTitle, markdown),
+        content: leafBytes,
       });
+
+      // CTD-keyed view for the canonical packager. Unresolvable sections are
+      // reported (and block transmit via an error finding below) rather than
+      // being assigned a guessed section inside an agency submission.
+      const ctdSection = resolveCtdSection(
+        section.sectionKey,
+        mapped.map((a) => a.ctdSection),
+      );
+      if (ctdSection) {
+        ctdLeaves.push({
+          ctdSection,
+          fileName: leafPath.slice(leafPath.lastIndexOf('/') + 1),
+          bytes: leafBytes,
+          title: leafTitle,
+        });
+      } else {
+        unplacedSections.push(`${section.sectionLabel} (${section.sectionKey})`);
+      }
     }
 
     // Internal eCTD structural validation (pre-flight). Findings are stored on
@@ -1652,13 +1685,59 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     const validation = validateEctdLeafs(leafs, { region, emptyLeafPaths });
 
     // Assemble the real zip buffer.
-    const zipBuffer = await buildECTDZip({
-      region,
-      sequence,
-      operation: 'new',
-      leafs,
-    });
-    const zip: Buffer = Buffer.isBuffer(zipBuffer) ? zipBuffer : Buffer.from(zipBuffer as Uint8Array);
+    //
+    // eCTD formats go through the CANONICAL packager — the same builder the
+    // compile/export/sign path uses — so the bytes that reach an agency carry a
+    // conformant ICH <ectd:ectd> heading tree, the regional Module 1 backbone,
+    // per-leaf MD5s and the root index-md5.txt. The legacy flat-<ectd:index>
+    // builder produced none of that and would be rejected by a real validator.
+    // Non-eCTD families (eSTAR / EUDAMED register) are NOT eCTD submissions and
+    // keep their existing builder.
+    const isEctdFormat = format === 'ectd' || format === 'pmda_ectd';
+    let zip: Buffer;
+    if (isEctdFormat) {
+      // A section whose CTD placement could not be resolved is NOT guessed into
+      // the package — it is reported as a blocking finding, so the governed
+      // transmit gate (which hard-blocks on errors) refuses until it is placed.
+      for (const label of unplacedSections) {
+        validation.findings.push({
+          severity: 'error',
+          ruleId: 'LEAF-UNPLACED',
+          message: `Section has no resolvable eCTD section, so it cannot be placed in the backbone: ${label}. Assign its CTD section before transmitting.`,
+        });
+        validation.errorCount += 1;
+      }
+      const packagerRegion = region === 'EMA' ? 'ema' : region === 'PMDA' ? 'pmda' : 'fda';
+      const work = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'c2c-assemble-'));
+      try {
+        const canonical = await packageLeafBytes({
+          region: packagerRegion,
+          applicationId: pkg.packageId,
+          sequence,
+          submissionType: 'original',
+          sponsorId: `ORG-${orgId}`,
+          sponsorName: `Organization ${orgId}`,
+          productName: pkg.title,
+          outputDir: work,
+          // Structural conformance is produced either way; 'staging' keeps the
+          // opt-in PDF/A / DTD gates from blocking assembly. Submittability is
+          // decided by the validation findings + the governed transmit gate.
+          environment: 'staging',
+          leaves: ctdLeaves,
+        });
+        zip = await fs.promises.readFile(canonical.path);
+      } finally {
+        await fs.promises.rm(work, { recursive: true, force: true }).catch(() => {});
+      }
+    } else {
+      const zipBuffer = await buildECTDZip({
+        region,
+        sequence,
+        operation: 'new',
+        leafs,
+      });
+      zip = Buffer.isBuffer(zipBuffer) ? zipBuffer : Buffer.from(zipBuffer as Uint8Array);
+    }
 
     // Bundle-level SHA-256 over the full zip + size.
     const sha256 = createHash('sha256').update(zip).digest('hex');
