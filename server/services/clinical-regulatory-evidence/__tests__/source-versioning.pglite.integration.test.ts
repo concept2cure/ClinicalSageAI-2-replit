@@ -89,6 +89,12 @@ beforeAll(async () => {
   await pglite.exec(migration('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
   await pglite.exec(migration('migrations/20260726_cre_source_program_scope.sql'));
   await pglite.exec(migration('db/migrations/20260725_authoring_document_loop_tables.sql'));
+  // ALTER-closure: the loop-tables migration above creates authoring_comments,
+  // user_pins and doc_revisions; every applier file that ALTERs those tables
+  // must be applied here too, or this harness builds a schema no deployment has
+  // (see tests/schema-contract/authoring-migration-list-closure.contract.test.ts).
+  await pglite.exec(migration('db/migrations/20260730_authoring_comments_router_columns.sql'));
+  await pglite.exec(migration('db/migrations/20260817_doc_revisions_immutable_ledger.sql'));
   await pglite.exec(migration('migrations/20260726_authoring_citation_source_usage.sql'));
   // The migration under test.
   await pglite.exec(migration('migrations/20260829_cre_source_versioning.sql'));
