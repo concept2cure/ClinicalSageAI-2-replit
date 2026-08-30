@@ -175,6 +175,10 @@ jobs:
         # enlisted too. Verified to fail on each of those removed individually.
         run: npm run ci:lineage-save-gate
 
+      - name: Guardrails — a store nothing writes may not gain readers
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:writerless-stores
+
       - name: Guardrails — every artifact producer emits a provenance event
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # A write to concept2cure_artifacts is a document the platform builds;

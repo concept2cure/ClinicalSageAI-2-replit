@@ -280,7 +280,8 @@
     "ci:dead-audit-catch": "node scripts/ci/check-dead-audit-catch.mjs",
     "ci:dead-audit-catch:self-test": "node scripts/ci/check-dead-audit-catch.mjs --self-test",
     "ci:dead-audit-catch:list": "node scripts/ci/check-dead-audit-catch.mjs --list",
-    "ci:dead-audit-catch:write-baseline": "node scripts/ci/check-dead-audit-catch.mjs --write-baseline"
+    "ci:dead-audit-catch:write-baseline": "node scripts/ci/check-dead-audit-catch.mjs --write-baseline",
+    "ci:writerless-stores": "node scripts/ci/check-writerless-stores.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
