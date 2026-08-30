@@ -90,6 +90,75 @@ const sendGovernedContractInvalid = (
 
 // ─── Wave 1 Action 1: Resume Last Section ────────────────────────────────────
 
+/**
+ * The per-section preflight verdict, extracted so the rule is testable.
+ *
+ * THE DEFECT THIS REPLACES. The verdict read
+ *
+ *     const allUnknown = statuses.every(s => s === 'unknown')
+ *     ... else if (allUnknown) overall = 'needs-review'
+ *     else overall = 'ready'
+ *
+ * so anything short of EVERY check being unknown fell through to 'ready'. Two
+ * of the five entries — crossSectionConsistency and approvedBaselineCompare —
+ * were hardcoded 'unknown' placeholders that have never had an implementation,
+ * and `readiness` returns 'unknown' whenever its engine throws. A section where
+ * four checks never ran and exactly one passed therefore satisfied
+ * `!allUnknown` and was reported 'Ready'.
+ *
+ * The module rolls those up as "ready — all N section(s) pass preflight", and
+ * this router's one live consumer (server/services/ana-ri/mdx-command-handlers.ts,
+ * the AnA 510(k) preflight command) writes that verdict into a GxP audit record
+ * and reports it to the user. So the fabricated pass did not stop at an unused
+ * endpoint — it reached the regulated record.
+ *
+ * "Not failed" is not "passed". A check that did not run is not evidence of
+ * anything: a section is ready only when at least one check ran, every check
+ * that ran passed, and none came back unknown. Placeholders are excluded from
+ * the verdict entirely rather than counted as inconclusive checks — a TODO does
+ * not belong in the denominator.
+ */
+export interface SectionPreflightVerdict {
+  overall: 'blocked' | 'provisional' | 'needs-review' | 'ready';
+  summary: string;
+  checksRan: number;
+  checksDidNotRun: string[];
+}
+
+export function sectionPreflightVerdict(
+  checks: Record<string, { status?: string } | null | undefined>,
+): SectionPreflightVerdict {
+  const assessed = Object.entries(checks || {}).filter(
+    ([, c]) => c && c.status && c.status !== 'not-implemented',
+  );
+  const statuses = assessed.map(([, c]) => (c as { status: string }).status);
+  const hasFail = statuses.includes('fail');
+  const hasWarn = statuses.includes('warn');
+  const checksDidNotRun = assessed
+    .filter(([, c]) => (c as { status: string }).status === 'unknown')
+    .map(([name]) => name);
+  const checksRan = statuses.filter((st) => st !== 'unknown').length;
+
+  let overall: SectionPreflightVerdict['overall'];
+  if (hasFail) overall = 'blocked';
+  else if (hasWarn) overall = 'provisional';
+  else if (checksDidNotRun.length > 0 || checksRan === 0) overall = 'needs-review';
+  else overall = 'ready';
+
+  const summary =
+    overall === 'blocked'
+      ? 'Blocked'
+      : overall === 'provisional'
+        ? 'Warnings'
+        : overall === 'ready'
+          ? `Ready — ${checksRan} check(s) ran and passed`
+          : checksDidNotRun.length > 0
+            ? `Needs review — ${checksDidNotRun.length} check(s) did not run: ${checksDidNotRun.join(', ')}`
+            : 'Needs review — no check produced a result';
+
+  return { overall, summary, checksRan, checksDidNotRun };
+}
+
 router.get('/resume-last-section/:projectId', async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
@@ -1957,23 +2026,25 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
           } catch { checks.bodyExpectations = { status: 'unknown' }; }
         } else { checks.bodyExpectations = { status: 'unknown' }; }
 
-        checks.crossSectionConsistency = { status: 'unknown' };
-        checks.approvedBaselineCompare = { status: 'unknown' };
+        /* These two are not checks. They are placeholders that have never had an
+           implementation, and they were being written into `checks` with
+           status 'unknown' — which put them in the denominator of a verdict
+           they can never contribute to. Marked as not-implemented and excluded
+           from the verdict below, so the result describes what was actually
+           examined rather than counting a TODO as an inconclusive check. */
+        checks.crossSectionConsistency = { status: 'not-implemented' };
+        checks.approvedBaselineCompare = { status: 'not-implemented' };
 
-        const statuses = Object.values(checks).map((c: any) => c.status);
-        const hasFail = statuses.includes('fail');
-        const hasWarn = statuses.includes('warn');
-        const allUnknown = statuses.every((s: string) => s === 'unknown');
-
-        let overall: string;
-        if (hasFail) overall = 'blocked';
-        else if (hasWarn) overall = 'provisional';
-        else if (allUnknown) overall = 'needs-review';
-        else overall = 'ready';
+        const verdict = sectionPreflightVerdict(checks);
 
         return {
-          sectionCode: sec.ctdSection, artifactId: sec.id, overall,
-          summary: overall === 'blocked' ? 'Blocked' : overall === 'provisional' ? 'Warnings' : overall === 'ready' ? 'Ready' : 'Needs review',
+          sectionCode: sec.ctdSection, artifactId: sec.id,
+          overall: verdict.overall,
+          summary: verdict.summary,
+          /* Named so a reader (and the audit record downstream) can see what the
+             verdict rests on rather than taking the word for it. */
+          checksRan: verdict.checksRan,
+          checksDidNotRun: verdict.checksDidNotRun,
           checks, recommendedActions: [],
         };
       } catch {

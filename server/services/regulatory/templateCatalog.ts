@@ -1,8 +1,23 @@
 /**
- * Template Catalog — Registry-driven document template mappings.
+ * Template Catalog — which templates are OFFERED for a registry entry.
  *
  * Extracted from hardcoded logic in concept2cure.ts. Maps registry entries
- * to available document templates for section authoring.
+ * to available document templates for section authoring. METADATA ONLY —
+ * id, title, format, aiDraftable. It carries no section structure and it does
+ * not decide which template applies.
+ *
+ * ── Which of the three "template" modules is this? ──────────────────────────
+ * `DocumentTemplate` was exported by three modules in server/services/, with
+ * three different shapes. Each now says what it owns and names the others:
+ *
+ *   · intelligence/template-registry.ts — WHICH template applies (DB-backed,
+ *     async, most-specific-first resolution). Owns `DocumentTemplate`.
+ *   · docx/templateRegistry.ts — what it LOOKS LIKE as a DOCX (static section
+ *     blueprints for docxFactory). Owns `DocxTemplateBlueprint`.
+ *   · THIS FILE — which are OFFERED, as metadata. Owns `CatalogTemplateEntry`.
+ *
+ * For the heading outlines this file deliberately lacks, see
+ * `market-specs/document-template-library.ts`, keyed by the same ids.
  *
  * @module server/services/regulatory/templateCatalog
  */
@@ -11,7 +26,7 @@ import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export interface DocumentTemplate {
+export interface CatalogTemplateEntry {
   id: string;
   title: string;
   description: string;
@@ -23,7 +38,7 @@ export interface DocumentTemplate {
 
 // ─── Template Definitions ─────────────────────────────────────────────────────
 
-const CTD_TEMPLATES: DocumentTemplate[] = [
+const CTD_TEMPLATES: CatalogTemplateEntry[] = [
   { id: 'cover_letter', title: 'Cover Letter', description: 'Regulatory submission cover letter', sectionCode: '1.1', format: 'narrative', aiDraftable: true, category: 'administrative' },
   { id: 'quality_overall_summary', title: 'Quality Overall Summary', description: 'Module 2.3 QOS per ICH M4Q', sectionCode: '2.3', format: 'narrative', aiDraftable: true, category: 'quality' },
   { id: 'nonclinical_overview', title: 'Nonclinical Overview', description: 'Module 2.4 nonclinical overview per ICH M4S', sectionCode: '2.4', format: 'narrative', aiDraftable: true, category: 'nonclinical' },
@@ -33,7 +48,7 @@ const CTD_TEMPLATES: DocumentTemplate[] = [
   { id: 'drug_product', title: 'Drug Product', description: 'Module 3.2.P drug product documentation', sectionCode: '3.2.P', format: 'mixed', aiDraftable: false, category: 'quality' },
 ];
 
-const DEVICE_TEMPLATES: DocumentTemplate[] = [
+const DEVICE_TEMPLATES: CatalogTemplateEntry[] = [
   { id: 'device_description', title: 'Device Description', description: 'Detailed device description and specifications', format: 'mixed', aiDraftable: true, category: 'device' },
   { id: 'predicate_comparison', title: 'Predicate Comparison', description: 'Substantial equivalence comparison table', format: 'table', aiDraftable: true, category: 'device' },
   { id: 'performance_testing', title: 'Performance Testing', description: 'Bench and clinical performance testing', format: 'mixed', aiDraftable: false, category: 'device' },
@@ -41,7 +56,7 @@ const DEVICE_TEMPLATES: DocumentTemplate[] = [
   { id: 'software_documentation', title: 'Software Documentation', description: 'IEC 62304 software lifecycle documentation', format: 'mixed', aiDraftable: false, category: 'device' },
 ];
 
-const EU_SPECIFIC_TEMPLATES: DocumentTemplate[] = [
+const EU_SPECIFIC_TEMPLATES: CatalogTemplateEntry[] = [
   { id: 'smpc', title: 'Summary of Product Characteristics', description: 'SmPC per QRD template', format: 'narrative', aiDraftable: true, category: 'eu_regional' },
   { id: 'pil', title: 'Package Leaflet', description: 'Patient information leaflet per QRD template', format: 'narrative', aiDraftable: true, category: 'eu_regional' },
   { id: 'rmp', title: 'Risk Management Plan', description: 'EU RMP per GVP Module V', format: 'mixed', aiDraftable: false, category: 'safety' },
@@ -50,7 +65,7 @@ const EU_SPECIFIC_TEMPLATES: DocumentTemplate[] = [
 
 // ─── Catalog Registry ─────────────────────────────────────────────────────────
 
-const TEMPLATE_SETS: Record<string, DocumentTemplate[]> = {
+const TEMPLATE_SETS: Record<string, CatalogTemplateEntry[]> = {
   ctd: CTD_TEMPLATES,
   device: DEVICE_TEMPLATES,
   eu_specific: EU_SPECIFIC_TEMPLATES,
@@ -78,11 +93,11 @@ const REGISTRY_TO_TEMPLATE_SETS: Record<string, string[]> = {
 /**
  * Get available templates for a registry entry.
  */
-export function getTemplatesForType(registryIdOrLegacy: string): DocumentTemplate[] {
+export function getTemplatesForType(registryIdOrLegacy: string): CatalogTemplateEntry[] {
   const registryId = resolveRegistryId(registryIdOrLegacy) || registryIdOrLegacy;
   const sets = REGISTRY_TO_TEMPLATE_SETS[registryId] ?? ['ctd'];
 
-  const templates: DocumentTemplate[] = [];
+  const templates: CatalogTemplateEntry[] = [];
   for (const setId of sets) {
     const set = TEMPLATE_SETS[setId];
     if (set) templates.push(...set);
@@ -107,7 +122,7 @@ export function getTemplateCategories(): string[] {
 /**
  * Search templates by query.
  */
-export function searchTemplates(query: string, registryIdOrLegacy?: string): DocumentTemplate[] {
+export function searchTemplates(query: string, registryIdOrLegacy?: string): CatalogTemplateEntry[] {
   const q = query.toLowerCase();
   const templates = registryIdOrLegacy
     ? getTemplatesForType(registryIdOrLegacy)

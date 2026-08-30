@@ -6,8 +6,11 @@
 --   was dropped on the floor, so after a reload the correspondence file said
 --   DRAFTED while holding no way to open the draft it referred to. This column
 --   is the link: the PATCH that records it verifies the document exists in the
---   caller's organization first (cmc-agency-questions.routes.ts), so a stored
---   link is a door that opens, never a dangling id.
+--   caller's organization first (cmc-agency-questions.routes.ts). That check is
+--   WRITE-TIME only — with no FK (below), a document deleted later (the
+--   admin-token UAT cleanup path is the one reachable delete) leaves the id
+--   dangling; the editor then states an honest miss rather than opening
+--   anything, which is the read-time half of the contract.
 --
 -- Notes:
 --   - Nullable by design: a question without a draft simply carries no link.

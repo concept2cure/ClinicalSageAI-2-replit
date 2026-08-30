@@ -336,7 +336,7 @@ describe('CmPathway — draft response advances the question to DRAFTED', () => 
     expect(urls.indexOf('/api/authoring/docs')).toBeLessThan(urls.indexOf('/api/cmc/agency-questions/9'));
   });
 
-  it('a question already IN_REVIEW is not downgraded by re-drafting', async () => {
+  it('a question already IN_REVIEW keeps its status but the LINK follows the new draft', async () => {
     const patches: Array<{ url: string; body: unknown }> = [];
     const navd: string[] = [];
     wireDraft('IN_REVIEW', patches);
@@ -344,8 +344,39 @@ describe('CmPathway — draft response advances the question to DRAFTED', () => 
     await screen.findByText('Clarify the shelf-life claim.');
 
     fireEvent.click(screen.getByTitle(/Create a governed response draft/));
+    await waitFor(() => expect(patches).toHaveLength(1));
+    // The link follows the newest draft; NO status field is sent, so the
+    // reviewer's IN_REVIEW cannot be downgraded, and the guard means a
+    // concurrently closed question answers 409 instead of being re-linked.
+    expect(patches[0].body).toMatchObject({ responseDocId: 'DOC9', expectedStatus: 'IN_REVIEW' });
+    expect((patches[0].body as Record<string, unknown>).status).toBeUndefined();
     await waitFor(() => expect(navd).toContain('document-authoring'));
-    expect(patches).toHaveLength(0);
+  });
+
+  it('a failed link write is SAID, and the user stays on the card — never navigated away from the statement', async () => {
+    const navd: string[] = [];
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'POST' && url === '/api/authoring/docs') {
+        return res({ success: true, document: { id: 'DOC9', title: 'Response…' } }, 201);
+      }
+      if (method === 'POST' && url === '/api/authoring/sections') {
+        return res({ success: true, section: { id: 'SEC9', code: 'agency_question_response' } }, 201);
+      }
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
+        // A concurrent close: the expectedStatus guard answers 409.
+        return res({ success: false, error: 'The question is CLOSED now — it changed since this screen loaded. Nothing was updated.' }, 409);
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} nav={(id) => navd.push(id)} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+
+    fireEvent.click(screen.getByTitle(/Create a governed response draft/));
+    // The split state is stated with the server's own sentence…
+    await screen.findByText(/The draft was created, but the correspondence file was not updated — The question is CLOSED now/);
+    // …and the user is NOT navigated into the editor believing the file followed.
+    expect(navd).toHaveLength(0);
   });
 
   it('a linked question renders the Open-draft door, which targets the EXACT document', async () => {

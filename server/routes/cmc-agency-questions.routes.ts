@@ -220,7 +220,10 @@ export default function createCmcAgencyQuestionRoutes(): Router {
         // The link is a DOOR the card renders — verify it opens before it is
         // recorded. authoring_documents.tenant_id is the same integer org
         // space as reg_questions.organization_id, so a cross-org id fails
-        // here rather than becoming a dead "Open draft".
+        // here rather than becoming a dead "Open draft". WRITE-TIME only (no
+        // FK — the authoring tables are ensure-DDL'd lazily): a document
+        // deleted later leaves the id dangling, and the editor's deep-link
+        // then states an honest miss instead of opening anything.
         try {
           const doc = await q(
             `select 1 from authoring_documents where id = $1 and tenant_id = $2`,

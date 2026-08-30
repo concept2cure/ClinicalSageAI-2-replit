@@ -1,5 +1,27 @@
 /**
- * Regulatory Document Template Registry
+ * DOCX template blueprints — the RENDERING skeleton docxFactory fills.
+ *
+ * ── Which of the four "template" modules is this? ───────────────────────────
+ * `DocumentTemplate` was exported by four modules in server/services/, with
+ * four different shapes, so the name told a reader nothing. Each now says what
+ * it owns and names the others:
+ *
+ *   · intelligence/template-registry.ts — WHICH template applies. DB-backed,
+ *     async, resolves (agency, document_type, submission_type, indication) down
+ *     a most-specific-first chain. Owns the name `DocumentTemplate`.
+ *   · THIS FILE — what a chosen template LOOKS LIKE as a DOCX. Static,
+ *     in-memory, sync. Section blueprints with CTD codes and boilerplate, fed
+ *     to docxFactory. Owns `DocxTemplateBlueprint`.
+ *   · regulatory/templateCatalog.ts — which templates are OFFERED for a
+ *     registry entry. Metadata only (id/title/format/aiDraftable), no
+ *     structure. Owns `CatalogTemplateEntry`.
+ *   · ana-ri/document-actions.ts — the heading outline an AnA quick-action
+ *     scaffolds from. Owns `ActionArtifactOutline`.
+ *
+ * (`market-specs/document-template-library.ts` supplies the heading outlines
+ * templateCatalog's metadata lacks, and already states that boundary itself.)
+ *
+ * This module does NOT decide which template to use — ask template-registry.
  *
  * Architecture (Veeva/Certara pattern):
  *   Template Blueprint → AI fills sections → docxFactory renders DOCX
@@ -39,7 +61,7 @@ export interface TemplateSectionBlueprint {
   expectedTables?: { caption: string; suggestedHeaders: string[] }[];
 }
 
-export interface DocumentTemplate {
+export interface DocxTemplateBlueprint {
   /** Template identifier */
   id: string;
   /** Display name */
@@ -62,7 +84,7 @@ export interface DocumentTemplate {
 // CER TEMPLATE — EU MDR 2017/745 (MEDDEV 2.7/1 Rev 4)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const cerTemplate: DocumentTemplate = {
+const cerTemplate: DocxTemplateBlueprint = {
   id: 'cer-eu-mdr',
   name: 'Clinical Evaluation Report (EU MDR)',
   submissionType: 'CER',
@@ -227,7 +249,7 @@ const cerTemplate: DocumentTemplate = {
 // 510(K) TEMPLATE — FDA 21 CFR 807 Subpart E
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const fda510kTemplate: DocumentTemplate = {
+const fda510kTemplate: DocxTemplateBlueprint = {
   id: 'fda-510k',
   name: 'FDA 510(k) Premarket Notification',
   submissionType: '510K',
@@ -377,7 +399,7 @@ const fda510kTemplate: DocumentTemplate = {
 // CSR TEMPLATE — ICH E3
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const csrTemplate: DocumentTemplate = {
+const csrTemplate: DocxTemplateBlueprint = {
   id: 'csr-ich-e3',
   name: 'Clinical Study Report (ICH E3)',
   submissionType: 'CSR',
@@ -609,7 +631,7 @@ const csrTemplate: DocumentTemplate = {
 
 // ─── IND Template (FDA IND Application — Modules 1-5) ────────────────────────
 
-const indTemplate: DocumentTemplate = {
+const indTemplate: DocxTemplateBlueprint = {
   id: 'ind-fda',
   name: 'IND Application (FDA)',
   submissionType: 'IND',
@@ -644,13 +666,13 @@ const indTemplate: DocumentTemplate = {
   ],
 };
 
-const templates = new Map<string, DocumentTemplate>();
+const templates = new Map<string, DocxTemplateBlueprint>();
 templates.set(cerTemplate.id, cerTemplate);
 templates.set(fda510kTemplate.id, fda510kTemplate);
 templates.set(csrTemplate.id, csrTemplate);
 templates.set(indTemplate.id, indTemplate);
 
-export function getTemplate(id: string): DocumentTemplate | undefined {
+export function getTemplate(id: string): DocxTemplateBlueprint | undefined {
   return templates.get(id);
 }
 
