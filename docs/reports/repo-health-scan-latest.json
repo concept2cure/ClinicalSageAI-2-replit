@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-30T18:20:58.276Z",
+  "generatedAt": "2026-08-30T18:23:21.676Z",
   "git": {
-    "sha": "ed5c85c7283a8d0e58a47c309672193c8dc246cf",
+    "sha": "89cf89b00deb5fdd64417ab12f379be99c90da29",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2149,7 +2149,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 842866
+        "bytes": 843151
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2173,7 +2173,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 214216
+        "bytes": 215457
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2184,12 +2184,12 @@
         "bytes": 179637
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 152542
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 154564
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 152139
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 152542
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2283,7 +2283,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19979
+        "lines": 19983
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
@@ -2315,7 +2315,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 4769
+        "lines": 4797
       },
       {
         "file": "server/storage.ts",
@@ -2362,12 +2362,12 @@
         "lines": 2759
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2685
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2694
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2653
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 2685
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
