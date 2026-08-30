@@ -603,6 +603,38 @@ async function assertSigningAuthority(
  * and the caller told the document was signed and approved. §11.70 requires a
  * signature to be linked to its record; a signature bound to no record is not.
  */
+/**
+ * Does `authoring_documents` carry `c2c_document_id` in THIS deployment?
+ *
+ * The column binds the editing layer to the filing that is the system of
+ * record. It is added by migrations/20260728_authoring_document_governed_binding.sql,
+ * whose DO-block is guarded on `c2c_documents` existing — a table from another
+ * bundle. So a deployment carrying the authoring bundle without the c2c one
+ * genuinely does not have the column, and every reference to it has to cope.
+ *
+ * Three values, not two. 'unknown' is the one that matters: a check that could
+ * not RUN has not established that the column is missing, and a caller that
+ * collapses it into 'absent' goes on to report a deployment fact it never
+ * observed. That is the same unknown-as-a-definite-state error the Exports
+ * rail has a gate against; this helper exists so the two call sites cannot
+ * repeat it independently.
+ */
+type BindingColumnState = 'present' | 'absent' | 'unknown';
+
+async function bindingColumnState(executor: Queryable = pool): Promise<BindingColumnState> {
+  try {
+    const r = await executor.query(
+      `SELECT EXISTS (SELECT 1 FROM information_schema.columns
+                       WHERE table_schema = 'public'
+                         AND table_name = 'authoring_documents'
+                         AND column_name = 'c2c_document_id') AS ok`,
+    );
+    return r.rows[0]?.ok === true ? 'present' : 'absent';
+  } catch {
+    return 'unknown';
+  }
+}
+
 async function documentExistsForTenant(
   docId: string | string[] | undefined,
   tenantId: number,
@@ -1853,31 +1885,28 @@ router.post('/docs', async (req: Request, res: Response) => {
      * the filing. This is the same check on the read half, so both halves
      * degrade the same way: unbound, with the reason recorded, rather than
      * refusing to create a document. */
-    let bindingColumnPresent = false;
     if (binding.documentId) {
-      try {
-        const col = await pool.query<{ ok: boolean }>(
-          `SELECT EXISTS (SELECT 1 FROM information_schema.columns
-                           WHERE table_schema = 'public'
-                             AND table_name = 'authoring_documents'
-                             AND column_name = 'c2c_document_id') AS ok`,
-        );
-        bindingColumnPresent = col.rows[0]?.ok === true;
-      } catch {
-        /* Unable to ask — treat as absent. Creating the document unbound is
-           recoverable; failing the create is not. */
-        bindingColumnPresent = false;
-      }
-      if (!bindingColumnPresent) {
+      const columnState = await bindingColumnState();
+      if (columnState !== 'present') {
         /* The caller is told the truth about what it got: a document that is
            NOT bound to a filing, and why. Silently dropping the binding while
            reporting `bound: true` would be the worse failure — every later
-           save would look for a filing that was never linked. */
+           save would look for a filing that was never linked.
+
+           The two reasons are kept apart. This branch used to report "this
+           deployment has no c2c_document_id column" whenever the check did not
+           come back TRUE — including when the check itself threw, which
+           establishes nothing about the deployment. Asserting a schema fact
+           from a query that failed is the same defect this file gates against
+           elsewhere; the wording now says only what was actually observed. */
         binding = {
           documentId: null,
           reason:
-            'This deployment has no c2c_document_id column on authoring_documents, so the ' +
-            'document was created without a binding to a filing.',
+            columnState === 'absent'
+              ? 'This deployment has no c2c_document_id column on authoring_documents, so the ' +
+                'document was created without a binding to a filing.'
+              : 'Whether this deployment carries the c2c_document_id column could not be ' +
+                'checked, so the document was created without a binding to a filing.',
         };
       }
     }
@@ -2297,11 +2326,43 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
      * in the rule pack?), not a side effect of the rename field. An UNBOUND
      * document has no filing linkage to break, so its codes stay editable. */
     if (code !== undefined && String(code) !== String(currentSection.rows[0].code ?? '')) {
-      const bound = await pool.query(
-        `SELECT 1 FROM authoring_documents
-          WHERE id = $1 AND tenant_id = $2 AND c2c_document_id IS NOT NULL`,
-        [currentSection.rows[0].doc_id, tenantId],
-      );
+      /* This predicate names c2c_document_id, which a deployment carrying the
+         authoring bundle without the c2c one does not have — the same shape the
+         create path above already copes with, and which
+         commit-section-to-filing.ts treats as a supported deployment rather
+         than an error. Unguarded, the catalog raises 42703 and a section
+         rename answers 500 on those deployments.
+
+         Each state has a different correct answer, so they are not collapsed:
+           present — ask, and lock the code if the document is bound.
+           absent  — no document here CAN be bound, so there is no filing
+                     linkage to break and the code stays editable, exactly as
+                     the comment above says of an unbound document.
+           unknown — the check did not run, so whether this document is bound
+                     is not known. Refuse. The lock exists to stop a rename
+                     silently re-pointing a section to a different filing slot
+                     and orphaning the old slot's content; allowing it on an
+                     unverified guess risks that, while refusing costs a retry. */
+      const columnState = await bindingColumnState();
+      if (columnState === 'unknown') {
+        return res.status(503).json({
+          success: false,
+          error: {
+            code: 'BINDING_CHECK_UNAVAILABLE',
+            message:
+              'Whether this section is bound to a filing slot could not be checked, so its code ' +
+              'was not changed. Nothing was modified. Try again.',
+          },
+        });
+      }
+      const bound =
+        columnState === 'present'
+          ? await pool.query(
+              `SELECT 1 FROM authoring_documents
+                WHERE id = $1 AND tenant_id = $2 AND c2c_document_id IS NOT NULL`,
+              [currentSection.rows[0].doc_id, tenantId],
+            )
+          : { rowCount: 0 };
       if ((bound.rowCount ?? 0) > 0) {
         return res.status(409).json({
           success: false,
