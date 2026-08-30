@@ -1660,6 +1660,22 @@ export const C2C_MIGRATION_FILES = [
   // over the bytes it read and REFUSES a mismatch. Existing rows stay NULL by
   // design: hashing today's bytes would record corruption as authentic.
   'db/migrations/20260828_file_uploads_checksum.sql',
+
+  // ── ectd_compilations.submission_id (lifecycle predecessor key) ───────────
+  // The file shipped with the eCTD lifecycle work but was never added to this
+  // manifest, so an existing estate never gained the column — and the compile
+  // path's INSERT names it, failing every spine-backed compile with 42703
+  // ("column submission_id does not exist", 0 leaves rendered). Fresh installs
+  // get it from shared/schema.ts via drizzle-kit push; this is the
+  // existing-database half. Idempotent ADD COLUMN IF NOT EXISTS + index.
+  'db/migrations/20260828_ectd_compilations_submission_id.sql',
+
+  // ── reg_questions.response_doc_id (correspondence → drafted response) ─────
+  // "Draft response" creates a governed authoring document; this column links
+  // it back to the agency question so the correspondence file can OPEN the
+  // draft it says exists. Verified org-scoped at write time (no FK — the
+  // authoring tables are ensure-DDL'd lazily). Idempotent ADD COLUMN.
+  'db/migrations/20260830_reg_questions_response_doc.sql',
   // Must follow the sweep above: that one keys on polqual (USING), which an
   // INSERT policy does not have, so every write-only policy slipped through
   // with its fail-open COALESCE intact. This closes them on polwithcheck.

@@ -73,6 +73,12 @@ export interface EditorTarget {
    *  is a REFUSAL, so a guessed family turns a resolvable section into a
    *  "belongs to a different dossier" miss. */
   docType: EditorTargetDocType | null;
+  /** A SPECIFIC authoring document, by id — the strongest claim a sender can
+   *  make, used when the sender holds the exact document (the correspondence
+   *  card's linked response draft) rather than a section it must search for.
+   *  Resolved before any code/label search: the doc is either in the editor's
+   *  list or the miss is stated. */
+  docId: string | null;
   sectionCode: string | null;
   sectionLabel: string | null;
   /** regulatory_programs UUID the section belongs to, when the sender had one.
@@ -107,6 +113,7 @@ const str = (v: unknown): string | null => {
  *  the same rule window.C2C_PROJECT writes follow. */
 export function setEditorTarget(
   target: { docType: EditorTargetDocType | null } & EditorSectionRef & {
+    docId?: string | null;
     programId?: string | null;
     programTitle?: string | null;
   },
@@ -114,6 +121,7 @@ export function setEditorTarget(
   if (typeof window === 'undefined') return;
   window.C2C_EDITOR_TARGET = {
     docType: target.docType ?? null,
+    docId: str(target.docId),
     sectionCode: str(target.code),
     sectionLabel: str(target.label),
     programId: str(target.programId),
@@ -159,6 +167,7 @@ export function peekEditorTarget(now: number = Date.now()): EditorTarget | null 
   if (now - t.setAt > EDITOR_TARGET_TTL_MS || t.setAt - now > EDITOR_TARGET_TTL_MS) return null;
   return {
     docType: (t.docType ?? null) as EditorTargetDocType | null,
+    docId: str(t.docId),
     sectionCode: str(t.sectionCode),
     sectionLabel: str(t.sectionLabel),
     programId: str(t.programId),

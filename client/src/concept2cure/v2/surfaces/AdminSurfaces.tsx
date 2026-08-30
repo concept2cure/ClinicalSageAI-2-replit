@@ -3128,7 +3128,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                 <EmptyState
                   icon={I.building}
                   title="Organization profile not yet available"
-                  hint="A governed org-profile read isn't wired yet. The profile (name, industry mode, tier, region, data residency) drives rail categories, pathways and pricing archetype; editing is governed via /api/setup."
+                  hint="A governed org-profile read isn't wired yet. The profile (name, industry mode, tier, region, data residency) drives rail categories, pathways and pricing archetype; editing is governed in Setup."
                 />
               </div>
             )}
@@ -3300,7 +3300,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
             {sec === 'apikeys' && (
               <div>
                 <div className="scaf-note" style={{ marginBottom: 12 }}>
-                  Programmatic access tokens (/api/api-keys) -- org-scoped, hashed at rest,
+                  Programmatic access tokens — org-scoped, hashed at rest,
                   last-used tracked, revocable. Every use is audited.
                 </div>
                 {keysState.loading ? (

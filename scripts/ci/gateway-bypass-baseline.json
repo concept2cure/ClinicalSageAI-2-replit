@@ -1,17 +1,14 @@
 {
-  "description": "Files that reach a model provider outside the governed AI gateway — by constructing an SDK client, calling a provider endpoint directly, or using a shared client factory's returned client. This is the gateway-bypass burndown list. Do NOT add to it: route new AI calls through server/services/ai-gateway (getGateway) or server/lib/unified-ai-client. Every entry carries a REASON stating what governance is lost; an entry without one fails the gate. Removing entries by routing them through the gateway is the point. Enforced by scripts/ci/check-gateway-bypass.mjs.",
+  "description": "Files that reach a model provider outside the governed AI gateway \u2014 by constructing an SDK client, calling a provider endpoint directly, or using a shared client factory's returned client. This is the gateway-bypass burndown list. Do NOT add to it: route new AI calls through server/services/ai-gateway (getGateway) or server/lib/unified-ai-client. Every entry carries a REASON stating what governance is lost; an entry without one fails the gate. Removing entries by routing them through the gateway is the point. Enforced by scripts/ci/check-gateway-bypass.mjs.",
   "entries": {
     "server/services/anthropic-client.ts": {
-      "reason": "Shared Anthropic client factory — the canonical place a raw client is constructed for callers that have not yet moved to the gateway. Kept as burndown, not blessed: baselining the CONSTRUCTOR is what let ungoverned CALLS through getAnthropicClient() spread to files nobody baselined, which is why this gate now matches the call sites too."
+      "reason": "Shared Anthropic client factory \u2014 the canonical place a raw client is constructed for callers that have not yet moved to the gateway. Kept as burndown, not blessed: baselining the CONSTRUCTOR is what let ungoverned CALLS through getAnthropicClient() spread to files nobody baselined, which is why this gate now matches the call sites too."
     },
     "server/services/openai-client.ts": {
-      "reason": "Shared OpenAI client factory — same status and same caveat as anthropic-client.ts above."
-    },
-    "server/services/openai-service.ts": {
-      "reason": "Legacy OpenAI service wrapper predating the gateway. Burndown."
+      "reason": "Shared OpenAI client factory \u2014 same status and same caveat as anthropic-client.ts above."
     },
     "server/services/ai/LiteLLMAdapter.ts": {
-      "reason": "WIDEST BYPASS. Posts to `${this.baseUrl}/chat/completions` — an OpenAI-compatible proxy — and server/services/aiProviderRouter.ts makes the gateway the ELSE branch: `if (this.liteLLMAdapter.isEnabled()) { ... } else { executeViaGateway(...) }`. One env flag (LITELLM_ENABLED) therefore diverts EVERY routed call away from policy evaluation, the PII/PHI fail-closed screen, the provider-placement/residency check and the ai.gateway_audit_log row; the router writes its own ai_provider_audit_log row with no prompt hash, resolved model or residency. .env.example defaults it false and nothing in helm/terraform/compose sets it, so this is latent rather than live — and nothing announces at boot that the gateway has been bypassed."
+      "reason": "WIDEST BYPASS. Posts to `${this.baseUrl}/chat/completions` \u2014 an OpenAI-compatible proxy \u2014 and server/services/aiProviderRouter.ts makes the gateway the ELSE branch: `if (this.liteLLMAdapter.isEnabled()) { ... } else { executeViaGateway(...) }`. One env flag (LITELLM_ENABLED) therefore diverts EVERY routed call away from policy evaluation, the PII/PHI fail-closed screen, the provider-placement/residency check and the ai.gateway_audit_log row; the router writes its own ai_provider_audit_log row with no prompt hash, resolved model or residency. .env.example defaults it false and nothing in helm/terraform/compose sets it, so this is latent rather than live \u2014 and nothing announces at boot that the gateway has been bypassed."
     },
     "server/api/ai/routes.ts": {
       "reason": "POST /api/ai/regulatory-guidance fetches https://api.openai.com/v1/chat/completions directly with model 'gpt-4o' and temperature 0.7. 'gpt-4o' is a floating alias and nothing records which model actually answered; no prompt hash over a system prompt that interpolates caller context; no fallback chain, so one non-200 becomes a 503. Mounted at /api/ai."
@@ -20,7 +17,7 @@
       "reason": "extractEntities() fetches https://api.openai.com/v1/chat/completions (gpt-4o-mini) with up to 8000 characters of ingested regulatory document text, from POST /api/graphrag/query and /ingest. Same missing audit as api/ai/routes.ts, plus the PII/PHI classifier never sees the ingested body, and a failure silently degrades to regex extraction with no provenance distinction between model-extracted and regex-extracted entities."
     },
     "server/services/deep-research-orchestrator.ts": {
-      "reason": "generateSynthesis() calls getAnthropicClient().messages.create(...) for a 4096-token regulatory-intelligence briefing that is persisted and shown to users. Invisible to the old guard because the CONSTRUCTION lives in the baselined anthropic-client.ts and the call site was never scanned. No audit row, no prompt hash over the aggregated evidence corpus, no retry ladder — a failure silently swaps in buildFallbackSynthesis()."
+      "reason": "generateSynthesis() calls getAnthropicClient().messages.create(...) for a 4096-token regulatory-intelligence briefing that is persisted and shown to users. Invisible to the old guard because the CONSTRUCTION lives in the baselined anthropic-client.ts and the call site was never scanned. No audit row, no prompt hash over the aggregated evidence corpus, no retry ladder \u2014 a failure silently swaps in buildFallbackSynthesis()."
     },
     "server/services/EvidenceManagementService.ts": {
       "reason": "Sends 4000 characters of an UPLOADED customer evidence file to gpt-4o via getOpenAIClient().chat.completions.create. Same shared-client blind spot as deep-research-orchestrator. No PII/PHI classification and no substrate/retention record on customer file content. Reachable from /api/evidence-management and from authoring-actions."
@@ -41,10 +38,10 @@
       "reason": "NOT INFERENCE. Fetches https://api.openai.com/v1/models purely as a reachability probe (the code says so: 'don't burn tokens'), and the router is mounted only under testRoutesEnabled, so it is fenced out of production. Baselined rather than path-excluded because it IS egress to a provider host and should stay visible if that mount fence ever moves."
     },
     "server/services/submission-twin-service.ts": {
-      "reason": "Constructs `const openai = getOpenAIClient()` at module load and never uses it. Dead construction — the fix is deletion, not migration."
+      "reason": "Constructs `const openai = getOpenAIClient()` at module load and never uses it. Dead construction \u2014 the fix is deletion, not migration."
     },
     "server/workers/vectorization-worker.ts": {
-      "reason": "openai.embeddings.create via the shared client. Embeddings are governed by a different gate — scripts/ci/check-embedding-runtime-canonicality.mjs allowlists this file — so this entry records that it sits outside the AI gateway's audit trail while remaining inside the embedding-runtime policy, not that it is unpoliced."
+      "reason": "openai.embeddings.create via the shared client. Embeddings are governed by a different gate \u2014 scripts/ci/check-embedding-runtime-canonicality.mjs allowlists this file \u2014 so this entry records that it sits outside the AI gateway's audit trail while remaining inside the embedding-runtime policy, not that it is unpoliced."
     },
     "server/services/innovation/auto-traceability-service.ts": {
       "reason": "openai.embeddings.create via the shared client. Same status as vectorization-worker.ts: allowlisted by the embedding-runtime canonicality gate, outside the AI gateway's audit trail."
@@ -62,7 +59,7 @@
       "reason": "DEAD CODE. axios.post to api-inference.huggingface.co (Llama-2-70b). Zero importers; recorded in unreferenced-modules-baseline.json. Superseded by the .ts service of the same name."
     },
     "server/services/csr-extractor-service.ts": {
-      "reason": "DEAD CODE. getOpenAIClient().chat.completions.create with gpt-4-turbo-preview, reachable only through a barrel chain (services/csr/index.ts ← services/index.ts) that is itself recorded as unreferenced; the exported csrExtractorService symbol has zero call sites."
+      "reason": "DEAD CODE. getOpenAIClient().chat.completions.create with gpt-4-turbo-preview, reachable only through a barrel chain (services/csr/index.ts \u2190 services/index.ts) that is itself recorded as unreferenced; the exported csrExtractorService symbol has zero call sites."
     }
   }
 }

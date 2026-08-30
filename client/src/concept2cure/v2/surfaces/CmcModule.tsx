@@ -10,6 +10,7 @@ import type { C2CFormConfig } from '../C2CForm';
 import { EmptyState, liveGetOrNull, useLiveData, useLiveRows } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { saveToAuthoring } from '../authoringHandoff';
+import { setEditorTarget } from '../editorTarget';
 import {
   specRowsFromApi,
   specCreateBody,
@@ -120,6 +121,8 @@ interface CmcCorrespondence {
   priority: string | null; severity: string | null; status: string;
   region: string | null; dueDate: string | null; overdue: boolean;
   assignedTo: string | null;
+  /** The authoring document holding the drafted response, when one is linked. */
+  responseDocId?: string | null;
 }
 interface CmcSection { key: string; path: string; st: string; _new?: boolean; }
 interface CmcChangeType { id: string; label: string; risk: string; }
@@ -396,6 +399,12 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
   const computedAvgRpi = rpiNums.length ? Math.round(rpiNums.reduce((a, b) => a + b, 0) / rpiNums.length) : null;
   const avgRpi: number | null = kpis ? kpis.rpiAverage : computedAvgRpi;
   const irOverdue: number = kpis ? kpis.irOverdue : port.reduce((a, r) => a + (r.ir ?? 0), 0);
+  /* The overdue ATTRIBUTION comes from the same read as the COUNT. The lead
+     used to count from the correspondence KPI but name submissions from the
+     legacy per-row store — two sources, and when the legacy store was empty
+     the sentence attributed the count to "()" — an empty list. */
+  const overdueQs = (board.data?.correspondence ?? []).filter((c) => c.overdue);
+  const overdueSecs = [...new Set(overdueQs.map((c) => c.sectionRef).filter((s): s is string => !!s))];
 
   const approved = secs.filter((s) => s.st === 'approved').length;
   const readyPct = secs.length ? Math.round(100 * approved / secs.length) : 0;
@@ -463,7 +472,6 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
   const inReview = secs.filter((s) => s.st === 'review');
   const drafts = secs.filter((s) => s.st === 'draft');
   const nextSec = inReview[0] || drafts[0];
-  const irSubs = port.filter((p) => (p.ir ?? 0) > 0);
   /* ── BP-W0-3, the same defect as the NDA cockpit ───────────────────────────
      With zero submissions this lead read "Your Module 3 spans 0 submissions --
      preparedness is still computing across the portfolio" over a board that had
@@ -510,7 +518,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           : port.length === 0
             ? <>Module 3 readiness is measured across an organization's submissions, and there are none recorded. Nothing about this package has been assessed. Create a submission and add its CMC sections, and its specifications, batch analyses, stability data and change control appear here.</>
             : irOverdue
-              ? <>You have <b>{irOverdue} information {irOverdue === 1 ? 'request' : 'requests'} overdue</b> ({irSubs.map((p) => p.sub).join(', ')}). {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
+              ? <>You have <b>{irOverdue} information {irOverdue === 1 ? 'request' : 'requests'} overdue</b>{overdueSecs.length ? <> (§{overdueSecs.join(', §')})</> : null}. {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
               : secs.length === 0
                 ? <>No governed CMC sections have been authored for {port.length === 1 ? 'this submission' : 'these submissions'} yet, so section approval has nothing to report.</>
                 : <>{approved} of {secs.length} sections are approved{nextSec ? <>. §{nextSec.key} ({nextSec.path}) is the next one to move — clear it{lowSub ? <> and {lowSub.sub} climbs with it</> : null}</> : null}.</>}
@@ -523,7 +531,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
         : mayReassure(cmcState, readyPct)
           ? "You're building steadily. I'll help you move the next section to approved."
           : undefined}
-      action={{ label: irOverdue ? 'Draft the overdue IR responses' : 'Advance the next section', onClick: () => ask(irOverdue ? ('Draft responses to the overdue CMC information requests for ' + irSubs.map((p) => p.sub).join(' and ')) : ('Prepare §' + (nextSec ? nextSec.key : '') + ' ' + (nextSec ? nextSec.path : '') + ' for approval')),
+      action={{ label: irOverdue ? 'Draft the overdue IR responses' : 'Advance the next section', onClick: () => ask(irOverdue ? ('Draft responses to the overdue Module 3 information requests' + (overdueSecs.length ? ' citing §' + overdueSecs.join(', §') : '')) : ('Prepare §' + (nextSec ? nextSec.key : '') + ' ' + (nextSec ? nextSec.path : '') + ' for approval')),
         /* The second action goes where the section actually moves: the build
            board, which is the only surface that can compile it, show what is
            blocking it and clear the export gate. */
@@ -2052,6 +2060,10 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
      could not be recorded at all. POST /api/cmc/agency-questions stamps the
      org from the verified session; the card reloads from the server. */
   const [logOpen, setLogOpen] = useState(false);
+  /* A second submit while the POST is in flight would write a second
+     PERMANENT row (questions close, never delete) — same guard idiom as the
+     change memo's openingRef. */
+  const loggingRef = useRef(false);
   const LOG_FORM: C2CFormConfig = {
     eyebrow: 'CMC — agency correspondence',
     title: 'Log an agency question',
@@ -2059,7 +2071,7 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
     submitLabel: 'Log question',
     fields: [
       { key: 'questionText', label: 'Question, as received', type: 'textarea', required: true, placeholder: 'Quote the agency’s question verbatim — never a paraphrase.' },
-      { key: 'sectionReference', label: 'CTD section', type: 'text', half: true, placeholder: 'e.g. 3.2.S.4.1' },
+      { key: 'sectionReference', label: 'Module 3 section (optional)', type: 'text', half: true, placeholder: 'e.g. 3.2.S.4.1 — this file holds 3.x questions' },
       { key: 'region', label: 'Agency / region', type: 'text', half: true, placeholder: 'e.g. FDA' },
       { key: 'priority', label: 'Priority', type: 'seg', options: ['low', 'medium', 'high'], default: 'medium', half: true },
       { key: 'dueDate', label: 'Response due', type: 'date', half: true },
@@ -2067,6 +2079,8 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
     ],
   };
   const logQuestion = async (v: Record<string, string>) => {
+    if (loggingRef.current) return;
+    loggingRef.current = true;
     try {
       const res = await apiRequest('POST', '/api/cmc/agency-questions', {
         questionText: v.questionText,
@@ -2087,6 +2101,8 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
       setCorrEpoch((e) => e + 1);
     } catch (e) {
       fireToast('Couldn’t log the question — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+    } finally {
+      loggingRef.current = false;
     }
   };
 
@@ -2167,22 +2183,52 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
          not downgraded by re-drafting. A failed status write does not undo
          the draft; it is stated, and we stay here so the statement is seen. */
       if (c.status === 'OPEN') {
+        /* expectedStatus makes the flip conditional SERVER-side: this row was
+           read when the screen loaded, and if someone closed the question in
+           the meantime, an unconditional PATCH would silently REOPEN it as
+           DRAFTED. A 409 means the row moved on — the draft still exists.
+           responseDocId rides the same write: the file records WHICH document
+           holds the response, so "Open draft" works after any reload. The
+           server refuses a doc it cannot find in this org — the link is a
+           door that opens, never a dangling id. */
         const patch = await apiRequest(
           'PATCH',
           '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
-          { status: 'DRAFTED' },
+          { status: 'DRAFTED', expectedStatus: 'OPEN', responseDocId: res.docId },
         ).catch(() => null);
         if (!patch?.ok) {
+          const pj = patch ? await patch.json().catch(() => null) : null;
           fireToast(
-            'The draft was created, but the question could not be marked DRAFTED — it stays OPEN in the file. Open the draft from the Document editor.',
+            'The draft was created, but the question was not marked DRAFTED — ' +
+              (serverMessage(pj) ?? 'its status could not be updated; it is unchanged in the file') +
+              ' Open the draft from the Document editor.',
             'error',
           );
           setCorrEpoch((e) => e + 1);
           return;
         }
+      } else if (c.status === 'DRAFTED') {
+        /* Re-drafting an already-DRAFTED question creates a NEWER draft; the
+           link follows it so the file points at the draft the responder is
+           actually working in. Status untouched; the guard means a concurrent
+           close is answered 409 rather than silently re-linked. A failed
+           link is not fatal — the draft is real and about to be on screen —
+           but it is not silently swallowed either: the card keeps rendering
+           whichever draft the file still names. */
+        await apiRequest(
+          'PATCH',
+          '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
+          { responseDocId: res.docId, expectedStatus: 'DRAFTED' },
+        ).catch(() => null);
       }
-      if (nav) nav('document-authoring');
-      else {
+      if (nav) {
+        /* Open the editor ON the new draft — the deep-link channel names the
+           exact document, so the editor cannot land on "first doc in the
+           list". Set only when a navigation follows: the channel is one-shot
+           and a target nothing consumes is a stray claim. */
+        setEditorTarget({ docType: null, docId: res.docId });
+        nav('document-authoring');
+      } else {
         fireToast(res.message);
         setCorrEpoch((e) => e + 1);
       }
@@ -2302,13 +2348,28 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
                 <td>{c.assignedTo ?? '—'}</td>
                 <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                   <div style={{ display: 'inline-flex', gap: 6 }}>
+                    {/* The linked draft is a recorded fact on the row — the
+                        door renders only when the file names a document AND a
+                        navigator exists to honour it. */}
+                    {c.responseDocId && nav ? (
+                      <button
+                        className="nda-open"
+                        title="Open the drafted response in the document editor"
+                        onClick={() => {
+                          setEditorTarget({ docType: null, docId: c.responseDocId });
+                          nav('document-authoring');
+                        }}
+                      >
+                        {I.fileText} Open draft
+                      </button>
+                    ) : null}
                     <button
                       className="nda-open"
                       disabled={draftingId != null}
                       title="Create a governed response draft quoting this question and open it in the editor"
                       onClick={() => void draftResponse(c)}
                     >
-                      {draftingId === c.id ? <>Creating…</> : <>{I.fileText} Draft response</>}
+                      {draftingId === c.id ? <>Creating…</> : c.responseDocId ? <>{I.fileText} Re-draft</> : <>{I.fileText} Draft response</>}
                     </button>
                     <button
                       className="nda-open"
