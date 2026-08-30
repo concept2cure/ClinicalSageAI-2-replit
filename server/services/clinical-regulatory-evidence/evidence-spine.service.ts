@@ -49,6 +49,63 @@ function assertOneOf<T extends string>(value: T, allowed: readonly T[], field: s
 
 // ─── Evidence sources ─────────────────────────────────────────────────────────
 
+/** The narrow surface createSource needs — pool, or a transaction client. */
+type SourceExecutor = { query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }> };
+
+/**
+ * Record a new source AS THE SUCCESSOR of one already held, atomically.
+ *
+ * WHY THIS IS NOT createSource WITH AN EXTRA FIELD. Two rows change: the new
+ * source is written, and the one it replaces stops being current. Apart, a
+ * failure between them leaves either two current versions of one document or a
+ * retired source with no successor — both worse than no linkage, because both
+ * are a lineage that reads as complete and is not. They go in one transaction.
+ *
+ * WHAT MAKES SOMETHING A SUCCESSOR IS THE CALLER'S CALL, NOT THIS FUNCTION'S.
+ * It links exactly the predecessor it is handed. Deciding that upload B revises
+ * document A is a judgement about content, and a wrong one is expensive: it
+ * would tell a reviewer their citation is stale on the strength of a guess. The
+ * ingest path makes that decision explicitly, conservatively, and records how it
+ * was reached in the successor's provenance.
+ *
+ * The retirement is conditional on the predecessor still being current and still
+ * belonging to this org. If it is already retired, nothing is written and the
+ * caller is told — a second successor would fork the lineage, which the unique
+ * index also refuses at the schema level.
+ */
+export async function createSupersedingSource(
+  orgId: number,
+  p: Parameters<typeof createSource>[1],
+  predecessorId: number,
+): Promise<{ source: EvidenceSource; supersededId: number }> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const retired = await client.query(
+      `UPDATE cre_evidence_sources
+          SET is_current = FALSE
+        WHERE id = $1 AND organization_id = $2 AND is_current = TRUE
+        RETURNING id`,
+      [predecessorId, orgId],
+    );
+    if (retired.rows.length === 0) {
+      await client.query('ROLLBACK');
+      throw new Error(
+        `createSupersedingSource: source ${predecessorId} is not a current source of org ${orgId} — ` +
+        'it was already superseded, or belongs to another tenant. Refusing to fork its lineage.',
+      );
+    }
+    const source = await createSource(orgId, { ...p, previousVersionId: predecessorId }, client);
+    await client.query('COMMIT');
+    return { source, supersededId: predecessorId };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 export async function createSource(orgId: number, p: {
   sourceType: SourceType; visibilityClass?: VisibilityClass; clientWorkspaceId?: number | null;
   /** regulatory_programs.id (UUID) — the project-management id-space. Set this
@@ -61,6 +118,9 @@ export async function createSource(orgId: number, p: {
   applicationNumber?: string | null; trialRegistryIdentifier?: string | null;
   documentDate?: string | null; officialUrl?: string | null; storedArtifactRef?: string | null;
   checksum?: string | null; version?: string | null; provenance?: Record<string, unknown> | null;
+  /** The source this one REPLACES, when that is known. See createSupersedingSource:
+   *  it is set by the ingest path, never inferred here. */
+  previousVersionId?: number | null;
   linkedCsrReportId?: number | null; linkedPrecedentId?: string | null;
   metadata?: Record<string, unknown> | null;
   /** Defaults to 'pending'. A source whose bytes are already stored and read is
@@ -69,7 +129,11 @@ export async function createSource(orgId: number, p: {
   /** Defaults to 'pending'. Set to 'extracted' when text was pulled at ingest;
    *  'failed' when extraction was attempted and produced nothing usable. */
   extractionStatus?: ExtractionStatus;
-}): Promise<EvidenceSource> {
+},
+/** Runs on the caller's transaction when one is supplied. createSupersedingSource
+ *  needs the insert and the predecessor's retirement to land together. */
+exec: SourceExecutor = pool,
+): Promise<EvidenceSource> {
   assertOneOf(p.sourceType, SOURCE_TYPES, 'sourceType');
   const visibility = p.visibilityClass ?? 'tenant_private';
   assertOneOf(visibility, VISIBILITY_CLASSES, 'visibilityClass');
@@ -117,7 +181,18 @@ export async function createSource(orgId: number, p: {
     placeholders.push(`$${values.length}`);
   }
 
-  const { rows } = await pool.query(
+  // `previous_version_id` is added by migrations/20260829_cre_source_versioning.sql,
+  // separately from the spine that creates this table — so it is named only when
+  // a caller supplies one, for exactly the reason client_program_id is. Naming it
+  // unconditionally would break every write on a database that has the spine but
+  // not that migration.
+  if (p.previousVersionId != null) {
+    values.push(p.previousVersionId);
+    columns.push('previous_version_id');
+    placeholders.push(`$${values.length}`);
+  }
+
+  const { rows } = await exec.query(
     `INSERT INTO cre_evidence_sources (${columns.join(', ')})
      VALUES (${placeholders.join(',')})
      RETURNING *`,
@@ -249,6 +324,63 @@ export async function findSourceByChecksum(
     args,
   );
   return rows[0] ? adaptSource(rows[0]) : null;
+}
+
+/**
+ * The one current source this upload would REPLACE, or null when that cannot be
+ * established without guessing.
+ *
+ * The rule is deliberately narrow: same tenant, same project scope, same
+ * source type, same title, still current, not deleted. A re-upload of
+ * "Protocol.pdf" into the project that already holds "Protocol.pdf" is a
+ * revision; that is the case this exists for.
+ *
+ * It returns null when MORE THAN ONE candidate matches. Two documents sharing a
+ * filename in one project is exactly where a "revision" call becomes a guess,
+ * and a wrong one is not cosmetic — it would retire a live source and tell a
+ * reviewer their citation is stale on the strength of a filename. Ambiguity
+ * declines to decide rather than picking the newest.
+ *
+ * It also returns null when the scope is unknown. An unscoped tenant upload has
+ * no project context to be a revision WITHIN, so filename alone is far too weak.
+ *
+ * NOTE: this reads `is_current`, added by
+ * migrations/20260829_cre_source_versioning.sql. Callers reach it only from the
+ * ingest path, which tolerates the column being absent by treating a failed
+ * lookup as "no predecessor known" — see the call site.
+ */
+export async function findSupersededCandidate(
+  orgId: number,
+  p: {
+    title: string;
+    sourceType: SourceType;
+    programId?: string | null;
+    workspaceId?: number | null;
+  },
+): Promise<EvidenceSource | null> {
+  const title = (p.title ?? '').trim();
+  if (!title) return null;
+  // No project scope → no context in which "same name" means "same document".
+  if (p.programId == null && p.workspaceId == null) return null;
+
+  const args: unknown[] = [orgId, title, p.sourceType];
+  let where = `organization_id = $1 AND title = $2 AND source_type = $3
+               AND is_current = TRUE AND deleted_at IS NULL`;
+  if (p.programId != null) {
+    args.push(p.programId);
+    where += ` AND client_program_id = $${args.length}`;
+  } else {
+    args.push(p.workspaceId);
+    where += ` AND client_workspace_id = $${args.length}`;
+  }
+  // LIMIT 2, not 1: one row is a decision, two rows is an ambiguity that must
+  // not be resolved by ordering.
+  const { rows } = await pool.query(
+    `SELECT * FROM cre_evidence_sources WHERE ${where} ORDER BY created_at DESC LIMIT 2`,
+    args,
+  );
+  if (rows.length !== 1) return null;
+  return adaptSource(rows[0]);
 }
 
 export async function getSource(orgId: number, id: number): Promise<EvidenceSource | null> {

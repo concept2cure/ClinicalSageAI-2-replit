@@ -27,7 +27,15 @@ describe('toPackagerRegion', () => {
     expect(toPackagerRegion('EU')).toBe('ema'); // case-insensitive
   });
   it('throws on an unsupported region', () => {
-    expect(() => toPackagerRegion('cn')).toThrow(/Unsupported region/);
+    // 'cn' used to be the example here, and it stopped being unsupported: the
+    // fix documented above REGION_MAP added cn/br/in/kr/sg (and ca/uk/ch/au)
+    // because the spine could not build those submissions at all. The rule this
+    // test exists for — an unrecognised region is refused, never silently
+    // defaulted to fda — is unchanged, so it now uses a code that really is
+    // outside the map.
+    expect(() => toPackagerRegion('zz')).toThrow(/Unsupported region/);
+    // And the region that prompted the change is genuinely supported now.
+    expect(toPackagerRegion('cn')).toBe('cn');
   });
 });
 
@@ -47,9 +55,13 @@ describe('mapCoreLeafToEctdLeaf', () => {
     });
   });
 
-  it('falls back to the leaf checksum when the resolved file has no md5', () => {
+  it('never adopts the DB leaf.checksum as the manifest md5 — leaves it undefined for byte-hashing downstream', () => {
+    // leaf.checksum is a caller-settable DB value with no tie to the file bytes;
+    // it must NOT become the manifest checksum. When the resolver produced no
+    // md5, md5 stays undefined so the packager hashes the real bytes.
     const out = mapCoreLeafToEctdLeaf(leaf({ sectionCode: '2.7', checksum: 'corechk' }), file({ md5: undefined }));
-    expect(out.md5).toBe('corechk');
+    expect(out.md5).toBeUndefined();
+    expect(out.md5).not.toBe('corechk');
   });
 
   it('defaults an unknown lifecycle op to new', () => {

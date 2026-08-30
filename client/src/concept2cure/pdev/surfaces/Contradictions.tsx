@@ -74,7 +74,21 @@ export function PdevContradictionsSurface({
 
       {payload.contradictions.length === 0 ? (
         <div className="pdev-section">
-          <div className="pdev-empty">No contradictions detected.</div>
+          {/* "No contradictions detected." asserted that a detection RAN and came
+              back clean. Nothing here establishes that. The registry is a read
+              over contradictionEngineService.searchFindings, which returns
+              contradictions the engine has already DETECTED and persisted — so an
+              empty list is equally the shape of a program nothing has ever scanned.
+              (The loading and failed reads are handled by the caller in App.tsx and
+              never reach this branch, so this is specifically the read-succeeded,
+              nothing-returned case.) Same rule as the submission gate on the v2
+              Inconsistency surface: an empty findings set is not a finding of
+              "none". */}
+          <div className="pdev-empty">
+            The registry is empty for this program. It lists contradictions the
+            engine has detected, so an empty registry does not confirm a scan
+            has run.
+          </div>
         </div>
       ) : (
         <div className="pdev-contradiction-layout">

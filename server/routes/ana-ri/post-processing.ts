@@ -129,8 +129,10 @@ export async function persistCollectedDrafts(args: {
     try {
       const { pool } = await import('../../db.js');
       const anchor = await pool.query(
-        `SELECT id FROM projects WHERE regulatory_program_id = $1 LIMIT 1`,
-        [String(streamProjectId).trim()],
+        `SELECT id FROM projects
+          WHERE regulatory_program_id = $1 AND organization_id = $2
+          LIMIT 1`,
+        [String(streamProjectId).trim(), Number(orgId)],
       );
       const anchored = parseIntegerProjectId(anchor.rows[0]?.id);
       if (anchored != null) projectId = anchored;

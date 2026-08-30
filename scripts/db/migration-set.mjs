@@ -1289,6 +1289,24 @@ export const C2C_MIGRATION_FILES = [
   // because they truthfully record that nothing was captured.
   'migrations/20260814g_section_version_reason_required.sql',
 
+  // ── An unstated author is recorded as unspecified, not as a human ──────────
+  // The same fix as 20260814g one column over: the section save defaulted an
+  // omitted `draftSource` to 'human' and the trigger's CASE fell through to
+  // 'human' for NULL, so a save that said nothing about where its text came
+  // from filed a version row asserting a named person wrote it. MUST stay last
+  // of the five definitions of c2c_snapshot_section_version() — it is built on
+  // 20260814g's body and carries its mandatory-reason RAISE.
+  'migrations/20260822_section_version_author_kind_unspecified.sql',
+
+  // ── A revised source document is linked to the one it replaces (L21) ───────
+  // checksum is written once and never updated, so a revision is ingested as a
+  // wholly NEW row with nothing pointing back at what it replaced. That made
+  // the Source Tracer's "changed since cited" branch unreachable. Additive
+  // columns only, and no backfill: nothing in the existing data says which row
+  // superseded which, and inferring it would manufacture a lineage the system
+  // never observed.
+  'migrations/20260829_cre_source_versioning.sql',
+
   // Constraint repair only: no table, no column, no data. 0001_phase13_full
   // meant to widen concept2cure_review_tasks.task_type to include
   // 'approval_task' but added a second CHECK instead of replacing phase13's
@@ -1539,22 +1557,14 @@ export const C2C_MIGRATION_FILES = [
   // missing column and fails every org closed.
   'db/migrations/20260824_module_grant_expiry.sql',
 
-  // ── Access requests from a lock — NOT YET WRITTEN ─────────────────────────
-  // `db/migrations/20260824_module_access_requests.sql` was listed here by
-  // 89ce2cd20 and never committed. It exists in no commit, and
-  // `module_access_requests` is referenced nowhere in server/, shared/ or the
-  // schema — the entry described a feature whose migration was not written.
-  //
-  // A listing for a file that is not on disk is not harmless here. This set is
-  // APPLIED in order, and the entry sat AFTER the tenant-isolation sweep in a
-  // reading where it created a tenant-keyed table — which is the exact case
-  // check-migration-set-order.mjs exists to catch, because such a table ships
-  // with no RLS policy and the policy count still goes up. It also blocked
-  // every push to this branch, for every session, from the moment it landed.
-  //
-  // Removed rather than stubbed: an empty migration would satisfy the gate and
-  // teach it to accept a file that creates nothing. When the feature is built,
-  // the entry returns WITH its SQL, in the same change.
+  // ── Access requests from a locked module ──────────────────────────────────
+  // The route is live and reads/writes module_access_requests. The migration
+  // therefore belongs on the same durable deploy path as the route, before the
+  // final tenant-isolation sweep so its integer organization_id receives the
+  // standard RLS policy in the same run. Keeping the SQL in db/migrations/
+  // without this entry creates a deploy-dead table definition: unit tests pass,
+  // while every real request fails with 42P01.
+  'db/migrations/20260824_module_access_requests.sql',
 
   // ── The enforcement mode becomes a governed setting ───────────────────────
   // Creates platform_settings, the store the Master Licensing console writes
@@ -1591,6 +1601,69 @@ export const C2C_MIGRATION_FILES = [
   // on every super-admin / null-orgUuid scope. Idempotent — it matches nothing
   // once the inline casts are gone.
   'db/migrations/20260821_uuid_org_guc_cast_heal.sql',
+
+  // core.get_program_org_id must resolve the canonical program registry
+  // (regulatory_programs → organizations.uuid), or every vault.documents RLS
+  // policy denies the runtime role on a fresh install (core.programs is empty
+  // there). Proven by tests/db/vault-ingest.dbtest.ts.
+  'db/migrations/20260828_program_org_resolution_canonical.sql',
+
+  // ── Orphaned org-GUC policies on the IND section-tracking tables ───────────
+  // 20260220_ind_section_tracking.sql created five *_org_policy policies keyed
+  // on `app.organization_id`, a GUC nothing in the application sets — so they
+  // have never granted anyone access. They are not an outage (the canonical
+  // tenant_isolation_policy is PERMISSIVE and ORs alongside them, measured: own
+  // org sees its row, another org sees none) but their cast is unguarded, so
+  // one `set_config('app.organization_id','')` anywhere takes all five tables
+  // down with 22P02 — both expressions are evaluated no matter which one grants.
+  // Dropped rather than repaired: a repair would restate what the sweep already
+  // says. Ordered before the sweep so a table is never left without a policy.
+  'db/migrations/20260828_drop_orphaned_org_guc_policies.sql',
+
+  // ── Non-public tenant policies must fail CLOSED (ordered before the sweep) ──
+  // The gcc 074-078 migrations and the earlier form of the non-public sweep
+  // emitted `<col> = COALESCE(<resolver>, <col>)`, which collapses to
+  // `<col> = <col>` — TRUE for every row — whenever the org GUC is unset, empty
+  // or not a uuid. Measured as app_service with app.rls_enforce=on: an unset
+  // GUC and a GUC of '42' each returned BOTH tenants' rows. This rewrites them
+  // to the shadow-clause form the 793 public policies already use, so they do
+  // not filter when enforcement is off and filter strictly when it is on.
+  // Idempotent; matches on shape, not on policy name.
+  'db/migrations/20260828_fail_closed_org_coalesce_policies.sql',
+
+  // ── concept2cure_artifact_versions.updated_at (GA ledger L38) ─────────────
+  // artifactVersionStore.ts names updated_at in both of its INSERTs and
+  // shared/schema.ts declares it, but none of the three migrations that create
+  // this table do — so the column exists on a drizzle-push (install-fresh)
+  // database and not on a migration-provisioned one, and the 42703 lands on the
+  // long-lived deployments. Reproduced by dropping the column and replaying the
+  // writer's own column list. Idempotent ADD COLUMN with the model's exact
+  // type, nullability and default.
+  'db/migrations/20260828_artifact_versions_updated_at.sql',
+
+  // ── Five more columns the app writes that no migration creates ────────────
+  // Same class as the entry above, found by diffing a drizzle-pushed database
+  // against every column the migration files create and keeping only those a
+  // raw INSERT in server/ actually names: concept2cure_signatures and
+  // regulatory_audit_logs (created_at/updated_at — the Part 11 signature and
+  // the audit row beside it) and concept2cure_submission_snapshots.updated_at.
+  // Each confirmed by hand; the detection also flagged the knowledge-graph
+  // tenant columns, which turned out to be added dynamically by
+  // 20260813_knowledge_graph_tenant_keys.sql and are NOT included.
+  'db/migrations/20260828_align_written_columns_with_migrations.sql',
+
+  // ── file_uploads.checksum_sha256 (GA ledger L25) ──────────────────────────
+  // Nothing recorded a digest for an uploaded document, so no stored file was
+  // verifiable after the fact — bytes altered on disk, a truncated write or a
+  // bad restore were all served as the original, and keeping file_size
+  // consistent was enough to hide it. loadUploadedFile now re-derives SHA-256
+  // over the bytes it read and REFUSES a mismatch. Existing rows stay NULL by
+  // design: hashing today's bytes would record corruption as authentic.
+  'db/migrations/20260828_file_uploads_checksum.sql',
+  // Must follow the sweep above: that one keys on polqual (USING), which an
+  // INSERT policy does not have, so every write-only policy slipped through
+  // with its fail-open COALESCE intact. This closes them on polwithcheck.
+  'db/migrations/20260828_fail_closed_insert_withcheck_policies.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

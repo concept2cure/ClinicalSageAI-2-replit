@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData, liveMutateOrNull, type DataResult } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { takeUnlockIntent, type UnlockIntent } from '../unlockIntent';
 import type { SurfaceViewProps } from '../surfaceViews';
 // Canonical price list, NOT fabricated per-tenant data: LIC_DTC / LIC_PRICING /
@@ -134,6 +135,71 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
       fireToast(r.error ? 'Billing portal unavailable · ' + r.error : 'Billing portal unavailable', 'error');
     });
   };
+
+  /* WHAT ANA SEES HERE. On a failed status read `curTier` silently falls back
+     to 'free' and the free card wears the Current tag — the error branch
+     exists so that fallback is never reported as the organization's plan.
+     Payment status is the raw value, never dunning language; choosing a plan
+     and the seats input are checkout acts and are never offered. */
+  const anaContext = useMemo(() => {
+    const lockLead = unlock
+      ? `The user arrived here from a lock on "${unlock.label}", which ${
+          unlock.requiredTier
+            ? `needs the ${unlock.requiredTier} plan or above`
+            : 'has no plan remedy — changing plan may not resolve it on its own'
+        }. `
+      : '';
+    const view = `Viewing the ${model === 'dtc' ? 'self-service' : 'enterprise per-user'} catalog on the ${cycle} cycle.`;
+    const shared = {
+      pricingModel: model,
+      cycle,
+      ...(model === 'b2b' ? { archetype: arch } : {}),
+      arrivedFromLock: unlock ? { label: unlock.label, requiredTier: unlock.requiredTier } : null,
+    };
+    if (statusState.loading) {
+      return { summary: lockLead + 'The current plan is still loading. ' + view, facts: shared };
+    }
+    if (statusState.error) {
+      return {
+        summary:
+          lockLead +
+          'The subscription status could not be read, so no current plan is shown — any "Current" marker on the ' +
+          'free card is the silent fallback of the failed read, NOT a finding that the organization is on the ' +
+          'free tier. ' + view,
+        facts: { ...shared, planUnavailable: true },
+      };
+    }
+    if (!status) {
+      return {
+        summary: lockLead + 'No subscription record was returned for this organization. ' + view,
+        facts: { ...shared, planUnavailable: true },
+      };
+    }
+    return {
+      summary:
+        lockLead +
+        `Plans & licensing: current plan "${status.tier}", payment status "${status.paymentStatus}", ` +
+        `${status.seats} seat(s), billed ${status.billingCycle}` +
+        (status.currentPeriodEnd
+          ? `, current period ends ${new Date(status.currentPeriodEnd).toLocaleDateString()}`
+          : '') +
+        '. ' + view,
+      facts: {
+        ...shared,
+        currentTier: status.tier,
+        paymentStatus: status.paymentStatus,
+        billingCycle: status.billingCycle,
+        seats: status.seats,
+        currentPeriodEnd: status.currentPeriodEnd ?? null,
+        planUnavailable: false,
+      },
+      availableActions: [
+        'Switch between the self-service and enterprise catalogs and the monthly/annual cycle (view state only)',
+        'Choosing a plan opens Stripe checkout; changing or cancelling runs through the billing portal — human acts',
+      ],
+    };
+  }, [unlock, model, cycle, arch, statusState.loading, statusState.error, status]);
+  usePublishSurfaceContext('licensing', anaContext);
 
   return (
     <div className="sp" style={{ maxWidth: 1120 }}>

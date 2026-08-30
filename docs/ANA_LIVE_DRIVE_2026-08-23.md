@@ -339,3 +339,63 @@ Still deliberately absent, with reasons: `apps.show-admin-controls`
 query/sources/depth/launch driving (metered spend — now also structurally
 refused), `cmc` pane-form busy guards (child-local state; parity-with-human
 limitation recorded in wave 2).
+
+### Wave 5 landed (2026-08-24, same day) — zero blind surfaces
+
+Two halves. **Hands (small):** `ectd-coauthor.open-tab` — view-only where
+the human tab buttons auto-run a validation/compliance check (the wiring
+test pins that no POST fires), dirty-guarded because the editor unmounts
+on a tab switch; the sales demo gained its Deep Research stop; and
+`anaDrivesWave5.test.tsx` backfilled dedicated bus wiring tests for the
+three wave-2 surfaces that had only behavioral coverage (cmc /
+submission-center-via-alias / project-home with its no-project refusal).
+The cmc pane-form guard stays deferred: the right shape is a platform
+form-open channel in C2CForm itself (its e-sign ceremonies span six pane
+components), recorded here as the candidate design.
+
+**Eyes (the wave):** every one of the 46 remaining blind routable surfaces
+gained a screen-state publisher — `check-ana-surface-context` now reads
+**114 of 120 publish, 6 exempt, 0 still blind**. The two kit families
+publish from their single hosts with one context builder and per-id
+LITERAL gated calls (the UsageBilling shape — the gate counts literal ids,
+and a dynamic id would ground AnA while the ratchet silently reported her
+blind): MdxSurfaceHost covers the 16 `device-*` ids (program identity only
+from `programForContext`'s recorded honesty rule; no leaf counts — absent
+beats guessed), and PdevApp covers the 8 `pdev*` ids (readiness with its
+SOURCE named — live report, snapshot fallback, or an ambiguous zero stated
+as a fallback default; IND-assembly module presence with the compile CTA's
+real disabled causes; a compile-in-flight state the host cannot see is
+described as a property of the control, never claimed as current state).
+The 22 singles follow the same honest-branch law, with the sharp edges
+kept sharp: the `inconsistency` submission gate publishes never-scanned as
+NOT clear and fails closed on a read failure, with counts only in
+assessed states; `orchestration`'s dead checkpoint store is published in
+reviewer-protecting words ("NOT a report that zero human-in-the-loop
+gates are pending"); `ectd-publishing` leads every branch with "read-only;
+nothing on this screen publishes, transmits, or freezes a sequence" — the
+name is a trap; `precedent-intelligence` publishes `searchRun: false` with
+nothing from a typed-but-unrun form; `licensing` states that the free
+card's "Current" tag on a failed read is the fallback of the failure, not
+a finding; `labeling-pi` gates every count on its own `answerable` flag.
+
+The admin set publishes **aggregates only, with security exclusions as
+hard rules**: no SCIM bearer token (a live credential must never enter
+model context), no allowlist CIDRs, no member emails or per-person
+MFA/SSO flags (a who-lacks-MFA list is a target list), no role scopes,
+grants, API-key ids, audit chain hashes, org-setting values, cross-tenant
+rosters or per-org enforcement refusal paths. `access-requests` publishes
+scope-guarded (the same queue mounted inside master-licensing publishes
+null there); third-party request notes and decision reasons never enter
+the prompt. `research-admin`'s read lifted out of its early-returning
+child so the one publisher can also say the load-bearing negative: four
+of its five sections are not connected, which is exactly what stops its
+own "summarize my committees" button from producing a confident answer
+about data that does not exist.
+
+Wiring proof: `anaSeesScreens.test.tsx` — publisher output pinned through
+`useActiveSurfaceContext` (the same hook the shell folds into
+module_context): real counts when loaded, the fail-closed register read,
+the identity-console forbidden state with a payload scan proving no
+token/CIDR/org-id, the orchestration gates-error words, and the program
+journey's identity line. `ID_BASELINE` 68 → **114 exact**, landed across
+five pushes as each verified slice completed.

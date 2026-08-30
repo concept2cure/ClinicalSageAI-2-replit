@@ -68,7 +68,7 @@ vi.mock('../../../shared/schema/q-sub', () => ({
   Q_SUB_TYPES: ['presub', 'sir', 'srd', 'agree', 'info'],
 }));
 vi.mock('../../auditService', () => ({
-  default: { logAction: vi.fn().mockResolvedValue(undefined) },
+  default: { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
 }));
 vi.mock('../../db', () => ({ pool: null }));
 

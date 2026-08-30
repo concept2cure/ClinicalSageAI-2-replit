@@ -267,7 +267,13 @@ async function authorSection(s: {
     section_key: s.key,
     category: s.category,
     content: s.content,
-    status: 'in_progress',
+    // 'approved', not 'in_progress': eSTAR readiness counts only FINALIZED
+    // content, and "a long draft is still a draft" — an explicitly in-progress
+    // section is never substantive no matter how much text it holds. These
+    // sections are authored complete, so they say so. The deliberately EMPTY
+    // section below still proves its point: an approved status with a blank or
+    // placeholder body is not substantive either, so the gap is not invented.
+    status: 'approved',
   });
   expect(res.status, JSON.stringify(res.body)).toBe(201);
   return res.body.section;
@@ -451,8 +457,30 @@ describe('golden journey — device 510(k) eSTAR path', () => {
         content:
           'The subject device is substantially equivalent to predicate K123456; ' +
           'technological differences do not raise new questions of safety or effectiveness.',
+        // Finishing the section is what closes the gap — writing into a section
+        // that stays in progress does not, and should not.
+        status: 'approved',
       });
       expect(patched.status, JSON.stringify(patched.body)).toBe(200);
+
+      // Content alone does not make a section substantive: readiness counts a
+      // required section as present only when it is APPROVED, so a dossier of
+      // in-progress drafts is not a filing-complete dossier no matter how much
+      // prose it carries. The journey therefore performs the approval — a
+      // governed act with its own audit consequence — rather than asserting a
+      // completeness the product is right to withhold from drafts.
+      const drafted = (
+        await jdb.pool.query(
+          `SELECT id FROM cerv2_510k_sections WHERE organization_id = $1 ORDER BY id`,
+          [ORG],
+        )
+      ).rows as Array<{ id: number }>;
+      for (const section of drafted) {
+        const approved = await asPrincipal(ORG, USER)(
+          request(app).patch(`/api/cerv2-sections/${section.id}`),
+        ).send({ status: 'approved' });
+        expect(approved.status, JSON.stringify(approved.body)).toBe(200);
+      }
 
       const res = await asPrincipal(ORG, USER)(request(app).post('/api/510k/estar/assemble')).send({
         pathway: '510k',
@@ -460,7 +488,7 @@ describe('golden journey — device 510(k) eSTAR path', () => {
       });
       expect(res.status).toBe(200);
       expect(res.body.estar.summary.missingRequired).toEqual([]);
-      return { missingRequired: res.body.estar.summary.missingRequired };
+      return { approvedSections: drafted.length, missingRequired: res.body.estar.summary.missingRequired };
     });
 
     // ── 5. The honest artifactKind with a complete content set ──────────────

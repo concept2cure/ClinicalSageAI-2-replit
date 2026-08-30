@@ -985,8 +985,9 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                         '.',
                     )
                   }
+                  title="Sends this request to AnA in the rail — it does not download a file here"
                 >
-                  {I.download} Export
+                  {I.sparkles} Ask AnA to draft this
                 </button>
               </div>
             </div>
@@ -998,12 +999,14 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                   {prog.sponsorName && <span>{prog.sponsorName}</span>}
                   <span>Initial IND — eCTD v4.0 (FDA)</span>
                   <span>
-                    Assessed{' '}
-                    {new Date().toLocaleDateString([], {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
+                    {R.assessed
+                      ? 'Assessed ' +
+                        new Date().toLocaleDateString([], {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      : 'Not yet assessed'}
                   </span>
                 </div>
                 <div className="indl-overall">

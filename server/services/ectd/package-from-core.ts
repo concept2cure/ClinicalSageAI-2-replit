@@ -16,11 +16,14 @@
  */
 
 import { eq, and, isNull } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, pool } from '../../db';
 import { submissions, ectdSequences, submissionLeaves } from '../../../shared/schema';
 import { packageEctdSubmission } from '../submission-gateways/regional-packager';
 import type { SubmissionBundle } from '../submission-gateways/types';
 import { buildPackagerInputFromCore, type LeafFileResolver } from './core-to-packager';
+import { loadLatestPriorManifestBySubmission } from './prior-sequence-loader';
+import { computeLifecycleOperations, type DesiredLeaf } from './lifecycle-operator';
+import { computeSequencePrefix } from './sequence-manifest';
 import auditService from '../auditService';
 
 export interface PackageFromCoreParams {
@@ -110,6 +113,35 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
     outputDir: params.outputDir,
     emitUnzipped: params.emitUnzipped,
   });
+
+  // Lifecycle: for a FOLLOW-UP sequence (not 0000), diff the leaves against the
+  // prior sequence's published manifest so each leaf carries a REAL operator
+  // (new/replace/append/delete) + ICH modified-file pointer — instead of the
+  // all-`new` set that submission_leaves.lifecycle_op yields. Keyed on the stable
+  // submission id (application_number was not reliable across sequences). Absent a
+  // prior manifest (first sequence, or none persisted yet) the leaves stay `new`.
+  if (sequence.sequenceNumber !== '0000') {
+    const prior = await loadLatestPriorManifestBySubmission(pool, {
+      organizationId,
+      submissionId: submission.id,
+      currentSequence: sequence.sequenceNumber,
+    });
+    if (prior.leaves.length > 0) {
+      const desired: DesiredLeaf[] = input.leaves.map((leaf) => {
+        // Drop the placeholder operation; the operator computes it. md5 is the
+        // diff input — when unknown a leaf present in prior conservatively
+        // becomes `replace` (safe: re-ships content) rather than being omitted.
+        const { operation: _drop, ...rest } = leaf;
+        return { ...rest, md5: leaf.md5 ?? '' };
+      });
+      const life = computeLifecycleOperations(prior.leaves, desired, {
+        priorSequencePrefix: computeSequencePrefix(prior.priorSequenceNumber),
+      });
+      // life.leaves already includes backbone-only `delete` leaves for dropped
+      // priors and OMITS unchanged leaves — exactly the delta the packager ships.
+      input.leaves = life.leaves;
+    }
+  }
 
   const bundle = await packageEctdSubmission(input);
 

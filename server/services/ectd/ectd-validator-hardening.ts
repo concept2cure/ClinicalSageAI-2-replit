@@ -144,9 +144,18 @@ export async function validateEctdPackageHardened(
   const dtdFindings: DtdFinding[] = backboneXml
     ? validateDtdConformance(backboneXml, leaves)
     : [{
-        severity: 'warning',
+        // Fail closed: with no backbone, DTD conformance was NOT checked, so the
+        // package cannot be declared gateway-ready. A 'warning' here left
+        // gatewayReady:true over zero DTD structural checking — a caller could
+        // omit the backbone (the route schema allows it) and be told the package
+        // is ready when the index.xml that ships was never examined. This is an
+        // error so it blocks gatewayReady; every production caller already passes
+        // the assembled backboneXml, so only a genuinely backbone-less
+        // validation (a dry-run, or an assembly that produced no backbone) trips
+        // it — exactly the case that must not read as ready.
+        severity: 'error',
         code: 'DTD_NO_BACKBONE',
-        message: 'No backbone XML provided — DTD validation skipped',
+        message: 'No backbone XML provided — DTD validation could not be performed; package is not gateway-ready.',
         fix: 'Pass the generated index.xml or backbone JSON for DTD validation',
       }];
 

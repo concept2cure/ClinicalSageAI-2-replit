@@ -443,6 +443,15 @@ export async function purgeTenant(
  * billing records are needed for revenue recognition after the account closes.
  */
 export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
+  // Access requests contain the member's free-text business justification and
+  // the administrator's decision reason. The canonical audit event survives;
+  // this tenant-owned working record does not.
+  'module_access_requests',
+  // CMC/project workflow payloads are customer plans and assignments. Delete
+  // them before their project parents; workflow_tasks cascade where the
+  // canonical FK is present, while editions without this table/column are
+  // safely skipped by purgeChildTable.
+  'project_workflows',
   'organization_users',
   'client_workspaces',
   'projects',

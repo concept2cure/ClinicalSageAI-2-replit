@@ -276,7 +276,11 @@ export async function assembleOrgIBSections(orgId: number): Promise<IBView> {
     rows,
     availability,
     sources,
-    source: sources.length ? sources.join('+') : 'nonclinical_studies',
+    // Honest provenance: when no store backed the read, report 'none' rather
+    // than naming a specific store ('nonclinical_studies') that contributed
+    // nothing — the rest of this assembler already reports the empty state
+    // honestly (provisioned:false, productName:null).
+    source: sources.length ? sources.join('+') : 'none',
     provisioned,
     completeness: completenessOf(rows),
     productName: null,

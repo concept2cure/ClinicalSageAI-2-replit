@@ -538,7 +538,15 @@ describe('Module 3 Composer — Narrative Generation', () => {
     const composed = composeModule3FromCanonicalSources(makeSources());
     const s7 = composed.find((s) => s.sectionKey === '3.2.S.7')!;
     expect(s7.narrativeDraft).toContain('25°C/60%RH');
-    expect(s7.narrativeDraft).toContain('stable');
+    // NOT 'stable'. The composer used to append "the drug substance is stable
+    // under the proposed storage conditions" unconditionally — a stability
+    // CONCLUSION the recorded data does not establish, written into a CMC
+    // Module 3 filing where a failing or absent study would have read as a
+    // passing one. It now reports the study conditions and what was recorded;
+    // the conclusion is the reviewer's to draw. See
+    // module3Composer.stability-honesty.test.ts.
+    expect(s7.narrativeDraft).not.toMatch(/is stable under the proposed storage conditions/i);
+    expect(s7.narrativeDraft).toMatch(/stability/i);
   });
 
   it('generates drug product description for 3.2.P.1', () => {

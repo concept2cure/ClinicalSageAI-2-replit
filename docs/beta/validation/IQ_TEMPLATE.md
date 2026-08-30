@@ -34,7 +34,7 @@ authority — the customer's RA / Quality team owns sign-off.
 |----------------------------|---------------------|----------------|-------------|
 | BFF image (digest)         | `ghcr.io/...@sha256:...` |          |             |
 | Predicate shadow image     | `ghcr.io/...@sha256:...` |          |             |
-| Node.js runtime            | 20.x LTS            |                |             |
+| Node.js runtime            | 22.x LTS            |                |             |
 | Postgres version           | 15.x                |                |             |
 | Redis (queue cache)        | 7.x                 |                |             |
 | Database extensions        | `pgcrypto`, `pg_trgm`, `vector` |     |             |

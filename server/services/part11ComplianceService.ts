@@ -175,7 +175,17 @@ class Part11ComplianceService {
       const signatureManifest = { ...signatureData, boundPayloadDigest };
       const signature = this.generateCryptographicSignature(signatureManifest, userId);
 
-      const [electronicSig] = await dbInstance
+      const resolvedAuditUserId = typeof userId === 'number' ? userId : 0;
+      const resolvedAuditEntityId = typeof documentId === 'number' ? documentId : 0;
+      // Atomicity (§11.10(e)): the audit-trail event MUST commit together with
+      // the §11.70 signature, or neither does. Previously the signature was
+      // inserted and committed on its own and the audit write was a separate,
+      // later statement — a failure there (DB blip, schema drift) left a
+      // permanent, active signature with NO recorded event, and the caller's
+      // idempotency pre-check then short-circuited every retry, so the missing
+      // event could never be backfilled. One transaction closes that gap.
+      const electronicSig = await dbInstance.transaction(async (tx) => {
+      const [sig] = await tx
         .insert(electronicSignatures)
         .values({
           documentId,
@@ -201,19 +211,65 @@ class Part11ComplianceService {
         })
         .returning();
 
-      await this.createAuditTrail({
+      // Same transaction → the §11.10(e) event and the signature are
+      // all-or-nothing. This inlines the primary device_audit_trail write from
+      // createAuditTrail so it shares the signature's transaction.
+      await tx.insert(deviceAuditTrail).values({
         organizationId,
-        userId,
+        userId: resolvedAuditUserId,
         action: 'ELECTRONIC_SIGNATURE_CREATED',
         entityType: documentType,
-        entityId: documentId,
-        details: {
-          signatureId: electronicSig.id,
-          reason: signatureReason,
-          meaning: signatureMeaning,
-          userName: user.name,
-        },
+        entityId: resolvedAuditEntityId,
+        previousValues: null,
+        newValues: null,
+        changedFields: null,
+        changeReason: signatureReason,
+        userName: user.name || 'Unknown',
+        userRole: null,
+        ipAddress: null,
+        userAgent: null,
+        sessionId: null,
       });
+      return sig;
+      });
+
+      // Best-effort SECONDARY log to the general audit service — OUTSIDE the
+      // transaction and non-throwing. The durable §11.10(e) record is the
+      // device_audit_trail row committed atomically above; a failure of this
+      // convenience log must never orphan the signature nor fail the signing.
+      // logAction resolves an outcome rather than rejecting when a write does
+      // not persist, so the previous bare try/catch here could never fire: a
+      // silently unpersisted secondary log read as handled. The outcome is now
+      // inspected, with the catch kept only as belt-and-braces for a promise
+      // documented never to reject — and recorded into the same variable the
+      // check below reads, so either failure path is actually observable.
+      let secondaryAudit: { persisted?: boolean; error?: string } | undefined;
+      try {
+        secondaryAudit = await auditService.logAction({
+          userId: resolvedAuditUserId,
+          action: 'ELECTRONIC_SIGNATURE_CREATED',
+          resourceType: documentType,
+          details: {
+            signatureId: electronicSig.id,
+            reason: signatureReason,
+            meaning: signatureMeaning,
+            userName: user.name,
+            part11Compliance: true,
+          },
+        });
+      } catch (secondaryErr) {
+        secondaryAudit = {
+          persisted: false,
+          error: secondaryErr instanceof Error ? secondaryErr.message : String(secondaryErr),
+        };
+      }
+      if (!secondaryAudit?.persisted) {
+        console.error(
+          '[part11] secondary audit log (best-effort) did NOT persist for signature',
+          electronicSig.id,
+          secondaryAudit?.error,
+        );
+      }
 
       return {
         success: true,

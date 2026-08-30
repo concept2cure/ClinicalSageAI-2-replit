@@ -109,7 +109,7 @@ const signBody = (over: Record<string, unknown> = {}) => ({
 function wireHappyPool() {
   hoisted.poolQuery.mockImplementation(async (sql: string) => {
     if (/SELECT password_hash FROM users/i.test(sql)) return { rows: [{ password_hash: PW_HASH }] };
-    if (/SELECT name, email FROM users/i.test(sql)) return { rows: [{ name: 'A Signer', email: 's@x.test' }] };
+    if (/SELECT name, email, title FROM users/i.test(sql)) return { rows: [{ name: 'A Signer', email: 's@x.test', title: 'Study Director' }] };
     if (/FROM document_versions/i.test(sql)) {
       return { rows: [{ document_id: 10, version_number: '1', content: 'body' }] };
     }
@@ -182,6 +182,22 @@ describe('POST /api/esignature/sign — §11.10(e) audit-trail invariant', () =>
     const auditClient = hoisted.writeChainedAuditRow.mock.calls[0][0] as { query: unknown };
     await (auditClient as any).query('SELECT 1');
     expect(hoisted.clientQuery).toHaveBeenCalledWith('SELECT 1');
+  });
+
+  it('§11.50: ignores a client-supplied signerTitle and persists the server-resolved one', async () => {
+    const res = await request(makeApp())
+      .post('/api/esignature/sign')
+      .send(signBody({ signerTitle: 'Chief Medical Officer' })); // a claimed authority the signer does not hold
+    expect(res.status).toBe(201);
+    const insertCall = hoisted.clientQuery.mock.calls.find((c) =>
+      /INSERT INTO electronic_signatures/i.test(String(c[0])),
+    );
+    expect(insertCall).toBeDefined();
+    const params = JSON.stringify(insertCall![1] ?? []);
+    // The server-resolved title (from the users row) is persisted...
+    expect(params).toContain('Study Director');
+    // ...and the client-asserted one is NOT.
+    expect(params).not.toContain('Chief Medical Officer');
   });
 });
 

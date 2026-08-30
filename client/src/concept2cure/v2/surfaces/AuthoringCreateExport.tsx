@@ -20,6 +20,7 @@
  * bytes the server streamed.
  */
 import React, { useEffect, useState } from 'react';
+import { NEW_DOCUMENT_EVENT } from '../newDocumentAction';
 import { I } from '../icons';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
@@ -50,6 +51,17 @@ const NONE = '(blank document)';
 
 export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDocCreated, onSectionCreated, onExported }: AuthoringCreateExportProps) {
   const [dialog, setDialog] = useState<'doc' | 'section' | null>(null);
+
+  /* The dialog is owned here, and the panels that most need it — the empty
+     document tree and the empty canvas — are siblings with no way to reach it.
+     Rather than lift this state up through DocumentAuthoring so two empty
+     states can call it, they raise an event and this listens. Same idiom as
+     ../programAction.ts; see ../newDocumentAction.ts for what it fixes. */
+  useEffect(() => {
+    const open = () => setDialog('doc');
+    window.addEventListener(NEW_DOCUMENT_EVENT, open);
+    return () => window.removeEventListener(NEW_DOCUMENT_EVENT, open);
+  }, []);
   const [templates, setTemplates] = useState<AuthoringTemplate[]>([]);
   // 'unavailable' = the server said the shared reference catalog failed to
   // read (its fail-soft still lists the org's own templates). A SHORT list

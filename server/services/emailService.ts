@@ -96,7 +96,7 @@ function buildResetEmailHtml(resetUrl: string): string {
         <tr>
           <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
             <p style="margin:0 0 8px;color:#75736d;font-size:11px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
-              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; FDA 21 CFR Part 11 Compliant
+              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; Built for 21 CFR Part 11: audit trail, electronic signature, record retention
             </p>
             <p style="margin:0;font-size:10px;">
               <a href="${process.env.APP_URL || 'https://concept2cure.com'}/concept2cure/legal/privacy" style="color:#b0aea5;text-decoration:none;">Privacy</a>
@@ -188,7 +188,7 @@ function buildOtpEmailHtml(code: string): string {
         <tr>
           <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
             <p style="margin:0;color:#75736d;font-size:11px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
-              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; FDA 21 CFR Part 11 Compliant
+              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; Built for 21 CFR Part 11: audit trail, electronic signature, record retention
             </p>
           </td>
         </tr>
@@ -247,7 +247,7 @@ function buildWelcomeEmailHtml(name: string, loginUrl: string): string {
         <tr>
           <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
             <p style="margin:0 0 8px;color:#75736d;font-size:11px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
-              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; FDA 21 CFR Part 11 Compliant
+              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; Built for 21 CFR Part 11: audit trail, electronic signature, record retention
             </p>
             <p style="margin:0;font-size:10px;">
               <a href="${process.env.APP_URL || 'https://concept2cure.com'}/concept2cure/legal/privacy" style="color:#b0aea5;text-decoration:none;">Privacy</a>
@@ -475,7 +475,7 @@ function buildReportDeliveryEmailHtml(payload: {
         <tr>
           <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
             <p style="margin:0;color:#75736d;font-size:11px;">
-              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; FDA 21 CFR Part 11 Compliant
+              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; Built for 21 CFR Part 11: audit trail, electronic signature, record retention
             </p>
           </td>
         </tr>

@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
+import { assessmentStateFor, mayReassure } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
@@ -111,12 +112,30 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
      loading / on error, so the derivations below are null-safe. */
   const live = useLiveRows<DcInput>('/api/design-controls');
 
-  /* Local working copy so the "new design input" form can insert optimistically.
-     Synced from the real rows once they load (never from a fixture). */
-  const [inputs, setInputs] = useState<DcInput[]>([]);
-  useEffect(() => {
-    if (!live.loading && !live.error) setInputs(live.rows);
-  }, [live.loading, live.error, live.rows]);
+  /* Design inputs created in THIS session, held on their own and merged with the
+     live file below so the "new design input" form can insert optimistically.
+     The read fires once per path, so a row the user has just recorded is not in
+     `live.rows` until the surface remounts.
+
+     ── Honest-state sweep, finding 2 ──────────────────────────────────────────
+     This used to be a full local MIRROR of the live rows: `const [inputs,
+     setInputs] = useState<DcInput[]>([])` seeded by a `useEffect` that copied
+     `live.rows` across once the read settled. An effect runs AFTER the render it
+     belongs to, so in the render where `live.loading` first flipped to false the
+     org's real rows were already in hand while `inputs` was still its initial
+     `[]`. Every branch below reads `inputs`, so that render painted "No design
+     inputs defined yet -- Add your first with New design input above" over a
+     SUCCESSFUL read of a populated design history file, with the traceability
+     roll-up computing 0 of 0 beside it, until a second render (triggered by the
+     effect calling setInputs) replaced it with the real matrix.
+
+     Deriving the rendered set from `live.rows` directly closes that window
+     rather than narrowing it: there is no second copy left to be stale. */
+  const [added, setAdded] = useState<DcInput[]>([]);
+  const inputs = useMemo(
+    () => (added.length ? [...live.rows, ...added] : live.rows),
+    [live.rows, added],
+  );
 
   const [form, setForm] = useState(false);
   const [toast, fire] = useToast();
@@ -147,6 +166,33 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
 
   const firstGap = inputs.find(i => !i.outputs || !i.outputs.length) || inputs.find(i => i.ver !== 'pass') || inputs.find(i => i.val !== 'pass');
 
+  /* ── Honest-state sweep, finding 1 ────────────────────────────────────────
+     `reassure` on the lead below was one static string, outside every branch:
+     "I'll draft the missing V&V protocols, link each to the input it covers,
+     and flag any orphan output before the review -- you sign off."
+
+     It therefore rendered in the state the headline one prop above had just
+     declared complete. When `trace.fullyTraced === trace.total` the headline
+     reads "Every design input traces cleanly to output -> verification ->
+     validation. The DHF is audit-ready on traceability" -- which is only true
+     when no row lacks an output, a passing verification or a passing validation
+     -- and the very next line offered to draft "the missing V&V protocols" and
+     flag "any orphan output". The surface asserted outstanding work that its own
+     roll-up, computed from the same rows a few lines up, shows does not exist.
+
+     `assessmentRan` here is a RECORDED result rather than the absence of
+     findings: a fully traced row exists only because someone executed the
+     verification and the validation and entered their outcomes against that
+     input. The case where "no gaps" is an artifact of having nothing to gap --
+     an empty design history file, where `fullyTraced === total` is 0 === 0 --
+     is excluded by `scopeExists`, not by this flag. */
+  const dcState = assessmentStateFor(live, {
+    scopeExists: trace.total > 0,
+    findingCount: trace.total - trace.fullyTraced,
+    assessmentRan: trace.fullyTraced > 0,
+  });
+  const traceClear = dcState === 'assessed-clear';
+
   const FORM: C2CFormConfig = {
     eyebrow: 'DHF — 820.30(c) · ISO 13485 §7.3.3',
     title: 'New design input',
@@ -167,7 +213,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
     // then reconcile with the server's row; roll back on failure.
     const tempId = 'dc-tmp-' + Date.now();
     const optimistic: DcInput = { id: tempId, cat: v.cat || 'functional', req: v.req, riskRef: v.riskRef || null, outputs: [], ver: null, verRef: null, val: null, valRef: null, _new: true };
-    setInputs(is => [...is, optimistic]);
+    setAdded(is => [...is, optimistic]);
     try {
       const res = await apiRequest('POST', '/api/design-controls', {
         req: v.req,
@@ -176,10 +222,10 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
       });
       const row = (await res.json())?.data as DcInput | undefined;
       if (!row || !row.id) throw new Error('malformed response');
-      setInputs(is => is.map(i => (i.id === tempId ? { ...row, _new: true } : i)));
+      setAdded(is => is.map(i => (i.id === tempId ? { ...row, _new: true } : i)));
       fire('Design input ' + row.id + ' added — untraced');
     } catch (e) {
-      setInputs(is => is.filter(i => i.id !== tempId));
+      setAdded(is => is.filter(i => i.id !== tempId));
       fire('Could not add design input -- ' + (e instanceof Error && e.message ? e.message : 'request failed'));
     }
   };
@@ -292,11 +338,27 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
           <AnswerLead
             tone={trace.noVal > 0 || trace.noOutput > 0 ? 'urgent' : 'calm'}
             eyebrow="Whether the DHF will survive a design-control audit"
-            headline={trace.fullyTraced < trace.total
-              ? <><b>{trace.total - trace.fullyTraced}</b> of {trace.total} design inputs {trace.total - trace.fullyTraced === 1 ? 'is' : 'are'} not yet fully traced to output, verification and validation.</>
-              : <>Every design input traces cleanly to output {'->'} verification {'->'} validation. The DHF is audit-ready on traceability.</>}
+            /* The clear branch was `trace.fullyTraced < trace.total ? ... : ...`,
+               so an arithmetic tie decided it. 0 === 0 is a tie: an empty design
+               history file satisfied the else and would have claimed the DHF
+               audit-ready on traceability with nothing in it. Branching on the
+               state keeps that unrepresentable — `assessed-clear` requires
+               `scopeExists`, i.e. at least one real design input. */
+            headline={traceClear
+              ? <>Every design input traces cleanly to output {'->'} verification {'->'} validation. The DHF is audit-ready on traceability.</>
+              : <><b>{trace.total - trace.fullyTraced}</b> of {trace.total} design inputs {trace.total - trace.fullyTraced === 1 ? 'is' : 'are'} not yet fully traced to output, verification and validation.</>}
             body={<>Design-control completeness is <b>{elPct}%</b> across the {assessable.length} 820.30 elements this store can evidence{untracked > 0 && <> ({untracked} more not tracked here)</>}; traceability (820.30(j)) is <b>{trace.pct}%</b>. {trace.noVal > 0 && <>{trace.noVal} input{trace.noVal === 1 ? '' : 's'} still lack{trace.noVal === 1 ? 's' : ''} passing validation.</>}</>}
-            reassure="I'll draft the missing V&V protocols, link each to the input it covers, and flag any orphan output before the review — you sign off."
+            /* The offer to draft what is missing is kept verbatim for the state
+               it was written for — untraced inputs on file — and withheld from
+               the state it contradicted. Reassurance is gated by mayReassure,
+               so it is spoken only from `assessed-clear` and only against a
+               non-zero traceability figure; every other state says nothing here
+               rather than a softened version of either sentence. */
+            reassure={dcState === 'assessed-with-findings'
+              ? "I'll draft the missing V&V protocols, link each to the input it covers, and flag any orphan output before the review — you sign off."
+              : mayReassure(dcState, trace.pct)
+                ? "Nothing is outstanding on traceability. As design inputs are added I'll flag the first one that reaches design review without an output, verification and validation linked."
+                : undefined}
             action={firstGap
               ? { label: 'Close the ' + firstGap.id + ' gap', onClick: () => ask('What is missing to fully trace ' + firstGap.id + ' (' + firstGap.req + ')?') }
               : { label: 'Draft the design review minutes', onClick: () => ask('Draft the design review minutes confirming full traceability') }}

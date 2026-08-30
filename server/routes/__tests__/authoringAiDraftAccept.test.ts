@@ -189,6 +189,74 @@ describe('POST /sections/:id/ai/draft/accept', () => {
     expect(contentArg).toBe('the author edited this before saving');
   });
 
+  it('commits the accepted draft to the filing, and reports whether it landed', async () => {
+    /* The handler used to write authoring_sections (the working copy) and stop,
+       leaving c2c_document_sections — what the filing IS — holding the
+       pre-draft content: the same working-copy/filing drift the revert path
+       had, and the widest one, since AI drafting is a primary use of this
+       surface. The accept now runs commitSectionToFiling in its transaction. */
+    sectionExists();
+    txOk();
+    mockConsume.mockResolvedValue({ id: 'd1', sectionId: 'S1', content: 'x', sources: [], createdBy: 'u1' });
+    mockEnforce.mockResolvedValue({ sourceSpans: 0, authorSpans: 1, distinctSources: 0, coverage: 0 });
+
+    const res = await request(makeApp())
+      .post('/api/authoring/sections/S1/ai/draft/accept')
+      .set('Authorization', await bearer())
+      .send({ draftId: 'd1' });
+
+    expect(res.status).toBe(200);
+    // commitSectionToFiling's capability probe ran on the TRANSACTION client —
+    // proof the filing commit is inside the same transaction as the content.
+    const probed = mockClientQuery.mock.calls.some((c) =>
+      String(c[0]).includes("to_regclass('public.c2c_document_sections')"));
+    expect(probed, 'the accept never tried to reach the filing').toBe(true);
+    // And the response states the outcome, honest either way (here: not
+    // provisioned under the mock), rather than letting the stores drift silently.
+    expect(res.body).toHaveProperty('filing');
+    expect(res.body.filing.committed).toBe(false);
+  });
+
+  it('never records "Accepted AI draft" as the reason for change', async () => {
+    /* That fallback put a MECHANISM in the reason-for-change field, where it
+       read as the author's justification — the pattern removed from the manual
+       save. When the author states nothing, the record says nothing; the fact
+       that it was an AI draft lives in the metadata, not the reason. */
+    sectionExists();
+    txOk();
+    mockConsume.mockResolvedValue({ id: 'd1', sectionId: 'S1', content: 'x', sources: [], createdBy: 'u1' });
+    mockEnforce.mockResolvedValue({ sourceSpans: 0, authorSpans: 1, distinctSources: 0, coverage: 0 });
+
+    await request(makeApp())
+      .post('/api/authoring/sections/S1/ai/draft/accept')
+      .set('Authorization', await bearer())
+      .send({ draftId: 'd1' });
+
+    // The audit INSERT carries change_reason at value index 9.
+    const insert = mockQuery.mock.calls.find((c) =>
+      String(c[0]).includes('INSERT INTO') && String(c[0]).includes('authoring_audit_trail'));
+    expect(insert, 'no authoring_audit_trail row was written').toBeTruthy();
+    const reason = (insert![1] as unknown[])[9];
+    expect(reason, 'a mechanism string was recorded as the reason').not.toBe('Accepted AI draft');
+    expect(reason).toBeNull();
+  });
+
+  it('records the author\'s stated reason when they give one', async () => {
+    sectionExists();
+    txOk();
+    mockConsume.mockResolvedValue({ id: 'd1', sectionId: 'S1', content: 'x', sources: [], createdBy: 'u1' });
+    mockEnforce.mockResolvedValue({ sourceSpans: 0, authorSpans: 1, distinctSources: 0, coverage: 0 });
+
+    await request(makeApp())
+      .post('/api/authoring/sections/S1/ai/draft/accept')
+      .set('Authorization', await bearer())
+      .send({ draftId: 'd1', changeReason: 'Incorporated the reviewer’s requested safety language.' });
+
+    const insert = mockQuery.mock.calls.find((c) =>
+      String(c[0]).includes('INSERT INTO') && String(c[0]).includes('authoring_audit_trail'));
+    expect((insert![1] as unknown[])[9]).toBe('Incorporated the reviewer’s requested safety language.');
+  });
+
   it('500 (fails closed) when lineage cannot be recorded — rolls content back', async () => {
     sectionExists();
     txOk();

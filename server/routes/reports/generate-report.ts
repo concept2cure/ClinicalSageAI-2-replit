@@ -102,12 +102,21 @@ router.post('/generate', async (req, res) => {
       });
     }
 
-    // Get protocol data if ID is provided
+    // Get protocol data if ID is provided.
+    //
+    // No protocol data store is wired into this route yet. Previously a
+    // supplied protocolId was silently discarded — protocolData stayed
+    // `null` and the response still came back `success: true` with no
+    // indication that the report was never grounded in the requested
+    // protocol. That is exactly the "error rendered as an empty result"
+    // failure mode CLAUDE.md forbids: fail closed, don't fabricate.
+    //
+    // Until a real fetch exists, we do not invent one. Instead we track
+    // that the caller's protocolId could not be resolved and surface that
+    // honestly, both to the generators (so they can decline to fabricate
+    // protocol-grounded specifics) and in the API response.
     const protocolData = null;
-    if (protocolId) {
-      // Get protocol data from the database
-      // In a real implementation, we would fetch the protocol data from wherever it's stored
-    }
+    const protocolDataUnavailable = Boolean(protocolId);
 
     // Get related trials for the protocol/indication
     let relatedTrials: (typeof csrReports.$inferSelect)[] = [];
@@ -126,14 +135,23 @@ router.post('/generate', async (req, res) => {
     // Generate the report
     const report = await reportGenerator.generateReport({
       protocolData,
+      protocolDataUnavailable,
       relatedTrials,
       indication,
       sessionId,
     });
 
-    // Return report to the client
+    // Return report to the client. When a protocolId was supplied but could
+    // not be resolved, say so explicitly rather than returning a plain
+    // success as if the report were grounded in real protocol records.
     res.json({
       success: true,
+      ...(protocolDataUnavailable && {
+        protocolDataUnavailable: true,
+        warning:
+          'protocolId was supplied but could not be resolved to protocol records; ' +
+          'this report is not grounded in protocol data.',
+      }),
       report,
     });
   } catch (error) {

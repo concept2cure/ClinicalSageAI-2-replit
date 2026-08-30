@@ -18,13 +18,26 @@ vi.mock('../server/src/services/ectd', () => ({
   buildECTDZip: (...args: unknown[]) => buildECTDZipFn(...args),
 }));
 
-/* ─── Mock fs (mkdir + writeFile are awaited via fs.promises). ───────── */
+/* ─── Mock the CANONICAL packager: eCTD-format bundles are built by it, not by
+   the legacy flat builder. Its real conformance (ICH <ectd:ectd> tree, regional
+   M1, root index-md5) is proven in server/services/ectd/__tests__/. ───────── */
+const packageLeafBytesFn = vi.fn();
+vi.mock('../server/services/ectd/package-leaf-bytes', () => ({
+  packageLeafBytes: (...args: unknown[]) => packageLeafBytesFn(...args),
+}));
+
+/* ─── Mock fs (mkdir + writeFile are awaited via fs.promises; the canonical
+   path additionally uses mkdtemp/readFile/rm around the packager). ───────── */
 const writeFileFn = vi.fn().mockResolvedValue(undefined);
 const mkdirFn = vi.fn().mockResolvedValue(undefined);
+const readFileFn = vi.fn().mockResolvedValue(Buffer.from('PK-ZIP-CONTENT', 'utf8'));
 vi.mock('fs', () => ({
   promises: {
     mkdir: (...a: unknown[]) => mkdirFn(...a),
     writeFile: (...a: unknown[]) => writeFileFn(...a),
+    mkdtemp: vi.fn().mockResolvedValue('/tmp/c2c-assemble-test'),
+    readFile: (...a: unknown[]) => readFileFn(...a),
+    rm: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -114,6 +127,7 @@ function makeApp() {
 
 beforeEach(() => {
   buildECTDZipFn.mockReset();
+  packageLeafBytesFn.mockReset();
   writeFileFn.mockClear();
   mkdirFn.mockClear();
   connectFn.mockClear();
@@ -123,6 +137,14 @@ beforeEach(() => {
   dbState.updateSet = null;
   (dbState as any)._pkgResolved = false;
   buildECTDZipFn.mockResolvedValue(Buffer.from('PK-ZIP-CONTENT', 'utf8'));
+  // The canonical packager writes the bundle to disk; the route reads it back
+  // (readFile is stubbed to the same deterministic bytes).
+  packageLeafBytesFn.mockResolvedValue({
+    path: '/tmp/c2c-assemble-test/pkg.zip',
+    sha256: 'f'.repeat(64),
+    sizeBytes: Buffer.byteLength('PK-ZIP-CONTENT'),
+    format: 'ectd',
+  });
 });
 
 describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
@@ -165,21 +187,19 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(res.body.data.bundle.validation.errorCount).toBe(0);
     expect(res.body.data.bundle.validation.warningCount).toBeGreaterThanOrEqual(1);
 
-    // The builder received two leafs (one per section), region FDA derived from 'ind'.
-    expect(buildECTDZipFn).toHaveBeenCalledTimes(1);
-    const opts = buildECTDZipFn.mock.calls[0][0];
-    expect(opts.region).toBe('FDA');
-    expect(opts.leafs).toHaveLength(2);
+    // An eCTD-format package is built by the CANONICAL packager — never by the
+    // legacy flat <ectd:index> builder, whose output an agency validator rejects.
+    expect(buildECTDZipFn).not.toHaveBeenCalled();
+    expect(packageLeafBytesFn).toHaveBeenCalledTimes(1);
+    const opts = packageLeafBytesFn.mock.calls[0][0];
+    expect(opts.region).toBe('fda');
+    expect(opts.leaves).toHaveLength(2);
 
-    // Both leafs are real PDFs placed at the correct ICH module path. The
-    // semantic sectionKeys route by module: `module1_admin` -> m1 (nested under
-    // the region code), `module3_cmc` -> m3.
-    expect(opts.leafs[0].mediaType).toBe('application/pdf');
-    expect(opts.leafs[0].path).toBe('m1/us/module1-admin.pdf');
-    expect(opts.leafs[1].mediaType).toBe('application/pdf');
-    expect(opts.leafs[1].path).toBe('m3/module3-cmc.pdf');
+    // Each leaf carries a REAL CTD section the packager can place: the semantic
+    // sectionKeys resolve by module (`module1_admin` -> 1, `module3_cmc` -> 3).
+    expect(opts.leaves.map((l: any) => l.ctdSection)).toEqual(['1', '3']);
     // The PDF magic bytes confirm a valid pdfkit render (not a text leaf).
-    expect(opts.leafs[1].content.subarray(0, 5).toString('utf8')).toBe('%PDF-');
+    expect(opts.leaves[1].bytes.subarray(0, 5).toString('utf8')).toBe('%PDF-');
 
     // The zip was persisted to disk.
     expect(mkdirFn).toHaveBeenCalledTimes(1);

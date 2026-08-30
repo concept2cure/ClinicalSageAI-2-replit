@@ -18,7 +18,7 @@ const { createMarketAccessPosition, listMarketAccessPositions, MarketAccessValid
   class MarketAccessValidationError extends Error {}
   return {
     createMarketAccessPosition: vi.fn(), listMarketAccessPositions: vi.fn(),
-    MarketAccessValidationError, logAction: vi.fn(),
+    MarketAccessValidationError, logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })),
   };
 });
 vi.mock('../../services/market-access/market-access-service', () => ({

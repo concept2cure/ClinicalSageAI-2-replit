@@ -130,6 +130,10 @@ describe('eCTD export governance gate', () => {
           aiGenerated: true,
           humanReviewApproved: true,
           reviewerName: 'Reg QA',
+          // Reviewer attribution is WHO + in WHAT capacity + WHEN: the shared
+          // gate refuses humanReviewApproved:true without reviewerRole
+          // (INCOMPLETE_HUMAN_REVIEW), so an accepted approval must carry it.
+          reviewerRole: 'Regulatory QA Reviewer',
           reviewTimestamp: '2026-03-25T00:00:00.000Z',
         },
       },

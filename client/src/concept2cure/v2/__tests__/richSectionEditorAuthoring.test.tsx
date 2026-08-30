@@ -32,8 +32,14 @@ describe('RichSectionEditor — authoring affordances (BP-W1-1)', () => {
     await waitFor(() => {
       expect(screen.getByTitle(/insert table/i)).toBeTruthy();
     });
-    expect(screen.getByTitle('Superscript')).toBeTruthy();
-    expect(screen.getByTitle('Subscript')).toBeTruthy();
+    /* Matched by accessible NAME, not an exact title string. The ribbon now
+       names each control's keyboard shortcut in its own label ("Superscript
+       (⌘.)") so the faster path is discoverable — a bare noun taught nobody
+       it existed. An exact-equality assertion on the label makes the copy
+       unimprovable, which is not what this test is for: it exists to prove the
+       ribbon OFFERS sub/superscript, and it still does. */
+    expect(screen.getByRole('button', { name: /^superscript/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^subscript/i })).toBeTruthy();
     expect(screen.getByLabelText('Insert symbol')).toBeTruthy();
   });
 

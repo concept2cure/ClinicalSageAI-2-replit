@@ -24,9 +24,11 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import {
+  AISentinel,
   SENTINEL_OVERDUE_TASKS_SQL,
   SENTINEL_PROJECT_HEALTH_SQL,
 } from '../sentinel';
+import type { Pool } from 'pg';
 
 let pg: PGlite;
 
@@ -48,6 +50,12 @@ CREATE TABLE unified_tasks (
   priority        TEXT,
   due_date        TIMESTAMPTZ,
   deleted_at      TIMESTAMPTZ
+);
+CREATE TABLE pm_settings (
+  id              SERIAL PRIMARY KEY,
+  organization_id INTEGER NOT NULL UNIQUE,
+  ai_settings     JSON,
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 `;
 
@@ -78,10 +86,37 @@ beforeAll(async () => {
 afterAll(async () => { await pg?.close(); });
 
 beforeEach(async () => {
-  await pg.exec('DELETE FROM unified_tasks; DELETE FROM projects;');
+  await pg.exec('DELETE FROM unified_tasks; DELETE FROM projects; DELETE FROM pm_settings;');
   await pg.exec(`INSERT INTO projects (id, organization_id, name, status)
                  VALUES (1, ${ORG}, 'Filing', 'active')`);
   seq = 0;
+});
+
+describe('Sentinel configuration', () => {
+  it('uses the canonical one-row-per-organization PM settings shape', async () => {
+    await pg.query(
+      `INSERT INTO pm_settings (organization_id, ai_settings)
+       VALUES ($1, $2::json)`,
+      [ORG, JSON.stringify({ tone: 'regulatory' })]
+    );
+    const sentinel = new AISentinel(pg as unknown as Pool);
+
+    const updated = await sentinel.updateConfig(ORG, { enabled: false, intervalMinutes: 15 });
+    const stored = await pg.query<{ ai_settings: Record<string, any> }>(
+      'SELECT ai_settings FROM pm_settings WHERE organization_id = $1',
+      [ORG]
+    );
+
+    expect(updated.enabled).toBe(false);
+    expect(updated.intervalMinutes).toBe(15);
+    expect(stored.rows[0].ai_settings.tone).toBe('regulatory');
+    expect(stored.rows[0].ai_settings.sentinel.enabled).toBe(false);
+
+    // A separate process/cache instance must read the persisted value back.
+    const reread = await new AISentinel(pg as unknown as Pool).getConfig(ORG);
+    expect(reread.enabled).toBe(false);
+    expect(reread.intervalMinutes).toBe(15);
+  });
 });
 
 describe('overdue scan', () => {

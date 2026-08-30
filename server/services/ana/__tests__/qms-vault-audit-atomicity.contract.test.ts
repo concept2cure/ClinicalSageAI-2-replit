@@ -106,7 +106,11 @@ CREATE TABLE concept2cure_provenance_events (
 CREATE TABLE audit_logs (
   id text PRIMARY KEY, tenant_id integer, user_id integer, action text, table_name text, record_id text,
   actor_id integer, target text, target_type text, target_id text, reason text, payload_hash text,
-  ana_action_id text, sha256_chain text, occurred_at timestamptz NOT NULL DEFAULT now(), hmac_seal text
+  ana_action_id text, sha256_chain text, occurred_at timestamptz NOT NULL DEFAULT now(), hmac_seal text,
+  old_values   json,
+  new_values   json,
+  ip_address   text,
+  user_agent   text
 );
 `;
 

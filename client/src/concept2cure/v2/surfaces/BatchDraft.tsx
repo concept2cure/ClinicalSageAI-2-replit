@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { connected, useLiveData, EmptyState, hasKeys } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AuthoredHtml } from '../editor/AuthoredHtml';
@@ -539,6 +540,53 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
       <div className="bd-sub">{spine && spine.standard ? spine.standard.toUpperCase() + ' · ' : ''}{agency} · batch_draft_sections</div>
     </div>
   );
+
+  /* WHAT ANA SEES HERE. Published above the four-state gate — hooks cannot sit
+     below a conditional return, and one publish must cover every branch.
+     Loading/error/empty publish as themselves: a failed spine read is a
+     failure, not an empty spine, and no count is published that the gated
+     screens do not show. */
+  const anaContext = useMemo(() => {
+    if (spineState.loading) {
+      return { summary: 'Batch draft — loading the document spine; nothing draftable is on screen yet.' };
+    }
+    if (spineState.error) {
+      return {
+        summary:
+          'Batch draft — the eCTD Co-Author document spine did not load, so no draftable sections are shown — a failure, not an empty spine.',
+      };
+    }
+    if (tree.length === 0) {
+      return { summary: 'Batch draft — no eCTD Co-Author documents in this workspace yet, so there is nothing to draft.' };
+    }
+    const base =
+      phase === 'review'
+        ? 'Batch draft (review) — ' + doneCount + ' draft(s) ready to review, ' + acceptedCount + ' accepted and written to their documents.'
+        : phase === 'drafting'
+          ? 'Batch draft (drafting) — ' + selList.length + ' section(s) drafting in parallel, ' + doneCount + ' returned so far.'
+          : 'Batch draft (pick) — ' + todo.length + ' draftable section(s), ' + selList.length + ' selected'
+            + (frameworkLabel ? ', drafting against ' + frameworkLabel : ', no framework chosen yet')
+            + (overBatchCap ? '; over the 20-per-batch cap' : '') + '.';
+    return {
+      // canLive false = the surface's own claim: nothing can be drafted right now.
+      summary: canLive ? base : base + ' The drafting service is unreachable, so nothing can be drafted right now.',
+      facts: {
+        draftableSections: todo.length,
+        selectedSections: selList.length,
+        overBatchCap,
+        framework: frameworkLabel || null,
+        phase,
+        draftingServiceReachable: canLive,
+        ...(phase === 'review' ? { draftsReady: doneCount, draftsAccepted: acceptedCount } : {}),
+      },
+      availableActions: [
+        'Pick up to 20 draftable sections and the regulatory framework they are drafted against',
+        'Review each returned draft card — edit or discard it before anything is written',
+        'Running a batch (spends drafting budget) and accepting a draft into a document (a versioned, audited write) are governed — AnA proposes them in conversation, never through screen controls.',
+      ],
+    };
+  }, [spineState.loading, spineState.error, tree, todo.length, selList.length, overBatchCap, frameworkLabel, phase, canLive, doneCount, acceptedCount]);
+  usePublishSurfaceContext('batch-draft', anaContext);
 
   // ── Four-state gate for the spine DATA (loading → error → empty → real) ──
   if (spineState.loading) {

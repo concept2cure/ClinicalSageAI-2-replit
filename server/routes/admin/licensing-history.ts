@@ -250,6 +250,9 @@ async function verifyStore(): Promise<IntegrityReport> {
     // Cheap probe for "is this store larger than we walk in one pass" — it
     // stops after VERIFY_MAX_ROWS rows and returns nothing when there are
     // fewer, so the common case costs one bounded scan.
+    // tenant-isolation-safe: intentional estate-wide integrity check behind the
+    // platform-admin router gate; restricting this probe to one organization
+    // would let a platform administrator report a partial chain as complete.
     const oversize = await query(`SELECT 1 FROM audit_logs OFFSET $1 LIMIT 1`, [VERIFY_MAX_ROWS]);
     if (oversize.rows.length > 0) {
       report = {
@@ -276,6 +279,9 @@ async function verifyStore(): Promise<IntegrityReport> {
         // Resolve the break row's append position so rows BEFORE it can still
         // be reported as verified — they were.
         try {
+          // tenant-isolation-safe: the id comes from the estate-wide canonical
+          // integrity verifier above, and this platform-admin-only lookup needs
+          // that exact row's global chain position, regardless of its tenant.
           const pos = await query(`SELECT id, occurred_at FROM audit_logs WHERE id = $1`, [
             result.chain.brokenAt.id,
           ]);

@@ -59,11 +59,22 @@ export function validateAnswers(
         }
       }
 
-      if (typeof value === 'number') {
-        if (v.min != null && value < v.min) {
+      // A number field's answer reaches here as a real number from the UI but
+      // as a string ('200') from the AnA tool surface; a `typeof === 'number'`
+      // gate silently skips min/max for the string form, letting an
+      // out-of-range value pass validation. Coerce a number-field string before
+      // the range check so the bound is enforced either way.
+      const numericValue =
+        typeof value === 'number'
+          ? value
+          : field.type === 'number' && typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value))
+            ? Number(value)
+            : null;
+      if (numericValue !== null) {
+        if (v.min != null && numericValue < v.min) {
           errors.push({ fieldId: field.id, message: `${field.label} must be at least ${v.min}.` });
         }
-        if (v.max != null && value > v.max) {
+        if (v.max != null && numericValue > v.max) {
           errors.push({ fieldId: field.id, message: `${field.label} must be at most ${v.max}.` });
         }
       }

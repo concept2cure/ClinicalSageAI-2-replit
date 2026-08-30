@@ -19,11 +19,18 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, 'client/src'),
-      '@shared': path.resolve(__dirname, 'shared'),
-      shared: path.resolve(__dirname, 'shared'),
-    },
+    alias: [
+      // server/middleware/auth WAS a live .js/.ts shadow pair (KNOWN_ISSUES_LEDGER
+      // M-5): Vite's extension order preferred the legacy auth.js while tsx and
+      // esbuild ran auth.ts, so this lane carried an alias pinning the extensionless
+      // import to auth.ts. The M-5 consolidation made auth.js a pure re-export shim
+      // of auth.ts, so every resolver — this one included — executes the canonical
+      // middleware and the alias is gone. If the WO-03 proof ever fails with
+      // REQUEST_DB_CONTEXT_REQUIRED again, suspect auth.js regrowing logic.
+      { find: '@', replacement: path.resolve(__dirname, 'client/src') },
+      { find: '@shared', replacement: path.resolve(__dirname, 'shared') },
+      { find: 'shared', replacement: path.resolve(__dirname, 'shared') },
+    ],
   },
   test: {
     globals: true,

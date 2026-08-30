@@ -35,6 +35,7 @@ import { I } from '../icons';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
+import { assessmentStateFor } from '../assessmentState';
 import { useLiveRows, useLiveData, hasKeys, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { EsignModal } from '../../_shared/components/EsignModal';
 import type { EsigMeaning } from '../../hooks/useEsignature';
@@ -194,6 +195,24 @@ export function SubmissionCenter({
   const list = subs.rows;
   const sub = list.find((s) => s.id === selSub) ?? list[0];
 
+  /* ── Which of the three things an empty `list` means ────────────────────────
+     `subs.rows` is the SAME empty array while the read is in flight, when the
+     read FAILED, and when this organization genuinely has no submissions — so
+     `!sub` on its own cannot say which is true, and copy written off `!sub`
+     states as fact something nobody established. The Portfolio table below
+     already branches loading → error → empty → rows; the per-sequence gate
+     further down did not. This is the one discriminator both now read.
+
+     `assessmentRan: false` deliberately: a submission list is a RECORD of what
+     exists, not the outcome of an evaluation, so zero rows is 'not-assessed'
+     ("nothing is recorded") and never 'assessed-clear'. Nothing here is
+     entitled to clearance vocabulary. ── */
+  const subsState = assessmentStateFor(subs, {
+    scopeExists: true,
+    findingCount: list.length,
+    assessmentRan: false,
+  });
+
   // GET /api/510k/estar/submissions — the org's tracked eSTAR device filings.
   // { submissions } envelope (not the `{ data }` convention), so the shape is
   // guarded explicitly; a mismatched 200 reaches the error branch, never an
@@ -239,6 +258,21 @@ export function SubmissionCenter({
   const [seqBump, setSeqBump] = React.useState(0);
   const seqPath = sub ? `/api/submissions/${sub.id}/sequences` : null;
   const seqs = useLiveRows<SeqRow>(seqPath, [seqPath, seqBump]);
+
+  /* The same discriminator for THIS submission's sequences, for the same reason:
+     `seqs.rows.length === 0` is true in flight, on failure, and on a genuine
+     zero-sequence submission, and only the third may be spoken about.
+       'loading'                 → the read has not settled
+       'unreadable'              → the read failed
+       'assessed-with-findings'  → sequences came back
+       'not-assessed'            → the read settled and none are recorded
+     `assessmentRan: false` again: a sequence list is a record, and an empty one
+     means nothing has been planned yet — which is exactly 'not-assessed'. */
+  const seqState = assessmentStateFor(seqs, {
+    scopeExists: Boolean(sub),
+    findingCount: seqs.rows.length,
+    assessmentRan: false,
+  });
 
   // The selected working sequence — the selector feeding Builder / Validation /
   // Shadow Review / Cross-region / Dispatch. Defaults to the first real row.
@@ -664,10 +698,26 @@ export function SubmissionCenter({
             )
           }
           reassure="I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you."
-          action={{
-            label: seqs.rows.length ? 'Open the sequences' : 'Plan the submission',
-            onClick: () => setWs(seqs.rows.length ? 'sequences' : 'planner'),
-          }}
+          /* ── The lead's action used to branch on `seqs.rows.length` alone ────
+             It read `seqs.rows.length ? 'Open the sequences' : 'Plan the
+             submission'`, with the same expression choosing the destination —
+             and `rows` is empty in flight, on a failed read, and on a genuine
+             zero-sequence submission alike. So the reader could see the body
+             copy two props above say "Loading this submission's sequences…" or
+             "couldn't be loaded" while the button directly below offered to plan
+             the submission from zero, and clicking it opened the Planner: the
+             right destination only when zero is the KNOWN count, not the unknown
+             one. The Planner is now offered from 'not-assessed' only — a settled
+             read with no sequences recorded. While the count is unknown the
+             button names the workspace it opens and claims nothing about what is
+             in it; that workspace reports the loading or failed read itself. ── */
+          action={
+            seqState === 'not-assessed'
+              ? { label: 'Plan the submission', onClick: () => setWs('planner') }
+              : seqState === 'assessed-with-findings'
+                ? { label: 'Open the sequences', onClick: () => setWs('sequences') }
+                : { label: 'Open the Sequences workspace', onClick: () => setWs('sequences') }
+          }
           secondary="Or move through the workspaces below — plan, build, validate, dispatch."
         />
       )}
@@ -932,7 +982,24 @@ export function SubmissionCenter({
       {/* Builder / Validation / Shadow review / Cross-region / Dispatch — the
           per-sequence workspaces. One selector (SeqPicker) chooses the working
           sequence; each workspace then reads/writes the REAL endpoints for it. */}
-      {PER_SEQ_WS.has(ws) && !sub && !subs.loading && (
+      {/* ── "No submission selected" is a claim about the reader's portfolio ──
+          The guard was `PER_SEQ_WS.has(ws) && !sub && !subs.loading`, which never
+          inspected `subs.error`. `sub` falls back to `list[0]`, and `list` is the
+          same empty array after a failed read as after a genuinely empty one, so
+          once a failed fetch settled this panel told a regulatory director that
+          nothing was selected — implying the list had been read and they simply
+          had not picked from it — when the list had not been read at all. The
+          Portfolio table thirty lines above already branched on the failure
+          first; this is that same branch, taken from the shared discriminator. ── */}
+      {PER_SEQ_WS.has(ws) && !sub && subsState === 'unreadable' && (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the submissions"
+          hint="These workspaces operate on one submission's sequences, and the submission list didn't load — nothing here says whether you have any. Retry from the Portfolio workspace, or check the service is reachable."
+        />
+      )}
+      {PER_SEQ_WS.has(ws) && !sub && subsState === 'not-assessed' && (
         <EmptyState
           icon={I.fileText}
           title="No submission selected"

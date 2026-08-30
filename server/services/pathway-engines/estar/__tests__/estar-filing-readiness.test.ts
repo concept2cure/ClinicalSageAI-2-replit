@@ -16,10 +16,11 @@ const REQUEST_ONLY: EstarClientRegistration = {
   satisfied: ['fda_esg_account', 'cdrh_portal_account', 'organization_identity'],
 };
 
-const leaf = (sectionCode: string, title: string, documentType?: string): FilingLeaf => ({
+const leaf = (sectionCode: string, title: string, documentType?: string, substantive = true): FilingLeaf => ({
   sectionCode,
   title,
   documentType,
+  substantive,
 });
 
 // Leaves covering every REQUIRED 510(k) eSTAR section.

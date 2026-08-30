@@ -13,7 +13,7 @@ import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness'
 
 const holder = vi.hoisted(() => ({ db: null as any }));
 vi.mock('../../../db', () => ({ get db() { return holder.db; } }));
-vi.mock('../../../services/auditService', () => ({ default: { logAction: vi.fn(async () => {}) } }));
+vi.mock('../../../services/auditService', () => ({ default: { logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) } }));
 // Contract tests exercise route logic, not rate limiting; pass-through the limiter
 // so the volume of requests in this suite doesn't trip a 429.
 vi.mock('../../../middleware/rateLimiter', () => ({

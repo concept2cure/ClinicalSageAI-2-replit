@@ -27,6 +27,7 @@ import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 import { createJourneyDb, type JourneyDb } from '../golden-journeys/harness';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../server/db/pglite-harness';
 
 const JWT_SECRET = 'section-perms-contract-secret-0728';
 process.env.JWT_SECRET = JWT_SECRET;
@@ -68,6 +69,13 @@ async function mint(u: { id: string; organizationId: number; email: string }, ro
 }
 
 const PREREQ = `
+  /* Governed authoring writes land a hash-chained, HMAC-sealed §11.10(e) row,
+     and that write is fail-closed — the audit row and the mutation it records
+     commit together or neither does. Without this table the handler under test
+     500s on a save that is otherwise correct. Imported rather than restated so
+     it cannot drift from what writeChainedAuditRow writes; the CI gate
+     scripts/ci/check-audit-logs-fixture.mjs enforces that agreement. */
+  ${AUDIT_LOGS_PGLITE_DDL}
   CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
   CREATE TABLE users (id UUID PRIMARY KEY, name TEXT, email TEXT);
   INSERT INTO organizations (id, name) VALUES (1, 'org-a'), (2, 'org-b');

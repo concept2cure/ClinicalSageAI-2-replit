@@ -22,6 +22,7 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { ApiRequestError } from '@/lib/queryClient';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async importOriginal => ({
@@ -168,6 +169,13 @@ async function renderDirty() {
   await waitFor(() => expect(canvasText()).toBe('The drug substance is a monoclonal antibody.'));
   canvasEditor().chain().focus().selectAll().insertContent('Half-written sentence that').run();
   await waitFor(() => expect(canvasText()).toBe('Half-written sentence that'));
+  /* §11.10(d) reason for change. Save stays disabled until it is given, so the
+     surface cannot move a governed record without one — stated here exactly as
+     an author now must, since this helper's job is to reach a SAVEABLE dirty
+     state, not to test the reason gate (which has its own suite). */
+  fireEvent.change(screen.getByTestId('change-reason'), {
+    target: { value: 'Continuing the drug-substance description.' },
+  });
   await waitFor(() => expect(headerSave().disabled).toBe(false));
 }
 
@@ -263,16 +271,28 @@ describe('switching sections over unsaved work is held, not silent', () => {
 
   it('a refused save keeps the author on the section rather than losing the edit', async () => {
     await renderDirty();
-    mockApi((method, url) =>
-      method === 'PATCH' && url === '/api/authoring/sections/S1'
-        ? ({ ok: false, status: 500, json: async () => ({ error: 'db unavailable' }) } as Response)
-        : null
-    );
+    /* THROWS, because the real `apiRequest` throws on a non-2xx. Returning
+       `{ ok: false }` — as this did — is a response shape the transport never
+       produces, so the assertion below was covering a branch production could
+       not reach while the surface's actual failure path went untested. */
+    mockApi((method, url) => {
+      if (method === 'PATCH' && url === '/api/authoring/sections/S1') {
+        throw new ApiRequestError(
+          'This document is frozen. Its content is sealed under a content hash.',
+          403,
+          { error: { code: 'DOCUMENT_FROZEN' } },
+          'DOCUMENT_FROZEN',
+        );
+      }
+      return null;
+    });
     fireEvent.click(screen.getByRole('button', { name: /3\.2\.S\.2\s*Manufacture/ }));
     const guard = await screen.findByRole('alertdialog', { name: /unsaved changes/i });
     fireEvent.click(within(guard).getByRole('button', { name: /Save and continue/i }));
 
-    expect(await screen.findByText(/Couldn’t save the section/i)).toBeTruthy();
+    /* The server's own reason — a frozen record tells the author to create a
+       new version; "HTTP 403" tells them to file a bug. */
+    expect(await screen.findByText(/frozen/i)).toBeTruthy();
     expect(openSectionCode()).toBe('3.2.S.1');
     expect(canvasText()).toBe('Half-written sentence that');
   });

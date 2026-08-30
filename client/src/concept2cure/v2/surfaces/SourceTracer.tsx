@@ -25,7 +25,7 @@ import '../styles/project-home-v2.css';
 
 interface StCitedSource {
   citationId: string;
-  state: 'current' | 'changed' | 'unverified' | 'unresolved';
+  state: 'current' | 'changed' | 'superseded' | 'unverified' | 'unresolved';
   citedAt: string | null;
   citationText: string | null;
   citedChecksum: string | null;
@@ -51,9 +51,25 @@ function stateLabel(s: StCitedSource): { text: string; tone: string; hint: strin
   switch (s.state) {
     case 'current':
       return {
-        text: 'content unchanged since cited',
+        // NOT "content unchanged since cited". Nothing in the product ever
+        // revises cre_evidence_sources.checksum — a revised document is ingested
+        // as a NEW source row — so `changed` is unreachable and this branch is
+        // what every citation shows, always. Claiming the content is unchanged
+        // was therefore a verification the system has no mechanism to perform,
+        // shown to a regulatory lead as a settled fact.
+        text: 'matches the source record as stored',
         tone: 'ok',
-        hint: 'The checksum recorded when this section cited the source still matches the source today.',
+        hint: 'The checksum recorded at cite time still matches this source record. That is a statement about the RECORD, not the document: a revised document is ingested as a NEW source, which this citation does not point at, so a revision upstream is not detected here.',
+      };
+    case 'superseded':
+      return {
+        text: 'source has been replaced since cited',
+        tone: 'warn',
+        hint:
+          'A newer version of this document was ingested after this section cited it. The ' +
+          'checksum still matches, because a source keeps its bytes and its hash forever — ' +
+          'the revision was recorded as a successor, and that is what says this citation ' +
+          'points at a superseded version.',
       };
     case 'changed':
       return {
@@ -205,7 +221,7 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
         headline={<><b>{sections.length}</b> section{sections.length === 1 ? '' : 's'} carr{sections.length === 1 ? 'ies' : 'y'} <b>{allSources.length}</b> recorded source citation{allSources.length === 1 ? '' : 's'} — each with the source&rsquo;s content identity at cite time. Sections that recorded nothing do not appear.</>}
         body={changed.length
           ? <><b>{changed.length}</b> citation{changed.length === 1 ? ' is' : 's are'} against content the source no longer has — those sections were written from an earlier version.</>
-          : <>Every recorded citation still matches its source&rsquo;s current content, or says plainly that it was never checked.</>}
+          : <>Every recorded citation still matches the source record it points at, or says plainly that it was never checked. A revised document is ingested as a new source, so this does not establish that the underlying document is unchanged.</>}
         reassure={unresolved.length
           ? <><b>{unresolved.length}</b> citation{unresolved.length === 1 ? '' : 's'} point{unresolved.length === 1 ? 's' : ''} at a source that no longer resolves — kept visible rather than dropped, because &ldquo;cites something unavailable&rdquo; is worth seeing.</>
           : <>Recorded lineage only — nothing here is a similarity guess.</>}

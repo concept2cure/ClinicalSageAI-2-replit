@@ -38,6 +38,10 @@ import {
 import { PassThrough } from 'stream';
 import { authMiddleware } from '../auth';
 import { createGovernedExportConsequence } from '../services/export/governedExportConsequence';
+import {
+  applyExportGovernanceHeaders,
+  evaluateExportGovernance,
+} from '../services/export/exportReviewGate';
 import type { ExportSourceType } from '../services/export/governedExportConsequence';
 import { requestDb } from '../db/requestDb';
 import { fda510kProjects, projects } from '../../shared/schema';
@@ -396,52 +400,34 @@ async function respondAuditedUnplaced(
 const sanitizeFilename = (value: string) =>
   value.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/_+/g, '_');
 
-const exportGovernanceSchema = z.object({
-  aiGenerated: z.boolean().default(true),
-  humanReviewApproved: z.boolean().default(false),
-  reviewerName: z.string().trim().min(1).max(200).optional(),
-  reviewerRole: z.string().trim().min(1).max(200).optional(),
-  reviewTimestamp: z.string().datetime().optional(),
-});
-
-function shouldEnforceExportReviewGate(): boolean {
-  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'true') return true;
-  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'false') return false;
-  return process.env.NODE_ENV === 'production';
-}
-
-function applyGovernanceHeaders(res: Response, governance: z.infer<typeof exportGovernanceSchema>) {
-  res.setHeader('X-Concept2Cure-AI-Generated', String(governance.aiGenerated));
-  res.setHeader('X-Concept2Cure-Human-Review-Approved', String(governance.humanReviewApproved));
-  res.setHeader('X-Concept2Cure-Review-Required', 'true');
-  res.setHeader('X-Concept2Cure-Review-Notice', 'Human review required for regulated use');
-  res.setHeader('X-Concept2Cure-Governance-Persistence', 'governed');
-  if (governance.reviewerName) {
-    res.setHeader('X-Concept2Cure-Reviewer', encodeURIComponent(governance.reviewerName));
-  }
-  if (governance.reviewTimestamp) {
-    res.setHeader('X-Concept2Cure-Review-Timestamp', governance.reviewTimestamp);
-  }
-}
-
+/**
+ * Thin adapter over the canonical export review gate
+ * (server/services/export/exportReviewGate.ts). All decision logic — schema,
+ * reviewer-attribution rule (INCOMPLETE_HUMAN_REVIEW), and the strict
+ * environment gate (HUMAN_REVIEW_REQUIRED) — lives there; this only renders a
+ * rejection into this router's flat `{ error, message?, details? }` bodies and
+ * adds the CERV2-specific governance headers.
+ */
 function validateExportGovernance(req: Request, res: Response) {
-  const parsed = exportGovernanceSchema.safeParse(req.body?.governance ?? {});
-  if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid governance payload', details: parsed.error.flatten() });
+  const evaluation = evaluateExportGovernance(req.body?.governance);
+  if (!evaluation.ok) {
+    if (evaluation.code === 'VALIDATION_ERROR') {
+      res.status(400).json({ error: 'Invalid governance payload', details: evaluation.details });
+    } else {
+      res.status(evaluation.status).json({
+        error: evaluation.code,
+        message: evaluation.message,
+        details: evaluation.details,
+      });
+    }
     return null;
   }
 
-  const governance = parsed.data;
-  if (shouldEnforceExportReviewGate() && !governance.humanReviewApproved) {
-    res.status(403).json({
-      error: 'HUMAN_REVIEW_REQUIRED',
-      message: 'Human review approval is required before export in this environment',
-    });
-    return null;
-  }
-
-  applyGovernanceHeaders(res, governance);
-  return governance;
+  applyExportGovernanceHeaders(res, evaluation.governance, {
+    'X-Concept2Cure-Review-Notice': 'Human review required for regulated use',
+    'X-Concept2Cure-Governance-Persistence': 'governed',
+  });
+  return evaluation.governance;
 }
 
 function resolveCtdPlacement(docType: (typeof validDocTypes)[number]) {

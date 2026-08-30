@@ -1172,6 +1172,54 @@ export const UI_V2_SURFACES: UiSurface[] = [
     notes: 'Plan tiers, seat licensing, module entitlements, upgrade/downgrade.',
   },
   {
+    /* Routable but unregistered until now: the account menu's "Licensing"
+       entry (Shell.tsx ACCT_ITEMS, org-admin gated) navigated here, and
+       `getSurface('master-licensing')` returned undefined — so the platform
+       licensing console rendered under a breadcrumb reading "Home" and had no
+       ⌘K row. Distinct from `licensing` (Plans & licensing), which is the
+       customer-facing plan/upgrade view; this is the platform-admin control
+       room that DEFINES the tiers. The surface re-checks platform-admin
+       server-side on every read and write; registration only names it. */
+    id: 'master-licensing',
+    label: 'Master licensing',
+    navTier: 'admin',
+    layoutMode: 'master-licensing',
+    group: 'admin',
+    icon: 'checkSquare',
+    uiKit: null,
+    apiPrefixes: ['/api/admin/master/licensing', '/api/admin/master/feature-flags', '/api/module-access-requests'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'Platform-admin licensing control room (MasterLicensing.tsx): the module × tier packaging matrix (minTier per module), per-tenant tier + module-by-module effective verdicts with reasons, the platform-scope access-request queue, trials, feature_toggles flags, enforcement observations and the decision history. Every list is a live read of /api/admin/master/* — a failed read renders ErrorState with retry, never an empty table — and every mutation goes through GovernedConfirmDialog with the server’s own reason-for-change floor (min 3 chars), audit-logged verbatim.',
+  },
+  {
+    /* Where a member’s request for a locked module lands. The queue shipped as
+       a registered SURFACE_VIEWS component with an account-menu entry
+       (Shell.tsx, org-admin gated) but no registry row, so the administrator
+       arrived under a breadcrumb reading "Home" with no ⌘K row. Org-scoped
+       server-side; scope="all" of the same component is the panel inside
+       master-licensing (licensing/AccessRequestsPanel.tsx). */
+    id: 'access-requests',
+    label: 'Access requests',
+    navTier: 'admin',
+    layoutMode: 'access-requests',
+    group: 'admin',
+    icon: 'clipboardList',
+    uiKit: null,
+    apiPrefixes: ['/api/module-access-requests'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'The org-admin queue for module access requests (AccessRequests.tsx): who asked for which locked app, in their own words, with approve/decline through GovernedConfirmDialog (reason stored with the decision, written to the Part 11 chain server-side). Nothing optimistic — an approval renders granted only after the server grants. Fail closed: a failed read is ErrorState with retry, never mistaken for "nobody is waiting".',
+  },
+  {
     id: 'training',
     label: 'Training & enablement',
     navTier: 'admin',

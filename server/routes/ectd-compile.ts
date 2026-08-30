@@ -39,6 +39,7 @@ import { promises as fs } from 'node:fs';
 
 import { Router, Request, Response } from 'express';
 import { pool } from '../db';
+import { buildLeafManifest } from '../services/ectd/sequence-manifest';
 
 const router = Router();
 
@@ -836,6 +837,11 @@ async function compileFromSpine(
   let dtdSelfContained: boolean | null = null;
   let packageSha256: string | null = null;
   let assembleFailure: string | null = null;
+  // Per-sequence leaf manifest → persisted so the NEXT sequence can load it and
+  // compute real replace/append/delete lifecycle ops (loadPriorSequenceManifest).
+  // Without this write-half, prior-sequence load always returned [] and every
+  // leaf stayed `new` — no amendments/supplements were producible.
+  let leafManifestJson: string | null = null;
 
   try {
     const assembled = await assembleSequence({
@@ -860,6 +866,9 @@ async function compileFromSpine(
       );
       dtdSelfContained = assembled.bundle.dtdStatus?.selfContained ?? null;
       packageSha256 = assembled.bundle.sha256;
+      // Snapshot this sequence's shipped leaves as its immutable manifest.
+      const manifest = buildLeafManifest(assembled.bundle.leafManifest ?? []);
+      leafManifestJson = manifest.length > 0 ? JSON.stringify(manifest) : null;
     } finally {
       await assembled.cleanup();
     }
@@ -923,8 +932,8 @@ async function compileFromSpine(
       `INSERT INTO ectd_compilations
          (organization_id, compilation_name, compilation_type, status,
           xml_backbone, validation_results, compiled_at, version,
-          application_number, sequence_number)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), '1.0', $7, $8)`,
+          application_number, sequence_number, leaf_manifest, submission_id)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW(), '1.0', $7, $8, $9, $10)`,
       [
         orgId,
         compilationName,
@@ -934,6 +943,10 @@ async function compileFromSpine(
         JSON.stringify(validationResults),
         anchor.programCode ?? `SEQ-${seq.id}`,
         seq.sequenceNumber,
+        leafManifestJson,
+        // Stable per-submission key: lets the NEXT sequence locate this manifest
+        // via loadLatestPriorManifestBySubmission regardless of application_number.
+        spine.submissionId,
       ],
     );
   } catch (err: any) {
@@ -1076,14 +1089,24 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
   try {
     let compilations: any[] = [];
     try {
+      // Match the anchor label as a WHOLE token, not a bare substring. A
+      // `LIKE '%Project 5%'` matched "Project 50", "Project 500", etc., so
+      // GET /:projectId/history returned OTHER same-org projects' compilations
+      // as if they were this project's. Require a non-alphanumeric boundary (or
+      // string edge) on each side of the label so "Project 5" no longer matches
+      // inside "Project 50", while still finding the label anywhere in a longer
+      // compilation name. (ectd_compilations has no project/program id column to
+      // filter on exactly; that would be the stronger fix via a migration.)
+      const escapedLabel = anchor.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const labelTokenPattern = `(^|[^A-Za-z0-9])${escapedLabel}($|[^A-Za-z0-9])`;
       const result = await pool.query(
         `SELECT id, compilation_name, compilation_type, status, version,
                 compiled_at, created_at
          FROM ectd_compilations
-         WHERE organization_id = $1 AND compilation_name LIKE $2
+         WHERE organization_id = $1 AND compilation_name ~ $2
          ORDER BY created_at DESC
          LIMIT 20`,
-        [orgId, `%${anchor.label}%`]
+        [orgId, labelTokenPattern]
       );
       compilations = result.rows;
     } catch (err: any) {

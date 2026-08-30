@@ -43,24 +43,24 @@ import express from 'express';
 import request from 'supertest';
 
 // Imported from the BARE specifier on purpose — the same way the 95 call sites
-// import it. server/middleware/auth.js and auth.ts both exist and export
-// overlapping names, and which one wins is resolver-dependent (measured):
-// esbuild (production build) and tsx (dev) both pick auth.TS; Vite/vitest picks
-// auth.JS. So this file, imported bare, exercises the .js twin, while the .ts
-// twin below is the one that actually ships. Both are asserted here precisely
-// because neither alone would prove production is guarded.
-import { requireRole, requireSameOrganization, PLATFORM_SCOPED_ROLES } from '../auth';
+// import it. Under vitest the bare specifier resolves to auth.js, which since
+// the M-5 consolidation is a PURE RE-EXPORT SHIM of auth.ts — so this import
+// exercises the exact functions production ships. The identity of the two
+// specifiers is itself asserted below ("one module behind every specifier"),
+// because the .js file regrowing its own implementation is precisely the
+// regression this suite exists to catch.
+import { requireRole, requireOrgAccess, requireSameOrganization, PLATFORM_SCOPED_ROLES } from '../auth';
 
-// The .ts twin can only be addressed by its explicit extension — the bare
-// specifier resolves to the .js file above. A STATIC `from '../auth.ts'` is
-// TS5097 ("an import path can only end with '.ts' when
-// allowImportingTsExtensions is enabled"), so the specifier is held in a
-// variable: tsc cannot apply TS5097 to a non-literal, and Vite still resolves
-// it at runtime. Awkward, and the awkwardness is the point — two modules
-// sharing a name is why this test file has to reach for either one by hand.
+// The .ts module addressed by its explicit extension, to compare against the
+// bare-specifier bindings above. A STATIC `from '../auth.ts'` is TS5097 ("an
+// import path can only end with '.ts' when allowImportingTsExtensions is
+// enabled"), so the specifier is held in a variable: tsc cannot apply TS5097
+// to a non-literal, and Vite still resolves it at runtime.
 const TS_TWIN_SPECIFIER = '../auth.ts';
 type TsTwin = {
+  requireRole: (...roles: string[]) => express.RequestHandler;
   requireOrgAccess: express.RequestHandler;
+  requireSameOrganization: express.RequestHandler;
   PLATFORM_SCOPED_ROLES: Set<string>;
 };
 const loadTsTwin = async (): Promise<TsTwin> =>
@@ -95,10 +95,11 @@ describe('requireRole — an org admin cannot stand in for platform staff', () =
     const res = await request(appWith(ORG_ADMIN, requireRole('super_admin', 'platform_admin')))
       .get('/probe');
     expect(res.status).toBe(403);
-    // NOTE the envelope: the live .js answers {status,message}; auth.ts answers
-    // {error:{code:'AUTH_004'}}. Two modules exporting one name, disagreeing on
-    // the error contract, is the same shadowing hazard in another dress.
-    expect(res.body?.status).toBe('error');
+    // Canonical envelope. (Pre-consolidation the .js twin answered
+    // {status,message} while auth.ts answered {error:{code}} — two modules
+    // exporting one name and disagreeing on the error contract. One module
+    // now, one contract.)
+    expect(res.body?.error?.code).toBe('AUTH_004');
   });
 
   it('refuses an org admin for every platform role spelling', async () => {
@@ -144,61 +145,40 @@ describe('requireRole — the org-scoped stand-in survives, because it must', ()
     app.get('/probe', requireRole('regulatory-author'), (_req, res) => res.status(200).json({}));
     const res = await request(app).get('/probe');
     expect(res.status).toBe(401);
-    expect(res.body?.status).toBe('error');
+    expect(res.body?.error?.code).toBe('AUTH_003');
   });
 });
 
-describe('the shadowing .js and the .ts twin do not drift', () => {
-  it('declares the same platform-scoped role set in both files', async () => {
-    const { PLATFORM_SCOPED_ROLES: TS_PLATFORM_ROLES } = await loadTsTwin();
-    // auth.js's comment used to claim it "Mirrors the canonical auth.ts
-    // requireRole" while taking a single role to the other's variadic. Two
-    // files exporting the same names is the hazard; this pins the part of
-    // them that decides who is staff.
-    expect([...PLATFORM_SCOPED_ROLES].sort()).toEqual([...TS_PLATFORM_ROLES].sort());
+describe('one module behind every specifier (M-5 consolidation holds)', () => {
+  it('the bare specifier binds the very same functions as auth.ts', async () => {
+    // auth.js is a pure re-export shim of auth.ts. If it ever regrows its own
+    // implementation, these stop being IDENTICAL references (not merely
+    // equivalent behavior) and this fails — the resolver-dependent shadowing
+    // this suite was built around cannot quietly return.
+    const twin = await loadTsTwin();
+    expect(requireRole).toBe(twin.requireRole);
+    expect(requireOrgAccess).toBe(twin.requireOrgAccess);
+    expect(requireSameOrganization).toBe(twin.requireSameOrganization);
+    expect(PLATFORM_SCOPED_ROLES).toBe(twin.PLATFORM_SCOPED_ROLES);
   });
 
-  it('makes both variadic, so a second role is never silently dropped', async () => {
-    // The live .js took (requiredRole) — so requireRole('super_admin',
-    // 'platform_admin') discarded the second and denied real platform admins.
+  it('requireRole is variadic, so a second role is never silently dropped', async () => {
+    // The pre-consolidation .js took (requiredRole) — so requireRole(
+    // 'super_admin', 'platform_admin') discarded the second and denied real
+    // platform admins.
     expect(requireRole.length).toBe(0); // rest params report length 0
   });
-});
 
-describe('requireSameOrganization (.js twin, as resolved under vitest) — platform staff only', () => {
-  // The requireOrgAccess block below imports auth.ts explicitly, so it does NOT
-  // exercise what production runs. This block does: requireSameOrganization is
-  // the bare-specifier export, and it compares req.user.organizationId against
-  // req.organizationId (set from the JWT by authenticateJWT).
-  const appOrg = (identity: Identity, reqOrgId: number) => {
-    const app = express();
-    app.use((req, _res, next) => {
-      (req as express.Request & { user: Identity; organizationId: number }).user = identity;
-      (req as express.Request & { organizationId: number }).organizationId = reqOrgId;
-      next();
-    });
-    app.get('/probe', requireSameOrganization, (_req, res) => res.status(200).json({ ok: true }));
-    return app;
-  };
-  const orgAdmin = { role: 'admin', roles: ['admin'], organizationId: 30 } as unknown as Identity;
-  const platform = { role: 'platform_admin', roles: ['platform_admin'], organizationId: 1 } as unknown as Identity;
-
-  it('denies an org admin another organization', async () => {
-    // The exemption was `!req.user.roles.includes('admin')` — the guard whose
-    // job is blocking cross-tenant access exempted every customer admin.
-    expect((await request(appOrg(orgAdmin, 999)).get('/probe')).status).toBe(403);
-  });
-
-  it('allows an org admin their own organization', async () => {
-    expect((await request(appOrg(orgAdmin, 30)).get('/probe')).status).toBe(200);
-  });
-
-  it('allows platform staff any organization', async () => {
-    expect((await request(appOrg(platform, 999)).get('/probe')).status).toBe(200);
+  it('requireSameOrganization is the requireOrgAccess guard', () => {
+    // The legacy .js twin had a DIFFERENT requireSameOrganization (it compared
+    // req.organizationId, which only tenantContext sets). No route imports the
+    // name; production always ran this alias. Pinned so the alias is not
+    // "helpfully" re-implemented.
+    expect(requireSameOrganization).toBe(requireOrgAccess);
   });
 });
 
-describe('requireOrgAccess (auth.ts twin — not the live module) — platform staff only', () => {
+describe('requireOrgAccess (canonical, as production runs it) — platform staff only', () => {
   it('denies an org admin another organization’s id', async () => {
     const { requireOrgAccess } = await loadTsTwin();
     const res = await request(appWith(ORG_ADMIN, requireOrgAccess)).get('/probe/999');

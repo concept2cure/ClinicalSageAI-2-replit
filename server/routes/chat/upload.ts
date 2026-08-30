@@ -23,6 +23,7 @@ import { sha256, sha256Bytes } from './provenance.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { verifyFileSignature } from '../../utils/fileSignature';
 import { scanBuffer as scanForViruses } from '../../utils/virusScan';
+import { sha256Hex } from '../../services/ana/uploaded-file-access';
 
 const logger = createScopedLogger('chat-upload');
 
@@ -182,9 +183,23 @@ export const uploadHandler = async (req: Request, res: Response) => {
     // INSERT previously did — made every `WHERE organization_id = $n` lookup in
     // the chat/stream paths match zero rows, silently dropping attachments.
     await pool.query(
-      `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, status, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'uploaded', NOW())`,
-      [fileId, userId, orgId != null ? Number(orgId) : null, fileName, mimeType, fileSize, storagePath]
+      `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'uploaded', NOW())`,
+      [
+        fileId,
+        userId,
+        orgId != null ? Number(orgId) : null,
+        fileName,
+        mimeType,
+        fileSize,
+        storagePath,
+        // SHA-256 of the bytes as received, so loadUploadedFile can later prove
+        // the file on disk is still the one that was uploaded. Nothing recorded
+        // a digest before this, which is why no stored document was verifiable
+        // after the fact (GA ledger L25). Null only if this route ever runs
+        // without a buffer — the checksum must describe real bytes or nothing.
+        fileBuffer ? sha256Hex(fileBuffer) : null,
+      ]
     );
 
     // ── Text extraction (runs for every upload with a buffer) ──
@@ -412,9 +427,8 @@ export const uploadHandler = async (req: Request, res: Response) => {
         // handler now refuses byte-less uploads outright, so this is
         // unconditional.
         const checksum = sha256Bytes(fileBuffer);
-        const { createSource, findSourceByChecksum } = await import(
-          '../../services/clinical-regulatory-evidence/evidence-spine.service.js'
-        );
+        const { createSource, createSupersedingSource, findSourceByChecksum, findSupersededCandidate } =
+          await import('../../services/clinical-regulatory-evidence/evidence-spine.service.js');
 
         const existing = await findSourceByChecksum(numericOrgId, checksum, {
           sourceType: 'client_document',
@@ -471,7 +485,38 @@ export const uploadHandler = async (req: Request, res: Response) => {
               fileId,
             });
           }
-          const created = await createSource(numericOrgId, {
+          // Is this a REVISION of a document this project already holds?
+          //
+          // A new checksum means new bytes, and until now that was the end of
+          // it: the revision became an unrelated source row, and every citation
+          // of the old one went on reporting "content unchanged since cited"
+          // forever, because a source's checksum is never rewritten. Linking the
+          // two is what makes a superseded citation visible at all.
+          //
+          // The lookup is deliberately narrow and declines to decide when two
+          // documents in the project share a filename — see
+          // findSupersededCandidate. It is also best-effort: on a database
+          // without the versioning migration it throws, and "no predecessor
+          // known" is the honest fallback rather than a failed upload.
+          let supersedes: { id: number } | null = null;
+          try {
+            supersedes = await findSupersededCandidate(numericOrgId, {
+              title: fileName,
+              sourceType: 'client_document',
+              programId: scope.programId,
+              workspaceId: scope.workspaceId,
+            });
+          } catch (verErr: any) {
+            logger.warn('Source version lookup unavailable — treating upload as a new document', {
+              fileId,
+              err: verErr?.message,
+            });
+          }
+
+          // Typed against createSource's parameter so pulling the literal out of
+          // the call keeps its string-union fields (sourceType, visibilityClass,
+          // the two statuses) instead of widening them to string.
+          const sourceParams: Parameters<typeof createSource>[1] = {
             sourceType: 'client_document',
             // Project uploads are scoped to the project; an unscoped chat
             // attachment stays tenant-private rather than leaking project-wide.
@@ -502,9 +547,35 @@ export const uploadHandler = async (req: Request, res: Response) => {
               artifactId,
               ...(dossier ? { dossier } : {}),
             },
-          });
+          };
+
+          // How the link was established travels WITH the record. A reviewer
+          // asking "why does this say my source was superseded" gets the answer
+          // from the row, not from this file.
+          const created = supersedes
+            ? (await createSupersedingSource(
+                numericOrgId,
+                {
+                  ...sourceParams,
+                  provenance: {
+                    ...sourceParams.provenance,
+                    supersedes: {
+                      sourceId: supersedes.id,
+                      matchedOn: 'title+projectScope+sourceType',
+                      decidedBy: 'chat_upload ingest',
+                    },
+                  },
+                },
+                supersedes.id,
+              )).source
+            : await createSource(numericOrgId, sourceParams);
           sourceId = created.id;
-          logger.info('Upload created a canonical source identity', { fileId, sourceId });
+          logger.info(
+            supersedes
+              ? 'Upload superseded an existing source identity'
+              : 'Upload created a canonical source identity',
+            { fileId, sourceId, supersededId: supersedes?.id ?? null },
+          );
         }
       } catch (sourceErr: any) {
         logger.error('Canonical source identity not created for upload', {

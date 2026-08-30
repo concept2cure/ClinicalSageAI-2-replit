@@ -73,16 +73,22 @@ import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage, ApiRequestError, redactInternals } from '@/lib/queryClient';
 import { AuthoringFilingBar } from './AuthoringFilingBar';
 import { AuthoringPlaceIntoFiling } from './AuthoringPlaceIntoFiling';
 import { AuthoringCollab } from './AuthoringCollab';
 import { AuthoringCreateExport } from './AuthoringCreateExport';
+import { newDocumentAction } from '../newDocumentAction';
 import { AuthoringRevisionDiff } from './AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from './AuthoringAiDraft';
 import { AuthoringExports } from './AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
+import type { SuggestionDecision } from '../editor/suggestions';
 import type { CommentAnchorPayload } from '../editor/commentAnchor';
+import { citedSourceIdsInHtml } from '../editor/citationNode';
+import { captionedObjectsInHtml } from '../editor/captionNumbering';
+import type { CaptionedObject } from '@shared/authoring/captions';
+import type { CitationSource } from '@shared/authoring/citations';
 import { useAuth } from '@/services/portal/authService';
 import { getAuthToken } from '@/utils/authToken';
 import { describeRulePackProvenance } from '@shared/rule-pack-provenance';
@@ -182,6 +188,10 @@ interface AuthAuditEvent {
   content_hash_before: string | null;
   content_hash_after: string | null;
   created_at: string | null;
+  /** The endpoint has always returned this and no surface read it, so the
+   *  richest part of several governed records — which model produced a draft,
+   *  which redline a reviewer refused — was written and unreadable. */
+  metadata: Record<string, unknown> | null;
 }
 
 /** How each recorded operation reads to a reviewer. Unknown operations are
@@ -192,7 +202,11 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
   UPDATE: 'updated',
   COMMIT: 'committed to filing',
   REVERT: 'reverted to a prior revision',
+  tracked_change_decision: 'tracked change decided',
+  tracked_change_bulk_decision: 'tracked changes decided in bulk',
   REORDER_SECTIONS: 'sections reordered',
+  RENAME: 'renamed',
+  TRACK_CHANGES: 'track changes toggled',
   FREEZE: 'frozen',
   SIGN: 'signed',
   E_SIGN: 'e-signed',
@@ -201,12 +215,113 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
   SUBMIT: 'submitted',
 };
 
+/**
+ * The readable part of an audit row's `metadata`, or null when it carries
+ * nothing a reviewer would act on.
+ *
+ * Two recorded shapes were being written and shown to nobody, and both answer
+ * the first question an assessor asks:
+ *
+ *   tracked_change_decision — a reviewer accepted or REFUSED a redline. A
+ *     rejection changes no text, so this row is the only place it exists.
+ *   ai-draft-accept — which model and provider produced the text, and whether
+ *     the author edited it before accepting (so "accepted AI draft" cannot
+ *     vouch for words the model never wrote).
+ *
+ * Unrecognised metadata is left alone rather than dumped as JSON: a rail is a
+ * reading surface, and raw payloads are not read.
+ */
+export function describeAuditMetadata(
+  eventType: string | null,
+  metadata: Record<string, unknown> | null,
+): string | null {
+  if (!metadata || typeof metadata !== 'object') return null;
+  const str = (k: string): string | null => {
+    const v = (metadata as Record<string, unknown>)[k];
+    return typeof v === 'string' && v.trim().length > 0 ? v : null;
+  };
+
+  if (eventType === 'tracked_change_decision') {
+    const decision = str('decision');
+    const kind = str('changeType');
+    const text = str('text');
+    const proposedBy = str('proposedBy');
+    if (!decision) return null;
+    const verb = decision === 'accept' ? 'accepted' : 'rejected';
+    const what = kind === 'deletion' ? 'a proposed deletion' : kind === 'insertion' ? 'a proposed insertion' : 'a tracked change';
+    /* The quoted text is what makes the row resolvable — accepting a
+       suggestion strips its mark, so the document no longer holds it. */
+    const quoted = text ? ` — “${text.length > 160 ? text.slice(0, 160) + '…' : text}”` : '';
+    const by = proposedBy ? ` (proposed by ${proposedBy})` : '';
+    return `${verb} ${what}${by}${quoted}`;
+  }
+
+  if (eventType === 'tracked_change_bulk_decision') {
+    const decision = str('decision');
+    const count = typeof metadata.count === 'number' ? metadata.count : null;
+    if (!decision || count === null) return null;
+    const verb = decision === 'accept' ? 'accepted' : 'rejected';
+    const omitted =
+      typeof metadata.changesOmittedFromSummary === 'number'
+        ? metadata.changesOmittedFromSummary
+        : 0;
+    const changes = Array.isArray(metadata.changes) ? metadata.changes : [];
+    const sample = changes
+      .slice(0, 3)
+      .map(c => (c && typeof (c as any).text === 'string' ? (c as any).text : null))
+      .filter((t): t is string => !!t)
+      .map(t => `“${t.length > 80 ? t.slice(0, 80) + '…' : t}”`);
+    /* When the stored summary was capped, the row says so. A truncated record
+       that reads as complete is worse than one that admits its limit. */
+    return (
+      `${verb} ${count} tracked change${count === 1 ? '' : 's'} in one action` +
+      (sample.length > 0 ? ` — including ${sample.join(', ')}` : '') +
+      (omitted > 0 ? ` (${omitted} more not summarised on this row)` : '')
+    );
+  }
+
+  if (metadata.source === 'section-metadata') {
+    /* A rename or a track-changes toggle. Renders what moved, from and to, so
+       the row is resolvable without opening the section — the same standard the
+       tracked-change rows above hold. */
+    const changes = Array.isArray(metadata.changes) ? metadata.changes : [];
+    const parts = changes
+      .map((c) => {
+        const ch = (c ?? {}) as Record<string, unknown>;
+        const field = typeof ch.field === 'string' ? ch.field : null;
+        const from = ch.from == null ? '—' : String(ch.from);
+        const to = ch.to == null ? '—' : String(ch.to);
+        if (field === 'title') return `title “${from}” → “${to}”`;
+        if (field === 'code') return `code ${from} → ${to}`;
+        if (field === 'track_changes') return `track changes turned ${ch.to ? 'on' : 'off'}`;
+        return null;
+      })
+      .filter((p): p is string => !!p);
+    return parts.length ? parts.join('; ') : null;
+  }
+
+  if (metadata.source === 'ai-draft-accept') {
+    const gen = (metadata.generator ?? null) as Record<string, unknown> | null;
+    const model = gen && typeof gen.model === 'string' ? gen.model : null;
+    const provider = gen && typeof gen.provider === 'string' ? gen.provider : null;
+    const who = [model, provider].filter(Boolean).join(' · ');
+    const edited = metadata.draft_modified_on_accept === true;
+    return (
+      'accepted an AI draft' +
+      (who ? ` generated by ${who}` : ' whose generating model was not recorded') +
+      (edited ? ', edited before accepting — the saved text is not the model’s wording' : '')
+    );
+  }
+
+  return null;
+}
+
 function auditEventLabel(raw: string | null): string {
   if (!raw) return 'recorded';
   return AUDIT_EVENT_LABELS[raw] ?? raw.replace(/_/g, ' ').toLowerCase();
 }
 
-/** POST /sections/:id/ai/deficiency-scan — six mechanical checks over the
+/** POST /sections/:id/ai/deficiency-scan — a handful of mechanical checks over the
  *  SAVED section (length, module keywords, tables/figures, placeholders,
  *  structure). The handler itself refuses to call this a compliance
  *  determination (`signal_type: 'heuristic_quality'`); the panel keeps that
@@ -225,6 +340,11 @@ interface ScanResults {
   status?: string;
   deficiencies: ScanDeficiency[];
   deficiency_count?: number;
+  /** The denominator behind `quality_score`, and how many of those passed. The
+   *  panel names the server's count rather than a literal, so the sentence
+   *  cannot drift from the checks the handler actually runs. */
+  checks_run?: number;
+  checks_passed?: number;
   scanned_at?: string;
 }
 
@@ -409,7 +529,7 @@ interface SectionSource {
   citedAt: string | null;
   citationText: string | null;
   citedChecksum: string | null;
-  state: 'current' | 'changed' | 'unverified' | 'unresolved';
+  state: 'current' | 'changed' | 'superseded' | 'unverified' | 'unresolved';
   source: {
     id: number;
     title: string | null;
@@ -435,9 +555,23 @@ function sourceStateLabel(s: SectionSource): {
   switch (s.state) {
     case 'current':
       return {
-        text: 'Content unchanged since cited',
+        // Mirrors SourceTracer deliberately — see the note there. The old
+        // wording asserted the document was unchanged, which nothing here can
+        // establish: a revised document becomes a new source row rather than a
+        // changed checksum.
+        text: 'Matches the source record as stored',
         tone: 'ok',
-        hint: 'The checksum recorded when this section cited the source still matches the source today.',
+        hint: 'The checksum recorded at cite time still matches this source record. That is a statement about the RECORD, not the document: a revised document is ingested as a NEW source, which this citation does not point at, so a revision upstream is not detected here.',
+      };
+    case 'superseded':
+      return {
+        text: 'Source has been replaced since cited',
+        tone: 'warn',
+        hint:
+          'A newer version of this document was ingested after this section cited it. The ' +
+          'checksum still matches, because a source keeps its bytes and its hash forever — ' +
+          'the revision was recorded as a successor, and that is what says this citation ' +
+          'points at a superseded version.',
       };
     case 'changed':
       return {
@@ -751,6 +885,47 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   // the leave-guard on filing actions.
   const [editorDirty, setEditorDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  /* ── REASON FOR CHANGE — stated once per section, carried on every save ──
+   *
+   * §11.10(d)/(e) wants to know WHY a governed record changed. Nothing on this
+   * surface ever asked: only the AI-draft dialog sent `changeReason`, so every
+   * ordinary save arrived without one and the filing's version ledger recorded
+   * that it was not stated.
+   *
+   * Sticky rather than per-save, which is the shape this repo already settled
+   * on for the same problem in ProtocolDev's schedule-of-assessments grid: the
+   * governed router wants a reason on every write, and "prompting per tick
+   * would be unusable — so the reason is stated ONCE for the editing session…
+   * what the regulation does not ask for is the same sentence retyped forty
+   * times." Save and ⌘S can each fire many times while working through one
+   * section, and each one is a real write.
+   *
+   * It gates SAVE, not editing. The SoA grid can sit read-only until a reason
+   * is given because it is one small governed table; this is the surface a
+   * writer spends the day in, and locking the canvas would make the editor
+   * hostile to the work it exists for. So: type freely, and state why before
+   * the record moves.
+   *
+   * Cleared on section change, because it describes THAT section's edit. A
+   * reason carried silently from one section to the next would attach one
+   * author's stated intent to a different part of the filing — a fabrication
+   * of exactly the kind the absent-reason handling was built to avoid.
+   *
+   * The ref exists because `saveSectionContent` is a useCallback that
+   * `RichSectionEditor` holds across renders; reading state through it
+   * directly would capture whatever the reason was when the callback was
+   * built. */
+  const [changeReason, setChangeReason] = useState('');
+  const changeReasonRef = useRef('');
+  useEffect(() => {
+    changeReasonRef.current = changeReason;
+  }, [changeReason]);
+  /* A reason describes the edit to ONE section. Carrying it across a section
+     change would attach one stated intent to a different part of the filing. */
+  useEffect(() => {
+    setChangeReason('');
+  }, [activeSectionId]);
   /** Bumped when the server replaces content out from under the editor
    *  (revert) so the canvas remounts on the new truth. */
   const [contentEpoch, setContentEpoch] = useState(0);
@@ -790,6 +965,17 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      against — a rail left stale would keep saying "matches the last export"
      about text that no longer matches it. */
   const [exportsEpoch, setExportsEpoch] = useState(0);
+  /** The open section, readable from the tracked-change callback. That callback
+   *  is configured once per editor mount, so closing over the state value would
+   *  attribute a decision to whichever section was open when the canvas
+   *  mounted. */
+  const activeSectionIdRef = useRef<string | null>(null);
+  /** Decisions awaiting their coalesced flush, and whether one is scheduled. */
+  const pendingDecisionsRef = useRef<SuggestionDecision[]>([]);
+  const decisionFlushRef = useRef(false);
+  useEffect(() => {
+    activeSectionIdRef.current = activeSectionId ?? null;
+  });
   const [revisions, setRevisions] = useState<AuthRevision[]>([]);
   // 'error' is a distinct state on purpose: an empty list because the read
   // failed and an empty list because there are no revisions are the same value
@@ -812,6 +998,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const [sources, setSources] = useState<SectionSource[]>([]);
   const [sourcesState, setSourcesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [projectSources, setProjectSources] = useState<ProjectSource[]>([]);
+  /** Citations the last document-wide re-read could NOT refresh, with the
+   *  server's reason. Held rather than toasted away: "3 could not be re-read"
+   *  is the finding, and a message that fades in four seconds is not where a
+   *  finding belongs. */
+  const [skippedRefreshes, setSkippedRefreshes] = useState<
+    Array<{ cite_id: string; reason: string }>
+  >([]);
   const [picking, setPicking] = useState(false);
 
   const [toast, fireToast] = useToast();
@@ -1571,7 +1764,11 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     if (rail === 'history' && activeSectionId) void loadHistory(activeSectionId);
     if (rail === 'comments' && activeDocId) void loadComments(activeDocId);
     if (rail === 'audit' && activeDocId) void loadAudit(activeDocId);
-    if (rail === 'sources' && activeSectionId) {
+    /* Loaded whenever a section is open, not only when the Sources rail is:
+       the editor's citation picker offers this library, and a writer citing a
+       source mid-sentence should not have to open a rail first to make the
+       list exist. The rail re-reads on open through the same callbacks. */
+    if (activeSectionId) {
       void loadSources(activeSectionId);
       void loadProjectSources();
     }
@@ -1585,6 +1782,79 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     loadSources,
     loadProjectSources,
   ]);
+
+  /* ── The source library the editor's citation picker offers ──
+     The sources this section already cites, then the rest of the project's Data
+     Room. Merged rather than kept apart because a writer citing mid-sentence is
+     choosing a source, not choosing between two lists; de-duplicated on the
+     source's identity so a source already cited appears once.
+
+     Only the id and the title travel here. That is all the canvas needs — the
+     picker's label and the node's cached name — and the reference list a
+     reviewer reads is assembled server-side at export, where the source
+     registry's sponsor, date and identifier are available. Nothing here is
+     invented to fill a field the client cannot see. */
+  const citationLibrary = useMemo<CitationSource[]>(() => {
+    const out: CitationSource[] = [];
+    const seen = new Set<string>();
+    const add = (id: unknown, title: string | null | undefined) => {
+      if (id == null) return;
+      const key = String(id);
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push({ id: key, title: title ?? null });
+    };
+    for (const s of sources) if (s.source) add(s.source.id, s.source.title);
+    for (const p of projectSources) add(p.id, p.title);
+    return out;
+  }, [sources, projectSources]);
+
+  /* ── Where this section's citation numbering continues from ──
+     A citation's number is its position in the DOCUMENT's reference list, and
+     the editor holds one section. Without the sources cited above it, the canvas
+     would number from 1 and show "[1]" for a claim the filed document prints as
+     "[7]" — a plausible-looking wrong number, which is the failure the whole
+     design exists to remove. Read from the sections' SAVED content, in the
+     document's own order, which is what the export will read too. */
+  const precedingSourceIds = useMemo<string[]>(() => {
+    if (!activeSectionId) return [];
+    const ids: string[] = [];
+    for (const sec of sections) {
+      if (sec.id === activeSectionId) break;
+      ids.push(...citedSourceIdsInHtml(sec.content ?? ''));
+    }
+    return ids;
+  }, [sections, activeSectionId]);
+
+  /* ── The document's tables and figures, either side of the open section ──
+     A caption's number is the object's POSITION among the document's tables
+     (or figures), and the editor holds one section. Without the objects above
+     it the canvas would number from 1 and show "Table 1" for an object the
+     filing prints as "Table 7" — a plausible-looking wrong number, which is
+     the failure this design exists to remove. The ones BELOW are supplied too,
+     because "as shown in Table 9" is routinely written above the table it
+     names and must resolve.
+
+     Read from the sections' SAVED content, in the document's own order, which
+     is what the export will read too. The open section's own objects are not
+     here: the canvas numbers those from its live document, so a table gets its
+     number the moment it is captioned rather than at the next save. */
+  const captionsAround = useMemo<{
+    before: CaptionedObject[];
+    after: CaptionedObject[];
+  }>(() => {
+    const before: CaptionedObject[] = [];
+    const after: CaptionedObject[] = [];
+    let seen = false;
+    for (const sec of sections) {
+      if (sec.id === activeSectionId) {
+        seen = true;
+        continue;
+      }
+      (seen ? after : before).push(...captionedObjectsInHtml(sec.content ?? ''));
+    }
+    return { before, after };
+  }, [sections, activeSectionId]);
 
   /* ── Record that this section is drafted from a source ── */
   const citeSource = useCallback(
@@ -1673,14 +1943,93 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     [activeSectionId, fireToast, loadSources]
   );
 
+  /* ── Re-read every source in the DOCUMENT ──
+     The per-citation "re-read" above answers one claim at a time, which is the
+     wrong granularity before an export or a sign-off: the question there is
+     "has anything I cite moved?", across the whole document.
+
+     The server re-resolves each unfrozen citation against its stored source and
+     reports three separate numbers — how many it refreshed, how many of those
+     actually CHANGED, and which it could not refresh and why. All three are
+     said. Collapsing `skipped` into the success count is the tempting summary
+     and the dishonest one: a citation whose source no longer exists is exactly
+     what the person about to file this needs to see. */
+  const [refreshingAll, setRefreshingAll] = useState(false);
+  const refreshAllSources = useCallback(async () => {
+    if (!activeDocId) return;
+    setRefreshingAll(true);
+    try {
+      const res = await apiRequest('POST', `/api/authoring/docs/${activeDocId}/refresh-all`, {});
+      const json = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        refreshed?: number;
+        changed?: number;
+        skipped?: Array<{ cite_id: string; reason: string }>;
+      } | null;
+      if (!res.ok || json?.ok !== true) {
+        fireToast(
+          'Couldn’t re-read this document’s sources — ' +
+            (serverMessage(json) ?? `HTTP ${res.status}`) +
+            '. Nothing was changed.',
+          'error',
+        );
+        return;
+      }
+      const refreshed = typeof json.refreshed === 'number' ? json.refreshed : 0;
+      const changed = typeof json.changed === 'number' ? json.changed : 0;
+      const skipped = Array.isArray(json.skipped) ? json.skipped : [];
+      setSkippedRefreshes(skipped);
+      /* A refresh that changed nothing is a real and useful outcome — it means
+         the citations still say what they said. It is reported as that, not as
+         a bare "done". */
+      fireToast(
+        `Re-read ${refreshed} citation${refreshed === 1 ? '' : 's'}: ` +
+          (changed === 0
+            ? 'none had changed'
+            : `${changed} had changed since they were recorded`) +
+          (skipped.length > 0
+            ? `. ${skipped.length} could not be re-read — see Sources.`
+            : '.'),
+        skipped.length > 0 ? 'error' : 'ok',
+      );
+      if (activeSectionId) void loadSources(activeSectionId);
+    } catch (e) {
+      fireToast(
+        'Couldn’t re-read this document’s sources — ' +
+          (e instanceof Error ? e.message : String(e)) +
+          '. Nothing was changed.',
+        'error',
+      );
+    } finally {
+      setRefreshingAll(false);
+    }
+  }, [activeDocId, activeSectionId, loadSources, fireToast]);
+
   /* ── Save the section content (real, awaited, auto-revisioned) ──
      The ONE save path: the canonical editor serializes and calls this; the
      header Save button and Cmd/Ctrl-S route through the editor's own save so
      the footer save-state, the device cache and this governed PATCH cannot
      disagree. Throwing on failure lets the editor report the truth. */
   const saveSectionContent = useCallback(
-    async (serialized: string) => {
+    async (serialized: string, systemReason?: string) => {
       if (!activeSection) throw new Error('No section open');
+
+      /* THE FUNNEL. Every content save arrives here — the Save button, ⌘S, and
+         the unsaved-work guard's Save — so the reason is required here rather
+         than only on the button, which is the one path a disabled attribute
+         can cover. Without this, ⌘S saved silently with no reason and the
+         button's requirement was decorative.
+         Refused visibly, never silently: an author who pressed ⌘S and saw
+         nothing happen would reasonably conclude their work was saved. */
+      if (!systemReason && !changeReasonRef.current.trim()) {
+        fireToast(
+          'Not saved — say why this section changed. It is recorded with the ' +
+            'revision, and the filing keeps it.',
+          'error',
+        );
+        throw new Error('reason-for-change required');
+      }
+
       setSaving(true);
       try {
         /* Authors whose insertions this reviewer accepted since the last save.
@@ -1689,24 +2038,50 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
            whoever pressed accept. Read-and-clear: an author counts once, for
            the save that carried their text in. */
         const acceptedAuthors = editorRef.current?.takeAcceptedAuthors?.() ?? [];
+        /* The concurrency token. `updated_at` is the value THIS editor loaded;
+           the server refuses with 409 SECTION_CHANGED if the row has moved
+           since. Without it the PATCH is a blind last-write-wins, and two
+           authors on one CTD section — a writer and a reviewer on the same
+           §3.2.P.5 — end with the second save replacing the first's entire
+           section, recorded in the revision ledger as an ordinary edit. */
+        /* §11.10(d)/(e) reason for change. Stated once per section per editing
+           session and carried on every save of that section — see
+           `changeReason` below for why it is sticky rather than per-save.
+           When it is absent the server records that it was NOT STATED; it does
+           not invent one. */
+        const reasonForChange = systemReason ?? changeReasonRef.current.trim();
         const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
           content: serialized,
+          ...(activeSection.updated_at ? { expectedUpdatedAt: activeSection.updated_at } : {}),
           ...(acceptedAuthors.length ? { acceptedAuthors } : {}),
+          ...(reasonForChange ? { changeReason: reasonForChange } : {}),
         });
         const json = await res.json().catch(() => null);
         if (res.status === 401) {
           fireToast('Not saved — your session isn’t authenticated. Sign in and retry.', 'error');
           throw new Error('unauthenticated');
         }
-        if (!res.ok) {
-          fireToast(
-            'Couldn’t save the section — ' +
-              ((json as any)?.error ?? `HTTP ${res.status}`) +
-              '. Nothing was persisted.',
-            'error'
-          );
-          throw new Error('save failed');
-        }
+        /* The `!res.ok` branch that used to live here was UNREACHABLE, and with
+           it every sentence this surface had for a refused save.
+           `apiRequest` throws an ApiRequestError on any non-2xx except 401
+           (client/src/lib/queryClient.ts), so execution never arrived at a
+           non-ok `res`. The throw escaped this function — which has
+           try/finally and no catch — into RichSectionEditor's unbound
+           `catch { setSaveState('error') }`, where the error object, its
+           message and its correlation id were all discarded. The author saw
+           `Save failed — kept on this device` at 10px, in grey, and nothing
+           else.
+           On a Part 11 authoring surface that is the wrong failure to blur.
+           The server distinguishes these deliberately and phrases each one:
+             403 DOCUMENT_FROZEN     — with the lock's own reason
+             403                     — no edit permission for this section
+             500 LINEAGE_REQUIRED    — "the section was not saved: its data
+                                        lineage could not be recorded"
+           A frozen record and a flaky network need completely different
+           actions from the author, and they were indistinguishable.
+           The catch is in `doSave` below; this line documents why there is no
+           `!res.ok` test here any more. */
+        void json;
         const adopted = (json as { section?: AuthSection })?.section;
         const persisted = adopted?.content ?? serialized;
         // Adopt the server row (revision counter, updated_at) into the tree.
@@ -1724,6 +2099,45 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
            the rail re-reads on mount, so bumping while it is closed simply
            means it opens on the truth rather than on a cached verdict. */
         setExportsEpoch(e => e + 1);
+      } catch (err) {
+        /* THE AUTHOR IS TOLD WHY THE RECORD REFUSED THEIR WORK.
+           `apiRequest` throws ApiRequestError for every non-2xx except 401, so
+           this is where a frozen document, a permission refusal and a lineage
+           failure actually arrive. `message` has already been through
+           `extractApiError`, so it is the server's own sentence with SQL,
+           relation names, routes and env vars filtered out — safe to render
+           verbatim, which is the point: "This document is frozen. Its content
+           is sealed under a content hash" tells the author to create a new
+           version, and "HTTP 403" tells them to file a bug.
+           `correlationId` is the X-Request-Id the server echoed; it is the one
+           string that makes an outage diagnosable without describing the
+           schema to whoever is looking.
+           Re-thrown either way: the editor's own save-state must still go to
+           'error' and keep the text cached on the device. This adds the
+           explanation; it does not swallow the failure. */
+        const e = err as Partial<ApiRequestError> & { message?: string };
+        /* A collision is not a failure to report like the others. The author's
+           text is intact on this device and nothing of theirs was lost — what
+           they must NOT do is press save again expecting it to work, and what
+           they must know is that someone else's version is now the record.
+           Reloading is the only safe next step, so the message says so instead
+           of offering a retry that would either fail again or clobber. */
+        if (e?.status === 409) {
+          fireToast(
+            `Not saved — ${activeSection.code} was changed by someone else while you were editing. ` +
+              'Your text is still here and theirs was not overwritten. Reload the section to see ' +
+              'their version, then reapply your changes.',
+            'error',
+          );
+          throw err;
+        }
+        const why = redactInternals(e?.message, 'the server did not accept the change');
+        fireToast(
+          `Couldn’t save ${activeSection.code} — ${why} Nothing was persisted.` +
+            (e?.correlationId ? ` Reference ${e.correlationId}.` : ''),
+          'error',
+        );
+        throw err;
       } finally {
         setSaving(false);
       }
@@ -1752,9 +2166,10 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       error?: unknown;
     } | null;
     if (!res.ok || typeof json?.image?.url !== 'string') {
-      throw new Error(
-        typeof json?.error === 'string' ? json.error : `the image store returned HTTP ${res.status}`
-      );
+      // The envelope's error goes through the canonical reader, which drops an
+      // enum token or internal text before it reaches the thrown message a toast
+      // will show. A hand-rolled `typeof error === 'string'` skips both filters.
+      throw new Error(serverMessage(json) ?? `the image store returned HTTP ${res.status}`);
     }
     return { id: String(json.image.id), url: json.image.url };
   }, []);
@@ -2047,19 +2462,9 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         title,
       });
       const json = await res.json().catch(() => null);
-      if (res.status === 401) {
-        fireToast('Not renamed — your session isn’t authenticated.', 'error');
-        return;
-      }
-      if (!res.ok) {
-        fireToast(
-          'Couldn’t rename the section — ' +
-            ((json as any)?.error ?? `HTTP ${res.status}`) +
-            '. Nothing was changed.',
-          'error'
-        );
-        return;
-      }
+      /* No `if (!res.ok)` branch: apiRequest THROWS on any non-2xx except 401,
+         so a refused rename lands in the catch below with the server's own
+         sentence and code, not this dead check. */
       const adopted = (json as { section?: AuthSection })?.section;
       setSections(ss =>
         ss.map(s => (s.id === activeSection.id ? { ...s, ...(adopted ?? { code, title }) } : s))
@@ -2067,8 +2472,25 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       setRenaming(false);
       fireToast(`Section renamed — ${code} · ${title}. Its content and history are unchanged.`);
     } catch (e) {
+      const err = e as Partial<ApiRequestError> & { message?: string };
+      if (err?.status === 401) {
+        fireToast('Not renamed — your session isn’t authenticated.', 'error');
+        return;
+      }
+      /* The code is locked to the filing on a bound document — the server sent
+         a complete sentence explaining why, so show it as-is rather than
+         wrapping it in a second "couldn't rename" clause. */
+      if (err?.code === 'CODE_LOCKED_TO_FILING') {
+        fireToast(
+          redactInternals(err.message, 'This section’s code cannot be changed on a filed document.'),
+          'error',
+        );
+        return;
+      }
       fireToast(
-        'Couldn’t rename the section — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'Couldn’t rename the section — ' +
+          redactInternals(err?.message, 'the server did not accept it') +
+          ' Nothing was changed.',
         'error'
       );
     } finally {
@@ -2159,7 +2581,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       if (!res.ok || !json?.scan_results) {
         fireToast(
           'Couldn’t check the section — ' +
-            (typeof json?.error === 'string' ? json.error : `HTTP ${res.status}`) +
+            (serverMessage(json) ?? `HTTP ${res.status}`) +
             '. No result is shown because none was produced.',
           'error'
         );
@@ -2210,6 +2632,94 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       if (activeDocId) void loadAudit(activeDocId);
     },
     [activeSectionId, activeDocId, loadHistory, loadSources, loadAudit, fireToast],
+  );
+
+  /** Post one reviewer action — one decision, or a whole accept/reject-all.
+   *
+   *  Split by size rather than by caller: a batch of one is a single decision
+   *  however it arrived, and a batch of many is one bulk act however it was
+   *  produced. Both carry the change TEXT, because accepting a suggestion
+   *  strips its mark and the id alone would name something no longer in the
+   *  document. */
+  const flushDecisions = useCallback(
+    async (docId: string, batch: SuggestionDecision[]) => {
+      const sectionId = activeSectionIdRef.current ?? undefined;
+      const context = (d: SuggestionDecision) => ({
+        changeId: d.changeId,
+        changeType: d.changeType,
+        text: d.text,
+        authorId: d.authorId ?? undefined,
+        authorName: d.authorName ?? undefined,
+        at: d.at ?? undefined,
+      });
+      const decision = batch[0].decision;
+      try {
+        const res =
+          batch.length === 1
+            ? await apiRequest(
+                'POST',
+                `/api/authoring/documents/${docId}/tracked-change-decisions`,
+                { decision, sectionId, ...context(batch[0]) },
+              )
+            : await apiRequest(
+                'POST',
+                `/api/authoring/documents/${docId}/tracked-change-decisions/bulk`,
+                {
+                  decision,
+                  changeIds: batch.map(d => d.changeId),
+                  changes: batch.map(context),
+                  sectionId,
+                },
+              );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        /* The audit rail gained a row. Refresh it if the reviewer is looking. */
+        if (rail === 'audit') void loadAudit(docId);
+      } catch (e) {
+        /* The decision is already applied to the document — undoing the edit
+           because a POST failed would be worse than the missing row. But a
+           compliance record that vanishes quietly is not acceptable either, so
+           the gap is stated and counted. */
+        fireToast(
+          `${batch.length === 1 ? 'That decision was' : `${batch.length} decisions were`} applied ` +
+            'to the document but NOT recorded on the audit trail — ' +
+            (e instanceof Error ? e.message : String(e)) +
+            '. The content is still saved on the next save; report the missing record.',
+          'error',
+        );
+      }
+    },
+    [rail, loadAudit, fireToast],
+  );
+
+  /* ── A reviewer decided a tracked change ──
+     Posted per decision, accept AND reject. The rejection is the one that has
+     had no home in the record: refusing a proposed deletion changes no text,
+     writes no revision, and until now left nothing behind saying a reviewer
+     considered it.
+
+     Deliberately fire-and-forget with a VISIBLE failure. It must not block the
+     editor action the reviewer just took — the decision is already applied to
+     the document, and undoing it because a POST failed would be worse than the
+     missing row. But a silently-dropped compliance record is not acceptable
+     either, so a failure says so and names what was not recorded. */
+  const recordTrackedChangeDecision = useCallback(
+    (d: SuggestionDecision) => {
+      if (!activeDocId) return;
+      /* "Accept all" resolves every suggestion in one synchronous loop, so the
+         callback fires N times in a single tick. Posting per call would send
+         fifty requests for one click. Queue and flush on the microtask so one
+         reviewer action becomes one write — the bulk endpoint exists for
+         exactly this and records it as the single act it was. */
+      pendingDecisionsRef.current.push(d);
+      if (decisionFlushRef.current) return;
+      decisionFlushRef.current = true;
+      queueMicrotask(() => {
+        decisionFlushRef.current = false;
+        const batch = pendingDecisionsRef.current.splice(0);
+        if (batch.length > 0) void flushDecisions(activeDocId, batch);
+      });
+    },
+    [activeDocId, flushDecisions],
   );
 
   const draftPrompt = activeSection
@@ -2371,14 +2881,28 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               hint="The document list didn’t respond. Sign in to your tenant and retry."
             />
           ) : docs.length === 0 ? (
+            <>
+            {/* Was: `No ${status.replace('_',' ')} documents in this project.
+                Switch the status filter above.` — which renders "No ALL
+                documents in this project" on the default filter, because the
+                filter's own value is interpolated into the middle of a
+                sentence. It then instructed the reader to change a filter that
+                was already showing everything, so following the instruction
+                changed nothing.
+                The action that actually resolves this is New document. It
+                existed, in the toolbar directly above, and could not be reached
+                from here — see ../newDocumentAction.ts. */}
             <EmptyState
               icon={I.fileText}
-              title="No documents here"
-              hint={`No ${status.replace(
-                '_',
-                ' '
-              )} documents in this project. Switch the status filter above.`}
+              title={status === 'all' ? 'No documents yet' : `Nothing at this stage`}
+              hint={status === 'all'
+                ? 'Documents you create in this project appear here.'
+                : `This project has no ${status.replace('_', ' ')} documents. Clear the filter to see the rest.`}
+              action={status === 'all'
+                ? newDocumentAction()
+                : { label: 'Show all documents', onAct: () => setStatus('all') }}
             />
+            </>
           ) : (
             docs.map(d => {
               const open = d.id === activeDocId;
@@ -2540,6 +3064,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               style={{ height: 30 }}
               onClick={() => setRail(rail === 'sources' ? null : 'sources')}
               data-active={rail === 'sources' || undefined}
+              data-testid="sources-rail-open"
             >
               {I.fileText} Sources
               {activeSection && num(activeSection.citation_count) > 0
@@ -2582,14 +3107,35 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             >
               {I.fileDown} Exports
             </button>
+            {/* Reason for change, stated once per section and carried on every
+                save of it. Inline beside Save rather than a dialog: there is no
+                autosave here, but Save and ⌘S each fire many times while
+                working through a section, and a modal on each would be the
+                friction the regulation does not ask for. */}
+            {dirty && !docSealed && (
+              <input
+                className="de-input"
+                style={{ height: 30, width: 260 }}
+                value={changeReason}
+                onChange={e => setChangeReason(e.target.value)}
+                placeholder="Why this changed (required to save)"
+                aria-label="Reason for change"
+                data-testid="change-reason"
+              />
+            )}
             <button
               className="btn primary"
               style={{ height: 30 }}
               onClick={() => void editorRef.current?.save()}
-              disabled={!dirty || saving || docSealed}
+              disabled={!dirty || saving || docSealed || !changeReason.trim()}
               title={
-                docSealed ? 'This document is frozen — its content cannot be edited.' : undefined
+                docSealed
+                  ? 'This document is frozen — its content cannot be edited.'
+                  : dirty && !changeReason.trim()
+                    ? 'Say why this section changed — it is recorded with the revision.'
+                    : undefined
               }
+              data-testid="save-section"
             >
               {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : 'Saved'}
             </button>
@@ -2770,14 +3316,26 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               </div>
             ) : !activeSection ? (
               <div style={{ paddingTop: 48 }}>
+                {/* THE OTHER HALF OF THE CIRCLE. This said "Choose a document
+                    from the tree" while the tree said "no documents — switch
+                    the filter". Two empty states pointing at each other, on a
+                    project where the honest answer is that nothing has been
+                    created yet, next to a New document button neither of them
+                    offered. When there are no documents at all this now offers
+                    the action; when there IS a document open, "choose a
+                    section" is genuinely correct — the tree beside it is full. */}
                 <EmptyState
                   icon={I.fileText}
-                  title={activeDoc ? 'Select a section to edit' : 'Select a document'}
-                  hint={
-                    activeDoc
-                      ? 'Choose a section from the tree to open its content in the editor. Every save records an auditable revision.'
-                      : 'Choose a document from the tree to open its sections.'
-                  }
+                  title={activeDoc ? 'Select a section to edit' : docs.length === 0 ? 'Nothing to edit yet' : 'Select a document'}
+                  hint={activeDoc
+                    ? 'Choose a section from the tree to open its content in the editor. Every save records an auditable revision.'
+                    : docs.length === 0
+                      ? 'Create the first document for this project and its sections open here.'
+                      : 'Choose a document from the tree to open its sections.'}
+                  action={!activeDoc && docs.length === 0 ? newDocumentAction() : undefined}
+                  regulation={!activeDoc && docs.length === 0
+                    ? 'Every save records an auditable revision (21 CFR Part 11)'
+                    : undefined}
                 />
               </div>
             ) : (
@@ -2877,7 +3435,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                         className="nda-open"
                         style={{ marginLeft: 4, verticalAlign: 'middle' }}
                         disabled={checking}
-                        title="Six mechanical checks over the saved section — length, module keywords, tables, placeholders, structure. Heuristic signals, not a compliance determination."
+                        title="Mechanical checks over the saved section — length, module keywords, CTD elements, tables, placeholders, structure. Heuristic signals, not a compliance determination."
                         onClick={() => void runCheck()}
                       >
                         {I.checkCircle} {checking ? 'Checking…' : 'Check'}
@@ -2906,7 +3464,9 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                 {/* ── Heuristic check results ──
                     Framed exactly as the server frames them: mechanical
                     signals over the SAVED content. Zero flags is reported as
-                    "passed six mechanical checks", never as "compliant". */}
+                    "passed N of M mechanical checks", never as "compliant" — and
+                    N and M come from the server's own count, so the sentence
+                    cannot drift from the checks the code actually runs. */}
                 {check && check.section_id === activeSection.id && (
                   <div
                     className="scaf-note"
@@ -2930,8 +3490,11 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     </div>
                     {check.deficiencies.length === 0 ? (
                       <span style={{ fontSize: 12 }}>
-                        No flags. The section passed six mechanical checks (length, module
-                        keywords, tables, placeholders, structure) — this is not a review.
+                        {typeof check.checks_run === 'number' && check.checks_run > 0
+                          ? `No flags. The section passed all ${check.checks_run} mechanical checks `
+                          : 'No flags. The section passed the mechanical checks '}
+                        (length, module keywords, CTD elements where defined, tables,
+                        placeholders, structure) — this is not a review.
                       </span>
                     ) : (
                       [...check.deficiencies]
@@ -3081,12 +3644,61 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                         name: user?.displayName || user?.email || 'Unknown author',
                       },
                       onToggle: toggleTrackChanges,
+                      onResolve: recordTrackedChangeDecision,
                     }}
                     commentsApi={{
                       onCreate: requestAnchoredComment,
                       onOpen: openCommentFromAnchor,
                     }}
                     imagesApi={{ upload: uploadSectionImage }}
+                    /* The document's own sections, as they stand right now.
+                       A cross-reference stores the target's id and resolves its
+                       number and title from this list, so renumbering or
+                       retitling a section corrects every reference to it in
+                       place — no referring section is edited, and no revision
+                       is minted for a change nobody made to its words. The
+                       same list the export resolves against server-side, so
+                       the canvas and the filed document say the same thing. */
+                    crossRefsApi={{
+                      sections: sections.map(s => ({
+                        id: s.id,
+                        code: s.code,
+                        title: s.title,
+                      })),
+                      /* And the document's captioned tables and figures, which
+                         are cross-reference targets exactly as sections are —
+                         "Table 3" is a rendering of where a table currently
+                         sits, so a reference to one stores its identity and
+                         resolves its number from this ordering. Split at the
+                         open section because the number is positional. */
+                      captionsBefore: captionsAround.before,
+                      captionsAfter: captionsAround.after,
+                    }}
+                    /* The governed sources this document can cite, and the
+                       numbering already used above this section. A citation
+                       stores the source's id and derives its number from
+                       position, so inserting one earlier renumbers the rest
+                       with no section's stored content touched. Inserting one
+                       also records the section→source link the Sources rail
+                       and the change report already read, so the prose and the
+                       recorded lineage cannot drift apart. */
+                    citationsApi={{
+                      sources: citationLibrary,
+                      precedingSourceIds,
+                      onCite: (sourceId: string) => {
+                        /* Only when the link is not already recorded: citing
+                           the same source a second time in the prose is not a
+                           new fact about this section's lineage, and re-posting
+                           it would announce a record that did not change. */
+                        const already = sources.some(
+                          s => s.source && String(s.source.id) === sourceId
+                        );
+                        const numeric = Number(sourceId);
+                        if (!already && Number.isInteger(numeric) && numeric > 0) {
+                          void citeSource(numeric);
+                        }
+                      },
+                    }}
                     collab={
                       liveCoedit && activeDoc
                         ? {
@@ -3512,6 +4124,20 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                         </>
                       )}
                     </span>
+                    {/* The metadata the endpoint has always returned and no
+                        surface read — the redline a reviewer refused, the model
+                        that produced an accepted draft. */}
+                    {(() => {
+                      const detail = describeAuditMetadata(ev.event_type, ev.metadata);
+                      return detail ? (
+                        <span
+                          style={{ fontSize: 12, opacity: 0.85 }}
+                          data-testid="audit-metadata"
+                        >
+                          {detail}
+                        </span>
+                      ) : null;
+                    })()}
                     {ev.change_reason && (
                       <span style={{ fontSize: 12, opacity: 0.85 }}>{ev.change_reason}</span>
                     )}
@@ -3538,7 +4164,54 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
       {rail === 'sources' && (
         <aside className="ed-comments">
-          <div className="ed-comments-h">Drafted from</div>
+          <div className="ed-comments-h ed-comments-h-row">
+            <span>Drafted from</span>
+            {/* Document-wide, not section-wide, because the question before an
+                export or a sign-off is "has anything I cite moved?" across the
+                whole document — not one claim at a time. */}
+            <button
+              className="nda-open"
+              onClick={() => void refreshAllSources()}
+              disabled={!activeDocId || refreshingAll}
+              data-testid="refresh-all-sources"
+              title="Re-read every unfrozen citation in this document against its stored source. Frozen citations are left alone."
+            >
+              {refreshingAll ? 'Re-reading…' : 'Re-read all'}
+            </button>
+          </div>
+          {/* The findings from the last document-wide re-read. Kept on the rail
+              rather than in a toast: a citation whose source is gone is the
+              thing the person about to file this needs to see, and it must not
+              fade after four seconds. */}
+          {skippedRefreshes.length > 0 && (
+            <div
+              className="scaf-note"
+              role="alert"
+              data-testid="refresh-skipped"
+              style={{ margin: 12, fontSize: 12, borderLeftColor: 'var(--c2c-err,#b42318)' }}
+            >
+              <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                <b>
+                  {skippedRefreshes.length} citation
+                  {skippedRefreshes.length === 1 ? '' : 's'} could not be re-read
+                </b>
+                <span style={{ flex: 1 }} />
+                <button className="nda-open" onClick={() => setSkippedRefreshes([])}>
+                  Dismiss
+                </button>
+              </div>
+              {skippedRefreshes.slice(0, 8).map(sk => (
+                <div key={sk.cite_id} style={{ marginTop: 4 }}>
+                  {sk.reason}
+                </div>
+              ))}
+              {skippedRefreshes.length > 8 && (
+                <div style={{ marginTop: 4, opacity: 0.75 }}>
+                  and {skippedRefreshes.length - 8} more.
+                </div>
+              )}
+            </div>
+          )}
           {!activeSection ? (
             <EmptyState
               icon={I.fileText}

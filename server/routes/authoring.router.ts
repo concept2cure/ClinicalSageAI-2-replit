@@ -616,6 +616,21 @@ async function documentExistsForTenant(
 }
 
 // Comprehensive audit logging for 21 CFR Part 11 compliance
+interface CreateAuditTrailOptions {
+  /**
+   * Set when the CALLER writes its own, richer `writeChainedAuditRow` for this
+   * act — freeze, e-sign and sign each do, with action-specific detail worth
+   * keeping. Without this they would get TWO entries in the hash chain for one
+   * act, which is not a cosmetic duplicate: the chain is the tamper-evidence,
+   * and a reader counting governed events would double-count exactly the three
+   * that matter most.
+   *
+   * One act, one entry. Anything that does not set this gets its chained entry
+   * written here.
+   */
+  chainedRowWrittenByCaller?: true;
+}
+
 const createAuditTrail = async (
   req: Request,
   docId: string | string[] | undefined,
@@ -628,7 +643,8 @@ const createAuditTrail = async (
   // When part of a lifecycle transaction, the caller passes its BEGIN'd client
   // so the audit row commits (or rolls back) atomically with the mutation it
   // records. Defaults to the pool for standalone callers.
-  executor: Queryable = pool
+  executor: Queryable = pool,
+  auditOpts: CreateAuditTrailOptions = {}
 ) => {
   try {
     const actorEmail = (req.headers as any)['x-user-email'] || 'unknown';
@@ -693,25 +709,74 @@ const createAuditTrail = async (
     // caller's client; it commits and rolls back atomically with the mutation.
     // The secondary index is skipped for transactional mutations rather than
     // written on a competing transaction that can disagree with the outcome.
+    const chainDetails = {
+      docId,
+      sectionId,
+      operationType,
+      contentHashBefore: hashBefore,
+      contentHashAfter: hashAfter,
+      changeReason: changeReason ?? null,
+      actorRole,
+      sessionId,
+    };
+    const action = `authoring.section.${operationType}`;
+    const resourceType = sectionId ? 'authoring_section' : 'authoring_document';
+    const resourceId = String(sectionId ?? docId ?? '');
+
     if (executor === pool) {
       void auditService.logAction({
         tenantId,
         userId: actorEmail,
-        action: `authoring.section.${operationType}`,
-        resourceType: sectionId ? 'authoring_section' : 'authoring_document',
-        resourceId: String(sectionId ?? docId ?? ''),
+        action,
+        resourceType,
+        resourceId,
         ipAddress,
         userAgent,
-        details: {
-          docId,
-          sectionId,
-          operationType,
-          contentHashBefore: hashBefore,
-          contentHashAfter: hashAfter,
-          changeReason: changeReason ?? null,
-          actorRole,
-          sessionId,
-        },
+        details: chainDetails,
+      });
+    } else if (!auditOpts.chainedRowWrittenByCaller) {
+      /* §11.10(e) — ENLISTED IN THE CALLER'S TRANSACTION.
+       *
+       * This branch did not exist: a transactional mutation wrote the
+       * unchained `authoring_audit_trail` row above and NOTHING else. The
+       * reasoning for skipping the mirror is sound and still stands for
+       * `auditService.logAction` — it opens its own connection and runs its own
+       * BEGIN/COMMIT/ROLLBACK, so on a caller's transaction it is a second,
+       * competing transaction that can commit an audit row for an action the
+       * caller rolls back, or tear the caller's transaction down mid-flight.
+       *
+       * But `writeChainedAuditRow` is not that. It takes a client and issues
+       * plain statements on it, which is precisely why it was reached for at
+       * the freeze, e-sign and sign handlers — the audit row lands or the whole
+       * mutation rolls back, and the two can never disagree. Those three were
+       * fixed one at a time at their call sites; the rest of the transactional
+       * handlers were left with no chained entry at all, and the guard above
+       * meant they had no soft mirror either.
+       *
+       * Three governed acts were affected, and they are not marginal ones:
+       *   PATCH /sections/:id        the section save — the most frequent
+       *                              governed act in the product, and the one
+       *                              that changes what the filing SAYS;
+       *   PATCH /comments/:id        resolving a reviewer's comment;
+       *   POST  /docs/:id/sections/reorder   reordering a filing's sections.
+       *
+       * All three existed only in `authoring_audit_trail`, which carries no
+       * chain, no HMAC and no immutability trigger — so `verifyAuditChain` had
+       * nothing to attest for them, and an edit to a filed document left no
+       * tamper-evident trace anywhere.
+       *
+       * Awaited, not fire-and-forget: an audit row that cannot be written must
+       * take the mutation down with it (the catch below rethrows on the
+       * transactional path for exactly this reason). */
+      await writeChainedAuditRow(executor, {
+        tenantId,
+        userId: getActorId(req) ?? undefined,
+        action,
+        resourceType,
+        resourceId,
+        ipAddress,
+        userAgent,
+        details: chainDetails,
       });
     }
   } catch (error) {
@@ -738,7 +803,8 @@ const createAuditEvent = async (
   tenantId: number,
   // Threaded through to createAuditTrail so this legacy wrapper can enlist in a
   // lifecycle transaction (see POST /docs/:docId/sign). Defaults to the pool.
-  executor: Queryable = pool
+  executor: Queryable = pool,
+  auditOpts: CreateAuditTrailOptions = {}
 ) => {
   // Synthesize the request shape createAuditTrail reads from. `user` is the
   // important part: getTenantId sources the tenant from the VERIFIED JWT
@@ -768,7 +834,8 @@ const createAuditEvent = async (
     null,
     'Legacy audit event',
     metadata,
-    executor
+    executor,
+    auditOpts
   );
 };
 
@@ -990,25 +1057,6 @@ const resolveSignerName = async (email: string): Promise<string | null> => {
 };
 
 // Helper to create or update user PIN
-const createUserPin = async (email: string, pin: string, tenantId: number): Promise<boolean> => {
-  try {
-    const pinHash = await bcrypt.hash(pin, 10);
-    const pinExpiry = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // 90 days
-
-    await pool.query(
-      `INSERT INTO user_pins (email, pin_hash, tenant_id, pin_expires_at)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (email, tenant_id)
-       DO UPDATE SET pin_hash = $2, pin_expires_at = $4, updated_at = NOW(), failed_attempts = 0, locked_until = NULL`,
-      [email, pinHash, tenantId, pinExpiry]
-    );
-
-    return true;
-  } catch (error) {
-    console.error('Error creating PIN:', error);
-    return false;
-  }
-};
 
 // Helper function to create revision automatically.
 //
@@ -1793,9 +1841,57 @@ router.post('/docs', async (req: Request, res: Response) => {
       cols.push('client_program_id');
       vals.push(`$${args.length}`);
     }
-    // Referenced ONLY when a binding resolved, for the same reason
-    // client_program_id is: a database without the 20260728 migration emits the
-    // original statement and keeps working.
+    /* Referenced only when the binding resolved AND the column exists.
+     *
+     * The existence check is the load-bearing half, and it was missing. This
+     * guarded on `binding.documentId` alone, on the reasoning that a database
+     * without the 20260728 migration "emits the original statement and keeps
+     * working" — which assumes binding resolution and column existence rise
+     * and fall together. They do not. Resolution depends on the governance
+     * store (c2c_documents / regulatory_programs) answering; the column
+     * depends on an ALTER that lives in the root `migrations/` tree while the
+     * authoring tables live in `db/migrations/`, and which the canonical
+     * authoring migration set does not include.
+     *
+     * On a deployment where the governance store resolves and that ALTER never
+     * ran, this INSERT named a column that does not exist — inside the
+     * BEGIN/COMMIT below, so the whole create rolled back and NEW DOCUMENTS
+     * COULD NOT BE CREATED AT ALL. The most critical path in the editor,
+     * broken by a schema difference the code believed it was tolerating.
+     *
+     * commit-section-to-filing.ts — the write half of the same binding —
+     * already checks information_schema for this exact column before touching
+     * the filing. This is the same check on the read half, so both halves
+     * degrade the same way: unbound, with the reason recorded, rather than
+     * refusing to create a document. */
+    let bindingColumnPresent = false;
+    if (binding.documentId) {
+      try {
+        const col = await pool.query<{ ok: boolean }>(
+          `SELECT EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema = 'public'
+                             AND table_name = 'authoring_documents'
+                             AND column_name = 'c2c_document_id') AS ok`,
+        );
+        bindingColumnPresent = col.rows[0]?.ok === true;
+      } catch {
+        /* Unable to ask — treat as absent. Creating the document unbound is
+           recoverable; failing the create is not. */
+        bindingColumnPresent = false;
+      }
+      if (!bindingColumnPresent) {
+        /* The caller is told the truth about what it got: a document that is
+           NOT bound to a filing, and why. Silently dropping the binding while
+           reporting `bound: true` would be the worse failure — every later
+           save would look for a filing that was never linked. */
+        binding = {
+          documentId: null,
+          reason:
+            'This deployment has no c2c_document_id column on authoring_documents, so the ' +
+            'document was created without a binding to a filing.',
+        };
+      }
+    }
     if (binding.documentId) {
       args.push(binding.documentId);
       cols.push('c2c_document_id');
@@ -2154,6 +2250,83 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       });
     }
 
+    /* LAST WRITE NO LONGER SILENTLY WINS.
+     *
+     * This UPDATE was `WHERE id = $n AND tenant_id = $n` and nothing else, and
+     * the client sent only `{ content }`. So two authors on one section — the
+     * normal case for a CTD module, where a writer and a reviewer work the same
+     * §3.2.P.5 at once — ended with whoever saved second replacing the OTHER'S
+     * ENTIRE SECTION. No 409, no warning, no merge, no "this changed while you
+     * were editing". The overwrite then entered the hash-chained revision
+     * ledger as an ordinary authored revision, so the record does not show a
+     * collision either; the only way back is for someone to notice and revert.
+     *
+     * `updated_at` is the concurrency token because it is already on the row
+     * the client loaded, already returned by every read, and already bumped by
+     * every write — no new column, no new migration, nothing to keep in sync.
+     *
+     * OPT-IN, deliberately. A client that sends no `expectedUpdatedAt` keeps
+     * the old behaviour rather than being refused: several callers (the MDX
+     * dossier drawer among them) PATCH sections without having read a
+     * timestamp, and failing those closed would break saving to fix a race
+     * they cannot hit. The editor sends it; anything that does not is exactly
+     * as safe as it was yesterday and no less. */
+    const expectedUpdatedAt = req.body?.expectedUpdatedAt;
+    if (typeof expectedUpdatedAt === 'string' && expectedUpdatedAt.trim()) {
+      const current = currentSection.rows[0]?.updated_at;
+      const currentMs = current ? new Date(current).getTime() : NaN;
+      const expectedMs = new Date(expectedUpdatedAt).getTime();
+      if (Number.isFinite(currentMs) && Number.isFinite(expectedMs) && currentMs !== expectedMs) {
+        return res.status(409).json({
+          success: false,
+          error: {
+            code: 'SECTION_CHANGED',
+            message:
+              'This section was changed by someone else while you were editing. ' +
+              'Your text has not been saved and nothing was overwritten — reload the ' +
+              'section to see their version, then reapply your changes.',
+          },
+          /* The caller can show WHEN it moved under them without another read. */
+          currentUpdatedAt: current,
+        });
+      }
+    }
+
+    /* ── A SECTION'S CODE IS ITS IDENTITY IN THE FILING ──
+     *
+     * `commitSectionToFiling` matches `authoring_sections.code` to
+     * `c2c_document_sections.section_key`. So changing the code on a BOUND
+     * document does not rename anything — it silently re-points the section to
+     * a DIFFERENT filing slot (or to none), and the next content save lands
+     * there instead, orphaning the old slot's content. Nothing warned; the
+     * rename dialog offered the code as a freely editable field.
+     *
+     * Refused, fail-closed. The title renames freely — that is a label. The
+     * code is structure, and re-keying a bound section is not a rename. If a
+     * "move this section to another filing slot" operation is ever wanted, it
+     * is a deliberate feature with its own rules (is the target occupied? is it
+     * in the rule pack?), not a side effect of the rename field. An UNBOUND
+     * document has no filing linkage to break, so its codes stay editable. */
+    if (code !== undefined && String(code) !== String(currentSection.rows[0].code ?? '')) {
+      const bound = await pool.query(
+        `SELECT 1 FROM authoring_documents
+          WHERE id = $1 AND tenant_id = $2 AND c2c_document_id IS NOT NULL`,
+        [currentSection.rows[0].doc_id, tenantId],
+      );
+      if ((bound.rowCount ?? 0) > 0) {
+        return res.status(409).json({
+          success: false,
+          error: {
+            code: 'CODE_LOCKED_TO_FILING',
+            message:
+              'This section’s code is its place in the filing, so it cannot be changed here. ' +
+              'Re-coding it would break the link between this section and the filing slot it fills, ' +
+              'and its content would stop reaching the filing. The title can be renamed freely.',
+          },
+        });
+      }
+    }
+
     // Build update query dynamically
     const updates = [];
     const values = [];
@@ -2285,6 +2458,55 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
           { titleChanged: title !== undefined },
           client,
         );
+      } else {
+        /* A METADATA CHANGE IS STILL A CHANGE TO A GOVERNED RECORD.
+         *
+         * The audit block above fired only on a content change, so a save that
+         * renamed a section, re-coded it, or toggled its track-changes mode
+         * updated the row and left NO audit trail at all. Renaming a CTD code
+         * is not cosmetic — `commitSectionToFiling` matches a section to its
+         * filing slot BY that code — and §11.10(e) wants every change to a
+         * governed record recorded with who, when, and what moved.
+         *
+         * No revision (the revision ledger is for content, and none changed)
+         * and no reason prompt (the action names itself, exactly like the
+         * revert): the row records the field and its before/after, which is a
+         * complete answer to "what changed". It rides the same transaction, so
+         * a metadata change and its audit row commit together or neither does —
+         * and because it goes through createAuditTrail on the caller's client,
+         * it lands in the hash-chained ledger too, not only the soft table. */
+        const cur = currentSection.rows[0] ?? {};
+        const metaChanges: Array<{ field: string; from: unknown; to: unknown }> = [];
+        if (title !== undefined && String(title) !== String(cur.title ?? '')) {
+          metaChanges.push({ field: 'title', from: cur.title ?? null, to: title });
+        }
+        if (code !== undefined && String(code) !== String(cur.code ?? '')) {
+          metaChanges.push({ field: 'code', from: cur.code ?? null, to: code });
+        }
+        if (
+          track_changes !== undefined &&
+          Boolean(track_changes) !== Boolean(cur.track_changes)
+        ) {
+          metaChanges.push({
+            field: 'track_changes',
+            from: Boolean(cur.track_changes),
+            to: Boolean(track_changes),
+          });
+        }
+        if (metaChanges.length) {
+          const renamed = metaChanges.some((c) => c.field === 'title' || c.field === 'code');
+          await createAuditTrail(
+            req,
+            result.rows[0]?.doc_id,
+            sectionId,
+            renamed ? 'RENAME' : 'TRACK_CHANGES',
+            null,
+            null,
+            null,
+            { source: 'section-metadata', changes: metaChanges },
+            client,
+          );
+        }
       }
 
       await client.query('COMMIT');
@@ -2481,6 +2703,38 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
       // content being replaced under the reverter's name — the same
       // misattribution the edit path had.
       await createRevision(sectionId, revision.content, revertedBy, tenantId, client, 'revert');
+
+      /* AND THE FILING MOVES WITH IT.
+       *
+       * This call was missing, and its absence reopened on the revert path the
+       * exact divergence `commitSectionToFiling` exists to close. Revert wrote
+       * the restored text to `authoring_sections` — the working copy — and left
+       * `c2c_document_sections`, which is what the filing IS, holding whatever
+       * the last PATCH had put there.
+       *
+       * So an author who reverted a bad edit saw the good text in the editor,
+       * the revision ledger recorded the restoration, the audit trail recorded
+       * a REVERT, and the filed document still contained the bad text. Every
+       * record agreed a revert had happened and the one artifact that matters
+       * disagreed — and nothing surfaced the disagreement, because each store
+       * was internally consistent.
+       *
+       * The reason is stated rather than defaulted, and that is not the
+       * fabrication REASON_NOT_STATED guards against: on an ordinary save the
+       * system does not know why a human changed the words, so it must not
+       * invent one. Here it does know — this is a restoration of a named
+       * revision, which is a complete and truthful answer to "why did this
+       * change". A mechanism describing itself is not a person being
+       * impersonated. */
+      await commitSectionToFiling({
+        client,
+        sectionId: String(sectionId),
+        content: String(revision.content ?? ''),
+        actorId: String(revertedBy),
+        tenantId,
+        reason: `Reverted to revision ${rev_id}`,
+      });
+
       await client.query('COMMIT');
     } catch (txErr) {
       await client.query('ROLLBACK').catch(() => {});
@@ -2667,34 +2921,65 @@ router.patch('/comments/:commentId', async (req: Request, res: Response) => {
     if (updates.length === 0) {
       // An empty body used to build `SET  WHERE id = $1` — malformed SQL
       // answered as a 500 with the driver's message in the payload.
-      return res.status(400).json({
-        success: false,
-        error: 'At least one of status or resolution_note is required',
-      });
+      return res.status(400).json({ success: false, error: 'No comment changes supplied' });
     }
 
-    values.push(commentId, tenantId);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    const result = await pool.query(
-      `UPDATE authoring_comments
-       SET ${updates.join(', ')}
-       WHERE id = $${paramCount + 1} AND tenant_id = $${paramCount + 2}
-       RETURNING *`,
-      values
-    );
+      const before = await client.query(
+        `SELECT doc_id, section_id, status, resolution_note
+           FROM authoring_comments
+          WHERE id = $1 AND tenant_id = $2
+          FOR UPDATE`,
+        [commentId, tenantId]
+      );
+      if (((before.rowCount ?? 0) === 0)) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ success: false, error: 'Comment not found' });
+      }
 
-    if (((result.rowCount ?? 0) === 0)) {
-      return res.status(404).json({
-        success: false,
-        error: 'Comment not found',
+      values.push(commentId, tenantId);
+      const result = await client.query(
+        `UPDATE authoring_comments
+            SET ${updates.join(', ')}, updated_at = NOW()
+          WHERE id = $${paramCount + 1} AND tenant_id = $${paramCount + 2}
+          RETURNING *`,
+        values
+      );
+
+      const updated = result.rows[0];
+      const eventType = status === 'resolved' ? 'comment_resolved' : 'comment_updated';
+      const actor = req.user?.email ?? resolvedBy;
+      await createAuditEvent(
+        updated.doc_id,
+        eventType,
+        actor,
+        {
+          comment_id: commentId,
+          section_id: updated.section_id,
+          previous_status: before.rows[0].status,
+          status: updated.status,
+          previous_resolution_note: before.rows[0].resolution_note ?? null,
+          resolution_note: updated.resolution_note ?? null,
+        },
+        tenantId,
+        client
+      );
+
+      await client.query('COMMIT');
+      res.json({
+        success: true,
+        comment: updated,
+        message: 'Comment updated successfully',
       });
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
     }
-
-    res.json({
-      success: true,
-      comment: result.rows[0],
-      message: 'Comment updated successfully',
-    });
   } catch (error) {
     console.error('Error updating comment:', error);
     res.status(500).json({
@@ -3526,6 +3811,9 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
     let generator: Record<string, unknown> | null = null;
     /* Whether the caller's accepted text still IS the generated draft. */
     let draftModifiedOnAccept = false;
+    /* Whether the accepted content reached the bound filing, and when it did
+       not, why — surfaced on the response exactly as the manual save does. */
+    let governedCommit: CommitSectionResult | null = null;
     try {
       await client.query('BEGIN');
 
@@ -3572,6 +3860,36 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         sources,
       );
 
+      /* AND THE ACCEPTED DRAFT REACHES THE FILING.
+       *
+       * This call was missing, exactly as it was on the revert path, and with
+       * the same consequence: accepting an AI draft wrote the working copy
+       * (`authoring_sections`) and its lineage, and left `c2c_document_sections`
+       * — what the filing IS — holding the pre-draft content. So an author
+       * accepted a page of regulatory text, saw it in the editor, the audit
+       * trail recorded it, and the system of record still showed the old text.
+       * AI-assisted drafting is a primary use of this surface, which made this
+       * the widest instance of the working-copy/filing drift `commitSectionToFiling`
+       * exists to close.
+       *
+       * In THIS transaction, so the working copy and the filing move together
+       * or neither does — the same guarantee the manual save gives. The reason
+       * is the author's if they stated one, and otherwise NOT invented: the
+       * fact that it came from an AI draft is provenance, recorded on the
+       * revision origin and the audit metadata, not a justification for the
+       * change. */
+      governedCommit = await commitSectionToFiling({
+        client,
+        sectionId: String(sectionId),
+        content: String(acceptedContent ?? ''),
+        actorId: String(actor),
+        tenantId,
+        reason:
+          typeof req.body?.changeReason === 'string' && req.body.changeReason.trim()
+            ? req.body.changeReason
+            : undefined,
+      });
+
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
@@ -3609,17 +3927,27 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       'UPDATE',
       priorContent,
       acceptedContent,
-      typeof req.body?.changeReason === 'string' ? req.body.changeReason : 'Accepted AI draft',
+      /* THE REASON IS THE AUTHOR'S, OR NOT STATED — never "Accepted AI draft".
+         That fallback put a MECHANISM in the reason-for-change field, where it
+         read as a human's justification for the edit; it is the same pattern
+         removed from the manual save's `app.reason` default. Accepting an AI
+         draft is provenance (recorded on the revision origin 'ai-draft-accept'
+         and in the metadata below), not a reason WHY this regulatory text was
+         chosen. When the author states a reason it is used; when they do not,
+         the record says so rather than inventing one. */
+      typeof req.body?.changeReason === 'string' && req.body.changeReason.trim()
+        ? req.body.changeReason
+        : null,
       /* Which model, which provider, which prompt. All three existed at draft
          time and used to reach the browser and stop there, so "what produced
          this text?" was answerable for about as long as the tab stayed open —
          the first question an assessor asks about AI-assisted content, and the
          one piece of provenance being collected and then discarded. */
       /* draft_modified_on_accept: the accept endpoint allows the author to
-         hand-edit the draft before accepting, so "Accepted AI draft" on its
-         own could vouch for words the model never produced. True here means
-         the saved text differs from the generated candidate — the generator
-         metadata describes the draft's origin, not the final wording. */
+         hand-edit the draft before accepting, so the provenance must not vouch
+         for words the model never produced. True here means the saved text
+         differs from the generated candidate — the generator metadata
+         describes the draft's origin, not the final wording. */
       { source: 'ai-draft-accept', generator, draft_modified_on_accept: draftModifiedOnAccept },
     );
 
@@ -3628,6 +3956,16 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       section: saved.rows[0],
       attribution,
       message: `AI draft accepted — ${attribution.sourceSpans} verified source citation(s) across ${attribution.distinctSources} source(s); ${attribution.coverage}% of content quoted, the remainder recorded as author-original.`,
+      /* Whether the accepted text reached the filing — honest either way, the
+         same as the manual save. An unbound accept says it did not, rather than
+         letting the two stores drift apart in silence. */
+      ...(governedCommit
+        ? {
+            filing: governedCommit.committed
+              ? { committed: true, documentId: governedCommit.documentId, sectionKey: governedCommit.sectionKey }
+              : { committed: false, reason: governedCommit.reason },
+          }
+        : {}),
     });
   } catch (error) {
     console.error('Error accepting AI draft:', error);
@@ -3665,21 +4003,40 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
     const section = sectionResult.rows[0];
 
     // Perform deficiency analysis
-    const deficiencies = [];
+    const deficiencies: Array<Record<string, unknown>> = [];
     const content = section.content || '';
     const contentLength = content.length;
 
-    // Basic content checks
-    if (contentLength < 100) {
-      deficiencies.push({
-        type: 'content_length',
-        severity: 'high',
-        message:
-          'Section content appears insufficient. Regulatory sections typically require detailed information.',
-        recommendation: 'Expand content to include all required regulatory elements.',
-        location: 'entire_section',
-      });
-    }
+    /* Which distinct checks ran, and which of them flagged.
+       The score was `(10 - deficiencies.length) / 10`, where 10 was a constant
+       unrelated to the checks actually performed. The module-keyword check
+       alone pushes one deficiency PER missing term — six of them — so a poor
+       section reached thirteen deficiencies and scored -30%. A percentage
+       below zero is not a signal, it is a bug wearing one. Counting distinct
+       checks makes the denominator mean something and keeps the range 0-100,
+       and it lets the response say "passed N of M" instead of asking a reader
+       to trust a bare number. */
+    const checks: Array<{ id: string; flagged: boolean }> = [];
+    const runCheck = (id: string, fn: () => void) => {
+      const before = deficiencies.length;
+      fn();
+      checks.push({ id, flagged: deficiencies.length > before });
+    };
+
+    const contentLower = content.toLowerCase();
+
+    runCheck('content_length', () => {
+      if (contentLength < 100) {
+        deficiencies.push({
+          type: 'content_length',
+          severity: 'high',
+          message:
+            'Section content appears insufficient. Regulatory sections typically require detailed information.',
+          recommendation: 'Expand content to include all required regulatory elements.',
+          location: 'entire_section',
+        });
+      }
+    });
 
     // Check for required regulatory keywords based on module
     const requiredKeywords: Record<string, string[]> = {
@@ -3690,68 +4047,108 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
       M1: ['form', 'administrative', 'regulatory'],
     };
 
-    const moduleKeywords = requiredKeywords[section.module] || requiredKeywords['M3'];
-    const contentLower = content.toLowerCase();
+    runCheck('module_keywords', () => {
+      const moduleKeywords = requiredKeywords[section.module] || requiredKeywords['M3'];
+      moduleKeywords.forEach(keyword => {
+        if (!contentLower.includes(keyword)) {
+          deficiencies.push({
+            type: 'missing_keyword',
+            severity: 'medium',
+            message: `Missing expected regulatory term: "${keyword}"`,
+            recommendation: `Include discussion of ${keyword} as required by ${region} guidelines`,
+            location: 'content',
+          });
+        }
+      });
+    });
 
-    moduleKeywords.forEach(keyword => {
-      if (!contentLower.includes(keyword)) {
+    /* CTD required-element check, migrated from POST /ai/validate-compliance.
+       That endpoint was a second, callerless implementation of this same
+       capability — heuristic keyword presence over section content — and it
+       reported `overall_compliance: 'PASS'` whenever its list came back empty.
+       Its list was only ever populated for five hardcoded 3.2.S.* codes, so
+       for every other section in the CTD it checked nothing and answered PASS.
+       The useful half is these per-section element lists; they belong on the
+       one scan that has a caller and an honest frame, and the endpoint is
+       deleted in the same change (zero duplication). */
+    const ctdRequiredElements: Record<string, string[]> = {
+      '3.2.S.1': ['nomenclature', 'structure', 'general properties'],
+      '3.2.S.2': ['manufacturer', 'manufacturing process', 'controls'],
+      '3.2.S.3': ['elucidation of structure', 'impurities'],
+      '3.2.S.4': ['specifications', 'analytical procedures', 'validation'],
+      '3.2.S.7': ['stability data', 'post-approval stability', 'storage conditions'],
+    };
+    const ctdElements = ctdRequiredElements[String(section.code)];
+    /* Only counted as a check when there IS a list for this section code.
+       Running it against a section it has no expectations for and recording a
+       pass would inflate the score with a check that never looked at anything
+       — the exact arithmetic that let the deleted endpoint answer PASS. */
+    if (ctdElements) {
+      runCheck('ctd_required_elements', () => {
+        ctdElements.forEach(element => {
+          if (!contentLower.includes(element)) {
+            deficiencies.push({
+              type: 'missing_ctd_element',
+              severity: 'medium',
+              message: `Section ${section.code} would normally discuss ${element}`,
+              recommendation: `Add information about ${element} to ${section.code}`,
+              location: 'content',
+            });
+          }
+        });
+      });
+    }
+
+    runCheck('data_presence', () => {
+      if (!content.includes('[') && !content.includes('Table') && !content.includes('Figure')) {
         deficiencies.push({
-          type: 'missing_keyword',
+          type: 'missing_data',
           severity: 'medium',
-          message: `Missing expected regulatory term: "${keyword}"`,
-          recommendation: `Include discussion of ${keyword} as required by ${region} guidelines`,
+          message: 'No data tables or figures detected',
+          recommendation: 'Consider adding supporting data, tables, or figures',
           location: 'content',
         });
       }
     });
 
-    // Check for data completeness
-    if (!content.includes('[') && !content.includes('Table') && !content.includes('Figure')) {
-      deficiencies.push({
-        type: 'missing_data',
-        severity: 'medium',
-        message: 'No data tables or figures detected',
-        recommendation: 'Consider adding supporting data, tables, or figures',
-        location: 'content',
+    runCheck('placeholder_text', () => {
+      const placeholderPatterns = [/\[.*?\]/g, /TBD/gi, /TODO/gi, /XXX/gi];
+      placeholderPatterns.forEach(pattern => {
+        const matches = content.match(pattern);
+        if (matches && matches.length > 0) {
+          deficiencies.push({
+            type: 'placeholder_text',
+            severity: 'high',
+            message: `Found placeholder text: ${matches.slice(0, 3).join(', ')}${
+              matches.length > 3 ? '...' : ''
+            }`,
+            recommendation: 'Replace all placeholder text with actual content',
+            location: 'multiple',
+          });
+        }
       });
-    }
+    });
 
-    // Check for placeholder text
-    const placeholderPatterns = [/\[.*?\]/g, /TBD/gi, /TODO/gi, /XXX/gi];
-    placeholderPatterns.forEach(pattern => {
-      const matches = content.match(pattern);
-      if (matches && matches.length > 0) {
+    runCheck('structure', () => {
+      if (!content.includes('\n') || content.split('\n').length < 5) {
         deficiencies.push({
-          type: 'placeholder_text',
-          severity: 'high',
-          message: `Found placeholder text: ${matches.slice(0, 3).join(', ')}${
-            matches.length > 3 ? '...' : ''
-          }`,
-          recommendation: 'Replace all placeholder text with actual content',
-          location: 'multiple',
+          type: 'poor_structure',
+          severity: 'low',
+          message: 'Content lacks proper structure and formatting',
+          recommendation: 'Add headings, paragraphs, and proper formatting',
+          location: 'formatting',
         });
       }
     });
-
-    // Structure checks
-    if (!content.includes('\n') || content.split('\n').length < 5) {
-      deficiencies.push({
-        type: 'poor_structure',
-        severity: 'low',
-        message: 'Content lacks proper structure and formatting',
-        recommendation: 'Add headings, paragraphs, and proper formatting',
-        location: 'formatting',
-      });
-    }
 
     // Heuristic quality/completeness signal — NOT a 21 CFR compliance
     // determination. It is derived purely from word-count and keyword presence
     // and cannot prove regulatory compliance; labelling a section "compliant" /
     // "non_compliant" on that basis overstates what the check establishes. It is
     // reported as a review signal ('review required' / 'heuristic quality').
-    const totalChecks = 10;
-    const passedChecks = totalChecks - deficiencies.length;
-    const qualityScore = Math.round((passedChecks / totalChecks) * 100);
+    const checksRun = checks.length;
+    const checksPassed = checks.filter(c => !c.flagged).length;
+    const qualityScore = checksRun > 0 ? Math.round((checksPassed / checksRun) * 100) : 0;
 
     res.json({
       success: true,
@@ -3767,6 +4164,11 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
         signal_type: 'heuristic_quality',
         quality_score: qualityScore,
         compliance_score: qualityScore,
+        /* The denominator, so a reader is never asked to take the percentage
+           on trust — and so the UI can name how many checks actually ran
+           rather than hardcoding a number that drifts from the code. */
+        checks_run: checksRun,
+        checks_passed: checksPassed,
         status:
           qualityScore >= 80
             ? 'heuristic_ok'
@@ -3879,49 +4281,36 @@ async function buildPdfFromDocx(docxBuffer: Buffer): Promise<Buffer> {
 
 // ============= 21 CFR Part 11 Compliance Endpoints =============
 
-// POST /api/authoring/docs/:docId/create-pin - Create/update PIN for user
-router.post('/docs/:docId/create-pin', async (req: Request, res: Response) => {
-  try {
-    const { pin } = req.body;
-    // Part 11 attribution: signer identity comes from the verified JWT only.
-    // The previous x-user-email header source was attacker-controlled (same
-    // class as the getActorId fix above) — a caller could mint a PIN for any
-    // email and later sign as that identity.
-    const email = getActorEmail(req);
-    const tenantId = getTenantId(req);
+/* POST /api/authoring/docs/:docId/create-pin has been DELETED.
+ *
+ * It was a second endpoint for the same thing POST /users/pin does — setting
+ * the signing PIN that gates every electronic signature in this router — with
+ * no caller anywhere, and it bypassed both controls the canonical one exists
+ * to enforce.
+ *
+ * NO OLD-PIN CHECK. /users/pin requires the current PIN, bcrypt-verified,
+ * before it will overwrite an existing one; its own header records why, citing
+ * §11.200(a)(1): possession of a session must not become possession of the
+ * signing credential. This route called createUserPin() straight through, so
+ * any authenticated session could replace another sitting PIN it did not know.
+ *
+ * IT CLEARED THE LOCKOUT. createUserPin's upsert ended in
+ * `failed_attempts = 0, locked_until = NULL`. verifyUserPin enforces three
+ * attempts and a thirty-minute lockout, and this endpoint reset both — so the
+ * brute-force control could be cleared between guesses by the same session
+ * doing the guessing.
+ *
+ * createUserPin() is deleted with it: this was its only call site.
+ *
+ * NOTE, deliberately left as a finding rather than fixed here: `pin_expires_at`
+ * was written ONLY by createUserPin (90 days) and is read by nothing —
+ * verifyUserPin selects pin_hash, failed_attempts and locked_until and never
+ * consults it. PIN aging therefore looks implemented and is not enforced, and
+ * after this deletion the column has no writer either. Enforcing expiry would
+ * start locking real signers out of a governed action, which is a product
+ * decision and not a cleanup.
+ */
 
-    if (!email) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    if (!pin || pin.length < 6) {
-      return res.status(400).json({ error: 'PIN must be at least 6 characters' });
-    }
-
-    const success = await createUserPin(email, pin, tenantId);
-
-    if (success) {
-      // Log PIN creation in audit trail
-      await createAuditTrail(
-        req,
-        req.params.docId,
-        null,
-        'PIN_CREATED',
-        null,
-        null,
-        'User PIN created or updated',
-        { email }
-      );
-
-      res.json({ success: true, message: 'PIN created successfully' });
-    } else {
-      res.status(500).json({ error: 'Failed to create PIN' });
-    }
-  } catch (error) {
-    console.error('Error creating PIN:', error);
-    res.status(500).json({ error: 'Failed to create PIN' });
-  }
-});
 
 // POST /api/authoring/docs/:docId/freeze - Freeze document with immutable snapshot
 router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
@@ -3961,6 +4350,83 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
       [docId, tenantId]
     );
 
+    /* ── A FROZEN DOCUMENT IS NOT ALLOWED TO STILL BE ASKING QUESTIONS ──
+     *
+     * Freeze is the seal: after it the content is seseal-hashed, signed under
+     * §11.50 and filed. Nothing here checked whether the document was actually
+     * finished, so a section carrying forty open reviewer comments and a dozen
+     * unaccepted tracked changes could be frozen, signed and submitted.
+     *
+     * Both then disappear in a way nobody can see downstream. Comments are not
+     * part of the exported content at all, so the questions simply do not
+     * travel — the filed document looks settled and the forty unanswered
+     * queries exist only in a UI nobody opens after the seal. Unresolved
+     * suggestions do travel, and now travel visibly (they render as
+     * `[-old-][+new+]`), which means an unfinished sentence reaches a reviewer
+     * mid-argument.
+     *
+     * So the refusal is the honest default: a document with outstanding work is
+     * not ready to be sealed, and the seal is exactly the wrong moment to
+     * discover that.
+     *
+     * It is a refusal, not a prohibition. Freezing a draft with open comments
+     * is legitimate — an internal baseline before a review round is a real
+     * thing to want — so the caller may proceed by SAYING SO, and what they
+     * acknowledged is recorded in the audit trail and in the freeze reason.
+     * That is the Part 11 shape: you may act, but you must state that you know,
+     * and the record keeps it. Silently sealing an unfinished document is the
+     * only option removed. */
+    const openComments = await pool.query<{ n: string }>(
+      `SELECT COUNT(*)::text AS n FROM authoring_comments
+        WHERE doc_id = $1 AND tenant_id = $2 AND status = 'open'`,
+      [docId, tenantId]
+    );
+    const openCommentCount = Number(openComments.rows[0]?.n ?? 0);
+
+    /* The same census the export takes, from the same parser, so the two can
+       never disagree about whether a document has unsettled edits. */
+    const { sectionContentToBlocks: toBlocks, countPendingSuggestions: countPending } =
+      await import('../export/authoring-section-content.js');
+    let pendingEdits = 0;
+    for (const section of sectionsResult.rows) {
+      const p = countPending(toBlocks(section.content));
+      pendingEdits += p.insertions + p.deletions;
+    }
+
+    const acknowledged = req.body?.acknowledgeUnresolved === true;
+    if ((openCommentCount > 0 || pendingEdits > 0) && !acknowledged) {
+      const parts: string[] = [];
+      if (openCommentCount > 0) {
+        parts.push(
+          `${openCommentCount} unresolved comment${openCommentCount === 1 ? '' : 's'}`
+        );
+      }
+      if (pendingEdits > 0) {
+        parts.push(`${pendingEdits} tracked change${pendingEdits === 1 ? '' : 's'} nobody has accepted or rejected`);
+      }
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'DOCUMENT_NOT_SETTLED',
+          message:
+            `Not frozen — this document still has ${parts.join(' and ')}. ` +
+            'Freezing seals the content for signature and filing, so the questions ' +
+            'would go unanswered and the proposed edits would reach a reviewer ' +
+            'undecided. Resolve them, or freeze again confirming you intend to ' +
+            'seal it as it stands.',
+        },
+        unresolved: { openComments: openCommentCount, pendingEdits },
+      });
+    }
+
+    /* What was sealed over is part of why it was sealed, so it goes into the
+       reason the frozen record carries rather than only into the audit row. */
+    const acknowledgedNote =
+      acknowledged && (openCommentCount > 0 || pendingEdits > 0)
+        ? ` [Sealed with ${openCommentCount} unresolved comment(s) and ` +
+          `${pendingEdits} undecided tracked change(s), acknowledged by ${email}.]`
+        : '';
+
     // Create frozen content snapshot
     const frozenContent = JSON.stringify({
       document: doc,
@@ -3986,7 +4452,8 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
         `INSERT INTO frozen_documents
          (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [docId, versionNumber, frozenContent, contentHash, email, reason, tenantId]
+        [docId, versionNumber, frozenContent, contentHash, email,
+         `${reason ?? ''}${acknowledgedNote}`.trim() || null, tenantId]
       );
 
       // Update document status
@@ -4003,9 +4470,11 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
         'FREEZE',
         null,
         frozenContent,
-        reason || 'Document frozen for compliance',
-        { contentHash, version: versionNumber },
+        `${reason || 'Document frozen for compliance'}${acknowledgedNote}`,
+        { contentHash, version: versionNumber, openCommentCount, pendingEdits, acknowledged },
         client,
+        // This handler writes its own richer chained row below.
+        { chainedRowWrittenByCaller: true },
       );
 
       /* §11.10(e) — the HASH-CHAINED ledger, on this transaction.
@@ -4162,7 +4631,9 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         meaning,
         documentHash: docHash,
         timestamp: new Date().toISOString(),
-      }, client);
+      }, client,
+      // This handler writes its own richer chained row below.
+      { chainedRowWrittenByCaller: true });
 
       // Update document status based on signature meaning
       if (meaning === 'APPROVER') {
@@ -4171,19 +4642,40 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
           ['APPROVED', docId, tenantId]
         );
 
-        // Auto-freeze on approval
+        // Auto-freeze on approval — capture the FULL approved snapshot (document
+        // + sections) and hash the SNAPSHOT BYTES, exactly like the manual freeze
+        // above. The prior code stored a 3-field stub {approvedBy, documentHash,
+        // timestamp} and set content_hash = docHash (the hash of the live
+        // SECTIONS, not of the stub). Two filing-integrity failures followed:
+        // the approved content was captured nowhere immutable (it lived only in
+        // the editable authoring_sections table), and GET /docs/:docId/frozen —
+        // which recomputes sha256(frozen_content) and compares to content_hash —
+        // raised a false "tampering detected" 500 on EVERY e-sign-approved
+        // document, because sha256(stub) can never equal docHash. Approval must
+        // produce a verifiable frozen legal record.
+        const approvedDoc = await client.query(
+          'SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+          [docId, tenantId]
+        );
+        const approvedSections = await client.query(
+          'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+          [docId, tenantId]
+        );
         const frozenContent = JSON.stringify({
+          document: approvedDoc.rows[0] ?? null,
+          sections: approvedSections.rows,
           approvedBy: email,
           documentHash: docHash,
-          timestamp: new Date().toISOString(),
+          frozenAt: new Date().toISOString(),
         });
+        const frozenContentHash = crypto.createHash('sha256').update(frozenContent).digest('hex');
 
         await client.query(
           `INSERT INTO frozen_documents
            (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7)
            ON CONFLICT (document_id, version, tenant_id) DO NOTHING`,
-          [docId, 'approved', frozenContent, docHash, email, 'Approved and frozen', tenantId]
+          [docId, 'approved', frozenContent, frozenContentHash, email, 'Approved and frozen', tenantId]
         );
       }
 
@@ -4659,7 +5151,19 @@ router.delete('/export-history/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const tenantId = getTenantId(req);
-    const userEmail = (req.headers['x-user-email'] as string) || 'system';
+    /* SECURITY (21 CFR Part 11): DELETING a filing's export-history record is a
+       governed action and must be attributed to the VERIFIED principal. This
+       read `x-user-email || 'system'` — a header the router's middleware clears,
+       falling through to the anonymous 'system' that is nobody, and the value
+       drove BOTH the permission check (`entry.exported_by !== userEmail`) and
+       the EXPORT_HISTORY_DELETED audit event. Use getActorEmail, the JWT-derived
+       accessor every other governed mutation here uses, and fail closed when the
+       token carries no identity rather than record a record-deletion against
+       'system'. */
+    const userEmail = getActorEmail(req);
+    if (!userEmail) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
     // Check if user has permission (only QA or the original exporter can delete)
     const roles = ((req.headers as any)['x-roles'] || '').toString().toUpperCase();
@@ -4716,6 +5220,17 @@ router.get('/docs/:docId/diff-since-export', async (req: Request, res: Response)
     // catch below turned every call into a 500. See ledger C-14.
     await ensureExportHistoryTableExists();
     const tenantId = getTenantId(req);
+    /* Same guard as GET …/exports, for the same reason: an unknown or
+       cross-tenant docId answered `{ baseline: null, changed: [] }`, which is
+       the response a real document with no export yet gets. Those are opposite
+       facts. Nothing surfaces the difference today — the Exports rail renders
+       citation drift only when `baseline` is non-null — but a future caller
+       reading "no exports" for a document it cannot see is a defect waiting on
+       a caller, which is precisely how the rest of this router accumulated its
+       silent 500s. */
+    if (!(await documentExistsForTenant(req.params.docId, tenantId))) {
+      return res.status(404).json({ success: false, error: 'Document not found' });
+    }
     const lastExportResult = await pool.query(
       `
       SELECT COALESCE(exported_at, created_at) AS exported_at
@@ -5003,94 +5518,32 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
    map presented as a guidance service. The real per-section guidance read is
    GET /guidance/:sectionId (section_guidance + template_guidance tables). */
 
-// POST /docs/:docId/seed-stability - Seed stability data and insert P.8 tokens
-router.post('/docs/:docId/seed-stability', async (req: Request, res: Response) => {
-  try {
-    const { docId } = req.params;
-    const {
-      product_code = 'UAT-PROD',
-      study_code = 'SS-UAT-001',
-      study_name = 'UAT Stability 24M',
-    } = req.body;
+/* POST /api/authoring/docs/:docId/seed-stability has been DELETED.
+ *
+ * It spawned `node scripts/seed-stability.mjs` from a request handler, with no
+ * caller anywhere and no environment guard of any kind — so a UAT fixture
+ * seeder, defaulting to product_code 'UAT-PROD' and study_code 'SS-UAT-001',
+ * was reachable over HTTP by any authenticated user in any deployment
+ * including production. CLAUDE.md's working agreement is explicit: no fixture
+ * data in governed paths. This was the mechanism for putting it there.
+ *
+ * It was also broken in a way that would have hidden its own failures. The
+ * handler ended with
+ *
+ *     process.on('error', …)
+ *
+ * — the GLOBAL Node process, not the spawned child. A child that failed to
+ * start emits 'error' on `childProcess`, which nothing listened to, so the
+ * request hung rather than answering; and every call added another permanent
+ * listener to the global process, each closing over a response object long
+ * since finished.
+ *
+ * scripts/seed-stability.mjs is KEPT. Its own header documents it as a command
+ * an operator runs (`node scripts/seed-stability.mjs`), which is the right
+ * shape for a seeder: a deliberate act at a terminal, not an endpoint on the
+ * governed authoring API.
+ */
 
-    if (!docId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Document ID is required',
-      });
-    }
-
-    // Run the stability seeder script with the provided parameters.
-    // BP-W0-6: same CommonJS `require` under "type": "module" as the docx export
-    // branch had — this route would have thrown ReferenceError the first time
-    // anyone called it. Found while fixing the export; converted rather than
-    // left as the next instance of the same 500.
-    const { spawn } = await import('node:child_process');
-    /* The `require` this replaced returned `any`, so nothing typechecked the
-       call — and it was wrong. Every one of these values comes off req.body and
-       is `string | undefined`, which no `spawn` overload accepts. Passing
-       undefined into a child's env is not a type nicety either: the child reads
-       process.env.PRODUCT_CODE and would get the string "undefined" or nothing
-       at all, depending on the platform. Coerced explicitly. */
-    const childProcess = spawn('node', ['scripts/seed-stability.mjs'], {
-      env: {
-        ...process.env,
-        BASE_URL: `http://localhost:${process.env.PORT || 5000}`,
-        PRODUCT_CODE: String(product_code ?? ''),
-        STUDY_CODE: String(study_code ?? ''),
-        STUDY_NAME: String(study_name ?? ''),
-        DOC_ID: String(docId ?? ''),
-      },
-    });
-
-    let output = '';
-    let errorOutput = '';
-
-    childProcess.stdout.on('data', (data: any) => {
-      output += data.toString();
-    });
-
-    childProcess.stderr.on('data', (data: any) => {
-      errorOutput += data.toString();
-    });
-
-    childProcess.on('close', (code: number) => {
-      if (code === 0) {
-        res.json({
-          success: true,
-          message: 'Stability data seeded successfully',
-          study_code,
-          product_code,
-          doc_id: docId,
-          output: output.trim(),
-        });
-      } else {
-        console.error('Stability seeder failed:', errorOutput);
-        res.status(500).json({
-          success: false,
-          error: 'Stability seeding failed',
-          details: errorOutput.trim(),
-        });
-      }
-    });
-
-    process.on('error', (err: any) => {
-      console.error('Failed to start stability seeder:', err);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to start stability seeder',
-        details: err.message,
-      });
-    });
-  } catch (error) {
-    console.error('Stability seeding error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to seed stability data',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
 
 // DELETE /docs/:docId (UAT-only; admin-guarded) - Step 12: Fixture Cleanup
 router.delete('/docs/:docId', async (req: Request, res: Response) => {
@@ -5262,6 +5715,36 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
 
     const doc = docResult.rows[0];
 
+    /* SECURITY (21 CFR Part 11 §11.50): EXPORT IS A FILING ARTIFACT, NOT A
+       PREVIEW — gate it on the record being sealed. This handler rendered
+       sections LIVE with no status gate, so a DRAFT / IN_REVIEW document
+       exported byte-for-byte like an approved one AND had the §11.50 signature
+       manifest appended below — presenting whatever reviewer signatures exist
+       as if they certify a final, immutable record when the content is still
+       editable and has no frozen snapshot behind it. That is "an export of
+       unapproved content" and a manifest attributed to content nobody approved.
+
+       Fail closed, the way the section-write path already does: refuse unless
+       the document is in a LOCKED/sealed state — the same canonical
+       LOCKED_DOCUMENT_STATUSES set ({FROZEN, APPROVED}) the write gate uses,
+       plus an explicit locked_at, mirroring document-lock's own check. An
+       editable document has no immutable snapshot to certify, so there is
+       nothing honest to export as a Part 11 artifact yet; 409 Conflict says the
+       document's state — not the caller's authority — forbids the action, so it
+       reads distinctly from the 401s above. Freeze or approve it first. */
+    const sealedForExport =
+      LOCKED_DOCUMENT_STATUSES.has(String(doc.status ?? '').toUpperCase()) ||
+      doc.locked_at != null;
+    if (!sealedForExport) {
+      return res.status(409).json({
+        error: 'Document not approved for export',
+        message:
+          `Only an approved or frozen document can be exported as a 21 CFR Part 11 filing artifact. ` +
+          `This document is still editable (status: ${doc.status ?? 'unknown'}) — it has no immutable ` +
+          `snapshot and no certified electronic-signature manifest. Freeze or approve it first.`,
+      });
+    }
+
     const sectionsResult = await pool.query(
       'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
       [docId, tenantId]
@@ -5311,6 +5794,94 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
             tenantId
           )
         : new Map();
+
+    /* CROSS-REFERENCES resolve against the sections THIS export is writing,
+       resolved ONCE here for the same reason the figures are — the DOCX and PDF
+       branches consume the same directory, so the two filed formats cannot
+       disagree about what a reference says.
+
+       A reference stores the target section's id and never its printed number,
+       so a section renumbered since the reference was written comes out with
+       its current number without one byte of the referring section's stored
+       content changing. A target that is not in this document resolves to a
+       stated line rather than to a number that would look right and be wrong. */
+    const { crossReferenceLookupFor, crossReferenceAnchorId } = await import(
+      '@shared/authoring/cross-references'
+    );
+    const sectionTargets = sectionsResult.rows.map(
+      (s: { id: string; code: string; title: string }) => ({
+        id: String(s.id),
+        code: s.code,
+        title: s.title,
+      })
+    );
+
+    /* CITATIONS are numbered by POSITION, once for the whole document.
+       The stored content carries the SOURCE'S ID and never the number a
+       reviewer reads: "[3]" describes where that source currently sits in this
+       document's reference list, and a citation inserted in an earlier section
+       moves it. So the content is parsed here, once, before the format
+       branches; the sources it actually cites are resolved against what this
+       tenant may see; and ONE registry numbers every marker in reading order
+       and yields the reference list at the end. Both filed formats consume the
+       same registry, so a DOCX and a PDF of the same frozen document cannot
+       disagree about what "[3]" means.
+
+       A citation whose source does not resolve — deleted, or another tenant's —
+       takes no number and no entry, and is stated in place. A number with no
+       entry behind it would send a reviewer looking for a reference that is not
+       there. */
+    const {
+      sectionContentToBlocks,
+      countPendingSuggestions,
+      collectCitedSourceIds,
+      collectCaptionTargets,
+    } = await import('../export/authoring-section-content.js');
+    const { makeCitationRegistry, citationLookupFor } = await import(
+      '@shared/authoring/citations'
+    );
+    type ExportSection = { id: string; code: string; title: string; content: string | null };
+    const parsedSections =
+      format === 'docx' || format === 'pdf'
+        ? sectionsResult.rows.map((section: ExportSection) => ({
+            section,
+            blocks: sectionContentToBlocks(section.content),
+          }))
+        : [];
+    /* CAPTIONS make a table and a figure NUMBERED OBJECTS, and numbered objects
+       are things a cross-reference can point at. The ordinal is never stored:
+       it is assigned here, in one pass over every section in reading order,
+       counted separately for tables and figures — so inserting a table in an
+       earlier section renumbers every table after it, and every reference to
+       any of them, with no section's stored bytes touched.
+
+       This pass runs BEFORE rendering because "as shown in Table 7" is routinely
+       written above the table it names: a reference cannot be resolved by
+       counting as the renderer walks. Same reason the citation registry has to
+       know the whole document before it can number one marker.
+
+       The results are merged into the SAME directory the sections go into. A
+       table is a target whose code is "Table 3" and whose title is its caption;
+       nothing in the resolver, in either renderer's reference branch, or in the
+       editor knows that some targets are tables. There is no second mechanism
+       to keep in step. */
+    const { makeCaptionNumbering } = await import('@shared/authoring/captions');
+    const captionDirectory = makeCaptionNumbering();
+    const captionTargets = parsedSections.flatMap((p) =>
+      collectCaptionTargets(p.blocks, captionDirectory)
+    );
+    const crossRefs = crossReferenceLookupFor([...sectionTargets, ...captionTargets]);
+
+    const citedSourceIds = parsedSections.flatMap((p) => collectCitedSourceIds(p.blocks));
+    const citationSources = citedSourceIds.length
+      ? await (async () => {
+          const { listCitationSources } = await import(
+            '../services/clinical-regulatory-evidence/source-usage.service.js'
+          );
+          return listCitationSources(tenantId, citedSourceIds);
+        })()
+      : [];
+    const citations = makeCitationRegistry(citationLookupFor(citationSources));
 
     // Generate export based on format
     let fileContent: Buffer | undefined;
@@ -5381,13 +5952,10 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
          wrong with the docx generation below it — it had simply never run. */
       const docxNs = await import('docx');
       const { Document, Packer, Paragraph, HeadingLevel, TextRun } = docxNs;
-      const { blocksToDocx, orderedListNumbering } = await import(
-        '../export/authoring-blocks-to-docx.js'
-      );
-      const { sectionContentToBlocks, countPendingSuggestions } = await import(
-        '../export/authoring-section-content.js'
-      );
+      const { blocksToDocx, orderedListNumbering, sectionHeadingParagraph, referenceListParagraphs } =
+        await import('../export/authoring-blocks-to-docx.js');
 
+      const exportedAt = new Date().toISOString();
       const children = [];
       children.push(new Paragraph({ text: doc.title, heading: HeadingLevel.TITLE }));
 
@@ -5395,18 +5963,26 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
          (which can carry ins/del track-changes marks). It used to be written
          into one paragraph verbatim, so markup rendered literally in a filed
          Word document. It is parsed to typed runs now; an unresolved
-         suggestion exports AS redline (insertion underlined, deletion struck)
-         with an up-front notice — settling it silently either way at export
-         time would fabricate a decision nobody made. */
+         suggestion exports as a REAL Word revision (w:ins / w:del) with an
+         up-front notice — settling it silently either way at export time would
+         fabricate a decision nobody made.
+
+         The revision carries the mark's own author and timestamp. The date
+         passed here is only the fallback for legacy marks written before the
+         editor recorded data-at; those export as "Unattributed", and dating
+         them to the export is the closest honest statement available — we know
+         when we wrote the file, not when someone made the edit. */
       let pendingIns = 0;
       let pendingDel = 0;
-      const sectionBlocks = sectionsResult.rows.map((section: any) => {
-        const blocks = sectionContentToBlocks(section.content);
+      /* Parsed ONCE, above the format branches, because the citation registry
+         has to know which sources this document cites before a single marker
+         can be numbered. */
+      const sectionBlocks = parsedSections;
+      for (const { blocks } of sectionBlocks) {
         const pending = countPendingSuggestions(blocks);
         pendingIns += pending.insertions;
         pendingDel += pending.deletions;
-        return { section, blocks };
-      });
+      }
       if (pendingIns + pendingDel > 0) {
         children.push(
           new Paragraph({
@@ -5422,15 +5998,52 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
           })
         );
       }
+      /* Word holds footnotes on the DOCUMENT, keyed by an id the referencing
+         run cites, so they are collected across ALL sections here and handed to
+         `new Document({ footnotes })` below. Ids must be unique across the file;
+         one counter for the whole export is the only way to guarantee that.
+         Identical note text cited twice reuses its id — that is what a writer
+         means by "the same note", and it is what Word does natively. */
+      const footnoteText = new Map<string, number>();
+      const footnoteSink = (noteText: string): number => {
+        const hit = footnoteText.get(noteText);
+        if (hit !== undefined) return hit;
+        const id = footnoteText.size + 1;
+        footnoteText.set(noteText, id);
+        return id;
+      };
+      /* ONE caption counter for the whole file, for the same reason there is one
+         footnote sink: a submission's tables run 1..n from front to back. It is
+         a SECOND counter over the same blocks in the same order as the directory
+         pass above — the two agree object-for-object because both ask
+         `blockCaption` what a block is. */
+      const captions = makeCaptionNumbering();
       for (const { section, blocks } of sectionBlocks) {
+        /* The heading carries the Word bookmarks every REF field to this
+           section cites. Emitted for EVERY section, so a reference that
+           resolved above always finds its anchor — a REF to a bookmark that
+           was never written shows a word processor's own error string in a
+           filed document, which is not a sentence a reviewer should ever
+           read. */
+        children.push(sectionHeadingParagraph(docxNs, section));
         children.push(
-          new Paragraph({
-            text: `${section.code} - ${section.title}`,
-            heading: HeadingLevel.HEADING_1,
+          ...blocksToDocx(docxNs, blocks, exportImages, {
+            revisionDate: exportedAt,
+            footnoteSink,
+            crossRefs,
+            citations,
+            captions,
           })
         );
-        children.push(...blocksToDocx(docxNs, blocks, exportImages));
       }
+
+      /* The reference list: every source the document's citations actually
+         resolved to, once each, numbered in first-appearance order. Filed after
+         the content that cites it and before the attestation, which is where a
+         reviewer expects to find it. Nothing is emitted when nothing was
+         cited — a heading over an empty list would claim a bibliography this
+         document does not have. */
+      children.push(...referenceListParagraphs(docxNs, citations));
 
       /* §11.50(b) manifestation. Ordered after the content so the record reads
          document-then-attestation, which is how a reviewer expects a signed
@@ -5451,6 +6064,20 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
            inert and numbered steps silently render unnumbered — which is the
            shape of the bug this replaced. */
         numbering: orderedListNumbering(docxNs),
+        /* Real Word footnotes: auto-numbered, at the foot of the page they are
+           cited on, and renumbered by Word when content moves. Every Module 3
+           specification, batch-analysis and stability table in a submission
+           carries them, and until now the editor could not express one at all. */
+        ...(footnoteText.size > 0
+          ? {
+              footnotes: Object.fromEntries(
+                [...footnoteText.entries()].map(([text, id]) => [
+                  String(id),
+                  { children: [new Paragraph({ text })] },
+                ])
+              ),
+            }
+          : {}),
         sections: [{ children }],
       });
       fileContent = await Packer.toBuffer(docxDoc);
@@ -5461,12 +6088,8 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
       // template render path uses). The previous implementation returned DOCX
       // bytes under a PDF label — a mislabeled file is worse than no file.
       const { renderHtmlToPdf } = await import('../export/renderers');
-      const { sectionContentToBlocks, countPendingSuggestions } = await import(
-        '../export/authoring-section-content.js'
-      );
-      const { blocksToHtml, escapeHtml: esc, PRINT_STYLES } = await import(
-        '../export/authoring-blocks-to-html.js'
-      );
+      const { blocksToHtml, renderReferenceListHtml, escapeHtml: esc, PRINT_STYLES } =
+        await import('../export/authoring-blocks-to-html.js');
       /* Section content parsed to typed runs and re-emitted as a WHITELISTED
          structure with every text node escaped — stored markup never reaches
          the renderer raw (the previous escape-everything approach printed
@@ -5474,16 +6097,30 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
          render as redline with an up-front notice, same as the DOCX branch. */
       let pdfPendingIns = 0;
       let pdfPendingDel = 0;
-      const pdfSections = sectionsResult.rows.map(
-        (s: { code: string; title: string; content: string | null }) => {
-          const blocks = sectionContentToBlocks(s.content);
-          const pending = countPendingSuggestions(blocks);
-          pdfPendingIns += pending.insertions;
-          pdfPendingDel += pending.deletions;
-          const body = blocksToHtml(blocks, exportImages);
-          return `<h2>${esc(s.code)} — ${esc(s.title)}</h2>${body}`;
-        }
-      );
+      /* One caption counter for the whole document, exactly as the DOCX branch
+         keeps one — the two formats of the same frozen document must not
+         disagree about which table is Table 3. */
+      const pdfCaptions = makeCaptionNumbering();
+      /* The same parse and the SAME citation registry the DOCX branch uses, so
+         the two filed formats cannot number one source differently. */
+      const pdfSections = parsedSections.map(({ section: s, blocks }) => {
+        const pending = countPendingSuggestions(blocks);
+        pdfPendingIns += pending.insertions;
+        pdfPendingDel += pending.deletions;
+        const body = blocksToHtml(blocks, exportImages, {
+          crossRefs,
+          citations,
+          captions: pdfCaptions,
+        });
+        // The heading is the anchor a resolved cross-reference links to.
+        return `<h2 id="${esc(crossReferenceAnchorId(String(s.id)))}">${esc(s.code)} — ${esc(
+          s.title
+        )}</h2>${body}`;
+      });
+      /* Assembled after every section has been rendered, because the list is
+         built from the citations actually used and their order is reading
+         order. Empty when nothing was cited. */
+      const referenceListHtml = renderReferenceListHtml(citations);
       const html = `<!doctype html><html><head><meta charset="utf-8"><style>
           body { font-family: Georgia, 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; margin: 1in; }
           h1 { font-size: 18pt; } h2 { font-size: 14pt; margin-top: 1.2em; } h3 { font-size: 12.5pt; margin-top: 1em; }
@@ -5500,6 +6137,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
             : ''
         }
         ${pdfSections.join('\n')}
+        ${referenceListHtml}
         <h2>Electronic signatures</h2>
         ${manifest.length === 0
           ? '<p>No electronic signatures are recorded against this document.</p>'
@@ -5512,6 +6150,18 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
       contentType = 'application/pdf';
     }
 
+    /* §11.10(b): record a hash of the DELIVERED ARTIFACT BYTES. `fileHash`
+       (doc_sha256) is computeDocHash over the SOURCE section rows — it stays,
+       because GET /docs/:docId/exports compares it against the live document to
+       answer content_changed_since_last_export, which only works source-to-
+       source. But nothing hashed the actual file the caller received, so the
+       export record could not attest that a re-download is the identical
+       artifact. Hash the real bytes here and carry it on the record's metadata
+       alongside the source hash. */
+    const artifactSha256 = fileContent
+      ? crypto.createHash('sha256').update(fileContent).digest('hex')
+      : null;
+
     // Durable export record — the same table GET /docs/:docId/exports lists and
     // GET /docs/:docId/diff-since-export baselines against.
     await logExport(
@@ -5521,7 +6171,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
       exportedBy as string,
       fileName,
       fileContent?.length,
-      { options, exportId },
+      { options, exportId, artifactSha256 },
       tenantId
     );
 
@@ -5834,6 +6484,44 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
              WHERE id = $1 AND tenant_id = $2`,
             [docId, tenantId]
           );
+
+          // Auto-freeze on approval — the final workflow signature approving the
+          // document must leave the same immutable legal record the e-sign
+          // APPROVER path produces. Without this the /sign workflow ended a
+          // document APPROVED with NO frozen_documents row: the approved content
+          // survived only in the editable authoring_sections table, and this
+          // approval signature's covered_freeze_version / covered_content_hash
+          // (bound above to `covered`, the pre-existing snapshot) were null —
+          // an approval that attests to "no snapshot". Mirror the proven e-sign
+          // pattern exactly: capture the FULL {document, sections, approvedBy,
+          // documentHash, frozenAt} snapshot, set content_hash to sha256 of the
+          // SNAPSHOT BYTES (so GET /docs/:docId/frozen's recompute-and-compare
+          // verifies), and INSERT ... ON CONFLICT DO NOTHING on THIS transaction
+          // client so the freeze lands with the status flip or rolls back with it.
+          const approvedDoc = await client.query(
+            'SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+            [docId, tenantId]
+          );
+          const approvedSections = await client.query(
+            'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+            [docId, tenantId]
+          );
+          const frozenContent = JSON.stringify({
+            document: approvedDoc.rows[0] ?? null,
+            sections: approvedSections.rows,
+            approvedBy: signerEmail,
+            documentHash: contentHash,
+            frozenAt: new Date().toISOString(),
+          });
+          const frozenContentHash = crypto.createHash('sha256').update(frozenContent).digest('hex');
+
+          await client.query(
+            `INSERT INTO frozen_documents
+             (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (document_id, version, tenant_id) DO NOTHING`,
+            [docId, 'approved', frozenContent, frozenContentHash, signerEmail, 'Approved and frozen', tenantId]
+          );
         }
       }
 
@@ -5844,7 +6532,9 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
         signerEmail as string,
         { signatureId, meaning, reason, contentHash },
         tenantId,
-        client
+        client,
+        // This handler writes its own richer chained row below.
+        { chainedRowWrittenByCaller: true }
       );
 
       /* §11.10(e) — the HASH-CHAINED ledger, on this transaction.
@@ -6146,80 +6836,32 @@ router.post('/ai/suggestions', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/authoring/ai/validate-compliance - Validate regulatory compliance
-router.post('/ai/validate-compliance', async (req: Request, res: Response) => {
-  try {
-    const { document_id, section_code, content } = req.body;
-    const tenantId = getTenantId(req);
-
-    const validationResults: {
-      ich_compliance: any[];
-      fda_compliance: any[];
-      ctd_structure: any[];
-      missing_elements: any[];
-      recommendations: any[];
-    } = {
-      ich_compliance: [],
-      fda_compliance: [],
-      ctd_structure: [],
-      missing_elements: [],
-      recommendations: [],
-    };
-
-    // Check CTD structure requirements
-    if (section_code && section_code.startsWith('3.2.')) {
-      const requiredSections: Record<string, string[]> = {
-        '3.2.S.1': ['nomenclature', 'structure', 'general properties'],
-        '3.2.S.2': ['manufacturer', 'manufacturing process', 'controls'],
-        '3.2.S.3': ['elucidation of structure', 'impurities'],
-        '3.2.S.4': ['specifications', 'analytical procedures', 'validation'],
-        '3.2.S.7': ['stability data', 'post-approval stability', 'storage conditions'],
-      };
-
-      const required = requiredSections[section_code] || [];
-      required.forEach((element: any) => {
-        if (!content.toLowerCase().includes(element)) {
-          validationResults.missing_elements.push({
-            element,
-            section: section_code,
-            severity: 'important',
-            message: `Section ${section_code} should include information about ${element}`,
-          });
-        }
-      });
-    }
-
-    // ICH guideline applicability. There is no automated ICH-guideline
-    // conformance engine wired, so we do NOT assert a pass/fail verdict or a
-    // score — the prior implementation fabricated both with Math.random()
-    // (`compliant: Math.random() > 0.3`, `score: 75 + Math.random() * 25`),
-    // randomly claiming conformance to ICH Q1A/Q3A/Q6A/E6/M4. We surface the
-    // applicable guidelines for the section and flag them for manual review
-    // instead of inventing a verdict.
-    const ichGuidelines = ['Q1A', 'Q3A', 'Q6A', 'E6', 'M4'];
-    ichGuidelines.forEach(guideline => {
-      validationResults.ich_compliance.push({
-        guideline,
-        compliant: null,
-        assessment: 'not_assessed',
-        issues: [],
-        score: null,
-        note: 'Automated ICH conformance assessment is not available — manual review required.',
-      });
-    });
-
-    res.json({
-      success: true,
-      validation: validationResults,
-      overall_compliance:
-        validationResults.missing_elements.length === 0 ? 'PASS' : 'NEEDS_IMPROVEMENT',
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('Compliance validation error:', error);
-    res.status(500).json({ error: 'Failed to validate compliance' });
-  }
-});
+/* POST /api/authoring/ai/validate-compliance has been DELETED.
+ *
+ * It was a second implementation of the capability POST
+ * /sections/:sectionId/ai/deficiency-scan already provides — heuristic keyword
+ * presence over a section's text — with no caller anywhere in the repository,
+ * and it ended in a verdict it could not support:
+ *
+ *     overall_compliance: missing_elements.length === 0 ? 'PASS' : 'NEEDS_IMPROVEMENT'
+ *
+ * `missing_elements` was only ever populated for five hardcoded 3.2.S.* codes.
+ * For every other section in the CTD — all of M1, M2, M4, M5, and most of M3 —
+ * the array was empty because nothing had been examined, and the response said
+ * PASS. A check that ran zero assertions reporting a compliance pass is the
+ * defect this repository keeps finding, and this one named the field
+ * `overall_compliance`.
+ *
+ * Its ICH block had already been repaired once: it used to fabricate
+ * `compliant: Math.random() > 0.3` and a random score against Q1A/Q3A/Q6A/E6/M4,
+ * and was changed to report `not_assessed`. That left the endpoint returning an
+ * honest "we did not assess ICH" beside a dishonest "PASS" in the same body.
+ *
+ * The one part worth keeping — the per-section CTD required-element lists — is
+ * now a check inside the deficiency scan, which has a caller and frames its
+ * output as signals rather than a determination. Migrated and deleted in the
+ * same change, per the zero-duplication rule.
+ */
 
 // ── Tracked Change Decisions (persist accept/reject) ──────────────────────────
 
@@ -6274,12 +6916,36 @@ router.post('/documents/:id/tracked-change-decisions', async (req: Request, res:
       [artifactId, changeId, decision, userId, userName, tenantId]
     );
 
-    // Audit trail for regulatory compliance
+    /* Audit trail for regulatory compliance.
+       `authoring_tracked_change_decisions` stores the id and the verdict and
+       nothing about the change itself — and accepting a suggestion STRIPS its
+       mark, so by the time anyone reads the row the id it names no longer
+       exists in the document. The row is an index; this is where the change is
+       actually recorded, so the decision can be read back as a sentence rather
+       than as an opaque key. The text is bounded: an audit row is not a place
+       to mirror a section. */
     await createAuditEvent(
       artifactId,
       'tracked_change_decision',
       userName,
-      { changeId, decision },
+      {
+        changeId,
+        decision,
+        ...(typeof req.body?.changeType === 'string' ? { changeType: req.body.changeType } : {}),
+        ...(typeof req.body?.text === 'string' && req.body.text.length > 0
+          ? { text: req.body.text.slice(0, 500) }
+          : {}),
+        ...(typeof req.body?.sectionId === 'string' ? { sectionId: req.body.sectionId } : {}),
+        /* Who PROPOSED the change, which is not who decided it — that is the
+           audit row's own actor. A redline record that cannot tell the two
+           apart says nothing about review at all. */
+        ...(typeof req.body?.authorName === 'string'
+          ? { proposedBy: req.body.authorName }
+          : typeof req.body?.authorId === 'string'
+            ? { proposedBy: req.body.authorId }
+            : {}),
+        ...(typeof req.body?.at === 'string' ? { proposedAt: req.body.at } : {}),
+      },
       tenantId
     );
 
@@ -6343,12 +7009,38 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
       results.push(result.rows[0]);
     }
 
-    // Single audit event for bulk action
+    /* Single audit event for the bulk action.
+       Ids alone would make this row unresolvable for exactly the case that
+       needs it most: rejecting changes alters no text, so no revision records
+       what was refused. A bounded per-change summary travels with it, and when
+       it is bounded the row SAYS how many it left out — a truncated record
+       that looks complete is worse than one that admits its limit. */
+    const MAX_SUMMARISED = 20;
+    const rawChanges = Array.isArray(req.body?.changes) ? req.body.changes : [];
+    const summarised = rawChanges.slice(0, MAX_SUMMARISED).map((c: any) => ({
+      changeId: typeof c?.changeId === 'string' ? c.changeId : null,
+      changeType: typeof c?.changeType === 'string' ? c.changeType : null,
+      proposedBy:
+        typeof c?.authorName === 'string'
+          ? c.authorName
+          : typeof c?.authorId === 'string'
+            ? c.authorId
+            : null,
+      text: typeof c?.text === 'string' ? c.text.slice(0, 200) : null,
+    }));
     await createAuditEvent(
       artifactId,
       'tracked_change_bulk_decision',
       userName,
-      { changeIds, decision, count: changeIds.length },
+      {
+        changeIds,
+        decision,
+        count: changeIds.length,
+        ...(summarised.length > 0 ? { changes: summarised } : {}),
+        ...(rawChanges.length > MAX_SUMMARISED
+          ? { changesOmittedFromSummary: rawChanges.length - MAX_SUMMARISED }
+          : {}),
+      },
       tenantId
     );
 

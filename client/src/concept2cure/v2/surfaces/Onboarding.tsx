@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import {
   LIC_ARCHETYPES,
   LIC_DTC,
@@ -10,6 +11,7 @@ import {
   licBundle as licBundleOf,
 } from '../fixtures/onboarding-data';
 import { getAuthHeaders, getOrgId } from '@/utils/authToken';
+import { serverMessage } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 
 /* ── Helpers ── */
@@ -492,7 +494,9 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
             enterpriseRequest = 'failed';
             const body = await res.json().catch(() => null);
             const why =
-              (body && body.error && (body.error.message || body.error)) ||
+              // Was `body.error.message || body.error` — a by-hand envelope read
+              // that carried an enum token or internal text straight to the UI.
+              serverMessage(body) ??
               (res.status === 429
                 ? 'too many requests from here in the last hour'
                 : 'the intake did not say why');
@@ -565,6 +569,78 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   const canNext = step === 0 ? org.name.trim().length > 1 : true;
+
+  /* WHAT ANA SEES HERE. Identity stays off the wire: invite addresses, the
+     contact's name/email, the failed-invite strings (which may embed addresses)
+     and the Stripe checkout URL are never published. After activation the
+     summary reports each step's real outcome — partial reads as partial. */
+  const anaContext = useMemo(() => {
+    const inviteCount = invites.filter((x) => x.email.trim()).length;
+    const facts: Record<string, unknown> = {
+      step,
+      stepLabel: STEPS[step],
+      pricingModel: model,
+      tier,
+      cycle,
+      seats,
+      archetype: org.archetype,
+      organizationNameEntered: org.name.trim().length > 0,
+      inviteCount,
+    };
+    let summary: string;
+    if (outcome) {
+      facts.activationOutcome = {
+        nameSaved: outcome.nameSaved,
+        profileSaved: outcome.profileSaved,
+        invitesAttempted: outcome.invitesAttempted,
+        invitesSent: outcome.invitesSent,
+        invitesFailedCount: outcome.invitesFailed.length,
+        checkout: outcome.checkout,
+        enterpriseRequest: outcome.enterpriseRequest,
+      };
+      const parts = [
+        outcome.nameSaved ? 'organization name saved' : 'organization name not saved',
+        outcome.profileSaved ? 'industry profile saved' : 'industry profile not saved',
+        outcome.invitesAttempted === 0
+          ? 'no invitations requested'
+          : `${outcome.invitesSent} of ${outcome.invitesAttempted} invitation(s) created` +
+            (outcome.invitesFailed.length ? ` (${outcome.invitesFailed.length} not sent)` : ''),
+        outcome.checkout === 'provisioned'
+          ? 'plan provisioned (nothing to pay)'
+          : outcome.checkout === 'redirecting'
+            ? 'redirecting to secure checkout'
+            : `checkout ${outcome.checkout}` +
+              (outcome.checkoutNote ? ` — ${outcome.checkoutNote}` : ''),
+      ];
+      if (outcome.enterpriseRequest !== 'not-requested') {
+        parts.push(
+          outcome.enterpriseRequest === 'sent'
+            ? 'an enterprise onboarding request was recorded for our team to review'
+            : outcome.enterpriseRequest === 'no-contact'
+              ? 'no enterprise request was sent — no contact email was given'
+              : 'the enterprise onboarding request was NOT recorded',
+        );
+      }
+      summary = `Workspace activation summary — ${parts.join('; ')}.`;
+    } else if (activating) {
+      summary =
+        'Workspace setup — activation is running; profile, invitations and checkout have not all reported.';
+    } else {
+      summary =
+        `Workspace setup wizard, step ${step + 1} of 6 (${STEPS[step]}). ` +
+        'Nothing has been created yet — this screen collects configuration and creates nothing until Activate.';
+    }
+    return {
+      summary,
+      facts,
+      // Stepping the wizard is not offered: every step fills a purchase order.
+      availableActions: [
+        'Explain what this step configures and what Activate will and will not do',
+        'Explain the pricing models, plan tiers and what each tier provisions',
+      ],
+    };
+  }, [step, activating, outcome, org.name, org.archetype, model, tier, cycle, seats, invites]);
+  usePublishSurfaceContext('onboarding', anaContext);
 
   return (
     <div className="sp" style={{ maxWidth: 960 }}>

@@ -26,12 +26,17 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
+import { randomBytes } from 'node:crypto';
 import { createJourneyDb, JourneyRecorder, type JourneyDb } from './harness';
 
 // The authoring router carries its own jose JWT verification (HS256 over
 // JWT_SECRET) — so this journey authenticates with REAL signed tokens, and the
 // signature check stays fully active. A forged-secret token is a known-bad step.
-const JWT_SECRET = 'journey-a-test-secret-0725';
+const JWT_SECRET = randomBytes(32).toString('hex');
+const FORGED_JWT_SECRET = randomBytes(32).toString('hex');
+const AUTHOR_PIN = randomBytes(12).toString('hex');
+const APPROVER_PIN = randomBytes(12).toString('hex');
+const WRONG_PIN = randomBytes(12).toString('hex');
 process.env.JWT_SECRET = JWT_SECRET;
 // The authoring router now verifies via the CANONICAL verifyJwtWithRotation,
 // which in test env (NODE_ENV=test → suffix DEV) reads JWT_SECRET_DEV ?? JWT_SECRET.
@@ -244,6 +249,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
   let docId: string;
   let sectionId: string;
   let firstRevisionId: string;
+  let commentId: string;
   let freezeHash: string;
 
   it('runs the authoring spine', async () => {
@@ -317,6 +323,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
         request(app).post(`/api/authoring/sections/${sectionId}/comment`),
       ).send({ doc_id: docId, body: 'Confirm the effect size against the SAP before freeze.' });
       expect(c.status).toBe(201);
+      commentId = c.body.comment.id;
       const cite = await asUser(AUTHOR)(
         request(app).post(`/api/authoring/sections/${sectionId}/cite`),
       ).send({
@@ -364,7 +371,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
 
     // ── KNOWN-BAD: token signed with the WRONG secret → 401 ──────────────────
     await R.expectBlocked('forged-jwt-rejected', async () => {
-      const forged = await mint(AUTHOR, 'not-the-server-secret');
+      const forged = await mint(AUTHOR, FORGED_JWT_SECRET);
       const res = await request(app)
         .get(`/api/authoring/docs/${docId}`)
         .set('Authorization', `Bearer ${forged}`);
@@ -374,10 +381,24 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
     // ── 7. Part 11: PIN from the VERIFIED identity ───────────────────────────
     await R.step('create-signing-pin', async () => {
       const res = await asUser(AUTHOR)(
-        request(app).post(`/api/authoring/docs/${docId}/create-pin`),
-      ).send({ pin: 'jrny-482913' });
+        request(app).post('/api/authoring/users/pin'),
+      ).send({ pin: AUTHOR_PIN });
       expect(res.status).toBe(200);
       return { pinCreated: true, identitySource: 'verified JWT (getActorEmail)' };
+    });
+
+    // ── 7b. Settle before the seal ───────────────────────────────────────────
+    // Freeze refuses to silently seal a document that is still asking questions:
+    // the reviewer's open comment must be resolved (or the freeze explicitly
+    // acknowledge it) before the content is hashed and signed. A pre-signature
+    // filing freeze is the clean-seal case, so the journey resolves the open
+    // review comment here rather than acknowledging an unfinished document.
+    await R.step('resolve-review-comment-before-seal', async () => {
+      const res = await asUser(AUTHOR)(
+        request(app).patch(`/api/authoring/comments/${commentId}`),
+      ).send({ status: 'resolved', resolution_note: 'Effect size confirmed against the SAP.' });
+      expect(res.status).toBe(200);
+      return { commentResolved: true, commentId };
     });
 
     // ── 8. Freeze — immutable snapshot with content hash ─────────────────────
@@ -400,7 +421,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
     await R.expectBlocked('e-sign-wrong-pin', async () => {
       const res = await asUser(AUTHOR)(
         request(app).post(`/api/authoring/docs/${docId}/e-sign`),
-      ).send({ pin: 'wrong-pin-000', meaning: 'AUTHOR', intent: 'I authored this document' });
+      ).send({ pin: WRONG_PIN, meaning: 'AUTHOR', intent: 'I authored this document' });
       return { blocked: res.status === 401, status: res.status };
     });
 
@@ -413,7 +434,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
     await R.step('e-sign-author', async () => {
       const res = await asUser(AUTHOR)(
         request(app).post(`/api/authoring/docs/${docId}/e-sign`),
-      ).send({ pin: 'jrny-482913', meaning: 'AUTHOR', intent: 'I authored this document' });
+      ).send({ pin: AUTHOR_PIN, meaning: 'AUTHOR', intent: 'I authored this document' });
       expect(res.status).toBe(200);
 
       // Independent recomputation of the signature hash from durable state.
@@ -448,11 +469,11 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
     // ── 10. Approver signs — status APPROVED + auto-freeze 'approved' ────────
     await R.step('e-sign-approver', async () => {
       await asUser(APPROVER)(
-        request(app).post(`/api/authoring/docs/${docId}/create-pin`),
-      ).send({ pin: 'appr-771002' });
+        request(app).post('/api/authoring/users/pin'),
+      ).send({ pin: APPROVER_PIN });
       const res = await asUser(APPROVER)(
         request(app).post(`/api/authoring/docs/${docId}/e-sign`),
-      ).send({ pin: 'appr-771002', meaning: 'APPROVER', intent: 'Approved for submission' });
+      ).send({ pin: APPROVER_PIN, meaning: 'APPROVER', intent: 'Approved for submission' });
       expect(res.status).toBe(200);
       const doc = await asUser(APPROVER)(request(app).get(`/api/authoring/docs/${docId}`));
       const rows = await jdb.pool.query(
@@ -692,7 +713,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       'Fixed while building this journey: POST /docs/:docId/export inserted into `authoring_exports` and GET /docs/:docId/diff-since-export read `doc_exports` — NEITHER table is created by any migration or any runtime DDL in this repo, and both queries were unguarded. Every export request and every diff request returned 500. The flagship authoring loop could draft, freeze and sign a document but could not export one (ledger C-14).',
       'Fixed while building this journey: the export record is now written by logExport() AFTER the bytes are generated, so file_name and file_size are the real ones rather than placeholders, and ANA-initiated exports (command-executor) record to the same table instead of the phantom one.',
       'Fixed while building this journey: freeze queried authoring_sections.document_id — a column that does not exist (doc_id everywhere else). Freeze had never been executable.',
-      'Fixed while building this journey: create-pin, freeze and e-sign took signer identity from the attacker-controlled x-user-email header; they now use the verified JWT via getActorEmail — the same fix the file had already applied to every other attribution column (Part 11 §11.100).',
+      'Fixed while building this journey: the canonical user PIN enrollment route, freeze and e-sign take signer identity from the verified JWT via getActorEmail. The former document-scoped create-pin route, which trusted an attacker-controlled x-user-email header and duplicated PIN enrollment, remains deleted (Part 11 §11.100).',
       'Fixed while building this journey (was recorded here as an INTEGRITY GAP): freeze and signature hashes each verified independently but nothing said WHICH snapshot a signature attested to, which is exactly what 21 CFR Part 11 §11.70 requires. Signatures now carry the covered snapshot version and hash, and signature_digest is computed over durable columns only — no timestamp — so an auditor can recompute it from the stored row and detect tampering with the signer, the meaning, the content, or the snapshot binding (ledger C-11 residual 2).',
     );
     R.limitations.push(

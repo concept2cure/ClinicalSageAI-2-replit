@@ -15,6 +15,10 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+/* The real class. The mock below spreads `importOriginal`, so this is the
+   same ApiRequestError the transport actually throws — which is the point:
+   the fixture has to fail the way production fails. */
+import { ApiRequestError } from '@/lib/queryClient';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -113,6 +117,11 @@ describe('DocumentAuthoring — real editable canvas', () => {
 
     canvasEditor().chain().focus().selectAll().insertContent('Revised substance description.').run();
     await waitFor(() => expect(canvasText()).toBe('Revised substance description.'));
+    /* §11.10(d) reason for change — Save stays disabled without one, so these
+       tests state a reason exactly as an author now must. */
+    fireEvent.change(screen.getByTestId('change-reason'), {
+      target: { value: 'Corrected the substance description.' },
+    });
     // The header Save button enables once the dirty state propagates.
     const saveBtn = screen.getByRole('button', { name: /Save/i }) as HTMLButtonElement;
     await waitFor(() => expect(saveBtn.disabled).toBe(false));
@@ -135,7 +144,23 @@ describe('DocumentAuthoring — real editable canvas', () => {
       if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
       if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
       if (method === 'PATCH' && url === '/api/authoring/sections/S1') {
-        return { ok: false, status: 500, json: async () => ({ error: 'db unavailable' }) } as Response;
+        /* THROWS, because the real `apiRequest` throws.
+           This used to return `{ ok: false, status: 500 }`, which
+           client/src/lib/queryClient.ts never produces for a non-2xx — it
+           raises ApiRequestError. So the assertion below was exercising a
+           branch in DocumentAuthoring that PRODUCTION COULD NOT REACH, and the
+           surface's real behaviour on a failed save (an unbound catch, a 10px
+           grey line, no reason) went untested and unnoticed while this stayed
+           green. A fixture that cannot happen is worse than no fixture: it
+           reports coverage of the case it is hiding. */
+        const err = new ApiRequestError(
+          'The section was not saved: its data lineage could not be recorded.',
+          500,
+          { error: { code: 'LINEAGE_REQUIRED' } },
+          'LINEAGE_REQUIRED',
+          'req-abc123',
+        );
+        throw err;
       }
       return ok({ success: true });
     });
@@ -145,11 +170,20 @@ describe('DocumentAuthoring — real editable canvas', () => {
 
     canvasEditor().chain().focus().selectAll().insertContent('My unsaved edit').run();
     await waitFor(() => expect(canvasText()).toBe('My unsaved edit'));
+    /* §11.10(d) reason for change — Save stays disabled without one. */
+    fireEvent.change(screen.getByTestId('change-reason'), {
+      target: { value: 'Reworded the opening paragraph.' },
+    });
     const saveBtn = screen.getByRole('button', { name: /Save/i }) as HTMLButtonElement;
     await waitFor(() => expect(saveBtn.disabled).toBe(false));
     fireEvent.click(saveBtn);
 
-    expect(await screen.findByText(/Couldn’t save the section/i)).toBeTruthy();
+    /* The server's OWN sentence reaches the author, with its correlation id —
+       not "HTTP 500", and not a silent grey line. A lineage failure and a
+       frozen record need different actions and must read differently. */
+    expect(await screen.findByText(/its data lineage could not be recorded/i)).toBeTruthy();
+    expect(screen.getByText(/Nothing was persisted/i)).toBeTruthy();
+    expect(screen.getByText(/req-abc123/)).toBeTruthy();
     // The edit is preserved (not discarded, not replaced by a fake success).
     expect(canvasText()).toBe('My unsaved edit');
     // And the canvas says so: not persisted, still on this device.

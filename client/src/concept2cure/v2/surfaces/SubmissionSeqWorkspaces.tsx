@@ -31,6 +31,7 @@ import React from 'react';
 import { I } from '../icons';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { useLiveRows, useLiveData, hasKeys, liveGetOrNull, EmptyState } from '../dataConnect';
+import { assessmentStateFor } from '../assessmentState';
 import {
   SC_LENSES,
   SC_LIFECYCLE_OPS,
@@ -690,6 +691,30 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
   const run = runs.rows.find((r) => r.id === selRun) ?? runs.rows[0] ?? null;
   const findingsPath = run ? `/api/submissions/shadow-review/${run.id}/findings` : null;
   const findings = useLiveRows<ShadowFindingRow>(findingsPath, [findingsPath, bump]);
+  /* ── A run row exists before the review does ───────────────────────────────
+     The findings panel used to say "Run #N recorded no findings." on the sole
+     condition that the findings read settled empty. The run row, however, is
+     INSERTED with status 'running' before the reviewer is called at all, and is
+     set to 'failed' — with no finding rows ever written — when that call does
+     not return a usable answer. The list is newest-first and the newest run is
+     the one selected by default, which is precisely the run most likely to be
+     in flight or to have aborted.
+
+     So the sentence rendered in two states where it was false: over a run still
+     executing, and over a run that failed outright. In both, zero findings means
+     the review never got as far as recording any — not that a reviewer read the
+     sequence and had nothing to raise. On a submission sequence that is the
+     sentence a regulatory director acts on.
+
+     Clearance is now gated on the run's own recorded completion, which is the
+     positive evidence assessmentState.ts asks for, and is deliberately NOT the
+     emptiness that produced the bug: a complete run can hold findings or hold
+     none, and those stay different states. */
+  const findingsState = assessmentStateFor(findings, {
+    scopeExists: Boolean(run),
+    findingCount: findings.rows.length,
+    assessmentRan: run?.status === 'complete',
+  });
   const [notice, setNotice] = React.useState<Notice | null>(null);
   const [running, setRunning] = React.useState(false);
 
@@ -813,7 +838,19 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
                     Couldn&#39;t load run #{run.id}&#39;s findings — {findings.error}.
                   </div>
                 ) : findings.empty ? (
-                  <div className="scaf-note">Run #{run.id} recorded no findings.</div>
+                  findingsState === 'assessed-clear' ? (
+                    <div className="scaf-note">Run #{run.id} recorded no findings.</div>
+                  ) : run.status === 'running' ? (
+                    <div className="scaf-note">
+                      Run #{run.id} is still running, so it holds no findings yet. That is
+                      the absence of a result, not a clear one.
+                    </div>
+                  ) : (
+                    <div className="sc-verdict tone-err" role="status">
+                      Run #{run.id} did not complete, so no findings were recorded. That is
+                      the absence of a review, not a clear one — run the shadow review again.
+                    </div>
+                  )
                 ) : (
                   <div className="sp-list">
                     {findings.rows.map((f) => (

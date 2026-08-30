@@ -239,6 +239,18 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'vault' },
       },
       {
+        say: 'Beyond their own vault: Deep Research runs multi-source regulatory research over live connectors, metered and governed — launching stays their click, never yours.',
+        navigate: { target: 'deep-research' },
+      },
+      {
+        say: 'Show the connector inventory — the org’s own sources with live configured status, credentials encrypted per-organization.',
+        act: { actionId: 'deep-research.open-tab', params: { tab: 'connectors' } },
+      },
+      {
+        say: 'For pharma programs the PDEV → IND engine tracks the whole pre-IND arc: four workstreams, readiness against threshold, and IND assembly with human-gated compilation.',
+        navigate: { target: 'pdev' },
+      },
+      {
         say: 'Review readiness: the platform scores whether the submission would survive review, before the agency sees it.',
         navigate: { target: 'review-readiness' },
       },

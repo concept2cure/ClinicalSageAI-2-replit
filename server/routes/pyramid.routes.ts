@@ -40,7 +40,8 @@
  *
  * AUTH — this router is mounted at /api/v1 (the X-API-Key "public API" prefix,
  * carved out of the global session boundary; see server/middleware/
- * authBoundary.ts). authenticateToken is applied PER-ROUTE below rather than at
+ * authBoundary.ts). The canonical session boundary is applied PER-ROUTE below
+ * rather than at
  * the app.use('/api/v1', …) mount ON PURPOSE: a prefix-level gate would run on
  * every /api/v1/* request and 401 every X-API-Key call to the sibling public
  * API (which shares the prefix and is registered right after this one). Per-
@@ -48,7 +49,8 @@
  * /api/v1 requests fall through untouched to the public-API router.
  */
 import { Router, type Request, type Response } from 'express';
-import { authenticateToken } from '../middleware/auth.js';
+import { authMiddleware } from '../auth.js';
+import { enforceTenantLifecycle } from '../middleware/tenantLifecycleGuard.js';
 import { ok, clientError } from '../lib/api-response.js';
 import { createFeatureStore } from '../utils/feature-persistence.js';
 import {
@@ -283,21 +285,29 @@ function buildGlobalList(): PyGlobalConfig[] {
 const router = Router();
 
 /** GET /pyramids/types → PyType[] (all 11 engine types + selector metadata). */
-router.get('/pyramids/types', authenticateToken, (_req: Request, res: Response) => {
-  return ok(res, buildTypeList());
-});
+router.get(
+  '/pyramids/types',
+  authMiddleware,
+  enforceTenantLifecycle,
+  (_req: Request, res: Response) => ok(res, buildTypeList())
+);
 
 /** GET /pyramids/:type → PyPyramid (adapted). 404 on an unsupported type. */
-router.get('/pyramids/:type', authenticateToken, (req: Request, res: Response) => {
-  const raw = String(req.params.type ?? '');
-  const match = getAllSupportedTypes().find(
-    (t) => t === raw || t === raw.toUpperCase(),
-  );
-  if (!match) {
-    return clientError(res, 404, `Unknown submission type: ${raw}`);
+router.get(
+  '/pyramids/:type',
+  authMiddleware,
+  enforceTenantLifecycle,
+  (req: Request, res: Response) => {
+    const raw = String(req.params.type ?? '');
+    const match = getAllSupportedTypes().find(
+      (t) => t === raw || t === raw.toUpperCase(),
+    );
+    if (!match) {
+      return clientError(res, 404, `Unknown submission type: ${raw}`);
+    }
+    return ok(res, adaptPyramid(getPyramidForProject(match)));
   }
-  return ok(res, adaptPyramid(getPyramidForProject(match)));
-});
+);
 
 
 // ─── Task progress — the org's RECORDED status per pyramid task ──────────────
@@ -334,7 +344,10 @@ async function loadProgressRow(orgId: number, type: string) {
 }
 
 /** GET /pyramids/:type/progress → { statuses: { [taskId]: status } }. */
-router.get('/pyramids/:type/progress', authenticateToken, async (req: Request, res: Response) => {
+router.get('/pyramids/:type/progress', authMiddleware, enforceTenantLifecycle, async (
+  req: Request,
+  res: Response
+) => {
   const orgId = progressOrgId(req);
   if (orgId === null) return clientError(res, 403, 'Organization context required.');
   const match = matchType(String(req.params.type ?? ''));
@@ -362,7 +375,10 @@ router.get('/pyramids/:type/progress', authenticateToken, async (req: Request, r
  * being viewed — which is what would let a stale tab quietly write orphan rows
  * that never render anywhere.
  */
-router.patch('/pyramids/:type/progress/:taskId', authenticateToken, async (req: Request, res: Response) => {
+router.patch('/pyramids/:type/progress/:taskId', authMiddleware, enforceTenantLifecycle, async (
+  req: Request,
+  res: Response
+) => {
   const orgId = progressOrgId(req);
   if (orgId === null) return clientError(res, 403, 'Organization context required.');
   const match = matchType(String(req.params.type ?? ''));
@@ -405,20 +421,28 @@ router.patch('/pyramids/:type/progress/:taskId', authenticateToken, async (req: 
 });
 
 /** GET /global-pyramids → PyGlobalConfig[] (distinct canonical global configs). */
-router.get('/global-pyramids', authenticateToken, (_req: Request, res: Response) => {
-  return ok(res, buildGlobalList());
-});
+router.get(
+  '/global-pyramids',
+  authMiddleware,
+  enforceTenantLifecycle,
+  (_req: Request, res: Response) => ok(res, buildGlobalList())
+);
 
 /** GET /global-pyramids/:type → PyGlobalConfig. 404 on an unsupported type. */
-router.get('/global-pyramids/:type', authenticateToken, (req: Request, res: Response) => {
-  const raw = String(req.params.type ?? '');
-  const match = getAvailableGlobalSubmissions().find(
-    (t) => t === raw || t === raw.toUpperCase(),
-  );
-  if (!match) {
-    return clientError(res, 404, `Unknown global submission type: ${raw}`);
+router.get(
+  '/global-pyramids/:type',
+  authMiddleware,
+  enforceTenantLifecycle,
+  (req: Request, res: Response) => {
+    const raw = String(req.params.type ?? '');
+    const match = getAvailableGlobalSubmissions().find(
+      (t) => t === raw || t === raw.toUpperCase(),
+    );
+    if (!match) {
+      return clientError(res, 404, `Unknown global submission type: ${raw}`);
+    }
+    return ok(res, adaptGlobal(getGlobalPyramid(match)));
   }
-  return ok(res, adaptGlobal(getGlobalPyramid(match)));
-});
+);
 
 export default router;

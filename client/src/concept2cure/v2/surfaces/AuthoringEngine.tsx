@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveRows, ErrorState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -140,6 +141,47 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
     ['templates', 'Templates'],
     ['automations', 'GxP automations'],
   ];
+
+  /* WHAT ANA SEES HERE. This page is a capability brochure: the disclaimer IS
+     the payload — without it, "is my 2.5 grounded?" gets answered from a
+     description of what the engine can do. The template count is the page's
+     only live read; everything else describes no program and no status. */
+  const tabLabel = (tabs.find(([id]) => id === tab) ?? [tab, tab])[1];
+  const anaContext = useMemo(() => {
+    let summary =
+      'AnA Authoring Engine — this page describes what the engine is built to do for each document type; ' +
+      `it reads no programs and reports no program status. The "${tabLabel}" tab is open.`;
+    if (tab === 'systems') {
+      summary += ` The ${sys.t} system (CTD ${sys.loc}) is selected.`;
+    }
+    if (tab === 'templates') {
+      summary += tpl.loading
+        ? ' The organization template read is still loading.'
+        : tpl.error
+          ? ' The organization templates could not be read — a failed read, not an organization with no templates.'
+          : tpl.rows.length === 0
+            ? ' No templates learned for this organization yet.'
+            : ` ${tpl.rows.length} template(s) learned for this organization.`;
+    }
+    return {
+      summary,
+      facts: {
+        describesCapabilityOnly: true,
+        openTab: tab,
+        ...(tab === 'systems'
+          ? { selectedSystemId: sys.id, selectedSystemTitle: sys.t, selectedSystemCtdLocation: sys.loc }
+          : {}),
+        ...(tab === 'templates'
+          ? tpl.loading
+            ? {}
+            : tpl.error
+              ? { templatesUnavailable: true }
+              : { templateCount: tpl.rows.length }
+          : {}),
+      },
+    };
+  }, [tab, tabLabel, sys, tpl.loading, tpl.error, tpl.rows]);
+  usePublishSurfaceContext('authoring-engine', anaContext);
 
   return (
     <div className="ae">

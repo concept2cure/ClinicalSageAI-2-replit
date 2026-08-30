@@ -99,7 +99,8 @@ describe('a vault id is verified against the store', () => {
       recordTmfArtifactFiling({ trialId: 'T', artifactCode: CODE, documentRef: 'vault://abc-123' }, CTX),
     ).resolves.toBeTruthy();
     expect(insertChain).toHaveBeenCalled();
-    expect(query.mock.calls[0][1]).toEqual(['abc-123']);
+    expect(query.mock.calls[0][0]).toMatch(/rp\.organization_id = \$2/);
+    expect(query.mock.calls[0][1]).toEqual(['abc-123', 7]);
   });
 
   it('refuses rather than waving the reference through when the vault schema is missing', async () => {

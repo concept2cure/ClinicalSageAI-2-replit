@@ -337,11 +337,16 @@ describe('CER v2 export routes — governed wiring', () => {
   });
 
   it('sets X-Concept2Cure-Governance-Persistence header to "governed"', () => {
-    expect(src).toContain("'X-Concept2Cure-Governance-Persistence', 'governed'");
+    // Matched on the header and its value rather than one call syntax. The
+    // header moved from setHeader('X-…', 'governed') to an object-literal
+    // property 'X-…': 'governed' in the same file, which is the same behaviour
+    // written differently — and a test that only knew the first spelling
+    // reported a refactor as a lost governance header.
+    expect(src).toMatch(/'X-Concept2Cure-Governance-Persistence'\s*[,:]\s*'governed'/);
   });
 
   it('does not have old "none" governance persistence default', () => {
-    expect(src).not.toContain("'X-Concept2Cure-Governance-Persistence', 'none'");
+    expect(src).not.toMatch(/'X-Concept2Cure-Governance-Persistence'\s*[,:]\s*'none'/);
   });
 
   it('consequence includes sourceType export_pdf and export_docx', () => {

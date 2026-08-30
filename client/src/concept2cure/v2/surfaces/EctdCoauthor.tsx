@@ -54,6 +54,7 @@ import { useChatUpload, attachmentReadLabel } from '../../hooks/useChatUpload';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import { AnswerLead } from '../AnswerLead';
+import { assessmentState, mayReassure } from '../assessmentState';
 import {
   advertisedScreenActions,
   notifySurfaceActionReady,
@@ -393,6 +394,37 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
       setTreeQuery(query);
       return { ok: true, detail: `Filtering the eCTD tree for "${query}"` };
     },
+    'ectd-coauthor.open-tab': (params) => {
+      const target =
+        params.tab === 'validation'
+          ? ('validation' as const)
+          : params.tab === 'compliance'
+            ? ('compliance' as const)
+            : ('document' as const);
+      if (tab === target) return { ok: true, detail: `Already on the ${target} tab` };
+      if (target !== 'document' && editorDirty && activeDoc) {
+        return {
+          ok: false,
+          reason:
+            `There are unsaved edits in §${activeDoc.moduleNumber || '—'} ${activeDoc.title} — ` +
+            'the editor unmounts on a tab switch; save first (Cmd/Ctrl-S).',
+        };
+      }
+      /* View only, deliberately: the human tab buttons auto-run a missing
+         validation/compliance check on switch — a server check AnA must not
+         start uninvited. She opens the tab; the panel's idle state and the
+         detail say the run is still a human click. */
+      setTab(target);
+      const unrun =
+        activeDoc &&
+        ((target === 'validation' && !validation) || (target === 'compliance' && !compliance));
+      return {
+        ok: true,
+        detail:
+          `Opened the ${target} tab` +
+          (unrun ? ` — no ${target} report has been run yet; running one stays a human click` : ''),
+      };
+    },
     'ectd-coauthor.open-document': (params) => {
       const raw = (params.document ?? '').trim();
       if (!raw) return { ok: false, reason: 'No document named.' };
@@ -454,6 +486,29 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
   const approvedCount = docs.filter((d) => statusToken(d.status) === 'approved').length;
   const reviewCount = docs.filter((d) => statusToken(d.status) === 'review').length;
   const readiness = total ? Math.round(((approvedCount + reviewCount * 0.5) / total) * 100) : 0;
+
+  /* ── What the backbone footer is entitled to say ───────────────────────────
+     `total`, `approvedCount` and `readiness` are only measurements once the
+     read has settled AND returned rows. `docs` is still its initial `[]` for
+     the whole of `loading === true` and for the entire error branch (the
+     documents fetch handler returns after `setError` without ever calling
+     `setDocs`), so all three collapse to 0 in states where the true figures are
+     unknown — and `readiness`'s `: 0` above is a fallback, not a finding of
+     "0% ready".
+
+     This is the same `loading` / `error` state the tree body and the document
+     tab already gate on; no new signal is invented. `assessmentRan` is the
+     non-zero denominator — the only condition under which the readiness
+     expression divides by something real. Findings are the documents not yet
+     approved, so a backbone whose documents are ALL approved still reaches
+     `assessed-clear`, and reads 100%. */
+  const backboneState = assessmentState({
+    loading,
+    unreadable: Boolean(error),
+    scopeExists: total > 0,
+    findingCount: total - approvedCount,
+    assessmentRan: total > 0,
+  });
 
   const toggleModule = (m: string) => setOpenModules((prev) => ({ ...prev, [m]: !prev[m] }));
 
@@ -585,10 +640,37 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
             </div>
           ))
         )}
+        {/* ── The strip that measured a dossier nobody had read ─────────────
+            These three rows were a SIBLING of the tree body's
+            loading / error / empty ternary above, not a branch of it, so they
+            rendered on every pass. While the tree body directly above said
+            "Loading eCTD documents…" or "Couldn't load eCTD documents.", this
+            footer printed "Documents 0 -- Approved 0 -- eCTD readiness 0%" in the
+            vocabulary of a measurement: a specific, computed readiness figure
+            for a backbone that had not been read, and a confirmed zero
+            document count when the count was unknown.
+
+            Each state now says which one it is. The counts return the moment
+            the read settles with rows — the gate withholds the figures while
+            they are unknown, it does not suppress them. */}
         <div className="ec-tree-foot">
-          <div className="ec-tree-foot-row"><span>Documents</span><b>{total}</b></div>
-          <div className="ec-tree-foot-row"><span>Approved</span><b>{approvedCount}</b></div>
-          <div className="ec-tree-foot-row"><span>eCTD readiness</span><b>{readiness}%</b></div>
+          {backboneState === 'loading' ? (
+            <div className="ec-tree-foot-row"><span>eCTD backbone</span><b>Reading…</b></div>
+          ) : backboneState === 'unreadable' ? (
+            <div className="ec-tree-foot-row"><span>eCTD backbone</span><b className="sp-tone-warn">Not read</b></div>
+          ) : (
+            <>
+              {/* A settled read that returned nothing DOES establish these two:
+                  the org has no co-author documents. Readiness does not follow
+                  from them — it was measured against nothing. */}
+              <div className="ec-tree-foot-row"><span>Documents</span><b>{total}</b></div>
+              <div className="ec-tree-foot-row"><span>Approved</span><b>{approvedCount}</b></div>
+              <div className="ec-tree-foot-row"><span>eCTD readiness</span><b>{backboneState === 'not-assessed' ? 'Not assessed' : readiness + '%'}</b></div>
+              {mayReassure(backboneState, readiness) && (
+                <div className="ec-tree-foot-row"><span>eCTD backbone</span><b>All documents approved</b></div>
+              )}
+            </>
+          )}
         </div>
       </aside>
 

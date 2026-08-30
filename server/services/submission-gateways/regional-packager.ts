@@ -507,7 +507,13 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     const raw = await fs.readFile(leaf.sourcePath);
     const { bytes, md5Override, isPdf, converted } = await finalizeLeafBytes(raw, leaf.fileName, input.skipPdfaConversion);
     grades.push({ fileName: leaf.fileName, isPdf, converted });
-    const md5 = md5Override ?? leaf.md5 ?? createHash('md5').update(bytes).digest('hex');
+    // Hash the EXACT bytes about to be written into the zip — never a caller-
+    // supplied leaf.md5. The eCTD checksum contract requires index-md5 to match
+    // the shipped file; a pre-computed leaf.md5 can be stale/wrong (computed
+    // against different bytes, before a re-render), which md5Override only
+    // guards on the PDF/A-conversion branch. The bytes are already in memory, so
+    // recomputing is free and makes the manifest correct by construction.
+    const md5 = md5Override ?? createHash('md5').update(bytes).digest('hex');
 
     let relPath: string;
     let href: string;
@@ -527,8 +533,26 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     refByLeaf.set(leaf, ref);
     prepared.push({ leaf, relPath, ref, bytes });
   }
-  const resolve = (l: EctdLeaf): LeafRef =>
-    refByLeaf.get(l) ?? { href: l.fileName, md5: l.md5 ?? '' };
+  const resolve = (l: EctdLeaf): LeafRef => {
+    const ref = refByLeaf.get(l);
+    if (!ref) {
+      // A leaf referenced by the backbone (e.g. an FDA transmittal form passed
+      // in fda.forms) that was never in input.leaves is never read, hashed, or
+      // written into the zip. Emitting a fabricated ref (empty/unverified md5 +
+      // an href to a file that is absent from the package) would declare a
+      // legally-required document present while it is missing. Fail closed: the
+      // referenced leaf must be in input.leaves so it is actually packaged.
+      throw new ValidationError(
+        `regional-packager: leaf "${l.fileName}" (section ${l.ctdSection}) is referenced by the backbone but was not packaged — include it in input.leaves so it is read, hashed, and written into the submission.`,
+        // ValidationError carries structured findings alongside the sentence —
+        // this call was written with the message alone. Same shape as the
+        // unplaceable-leaf refusal above, so a caller inspecting `findings`
+        // sees this refusal too instead of only its text.
+        [`unpackaged-referenced-leaf:${l.ctdSection}:${l.fileName}`],
+      );
+    }
+    return ref;
+  };
 
   /* PASS 1.5 — Study Tagging Files (FDA STF v2.6.1, audit gap G5). For each
      M4/M5 study (leaves carrying studyId + stfFileTag) generate a per-study
@@ -684,9 +708,16 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
 
   /* Write the ICH M2-M5 index.xml + index-md5.txt. */
   const indexXml = buildIndexXml(input, m2to5, resolve);
+  const indexXmlMd5 = createHash('md5').update(indexXml).digest('hex');
   zip.file('index.xml', indexXml);
-  checksums.push({ relPath: 'index.xml', md5: createHash('md5').update(indexXml).digest('hex') });
+  checksums.push({ relPath: 'index.xml', md5: indexXmlMd5 });
 
+  // ICH eCTD v3.2.2 REQUIRES `index-md5.txt` at the SEQUENCE ROOT holding the
+  // bare MD5 of index.xml — regional validators (FDA eValidator / EMA / PMDA)
+  // reject a sequence whose backbone checksum file is missing. (The additional
+  // `util/index-md5.txt` full-file manifest below is a platform convenience, not
+  // the spec artifact, and is not a substitute for the root file.)
+  zip.file('index-md5.txt', indexXmlMd5);
   zip.file('util/index-md5.txt', buildMd5Index(checksums));
 
   /* Generate the zip + write to disk. */
@@ -715,10 +746,26 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     }
   }
 
+  // Per-sequence leaf manifest for cross-sequence lifecycle diffing: each shipped
+  // leaf's CTD section + final href + md5 (+ op/title). The NEXT sequence loads
+  // this (loadPriorSequenceManifest) and diffs against it to derive
+  // replace/append/delete. Raw shape (not built via sequence-manifest) to keep
+  // the packager free of an ectd/ import; the ectd-side caller runs
+  // buildLeafManifest over it before persisting.
+  const leafManifest = prepared.map((p) => ({
+    ctdSection: p.leaf.ctdSection,
+    fileName: p.leaf.fileName,
+    href: p.relPath,
+    md5: p.ref.md5,
+    ...(p.leaf.operation ? { operation: p.leaf.operation } : {}),
+    ...(p.leaf.title ? { title: p.leaf.title } : {}),
+  }));
+
   return {
     path:      outPath,
     sha256:    createHash('sha256').update(buffer).digest('hex'),
     sizeBytes: buffer.length,
+    leafManifest,
     format,
     displayName: `${input.productName} · ${region.toUpperCase()} ${submissionTypeLabel} #${input.sequence}`,
     submissionGrade,

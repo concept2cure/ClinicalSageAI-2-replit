@@ -77,6 +77,32 @@ function wireDb(opts: { docExists: boolean; sections?: Array<{ code: string; con
   });
 }
 
+describe('GET /docs/:docId/diff-since-export', () => {
+  beforeEach(() => mockQuery.mockReset());
+
+  it('404s an unknown document rather than answering "no baseline"', async () => {
+    wireDb({ docExists: false });
+    const res = await request(makeApp())
+      .get('/api/authoring/docs/NOPE/diff-since-export')
+      .set('Authorization', await bearer());
+
+    expect(res.status).toBe(404);
+    // `{ baseline: null }` is what a real document with no export yet gets.
+    expect(res.body.baseline).toBeUndefined();
+  });
+
+  it('answers with a null baseline for a real document never exported', async () => {
+    wireDb({ docExists: true, exports: [] });
+    const res = await request(makeApp())
+      .get('/api/authoring/docs/D1/diff-since-export')
+      .set('Authorization', await bearer());
+
+    expect(res.status).toBe(200);
+    expect(res.body.baseline).toBeNull();
+    expect(res.body.changed).toEqual([]);
+  });
+});
+
 describe('GET /docs/:docId/exports', () => {
   beforeEach(() => mockQuery.mockReset());
 

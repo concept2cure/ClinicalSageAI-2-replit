@@ -410,7 +410,10 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
       );
     } catch (e) {
       setDownloadNote({
-        text: `${title} was not downloaded — ` + (e instanceof Error ? e.message : String(e)) + '.',
+        text: redactInternals(
+          e instanceof Error ? e.message : String(e),
+          `${title} was not downloaded.`,
+        ),
         tone: 'error',
       });
     } finally {
@@ -431,6 +434,23 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         '/api/c2c/project-vault/' + encodeURIComponent(projectId) + '/file',
         { documentId: docId, ...body },
       );
+      // apiRequest does not throw on 401 (an expired token returns, it does not
+      // reject), so without this guard a rejected filing fell through to the
+      // tone:'ok' branch below and claimed "Recorded in the audit trail" for a
+      // write that never landed — a Part 11 claim on a refused request. A
+      // refusal is reported as a refusal; the placement on screen stays what the
+      // server last stored.
+      if (!res.ok) {
+        const j = await res.json().catch(() => null);
+        setFilingNote({
+          tone: 'error',
+          text:
+            'The filing decision was not recorded — ' +
+            (serverMessage(j) ?? `the vault refused it (HTTP ${res.status})`) +
+            '. The placement here is unchanged.',
+        });
+        return;
+      }
       const payload = (await res.json().catch(() => null)) as
         | { filing?: { folderId: string | null; folderLabel?: string } }
         | null;

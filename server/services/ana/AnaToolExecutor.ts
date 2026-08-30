@@ -7899,6 +7899,18 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'write_q_sub_section requires tenant context.' });
   }
+  // Matches create_qms_document / approve_qms_document / revise_qms_document,
+  // which all refuse without an identified actor. This handler wrote author
+  // lineage as String(ctx.userId ?? 'system') — a literal, into
+  // document_span_lineage.asserted_by, whose CHECK requires that column to be
+  // NOT NULL for an author_assertion. Satisfying an attribution constraint with
+  // a placeholder defeats what the constraint is for: the prose is regulatory
+  // text bound for FDA, and 'system' is not a person who can stand behind it.
+  if (!ctx.userId) {
+    return JSON.stringify({
+      error: 'write_q_sub_section requires user context — section prose cannot be attributed without an identified author (21 CFR Part 11).',
+    });
+  }
   const qSubId     = typeof input.q_sub_id === 'string' ? input.q_sub_id : '';
   const sectionKey = typeof input.section_key === 'string' ? input.section_key : '';
   const content    = typeof input.content === 'string' ? input.content : '';
@@ -7961,7 +7973,7 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
         ctx.organizationId,
         { documentTable: 'q_sub_section_bodies', documentId: String(rows[0].id) },
         content,
-        String(ctx.userId ?? 'system'),
+        String(ctx.userId),
       );
       await client.query('COMMIT');
       return JSON.stringify({
@@ -15564,12 +15576,16 @@ registerToolHandler('assemble_device_submission', async (input: Record<string, u
       return JSON.stringify({ status: 'needs_parameters', message: "variant must be 'device' or 'ivd'." });
     }
     if (!Array.isArray(input.leaves)) {
-      return JSON.stringify({ status: 'needs_parameters', message: 'leaves[] is required (each: { sectionCode, title, documentType? }).' });
+      return JSON.stringify({ status: 'needs_parameters', message: 'leaves[] is required (each: { sectionCode, title, documentType?, substantive? }).' });
     }
+    // Fails closed: a leaf is treated as a draft/placeholder (not substantive)
+    // unless the caller explicitly asserts it carries real, finalized content —
+    // a title match alone must never count as "present".
     const leaves = (input.leaves as Array<Record<string, unknown>>).map(l => ({
       sectionCode: String(l.sectionCode ?? ''),
       title: String(l.title ?? ''),
       documentType: typeof l.documentType === 'string' ? l.documentType : undefined,
+      substantive: l.substantive === true,
     }));
     const { assembleDeviceSubmission } = await import('../pathway-engines/device-assembly/assemble-device-submission.js');
     const result = assembleDeviceSubmission({
