@@ -1682,14 +1682,25 @@ router.post('/docs', async (req: Request, res: Response) => {
       }
       // (a) The global reference store. Deliberately no tenant filter — these
       // templates describe agency expectations, not customer content; tenancy
-      // comes from the document being created.
-      const globalSections = await pool.query(
-        `SELECT ts.section_code, ts.section_title, ts.ordering
-           FROM intelligence.template_sections ts
-          WHERE ts.template_id = $1
-          ORDER BY ts.ordering`,
-        [template_id],
-      );
+      // comes from the document being created. FAIL SOFT to zero rows when the
+      // intelligence schema is absent (a separate bundle, missing in some
+      // deployments and the authoring harness): before this, an ORG-template
+      // create 500'd on the missing relation before the org store was ever
+      // consulted — the same fail-soft GET /templates already applies.
+      let globalSections: { rows: any[] } = { rows: [] };
+      try {
+        globalSections = await pool.query(
+          `SELECT ts.section_code, ts.section_title, ts.ordering
+             FROM intelligence.template_sections ts
+            WHERE ts.template_id = $1
+            ORDER BY ts.ordering`,
+          [template_id],
+        );
+      } catch (intelErr) {
+        logger.warn('Global template store unavailable during create; trying the org store', {
+          error: intelErr instanceof Error ? intelErr.message : String(intelErr),
+        });
+      }
       if (globalSections.rows.length > 0) {
         templateSections = globalSections.rows.map((r: any, i: number) => ({
           code: String(r.section_code),
@@ -2634,13 +2645,32 @@ router.patch('/comments/:commentId', async (req: Request, res: Response) => {
         // this value, and "Resolved by 1" is an attribution no reader can use.
         // Still JWT-sourced either way — never a header, never the body.
         values.push(req.user?.email ?? resolvedBy);
+        // The resolution RECORD is this resolution's, whole: a re-resolve
+        // without a stated reason must not display the PREVIOUS resolver's
+        // note under the new resolver's name. The prior resolution stays in
+        // the audit ledger; the row carries only the current one.
+        paramCount++;
+        updates.push(`resolution_note = $${paramCount}`);
+        values.push(resolution_note || null);
+      } else if (status === 'open') {
+        // Reopen clears the resolution fields — the row reflects CURRENT
+        // state ("this thread is open"), and the who/when/why of the earlier
+        // resolution lives in the audit trail, not on an open thread.
+        updates.push('resolved_at = NULL, resolved_by = NULL, resolution_note = NULL');
       }
-    }
-
-    if (resolution_note) {
+    } else if (resolution_note) {
       paramCount++;
       updates.push(`resolution_note = $${paramCount}`);
       values.push(resolution_note);
+    }
+
+    if (updates.length === 0) {
+      // An empty body used to build `SET  WHERE id = $1` — malformed SQL
+      // answered as a 500 with the driver's message in the payload.
+      return res.status(400).json({
+        success: false,
+        error: 'At least one of status or resolution_note is required',
+      });
     }
 
     values.push(commentId, tenantId);
