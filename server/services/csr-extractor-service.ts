@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url';
 import { sql } from 'drizzle-orm';
 import { db } from '../db';
 import { huggingFaceService } from '../huggingface-service';
-import * as openaiServiceModule from './openai-service';
 import { eq } from 'drizzle-orm';
 import { getOpenAIClient } from './openai-client';
 
@@ -14,7 +13,10 @@ const logger = createScopedLogger('csr-extractor');
 // ESM has no module-scope __dirname; recreate it from import.meta.url.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const openaiService: any = openaiServiceModule;
+/* Was `const openaiService: any = openaiServiceModule;` over an import of
+   ./openai-service — the UNGOVERNED, direct-OpenAI-client sibling. Nothing in
+   this file ever called it; the `any` cast is why no unused-symbol check ever
+   said so. Both are gone with the module. */
 
 // Constants
 const PROCESSED_CSR_DIR = path.join(process.cwd(), 'data/processed_csrs');

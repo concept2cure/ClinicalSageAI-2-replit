@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-29T16:03:14.248Z",
+  "generatedAt": "2026-08-30T17:59:16.837Z",
   "git": {
-    "sha": "28fde6c0ef070110d38dad3fb967c5253098dd4b",
+    "sha": "aac79d428bfa07e2a53e2835fa6466c3a3b80265",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -14,7 +14,7 @@
     "design-system/"
   ],
   "summary": {
-    "duplicateBasenames": 222,
+    "duplicateBasenames": 221,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 34,
@@ -859,15 +859,6 @@
           "client/src/concept2cure/v2/surfaces/Nonclinical.tsx",
           "server/routes/nonclinical.ts",
           "shared/schema/nonclinical.ts"
-        ]
-      },
-      {
-        "basename": "openai-service",
-        "count": 3,
-        "paths": [
-          "server/openai-service.ts",
-          "server/services/openai-service.ts",
-          "server/test/services/openai-service.ts"
         ]
       },
       {
@@ -2174,7 +2165,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 310044
+        "bytes": 313339
       },
       {
         "file": "server/statistics-service.ts",
@@ -2304,7 +2295,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7317
+        "lines": 7378
       },
       {
         "file": "server/statistics-service.ts",
@@ -2624,7 +2615,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 401,
+      "duplicateGroups": 398,
       "largeByBytes": 25,
       "largeByLines": 68
     },
