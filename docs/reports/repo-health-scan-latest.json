@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-30T18:23:21.676Z",
+  "generatedAt": "2026-08-30T18:23:59.148Z",
   "git": {
-    "sha": "89cf89b00deb5fdd64417ab12f379be99c90da29",
+    "sha": "0e3640e0af61636421d02ffeeb9279385df3cdf7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2189,7 +2189,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 152542
+        "bytes": 152521
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
