@@ -36,7 +36,7 @@ import {
   AUTH_IMG_ATTR,
   sanitizeAuthoringHtml,
 } from '../../components/ana/renderSafeMarkdown';
-import { resolveImageSrc } from './imageNode';
+import { NOT_A_FIGURE_REF, resolveImageSrc } from './imageNode';
 
 export function AuthoredHtml({
   html,
@@ -70,15 +70,18 @@ export function AuthoredHtml({
             const url = await resolveImageSrc(refSrc);
             img.setAttribute('src', url);
           } catch (e) {
-            // resolveImageSrc throws `HTTP <status>` on a refused fetch — say
-            // the actual cause instead of guessing at two.
+            // resolveImageSrc throws `HTTP <status>` on a refused fetch and
+            // NOT_A_FIGURE_REF for an API path outside the governed images
+            // route — say the actual cause instead of guessing.
             const status = e instanceof Error ? /^HTTP (\d+)/.exec(e.message)?.[1] : null;
             const reason =
-              status === '401' || status === '403'
-                ? 'you don’t have access to it'
-                : status
-                  ? 'the image store returned an error'
-                  : 'the image store is unreachable';
+              e instanceof Error && e.message === NOT_A_FIGURE_REF
+                ? 'its reference points outside the image store'
+                : status === '401' || status === '403'
+                  ? 'you don’t have access to it'
+                  : status
+                    ? 'the image store returned an error'
+                    : 'the image store is unreachable';
             const note = document.createElement('p');
             note.className = 'ed-figure-missing';
             note.textContent = `Couldn’t load this figure — ${reason}. Its reference is kept in the section.`;

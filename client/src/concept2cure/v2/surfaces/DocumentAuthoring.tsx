@@ -1670,12 +1670,21 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      empty list. This loader used to discard `ok` and render every failure as
      "No comments yet" — on a rail consulted to decide whether a document is
      clear of open review threads before freezing it, that conflation is the
-     dangerous one. */
+     dangerous one.
+
+     Doc-scoped, same as the section loader's targetSectionRef: the ref stamps
+     the LATEST requested doc, and a response for any other doc is dropped.
+     Without it, switching documents while a slow comments fetch was in flight
+     rendered document A's review threads under document B — and a reply or a
+     resolution made there acted on threads of a document not on screen. */
+  const commentsDocRef = useRef<string | null>(null);
   const loadComments = useCallback(async (docId: string) => {
+    commentsDocRef.current = docId;
     setCommentsState('loading');
     const { ok, body } = await readJson<{ comments?: AuthComment[] }>(
       `/api/authoring/documents/${encodeURIComponent(docId)}/comments`
     );
+    if (commentsDocRef.current !== docId) return;
     if (!ok || !body) {
       setCommentsState('error');
       setComments([]);
@@ -1690,11 +1699,16 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      reason, before/after content hashes — since the authoring store shipped,
      and no surface ever called it: the record §11.10(e) exists for was being
      written and could not be read. Newest first, as the server returns it. */
+  const auditDocRef = useRef<string | null>(null);
   const loadAudit = useCallback(async (docId: string) => {
+    // Doc-scoped like loadComments above: a Part 11 trail rendered under the
+    // wrong document is worse than a late one.
+    auditDocRef.current = docId;
     setAuditState('loading');
     const { ok, body } = await readJson<{ events?: AuthAuditEvent[] }>(
       `/api/authoring/docs/${encodeURIComponent(docId)}/audit?limit=100`
     );
+    if (auditDocRef.current !== docId) return;
     if (!ok || !body) {
       setAuditState('error');
       setAuditEvents([]);

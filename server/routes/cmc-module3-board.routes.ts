@@ -168,8 +168,11 @@ async function buildSpinePortfolio(
  * carries the question text, CTD section reference, priority/severity, status
  * and due date. The board previously returned correspondence:null and the
  * Program-records tab rendered a permanent empty state while these rows fed
- * only an Overview KPI. Filtered to Module 3 references; ordered so the
- * nearest deadline is first. Fails closed to unprovisioned.
+ * only an Overview KPI. Filtered to Module 3 references PLUS unsectioned
+ * rows — the Log-question dialog makes the section optional, and a question
+ * this file confirmed must never vanish from the only UI over the store
+ * (non-M3 sections stay excluded: they belong to another module's file).
+ * Ordered so the nearest deadline is first. Fails closed to unprovisioned.
  */
 async function buildCorrespondence(
   tenantId: number,
@@ -179,12 +182,13 @@ async function buildCorrespondence(
       await q(
         `select id, question_text, section_reference, priority, severity, status,
                 region, due_date, assigned_to,
-                (due_date is not null and due_date < now()
+                (due_date is not null and due_date < current_date
                  and status in ('OPEN','DRAFTED','IN_REVIEW')) as overdue
            from reg_questions
           where organization_id = $1
             and status in ('OPEN','DRAFTED','IN_REVIEW')
-            and (section_reference ilike '3.%' or section_reference ilike 'm3%')
+            and (section_reference ilike '3.%' or section_reference ilike 'm3%'
+                 or section_reference is null)
           order by (due_date is null), due_date asc, id desc
           limit 50`,
         [tenantId],
