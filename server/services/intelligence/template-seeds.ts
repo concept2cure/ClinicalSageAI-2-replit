@@ -479,73 +479,95 @@ export async function seedTemplates(): Promise<{ inserted: number; updated: numb
   let sections = 0;
 
   for (const t of SEED_TEMPLATES) {
-    const existing = await pool.query(
-      `SELECT id FROM intelligence.document_templates WHERE template_code = $1 AND version = '1.0'`,
-      [t.templateCode],
-    );
+    // ONE transaction per template: the template row and its sections commit
+    // together or not at all. These used to be independent auto-committed
+    // statements (under a comment claiming atomicity), which made the boot
+    // guard unsound: it counts template ROWS, so a row committed with zero or
+    // partial sections passed the guard forever and nothing ever repaired it —
+    // the picker's section_count>0 filter just made the template silently
+    // vanish. An interrupted seed now leaves the template ABSENT, which is the
+    // state the count guard exists to detect and re-run.
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    let templateId: string;
-    if (existing.rows.length > 0) {
-      templateId = existing.rows[0].id;
-      await pool.query(
-        `UPDATE intelligence.document_templates
-            SET template_name = $1, agency = $2, document_type = $3,
-                submission_type = $4, module_path = $5, description = $6,
-                source_reference = $7, agency_specific_notes = $8,
-                formatting_rules = $9, updated_at = NOW()
-          WHERE id = $10`,
-        [
-          t.templateName, t.agency, t.documentType,
-          t.submissionType ?? null, t.modulePath ?? null,
-          t.description ?? null, t.sourceReference ?? null,
-          t.agencySpecificNotes ?? null,
-          JSON.stringify(t.formattingRules ?? {}),
-          templateId,
-        ],
+      const existing = await client.query(
+        `SELECT id FROM intelligence.document_templates WHERE template_code = $1 AND version = '1.0'`,
+        [t.templateCode],
       );
-      updated += 1;
-    } else {
-      const insertResult = await pool.query(
-        `INSERT INTO intelligence.document_templates (
-           template_code, template_name, version, agency, document_type,
-           submission_type, module_path, description, source_reference,
-           agency_specific_notes, formatting_rules, status
-         ) VALUES ($1, $2, '1.0', $3, $4, $5, $6, $7, $8, $9, $10, 'active')
-         RETURNING id`,
-        [
-          t.templateCode, t.templateName, t.agency, t.documentType,
-          t.submissionType ?? null, t.modulePath ?? null,
-          t.description ?? null, t.sourceReference ?? null,
-          t.agencySpecificNotes ?? null,
-          JSON.stringify(t.formattingRules ?? {}),
-        ],
-      );
-      templateId = insertResult.rows[0].id;
-      inserted += 1;
-    }
 
-    // Replace sections atomically.
-    await pool.query(`DELETE FROM intelligence.template_sections WHERE template_id = $1`, [templateId]);
-    for (const s of t.sections) {
-      await pool.query(
-        `INSERT INTO intelligence.template_sections (
-           template_id, section_code, section_title, ordering, required, criticality,
-           content_guidance, required_elements, citation_rules, agency_quirks,
-           min_words, max_words, forbidden_phrases, required_phrases
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
-        [
-          templateId, s.sectionCode, s.sectionTitle, s.ordering,
-          s.required ?? true, s.criticality ?? 'important',
-          s.contentGuidance ?? null,
-          JSON.stringify(s.requiredElements ?? []),
-          JSON.stringify({}),
-          s.agencyQuirks ?? null,
-          s.minWords ?? null, s.maxWords ?? null,
-          JSON.stringify(s.forbiddenPhrases ?? []),
-          JSON.stringify(s.requiredPhrases ?? []),
-        ],
-      );
-      sections += 1;
+      let templateId: string;
+      if (existing.rows.length > 0) {
+        templateId = existing.rows[0].id;
+        await client.query(
+          `UPDATE intelligence.document_templates
+              SET template_name = $1, agency = $2, document_type = $3,
+                  submission_type = $4, module_path = $5, description = $6,
+                  source_reference = $7, agency_specific_notes = $8,
+                  formatting_rules = $9, updated_at = NOW()
+            WHERE id = $10`,
+          [
+            t.templateName, t.agency, t.documentType,
+            t.submissionType ?? null, t.modulePath ?? null,
+            t.description ?? null, t.sourceReference ?? null,
+            t.agencySpecificNotes ?? null,
+            JSON.stringify(t.formattingRules ?? {}),
+            templateId,
+          ],
+        );
+        updated += 1;
+      } else {
+        const insertResult = await client.query(
+          `INSERT INTO intelligence.document_templates (
+             template_code, template_name, version, agency, document_type,
+             submission_type, module_path, description, source_reference,
+             agency_specific_notes, formatting_rules, status
+           ) VALUES ($1, $2, '1.0', $3, $4, $5, $6, $7, $8, $9, $10, 'active')
+           RETURNING id`,
+          [
+            t.templateCode, t.templateName, t.agency, t.documentType,
+            t.submissionType ?? null, t.modulePath ?? null,
+            t.description ?? null, t.sourceReference ?? null,
+            t.agencySpecificNotes ?? null,
+            JSON.stringify(t.formattingRules ?? {}),
+          ],
+        );
+        templateId = insertResult.rows[0].id;
+        inserted += 1;
+      }
+
+      // Replace sections — atomic for real now: the DELETE and every INSERT
+      // ride the same transaction, so a refresh can no longer be killed
+      // between them and drop an existing template to zero sections.
+      await client.query(`DELETE FROM intelligence.template_sections WHERE template_id = $1`, [templateId]);
+      for (const s of t.sections) {
+        await client.query(
+          `INSERT INTO intelligence.template_sections (
+             template_id, section_code, section_title, ordering, required, criticality,
+             content_guidance, required_elements, citation_rules, agency_quirks,
+             min_words, max_words, forbidden_phrases, required_phrases
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+          [
+            templateId, s.sectionCode, s.sectionTitle, s.ordering,
+            s.required ?? true, s.criticality ?? 'important',
+            s.contentGuidance ?? null,
+            JSON.stringify(s.requiredElements ?? []),
+            JSON.stringify({}),
+            s.agencyQuirks ?? null,
+            s.minWords ?? null, s.maxWords ?? null,
+            JSON.stringify(s.forbiddenPhrases ?? []),
+            JSON.stringify(s.requiredPhrases ?? []),
+          ],
+        );
+        sections += 1;
+      }
+
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
     }
   }
   log.info(`Template seeds: inserted=${inserted} updated=${updated} sections=${sections}`);

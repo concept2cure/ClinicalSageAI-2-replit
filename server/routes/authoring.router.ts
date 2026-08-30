@@ -1296,6 +1296,10 @@ router.get('/templates', async (req: Request, res: Response) => {
     query += ` ORDER BY t.created_at DESC`;
 
     const result = await pool.query(query, params);
+    // Same rule the globals get below: a template with zero sections cannot
+    // seed anything and POST /docs refuses it with a 404 — listing it here
+    // offered an option the create endpoint was guaranteed to reject.
+    const orgRows = result.rows.filter((r: any) => Number(r.section_count) > 0);
 
     // ── Merge in the GLOBAL regulatory reference templates ──
     //
@@ -1359,7 +1363,7 @@ router.get('/templates', async (req: Request, res: Response) => {
       globalCatalog = 'unavailable';
     }
 
-    const merged = [...result.rows, ...globalRows];
+    const merged = [...orgRows, ...globalRows];
     res.json({
       success: true,
       templates: merged,

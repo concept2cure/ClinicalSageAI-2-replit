@@ -107,6 +107,13 @@ const AUTHORING_SANITIZE_CONFIG = {
 /** The attribute AuthoredHtml resolves through the authenticated fetch. */
 export const AUTH_IMG_ATTR = 'data-authsrc';
 
+/** The ONE same-app route a stored figure reference may point at (POST
+ *  /api/authoring/images returns it; GET serves it). Everything under /api/
+ *  that is NOT this prefix must never reach the authenticated resolver — a
+ *  bare '/api/' test let any API path one author stored in section HTML be
+ *  fetched with the NEXT VIEWER's credentials when the document rendered. */
+export const AUTHORING_IMAGE_URL_PREFIX = '/api/authoring/images/';
+
 // Bounded LRU so the chat panel doesn't recompute identical markdown
 // every render during streaming. 200 entries ≈ one long conversation.
 const MD_CACHE_MAX = 200;
@@ -173,8 +180,13 @@ export function sanitizeAuthoringHtml(html: string): string {
   DOMPurify.addHook('afterSanitizeAttributes', (node) => {
     if (node.tagName === 'IMG') {
       const src = node.getAttribute('src') ?? '';
-      if (src.startsWith('/api/')) {
+      if (src.startsWith(AUTHORING_IMAGE_URL_PREFIX)) {
         node.setAttribute(AUTH_IMG_ATTR, src);
+        node.removeAttribute('src');
+      } else if (src.startsWith('/api/')) {
+        // Any OTHER same-app API path is not a figure reference: never leave
+        // it for the browser to fire as a native (cookie-carrying) request,
+        // and never hand it to the authenticated resolver either.
         node.removeAttribute('src');
       }
     }

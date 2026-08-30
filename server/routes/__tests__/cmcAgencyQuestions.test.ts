@@ -96,6 +96,26 @@ describe('POST /api/cmc/agency-questions', () => {
     expect(res.status).toBe(401);
     expect(mockQuery).not.toHaveBeenCalled();
   });
+
+  it("refuses a non-Module-3 section reference — refusal beats a 201 row the board's 3.x filter would make unreachable", async () => {
+    for (const bad of ['2.5', 'S.4.1', 'm2.7']) {
+      const res = await request(makeApp())
+        .post('/api/cmc/agency-questions')
+        .send({ questionText: 'Q', sectionReference: bad });
+      expect(res.status).toBe(400);
+      expect(String(res.body.error)).toMatch(/Module 3/);
+    }
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it('accepts an ABSENT section reference — the board lists unsectioned rows', async () => {
+    const res = await request(makeApp())
+      .post('/api/cmc/agency-questions')
+      .send({ questionText: 'Which stability protocol applies?' });
+    expect(res.status).toBe(201);
+    const [, params] = mockQuery.mock.calls[0] as [string, unknown[]];
+    expect(params[2]).toBeNull();
+  });
 });
 
 describe('PATCH /api/cmc/agency-questions/:id', () => {
@@ -132,5 +152,50 @@ describe('PATCH /api/cmc/agency-questions/:id', () => {
       .send({ status: 'DELETED' });
     expect(res.status).toBe(400);
     expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it('expectedStatus guards the write: a row that moved on answers 409, not a silent overwrite', async () => {
+    // UPDATE … AND status = $n matches nothing; the follow-up SELECT finds the
+    // row CLOSED — the question changed since the caller's screen loaded.
+    mockQuery
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ status: 'CLOSED' }] });
+    const res = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ status: 'DRAFTED', expectedStatus: 'OPEN' });
+    expect(res.status).toBe(409);
+    expect(String(res.body.error)).toMatch(/CLOSED/);
+    const [sql, params] = mockQuery.mock.calls[0] as [string, unknown[]];
+    expect(sql).toMatch(/and status = \$\d+/);
+    expect(params).toContain('OPEN');
+  });
+
+  it('expectedStatus alone is a guard, not an update — 400, nothing touched', async () => {
+    const res = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ expectedStatus: 'OPEN' });
+    expect(res.status).toBe(400);
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it('a vanished row with a guard still answers 404, not 409', async () => {
+    mockQuery.mockResolvedValue({ rows: [] });
+    const res = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ status: 'DRAFTED', expectedStatus: 'OPEN' });
+    expect(res.status).toBe(404);
+  });
+
+  it('refuses re-sectioning a question OUT of Module 3 — clearing it stays legal', async () => {
+    const bad = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ sectionReference: '2.7.1' });
+    expect(bad.status).toBe(400);
+    expect(mockQuery).not.toHaveBeenCalled();
+
+    const clear = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ sectionReference: null });
+    expect(clear.status).toBe(200);
   });
 });

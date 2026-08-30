@@ -118,6 +118,21 @@ describe('sanitizeAuthoringHtml', () => {
     expect(out).not.toMatch(/\ssrc="\/api\//);
   });
 
+  it('strips a same-app API src OUTSIDE the governed images route — no data-authsrc, no live src', () => {
+    // A bare '/api/' rewrite handed ANY stored API path to the authenticated
+    // resolver: one author's `<img src="/api/authoring/docs/<other>/audit">`
+    // fired a GET with the next viewer's credentials when the document
+    // rendered. Only the images route is a figure reference.
+    const out = sanitizeAuthoringHtml(
+      '<img src="/api/authoring/docs/abc/audit" alt="not a figure">',
+    );
+    expect(out).not.toContain(AUTH_IMG_ATTR);
+    expect(out).not.toMatch(/\ssrc="\/api\//);
+    // The element survives (alt text remains in the record) — only the
+    // fetchable reference is gone.
+    expect(out).toContain('alt="not a figure"');
+  });
+
   it('keeps external https images on src directly (no auth to attach)', () => {
     const out = sanitizeAuthoringHtml('<img src="https://example.com/fig.png" alt="x">');
     expect(out).toContain('src="https://example.com/fig.png"');

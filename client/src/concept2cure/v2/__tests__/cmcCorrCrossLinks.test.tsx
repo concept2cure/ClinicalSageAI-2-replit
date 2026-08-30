@@ -207,7 +207,7 @@ describe('CmPathway — logging and closing agency questions', () => {
     fireEvent.change(await screen.findByLabelText(/Question, as received/), {
       target: { value: 'Justify the scale-up comparability approach.' },
     });
-    fireEvent.change(screen.getByLabelText(/CTD section/), { target: { value: '3.2.S.2' } });
+    fireEvent.change(screen.getByLabelText(/Module 3 section/), { target: { value: '3.2.S.2' } });
     // The dialog's submit shares its label with the card-header opener — the
     // dialog renders after it, so the LAST match is the submit.
     const submits = screen.getAllByRole('button', { name: /^Log question$/ });

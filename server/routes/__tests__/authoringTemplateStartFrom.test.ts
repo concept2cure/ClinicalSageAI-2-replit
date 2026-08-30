@@ -214,6 +214,35 @@ describe('GET /templates — the picker lists what create consumes', () => {
     expect(res.body.count).toBe(2);
   });
 
+  it('drops sectionless ORG rows too — the picker must not offer what POST /docs refuses', async () => {
+    // POST /templates does not validate template_content.sections, so an org
+    // row with none can exist; POST /docs 404s it. Listing it offered an
+    // option the create endpoint was guaranteed to reject.
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM authoring_templates t')) {
+        return {
+          rowCount: 2,
+          rows: [
+            { id: ORG_TPL_ID, name: 'House template', template_type: 'sop', section_count: 3, active: true },
+            { id: '33333333-4444-5555-6666-777777777777', name: 'Hollow org outline', template_type: 'sop', section_count: 0, active: true },
+          ],
+        };
+      }
+      if (sql.includes('FROM intelligence.document_templates t')) {
+        return { rowCount: 0, rows: [] };
+      }
+      return { rowCount: 0, rows: [] };
+    });
+
+    const res = await request(makeApp())
+      .get('/api/authoring/templates')
+      .set('Authorization', await bearer());
+
+    expect(res.status).toBe(200);
+    expect(res.body.templates.map((t: { name: string }) => t.name)).toEqual(['House template']);
+    expect(res.body.count).toBe(1);
+  });
+
   it('fail-soft: an unreachable global store still lists the org templates', async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes('FROM authoring_templates t')) {
