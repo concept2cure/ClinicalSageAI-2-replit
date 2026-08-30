@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
+import { ceremonyOpen } from '../ceremony';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
@@ -273,6 +275,52 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
       ],
     };
   }, [loading, error, hasData, tab, allMembers.length, activeMembers, mfaMembers, roles.length, apiKeys.length, audit.length, sso, stateFilter, member]);
+  /* View state only. Every mutation this screen offers — invite, grant,
+     scope edit, key revoke, setting change — is a governed administrator act
+     that routes through the rail's §11.50 sign-off, and none is reachable
+     from here. Switching under an open invite/revoke form would discard it. */
+  useSurfaceActionHandlers('admin-console', {
+    'admin-console.open-tab': (params) => {
+      const target = String(params.tab ?? '');
+      const meta = TABS.find((t) => t.id === target);
+      if (!meta) return { ok: false, reason: `No admin tab named "${params.tab}".` };
+      if (tab === target) return { ok: true, detail: `Already on ${meta.label}` };
+      if (ceremonyOpen()) {
+        return {
+          ok: false,
+          reason:
+            'A governed form is open on this screen — switching tabs would discard it. ' +
+            'Let the person finish or cancel it first.',
+        };
+      }
+      setTab(target as TabId);
+      return { ok: true, detail: `Opened ${meta.label}` };
+    },
+    'admin-console.filter-members': (params) => {
+      const target = String(params.state ?? '');
+      if (!['all', 'active', 'invited', 'disabled'].includes(target)) {
+        return { ok: false, reason: `No member state named "${params.state}".` };
+      }
+      if (ceremonyOpen()) {
+        return {
+          ok: false,
+          reason:
+            'A governed form is open on this screen — changing the view would discard it. ' +
+            'Let the person finish or cancel it first.',
+        };
+      }
+      const switched = tab !== 'members';
+      if (switched) setTab('members');
+      setStateFilter(target);
+      return {
+        ok: true,
+        detail:
+          `Filtered members to ${target}` + (switched ? ' on the members tab' : '') +
+          ' — counts on screen are aggregates; individual records stay on the screen',
+      };
+    },
+  });
+
   usePublishSurfaceContext('admin-console', anaContext);
 
   return (

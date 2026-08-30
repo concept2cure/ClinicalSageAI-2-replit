@@ -188,10 +188,24 @@ CODE=$(req board2 GET /api/cmc/module3-board)
 LISTED=$(cat "$OUT/board2.json" | jq --argjson id "${QID:-0}" '[.data.correspondence[]? | select(.id == $id)] | length' 2>/dev/null)
 [ "$CODE" = 200 ] && [ "${LISTED:-0}" = 1 ] && ok "board correspondence lists question $QID" || bad "board listing: code=$CODE listed=$LISTED"
 
-step "25. Triage: DRAFTED, then CLOSED — the row leaves the open list, stays in the record"
-CODE=$(req qdraft PATCH "/api/cmc/agency-questions/$QID" '{"status":"DRAFTED","assignedTo":"reg.author@sim"}')
+step "25. Triage: DRAFTED with a LINKED response draft, then CLOSED — the row leaves the open list, stays in the record"
+# The response draft is a real governed authoring document; the link is
+# refused unless the doc exists in THIS org (a dangling "Open draft" would be
+# a door that opens nothing).
+CODE=$(req rdoc POST /api/authoring/docs '{"title":"[SIM] Response to agency question — §3.2.P.7","module":"M3"}')
+RDOC=$(cat "$OUT/rdoc.json" | JQ '.document.id // empty')
+[ "$CODE" = 200 -o "$CODE" = 201 ] && [ -n "$RDOC" ] && ok "response draft created ($RDOC)" || bad "response draft create: $CODE $(head -c150 "$OUT/rdoc.json")"
+# A bogus link is refused outright — nothing recorded.
+CODE=$(req qbadlink PATCH "/api/cmc/agency-questions/$QID" '{"responseDocId":"00000000-0000-4000-8000-000000000000"}')
+[ "$CODE" = 400 ] && ok "dangling responseDocId refused (400, nothing linked)" || bad "dangling link accepted?! code=$CODE"
+CODE=$(req qdraft PATCH "/api/cmc/agency-questions/$QID" "{\"status\":\"DRAFTED\",\"assignedTo\":\"reg.author@sim\",\"responseDocId\":\"$RDOC\"}")
 ST=$(cat "$OUT/qdraft.json" | JQ '.data.status // empty')
-[ "$CODE" = 200 ] && [ "$ST" = "DRAFTED" ] && ok "status → DRAFTED with assignee" || bad "draft patch: $CODE $ST"
+LNK=$(cat "$OUT/qdraft.json" | JQ '.data.responseDocId // empty')
+[ "$CODE" = 200 ] && [ "$ST" = "DRAFTED" ] && [ "$LNK" = "$RDOC" ] && ok "status → DRAFTED, response draft linked" || bad "draft patch: $CODE $ST link=$LNK"
+# The board serves the link, so "Open draft" works after any reload.
+CODE=$(req board2b GET /api/cmc/module3-board)
+BLNK=$(cat "$OUT/board2b.json" | jq -r --argjson id "${QID:-0}" '[.data.correspondence[]? | select(.id == $id)][0].responseDocId // empty' 2>/dev/null)
+[ "$CODE" = 200 ] && [ "$BLNK" = "$RDOC" ] && ok "board serves the linked draft id" || bad "board link: code=$CODE link=$BLNK"
 CODE=$(req qclose PATCH "/api/cmc/agency-questions/$QID" '{"status":"CLOSED"}')
 ST=$(cat "$OUT/qclose.json" | JQ '.data.status // empty')
 CODE2=$(req board3 GET /api/cmc/module3-board)

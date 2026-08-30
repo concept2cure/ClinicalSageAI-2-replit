@@ -603,6 +603,38 @@ async function assertSigningAuthority(
  * and the caller told the document was signed and approved. §11.70 requires a
  * signature to be linked to its record; a signature bound to no record is not.
  */
+/**
+ * Does `authoring_documents` carry `c2c_document_id` in THIS deployment?
+ *
+ * The column binds the editing layer to the filing that is the system of
+ * record. It is added by migrations/20260728_authoring_document_governed_binding.sql,
+ * whose DO-block is guarded on `c2c_documents` existing — a table from another
+ * bundle. So a deployment carrying the authoring bundle without the c2c one
+ * genuinely does not have the column, and every reference to it has to cope.
+ *
+ * Three values, not two. 'unknown' is the one that matters: a check that could
+ * not RUN has not established that the column is missing, and a caller that
+ * collapses it into 'absent' goes on to report a deployment fact it never
+ * observed. That is the same unknown-as-a-definite-state error the Exports
+ * rail has a gate against; this helper exists so the two call sites cannot
+ * repeat it independently.
+ */
+type BindingColumnState = 'present' | 'absent' | 'unknown';
+
+async function bindingColumnState(executor: Queryable = pool): Promise<BindingColumnState> {
+  try {
+    const r = await executor.query(
+      `SELECT EXISTS (SELECT 1 FROM information_schema.columns
+                       WHERE table_schema = 'public'
+                         AND table_name = 'authoring_documents'
+                         AND column_name = 'c2c_document_id') AS ok`,
+    );
+    return r.rows[0]?.ok === true ? 'present' : 'absent';
+  } catch {
+    return 'unknown';
+  }
+}
+
 async function documentExistsForTenant(
   docId: string | string[] | undefined,
   tenantId: number,
@@ -1296,6 +1328,10 @@ router.get('/templates', async (req: Request, res: Response) => {
     query += ` ORDER BY t.created_at DESC`;
 
     const result = await pool.query(query, params);
+    // Same rule the globals get below: a template with zero sections cannot
+    // seed anything and POST /docs refuses it with a 404 — listing it here
+    // offered an option the create endpoint was guaranteed to reject.
+    const orgRows = result.rows.filter((r: any) => Number(r.section_count) > 0);
 
     // ── Merge in the GLOBAL regulatory reference templates ──
     //
@@ -1359,7 +1395,7 @@ router.get('/templates', async (req: Request, res: Response) => {
       globalCatalog = 'unavailable';
     }
 
-    const merged = [...result.rows, ...globalRows];
+    const merged = [...orgRows, ...globalRows];
     res.json({
       success: true,
       templates: merged,
@@ -1730,14 +1766,25 @@ router.post('/docs', async (req: Request, res: Response) => {
       }
       // (a) The global reference store. Deliberately no tenant filter — these
       // templates describe agency expectations, not customer content; tenancy
-      // comes from the document being created.
-      const globalSections = await pool.query(
-        `SELECT ts.section_code, ts.section_title, ts.ordering
-           FROM intelligence.template_sections ts
-          WHERE ts.template_id = $1
-          ORDER BY ts.ordering`,
-        [template_id],
-      );
+      // comes from the document being created. FAIL SOFT to zero rows when the
+      // intelligence schema is absent (a separate bundle, missing in some
+      // deployments and the authoring harness): before this, an ORG-template
+      // create 500'd on the missing relation before the org store was ever
+      // consulted — the same fail-soft GET /templates already applies.
+      let globalSections: { rows: any[] } = { rows: [] };
+      try {
+        globalSections = await pool.query(
+          `SELECT ts.section_code, ts.section_title, ts.ordering
+             FROM intelligence.template_sections ts
+            WHERE ts.template_id = $1
+            ORDER BY ts.ordering`,
+          [template_id],
+        );
+      } catch (intelErr) {
+        logger.warn('Global template store unavailable during create; trying the org store', {
+          error: intelErr instanceof Error ? intelErr.message : String(intelErr),
+        });
+      }
       if (globalSections.rows.length > 0) {
         templateSections = globalSections.rows.map((r: any, i: number) => ({
           code: String(r.section_code),
@@ -1853,31 +1900,28 @@ router.post('/docs', async (req: Request, res: Response) => {
      * the filing. This is the same check on the read half, so both halves
      * degrade the same way: unbound, with the reason recorded, rather than
      * refusing to create a document. */
-    let bindingColumnPresent = false;
     if (binding.documentId) {
-      try {
-        const col = await pool.query<{ ok: boolean }>(
-          `SELECT EXISTS (SELECT 1 FROM information_schema.columns
-                           WHERE table_schema = 'public'
-                             AND table_name = 'authoring_documents'
-                             AND column_name = 'c2c_document_id') AS ok`,
-        );
-        bindingColumnPresent = col.rows[0]?.ok === true;
-      } catch {
-        /* Unable to ask — treat as absent. Creating the document unbound is
-           recoverable; failing the create is not. */
-        bindingColumnPresent = false;
-      }
-      if (!bindingColumnPresent) {
+      const columnState = await bindingColumnState();
+      if (columnState !== 'present') {
         /* The caller is told the truth about what it got: a document that is
            NOT bound to a filing, and why. Silently dropping the binding while
            reporting `bound: true` would be the worse failure — every later
-           save would look for a filing that was never linked. */
+           save would look for a filing that was never linked.
+
+           The two reasons are kept apart. This branch used to report "this
+           deployment has no c2c_document_id column" whenever the check did not
+           come back TRUE — including when the check itself threw, which
+           establishes nothing about the deployment. Asserting a schema fact
+           from a query that failed is the same defect this file gates against
+           elsewhere; the wording now says only what was actually observed. */
         binding = {
           documentId: null,
           reason:
-            'This deployment has no c2c_document_id column on authoring_documents, so the ' +
-            'document was created without a binding to a filing.',
+            columnState === 'absent'
+              ? 'This deployment has no c2c_document_id column on authoring_documents, so the ' +
+                'document was created without a binding to a filing.'
+              : 'Whether this deployment carries the c2c_document_id column could not be ' +
+                'checked, so the document was created without a binding to a filing.',
         };
       }
     }
@@ -2297,11 +2341,43 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
      * in the rule pack?), not a side effect of the rename field. An UNBOUND
      * document has no filing linkage to break, so its codes stay editable. */
     if (code !== undefined && String(code) !== String(currentSection.rows[0].code ?? '')) {
-      const bound = await pool.query(
-        `SELECT 1 FROM authoring_documents
-          WHERE id = $1 AND tenant_id = $2 AND c2c_document_id IS NOT NULL`,
-        [currentSection.rows[0].doc_id, tenantId],
-      );
+      /* This predicate names c2c_document_id, which a deployment carrying the
+         authoring bundle without the c2c one does not have — the same shape the
+         create path above already copes with, and which
+         commit-section-to-filing.ts treats as a supported deployment rather
+         than an error. Unguarded, the catalog raises 42703 and a section
+         rename answers 500 on those deployments.
+
+         Each state has a different correct answer, so they are not collapsed:
+           present — ask, and lock the code if the document is bound.
+           absent  — no document here CAN be bound, so there is no filing
+                     linkage to break and the code stays editable, exactly as
+                     the comment above says of an unbound document.
+           unknown — the check did not run, so whether this document is bound
+                     is not known. Refuse. The lock exists to stop a rename
+                     silently re-pointing a section to a different filing slot
+                     and orphaning the old slot's content; allowing it on an
+                     unverified guess risks that, while refusing costs a retry. */
+      const columnState = await bindingColumnState();
+      if (columnState === 'unknown') {
+        return res.status(503).json({
+          success: false,
+          error: {
+            code: 'BINDING_CHECK_UNAVAILABLE',
+            message:
+              'Whether this section is bound to a filing slot could not be checked, so its code ' +
+              'was not changed. Nothing was modified. Try again.',
+          },
+        });
+      }
+      const bound =
+        columnState === 'present'
+          ? await pool.query(
+              `SELECT 1 FROM authoring_documents
+                WHERE id = $1 AND tenant_id = $2 AND c2c_document_id IS NOT NULL`,
+              [currentSection.rows[0].doc_id, tenantId],
+            )
+          : { rowCount: 0 };
       if ((bound.rowCount ?? 0) > 0) {
         return res.status(409).json({
           success: false,
@@ -2888,16 +2964,28 @@ router.patch('/comments/:commentId', async (req: Request, res: Response) => {
         // this value, and "Resolved by 1" is an attribution no reader can use.
         // Still JWT-sourced either way — never a header, never the body.
         values.push(req.user?.email ?? resolvedBy);
+        // The resolution RECORD is this resolution's, whole: a re-resolve
+        // without a stated reason must not display the PREVIOUS resolver's
+        // note under the new resolver's name. The prior resolution stays in
+        // the audit ledger; the row carries only the current one.
+        paramCount++;
+        updates.push(`resolution_note = $${paramCount}`);
+        values.push(resolution_note || null);
+      } else if (status === 'open') {
+        // Reopen clears the resolution fields — the row reflects CURRENT
+        // state ("this thread is open"), and the who/when/why of the earlier
+        // resolution lives in the audit trail, not on an open thread.
+        updates.push('resolved_at = NULL, resolved_by = NULL, resolution_note = NULL');
       }
-    }
-
-    if (resolution_note) {
+    } else if (resolution_note) {
       paramCount++;
       updates.push(`resolution_note = $${paramCount}`);
       values.push(resolution_note);
     }
 
     if (updates.length === 0) {
+      // An empty body used to build `SET  WHERE id = $1` — malformed SQL
+      // answered as a 500 with the driver's message in the payload.
       return res.status(400).json({ success: false, error: 'No comment changes supplied' });
     }
 
@@ -6446,14 +6534,34 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
           [reason, docId, signerEmail, tenantId]
         );
 
-        // Check if all workflow steps are approved
-        const pendingSteps = await client.query(
-          `SELECT COUNT(*) as pending FROM authoring_workflow_steps
-           WHERE doc_id = $1 AND status = 'PENDING' AND tenant_id = $2`,
+        /* Are all approvals in — or were there never any?
+           This counted only PENDING steps and treated '0' as "all approved".
+           That count is also '0' when NO STEPS EXIST, and the only thing that
+           creates them is POST /docs/:docId/submit, which has no caller
+           anywhere in the client. So on the ordinary path — a document never
+           submitted for approval — the first APPROVER signature found zero
+           pending steps, concluded the chain was complete, flipped the document
+           to APPROVED and inserted a frozen_documents row. An approval chain
+           that was never required read exactly like one that finished, and the
+           result is the strongest and least reversible transition in this
+           lifecycle: APPROVED is sealed, and the content becomes immutable.
+
+           A check that ran zero assertions must not report a pass. The total is
+           counted alongside the pending, and the flip now requires that an
+           approval workflow actually EXISTED and is complete. A document with
+           no workflow is signed — the signature above is recorded either way —
+           and simply not approved, which is the truth about it. */
+        const stepCounts = await client.query(
+          `SELECT COUNT(*) FILTER (WHERE status = 'PENDING') AS pending,
+                  COUNT(*) AS total
+             FROM authoring_workflow_steps
+            WHERE doc_id = $1 AND tenant_id = $2`,
           [docId, tenantId]
         );
+        const totalSteps = Number(stepCounts.rows[0]?.total ?? 0);
+        const pendingCount = Number(stepCounts.rows[0]?.pending ?? 0);
 
-        if (pendingSteps.rows[0].pending === '0') {
+        if (totalSteps > 0 && pendingCount === 0) {
           // All approved - update document status
           await client.query(
             `UPDATE authoring_documents

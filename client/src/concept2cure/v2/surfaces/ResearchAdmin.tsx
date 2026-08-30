@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -285,6 +286,27 @@ export function ResearchAdmin({ onAsk }: SurfaceViewProps) {
       ],
     };
   }, [sec, training.loading, training.error, training.empty, training.rows]);
+  /* Section navigation only. Four of the five sections are not connected to
+     the workspace, and the applied detail repeats that rather than letting a
+     successful switch imply data arrived. */
+  useSurfaceActionHandlers('research-admin', {
+    'research-admin.open-section': (params) => {
+      const target = String(params.section ?? '');
+      const meta = SECTIONS.find((s) => s.id === target);
+      if (!meta) return { ok: false, reason: `No research-admin section named "${params.section}".` };
+      if (sec === target) return { ok: true, detail: `Already on ${meta.label}` };
+      setSec(target);
+      return {
+        ok: true,
+        detail:
+          `Opened ${meta.label}` +
+          (target === 'training'
+            ? ''
+            : ' — this capability is not connected to the workspace, so it shows no data'),
+      };
+    },
+  });
+
   usePublishSurfaceContext('research-admin', anaContext);
 
   const body = (() => {

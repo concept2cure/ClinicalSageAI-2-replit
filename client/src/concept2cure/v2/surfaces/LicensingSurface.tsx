@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData, liveMutateOrNull, type DataResult } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import { takeUnlockIntent, type UnlockIntent } from '../unlockIntent';
 import type { SurfaceViewProps } from '../surfaceViews';
 // Canonical price list, NOT fabricated per-tenant data: LIC_DTC / LIC_PRICING /
@@ -199,6 +200,25 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
       ],
     };
   }, [unlock, model, cycle, arch, statusState.loading, statusState.error, status]);
+  /* AnA operates the pricing CATALOG view only. The seat count is a checkout
+     body field and `checkout()` opens Stripe — neither is reachable from here;
+     both stay the person's own click. */
+  useSurfaceActionHandlers('licensing', {
+    'licensing.set-pricing-model': (params) => {
+      const target = params.model === 'b2b' ? 'b2b' : 'dtc';
+      const label = target === 'b2b' ? 'enterprise per-user' : 'self-service';
+      if (model === target) return { ok: true, detail: `Already showing the ${label} catalog` };
+      setModel(target);
+      return { ok: true, detail: `Showing the ${label} catalog` };
+    },
+    'licensing.set-cycle': (params) => {
+      const target = params.cycle === 'monthly' ? 'monthly' : 'annual';
+      if (cycle === target) return { ok: true, detail: `Already showing ${target} pricing` };
+      setCycle(target);
+      return { ok: true, detail: `Showing ${target} pricing — nothing is purchased` };
+    },
+  });
+
   usePublishSurfaceContext('licensing', anaContext);
 
   return (

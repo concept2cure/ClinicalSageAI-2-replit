@@ -6,6 +6,7 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AnswerLead } from '../AnswerLead';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import { severityTone } from '../fixtures/precedent-engine-data';
 import '../styles/project-home-v2.css';
 import { C2CForm } from '../C2CForm';
@@ -556,6 +557,47 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
       ],
     };
   }, [applied, board.loading, board.error, board.data, results.length, sel, tab, lo, hi]);
+  /* Both actions refuse until a search has been RUN. AnA never runs it: the
+     search is the person's, and a board with no applied query has nothing on
+     screen to operate. */
+  useSurfaceActionHandlers('precedent-intelligence', {
+    'precedent-intelligence.open-tab': (params) => {
+      if (!applied) {
+        return { ok: false, reason: 'No search has been run — the person runs the search; there is no board on screen yet.' };
+      }
+      const target = String(params.tab ?? '');
+      if (!['risk', 'strategy', 'crl', 'rtf', 'ema', 'adcomm'].includes(target)) {
+        return { ok: false, reason: `No analysis tab named "${params.tab}".` };
+      }
+      if (tab === target) return { ok: true, detail: `Already on the ${target} tab` };
+      setTab(target);
+      return { ok: true, detail: `Opened the ${target} analysis tab` };
+    },
+    'precedent-intelligence.select-result': (params) => {
+      if (!applied) {
+        return { ok: false, reason: 'No search has been run — there are no precedents on screen to select.' };
+      }
+      const raw = String(params.result ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a precedent to select.' };
+      if (board.loading) return { ok: false, reason: 'The precedent board is still loading.', retry: true };
+      if (board.error) {
+        return { ok: false, reason: 'The precedent read-model did not respond, so no results are listed to select from.' };
+      }
+      const needle = raw.toLowerCase();
+      const exact = results.filter((r) => r.clearanceNumber.toLowerCase() === needle);
+      const hits = exact.length
+        ? exact
+        : results.filter((r) => (r.deviceName ?? '').toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No precedent named "${raw}" in these results.` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} precedents — name one exactly.` };
+      setSelK(hits[0].clearanceNumber);
+      return { ok: true, detail: `Selected ${hits[0].clearanceNumber} — ${hits[0].deviceName ?? 'unnamed device'}` };
+    },
+  });
+  useEffect(() => {
+    if (applied && !board.loading && !board.error) notifySurfaceActionReady('precedent-intelligence');
+  }, [applied, board.loading, board.error]);
+
   usePublishSurfaceContext('precedent-intelligence', anaContext);
 
   /* Four honest states on the real read-model — never a fixture, and never a

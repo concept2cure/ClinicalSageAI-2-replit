@@ -150,7 +150,7 @@ export function Dossier({ onNav }: SurfaceViewProps) {
           <EmptyState
             icon={I.folder}
             title="Open a program to see its dossier readiness"
-            hint="Per-CTD-section readiness is rolled up from the program's governed artifacts (GET /api/dossier-readiness/:projectId). Open a program with a numeric project id, then its section states appear here."
+            hint="Per-CTD-section readiness is rolled up from the program's governed artifacts. Open a program with a numeric project id, then its section states appear here."
           />
         ) : state === 'loading' ? (
           <EmptyState icon={I.folder} title="Loading section readiness…" />

@@ -1041,6 +1041,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       (navSectionCode
         ? {
             docType: null,
+            docId: null,
             sectionCode: navSectionCode,
             sectionLabel: null,
             programId: null,
@@ -1393,6 +1394,33 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     if (!sectionOpenTarget || docsState === 'loading' || filing.loading) return;
     targetAttemptedRef.current = true;
     const t = sectionOpenTarget;
+    /* A doc-id target is the strongest claim a sender can make: it holds the
+       EXACT document (the correspondence card's linked response draft). No
+       search, no near-miss — the document is in the list or the miss is
+       stated. Resolved before the section flow because a sender with the id
+       has nothing to search for. */
+    if (t.docId) {
+      if (docsState === 'error') {
+        setTargetNotice(
+          'Couldn’t open the linked document — the document list failed to load, ' +
+            'so nothing was resolved. Retry once documents load.'
+        );
+        return;
+      }
+      const linked = docs.find((d) => d.id === t.docId);
+      if (linked) {
+        if (linked.id !== activeDocId) setActiveDocId(linked.id);
+        setTreeScrollNonce(n => n + 1);
+        fireToast(`Opened “${linked.title}” — the linked document.`);
+      } else {
+        setTargetNotice(
+          'Couldn’t open the linked document — it isn’t in the documents in scope ' +
+            `(status filter: ${status.replace('_', ' ')}). It may sit under another ` +
+            'status or another project. Showing the editor’s default view instead.'
+        );
+      }
+      return;
+    }
     // A hand-off that named no section carried only program scope, which
     // window.C2C_PROJECT already delivered. Nothing more was claimed.
     if (!t.sectionCode && !t.sectionLabel) return;
@@ -1670,12 +1698,21 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      empty list. This loader used to discard `ok` and render every failure as
      "No comments yet" — on a rail consulted to decide whether a document is
      clear of open review threads before freezing it, that conflation is the
-     dangerous one. */
+     dangerous one.
+
+     Doc-scoped, same as the section loader's targetSectionRef: the ref stamps
+     the LATEST requested doc, and a response for any other doc is dropped.
+     Without it, switching documents while a slow comments fetch was in flight
+     rendered document A's review threads under document B — and a reply or a
+     resolution made there acted on threads of a document not on screen. */
+  const commentsDocRef = useRef<string | null>(null);
   const loadComments = useCallback(async (docId: string) => {
+    commentsDocRef.current = docId;
     setCommentsState('loading');
     const { ok, body } = await readJson<{ comments?: AuthComment[] }>(
       `/api/authoring/documents/${encodeURIComponent(docId)}/comments`
     );
+    if (commentsDocRef.current !== docId) return;
     if (!ok || !body) {
       setCommentsState('error');
       setComments([]);
@@ -1690,11 +1727,16 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      reason, before/after content hashes — since the authoring store shipped,
      and no surface ever called it: the record §11.10(e) exists for was being
      written and could not be read. Newest first, as the server returns it. */
+  const auditDocRef = useRef<string | null>(null);
   const loadAudit = useCallback(async (docId: string) => {
+    // Doc-scoped like loadComments above: a Part 11 trail rendered under the
+    // wrong document is worse than a late one.
+    auditDocRef.current = docId;
     setAuditState('loading');
     const { ok, body } = await readJson<{ events?: AuthAuditEvent[] }>(
       `/api/authoring/docs/${encodeURIComponent(docId)}/audit?limit=100`
     );
+    if (auditDocRef.current !== docId) return;
     if (!ok || !body) {
       setAuditState('error');
       setAuditEvents([]);

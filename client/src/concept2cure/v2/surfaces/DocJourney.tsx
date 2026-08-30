@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -349,6 +350,30 @@ export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
       ],
     };
   }, [live.loading, live.error, live.empty, total, doneCount, currentVer, currentStage, headWhen, stage]);
+  /* Read-only rail: selecting a stage shows its recorded snapshot. Nothing
+     here writes to the audit trail it reconstructs. */
+  useSurfaceActionHandlers('doc-journey', {
+    'doc-journey.select-stage': (params) => {
+      const raw = String(params.stage ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a stage to open.' };
+      if (live.loading) return { ok: false, reason: 'The document journey is still loading.', retry: true };
+      if (live.error) {
+        return { ok: false, reason: 'The document journey could not be read, so no stages are listed.' };
+      }
+      const needle = raw.toLowerCase();
+      const exact = stages.filter((s) => s.id.toLowerCase() === needle || s.label.toLowerCase() === needle);
+      const hits = exact.length ? exact : stages.filter((s) => s.label.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No lifecycle stage named "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} stages — name one exactly.` };
+      const st = hits[0];
+      setActive(st.id);
+      return { ok: true, detail: `Opened ${st.label}` + (st.ver ? ` (${st.ver})` : '') };
+    },
+  });
+  React.useEffect(() => {
+    if (!live.loading && !live.error) notifySurfaceActionReady('doc-journey');
+  }, [live.loading, live.error]);
+
   usePublishSurfaceContext('doc-journey', anaContext);
 
   return (
