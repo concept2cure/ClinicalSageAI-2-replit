@@ -1041,6 +1041,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       (navSectionCode
         ? {
             docType: null,
+            docId: null,
             sectionCode: navSectionCode,
             sectionLabel: null,
             programId: null,
@@ -1393,6 +1394,33 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     if (!sectionOpenTarget || docsState === 'loading' || filing.loading) return;
     targetAttemptedRef.current = true;
     const t = sectionOpenTarget;
+    /* A doc-id target is the strongest claim a sender can make: it holds the
+       EXACT document (the correspondence card's linked response draft). No
+       search, no near-miss — the document is in the list or the miss is
+       stated. Resolved before the section flow because a sender with the id
+       has nothing to search for. */
+    if (t.docId) {
+      if (docsState === 'error') {
+        setTargetNotice(
+          'Couldn’t open the linked document — the document list failed to load, ' +
+            'so nothing was resolved. Retry once documents load.'
+        );
+        return;
+      }
+      const linked = docs.find((d) => d.id === t.docId);
+      if (linked) {
+        if (linked.id !== activeDocId) setActiveDocId(linked.id);
+        setTreeScrollNonce(n => n + 1);
+        fireToast(`Opened “${linked.title}” — the linked document.`);
+      } else {
+        setTargetNotice(
+          'Couldn’t open the linked document — it isn’t in the documents in scope ' +
+            `(status filter: ${status.replace('_', ' ')}). It may sit under another ` +
+            'status or another project. Showing the editor’s default view instead.'
+        );
+      }
+      return;
+    }
     // A hand-off that named no section carried only program scope, which
     // window.C2C_PROJECT already delivered. Nothing more was claimed.
     if (!t.sectionCode && !t.sectionLabel) return;

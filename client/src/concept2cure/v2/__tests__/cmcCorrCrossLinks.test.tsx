@@ -187,6 +187,9 @@ describe('CmPathway — logging and closing agency questions', () => {
   beforeEach(() => {
     apiRequest.mockReset();
     delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+    // The editor-target channel is one-shot; a target left by one test must
+    // not satisfy an assertion in the next.
+    delete window.C2C_EDITOR_TARGET;
   });
 
   it('Log question POSTs the form and reloads the card from the server', async () => {
@@ -285,6 +288,9 @@ describe('CmPathway — draft response advances the question to DRAFTED', () => 
   beforeEach(() => {
     apiRequest.mockReset();
     delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+    // The editor-target channel is one-shot; a target left by one test must
+    // not satisfy an assertion in the next.
+    delete window.C2C_EDITOR_TARGET;
   });
 
   function wireDraft(status: string, patches: Array<{ url: string; body: unknown }>) {
@@ -318,8 +324,12 @@ describe('CmPathway — draft response advances the question to DRAFTED', () => 
 
     fireEvent.click(screen.getByTitle(/Create a governed response draft/));
     await waitFor(() => expect(patches).toHaveLength(1));
-    expect(patches[0].body).toMatchObject({ status: 'DRAFTED' });
+    // The flip carries the LINK: the file records which document holds the
+    // response, so "Open draft" works after any reload.
+    expect(patches[0].body).toMatchObject({ status: 'DRAFTED', responseDocId: 'DOC9' });
     await waitFor(() => expect(navd).toContain('document-authoring'));
+    // The editor opens ON the new draft — the deep-link channel names it.
+    expect(window.C2C_EDITOR_TARGET).toMatchObject({ docId: 'DOC9' });
     // Ordering: the authoring write came before the status flip — a DRAFTED
     // status with no draft behind it would be the dishonest order.
     const urls = apiRequest.mock.calls.map((c) => String(c[1]));
@@ -336,5 +346,38 @@ describe('CmPathway — draft response advances the question to DRAFTED', () => 
     fireEvent.click(screen.getByTitle(/Create a governed response draft/));
     await waitFor(() => expect(navd).toContain('document-authoring'));
     expect(patches).toHaveLength(0);
+  });
+
+  it('a linked question renders the Open-draft door, which targets the EXACT document', async () => {
+    const navd: string[] = [];
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/cmc/module3-board') {
+        return res({
+          ...CORR_BOARD,
+          data: {
+            ...CORR_BOARD.data,
+            correspondence: [
+              { ...CORR_BOARD.data.correspondence[0], status: 'DRAFTED', responseDocId: 'DOC42' },
+            ],
+          },
+        });
+      }
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} nav={(id) => navd.push(id)} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+
+    fireEvent.click(screen.getByTitle('Open the drafted response in the document editor'));
+    expect(navd).toContain('document-authoring');
+    expect(window.C2C_EDITOR_TARGET).toMatchObject({ docId: 'DOC42' });
+  });
+
+  it('an unlinked question offers no Open-draft door — a door must open something', async () => {
+    wireDraft('OPEN', []);
+    render(<CmPathway ask={() => {}} nav={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+    expect(
+      screen.queryByTitle('Open the drafted response in the document editor'),
+    ).toBeNull();
   });
 });

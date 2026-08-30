@@ -10,6 +10,7 @@ import type { C2CFormConfig } from '../C2CForm';
 import { EmptyState, liveGetOrNull, useLiveData, useLiveRows } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { saveToAuthoring } from '../authoringHandoff';
+import { setEditorTarget } from '../editorTarget';
 import {
   specRowsFromApi,
   specCreateBody,
@@ -120,6 +121,8 @@ interface CmcCorrespondence {
   priority: string | null; severity: string | null; status: string;
   region: string | null; dueDate: string | null; overdue: boolean;
   assignedTo: string | null;
+  /** The authoring document holding the drafted response, when one is linked. */
+  responseDocId?: string | null;
 }
 interface CmcSection { key: string; path: string; st: string; _new?: boolean; }
 interface CmcChangeType { id: string; label: string; risk: string; }
@@ -2183,11 +2186,15 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
         /* expectedStatus makes the flip conditional SERVER-side: this row was
            read when the screen loaded, and if someone closed the question in
            the meantime, an unconditional PATCH would silently REOPEN it as
-           DRAFTED. A 409 means the row moved on — the draft still exists. */
+           DRAFTED. A 409 means the row moved on — the draft still exists.
+           responseDocId rides the same write: the file records WHICH document
+           holds the response, so "Open draft" works after any reload. The
+           server refuses a doc it cannot find in this org — the link is a
+           door that opens, never a dangling id. */
         const patch = await apiRequest(
           'PATCH',
           '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
-          { status: 'DRAFTED', expectedStatus: 'OPEN' },
+          { status: 'DRAFTED', expectedStatus: 'OPEN', responseDocId: res.docId },
         ).catch(() => null);
         if (!patch?.ok) {
           const pj = patch ? await patch.json().catch(() => null) : null;
@@ -2200,9 +2207,28 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
           setCorrEpoch((e) => e + 1);
           return;
         }
+      } else if (c.status === 'DRAFTED') {
+        /* Re-drafting an already-DRAFTED question creates a NEWER draft; the
+           link follows it so the file points at the draft the responder is
+           actually working in. Status untouched; the guard means a concurrent
+           close is answered 409 rather than silently re-linked. A failed
+           link is not fatal — the draft is real and about to be on screen —
+           but it is not silently swallowed either: the card keeps rendering
+           whichever draft the file still names. */
+        await apiRequest(
+          'PATCH',
+          '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
+          { responseDocId: res.docId, expectedStatus: 'DRAFTED' },
+        ).catch(() => null);
       }
-      if (nav) nav('document-authoring');
-      else {
+      if (nav) {
+        /* Open the editor ON the new draft — the deep-link channel names the
+           exact document, so the editor cannot land on "first doc in the
+           list". Set only when a navigation follows: the channel is one-shot
+           and a target nothing consumes is a stray claim. */
+        setEditorTarget({ docType: null, docId: res.docId });
+        nav('document-authoring');
+      } else {
         fireToast(res.message);
         setCorrEpoch((e) => e + 1);
       }
@@ -2322,13 +2348,28 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
                 <td>{c.assignedTo ?? '—'}</td>
                 <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                   <div style={{ display: 'inline-flex', gap: 6 }}>
+                    {/* The linked draft is a recorded fact on the row — the
+                        door renders only when the file names a document AND a
+                        navigator exists to honour it. */}
+                    {c.responseDocId && nav ? (
+                      <button
+                        className="nda-open"
+                        title="Open the drafted response in the document editor"
+                        onClick={() => {
+                          setEditorTarget({ docType: null, docId: c.responseDocId });
+                          nav('document-authoring');
+                        }}
+                      >
+                        {I.fileText} Open draft
+                      </button>
+                    ) : null}
                     <button
                       className="nda-open"
                       disabled={draftingId != null}
                       title="Create a governed response draft quoting this question and open it in the editor"
                       onClick={() => void draftResponse(c)}
                     >
-                      {draftingId === c.id ? <>Creating…</> : <>{I.fileText} Draft response</>}
+                      {draftingId === c.id ? <>Creating…</> : c.responseDocId ? <>{I.fileText} Re-draft</> : <>{I.fileText} Draft response</>}
                     </button>
                     <button
                       className="nda-open"
