@@ -1,6 +1,26 @@
 /**
- * eCTD fallback templates — static data extracted from server/index.ts
- * Based on FDA ICH guidelines and eCTD v4.0 structure
+ * eCTD fallback templates — the ONE copy.
+ *
+ * Static FDA/ICH CTD skeleton data: module numbering, section headings and the
+ * placeholder bodies a submission is scaffolded from.
+ *
+ * ── Why this note exists (GA ledger L48) ─────────────────────────────────────
+ * This catalog existed TWICE — here and at `server/data/fallback-templates.ts`
+ * — 1,134 lines each, byte-identical once comments are stripped, and BOTH were
+ * served: `routes/templates.ts` imported the other one, while
+ * `routes/misc-inline-routes.ts` and the ich-headings test imported this one.
+ *
+ * That is worse than ordinary duplication because this is REGULATORY REFERENCE
+ * DATA. A correction to an ICH heading or a module number applied to one copy
+ * leaves the other serving the superseded structure, and which CTD skeleton a
+ * caller received depended on which endpoint it happened to hit — with nothing
+ * anywhere reporting the divergence. A submission scaffolded from the stale
+ * copy is non-conformant, and the first party to notice is the agency.
+ *
+ * The other copy is deleted and its importers re-pointed here. This is the
+ * services-layer, domain-named home; `server/data/` was a generic bucket under
+ * a generic name, which is part of why the second copy was written instead of
+ * the first being found.
  */
 
 export const fallbackTemplates = [
