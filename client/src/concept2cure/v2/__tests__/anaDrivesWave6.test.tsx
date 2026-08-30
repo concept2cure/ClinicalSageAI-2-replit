@@ -22,6 +22,8 @@ vi.mock('@/services/portal/authService', () => ({
 }));
 
 import { CmcModule } from '../surfaces/CmcModule';
+import { AccessRequests, AccessRequestQueue } from '../surfaces/AccessRequests';
+import { ResearchAdmin } from '../surfaces/ResearchAdmin';
 import { __resetCeremonies, ceremonyOpen, registerCeremonyOpen } from '../ceremony';
 import {
   __resetSurfaceActionBus,
@@ -100,5 +102,61 @@ describe('CmcModule — a driven tab switch refuses over a mounted governed form
 
     const applied = apply('cmc.open-tab', { tab: 'specs' });
     expect(applied.status).toBe('applied');
+  });
+});
+
+/* ── The single-slot fix: a shared queue must not claim the bus ──────────── */
+
+describe('AccessRequests — the queue registers only for its OWN surface', () => {
+  beforeEach(() => {
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async () => ok({ requests: [], scope: 'organization' }));
+  });
+
+  it('the org-scoped mount claims the bus', async () => {
+    render(<AccessRequests />);
+    await waitFor(() => expect(registeredSurfaceId()).toBe('access-requests'));
+
+    const out = apply('access-requests.set-filter', { show: 'everything' });
+    expect(out.status).toBe('applied');
+    expect(out.detail).toContain('answered included');
+  });
+
+  it('the SAME queue mounted inside master-licensing claims NOTHING', async () => {
+    // scope="all" is the master-licensing tab. Before the hook accepted a null
+    // id, this registration replaced master-licensing's own — so directives for
+    // the screen the user was actually on found a registration for someone else.
+    render(<AccessRequestQueue scope="all" />);
+    await waitFor(() => expect(document.querySelector('.mar-note, .pj-card, div')).not.toBeNull());
+    expect(registeredSurfaceId()).toBeNull();
+  });
+});
+
+/* ── An unconnected section says so, even when the switch succeeds ───────── */
+
+describe('ResearchAdmin — a successful switch does not imply data arrived', () => {
+  beforeEach(() => {
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async () => ok({ data: [] }));
+  });
+
+  it('opening an unconnected section reports that it is not connected', async () => {
+    render(
+      <ResearchAdmin
+        surface={{ id: 'research-admin', label: 'Research admin' } as never}
+        onAsk={vi.fn()}
+        onNav={vi.fn()}
+        segment="biopharma"
+      />,
+    );
+    await waitFor(() => expect(registeredSurfaceId()).toBe('research-admin'));
+
+    const out = apply('research-admin.open-section', { section: 'coverage' });
+    expect(out.status).toBe('applied');
+    expect(out.detail).toContain('not connected to the workspace');
+
+    const training = apply('research-admin.open-section', { section: 'training' });
+    expect(training.status).toBe('applied');
+    expect(training.detail).not.toContain('not connected');
   });
 });

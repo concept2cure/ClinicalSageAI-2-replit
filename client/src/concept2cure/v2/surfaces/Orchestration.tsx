@@ -5,6 +5,7 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { assessmentState } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import '../styles/project-home-v2.css';
 
 /* ── Display-contract types (mapped from the real orchestration backends) ── */
@@ -751,6 +752,47 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
     cpsState.loading, cpsState.error, gatesReady, cps, pendingGateCount,
     rdState.loading, rdState.error, r, tplState.error, tplSettled, templates, sel,
   ]);
+  /* View state only. Approving or rejecting a gate is a separation-of-duties
+     decision, and starting, retrying or cancelling a run is a metered spend —
+     none is reachable from here. */
+  useSurfaceActionHandlers('orchestration', {
+    'orchestration.set-view': (params) => {
+      const target = String(params.view ?? '');
+      if (!['runs', 'approvals', 'readiness'].includes(target)) {
+        return { ok: false, reason: `No orchestration view named "${params.view}".` };
+      }
+      if (view === target) return { ok: true, detail: `Already on the ${target} view` };
+      setView(target);
+      return { ok: true, detail: `Opened the ${target} view` };
+    },
+    'orchestration.select-run': (params) => {
+      const raw = String(params.run ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a run to select.' };
+      if (runsState.loading) {
+        return { ok: false, reason: 'The workflow runs are still loading.', retry: true };
+      }
+      if (runsState.error) {
+        return { ok: false, reason: 'The orchestration execution engine did not respond, so no runs are listed to select from.' };
+      }
+      const needle = raw.toLowerCase();
+      const exact = runs.filter((r) => r.id.toLowerCase() === needle || r.title.toLowerCase() === needle);
+      const hits = exact.length ? exact : runs.filter((r) => r.title.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No workflow run named "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} runs — name one exactly.` };
+      const run = hits[0];
+      const switched = view !== 'runs';
+      if (switched) setView('runs');
+      setSel(run.id);
+      return {
+        ok: true,
+        detail: `Selected ${run.title} (${run.status})` + (switched ? ' on the runs view' : ''),
+      };
+    },
+  });
+  useEffect(() => {
+    if (!runsState.loading && !runsState.error) notifySurfaceActionReady('orchestration');
+  }, [runsState.loading, runsState.error]);
+
   usePublishSurfaceContext('orchestration', anaContext);
 
   /* Cancel, Retry, Replay and "Open gate" all reach a real endpoint. The two

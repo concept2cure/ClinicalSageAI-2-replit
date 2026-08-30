@@ -77,10 +77,12 @@ export type SurfaceActionResolution =
  * governed path is the Part 11 propose-only pipeline, never this registry.
  * `advance` (a change-control lifecycle transition is an e-signed ceremony)
  * and `launch` (starting a metered job is a spend, which gets the same
- * structural exclusion as a signature) joined with wave 4.
+ * structural exclusion as a signature) joined with wave 4. `grant` (a module
+ * grant is an entitlement change), `checkout` and `purchase` (payment starts)
+ * joined with wave 6, when the admin and licensing consoles became operable.
  */
 export const GOVERNED_VERB_PATTERN =
-  /\b(sign|esign|e-sign|approve|reject|submit|transmit|lock|unlock|release|revoke|delete|destroy|certify|attest|countersign|freeze|dispatch|accept|advance|launch)\b/i;
+  /\b(sign|esign|e-sign|approve|reject|submit|transmit|lock|unlock|release|revoke|delete|destroy|certify|attest|countersign|freeze|dispatch|accept|advance|launch|grant|checkout|purchase)\b/i;
 
 /** Throws for an action id that names governed work. Exported for the tests. */
 export function assertUngovernedActionId(id: string): void {
@@ -265,7 +267,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'cmc',
     label: 'Open a CMC tab',
     description:
-      'On the CMC workstream, open one of its tabs: overview, substance & product (materials), specifications (specs), stability, batch records (batch), change control (change), quality by design (quality), Module 3 build (build), or program records (pathway). Switching tabs replaces the current pane — do it when asked or when beginning work there, not while the user is mid-form in the current pane.',
+      'On the CMC workstream, open one of its tabs: overview, substance & product (materials), specifications (specs), stability, batch records (batch), change control (change), quality by design (quality), Module 3 build (build), or program records (pathway). Refused while a governed form is open in the current pane (spec edits, batch e-sign releases, stability registrations report themselves through the ceremony channel) — a switch would discard the person’s half-completed ceremony.',
     params: [
       {
         name: 'tab',
@@ -659,6 +661,459 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
         description:
           'The change number or title as listed in the log (case-insensitive; partial titles resolve when unambiguous).',
       },
+    ],
+  },
+
+  // ── eCTD publishing reference (read-only surface; these switch views) ──
+  {
+    id: 'ectd-publishing.set-version',
+    surfaceId: 'ectd-publishing',
+    label: 'Switch the eCTD version',
+    description:
+      'On the eCTD publishing reference, switch between the v4.0 (HL7 RPS) and v3.2.2 views. View-only — nothing on this surface publishes, transmits, or freezes a sequence.',
+    params: [
+      { name: 'version', required: true, description: 'The spec version to show.', enum: ['v4.0', 'v3.2.2'] },
+    ],
+  },
+  {
+    id: 'ectd-publishing.open-list',
+    surfaceId: 'ectd-publishing',
+    label: 'Open a controlled-vocabulary list',
+    description:
+      'Open one of the v4.0 controlled-vocabulary code lists by its id (e.g. "contextOfUse", "submissionType"). Resolved against the live listing with honest misses; v3.2.2 has no per-list browser and the refusal says so.',
+    params: [
+      { name: 'list', required: true, description: 'The vocabulary list id as shown in the picker.' },
+    ],
+  },
+  {
+    id: 'ectd-publishing.filter-codes',
+    surfaceId: 'ectd-publishing',
+    label: 'Filter the code list',
+    description: 'Filter the open vocabulary list’s codes by text — zero matches is a truthful result.',
+    params: [{ name: 'query', required: true, description: 'Text to filter codes and descriptions by.' }],
+  },
+
+  // ── Submission pyramid ──
+  {
+    id: 'pyramid.select-type',
+    surfaceId: 'pyramid',
+    label: 'Pick a submission type',
+    description:
+      'On the submission pyramid, pick a submission type from the live catalog by id or label — the same card click a person makes. Honest misses; held while the type list loads.',
+    params: [
+      { name: 'type', required: true, description: 'The submission type id or label as listed in the picker.' },
+    ],
+  },
+  {
+    id: 'pyramid.open-tab',
+    surfaceId: 'pyramid',
+    label: 'Open a pyramid tab',
+    description: 'Switch between the dashboard, work-breakdown, analytics, and global-submissions tabs.',
+    params: [
+      { name: 'tab', required: true, description: 'The tab to open.', enum: ['dashboard', 'wbs', 'analytics', 'global'] },
+    ],
+  },
+  {
+    id: 'pyramid.focus-phase',
+    surfaceId: 'pyramid',
+    label: 'Focus a phase',
+    description:
+      'Focus one phase of the work breakdown (opens the work-breakdown tab). Resolved against the live pyramid with honest misses. Changing a task status stays a persisted human act.',
+    params: [
+      { name: 'phase', required: true, description: 'The phase id or label as shown on the pyramid.' },
+    ],
+  },
+  {
+    id: 'pyramid.open-task',
+    surfaceId: 'pyramid',
+    label: 'Open a task sheet',
+    description:
+      'Open a task’s detail sheet by name or id — a read-only view; its status control stays a human act. Honest misses and ambiguity refusals.',
+    params: [
+      { name: 'task', required: true, description: 'The task name or id as listed (case-insensitive; partial names resolve when unambiguous).' },
+    ],
+  },
+
+  // ── Precedent intelligence ──
+  {
+    id: 'precedent-intelligence.open-tab',
+    surfaceId: 'precedent-intelligence',
+    label: 'Open an analysis tab',
+    description:
+      'On the precedent board, switch the analysis tab for the selected clearance. Refused until a search has been run — AnA never runs the search herself.',
+    params: [
+      {
+        name: 'tab',
+        required: true,
+        description: 'The analysis tab to open.',
+        enum: ['risk', 'strategy', 'crl', 'rtf', 'ema', 'adcomm'],
+      },
+    ],
+  },
+  {
+    id: 'precedent-intelligence.select-result',
+    surfaceId: 'precedent-intelligence',
+    label: 'Select a precedent',
+    description:
+      'Select one of the returned clearances by K-number or device name — the same row click a person makes. Refused until a search has been run; honest misses.',
+    params: [
+      { name: 'result', required: true, description: 'The clearance number or device name as listed in the results.' },
+    ],
+  },
+
+  // ── Prescribing information (labeling) ──
+  {
+    id: 'labeling-pi.set-format',
+    surfaceId: 'labeling-pi',
+    label: 'Switch the label format',
+    description:
+      'Switch between the USPI, EU SmPC, and SPL views. View-only: accepting agency text, exporting, and building SPL stay governed human acts, and the reason field is never filled.',
+    params: [
+      { name: 'format', required: true, description: 'The label view to open.', enum: ['uspi', 'smpc', 'spl'] },
+    ],
+  },
+  {
+    id: 'labeling-pi.open-section',
+    surfaceId: 'labeling-pi',
+    label: 'Open a label section',
+    description:
+      'On the USPI view, open a numbered section from the real worklist — the same tree click a person makes. Honest misses; held while the worklist loads.',
+    params: [
+      { name: 'section', required: true, description: 'The section number or heading as listed (e.g. "1", "Boxed Warning").' },
+    ],
+  },
+
+  // ── Orchestration ──
+  {
+    id: 'orchestration.set-view',
+    surfaceId: 'orchestration',
+    label: 'Switch the orchestration view',
+    description:
+      'Switch between the runs, approvals, and readiness views. Approving or rejecting a gate, starting, retrying or cancelling a run, and re-evaluating readiness stay human acts.',
+    params: [
+      { name: 'view', required: true, description: 'The view to open.', enum: ['runs', 'approvals', 'readiness'] },
+    ],
+  },
+  {
+    id: 'orchestration.select-run',
+    surfaceId: 'orchestration',
+    label: 'Select a workflow run',
+    description:
+      'Select a workflow run by title or id so its steps, outputs, and blockers show — the same row click a person makes. Honest misses; held while the runs load.',
+    params: [
+      { name: 'run', required: true, description: 'The run title or id as listed (case-insensitive; partial titles resolve when unambiguous).' },
+    ],
+  },
+
+  // ── Inconsistency board ──
+  {
+    id: 'inconsistency.set-regulator',
+    surfaceId: 'inconsistency',
+    label: 'Switch the regulator overlay',
+    description:
+      'On the inconsistency board, switch the FDA/EMA overlay — a client-side re-scoring of the same findings; the applied detail restates the gate verdict under the new overlay. Scans, resolutions, and assumption revaluations stay governed human acts.',
+    params: [
+      { name: 'regulator', required: true, description: 'The regulator overlay to apply.', enum: ['FDA', 'EMA'] },
+    ],
+  },
+
+  // ── Capability catalog ──
+  {
+    id: 'intelligence-catalog.filter',
+    surfaceId: 'intelligence-catalog',
+    label: 'Filter the capability catalog',
+    description:
+      'Filter AnA’s tool catalog by name — pure view state; zero matches is a truthful result. Running a tool stays the person’s request.',
+    params: [{ name: 'query', required: true, description: 'Text to filter domains and tools by.' }],
+  },
+
+  // ── Change assessment ──
+  {
+    id: 'change-assessment.select-change',
+    surfaceId: 'change-assessment',
+    label: 'Select a change',
+    description:
+      'Select a change from the worklist by id or title so its FDA / EU MDR determinations show — the same row click a person makes. Honest misses; held while the worklist loads.',
+    params: [
+      { name: 'change', required: true, description: 'The change id or title as listed (case-insensitive; partial titles resolve when unambiguous).' },
+    ],
+  },
+
+  // ── Document journey ──
+  {
+    id: 'doc-journey.select-stage',
+    surfaceId: 'doc-journey',
+    label: 'Select a lifecycle stage',
+    description:
+      'On the document journey rail, select a recorded stage so its snapshot shows — read-only over the real audit trail. Honest misses; held while the journey loads.',
+    params: [
+      { name: 'stage', required: true, description: 'The stage label or id as shown on the rail.' },
+    ],
+  },
+
+  // ── Biostatistics designer ──
+  {
+    id: 'biostatistics.set-preset',
+    surfaceId: 'biostatistics',
+    label: 'Apply a design preset',
+    description:
+      'Apply one of the deterministic design presets — a pure client-side recompute; nothing is filed. Opening in the editor and attaching to the dossier stay governed human acts.',
+    params: [
+      { name: 'preset', required: true, description: 'The design preset to apply.', enum: ['survival', 'binary', 'ni', 'ivd'] },
+    ],
+  },
+  {
+    id: 'biostatistics.set-doc-type',
+    surfaceId: 'biostatistics',
+    label: 'Switch the statistical document type',
+    description:
+      'Switch which governed statistical document the engine drafts — a pure client-side recompute; filing stays a human act.',
+    params: [
+      {
+        name: 'docType',
+        required: true,
+        description: 'The document type to draft.',
+        enum: [
+          'sample_size_rationale',
+          'full_statistical_analysis_plan',
+          'sap_section_draft',
+          'protocol_statistical_section',
+          'statistical_methods_section',
+          'statistical_risk_memo',
+          'design_assumption_note',
+          'interim_analysis_plan',
+          'dsmb_charter',
+          'tlf_shell_plan',
+          'randomization_plan',
+        ],
+      },
+    ],
+  },
+
+  // ── Research administration ──
+  {
+    id: 'research-admin.open-section',
+    surfaceId: 'research-admin',
+    label: 'Open a research-admin section',
+    description:
+      'Switch between the research-administration sections. Four of five are not connected to the workspace and say so honestly; training shows the live CITI matrix.',
+    params: [
+      {
+        name: 'section',
+        required: true,
+        description: 'The section to open.',
+        enum: ['committees', 'coverage', 'grants', 'training', 'portfolio'],
+      },
+    ],
+  },
+
+  // ── Admin & access ──
+  {
+    id: 'admin-console.open-tab',
+    surfaceId: 'admin-console',
+    label: 'Open an admin tab',
+    description:
+      'On Admin & access, switch between the members, roles, SSO, API-keys, and settings tabs. Inviting, granting, editing scopes, revoking keys, and changing settings stay governed administrator acts.',
+    params: [
+      {
+        name: 'tab',
+        required: true,
+        description: 'The tab to open.',
+        enum: ['members', 'roles', 'sso', 'apikeys', 'settings'],
+      },
+    ],
+  },
+  {
+    id: 'admin-console.filter-members',
+    surfaceId: 'admin-console',
+    label: 'Filter the member list',
+    description: 'Filter the member list by state — the same chips a person clicks (opens the members tab first when needed).',
+    params: [
+      { name: 'state', required: true, description: 'The member state to filter to.', enum: ['all', 'active', 'invited', 'disabled'] },
+    ],
+  },
+
+  // ── Access requests ──
+  {
+    id: 'access-requests.set-filter',
+    surfaceId: 'access-requests',
+    label: 'Switch the request filter',
+    description:
+      'Switch the access-request queue between waiting-only and everything. Approving or declining a request stays a governed administrator decision.',
+    params: [
+      { name: 'show', required: true, description: 'Which requests to list.', enum: ['waiting', 'everything'] },
+    ],
+  },
+
+  // ── Master licensing (platform owner) ──
+  {
+    id: 'master-licensing.open-tab',
+    surfaceId: 'master-licensing',
+    label: 'Open a licensing tab',
+    description:
+      'On master licensing, switch between the console tabs. Every change on this console — packaging, entitlements, flags, enforcement — stays a governed platform-owner act; workspace selection is not driven (it fires a cross-tenant read).',
+    params: [
+      {
+        name: 'tab',
+        required: true,
+        description: 'The tab to open.',
+        enum: ['packaging', 'tenants', 'access-requests', 'trials', 'flags', 'enforcement', 'history'],
+      },
+    ],
+  },
+  {
+    id: 'master-licensing.filter-modules',
+    surfaceId: 'master-licensing',
+    label: 'Filter the module catalog',
+    description: 'On the packaging tab, filter the module catalog by category — a local view filter (opens the packaging tab first when needed).',
+    params: [
+      { name: 'category', required: true, description: 'The category as shown in the picker, or "all".' },
+    ],
+  },
+  {
+    id: 'master-licensing.search-modules',
+    surfaceId: 'master-licensing',
+    label: 'Search the module catalog',
+    description: 'On the packaging tab, search modules by name — a local view filter; zero matches is a truthful result.',
+    params: [{ name: 'query', required: true, description: 'Text to search module names for.' }],
+  },
+
+  // ── Plans & licensing ──
+  {
+    id: 'licensing.set-pricing-model',
+    surfaceId: 'licensing',
+    label: 'Switch the pricing catalog',
+    description:
+      'Switch between the self-service and enterprise per-user catalogs — a view switch over public pricing config. Choosing a plan (Stripe checkout) and the seat count stay human acts.',
+    params: [
+      { name: 'model', required: true, description: 'The catalog to show.', enum: ['dtc', 'b2b'] },
+    ],
+  },
+  {
+    id: 'licensing.set-cycle',
+    surfaceId: 'licensing',
+    label: 'Switch the billing cycle view',
+    description: 'Switch the displayed pricing between monthly and annual — a view switch; nothing is purchased.',
+    params: [
+      { name: 'cycle', required: true, description: 'The cycle to display.', enum: ['monthly', 'annual'] },
+    ],
+  },
+
+  // ── Authoring engine (capability reference) ──
+  {
+    id: 'authoring-engine.open-tab',
+    surfaceId: 'authoring-engine',
+    label: 'Open an authoring-engine tab',
+    description: 'Switch between the capability-reference tabs. The page reads no programs; drafting stays the person’s request.',
+    params: [
+      {
+        name: 'tab',
+        required: true,
+        description: 'The tab to open.',
+        enum: ['pyramid', 'systems', 'templates', 'automations'],
+      },
+    ],
+  },
+  {
+    id: 'authoring-engine.select-system',
+    surfaceId: 'authoring-engine',
+    label: 'Select a document system',
+    description: 'On the systems tab, select one of the twelve document systems so its guarantees and checks show (opens the systems tab first when needed).',
+    params: [
+      {
+        name: 'system',
+        required: true,
+        description: 'The document system to select.',
+        enum: ['co25', 'sce273', 'scs274', 'nc26', 'csr', 'proto', 'cmcs', 'cmcp', 'issise', 'uspi', 'brief', 'psur'],
+      },
+    ],
+  },
+
+  // ── PDEV workstreams (one entry per workstream surface; same controls) ──
+  {
+    id: 'pdev-cmc.filter-activities',
+    surfaceId: 'pdev-cmc',
+    label: 'Filter CMC activities',
+    description:
+      'Filter the CMC workstream’s activities by state — the same chips a person clicks; a chip with zero activities is not offered and the refusal says so. State changes, evidence, drafts and workflow decisions stay governed human acts.',
+    params: [
+      { name: 'state', required: true, description: 'The activity state to filter to.', enum: ['all', 'drafting', 'in_review', 'revision_required', 'approved'] },
+    ],
+  },
+  {
+    id: 'pdev-cmc.set-view',
+    surfaceId: 'pdev-cmc',
+    label: 'Switch the CMC view',
+    description: 'Switch the CMC workstream between grid and list — sticky per browser (localStorage), and the detail says so.',
+    params: [
+      { name: 'view', required: true, description: 'The view mode.', enum: ['grid', 'list'] },
+    ],
+  },
+  {
+    id: 'pdev-nonclinical.filter-activities',
+    surfaceId: 'pdev-nonclinical',
+    label: 'Filter nonclinical activities',
+    description:
+      'Filter the nonclinical workstream’s activities by state — the same chips a person clicks; a chip with zero activities is not offered. Governed acts stay human.',
+    params: [
+      { name: 'state', required: true, description: 'The activity state to filter to.', enum: ['all', 'drafting', 'in_review', 'revision_required', 'approved'] },
+    ],
+  },
+  {
+    id: 'pdev-nonclinical.set-view',
+    surfaceId: 'pdev-nonclinical',
+    label: 'Switch the nonclinical view',
+    description: 'Switch the nonclinical workstream between grid and list — sticky per browser, stated in the detail.',
+    params: [
+      { name: 'view', required: true, description: 'The view mode.', enum: ['grid', 'list'] },
+    ],
+  },
+  {
+    id: 'pdev-clinical.filter-activities',
+    surfaceId: 'pdev-clinical',
+    label: 'Filter clinical activities',
+    description:
+      'Filter the clinical workstream’s activities by state — the same chips a person clicks; a chip with zero activities is not offered. Governed acts stay human.',
+    params: [
+      { name: 'state', required: true, description: 'The activity state to filter to.', enum: ['all', 'drafting', 'in_review', 'revision_required', 'approved'] },
+    ],
+  },
+  {
+    id: 'pdev-clinical.set-view',
+    surfaceId: 'pdev-clinical',
+    label: 'Switch the clinical view',
+    description: 'Switch the clinical workstream between grid and list — sticky per browser, stated in the detail.',
+    params: [
+      { name: 'view', required: true, description: 'The view mode.', enum: ['grid', 'list'] },
+    ],
+  },
+  {
+    id: 'pdev-regulatory.filter-activities',
+    surfaceId: 'pdev-regulatory',
+    label: 'Filter regulatory activities',
+    description:
+      'Filter the regulatory workstream’s activities by state — the same chips a person clicks; a chip with zero activities is not offered. Governed acts stay human.',
+    params: [
+      { name: 'state', required: true, description: 'The activity state to filter to.', enum: ['all', 'drafting', 'in_review', 'revision_required', 'approved'] },
+    ],
+  },
+  {
+    id: 'pdev-regulatory.set-view',
+    surfaceId: 'pdev-regulatory',
+    label: 'Switch the regulatory view',
+    description: 'Switch the regulatory workstream between grid and list — sticky per browser, stated in the detail.',
+    params: [
+      { name: 'view', required: true, description: 'The view mode.', enum: ['grid', 'list'] },
+    ],
+  },
+  {
+    id: 'pdev-contradictions.select-contradiction',
+    surfaceId: 'pdev-contradictions',
+    label: 'Select a contradiction',
+    description:
+      'Select a contradiction from the registry by id or object name so its detail shows — the same row click a person makes. Review-state changes stay governed human acts.',
+    params: [
+      { name: 'contradiction', required: true, description: 'The contradiction id or an object name from the row (case-insensitive; partial names resolve when unambiguous).' },
     ],
   },
 
