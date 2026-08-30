@@ -23,6 +23,7 @@ import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState, hasKeys, isRowsWith, type ShapeGuard } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 
@@ -229,6 +230,53 @@ export function PublishingCenter(_props: SurfaceViewProps) {
       availableActions: ['Switch eCTD version, pick a vocabulary list, filter its codes — all view-only'],
     };
   }, [loadState, listState, version, specs, listing, selectedList, filter, filteredCodes]);
+  /* This surface publishes nothing and transmits nothing — it is the spec and
+     vocabulary reference. All three actions move the view only. */
+  useSurfaceActionHandlers('ectd-publishing', {
+    'ectd-publishing.set-version': (params) => {
+      const target = params.version === 'v3.2.2' ? 'v3.2.2' : 'v4.0';
+      if (version === target) return { ok: true, detail: `Already showing ${target}` };
+      setVersion(target as EctdVersion);
+      return { ok: true, detail: `Showing the ${target} register` };
+    },
+    'ectd-publishing.open-list': (params) => {
+      const raw = String(params.list ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a vocabulary list to open.' };
+      if (version !== 'v4.0') {
+        return {
+          ok: false,
+          reason: 'v3.2.2 has no per-list code browser — switch to v4.0 first, where the controlled vocabularies are listed.',
+        };
+      }
+      if (listState === 'loading' || listState === 'idle') {
+        return { ok: false, reason: 'The vocabulary listing is still loading.', retry: true };
+      }
+      if (listState === 'error' || !listing) {
+        return { ok: false, reason: 'The vocabulary listing could not be read, so no code lists are available to open.' };
+      }
+      const ids = (listing.v4 ?? []).map((l) => l.id);
+      const needle = raw.toLowerCase();
+      const exact = ids.filter((id) => id.toLowerCase() === needle);
+      const hits = exact.length ? exact : ids.filter((id) => id.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No controlled-vocabulary list named "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} lists — name one exactly.` };
+      setSelectedList(hits[0]);
+      return { ok: true, detail: `Opened the ${hits[0]} code list` };
+    },
+    'ectd-publishing.filter-codes': (params) => {
+      const next = String(params.query ?? '');
+      if (filter === next) return { ok: true, detail: next ? `Already filtered by "${next}"` : 'Filter already cleared' };
+      setFilter(next);
+      return {
+        ok: true,
+        detail: next.trim() ? `Filtered the code list by "${next.trim()}"` : 'Cleared the code filter',
+      };
+    },
+  });
+  useEffect(() => {
+    if (listState === 'ready' || listState === 'error') notifySurfaceActionReady('ectd-publishing');
+  }, [listState]);
+
   usePublishSurfaceContext('ectd-publishing', anaContext);
 
   return (

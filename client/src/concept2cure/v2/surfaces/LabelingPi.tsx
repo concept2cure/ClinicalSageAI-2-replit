@@ -7,6 +7,7 @@ import { C2CToast, useToast } from '../toast';
 import { downloadBlob, downloadText, safeFileName } from '../download';
 import { RedlineText } from '../RedlineText';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -419,6 +420,46 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
       availableActions: actions,
     };
   }, [loading, error, empty, fmt, smpc.loading, smpc.error, smpc.data, stIdx, active, answerable, numberedSections, agencyOpen, boxedProposed, program, docTitle]);
+  /* View state only. Accepting agency text, exporting and building SPL are
+     governed acts, and the reason field is never filled by AnA — the section
+     handler clears it exactly as the person's own click does. */
+  useSurfaceActionHandlers('labeling-pi', {
+    'labeling-pi.set-format': (params) => {
+      const target = String(params.format ?? '');
+      if (!['uspi', 'smpc', 'spl'].includes(target)) {
+        return { ok: false, reason: `No label format named "${params.format}".` };
+      }
+      if (fmt === target) return { ok: true, detail: `Already showing the ${target.toUpperCase()} view` };
+      setFmt(target as LabelFormat);
+      return { ok: true, detail: `Opened the ${target.toUpperCase()} view` };
+    },
+    'labeling-pi.open-section': (params) => {
+      const raw = String(params.section ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a section to open.' };
+      if (loading) return { ok: false, reason: 'The label worklist is still loading.', retry: true };
+      if (error) return { ok: false, reason: 'The label could not be read, so no sections are listed to open.' };
+      const needle = raw.toLowerCase();
+      const exact = rows.filter((r) => r.n.toLowerCase() === needle || r.label.toLowerCase() === needle);
+      const hits = exact.length ? exact : rows.filter((r) => r.label.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No label section named "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} sections — name one exactly.` };
+      const row = hits[0];
+      const switched = fmt !== 'uspi';
+      if (switched) setFmt('uspi');
+      // The person's own click: select, close any redline, clear the reason box.
+      setActive(row.n);
+      setRedlineOpen(false);
+      setReason('');
+      return {
+        ok: true,
+        detail: `Opened §${row.n} ${row.label}` + (switched ? ' on the USPI view' : ''),
+      };
+    },
+  });
+  React.useEffect(() => {
+    if (!loading && !error) notifySurfaceActionReady('labeling-pi');
+  }, [loading, error]);
+
   usePublishSurfaceContext('labeling-pi', anaContext);
 
   return (

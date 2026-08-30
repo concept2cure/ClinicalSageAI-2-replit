@@ -1113,7 +1113,7 @@ export function SubmissionCenter({
                               title={
                                 governed
                                   ? 'Governed — Part 11 e-signature and a clear dispatch gate required'
-                                  : 'POST /sequences/:seqId/transition — server-enforced lifecycle'
+                                  : 'Lifecycle transition — the server enforces which transitions are legal'
                               }
                               onClick={(e) => {
                                 e.stopPropagation();

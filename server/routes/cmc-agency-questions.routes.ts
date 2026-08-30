@@ -15,7 +15,9 @@
  *   POST  /      — log a question the agency asked (org stamped from the
  *                  verified JWT, never the body; status starts OPEN).
  *   PATCH /:id   — triage updates: status / assignee / due date / priority /
- *                  section reference. WHERE id AND organization_id — a row in
+ *                  section reference / response-draft link (responseDocId,
+ *                  verified org-scoped against authoring_documents before it
+ *                  is recorded). WHERE id AND organization_id — a row in
  *                  another org is a 404, indistinguishable from absent.
  * No DELETE, deliberately: an agency question is answered and closed, never
  * erased. CLOSED rows drop out of the board's open filter and stay in the
@@ -89,6 +91,10 @@ const patchBody = z
       .nullable()
       .optional(),
     assignedTo: z.string().trim().max(200).nullable().optional(),
+    /** The authoring document holding the drafted response. Verified against
+     *  the caller's org before it is linked — a dangling or cross-org id
+     *  would render an "Open draft" door that opens nothing. */
+    responseDocId: z.string().uuid('responseDocId must be a document id').nullable().optional(),
   })
   .refine((b) => Object.values(b).some((v) => v !== undefined), {
     message: 'At least one field to update is required',
@@ -104,6 +110,7 @@ interface RegQuestionRow {
   region: string | null;
   due_date: string | Date | null;
   assigned_to: string | null;
+  response_doc_id: string | null;
   created_at: string | Date;
   updated_at: string | Date;
 }
@@ -120,6 +127,7 @@ function mapRow(r: RegQuestionRow) {
     region: r.region,
     dueDate: r.due_date ? new Date(r.due_date).toISOString() : null,
     assignedTo: r.assigned_to,
+    responseDocId: r.response_doc_id ?? null,
     createdAt: r.created_at ? new Date(r.created_at).toISOString() : null,
     updatedAt: r.updated_at ? new Date(r.updated_at).toISOString() : null,
   };
@@ -150,7 +158,8 @@ export default function createCmcAgencyQuestionRoutes(): Router {
          values ($1, $2, $3, $4, coalesce($5, 'medium'), coalesce($6, 'MAJOR'),
                  'OPEN', $7, $8)
          returning id, question_text, section_reference, priority, severity,
-                   status, region, due_date, assigned_to, created_at, updated_at`,
+                   status, region, due_date, assigned_to, response_doc_id,
+                   created_at, updated_at`,
         [
           tenantId,
           b.questionText,
@@ -206,6 +215,38 @@ export default function createCmcAgencyQuestionRoutes(): Router {
     if (b.severity !== undefined) set('severity', b.severity);
     if (b.dueDate !== undefined) set('due_date', b.dueDate);
     if (b.assignedTo !== undefined) set('assigned_to', b.assignedTo);
+    if (b.responseDocId !== undefined) {
+      if (b.responseDocId !== null) {
+        // The link is a DOOR the card renders — verify it opens before it is
+        // recorded. authoring_documents.tenant_id is the same integer org
+        // space as reg_questions.organization_id, so a cross-org id fails
+        // here rather than becoming a dead "Open draft". WRITE-TIME only (no
+        // FK — the authoring tables are ensure-DDL'd lazily): a document
+        // deleted later leaves the id dangling, and the editor's deep-link
+        // then states an honest miss instead of opening anything.
+        try {
+          const doc = await q(
+            `select 1 from authoring_documents where id = $1 and tenant_id = $2`,
+            [b.responseDocId, tenantId],
+          );
+          if (doc.rows.length === 0) {
+            return res.status(400).json({
+              success: false,
+              error: 'That response draft could not be found in this organization — nothing was linked.',
+            });
+          }
+        } catch (err) {
+          logger.error('response-doc verification failed', {
+            error: err instanceof Error ? err.message : String(err),
+          });
+          return res.status(500).json({
+            success: false,
+            error: 'The response draft could not be verified, so nothing was linked.',
+          });
+        }
+      }
+      set('response_doc_id', b.responseDocId);
+    }
     if (sets.length === 0) {
       // expectedStatus alone is a guard, not an update — and an empty SET list
       // would be malformed SQL answered as a 500.
@@ -225,7 +266,8 @@ export default function createCmcAgencyQuestionRoutes(): Router {
             set ${sets.join(', ')}, updated_at = now()
           where id = $${idParam} and organization_id = $${orgParam}${statusGuard}
           returning id, question_text, section_reference, priority, severity,
-                    status, region, due_date, assigned_to, created_at, updated_at`,
+                    status, region, due_date, assigned_to, response_doc_id,
+                    created_at, updated_at`,
         params,
       );
       if (rows.length === 0) {

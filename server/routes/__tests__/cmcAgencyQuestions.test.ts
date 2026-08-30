@@ -186,6 +186,52 @@ describe('PATCH /api/cmc/agency-questions/:id', () => {
     expect(res.status).toBe(404);
   });
 
+  it('links a response draft only after verifying it exists IN THIS ORG', async () => {
+    const DOC = '9a1b2c3d-4e5f-4a6b-8c7d-0e1f2a3b4c5d';
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ '?column?': 1 }] }) // the org-scoped existence check
+      .mockResolvedValueOnce({ rows: [{ ...ROW, status: 'DRAFTED', response_doc_id: DOC }] });
+    const res = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ status: 'DRAFTED', responseDocId: DOC });
+    expect(res.status).toBe(200);
+    expect(res.body.data.responseDocId).toBe(DOC);
+    const [checkSql, checkParams] = mockQuery.mock.calls[0] as [string, unknown[]];
+    expect(checkSql).toContain('from authoring_documents');
+    expect(checkSql).toMatch(/tenant_id = \$\d+/);
+    expect(checkParams).toEqual([DOC, 42]);
+    const [updSql] = mockQuery.mock.calls[1] as [string, unknown[]];
+    expect(updSql).toContain('response_doc_id');
+  });
+
+  it('refuses a dangling or cross-org responseDocId — nothing is linked', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [] }); // the doc is not in this org
+    const res = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ responseDocId: '9a1b2c3d-4e5f-4a6b-8c7d-0e1f2a3b4c5d' });
+    expect(res.status).toBe(400);
+    expect(String(res.body.error)).toMatch(/could not be found/i);
+    // Only the existence check ran; no UPDATE was attempted.
+    expect(mockQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuses a malformed responseDocId before any query runs — and clearing the link stays legal', async () => {
+    const res = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ responseDocId: 'not-a-uuid' });
+    expect(res.status).toBe(400);
+    expect(mockQuery).not.toHaveBeenCalled();
+
+    const clear = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ responseDocId: null });
+    expect(clear.status).toBe(200);
+    // A null link needs no existence check — one UPDATE only.
+    expect(mockQuery).toHaveBeenCalledTimes(1);
+    const [sql] = mockQuery.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain('response_doc_id');
+  });
+
   it('refuses re-sectioning a question OUT of Module 3 — clearing it stays legal', async () => {
     const bad = await request(makeApp())
       .patch('/api/cmc/agency-questions/7')

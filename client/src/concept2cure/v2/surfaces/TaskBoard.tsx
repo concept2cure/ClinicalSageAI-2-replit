@@ -716,7 +716,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the task board"
-          hint="The org-wide unifiedTasks board didn't respond. These are the organization's tasks from GET /api/task-management/board — sign in and retry, or check the service is reachable."
+          hint="The org-wide task board didn't respond. These are the organization's tasks — sign in and retry, or check that the task service is reachable."
         />
       ) : liveTasks.empty ? (
         <EmptyState

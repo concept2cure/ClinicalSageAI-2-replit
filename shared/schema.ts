@@ -10342,6 +10342,10 @@ export const regQuestions = pgTable(
     region: text('region'), // FDA, EMA, etc.
     dueDate: date('due_date'),
     assignedTo: text('assigned_to'),
+    // The authoring document holding the drafted response ("Draft response" on
+    // the CMC correspondence card). Nullable: linked when a draft exists.
+    // Existing-database half: db/migrations/20260830_reg_questions_response_doc.sql.
+    responseDocId: uuid('response_doc_id'),
     metadata: json('metadata'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),

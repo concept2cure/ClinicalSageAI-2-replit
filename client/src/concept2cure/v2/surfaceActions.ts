@@ -204,12 +204,19 @@ export function notifySurfaceActionReady(surfaceId: string): void {
  * the surface's latest state without re-registering every render.
  */
 export function useSurfaceActionHandlers(
-  surfaceId: string,
+  surfaceId: string | null,
   handlers: Record<string, SurfaceActionHandler>,
 ): void {
   const latest = useRef(handlers);
   latest.current = handlers;
   useEffect(() => {
+    // A null id registers NOTHING, the same escape `usePublishSurfaceContext`
+    // gives a publisher. It exists because registration is a single global
+    // slot: a component that also mounts INSIDE another surface (the access
+    // request queue renders as a master-licensing tab) would otherwise claim
+    // the bus while a different screen is on, and that screen's own directives
+    // would find a registration for someone else.
+    if (!surfaceId) return undefined;
     // Stable proxies delegate to the latest real handler at call time.
     const proxies: Record<string, SurfaceActionHandler> = {};
     for (const id of Object.keys(latest.current)) {

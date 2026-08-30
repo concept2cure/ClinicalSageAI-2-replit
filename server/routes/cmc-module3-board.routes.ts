@@ -77,6 +77,8 @@ interface CorrespondenceRow {
   dueDate: string | null;
   overdue: boolean;
   assignedTo: string | null;
+  /** The authoring document holding the drafted response, when one is linked. */
+  responseDocId: string | null;
 }
 
 /** One governed Module 3 section — matches CmcSection { key, path, st }. */
@@ -181,7 +183,7 @@ async function buildCorrespondence(
     const rows = (
       await q(
         `select id, question_text, section_reference, priority, severity, status,
-                region, due_date, assigned_to,
+                region, due_date, assigned_to, response_doc_id,
                 (due_date is not null and due_date < current_date
                  and status in ('OPEN','DRAFTED','IN_REVIEW')) as overdue
            from reg_questions
@@ -203,6 +205,7 @@ async function buildCorrespondence(
       region: string | null;
       due_date: string | Date | null;
       assigned_to: string | null;
+      response_doc_id: string | null;
       overdue: boolean;
     }>;
     return {
@@ -217,6 +220,7 @@ async function buildCorrespondence(
         dueDate: r.due_date ? new Date(r.due_date).toISOString() : null,
         overdue: Boolean(r.overdue),
         assignedTo: r.assigned_to,
+        responseDocId: r.response_doc_id ?? null,
       })),
       provisioned: true,
     };

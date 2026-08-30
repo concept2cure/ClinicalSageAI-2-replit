@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-30T18:05:38.539Z",
+  "generatedAt": "2026-08-30T18:57:59.652Z",
   "git": {
-    "sha": "64b812b6b43e464d6d4566ec47ac9aed21845e91",
+    "sha": "b86383c0332a7f1159d35d4c6e38f696479722a8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2149,7 +2149,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 842866
+        "bytes": 843151
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2165,7 +2165,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 315196
+        "bytes": 316571
       },
       {
         "file": "server/statistics-service.ts",
@@ -2173,7 +2173,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 214216
+        "bytes": 217214
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2184,12 +2184,12 @@
         "bytes": 179637
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 152542
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 154847
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 152139
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 152521
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2283,7 +2283,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19979
+        "lines": 19983
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
@@ -2295,7 +2295,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7405
+        "lines": 7425
       },
       {
         "file": "server/statistics-service.ts",
@@ -2315,7 +2315,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 4769
+        "lines": 4822
       },
       {
         "file": "server/storage.ts",
@@ -2362,12 +2362,12 @@
         "lines": 2759
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2685
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2699
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2653
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 2685
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2446,6 +2446,10 @@
         "lines": 2068
       },
       {
+        "file": "server/services/precedent-engine.ts",
+        "lines": 2043
+      },
+      {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
         "lines": 2024
       },
@@ -2472,10 +2476,6 @@
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
         "lines": 1981
-      },
-      {
-        "file": "server/services/precedent-engine.ts",
-        "lines": 1979
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",

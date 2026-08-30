@@ -10,6 +10,7 @@ import type { C2CFormConfig } from '../C2CForm';
 import { EmptyState, liveGetOrNull, useLiveData, useLiveRows } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { saveToAuthoring } from '../authoringHandoff';
+import { setEditorTarget } from '../editorTarget';
 import {
   specRowsFromApi,
   specCreateBody,
@@ -120,6 +121,8 @@ interface CmcCorrespondence {
   priority: string | null; severity: string | null; status: string;
   region: string | null; dueDate: string | null; overdue: boolean;
   assignedTo: string | null;
+  /** The authoring document holding the drafted response, when one is linked. */
+  responseDocId?: string | null;
 }
 interface CmcSection { key: string; path: string; st: string; _new?: boolean; }
 interface CmcChangeType { id: string; label: string; risk: string; }
@@ -2179,30 +2182,54 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
          keeps. Only an OPEN question is advanced — a reviewer's IN_REVIEW is
          not downgraded by re-drafting. A failed status write does not undo
          the draft; it is stated, and we stay here so the statement is seen. */
-      if (c.status === 'OPEN') {
-        /* expectedStatus makes the flip conditional SERVER-side: this row was
-           read when the screen loaded, and if someone closed the question in
-           the meantime, an unconditional PATCH would silently REOPEN it as
-           DRAFTED. A 409 means the row moved on — the draft still exists. */
-        const patch = await apiRequest(
-          'PATCH',
-          '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
-          { status: 'DRAFTED', expectedStatus: 'OPEN' },
-        ).catch(() => null);
-        if (!patch?.ok) {
-          const pj = patch ? await patch.json().catch(() => null) : null;
-          fireToast(
-            'The draft was created, but the question was not marked DRAFTED — ' +
-              (serverMessage(pj) ?? 'its status could not be updated; it is unchanged in the file') +
-              ' Open the draft from the Document editor.',
-            'error',
-          );
-          setCorrEpoch((e) => e + 1);
-          return;
-        }
+      /* ONE guarded write for every status the board serves. An OPEN question
+         flips to DRAFTED because the draft now exists; DRAFTED and IN_REVIEW
+         keep their status (a reviewer's IN_REVIEW is never downgraded) while
+         the LINK follows the newest draft — the file must point at the draft
+         the responder is actually working in, whatever the lifecycle says.
+         expectedStatus makes the write conditional SERVER-side: this row was
+         read when the screen loaded, and if it moved on (someone closed the
+         question), the PATCH answers 409 instead of silently rewriting a
+         closed record. responseDocId is refused unless the document exists
+         in this org — the recorded link is a door that opens.
+         EVERY failure is surfaced: "draft created, file not updated" is a
+         split state the responder must hear about, so we stay on the card
+         where the statement is visible instead of navigating away from it. */
+      // apiRequest THROWS on a non-2xx (except 401) with the server's own
+      // sentence on the error — keep it, or the 409's "the question is CLOSED
+      // now" would be replaced by a vaguer line.
+      let thrownMsg: string | null = null;
+      const patch = await apiRequest(
+        'PATCH',
+        '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
+        {
+          ...(c.status === 'OPEN' ? { status: 'DRAFTED' } : {}),
+          expectedStatus: c.status,
+          responseDocId: res.docId,
+        },
+      ).catch((e: unknown) => {
+        thrownMsg = e instanceof Error && e.message ? e.message : null;
+        return null;
+      });
+      if (!patch?.ok) {
+        const pj = patch ? await patch.json().catch(() => null) : null;
+        fireToast(
+          'The draft was created, but the correspondence file was not updated — ' +
+            (serverMessage(pj) ?? thrownMsg ?? 'the question could not be updated; it is unchanged in the file.') +
+            ' Open the draft from the Document editor.',
+          'error',
+        );
+        setCorrEpoch((e) => e + 1);
+        return;
       }
-      if (nav) nav('document-authoring');
-      else {
+      if (nav) {
+        /* Open the editor ON the new draft — the deep-link channel names the
+           exact document, so the editor cannot land on "first doc in the
+           list". Set only when a navigation follows: the channel is one-shot
+           and a target nothing consumes is a stray claim. */
+        setEditorTarget({ docType: null, docId: res.docId });
+        nav('document-authoring');
+      } else {
         fireToast(res.message);
         setCorrEpoch((e) => e + 1);
       }
@@ -2322,13 +2349,32 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
                 <td>{c.assignedTo ?? '—'}</td>
                 <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                   <div style={{ display: 'inline-flex', gap: 6 }}>
+                    {/* The linked draft is a recorded fact on the row — the
+                        door renders only when the file names a document AND a
+                        navigator exists to honour it. */}
+                    {c.responseDocId && nav ? (
+                      <button
+                        className="nda-open"
+                        // Held while ANY draft write is in flight: navigating
+                        // to the editor mid-write would leave that write's
+                        // own editor target unconsumed on the channel.
+                        disabled={draftingId != null}
+                        title="Open the drafted response in the document editor"
+                        onClick={() => {
+                          setEditorTarget({ docType: null, docId: c.responseDocId });
+                          nav('document-authoring');
+                        }}
+                      >
+                        {I.fileText} Open draft
+                      </button>
+                    ) : null}
                     <button
                       className="nda-open"
                       disabled={draftingId != null}
                       title="Create a governed response draft quoting this question and open it in the editor"
                       onClick={() => void draftResponse(c)}
                     >
-                      {draftingId === c.id ? <>Creating…</> : <>{I.fileText} Draft response</>}
+                      {draftingId === c.id ? <>Creating…</> : c.responseDocId ? <>{I.fileText} Re-draft</> : <>{I.fileText} Draft response</>}
                     </button>
                     <button
                       className="nda-open"

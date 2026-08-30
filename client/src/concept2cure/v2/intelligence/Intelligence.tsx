@@ -29,6 +29,7 @@ import React from 'react';
 import '../styles/intelligence-v2.css';
 import { I } from '../icons';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import {
   // Reference config only: the tool catalog (what AnA can run) and the pedigree
   // /trust vocabulary. INTEL_DEMOS, INTEL_VALIDATION and INTEL_STATS are no
@@ -262,6 +263,36 @@ export function CapabilityIndex({ onAsk }: { onAsk: (text: string) => void }) {
       availableActions: ['Filter the catalog by name'],
     };
   }, [S, term, query, filteredWaves]);
+  /* Catalog filtering only — running a tool stays the person's request. The
+     detail counts come from `filteredWaves`, the SAME memo the render and the
+     published context read, so the number AnA reports is the number on screen
+     (one render behind, which the wording accounts for). */
+  useSurfaceActionHandlers('intelligence-catalog', {
+    'intelligence-catalog.filter': (params) => {
+      const next = String(params.query ?? '');
+      if (query === next) return { ok: true, detail: next ? `Already filtered by "${next}"` : 'Filter already cleared' };
+      setQuery(next);
+      if (!next.trim()) return { ok: true, detail: 'Cleared the catalog filter — every capability is listed again' };
+      // Scored through the SAME predicate `filteredWaves` uses, against the
+      // catalog rather than the current (pre-setState) filtered structure.
+      const t = next.trim().toLowerCase();
+      const hitDomains = INTEL_CATALOG.reduce(
+        (n, w) =>
+          n +
+          w.domains.filter(
+            (d) => d.name.toLowerCase().includes(t) || d.tools.some((tool) => tool.includes(t)),
+          ).length,
+        0,
+      );
+      return {
+        ok: true,
+        detail: hitDomains
+          ? `Filtered the catalog by "${next.trim()}" — ${hitDomains} domain(s) match`
+          : `Filtered the catalog by "${next.trim()}" — nothing matches, so the catalog reads empty`,
+      };
+    },
+  });
+
   usePublishSurfaceContext('intelligence-catalog', anaContext);
 
   return (
