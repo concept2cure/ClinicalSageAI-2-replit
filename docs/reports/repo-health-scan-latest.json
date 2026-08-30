@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-30T18:23:59.148Z",
+  "generatedAt": "2026-08-30T18:36:27.481Z",
   "git": {
-    "sha": "0e3640e0af61636421d02ffeeb9279385df3cdf7",
+    "sha": "fdddcce442c059a3c86e16c47a10c20d6b2da05a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2446,6 +2446,10 @@
         "lines": 2068
       },
       {
+        "file": "server/services/precedent-engine.ts",
+        "lines": 2043
+      },
+      {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
         "lines": 2024
       },
@@ -2472,10 +2476,6 @@
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
         "lines": 1981
-      },
-      {
-        "file": "server/services/precedent-engine.ts",
-        "lines": 1979
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
