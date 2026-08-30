@@ -2182,44 +2182,45 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
          keeps. Only an OPEN question is advanced — a reviewer's IN_REVIEW is
          not downgraded by re-drafting. A failed status write does not undo
          the draft; it is stated, and we stay here so the statement is seen. */
-      if (c.status === 'OPEN') {
-        /* expectedStatus makes the flip conditional SERVER-side: this row was
-           read when the screen loaded, and if someone closed the question in
-           the meantime, an unconditional PATCH would silently REOPEN it as
-           DRAFTED. A 409 means the row moved on — the draft still exists.
-           responseDocId rides the same write: the file records WHICH document
-           holds the response, so "Open draft" works after any reload. The
-           server refuses a doc it cannot find in this org — the link is a
-           door that opens, never a dangling id. */
-        const patch = await apiRequest(
-          'PATCH',
-          '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
-          { status: 'DRAFTED', expectedStatus: 'OPEN', responseDocId: res.docId },
-        ).catch(() => null);
-        if (!patch?.ok) {
-          const pj = patch ? await patch.json().catch(() => null) : null;
-          fireToast(
-            'The draft was created, but the question was not marked DRAFTED — ' +
-              (serverMessage(pj) ?? 'its status could not be updated; it is unchanged in the file') +
-              ' Open the draft from the Document editor.',
-            'error',
-          );
-          setCorrEpoch((e) => e + 1);
-          return;
-        }
-      } else if (c.status === 'DRAFTED') {
-        /* Re-drafting an already-DRAFTED question creates a NEWER draft; the
-           link follows it so the file points at the draft the responder is
-           actually working in. Status untouched; the guard means a concurrent
-           close is answered 409 rather than silently re-linked. A failed
-           link is not fatal — the draft is real and about to be on screen —
-           but it is not silently swallowed either: the card keeps rendering
-           whichever draft the file still names. */
-        await apiRequest(
-          'PATCH',
-          '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
-          { responseDocId: res.docId, expectedStatus: 'DRAFTED' },
-        ).catch(() => null);
+      /* ONE guarded write for every status the board serves. An OPEN question
+         flips to DRAFTED because the draft now exists; DRAFTED and IN_REVIEW
+         keep their status (a reviewer's IN_REVIEW is never downgraded) while
+         the LINK follows the newest draft — the file must point at the draft
+         the responder is actually working in, whatever the lifecycle says.
+         expectedStatus makes the write conditional SERVER-side: this row was
+         read when the screen loaded, and if it moved on (someone closed the
+         question), the PATCH answers 409 instead of silently rewriting a
+         closed record. responseDocId is refused unless the document exists
+         in this org — the recorded link is a door that opens.
+         EVERY failure is surfaced: "draft created, file not updated" is a
+         split state the responder must hear about, so we stay on the card
+         where the statement is visible instead of navigating away from it. */
+      // apiRequest THROWS on a non-2xx (except 401) with the server's own
+      // sentence on the error — keep it, or the 409's "the question is CLOSED
+      // now" would be replaced by a vaguer line.
+      let thrownMsg: string | null = null;
+      const patch = await apiRequest(
+        'PATCH',
+        '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
+        {
+          ...(c.status === 'OPEN' ? { status: 'DRAFTED' } : {}),
+          expectedStatus: c.status,
+          responseDocId: res.docId,
+        },
+      ).catch((e: unknown) => {
+        thrownMsg = e instanceof Error && e.message ? e.message : null;
+        return null;
+      });
+      if (!patch?.ok) {
+        const pj = patch ? await patch.json().catch(() => null) : null;
+        fireToast(
+          'The draft was created, but the correspondence file was not updated — ' +
+            (serverMessage(pj) ?? thrownMsg ?? 'the question could not be updated; it is unchanged in the file.') +
+            ' Open the draft from the Document editor.',
+          'error',
+        );
+        setCorrEpoch((e) => e + 1);
+        return;
       }
       if (nav) {
         /* Open the editor ON the new draft — the deep-link channel names the
@@ -2354,6 +2355,10 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
                     {c.responseDocId && nav ? (
                       <button
                         className="nda-open"
+                        // Held while ANY draft write is in flight: navigating
+                        // to the editor mid-write would leave that write's
+                        // own editor target unconsumed on the channel.
+                        disabled={draftingId != null}
                         title="Open the drafted response in the document editor"
                         onClick={() => {
                           setEditorTarget({ docType: null, docId: c.responseDocId });

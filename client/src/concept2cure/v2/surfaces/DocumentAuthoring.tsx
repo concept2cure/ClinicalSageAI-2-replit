@@ -1318,12 +1318,22 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     void loadDocs();
   }, [loadDocs]);
 
-  /* ── Load sections when the active document changes ── */
+  /* ── Load sections when the active document changes ──
+     Doc-scoped like the comments/audit loaders below: the ref stamps the
+     LATEST requested doc, and a response for any other doc is dropped whole.
+     Without it, a fast doc switch (the docId deep-link resolving while the
+     default document's larger section list was still in flight) let the
+     STALE response land last — the header named the linked document while
+     the outline and canvas held the other one's sections, and a save from
+     there would have written the wrong governed document. */
+  const sectionsDocRef = useRef<string | null>(null);
   const loadSections = useCallback(async (docId: string) => {
+    sectionsDocRef.current = docId;
     setSectionsState('loading');
     const { ok, body } = await readJson<{ sections?: AuthSection[] }>(
       `/api/authoring/docs/${encodeURIComponent(docId)}/sections`
     );
+    if (sectionsDocRef.current !== docId) return;
     if (!ok || !body) {
       setSectionsState('error');
       setSections([]);
@@ -1391,25 +1401,40 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const [treeScrollNonce, setTreeScrollNonce] = useState(0);
   useEffect(() => {
     if (targetAttemptedRef.current) return;
-    if (!sectionOpenTarget || docsState === 'loading' || filing.loading) return;
-    targetAttemptedRef.current = true;
+    if (!sectionOpenTarget || docsState === 'loading') return;
     const t = sectionOpenTarget;
+    if (docsState === 'error') {
+      /* A failed docs read must NOT spend the one attempt: the ref stays
+         unlatched, so when the list does load (a retry, a status-filter
+         change) this effect re-fires and the target still resolves — the
+         retry this notice promises actually exists. The tree pane already
+         reports the failed read; this says what it cost. */
+      setTargetNotice(
+        `Couldn’t open ${t.docId ? 'the linked document' : describeEditorTarget(t)} — ` +
+          'the document list failed to load, so nothing was resolved. ' +
+          'It opens automatically once documents load.'
+      );
+      return;
+    }
     /* A doc-id target is the strongest claim a sender can make: it holds the
        EXACT document (the correspondence card's linked response draft). No
        search, no near-miss — the document is in the list or the miss is
        stated. Resolved before the section flow because a sender with the id
-       has nothing to search for. */
+       has nothing to search for — and WITHOUT waiting on the filing outline
+       (only the section flow's docType/program guards consult it; waiting
+       here widened the window in which an author could type into the
+       default document before the switch landed). */
     if (t.docId) {
-      if (docsState === 'error') {
-        setTargetNotice(
-          'Couldn’t open the linked document — the document list failed to load, ' +
-            'so nothing was resolved. Retry once documents load.'
-        );
-        return;
-      }
+      targetAttemptedRef.current = true;
       const linked = docs.find((d) => d.id === t.docId);
       if (linked) {
-        if (linked.id !== activeDocId) setActiveDocId(linked.id);
+        // A docs-error notice posted moments ago must not outlive the open.
+        setTargetNotice(null);
+        /* Through the unsaved-work gate, not a bare setActiveDocId: a doc
+           switch unmounts the section-keyed canvas, and if the author typed
+           anything while this resolution was pending, the guard dialog gets
+           to hold the navigation (see requestLeave above). */
+        requestLeave({ kind: 'document', id: linked.id });
         setTreeScrollNonce(n => n + 1);
         fireToast(`Opened “${linked.title}” — the linked document.`);
       } else {
@@ -1421,6 +1446,10 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       }
       return;
     }
+    // Only the section flow consults the governed outline; its guards below
+    // need the filing settled before the one attempt is spent.
+    if (filing.loading) return;
+    targetAttemptedRef.current = true;
     // A hand-off that named no section carried only program scope, which
     // window.C2C_PROJECT already delivered. Nothing more was claimed.
     if (!t.sectionCode && !t.sectionLabel) return;
@@ -1428,14 +1457,6 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     // notices below only speak of one when the sender actually named it.
     const family = t.docType ? EDITOR_TARGET_DOC_LABELS[t.docType] : null;
     const wanted = describeEditorTarget(t);
-    if (docsState === 'error') {
-      // The tree pane already reports the failed read; this says what it cost.
-      setTargetNotice(
-        `Couldn’t open ${wanted} — the document list failed to load, so nothing was resolved. ` +
-          'Retry once documents load.'
-      );
-      return;
-    }
     if (t.programId && t.programId !== projectIdForOutline) {
       setTargetNotice(
         `Couldn’t open ${wanted} — it belongs to ${t.programTitle ?? 'a different program'}, ` +
@@ -1474,6 +1495,9 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
           targetSectionRef.current = { docId: d.id, sectionId: match.id };
           if (d.id === activeDocId) void loadSections(d.id);
           else setActiveDocId(d.id);
+          // A docs-error notice from before the list loaded must not outlive
+          // the successful open.
+          setTargetNotice(null);
           setTreeScrollNonce(n => n + 1);
           fireToast(
             `Opened ${match.code} · ${match.title}` +
@@ -1499,6 +1523,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     status,
     activeDocId,
     loadSections,
+    requestLeave,
     fireToast,
   ]);
 
