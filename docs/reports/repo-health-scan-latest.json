@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-30T18:57:59.652Z",
+  "generatedAt": "2026-08-30T20:51:19.874Z",
   "git": {
-    "sha": "b86383c0332a7f1159d35d4c6e38f696479722a8",
+    "sha": "8cd31f54aedcfb8be81809a8ca605900d0ad9a97",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2200,6 +2200,10 @@
         "bytes": 145402
       },
       {
+        "file": "server/routes/authoring-actions.ts",
+        "bytes": 139841
+      },
+      {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "bytes": 139064
       },
@@ -2210,10 +2214,6 @@
       {
         "file": "server/services/submission-package-orchestrator.ts",
         "bytes": 137182
-      },
-      {
-        "file": "server/routes/authoring-actions.ts",
-        "bytes": 136607
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2334,12 +2334,12 @@
         "lines": 3458
       },
       {
-        "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
-        "lines": 3326
+        "file": "server/routes/authoring-actions.ts",
+        "lines": 3346
       },
       {
-        "file": "server/routes/authoring-actions.ts",
-        "lines": 3275
+        "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
+        "lines": 3326
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
