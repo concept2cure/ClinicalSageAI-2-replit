@@ -131,7 +131,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
       },
       availableActions: [
         'Open an SAE case to see its narrative and its reporting clock',
-        'Complete a missing ICH E3 §16 field on the selected case and save it under an audited reason for change (PATCH /api/safety-narratives/cases/:id)',
+        'Complete a missing ICH E3 §16 field on the selected case and save it under an audited reason for change',
         'QC the composed narrative before handing it off',
       ],
     };
