@@ -32,6 +32,7 @@ import { I } from '../icons';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { useLiveRows, useLiveData, hasKeys, liveGetOrNull, EmptyState } from '../dataConnect';
 import { assessmentStateFor } from '../assessmentState';
+import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 import {
   SC_LENSES,
   SC_LIFECYCLE_OPS,
@@ -354,7 +355,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
             disabled={!doc || !section.trim() || saving}
             onClick={place}
           >
-            {I.layers} {saving ? 'Placing…' : 'Place leaf (PUT /leaves)'}
+            {I.layers} {saving ? 'Placing…' : 'Place leaf in the sequence'}
           </button>
           <button type="button" className="sc-trans-b" onClick={() => setOpen(false)} disabled={saving}>
             Cancel
@@ -421,9 +422,11 @@ export function BuilderWorkspace({ seq }: { seq: SeqRow }) {
                   <td>{l.granularity ?? '—'}</td>
                   <td>
                     {l.documentTable && l.documentId != null ? (
-                      <span className="sc-mono">
-                        {l.documentTable} #{l.documentId}
-                      </span>
+                      /* The source row, named rather than related. The id stays —
+                         it is how an auditor ties this leaf to its source — but
+                         it is qualified by a store name a reader can act on
+                         instead of by a relation name (documentSourceLabel). */
+                      <span className="sc-mono">{documentSourceLabel(l.documentTable, l.documentId)}</span>
                     ) : (
                       'unlinked'
                     )}

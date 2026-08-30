@@ -276,3 +276,66 @@ describe('PrecedentEngine — a rejected strategy analysis is not a thin precede
     expect(/strategy analysis did not complete/i.test(text())).toBe(false);
   });
 });
+
+/* ── The search sub-call's missing sentinel, now supplied ────────────────────
+ *
+ * The block above records that a rejected search and a genuinely empty one are
+ * both `results: []`, so the copy could only decline to diagnose either. For
+ * the DEVICE lane that is no longer true: the engine's Strategy 2 used to
+ * SELECT from `predicate.fda_510k_clearances` — a relation no migration
+ * creates and nothing writes — so it raised on every call and its catch
+ * returned [], and a search for a heavily cleared product code reported zero
+ * precedents structurally. Strategy 2 now reads the FDA 510(k) registry and
+ * the route reports whether it answered, as `sources.registry`.
+ *
+ * Three states that used to render identically must now read differently, and
+ * only one of them may say that nothing matched.
+ */
+describe('an unreachable FDA registry is not an empty registry', () => {
+  it('says the registry answered when it did — the one case that may assert a clean result', async () => {
+    await mountWithBoard({
+      results: [],
+      sources: { registry: { consulted: true, available: true, resultCount: 0 } },
+    });
+    expect(text()).toContain('The FDA 510(k) registry answered');
+    // The old shrug must be GONE here: this state is now knowable.
+    expect(text()).not.toContain('cannot tell an empty result');
+  });
+
+  it('says the registry did not answer, and carries the reason', async () => {
+    await mountWithBoard({
+      results: [],
+      sources: {
+        registry: {
+          consulted: true,
+          available: false,
+          reason: 'openFDA device/510k timed out after 10000ms',
+        },
+      },
+    });
+    expect(text()).toContain('did not answer');
+    expect(text()).toContain('timed out');
+    // It must not be reported as the registry having nothing.
+    expect(text()).not.toContain('The FDA 510(k) registry answered');
+  });
+
+  it('keeps naming the ambiguity where the registry was never consulted', async () => {
+    await mountWithBoard({
+      results: [],
+      sources: {
+        registry: { consulted: false, available: false, reason: 'not a device submission type' },
+      },
+    });
+    // A drug pathway, or a device pathway with nothing to search the registry
+    // by. Nothing new is knowable, so nothing new may be claimed.
+    expect(text()).toContain('cannot tell an empty result');
+    expect(text()).not.toContain('The FDA 510(k) registry answered');
+  });
+
+  it('falls back to the ambiguity when the board carries no sources at all', async () => {
+    // A board served before this field existed. Absent evidence is not evidence.
+    await mountWithBoard({ results: [] });
+    expect(text()).toContain('cannot tell an empty result');
+    expect(text()).not.toContain('The FDA 510(k) registry answered');
+  });
+});

@@ -16,6 +16,7 @@ import type {
   PdevContradiction,
   PdevContradictionsPayload,
 } from '../data/types';
+import { useSurfaceActionHandlers } from '../../v2/surfaceActions';
 
 interface ContradictionsProps {
   programCode: string;
@@ -40,6 +41,39 @@ export function PdevContradictionsSurface({
       setSelectedId(payload.contradictions[0]?.id ?? null);
     }
   }, [payload.contradictions, selectedId]);
+
+  /* Selection only. Review-state changes on a contradiction are governed
+     (they carry promotion-blocking authority), so they stay in conversation.
+     The payload is already resolved when this leaf renders — the host gates
+     it — so there is no not-ready state to hold for. */
+  useSurfaceActionHandlers('pdev-contradictions', {
+    'pdev-contradictions.select-contradiction': (params) => {
+      const raw = String(params.contradiction ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a contradiction to open.' };
+      const rows = payload.contradictions;
+      if (rows.length === 0) {
+        return { ok: false, reason: 'No contradictions are recorded for this program, so there is nothing to select.' };
+      }
+      const needle = raw.toLowerCase();
+      const exact = rows.filter((c) => c.id.toLowerCase() === needle);
+      const hits = exact.length
+        ? exact
+        : rows.filter(
+            (c) =>
+              c.objectA.toLowerCase().includes(needle) || c.objectB.toLowerCase().includes(needle),
+          );
+      if (hits.length === 0) return { ok: false, reason: `No contradiction named "${raw}".` };
+      if (hits.length > 1) {
+        return { ok: false, reason: `"${raw}" matches ${hits.length} contradictions — name one exactly.` };
+      }
+      const c = hits[0];
+      setSelectedId(c.id);
+      return {
+        ok: true,
+        detail: `Selected ${c.id} — ${c.objectA.split(' · ')[0]} vs ${c.objectB.split(' · ')[0]}`,
+      };
+    },
+  });
 
   const selected: PdevContradiction | undefined = payload.contradictions.find(
     (c) => c.id === selectedId,

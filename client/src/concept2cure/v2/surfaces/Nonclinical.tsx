@@ -573,7 +573,7 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
           'Nonclinical (CTD Module 4): the Module 2.6 / Module 4 / SEND projection could not be read, so no ' +
           'completeness or SEND readiness figure is on screen — that is a failure, not a zero.' +
           (studiesUnavailable ? ' The study registry did not load either.' : ` ${studies.length} GLP study(ies) are in the registry.`),
-        facts: { ...base, projectionUnavailable: 'the /api/nonclinical-summary projection read failed' },
+        facts: { ...base, projectionUnavailable: 'the Module 2.6 / Module 4 / SEND projection read failed' },
         availableActions: ['Retry the Module 2.6 / Module 4 projection read'],
       };
     }

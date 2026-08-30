@@ -9,12 +9,15 @@
 import { eq, and, inArray } from 'drizzle-orm';
 import type { RequestDb } from '../db/requestDb';
 import { WorkflowService } from './WorkflowService';
+import { isAllowedUpload } from '../middleware/uploadAllowlist';
+import { hasUnsafePathSyntax } from './submission-gateways/bundle-namespace';
 import {
   unifiedDocuments,
   moduleDocuments,
   moduleTypeEnum,
   workflowDocumentVersions,
   documentAuditLogs,
+  documentAttachments,
   documentWorkflows,
 } from '../../shared/schema/unified_workflow';
 
@@ -52,6 +55,34 @@ export interface RegisterDocumentInput {
 }
 
 /**
+ * The attachment-record input contract.
+ *
+ * Declared here rather than accepted as `any`, for the same reason
+ * RegisterDocumentInput is: fileName / fileType / fileSize / filePath are the
+ * NOT NULL columns of document_attachments (migrations/20260729b), so an
+ * `any` boundary defers a missing one to a runtime 23502 inside an open
+ * transaction instead of rejecting it at the edge with a usable message.
+ *
+ * This service records an attachment; it does not receive or store the bytes.
+ * `filePath` must already point at a file placed through the caller's own
+ * storage path — this boundary validates the SYNTAX it is handed and the file
+ * type policy, and nothing here should be read as having verified that the
+ * file exists or is what it claims.
+ */
+export interface DocumentAttachmentInput {
+  fileName: string;
+  fileType: string;
+  /** Bytes. Stored in an `integer` column, so bounded by INT4_MAX. */
+  fileSize: number;
+  filePath: string;
+  description?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+/** `file_size integer` — Postgres rejects anything past this, so we do first. */
+const INT4_MAX = 2_147_483_647;
+
+/**
  * Exception for document not found errors
  */
 export class DocumentNotFoundException extends Error {
@@ -59,6 +90,91 @@ export class DocumentNotFoundException extends Error {
     super(`Document with ID ${documentId} not found`);
     this.name = 'DocumentNotFoundException';
   }
+}
+
+/** An attachment that does not exist on the named document, in this tenant. */
+export class AttachmentNotFoundException extends Error {
+  constructor(attachmentId: number | string) {
+    super(`Attachment with ID ${attachmentId} not found`);
+    this.name = 'AttachmentNotFoundException';
+  }
+}
+
+/** An attachment record this boundary refuses to write. */
+export class AttachmentRejectedException extends Error {
+  constructor(reason: string) {
+    super(reason);
+    this.name = 'AttachmentRejectedException';
+  }
+}
+
+/**
+ * Narrow an untrusted attachment payload, or throw.
+ *
+ * Reuses the repo's canonical validators rather than restating them:
+ * `hasUnsafePathSyntax` (empty / embedded NUL / `..` traversal, in either
+ * separator style) and `isAllowedUpload` (the shared extension + MIME policy,
+ * which rejects the BLOCKED_EXTENSIONS executables outright). A second copy of
+ * either rule here is a second place for them to drift apart.
+ *
+ * `fileName` is checked for path syntax too: a name is not a path, and one
+ * carrying separators or `..` is either a mistake or an attempt to make a
+ * later consumer join it onto a directory.
+ */
+function requireText(value: unknown, field: string): string {
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new AttachmentRejectedException(`${field} is required`);
+  }
+  return value;
+}
+
+/** `file_size` is a NOT NULL `integer`; anything else is rejected here, not by PG. */
+function requireByteCount(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) {
+    throw new AttachmentRejectedException('fileSize must be a non-negative integer number of bytes');
+  }
+  if (value > INT4_MAX) {
+    throw new AttachmentRejectedException('fileSize exceeds the maximum this record can store');
+  }
+  return value;
+}
+
+function assertAttachmentRecordable(input: unknown): asserts input is DocumentAttachmentInput {
+  const candidate = input as Partial<DocumentAttachmentInput> | null | undefined;
+  if (!candidate || typeof candidate !== 'object') {
+    throw new AttachmentRejectedException('attachment data is required');
+  }
+
+  const fileName = requireText(candidate.fileName, 'fileName');
+  const fileType = requireText(candidate.fileType, 'fileType');
+  const filePath = requireText(candidate.filePath, 'filePath');
+  requireByteCount(candidate.fileSize);
+
+  if (hasUnsafePathSyntax(fileName) || /[\\/]/.test(fileName)) {
+    throw new AttachmentRejectedException('fileName must be a file name, not a path');
+  }
+  if (hasUnsafePathSyntax(filePath)) {
+    throw new AttachmentRejectedException('filePath must not contain traversal syntax');
+  }
+  if (!isAllowedUpload(fileName, fileType)) {
+    throw new AttachmentRejectedException(`Unsupported file type: ${fileName}`);
+  }
+}
+
+/**
+ * The tenant a governed write is filed under is never optional and never
+ * inferred. An unusable organization id fails closed rather than reaching a
+ * query as NaN — `Number(undefined)` and `Number('x')` are both NaN, and a NaN
+ * in an equality predicate matches nothing, which reads as "not found" instead
+ * of "you did not pass a tenant".
+ */
+function requireOrgId(organizationId: unknown, method: string): number {
+  const parsed =
+    typeof organizationId === 'number' ? organizationId : Number(String(organizationId ?? '').trim());
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+    throw new Error(`${method} requires an organization context`);
+  }
+  return parsed;
 }
 
 export class ModuleIntegrationService {
@@ -495,17 +611,88 @@ export class ModuleIntegrationService {
   }
 
   /**
-   * Add an attachment to a document
+   * Resolve a document the caller's organization owns, or throw.
+   *
+   * `document_attachments` carries no organization_id of its own — it reaches a
+   * tenant only through `document_id -> unified_documents.organizationId` — and
+   * neither table is RLS-protected, so this walk IS the tenant boundary for
+   * both attachment methods below.
+   */
+  private async requireOwnedDocument(tx: any, documentId: number, orgId: number) {
+    const rows = await tx
+      .select()
+      .from(unifiedDocuments)
+      .where(
+        and(
+          eq(unifiedDocuments.id, documentId),
+          eq(unifiedDocuments.organizationId, orgId)
+        )
+      )
+      .limit(1);
+    // A document in another tenancy reports the same "not found" as one that
+    // does not exist, so the error cannot be used to probe for document ids.
+    if (!rows.length) throw new DocumentNotFoundException(documentId);
+    return rows[0];
+  }
+
+  /**
+   * Add an attachment to a document.
+   *
+   * ── What this method used to do ──────────────────────────────────────────
+   * It wrote `action: 'attachment_added'` into document_audit_logs and never
+   * touched document_attachments. The insert was a comment. Every part of the
+   * system that reads that trail — a reviewer, an inspector, an export — would
+   * have been told a file was attached to a regulated document when no row had
+   * been written and no attachment existed. The whole table had, and still has
+   * as of this change, no other writer anywhere in the codebase.
+   *
+   * That is the failure this repo names as "never fabricate", and it is the
+   * server-side twin of the UI defect check-action-overclaim.mjs was built for:
+   * a control that promises a governed act and only emits a message. Here the
+   * message went somewhere worse than a toast — into the audit trail itself.
+   *
+   * The act and its audit now happen in ONE transaction, so a failure of either
+   * rolls back both: the ledger never records an attachment that was not made,
+   * and no attachment is recorded without its audit entry (§ 11.10(e)) — the
+   * same contract the c2c evidence-delete path is held to.
    *
    * @param documentId Document ID
-   * @param attachmentData Attachment data
+   * @param attachmentData Attachment record (see DocumentAttachmentInput)
    * @param userId User adding the attachment
+   * @param organizationId The caller's organization ID (required)
+   * @returns The stored attachment row
    */
-  async addDocumentAttachment(documentId: number, attachmentData: any, userId: string) {
-    return this.db.transaction(async (tx: any) => {
-      // Add the attachment
+  async addDocumentAttachment(
+    documentId: number,
+    attachmentData: unknown,
+    userId: string,
+    organizationId: unknown
+  ) {
+    const orgId = requireOrgId(organizationId, 'addDocumentAttachment');
+    // Validate before opening the transaction: a rejected payload should cost
+    // nothing and should say which field is wrong.
+    assertAttachmentRecordable(attachmentData);
+    const attachment = attachmentData;
 
-      // Log the action
+    return this.db.transaction(async (tx: any) => {
+      await this.requireOwnedDocument(tx, documentId, orgId);
+
+      const [stored] = await tx
+        .insert(documentAttachments)
+        .values({
+          documentId,
+          fileName: attachment.fileName,
+          fileType: attachment.fileType,
+          fileSize: attachment.fileSize,
+          filePath: attachment.filePath,
+          uploadedBy: userId,
+          description: attachment.description ?? null,
+          metadata: attachment.metadata ?? {},
+        })
+        .returning();
+
+      // Audited only now that the row exists, and with the identifiers the
+      // insert actually produced rather than the ones that were requested.
       await tx.insert(documentAuditLogs).values({
         documentId,
         action: 'attachment_added',
@@ -513,25 +700,66 @@ export class ModuleIntegrationService {
         details: {
           field: 'attachments',
           action: 'add',
-          value: attachmentData.fileName,
+          attachmentId: stored.id,
+          fileName: stored.fileName,
+          fileType: stored.fileType,
+          fileSize: stored.fileSize,
         },
       });
+
+      return stored;
     });
   }
 
   /**
-   * Remove an attachment from a document
+   * Remove an attachment from a document.
+   *
+   * Same defect and same repair as addDocumentAttachment: this wrote
+   * `attachment_removed` without deleting anything.
+   *
+   * The delete is scoped by BOTH the attachment id and the document id, so an
+   * attachment cannot be removed via a document the caller does not own, and
+   * the audit row is written only when a row was actually removed — deleting
+   * nothing and recording a removal is the same fabrication in miniature.
+   *
+   * The removal is a hard delete. document_attachments has no lifecycle column
+   * to mark instead, and its parent is ON DELETE CASCADE, so there is no
+   * soft-delete affordance in this schema to use; the audit row carries the id,
+   * name and type of what was removed, which is the same delete-with-atomic-
+   * audit shape the c2c evidence path uses. Introducing a REPLACED/SUSPENDED
+   * lifecycle here, as ectd_v4 has, would be a schema change and a product
+   * decision, not part of making this method tell the truth.
    *
    * @param documentId Document ID
    * @param attachmentId Attachment ID
    * @param userId User removing the attachment
+   * @param organizationId The caller's organization ID (required)
+   * @returns The removed attachment row
    */
-  async removeDocumentAttachment(documentId: number, attachmentId: number, userId: string) {
-    return this.db.transaction(async (tx: any) => {
-      // Get attachment details first
-      // Remove the attachment
+  async removeDocumentAttachment(
+    documentId: number,
+    attachmentId: number,
+    userId: string,
+    organizationId: unknown
+  ) {
+    const orgId = requireOrgId(organizationId, 'removeDocumentAttachment');
 
-      // Log the action
+    return this.db.transaction(async (tx: any) => {
+      await this.requireOwnedDocument(tx, documentId, orgId);
+
+      const [removed] = await tx
+        .delete(documentAttachments)
+        .where(
+          and(
+            eq(documentAttachments.id, attachmentId),
+            eq(documentAttachments.documentId, documentId)
+          )
+        )
+        .returning();
+
+      // Nothing was removed — do not record a removal.
+      if (!removed) throw new AttachmentNotFoundException(attachmentId);
+
       await tx.insert(documentAuditLogs).values({
         documentId,
         action: 'attachment_removed',
@@ -539,9 +767,13 @@ export class ModuleIntegrationService {
         details: {
           field: 'attachments',
           action: 'remove',
-          value: attachmentId,
+          attachmentId: removed.id,
+          fileName: removed.fileName,
+          fileType: removed.fileType,
         },
       });
+
+      return removed;
     });
   }
 }

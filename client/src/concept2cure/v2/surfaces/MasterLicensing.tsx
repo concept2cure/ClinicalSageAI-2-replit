@@ -39,6 +39,8 @@ import { I } from '../icons';
 import { useLiveData, ErrorState, EmptyState, hasKeys } from '../dataConnect';
 import { apiCall, apiErrorText } from '../apiCall';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
+import { ceremonyOpen } from '../ceremony';
 import { C2CToast, useToast } from '../toast';
 import {
   GovernedConfirmDialog,
@@ -730,6 +732,68 @@ export function MasterLicensing() {
     selectedOrg, orgRows, tenant.loading, tenant.error,
     flagsState.loading, flagsState.error, flagRows, enf.loading, enf.error, enf.data,
   ]);
+  /* Tab and packaging-filter view state ONLY. Every change this console makes
+     — packaging a module into a tier, granting or revoking a workspace's
+     module, flipping a feature flag, changing deployment enforcement — is a
+     governed platform-owner act behind a reason dialog. Workspace SELECTION is
+     deliberately not driven either: it fires a cross-tenant read, and a model
+     that can pick which customer to look at is one that can be steered. */
+  useSurfaceActionHandlers('master-licensing', {
+    'master-licensing.open-tab': (params) => {
+      const target = String(params.tab ?? '');
+      const meta = TABS.find((t) => t.id === target);
+      if (!meta) return { ok: false, reason: `No licensing tab named "${params.tab}".` };
+      if (tab === target) return { ok: true, detail: `Already on ${meta.label}` };
+      if (ceremonyOpen()) {
+        return {
+          ok: false,
+          reason:
+            'A governed confirmation is open on this console — switching tabs would discard it. ' +
+            'Let the person finish or cancel it first.',
+        };
+      }
+      setTab(target as TabId);
+      return { ok: true, detail: `Opened ${meta.label}` };
+    },
+    'master-licensing.filter-modules': (params) => {
+      const raw = String(params.category ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a category, or "all".' };
+      if (ceremonyOpen()) {
+        return { ok: false, reason: 'A governed confirmation is open on this console — let the person finish or cancel it first.' };
+      }
+      const needle = raw.toLowerCase();
+      const target = needle === 'all' ? 'all' : categories.find((c) => c.toLowerCase() === needle);
+      if (!target) {
+        return {
+          ok: false,
+          reason: `No module category named "${raw}". On screen: all, ${categories.join(', ')}.`,
+        };
+      }
+      const switched = tab !== 'packaging';
+      if (switched) setTab('packaging');
+      setCategory(target);
+      return {
+        ok: true,
+        detail: `Filtered the module catalog to ${target}` + (switched ? ' on the packaging tab' : ''),
+      };
+    },
+    'master-licensing.search-modules': (params) => {
+      const next = String(params.query ?? '');
+      if (ceremonyOpen()) {
+        return { ok: false, reason: 'A governed confirmation is open on this console — let the person finish or cancel it first.' };
+      }
+      const switched = tab !== 'packaging';
+      if (switched) setTab('packaging');
+      setSearch(next);
+      return {
+        ok: true,
+        detail: next.trim()
+          ? `Searched the module catalog for "${next.trim()}"` + (switched ? ' on the packaging tab' : '')
+          : 'Cleared the module search',
+      };
+    },
+  });
+
   usePublishSurfaceContext('master-licensing', anaContext);
 
   return (

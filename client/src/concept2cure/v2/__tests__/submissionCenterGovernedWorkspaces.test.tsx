@@ -227,7 +227,9 @@ describe('sequence selector drives the per-sequence workspaces', () => {
     expect(await screen.findByText('Summary of Clinical Efficacy')).toBeTruthy();
     expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/sequences/21/leaves');
     expect(document.body.textContent).toContain('2.7.3');
-    expect(document.body.textContent).toContain('coauthor_documents #88');
+    expect(document.body.textContent).toContain('Authored document #88');
+    // The leaf table names its source store, never the relation behind it.
+    expect(document.body.textContent).not.toContain('coauthor_documents');
 
     // Switch the working sequence — the OTHER sequence's URL is fetched and its
     // real leaf renders (unlinked source rendered honestly).

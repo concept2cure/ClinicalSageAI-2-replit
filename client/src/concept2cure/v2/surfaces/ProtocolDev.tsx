@@ -794,7 +794,7 @@ function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk: 
           config={{
             eyebrow: 'Protocol · export',
             title: 'Export protocol',
-            sub: 'Assembled server-side from the governed document (GET /api/protocol-export). Read-only — nothing about the protocol changes.',
+            sub: 'Assembled server-side from the governed document. Read-only — nothing about the protocol changes.',
             submitLabel: exporting ? 'Exporting…' : 'Export',
             fields: [
               { key: 'format', label: 'Format', type: 'seg', options: ['docx', 'pdf', 'markdown'], default: 'docx' },

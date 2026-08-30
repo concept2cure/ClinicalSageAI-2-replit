@@ -6,6 +6,7 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AnswerLead } from '../AnswerLead';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import { severityTone } from '../fixtures/precedent-engine-data';
 import '../styles/project-home-v2.css';
 import { C2CForm } from '../C2CForm';
@@ -71,11 +72,21 @@ interface RiskFactorView { label: string; severity: 'high' | 'medium' | 'low'; n
 interface RiskView { overall: string; score: number; factors: RiskFactorView[] }
 interface StrategyView { recommendation: string; predicate: string; rationale: string[]; altPathways: { p: string; when: string }[] }
 interface PatternView { title: string; rate: string; items: string[] }
+/** What the board consulted for `results` (server: sources.registry). */
+interface RegistryStatusView {
+  consulted: boolean;
+  available: boolean;
+  reason?: string;
+  resultCount?: number;
+}
 interface PrecedentBoard {
   results: PrecedentResultView[];
   risk: RiskView;
   strategy: StrategyView;
   patterns: { crl: PatternView; rtf: PatternView; ema: PatternView; adcomm: PatternView };
+  /* Optional so a board served before this field existed still renders — the
+     empty-result copy falls back to naming the ambiguity, as it did before. */
+  sources?: { registry: RegistryStatusView };
 }
 interface ClaimView { verdict?: string; confidence?: number; note?: string; precedents?: string[] }
 type AnalysisState = RiskView | StrategyView | PatternView;
@@ -144,11 +155,27 @@ function parseSavedQuery(s: SavedPeQuery): PeQuery {
  * analysis ran" from the same empty array whose emptiness is the question is
  * the defect itself, wearing a new API.
  *
- * The SEARCH sub-call has no such sentinel: a rejected search is mapped to
- * `results: []`, which is byte-identical to a search that ran and matched
- * nothing. Nothing else in the payload distinguishes them. So the empty-result
- * copy may not assert either reading, and no longer does — it states what came
- * back and says plainly that the two cannot be told apart from here.
+ * The SEARCH sub-call had no such sentinel: a rejected search was mapped to
+ * `results: []`, byte-identical to a search that ran and matched nothing, with
+ * nothing else in the payload to separate them. So the empty-result copy did
+ * not assert either reading — it stated what came back and named the ambiguity
+ * rather than resolving it in the direction that flatters the product.
+ *
+ * `sources.registry` is now that missing evidence for the device lane. The
+ * engine's Strategy 2 used to SELECT from a relation no migration creates, so
+ * it raised on every call and its catch returned [] — a search for a heavily
+ * cleared product code reported zero precedents structurally, and this copy
+ * could only shrug. Strategy 2 now reads the FDA 510(k) registry and REPORTS
+ * whether it answered, so three genuinely different states can finally be told
+ * apart and said out loud:
+ *
+ *   consulted && available && 0 results   the registry answered; no clearance
+ *                                         matches these criteria. Assertable.
+ *   consulted && !available               the registry did not answer, with the
+ *                                         reason. Not an empty result.
+ *   !consulted                            a non-device pathway, or no product
+ *                                         code / device name to search it by —
+ *                                         the old ambiguity, still named.
  */
 const RISK_NOT_RUN = 'unknown';
 const STRATEGY_NOT_RUN = 'Insufficient precedent data';
@@ -190,6 +217,10 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
   const board = useLiveData<PrecedentBoard>(path);
 
   const results = board.data?.results ?? [];
+  /* What was consulted for those results. `undefined` means a board served
+     without the field — treat that as "not consulted" so the copy falls back to
+     naming the ambiguity rather than asserting a clean registry answer. */
+  const registry = board.data?.sources?.registry;
   const sel = results.find((r) => r.clearanceNumber === selK) || results[0];
 
   /* ── Ingest and Compare, against the endpoints that already existed ────────
@@ -556,6 +587,47 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
       ],
     };
   }, [applied, board.loading, board.error, board.data, results.length, sel, tab, lo, hi]);
+  /* Both actions refuse until a search has been RUN. AnA never runs it: the
+     search is the person's, and a board with no applied query has nothing on
+     screen to operate. */
+  useSurfaceActionHandlers('precedent-intelligence', {
+    'precedent-intelligence.open-tab': (params) => {
+      if (!applied) {
+        return { ok: false, reason: 'No search has been run — the person runs the search; there is no board on screen yet.' };
+      }
+      const target = String(params.tab ?? '');
+      if (!['risk', 'strategy', 'crl', 'rtf', 'ema', 'adcomm'].includes(target)) {
+        return { ok: false, reason: `No analysis tab named "${params.tab}".` };
+      }
+      if (tab === target) return { ok: true, detail: `Already on the ${target} tab` };
+      setTab(target);
+      return { ok: true, detail: `Opened the ${target} analysis tab` };
+    },
+    'precedent-intelligence.select-result': (params) => {
+      if (!applied) {
+        return { ok: false, reason: 'No search has been run — there are no precedents on screen to select.' };
+      }
+      const raw = String(params.result ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a precedent to select.' };
+      if (board.loading) return { ok: false, reason: 'The precedent board is still loading.', retry: true };
+      if (board.error) {
+        return { ok: false, reason: 'The precedent read-model did not respond, so no results are listed to select from.' };
+      }
+      const needle = raw.toLowerCase();
+      const exact = results.filter((r) => r.clearanceNumber.toLowerCase() === needle);
+      const hits = exact.length
+        ? exact
+        : results.filter((r) => (r.deviceName ?? '').toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No precedent named "${raw}" in these results.` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} precedents — name one exactly.` };
+      setSelK(hits[0].clearanceNumber);
+      return { ok: true, detail: `Selected ${hits[0].clearanceNumber} — ${hits[0].deviceName ?? 'unnamed device'}` };
+    },
+  });
+  useEffect(() => {
+    if (applied && !board.loading && !board.error) notifySurfaceActionReady('precedent-intelligence');
+  }, [applied, board.loading, board.error]);
+
   usePublishSurfaceContext('precedent-intelligence', anaContext);
 
   /* Four honest states on the real read-model — never a fixture, and never a
@@ -568,7 +640,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
         <EmptyState
           icon={I.search}
           title="No search run yet"
-          hint="Enter your submission type, indication, therapeutic area or product code above and run a search. Precedents, risk, strategy and CRL/RTF/EMA/AdComm analyses are assembled from your organization's precedent corpus and the FDA registry for the criteria YOU enter — nothing is pre-filled on your behalf."
+          hint="Enter your submission type, indication, therapeutic area or product code above and run a search. Precedents, risk, strategy and the pattern analyses are assembled for the criteria YOU enter — from your organization's precedent corpus, and for device pathways also from the FDA 510(k) registry. Nothing is pre-filled on your behalf."
         />
       </div>
     );
@@ -591,7 +663,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load precedent intelligence"
-          hint="The precedent read-model didn't respond. It's assembled live from your organization's precedent corpus and the FDA registry — sign in and retry. Nothing is shown from a cached sample."
+          hint="The precedent read-model didn't respond. It's assembled live from your organization's precedent corpus, and for device pathways from the FDA 510(k) registry — sign in and retry. Nothing is shown from a cached sample."
         />
       </div>
     );
@@ -676,11 +748,24 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
                headline now states only what arrived, and names the ambiguity
                instead of resolving it in the direction that flatters the
                product. */
-            <>
-              No precedents came back for this search — and this board cannot tell an empty
-              result from a precedent search that did not complete, so nothing here establishes
-              that no precedent exists.
-            </>
+            registry?.consulted && registry.available ? (
+              <>
+                The FDA 510(k) registry answered and holds no clearance matching these
+                criteria, and your organization's corpus has none either. Widening the
+                product code or device name is the next move.
+              </>
+            ) : registry?.consulted && !registry.available ? (
+              <>
+                The FDA 510(k) registry did not answer{registry.reason ? <> — {registry.reason}</> : null}.
+                Nothing came back, and nothing here establishes that no precedent exists.
+              </>
+            ) : (
+              <>
+                No precedents came back for this search — and this board cannot tell an empty
+                result from a precedent search that did not complete, so nothing here establishes
+                that no precedent exists.
+              </>
+            )
           ) : (
             <>
               No single strong predicate yet — worth a search or a De Novo look before you
@@ -742,11 +827,22 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
                  result list under a 200, so this branch is reached by a failed
                  search and a genuinely empty one alike. The remedy is still
                  offered — widening or ingesting is what the user can do either
-                 way — but it is no longer presented as the diagnosis. */
+                 way — but it is no longer presented as the diagnosis.
+
+                 `sources.registry` now supplies the evidence that was missing
+                 for the device lane, so where the FDA registry actually
+                 answered this panel can say so; where it did not, it says THAT
+                 instead of describing an empty corpus. */
               <EmptyState
                 icon={I.search}
                 title="No precedents returned"
-                hint="This search returned no precedents. That is not the same as none existing: an empty result and a precedent search that did not complete are indistinguishable from here, so treat it as unconfirmed rather than as an empty corpus. Re-run the search, widen the criteria, or ingest a precedent to seed the registry."
+                hint={
+                  registry?.consulted && registry.available
+                    ? "The FDA 510(k) registry answered for these criteria and returned no clearance, and your organization's corpus holds none either. Widen the product code or device name, or ingest a precedent of your own."
+                    : registry?.consulted && !registry.available
+                      ? `The FDA 510(k) registry could not be reached, so only your organization's corpus was searched${registry.reason ? ` — ${registry.reason}` : ''}. Treat this as unconfirmed rather than as an empty registry, and re-run the search.`
+                      : 'This search returned no precedents. That is not the same as none existing: an empty result and a precedent search that did not complete are indistinguishable from here, so treat it as unconfirmed rather than as an empty corpus. Re-run the search, widen the criteria, or ingest a precedent to seed the registry.'
+                }
               />
             ) : (
               <div className="sp-list">

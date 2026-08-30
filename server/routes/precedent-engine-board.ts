@@ -6,7 +6,7 @@
  * read-model that aggregates the existing PrecedentEngine service into the exact
  * display shape the surface renders:
  *
- *   { results, risk, strategy, patterns: { crl, rtf, ema, adcomm } }
+ *   { results, risk, strategy, patterns: { crl, rtf, ema, adcomm }, sources }
  *
  * Envelope: { success: true, data: <displayShape> }.
  *
@@ -36,6 +36,16 @@
  *   - strategy.rationale → assembled ONLY from the engine's real computed fields
  *                          (supportingPrecedents / estimatedTimeline /
  *                          testingRequirements / keyRisks); no prose is invented.
+ *   - sources.registry   → whether the FDA 510(k) registry was consulted for this
+ *                          search and what came back. Strategy 2 of the engine
+ *                          used to SELECT from `predicate.fda_510k_clearances`,
+ *                          a relation no migration creates and nothing writes,
+ *                          so it raised on every call and its catch returned []
+ *                          — a device search for a heavily cleared product code
+ *                          reported zero precedents, structurally. It now reads
+ *                          the openFDA device/510k dataset, and an unreachable
+ *                          registry is REPORTED here rather than rendered as an
+ *                          empty result (MDX_WORK_ORDER W2-8).
  *   - patterns.*         → curated rule-based pattern libraries in the service,
  *                          filtered to the submission context and enriched with
  *                          the org's adversarial-precedent matches. Only the
@@ -47,7 +57,7 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { precedentEngine } from '../services/precedent-engine';
+import { precedentEngine, type RegistryStatus } from '../services/precedent-engine';
 import { createScopedLogger } from '../utils/logger';
 
 const log = createScopedLogger('precedent-engine-board');
@@ -104,6 +114,12 @@ interface PrecedentBoardDTO {
     ema: PatternAnalysisDTO;
     adcomm: PatternAnalysisDTO;
   };
+  /**
+   * What was consulted to build `results`, so the surface can say WHY a device
+   * search came back thin. Without this the FDA registry being unreachable and
+   * the FDA registry holding no match render identically — as "no precedents".
+   */
+  sources: { registry: RegistryStatus };
 }
 
 // Derive the service return element/result types WITHOUT importing named types,
@@ -299,7 +315,7 @@ export default function createPrecedentEngineBoardRoutes(): Router {
 
     try {
       const [resultsR, riskR, strategyR, crlR, rtfR, emaR, adcommR] = await Promise.allSettled([
-        precedentEngine.search(searchInput, organizationId),
+        precedentEngine.searchWithSources(searchInput, organizationId),
         precedentEngine.analyzeRisk(analysisInput),
         precedentEngine.recommendStrategy(analysisInput),
         precedentEngine.analyzeCRLTriggers(analysisInput),
@@ -327,7 +343,7 @@ export default function createPrecedentEngineBoardRoutes(): Router {
       }
 
       const data: PrecedentBoardDTO = {
-        results: resultsR.status === 'fulfilled' ? resultsR.value.map(mapResult) : [],
+        results: resultsR.status === 'fulfilled' ? resultsR.value.records.map(mapResult) : [],
         risk: riskR.status === 'fulfilled' ? mapRisk(riskR.value) : emptyRisk(),
         strategy: strategyR.status === 'fulfilled' ? mapStrategy(strategyR.value) : emptyStrategy(),
         patterns: {
@@ -335,6 +351,12 @@ export default function createPrecedentEngineBoardRoutes(): Router {
           rtf: rtfR.status === 'fulfilled' ? mapRtf(rtfR.value) : emptyPattern('RTF (Refuse-to-File) triggers'),
           ema: emaR.status === 'fulfilled' ? mapEma(emaR.value) : emptyPattern('EMA Day-120/180 question patterns'),
           adcomm: adcommR.status === 'fulfilled' ? mapAdcomm(adcommR.value) : emptyPattern('Advisory Committee risk'),
+        },
+        sources: {
+          registry:
+            resultsR.status === 'fulfilled'
+              ? resultsR.value.registry
+              : { consulted: false, available: false, reason: 'The precedent search did not complete.' },
         },
       };
 

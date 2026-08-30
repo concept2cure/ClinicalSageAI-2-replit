@@ -417,7 +417,7 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">
-            Settings {I.dot} /api/billing (dashboard)
+            Settings {I.dot} Billing
           </div>
           <h1 className="sp-title">Usage &amp; billing</h1>
           <p className="sp-state">

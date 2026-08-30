@@ -258,6 +258,8 @@
     "visual-qa:contrast-why": "node scripts/visual-qa/contrast-breakdown.mjs",
     "ci:canonicalizers": "node scripts/ci/check-canonicalizers.mjs",
     "ci:canonicalizers:write-baseline": "node scripts/ci/check-canonicalizers.mjs --write-baseline",
+    "ci:duplicate-exported-types": "node scripts/ci/check-duplicate-exported-types.mjs",
+    "ci:duplicate-exported-types:write-baseline": "node scripts/ci/check-duplicate-exported-types.mjs --write-baseline",
     "ci:tenant-resolvers": "node scripts/ci/check-tenant-resolvers.mjs",
     "ci:tenant-resolvers:write-baseline": "node scripts/ci/check-tenant-resolvers.mjs --write-baseline",
     "ci:error-envelope": "node scripts/ci/check-error-envelope-reads.mjs",
