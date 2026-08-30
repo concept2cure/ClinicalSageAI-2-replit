@@ -6507,14 +6507,34 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
           [reason, docId, signerEmail, tenantId]
         );
 
-        // Check if all workflow steps are approved
-        const pendingSteps = await client.query(
-          `SELECT COUNT(*) as pending FROM authoring_workflow_steps
-           WHERE doc_id = $1 AND status = 'PENDING' AND tenant_id = $2`,
+        /* Are all approvals in — or were there never any?
+           This counted only PENDING steps and treated '0' as "all approved".
+           That count is also '0' when NO STEPS EXIST, and the only thing that
+           creates them is POST /docs/:docId/submit, which has no caller
+           anywhere in the client. So on the ordinary path — a document never
+           submitted for approval — the first APPROVER signature found zero
+           pending steps, concluded the chain was complete, flipped the document
+           to APPROVED and inserted a frozen_documents row. An approval chain
+           that was never required read exactly like one that finished, and the
+           result is the strongest and least reversible transition in this
+           lifecycle: APPROVED is sealed, and the content becomes immutable.
+
+           A check that ran zero assertions must not report a pass. The total is
+           counted alongside the pending, and the flip now requires that an
+           approval workflow actually EXISTED and is complete. A document with
+           no workflow is signed — the signature above is recorded either way —
+           and simply not approved, which is the truth about it. */
+        const stepCounts = await client.query(
+          `SELECT COUNT(*) FILTER (WHERE status = 'PENDING') AS pending,
+                  COUNT(*) AS total
+             FROM authoring_workflow_steps
+            WHERE doc_id = $1 AND tenant_id = $2`,
           [docId, tenantId]
         );
+        const totalSteps = Number(stepCounts.rows[0]?.total ?? 0);
+        const pendingCount = Number(stepCounts.rows[0]?.pending ?? 0);
 
-        if (pendingSteps.rows[0].pending === '0') {
+        if (totalSteps > 0 && pendingCount === 0) {
           // All approved - update document status
           await client.query(
             `UPDATE authoring_documents
