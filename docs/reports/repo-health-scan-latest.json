@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-30T17:51:14.460Z",
+  "generatedAt": "2026-08-30T17:59:16.837Z",
   "git": {
-    "sha": "ab42b94e59dce71c110bf676bc18bb25cd866668",
+    "sha": "aac79d428bfa07e2a53e2835fa6466c3a3b80265",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -14,7 +14,7 @@
     "design-system/"
   ],
   "summary": {
-    "duplicateBasenames": 222,
+    "duplicateBasenames": 221,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 34,
@@ -859,15 +859,6 @@
           "client/src/concept2cure/v2/surfaces/Nonclinical.tsx",
           "server/routes/nonclinical.ts",
           "shared/schema/nonclinical.ts"
-        ]
-      },
-      {
-        "basename": "openai-service",
-        "count": 3,
-        "paths": [
-          "server/openai-service.ts",
-          "server/services/openai-service.ts",
-          "server/test/services/openai-service.ts"
         ]
       },
       {
@@ -2624,7 +2615,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 401,
+      "duplicateGroups": 398,
       "largeByBytes": 25,
       "largeByLines": 68
     },
