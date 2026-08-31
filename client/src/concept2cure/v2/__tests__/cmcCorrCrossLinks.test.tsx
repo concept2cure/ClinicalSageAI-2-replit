@@ -255,6 +255,96 @@ describe('CmPathway — logging and closing agency questions', () => {
     await screen.findByText(/Question closed · §3\.2\.P\.8\.1/);
   });
 
+  it('Close carries the guard: the write names the status this screen read', async () => {
+    const patches: Array<{ body: unknown }> = [];
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
+        patches.push({ body });
+        return res({ success: true, data: { id: 9, status: 'CLOSED' } });
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+    fireEvent.click(screen.getByTitle(/Close this question/));
+    fireEvent.click(screen.getByRole('button', { name: /^Close$/ }));
+    await waitFor(() => expect(patches).toHaveLength(1));
+    expect(patches[0].body).toMatchObject({ status: 'CLOSED', expectedStatus: 'OPEN' });
+  });
+
+  it('a DRAFTED question can be SENT FOR REVIEW — the transition the row allows, guarded', async () => {
+    const patches: Array<{ body: unknown }> = [];
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
+        patches.push({ body });
+        return res({ success: true, data: { id: 9, status: 'IN_REVIEW' } });
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') {
+        return res({
+          ...CORR_BOARD,
+          data: { ...CORR_BOARD.data, correspondence: [{ ...CORR_BOARD.data.correspondence[0], status: 'DRAFTED' }] },
+        });
+      }
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+    // The opposite leg is not offered on a DRAFTED row.
+    expect(screen.queryByRole('button', { name: /Return to drafting/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
+    await waitFor(() => expect(patches).toHaveLength(1));
+    expect(patches[0].body).toMatchObject({ status: 'IN_REVIEW', expectedStatus: 'DRAFTED' });
+    await screen.findByText(/Sent for review/);
+  });
+
+  it('an IN_REVIEW question can be RETURNED TO DRAFTING — and only that', async () => {
+    const patches: Array<{ body: unknown }> = [];
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
+        patches.push({ body });
+        return res({ success: true, data: { id: 9, status: 'DRAFTED' } });
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') {
+        return res({
+          ...CORR_BOARD,
+          data: { ...CORR_BOARD.data, correspondence: [{ ...CORR_BOARD.data.correspondence[0], status: 'IN_REVIEW' }] },
+        });
+      }
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+    expect(screen.queryByRole('button', { name: /Send for review/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Return to drafting/ }));
+    await waitFor(() => expect(patches).toHaveLength(1));
+    expect(patches[0].body).toMatchObject({ status: 'DRAFTED', expectedStatus: 'IN_REVIEW' });
+  });
+
+  it('a stale send-for-review states the 409 and refetches — never a silent overwrite', async () => {
+    let boardCalls = 0;
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
+        const err = new Error('The question is CLOSED now — it changed since this screen loaded. Nothing was updated.');
+        throw err;
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') {
+        boardCalls += 1;
+        return res({
+          ...CORR_BOARD,
+          data: { ...CORR_BOARD.data, correspondence: [{ ...CORR_BOARD.data.correspondence[0], status: 'DRAFTED' }] },
+        });
+      }
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+    fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
+    await screen.findByText(/Couldn’t update the question — The question is CLOSED now/);
+    // The stale row is re-read: the honest next state is the server's.
+    await waitFor(() => expect(boardCalls).toBeGreaterThanOrEqual(2));
+  });
+
   it('a refused log says so and records nothing locally', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'POST' && url === '/api/cmc/agency-questions') {
