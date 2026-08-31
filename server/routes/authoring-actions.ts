@@ -1224,6 +1224,22 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
       if (isGovernedContractInvalidError(metadataErr) && metadataErr.governed) {
         return sendGovernedContractInvalid(res, metadataErr.governed);
       }
+      /* Everything else used to be swallowed here — the catch body ended at the
+         `if`, and control fell through to `submissionReady: true, 'Artifact
+         marked submission-ready.'` below.
+
+         The block this guards throws `new Error('Artifact not found')` when the
+         artifact does not resolve for this project and org, and it is also where
+         the governed contract is persisted. So a request naming an artifact that
+         does not exist answered that it had been marked submission-ready — and
+         the same body carried a freshly minted decisionId and receiptId, a
+         governance receipt for a transition that never happened. Any failure of
+         the contract write was reported the same way.
+
+         Fail closed. A governed-contract violation still gets its own structured
+         refusal; anything else reaches the handler's outer catch and returns 500,
+         which is the truth: the state was not changed. */
+      throw metadataErr;
     }
 
     return res.json({
@@ -2214,6 +2230,8 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
     if (moduleCodes.length === 0) {
       return res.json({
         status: 'data', action: 'dossier_preflight',
+        /* Reported so a consumer cannot mistake this for an executed preflight. */
+        signalType: 'module_status_rollup',
         regulatorBody, submissionType,
         overall: 'needs-review',
         summary: 'No modules found in this project. Add documents first.',
@@ -2287,20 +2305,39 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
       }
     }
 
+    /* WHAT THIS ACTUALLY COMPUTES.
+       Nothing here runs a preflight check. Each section's contribution is read
+       straight off its status column — 'locked'/'approved' counts ready,
+       'review' counts provisional, anything else needs review — and
+       `counts.blocked` is initialised to 0 and never incremented, so the
+       blocked branch below is unreachable by construction.
+
+       It said "Dossier ready — all N module(s) pass." A dossier whose artifacts
+       are merely marked approved therefore reported that every module PASSED,
+       naming a preflight that never ran. That is the same defect as the
+       per-section verdict in /module-preflight — a check that ran zero
+       assertions reporting a pass — one level up and without even the checks.
+
+       The roll-up itself is worth having: the distribution of module states is a
+       real answer to a real question. So it is reported as what it is, in the
+       same spirit as the deficiency scan's `signal_type: 'heuristic_quality'`.
+       The word "pass" is gone, because nothing was tested. */
     let overall: string;
     let summary: string;
+    const NOT_A_PREFLIGHT =
+      ' This is a roll-up of recorded module status; no preflight checks were run.';
     if (dCounts.blockedModules > 0) {
       overall = 'blocked';
-      summary = `Dossier blocked — ${dCounts.blockedModules} of ${dCounts.totalModules} module(s) blocked.`;
+      summary = `Dossier blocked — ${dCounts.blockedModules} of ${dCounts.totalModules} module(s) blocked.${NOT_A_PREFLIGHT}`;
     } else if (dCounts.provisionalModules > 0) {
       overall = 'provisional';
-      summary = `Dossier provisional — ${dCounts.provisionalModules} module(s) have warnings.`;
+      summary = `Dossier provisional — ${dCounts.provisionalModules} module(s) are still in review.${NOT_A_PREFLIGHT}`;
     } else if (dCounts.readyModules === dCounts.totalModules && dCounts.totalModules > 0) {
       overall = 'ready';
-      summary = `Dossier ready — all ${dCounts.totalModules} module(s) pass.`;
+      summary = `All ${dCounts.totalModules} module(s) are recorded as approved or locked.${NOT_A_PREFLIGHT}`;
     } else {
       overall = 'needs-review';
-      summary = `Dossier needs review — ${dCounts.needsReviewModules} module(s) need attention.`;
+      summary = `Dossier needs review — ${dCounts.needsReviewModules} module(s) need attention.${NOT_A_PREFLIGHT}`;
     }
 
     const recommendedActions: any[] = [];
@@ -2384,6 +2421,8 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
 
     return res.json({
       status: 'data', action: 'dossier_preflight',
+      /* Reported so a consumer cannot mistake this for an executed preflight. */
+      signalType: 'module_status_rollup',
       regulatorBody, submissionType, overall, summary,
       moduleResults, counts: dCounts, majorBlockers, recommendedActions,
       decisionId: decisionRecord?.id || null,
