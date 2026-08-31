@@ -2112,7 +2112,10 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
   const [closingId, setClosingId] = useState<string | number | null>(null);
   const closeQuestion = async (c: CmcCorrespondence) => {
     try {
-      const res = await apiRequest('PATCH', '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)), { status: 'CLOSED' });
+      // expectedStatus: closing applies to the row THIS screen read — if
+      // someone else already moved it, the server answers 409 with the
+      // current status instead of this click silently overwriting it.
+      const res = await apiRequest('PATCH', '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)), { status: 'CLOSED', expectedStatus: c.status });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
         fireToast('Couldn’t close the question — ' + (serverMessage(json) ?? `HTTP ${res.status}`) + '. It stays open.', 'error');
@@ -2123,7 +2126,66 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
       setCorrEpoch((e) => e + 1);
     } catch (e) {
       fireToast('Couldn’t close the question — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      setCorrEpoch((e) => e + 1);
     }
+  };
+
+  /* Inline re-assignment. The Assigned column rendered the owner but only the
+     Log dialog could ever set one — changing who owns the response mid-life,
+     the everyday triage act, forced a raw API call. A blank value clears the
+     owner (the server stores NULL, the cell says so honestly). */
+  const [assigningId, setAssigningId] = useState<string | number | null>(null);
+  const [assignVal, setAssignVal] = useState('');
+  const saveAssignee = async (c: CmcCorrespondence) => {
+    const next = assignVal.trim();
+    if ((c.assignedTo ?? '') === next) {
+      setAssigningId(null);
+      return;
+    }
+    try {
+      await apiRequest(
+        'PATCH',
+        '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
+        { assignedTo: next || null },
+      );
+      fireToast(next ? 'Assigned to ' + next + '.' : 'Assignment cleared.');
+      setAssigningId(null);
+      setCorrEpoch((e) => e + 1);
+    } catch (e) {
+      fireToast(
+        'Couldn’t update the assignment — ' + (e instanceof Error ? e.message : String(e)),
+        'error',
+      );
+    }
+  };
+
+  /* The REVIEW leg of the lifecycle. IN_REVIEW has always been in the store's
+     status set and on the board's chips, but nothing in the product could SET
+     it — a drafted response went to its reviewer by email while the file
+     stayed DRAFTED, and a reviewer could not hand it back. Guarded like every
+     status write here: the transition applies only from the status this
+     screen read; a concurrent move answers 409 with the current status. */
+  const moveStatus = async (
+    c: CmcCorrespondence,
+    to: 'IN_REVIEW' | 'DRAFTED',
+    said: string,
+  ) => {
+    try {
+      await apiRequest(
+        'PATCH',
+        '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
+        { status: to, expectedStatus: c.status },
+      );
+      fireToast(said + (c.sectionRef ? ' · §' + c.sectionRef : '') + '.');
+    } catch (e) {
+      fireToast(
+        'Couldn’t update the question — ' + (e instanceof Error ? e.message : String(e)),
+        'error',
+      );
+    }
+    // Refetch on success AND failure: a 409 means this screen's row is
+    // stale, and the honest next state is the server's.
+    setCorrEpoch((e) => e + 1);
   };
 
   /* "Draft response" — the same real handoff as the change memo's editor
@@ -2346,7 +2408,37 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
                   </span>
                 </td>
                 <td className="mono">{c.status}</td>
-                <td>{c.assignedTo ?? '—'}</td>
+                <td>
+                  {assigningId === c.id ? (
+                    <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+                      <input
+                        value={assignVal}
+                        autoFocus
+                        aria-label="Who owns the response — blank clears the assignment"
+                        placeholder="name or email"
+                        style={{ width: 150 }}
+                        onChange={(e) => setAssignVal(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') void saveAssignee(c);
+                          if (e.key === 'Escape') setAssigningId(null);
+                        }}
+                      />
+                      <button className="nda-open" onClick={() => void saveAssignee(c)}>Save</button>
+                      <button className="nda-open" onClick={() => setAssigningId(null)}>Cancel</button>
+                    </span>
+                  ) : (
+                    <button
+                      className="nda-open"
+                      title={c.assignedTo ? 'Change who owns the response' : 'Assign an owner for the response'}
+                      onClick={() => {
+                        setAssigningId(c.id);
+                        setAssignVal(c.assignedTo ?? '');
+                      }}
+                    >
+                      {c.assignedTo ?? 'Assign'}
+                    </button>
+                  )}
+                </td>
                 <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                   <div style={{ display: 'inline-flex', gap: 6 }}>
                     {/* The linked draft is a recorded fact on the row — the
@@ -2390,6 +2482,27 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
                     >
                       {I.checkSquare} Create task
                     </button>
+                    {/* The review leg: only the transition the row's CURRENT
+                        status allows is offered — the guard on the write is
+                        mirrored by the door that proposes it. */}
+                    {c.status === 'DRAFTED' ? (
+                      <button
+                        className="nda-open"
+                        title="Send the drafted response for review — the file shows IN_REVIEW"
+                        onClick={() => void moveStatus(c, 'IN_REVIEW', 'Sent for review')}
+                      >
+                        Send for review
+                      </button>
+                    ) : null}
+                    {c.status === 'IN_REVIEW' ? (
+                      <button
+                        className="nda-open"
+                        title="Hand the question back to drafting"
+                        onClick={() => void moveStatus(c, 'DRAFTED', 'Returned to drafting')}
+                      >
+                        Return to drafting
+                      </button>
+                    ) : null}
                     {/* Close leaves the open list (the record keeps the row),
                         so a misclick must confirm before it disappears. */}
                     {closingId === c.id ? (

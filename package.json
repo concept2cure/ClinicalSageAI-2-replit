@@ -147,6 +147,7 @@
     "ci:check-shell-css-collisions": "node scripts/ci/check-shell-css-collisions.mjs",
     "ci:check-css-selector-shadowing": "node scripts/ci/check-css-selector-shadowing.mjs",
     "ci:reg-reference-single-copy": "node scripts/ci/check-regulatory-reference-data-single-copy.mjs",
+    "ci:surface-text-ramp": "node scripts/design/generate-surface-text-ramp.mjs --check",
     "ci:check-chip-tones": "node scripts/ci/check-chip-tones.mjs",
     "ci:toast-canonicality": "node scripts/ci/check-toast-canonicality.mjs",
     "ci:check-phantom-tokens": "node scripts/ci/check-phantom-tokens.mjs",

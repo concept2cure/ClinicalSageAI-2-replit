@@ -206,6 +206,14 @@ LNK=$(cat "$OUT/qdraft.json" | JQ '.data.responseDocId // empty')
 CODE=$(req board2b GET /api/cmc/module3-board)
 BLNK=$(cat "$OUT/board2b.json" | jq -r --argjson id "${QID:-0}" '[.data.correspondence[]? | select(.id == $id)][0].responseDocId // empty' 2>/dev/null)
 [ "$CODE" = 200 ] && [ "$BLNK" = "$RDOC" ] && ok "board serves the linked draft id" || bad "board link: code=$CODE link=$BLNK"
+# The review leg: DRAFTED → IN_REVIEW, guarded on the status the screen read.
+CODE=$(req qreview PATCH "/api/cmc/agency-questions/$QID" '{"status":"IN_REVIEW","expectedStatus":"DRAFTED"}')
+ST=$(cat "$OUT/qreview.json" | JQ '.data.status // empty')
+[ "$CODE" = 200 ] && [ "$ST" = "IN_REVIEW" ] && ok "sent for review (IN_REVIEW)" || bad "send for review: $CODE $ST"
+# A STALE transition (a screen that still thought DRAFTED) is a stated 409 —
+# never a silent overwrite of the reviewer's state.
+CODE=$(req qstale PATCH "/api/cmc/agency-questions/$QID" '{"status":"IN_REVIEW","expectedStatus":"DRAFTED"}')
+[ "$CODE" = 409 ] && ok "stale transition answers 409 (row is IN_REVIEW now)" || bad "stale transition: $CODE"
 CODE=$(req qclose PATCH "/api/cmc/agency-questions/$QID" '{"status":"CLOSED"}')
 ST=$(cat "$OUT/qclose.json" | JQ '.data.status // empty')
 CODE2=$(req board3 GET /api/cmc/module3-board)
