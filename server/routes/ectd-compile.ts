@@ -403,6 +403,13 @@ interface CompilationResult {
   submissionReady: boolean;
   /** Why not, in the caller's words. Empty exactly when submissionReady. */
   submissionBlockers: string[];
+  /** The governed submission this spine-backed compile ran against — the
+   *  handle POST /api/ectd/export/:submissionId needs to hand the caller the
+   *  actual package bytes. Absent on draft-backbone compiles, which assemble
+   *  no package to download. */
+  submissionId?: number;
+  /** The sequence identity recorded for this compile (e.g. "0001"). */
+  sequenceNumber?: string;
   /** Leaf files actually rendered to disk: the materialized count on the
    *  spine-backed compile, 0 on the draft-backbone path. */
   leafFilesRendered?: number;
@@ -970,6 +977,8 @@ async function compileFromSpine(
     submissionReady: blockers.length === 0,
     submissionBlockers: blockers,
     leafFilesRendered: materialized,
+    submissionId: spine.submissionId,
+    sequenceNumber: seq.sequenceNumber,
     errors,
     warnings: validationResults.filter((v) => v.severity === 'warning').map((v) => v.message),
   };

@@ -38,7 +38,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
-import { downloadText } from '../download';
+import { downloadBlob, downloadText, safeFileName } from '../download';
 
 interface ModuleReadiness {
   moduleCode: string;
@@ -86,6 +86,10 @@ interface CompileResult {
   submissionReady: boolean;
   submissionBlockers?: string[];
   leafFilesRendered?: number;
+  /** The governed submission a spine-backed compile ran against — the handle
+   *  the package-download endpoint needs. Absent on draft-backbone compiles. */
+  submissionId?: number;
+  sequenceNumber?: string;
   errors: string[];
   warnings: string[];
 }
@@ -152,7 +156,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
   const [validationFailed, setValidationFailed] = useState(false);
   const [compileResult, setCompileResult] = useState<CompileResult | null>(null);
   const [history, setHistory] = useState<CompilationRow[]>([]);
-  const [busy, setBusy] = useState<'validate' | 'compile' | null>(null);
+  const [busy, setBusy] = useState<'validate' | 'compile' | 'export' | null>(null);
   const [toast, fireToast] = useToast();
 
   const loadStatus = useCallback(async () => {
@@ -189,6 +193,39 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
       fireToast(`Validation: ${body.summary.errors} error(s), ${body.summary.warnings} warning(s).`);
     } finally { setBusy(null); }
   }, [identPath, region, fireToast]);
+
+  /* The actual deliverable. The compile proves the package exists (leaf
+     counts, sha256) — this hands the publisher its BYTES through the governed
+     export route, which is fail-closed server-side: a package that fails
+     structural validation answers 422 and no zip is returned. Draft-backbone
+     compiles carry no submission spine and assemble no package, so the
+     button never renders for them. */
+  const doExport = useCallback(async () => {
+    const subId = compileResult?.submissionId;
+    if (subId == null) return;
+    setBusy('export');
+    try {
+      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, { region });
+      if (!res.ok) {
+        const pj = (await res.json().catch(() => null)) as { error?: string } | null;
+        fireToast('The package was not returned — ' + (pj?.error ?? `HTTP ${res.status}`) + '.', 'error');
+        return;
+      }
+      const blob = await res.blob();
+      const cd = res.headers.get('Content-Disposition') ?? '';
+      const name =
+        /filename="([^"]+)"/.exec(cd)?.[1] ??
+        safeFileName(`ectd-${ident}-seq-${compileResult?.sequenceNumber ?? 'package'}`) + '.zip';
+      downloadBlob(name, blob);
+      fireToast(`eCTD package downloaded — ${name}.`);
+    } catch (e) {
+      // apiRequest throws on a refused build (422: validation failure or the
+      // completeness gate) with the server's own sentence — say it verbatim.
+      fireToast('The package was not returned — ' + (e instanceof Error ? e.message : String(e)), 'error');
+    } finally {
+      setBusy(null);
+    }
+  }, [compileResult, region, ident, fireToast]);
 
   const doCompile = useCallback(async () => {
     if (identPath == null) return;
@@ -402,6 +439,18 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
                   {compileResult.submissionBlockers!.map((b, i) => <li key={i}>{b}</li>)}
                 </ul>
               </div>
+            )}
+            {/* The deliverable itself — only a spine-backed compile with
+                rendered leaves has a package to hand over. */}
+            {compileResult.submissionId != null && (compileResult.leafFilesRendered ?? 0) > 0 && (
+              <button
+                className="btn primary"
+                style={{ height: 32, marginRight: 8 }}
+                disabled={busy != null}
+                onClick={() => void doExport()}
+              >
+                {I.download} {busy === 'export' ? 'Assembling package…' : 'Download package (.zip)'}
+              </button>
             )}
             {compileResult.xmlBackbone && (
               <>

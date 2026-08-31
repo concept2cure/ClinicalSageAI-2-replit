@@ -304,27 +304,40 @@ export function SubmissionCenter({
    * empty state was instructing the user to press a button that could not do
    * what it said.
    *
-   * The route and its schema existed the whole time — createSubmissionSchema
-   * takes { type, projectId, targetAgency, targetDate? } — so this is a form
-   * over what the server already requires, with the project picked from the
-   * org's own programmes rather than typed as a uuid.
+   * The route and its schema existed the whole time — the MOUNTED router's
+   * createSubmissionSchema (routes/submissions.ts) takes { title,
+   * productName?, applicationType, clientType, primaryRegion } — so this is a
+   * form over what the server actually requires, with the programme picked
+   * from the org's own list to supply the product identity the compile spine
+   * links on. (An earlier body targeted a different, unmounted router's
+   * schema; every submit answered 400 VALIDATION.)
    */
   const [newOpen, setNewOpen] = React.useState(false);
   const [creating, setCreating] = React.useState(false);
   const createSubmission = async (v: Record<string, string>) => {
     if (creating) return;
-    const projectId = (v.projectId ?? '').trim();
-    if (!projectId) {
+    const programme = programmes.rows.find((p) => p.id === (v.projectId ?? '').trim());
+    if (!programme) {
       setNotice({ tone: 'err', text: 'Pick the programme this submission belongs to.' });
       return;
     }
     setCreating(true);
     setNotice(null);
+    /* The LIVE schema of POST /api/submissions (routes/submissions.ts):
+       { title, productName?, applicationType, clientType, primaryRegion }.
+       The previous body ({ type, projectId, targetAgency, targetDate })
+       belonged to a router that is NOT mounted at this path — every submit
+       was a 400 VALIDATION, so this form had never created anything.
+       productName carries the programme's identity on purpose: the eCTD
+       compile spine links program ↔ submission by matching application type
+       plus product/title, so this field is what makes the new submission
+       compilable from the programme's Module 3. */
     const r = await mutateVerbatim<SubRow>('POST', '/api/submissions', {
-      type: v.type,
-      projectId,
-      targetAgency: (v.targetAgency ?? '').trim(),
-      targetDate: v.targetDate || undefined,
+      title: (v.title ?? '').trim(),
+      productName: programme.title || programme.code || undefined,
+      applicationType: v.applicationType,
+      clientType: v.clientType,
+      primaryRegion: v.primaryRegion,
     });
     setCreating(false);
     if (r.data && (r.data as { id?: unknown }).id != null) {
@@ -332,7 +345,10 @@ export function SubmissionCenter({
       // Re-read rather than appending a client-built row: what appears is the
       // record the server created.
       setSubsBump((b) => b + 1);
-      setNotice({ tone: 'ok', text: `Submission created — ${v.type} for ${v.targetAgency}.` });
+      setNotice({
+        tone: 'ok',
+        text: `Submission created — ${SC_APPTYPES.find((x) => x.v === v.applicationType)?.l ?? v.applicationType} · ${SC_REGIONS.find((x) => x.v === v.primaryRegion)?.l ?? v.primaryRegion}.`,
+      });
     } else {
       setNotice({ tone: 'err', text: `Submission not created — ${r.error ?? 'the request failed'}.` });
     }
@@ -749,14 +765,31 @@ export function SubmissionCenter({
             submitLabel: creating ? 'Creating…' : 'Create submission',
             fields: [
               {
-                key: 'type', label: 'Submission type', type: 'select',
-                // The server's own enum — a type it would refuse is never offered.
-                options: ['510k', 'PMA', 'De_Novo', 'IND', 'NDA', 'BLA'],
-                default: 'IND', required: true, half: true,
+                key: 'title', label: 'Title', type: 'text',
+                placeholder: 'e.g. BX-701 — Initial IND', required: true,
               },
               {
-                key: 'targetAgency', label: 'Target agency', type: 'text',
-                placeholder: 'e.g. FDA CDER', required: true, half: true,
+                key: 'applicationType', label: 'Application type', type: 'select',
+                // The canonical vocabulary the rest of this surface renders —
+                // including the non-US applications (MAA, CTA) a global team
+                // opens as its second market.
+                options: SC_APPTYPES.map((a) => ({ value: a.v, label: a.l })),
+                default: 'ind', required: true, half: true,
+              },
+              {
+                key: 'primaryRegion', label: 'Primary region', type: 'select',
+                options: SC_REGIONS.map((r0) => ({ value: r0.v, label: r0.l })),
+                default: 'fda', required: true, half: true,
+              },
+              {
+                key: 'clientType', label: 'Client type', type: 'select',
+                options: [
+                  { value: 'pharma', label: 'Pharma' },
+                  { value: 'biotech', label: 'Biotech' },
+                  { value: 'mdx', label: 'Medical device' },
+                  { value: 'ivd', label: 'IVD' },
+                ],
+                default: 'biotech', required: true, half: true,
               },
               {
                 key: 'projectId', label: 'Programme', type: 'select',
@@ -764,9 +797,8 @@ export function SubmissionCenter({
                   value: p.id,
                   label: [p.code, p.title].filter(Boolean).join(' · ') || p.id,
                 })),
-                required: true,
+                required: true, half: true,
               },
-              { key: 'targetDate', label: 'Target date (optional)', type: 'date', half: true },
             ],
           }}
           onCancel={() => setNewOpen(false)}

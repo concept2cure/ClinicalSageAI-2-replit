@@ -133,24 +133,45 @@ export function mapAnalyticalMethodPayload(record: Record<string, any>): Record<
 
 /**
  * Map a stabilityStudies row to a canonical source payload.
+ *
+ * The row is the DRIZZLE `stability_studies` shape (shared/schema.ts):
+ * studyTitle / storageConditions[] / stabilityData / shelfLife / batchNumber.
+ * The first version of this mapper read keys the row has NEVER had
+ * (studyName / storageCondition / results / shelfLifeClaim / batchesStudied),
+ * so each of those stored '' or null, the composer's required fields for
+ * 3.2.S.7 and 3.2.P.8 were permanently unsatisfiable, and recorded stability
+ * data — pull-point results, the shelf-life claim, the batch — silently
+ * never reached the compiled dossier. The payload keys are the composer's
+ * contract and stay as they are; the ROW keys now actually feed them.
  */
 export function mapStabilityPayload(record: Record<string, any>): Record<string, any> {
+  const asArr = (v: unknown): unknown[] | null =>
+    Array.isArray(v) ? v : v == null || v === '' ? null : [v];
+  const storageArr =
+    asArr(record.storageCondition ?? record.storage_condition) ??
+    asArr(record.storageConditions ?? record.storage_conditions);
   return {
-    studyName: record.studyName || record.study_name || '',
+    studyName: record.studyName || record.study_name || record.studyTitle || record.study_title || '',
     studyType: record.studyType || record.study_type || '',
-    storageCondition: record.storageCondition || record.storage_condition || '',
+    storageCondition: storageArr ? storageArr.join(', ') : '',
     duration: record.duration || '',
     timePoints: record.timePoints || record.time_points || '',
     containerClosure: record.containerClosure || record.container_closure || '',
     testParameters: record.testParameters || record.test_parameters || '',
     stabilityParameters: record.testParameters || record.test_parameters || '',
     status: record.status || '',
-    startedDate: record.startedDate || record.started_date || null,
+    startedDate: record.startedDate || record.started_date || record.startDate || record.start_date || null,
     completedDate: record.completedDate || record.completed_date || null,
-    results: record.results || null,
-    batchesStudied: record.batchesStudied || record.batches_studied || null,
+    // The result-bearing field the composer's data-inspection reads: the
+    // study's recorded pull points live in `stability_data` on the row.
+    results: record.results || record.stabilityData || record.stability_data || null,
+    // The composer renders this as a list; the row records ONE batch per study.
+    batchesStudied:
+      asArr(record.batchesStudied ?? record.batches_studied) ??
+      asArr(record.batchNumber ?? record.batch_number),
     packagingConfiguration: record.packagingConfiguration || record.packaging_configuration || null,
-    shelfLifeClaim: record.shelfLifeClaim || record.shelf_life_claim || null,
+    shelfLifeClaim:
+      record.shelfLifeClaim || record.shelf_life_claim || record.shelfLife || record.shelf_life || null,
   };
 }
 

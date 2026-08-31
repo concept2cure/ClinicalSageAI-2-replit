@@ -19,7 +19,25 @@ export interface ScFinding { id: string; rule: string; severity: string; status:
 export interface ScShadow { id: string; severity: string; msg: string; ref: string }
 export interface ScCrossRegion { region: string; item: string; status: string; note: string }
 
-export const SC_REGIONS = [{ v: 'fda', l: 'FDA (US)' }, { v: 'eu', l: 'EU' }, { v: 'jp', l: 'PMDA (Japan)' }];
+/** One spelling per region, matching the server's primaryRegion enum — the
+ *  store already writes 'eu' and 'jp' (never their agency aliases), so those
+ *  aliases are deliberately not offered as second spellings of the same
+ *  market. Extended past fda/eu/jp so a non-US submission can be OPENED, not
+ *  only displayed — the global-markets half of the product's mandate. */
+export const SC_REGIONS = [
+  { v: 'fda', l: 'FDA (US)' },
+  { v: 'eu', l: 'EU (EMA)' },
+  { v: 'jp', l: 'PMDA (Japan)' },
+  { v: 'ca', l: 'Health Canada' },
+  { v: 'uk', l: 'MHRA (UK)' },
+  { v: 'ch', l: 'Swissmedic' },
+  { v: 'au', l: 'TGA (Australia)' },
+  { v: 'cn', l: 'NMPA (China)' },
+  { v: 'br', l: 'ANVISA (Brazil)' },
+  { v: 'in', l: 'CDSCO (India)' },
+  { v: 'kr', l: 'MFDS (Korea)' },
+  { v: 'sg', l: 'HSA (Singapore)' },
+];
 
 export const SC_APPTYPES = [
   { v: 'ind', l: 'IND' },
