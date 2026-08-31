@@ -63,71 +63,148 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
 // ── Mapping helpers: legacy CMC record → canonical source payload ─────────
 
 /**
+ * A compact textual projection of a record's own json (criteria, controls) for
+ * payload keys the composer reads as TEXT (`val()` renders String(v), so an
+ * object would print "[object Object]" into a narrative). Nothing is
+ * invented — every key and value is the record's own; anything non-scalar is
+ * simply omitted from the projection.
+ */
+function textOf(v: unknown): string {
+  if (v == null) return '';
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number') return String(v);
+  if (Array.isArray(v)) return v.map(textOf).filter(Boolean).join('; ');
+  if (typeof v === 'object') {
+    return Object.entries(v as Record<string, unknown>)
+      .map(([k, x]) => (typeof x === 'string' || typeof x === 'number' ? `${k}: ${x}` : ''))
+      .filter(Boolean)
+      .join('; ');
+  }
+  return '';
+}
+
+/**
  * Map a drugSubstances row to a canonical source payload.
+ *
+ * The §3.2.S register form nests manufacturer / route / site inside the
+ * `manufacturing_process` json (drugSubstanceBody in cmcRegisterForms.ts) —
+ * the flat reads alone left 3.2.S.1's required `manufacturer` and 3.2.S.2's
+ * `manufacturingRoute` permanently blank while the staffer's save succeeded.
+ * Canonical payload keys stay first, so a caller that already holds a
+ * canonical-shaped payload passes through unchanged (same rule as the
+ * stability mapper below).
  */
 export function mapDrugSubstancePayload(record: Record<string, any>): Record<string, any> {
+  const mp = (record.manufacturingProcess ?? record.manufacturing_process ?? {}) as Record<string, any>;
+  const route = record.manufacturingRoute || record.manufacturing_route || mp.route || '';
   return {
     name: record.substanceName || record.substance_name || '',
-    manufacturer: record.manufacturer || '',
+    inn: record.inn || '',
+    manufacturer: record.manufacturer || mp.manufacturer || '',
+    manufacturingSite: record.manufacturingSite || record.manufacturing_site || mp.site || '',
     cas: record.casNumber || record.cas || record.cas_number || '',
     molecularFormula: record.molecularFormula || record.molecular_formula || '',
     molecularWeight: record.molecularWeight || record.molecular_weight || '',
-    structure: record.structure || '',
-    manufacturingRoute: record.manufacturingRoute || record.manufacturing_route || '',
+    structure: record.structure || record.structuralFormula || record.structural_formula || '',
+    manufacturingRoute: route,
+    /* The form labels the route field as "the §3.2.S.2.2 description"; at this
+       register's granularity the recorded route IS the process description
+       3.2.S.2 requires. Nothing is invented — an empty route stays empty. */
+    processDescription: record.processDescription || record.process_description || route,
     specifications: record.specifications || null,
-    stability_data: record.stability_data || null,
+    stability_data: record.stability_data || record.stability || null,
     characterization_data: record.characterization_data || null,
-    impurities: record.impurities || null,
-    reference_materials: record.reference_materials || null,
+    impurities: record.impurities || record.impuritiesProfile || record.impurities_profile || null,
+    reference_materials:
+      record.reference_materials || record.controlOfMaterials || record.control_of_materials || null,
     physicochemicalProperties: record.physicochemicalProperties || record.physicochemical_properties || null,
     biologicalActivity: record.biologicalActivity || record.biological_activity || null,
+    /* Deliberately NOT aliased from the structure field: a SMILES string is
+       not structural-elucidation evidence, and 3.2.S.3 claiming it would
+       overstate the record. The characterization register (coverage
+       evaluation, build item 4) is that field's honest producer. */
     structuralElucidation: record.structuralElucidation || record.structural_elucidation || null,
     qualificationBasis: record.qualificationBasis || record.qualification_basis || null,
+    developmentPhase: record.developmentPhase || record.development_phase || '',
+    status: record.status || '',
   };
 }
 
 /**
  * Map a drugProducts row to a canonical source payload.
+ *
+ * The §3.2.P register form nests the container closure inside
+ * `packaging_materials` and the process description/site inside
+ * `manufacturing_process` (drugProductBody in cmcRegisterForms.ts); the flat
+ * `containerClosure` / snake-only `manufacturing_process` reads dropped both.
  */
 export function mapDrugProductPayload(record: Record<string, any>): Record<string, any> {
+  const mp = (record.manufacturingProcess ?? record.manufacturing_process ?? {}) as Record<string, any>;
+  const pkg = (record.packagingMaterials ?? record.packaging_materials ?? {}) as Record<string, any>;
   return {
     name: record.productName || record.product_name || '',
     dosageForm: record.dosageForm || record.dosage_form || '',
     dosageFormDescription: record.dosageForm || record.dosage_form || '',
     strength: record.strength || '',
     routeOfAdministration: record.routeOfAdministration || record.route_of_administration || '',
-    containerClosure: record.containerClosure || record.container_closure || '',
+    containerClosure:
+      record.containerClosure || record.container_closure ||
+      pkg.containerClosure || pkg.container_closure || '',
     batchSize: record.batchSize || record.batch_size || '',
-    formulation: record.formulation || null,
-    composition: record.formulation || record.composition || null,
+    /* 3.2.P.3's `formulation` is the BATCH formula — mapped from the row's
+       batch_formula json only. The per-unit composition (a P.1 fact) is
+       deliberately not aliased in: rendering it as the batch formula would
+       overstate the record. */
+    formulation: record.formulation || record.batchFormula || record.batch_formula || null,
+    composition: record.composition || record.formulation || null,
     excipients: record.excipients || null,
-    manufacturing_process: record.manufacturing_process || null,
+    manufacturing_process: record.manufacturing_process || record.manufacturingProcess || null,
+    processDescription: record.processDescription || record.process_description || mp.description || '',
+    manufacturingSite: record.manufacturingSite || record.manufacturing_site || mp.site || '',
+    processControls: record.processControls || record.process_controls || null,
     specifications: record.specifications || null,
-    stability_data: record.stability_data || null,
+    stability_data: record.stability_data || record.stability || null,
     components: record.components || null,
     version: record.version || null,
+    status: record.status || '',
   };
 }
 
 /**
  * Map an analyticalMethods row to a canonical source payload.
+ *
+ * The register row's identity lives in `title` / `methodCode` / `technique`
+ * and its lifecycle in `status` ('development' | 'validation' | 'validated' |
+ * 'retired' — the validation vocabulary 3.2.S.4 renders); the old
+ * methodName/methodType/validationStatus-only reads matched none of them, so
+ * every registered method composed as "Not specified / Pending" and the ICH
+ * Q2 record the UI captures (ichQ2Parameters, validationDate) was dropped.
  */
 export function mapAnalyticalMethodPayload(record: Record<string, any>): Record<string, any> {
   return {
-    methodName: record.methodName || record.method_name || '',
-    methodType: record.methodType || record.method_type || '',
+    methodName: record.methodName || record.method_name || record.title || '',
+    methodCode: record.methodCode || record.method_code || '',
+    methodType: record.methodType || record.method_type || record.technique || '',
+    technique: record.technique || '',
+    analyte: record.analyte || '',
+    matrix: record.matrix || '',
     purpose: record.purpose || '',
     principle: record.principle || '',
     procedure: record.procedure || '',
-    validationStatus: record.validationStatus || record.validation_status || '',
+    validationStatus: record.validationStatus || record.validation_status || record.status || '',
     acceptanceCriteria: record.acceptanceCriteria || record.acceptance_criteria || '',
-    validation_data: record.validation_data || null,
+    /* The Q2(R2) validation record, whole: which characteristics were
+       validated and when. */
+    ichQ2Parameters: record.ichQ2Parameters || record.ich_q2_parameters || null,
+    validationDate: record.validationDate || record.validation_date || null,
+    validation_data: record.validation_data || record.ichQ2Parameters || record.ich_q2_parameters || null,
     specificity_data: record.specificity_data || null,
     linearity_data: record.linearity_data || null,
     accuracy_data: record.accuracy_data || null,
     precision_data: record.precision_data || null,
     robustness_data: record.robustness_data || null,
-    system_suitability: record.system_suitability || null,
+    system_suitability: record.system_suitability || record.systemSuitability || null,
+    status: record.status || '',
   };
 }
 
@@ -177,12 +254,25 @@ export function mapStabilityPayload(record: Record<string, any>): Record<string,
 
 /**
  * Map a quality_specifications row to a canonical source payload.
+ *
+ * The row is the RAW snake_case shape the spec routes write
+ * (migrations/20260823_cmc_register_store_parity.sql). validationStatus /
+ * impurityLimits stay as canonical-caller passthroughs — the table has no
+ * such columns, and 3.2.S.4's `validationStatus` is honestly produced by the
+ * METHOD register (its lifecycle status), not invented here.
  */
 export function mapSpecificationPayload(record: Record<string, any>): Record<string, any> {
+  const criteria = record.acceptanceCriteria ?? record.acceptance_criteria ?? null;
   return {
     materialType: record.materialType || record.material_type || '',
     materialName: record.materialName || record.material_name || '',
-    acceptanceCriteria: record.acceptanceCriteria || record.acceptance_criteria || null,
+    acceptanceCriteria: criteria,
+    /* 3.2.P.5's required field: the release limits ARE this register's
+       acceptance criteria — the composer read `releaseCriteria` and nothing
+       ever emitted it. Text, because the P.5 narrative reads it with val();
+       the structured object stays on acceptanceCriteria. */
+    releaseCriteria:
+      record.releaseCriteria ?? record.release_criteria ?? (textOf(criteria) || null),
     testParameters: record.testParameters || record.test_parameters || null,
     testMethods: record.testMethods || record.test_methods || null,
     justification: record.justification || '',
@@ -195,38 +285,71 @@ export function mapSpecificationPayload(record: Record<string, any>): Record<str
 
 /**
  * Map a batch_records row to a canonical source payload.
+ *
+ * The row is the RAW snake_case cmc_batch_records shape
+ * (migrations/0006_regulatory_atoms.sql + the 20260823 parity columns). The
+ * governed release decision — disposition, release status, who released and
+ * when — was captured under §11 re-auth and then never exported; it travels
+ * now. `formulation` stays a canonical-caller passthrough: this table has no
+ * such column, and the batch formula's honest producer is the drug product
+ * row's batch_formula json.
  */
 export function mapBatchRecordPayload(record: Record<string, any>): Record<string, any> {
   return {
     batchNumber: record.batchNumber || record.batch_number || '',
     productName: record.productName || record.product_name || '',
+    batchType: record.batchType || record.batch_type || '',
+    materialType: record.materialType || record.material_type || '',
+    scale: record.scale || '',
     batchSize: record.batchSize || record.batch_size || '',
+    batchSizeUnit: record.batchSizeUnit || record.batch_size_unit || '',
     manufacturingDate: record.manufacturingDate || record.manufacturing_date || null,
     expiryDate: record.expiryDate || record.expiry_date || null,
-    manufacturingSite: record.manufacturingSite || record.manufacturing_site || '',
+    manufacturingSite: record.manufacturingSite || record.manufacturing_site || record.site || '',
+    processVersion: record.processVersion || record.process_version || '',
     status: record.status || '',
     processParameters: record.processParameters || record.process_parameters || null,
     inProcessControls: record.inProcessControls || record.in_process_controls || null,
     yieldData: record.yieldData || record.yield_data || null,
     deviations: record.deviations || null,
     releaseTesting: record.releaseTesting || record.release_testing || null,
+    specificationCompliance: record.specificationCompliance || record.specification_compliance || null,
+    oosEvents: record.oosEvents || record.oos_events || null,
+    disposition: record.disposition || '',
+    releaseStatus: record.releaseStatus || record.release_status || '',
+    releasedBy: record.releasedBy || record.released_by || '',
+    releasedAt: record.releasedAt || record.released_at || null,
     formulation: record.formulation || null,
   };
 }
 
 /**
  * Map a change_control row to a canonical source payload.
+ *
+ * The register row (cmcChangeControl, shared/schema.ts) identifies a change
+ * by `changeNumber`, nests the assessed risk inside the `risk_assessment`
+ * json, and records the filing category in `regulatory_filing` — the ICH Q12
+ * classification the whole record exists to carry. All three were dropped, so
+ * a canonical change read as an untitled change with no risk level and no
+ * filing category.
  */
 export function mapChangeControlPayload(record: Record<string, any>): Record<string, any> {
+  const risk = (record.riskAssessment ?? record.risk_assessment ?? null) as Record<string, any> | null;
+  const changeNumber = record.changeNumber || record.change_number || '';
   return {
-    changeTitle: record.changeTitle || record.change_title || record.title || '',
+    changeNumber,
+    changeTitle: record.changeTitle || record.change_title || record.title || changeNumber,
     changeType: record.changeType || record.change_type || '',
     changeDescription: record.changeDescription || record.change_description || record.description || '',
     impactAssessment: record.impactAssessment || record.impact_assessment || '',
     justification: record.justification || '',
     status: record.status || '',
     priority: record.priority || '',
-    riskLevel: record.riskLevel || record.risk_level || '',
+    riskLevel:
+      record.riskLevel || record.risk_level ||
+      (typeof risk?.level === 'string' ? risk.level : '') || '',
+    regulatoryFiling: record.regulatoryFiling || record.regulatory_filing || null,
+    implementationDate: record.implementationDate || record.implementation_date || null,
     affectedSystems: record.affectedSystems || record.affected_systems || null,
     regulatoryImpact: record.regulatoryImpact || record.regulatory_impact || null,
   };
@@ -250,16 +373,44 @@ export function mapComparabilityPayload(record: Record<string, any>): Record<str
 
 /**
  * Map a process_validation row to a canonical source payload.
+ *
+ * The register (processValidation, shared/schema.ts) records the lifecycle
+ * stage, the batches in scope, the CPPs/CQAs and the control strategy — six
+ * of the old mapper's eight reads named columns this table never had, so the
+ * staffer's recorded validation reached Module 3 as a process name and a
+ * status. 3.2.S.2's `processControls` is honestly produced by the recorded
+ * control strategy; `processDescription` deliberately is NOT aliased from it
+ * (a control strategy is not a process description — that field's producer is
+ * the drug substance/product record's own process text).
  */
 export function mapProcessValidationPayload(record: Record<string, any>): Record<string, any> {
+  const controlStrategy = record.controlStrategy ?? record.control_strategy ?? null;
   return {
-    validationType: record.validationType || record.validation_type || '',
+    validationType: record.validationType || record.validation_type || record.stage || '',
     processName: record.processName || record.process_name || '',
+    stage: record.stage || '',
+    batchNumbers: record.batchNumbers || record.batch_numbers || null,
     batchSize: record.batchSize || record.batch_size || '',
     processDescription: record.processDescription || record.process_description || '',
-    processControls: record.processControls || record.process_controls || null,
+    /* Text, because the 3.2.S.2 narrative reads processControls with val();
+       the control strategy's own summary sentence is the honest statement,
+       with a keyed projection as the fallback for other recorded shapes. The
+       structured object stays on controlStrategy below. */
+    processControls:
+      record.processControls || record.process_controls ||
+      (typeof (controlStrategy as Record<string, any> | null)?.summary === 'string'
+        ? (controlStrategy as Record<string, any>).summary
+        : textOf(controlStrategy) || null),
+    criticalProcessParameters:
+      record.criticalProcessParameters || record.critical_process_parameters || null,
+    criticalQualityAttributes:
+      record.criticalQualityAttributes || record.critical_quality_attributes || null,
+    controlStrategy,
+    validationProtocol: record.validationProtocol || record.validation_protocol || '',
+    validationReport: record.validationReport || record.validation_report || '',
     acceptanceCriteria: record.acceptanceCriteria || record.acceptance_criteria || null,
     results: record.results || null,
+    approvalDate: record.approvalDate || record.approval_date || null,
     status: record.status || '',
   };
 }
