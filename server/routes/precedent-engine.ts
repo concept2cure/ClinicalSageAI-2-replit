@@ -18,6 +18,7 @@ import { z } from 'zod';
 import { precedentEngine } from '../services/precedent-engine';
 import { authMiddleware } from '../auth.js';
 import { createScopedLogger } from '../utils/logger';
+import { serverError } from '../lib/api-response';
 
 const router = Router();
 const log = createScopedLogger('precedent-routes');
@@ -66,6 +67,10 @@ const ClaimCheckSchema = z.object({
   submissionType: z.string().min(1),
   therapeuticArea: z.string().optional(),
   indication: z.string().optional(),
+  /* What the FDA 510(k) registry can be searched by. Without them a device
+     claim check reaches the org corpus but never the registry. */
+  productCode: z.string().optional(),
+  deviceName: z.string().optional(),
 });
 
 const IngestSchema = z.object({
@@ -125,8 +130,7 @@ router.post('/search', async (req: Request, res: Response) => {
       pagination: { offset, limit, hasMore: results.length === limit },
     });
   } catch (err: any) {
-    log.error(`Search failed: ${err.message}`);
-    res.status(500).json({ success: false, error: err.message });
+    return serverError(res, log, 'searching precedents', err);
   }
 });
 
@@ -146,8 +150,7 @@ router.post('/compare', async (req: Request, res: Response) => {
     const result = await precedentEngine.compare(userContext, precedentId);
     res.json({ success: true, data: result });
   } catch (err: any) {
-    log.error(`Compare failed: ${err.message}`);
-    res.status(500).json({ success: false, error: err.message });
+    return serverError(res, log, 'comparing against a precedent', err);
   }
 });
 
@@ -166,8 +169,7 @@ router.post('/risk', async (req: Request, res: Response) => {
     const result = await precedentEngine.analyzeRisk(parsed.data);
     res.json({ success: true, data: result });
   } catch (err: any) {
-    log.error(`Risk analysis failed: ${err.message}`);
-    res.status(500).json({ success: false, error: err.message });
+    return serverError(res, log, 'analysing precedent risk', err);
   }
 });
 
@@ -186,8 +188,7 @@ router.post('/strategy', async (req: Request, res: Response) => {
     const result = await precedentEngine.recommendStrategy(parsed.data);
     res.json({ success: true, data: result });
   } catch (err: any) {
-    log.error(`Strategy recommendation failed: ${err.message}`);
-    res.status(500).json({ success: false, error: err.message });
+    return serverError(res, log, 'recommending a submission strategy', err);
   }
 });
 
@@ -207,8 +208,7 @@ router.post('/check-claim', async (req: Request, res: Response) => {
     const result = await precedentEngine.checkClaim(claim, context);
     res.json({ success: true, data: result });
   } catch (err: any) {
-    log.error(`Claim check failed: ${err.message}`);
-    res.status(500).json({ success: false, error: err.message });
+    return serverError(res, log, 'checking the claim', err);
   }
 });
 
@@ -234,8 +234,7 @@ router.post('/ingest', async (req: Request, res: Response) => {
 
     res.status(201).json({ success: true, data: { id } });
   } catch (err: any) {
-    log.error(`Ingest failed: ${err.message}`);
-    res.status(500).json({ success: false, error: err.message });
+    return serverError(res, log, 'ingesting the precedent', err);
   }
 });
 
@@ -249,8 +248,7 @@ router.post('/crl-triggers', async (req: Request, res: Response) => {
     const result = await precedentEngine.analyzeCRLTriggers(parsed.data);
     res.json({ success: true, data: result });
   } catch (err: any) {
-    log.error(`CRL trigger analysis failed: ${err.message}`);
-    res.status(500).json({ success: false, error: err.message });
+    return serverError(res, log, 'analysing CRL triggers', err);
   }
 });
 
@@ -264,8 +262,7 @@ router.post('/rtf-triggers', async (req: Request, res: Response) => {
     const result = await precedentEngine.analyzeRTFTriggers(parsed.data);
     res.json({ success: true, data: result });
   } catch (err: any) {
-    log.error(`RTF trigger analysis failed: ${err.message}`);
-    res.status(500).json({ success: false, error: err.message });
+    return serverError(res, log, 'analysing RTF triggers', err);
   }
 });
 
@@ -279,8 +276,7 @@ router.post('/ema-patterns', async (req: Request, res: Response) => {
     const result = await precedentEngine.analyzeEMAPatterns(parsed.data);
     res.json({ success: true, data: result });
   } catch (err: any) {
-    log.error(`EMA pattern analysis failed: ${err.message}`);
-    res.status(500).json({ success: false, error: err.message });
+    return serverError(res, log, 'analysing EMA question patterns', err);
   }
 });
 
@@ -294,8 +290,7 @@ router.post('/advisory-committee', async (req: Request, res: Response) => {
     const result = await precedentEngine.analyzeAdvisoryCommitteeRisk(parsed.data);
     res.json({ success: true, data: result });
   } catch (err: any) {
-    log.error(`Advisory Committee analysis failed: ${err.message}`);
-    res.status(500).json({ success: false, error: err.message });
+    return serverError(res, log, 'analysing advisory-committee risk', err);
   }
 });
 

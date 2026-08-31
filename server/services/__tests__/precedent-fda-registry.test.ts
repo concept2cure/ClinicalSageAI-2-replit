@@ -170,3 +170,56 @@ describe('the registry is only consulted where it applies', () => {
     expect(registry.reason).toMatch(/product code or device name/i);
   });
 });
+
+/* ── The claim check ─────────────────────────────────────────────────────────
+ *
+ * `supported: false` carried two unrelated meanings — "precedents were
+ * consulted and they do not support this" and "nothing was consulted" — and the
+ * surface rendered both as the same words. With the corpus structurally empty,
+ * every claim came back looking adjudicated against. `basis` separates them.
+ */
+describe('a claim checked against nothing is not a claim that failed', () => {
+  it('reports no-precedents rather than "not supported" when nothing was consulted', async () => {
+    openFda.mockResolvedValue({ available: true, results: [], source: 'openfda' });
+    const r = await precedentEngine.checkClaim('The device is substantially equivalent.', {
+      submissionType: '510(k)',
+      indication: 'Continuous glucose monitoring',
+    });
+
+    expect(r.basis).toBe('no-precedents');
+    expect(r.precedents).toEqual([]);
+    // The reasoning must say it was not assessed, not that it was rejected.
+    expect(r.recommendation).toMatch(/not been assessed|has not been assessed either way/i);
+  });
+
+  it('names the unreachable registry as the reason it could not check', async () => {
+    openFda.mockResolvedValue({
+      available: false,
+      unavailableReason: 'openFDA device/510k timed out after 10000ms',
+      results: [],
+      source: 'openfda',
+    });
+    const r = await precedentEngine.checkClaim('Substantially equivalent to the predicate.', {
+      submissionType: '510(k)',
+      productCode: 'BZH',
+    });
+
+    expect(r.basis).toBe('no-precedents');
+    expect(r.recommendation).toContain('timed out');
+    expect(r.recommendation).toContain('unchecked');
+  });
+
+  it('returns the precedents it checked against, so the reader can look at them', async () => {
+    openFda.mockResolvedValue({ available: true, results: BZH_HITS, source: 'openfda' });
+    const r = await precedentEngine.checkClaim('Substantially equivalent to the predicate device.', {
+      submissionType: '510(k)',
+      productCode: 'BZH',
+    });
+
+    expect(r.basis).toBe('checked');
+    expect(r.precedents.length).toBeGreaterThan(0);
+    expect(r.precedents[0].clearanceNumber).toBe('K183282');
+    // Reasoning, not a bare verdict.
+    expect(r.recommendation.length).toBeGreaterThan(20);
+  });
+});

@@ -83,12 +83,53 @@ interface PrecedentBoard {
   results: PrecedentResultView[];
   risk: RiskView;
   strategy: StrategyView;
-  patterns: { crl: PatternView; rtf: PatternView; ema: PatternView; adcomm: PatternView };
+  /* Keyed rather than four fixed slots: which lenses arrive depends on the
+     pathway (server: services/precedent/device-lenses). */
+  patterns: Record<string, PatternView>;
+  /** The lens keys that apply, in display order. Absent on an older board. */
+  lenses?: string[];
   /* Optional so a board served before this field existed still renders — the
      empty-result copy falls back to naming the ambiguity, as it did before. */
   sources?: { registry: RegistryStatusView };
 }
-interface ClaimView { verdict?: string; confidence?: number; note?: string; precedents?: string[] }
+/**
+ * The claim-check result, as the server actually returns it.
+ *
+ * ── The contract this replaces ───────────────────────────────────────────────
+ * This interface used to read `{ verdict, confidence, note, precedents:
+ * string[] }`. POST /api/precedent-engine/check-claim returns none of those. It
+ * returns `{ supported, precedents: PrecedentRecord[], warnings,
+ * suggestedCitations, recommendation, ... }`. Three consequences, all of them
+ * live:
+ *
+ *   `verdict` was always undefined, so `verdict === 'supported' ? … : 'Needs
+ *   support'` rendered "Needs support" for EVERY claim, including supported
+ *   ones. That is the bare verdict the work order recorded.
+ *
+ *   `note` was always undefined, so the engine's reasoning — which it computes
+ *   and returns — was never displayed. The screen had it and threw it away.
+ *
+ *   `precedents` are objects, and the list rendered them as React children.
+ *   That throws. It had never fired only because the precedent corpus was
+ *   structurally empty (the 510(k) query ran against a relation that does not
+ *   exist), so the array was always []. Connecting the FDA registry would have
+ *   made this crash on the first successful device claim check.
+ */
+interface ClaimPrecedentView {
+  clearanceNumber?: string | null;
+  deviceName?: string | null;
+  decisionOutcome?: string | null;
+  decisionDate?: string | null;
+}
+interface ClaimView {
+  supported?: boolean;
+  /** 'no-precedents' means nothing was consulted — not a judgement on the claim. */
+  basis?: 'checked' | 'no-precedents';
+  recommendation?: string;
+  precedents?: ClaimPrecedentView[];
+  warnings?: { message: string; severity?: string }[];
+  suggestedCitations?: string[];
+}
 type AnalysisState = RiskView | StrategyView | PatternView;
 
 interface PeQuery {
@@ -361,15 +402,12 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
   const analysis: AnalysisState | null = useMemo(() => {
     const d = board.data;
     if (!d) return null;
-    switch (tab) {
-      case 'risk': return d.risk;
-      case 'strategy': return d.strategy;
-      case 'crl': return d.patterns.crl;
-      case 'rtf': return d.patterns.rtf;
-      case 'ema': return d.patterns.ema;
-      case 'adcomm': return d.patterns.adcomm;
-      default: return d.risk;
-    }
+    if (tab === 'risk') return d.risk;
+    if (tab === 'strategy') return d.strategy;
+    // Lens keys are decided by the pathway, so they are looked up rather than
+    // enumerated: a device board carries rta/ai/nse/predicate/panel and a drug
+    // board crl/rtf/ema/adcomm, and this switch used to know only the latter.
+    return d.patterns?.[tab] ?? d.risk;
   }, [board.data, tab]);
 
   /* The honest state of the risk and strategy sections, from the sentinels
@@ -407,6 +445,9 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
         submissionType: ctx.submissionType,
         ...(ctx.therapeuticArea.trim() ? { therapeuticArea: ctx.therapeuticArea.trim() } : {}),
         ...(ctx.indication.trim() ? { indication: ctx.indication.trim() } : {}),
+        /* The product code is what the FDA registry can be searched by; without
+           it a device claim is checked against the org corpus only. */
+        ...(ctx.productCode.trim() ? { productCode: ctx.productCode.trim() } : {}),
       });
       const body = await res.json().catch(() => null);
       setClaimRes(res.ok && body?.data ? (body.data as ClaimView) : null);
@@ -417,13 +458,30 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
     }
   };
 
+  /* Short tab labels. The board decides WHICH lenses apply to the pathway and
+     in what order (`lenses`); this only names them. A key the board sends that
+     is not listed here falls back to the lens's own title, so a lens added
+     server-side appears without a client change. */
+  const LENS_LABEL: Record<string, string> = {
+    // device
+    rta: 'RTA / RTF',
+    ai: 'AI requests',
+    nse: 'NSE routes',
+    predicate: 'Predicate adequacy',
+    panel: 'Panel track',
+    // drug
+    crl: 'CRL triggers',
+    rtf: 'RTF triggers',
+    ema: 'EMA D120/180',
+    adcomm: 'AdComm risk',
+  };
+  const lensKeys = board.data?.lenses ?? [];
   const TABS: [string, string][] = [
     ['risk', 'Risk analysis'],
     ['strategy', 'Strategy'],
-    ['crl', 'CRL triggers'],
-    ['rtf', 'RTF triggers'],
-    ['ema', 'EMA D120/180'],
-    ['adcomm', 'AdComm risk'],
+    ...lensKeys.map(
+      (k) => [k, LENS_LABEL[k] ?? board.data?.patterns?.[k]?.title ?? k] as [string, string],
+    ),
   ];
 
   /* Type guards for analysis panel rendering */
@@ -480,9 +538,23 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
             value={q.submissionType}
             onChange={(e) => setQ({ ...q, submissionType: e.target.value })}
           >
-            {['510(k)', 'De Novo', 'PMA', 'NDA', 'BLA', 'ANDA'].map((x) => (
-              <option key={x}>{x}</option>
-            ))}
+            {/* Grouped by lane. The complaint was that NDA/BLA/ANDA are offered
+                on a device screen — true, but this one screen serves both
+                lanes, and nothing reaching it reliably says which one the user
+                is in (__C2C_SEGMENT is written by a single other surface). So
+                rather than hide half the list on a guess, the two families are
+                named and separated, and the analysis lenses below follow the
+                choice: pick 510(k) and the drug lenses are gone. */}
+            <optgroup label="Device pathways">
+              {['510(k)', 'De Novo', 'PMA', 'IDE', 'HDE'].map((x) => (
+                <option key={x}>{x}</option>
+              ))}
+            </optgroup>
+            <optgroup label="Drug and biologic pathways">
+              {['NDA', 'BLA', 'ANDA'].map((x) => (
+                <option key={x}>{x}</option>
+              ))}
+            </optgroup>
           </select>
         </label>
         <label className="pe-f" style={{ flex: 1.4 }}>
@@ -1069,7 +1141,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
                   )}
                 </div>
               )}
-              {['crl', 'rtf', 'ema', 'adcomm'].includes(tab) && analysis && isPattern(analysis) && (
+              {lensKeys.includes(tab) && analysis && isPattern(analysis) && (
                 <div>
                   <div className="pj-seclbl" style={{ marginTop: 0 }}>
                     {analysis.title}
@@ -1121,12 +1193,17 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
             <div className="gri-result" style={{ marginTop: 12 }}>
               <div className="gri-result-hdr">
                 <span className="t">
-                  {claimRes.verdict === 'supported' ? 'Supported' : 'Needs support'}
-                  {typeof claimRes.confidence === 'number' ? ' -- ' + Math.round(claimRes.confidence * 100) + '%' : ''}
+                  {/* Three states, not two. "Not supported" is a judgement and
+                      may only be shown when something was actually consulted. */}
+                  {claimRes.basis === 'no-precedents'
+                    ? 'Not checked'
+                    : claimRes.supported
+                      ? 'Supported'
+                      : 'Not supported'}
                 </span>
               </div>
               <div className="gri-result-body">
-                {claimRes.note && (
+                {claimRes.recommendation && (
                   <div
                     style={{
                       fontSize: 13,
@@ -1135,11 +1212,26 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
                       marginBottom: 8,
                     }}
                   >
-                    {claimRes.note}
+                    {claimRes.recommendation}
                   </div>
                 )}
+                {(claimRes.warnings || []).length > 0 && (
+                  <ul style={{ margin: '0 0 8px 18px', padding: 0, fontSize: 13, lineHeight: 1.5 }}>
+                    {(claimRes.warnings || []).map((w, i) => (
+                      <li key={i} style={{ color: 'var(--text-200)' }}>{w.message}</li>
+                    ))}
+                  </ul>
+                )}
+                {/* The precedents the claim was actually checked against —
+                    named, so the reader can go and look at them. */}
                 <div className="gri-cite">
-                  {(claimRes.precedents || []).map((c) => (
+                  {(claimRes.precedents || []).map((c, i) => (
+                    <span key={c.clearanceNumber ?? i} className="c">
+                      {[c.clearanceNumber, c.deviceName].filter(Boolean).join(' — ') ||
+                        'precedent'}
+                    </span>
+                  ))}
+                  {(claimRes.suggestedCitations || []).map((c) => (
                     <span key={c} className="c">
                       {c}
                     </span>
