@@ -345,6 +345,55 @@ describe('CmPathway — logging and closing agency questions', () => {
     await waitFor(() => expect(boardCalls).toBeGreaterThanOrEqual(2));
   });
 
+  it('the Assigned cell is editable in place: rename PATCHes the owner, blank clears it', async () => {
+    const patches: Array<{ body: unknown }> = [];
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
+        patches.push({ body });
+        return res({ success: true, data: { id: 9, assignedTo: 'r.lead@example.test' } });
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+
+    // Unassigned renders as an 'Assign' door, not a dead dash.
+    fireEvent.click(screen.getByRole('button', { name: 'Assign' }));
+    const input = screen.getByLabelText(/Who owns the response/);
+    fireEvent.change(input, { target: { value: 'r.lead@example.test' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    await waitFor(() => expect(patches).toHaveLength(1));
+    expect(patches[0].body).toEqual({ assignedTo: 'r.lead@example.test' });
+    await screen.findByText(/Assigned to r\.lead@example\.test/);
+  });
+
+  it('clearing the assignment sends NULL — the server stores the truth, not an empty string', async () => {
+    const patches: Array<{ body: unknown }> = [];
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
+        patches.push({ body });
+        return res({ success: true, data: { id: 9, assignedTo: null } });
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') {
+        return res({
+          ...CORR_BOARD,
+          data: { ...CORR_BOARD.data, correspondence: [{ ...CORR_BOARD.data.correspondence[0], assignedTo: 'old.owner@x' }] },
+        });
+      }
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+
+    fireEvent.click(screen.getByRole('button', { name: 'old.owner@x' }));
+    const input = screen.getByLabelText(/Who owns the response/);
+    fireEvent.change(input, { target: { value: '' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    await waitFor(() => expect(patches).toHaveLength(1));
+    expect(patches[0].body).toEqual({ assignedTo: null });
+  });
+
   it('a refused log says so and records nothing locally', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'POST' && url === '/api/cmc/agency-questions') {
