@@ -20,6 +20,11 @@ import { eq, and, desc } from 'drizzle-orm';
 import crypto from 'crypto';
 import auditService from './auditService';
 import { buildVersionBindingDigest, evaluateBindingVerification } from './part11/version-binding';
+import {
+  BINDING_BASIS,
+  drizzleSignatureClient,
+  persistElectronicSignature,
+} from './part11/signature-persistence';
 
 interface AuditTrailInput {
   organizationId: number;
@@ -185,31 +190,55 @@ class Part11ComplianceService {
       // idempotency pre-check then short-circuited every retry, so the missing
       // event could never be backfilled. One transaction closes that gap.
       const electronicSig = await dbInstance.transaction(async (tx) => {
-      const [sig] = await tx
-        .insert(electronicSignatures)
-        .values({
-          documentId,
-          versionId,
-          organizationId,
-          signatureType: documentType,
-          signaturePurpose: signatureReason,
-          signatureLevel: 1,
-          signerId: userId,
-          signerName: user.name,
-          signerTitle: user.title,
-          signerEmail: user.email,
-          authenticationMethod: 'password',
-          authenticationTimestamp: timestamp,
-          secondFactorVerified: false,
-          signatureHash: signature.hash,
-          signatureMeaning,
-          signatureManifest,
-          boundPayloadDigest,
-          signedAt: timestamp,
-          complianceStatement: 'Electronic signature complies with 21 CFR Part 11',
-          verificationStatus: 'valid',
-        })
-        .returning();
+      // Ledger L37 — ONE INSERT per substrate. This used to be a second
+      // `.insert(electronicSignatures)` builder living here beside the one in
+      // services/part11/signature-persistence.ts. Both were conforming, and
+      // that was the problem: two writers are two answers to what a Part 11 row
+      // must contain, and they had already drifted — this one wrote 20 of the
+      // table's 26 columns and had no way to say what `bound_payload_digest`
+      // was a digest OF, while every row from the shared writer states its
+      // basis. The record below is the same row, column for column, composed
+      // for the shared writer and inserted by it.
+      //
+      // `drizzleSignatureClient(tx)` — not a pool client — so the INSERT runs on
+      // THIS transaction and still commits or rolls back with the
+      // device_audit_trail row below (§11.10(e), the atomicity note above).
+      const sig = await persistElectronicSignature(drizzleSignatureClient(tx), {
+        documentId,
+        versionId,
+        // The basis this row's digest actually has. A caller-supplied digest is
+        // the submission orchestrator's release-package digest; otherwise it is
+        // the digest buildVersionBindingDigest just took over the signed
+        // version's content. Stated, never inferred: an inspector reads this
+        // column to know which re-derivation answers "is this still the content
+        // that was signed?".
+        bindingBasis: preboundPayloadDigest
+          ? BINDING_BASIS.SUBMISSION_RELEASE_PAYLOAD
+          : BINDING_BASIS.DOCUMENT_VERSION_CONTENT,
+        signatureType: documentType,
+        signaturePurpose: signatureReason,
+        signatureLevel: 1,
+        signerId: userId,
+        signerName: user.name,
+        signerTitle: user.title,
+        signerEmail: user.email,
+        authenticationMethod: 'password',
+        authenticationTimestamp: timestamp,
+        secondFactorVerified: false,
+        signatureHash: signature.hash,
+        signatureMeaning,
+        signatureManifest,
+        // The deleted builder omitted is_valid and let the column default to
+        // true. Passed explicitly here because the shared writer requires it:
+        // a signature's validity is an assertion, and a row should not carry it
+        // by defaulting.
+        isValid: true,
+        verificationStatus: 'valid',
+        complianceStatement: 'Electronic signature complies with 21 CFR Part 11',
+        signedAt: timestamp,
+        boundPayloadDigest,
+        organizationId,
+      });
 
       // Same transaction → the §11.10(e) event and the signature are
       // all-or-nothing. This inlines the primary device_audit_trail write from
