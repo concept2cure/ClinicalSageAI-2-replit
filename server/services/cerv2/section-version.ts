@@ -12,9 +12,11 @@
  *
  * This module is that responsibility in one place, so the next writer cannot
  * arrive with another answer, and so "did this change get recorded?" has a
- * single implementation to inspect. The AnA tool path uses it. The three
- * inserts still inline in routes/cerv2-sections.ts record history correctly
- * and are safe, but they belong here too — ledger L39.
+ * single implementation to inspect. The AnA tool path uses it, and as of ledger
+ * L39 so do all three routes/cerv2-sections.ts handlers, whose inline inserts
+ * are gone. The one column those inserts wrote and this writer did not,
+ * `field_data`, is a parameter here now — a shared writer that silently drops a
+ * column the callers it replaces were filling is not a migration.
  *
  * ── CALLERS MUST PASS A TRANSACTION ─────────────────────────────────────────
  * `exec` is the caller's transaction client, and the caller must run its
@@ -48,6 +50,13 @@ export interface RecordSectionVersionParams {
   content: string;
   status?: string | null;
   completionPercentage?: number | null;
+  /**
+   * Every field value as of this version. The column exists so a reviewer can
+   * see the whole section state at a point in history without reconstructing it
+   * from the diff columns; a writer that omits it leaves that NULL and the
+   * reconstruction is the reader's problem.
+   */
+  fieldData?: unknown;
   /** The state BEFORE — this is the part that makes the row history. */
   previousValues: Record<string, unknown>;
   newValues?: Record<string, unknown> | null;
@@ -84,10 +93,10 @@ export async function recordCerv2SectionVersion(
   await exec.query(
     `INSERT INTO cerv2_section_versions
        (section_id, organization_id, version_number, change_type, change_summary,
-        content, status, completion_percentage, fields_changed,
+        content, status, completion_percentage, field_data, fields_changed,
         previous_values, new_values,
         changed_by, changed_by_email, changed_by_name, ip_address, user_agent)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::json,$11::json,$12,$13,$14,$15,$16)`,
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::json,$10,$11::json,$12::json,$13,$14,$15,$16,$17)`,
     [
       params.sectionId,
       params.organizationId,
@@ -97,6 +106,7 @@ export async function recordCerv2SectionVersion(
       params.content,
       params.status ?? null,
       params.completionPercentage ?? null,
+      params.fieldData == null ? null : JSON.stringify(params.fieldData),
       params.fieldsChanged ?? null,
       JSON.stringify(params.previousValues ?? {}),
       params.newValues == null ? null : JSON.stringify(params.newValues),
