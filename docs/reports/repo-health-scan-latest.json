@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-31T02:41:46.290Z",
+  "generatedAt": "2026-08-31T02:51:04.811Z",
   "git": {
-    "sha": "b4f14bc6b0db595c75f14008c2c78f560f15243c",
+    "sha": "246628d494d27f14fd96e7c94d502bbd59746303",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2185,7 +2185,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 154847
+        "bytes": 157368
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2363,7 +2363,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2699
+        "lines": 2753
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
