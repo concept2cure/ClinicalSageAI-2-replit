@@ -7,6 +7,8 @@ import {
   createSourceHash,
 } from '../../services/cmc-module3-compiler';
 import { composeModule3FromCanonicalSources, impactedSectionsForSourceType } from '../../services/module3Composer';
+import { composeRegional } from '../../services/module3-extensions';
+import { regionCodeForPrimaryRegion, resolveSubmissionSpine } from '../../services/cmc/submission-spine';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
 import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
@@ -170,7 +172,46 @@ router.post('/compile/:projectId', async (req, res) => {
       });
     }
 
-    const compiled = composeModule3FromCanonicalSources(rows as any);
+    let compiled = composeModule3FromCanonicalSources(rows as any);
+
+    /* ── Regional Information (3.2.R) ──
+       The core composer deliberately owns only S/P/3.1/3.3 (defining R rules
+       there once produced duplicate appendix leaves and region leakage — see
+       the NOTE in MODULE3_SECTION_RULES); module3-extensions owns the
+       region-specific dispatch. Composed here for the REGION THE LINKED
+       SUBMISSION RECORDS, resolved through the same spine identity the eCTD
+       compile runs against — so the section the initial-sequence gate
+       requires ('3.2.R') is authorable, approvable and placeable through the
+       same lifecycle as every other Module 3 section. No spine, or a market
+       the composer has no generator for → nothing is composed: an honest gap
+       beats a guessed region's regional form in a filing. */
+    try {
+      const prog = await client.query(
+        `SELECT id, program_type AS "programType", product_name AS "productName", name, code
+           FROM regulatory_programs
+          WHERE id = $1 AND organization_id = $2`,
+        [projectId, orgId],
+      );
+      const p = prog.rows[0] as
+        | { id: string; programType: string | null; productName: string | null; name: string | null; code: string | null }
+        | undefined;
+      if (p) {
+        const spine = await resolveSubmissionSpine(
+          { programId: p.id, programType: p.programType, productName: p.productName, title: p.name, programCode: p.code },
+          orgId,
+        );
+        const region = regionCodeForPrimaryRegion(spine?.primaryRegion);
+        if (region) compiled = compiled.concat(composeRegional(rows as any, region));
+      }
+    } catch (regionalErr) {
+      // The core compose stands either way — but a skipped regional pass is
+      // SAID, not swallowed: the compile gate will name the missing 3.2.R.
+      console.warn(
+        '[module3-os] regional (3.2.R) composition skipped:',
+        regionalErr instanceof Error ? regionalErr.message : String(regionalErr),
+      );
+    }
+
     for (const section of compiled) {
       const upsert = await client.query(
         `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, stale_reason, approval_state)

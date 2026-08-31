@@ -147,6 +147,11 @@ if [ "$CODE" = 200 ] && [ "$STATUS" = "completed" ] && [ "${RENDERED:-0}" -ge 17
 else
   bad "eCTD compile: code=$CODE status=$STATUS rendered=$RENDERED placeholders=$UNRENDERED"
 fi
+# The initial-sequence gate RECOGNIZES the placed Module 3: no required 3.2.*
+# section (3.2.S / 3.2.P / 3.2.R) may read as unplaced. This pins two fixes at
+# once — the gate's 'm'-prefix blindness, and 3.2.R being composable at all.
+M3REQ=$(cat "$OUT/ectd.json" | jq '[.validationResults[]? | select(.rule=="REQUIRED_SECTION_UNPLACED" and ((.sectionCode // "")|startswith("3.2")))] | length' 2>/dev/null)
+[ "${M3REQ:-1}" = 0 ] && ok "every required Module 3 section (3.2.S / 3.2.P / 3.2.R) is placed and recognized" || bad "required Module 3 sections still unplaced: $M3REQ"
 
 step "20. The IND checklist sees the M3 leaves"
 CODE=$(req checklist GET /api/ind-checklist)

@@ -39,6 +39,7 @@ import { promises as fs } from 'node:fs';
 
 import { Router, Request, Response } from 'express';
 import { pool } from '../db';
+import { resolveSubmissionSpine, type SubmissionSpine } from '../services/cmc/submission-spine';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
 
 const router = Router();
@@ -223,89 +224,11 @@ async function resolveCompileAnchor(ident: string, orgId: number): Promise<Compi
 // SUBMISSION SPINE RESOLUTION (program → canonical submissions → sequence)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/**
- * Program types whose intake creates the canonical `submissions` row (slice 4)
- * — the value space of submissions.application_type for drug programs. Mirrors
- * DRUG_APPLICATION_TYPES in routes/c2c/projects.ts.
- */
-const DRUG_APPLICATION_TYPES = new Set(['ind', 'cta', 'nda', 'bla', 'maa', 'jnda', 'anda']);
-
-interface SubmissionSpine {
-  submissionId: number;
-  applicationType: string;
-  /** Latest sequence, with its placed-leaf count; null when none exists yet. */
-  sequence: { id: number; sequenceNumber: string; region: string; leafCount: number } | null;
-}
-
-/**
- * Resolve the program anchor's canonical submission spine, org-scoped, by the
- * SAME identity convention the ind-checklist-view-assembler and the C2C intake
- * use to link program ↔ submission: matching application type, and the
- * program's product_name / name / code matching the submission's product_name
- * or title (case-insensitive). Numeric legacy anchors have no program identity
- * and therefore no spine. Fail-closed: any lookup failure is "no spine", never
- * a guessed one.
- */
-async function resolveSubmissionSpine(
-  anchor: CompileAnchor,
-  orgId: number,
-): Promise<SubmissionSpine | null> {
-  if (anchor.programId === null) return null;
-  const appType = (anchor.programType ?? '').trim().toLowerCase();
-  if (!DRUG_APPLICATION_TYPES.has(appType)) return null;
-  const identityKeys = [
-    ...new Set(
-      [anchor.productName, anchor.title, anchor.programCode]
-        .map((v) => (v ?? '').trim().toLowerCase())
-        .filter(Boolean),
-    ),
-  ];
-  if (identityKeys.length === 0) return null;
-  try {
-    const subRes = await pool.query(
-      `SELECT id, application_type FROM submissions
-        WHERE organization_id = $1 AND deleted_at IS NULL
-          AND lower(application_type) = $2
-          AND (lower(coalesce(product_name, '')) = ANY($3) OR lower(title) = ANY($3))
-        ORDER BY updated_at DESC NULLS LAST, id DESC
-        LIMIT 1`,
-      [orgId, appType, identityKeys],
-    );
-    const sub = subRes.rows[0];
-    if (!sub) return null;
-    const submissionId = Number(sub.id);
-
-    const seqRes = await pool.query(
-      `SELECT id, sequence_number, region FROM ectd_sequences
-        WHERE submission_id = $1 AND organization_id = $2 AND deleted_at IS NULL
-        ORDER BY sequence_number DESC, id DESC
-        LIMIT 1`,
-      [submissionId, orgId],
-    );
-    const seq = seqRes.rows[0];
-    if (!seq) return { submissionId, applicationType: String(sub.application_type), sequence: null };
-
-    const leafRes = await pool.query(
-      `SELECT count(*)::int AS n FROM submission_leaves
-        WHERE sequence_id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-      [Number(seq.id), orgId],
-    );
-    return {
-      submissionId,
-      applicationType: String(sub.application_type),
-      sequence: {
-        id: Number(seq.id),
-        sequenceNumber: String(seq.sequence_number),
-        region: String(seq.region),
-        leafCount: Number(leafRes.rows[0]?.n ?? 0),
-      },
-    };
-  } catch {
-    // Store not provisioned / lookup failure → no spine (the draft path's
-    // blockers state exactly what is missing).
-    return null;
-  }
-}
+/* The program ↔ submission identity convention (DRUG_APPLICATION_TYPES,
+   SubmissionSpine, resolveSubmissionSpine) moved to
+   services/cmc/submission-spine.ts — the Module 3 OS compose dispatches
+   regional composition (3.2.R) on the SAME spine this compile runs against,
+   and an identity convention gets exactly one owner. */
 
 /**
  * Shared route prologue: org from auth context (401), then the ident resolved
@@ -675,12 +598,18 @@ function resolveUserId(req: Request): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-/** Case-insensitive CTD-section prefix match (leaf '3.2.s' covers '3.2.S'). */
+/** Case-insensitive CTD-section prefix match (leaf '3.2.s' covers '3.2.S').
+ *  A leading module prefix is normalized away first: the Module 3 placement
+ *  writes leaf codes as 'm3.2.S.1' (toLeafSectionCode = 'm' + key), and the
+ *  raw startsWith made every one of those invisible to this gate — a fully
+ *  placed Module 3 was reported REQUIRED_SECTION_UNPLACED on 3.2.S/3.2.P/3.2.R
+ *  while the sections sat in the sequence. */
 function sectionMatches(sectionCode: unknown, requiredCode: string): boolean {
-  return String(sectionCode ?? '')
+  const code = String(sectionCode ?? '')
     .trim()
     .toLowerCase()
-    .startsWith(requiredCode.toLowerCase());
+    .replace(/^m(?=\d)/, '');
+  return code.startsWith(requiredCode.toLowerCase().replace(/^m(?=\d)/, ''));
 }
 
 interface SpineLeafRow {
