@@ -27,6 +27,7 @@ import { ResearchAdmin } from '../surfaces/ResearchAdmin';
 import { __resetCeremonies, ceremonyOpen, registerCeremonyOpen } from '../ceremony';
 import {
   __resetSurfaceActionBus,
+  advertisedScreenActions,
   applySurfaceAction,
   registeredSurfaceId,
 } from '../surfaceActions';
@@ -158,5 +159,30 @@ describe('ResearchAdmin — a successful switch does not imply data arrived', ()
     const training = apply('research-admin.open-section', { section: 'training' });
     expect(training.status).toBe('applied');
     expect(training.detail).not.toContain('not connected');
+  });
+});
+
+/* ── Runtime discovery: the wave-6 actions reach module_context ─────────── */
+
+describe('advertisedScreenActions — the new actions are discoverable at runtime', () => {
+  it('every wave-6 surface advertises its actions, so AnA needs no list_screen_actions round-trip', () => {
+    // This is the path V2App folds into module_context every turn:
+    // advertisedScreenActions(activeId) → screen_actions. If a surface's
+    // actions do not surface here, AnA cannot know they exist even though the
+    // handler is registered.
+    const expected: Record<string, string[]> = {
+      'master-licensing': ['master-licensing.open-tab', 'master-licensing.filter-modules', 'master-licensing.search-modules'],
+      'pdev-cmc': ['pdev-cmc.filter-activities', 'pdev-cmc.set-view'],
+      pyramid: ['pyramid.select-type', 'pyramid.open-tab', 'pyramid.focus-phase', 'pyramid.open-task'],
+      'ectd-publishing': ['ectd-publishing.set-version', 'ectd-publishing.open-list', 'ectd-publishing.filter-codes'],
+      licensing: ['licensing.set-pricing-model', 'licensing.set-cycle'],
+      'admin-console': ['admin-console.open-tab', 'admin-console.filter-members'],
+    };
+    for (const [surface, ids] of Object.entries(expected)) {
+      const advertised = advertisedScreenActions(surface).map((a) => a.id);
+      for (const id of ids) {
+        expect(advertised, `${surface} should advertise ${id}`).toContain(id);
+      }
+    }
   });
 });
