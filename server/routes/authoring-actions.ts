@@ -3288,14 +3288,24 @@ router.get('/contradiction-context/:projectId', async (req: Request, res: Respon
  */
 router.post('/plan-contradiction-resolution', async (req: Request, res: Response) => {
   try {
-    const { projectId, findingId, finding, overlayRules } = req.body;
-    if (!projectId || !findingId || !finding) {
-      return res.status(400).json({ error: 'projectId, findingId, and finding are required' });
+    const { projectId, findingId, overlayRules } = req.body;
+    if (!projectId || !findingId) {
+      return res.status(400).json({ error: 'projectId and findingId are required' });
     }
 
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
     const userId = (req as any).userId || 0;
+
+    /* Loaded, not accepted — see the note on /execute-contradiction-resolution.
+       A `finding` supplied in the request body is ignored. */
+    const { contradictionEngineService } = await import(
+      '../services/contradiction-engine-service.js'
+    );
+    const finding = await contradictionEngineService.getFinding(findingId, Number(orgId));
+    if (!finding) {
+      return res.status(404).json({ error: 'Finding not found for this organization' });
+    }
 
     const { planContradictionResolution } = await import(
       '../services/resolution/contradiction-resolution-bridge.js'
@@ -3323,15 +3333,34 @@ router.post('/plan-contradiction-resolution', async (req: Request, res: Response
  */
 router.post('/execute-contradiction-resolution', async (req: Request, res: Response) => {
   try {
-    const { projectId, findingId, finding, overlayRules } = req.body;
-    if (!projectId || !findingId || !finding) {
-      return res.status(400).json({ error: 'projectId, findingId, and finding are required' });
+    const { projectId, findingId, overlayRules } = req.body;
+    if (!projectId || !findingId) {
+      return res.status(400).json({ error: 'projectId and findingId are required' });
     }
 
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
     const userId = (req as any).userId || 0;
     const actorRole = (req as any).userRole || undefined;
+
+    /* The finding is LOADED here, not accepted from the caller.
+       It used to arrive as `finding` in the request body and be passed straight
+       downstream, where its own fields drive the resolution — including
+       finding.authority*, which decides whether the action is permitted at all.
+       A client that supplies the object also supplies the authority state used
+       to judge it, and nothing checked that the finding existed, belonged to
+       this org, or matched the id alongside it.
+
+       /contradiction-consequence in this same file already does it correctly:
+       take the id, load the row scoped to the caller's org, refuse when it does
+       not resolve. Same pattern here. A `finding` in the body is now ignored. */
+    const { contradictionEngineService } = await import(
+      '../services/contradiction-engine-service.js'
+    );
+    const finding = await contradictionEngineService.getFinding(findingId, Number(orgId));
+    if (!finding) {
+      return res.status(404).json({ error: 'Finding not found for this organization' });
+    }
 
     const { executeContradictionResolution } = await import(
       '../services/resolution/contradiction-resolution-bridge.js'
@@ -3358,13 +3387,23 @@ router.post('/execute-contradiction-resolution', async (req: Request, res: Respo
  */
 router.post('/explain-contradiction-resolution', async (req: Request, res: Response) => {
   try {
-    const { projectId, findingId, finding, overlayRules } = req.body;
-    if (!projectId || !findingId || !finding) {
-      return res.status(400).json({ error: 'projectId, findingId, and finding are required' });
+    const { projectId, findingId, overlayRules } = req.body;
+    if (!projectId || !findingId) {
+      return res.status(400).json({ error: 'projectId and findingId are required' });
     }
 
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
+
+    /* Loaded, not accepted — see the note on /execute-contradiction-resolution.
+       A `finding` supplied in the request body is ignored. */
+    const { contradictionEngineService } = await import(
+      '../services/contradiction-engine-service.js'
+    );
+    const finding = await contradictionEngineService.getFinding(findingId, Number(orgId));
+    if (!finding) {
+      return res.status(404).json({ error: 'Finding not found for this organization' });
+    }
 
     const { explainContradictionResolution } = await import(
       '../services/resolution/contradiction-resolution-bridge.js'

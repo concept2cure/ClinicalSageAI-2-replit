@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-31T03:32:44.998Z",
+  "generatedAt": "2026-08-31T16:42:55.181Z",
   "git": {
-    "sha": "9cab503b7b53ed769d3f1de386e7db4e78e3d424",
+    "sha": "2019ef2c800ed3fa5e30cd83ac0e663187c8cef0",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2196,12 +2196,12 @@
         "bytes": 150437
       },
       {
-        "file": "server/storage.ts",
-        "bytes": 145402
+        "file": "server/routes/authoring-actions.ts",
+        "bytes": 146694
       },
       {
-        "file": "server/routes/authoring-actions.ts",
-        "bytes": 144774
+        "file": "server/storage.ts",
+        "bytes": 145402
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2326,16 +2326,16 @@
         "lines": 3563
       },
       {
+        "file": "server/routes/authoring-actions.ts",
+        "lines": 3488
+      },
+      {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "lines": 3472
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
         "lines": 3458
-      },
-      {
-        "file": "server/routes/authoring-actions.ts",
-        "lines": 3449
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
