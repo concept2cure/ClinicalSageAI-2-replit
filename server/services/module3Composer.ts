@@ -207,7 +207,11 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
 
   '3.2.S.2': (m) => {
     const route = val(m, 'manufacturingRoute');
-    const desc = val(m, 'processDescription');
+    const descRaw = val(m, 'processDescription');
+    // The §3.2.S register records ONE process text (its form labels the route
+    // field as the §3.2.S.2.2 description), so route and description are
+    // often the same recorded sentence — rendering it twice reads as padding.
+    const desc = descRaw === route ? '' : descRaw;
     const controls = val(m, 'processControls');
     const pvStatus = val(m, 'validationStatus');
     const pvProtocol = val(m, 'protocol');
@@ -269,8 +273,28 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
 
   '3.2.S.4': (m) => {
     const criteria = valObj(m, 'acceptanceCriteria');
-    const status = val(m, 'validationStatus');
-    const methodName = val(m, 'methodName');
+    /* Methods, PLURAL. A first-match val() read stamped ONE method's name and
+       lifecycle status onto every acceptance-criteria row — with two methods
+       in different states, whichever source was updated last claimed every
+       attribute, asserting a validation state the record contradicts. The
+       register captures no attribute↔method link, so per-row attribution is
+       honest only when exactly one method exists; otherwise the rows point at
+       the methods table and the narrative reports each status by name. */
+    const methodSources = m
+      .filter((s) => s.sourceType === 'method')
+      .map((s) => (s.sourcePayload || {}) as Record<string, any>)
+      .filter((p) => p.methodName || p.methodCode || p.technique || p.validationStatus);
+    const soleMethod = methodSources.length === 1 ? methodSources[0] : null;
+    const status = soleMethod ? String(soleMethod.validationStatus || '') : '';
+    const methodName = soleMethod
+      ? String(soleMethod.methodName || soleMethod.methodCode || '')
+      : '';
+    const statusSummary =
+      methodSources.length > 1
+        ? methodSources
+            .map((p) => `${p.validationStatus || 'status not recorded'} (${p.methodName || p.methodCode || 'unnamed method'})`)
+            .join('; ')
+        : status;
     const impurityLimits = valObj(m, 'impurityLimits');
     const impurities = valArr(m, 'impurities');
     const qualBasis = val(m, 'qualificationBasis');
@@ -281,9 +305,21 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         headers: ['Quality Attribute', 'Test Method', 'Acceptance Criteria', 'Validation Status'],
         rows: Object.entries(criteria).map(([test, crit]) => [
           test,
-          methodName || 'Not specified',
+          methodName || (methodSources.length > 1 ? 'See Analytical Methods table' : 'Not specified'),
           String(crit),
-          status || 'Pending',
+          status || (methodSources.length > 1 ? '—' : 'Pending'),
+        ]),
+      });
+    }
+    if (methodSources.length > 0) {
+      tables.push({
+        title: 'Analytical Methods',
+        headers: ['Method', 'Technique', 'Validation Status', 'Validated'],
+        rows: methodSources.map((p) => [
+          String(p.methodName || p.methodCode || 'Unnamed method'),
+          String(p.technique || p.methodType || '—'),
+          String(p.validationStatus || '—'),
+          p.validationDate ? String(p.validationDate).slice(0, 10) : '—',
         ]),
       });
     }
@@ -311,7 +347,11 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     }
     return {
       narrative: `The drug substance specification defines acceptance criteria for quality attributes. ` +
-        (status ? `Analytical methods are ${status}. ` : '') +
+        (statusSummary
+          ? methodSources.length > 1
+            ? `Analytical method validation status: ${statusSummary}. `
+            : `Analytical methods are ${statusSummary}. `
+          : '') +
         (criteria ? `${Object.keys(criteria).length} test(s) are defined in the specification. ` : '') +
         (impurityLimits ? `Impurity limits are established for ${Object.keys(impurityLimits).length} identified impurity/ies per ICH Q3A. ` :
           impurities.length > 0 ? `${impurities.length} specified impurity/ies characterized. ` : '') +
@@ -574,8 +614,18 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
 
   '3.2.P.5': (m) => {
     const criteria = val(m, 'releaseCriteria');
-    const method = val(m, 'methodName');
-    const status = val(m, 'validationStatus');
+    // Release and shelf-life limits are DIFFERENT regulatory claims; the spec
+    // register records both, and the shelf limit renders under its own label.
+    const shelfCriteria = val(m, 'shelfLifeCriteria');
+    /* Same plural-methods honesty as 3.2.S.4: one method may be named
+       per-row; several point at their own table. */
+    const methodSources = m
+      .filter((s) => s.sourceType === 'method')
+      .map((s) => (s.sourcePayload || {}) as Record<string, any>)
+      .filter((p) => p.methodName || p.methodCode || p.technique || p.validationStatus);
+    const soleMethod = methodSources.length === 1 ? methodSources[0] : null;
+    const method = soleMethod ? String(soleMethod.methodName || soleMethod.methodCode || '') : '';
+    const status = soleMethod ? String(soleMethod.validationStatus || '') : '';
     const releaseTests = valArr(m, 'releaseTests');
     const shelfLifeTests = valArr(m, 'shelfLifeTests');
     const dissolutionSpec = valObj(m, 'dissolutionSpecification');
@@ -604,11 +654,31 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
               t.shelfLifeCriteria || t.shelfLife || '—',
             ];
           }
-          return [String(t), method || '—', criteria || '—', '—'];
+          return [String(t), method || '—', criteria || '—', shelfCriteria || '—'];
         }),
       });
     } else {
-      tables.push(kvTable('Drug Product Specification', { 'Release Criteria': criteria, 'Analytical Method': method, 'Validation Status': status }));
+      tables.push(
+        kvTable('Drug Product Specification', {
+          'Release Criteria': criteria,
+          'Shelf-Life Criteria': shelfCriteria,
+          'Analytical Method':
+            method || (methodSources.length > 1 ? 'See Analytical Methods table' : ''),
+          'Validation Status': status,
+        }),
+      );
+    }
+    if (methodSources.length > 0) {
+      tables.push({
+        title: 'Analytical Methods',
+        headers: ['Method', 'Technique', 'Validation Status', 'Validated'],
+        rows: methodSources.map((p) => [
+          String(p.methodName || p.methodCode || 'Unnamed method'),
+          String(p.technique || p.methodType || '—'),
+          String(p.validationStatus || '—'),
+          p.validationDate ? String(p.validationDate).slice(0, 10) : '—',
+        ]),
+      });
     }
     // Dissolution specification (from dissolutionSpecification object or dissolution_profile source)
     if (dissolutionSpec) {
@@ -657,9 +727,14 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     }
     return {
       narrative: `The drug product specification defines release and shelf-life acceptance criteria. ` +
-        (method ? `Primary analytical method: ${method}. ` : '') +
+        (method
+          ? `Primary analytical method: ${method}. `
+          : methodSources.length > 1
+            ? `${methodSources.length} analytical methods are registered (see Analytical Methods table). `
+            : '') +
         (releaseTests.length > 0 ? `${releaseTests.length} quality attribute(s) are defined for release testing. ` : '') +
         (criteria ? `Release criteria: ${criteria}. ` : '') +
+        (shelfCriteria ? `Shelf-life criteria: ${shelfCriteria}. ` : '') +
         (dissolutionSpec || dissCondition ? `Dissolution specifications are established per ICH Q6A. ` : '') +
         (impurities.length > 0 ? `${impurities.length} specified impurity/ies characterized` + (qualBasis ? ` (${qualBasis})` : '') + `. ` : '') +
         (status ? `Validation status: ${status}.` : ''),

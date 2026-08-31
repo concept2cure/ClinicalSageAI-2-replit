@@ -71,12 +71,18 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
  */
 function textOf(v: unknown): string {
   if (v == null) return '';
-  if (typeof v === 'string') return v;
+  if (typeof v === 'string') return v.trim();
   if (typeof v === 'number') return String(v);
   if (Array.isArray(v)) return v.map(textOf).filter(Boolean).join('; ');
   if (typeof v === 'object') {
     return Object.entries(v as Record<string, unknown>)
-      .map(([k, x]) => (typeof x === 'string' || typeof x === 'number' ? `${k}: ${x}` : ''))
+      .map(([k, x]) => {
+        // An EMPTY value is not a fact — "release: " must never survive into
+        // a payload where its truthiness fakes a limit nobody entered.
+        if (typeof x === 'string' && x.trim()) return `${k}: ${x.trim()}`;
+        if (typeof x === 'number') return `${k}: ${x}`;
+        return '';
+      })
       .filter(Boolean)
       .join('; ');
   }
@@ -141,6 +147,27 @@ export function mapDrugSubstancePayload(record: Record<string, any>): Record<str
 export function mapDrugProductPayload(record: Record<string, any>): Record<string, any> {
   const mp = (record.manufacturingProcess ?? record.manufacturing_process ?? {}) as Record<string, any>;
   const pkg = (record.packagingMaterials ?? record.packaging_materials ?? {}) as Record<string, any>;
+  /* composition and formulation are TEXT in the payload: every consumer —
+     3.2.P.1's narrative and table, the 3.2.R.1.* composition statement, and
+     3.2.A.3's animal/human-origin scan — reads them with val() (String(v)),
+     so a passed-through json rendered "[object Object]" into governed
+     narratives and hid "gelatin" from the TSE/BSE scan, which then asserted
+     no animal-origin excipients OVER a gelatin composition. An empty {} maps
+     to null so it can never satisfy a required field. The structured objects
+     travel on *Detail keys. */
+  const compositionRaw = record.composition ?? record.formulation ?? null;
+  const compositionText =
+    typeof compositionRaw === 'string'
+      ? compositionRaw.trim()
+      : (typeof (compositionRaw as Record<string, any> | null)?.description === 'string'
+          ? String((compositionRaw as Record<string, any>).description).trim()
+          : '') || textOf(compositionRaw);
+  const batchFormulaRaw =
+    record.formulation ?? record.batchFormula ?? record.batch_formula ?? null;
+  const batchFormulaText =
+    typeof batchFormulaRaw === 'string' ? batchFormulaRaw.trim() : textOf(batchFormulaRaw);
+  const objOrNull = (v: unknown) =>
+    v != null && typeof v === 'object' && Object.keys(v as object).length > 0 ? v : null;
   return {
     name: record.productName || record.product_name || '',
     dosageForm: record.dosageForm || record.dosage_form || '',
@@ -155,8 +182,10 @@ export function mapDrugProductPayload(record: Record<string, any>): Record<strin
        batch_formula json only. The per-unit composition (a P.1 fact) is
        deliberately not aliased in: rendering it as the batch formula would
        overstate the record. */
-    formulation: record.formulation || record.batchFormula || record.batch_formula || null,
-    composition: record.composition || record.formulation || null,
+    formulation: batchFormulaText || null,
+    batchFormulaDetail: objOrNull(batchFormulaRaw),
+    composition: compositionText || null,
+    compositionDetail: objOrNull(compositionRaw),
     excipients: record.excipients || null,
     manufacturing_process: record.manufacturing_process || record.manufacturingProcess || null,
     processDescription: record.processDescription || record.process_description || mp.description || '',
@@ -263,16 +292,44 @@ export function mapStabilityPayload(record: Record<string, any>): Record<string,
  */
 export function mapSpecificationPayload(record: Record<string, any>): Record<string, any> {
   const criteria = record.acceptanceCriteria ?? record.acceptance_criteria ?? null;
+  const materialType = record.materialType || record.material_type || '';
+  /* 3.2.P.5 is the DRUG PRODUCT specification. The composer matches sources
+     by TYPE only, so if every spec emitted releaseCriteria, a drug-substance
+     or excipient spec's limits would render under the drug product's release
+     criteria and flip P.5 green — cross-material bleed into a governed
+     section. Only a drug-product spec produces the field. */
+  const isDrugProductSpec = /drug[\s_-]?product/i.test(materialType);
+  /* The register's shape separates the release limit from the shelf-life
+     limit ({release, shelf} — cmcSpec.ts): they are DIFFERENT regulatory
+     claims and must not be folded into one string under the release label. */
+  const relText =
+    typeof (criteria as Record<string, any> | null)?.release === 'string'
+      ? String((criteria as Record<string, any>).release).trim()
+      : '';
+  const shelfText =
+    typeof (criteria as Record<string, any> | null)?.shelf === 'string'
+      ? String((criteria as Record<string, any>).shelf).trim()
+      : '';
+  const hasReleaseShelfShape =
+    criteria != null && typeof criteria === 'object' &&
+    ('release' in (criteria as object) || 'shelf' in (criteria as object));
   return {
-    materialType: record.materialType || record.material_type || '',
+    materialType,
     materialName: record.materialName || record.material_name || '',
     acceptanceCriteria: criteria,
     /* 3.2.P.5's required field: the release limits ARE this register's
        acceptance criteria — the composer read `releaseCriteria` and nothing
        ever emitted it. Text, because the P.5 narrative reads it with val();
-       the structured object stays on acceptanceCriteria. */
+       the structured object stays on acceptanceCriteria; empty limits map to
+       null, never to a truthy "release: " that fakes completeness. */
     releaseCriteria:
-      record.releaseCriteria ?? record.release_criteria ?? (textOf(criteria) || null),
+      record.releaseCriteria ?? record.release_criteria ??
+      (isDrugProductSpec
+        ? (hasReleaseShelfShape ? relText : textOf(criteria)) || null
+        : null),
+    shelfLifeCriteria:
+      record.shelfLifeCriteria ?? record.shelf_life_criteria ??
+      (isDrugProductSpec && shelfText ? shelfText : null),
     testParameters: record.testParameters || record.test_parameters || null,
     testMethods: record.testMethods || record.test_methods || null,
     justification: record.justification || '',
@@ -385,11 +442,24 @@ export function mapComparabilityPayload(record: Record<string, any>): Record<str
  */
 export function mapProcessValidationPayload(record: Record<string, any>): Record<string, any> {
   const controlStrategy = record.controlStrategy ?? record.control_strategy ?? null;
+  const batches = record.consecutiveBatches ?? record.batchNumbers ?? record.batch_numbers ?? null;
   return {
     validationType: record.validationType || record.validation_type || record.stage || '',
     processName: record.processName || record.process_name || '',
     stage: record.stage || '',
     batchNumbers: record.batchNumbers || record.batch_numbers || null,
+    /* The composer's process-validation slots read `protocol`,
+       `validationStatus` and `consecutiveBatches` (3.2.S.2 / 3.2.P.3) — keys
+       nothing produced, so the PV summary table could never render. The PV
+       record's lifecycle status IS its validation status; the batches in
+       scope render as text. */
+    protocol: record.protocol || record.validationProtocol || record.validation_protocol || '',
+    validationStatus: record.validationStatus || record.validation_status || record.status || '',
+    consecutiveBatches: Array.isArray(batches)
+      ? batches.filter(Boolean).join(', ')
+      : typeof batches === 'string'
+        ? batches
+        : '',
     batchSize: record.batchSize || record.batch_size || '',
     processDescription: record.processDescription || record.process_description || '',
     /* Text, because the 3.2.S.2 narrative reads processControls with val();

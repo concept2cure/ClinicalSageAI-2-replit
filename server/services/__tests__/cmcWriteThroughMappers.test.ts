@@ -25,7 +25,11 @@ import {
   mapProcessValidationPayload,
   mapSpecificationPayload,
 } from '../cmc-write-through';
-import { MODULE3_SECTION_RULES } from '../module3Composer';
+import { MODULE3_SECTION_RULES, composeModule3FromCanonicalSources } from '../module3Composer';
+
+/** A canonical source as the composer receives it. */
+const src = (sourceType: string, sourcePayload: Record<string, unknown>) =>
+  ({ id: 'x', sourceType, sourcePayload, sourceHash: 'h' }) as never;
 
 const required = (sectionKey: string) =>
   MODULE3_SECTION_RULES.find((r) => r.sectionKey === sectionKey)?.requiredFields ?? [];
@@ -92,11 +96,28 @@ describe('mapDrugProductPayload — the §3.2.P register row (nested packaging/p
   };
   const p = mapDrugProductPayload(row);
 
-  it("3.2.P.1's required fields survive", () => {
+  it("3.2.P.1's required fields survive — composition as TEXT, because every consumer reads it with val()", () => {
     expect(required('3.2.P.1')).toEqual(['dosageFormDescription', 'composition', 'strength']);
     expect(p.dosageFormDescription).toBe('Solution for injection');
     expect(p.strength).toBe('50 mg/mL');
-    expect(p.composition).toEqual(row.composition);
+    // An object here rendered "[object Object]" into 3.2.P.1/3.2.R.1 and hid
+    // ingredient names from 3.2.A.3's animal-origin scan.
+    expect(p.composition).toBe('BX-204 50 mg/mL; histidine buffer; polysorbate 80; WFI qs.');
+    expect(p.compositionDetail).toEqual(row.composition);
+  });
+
+  it("the TSE/BSE scan can SEE the ingredients: a gelatin composition surfaces as scannable text", () => {
+    const gel = mapDrugProductPayload({
+      ...row,
+      composition: { description: 'Gelatin capsule shell; lactose monohydrate; magnesium stearate' },
+    });
+    expect(String(gel.composition)).toMatch(/gelatin/i);
+  });
+
+  it('an EMPTY composition {} maps to null — it must never satisfy a required field', () => {
+    const blank = mapDrugProductPayload({ ...row, composition: {} });
+    expect(blank.composition).toBeNull();
+    expect(blank.compositionDetail).toBeNull();
   });
 
   it('the container closure, process description and site come out of their nests', () => {
@@ -106,8 +127,11 @@ describe('mapDrugProductPayload — the §3.2.P register row (nested packaging/p
     expect(p.processControls).toEqual(row.processControls);
   });
 
-  it("3.2.P.3's formulation is the BATCH formula — never the per-unit composition aliased in", () => {
-    expect(p.formulation).toEqual(row.batchFormula);
+  it("3.2.P.3's formulation is the BATCH formula as TEXT — never the per-unit composition, never an object", () => {
+    // 3.2.P.3 renders formulation with val(); an object printed
+    // "[object Object]" into the governed Batch Formula table.
+    expect(p.formulation).toBe('perBatch: 2000 L: BX-204 100 kg…');
+    expect(p.batchFormulaDetail).toEqual(row.batchFormula);
     const noBatchFormula = mapDrugProductPayload({ ...row, batchFormula: undefined });
     expect(noBatchFormula.formulation).toBeNull();
   });
@@ -171,6 +195,35 @@ describe('mapSpecificationPayload — the raw snake_case quality_specifications 
 
   it('has no fabricated validation status — that field is the method register’s to produce', () => {
     expect(p.validationStatus).toBe('');
+  });
+
+  it('the register’s real {release, shelf} shape splits into DISTINCT claims — shelf never folds under the release label', () => {
+    const split = mapSpecificationPayload({
+      ...row,
+      acceptance_criteria: { release: '98.0–102.0%', shelf: '95.0–105.0%' },
+    });
+    expect(split.releaseCriteria).toBe('98.0–102.0%');
+    expect(split.shelfLifeCriteria).toBe('95.0–105.0%');
+  });
+
+  it('blank limits fabricate NOTHING: {release:"", shelf:""} maps releaseCriteria to null', () => {
+    const blank = mapSpecificationPayload({
+      ...row,
+      acceptance_criteria: { release: '', shelf: '' },
+    });
+    expect(blank.releaseCriteria).toBeNull();
+    expect(blank.shelfLifeCriteria).toBeNull();
+  });
+
+  it("a NON-drug-product spec never produces releaseCriteria — a substance's limits must not bleed into 3.2.P.5", () => {
+    const ds = mapSpecificationPayload({
+      ...row,
+      material_type: 'drug_substance',
+      acceptance_criteria: { release: '98.0–102.0%', shelf: '' },
+    });
+    expect(ds.releaseCriteria).toBeNull();
+    // The limits still travel as this spec's own acceptance criteria.
+    expect(ds.acceptanceCriteria).toEqual({ release: '98.0–102.0%', shelf: '' });
   });
 });
 
@@ -266,7 +319,129 @@ describe('mapProcessValidationPayload — the register row (CPPs/CQAs/control st
     expect(p.stage).toBe('qualification');
   });
 
+  it("emits the KEYS the composer's PV slots actually read — protocol, validationStatus, consecutiveBatches", () => {
+    // The 3.2.S.2/3.2.P.3 process-validation summary reads val('protocol'),
+    // val('validationStatus'), val('consecutiveBatches'); nothing produced
+    // them, so the PV summary table could never render from the register.
+    expect(p.protocol).toBe('PV-PROT-011');
+    expect(p.validationStatus).toBe('in-progress');
+    expect(p.consecutiveBatches).toBe('PPQ-01, PPQ-02, PPQ-03');
+  });
+
   it('a control strategy is NOT rendered as a process description', () => {
     expect(p.processDescription).toBe('');
+  });
+});
+
+describe('register row → payload → composed section: the whole chain, no "[object Object]", no false claims', () => {
+  it('a gelatin composition reaches 3.2.P.1 readably and 3.2.A.3 can never call it animal-free', () => {
+    const payload = mapDrugProductPayload({
+      productName: 'BX-cap',
+      dosageForm: 'Capsule',
+      strength: '25 mg',
+      composition: { description: 'Gelatin capsule shell; lactose monohydrate; magnesium stearate' },
+      manufacturingProcess: {},
+      packagingMaterials: {},
+      status: 'development',
+    });
+    const sections = composeModule3FromCanonicalSources([src('drug_product', payload)]);
+    const p1 = sections.find((s) => s.sectionKey === '3.2.P.1')!;
+    expect(p1.narrativeDraft).toMatch(/Gelatin capsule shell/);
+    expect(p1.narrativeDraft).not.toMatch(/object Object/);
+    expect(p1.missingInputs).toEqual([]);
+  });
+
+  it('an EMPTY composition {} leaves 3.2.P.1 honestly incomplete', () => {
+    const payload = mapDrugProductPayload({
+      productName: 'BX-cap',
+      dosageForm: 'Capsule',
+      strength: '25 mg',
+      composition: {},
+      manufacturingProcess: {},
+      packagingMaterials: {},
+      status: 'development',
+    });
+    const p1 = composeModule3FromCanonicalSources([src('drug_product', payload)])
+      .find((s) => s.sectionKey === '3.2.P.1')!;
+    expect(p1.missingInputs).toContain('composition');
+  });
+
+  it('two methods in different lifecycle states are reported BY NAME in 3.2.S.4 — one status is never stamped on every row', () => {
+    const spec = mapSpecificationPayload({
+      material_type: 'drug_substance',
+      material_name: 'BX-204',
+      acceptance_criteria: { assay: '95.0–105.0%', impurities: '≤ 0.5%' },
+      approval_status: 'approved',
+    });
+    const validated = mapAnalyticalMethodPayload({
+      methodCode: 'AM-011', title: 'RP-HPLC assay', purpose: 'Assay', analyte: 'BX-204',
+      matrix: 'DS', technique: 'HPLC', status: 'validated', ichQ2Parameters: null,
+    });
+    const inDev = mapAnalyticalMethodPayload({
+      methodCode: 'AM-012', title: 'Related substances', purpose: 'Purity', analyte: 'BX-204',
+      matrix: 'DS', technique: 'HPLC', status: 'development', ichQ2Parameters: null,
+    });
+    const s4 = composeModule3FromCanonicalSources([
+      src('specification', spec), src('method', validated), src('method', inDev),
+    ]).find((s) => s.sectionKey === '3.2.S.4')!;
+    // The narrative names each status with its method…
+    expect(s4.narrativeDraft).toMatch(/validated \(RP-HPLC assay\)/);
+    expect(s4.narrativeDraft).toMatch(/development \(Related substances\)/);
+    // …and never asserts one blanket state.
+    expect(s4.narrativeDraft).not.toMatch(/Analytical methods are validated\./);
+    // The criteria rows point at the methods table instead of stamping one method.
+    const criteriaTable = s4.tables.find((t) => t.title.includes('Acceptance Criteria'))!;
+    for (const row of criteriaTable.rows) {
+      expect(row[1]).toBe('See Analytical Methods table');
+    }
+    // The methods table lists both, with their own statuses.
+    const methodsTable = s4.tables.find((t) => t.title === 'Analytical Methods')!;
+    expect(methodsTable.rows).toHaveLength(2);
+  });
+
+  it("a drug-substance spec's limits never render as the drug product's 3.2.P.5 release criteria", () => {
+    const dsSpec = mapSpecificationPayload({
+      material_type: 'drug_substance',
+      material_name: 'BX-204',
+      acceptance_criteria: { release: '98.0–102.0%', shelf: '' },
+      approval_status: 'approved',
+    });
+    const p5 = composeModule3FromCanonicalSources([src('specification', dsSpec)])
+      .find((s) => s.sectionKey === '3.2.P.5')!;
+    expect(p5.missingInputs).toContain('releaseCriteria');
+    expect(p5.narrativeDraft).not.toMatch(/98\.0–102\.0%/);
+  });
+
+  it('the PV register renders a real Process Validation Summary in 3.2.S.2', () => {
+    const pv = mapProcessValidationPayload({
+      processName: 'DS final step', stage: 'qualification',
+      batchNumbers: ['PPQ-01', 'PPQ-02', 'PPQ-03'],
+      criticalProcessParameters: { parameters: ['Temp'] },
+      criticalQualityAttributes: { attributes: ['Assay'] },
+      controlStrategy: { summary: 'CPPs held within PAR.' },
+      validationProtocol: 'PV-PROT-011', status: 'approved',
+    });
+    const s2 = composeModule3FromCanonicalSources([src('process_validation', pv)])
+      .find((s) => s.sectionKey === '3.2.S.2')!;
+    const pvTable = s2.tables.find((t) => t.title === 'Process Validation Summary');
+    expect(pvTable).toBeTruthy();
+    expect(pvTable!.rows).toEqual(expect.arrayContaining([
+      ['Validation Protocol', 'PV-PROT-011'],
+      ['Validation Status', 'approved'],
+      ['Consecutive Batches', 'PPQ-01, PPQ-02, PPQ-03'],
+    ]));
+    expect(s2.narrativeDraft).not.toMatch(/object Object/);
+  });
+
+  it('the recorded route renders ONCE in 3.2.S.2 — never duplicated as its own process description', () => {
+    const ds = mapDrugSubstancePayload({
+      substanceName: 'BX-204',
+      manufacturingProcess: { manufacturer: 'Lonza', route: 'Four-step convergent synthesis.', site: 'Visp' },
+      status: 'qualified',
+    });
+    const s2 = composeModule3FromCanonicalSources([src('drug_substance', ds)])
+      .find((s) => s.sectionKey === '3.2.S.2')!;
+    const occurrences = s2.narrativeDraft.split('Four-step convergent synthesis').length - 1;
+    expect(occurrences).toBe(1);
   });
 });
