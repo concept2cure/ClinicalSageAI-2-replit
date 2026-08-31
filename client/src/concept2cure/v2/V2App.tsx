@@ -99,6 +99,13 @@ import './styles/misc-surfaces-v2.css';
 import './styles/device-v2.css';
 import './styles/pathway-core-v2.css';
 import './styles/pathway-panels-v2.css';
+/* LAST, deliberately. `surface-text-ramp.css` re-bases `--text-400` /
+   `--text-300` on every element that establishes a tinted surface, so it has to
+   load after the sheets that declare those surfaces — a custom property set
+   earlier in the cascade would be overwritten by the rule it is correcting.
+   GENERATED: scripts/design/generate-surface-text-ramp.mjs, drift-checked by
+   ci:surface-text-ramp. See GA ledger L102. */
+import './styles/surface-text-ramp.css';
 import { restoreShellProject } from './shellProject';
 
 const PREFS_KEY = 'c2c-v2-prefs';

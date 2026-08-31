@@ -54,8 +54,12 @@ const dbStub = () => ({
   ),
 });
 
-vi.mock('../db.js', () => ({ get db() { return dbStub(); } }));
-vi.mock('../db', () => ({ get db() { return dbStub(); } }));
+/* The router does `await import('../db.js')` from server/routes/, i.e.
+   server/db. vi.mock resolves relative to THIS file, so it is one level up
+   again — a wrong specifier here silently mocks nothing and the test would
+   pass for a reason unrelated to the fix. */
+vi.mock('../../db.js', () => ({ get db() { return dbStub(); } }));
+vi.mock('../../db', () => ({ get db() { return dbStub(); } }));
 
 import router from '../authoring-actions';
 

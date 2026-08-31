@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-31T02:51:04.811Z",
+  "generatedAt": "2026-08-31T03:21:27.080Z",
   "git": {
-    "sha": "246628d494d27f14fd96e7c94d502bbd59746303",
+    "sha": "cfc43dcf562165bbe6de94329ab55646512e1108",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2145,7 +2145,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 978687
+        "bytes": 979057
       },
       {
         "file": "shared/schema.ts",
@@ -2165,7 +2165,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 316571
+        "bytes": 318814
       },
       {
         "file": "server/statistics-service.ts",
@@ -2185,7 +2185,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 157368
+        "bytes": 159929
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2201,7 +2201,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "bytes": 142382
+        "bytes": 144774
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2287,7 +2287,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19045
+        "lines": 19050
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2295,7 +2295,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7425
+        "lines": 7467
       },
       {
         "file": "server/statistics-service.ts",
@@ -2335,7 +2335,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "lines": 3385
+        "lines": 3449
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2358,12 +2358,12 @@
         "lines": 2832
       },
       {
-        "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 2759
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2812
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2753
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "lines": 2759
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2438,16 +2438,16 @@
         "lines": 2093
       },
       {
+        "file": "server/services/precedent-engine.ts",
+        "lines": 2082
+      },
+      {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
         "lines": 2076
       },
       {
         "file": "server/services/pharmacovigilance/pharmacovigilance-knowledge.ts",
         "lines": 2068
-      },
-      {
-        "file": "server/services/precedent-engine.ts",
-        "lines": 2043
       },
       {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",

@@ -16376,7 +16376,7 @@ registerToolHandler('validate_cdisc_dataset', async (input: Record<string, unkno
 registerToolHandler('check_dataset_conformance', async (input: Record<string, unknown>) => {
   try {
     if (!input.spec || typeof input.spec !== 'object') return JSON.stringify({ status: 'needs_parameters', message: 'spec is required (the dataset spec).' });
-    const { checkDatasetConformance } = await import('../cdisc/define-xml.js');
+    const { checkDatasetConformance } = await import('../cdisc/define-spec-conformance.js');
     const result = checkDatasetConformance(input.spec as any);
     return JSON.stringify({ status: 'checked', engine: 'deterministic', result, instruction: 'Report errors (blocking) before warnings. Structural subset, not the full validator of record.' });
   } catch (err: any) {
@@ -16622,6 +16622,10 @@ registerToolHandler('generate_define_xml', async (input: Record<string, unknown>
   const spec = {
     studyName: raw.studyName,
     standard: raw.standard,
+    // defineVersion sits beside `spec` in the tool schema, but a model that
+    // wraps everything will put it inside; accept either, default 2.1.
+    defineVersion:
+      ((input as any).defineVersion ?? raw.defineVersion) === '2.0' ? '2.0' : '2.1',
     datasets: raw.datasets.map((ds: any) => ({
       ...ds,
       variables: (ds.variables ?? []).map((v: any) => ({
@@ -16640,10 +16644,11 @@ registerToolHandler('generate_define_xml', async (input: Record<string, unknown>
       })),
     })),
   };
-  // Emit define.xml v2.1.0 via the dataset-metadata generator (returns
-  // { xml, datasetCount, variableCount, gaps }). Structural conformance is a
-  // separate tool (check_dataset_conformance). runStatsTool wraps the result as
-  // { status: 'computed', engine, result }.
+  // Emit define.xml at the requested version via the one generator (returns
+  // { xml, defineVersion, valid, gaps, datasetCount, variableCount,
+  // codelistCount }), so the version in the result is the version in the file.
+  // Structural conformance is a separate tool (check_dataset_conformance).
+  // runStatsTool wraps the result as { status: 'computed', engine, result }.
   return runStatsTool('generate_define_xml', async () => {
     const { generateDefineXml } = await import('../cdisc/define-xml-generator.js');
     return generateDefineXml(spec as any);

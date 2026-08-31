@@ -29,6 +29,7 @@ import {
 // (interactive save AND section create) applies the identical rule.
 // See server/services/clinical-regulatory-evidence/lineage-gate.ts.
 import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/lineage-gate';
+import { sectionInsertIndex } from '../../shared/regulatory/section-code';
 import {
   computeChainHash,
   sha256Hex,
@@ -2149,7 +2150,18 @@ router.get('/docs/:docId/sections', async (req: Request, res: Response) => {
 // POST /api/authoring/sections - Create new section
 router.post('/sections', async (req: Request, res: Response) => {
   try {
-    const { doc_id, code, title, content = '', order_index = 0 } = req.body;
+    const { doc_id, code, title, content = '' } = req.body;
+    /* `order_index` was defaulted to 0 and no client sends one, so every
+       section of every document was created at the same index. The readers all
+       `ORDER BY order_index`, which with a table of ties returns whatever
+       Postgres returns — creating 5.6 then 5.1 left 5.6 above 5.1, and the
+       assembled dossier, the tree and both export branches inherited it
+       (MDX_WORK_ORDER W1-2). An explicitly supplied index is still honoured;
+       only the DEFAULT changes, from "0" to "where this code belongs".
+       Resolved below, inside the transaction that creates the row. */
+    const requestedOrderIndex: number | undefined = Number.isFinite(Number(req.body?.order_index))
+      ? Number(req.body.order_index)
+      : undefined;
     const tenantId = getTenantId(req);
     const sectionId = crypto.randomUUID();
     const createdBy = getActorId(req);
@@ -2197,12 +2209,42 @@ router.post('/sections', async (req: Request, res: Response) => {
     let result: { rows: any[] };
     try {
       await client.query('BEGIN');
+
+      /* Where the new section goes. Read the document's CURRENT order and find
+         the position this code belongs at within it — relative, not absolute:
+         a document someone has deliberately reordered keeps that order, and one
+         nobody has touched converges on full code order one insert at a time.
+         The rows below it shift down in the same transaction, so the index
+         means the same thing after the insert as before it.
+
+         Locked FOR UPDATE because two concurrent creates reading the same order
+         would otherwise both compute the same index and land on top of each
+         other. */
+      let orderIndex = requestedOrderIndex;
+      if (orderIndex === undefined) {
+        const existing = await client.query(
+          `SELECT id, code FROM authoring_sections
+            WHERE doc_id = $1 AND tenant_id = $2
+            ORDER BY order_index, created_at
+            FOR UPDATE`,
+          [doc_id, tenantId]
+        );
+        const codes = existing.rows.map((r: { code: string }) => String(r.code ?? ''));
+        orderIndex = sectionInsertIndex(codes, String(code));
+        // Everything at or after the insertion point moves down by one.
+        await client.query(
+          `UPDATE authoring_sections SET order_index = order_index + 1
+            WHERE doc_id = $1 AND tenant_id = $2 AND order_index >= $3`,
+          [doc_id, tenantId, orderIndex]
+        );
+      }
+
       result = await client.query(
         `INSERT INTO authoring_sections
          (id, doc_id, code, title, content, order_index, created_at, updated_at, tenant_id)
          VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW(), $7)
          RETURNING *`,
-        [sectionId, doc_id, code, title, content, order_index, tenantId]
+        [sectionId, doc_id, code, title, content, orderIndex, tenantId]
       );
       await enforceAuthorLineage(
         client,

@@ -35,6 +35,28 @@ function fakeExec(maxVersion = 0) {
   return { exec: { query }, calls };
 }
 
+/**
+ * Read an INSERT parameter by COLUMN NAME rather than by position. Positional
+ * assertions silently re-target when a column is added to the writer's list —
+ * `params[9]` meant previous_values until `field_data` was inserted ahead of it,
+ * after which the same index asserted a different column and the test's subject
+ * changed without the test changing. Parse the column list instead.
+ */
+function insertedColumn(
+  calls: Array<{ sql: string; params: unknown[] }>,
+  column: string,
+): unknown {
+  const insert = calls.find(c => /INSERT INTO cerv2_section_versions/i.test(c.sql));
+  if (!insert) throw new Error('no INSERT INTO cerv2_section_versions was run');
+  const columns = insert.sql
+    .slice(insert.sql.indexOf('(') + 1, insert.sql.indexOf(')'))
+    .split(',')
+    .map(c => c.trim());
+  const i = columns.indexOf(column);
+  if (i === -1) throw new Error(`writer does not insert a "${column}" column; it inserts: ${columns.join(', ')}`);
+  return insert.params[i];
+}
+
 const BASE = {
   sectionId: 11,
   organizationId: 7,
@@ -53,9 +75,7 @@ describe('recordCerv2SectionVersion', () => {
     const { exec, calls } = fakeExec(0);
     const v = await recordCerv2SectionVersion(exec, BASE);
     expect(v).toBe(1);
-    const insert = calls.find(c => /INSERT INTO cerv2_section_versions/i.test(c.sql));
-    expect(insert).toBeDefined();
-    expect(insert!.params[2]).toBe(1);
+    expect(insertedColumn(calls, 'version_number')).toBe(1);
   });
 
   it('appends rather than restarting when history exists', async () => {
@@ -68,11 +88,24 @@ describe('recordCerv2SectionVersion', () => {
     // only the NEW content would be a copy, not history.
     const { exec, calls } = fakeExec(0);
     await recordCerv2SectionVersion(exec, BASE);
-    const insert = calls.find(c => /INSERT INTO cerv2_section_versions/i.test(c.sql))!;
-    const previous = JSON.parse(String(insert.params[9]));
+    const previous = JSON.parse(String(insertedColumn(calls, 'previous_values')));
     expect(previous.content).toBe('OLD body text');
     // And the new state is recorded alongside, so a diff is reconstructable.
-    expect(insert.params[5]).toBe('NEW body text');
+    expect(insertedColumn(calls, 'content')).toBe('NEW body text');
+  });
+
+  it('records field_data when given it, and NULL — not "{}" — when not', async () => {
+    // The column holds every field value as of this version. A writer that
+    // dropped it left the dedicated column NULL while the values sat only in
+    // the diff columns, so a reader could not tell an empty section from an
+    // unrecorded one.
+    const withData = fakeExec(0);
+    await recordCerv2SectionVersion(withData.exec, { ...BASE, fieldData: { device_name: 'ACME X1' } });
+    expect(JSON.parse(String(insertedColumn(withData.calls, 'field_data')))).toEqual({ device_name: 'ACME X1' });
+
+    const without = fakeExec(0);
+    await recordCerv2SectionVersion(without.exec, BASE);
+    expect(insertedColumn(without.calls, 'field_data')).toBeNull();
   });
 
   it('scopes the version lookup to the section AND the organization', async () => {
@@ -99,8 +132,7 @@ describe('recordCerv2SectionVersion', () => {
       ...BASE,
       changeSummary: 'Reworked per FDA AI letter item 3',
     });
-    const insert = calls.find(c => /INSERT INTO cerv2_section_versions/i.test(c.sql))!;
-    expect(insert.params[4]).toBe('Reworked per FDA AI letter item 3');
+    expect(insertedColumn(calls, 'change_summary')).toBe('Reworked per FDA AI letter item 3');
   });
 
   it('SOURCE: the AnA tool writes its version row inside a transaction', async () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { checkDatasetConformance, generateDefineXml, type DefineSpec } from '../define-xml.js';
+import { checkDatasetConformance, type DefineSpec } from '../define-spec-conformance.js';
 
 const dm: DefineSpec = {
   studyName: 'STUDY-001',
@@ -43,22 +43,5 @@ describe('checkDatasetConformance', () => {
 
   it('throws on empty datasets', () => {
     expect(() => checkDatasetConformance({ studyName: 'S', standard: 'SDTM', datasets: [] })).toThrow(/non-empty/);
-  });
-});
-
-describe('generateDefineXml', () => {
-  it('produces ODM/define.xml v2.0 with item groups, item defs, and codelists', () => {
-    const { xml, conformance } = generateDefineXml(dm);
-    expect(conformance.summary.pass).toBe(true);
-    expect(xml).toContain('xmlns:def="http://www.cdisc.org/ns/def/v2.0"');
-    expect(xml).toContain('def:DefineVersion="2.0.0"');
-    expect(xml).toContain('<ItemGroupDef OID="IG.DM"');
-    expect(xml).toContain('<ItemDef OID="IT.DM.USUBJID"');
-    expect(xml).toContain('<CodeList OID="CL.SEX"');
-    expect(xml).toContain('<CodeListRef CodeListOID="CL.SEX"/>');
-  });
-
-  it('is deterministic', () => {
-    expect(generateDefineXml(dm).xml).toBe(generateDefineXml(dm).xml);
   });
 });

@@ -190,6 +190,18 @@ export interface ClaimCheckResult {
   warnings: ClaimWarning[];
   suggestedCitations: string[];
   recommendation: string;
+  /**
+   * Whether there was anything to check the claim AGAINST.
+   *
+   * `supported: false` carried two unrelated meanings: "precedents were
+   * consulted and they do not support this" and "nothing was consulted". The
+   * surface rendered both as "Needs support", so a claim checked against an
+   * empty corpus came back looking adjudicated. Only 'checked' may be read as
+   * a judgement about the claim (MDX_WORK_ORDER W2-8).
+   */
+  basis: 'checked' | 'no-precedents';
+  /** Whether the FDA registry was consulted for the precedents, and what came back. */
+  registry: RegistryStatus;
 }
 
 interface ClaimWarning {
@@ -969,7 +981,17 @@ export class PrecedentEngine {
 
   async checkClaim(
     claim: string,
-    context: { submissionType: string; therapeuticArea?: string; indication?: string }
+    /* productCode / deviceName are what the FDA 510(k) registry can be searched
+       by. Without them a device claim check could reach the corpus but never
+       the registry, so it answered "no precedent" for claims about product
+       codes with hundreds of clearances. */
+    context: {
+      submissionType: string;
+      therapeuticArea?: string;
+      indication?: string;
+      productCode?: string;
+      deviceName?: string;
+    }
   ): Promise<ClaimCheckResult> {
     const bridgeEntry = resolveToRegistryEntry(context.submissionType);
     if (bridgeEntry) context = { ...context, submissionType: bridgeEntry.applicationType };
@@ -979,11 +1001,15 @@ export class PrecedentEngine {
     const warnings: ClaimWarning[] = [];
     const suggestedCitations: string[] = [];
 
-    // Search for relevant precedents based on the claim text
-    const precedents = await this.search({
+    // Search for relevant precedents based on the claim text. The provenance
+    // comes back with them: a claim checked against nothing must be able to say
+    // so, and must be able to say WHY when the reason is an unreachable registry.
+    const { records: precedents, registry } = await this.searchWithSources({
       submissionType: context.submissionType,
       therapeuticArea: context.therapeuticArea,
       indication: context.indication,
+      productCode: context.productCode,
+      deviceName: context.deviceName,
       query: claim,
       limit: 5,
     });
@@ -1071,11 +1097,22 @@ export class PrecedentEngine {
       warnings.filter(w => w.severity === 'high').length === 0 &&
       precedents.filter(p => ['CLEARED', 'APPROVED'].includes(p.decisionOutcome)).length > 0;
 
-    const recommendation = supported
-      ? `Claim is supported by ${precedents.filter(p => ['CLEARED', 'APPROVED'].includes(p.decisionOutcome)).length} approved precedent(s). Include referenced citations.`
-      : warnings.length > 0
-        ? `Claim requires additional supporting evidence. ${warnings.length} warning(s) identified from historical FDA precedents.`
-        : 'No direct precedents found for this claim. Consider adding literature references.';
+    /* Nothing was consulted, so nothing was judged. Saying "needs support" here
+       would be a finding about the claim drawn from the absence of a corpus. */
+    const basis: 'checked' | 'no-precedents' =
+      precedents.length === 0 && warnings.length === 0 ? 'no-precedents' : 'checked';
+
+    const approved = precedents.filter(p => ['CLEARED', 'APPROVED'].includes(p.decisionOutcome));
+    const recommendation =
+      basis === 'no-precedents'
+        ? registry.consulted && !registry.available
+          ? `No precedent was checked against this claim — ${registry.reason ?? 'the FDA registry did not respond'}. Nothing here says the claim is unsupported; it says it is unchecked.`
+          : 'No precedent was found to check this claim against, so it has not been assessed either way. Widen the search criteria, ingest a precedent, or add literature references.'
+        : supported
+          ? `Claim is supported by ${approved.length} approved precedent(s). Include referenced citations.`
+          : warnings.length > 0
+            ? `Claim requires additional supporting evidence. ${warnings.length} warning(s) identified from historical FDA precedents.`
+            : `Checked against ${precedents.length} precedent(s); none of them approved, so the claim is not yet supported by this corpus.`;
 
     return {
       claim,
@@ -1084,6 +1121,8 @@ export class PrecedentEngine {
       warnings,
       suggestedCitations: [...new Set(suggestedCitations)].slice(0, 5),
       recommendation,
+      basis,
+      registry,
     };
   }
 
