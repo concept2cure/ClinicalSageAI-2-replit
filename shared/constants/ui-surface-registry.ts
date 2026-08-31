@@ -123,8 +123,24 @@ export interface UiSurface {
   readiness: ReadinessTier;
   /** Compliance rails that gate this surface. */
   compliance: ComplianceRail[];
-  /** Short note: what's done, what design still owns. */
+  /**
+   * PRODUCT COPY. This is rendered — as the scaffold page's subtitle under the
+   * <h1>, as the Coverage card note, and as the nav card's tooltip — so it is
+   * read by a regulatory director, not by an engineer. Write it as copy: no
+   * API routes, no table names, no source paths, no branch names, and no
+   * written-down counts of things the product computes (a count in prose goes
+   * stale the moment the data grows, and then two screens disagree).
+   *
+   * `check-internals-in-copy.mjs` enforces this over both registry files.
+   */
   notes?: string;
+  /**
+   * NOT RENDERED. Where the engineering detail that used to ride along inside
+   * `notes` goes: bound routes, contract refs, the module that owns the write
+   * layer. Kept rather than deleted — it was useful to the people maintaining
+   * the surface; it was only ever wrong to put it on screen.
+   */
+  engineering?: string;
 }
 
 // Shorthand for the two near-universal rails.
@@ -305,7 +321,8 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Living submission intelligence — readiness/fragility, narrative-drift alerts, simulated reviewer challenges, change-impact, keyed on a numeric package id (/api/submission-twin).',
+    notes: 'Living submission intelligence — readiness/fragility, narrative-drift alerts, simulated reviewer challenges, change-impact, keyed on a numeric package id.',
+    engineering: 'Routes: /api/submission-twin.',
   },
   {
     id: 'gateway-transmittals',
@@ -321,7 +338,8 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Multi-region agency dispatch: gateway roster + credential status, governed transmit (§11 re-auth + reason), transmittal log, live status poll, ACK download, governed rollback (/api/mdx/gateways).',
+    notes: 'Multi-region agency dispatch: gateway roster + credential status, governed transmit (§11 re-auth + reason), transmittal log, live status poll, ACK download, governed rollback.',
+    engineering: 'Routes: /api/mdx/gateways.',
   },
   {
     id: 'ectd-coauthor',
@@ -353,7 +371,8 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'eCTD 4.0 backbone compile/validate/export across FDA/EMA, keyed on the program’s numeric project id (/api/ectd-compile).',
+    notes: 'eCTD 4.0 backbone compile/validate/export across FDA/EMA, keyed on the program’s numeric project id.',
+    engineering: 'Routes: /api/ectd-compile.',
   },
   {
     id: 'ectd-publishing',
@@ -369,7 +388,8 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'eCTD publishing engine — version-aware (v3.2.2 + v4.0/HL7 RPS): controlled-vocabulary browser, RPS/backbone validation, v3->v4 forward-compat preview, and the exact spec versions each package is qualified against (/api/ectd/controlled-vocab, /api/ectd/v4/*, /api/ectd/qualification).',
+    notes: 'eCTD publishing engine — version-aware (v3.2.2 + v4.0/HL7 RPS): controlled-vocabulary browser, RPS/backbone validation, v3->v4 forward-compat preview, and the exact spec versions each package is qualified against.',
+    engineering: 'Routes: /api/ectd/controlled-vocab, /api/ectd/v4/*, /api/ectd/qualification.',
   },
   {
     id: 'device-510k',
@@ -461,7 +481,8 @@ export const UI_SURFACES: UiSurface[] = [
     // ceiling here, not contract-ready.
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'See PDEV_IND_DESIGN_BRIEF.md. Activity → AI draft → evidence → confirm, bound to /api/pdev; state changes and evidence links carry a reason into the audit chain.',
+    notes: 'Activity → AI draft → evidence → confirm. State changes and evidence links carry a reason into the audit chain.',
+    engineering: 'See PDEV_IND_DESIGN_BRIEF.md. Routes: /api/pdev.',
   },
   {
     id: 'template-library',
@@ -694,7 +715,8 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Safety-surveillance workbench: KPIs, disproportionality screener (PRR/ROR/EBGM), expedited-reporting clock, regional compliance matrix (/api/pharmacovigilance).',
+    notes: 'Safety-surveillance workbench: KPIs, disproportionality screener (PRR/ROR/EBGM), expedited-reporting clock, regional compliance matrix.',
+    engineering: 'Routes: /api/pharmacovigilance.',
   },
   {
     id: 'device-diagnostics',
@@ -732,7 +754,8 @@ export const UI_SURFACES: UiSurface[] = [
     // null, so this stops at routes-ready.
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Labeling/IFU authoring + compliance. Documents, symbols and translations read and write against /api/mdx/labeling.',
+    notes: 'Labeling/IFU authoring and compliance. Documents, symbols and translations are read and written live — nothing is held only in the browser.',
+    engineering: 'Routes: /api/mdx/labeling.',
   },
   {
     id: 'risk',
@@ -753,7 +776,8 @@ export const UI_SURFACES: UiSurface[] = [
     // still null, so this stops at routes-ready.
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'ISO 14971 risk file, hazard analysis. Risk items and their controls read and write against /api/mdx/risk-items.',
+    notes: 'ISO 14971 risk file and hazard analysis. Risk items and their controls are read and written live — nothing is held only in the browser.',
+    engineering: 'Routes: /api/mdx/risk-items.',
   },
   {
     id: 'deep-research',
@@ -819,7 +843,8 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Quality-management plan lifecycle (list/create/activate) + completeness/gate-level/risk-factor dashboard (/api/quality).',
+    notes: 'Quality-management plan lifecycle (list/create/activate) + completeness/gate-level/risk-factor dashboard.',
+    engineering: 'Routes: /api/quality.',
   },
   {
     id: 'part11-console',
@@ -835,7 +860,8 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Read-only compliance console: audit hash-chain integrity, §11.10 control status, SOC 2 control grid (/api/part11).',
+    notes: 'Read-only compliance console: audit hash-chain integrity, §11.10 control status, SOC 2 control grid.',
+    engineering: 'Routes: /api/part11.',
   },
   {
     id: 'identity-console',
@@ -867,7 +893,8 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Sealed-report lifecycle: list, cryptographic integrity verify, provenance/attestation counts, seal and revoke with justification (/api/intelligent-reports).',
+    notes: 'Sealed-report lifecycle: list, cryptographic integrity verify, provenance/attestation counts, seal and revoke with justification.',
+    engineering: 'Routes: /api/intelligent-reports.',
   },
   {
     id: 'billing',
@@ -921,7 +948,10 @@ export interface CrossCuttingConcern {
   label: string;
   apiPrefixes: string[];
   sharedContract: string | null;
+  /** PRODUCT COPY — rendered on the Coverage page. Same rule as UiSurface.notes. */
   notes: string;
+  /** NOT RENDERED — engineering detail. Same rule as UiSurface.engineering. */
+  engineering?: string;
 }
 
 export const CROSS_CUTTING_CONCERNS: CrossCuttingConcern[] = [
@@ -930,7 +960,8 @@ export const CROSS_CUTTING_CONCERNS: CrossCuttingConcern[] = [
     label: 'Auth & session',
     apiPrefixes: ['/api/auth', '/api/users', '/api/auth/sso', '/api/auth/enterprise'],
     sharedContract: null,
-    notes: 'JWT (sliding 7-day refresh), MFA (TOTP), SSO/SCIM. Token + org id flow through client/src/utils/authToken.ts and apiRequest headers.',
+    notes: 'JWT (sliding 7-day refresh), MFA (TOTP), SSO/SCIM. The session token and organization id travel on every request.',
+    engineering: 'Token + org id flow through client/src/utils/authToken.ts and apiRequest headers.',
   },
   {
     id: 'tenant-org',
@@ -944,14 +975,16 @@ export const CROSS_CUTTING_CONCERNS: CrossCuttingConcern[] = [
     label: 'Feature flags / entitlements',
     apiPrefixes: ['/api/module-subscriptions'],
     sharedContract: null,
-    notes: 'Per-tenant module gating. client/src/flags/featureFlags.ts (isFeatureEnabled). Locked modules → upgrade CTA, never a dead button.',
+    notes: 'Per-tenant module gating. A locked module shows an upgrade path, never a dead button.',
+    engineering: 'client/src/flags/featureFlags.ts (isFeatureEnabled).',
   },
   {
     id: 'ana-rail',
     label: 'AnA assistant rail',
     apiPrefixes: ['/api/ana-ri', '/api/ana', '/api/chat'],
     sharedContract: '@shared/types/ai-actions',
-    notes: 'Persistent right rail on EVERY surface. Modes standard/deep-research/quick-ask. SSE via /api/ana-ri/stream. Context card + suggested prompts + "Ask AnA about this" chips. Pedigree badge (registry-grounded vs verify).',
+    notes: 'Persistent right rail on every surface. Modes standard / deep-research / quick-ask, streamed as the answer is produced. Context card, suggested prompts, and "Ask AnA about this" chips. A pedigree badge says whether an answer is registry-grounded or needs verifying.',
+    engineering: 'SSE via /api/ana-ri/stream.',
   },
   {
     id: 'esign-modal',

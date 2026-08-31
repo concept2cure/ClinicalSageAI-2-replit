@@ -295,6 +295,50 @@ function proseLiterals(line) {
   return out;
 }
 
+/**
+ * Copy that is DECLARED in shared/ but RENDERED by the client.
+ *
+ * The walk below is `client/src/**`, which is where copy usually lives — and
+ * that is exactly why this gate was green over 25 surface notes carrying API
+ * routes, source paths, a table name and an agent branch name. The surface
+ * registry declares them in `shared/constants/`, and the client renders each
+ * one verbatim: as the scaffold page's subtitle under the <h1>
+ * (surfaces/Surfaces.tsx), as the Coverage card note, and as the nav card's
+ * tooltip. A gate that only reads the file where copy is USED cannot see copy
+ * that is declared one directory over.
+ *
+ * Only the fields that reach a screen are read. `engineering` exists precisely
+ * so the routes and contract refs have somewhere to live that is NOT copy, so
+ * it is skipped here on purpose — flagging it would push the detail back into
+ * the rendered field or delete it, and both are worse.
+ */
+const SHARED_COPY_SOURCES = [
+  'shared/constants/ui-surface-registry.ts',
+  'shared/constants/ui-surface-registry.ui-v2.ts',
+];
+const RENDERED_FIELDS = /^\s*(notes|label|subtitle|blurb)\s*:\s*'((?:[^'\\]|\\.)*)'/;
+
+function sharedCopyFindings() {
+  const hits = [];
+  for (const file of SHARED_COPY_SOURCES) {
+    const full = path.join(ROOT, file);
+    if (!existsSync(full)) continue;
+    readFileSync(full, 'utf8')
+      .split('\n')
+      .forEach((line, i) => {
+        const m = RENDERED_FIELDS.exec(line);
+        if (!m) return;
+        const value = m[2];
+        for (const { re: bad, what } of INTERNALS) {
+          if (!bad.test(value)) continue;
+          hits.push({ file, line: i + 1, what, text: value.trim().slice(0, 110) });
+          break;
+        }
+      });
+  }
+  return hits;
+}
+
 function sourceFiles() {
   const out = execSync("git ls-files 'client/src/**/*.tsx' 'client/src/**/*.ts'", {
     cwd: ROOT,
@@ -317,7 +361,7 @@ function stripComments(text) {
 }
 
 function findings() {
-  const hits = [];
+  const hits = sharedCopyFindings();
   for (const file of sourceFiles()) {
     const raw = readFileSync(path.join(ROOT, file), 'utf8');
     const code = stripComments(raw);
