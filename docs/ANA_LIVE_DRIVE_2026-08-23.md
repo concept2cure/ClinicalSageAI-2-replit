@@ -466,3 +466,16 @@ totality gate proves every stop resolves and fits the demo budget), and
 the Shell's Demonstrations menu picks it up from `listDemoScripts()` with
 no client change. Predicate search and residual-risk acceptance stay human
 acts, narrated as such.
+
+`training-medtech` is its operational counterpart — the device answer to
+`training-orientation`. Act-dense like the pharma training tour ("work
+one hazard, do not slide it"): it navigates the device portfolio, task
+workbench and 510(k) pathway, then operates the ISO 14971 risk file
+hands-on (`risk.select-hazard` runtime-filled from the file on screen,
+then `risk.set-matrix-view` to residual), works a real significant-change
+determination (`change-assessment.select-change`), and closes through EU
+MDR clinical evaluation and the submission packages. Hazard selection and
+change determinations are runtime-filled from the surface in front of
+AnA, exactly as the pharma tour fills `projects.open-program`. The
+platform now demonstrates both lanes symmetrically — a training
+walkthrough and a sales demonstration for pharma and for medtech.
