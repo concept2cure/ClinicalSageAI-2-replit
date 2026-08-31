@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-30T20:51:19.874Z",
+  "generatedAt": "2026-08-31T02:41:46.290Z",
   "git": {
-    "sha": "8cd31f54aedcfb8be81809a8ca605900d0ad9a97",
+    "sha": "b4f14bc6b0db595c75f14008c2c78f560f15243c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2201,7 +2201,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "bytes": 139841
+        "bytes": 142382
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2335,7 +2335,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "lines": 3346
+        "lines": 3385
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
