@@ -125,6 +125,62 @@ export interface SectionPreflightVerdict {
   checksDidNotRun: string[];
 }
 
+/**
+ * The governed-authority verdict for an action, resolved FAIL-CLOSED.
+ *
+ * All three governed status transitions in this router asked
+ * decisionLifecycleService.checkAuthority(...) inside
+ *
+ *     try { … } catch { (a comment reading "non-blocking") }
+ *
+ * so a throw from the dynamic import or the check itself left the verdict unset
+ * and execution continued into the write. An authorization gate whose failure
+ * mode is "proceed" is not a gate. Worse, /promote-to-review never consulted
+ * `allowed` at all — it computed the verdict, used `authority.requiresReviewerApproval`
+ * as a descriptive field in the response, and promoted the artifact regardless
+ * of the caller's role.
+ *
+ * One resolver for all three. A check that cannot be completed refuses, and
+ * says that it is the CHECK that failed rather than implying the caller's role
+ * was the problem — those are different facts and only one of them is about the
+ * caller.
+ *
+ * The predicate itself (isActorAuthorized in shared/types/decision-architecture.ts)
+ * is already correct: it denies an unknown or missing role. Only the plumbing
+ * around it was wrong.
+ */
+export async function resolveGovernedAuthority(
+  action: string,
+  actorRole?: string,
+): Promise<{
+  allowed: boolean;
+  /* Structural rather than `unknown`: callers echo the requirement back to the
+     client so a refused actor can see WHAT was required of them. */
+  authority?: { level?: string; requiresReviewerApproval?: boolean } | undefined;
+  reason: string;
+  checkFailed: boolean;
+}> {
+  try {
+    const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
+    const check = decisionLifecycleService.checkAuthority(action as never, actorRole);
+    return {
+      allowed: check?.allowed === true,
+      authority: check?.authority,
+      reason: check?.reason ?? '',
+      checkFailed: false,
+    };
+  } catch {
+    return {
+      allowed: false,
+      authority: undefined,
+      reason:
+        'The authority check for this action could not be completed, so the action was refused. ' +
+        'This is a failure to CHECK, not a decision about your role.',
+      checkFailed: true,
+    };
+  }
+}
+
 export function sectionPreflightVerdict(
   checks: Record<string, { status?: string } | null | undefined>,
 ): SectionPreflightVerdict {
@@ -491,16 +547,22 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
     }
 
     // Step 2: Authority check
-    let authorityCheck: any = null;
-    try {
-      const { decisionLifecycleService } = await import(
-        '../services/decision-lifecycle-service.js'
-      );
-      authorityCheck = decisionLifecycleService.checkAuthority(
-        'promote-to-review',
-        (req as any).userRole || undefined
-      );
-    } catch { /* non-blocking */ }
+    /* This verdict used to be computed and then ignored: `allowed` was never
+       consulted, and the only read of `authorityCheck` was
+       `authority.requiresReviewerApproval` as a descriptive field in the
+       response below. The promotion went through whatever the caller's role. */
+    const authorityCheck = await resolveGovernedAuthority(
+      'promote-to-review',
+      (req as any).userRole || undefined
+    );
+    if (!authorityCheck.allowed) {
+      return res.json({
+        promoted: false,
+        reason: authorityCheck.checkFailed ? 'authority-check-failed' : 'unauthorized',
+        message: authorityCheck.reason || 'Reviewer approval required',
+        authority: authorityCheck.authority,
+      });
+    }
 
     // Step 3: Execute promotion via existing governed path
     try {
@@ -734,18 +796,18 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
     }
 
     // Step 2: Authority check
-    let authorityCheck: any = null;
-    try {
-      const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
-      authorityCheck = decisionLifecycleService.checkAuthority('approve-artifact', userRole || undefined);
-      if (authorityCheck && !authorityCheck.allowed) {
-        return res.json({
-          approved: false, reason: 'unauthorized',
-          message: authorityCheck.reason || 'Reviewer approval required',
-          authority: authorityCheck.authority,
-        });
-      }
-    } catch { /* non-blocking */ }
+    const authorityCheck = await resolveGovernedAuthority(
+      'approve-artifact',
+      userRole || undefined
+    );
+    if (!authorityCheck.allowed) {
+      return res.json({
+        approved: false,
+        reason: authorityCheck.checkFailed ? 'authority-check-failed' : 'unauthorized',
+        message: authorityCheck.reason || 'Reviewer approval required',
+        authority: authorityCheck.authority,
+      });
+    }
 
     // Step 3: Execute status transition
     try {
@@ -919,13 +981,15 @@ router.post('/lock-artifact', async (req: Request, res: Response) => {
     }
 
     // Step 2: Authority check
-    try {
-      const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
-      const authorityCheck = decisionLifecycleService.checkAuthority('lock-artifact', userRole || undefined);
-      if (authorityCheck && !authorityCheck.allowed) {
-        return res.json({ locked: false, reason: 'unauthorized', message: authorityCheck.reason || 'Reviewer approval required' });
-      }
-    } catch { /* non-blocking */ }
+    const lockAuthority = await resolveGovernedAuthority('lock-artifact', userRole || undefined);
+    if (!lockAuthority.allowed) {
+      return res.json({
+        locked: false,
+        reason: lockAuthority.checkFailed ? 'authority-check-failed' : 'unauthorized',
+        message: lockAuthority.reason || 'Reviewer approval required',
+        authority: lockAuthority.authority,
+      });
+    }
 
     // Step 3: Execute lock
     try {
