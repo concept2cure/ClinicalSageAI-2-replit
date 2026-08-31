@@ -1,11 +1,15 @@
 /**
- * CDISC Conformance Service — unified validation + generation for SDTM/ADaM datasets.
+ * CDISC Conformance Service — SDTM/ADaM dataset validation.
  *
- * Exposes three deterministic, pure functions:
+ * Exposes two deterministic, pure functions:
  *
  *   - {@link validateSdtmDataset} — validate a dataset descriptor against SDTM IG 3.4 rules.
  *   - {@link validateAdamDataset} — validate a dataset descriptor against ADaM IG 1.3 rules.
- *   - {@link generateDefineXml}   — generate a define.xml 2.1 skeleton from dataset descriptors.
+ *
+ * It used to also export a `generateDefineXml`, the third define.xml generator
+ * in this directory and the only one with no caller. It asserted Mandatory="Yes"
+ * on every variable it emitted, which is a claim about the dataset it had no
+ * basis for. Generation lives in `define-xml-generator`; this file validates.
  *
  * No LLM calls, no network, no DB — pure deterministic logic over governed
  * CDISC standards data. Designed to be registered as AnA tool handlers via
@@ -36,24 +40,6 @@ export interface Finding {
 export interface ValidationResult {
   valid: boolean;
   findings: Finding[];
-}
-
-export interface DatasetDescriptor {
-  domain: string;
-  label?: string;
-  variables: Array<{
-    name: string;
-    label?: string;
-    type?: 'Char' | 'Num';
-    length?: number;
-    role?: string;
-  }>;
-}
-
-export interface DefineXmlResult {
-  xml: string;
-  datasetCount: number;
-  variableCount: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -281,91 +267,5 @@ export function validateAdamDataset(input: {
   return {
     valid: findings.filter((f) => f.severity === 'error').length === 0,
     findings,
-  };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// generateDefineXml
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Escape the five XML special characters. */
-function escapeXml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-
-/**
- * Generate a define.xml 2.1 skeleton from an array of dataset descriptors.
- *
- * Input: array of dataset descriptors (domain, label, variables with name/label/type/length/role).
- * Output: `{xml, datasetCount, variableCount}` — the XML is a valid define.xml 2.1
- * structure with proper ODM wrapper, MetaDataVersion, ItemGroupDef, ItemDef.
- *
- * @throws when input is missing required fields (triggers `isStatsParamError`).
- */
-export function generateDefineXml(input: {
-  datasets?: DatasetDescriptor[];
-  studyName?: string;
-}): DefineXmlResult {
-  if (!Array.isArray(input.datasets) || input.datasets.length === 0) {
-    throw new Error('datasets must be a non-empty array');
-  }
-
-  const studyName = input.studyName ?? 'STUDY';
-  const studyOID = `STDY.${studyName}`;
-  const indent = '  ';
-  let variableCount = 0;
-
-  // ── Build XML ──────────────────────────────────────────────────────────────
-  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-  xml += '<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" xmlns:def="http://www.cdisc.org/ns/def/v2.1" ODMVersion="1.3.2" FileType="Snapshot">\n';
-  xml += `${indent}<Study OID="${escapeXml(studyOID)}">\n`;
-  xml += `${indent}${indent}<GlobalVariables>\n`;
-  xml += `${indent}${indent}${indent}<StudyName>${escapeXml(studyName)}</StudyName>\n`;
-  xml += `${indent}${indent}${indent}<StudyDescription>${escapeXml(studyName)}</StudyDescription>\n`;
-  xml += `${indent}${indent}${indent}<ProtocolName>${escapeXml(studyName)}</ProtocolName>\n`;
-  xml += `${indent}${indent}</GlobalVariables>\n`;
-  xml += `${indent}${indent}<MetaDataVersion OID="MDV.${escapeXml(studyName)}" Name="${escapeXml(studyName)}" def:DefineVersion="2.1.0">\n`;
-
-  // ItemGroupDefs (datasets) with ItemRefs
-  for (const ds of input.datasets) {
-    const domain = (ds.domain ?? '').trim().toUpperCase();
-    const label = ds.label ?? domain;
-    xml += `${indent}${indent}${indent}<ItemGroupDef OID="IG.${escapeXml(domain)}" Name="${escapeXml(domain)}" SASDatasetName="${escapeXml(domain)}" Repeating="Yes" Purpose="Tabulation">\n`;
-    xml += `${indent}${indent}${indent}${indent}<Description><TranslatedText xml:lang="en">${escapeXml(label)}</TranslatedText></Description>\n`;
-    for (const v of ds.variables ?? []) {
-      const varName = (v.name ?? '').trim().toUpperCase();
-      xml += `${indent}${indent}${indent}${indent}<ItemRef ItemOID="IT.${escapeXml(domain)}.${escapeXml(varName)}" Mandatory="Yes"/>\n`;
-      variableCount += 1;
-    }
-    xml += `${indent}${indent}${indent}</ItemGroupDef>\n`;
-  }
-
-  // ItemDefs (variables)
-  for (const ds of input.datasets) {
-    const domain = (ds.domain ?? '').trim().toUpperCase();
-    for (const v of ds.variables ?? []) {
-      const varName = (v.name ?? '').trim().toUpperCase();
-      const varLabel = v.label ?? varName;
-      const dataType = v.type === 'Num' ? 'float' : 'text';
-      const lengthAttr = typeof v.length === 'number' ? ` Length="${v.length}"` : '';
-      xml += `${indent}${indent}${indent}<ItemDef OID="IT.${escapeXml(domain)}.${escapeXml(varName)}" Name="${escapeXml(varName)}" DataType="${dataType}"${lengthAttr}>\n`;
-      xml += `${indent}${indent}${indent}${indent}<Description><TranslatedText xml:lang="en">${escapeXml(varLabel)}</TranslatedText></Description>\n`;
-      xml += `${indent}${indent}${indent}</ItemDef>\n`;
-    }
-  }
-
-  xml += `${indent}${indent}</MetaDataVersion>\n`;
-  xml += `${indent}</Study>\n`;
-  xml += '</ODM>\n';
-
-  return {
-    xml,
-    datasetCount: input.datasets.length,
-    variableCount,
   };
 }

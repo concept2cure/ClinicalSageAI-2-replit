@@ -1,17 +1,22 @@
 /**
- * CDISC define.xml generation + dataset conformance checks (SDTM / ADaM basics).
+ * Structural conformance checks over a CDISC dataset spec (SDTM / ADaM basics).
  *
- * FDA data submissions require define.xml (dataset/variable metadata) and clean
- * conformance. This builds a define.xml v2.0 skeleton from a structured dataset
- * spec and runs deterministic structural conformance rules (variable naming,
- * required identifier variables, data types, codelist resolution). It is honest
- * about scope: it covers the structural/metadata rules that are mechanical and
- * reproducible — it is NOT a full Pinnacle21/CDISC CT rule engine, so run the
- * validator of record before submission.
+ * Runs deterministic structural rules — variable naming, required identifier
+ * variables, data types, label length, codelist resolution — over the spec an
+ * author supplies before a define.xml is generated from it. It is honest about
+ * scope: these are the mechanical, reproducible metadata rules, NOT a full
+ * Pinnacle21/CDISC CT rule engine, so run the validator of record before
+ * submission.
  *
- * Pure: no DB, no network. Identical spec → identical XML/findings.
+ * This file used to also carry a define.xml v2.0 generator, one of three in this
+ * directory under names that read as alternatives. The generator is now
+ * `define-xml-generator`, which takes the version as a parameter; this file was
+ * renamed off `define-xml` so its name says what it does. Checking a spec and
+ * rendering it are separate steps and the caller performs both.
  *
- * @module server/services/cdisc/define-xml
+ * Pure: no DB, no network. Identical spec → identical findings.
+ *
+ * @module server/services/cdisc/define-spec-conformance
  */
 
 export type CdiscStandard = 'SDTM' | 'ADaM';
@@ -72,10 +77,6 @@ export interface ConformanceResult {
   summary: { datasets: number; variables: number; errors: number; warnings: number; pass: boolean };
 }
 
-function xmlEscape(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
 /** Run deterministic structural conformance checks over a dataset spec. */
 export function checkDatasetConformance(spec: DefineSpec): ConformanceResult {
   const findings: ConformanceFinding[] = [];
@@ -130,81 +131,4 @@ export function checkDatasetConformance(spec: DefineSpec): ConformanceResult {
     findings,
     summary: { datasets: spec.datasets.length, variables: variableCount, errors, warnings, pass: errors === 0 },
   };
-}
-
-/**
- * Generate a define.xml v2.0 document from a dataset spec. Runs conformance
- * first and includes the findings so the caller never ships a define.xml whose
- * spec has structural errors without knowing.
- */
-export function generateDefineXml(spec: DefineSpec): { xml: string; conformance: ConformanceResult } {
-  const conformance = checkDatasetConformance(spec);
-
-  const itemGroups: string[] = [];
-  const itemDefs: string[] = [];
-
-  for (const ds of spec.datasets) {
-    const refs = ds.variables
-      .map((v) => `        <ItemRef ItemOID="IT.${ds.name}.${v.name}" Mandatory="${v.mandatory ? 'Yes' : 'No'}"/>`)
-      .join('\n');
-    itemGroups.push(
-      [
-        `      <ItemGroupDef OID="IG.${ds.name}" Name="${xmlEscape(ds.name)}" Repeating="No" Purpose="Tabulation"` +
-          (ds.datasetClass ? ` def:Class="${xmlEscape(ds.datasetClass)}"` : '') +
-          (ds.structure ? ` def:Structure="${xmlEscape(ds.structure)}"` : '') +
-          '>',
-        `        <Description><TranslatedText xml:lang="en">${xmlEscape(ds.label)}</TranslatedText></Description>`,
-        refs,
-        '      </ItemGroupDef>',
-      ].join('\n'),
-    );
-    for (const v of ds.variables) {
-      const lenAttr = v.type === 'text' && v.length ? ` Length="${v.length}"` : '';
-      const codeRef = v.codelist ? `\n        <CodeListRef CodeListOID="${xmlEscape(v.codelist)}"/>` : '';
-      const origin = v.origin ? `\n        <def:Origin Type="${xmlEscape(v.origin)}"/>` : '';
-      itemDefs.push(
-        [
-          `      <ItemDef OID="IT.${ds.name}.${v.name}" Name="${xmlEscape(v.name)}" DataType="${xmlEscape(v.type)}"${lenAttr}>`,
-          `        <Description><TranslatedText xml:lang="en">${xmlEscape(v.label)}</TranslatedText></Description>${codeRef}${origin}`,
-          '      </ItemDef>',
-        ].join('\n'),
-      );
-    }
-  }
-
-  const codeLists = (spec.codelists ?? [])
-    .map((cl) => {
-      const items = cl.items
-        .map(
-          (it) =>
-            `        <CodeListItem CodedValue="${xmlEscape(it.code)}"><Decode><TranslatedText xml:lang="en">${xmlEscape(it.decode)}</TranslatedText></Decode></CodeListItem>`,
-        )
-        .join('\n');
-      return [
-        `      <CodeList OID="${xmlEscape(cl.oid)}" Name="${xmlEscape(cl.name)}" DataType="${xmlEscape(cl.type ?? 'text')}">`,
-        items,
-        '      </CodeList>',
-      ].join('\n');
-    })
-    .join('\n');
-
-  const studyOid = `STD.${spec.studyName.replace(/[^A-Za-z0-9]/g, '').slice(0, 20) || 'STUDY'}`;
-  const xml = [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    '<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" xmlns:def="http://www.cdisc.org/ns/def/v2.0" ODMVersion="1.3.2" FileType="Snapshot" CreationDateTime="">',
-    `  <Study OID="${xmlEscape(studyOid)}">`,
-    `    <GlobalVariables><StudyName>${xmlEscape(spec.studyName)}</StudyName><StudyDescription>${xmlEscape(spec.studyName)}</StudyDescription><ProtocolName>${xmlEscape(spec.studyName)}</ProtocolName></GlobalVariables>`,
-    `    <MetaDataVersion OID="MDV.1" Name="${xmlEscape(spec.standard)} Define" def:DefineVersion="2.0.0">`,
-    itemGroups.join('\n'),
-    itemDefs.join('\n'),
-    codeLists,
-    '    </MetaDataVersion>',
-    '  </Study>',
-    '</ODM>',
-    '',
-  ]
-    .filter((l) => l !== '')
-    .join('\n');
-
-  return { xml, conformance };
 }

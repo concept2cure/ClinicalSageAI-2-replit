@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  validateSdtmDataset,
-  validateAdamDataset,
-  generateDefineXml,
-} from '../cdisc-conformance-service';
+import { validateSdtmDataset, validateAdamDataset } from '../cdisc-conformance-service';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validateSdtmDataset
@@ -156,79 +152,5 @@ describe('validateAdamDataset', () => {
 
   it('throws when variables is not an array', () => {
     expect(() => validateAdamDataset({ dataset: 'ADSL' } as any)).toThrow('variables must be an array');
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// generateDefineXml
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe('generateDefineXml', () => {
-  const sampleInput = {
-    studyName: 'TESTSTUDY',
-    datasets: [
-      {
-        domain: 'DM',
-        label: 'Demographics',
-        variables: [
-          { name: 'STUDYID', label: 'Study Identifier', type: 'Char' as const },
-          { name: 'USUBJID', label: 'Unique Subject Identifier', type: 'Char' as const },
-          { name: 'AGE', label: 'Age', type: 'Num' as const, length: 8 },
-        ],
-      },
-      {
-        domain: 'AE',
-        label: 'Adverse Events',
-        variables: [
-          { name: 'STUDYID', label: 'Study Identifier', type: 'Char' as const },
-          { name: 'AETERM', label: 'Reported Term for AE', type: 'Char' as const },
-        ],
-      },
-    ],
-  };
-
-  it('output contains ODM wrapper', () => {
-    const result = generateDefineXml(sampleInput);
-    expect(result.xml).toContain('<?xml version="1.0"');
-    expect(result.xml).toContain('<ODM');
-    expect(result.xml).toContain('xmlns="http://www.cdisc.org/ns/odm/v1.3"');
-    expect(result.xml).toContain('xmlns:def="http://www.cdisc.org/ns/def/v2.1"');
-    expect(result.xml).toContain('</ODM>');
-  });
-
-  it('output contains MetaDataVersion', () => {
-    const result = generateDefineXml(sampleInput);
-    expect(result.xml).toContain('<MetaDataVersion');
-    expect(result.xml).toContain('def:DefineVersion="2.1.0"');
-    expect(result.xml).toContain('</MetaDataVersion>');
-  });
-
-  it('output contains ItemGroupDef for each dataset', () => {
-    const result = generateDefineXml(sampleInput);
-    expect(result.xml).toContain('<ItemGroupDef OID="IG.DM"');
-    expect(result.xml).toContain('<ItemGroupDef OID="IG.AE"');
-  });
-
-  it('output contains ItemDef for each variable', () => {
-    const result = generateDefineXml(sampleInput);
-    expect(result.xml).toContain('<ItemDef OID="IT.DM.STUDYID"');
-    expect(result.xml).toContain('<ItemDef OID="IT.DM.USUBJID"');
-    expect(result.xml).toContain('<ItemDef OID="IT.DM.AGE"');
-    expect(result.xml).toContain('<ItemDef OID="IT.AE.AETERM"');
-  });
-
-  it('returns correct dataset count', () => {
-    const result = generateDefineXml(sampleInput);
-    expect(result.datasetCount).toBe(2);
-  });
-
-  it('returns correct variable count', () => {
-    const result = generateDefineXml(sampleInput);
-    expect(result.variableCount).toBe(5); // 3 from DM + 2 from AE
-  });
-
-  it('throws when datasets is missing or empty', () => {
-    expect(() => generateDefineXml({} as any)).toThrow('datasets must be a non-empty array');
-    expect(() => generateDefineXml({ datasets: [] })).toThrow('datasets must be a non-empty array');
   });
 });

@@ -1,12 +1,19 @@
 /**
- * CDISC Define-XML v2.1 generator.
+ * CDISC Define-XML generator — the only one.
  *
  * Every eCTD submission that carries CDISC datasets (SDTM/ADaM) must include a
  * define.xml describing those datasets, their variables, keys and controlled
- * terminology. This deterministically generates a Define-XML 2.1 document (an
+ * terminology. This deterministically generates a Define-XML document (an
  * ODM-based metadata file) from supplied dataset/variable/codelist metadata, and
  * reports gaps (a dataset with no keys, a variable citing a missing codelist,
  * missing labels) so an author sees what is incomplete before submission.
+ *
+ * The Define-XML version is an explicit `defineVersion` input ('2.0' | '2.1',
+ * default '2.1'), and the result echoes back which version was emitted. It used
+ * to be implicit, with a second 2.0 generator and a third 2.1 one sitting beside
+ * this file under names that read as alternatives; an edit could land in an
+ * unreachable one and appear to work. Both are gone — a caller that needs 2.0
+ * asks for 2.0 here.
  *
  * Pure / deterministic — identical metadata renders to byte-identical XML. The
  * companion `sdtm-domain-conformance-checker` validates a dataset's variables
@@ -31,6 +38,8 @@ export interface DefineVariable {
   keySequence?: number;
   /** References a codelist id in `codelists`. */
   codelistId?: string;
+  /** def:Origin Type, e.g. 'CRF', 'Derived', 'Assigned', 'Protocol'. */
+  origin?: string;
 }
 
 export interface DefineDataset {
@@ -56,11 +65,16 @@ export interface DefineCodelist {
   terms: DefineCodelistTerm[];
 }
 
+/** Define-XML versions this generator emits. */
+export type DefineXmlVersion = '2.0' | '2.1';
+
 export interface DefineXmlInput {
   studyName: string;
   studyOID?: string;
   /** Standard label, e.g. 'SDTMIG 3.4'. */
   standard?: string;
+  /** Define-XML version to emit. Default '2.1'. */
+  defineVersion?: DefineXmlVersion;
   datasets: DefineDataset[];
   codelists?: DefineCodelist[];
 }
@@ -76,6 +90,8 @@ export interface DefineGap {
 
 export interface DefineXmlResult {
   xml: string;
+  /** The version actually emitted — never inferred by the caller from the XML. */
+  defineVersion: DefineXmlVersion;
   /** True ⇔ no error-severity gaps. */
   valid: boolean;
   gaps: DefineGap[];
@@ -106,10 +122,11 @@ function clOid(id: string): string {
 }
 
 /**
- * Generate the Define-XML 2.1 document + gap report from the supplied metadata.
- * Pure / deterministic.
+ * Generate the Define-XML document + gap report from the supplied metadata, at
+ * the requested `defineVersion` (default '2.1'). Pure / deterministic.
  */
 export function generateDefineXml(input: DefineXmlInput): DefineXmlResult {
+  const defineVersion: DefineXmlVersion = input.defineVersion ?? '2.1';
   const studyOID = input.studyOID ?? `STDY.${input.studyName}`;
   const standard = input.standard ?? 'SDTMIG 3.4';
   const codelists = input.codelists ?? [];
@@ -156,11 +173,12 @@ export function generateDefineXml(input: DefineXmlInput): DefineXmlResult {
     }
   }
 
-  const xml = serialize(input, studyOID, standard, codelists);
+  const xml = serialize(input, studyOID, standard, codelists, defineVersion);
   const valid = !gaps.some((g) => g.severity === 'error');
 
   return {
     xml,
+    defineVersion,
     valid,
     gaps,
     datasetCount: input.datasets.length,
@@ -169,17 +187,28 @@ export function generateDefineXml(input: DefineXmlInput): DefineXmlResult {
   };
 }
 
-function serialize(input: DefineXmlInput, studyOID: string, standard: string, codelists: DefineCodelist[]): string {
+function serialize(
+  input: DefineXmlInput,
+  studyOID: string,
+  standard: string,
+  codelists: DefineCodelist[],
+  defineVersion: DefineXmlVersion,
+): string {
+  // The def: namespace URI and def:DefineVersion are the two places the version
+  // is asserted; they must agree or the file fails schema validation at the
+  // gateway, so both derive from the one parameter.
+  const defNs = `http://www.cdisc.org/ns/def/v${defineVersion}`;
+  const defineVersionAttr = `${defineVersion}.0`;
   const i = '  ';
   let out = '<?xml version="1.0" encoding="UTF-8"?>\n';
-  out += '<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" xmlns:def="http://www.cdisc.org/ns/def/v2.1" ODMVersion="1.3.2" FileType="Snapshot">\n';
+  out += `<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" xmlns:def="${defNs}" ODMVersion="1.3.2" FileType="Snapshot">\n`;
   out += `${i}<Study OID="${escapeXml(studyOID)}">\n`;
   out += `${i}${i}<GlobalVariables>\n`;
   out += `${i}${i}${i}<StudyName>${escapeXml(input.studyName)}</StudyName>\n`;
   out += `${i}${i}${i}<StudyDescription>${escapeXml(input.studyName)}</StudyDescription>\n`;
   out += `${i}${i}${i}<ProtocolName>${escapeXml(input.studyName)}</ProtocolName>\n`;
   out += `${i}${i}</GlobalVariables>\n`;
-  out += `${i}${i}<MetaDataVersion OID="MDV.${escapeXml(input.studyName)}" Name="${escapeXml(input.studyName)}" def:DefineVersion="2.1.0" def:StandardName="${escapeXml(standard)}">\n`;
+  out += `${i}${i}<MetaDataVersion OID="MDV.${escapeXml(input.studyName)}" Name="${escapeXml(input.studyName)}" def:DefineVersion="${defineVersionAttr}" def:StandardName="${escapeXml(standard)}">\n`;
 
   // ItemGroupDefs (datasets) with ItemRefs.
   for (const ds of input.datasets) {
@@ -205,6 +234,9 @@ function serialize(input: DefineXmlInput, studyOID: string, standard: string, co
       out += `${i}${i}${i}${i}<Description><TranslatedText xml:lang="en">${escapeXml(v.label ?? v.name)}</TranslatedText></Description>\n`;
       if (v.codelistId) {
         out += `${i}${i}${i}${i}<CodeListRef CodeListOID="${escapeXml(clOid(v.codelistId))}"/>\n`;
+      }
+      if (v.origin) {
+        out += `${i}${i}${i}${i}<def:Origin Type="${escapeXml(v.origin)}"/>\n`;
       }
       out += `${i}${i}${i}</ItemDef>\n`;
     }

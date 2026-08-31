@@ -1,7 +1,7 @@
 {
   "$comment": "Exported type names declared in more than one module under server/services. A shared name is how a reader, and a grep, end up at the wrong module and never learn it. This list may only SHRINK: rename each module's type to what it actually is, then regenerate with npm run ci:duplicate-exported-types:write-baseline. Adding an entry by hand is a regression.",
   "generatedBy": "scripts/ci/check-duplicate-exported-types.mjs --write-baseline",
-  "count": 247,
+  "count": 246,
   "names": [
     "ActionCategory",
     "ActionPriority",
@@ -62,7 +62,6 @@
     "CSRSection",
     "DeadlineItem",
     "DecisionFramework",
-    "DefineXmlResult",
     "Designation",
     "DesignationResult",
     "DevelopmentPhase",

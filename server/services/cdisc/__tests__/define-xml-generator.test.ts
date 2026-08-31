@@ -1,6 +1,6 @@
 /**
- * CDISC Define-XML v2.1 generator — deterministic XML + gap report from dataset
- * / variable / codelist metadata.
+ * CDISC Define-XML generator — deterministic XML + gap report from dataset /
+ * variable / codelist metadata, at the requested Define-XML version.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -101,5 +101,46 @@ describe('generateDefineXml — gap detection', () => {
     expect(res.gaps.some((g) => g.code === 'UNUSED_CODELIST' && g.severity === 'warning')).toBe(true);
     expect(res.gaps.some((g) => g.code === 'MISSING_LABEL' && g.severity === 'warning')).toBe(true);
     expect(res.valid).toBe(true); // warnings do not invalidate
+  });
+});
+
+describe('generateDefineXml — the version is a parameter, not a guess', () => {
+  it('defaults to 2.1 and says so in the result', () => {
+    const res = generateDefineXml(input());
+    expect(res.defineVersion).toBe('2.1');
+    expect(res.xml).toContain('xmlns:def="http://www.cdisc.org/ns/def/v2.1"');
+    expect(res.xml).toContain('def:DefineVersion="2.1.0"');
+  });
+
+  it('emits 2.0 when asked, in both places the version is declared', () => {
+    const res = generateDefineXml(input({ defineVersion: '2.0' }));
+    expect(res.defineVersion).toBe('2.0');
+    expect(res.xml).toContain('xmlns:def="http://www.cdisc.org/ns/def/v2.0"');
+    expect(res.xml).toContain('def:DefineVersion="2.0.0"');
+    // The version must not survive anywhere from the other branch: a file whose
+    // namespace and DefineVersion disagree fails schema validation at the
+    // receiving gateway, which is precisely what one hardcoded version caused.
+    expect(res.xml).not.toContain('def/v2.1');
+    expect(res.xml).not.toContain('DefineVersion="2.1.0"');
+  });
+
+  it('carries def:Origin through, the one thing the deleted 2.0 generator could do', () => {
+    const res = generateDefineXml(
+      input({
+        datasets: [
+          {
+            name: 'DM',
+            label: 'Demographics',
+            variables: [{ name: 'AGE', label: 'Age', dataType: 'integer', keySequence: 1, origin: 'CRF' }],
+          },
+        ],
+        codelists: [],
+      }),
+    );
+    expect(res.xml).toContain('<def:Origin Type="CRF"/>');
+  });
+
+  it('omits def:Origin entirely when no origin is stated', () => {
+    expect(generateDefineXml(input()).xml).not.toContain('def:Origin');
   });
 });
