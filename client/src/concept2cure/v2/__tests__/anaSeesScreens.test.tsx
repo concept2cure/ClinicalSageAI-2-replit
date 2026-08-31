@@ -25,6 +25,7 @@ import { ReportGovernance } from '../surfaces/ReportGovernance';
 import { IdentityConsole } from '../surfaces/IdentityConsole';
 import { Orchestration } from '../surfaces/Orchestration';
 import { BiopharmaJourney } from '../surfaces/BiopharmaJourney';
+import { AccessRequests } from '../surfaces/AccessRequests';
 import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 
 function ok(data: unknown) {
@@ -176,5 +177,102 @@ describe('BiopharmaJourney — the journey publishes real program identity', () 
       expect(seen.current?.summary).toContain('of 9 stages complete');
       expect(seen.current?.summary).toContain('42% ready');
     });
+  });
+});
+
+/* ── Security regression guard ────────────────────────────────────────────
+ * The admin publishers are the ones that sit next to credentials, member PII,
+ * and cross-tenant data. Their facts were audited by hand to carry only
+ * counts, booleans and the org's own non-PII fields — but a property held only
+ * by review regresses the first time someone adds a field. These tests feed
+ * each surface REAL-shaped data whose forbidden fields carry sentinel values,
+ * render it to its ready state, and assert those sentinels never reach the
+ * published context (which the shell folds verbatim into the model prompt).
+ * Each also asserts an ALLOWED value DID reach the context, so a green is a
+ * real scan of a populated payload, not an empty one.
+ */
+describe('security: identity-console never leaks a SCIM token, CIDR or org id', () => {
+  beforeEach(() => apiRequest.mockReset());
+
+  it('publishes counts from a populated directory — and no label, CIDR or org id', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/admin/scim-tenants')
+        return ok({
+          tenants: [
+            { id: 1, organizationId: 424242, label: 'IDP-LABEL-SENTINEL', enabled: true },
+            { id: 2, organizationId: 424242, label: 'IDP-LABEL-SENTINEL-2', enabled: false },
+          ],
+        });
+      if (url === '/api/admin/scim-ip-allowlist')
+        return ok({ rules: [{ id: 1, organizationId: 424242, cidr: '10.66.66.0/24', label: 'RULE-SENTINEL', enabled: true }] });
+      return ok({});
+    });
+    const seen = { current: null as SurfaceContext | null };
+    render(
+      <>
+        <IdentityConsole
+          surface={{ id: 'identity-console', label: 'Identity' } as never}
+          onAsk={vi.fn()}
+          onNav={vi.fn()}
+          segment="biopharma"
+        />
+        <Probe id="identity-console" seen={seen} />
+      </>,
+    );
+    // Ready state reached: the counts are published (2 tokens, 1 enabled).
+    await waitFor(() =>
+      expect((seen.current?.facts as Record<string, unknown>)?.scimTenantCount).toBe(2),
+    );
+    expect((seen.current?.facts as Record<string, unknown>)?.scimTenantsEnabled).toBe(1);
+    // And not one forbidden value rode along.
+    const payload = JSON.stringify(seen.current);
+    for (const leak of ['IDP-LABEL-SENTINEL', '10.66.66.0/24', 'RULE-SENTINEL', '424242']) {
+      expect(payload, `identity-console leaked ${leak}`).not.toContain(leak);
+    }
+  });
+});
+
+describe('security: access-requests never leaks a requester email, name, note or reason', () => {
+  beforeEach(() => apiRequest.mockReset());
+
+  it('publishes the requested module (allowed) but no third-party PII or free text', async () => {
+    apiRequest.mockImplementation(async () =>
+      ok({
+        scope: 'organization',
+        requests: [
+          {
+            id: 1,
+            organizationId: 7,
+            organizationName: 'Acme',
+            moduleId: 'submission-gateway',
+            moduleName: 'Submission Gateway',
+            requestedBy: 99,
+            requesterEmail: 'leak@sentinel.test',
+            requesterName: 'PII-NAME-SENTINEL',
+            note: 'NOTE-SENTINEL third-party free text',
+            status: 'open',
+            decidedByEmail: null,
+            decidedAt: null,
+            decisionReason: 'REASON-SENTINEL',
+            createdAt: null,
+            updatedAt: null,
+          },
+        ],
+      }),
+    );
+    const seen = { current: null as SurfaceContext | null };
+    render(
+      <>
+        <AccessRequests />
+        <Probe id="access-requests" seen={seen} />
+      </>,
+    );
+    // Ready state reached: the module id (an allowed fact) is published.
+    await waitFor(() => expect(JSON.stringify(seen.current)).toContain('submission-gateway'));
+    // But nothing a person typed, and no address, rode along.
+    const payload = JSON.stringify(seen.current);
+    for (const leak of ['leak@sentinel.test', 'PII-NAME-SENTINEL', 'NOTE-SENTINEL', 'REASON-SENTINEL']) {
+      expect(payload, `access-requests leaked ${leak}`).not.toContain(leak);
+    }
   });
 });
