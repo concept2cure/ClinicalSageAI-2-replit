@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-31T03:21:27.080Z",
+  "generatedAt": "2026-08-31T03:32:44.998Z",
   "git": {
-    "sha": "cfc43dcf562165bbe6de94329ab55646512e1108",
+    "sha": "9cab503b7b53ed769d3f1de386e7db4e78e3d424",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2185,7 +2185,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 159929
+        "bytes": 165761
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2354,12 +2354,12 @@
         "lines": 3067
       },
       {
-        "file": "server/src/routes/stability.router.ts",
-        "lines": 2832
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2922
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2812
+        "file": "server/src/routes/stability.router.ts",
+        "lines": 2832
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
