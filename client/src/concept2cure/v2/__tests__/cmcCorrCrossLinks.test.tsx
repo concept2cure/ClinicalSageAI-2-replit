@@ -394,6 +394,62 @@ describe('CmPathway — logging and closing agency questions', () => {
     expect(patches[0].body).toEqual({ assignedTo: null });
   });
 
+  it('the closed file is readable, and Reopen returns a question to the open list — guarded', async () => {
+    const patches: Array<{ body: unknown }> = [];
+    let closedReads = 0;
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && url === '/api/cmc/agency-questions?status=CLOSED') {
+        closedReads += 1;
+        return res({
+          success: true,
+          data: [
+            {
+              id: 31, question: 'Justify the impurity limit for compound Z.', sectionRef: '3.2.S.4.5',
+              priority: 'medium', severity: 'MAJOR', status: 'CLOSED', region: 'FDA', dueDate: null,
+              overdue: false, assignedTo: 'r.lead@x', responseDocId: 'DOC-ANS', updatedAt: '2026-08-20T09:00:00Z',
+            },
+          ],
+        });
+      }
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/31') {
+        patches.push({ body });
+        return res({ success: true, data: { id: 31, status: 'DRAFTED' } });
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} nav={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+
+    fireEvent.click(screen.getByRole('button', { name: /Show the closed file/ }));
+    await screen.findByText('Justify the impurity limit for compound Z.');
+    // The answered response is a door from the history too.
+    expect(screen.getByTitle('Open the response that answered this question')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Reopen$/ }));
+    await waitFor(() => expect(patches).toHaveLength(1));
+    // Reopens to the TRUTHFUL state — DRAFTED, because a response draft is
+    // linked — and only from CLOSED (the guard).
+    expect(patches[0].body).toMatchObject({ status: 'DRAFTED', expectedStatus: 'CLOSED' });
+    // Both halves refetch: the open board (corrEpoch) and the history.
+    await waitFor(() => expect(closedReads).toBeGreaterThanOrEqual(2));
+  });
+
+  it('a failed closed-file read is an ERROR on screen, never an empty history', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/cmc/agency-questions?status=CLOSED') {
+        return res({ success: false, error: 'The correspondence file could not be read.' }, 500);
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+    fireEvent.click(screen.getByRole('button', { name: /Show the closed file/ }));
+    await screen.findByText(/Couldn’t read the closed file/);
+    expect(screen.queryByText(/No closed questions yet/)).toBeNull();
+  });
+
   it('a refused log says so and records nothing locally', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'POST' && url === '/api/cmc/agency-questions') {

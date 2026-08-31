@@ -219,6 +219,16 @@ ST=$(cat "$OUT/qclose.json" | JQ '.data.status // empty')
 CODE2=$(req board3 GET /api/cmc/module3-board)
 GONE=$(cat "$OUT/board3.json" | jq --argjson id "${QID:-0}" '[.data.correspondence[]? | select(.id == $id)] | length' 2>/dev/null)
 [ "$CODE" = 200 ] && [ "$ST" = "CLOSED" ] && [ "${GONE:-1}" = 0 ] && ok "closed: off the open list ($GONE), kept in the store" || bad "close: code=$CODE st=$ST stillListed=$GONE"
+# "Stays in the record" is now READABLE: the closed file serves the row…
+CODE=$(req qclosedlist GET "/api/cmc/agency-questions?status=CLOSED")
+INFILE=$(cat "$OUT/qclosedlist.json" | jq --argjson id "${QID:-0}" '[.data[]? | select(.id == $id)] | length' 2>/dev/null)
+[ "$CODE" = 200 ] && [ "${INFILE:-0}" = 1 ] && ok "closed file lists the answered question" || bad "closed file: code=$CODE listed=$INFILE"
+# …and a mistaken close can be UNDONE, guarded on CLOSED, back to the truthful
+# state (DRAFTED — its response draft is linked).
+CODE=$(req qreopen PATCH "/api/cmc/agency-questions/$QID" '{"status":"DRAFTED","expectedStatus":"CLOSED"}')
+ST=$(cat "$OUT/qreopen.json" | JQ '.data.status // empty')
+[ "$CODE" = 200 ] && [ "$ST" = "DRAFTED" ] && ok "reopened to DRAFTED (guarded on CLOSED)" || bad "reopen: $CODE $ST"
+req qreclose PATCH "/api/cmc/agency-questions/$QID" '{"status":"CLOSED","expectedStatus":"DRAFTED"}' >/dev/null
 
 echo; echo "════ RESULT: $PASS passed, $FAIL failed ════"
 exit $([ "$FAIL" = 0 ] && echo 0 || echo 1)

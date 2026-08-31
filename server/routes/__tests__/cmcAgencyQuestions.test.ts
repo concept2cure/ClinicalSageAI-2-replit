@@ -54,6 +54,34 @@ beforeEach(() => {
   orgHolder.value = '42';
 });
 
+describe('GET /api/cmc/agency-questions', () => {
+  it('serves the org-scoped file; ?status=CLOSED reads the answered history', async () => {
+    mockQuery.mockResolvedValue({ rows: [{ ...ROW, status: 'CLOSED' }] });
+    const res = await request(makeApp()).get('/api/cmc/agency-questions?status=closed');
+    expect(res.status).toBe(200);
+    expect(res.body.data[0].status).toBe('CLOSED');
+    const [sql, params] = mockQuery.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain('from reg_questions');
+    expect(sql).toContain('organization_id = $1');
+    expect(sql).toMatch(/status = \$2/);
+    expect(params).toEqual([42, 'CLOSED']);
+  });
+
+  it('refuses an unknown status — never an empty list pretending to be one', async () => {
+    const res = await request(makeApp()).get('/api/cmc/agency-questions?status=ARCHIVED');
+    expect(res.status).toBe(400);
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it('no status serves the whole Module 3 file', async () => {
+    const res = await request(makeApp()).get('/api/cmc/agency-questions');
+    expect(res.status).toBe(200);
+    const [sql, params] = mockQuery.mock.calls[0] as [string, unknown[]];
+    expect(sql).not.toMatch(/status = \$/);
+    expect(params).toEqual([42]);
+  });
+});
+
 describe('POST /api/cmc/agency-questions', () => {
   it('stamps the VERIFIED org and starts the question OPEN — the body cannot choose a tenant', async () => {
     const res = await request(makeApp())
