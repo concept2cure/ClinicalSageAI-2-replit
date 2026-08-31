@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-31T02:59:22.887Z",
+  "generatedAt": "2026-08-31T03:03:27.053Z",
   "git": {
-    "sha": "3733d39298c3c0cb023ba2a3549e98c8393ad158",
+    "sha": "e749d2ff6224f5d8148b10b773f49d3b074fbc72",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2438,16 +2438,16 @@
         "lines": 2093
       },
       {
+        "file": "server/services/precedent-engine.ts",
+        "lines": 2082
+      },
+      {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
         "lines": 2076
       },
       {
         "file": "server/services/pharmacovigilance/pharmacovigilance-knowledge.ts",
         "lines": 2068
-      },
-      {
-        "file": "server/services/precedent-engine.ts",
-        "lines": 2043
       },
       {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
