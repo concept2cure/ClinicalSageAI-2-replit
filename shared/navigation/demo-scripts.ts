@@ -263,6 +263,126 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       },
     ],
   },
+  {
+    id: 'training-medtech',
+    kind: 'training',
+    title: 'Medtech product training',
+    audience:
+      'A device or diagnostics team learning to run their 510(k), PMA, De Novo, or EU MDR/IVDR work here.',
+    minutes: 8,
+    description:
+      'The complete device working tour: the portfolio, the task workbench, the 510(k) pathway, the ISO 14971 risk file worked hands-on, design controls and V&V, the significant-change worklist, EU MDR clinical evaluation, and the submission packages — each stop showing what the team actually does there.',
+    steps: [
+      {
+        say: 'Welcome them to their workspace and set the frame: this is a working tour of their own device programs, on their real data, and they can interrupt with a question at any moment.',
+      },
+      {
+        say: 'The device portfolio is the front door: every device program with its pathway — 510(k), PMA, De Novo, MDR — its stage and its readiness in one place.',
+        navigate: { target: 'device-workstream' },
+      },
+      {
+        say: 'The device task workbench is where the day starts: every open item across their programs with its owner, so nothing waits on a shared drive or an email thread.',
+        navigate: { target: 'device-tasks' },
+      },
+      {
+        say: 'The 510(k) pathway workspace: predicate intelligence, the substantial-equivalence matrix, and the eSTAR sections built as they go — this is where a submission takes shape, not a folder they assemble at the end.',
+        navigate: { target: 'device-510k' },
+      },
+      {
+        say: 'The ISO 14971 risk file is the discipline at the center of every device submission — hazards, severity and probability, and the controls that bring residual risk down.',
+        navigate: { target: 'risk' },
+      },
+      {
+        say: 'Work one hazard, do not slide it — open a hazard from their real file (pick one on screen) so they see its severity, probability, and controls the way they will actually use it.',
+        act: { actionId: 'risk.select-hazard' },
+      },
+      {
+        say: 'Switch to the residual matrix — the assessment after their controls. Accepting residual risk stays a signed human judgment; AnA shows the picture and never makes that call for them.',
+        act: { actionId: 'risk.set-matrix-view', params: { view: 'residual' } },
+      },
+      {
+        say: 'Design controls are the engineering backbone: requirements, verification and validation traced end to end — the spine an auditor follows and the team maintains here.',
+        navigate: { target: 'device-engineering' },
+      },
+      {
+        say: 'The validation center is where V&V evidence lands and its completeness is tracked against the plan — protocols, runs, and what is still open.',
+        navigate: { target: 'device-validation' },
+      },
+      {
+        say: 'The significant-change worklist is the call they make all the time: for each change, is it a letter-to-file or a new 510(k), and what is the EU MDR significant-change determination.',
+        navigate: { target: 'change-assessment' },
+      },
+      {
+        say: 'Open one change to show the real determination side by side (pick one on screen) — recording the decision stays a human act; AnA lays out the reasoning.',
+        act: { actionId: 'change-assessment.select-change' },
+      },
+      {
+        say: 'For Europe, the CER: clinical evaluation under EU MDR, with benefit-risk and GSPR reasoning — an uncharacterized dimension is never quietly treated as favourable.',
+        navigate: { target: 'device-cer' },
+      },
+      {
+        say: 'The submission packages are the final mile: eSTAR and eCTD pre-flight validation and the transmittal chain — the last step lives here too, not in a vendor hand-off.',
+        navigate: { target: 'device-submission' },
+      },
+      {
+        say: 'Close the loop: recap the route just driven, name the one or two screens most relevant to what this team does daily, and invite them to try the next task with you in Live Drive.',
+      },
+    ],
+  },
+  {
+    id: 'sales-medtech',
+    kind: 'sales',
+    title: 'Medtech sales demonstration',
+    audience:
+      'A device or diagnostics prospect — 510(k), PMA, De Novo, or EU MDR/IVDR — deciding whether this platform runs their regulatory operation.',
+    minutes: 6,
+    description:
+      'The device value story end to end: the program portfolio, the 510(k) pathway with predicate intelligence, design controls, the ISO 14971 risk file, EU MDR clinical evaluation, the significant-change worklist, and the submission packages — what gets faster, and what stays governed.',
+    steps: [
+      {
+        say: 'Open with the thesis for device teams: one platform where the 510(k), PMA, De Novo and EU MDR work is done, not tracked — AnA works the screens with the team, and every governed determination stays a human sign-off.',
+      },
+      {
+        say: 'Start at the device portfolio: every device program, its pathway and its readiness, in one place instead of a spreadsheet and a shared drive.',
+        navigate: { target: 'device-workstream' },
+      },
+      {
+        say: 'The 510(k) pathway: predicate intelligence, the substantial-equivalence matrix, and the eSTAR sections — the submission built as you go, not assembled at the end.',
+        navigate: { target: 'device-510k' },
+      },
+      {
+        say: 'Predicate intelligence in depth: real cleared devices, their review cycles and their risk profile. Running the search stays their click — AnA reads the board once it is there and never spends a metered search on its own.',
+        navigate: { target: 'precedent-intelligence' },
+      },
+      {
+        say: 'Design controls: the engineering backbone — requirements, verification and validation traced end to end, the spine an auditor follows.',
+        navigate: { target: 'device-engineering' },
+      },
+      {
+        say: 'The ISO 14971 risk file: the discipline at the center of every device submission — hazards, severity and probability, and the controls that bring residual risk down.',
+        navigate: { target: 'risk' },
+      },
+      {
+        say: 'Switch to the residual matrix — after the controls. Accepting residual risk is the one thing AnA never does for them: it stays a signed human judgment, and the screen shows exactly that.',
+        act: { actionId: 'risk.set-matrix-view', params: { view: 'residual' } },
+      },
+      {
+        say: 'For Europe, the CER: clinical evaluation under EU MDR, with the benefit-risk and GSPR reasoning laid out — an uncharacterized dimension is never quietly treated as favourable.',
+        navigate: { target: 'device-cer' },
+      },
+      {
+        say: 'The significant-change worklist: for each change, the FDA letter-to-file vs new-510(k) call and the EU MDR significant-change determination, side by side — recording the determination stays a human act.',
+        navigate: { target: 'change-assessment' },
+      },
+      {
+        say: 'The submission packages: eSTAR and eCTD pre-flight validation and the transmittal chain — the last mile lives here too, not in a vendor hand-off.',
+        navigate: { target: 'device-submission' },
+      },
+      {
+        say: 'Close on governance: 21 CFR Part 11 signatures, hash-chained audit, and the rule that holds across every pathway — AnA prepares while a person approves. Then invite their questions and the next step.',
+      },
+    ],
+  },
 ] as const;
 
 const SCRIPTS_BY_ID: ReadonlyMap<string, DemoScript> = new Map(

@@ -449,3 +449,33 @@ the 39 actions need no `list_screen_actions` round-trip
 now **74 actions**. Wiring proof: `anaDrivesWave6.test.tsx` — the
 ceremony refusal, the single-slot fix both ways, an unconnected section's
 honest detail, and the discovery fold.
+
+### Medtech demonstration (2026-08-31)
+
+The three original demos all walk the pharma lane (projects → authoring →
+vault → submissions). Waves 5–6 made the whole device family navigable and
+gave AnA eyes on it, but no demonstration showed it — a 510(k) or EU MDR
+prospect watching the sales demo saw pharma workflows. `sales-medtech`
+fills that: device portfolio → the 510(k) pathway → predicate
+intelligence → design controls → the ISO 14971 risk file (with a real
+`risk.set-matrix-view` to the residual matrix, the one operable beat that
+needs no live data) → EU MDR clinical evaluation → the significant-change
+worklist → the submission packages, closing on the same governance rule.
+It rides the same engine, budgets and validator as the others (the
+totality gate proves every stop resolves and fits the demo budget), and
+the Shell's Demonstrations menu picks it up from `listDemoScripts()` with
+no client change. Predicate search and residual-risk acceptance stay human
+acts, narrated as such.
+
+`training-medtech` is its operational counterpart — the device answer to
+`training-orientation`. Act-dense like the pharma training tour ("work
+one hazard, do not slide it"): it navigates the device portfolio, task
+workbench and 510(k) pathway, then operates the ISO 14971 risk file
+hands-on (`risk.select-hazard` runtime-filled from the file on screen,
+then `risk.set-matrix-view` to residual), works a real significant-change
+determination (`change-assessment.select-change`), and closes through EU
+MDR clinical evaluation and the submission packages. Hazard selection and
+change determinations are runtime-filled from the surface in front of
+AnA, exactly as the pharma tour fills `projects.open-program`. The
+platform now demonstrates both lanes symmetrically — a training
+walkthrough and a sales demonstration for pharma and for medtech.
