@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-01T07:32:52.530Z",
+  "generatedAt": "2026-09-01T07:39:43.680Z",
   "git": {
-    "sha": "657559fc7c90de59a53adea12a63b9a6be778d06",
+    "sha": "eb5b13d142dec98528324880a47ffc531d637bfa",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2181,7 +2181,7 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "bytes": 179637
+        "bytes": 179961
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2307,7 +2307,7 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "lines": 5431
+        "lines": 5433
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
