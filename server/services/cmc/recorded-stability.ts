@@ -360,3 +360,151 @@ export async function assessRecordedPoolability(
     },
   };
 }
+
+/* ── Single-study ICH Q1E estimate over a RECORDED study ────────────────────
+   Extracted from POST /api/cmc/stability-studies/:id/shelf-life so the route
+   and AnA's recorded-estimate tool run the SAME code. Two copies of a
+   shelf-life fit is two answers to a question a registered shelf life is set
+   from — the duplication this repo's working agreement forbids. */
+
+export interface RecordedShelfLifeStudy {
+  id: number | string;
+  studyTitle?: string | null;
+  productName?: string | null;
+  batchNumber?: string | null;
+  storageConditions?: unknown;
+  duration?: number | null;
+  stabilityData?: unknown;
+}
+
+export type RecordedShelfLifeOutcome =
+  | { ok: false; error: string }
+  | {
+      ok: true;
+      data: {
+        studyId: number | string;
+        studyTitle?: string | null;
+        productName?: string | null;
+        batchNumber?: string | null;
+        storageConditions?: unknown;
+        basis: string;
+        scopeLimit: string;
+        maxTimeEvaluated: number;
+        limitingParameter: string | null;
+        supportedShelfLife: number | null;
+        estimates: Array<Record<string, unknown>>;
+      };
+    };
+
+/**
+ * Fit the recorded pull points of ONE stability study per ICH Q1E.
+ *
+ * Refuses — rather than caveats — when the study cannot support a fit: no
+ * recorded results, or results spanning more than one storage condition with
+ * no per-result condition to separate them. The output is a month count
+ * someone sets a registered shelf life from, and a footnote on a
+ * plausible-looking number does not survive being copied into a summary.
+ */
+export async function estimateRecordedShelfLife(
+  study: RecordedShelfLifeStudy,
+): Promise<RecordedShelfLifeOutcome> {
+  const { estimateShelfLife } = await import('./shelf-life');
+  const series = readRecordedStabilityResults(study.stabilityData);
+  if (series.length === 0) {
+    return { ok: false, error: 'This study has no recorded pull-point results — there is nothing to fit.' };
+  }
+
+  const placedAt = (Array.isArray(study.storageConditions) ? study.storageConditions : [])
+    .map((c) => String(c ?? '').trim())
+    .filter(Boolean);
+  if (placedAt.length > 1) {
+    return {
+      ok: false,
+      error: `This study is placed at ${placedAt.length} storage conditions (${placedAt.join(', ')}) and its results are not recorded against a condition, so the points for one condition cannot be separated from the others. Register one study per condition to fit a shelf life.`,
+    };
+  }
+
+  const byParameter = groupByParameter(series);
+  const duration = Number(study.duration);
+  const maxTime = Number.isFinite(duration) && duration > 0 ? Math.max(120, duration * 2) : 120;
+
+  const estimates: Array<Record<string, unknown>> = [];
+  for (const [parameter, points] of byParameter) {
+    const usable = points
+      .map((p) => ({ time: parseNumeric(p.timePoint), value: parseNumeric(p.result) }))
+      .filter((p): p is { time: number; value: number } => p.time !== null && p.value !== null);
+    const criterion = parseAcceptanceCriterion(points.map((p) => p.specification));
+
+    if (usable.length < 3) {
+      estimates.push({
+        parameter,
+        estimable: false,
+        reason: `ICH Q1E regression needs at least 3 numeric timepoints; ${usable.length} of ${points.length} recorded ${points.length === 1 ? 'result is' : 'results are'} numeric.`,
+        pointsRecorded: points.length,
+        pointsUsable: usable.length,
+      });
+      continue;
+    }
+    if (!criterion) {
+      estimates.push({
+        parameter,
+        estimable: false,
+        reason:
+          'No numeric specification limit was recorded against these results, so there is no limit for the confidence bound to intersect. Record the acceptance criterion (e.g. "<= 2.0%" or ">= 95.0%") on the pull-point results.',
+        pointsRecorded: points.length,
+        pointsUsable: usable.length,
+      });
+      continue;
+    }
+
+    try {
+      const result = estimateShelfLife({
+        data: usable,
+        specLimit: criterion.limit,
+        direction: criterion.direction,
+        maxTime,
+      });
+      estimates.push({
+        parameter,
+        estimable: true,
+        specLimit: criterion.limit,
+        direction: criterion.direction,
+        pointsUsed: usable.length,
+        ...result,
+      });
+    } catch (e) {
+      estimates.push({
+        parameter,
+        estimable: false,
+        reason: e instanceof Error ? e.message : String(e),
+        pointsRecorded: points.length,
+        pointsUsable: usable.length,
+      });
+    }
+  }
+
+  // The programme-level answer is the most constraining attribute, which is
+  // what a shelf-life claim is actually limited by.
+  const estimable = estimates.filter((e) => e.estimable) as Array<{ parameter: string; shelfLife: number }>;
+  const limiting = estimable.length
+    ? estimable.reduce((min, e) => (e.shelfLife < min.shelfLife ? e : min))
+    : null;
+
+  return {
+    ok: true,
+    data: {
+      studyId: study.id,
+      studyTitle: study.studyTitle,
+      productName: study.productName,
+      batchNumber: study.batchNumber,
+      storageConditions: study.storageConditions,
+      basis: 'ICH Q1E — ordinary least squares, one-sided 95% mean confidence limit vs the specification limit',
+      scopeLimit:
+        'Single attribute, single factor, one batch. Batch poolability (ICH Q1E ANCOVA) is assessed separately and is not implied by this estimate.',
+      maxTimeEvaluated: maxTime,
+      limitingParameter: limiting ? limiting.parameter : null,
+      supportedShelfLife: limiting ? limiting.shelfLife : null,
+      estimates,
+    },
+  };
+}

@@ -1216,118 +1216,14 @@ router.post('/stability-studies/:id/shelf-life', async (req, res) => {
       .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)));
     if (!study) return res.status(404).json({ success: false, error: 'Stability study not found' });
 
-    const { estimateShelfLife } = await import('../../services/cmc/shelf-life');
-    const series = readRecordedStabilityResults(study.stabilityData);
-    if (series.length === 0) {
-      return res.status(409).json({
-        success: false,
-        error: 'This study has no recorded pull-point results — there is nothing to fit.',
-      });
+    /* One implementation, shared with AnA's recorded-estimate tool: the fit a
+       registered shelf life is set from must not have two versions. */
+    const { estimateRecordedShelfLife } = await import('../../services/cmc/recorded-stability');
+    const outcome = await estimateRecordedShelfLife(study);
+    if (!outcome.ok) {
+      return res.status(409).json({ success: false, error: outcome.error });
     }
-
-    /* `storage_conditions` is an ARRAY, and results carry no per-result
-       condition. A study placed at more than one condition therefore has ONE
-       undifferentiated series spanning two degradation regimes, and a straight
-       line through it describes neither. This is a refusal and not a caveat
-       because the output is a month count someone sets a registered shelf life
-       from — a footnote on a plausible-looking number does not survive being
-       copied into a summary. */
-    const placedAt = (Array.isArray(study.storageConditions) ? study.storageConditions : [])
-      .map(c => String(c ?? '').trim())
-      .filter(Boolean);
-    if (placedAt.length > 1) {
-      return res.status(409).json({
-        success: false,
-        error: `This study is placed at ${placedAt.length} storage conditions (${placedAt.join(', ')}) and its results are not recorded against a condition, so the points for one condition cannot be separated from the others. Register one study per condition to fit a shelf life.`,
-      });
-    }
-
-    // Group by the attribute being trended. Q1E fits ONE attribute at a time.
-    const byParameter = groupByParameter(series);
-
-    const maxTime = Number.isFinite(study.duration) && (study.duration as number) > 0
-      ? Math.max(120, (study.duration as number) * 2)
-      : 120;
-
-    const estimates: Array<Record<string, unknown>> = [];
-    for (const [parameter, points] of byParameter) {
-      const usable = points
-        .map(p => ({ time: parseNumeric(p.timePoint), value: parseNumeric(p.result) }))
-        .filter((p): p is { time: number; value: number } => p.time !== null && p.value !== null);
-      const criterion = parseAcceptanceCriterion(points.map(p => p.specification));
-
-      if (usable.length < 3) {
-        estimates.push({
-          parameter,
-          estimable: false,
-          reason: `ICH Q1E regression needs at least 3 numeric timepoints; ${usable.length} of ${points.length} recorded ${points.length === 1 ? 'result is' : 'results are'} numeric.`,
-          pointsRecorded: points.length,
-          pointsUsable: usable.length,
-        });
-        continue;
-      }
-      if (!criterion) {
-        estimates.push({
-          parameter,
-          estimable: false,
-          reason:
-            'No numeric specification limit was recorded against these results, so there is no limit for the confidence bound to intersect. Record the acceptance criterion (e.g. "<= 2.0%" or ">= 95.0%") on the pull-point results.',
-          pointsRecorded: points.length,
-          pointsUsable: usable.length,
-        });
-        continue;
-      }
-
-      try {
-        const result = estimateShelfLife({
-          data: usable,
-          specLimit: criterion.limit,
-          direction: criterion.direction,
-          maxTime,
-        });
-        estimates.push({
-          parameter,
-          estimable: true,
-          specLimit: criterion.limit,
-          direction: criterion.direction,
-          pointsUsed: usable.length,
-          ...result,
-        });
-      } catch (e) {
-        estimates.push({
-          parameter,
-          estimable: false,
-          reason: e instanceof Error ? e.message : String(e),
-          pointsRecorded: points.length,
-          pointsUsable: usable.length,
-        });
-      }
-    }
-
-    // The programme-level answer is the most constraining attribute, which is
-    // what a shelf-life claim is actually limited by.
-    const estimable = estimates.filter(e => e.estimable) as Array<{ parameter: string; shelfLife: number }>;
-    const limiting = estimable.length
-      ? estimable.reduce((min, e) => (e.shelfLife < min.shelfLife ? e : min))
-      : null;
-
-    return res.json({
-      success: true,
-      data: {
-        studyId: study.id,
-        studyTitle: study.studyTitle,
-        productName: study.productName,
-        batchNumber: study.batchNumber,
-        storageConditions: study.storageConditions,
-        basis: 'ICH Q1E — ordinary least squares, one-sided 95% mean confidence limit vs the specification limit',
-        scopeLimit:
-          'Single attribute, single factor, one batch. Batch poolability (ICH Q1E ANCOVA) is assessed separately and is not implied by this estimate.',
-        maxTimeEvaluated: maxTime,
-        limitingParameter: limiting ? limiting.parameter : null,
-        supportedShelfLife: limiting ? limiting.shelfLife : null,
-        estimates,
-      },
-    });
+    return res.json({ success: true, data: outcome.data });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to estimate shelf life');
   }
