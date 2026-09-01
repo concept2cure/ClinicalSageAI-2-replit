@@ -70,7 +70,11 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
   { sectionKey: '3.2.S.1', requiredSourceTypes: ['drug_substance'], requiredFields: ['name', 'manufacturer'] },
   { sectionKey: '3.2.S.2', requiredSourceTypes: ['drug_substance', 'manufacturing_process', 'process_validation'], requiredFields: ['manufacturingRoute', 'processDescription', 'processControls'] },
   { sectionKey: '3.2.S.3', requiredSourceTypes: ['drug_substance', 'characterization', 'impurity_profile'], requiredFields: ['structuralElucidation', 'physicochemicalProperties', 'biologicalActivity'] },
-  { sectionKey: '3.2.S.4', requiredSourceTypes: ['specification', 'method', 'impurity_profile', 'qc_result'], requiredFields: ['acceptanceCriteria', 'validationStatus', 'batchAnalyses'] },
+  /* `drugSubstanceBatchAnalyses`, not the generic `batchAnalyses`: the
+     renderer files a finished-product result to §3.2.P.5.4 only, so counting
+     it here turned this section green on a table it never renders. The QC
+     mapper decides the side once and emits the matching key. */
+  { sectionKey: '3.2.S.4', requiredSourceTypes: ['specification', 'method', 'impurity_profile', 'qc_result'], requiredFields: ['acceptanceCriteria', 'validationStatus', 'drugSubstanceBatchAnalyses'] },
   { sectionKey: '3.2.S.5', requiredSourceTypes: ['drug_substance', 'reference_standard'], requiredFields: ['referenceStandardDescription', 'certificateOfAnalysis'] },
   { sectionKey: '3.2.S.6', requiredSourceTypes: ['container_closure'], requiredFields: ['containerDescription', 'closureDescription', 'suitabilityJustification'] },
   { sectionKey: '3.2.S.7', requiredSourceTypes: ['stability'], requiredFields: ['timePoints', 'storageCondition'] },
@@ -79,7 +83,7 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
   { sectionKey: '3.2.P.2', requiredSourceTypes: ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile'], requiredFields: ['formulationDevelopment', 'manufacturingProcessDev', 'containerClosureStudies'] },
   { sectionKey: '3.2.P.3', requiredSourceTypes: ['drug_product', 'batch', 'change_control', 'process_validation'], requiredFields: ['formulation', 'batchNumber'] },
   { sectionKey: '3.2.P.4', requiredSourceTypes: ['excipient', 'raw_material_spec'], requiredFields: ['excipientSpecifications', 'excipientAnalyticalProcedures'] },
-  { sectionKey: '3.2.P.5', requiredSourceTypes: ['specification', 'method', 'dissolution_profile', 'impurity_profile', 'qc_result'], requiredFields: ['releaseCriteria', 'methodName', 'batchAnalyses'] },
+  { sectionKey: '3.2.P.5', requiredSourceTypes: ['specification', 'method', 'dissolution_profile', 'impurity_profile', 'qc_result'], requiredFields: ['releaseCriteria', 'methodName', 'drugProductBatchAnalyses'] },
   { sectionKey: '3.2.P.6', requiredSourceTypes: ['drug_product', 'reference_standard'], requiredFields: ['referenceStandardDescription', 'certificateOfAnalysis'] },
   { sectionKey: '3.2.P.7', requiredSourceTypes: ['container_closure'], requiredFields: ['containerDescription', 'closureDescription', 'suitabilityJustification'] },
   { sectionKey: '3.2.P.8', requiredSourceTypes: ['stability', 'comparability'], requiredFields: ['shelfLifeClaim', 'comparabilityStatus'] },
@@ -93,6 +97,16 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
   { sectionKey: '3.1', requiredSourceTypes: ['drug_substance', 'drug_product'], requiredFields: ['name', 'dosageFormDescription'] },
   { sectionKey: '3.3', requiredSourceTypes: ['drug_substance', 'drug_product', 'reference_standard'], requiredFields: ['name', 'dosageFormDescription'] },
 ];
+
+/** The QC sample types that are NOT tests of the material: a cleaning swab
+ *  belongs to GMP cleaning records, a reference-standard qualification to
+ *  §3.2.S.5/§3.2.P.6. Neither is batch-analyses evidence. Shared with the
+ *  write-through mapper so the completeness gate and the renderer apply ONE
+ *  rule. */
+export const NON_BATCH_SAMPLE_TYPES = ['cleaning-verification', 'reference-standard'];
+
+/** The sample type that makes a QC result DRUG PRODUCT evidence (§3.2.P.5.4). */
+export const FINISHED_PRODUCT = 'finished-product';
 
 // ── Helpers ─────────────────────────────��──────────────────────────────────────
 
@@ -203,8 +217,18 @@ function qcResultRows(
     .map((s) => (s.sourcePayload || {}) as Record<string, any>)
     .filter((p) => {
       const type = String(p.sampleType || '').toLowerCase();
-      const isFinished = type === 'finished-product';
-      return side === 'drug_product' ? isFinished : !isFinished;
+      /* The SAME gate the QC mapper applied. Reading only the sample-type
+         side let a cleaning-verification swab and a reference-standard
+         qualification — records the mapper had already refused as batch
+         data — render as drug-substance batch analyses while the section
+         simultaneously reported batchAnalyses missing. `batchAnalysisSide`
+         is the mapper's decision; the sample-type fallback keeps payloads
+         written before it existed rendering correctly. */
+      if (p.isBatchAnalysis === false) return false;
+      if (NON_BATCH_SAMPLE_TYPES.includes(type)) return false;
+      const decided = typeof p.batchAnalysisSide === 'string' ? p.batchAnalysisSide : null;
+      if (decided) return decided === side;
+      return side === 'drug_product' ? type === FINISHED_PRODUCT : type !== FINISHED_PRODUCT;
     });
 }
 
@@ -681,10 +705,22 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
   '3.2.P.3': (m) => {
     const formulation = val(m, 'formulation');
     const batchNum = val(m, 'batchNumber');
-    const disposition = val(m, 'disposition');
-    // The §11 release decision the batch register records under re-auth.
-    const releasedBy = val(m, 'releasedBy');
-    const releasedAt = val(m, 'releasedAt');
+    /* The §11 release decision, read from ONE batch record.
+       val() scans each key independently across sources, so with more than one
+       batch source the disposition, the releaser and the date could each come
+       from a DIFFERENT batch — a release attribution the register never made.
+       The facts travel together or not at all. Gated on what the register
+       actually writes (release_status / released_by / released_at); the old
+       `disposition` gate was a column no route ever populates, so the clause
+       could never render. */
+    const releasedBatch = m
+      .filter((s) => s.sourceType === 'batch')
+      .map((s) => (s.sourcePayload || {}) as Record<string, any>)
+      .find((p) => p.releasedBy || p.releasedAt || p.releaseStatus || p.disposition) ?? null;
+    const disposition = String(releasedBatch?.disposition || releasedBatch?.releaseStatus || val(m, 'disposition') || '');
+    const releasedBy = String(releasedBatch?.releasedBy || '');
+    const releasedAt = String(releasedBatch?.releasedAt || '');
+    const releasedBatchNumber = String(releasedBatch?.batchNumber || '');
     const batchSize = val(m, 'batchSize');
     const manufacturingSite = val(m, 'manufacturingSite');
     const processSteps = valArr(m, 'processSteps');
@@ -708,8 +744,23 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         ...(pvCriteria ? [['Validation Acceptance Criteria', pvCriteria]] : []),
       ],
     });
-    // The controlled changes behind this manufacturing section.
+    /* The controlled changes. The register records which CTD sections each
+       change's impact assessment names; the narrative reports THAT rather
+       than asserting every change is "against this process" — a claim the
+       record does not make for a change assessed against, say, §3.2.S.2. */
     const changeTable = changeHistoryTable(m);
+    const changeSectionsNoted = [
+      ...new Set(
+        m
+          .filter((s) => s.sourceType === 'change_control')
+          .flatMap((s) => {
+            const ia = (s.sourcePayload || {}).impactAssessment;
+            const listed = ia && typeof ia === 'object' ? (ia as Record<string, any>).impactedSections : null;
+            return Array.isArray(listed) ? listed.map((x: unknown) => String(x)) : [];
+          })
+          .filter(Boolean),
+      ),
+    ];
     if (changeTable) tables.push(changeTable);
     // Manufacturing process flow if steps are provided
     if (processSteps.length > 0) {
@@ -736,10 +787,18 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         `. ` +
         (manufacturingSite ? `Manufactured at: ${manufacturingSite}. ` : '') +
         (processSteps.length > 0 ? `The process comprises ${processSteps.length} unit operations. ` : '') +
-        (disposition ? `Batch disposition: ${disposition}` +
-          (releasedBy ? `, released by ${releasedBy}` : '') +
-          (releasedAt ? ` on ${String(releasedAt).slice(0, 10)}` : '') + `. ` : '') +
-        (changeTable ? `${changeTable.rows.length} controlled change(s) are recorded against this process; see the change history table. ` : '') +
+        (disposition
+          ? `Batch ${releasedBatchNumber || batchNum || '[number not recorded]'} disposition: ${disposition}` +
+            (releasedBy ? `, released by ${releasedBy}` : '') +
+            (releasedAt ? ` on ${releasedAt.slice(0, 10)}` : '') + `. `
+          : '') +
+        (changeTable
+          ? `${changeTable.rows.length} controlled change(s) are recorded in the change register` +
+            (changeSectionsNoted.length > 0
+              ? `, of which the impact assessment names ${changeSectionsNoted.join(', ')}`
+              : '') +
+            `; see the change history table. `
+          : '') +
         (pvConclusion ? `Process validation conclusion: ${pvConclusion}.` :
           validationStatus ? `Process validation status: ${validationStatus}.` : ''),
       tables,
@@ -1052,12 +1111,28 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
 
 // ── Markdown renderer for tables ───────────────────────────────���───────────────
 
+/**
+ * A cell that cannot break the table it is written into.
+ *
+ * These tables now carry FREE TEXT a staffer typed — a QC observation, a
+ * change description, a comparability outcome — and a newline or a literal
+ * `|` in it split one row into two or invented a column, corrupting the
+ * governed artifact's content. The text is preserved, not dropped: newlines
+ * become spaces and pipes are escaped.
+ */
+function mdCell(value: unknown): string {
+  return String(value ?? '')
+    .replace(/\r\n?|\n/g, ' ')
+    .replace(/\|/g, '\\|')
+    .trim();
+}
+
 export function tablesToMarkdown(tables: GeneratedTable[]): string {
   return tables.map((t) => {
-    const hdr = `| ${t.headers.join(' | ')} |`;
+    const hdr = `| ${t.headers.map(mdCell).join(' | ')} |`;
     const sep = `| ${t.headers.map(() => '---').join(' | ')} |`;
-    const rows = t.rows.map((r) => `| ${r.join(' | ')} |`).join('\n');
-    return `### ${t.title}\n\n${hdr}\n${sep}\n${rows}`;
+    const rows = t.rows.map((r) => `| ${r.map(mdCell).join(' | ')} |`).join('\n');
+    return `### ${mdCell(t.title)}\n\n${hdr}\n${sep}\n${rows}`;
   }).join('\n\n');
 }
 

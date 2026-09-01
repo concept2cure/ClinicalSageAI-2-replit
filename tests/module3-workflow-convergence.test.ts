@@ -213,7 +213,9 @@ describe('Module 3 Composer — Missing Inputs', () => {
     // `batchAnalyses` joined this list when the QC register gained a
     // write-through: §3.2.S.4.4 is Batch Analyses, and a §3.2.S.4 with no
     // quantitative batch results is missing an input, not complete.
-    expect(s4.missingInputs).toEqual(['acceptanceCriteria', 'validationStatus', 'batchAnalyses']);
+    // Side-scoped: §3.2.S.4 requires DRUG SUBSTANCE batch analyses, so a
+    // finished-product result can no longer complete it from the other side.
+    expect(s4.missingInputs).toEqual(['acceptanceCriteria', 'validationStatus', 'drugSubstanceBatchAnalyses']);
   });
 });
 
