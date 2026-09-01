@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-01T08:13:55.588Z",
+  "generatedAt": "2026-09-01T15:58:50.866Z",
   "git": {
-    "sha": "dd689bf02dc7bb9c7daf0e7f9a4d363217693cac",
+    "sha": "db74506172e1d5ed3d63563993c5187e837a6260",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -18,7 +18,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 34,
-    "largeFilesByLines": 82
+    "largeFilesByLines": 83
   },
   "findings": {
     "duplicateBasenames": [
@@ -2149,7 +2149,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 843151
+        "bytes": 849415
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2185,7 +2185,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 165761
+        "bytes": 166265
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2283,7 +2283,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19983
+        "lines": 20098
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
@@ -2355,7 +2355,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2922
+        "lines": 2932
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2608,6 +2608,10 @@
       {
         "file": "server/services/contradiction-engine-service.ts",
         "lines": 1601
+      },
+      {
+        "file": "server/services/module3Composer.ts",
+        "lines": 1530
       }
     ]
   },
@@ -2617,7 +2621,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 398,
       "largeByBytes": 25,
-      "largeByLines": 68
+      "largeByLines": 69
     },
     {
       "owner": "Unassigned (TBD)",
