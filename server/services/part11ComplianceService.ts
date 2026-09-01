@@ -14,6 +14,7 @@
  */
 
 import { db } from '../db';
+import { writeChainedAuditRow } from './auditService.js';
 import { deviceAuditTrail, electronicSignatures, users, organizations } from '../../shared/schema';
 import { documentVersions, documents, submissions } from '../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
@@ -75,6 +76,7 @@ class Part11ComplianceService {
     password,
     boundPayloadDigest: preboundPayloadDigest,
     signerRole,
+    transactionalAuditEvent,
   }: {
     userId: number;
     organizationId: number;
@@ -83,6 +85,14 @@ class Part11ComplianceService {
     signatureReason: string;
     signatureMeaning: string;
     password: string;
+    /**
+     * An audit event the CALLER needs committed with the signature, not after
+     * it. Written on this transaction via `writeChainedAuditRow`, so it lands
+     * or the signature does not exist (ledger L138). Distinct from the
+     * best-effort secondary log below, which is a convenience record whose
+     * durable counterpart is the in-transaction device_audit_trail row.
+     */
+    transactionalAuditEvent?: Parameters<typeof writeChainedAuditRow>[1];
     /**
      * Optional pre-computed §11.70 payload-binding digest (e.g. the submission
      * orchestrator's release digest). When provided it is persisted on the row
@@ -259,6 +269,16 @@ class Part11ComplianceService {
         userAgent: null,
         sessionId: null,
       });
+
+      // The caller's own §11.10(e) event, on THIS transaction. The release
+      // route used to write `release_signature_created` after the signature had
+      // already committed, on its own connection: an audit outage there left a
+      // committed signature with no route-level event, and logAction resolves
+      // normally on a failed write so nothing could even reject. Now the two
+      // land together or neither does.
+      if (transactionalAuditEvent) {
+        await writeChainedAuditRow(drizzleSignatureClient(tx), transactionalAuditEvent);
+      }
       return sig;
       });
 
