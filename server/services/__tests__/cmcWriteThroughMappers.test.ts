@@ -20,9 +20,11 @@ import {
   mapAnalyticalMethodPayload,
   mapBatchRecordPayload,
   mapChangeControlPayload,
+  mapComparabilityPayload,
   mapDrugProductPayload,
   mapDrugSubstancePayload,
   mapProcessValidationPayload,
+  mapQcTestingPayload,
   mapSpecificationPayload,
 } from '../cmc-write-through';
 import { MODULE3_SECTION_RULES, composeModule3FromCanonicalSources } from '../module3Composer';
@@ -443,5 +445,152 @@ describe('register row → payload → composed section: the whole chain, no "[o
       .find((s) => s.sectionKey === '3.2.S.2')!;
     const occurrences = s2.narrativeDraft.split('Four-step convergent synthesis').length - 1;
     expect(occurrences).toBe(1);
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Item 2 of the coverage evaluation: data the product CAPTURED and then never
+   showed. QC results gated §3.2.S.4/§3.2.P.5 completeness while the batch-
+   analyses tables those sections exist for were absent; the change history and
+   the comparability rationale lived only as register rows.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const qcRow = (over: Record<string, unknown> = {}) =>
+  mapQcTestingPayload({
+    sampleId: 'S-2407-118',
+    sampleType: 'finished-product',
+    testMethod: 'AM-011 RP-HPLC assay',
+    testResults: { value: '99.2', unit: '%', observation: '' },
+    specifications: { acceptanceCriteria: '95.0–105.0%' },
+    passFailStatus: 'pass',
+    certificateOfAnalysis: 'CoA-2407-118',
+    reviewedBy: 7,
+    releaseDate: '2026-04-02T00:00:00Z',
+    ...over,
+  });
+
+describe('§3.2.P.5.4 / §3.2.S.4.4 — the recorded QC results are RENDERED, not just counted', () => {
+  it('a finished-product result appears in the drug product batch-analyses table with its real values', () => {
+    const p5 = composeModule3FromCanonicalSources([src('qc_result', qcRow())])
+      .find((s) => s.sectionKey === '3.2.P.5')!;
+    const table = p5.tables.find((t) => t.title.includes('Batch Analyses — Drug Product'));
+    expect(table).toBeTruthy();
+    expect(table!.rows[0]).toEqual([
+      'S-2407-118', 'finished-product', 'AM-011 RP-HPLC assay', '95.0–105.0%', '99.2 %', 'pass', 'reviewed',
+    ]);
+    expect(p5.narrativeDraft).toMatch(/1 recorded QC result\(s\).*1 conforming, 0 out of specification/);
+  });
+
+  it('an out-of-specification result is reported as recorded — never smoothed into a pass', () => {
+    const oos = qcRow({
+      passFailStatus: 'fail',
+      testResults: { value: '92.1', unit: '%', observation: 'Below lower limit; investigation raised.' },
+      reviewedBy: null,
+    });
+    const p5 = composeModule3FromCanonicalSources([src('qc_result', oos)])
+      .find((s) => s.sectionKey === '3.2.P.5')!;
+    const table = p5.tables.find((t) => t.title.includes('Batch Analyses — Drug Product'))!;
+    expect(table.rows[0][4]).toBe('92.1 % — Below lower limit; investigation raised.');
+    expect(table.rows[0][5]).toBe('fail');
+    // The §11 second-person review state is visible: unreviewed is not releasable evidence.
+    expect(table.rows[0][6]).toBe('not reviewed');
+    expect(p5.narrativeDraft).toMatch(/1 out of specification/);
+    expect(p5.narrativeDraft).toMatch(/investigation and disposition are not asserted/);
+    expect(p5.narrativeDraft).toMatch(/1 result\(s\) have not completed second-person review/);
+  });
+
+  it('a finished-product result never files itself as DRUG SUBSTANCE batch analyses, and vice versa', () => {
+    const sections = composeModule3FromCanonicalSources([
+      src('qc_result', qcRow()),
+      src('qc_result', qcRow({ sampleId: 'S-RAW-01', sampleType: 'raw-material' })),
+    ]);
+    const s4 = sections.find((s) => s.sectionKey === '3.2.S.4')!;
+    const p5 = sections.find((s) => s.sectionKey === '3.2.P.5')!;
+    const s4Table = s4.tables.find((t) => t.title.includes('Batch Analyses — Drug Substance'))!;
+    const p5Table = p5.tables.find((t) => t.title.includes('Batch Analyses — Drug Product'))!;
+    expect(s4Table.rows.map((r) => r[0])).toEqual(['S-RAW-01']);
+    expect(p5Table.rows.map((r) => r[0])).toEqual(['S-2407-118']);
+  });
+
+  it('a cleaning-verification swab is not a batch analysis — it can never satisfy the requirement', () => {
+    const swab = qcRow({ sampleId: 'CV-09', sampleType: 'cleaning-verification' });
+    expect(swab.batchAnalyses).toBeNull();
+    const p5 = composeModule3FromCanonicalSources([src('qc_result', swab)])
+      .find((s) => s.sectionKey === '3.2.P.5')!;
+    expect(p5.missingInputs).toContain('batchAnalyses');
+  });
+
+  it('no QC results means no table and no sentence — never an empty table implying testing happened', () => {
+    const p5 = composeModule3FromCanonicalSources([src('specification', mapSpecificationPayload({
+      material_type: 'drug_product', material_name: 'BX-204 injection',
+      acceptance_criteria: { release: '95.0–105.0%', shelf: '' }, approval_status: 'approved',
+    }))]).find((s) => s.sectionKey === '3.2.P.5')!;
+    expect(p5.tables.find((t) => t.title.includes('Batch Analyses'))).toBeUndefined();
+    expect(p5.narrativeDraft).not.toMatch(/recorded QC result/);
+  });
+});
+
+describe('§3.2.P.3 — the change history and the governed release decision reach the document', () => {
+  const change = mapChangeControlPayload({
+    changeNumber: 'CC-2026-041', changeType: 'process',
+    description: 'Increase fill volume from 5.2 to 5.4 mL.',
+    justification: 'Extractable volume; no quality impact.',
+    riskAssessment: { level: 'medium' }, regulatoryFiling: 'CBE-30',
+    status: 'approved', implementationDate: '2026-09-01T00:00:00Z',
+  });
+  const batch = mapBatchRecordPayload({
+    batch_number: 'L2026-014', product_name: 'BX-204 injection', site: 'Basel',
+    status: 'released', disposition: 'released', release_status: 'released',
+    released_by: 'qp.olsen@example.test', released_at: '2026-04-01T09:00:00Z',
+  });
+
+  it('the ICH Q12 change history renders with its filing category — never inferred, only as recorded', () => {
+    const p3 = composeModule3FromCanonicalSources([src('change_control', change), src('batch', batch)])
+      .find((s) => s.sectionKey === '3.2.P.3')!;
+    const table = p3.tables.find((t) => t.title.includes('Change History'))!;
+    expect(table.rows[0]).toEqual([
+      'CC-2026-041', 'process', 'Increase fill volume from 5.2 to 5.4 mL.', 'medium', 'CBE-30', 'approved', '2026-09-01',
+    ]);
+    expect(p3.narrativeDraft).toMatch(/1 controlled change\(s\) are recorded against this process/);
+  });
+
+  it('an unclassified change says so rather than guessing a filing category', () => {
+    const unclassified = mapChangeControlPayload({
+      changeNumber: 'CC-2026-042', changeType: 'analytical',
+      description: 'Column supplier change.', justification: 'Equivalent chemistry.',
+      riskAssessment: { level: 'low' }, status: 'draft',
+    });
+    const p3 = composeModule3FromCanonicalSources([src('change_control', unclassified)])
+      .find((s) => s.sectionKey === '3.2.P.3')!;
+    const table = p3.tables.find((t) => t.title.includes('Change History'))!;
+    expect(table.rows[0][4]).toBe('not classified');
+  });
+
+  it('the QP release decision — who released it and when — is stated', () => {
+    const p3 = composeModule3FromCanonicalSources([src('batch', batch)])
+      .find((s) => s.sectionKey === '3.2.P.3')!;
+    expect(p3.narrativeDraft).toMatch(/Batch disposition: released, released by qp\.olsen@example\.test on 2026-04-01/);
+  });
+});
+
+describe('§3.2.P.8 — the comparability rationale, not just its one-word status', () => {
+  it('the assessment, what changed, its outcome and reviewer all render', () => {
+    const comp = mapComparabilityPayload({
+      title: 'Post-scale-up comparability', product: 'BX-204 DS',
+      type: 'process', status: 'comparable',
+      methods: ['SE-HPLC', 'icIEF'],
+      outcome: 'Post-change lots within pre-change ranges for all CQAs.',
+      owner: 'a.reviewer@example.test',
+    });
+    const p8 = composeModule3FromCanonicalSources([src('comparability', comp)])
+      .find((s) => s.sectionKey === '3.2.P.8')!;
+    const table = p8.tables.find((t) => t.title.includes('Comparability Assessments'))!;
+    expect(table.rows[0][0]).toBe('Post-scale-up comparability');
+    expect(table.rows[0][1]).toBe('BX-204 DS');
+    expect(table.rows[0][4]).toMatch(/within pre-change ranges/);
+    expect(table.rows[0][5]).toBe('a.reviewer@example.test');
+    expect(p8.narrativeDraft).toMatch(/1 comparability assessment\(s\) are summarized above/);
+    // Without a stability source, no shelf life is claimed.
+    expect(p8.narrativeDraft).toMatch(/No drug product stability study is present/);
   });
 });

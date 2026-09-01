@@ -179,6 +179,160 @@ function readStabilitySignal(stabilitySources: CanonicalSource[]): StabilityOutc
   return 'defer';
 }
 
+/**
+ * The recorded QC results, as the batch-analyses table §3.2.S.4.4 / §3.2.P.5.4
+ * exist to carry.
+ *
+ * qc_result sources gated these sections' completeness (`batchAnalyses`) and
+ * were then NEVER rendered: the dashboard turned green on results the composed
+ * document did not contain — the whole point of QC capture, absent from the
+ * filing.
+ *
+ * Scoped by the sample type the register records, because it is the only thing
+ * the record says about which material a result belongs to: a
+ * 'finished-product' result is drug PRODUCT evidence and appears only in
+ * §3.2.P.5.4; everything else appears in §3.2.S.4.4 carrying its own sample
+ * type, so no row is ever presented as something it is not.
+ */
+function qcResultRows(
+  sources: CanonicalSource[],
+  side: 'drug_substance' | 'drug_product',
+): Array<Record<string, any>> {
+  return sources
+    .filter((s) => s.sourceType === 'qc_result')
+    .map((s) => (s.sourcePayload || {}) as Record<string, any>)
+    .filter((p) => {
+      const type = String(p.sampleType || '').toLowerCase();
+      const isFinished = type === 'finished-product';
+      return side === 'drug_product' ? isFinished : !isFinished;
+    });
+}
+
+/** One batch-analyses table from recorded QC results, or null when there are none. */
+function batchAnalysesTable(
+  sources: CanonicalSource[],
+  side: 'drug_substance' | 'drug_product',
+): GeneratedTable | null {
+  const rows = qcResultRows(sources, side);
+  if (rows.length === 0) return null;
+  const resultText = (p: Record<string, any>): string => {
+    const r = p.testResults;
+    if (r == null) return '—';
+    if (typeof r === 'string') return r;
+    if (typeof r === 'object') {
+      const value = [r.value, r.unit].filter((x) => x !== undefined && x !== null && x !== '').join(' ');
+      // The observation carries what the number cannot (appearance, an OOS
+      // trigger, a repeat) and is part of the result, not decoration.
+      return [value, r.observation].filter(Boolean).join(' — ') || '—';
+    }
+    return String(r);
+  };
+  const criteriaText = (p: Record<string, any>): string => {
+    const spec = p.specifications;
+    if (spec == null) return '—';
+    if (typeof spec === 'string') return spec;
+    if (typeof spec === 'object' && typeof spec.acceptanceCriteria === 'string') {
+      return spec.acceptanceCriteria || '—';
+    }
+    return '—';
+  };
+  return {
+    title:
+      side === 'drug_product'
+        ? 'Batch Analyses — Drug Product (§3.2.P.5.4)'
+        : 'Batch Analyses — Drug Substance (§3.2.S.4.4)',
+    headers: ['Sample', 'Sample Type', 'Test Method', 'Acceptance Criteria', 'Result', 'Disposition', 'Reviewed'],
+    rows: rows.map((p) => [
+      String(p.sampleId || '—'),
+      String(p.sampleType || '—'),
+      String(p.testMethod || '—'),
+      criteriaText(p),
+      resultText(p),
+      String(p.passFailStatus || 'pending'),
+      // §11 two-person review: an unreviewed result is not releasable
+      // evidence, and a reader must be able to tell which it is looking at.
+      p.reviewed ? 'reviewed' : 'not reviewed',
+    ]),
+  };
+}
+
+/** A sentence about the recorded results, or '' when none were recorded. */
+function batchAnalysesSentence(
+  sources: CanonicalSource[],
+  side: 'drug_substance' | 'drug_product',
+): string {
+  const rows = qcResultRows(sources, side);
+  if (rows.length === 0) return '';
+  const passed = rows.filter((p) => String(p.passFailStatus || '').toLowerCase() === 'pass').length;
+  const failed = rows.filter((p) => String(p.passFailStatus || '').toLowerCase() === 'fail').length;
+  const pending = rows.length - passed - failed;
+  const unreviewed = rows.filter((p) => !p.reviewed).length;
+  return (
+    `${rows.length} recorded QC result(s) are reported in the batch analyses table: ` +
+    `${passed} conforming, ${failed} out of specification, ${pending} pending. ` +
+    (failed > 0
+      ? `Out-of-specification results are reported as recorded; their investigation and disposition are not asserted by this section. `
+      : '') +
+    (unreviewed > 0 ? `${unreviewed} result(s) have not completed second-person review. ` : '')
+  );
+}
+
+/**
+ * The controlled CMC changes behind a manufacturing section (§3.2.P.3 / ICH
+ * Q12). The change register captured the change number, its assessed risk and
+ * its filing category, the write-through carried them — and no section ever
+ * rendered them, so the change history a reviewer asks for first existed only
+ * as register rows.
+ */
+function changeHistoryTable(sources: CanonicalSource[]): GeneratedTable | null {
+  const changes = sources
+    .filter((s) => s.sourceType === 'change_control')
+    .map((s) => (s.sourcePayload || {}) as Record<string, any>)
+    .filter((p) => p.changeNumber || p.changeTitle || p.changeDescription);
+  if (changes.length === 0) return null;
+  return {
+    title: 'Change History (ICH Q12)',
+    headers: ['Change', 'Type', 'Description', 'Assessed Risk', 'Filing Category', 'Status', 'Implemented'],
+    rows: changes.map((c) => [
+      String(c.changeNumber || c.changeTitle || '—'),
+      String(c.changeType || '—'),
+      String(c.changeDescription || '—'),
+      String(c.riskLevel || '—'),
+      // The filing category is a REGULATORY classification the register
+      // records; it is never inferred here from the change type.
+      String(c.regulatoryFiling || 'not classified'),
+      String(c.status || '—'),
+      c.implementationDate ? String(c.implementationDate).slice(0, 10) : '—',
+    ]),
+  };
+}
+
+/**
+ * The comparability assessments behind a post-change section (ICH Q5E). The
+ * register captured what changed, the outcome and who reviewed it; only the
+ * one-word status ever reached the document, so the rationale a reviewer
+ * weighs was invisible.
+ */
+function comparabilityTable(sources: CanonicalSource[]): GeneratedTable | null {
+  const rows = sources
+    .filter((s) => s.sourceType === 'comparability')
+    .map((s) => (s.sourcePayload || {}) as Record<string, any>)
+    .filter((p) => p.assessmentName || p.changedElement || p.justification);
+  if (rows.length === 0) return null;
+  return {
+    title: 'Comparability Assessments (ICH Q5E)',
+    headers: ['Assessment', 'Changed Element', 'Change Type', 'Status', 'Outcome / Justification', 'Reviewed By'],
+    rows: rows.map((c) => [
+      String(c.assessmentName || '—'),
+      String(c.changedElement || '—'),
+      String(c.changeType || '—'),
+      String(c.comparabilityStatus || c.status || '—'),
+      String(c.justification || '—'),
+      String(c.reviewedBy || '—'),
+    ]),
+  };
+}
+
 function kvTable(title: string, data: Record<string, any>): GeneratedTable {
   return {
     title,
@@ -323,6 +477,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         ]),
       });
     }
+    // §3.2.S.4.4 — the recorded results themselves, not just their count.
+    const batchTable = batchAnalysesTable(m, 'drug_substance');
+    if (batchTable) tables.push(batchTable);
     // Impurity limits from structured object or impurity_profile source array
     if (impurityLimits) {
       tables.push({
@@ -353,6 +510,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
             : `Analytical methods are ${statusSummary}. `
           : '') +
         (criteria ? `${Object.keys(criteria).length} test(s) are defined in the specification. ` : '') +
+        batchAnalysesSentence(m, 'drug_substance') +
         (impurityLimits ? `Impurity limits are established for ${Object.keys(impurityLimits).length} identified impurity/ies per ICH Q3A. ` :
           impurities.length > 0 ? `${impurities.length} specified impurity/ies characterized. ` : '') +
         (qualBasis ? `Qualification basis per ICH Q3A: ${qualBasis}. ` : ''),
@@ -524,6 +682,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const formulation = val(m, 'formulation');
     const batchNum = val(m, 'batchNumber');
     const disposition = val(m, 'disposition');
+    // The §11 release decision the batch register records under re-auth.
+    const releasedBy = val(m, 'releasedBy');
+    const releasedAt = val(m, 'releasedAt');
     const batchSize = val(m, 'batchSize');
     const manufacturingSite = val(m, 'manufacturingSite');
     const processSteps = valArr(m, 'processSteps');
@@ -547,6 +708,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         ...(pvCriteria ? [['Validation Acceptance Criteria', pvCriteria]] : []),
       ],
     });
+    // The controlled changes behind this manufacturing section.
+    const changeTable = changeHistoryTable(m);
+    if (changeTable) tables.push(changeTable);
     // Manufacturing process flow if steps are provided
     if (processSteps.length > 0) {
       tables.push({
@@ -572,7 +736,10 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         `. ` +
         (manufacturingSite ? `Manufactured at: ${manufacturingSite}. ` : '') +
         (processSteps.length > 0 ? `The process comprises ${processSteps.length} unit operations. ` : '') +
-        (disposition ? `Batch disposition: ${disposition}. ` : '') +
+        (disposition ? `Batch disposition: ${disposition}` +
+          (releasedBy ? `, released by ${releasedBy}` : '') +
+          (releasedAt ? ` on ${String(releasedAt).slice(0, 10)}` : '') + `. ` : '') +
+        (changeTable ? `${changeTable.rows.length} controlled change(s) are recorded against this process; see the change history table. ` : '') +
         (pvConclusion ? `Process validation conclusion: ${pvConclusion}.` :
           validationStatus ? `Process validation status: ${validationStatus}.` : ''),
       tables,
@@ -680,6 +847,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         ]),
       });
     }
+    // §3.2.P.5.4 — the recorded finished-product results themselves.
+    const dpBatchTable = batchAnalysesTable(m, 'drug_product');
+    if (dpBatchTable) tables.push(dpBatchTable);
     // Dissolution specification (from dissolutionSpecification object or dissolution_profile source)
     if (dissolutionSpec) {
       tables.push({
@@ -735,6 +905,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         (releaseTests.length > 0 ? `${releaseTests.length} quality attribute(s) are defined for release testing. ` : '') +
         (criteria ? `Release criteria: ${criteria}. ` : '') +
         (shelfCriteria ? `Shelf-life criteria: ${shelfCriteria}. ` : '') +
+        batchAnalysesSentence(m, 'drug_product') +
         (dissolutionSpec || dissCondition ? `Dissolution specifications are established per ICH Q6A. ` : '') +
         (impurities.length > 0 ? `${impurities.length} specified impurity/ies characterized` + (qualBasis ? ` (${qualBasis})` : '') + `. ` : '') +
         (status ? `Validation status: ${status}.` : ''),
@@ -787,6 +958,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         ...(timePoints.length > 0 ? [['Time Points (months)', timePoints.join(', ')]] : []),
       ],
     });
+    const compTable = comparabilityTable(m);
+    if (compTable) tables.push(compTable);
     let narrative = '';
     if (hasStability) {
       narrative += `Stability studies for the drug product were conducted under ${condition || '[condition not specified]'}` +
@@ -807,6 +980,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
       narrative += comp
         ? `Comparability assessment status: ${comp}. `
         : `A comparability assessment is included; its status is not specified. `;
+      if (compTable) {
+        narrative += `${compTable.rows.length} comparability assessment(s) are summarized above with the recorded outcome for each. `;
+      }
     }
     return {
       narrative: narrative.trim(),

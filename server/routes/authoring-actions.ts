@@ -270,6 +270,12 @@ router.get('/promotion-blockers/:projectId', async (req: Request, res: Response)
     if (orgId == null) return;
 
     const blockers: Array<{ type: string; severity: string; message: string; source: string }> = [];
+    /* Which blocker sources actually produced an answer. Both sources below sit
+       in their own try, so a failure in one used to be indistinguishable from
+       that source finding nothing — and an empty blocker list reads as a clean
+       project. */
+    const checksRun: string[] = [];
+    const checksNotRun: string[] = [];
 
     // Check contradiction engine
     try {
@@ -297,43 +303,90 @@ router.get('/promotion-blockers/:projectId', async (req: Request, res: Response)
             }
           }
         }
+        checksRun.push('contradiction-engine');
+      } else {
+        checksNotRun.push('contradiction-engine');
       }
-    } catch {
-      // Contradiction engine unavailable — non-blocking
+    } catch (contradictionErr: any) {
+      checksNotRun.push('contradiction-engine');
+      console.warn(
+        '[authoring-actions] promotion-blockers: contradiction scan did not run:',
+        contradictionErr?.message,
+      );
     }
 
-    // Check readiness engine
+    /* Check readiness engine.
+       The payload used to be built by hand — `{ project: { id }, organizationId }`
+       cast through `as any` — and it carried none of the five fields the engine
+       reads. computeReadinessAssessment evaluates `completeness` first, whose
+       first statement is `payload.moduleMap.filter(...)`, so it threw a
+       TypeError on EVERY call. The bare catch below swallowed it and the
+       readiness blockers were simply never collected.
+
+       assembleCrossObjectPayload is the canonical builder for this payload —
+       continuity-service, lumen-context-builder and workflow-orchestrator all
+       use it — so this uses it too rather than hand-rolling a sixth shape. */
     try {
+      const { assembleCrossObjectPayload } = await import(
+        '../services/orchestration/cross-object-resolver.js'
+      );
       const { computeReadinessAssessment } = await import(
         '../services/orchestration/readiness-engine.js'
       );
-      if (computeReadinessAssessment) {
-        const assessment = await computeReadinessAssessment({
-          project: { id: Number(projectId) } as any,
-          organizationId: String(orgId),
-        } as any);
-        if (assessment?.blockers?.length) {
-          for (const b of assessment.blockers as any[]) {
-            blockers.push({
-              type: b.type || 'readiness',
-              severity: b.severity || 'major',
-              message: b.description || b.message || 'Readiness blocker',
-              source: 'readiness-engine',
-            });
-          }
+      const payload = await assembleCrossObjectPayload({
+        organizationId: Number(orgId),
+        projectId: Number(projectId),
+      });
+      const assessment = computeReadinessAssessment(payload);
+      if (assessment?.blockers?.length) {
+        for (const b of assessment.blockers as any[]) {
+          blockers.push({
+            type: b.type || b.category || 'readiness',
+            severity: b.severity || 'major',
+            message: b.description || b.message || 'Readiness blocker',
+            source: 'readiness-engine',
+          });
         }
       }
-    } catch {
-      // Readiness engine unavailable — non-blocking
+      checksRun.push('readiness-engine');
+    } catch (readinessErr: any) {
+      /* Recorded, not swallowed. See the note on the response below. */
+      checksNotRun.push('readiness-engine');
+      console.warn(
+        '[authoring-actions] promotion-blockers: readiness check did not run:',
+        readinessErr?.message,
+      );
     }
 
+    /* WHY `blocked` CAN BE NULL.
+       This answered `blocked: blockers.some(b => b.severity === 'critical')`
+       unconditionally. Both blocker sources above sat in bare catches, so when a
+       source failed to run its blockers were never collected — and an empty
+       list reads exactly like a clean one. With the readiness payload malformed
+       on every call, this endpoint reported `blocked: false, blockerCount: 0`
+       for a promotion gate that had evaluated nothing.
+
+       A gate that ran zero checks has not cleared anything. When every source
+       ran, `blocked` is the real verdict. When any source did not, it is null —
+       "cannot say" — and the sources that failed are named, so a caller can see
+       what the answer is missing rather than acting on a false all-clear. */
+    const checksIncomplete = checksNotRun.length > 0;
     return res.json({
       projectId,
       artifactId: artifactId || null,
       sectionCode: sectionCode || null,
-      blocked: blockers.some(b => b.severity === 'critical'),
+      blocked: checksIncomplete ? null : blockers.some(b => b.severity === 'critical'),
       blockerCount: blockers.length,
       blockers,
+      checksRun,
+      checksNotRun,
+      ...(checksIncomplete
+        ? {
+            message:
+              `${checksNotRun.length} blocker source(s) could not be evaluated ` +
+              `(${checksNotRun.join(', ')}), so whether this project is blocked is unknown.`,
+          }
+        : {}),
     });
   } catch (err: any) {
     console.error('[authoring-actions] promotion-blockers error:', err?.message);
@@ -1958,31 +2011,43 @@ router.post('/body-aware-gaps', async (req: Request, res: Response) => {
     }
 
     try {
-      const bodyAwareModule: any = await import('../services/body-aware-authoring.js');
-      const service = bodyAwareModule.bodyAwareAuthoringService
-        || bodyAwareModule.BodyAwareAuthoringService
-        || bodyAwareModule.default;
+      /* This looked for the capability under three names it was never published
+         under — `bodyAwareAuthoringService`, `BodyAwareAuthoringService` and
+         `default` — while server/services/body-aware-authoring.ts exports plain
+         NAMED functions. `service` was therefore always undefined, the guard
+         below never opened, and every call fell through to the
+         'service_unavailable' response at the end of the handler.
 
-      if (service) {
-        const svc = typeof service === 'function' ? new service() : service;
-        if (svc.detectBodySpecificGaps) {
-          const gaps = await svc.detectBodySpecificGaps(
-            regulatorBody,
-            submissionType,
-            sectionCode,
-            currentContent || ''
-          );
+         The capability was never missing. detectBodySpecificGaps is exported and
+         implemented, and its signature is exactly the four arguments this
+         handler already had ready to pass. So the endpoint has spent its whole
+         life reporting that body-aware gap detection is unavailable while the
+         function sat in the module it had just imported.
 
-          return res.json({
-            status: 'data',
-            action: 'body_aware_gaps',
-            regulatorBody,
-            submissionType,
-            sectionCode,
-            gaps: Array.isArray(gaps) ? gaps : gaps?.gaps || [],
-            gapCount: Array.isArray(gaps) ? gaps.length : gaps?.gaps?.length || 0,
-          });
-        }
+         Worth noting how it stayed hidden: the fallback is HONEST — it says the
+         analysis could not be run rather than returning an empty gap list — so
+         nothing ever looked wrong enough to investigate. An honest degraded
+         message is right, and it is also why a permanently-degraded path can go
+         unnoticed for a long time. */
+      const { detectBodySpecificGaps } = await import('../services/body-aware-authoring.js');
+
+      if (typeof detectBodySpecificGaps === 'function') {
+        const gaps = await detectBodySpecificGaps(
+          regulatorBody,
+          submissionType,
+          sectionCode,
+          currentContent || ''
+        );
+
+        return res.json({
+          status: 'data',
+          action: 'body_aware_gaps',
+          regulatorBody,
+          submissionType,
+          sectionCode,
+          gaps: Array.isArray(gaps) ? gaps : gaps?.gaps || [],
+          gapCount: Array.isArray(gaps) ? gaps.length : gaps?.gaps?.length || 0,
+        });
       }
     } catch {
       // Body-aware authoring service unavailable
