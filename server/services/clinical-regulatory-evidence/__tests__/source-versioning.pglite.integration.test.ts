@@ -47,6 +47,7 @@ vi.mock('../../../db', () => ({
 
 import * as spine from '../evidence-spine.service';
 import * as usage from '../source-usage.service';
+import { searchFindings } from '../index';
 
 const ORG = 711;
 const PROGRAM = '55555555-5555-4555-8555-555555555555';
@@ -198,5 +199,86 @@ describe('findSupersededCandidate — declines to guess', () => {
     });
     expect(found?.id).not.toBe(v1.id);
     expect(found?.checksum).toBe('sha-old-2');
+  }, 60_000);
+});
+
+describe('the version column carries what was observed, and nothing else (L21)', () => {
+  it('round-trips a declared version into cre_evidence_sources.version', async () => {
+    // Until this row landed, `version` had no writer at all: the column existed
+    // and every value in it was NULL. Proving the pass-through works is the
+    // difference between "the ingest computes a version" and "the version
+    // reaches the database".
+    const src = await spine.createSource(ORG, doc('sha-ver-1', {
+      title: 'versioned.pdf', version: '3.2',
+    }));
+    const { rows } = await query(`SELECT version FROM cre_evidence_sources WHERE id = $1`, [src.id]);
+    expect((rows[0] as { version: string | null }).version).toBe('3.2');
+    expect((await spine.getSource(ORG, src.id))?.version).toBe('3.2');
+  }, 60_000);
+
+  it('leaves the column NULL when the caller records no version', async () => {
+    // No default, at any layer. A source whose version is unknown must read as
+    // unknown from the database, not as 1.
+    const src = await spine.createSource(ORG, doc('sha-ver-2', { title: 'unversioned.pdf' }));
+    const { rows } = await query(`SELECT version FROM cre_evidence_sources WHERE id = $1`, [src.id]);
+    expect((rows[0] as { version: string | null }).version).toBeNull();
+  }, 60_000);
+
+  it('carries the version across a supersession without renumbering it', async () => {
+    // The tempting fix for L21 is `version = position in the chain`. It is
+    // wrong: the successor here declares 4.0, not 2, and the chain must not
+    // overwrite what the document says about itself.
+    const v1 = await spine.createSource(ORG, doc('sha-chain-a', {
+      title: 'chain-version.pdf', version: '3.2',
+    }));
+    const { source: v2 } = await spine.createSupersedingSource(
+      ORG, doc('sha-chain-b', { title: 'chain-version.pdf', version: '4.0' }), v1.id,
+    );
+    expect(v2.version).toBe('4.0');
+    expect((await spine.getSource(ORG, v1.id))?.version).toBe('3.2');
+  }, 60_000);
+});
+
+describe('SourceRef.version reports a label it can carry, or none', () => {
+  /** A global-public source + one finding on it, so searchFindings resolves a SourceRef. */
+  async function findingOnSourceWithVersion(version: string | null): Promise<number | null> {
+    const { rows: srcRows } = await query(
+      `INSERT INTO cre_evidence_sources
+         (organization_id, visibility_class, source_type, agency, application_type,
+          application_number, title, version, ingestion_status, extraction_status)
+       VALUES (NULL, 'global_public', 'fda_crl', 'FDA', 'BLA', $1, 'CRL', $2, 'ingested', 'extracted')
+       RETURNING id`,
+      ['BLA-' + (version ?? 'none') + '-' + Math.floor(Math.random() * 1e6), version],
+    );
+    const sourceId = (srcRows[0] as { id: number }).id;
+    await query(
+      `INSERT INTO cre_regulatory_findings
+         (organization_id, visibility_class, source_id, finding_domain, finding_text,
+          explicit_or_inferred, verification_status)
+       VALUES (NULL, 'global_public', $1, 'clinical', 'Efficacy package insufficient.',
+               'explicit', 'unverified')`,
+      [sourceId],
+    );
+    const res = await searchFindings({ organizationId: ORG });
+    const hit = res.findings.find((f) => f.source.sourceId === String(sourceId));
+    expect(hit, 'finding for source ' + sourceId).toBeDefined();
+    return hit!.source.version;
+  }
+
+  it('reports an integer label as that integer', async () => {
+    expect(await findingOnSourceWithVersion('3')).toBe(3);
+  }, 60_000);
+
+  it('reports a dotted label as NOT RECORDED rather than truncating it', async () => {
+    // `parseInt('3.2')` is 3. Rendering "v3" for a document that says 3.2 puts a
+    // number in a provenance field that is not the document's version and that
+    // a reader cannot tell apart from one that is — the same fabrication as
+    // defaulting the column, arriving from the read side instead.
+    expect(await findingOnSourceWithVersion('3.2')).toBeNull();
+    expect(await findingOnSourceWithVersion('2b')).toBeNull();
+  }, 60_000);
+
+  it('reports an absent version as absent', async () => {
+    expect(await findingOnSourceWithVersion(null)).toBeNull();
   }, 60_000);
 });
