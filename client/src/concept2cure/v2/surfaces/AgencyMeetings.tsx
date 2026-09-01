@@ -444,19 +444,27 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
         selected: m
           ? {
               id: m.id, type: m.type, agency: m.agency, program: m.program, status: m.status,
-              goal: m.goal, clock: m.clock, format: m.format,
+              clock: m.clock, format: m.format,
+              // The meeting `goal`, the verbatim agency `questions` and sponsor
+              // `positions`, and the minute `agreements` / commitment text are
+              // substantial user-authored free-text prose — a prompt-injection
+              // surface the sibling HaqManager already withholds for exactly
+              // this reason. Section states, question areas/counts, and
+              // commitment references/dates/states carry the grounding; the
+              // prose stays on screen.
               briefingBook: bb
                 ? {
                     title: bb.title, state: bb.state, version: bb.ver, owner: bb.owner,
                     sections: (bb.sections ?? []).map((sn) => ({ number: sn.n, label: sn.label, state: sn.st })),
-                    questions: (bb.questions ?? []).map((qq) => ({ question: qq.q, area: qq.area, position: qq.pos })),
+                    questionCount: (bb.questions ?? []).length,
+                    questionAreas: (bb.questions ?? []).map((qq) => qq.area),
                   }
                 : null,
               minutes: min
                 ? {
                     received: min.received,
-                    agreements: min.agree ?? [],
-                    commitments: (min.commitments ?? []).map((c) => ({ commitment: c.c, document: c.doc, due: c.due, state: c.st })),
+                    agreementCount: (min.agree ?? []).length,
+                    commitments: (min.commitments ?? []).map((c) => ({ document: c.doc, due: c.due, state: c.st })),
                   }
                 : null,
             }

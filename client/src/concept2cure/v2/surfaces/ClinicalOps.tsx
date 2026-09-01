@@ -560,8 +560,14 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
         deviations: devState.loading || devState.error
           ? null
           : devs.slice(0, 20).map((d) => ({
-              study: d.study, category: d.category, description: d.description,
-              detectedDate: d.detectedDate, correctiveAction: d.correctiveAction, status: d.status,
+              // `description` and `correctiveAction` are user-authored free-text
+              // on a subject-scoped clinical table (TEXT, up to 5000 chars) —
+              // deviation narratives and CAPA text that routinely carry subject
+              // detail. Folding them verbatim into the every-turn prompt is both
+              // a PII exposure and a prompt-injection channel. The structured
+              // fields carry the grounding; the narrative stays on screen.
+              study: d.study, category: d.category,
+              detectedDate: d.detectedDate, status: d.status,
             })),
         deviationsUnavailable: devState.error || null,
         deviationCoverage: {
