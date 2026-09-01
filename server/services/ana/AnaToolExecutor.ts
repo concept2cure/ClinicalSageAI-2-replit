@@ -15813,6 +15813,159 @@ registerToolHandler('assess_batch_poolability', async (input: Record<string, unk
    caller's tenant to be readable. The eligibility rules and the assessment
    itself live in services/cmc/recorded-stability, shared verbatim with the HTTP
    route the stability surface posts to, so the two can never disagree. */
+/* ── Register discovery ──
+   assess_recorded_batch_poolability tells the model to "list the stability
+   register first and use the ids it returns" — and nothing could list any
+   register, so the pointer was dead and the model had to ask the human for
+   ids the product already holds. Identity rows only: never the full result
+   series, so this is safe to call broadly. Org-scoped, read-only. */
+registerToolHandler('list_cmc_registers', async (input, ctx) => {
+  const orgId = ctx?.organizationId;
+  if (!orgId) return 'An active organization context is required to read the CMC registers.';
+  const wanted = typeof input.register === 'string' ? input.register : null;
+  const search = typeof input.search === 'string' && input.search.trim() ? input.search.trim() : null;
+  const rawLimit = Number(input.limit);
+  const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(Math.floor(rawLimit), 100) : 25;
+  try {
+    const { getPool } = await import('../../db.js');
+    const pool = getPool();
+    // One row shape per register: what it IS and what state it is in — the
+    // identity a recorded assessment needs, and nothing more.
+    const REGISTERS: Record<string, { sql: string; searchCols: string[] }> = {
+      stability: {
+        sql: `SELECT id, study_title AS "studyTitle", product_name AS "productName",
+                     batch_number AS "batchNumber", study_type AS "studyType",
+                     storage_conditions AS "storageConditions", duration, status,
+                     (stability_data IS NOT NULL) AS "hasRecordedResults"
+                FROM stability_studies WHERE organization_id = $1`,
+        searchCols: ['study_title', 'product_name', 'batch_number'],
+      },
+      method: {
+        sql: `SELECT id, method_code AS "methodCode", title, technique, analyte, status,
+                     validation_date AS "validationDate"
+                FROM analytical_methods WHERE organization_id = $1`,
+        searchCols: ['method_code', 'title', 'analyte'],
+      },
+      specification: {
+        sql: `SELECT id, material_type AS "materialType", material_name AS "materialName",
+                     approval_status AS "approvalStatus", updated_at AS "updatedAt"
+                FROM quality_specifications WHERE tenant_id = $1`,
+        searchCols: ['material_name', 'material_type'],
+      },
+      batch: {
+        sql: `SELECT id, batch_number AS "batchNumber", product_name AS "productName",
+                     batch_type AS "batchType", scale, status, disposition,
+                     manufacturing_date AS "manufacturingDate"
+                FROM cmc_batch_records WHERE organization_id = $1`,
+        searchCols: ['batch_number', 'product_name'],
+      },
+      qc_result: {
+        sql: `SELECT id, sample_id AS "sampleId", sample_type AS "sampleType",
+                     test_method AS "testMethod", pass_fail_status AS "passFailStatus",
+                     test_date AS "testDate", (reviewed_by IS NOT NULL) AS "reviewed"
+                FROM qc_testing WHERE organization_id = $1`,
+        searchCols: ['sample_id', 'test_method'],
+      },
+    };
+    const keys = wanted && REGISTERS[wanted] ? [wanted] : Object.keys(REGISTERS);
+    const out: Record<string, unknown> = {};
+    for (const key of keys) {
+      const spec = REGISTERS[key];
+      const params: unknown[] = [orgId];
+      let sql = spec.sql;
+      if (search) {
+        params.push(`%${search}%`);
+        const idx = params.length;
+        sql += ` AND (${spec.searchCols.map((c) => `${c} ILIKE $${idx}`).join(' OR ')})`;
+      }
+      sql += ` ORDER BY id DESC LIMIT ${limit}`;
+      try {
+        const { rows } = await pool.query(sql, params);
+        out[key] = rows;
+      } catch (err: any) {
+        // A register whose table is absent on this deployment is reported as
+        // unavailable — never as an empty register, which would read as
+        // "you have recorded nothing".
+        out[key] = { unavailable: true, reason: err?.message || 'register unreadable' };
+      }
+    }
+    const counts = Object.fromEntries(
+      Object.entries(out).map(([k, v]) => [k, Array.isArray(v) ? v.length : 'unavailable']),
+    );
+    return JSON.stringify({
+      status: 'listed',
+      scope: wanted ? `register: ${wanted}` : 'all registers',
+      search: search ?? null,
+      limit,
+      counts,
+      registers: out,
+      instruction:
+        'These are the ids the recorded-data tools take. Report a register marked unavailable as unreadable, NOT as empty — and an empty register as "nothing is recorded here yet", never as a finding about the product.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `list_cmc_registers failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+/* ICH Q1E over a RECORDED study — the same engine the stability surface's
+   shelf-life panel calls (cmc/recorded-stability.estimateRecordedShelfLife),
+   so the model and the screen can never report different month counts. */
+registerToolHandler('estimate_recorded_shelf_life', async (input, ctx) => {
+  const orgId = ctx?.organizationId;
+  if (!orgId) return 'An active organization context is required to read the stability register.';
+  const id = Number(input.study_id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: 'A numeric stability study id is required. Use list_cmc_registers to find it.',
+    });
+  }
+  try {
+    const [{ db }, { stabilityStudies }, { and, eq }, { estimateRecordedShelfLife }] = await Promise.all([
+      import('../../db.js'),
+      import('../../../shared/schema.js'),
+      import('drizzle-orm'),
+      import('../cmc/recorded-stability.js'),
+    ]);
+    const [study] = await db
+      .select({
+        id: stabilityStudies.id,
+        studyTitle: stabilityStudies.studyTitle,
+        productName: stabilityStudies.productName,
+        batchNumber: stabilityStudies.batchNumber,
+        storageConditions: stabilityStudies.storageConditions,
+        duration: stabilityStudies.duration,
+        stabilityData: stabilityStudies.stabilityData,
+      })
+      .from(stabilityStudies)
+      .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)));
+    if (!study) {
+      return JSON.stringify({
+        status: 'not_found',
+        message: `No stability study in this organization has id ${id}. List the register and use the ids it returns.`,
+      });
+    }
+    const outcome = await estimateRecordedShelfLife(study);
+    if (!outcome.ok) {
+      return JSON.stringify({
+        status: 'not_assessable',
+        message: outcome.error,
+        instruction:
+          'Relay this reason to the user verbatim. Do not work around it by falling back to estimate_shelf_life with numbers you read off the study — the refusal is a property of the data, not of the tool.',
+      });
+    }
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result: outcome.data,
+      instruction:
+        'Lead with the LIMITING attribute and the shelf life it supports, then report each attribute\'s estimate and every not-estimable reason verbatim. This is EVIDENCE for a shelf-life claim, not the claim: the registered shelf life is set by a person on the study close-out, and this tool writes nothing. Batch poolability is a separate question (assess_recorded_batch_poolability) and is not implied here.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `estimate_recorded_shelf_life failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 registerToolHandler('assess_recorded_batch_poolability', async (input, ctx) => {
   const orgId = ctx?.organizationId;
   if (!orgId) return 'An active organization context is required to read the stability register.';

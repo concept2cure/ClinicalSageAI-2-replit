@@ -93,6 +93,22 @@ NARR=$(echo "$S4" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "recorde
   && ok "§3.2.S.4 renders the batch-analyses table with sample S-2026-001 and reports it in the narrative" \
   || bad "batch analyses missing from the composed §3.2.S.4: tables=$BATAB sampleRows=$HASSAMPLE narrative=$NARR"
 
+step "11c. The recorded shelf-life engine answers over the study on file (the AnA tools' engine)"
+# One implementation, two callers: this route and AnA's
+# estimate_recorded_shelf_life. A study with no recorded pull points must
+# REFUSE, not fit nothing.
+STABID=$(cat "$OUT/stab.json" | JQ '.data.id // .id // empty')
+CODE=$(req shelf POST "/api/cmc/stability-studies/$STABID/shelf-life" '{}')
+SHELFERR=$(cat "$OUT/shelf.json" | JQ '.error // empty')
+if [ "$CODE" = 409 ] && echo "$SHELFERR" | grep -q "no recorded pull-point results"; then
+  ok "shelf-life engine refuses a study with no recorded results (shared engine, honest refusal)"
+elif [ "$CODE" = 200 ]; then
+  LIMIT=$(cat "$OUT/shelf.json" | JQ '.data.limitingParameter // empty')
+  ok "shelf-life estimated from recorded results (limiting attribute: $LIMIT)"
+else
+  bad "shelf-life engine: code=$CODE err=$(echo "$SHELFERR" | head -c 160)"
+fi
+
 step "12. Contradiction sweep"
 CODE=$(req sweep POST "/api/cmc/module3-os/contradictions/$PROGRAM" '{}')
 FOUND=$(cat "$OUT/sweep.json" | JQ '.contradictions | length')
