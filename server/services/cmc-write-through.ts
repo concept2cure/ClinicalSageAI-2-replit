@@ -14,7 +14,12 @@
 
 import { getPool } from '../db';
 import { createSourceHash } from './cmc-module3-compiler';
-import { impactedSectionsForSourceType, type CmcSourceType } from './module3Composer';
+import {
+  FINISHED_PRODUCT,
+  NON_BATCH_SAMPLE_TYPES,
+  impactedSectionsForSourceType,
+  type CmcSourceType,
+} from './module3Composer';
 import unifiedTaskService from './unifiedTaskService';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -87,6 +92,33 @@ function textOf(v: unknown): string {
       .join('; ');
   }
   return '';
+}
+
+
+/**
+ * Does this recorded result carry an actual measurement?
+ *
+ * §3.2.S.4.4 / §3.2.P.5.4 require quantitative results per test, not
+ * "conforms" statements — so an empty object, an empty array, an object whose
+ * every value is blank, and an observation with no measured value all count
+ * as NO result. A key-count check let all four through and marked the section
+ * complete on a test nobody has a number for.
+ */
+export function hasQuantitativeResult(results: unknown): boolean {
+  if (results === null || results === undefined || results === '') return false;
+  if (typeof results === 'string') return results.trim().length > 0;
+  if (typeof results === 'number') return Number.isFinite(results);
+  if (Array.isArray(results)) return results.some((r) => hasQuantitativeResult(r));
+  if (typeof results === 'object') {
+    const entries = Object.entries(results as Record<string, unknown>);
+    if (entries.length === 0) return false;
+    /* An observation alone is a narrative note, not a measurement: the
+       register's own form separates `value`/`unit` from `observation`. */
+    const measured = entries.filter(([k]) => k.toLowerCase() !== 'observation');
+    if (measured.length === 0) return false;
+    return measured.some(([, v]) => hasQuantitativeResult(v));
+  }
+  return false;
 }
 
 /**
@@ -508,11 +540,12 @@ export function mapQcTestingPayload(record: Record<string, any>): Record<string,
   /* A batch analysis is a test OF THE MATERIAL. A cleaning-verification swab
      and a reference-standard qualification are neither: they belong to GMP
      cleaning records and §3.2.S.5/§3.2.P.6 respectively, and letting them
-     satisfy §3.2.S.4.4 / §3.2.P.5.4's `batchAnalyses` marked those sections
-     complete on evidence that is not batch data. */
-  const isBatchAnalysis = !['cleaning-verification', 'reference-standard'].includes(sampleType);
-  const hasResult =
-    isBatchAnalysis && results !== null && results !== undefined && results !== '';
+     satisfy §3.2.S.4.4 / §3.2.P.5.4's batch-analyses requirement marked those
+     sections complete on evidence that is not batch data. The composer's
+     renderer reads this SAME flag off the payload, so the table and the
+     completeness bit can never disagree about what counts. */
+  const isBatchAnalysis = !NON_BATCH_SAMPLE_TYPES.includes(sampleType);
+  const hasResult = isBatchAnalysis && hasQuantitativeResult(results);
   return {
     sampleId: record.sampleId || record.sample_id || '',
     sampleType: record.sampleType || record.sample_type || '',
@@ -524,10 +557,17 @@ export function mapQcTestingPayload(record: Record<string, any>): Record<string,
     /* §3.2.S.4.4 / §3.2.P.5.4 require quantitative results per test, not
        "conforms" statements — so the presence of a recorded result is what
        counts here, not the presence of a row. */
-    batchAnalyses:
-      hasResult && !(typeof results === 'object' && !Array.isArray(results) && Object.keys(results as object).length === 0)
-        ? results
-        : null,
+    /* Which SIDE this result is evidence for, decided once here and honoured
+       by both the completeness rules and the renderer. §3.2.S.4 requires
+       drugSubstanceBatchAnalyses and §3.2.P.5 requires
+       drugProductBatchAnalyses, so a finished-product result can no longer
+       turn the drug-substance section green on a table that section will
+       never render (and vice versa). */
+    isBatchAnalysis,
+    batchAnalysisSide: isBatchAnalysis ? (sampleType === FINISHED_PRODUCT ? 'drug_product' : 'drug_substance') : null,
+    batchAnalyses: hasResult ? results : null,
+    drugSubstanceBatchAnalyses: hasResult && sampleType !== FINISHED_PRODUCT ? results : null,
+    drugProductBatchAnalyses: hasResult && sampleType === FINISHED_PRODUCT ? results : null,
     /* Reviewed status travels with the payload: an unreviewed result is not yet
        releasable evidence, and a reader of the composed section needs to know
        which it is looking at. */

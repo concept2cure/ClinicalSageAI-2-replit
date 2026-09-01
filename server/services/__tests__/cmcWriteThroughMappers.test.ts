@@ -27,7 +27,7 @@ import {
   mapQcTestingPayload,
   mapSpecificationPayload,
 } from '../cmc-write-through';
-import { MODULE3_SECTION_RULES, composeModule3FromCanonicalSources } from '../module3Composer';
+import { MODULE3_SECTION_RULES, composeModule3FromCanonicalSources, tablesToMarkdown } from '../module3Composer';
 
 /** A canonical source as the composer receives it. */
 const src = (sourceType: string, sourcePayload: Record<string, unknown>) =>
@@ -512,12 +512,69 @@ describe('§3.2.P.5.4 / §3.2.S.4.4 — the recorded QC results are RENDERED, no
     expect(p5Table.rows.map((r) => r[0])).toEqual(['S-2407-118']);
   });
 
-  it('a cleaning-verification swab is not a batch analysis — it can never satisfy the requirement', () => {
+  it('a cleaning-verification swab is not a batch analysis — not counted AND not rendered, on EITHER side', () => {
+    // The first version of this pin asserted on §3.2.P.5 — the one section a
+    // non-finished-product swab never reaches — so a real leak into the
+    // §3.2.S.4.4 table passed it. Assert the section the row would actually
+    // land in.
     const swab = qcRow({ sampleId: 'CV-09', sampleType: 'cleaning-verification' });
     expect(swab.batchAnalyses).toBeNull();
-    const p5 = composeModule3FromCanonicalSources([src('qc_result', swab)])
-      .find((s) => s.sectionKey === '3.2.P.5')!;
-    expect(p5.missingInputs).toContain('batchAnalyses');
+    expect(swab.isBatchAnalysis).toBe(false);
+    const sections = composeModule3FromCanonicalSources([src('qc_result', swab)]);
+    const s4 = sections.find((s) => s.sectionKey === '3.2.S.4')!;
+    const p5 = sections.find((s) => s.sectionKey === '3.2.P.5')!;
+    expect(s4.missingInputs).toContain('drugSubstanceBatchAnalyses');
+    expect(p5.missingInputs).toContain('drugProductBatchAnalyses');
+    // And it is NOT rendered as batch-analyses evidence anywhere.
+    expect(s4.tables.find((t) => t.title.includes('Batch Analyses'))).toBeUndefined();
+    expect(p5.tables.find((t) => t.title.includes('Batch Analyses'))).toBeUndefined();
+    expect(s4.narrativeDraft).not.toMatch(/recorded QC result/);
+  });
+
+  it('a reference-standard qualification is not batch data either — it belongs to §3.2.S.5', () => {
+    const refstd = qcRow({ sampleId: 'RS-QUAL-3', sampleType: 'reference-standard' });
+    expect(refstd.isBatchAnalysis).toBe(false);
+    const s4 = composeModule3FromCanonicalSources([src('qc_result', refstd)])
+      .find((s) => s.sectionKey === '3.2.S.4')!;
+    expect(s4.tables.find((t) => t.title.includes('Batch Analyses'))).toBeUndefined();
+    expect(s4.missingInputs).toContain('drugSubstanceBatchAnalyses');
+  });
+
+  it('completeness and the rendered table agree: a finished-product result greens ONLY the drug product section', () => {
+    // Unscoped completeness let one result satisfy BOTH sections while
+    // rendering into one — the falsely-green dashboard, moved rather than
+    // closed. 'finished-product' is the register form's default.
+    const sections = composeModule3FromCanonicalSources([src('qc_result', qcRow())]);
+    const s4 = sections.find((s) => s.sectionKey === '3.2.S.4')!;
+    const p5 = sections.find((s) => s.sectionKey === '3.2.P.5')!;
+    expect(p5.missingInputs).not.toContain('drugProductBatchAnalyses');
+    expect(p5.tables.some((t) => t.title.includes('Batch Analyses'))).toBe(true);
+    // The drug substance section stays honestly incomplete AND empty.
+    expect(s4.missingInputs).toContain('drugSubstanceBatchAnalyses');
+    expect(s4.tables.find((t) => t.title.includes('Batch Analyses'))).toBeUndefined();
+  });
+
+  it('a raw-material result greens ONLY the drug substance section — the mirror case', () => {
+    const sections = composeModule3FromCanonicalSources([
+      src('qc_result', qcRow({ sampleId: 'S-RAW-01', sampleType: 'raw-material' })),
+    ]);
+    const s4 = sections.find((s) => s.sectionKey === '3.2.S.4')!;
+    const p5 = sections.find((s) => s.sectionKey === '3.2.P.5')!;
+    expect(s4.missingInputs).not.toContain('drugSubstanceBatchAnalyses');
+    expect(p5.missingInputs).toContain('drugProductBatchAnalyses');
+    expect(p5.tables.find((t) => t.title.includes('Batch Analyses'))).toBeUndefined();
+  });
+
+  it('a result with no MEASUREMENT never counts — empty object, empty array, blanks, observation-only', () => {
+    for (const testResults of [{}, [], { value: '', unit: '' }, { observation: 'Sample cloudy.' }]) {
+      const p = qcRow({ testResults });
+      expect(p.batchAnalyses, JSON.stringify(testResults)).toBeNull();
+      const p5 = composeModule3FromCanonicalSources([src('qc_result', p)])
+        .find((s) => s.sectionKey === '3.2.P.5')!;
+      expect(p5.missingInputs, JSON.stringify(testResults)).toContain('drugProductBatchAnalyses');
+    }
+    // A real measurement still counts.
+    expect(qcRow({ testResults: { value: '99.2', unit: '%' } }).batchAnalyses).toBeTruthy();
   });
 
   it('no QC results means no table and no sentence — never an empty table implying testing happened', () => {
@@ -551,7 +608,9 @@ describe('§3.2.P.3 — the change history and the governed release decision rea
     expect(table.rows[0]).toEqual([
       'CC-2026-041', 'process', 'Increase fill volume from 5.2 to 5.4 mL.', 'medium', 'CBE-30', 'approved', '2026-09-01',
     ]);
-    expect(p3.narrativeDraft).toMatch(/1 controlled change\(s\) are recorded against this process/);
+    // Reports what the register RECORDED (the impact assessment's own
+    // sections) instead of asserting every change is "against this process".
+    expect(p3.narrativeDraft).toMatch(/1 controlled change\(s\) are recorded in the change register/);
   });
 
   it('an unclassified change says so rather than guessing a filing category', () => {
@@ -566,10 +625,43 @@ describe('§3.2.P.3 — the change history and the governed release decision rea
     expect(table.rows[0][4]).toBe('not classified');
   });
 
-  it('the QP release decision — who released it and when — is stated', () => {
+  it('the QP release decision — which batch, who released it, when — is stated', () => {
     const p3 = composeModule3FromCanonicalSources([src('batch', batch)])
       .find((s) => s.sectionKey === '3.2.P.3')!;
-    expect(p3.narrativeDraft).toMatch(/Batch disposition: released, released by qp\.olsen@example\.test on 2026-04-01/);
+    expect(p3.narrativeDraft).toMatch(
+      /Batch L2026-014 disposition: released, released by qp\.olsen@example\.test on 2026-04-01/,
+    );
+  });
+
+  it('the release facts travel TOGETHER — one batch\'s releaser is never attached to another batch', () => {
+    // val() scans each key independently across sources, so with two batch
+    // records the disposition, the releaser and the date could each come from
+    // a different batch — a §11 attribution the register never made.
+    const otherBatch = mapBatchRecordPayload({
+      batch_number: 'L2026-099', product_name: 'BX-204 injection', status: 'in-progress',
+    });
+    const p3 = composeModule3FromCanonicalSources([
+      src('batch', otherBatch), src('batch', batch),
+    ]).find((s) => s.sectionKey === '3.2.P.3')!;
+    // The released batch is named with ITS OWN releaser — never L2026-099.
+    expect(p3.narrativeDraft).toMatch(/Batch L2026-014 disposition: released, released by qp\.olsen@example\.test/);
+    expect(p3.narrativeDraft).not.toMatch(/L2026-099 disposition: released/);
+  });
+
+  it('free text with newlines and pipes cannot shatter the governed markdown table', () => {
+    const messy = mapChangeControlPayload({
+      changeNumber: 'CC-2026-050', changeType: 'process',
+      description: 'Line one\nline two | with a pipe',
+      justification: 'ok', riskAssessment: { level: 'low' }, status: 'draft',
+    });
+    const p3 = composeModule3FromCanonicalSources([src('change_control', messy)])
+      .find((s) => s.sectionKey === '3.2.P.3')!;
+    const md = tablesToMarkdown(p3.tables);
+    const changeRow = md.split('\n').find((l) => l.includes('CC-2026-050'))!;
+    // The text is PRESERVED, on one line, with the pipe escaped — a row that
+    // splits or grows a column corrupts the filed artifact.
+    expect(changeRow).toContain('Line one line two \\| with a pipe');
+    expect(changeRow.split(/(?<!\\)\|/).length - 1).toBe(8); // 7 columns → 8 delimiters
   });
 });
 
