@@ -2924,6 +2924,14 @@ router.get('/decisions/:projectId', async (req: Request, res: Response) => {
     const { projectId } = req.params;
     const { kind, status, sectionCode, moduleCode, limit } = req.query;
 
+    /* These three decision reads resolved no tenant at all — unlike every
+       adjacent route in this file — and the store behind them is an in-memory
+       Map, so there is no row-level security to fall back on. Any authenticated
+       caller could read another organization's governed decisions and receipts
+       by supplying an id. */
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
+
     const { decisionLifecycleService } = await import(
       '../services/decision-lifecycle-service.js'
     );
@@ -2931,6 +2939,7 @@ router.get('/decisions/:projectId', async (req: Request, res: Response) => {
     const decisions = decisionLifecycleService.getProjectDecisions(
       String(projectId ?? ''),
       {
+        organizationId: orgId,
         kind: kind as any || undefined,
         status: status as any || undefined,
         sectionCode: sectionCode as string || undefined,
@@ -2972,11 +2981,21 @@ router.get('/decision/:decisionId', async (req: Request, res: Response) => {
   try {
     const { decisionId } = req.params;
 
+    /* These three decision reads resolved no tenant at all — unlike every
+       adjacent route in this file — and the store behind them is an in-memory
+       Map, so there is no row-level security to fall back on. Any authenticated
+       caller could read another organization's governed decisions and receipts
+       by supplying an id. */
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
+
     const { decisionLifecycleService } = await import(
       '../services/decision-lifecycle-service.js'
     );
 
-    const decision = decisionLifecycleService.getDecision(String(decisionId ?? ''));
+    /* A decision belonging to another organization is reported as not found,
+       not as forbidden — a 403 would confirm the id exists. */
+    const decision = decisionLifecycleService.getDecision(String(decisionId ?? ''), orgId);
     if (!decision) {
       return res.status(404).json({ error: 'Decision not found' });
     }
@@ -3038,6 +3057,11 @@ router.get('/decision-context/:projectId', async (req: Request, res: Response) =
     const { projectId } = req.params;
     const { sectionCode, moduleCode, limit } = req.query;
 
+    /* Same gap as the two decision reads above, and this one returns MORE per
+       record — full receipts alongside the decisions. */
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
+
     const { decisionLifecycleService } = await import(
       '../services/decision-lifecycle-service.js'
     );
@@ -3045,6 +3069,7 @@ router.get('/decision-context/:projectId', async (req: Request, res: Response) =
     const context = decisionLifecycleService.getDecisionContext(
       String(projectId ?? ''),
       {
+        organizationId: orgId,
         sectionCode: sectionCode as string || undefined,
         moduleCode: moduleCode as string || undefined,
         limit: limit ? Number(limit) : 10,
