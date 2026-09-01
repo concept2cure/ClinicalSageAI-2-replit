@@ -82,6 +82,17 @@ SKIPPED=$(cat "$OUT/compile.json" | JQ '.bridgeSkips | length')
 [ "$CODE" = 200 ] && ok "compiled $COMPILED sections; bridged=$BRIDGED artifacts; bridgeSkips=$SKIPPED" || bad "compile failed ($CODE): $(head -c400 "$OUT/compile.json")"
 [ "${BRIDGED:-0}" -gt 0 ] && ok "auto-bridge created governed artifacts (pre-fix: 0, silently)" || bad "no artifacts bridged: $(cat "$OUT/compile.json" | JQ '.bridgeSkips' | head -c 300)"
 
+step "11b. The compiled §3.2.S.4 CONTAINS the recorded QC result — captured data reaches the document"
+# The whole point of QC capture: the batch-analyses table §3.2.S.4.4 exists to
+# carry. It gated completeness while being absent from the composed section.
+S4=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.S.4")][0]' 2>/dev/null)
+BATAB=$(echo "$S4" | jq -r '[.tables[]? | select(.title | test("Batch Analyses"))] | length' 2>/dev/null)
+HASSAMPLE=$(echo "$S4" | jq -r '[.tables[]? | select(.title | test("Batch Analyses")) | .rows[]? | select(.[0]=="S-2026-001")] | length' 2>/dev/null)
+NARR=$(echo "$S4" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "recorded QC result")
+[ "${BATAB:-0}" -ge 1 ] && [ "${HASSAMPLE:-0}" -ge 1 ] && [ "${NARR:-0}" -ge 1 ] \
+  && ok "§3.2.S.4 renders the batch-analyses table with sample S-2026-001 and reports it in the narrative" \
+  || bad "batch analyses missing from the composed §3.2.S.4: tables=$BATAB sampleRows=$HASSAMPLE narrative=$NARR"
+
 step "12. Contradiction sweep"
 CODE=$(req sweep POST "/api/cmc/module3-os/contradictions/$PROGRAM" '{}')
 FOUND=$(cat "$OUT/sweep.json" | JQ '.contradictions | length')

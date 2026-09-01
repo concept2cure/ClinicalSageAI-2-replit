@@ -504,7 +504,15 @@ export function mapQcTestingPayload(record: Record<string, any>): Record<string,
   const results = record.testResults ?? record.test_results ?? null;
   const specifications = record.specifications ?? null;
   const status = record.passFailStatus || record.pass_fail_status || '';
-  const hasResult = results !== null && results !== undefined && results !== '';
+  const sampleType = String(record.sampleType || record.sample_type || '').toLowerCase();
+  /* A batch analysis is a test OF THE MATERIAL. A cleaning-verification swab
+     and a reference-standard qualification are neither: they belong to GMP
+     cleaning records and §3.2.S.5/§3.2.P.6 respectively, and letting them
+     satisfy §3.2.S.4.4 / §3.2.P.5.4's `batchAnalyses` marked those sections
+     complete on evidence that is not batch data. */
+  const isBatchAnalysis = !['cleaning-verification', 'reference-standard'].includes(sampleType);
+  const hasResult =
+    isBatchAnalysis && results !== null && results !== undefined && results !== '';
   return {
     sampleId: record.sampleId || record.sample_id || '',
     sampleType: record.sampleType || record.sample_type || '',
@@ -516,7 +524,10 @@ export function mapQcTestingPayload(record: Record<string, any>): Record<string,
     /* §3.2.S.4.4 / §3.2.P.5.4 require quantitative results per test, not
        "conforms" statements — so the presence of a recorded result is what
        counts here, not the presence of a row. */
-    batchAnalyses: hasResult ? results : null,
+    batchAnalyses:
+      hasResult && !(typeof results === 'object' && !Array.isArray(results) && Object.keys(results as object).length === 0)
+        ? results
+        : null,
     /* Reviewed status travels with the payload: an unreviewed result is not yet
        releasable evidence, and a reader of the composed section needs to know
        which it is looking at. */
