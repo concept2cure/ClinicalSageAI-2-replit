@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-01T15:58:50.866Z",
+  "generatedAt": "2026-09-01T16:23:03.585Z",
   "git": {
-    "sha": "db74506172e1d5ed3d63563993c5187e837a6260",
+    "sha": "dc25fdd94ffaf3fb64ddea06a46b2c3792f752fb",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -18,7 +18,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 34,
-    "largeFilesByLines": 83
+    "largeFilesByLines": 84
   },
   "findings": {
     "duplicateBasenames": [
@@ -808,6 +808,15 @@
         ]
       },
       {
+        "basename": "governance",
+        "count": 3,
+        "paths": [
+          "server/api/cmc/governance.ts",
+          "server/routes/c2c/governance.ts",
+          "server/services/clinical-regulatory-evidence/governance.ts"
+        ]
+      },
+      {
         "basename": "harness",
         "count": 3,
         "paths": [
@@ -1450,14 +1459,6 @@
         "paths": [
           "client/src/types/global.d.ts",
           "server/types/global.d.ts"
-        ]
-      },
-      {
-        "basename": "governance",
-        "count": 2,
-        "paths": [
-          "server/routes/c2c/governance.ts",
-          "server/services/clinical-regulatory-evidence/governance.ts"
         ]
       },
       {
@@ -2145,11 +2146,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 986630
+        "bytes": 988272
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 849415
+        "bytes": 849419
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2287,7 +2288,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19203
+        "lines": 19226
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2550,6 +2551,10 @@
         "lines": 1785
       },
       {
+        "file": "server/api/cmc/routes.ts",
+        "lines": 1775
+      },
+      {
         "file": "server/services/ana/submission-chat-handler.ts",
         "lines": 1756
       },
@@ -2611,7 +2616,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "lines": 1530
+        "lines": 1555
       }
     ]
   },
@@ -2619,9 +2624,9 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 398,
+      "duplicateGroups": 399,
       "largeByBytes": 25,
-      "largeByLines": 69
+      "largeByLines": 70
     },
     {
       "owner": "Unassigned (TBD)",
