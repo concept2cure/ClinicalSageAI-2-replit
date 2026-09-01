@@ -290,11 +290,20 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
       summary:
         `Labeling: "${docRow.device_name}" ${kindLabel} v${docRow.version} (${docRow.status})` +
         (docRow.udi_di ? `, UDI-DI ${docRow.udi_di}` : '') +
-        `. ${trans.length} translation(s) — ` +
-        (Object.keys(byStatus).length
-          ? Object.entries(byStatus).map(([k, n]) => `${n} ${k.replace('_', ' ')}`).join(', ')
-          : 'none yet') +
         '. ' +
+        // Gated on the SEPARATE translations read, mirroring the on-screen lead:
+        // a failed/in-flight fetch must not report "0 translation(s) — none yet"
+        // for a label that may hold a fully approved set. The facts already
+        // carried translationsUnavailable; the summary was the gap.
+        (transState.loading
+          ? 'Translations are still loading. '
+          : transState.error
+            ? 'The translation set could not be read — its coverage is unknown, not zero. '
+            : `${trans.length} translation(s) — ` +
+              (Object.keys(byStatus).length
+                ? Object.entries(byStatus).map(([k, n]) => `${n} ${k.replace('_', ' ')}`).join(', ')
+                : 'none yet') +
+              '. ') +
         (symbolsLive.loading
           ? 'Symbols are still loading.'
           : symbolsLive.error
@@ -325,7 +334,7 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
         'Read the symbol set and what each symbol is required by',
       ],
     };
-  }, [docsLive.loading, docsLive.error, docRow, kindLabel, trans, transState.error, symbolsLive.loading, symbolsLive.error, symbolsLive.rows]);
+  }, [docsLive.loading, docsLive.error, docRow, kindLabel, trans, transState.loading, transState.error, symbolsLive.loading, symbolsLive.error, symbolsLive.rows]);
   usePublishSurfaceContext('labeling', anaContext);
 
   const transFormConfig: C2CFormConfig = {

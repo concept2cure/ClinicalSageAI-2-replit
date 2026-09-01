@@ -33,6 +33,8 @@ import { TaskBoard } from '../surfaces/TaskBoard';
 import { DocJourney } from '../surfaces/DocJourney';
 import { Projects } from '../surfaces/Projects';
 import { AuditTrail } from '../surfaces/AdminSurfaces';
+import { ReviewThreadsPane } from '../surfaces/ReviewThreads';
+import { ClinicalOps } from '../surfaces/ClinicalOps';
 import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 
 function ok(data: unknown) {
@@ -392,5 +394,74 @@ describe('audit: audit-trail never publishes an actor name or a reason free-text
     expect(payload, 'audit-trail leaked the actor name').not.toContain('ACTOR-NAME-SENTINEL');
     expect(payload, 'audit-trail leaked the reason free-text').not.toContain('REASON-FREETEXT-SENTINEL');
     expect(payload, 'audit-trail leaked the ip').not.toContain('10.0.0.9');
+  });
+});
+
+/* ── Coverage-completion audit guards (2026-08-31, publisher-only sweep) ────
+ * The second audit pass read the 53 publisher-only surfaces the first workflow
+ * did not reach. These pin its two highest-severity fixes: ReviewThreads'
+ * primary-queue fail-open, and ClinicalOps' subject-scoped deviation narrative
+ * leak. (The pharmacovigilance manufactured-all-clear fix is pinned server-side
+ * in pharmacovigilance-board-failclosed.test.ts.)
+ */
+describe('audit2: review queue — a dead my-queue read is a failure, not "0 threads"', () => {
+  beforeEach(() => apiRequest.mockReset());
+
+  it('publishes "could not be read", not "0 open threads", when the queue read fails', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (String(url).includes('/api/concept2cure/reviews/my-queue')) return fail(500);
+      return ok({ data: [] });
+    });
+    const seen = { current: null as SurfaceContext | null };
+    render(
+      <>
+        <ReviewThreadsPane onNotice={vi.fn()} board={null} />
+        <Probe id="review" seen={seen} />
+      </>,
+    );
+    await waitFor(() => expect(seen.current?.summary).toContain('could not be read'));
+    expect(seen.current?.summary).not.toContain('0 open thread');
+    expect((seen.current?.facts as Record<string, unknown>)?.queueState).toBe('error');
+  });
+});
+
+describe('audit2: clinical-ops never publishes a subject-scoped deviation narrative', () => {
+  beforeEach(() => apiRequest.mockReset());
+
+  it('publishes the deviation category/study but not its free-text description or CAPA', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      const u = String(url);
+      if (u === '/api/clinical-operations/studies') {
+        return ok({ data: [{ studyId: 'ST-1', id: 'PROTO-1', phase: 'Phase 2', status: 'active' }] });
+      }
+      if (u.includes('/api/clinical-operations/studies/ST-1/deviations')) {
+        return ok({
+          data: [
+            {
+              id: 'DV-1', category: 'protocol', status: 'open', detected_date: '2026-07-01',
+              description: 'SUBJECT-NARRATIVE-SENTINEL patient 004 missed a visit',
+              corrective_action: 'CAPA-FREETEXT-SENTINEL retrain the site',
+            },
+          ],
+        });
+      }
+      return ok({ data: [] });
+    });
+    const seen = { current: null as SurfaceContext | null };
+    render(
+      <>
+        <ClinicalOps {...svProps('clinical-ops')} />
+        <Probe id="clinical-ops" seen={seen} />
+      </>,
+    );
+    // Ready state reached: the deviation is published by its structured category.
+    await waitFor(() => {
+      const f = seen.current?.facts as Record<string, unknown> | undefined;
+      const devs = (f?.deviations as Array<Record<string, unknown>> | null) ?? null;
+      expect(Array.isArray(devs) && devs.length > 0).toBe(true);
+    });
+    const payload = JSON.stringify(seen.current);
+    expect(payload, 'clinical-ops leaked the deviation narrative').not.toContain('SUBJECT-NARRATIVE-SENTINEL');
+    expect(payload, 'clinical-ops leaked the CAPA free-text').not.toContain('CAPA-FREETEXT-SENTINEL');
   });
 });

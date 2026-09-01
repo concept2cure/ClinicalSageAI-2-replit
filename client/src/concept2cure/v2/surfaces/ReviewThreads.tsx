@@ -136,6 +136,23 @@ export function ReviewThreadsPane({
      "review" and not what was in their queue, so "what needs me?" — the exact
      question this surface exists to answer — had to be re-typed by the user. */
   const anaContext = useMemo(() => {
+    // A failed or still-loading my-queue read must NOT publish "0 open threads
+    // and 0 review tasks assigned to you" — that is this surface answering the
+    // exact question it exists for ("what needs me?") with a confident all-clear
+    // from a store that never responded. The `board` slice below was already
+    // guarded this way; the primary queue read was the gap.
+    if (queue.loading) {
+      return { summary: 'Your review queue is still loading; nothing on screen is final yet.' };
+    }
+    if (queue.error) {
+      return {
+        summary:
+          'Your review queue could not be read, so nothing is listed — this is a failure, not an ' +
+          'empty queue. How many threads and tasks await you is unknown, not zero.',
+        facts: { queueState: 'error', readFailure: queue.error },
+        availableActions: ['Retry the review-queue read'],
+      };
+    }
     // Every thread here is already open — my-queue filters status='open'
     // server-side, so there is nothing to re-filter and no status field to do
     // it with.
@@ -190,7 +207,7 @@ export function ReviewThreadsPane({
           : []),
       ],
     };
-  }, [threads, tasks, selected, canComment, canRequestChanges, canResolve, board]);
+  }, [threads, tasks, selected, canComment, canRequestChanges, canResolve, board, queue.loading, queue.error]);
   usePublishSurfaceContext('review', anaContext);
 
   const post = async () => {

@@ -274,7 +274,14 @@ export function FilingStrategy(_props: SurfaceViewProps) {
       productType: seq.productType || null,
       comparing: tab === 'divergence' ? [div.agencyA, div.agencyB] : null,
       sequenceLoaded: sequence.state === 'ready',
-      divergenceCount: asArray(divergences.data).length,
+      // State-aware, like `sequenceLoaded` above: a failed or not-yet-run
+      // divergence search must not read as "0 divergences" — that is the
+      // "absence of evidence reported as agreement" this surface exists to
+      // refuse. The count travels only when the search actually resolved.
+      divergenceState: divergences.state,
+      ...(divergences.state === 'ready'
+        ? { divergenceCount: asArray(divergences.data).length }
+        : {}),
     },
     availableActions: [
       'Explain why an agency is sequenced first',

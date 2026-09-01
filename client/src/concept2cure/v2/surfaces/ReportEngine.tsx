@@ -482,21 +482,28 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
     return {
       summary:
         `Report engine: a protocol has been analysed ${analysis.source === 'live' ? 'by the analytics service' : 'LOCALLY, in the browser, because the analytics service was not reachable — the figures below are a text parse, not an analysis'}. ` +
-        `"${a.title}" — ${a.phase}, ${a.indication}, n=${a.sample_size}, ${a.duration_weeks} weeks, primary endpoint "${a.primary_endpoint}". ` +
+        `Phase ${a.phase}, n=${a.sample_size}, ${a.duration_weeks} weeks; ` +
         `${(a.risk_factors ?? []).length} risk factor(s). The "${docDef?.label ?? docType}" document is generated on screen.`,
       facts: {
         analysisSource: analysis.source,
         analysisIsServerSide: analysis.source === 'live',
         selectedDocumentType: docType,
         documentLabel: docDef?.label ?? null,
+        // The parsed title / indication / primary-endpoint are unbounded
+        // free-text slices of the synopsis the user pasted (title falls back to
+        // its first 80 characters) — publishing them verbatim would fold a
+        // pasted third-party document into the every-turn model prompt, a
+        // sensitive payload AND a prompt-injection side channel outside the
+        // visible conversation. Only the bounded, structured figures travel;
+        // the text stays on screen. phase is a bounded token ([1-4IViv]+ or
+        // 'Unknown'), severity a bounded enum.
         protocol: {
-          title: a.title, indication: a.indication, phase: a.phase,
-          sampleSize: a.sample_size, durationWeeks: a.duration_weeks,
-          primaryEndpoint: a.primary_endpoint,
+          phase: a.phase, sampleSize: a.sample_size, durationWeeks: a.duration_weeks,
+          hasIndication: a.indication !== 'Unspecified' && Boolean(a.indication),
+          hasPrimaryEndpoint: Boolean(a.primary_endpoint),
         },
-        riskFactors: (a.risk_factors ?? []).map((r) => ({
-          description: r.description, severity: r.severity, mitigation: r.mitigation ?? null,
-        })),
+        riskFactorCount: (a.risk_factors ?? []).length,
+        riskFactorSeverities: (a.risk_factors ?? []).map((r) => r.severity),
         similarProtocols: (analysis.similar_protocols ?? []).slice(0, 8).map((sp) => ({ id: sp.id, title: sp.title })),
         generatedDocumentLength: md.length,
       },
