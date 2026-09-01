@@ -221,9 +221,6 @@ function sectionPermsEnforced(): boolean {
   return process.env.NODE_ENV === 'staging';
 }
 
-/** The only grants the fine-grained section matrix recognises. */
-const GRANTABLE_SECTION_ROLES = new Set(['AUTHOR', 'REVIEWER']);
-
 /**
  * Section-level write authorization (C2C-AUTHOR-001 / C2C-AUTHOR-002).
  *
@@ -5694,89 +5691,33 @@ router.delete('/docs/:docId', async (req: Request, res: Response) => {
   }
 });
 
-// Assign permission (doc- or section-level).
-//
-// TENANT-SCOPED (C2C-AUTHOR-002). The grant is written with the granter's
-// VERIFIED tenant, and both the document and — for a section-scoped grant — the
-// section must already live in that tenant. Without this the writer produced
-// rows canEditSection (which is tenant-scoped) could never match, and a grant
-// could be minted against another tenant's document id.
-router.post(
-  '/docs/:docId/permissions',
-  requireAny(['QA', 'RA_CMC']),
-  async (req: Request, res: Response) => {
-    try {
-      const tenantId = authedOrgId(req);
-      if (tenantId == null) return res.status(403).json({ error: 'Tenant context required' });
-
-      const { email, role, section_id } = req.body || {};
-      if (!email || !role) return res.status(400).json({ error: 'email and role required' });
-
-      const normalizedRole = String(role).toUpperCase();
-      if (!GRANTABLE_SECTION_ROLES.has(normalizedRole)) {
-        return res.status(400).json({
-          error: `role must be one of: ${[...GRANTABLE_SECTION_ROLES].join(', ')}`,
-        });
-      }
-
-      // The document must exist INSIDE the caller's tenant — a 404 rather than a
-      // dangling grant (or an FK-violation 500) for a foreign/unknown id.
-      const doc = await pool.query(
-        `SELECT 1 FROM authoring_documents WHERE id = $1 AND tenant_id = $2`,
-        [req.params.docId, tenantId]
-      );
-      if ((doc.rowCount ?? 0) === 0) return res.status(404).json({ error: 'Document not found' });
-
-      // A section-scoped grant must name a section OF THIS document in the same
-      // tenant, so a grant can never straddle documents or tenants.
-      if (section_id) {
-        const sec = await pool.query(
-          `SELECT 1 FROM authoring_sections WHERE id = $1 AND doc_id = $2 AND tenant_id = $3`,
-          [section_id, req.params.docId, tenantId]
-        );
-        if ((sec.rowCount ?? 0) === 0) {
-          return res.status(404).json({ error: 'Section not found for this document' });
-        }
-      }
-
-      const ins = (
-        await pool.query(
-          `
-      INSERT INTO doc_permissions (doc_id, section_id, email, role, tenant_id)
-      VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-          [
-            req.params.docId,
-            section_id || null,
-            String(email).toLowerCase(),
-            normalizedRole,
-            tenantId,
-          ]
-        )
-      ).rows[0];
-      res.json(ins);
-    } catch (error) {
-      console.error('POST /docs/:id/permissions', error);
-      res.status(500).json({ error: 'Failed to assign permission' });
-    }
-  }
-);
-
-router.get('/docs/:docId/permissions', async (req: Request, res: Response) => {
-  try {
-    const tenantId = authedOrgId(req);
-    if (tenantId == null) return res.status(403).json({ error: 'Tenant context required' });
-    const rows = (
-      await pool.query(
-        `SELECT id, doc_id, section_id, email, role, created_at FROM doc_permissions WHERE doc_id=$1 AND tenant_id=$2 ORDER BY created_at DESC`,
-        [req.params.docId, tenantId]
-      )
-    ).rows;
-    res.json(rows);
-  } catch (error) {
-    console.error('GET /docs/:id/permissions', error);
-    res.status(500).json({ error: 'Failed to list permissions' });
-  }
-});
+/* POST and GET /docs/:docId/permissions have been DELETED from this router.
+ *
+ * They were UNREACHABLE. server/bootstrap/register-inline-routes.ts mounts
+ * authoringPermissionsRouter on '/api' at line 312 — BEFORE this router is
+ * mounted on '/api/authoring' at 319 — and that router registers
+ * '/authoring/docs/:docId/permissions' with the prefix baked in, so it owns the
+ * same full path and never calls next(). Express matched it first, every time.
+ * These two handlers had never run.
+ *
+ * They were also a divergent second implementation of a governed capability.
+ * What the canonical one in authoring-permissions.ts does that these did not:
+ * an explicit permission-manager authorization gate, a reason-for-change, an
+ * expiry (validUntil), structured error codes, and — the one that matters most
+ * here — recordPermissionAudit on grant and revoke. The legacy POST below wrote
+ * a bare INSERT INTO doc_permissions with NO audit row and no ON CONFLICT, and
+ * there was no revoke at all.
+ *
+ * Worth naming what this cost, because it is the argument for deleting rather
+ * than leaving dead code in place: the deleted POST carried a careful C2C-AUTHOR-002
+ * tenant-scoping fix — a role allowlist, a document-in-tenant check, a
+ * section-belongs-to-this-document check, each with its own 404 and an
+ * explanatory comment. That work was written into a route Express never reaches,
+ * and anyone reading it would reasonably believe those guards were in force. The
+ * canonical router's requirePermissionManager does the same scoping properly
+ * (resolveAuthoringDocumentScope against the verified tenant, 404 on a miss), so
+ * nothing is lost by removing them — but a reader's confidence was.
+ */
 
 // ============= EXPORT Operations =============
 
