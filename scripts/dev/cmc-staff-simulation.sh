@@ -64,6 +64,23 @@ step "8. Manufacturing logs a batch (feeds 3.2.P.3 / batch analyses)"
 CODE=$(req batch POST /api/cmc/batch-records "{\"batchNumber\":\"B-001\",\"productName\":\"Drug substance\",\"status\":\"in-progress\",\"yieldData\":{\"percent\":94},\"deviations\":{\"open\":0},\"projectId\":\"$PROGRAM\"}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "batch logged ($CODE)" || bad "batch failed ($CODE): $(head -c300 "$OUT/batch.json")"
 
+step "8b. Packaging engineering records the container closure system + E&L (feeds 3.2.P.7)"
+# The register neither section had. `scope` decides which of 3.2.S.6 / 3.2.P.7
+# the system files under, and the response says whether the row reached Module 3
+# at all rather than reporting an unqualified success.
+CODE=$(req ccs POST /api/cmc/container-closures "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_product\",\"systemName\":\"10 mL Type I vial / 20 mm stopper\",\"componentType\":\"primary\",\"containerDescription\":\"10 mL clear Type I borosilicate glass vial\",\"closureDescription\":\"20 mm bromobutyl stopper with aluminium flip-off seal\",\"supplier\":\"Schott / West\",\"compendialStandards\":[\"USP <660>\",\"USP <381>\"],\"suitabilityJustification\":\"Protection and compatibility demonstrated over 12 months at 25C/60%RH.\",\"materialsOfConstruction\":[{\"component\":\"Vial\",\"material\":\"Type I borosilicate glass\",\"supplier\":\"Schott\",\"specification\":\"SPEC-VIAL-01\",\"compendialReference\":\"USP <660>\"}],\"extractablesLeachables\":{\"studyType\":\"Controlled extraction 40C/75%RH 6 months\",\"protocol\":\"PR-EL-014\",\"analyticalEvaluationThreshold\":\"1.5 ug/day\",\"conclusion\":\"All extractables below the AET.\",\"results\":[{\"analyte\":\"Zinc dibutyldithiocarbamate\",\"level\":\"0.4\",\"unit\":\"ug/day\",\"threshold\":\"1.5 ug/day\",\"assessment\":\"below AET\"}]},\"integrityTesting\":{\"method\":\"Helium leak (USP <1207>)\",\"acceptanceCriteria\":\"<= 6e-6 mbar L/s\",\"result\":\"2.1e-6 mbar L/s\"},\"status\":\"qualified\"}")
+CCLINK=$(cat "$OUT/ccs.json" | JQ '.module3Linked // empty')
+[ "$CODE" = 200 -o "$CODE" = 201 ] && [ "$CCLINK" = "true" ] \
+  && ok "container closure system recorded and linked to Module 3 ($CODE)" \
+  || bad "container closure failed ($CODE, module3Linked=$CCLINK): $(head -c300 "$OUT/ccs.json")"
+
+step "8c. Analytical development records the reference standard (feeds 3.2.S.5)"
+CODE=$(req rstd POST /api/cmc/reference-standards "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_substance\",\"standardCode\":\"RS-DS-001\",\"standardName\":\"BX-701 primary reference standard\",\"standardType\":\"primary\",\"materialSource\":\"DS lot B-001\",\"lotNumber\":\"RS-LOT-2405\",\"assignedValue\":\"98.7% (as-is)\",\"characterization\":[{\"attribute\":\"Identity\",\"method\":\"FTIR\",\"result\":\"Conforms to reference spectrum\"},{\"attribute\":\"Purity\",\"method\":\"RP-HPLC\",\"result\":\"99.4% area\"}],\"certificateOfAnalysis\":\"CoA-RS-001-2405\",\"qualificationProtocol\":\"PR-RS-002\",\"storageConditions\":\"-70C desiccated\",\"status\":\"qualified\",\"retestDate\":\"2027-05-01T00:00:00.000Z\"}")
+RSLINK=$(cat "$OUT/rstd.json" | JQ '.module3Linked // empty')
+[ "$CODE" = 200 -o "$CODE" = 201 ] && [ "$RSLINK" = "true" ] \
+  && ok "reference standard recorded and linked to Module 3 ($CODE)" \
+  || bad "reference standard failed ($CODE, module3Linked=$RSLINK): $(head -c300 "$OUT/rstd.json")"
+
 step "9. Change manager proposes a governed change WITH project (marks 3.2 stale)"
 CODE=$(req change POST /api/cmc-changes "{\"title\":\"Bioreactor scale-up 500L→2000L\",\"dosageFormFamily\":\"biologic\",\"changeCategory\":\"scale_up\",\"scaleChangeFactor\":\"within_10x\",\"touchesCriticalStep\":true,\"affects\":\"drug_substance\",\"cmcProjectId\":\"$PROGRAM\"}")
 WT=$(cat "$OUT/change.json" | JQ '.meta.module3WriteThrough // empty')
@@ -108,6 +125,34 @@ elif [ "$CODE" = 200 ]; then
 else
   bad "shelf-life engine: code=$CODE err=$(echo "$SHELFERR" | head -c 160)"
 fi
+
+step "11d. §3.2.P.7 and §3.2.S.5 compose from the two new registers — and the unrecorded side stays honestly empty"
+# Four sections that could never leave zero completeness because no table
+# anywhere held their source. The drug-substance container closure was NOT
+# recorded, so §3.2.S.6 must still say so: a drug-product blister greening the
+# drug-substance section is the exact cross-bleed the side-scoped rules prevent.
+P7=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.P.7")][0]' 2>/dev/null)
+P7C=$(echo "$P7" | jq -r '.completeness // 0' 2>/dev/null)
+P7MAT=$(echo "$P7" | jq -r '[.tables[]? | select(.title | test("Materials of Construction"))] | length' 2>/dev/null)
+P7EL=$(echo "$P7" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("Zinc dibutyldithiocarbamate"))] | length' 2>/dev/null)
+[ "${P7C:-0}" = "100" ] && [ "${P7MAT:-0}" -ge 1 ] && [ "${P7EL:-0}" -ge 1 ] \
+  && ok "§3.2.P.7 complete, with materials of construction and the E&L analyte rendered" \
+  || bad "§3.2.P.7: completeness=$P7C materialsTables=$P7MAT elRows=$P7EL"
+
+S5=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.S.5")][0]' 2>/dev/null)
+S5C=$(echo "$S5" | jq -r '.completeness // 0' 2>/dev/null)
+S5RS=$(echo "$S5" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("RS-DS-001"))] | length' 2>/dev/null)
+S5CH=$(echo "$S5" | jq -r '[.tables[]? | select(.title | test("Characterisation"))] | length' 2>/dev/null)
+[ "${S5C:-0}" = "100" ] && [ "${S5RS:-0}" -ge 1 ] && [ "${S5CH:-0}" -ge 1 ] \
+  && ok "§3.2.S.5 complete, with the standard and its characterisation rendered" \
+  || bad "§3.2.S.5: completeness=$S5C standardRows=$S5RS characterisationTables=$S5CH"
+
+S6=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.S.6")][0]' 2>/dev/null)
+S6C=$(echo "$S6" | jq -r '.completeness // 0' 2>/dev/null)
+S6N=$(echo "$S6" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "No container closure system is recorded for the drug substance")
+[ "${S6C:-0}" = "0" ] && [ "${S6N:-0}" -ge 1 ] \
+  && ok "§3.2.S.6 stays at 0% and says the drug-substance system is not recorded — no cross-bleed from the product side" \
+  || bad "§3.2.S.6 wrongly served by the drug-product record: completeness=$S6C honestNarrative=$S6N"
 
 step "12. Contradiction sweep"
 CODE=$(req sweep POST "/api/cmc/module3-os/contradictions/$PROGRAM" '{}')

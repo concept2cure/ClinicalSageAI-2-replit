@@ -1676,6 +1676,15 @@ export const C2C_MIGRATION_FILES = [
   // draft it says exists. Verified org-scoped at write time (no FK — the
   // authoring tables are ensure-DDL'd lazily). Idempotent ADD COLUMN.
   'db/migrations/20260830_reg_questions_response_doc.sql',
+
+  // ── CMC container closure + reference standard registers ─────────────────
+  // The two canonical source types the Module 3 composer has demanded since it
+  // was modelled and no table anywhere held, so 3.2.S.5 / 3.2.S.6 / 3.2.P.6 /
+  // 3.2.P.7 could never leave zero completeness. Both registers store `scope`
+  // (drug_substance | drug_product | both) so the section a record files into
+  // is stored rather than guessed, and both carry project_id as a column so the
+  // canonical write-through does not depend on the client having sent one.
+  'db/migrations/20260901_cmc_container_closure_reference_standard_registers.sql',
   // Must follow the sweep above: that one keys on polqual (USING), which an
   // INSERT policy does not have, so every write-only policy slipped through
   // with its fail-open COALESCE intact. This closes them on polwithcheck.

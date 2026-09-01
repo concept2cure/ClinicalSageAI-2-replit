@@ -75,17 +75,23 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
      it here turned this section green on a table it never renders. The QC
      mapper decides the side once and emits the matching key. */
   { sectionKey: '3.2.S.4', requiredSourceTypes: ['specification', 'method', 'impurity_profile', 'qc_result'], requiredFields: ['acceptanceCriteria', 'validationStatus', 'drugSubstanceBatchAnalyses'] },
-  { sectionKey: '3.2.S.5', requiredSourceTypes: ['drug_substance', 'reference_standard'], requiredFields: ['referenceStandardDescription', 'certificateOfAnalysis'] },
-  { sectionKey: '3.2.S.6', requiredSourceTypes: ['container_closure'], requiredFields: ['containerDescription', 'closureDescription', 'suitabilityJustification'] },
+  /* Side-scoped, for the same reason 3.2.S.4 is: both container closure
+     sections match EVERY container_closure source and both reference standard
+     sections match every reference_standard source, so a drug-product blister
+     would otherwise turn the drug-substance section green on a system that
+     section never renders. The registers store which side a record is evidence
+     for; the mapper emits the matching key; these rules read it. */
+  { sectionKey: '3.2.S.5', requiredSourceTypes: ['drug_substance', 'reference_standard'], requiredFields: ['drugSubstanceReferenceStandard', 'drugSubstanceReferenceStandardCoA'] },
+  { sectionKey: '3.2.S.6', requiredSourceTypes: ['container_closure'], requiredFields: ['drugSubstanceContainerDescription', 'drugSubstanceClosureDescription', 'drugSubstanceSuitabilityJustification'] },
   { sectionKey: '3.2.S.7', requiredSourceTypes: ['stability'], requiredFields: ['timePoints', 'storageCondition'] },
   // --- Drug Product (P) subsections ---
   { sectionKey: '3.2.P.1', requiredSourceTypes: ['drug_product', 'formulation_record'], requiredFields: ['dosageFormDescription', 'composition', 'strength'] },
-  { sectionKey: '3.2.P.2', requiredSourceTypes: ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile'], requiredFields: ['formulationDevelopment', 'manufacturingProcessDev', 'containerClosureStudies'] },
+  { sectionKey: '3.2.P.2', requiredSourceTypes: ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile', 'container_closure'], requiredFields: ['formulationDevelopment', 'manufacturingProcessDev', 'containerClosureStudies'] },
   { sectionKey: '3.2.P.3', requiredSourceTypes: ['drug_product', 'batch', 'change_control', 'process_validation'], requiredFields: ['formulation', 'batchNumber'] },
   { sectionKey: '3.2.P.4', requiredSourceTypes: ['excipient', 'raw_material_spec'], requiredFields: ['excipientSpecifications', 'excipientAnalyticalProcedures'] },
   { sectionKey: '3.2.P.5', requiredSourceTypes: ['specification', 'method', 'dissolution_profile', 'impurity_profile', 'qc_result'], requiredFields: ['releaseCriteria', 'methodName', 'drugProductBatchAnalyses'] },
-  { sectionKey: '3.2.P.6', requiredSourceTypes: ['drug_product', 'reference_standard'], requiredFields: ['referenceStandardDescription', 'certificateOfAnalysis'] },
-  { sectionKey: '3.2.P.7', requiredSourceTypes: ['container_closure'], requiredFields: ['containerDescription', 'closureDescription', 'suitabilityJustification'] },
+  { sectionKey: '3.2.P.6', requiredSourceTypes: ['drug_product', 'reference_standard'], requiredFields: ['drugProductReferenceStandard', 'drugProductReferenceStandardCoA'] },
+  { sectionKey: '3.2.P.7', requiredSourceTypes: ['container_closure'], requiredFields: ['drugProductContainerDescription', 'drugProductClosureDescription', 'drugProductSuitabilityJustification'] },
   { sectionKey: '3.2.P.8', requiredSourceTypes: ['stability', 'comparability'], requiredFields: ['shelfLifeClaim', 'comparabilityStatus'] },
   // NOTE: Appendices (3.2.A.*) and Regional Information (3.2.R.*) are intentionally
   // NOT composed here. They are owned by module3-extensions.ts, which performs the
@@ -108,7 +114,43 @@ export const NON_BATCH_SAMPLE_TYPES = ['cleaning-verification', 'reference-stand
 /** The sample type that makes a QC result DRUG PRODUCT evidence (§3.2.P.5.4). */
 export const FINISHED_PRODUCT = 'finished-product';
 
-// ── Helpers ─────────────────────────────��──────────────────────────────────────
+/**
+ * Which material a CMC record is evidence for.
+ *
+ * The container closure and reference standard registers store this, because
+ * the CTD files the same kind of record in two different places depending on
+ * it: a drug-substance container closure system is §3.2.S.6 and a drug-product
+ * one is §3.2.P.7. `both` is a real answer — a bulk drum used for the substance
+ * and for an intermediate of the product is one qualified system, not two.
+ */
+export type CmcMaterialScope = 'drug_substance' | 'drug_product' | 'both';
+
+/**
+ * Read a stored scope, tolerantly, without ever inventing a side.
+ *
+ * The `fallback` is what an UNSTATED scope means for that register (the column
+ * has a default, so this only fires for payloads written before the column
+ * existed or by a caller that omitted it). Unstated resolves to the caller's
+ * fallback rather than to one side, so nothing captured silently disappears
+ * from a section — and because the write-through mapper resolves the scope
+ * ONCE, through this function, and emits the side-scoped completeness keys from
+ * the result, what renders and what counts can never disagree.
+ */
+export function normalizeMaterialScope(raw: unknown, fallback: CmcMaterialScope): CmcMaterialScope {
+  const v = String(raw ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+  if (!v) return fallback;
+  if (v === 'drug_substance' || v === 'substance' || v === 'ds' || v === 'api') return 'drug_substance';
+  if (v === 'drug_product' || v === 'product' || v === 'dp' || v === 'finished_product') return 'drug_product';
+  if (v === 'both' || v === 'drug_substance_and_drug_product' || v === 'ds_and_dp') return 'both';
+  return fallback;
+}
+
+/** Does a stored scope cover this side? `both` covers either. */
+export function scopeCovers(scope: CmcMaterialScope, side: 'drug_substance' | 'drug_product'): boolean {
+  return scope === 'both' || scope === side;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function val(sources: CanonicalSource[], field: string): string {
   for (const s of sources) {
@@ -367,6 +409,321 @@ function kvTable(title: string, data: Record<string, any>): GeneratedTable {
   };
 }
 
+/** A stored date rendered as a day, or '' when nothing is recorded. */
+function dayOf(v: unknown): string {
+  if (v === undefined || v === null || v === '') return '';
+  return String(v).slice(0, 10);
+}
+
+/** The payloads of one source type that are evidence for one side. */
+function scopedPayloads(
+  sources: CanonicalSource[],
+  sourceType: CmcSourceType,
+  side: 'drug_substance' | 'drug_product',
+  fallback: CmcMaterialScope,
+): Array<Record<string, any>> {
+  return sources
+    .filter((s) => s.sourceType === sourceType)
+    .map((s) => (s.sourcePayload || {}) as Record<string, any>)
+    .filter((p) => scopeCovers(normalizeMaterialScope(p.scope, fallback), side));
+}
+
+/** The rows of a json array field, ignoring anything that is not an object. */
+function objectRows(v: unknown): Array<Record<string, any>> {
+  if (!Array.isArray(v)) return [];
+  return v.filter((r): r is Record<string, any> => Boolean(r) && typeof r === 'object' && !Array.isArray(r));
+}
+
+/**
+ * §3.2.S.5 / §3.2.P.6 — the reference standards the material's results are
+ * reported against.
+ *
+ * Both sections previously rendered one description and one CoA string read
+ * from whichever source happened to carry them. The register records standards
+ * as rows — code, type, lot, assigned value, characterisation, qualification —
+ * so the section renders the file, and says plainly when the file is empty.
+ *
+ * Qualification is never inferred. A standard is reported as qualified only
+ * when the register says its status is qualified; everything else is reported
+ * with the status it actually carries.
+ */
+function referenceStandardSection(
+  m: CanonicalSource[],
+  side: 'drug_substance' | 'drug_product',
+): { narrative: string; tables: GeneratedTable[] } {
+  const material = side === 'drug_product' ? 'drug product' : 'drug substance';
+  const suffix = side === 'drug_product' ? 'Drug Product' : 'Drug Substance';
+  /* Unstated scope falls back to drug_substance, matching the register column's
+     default: a standard is prepared from the substance far more often than not,
+     and the fallback is only ever reached by a payload written without one. */
+  const standards = scopedPayloads(m, 'reference_standard', side, 'drug_substance');
+
+  if (standards.length === 0) {
+    return {
+      narrative:
+        `No reference standard is recorded for the ${material}. The standard against which ` +
+        `${material} test results are reported, and the qualification of that standard, are ` +
+        `not established by this section.`,
+      tables: [],
+    };
+  }
+
+  const tables: GeneratedTable[] = [];
+  tables.push({
+    title: `Reference Standards — ${suffix}`,
+    headers: ['Code', 'Standard', 'Type', 'Lot', 'Assigned Value', 'Prepared From', 'Certificate of Analysis', 'Storage', 'Retest / Expiry', 'Status'],
+    rows: standards.map((p) => [
+      String(p.standardCode || '—'),
+      String(p.standardName || '—'),
+      String(p.standardType || '—'),
+      String(p.lotNumber || '—'),
+      String(p.assignedValue || '—'),
+      String(p.materialSource || '—'),
+      String(p.certificateOfAnalysis || '—'),
+      String(p.storageConditions || '—'),
+      dayOf(p.retestDate) || dayOf(p.expiryDate) || '—',
+      String(p.status || 'draft'),
+    ]),
+  });
+
+  /* The characterisation data are what make a lot a STANDARD rather than just
+     another lot, and are the first thing a reviewer asks a secondary standard
+     for. Rows are attributed to the standard they belong to — never merged. */
+  const charRows: string[][] = [];
+  for (const p of standards) {
+    for (const c of objectRows(p.characterization)) {
+      charRows.push([
+        String(p.standardCode || p.standardName || '—'),
+        String(c.attribute || c.parameter || '—'),
+        String(c.method || '—'),
+        String(c.result ?? c.value ?? '—'),
+      ]);
+    }
+  }
+  if (charRows.length > 0) {
+    tables.push({
+      title: `Reference Standard Characterisation — ${suffix}`,
+      headers: ['Standard', 'Attribute', 'Method', 'Result'],
+      rows: charRows,
+    });
+  }
+
+  const named = standards
+    .map((p) => String(p.standardName || p.standardCode || '').trim())
+    .filter(Boolean);
+  const qualified = standards.filter((p) => String(p.status || '').toLowerCase() === 'qualified');
+  const primary = standards.filter((p) => String(p.standardType || '').toLowerCase().includes('primary'));
+  const withCoa = standards.filter((p) => String(p.certificateOfAnalysis || '').trim());
+  const withProtocol = standards.filter((p) => String(p.qualificationProtocol || '').trim());
+
+  const narrative =
+    `${standards.length} reference standard(s) are recorded for the ${material}` +
+    (named.length > 0 ? `: ${named.join(', ')}. ` : '. ') +
+    (primary.length > 0
+      ? `${primary.length} primary standard(s) are recorded. `
+      : `No primary standard is recorded; the standard(s) above are not established as traceable to a primary standard by this section. `) +
+    (qualified.length === standards.length
+      ? `All recorded standards carry a qualified status in the reference standard register. `
+      : `${qualified.length} of ${standards.length} recorded standard(s) carry a qualified status; the remainder are not established as qualified by this section. `) +
+    (charRows.length > 0
+      ? `Characterisation data are reported in the table above. `
+      : `No characterisation data are recorded for these standards. `) +
+    (withProtocol.length > 0
+      ? `A qualification protocol is referenced for ${withProtocol.length} of ${standards.length} standard(s). `
+      : '') +
+    (withCoa.length === standards.length
+      ? `A Certificate of Analysis is referenced for each standard. `
+      : `A Certificate of Analysis is referenced for ${withCoa.length} of ${standards.length} standard(s). `);
+
+  return { narrative, tables };
+}
+
+/**
+ * §3.2.S.6 / §3.2.P.7 — the container closure system.
+ *
+ * FDA's container closure guidance judges a system on four criteria —
+ * protection, compatibility, safety, performance — and the safety half of that
+ * is the extractables and leachables package. Both were previously a single
+ * free-text sentence. The register records the system, its materials of
+ * construction, the compendial standards they are cited against, the E&L study
+ * and the integrity testing, and this renders all of it.
+ *
+ * Suitability is never asserted here. The recorded justification is quoted as
+ * what the applicant states; where none is recorded the section says the
+ * suitability is not established rather than implying it.
+ */
+function containerClosureSection(
+  m: CanonicalSource[],
+  side: 'drug_substance' | 'drug_product',
+): { narrative: string; tables: GeneratedTable[] } {
+  const material = side === 'drug_product' ? 'drug product' : 'drug substance';
+  const suffix = side === 'drug_product' ? 'Drug Product' : 'Drug Substance';
+  /* Unstated scope falls back to drug_product, matching the register column's
+     default (most recorded systems are the marketed presentation). */
+  const systems = scopedPayloads(m, 'container_closure', side, 'drug_product');
+
+  if (systems.length === 0) {
+    return {
+      narrative:
+        `No container closure system is recorded for the ${material}. The container, the closure ` +
+        `and their suitability for the intended use are not established by this section.`,
+      tables: [],
+    };
+  }
+
+  const label = (p: Record<string, any>): string =>
+    String(p.systemName || p.containerDescription || 'Unnamed system');
+  const listOf = (v: unknown): string =>
+    Array.isArray(v) ? v.map((x) => String(x ?? '').trim()).filter(Boolean).join(', ') : String(v ?? '').trim();
+
+  const tables: GeneratedTable[] = [];
+  tables.push({
+    title: `Container Closure System — ${suffix}`,
+    headers: ['System', 'Component', 'Container', 'Closure', 'Supplier', 'Compendial Standards', 'Status'],
+    rows: systems.map((p) => [
+      label(p),
+      String(p.componentType || '—'),
+      String(p.containerDescription || '—'),
+      String(p.closureDescription || '—'),
+      String(p.supplier || '—'),
+      listOf(p.compendialStandards) || '—',
+      String(p.status || 'draft'),
+    ]),
+  });
+
+  const materialRows: string[][] = [];
+  for (const p of systems) {
+    for (const c of objectRows(p.materialsOfConstruction)) {
+      materialRows.push([
+        label(p),
+        String(c.component || '—'),
+        String(c.material || '—'),
+        String(c.supplier || p.supplier || '—'),
+        String(c.specification || '—'),
+        String(c.compendialReference || c.compendialRef || '—'),
+      ]);
+    }
+  }
+  if (materialRows.length > 0) {
+    tables.push({
+      title: `Materials of Construction — ${suffix}`,
+      headers: ['System', 'Component', 'Material', 'Supplier', 'Specification', 'Compendial Reference'],
+      rows: materialRows,
+    });
+  }
+
+  /* Extractables and leachables. A study with no per-analyte results is
+     reported as a study DESIGN row — its presence is a fact, its results are
+     not, and collapsing the two would present an unfinished study as data. */
+  const elRows: string[][] = [];
+  const elDesign: string[][] = [];
+  let elConclusions = 0;
+  for (const p of systems) {
+    const el = p.extractablesLeachables;
+    if (!el || typeof el !== 'object' || Array.isArray(el)) continue;
+    const study = el as Record<string, any>;
+    if (String(study.conclusion || '').trim()) elConclusions += 1;
+    const results = objectRows(study.results);
+    if (results.length === 0) {
+      elDesign.push([
+        label(p),
+        String(study.studyType || '—'),
+        String(study.protocol || '—'),
+        String(study.conditions || '—'),
+        String(study.analyticalEvaluationThreshold || study.aet || '—'),
+        'no per-analyte results recorded',
+      ]);
+      continue;
+    }
+    for (const r of results) {
+      const level = [r.level, r.unit].filter((x) => x !== undefined && x !== null && x !== '').join(' ');
+      elRows.push([
+        label(p),
+        String(study.studyType || '—'),
+        String(r.analyte || '—'),
+        level || '—',
+        String(r.threshold ?? study.analyticalEvaluationThreshold ?? study.aet ?? '—'),
+        String(r.assessment || '—'),
+      ]);
+    }
+  }
+  if (elRows.length > 0) {
+    tables.push({
+      title: `Extractables and Leachables — ${suffix}`,
+      headers: ['System', 'Study', 'Analyte', 'Level', 'Threshold', 'Assessment'],
+      rows: elRows,
+    });
+  }
+  if (elDesign.length > 0) {
+    tables.push({
+      title: `Extractables and Leachables Studies — ${suffix}`,
+      headers: ['System', 'Study', 'Protocol', 'Conditions', 'Threshold', 'Results'],
+      rows: elDesign,
+    });
+  }
+
+  const integrityRows: string[][] = [];
+  for (const p of systems) {
+    const it = p.integrityTesting;
+    if (!it || typeof it !== 'object' || Array.isArray(it)) continue;
+    const t = it as Record<string, any>;
+    if (!String(t.method || t.acceptanceCriteria || t.result || '').trim()) continue;
+    integrityRows.push([
+      label(p),
+      String(t.method || '—'),
+      String(t.acceptanceCriteria || '—'),
+      String(t.result || '—'),
+      dayOf(t.testDate) || '—',
+    ]);
+  }
+  if (integrityRows.length > 0) {
+    tables.push({
+      title: `Container Closure Integrity — ${suffix}`,
+      headers: ['System', 'Method', 'Acceptance Criteria', 'Result', 'Tested'],
+      rows: integrityRows,
+    });
+  }
+
+  const justified = systems.filter((p) => String(p.suitabilityJustification || '').trim());
+  const compendial = systems.filter((p) => listOf(p.compendialStandards));
+  const elStudies = systems.filter((p) => {
+    const el = p.extractablesLeachables;
+    return Boolean(el) && typeof el === 'object' && !Array.isArray(el);
+  });
+
+  const head =
+    systems.length === 1
+      ? `The container closure system for the ${material} is ${label(systems[0])}: ` +
+        `${String(systems[0].containerDescription || '[container not recorded]')} with ` +
+        `${String(systems[0].closureDescription || '[closure not recorded]')}. `
+      : `${systems.length} container closure systems are recorded for the ${material}: ` +
+        `${systems.map(label).join(', ')}. `;
+
+  const narrative =
+    head +
+    (materialRows.length > 0
+      ? `Materials of construction are reported in the table above. `
+      : `Materials of construction are not recorded for ${systems.length === 1 ? 'this system' : 'these systems'}. `) +
+    (compendial.length > 0
+      ? `Compendial standards cited: ${Array.from(new Set(systems.flatMap((p) => (Array.isArray(p.compendialStandards) ? p.compendialStandards : [])).map((x) => String(x).trim()).filter(Boolean))).join(', ')}. `
+      : `No compendial standard is cited for the materials of construction. `) +
+    (justified.length > 0
+      ? `Suitability justification recorded by the applicant: ${justified.map((p) => `${label(p)} — ${String(p.suitabilityJustification).trim()}`).join('; ')}. ` +
+        (justified.length < systems.length
+          ? `${systems.length - justified.length} recorded system(s) carry no suitability justification. `
+          : '')
+      : `No suitability justification is recorded; the suitability of the container closure system for its intended use is not established by this section. `) +
+    (elStudies.length > 0
+      ? `Extractables and leachables data are reported as recorded for ${elStudies.length} of ${systems.length} system(s)` +
+        (elConclusions > 0 ? `, of which ${elConclusions} carry a recorded study conclusion. ` : `; no study conclusion is recorded, and the safety assessment of leachables is not asserted by this section. `)
+      : `No extractables and leachables study is recorded; the safety of the materials of construction is not established by this section. `) +
+    (integrityRows.length > 0
+      ? `Container closure integrity testing is reported in the table above. `
+      : `No container closure integrity testing is recorded. `);
+
+  return { narrative, tables };
+}
+
 // ── Section-specific narrative + table generators ──────────────────────────────
 
 type SectionGenerator = (matched: CanonicalSource[]) => { narrative: string; tables: GeneratedTable[] };
@@ -542,27 +899,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     };
   },
 
-  '3.2.S.5': (m) => {
-    const desc = val(m, 'referenceStandardDescription');
-    const coa = val(m, 'certificateOfAnalysis');
-    return {
-      narrative: `The primary reference standard used for testing of the drug substance is: ${desc || '[not specified]'}. ` +
-        (coa ? `Certificate of Analysis: ${coa}.` : ''),
-      tables: [kvTable('Reference Standards — Drug Substance', { 'Reference Standard': desc, 'Certificate of Analysis': coa })],
-    };
-  },
+  '3.2.S.5': (m) => referenceStandardSection(m, 'drug_substance'),
 
-  '3.2.S.6': (m) => {
-    const container = val(m, 'containerDescription');
-    const closure = val(m, 'closureDescription');
-    const justification = val(m, 'suitabilityJustification');
-    return {
-      narrative: `The container closure system for the drug substance consists of ${container || '[container not specified]'} ` +
-        `with ${closure || '[closure not specified]'}. ` +
-        (justification ? `Suitability justification: ${justification}.` : ''),
-      tables: [kvTable('Container Closure System — Drug Substance', { 'Container': container, 'Closure': closure, 'Suitability Justification': justification })],
-    };
-  },
+  '3.2.S.6': (m) => containerClosureSection(m, 'drug_substance'),
 
   '3.2.S.7': (m) => {
     const timePoints = valArr(m, 'timePoints');
@@ -972,27 +1311,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     };
   },
 
-  '3.2.P.6': (m) => {
-    const desc = val(m, 'referenceStandardDescription');
-    const coa = val(m, 'certificateOfAnalysis');
-    return {
-      narrative: `The primary reference standard used for testing of the drug product is: ${desc || '[not specified]'}. ` +
-        (coa ? `Certificate of Analysis: ${coa}.` : ''),
-      tables: [kvTable('Reference Standards — Drug Product', { 'Reference Standard': desc, 'Certificate of Analysis': coa })],
-    };
-  },
+  '3.2.P.6': (m) => referenceStandardSection(m, 'drug_product'),
 
-  '3.2.P.7': (m) => {
-    const container = val(m, 'containerDescription');
-    const closure = val(m, 'closureDescription');
-    const justification = val(m, 'suitabilityJustification');
-    return {
-      narrative: `The container closure system for the drug product consists of ${container || '[container not specified]'} ` +
-        `with ${closure || '[closure not specified]'}. ` +
-        (justification ? `Suitability justification: ${justification}.` : ''),
-      tables: [kvTable('Container Closure System — Drug Product', { 'Container': container, 'Closure': closure, 'Suitability Justification': justification })],
-    };
-  },
+  '3.2.P.7': (m) => containerClosureSection(m, 'drug_product'),
 
   '3.2.P.8': (m) => {
     const shelf = val(m, 'shelfLifeClaim');

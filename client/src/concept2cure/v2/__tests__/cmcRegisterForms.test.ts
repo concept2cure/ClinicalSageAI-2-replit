@@ -6,6 +6,11 @@ import {
   methodForm,
   methodBody,
   qcTestForm,
+  containerClosureForm,
+  containerClosureBody,
+  referenceStandardForm,
+  referenceStandardBody,
+  parseRowLines,
   qcTestBody,
   qcReviewBody,
   stabilityForm,
@@ -531,6 +536,8 @@ describe('every create form is fully submittable from its own defaults', () => {
     ['drug substance', drugSubstanceForm()],
     ['drug product', drugProductForm()],
     ['comparability', comparabilityForm()],
+    ['container closure', containerClosureForm()],
+    ['reference standard', referenceStandardForm()],
   ];
 
   it.each(forms)('%s: required selects always offer at least one option', (_name, config) => {
@@ -544,5 +551,122 @@ describe('every create form is fully submittable from its own defaults', () => {
   it.each(forms)('%s: no field key is declared twice', (_name, config) => {
     const keys = config.fields.map((f) => f.key);
     expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Container closure + reference standards — the two registers §3.2.S.5 /
+   §3.2.S.6 / §3.2.P.6 / §3.2.P.7 had no capture path for at all.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+describe('parseRowLines — a tabular field typed into a textarea', () => {
+  it('maps pipe-delimited lines onto the declared keys', () => {
+    expect(parseRowLines('Vial | Type I glass | Schott | SPEC-01 | USP <660>', [
+      'component', 'material', 'supplier', 'specification', 'compendialReference',
+    ])).toEqual([
+      { component: 'Vial', material: 'Type I glass', supplier: 'Schott', specification: 'SPEC-01', compendialReference: 'USP <660>' },
+    ]);
+  });
+
+  it('omits blank cells rather than storing empty strings, and skips blank lines', () => {
+    expect(parseRowLines('Stopper | Bromobutyl | |  | \n\n  \n', [
+      'component', 'material', 'supplier', 'specification', 'compendialReference',
+    ])).toEqual([{ component: 'Stopper', material: 'Bromobutyl' }]);
+  });
+
+  it('is empty for an untouched field — never a row of nothing', () => {
+    expect(parseRowLines('', ['component'])).toEqual([]);
+    expect(parseRowLines(undefined, ['component'])).toEqual([]);
+  });
+});
+
+describe('containerClosureBody', () => {
+  const filled = {
+    systemName: '10 mL Type I vial / 20 mm stopper',
+    scope: 'drug_product',
+    componentType: 'primary',
+    containerDescription: '10 mL clear Type I borosilicate glass vial',
+    closureDescription: '20 mm bromobutyl stopper, aluminium flip-off seal',
+    supplier: 'Schott / West',
+    status: 'qualified',
+    compendialStandards: 'USP <660>, USP <381>',
+    materialsOfConstruction: 'Vial | Type I borosilicate glass | Schott | SPEC-VIAL-01 | USP <660>',
+    suitabilityJustification: 'Protection and compatibility demonstrated over 12 months.',
+    elStudyType: 'Controlled extraction, 40C/75%RH, 6 months',
+    elProtocol: 'PR-EL-014',
+    elThreshold: '1.5 ug/day',
+    elConclusion: 'All extractables below the AET.',
+    elResults: 'Zinc dibutyldithiocarbamate | 0.4 | ug/day | 1.5 ug/day | below AET',
+    integrityMethod: 'Helium leak (USP <1207>)',
+    integrityCriteria: '<= 6e-6 mbar L/s',
+    integrityResult: '2.1e-6 mbar L/s',
+    qualificationDate: '2026-06-01',
+  };
+
+  it('carries every recorded field, with the tabular ones parsed into json rows', () => {
+    const body = containerClosureBody(filled, 'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab');
+    expect(body.scope).toBe('drug_product');
+    expect(body.compendialStandards).toEqual(['USP <660>', 'USP <381>']);
+    expect(body.materialsOfConstruction).toEqual([
+      { component: 'Vial', material: 'Type I borosilicate glass', supplier: 'Schott', specification: 'SPEC-VIAL-01', compendialReference: 'USP <660>' },
+    ]);
+    expect(body.extractablesLeachables).toMatchObject({
+      studyType: 'Controlled extraction, 40C/75%RH, 6 months',
+      protocol: 'PR-EL-014',
+      analyticalEvaluationThreshold: '1.5 ug/day',
+      conclusion: 'All extractables below the AET.',
+    });
+    expect((body.extractablesLeachables as { results: unknown[] }).results).toHaveLength(1);
+    expect(body.integrityTesting).toEqual({
+      method: 'Helium leak (USP <1207>)',
+      acceptanceCriteria: '<= 6e-6 mbar L/s',
+      result: '2.1e-6 mbar L/s',
+    });
+    expect(body.projectId).toBe('a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab');
+  });
+
+  /* An empty study object is truthy. Sending one would be recorded as an E&L
+     study that does not exist, and the composed section would stop saying the
+     package is absent — which is the only signal a reviewer has. */
+  it('sends no E&L study and no integrity record when neither was entered', () => {
+    const body = containerClosureBody({
+      systemName: 'HDPE drum',
+      scope: 'drug_substance',
+      componentType: 'primary',
+      containerDescription: 'HDPE drum, 25 kg',
+      closureDescription: 'Screw cap',
+      status: 'draft',
+    });
+    expect(body.extractablesLeachables).toBeUndefined();
+    expect(body.integrityTesting).toBeUndefined();
+    expect(body.materialsOfConstruction).toBeUndefined();
+    expect(body.compendialStandards).toBeUndefined();
+    expect(body.projectId).toBeUndefined();
+  });
+});
+
+describe('referenceStandardBody', () => {
+  it('carries the identity, the characterisation rows and the dates', () => {
+    const body = referenceStandardBody({
+      standardCode: 'RS-DS-001',
+      standardName: 'BX-204 primary reference standard',
+      scope: 'drug_substance',
+      standardType: 'primary',
+      lotNumber: 'RS-LOT-2405',
+      assignedValue: '98.7% (as-is)',
+      materialSource: 'DS lot BX204-DS-2403',
+      characterization: 'Identity | FTIR | Conforms to reference spectrum\nPurity | RP-HPLC | 99.4% area',
+      certificateOfAnalysis: 'CoA-RS-001-2405',
+      qualificationProtocol: 'PR-RS-002',
+      storageConditions: '-70C, desiccated',
+      status: 'qualified',
+      retestDate: '2027-05-01',
+    }, 'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab');
+    expect(body.standardCode).toBe('RS-DS-001');
+    expect(body.characterization).toHaveLength(2);
+    expect(body.characterization?.[1]).toEqual({ attribute: 'Purity', method: 'RP-HPLC', result: '99.4% area' });
+    expect(body.retestDate).toBe(new Date('2027-05-01').toISOString());
+    expect(body.expiryDate).toBeUndefined();
+    expect(body.projectId).toBe('a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab');
   });
 });

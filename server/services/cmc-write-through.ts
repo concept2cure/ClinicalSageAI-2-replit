@@ -18,6 +18,7 @@ import {
   FINISHED_PRODUCT,
   NON_BATCH_SAMPLE_TYPES,
   impactedSectionsForSourceType,
+  normalizeMaterialScope,
   type CmcSourceType,
 } from './module3Composer';
 import unifiedTaskService from './unifiedTaskService';
@@ -576,6 +577,156 @@ export function mapQcTestingPayload(record: Record<string, any>): Record<string,
   };
 }
 
+
+/**
+ * Is anything actually recorded in this json value?
+ *
+ * An empty object, an array of empty objects, and an object whose every value
+ * is a blank string are all "nothing was recorded" — and all of them are
+ * truthy. A truthiness check on a container closure record's
+ * `extractables_leachables` therefore reported an E&L study for a form the
+ * staffer opened and left blank, which is the same class of lie as a green
+ * completeness bar over an empty section.
+ */
+export function hasRecordedValue(v: unknown): boolean {
+  if (v === null || v === undefined) return false;
+  if (typeof v === 'string') return v.trim().length > 0;
+  if (typeof v === 'number') return Number.isFinite(v);
+  if (typeof v === 'boolean') return v;
+  if (Array.isArray(v)) return v.some(hasRecordedValue);
+  if (typeof v === 'object') return Object.values(v as Record<string, unknown>).some(hasRecordedValue);
+  return false;
+}
+
+/**
+ * Map a cmc_container_closures row to a canonical source payload.
+ *
+ * §3.2.S.6 and §3.2.P.7 both match EVERY container_closure source, so the side
+ * has to be carried on the payload or a drug-product blister turns the
+ * drug-substance section green on a system that section never renders — the
+ * defect that once filed a finished-product QC result under §3.2.S.4.4. The
+ * scope is resolved ONCE here, through the composer's own
+ * `normalizeMaterialScope`, and the side-scoped keys the section rules require
+ * are emitted from that single decision; the renderer resolves the same scope
+ * off the same payload, so what counts and what renders cannot disagree.
+ *
+ * `containerClosureStudies` is §3.2.P.2's required field — the development work
+ * behind the chosen packaging. It is emitted only from the drug-product side
+ * and only when a study is actually recorded, and it names the studies on file
+ * rather than restating their conclusions.
+ */
+export function mapContainerClosurePayload(record: Record<string, any>): Record<string, any> {
+  const scope = normalizeMaterialScope(record.scope, 'drug_product');
+  const forDs = scope === 'drug_substance' || scope === 'both';
+  const forDp = scope === 'drug_product' || scope === 'both';
+
+  const systemName = record.systemName || record.system_name || '';
+  const container = record.containerDescription || record.container_description || '';
+  const closure = record.closureDescription || record.closure_description || '';
+  const justification = record.suitabilityJustification || record.suitability_justification || '';
+  const materials = record.materialsOfConstruction ?? record.materials_of_construction ?? null;
+  const compendial = record.compendialStandards ?? record.compendial_standards ?? null;
+  const el = record.extractablesLeachables ?? record.extractables_leachables ?? null;
+  const integrity = record.integrityTesting ?? record.integrity_testing ?? null;
+
+  const studies: string[] = [];
+  if (hasRecordedValue(el)) {
+    const type = (el && typeof el === 'object' && !Array.isArray(el) ? String((el as any).studyType || '') : '').trim();
+    studies.push(type ? `extractables/leachables (${type})` : 'extractables/leachables study');
+  }
+  if (hasRecordedValue(integrity)) {
+    const method = (integrity && typeof integrity === 'object' && !Array.isArray(integrity) ? String((integrity as any).method || '') : '').trim();
+    studies.push(method ? `container closure integrity (${method})` : 'container closure integrity testing');
+  }
+  const studySummary = studies.length > 0
+    ? `${systemName || container || 'Container closure system'}: ${studies.join('; ')}`
+    : '';
+
+  return {
+    scope,
+    systemName,
+    componentType: record.componentType || record.component_type || '',
+    containerDescription: container,
+    closureDescription: closure,
+    suitabilityJustification: justification,
+    materialsOfConstruction: hasRecordedValue(materials) ? materials : null,
+    compendialStandards: hasRecordedValue(compendial) ? compendial : null,
+    extractablesLeachables: hasRecordedValue(el) ? el : null,
+    integrityTesting: hasRecordedValue(integrity) ? integrity : null,
+    supplier: record.supplier || '',
+    status: record.status || 'draft',
+    qualificationDate: record.qualificationDate || record.qualification_date || null,
+    /* Side-scoped completeness keys — §3.2.S.6 requires the drugSubstance*
+       trio and §3.2.P.7 the drugProduct* trio. Blank stays blank: a system
+       recorded without a suitability justification must NOT complete either
+       section, because that justification is the whole substance of the
+       section. */
+    drugSubstanceContainerDescription: forDs && container ? container : null,
+    drugSubstanceClosureDescription: forDs && closure ? closure : null,
+    drugSubstanceSuitabilityJustification: forDs && justification ? justification : null,
+    drugProductContainerDescription: forDp && container ? container : null,
+    drugProductClosureDescription: forDp && closure ? closure : null,
+    drugProductSuitabilityJustification: forDp && justification ? justification : null,
+    containerClosureStudies: forDp && studySummary ? studySummary : null,
+  };
+}
+
+/**
+ * Map a cmc_reference_standards row to a canonical source payload.
+ *
+ * Side-scoped for the same reason as the container closure mapper above:
+ * §3.2.S.5 and §3.2.P.6 both match every reference_standard source.
+ *
+ * `referenceStandardDescription` is built from the record's own identifying
+ * fields — nothing is invented, and a record with neither a name nor a code
+ * produces no description rather than an empty one that would satisfy the
+ * completeness gate.
+ */
+export function mapReferenceStandardPayload(record: Record<string, any>): Record<string, any> {
+  const scope = normalizeMaterialScope(record.scope, 'drug_substance');
+  const forDs = scope === 'drug_substance' || scope === 'both';
+  const forDp = scope === 'drug_product' || scope === 'both';
+
+  const code = String(record.standardCode || record.standard_code || '').trim();
+  const name = String(record.standardName || record.standard_name || '').trim();
+  const type = String(record.standardType || record.standard_type || '').trim();
+  const lot = String(record.lotNumber || record.lot_number || '').trim();
+  const assigned = String(record.assignedValue || record.assigned_value || '').trim();
+  const coa = String(record.certificateOfAnalysis || record.certificate_of_analysis || '').trim();
+
+  const head = [name, code ? `(${code})` : ''].filter(Boolean).join(' ');
+  const detail = [
+    type ? `${type} standard` : '',
+    lot ? `lot ${lot}` : '',
+    assigned ? `assigned value ${assigned}` : '',
+  ].filter(Boolean).join(', ');
+  const description = head ? [head, detail].filter(Boolean).join(' — ') : '';
+
+  return {
+    scope,
+    standardCode: code,
+    standardName: name,
+    standardType: type,
+    lotNumber: lot,
+    assignedValue: assigned,
+    materialSource: record.materialSource || record.material_source || '',
+    characterization: hasRecordedValue(record.characterization) ? record.characterization : null,
+    certificateOfAnalysis: coa,
+    qualificationProtocol: record.qualificationProtocol || record.qualification_protocol || '',
+    storageConditions: record.storageConditions || record.storage_conditions || '',
+    expiryDate: record.expiryDate || record.expiry_date || null,
+    retestDate: record.retestDate || record.retest_date || null,
+    status: record.status || 'draft',
+    qualificationDate: record.qualificationDate || record.qualification_date || null,
+    referenceStandardDescription: description || null,
+    /* Side-scoped completeness keys for §3.2.S.5 / §3.2.P.6. */
+    drugSubstanceReferenceStandard: forDs && description ? description : null,
+    drugSubstanceReferenceStandardCoA: forDs && coa ? coa : null,
+    drugProductReferenceStandard: forDp && description ? description : null,
+    drugProductReferenceStandardCoA: forDp && coa ? coa : null,
+  };
+}
+
 // ── Core write-through function ────────────────────────────────────────────
 
 /**
@@ -798,6 +949,28 @@ export async function writeThroughComparability(
     orgId, projectId, sourceType: 'comparability',
     sourceKey: `comparability:${recordId}`,
     sourcePayload: mapComparabilityPayload(record),
+    createdBy,
+  });
+}
+
+export async function writeThroughContainerClosure(
+  orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
+): Promise<WriteThroughResult | null> {
+  return writeThroughToCanonicalSource({
+    orgId, projectId, sourceType: 'container_closure',
+    sourceKey: `container_closure:${recordId}`,
+    sourcePayload: mapContainerClosurePayload(record),
+    createdBy,
+  });
+}
+
+export async function writeThroughReferenceStandard(
+  orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
+): Promise<WriteThroughResult | null> {
+  return writeThroughToCanonicalSource({
+    orgId, projectId, sourceType: 'reference_standard',
+    sourceKey: `reference_standard:${recordId}`,
+    sourcePayload: mapReferenceStandardPayload(record),
     createdBy,
   });
 }

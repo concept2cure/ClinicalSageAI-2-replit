@@ -11,6 +11,8 @@ import {
   writeThroughProcessValidation,
   writeThroughChangeControl,
   writeThroughComparability,
+  writeThroughContainerClosure,
+  writeThroughReferenceStandard,
 } from '../../services/cmc-write-through';
 import {
   analyticalMethods,
@@ -20,6 +22,8 @@ import {
   cmcChangeControl,
   drugSubstances,
   drugProducts,
+  cmcContainerClosures,
+  cmcReferenceStandards,
   insertAnalyticalMethodSchema,
   insertProcessValidationSchema,
   insertStabilityStudySchema,
@@ -27,6 +31,8 @@ import {
   insertCmcChangeControlSchema,
   insertDrugSubstanceSchema,
   insertDrugProductSchema,
+  insertCmcContainerClosureSchema,
+  insertCmcReferenceStandardSchema,
 } from '../../../shared/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 /* Reading a stability programme's recorded series, and the ICH Q1E poolability
@@ -237,6 +243,14 @@ const changeControlBody = withoutTenantKey(insertCmcChangeControlSchema).extend(
 });
 const drugSubstanceBody = withoutTenantKey(insertDrugSubstanceSchema);
 const drugProductBody = withoutTenantKey(insertDrugProductSchema);
+const containerClosureBody = withoutTenantKey(insertCmcContainerClosureSchema).extend({
+  qualificationDate: optionalDate,
+});
+const referenceStandardBody = withoutTenantKey(insertCmcReferenceStandardSchema).extend({
+  expiryDate: optionalDate,
+  retestDate: optionalDate,
+  qualificationDate: optionalDate,
+});
 
 router.post('/analytical-methods', async (req, res) => {
   try {
@@ -704,6 +718,172 @@ router.put('/drug-products/:id', async (req, res) => {
     res.json({ success: true, data: product });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to update drug product');
+  }
+});
+
+
+/* ── Container closure systems — §3.2.S.6 / §3.2.P.7 ─────────────────────────
+ *
+ * The register behind two CTD sections that had no capture path at all. Both
+ * the write-through and the composed section read `scope` to decide which side
+ * a system is evidence for, so it is stored on the row, never inferred.
+ *
+ * Unlike the older registers, `projectId` is a COLUMN here: the write-through
+ * reads it off the persisted row and falls back to the request body only for a
+ * caller that sends one without storing it. A create that carries no project at
+ * all still succeeds — but the response says so, because a register row that
+ * never reaches Module 3 looks identical to one that did.
+ */
+
+/** The project a canonical write-through should be keyed on, row first. */
+function writeThroughProjectId(row: { projectId?: string | null }, req: express.Request): string | null {
+  const stored = typeof row.projectId === 'string' ? row.projectId.trim() : '';
+  if (stored) return stored;
+  const sent = (req.body as { projectId?: string }).projectId;
+  return typeof sent === 'string' && sent.trim() ? sent.trim() : null;
+}
+
+/**
+ * A register write that could not reach Module 3 is reported, not hidden.
+ *
+ * `writeThroughToCanonicalSource` returns null and logs a warning when there is
+ * no project, so the record silently stops at the register. The row is still
+ * saved (it is real data), and the response carries `module3Linked: false` plus
+ * the reason, so a client can tell the staffer their entry is not yet feeding
+ * the dossier instead of showing an unqualified success.
+ */
+function module3Linkage(projectId: string | null): { module3Linked: boolean; module3Warning?: string } {
+  return projectId
+    ? { module3Linked: true }
+    : {
+        module3Linked: false,
+        module3Warning:
+          'Saved to the register only. No project is set on this record, so it does not feed Module 3 yet.',
+      };
+}
+
+router.get('/container-closures', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const rows = await db
+      .select()
+      .from(cmcContainerClosures)
+      .where(eq(cmcContainerClosures.organizationId, orgId));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch container closure systems');
+  }
+});
+
+router.post('/container-closures', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const validatedData = containerClosureBody.parse(req.body);
+    const [row] = await db
+      .insert(cmcContainerClosures)
+      .values({ ...validatedData, organizationId: orgId } as typeof cmcContainerClosures.$inferInsert)
+      .returning();
+    const projectId = writeThroughProjectId(row, req);
+    if (projectId) {
+      writeThroughContainerClosure(orgId, projectId, String(row.id), row).catch(err =>
+        observeWriteThroughFailure('write_through_container_closure', row.id, err)
+      );
+    }
+    res.json({ success: true, data: row, ...module3Linkage(projectId) });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create container closure system');
+  }
+});
+
+/**
+ * Qualify a system, attach the E&L package, or correct the record. A container
+ * closure system is qualified over months — the suitability justification and
+ * the extractables/leachables results almost never exist on the day the system
+ * is first recorded, so a create-only endpoint could never carry the section.
+ */
+router.put('/container-closures/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = containerClosureBody.partial().parse(req.body);
+    const [row] = await db
+      .update(cmcContainerClosures)
+      .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
+      .where(and(eq(cmcContainerClosures.id, id), eq(cmcContainerClosures.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Container closure system not found' });
+    const projectId = writeThroughProjectId(row, req);
+    if (projectId) {
+      writeThroughContainerClosure(orgId, projectId, String(row.id), row).catch(err =>
+        observeWriteThroughFailure('write_through_container_closure', row.id, err)
+      );
+    }
+    res.json({ success: true, data: row, ...module3Linkage(projectId) });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update container closure system');
+  }
+});
+
+/* ── Reference standards — §3.2.S.5 / §3.2.P.6 ───────────────────────────────
+ *
+ * Every potency and purity number the QC register holds is reported against a
+ * reference standard. Until now the standard itself was recorded nowhere, so
+ * the two sections that exist to describe it composed from nothing.
+ */
+router.get('/reference-standards', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const rows = await db
+      .select()
+      .from(cmcReferenceStandards)
+      .where(eq(cmcReferenceStandards.organizationId, orgId));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch reference standards');
+  }
+});
+
+router.post('/reference-standards', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const validatedData = referenceStandardBody.parse(req.body);
+    const [row] = await db
+      .insert(cmcReferenceStandards)
+      .values({ ...validatedData, organizationId: orgId } as typeof cmcReferenceStandards.$inferInsert)
+      .returning();
+    const projectId = writeThroughProjectId(row, req);
+    if (projectId) {
+      writeThroughReferenceStandard(orgId, projectId, String(row.id), row).catch(err =>
+        observeWriteThroughFailure('write_through_reference_standard', row.id, err)
+      );
+    }
+    res.json({ success: true, data: row, ...module3Linkage(projectId) });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create reference standard');
+  }
+});
+
+/** Qualify a standard, record its characterisation, or retire it. */
+router.put('/reference-standards/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = referenceStandardBody.partial().parse(req.body);
+    const [row] = await db
+      .update(cmcReferenceStandards)
+      .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
+      .where(and(eq(cmcReferenceStandards.id, id), eq(cmcReferenceStandards.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Reference standard not found' });
+    const projectId = writeThroughProjectId(row, req);
+    if (projectId) {
+      writeThroughReferenceStandard(orgId, projectId, String(row.id), row).catch(err =>
+        observeWriteThroughFailure('write_through_reference_standard', row.id, err)
+      );
+    }
+    res.json({ success: true, data: row, ...module3Linkage(projectId) });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update reference standard');
   }
 });
 

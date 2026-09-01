@@ -14,8 +14,11 @@ import {
   drugSubstanceForm, drugSubstanceBody,
   drugProductForm, drugProductBody,
   comparabilityForm, comparabilityBody,
+  containerClosureForm, containerClosureBody,
+  referenceStandardForm, referenceStandardBody,
   asUserId,
 } from './cmcRegisterForms';
+import type { ContainerClosureBody, ReferenceStandardBody } from './cmcRegisterForms';
 import { useAuth } from '@/services/portal/authService';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -956,6 +959,203 @@ export function CmDrugProducts() {
         { header: 'Route', render: (r) => text(r.routeOfAdministration) },
         { header: 'Container closure', render: (r) => text(r.packagingMaterials?.containerClosure) },
         { header: 'Status', render: (r) => chip(r.status, 'development') },
+      ]}
+    />
+  );
+}
+
+/* ═══════════ Container closure systems — GET /api/cmc/container-closures ═════ */
+
+export interface ContainerClosureApiRow {
+  id: number;
+  projectId?: string | null;
+  scope: string;
+  systemName: string;
+  componentType: string | null;
+  containerDescription: string;
+  closureDescription: string;
+  supplier?: string | null;
+  compendialStandards?: string[] | null;
+  suitabilityJustification?: string | null;
+  materialsOfConstruction?: Array<Record<string, string>> | null;
+  extractablesLeachables?: {
+    studyType?: string;
+    protocol?: string;
+    analyticalEvaluationThreshold?: string;
+    conclusion?: string;
+    results?: Array<Record<string, string>>;
+  } | null;
+  integrityTesting?: { method?: string; acceptanceCriteria?: string; result?: string } | null;
+  status: string;
+  qualificationDate?: string | null;
+}
+
+/** Which CTD section a scoped record files into, in the staffer's words. */
+function scopeLabel(scope: unknown, sSection: string, pSection: string): string {
+  const v = String(scope ?? '').toLowerCase();
+  if (v === 'both') return `${sSection} + ${pSection}`;
+  if (v === 'drug_substance') return sSection;
+  if (v === 'drug_product') return pSection;
+  return '--';
+}
+
+/**
+ * What the E&L record actually holds — never "yes" for an opened-and-abandoned
+ * form. A study with no per-analyte results is reported as a study with no
+ * results, which is what the composed section says about it too.
+ */
+function elSummary(r: ContainerClosureApiRow): React.ReactNode {
+  const el = r.extractablesLeachables;
+  if (!el || Object.keys(el).length === 0) return '--';
+  const results = Array.isArray(el.results) ? el.results.length : 0;
+  if (results > 0) return `${results} analyte${results === 1 ? '' : 's'}`;
+  return <span className="rd-chip tone-warn">no results</span>;
+}
+
+/**
+ * The container closure register — the capture path §3.2.S.6 and §3.2.P.7 never
+ * had. `Evidence for` is the column that decides which of the two a system
+ * files into, so it is shown in the table rather than buried in the record.
+ */
+export function CmContainerClosures() {
+  const projectId = cmcProjectUuid();
+  return (
+    <RegisterCard<ContainerClosureApiRow>
+      path="/api/cmc/container-closures"
+      title="Container closure systems"
+      meta={(rows) => {
+        const qualified = rows.filter((r) => String(r.status || '').toLowerCase() === 'qualified').length;
+        const withEl = rows.filter((r) => r.extractablesLeachables && Object.keys(r.extractablesLeachables).length > 0).length;
+        return `${rows.length} systems -- ${qualified} qualified -- ${withEl} with an E&L study`;
+      }}
+      icon={I.vault}
+      loadingTitle="Loading container closure systems…"
+      emptyTitle="No container closure system recorded yet"
+      emptyHint="The container, the closure, their materials of construction and the extractables/leachables package behind them. Sections 3.2.S.6 and 3.2.P.7 compose from this register, and stay empty until something is recorded here."
+      errorTitle="Couldn’t load container closure systems"
+      errorHint="The org-scoped container closure register didn’t load. Sign in and try again."
+      rowKey={(r) => r.id}
+      create={{
+        label: 'Record system',
+        subject: 'container closure system',
+        path: '/api/cmc/container-closures',
+        form: () => containerClosureForm(),
+        toBody: (v, pid) => containerClosureBody(v, pid),
+        /* Without a project the row is saved but never reaches Module 3 — the
+           API says so in its response, and the button says so first. */
+        needsProject: true,
+      }}
+      rowActions={[
+        {
+          label: 'Update',
+          icon: I.penLine,
+          subject: 'container closure system',
+          form: (r) => containerClosureForm(r as Partial<ContainerClosureBody>),
+          path: (r) => `/api/cmc/container-closures/${r.id}`,
+          toBody: (v, _r, pid) => containerClosureBody(v, pid ?? projectId),
+        },
+      ]}
+      columns={[
+        { header: 'System', render: (r) => r.systemName, mono: true, bold: true },
+        { header: 'Files under', render: (r) => scopeLabel(r.scope, '3.2.S.6', '3.2.P.7') },
+        { header: 'Component', render: (r) => text(r.componentType) },
+        { header: 'Container', render: (r) => r.containerDescription },
+        { header: 'Closure', render: (r) => r.closureDescription },
+        { header: 'Supplier', render: (r) => text(r.supplier) },
+        {
+          header: 'Suitability',
+          render: (r) => (r.suitabilityJustification
+            ? <span className="rd-chip tone-ok">justified</span>
+            : <span className="rd-chip tone-warn">not justified</span>),
+        },
+        { header: 'E&L', render: elSummary },
+        { header: 'Integrity', render: (r) => text(r.integrityTesting?.result) },
+        { header: 'Status', render: (r) => chip(r.status, 'draft') },
+      ]}
+    />
+  );
+}
+
+/* ═══════════ Reference standards — GET /api/cmc/reference-standards ══════════ */
+
+export interface ReferenceStandardApiRow {
+  id: number;
+  projectId?: string | null;
+  scope: string;
+  standardCode: string;
+  standardName: string;
+  standardType: string;
+  materialSource?: string | null;
+  lotNumber?: string | null;
+  assignedValue?: string | null;
+  characterization?: Array<Record<string, string>> | null;
+  certificateOfAnalysis?: string | null;
+  qualificationProtocol?: string | null;
+  storageConditions?: string | null;
+  expiryDate?: string | null;
+  retestDate?: string | null;
+  status: string;
+  qualificationDate?: string | null;
+}
+
+/**
+ * The reference standard register — §3.2.S.5 / §3.2.P.6.
+ *
+ * Every assay number in the QC register is reported against one of these, and
+ * until now the standard itself was recorded nowhere in the product.
+ */
+export function CmReferenceStandards() {
+  const projectId = cmcProjectUuid();
+  return (
+    <RegisterCard<ReferenceStandardApiRow>
+      path="/api/cmc/reference-standards"
+      title="Reference standards"
+      meta={(rows) => {
+        const qualified = rows.filter((r) => String(r.status || '').toLowerCase() === 'qualified').length;
+        const primary = rows.filter((r) => String(r.standardType || '').toLowerCase().includes('primary')).length;
+        return `${rows.length} standards -- ${primary} primary -- ${qualified} qualified`;
+      }}
+      icon={I.scale}
+      loadingTitle="Loading reference standards…"
+      emptyTitle="No reference standard recorded yet"
+      emptyHint="The standard every potency and purity result is reported against, its characterisation and its qualification. Sections 3.2.S.5 and 3.2.P.6 compose from this register."
+      errorTitle="Couldn’t load reference standards"
+      errorHint="The org-scoped reference standard register didn’t load. Sign in and try again."
+      rowKey={(r) => r.id}
+      create={{
+        label: 'Record standard',
+        subject: 'reference standard',
+        path: '/api/cmc/reference-standards',
+        form: () => referenceStandardForm(),
+        toBody: (v, pid) => referenceStandardBody(v, pid),
+        needsProject: true,
+      }}
+      rowActions={[
+        {
+          label: 'Update',
+          icon: I.penLine,
+          subject: 'reference standard',
+          form: (r) => referenceStandardForm(r as Partial<ReferenceStandardBody>),
+          path: (r) => `/api/cmc/reference-standards/${r.id}`,
+          toBody: (v, _r, pid) => referenceStandardBody(v, pid ?? projectId),
+        },
+      ]}
+      columns={[
+        { header: 'Code', render: (r) => r.standardCode, mono: true, bold: true },
+        { header: 'Standard', render: (r) => r.standardName },
+        { header: 'Files under', render: (r) => scopeLabel(r.scope, '3.2.S.5', '3.2.P.6') },
+        { header: 'Type', render: (r) => r.standardType },
+        { header: 'Lot', render: (r) => text(r.lotNumber) },
+        { header: 'Assigned value', render: (r) => text(r.assignedValue) },
+        {
+          header: 'Characterised',
+          render: (r) => (Array.isArray(r.characterization) && r.characterization.length > 0
+            ? `${r.characterization.length} attribute${r.characterization.length === 1 ? '' : 's'}`
+            : <span className="rd-chip tone-warn">none</span>),
+        },
+        { header: 'CoA', render: (r) => text(r.certificateOfAnalysis) },
+        { header: 'Retest / expiry', render: (r) => fmtDate(r.retestDate || r.expiryDate) },
+        { header: 'Status', render: (r) => chip(r.status, 'draft') },
       ]}
     />
   );

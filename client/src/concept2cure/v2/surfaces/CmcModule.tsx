@@ -32,6 +32,8 @@ import {
 import {
   CmMethodLibrary,
   CmQcTesting,
+  CmContainerClosures,
+  CmReferenceStandards,
   CmChangeRegister,
   CmComparabilityStudies,
   CmProcessValidation,
@@ -836,9 +838,11 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
         {rows.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Approved specifications -> §3.2.S.4.1'} nav={nav} bar /></div>}
       </div>
       {/* specification (the limit) -> method (how it is measured) -> QC test
-          (the measurement actually performed against it). */}
+          (the measurement actually performed against it) -> reference standard
+          (what the measurement is reported against). */}
       <CmMethodLibrary />
       <CmQcTesting />
+      <CmReferenceStandards />
       {edit && <C2CForm config={FORM(edit === 'new' ? null : edit)} onCancel={() => setEdit(null)} onSubmit={save} />}
       {sign && <C2CForm config={signForm(sign.attr + ' -- ' + sign.material)} onCancel={() => setSign(null)} onSubmit={doSign} />}
       <C2CToast msg={toast} />
@@ -1898,6 +1902,12 @@ function CmMaterials({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
       {/* Process validation is the §3.2.P.3.5 evidence that the product's
           process does what its description says. */}
       <CmProcessValidation />
+
+      <div className="cm-sub-head">Container closure — §3.2.S.6 / §3.2.P.7</div>
+      {/* The system that holds the material, and the extractables/leachables
+          package behind it. Both sections composed from nothing until this
+          register existed; each row states which of the two it files under. */}
+      <CmContainerClosures />
 
       <div className="pj-card" style={{ marginTop: 16 }}>
         <div className="pj-card-b" style={{ paddingTop: 4 }}>

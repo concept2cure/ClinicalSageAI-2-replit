@@ -3849,6 +3849,105 @@ export const drugProducts = pgTable(
   })
 );
 
+/* ── Container closure systems — §3.2.S.6 / §3.2.P.7 ──────────────────────────
+ *
+ * The Module 3 composer has demanded a `container_closure` source since Module 3
+ * was modelled, and no table anywhere held one: §3.2.S.6 and §3.2.P.7 were
+ * unservable, and the extractables/leachables package a reviewer asks for first
+ * had nowhere to be recorded at all.
+ *
+ * `scope` decides which section a system files into. A drum that holds the drug
+ * substance is §3.2.S.6 evidence; a blister that holds the tablet is §3.2.P.7
+ * evidence. Recording one and greening both is the defect class that once put a
+ * finished-product QC result into §3.2.S.4.4, so the side is a stored column,
+ * never an inference at render time.
+ */
+export const cmcContainerClosures = pgTable(
+  'cmc_container_closures',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    /* The program the system belongs to. Unlike the older CMC registers this is
+       a COLUMN, so a record still knows its project after the request that
+       created it, and the canonical write-through no longer depends on a client
+       having remembered to put projectId in the body. */
+    projectId: text('project_id'),
+    scope: text('scope').default('drug_product').notNull(), // drug_substance | drug_product | both
+    systemName: text('system_name').notNull(),
+    componentType: text('component_type').default('primary').notNull(), // primary, secondary, administration-device
+    containerDescription: text('container_description').notNull(),
+    closureDescription: text('closure_description').notNull(),
+    /* [{ component, material, supplier, specification, compendialReference }] —
+       the materials of construction table §3.2.P.7 is built around. */
+    materialsOfConstruction: json('materials_of_construction'),
+    compendialStandards: text('compendial_standards').array(), // USP <661>, Ph. Eur. 3.2.1, ...
+    suitabilityJustification: text('suitability_justification'),
+    /* { studyType, protocol, conditions, analyticalEvaluationThreshold,
+         results: [{ analyte, level, unit, threshold, assessment }], conclusion } */
+    extractablesLeachables: json('extractables_leachables'),
+    /* { method, acceptanceCriteria, result, testDate } — CCI / seal integrity. */
+    integrityTesting: json('integrity_testing'),
+    supplier: text('supplier'),
+    status: text('status').default('draft').notNull(), // draft, qualified, retired
+    qualifiedBy: integer('qualified_by').references(() => users.id),
+    qualificationDate: timestamp('qualification_date'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_cmc_container_closures_org: index('idx_cmc_container_closures_org').on(table.organizationId),
+    idx_cmc_container_closures_project: index('idx_cmc_container_closures_project').on(table.projectId),
+  })
+);
+
+/* ── Reference standards — §3.2.S.5 / §3.2.P.6 ────────────────────────────────
+ *
+ * Every assay result already in the system is reported against a reference
+ * standard, and the standard itself was recorded nowhere: §3.2.S.5 and §3.2.P.6
+ * had no source to compose from. A reviewer's first question about any potency
+ * number is which standard it was measured against and how that standard was
+ * qualified; both live here.
+ *
+ * `scope` follows the same rule as the container closure register — the section
+ * a standard files into is stored, not guessed.
+ */
+export const cmcReferenceStandards = pgTable(
+  'cmc_reference_standards',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: text('project_id'),
+    scope: text('scope').default('drug_substance').notNull(), // drug_substance | drug_product | both
+    standardCode: text('standard_code').notNull(),
+    standardName: text('standard_name').notNull(),
+    standardType: text('standard_type').default('primary').notNull(), // primary, secondary, working, compendial, system-suitability
+    materialSource: text('material_source'), // the DS lot it was prepared from, or the compendial catalogue entry
+    lotNumber: text('lot_number'),
+    assignedValue: text('assigned_value'), // e.g. "98.7% (as-is)" — the potency assay results are reported against
+    /* [{ attribute, method, result }] — how the standard was characterised, which
+       is what qualifies it as a standard rather than just another lot. */
+    characterization: json('characterization'),
+    certificateOfAnalysis: text('certificate_of_analysis'),
+    qualificationProtocol: text('qualification_protocol'),
+    storageConditions: text('storage_conditions'),
+    expiryDate: timestamp('expiry_date'),
+    retestDate: timestamp('retest_date'),
+    status: text('status').default('draft').notNull(), // draft, qualified, expired, retired
+    qualifiedBy: integer('qualified_by').references(() => users.id),
+    qualificationDate: timestamp('qualification_date'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_cmc_reference_standards_org: index('idx_cmc_reference_standards_org').on(table.organizationId),
+    idx_cmc_reference_standards_project: index('idx_cmc_reference_standards_project').on(table.projectId),
+  })
+);
+
 // Regulatory Documents Table
 export const regulatoryDocuments = pgTable(
   'regulatory_documents',
@@ -3918,6 +4017,18 @@ export const insertDrugProductSchema = createInsertSchemaOmit(drugProducts, {
   updatedAt: true,
 });
 
+export const insertCmcContainerClosureSchema = createInsertSchemaOmit(cmcContainerClosures, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCmcReferenceStandardSchema = createInsertSchemaOmit(cmcReferenceStandards, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // CMC Types
 export type AnalyticalMethod = InferSelectModel<typeof analyticalMethods>;
 export type InsertAnalyticalMethod = z.infer<typeof insertAnalyticalMethodSchema>;
@@ -3933,6 +4044,10 @@ export type DrugSubstance = InferSelectModel<typeof drugSubstances>;
 export type InsertDrugSubstance = z.infer<typeof insertDrugSubstanceSchema>;
 export type DrugProduct = InferSelectModel<typeof drugProducts>;
 export type InsertDrugProduct = z.infer<typeof insertDrugProductSchema>;
+export type CmcContainerClosure = InferSelectModel<typeof cmcContainerClosures>;
+export type InsertCmcContainerClosure = z.infer<typeof insertCmcContainerClosureSchema>;
+export type CmcReferenceStandard = InferSelectModel<typeof cmcReferenceStandards>;
+export type InsertCmcReferenceStandard = z.infer<typeof insertCmcReferenceStandardSchema>;
 
 // Regulatory Document Insert Schema
 export const insertRegulatoryDocumentSchema = createInsertSchemaOmit(regulatoryDocuments, {
