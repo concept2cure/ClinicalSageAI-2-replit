@@ -23,6 +23,7 @@
  */
 
 import { Router, type Request, type Response } from 'express';
+import { resolveSignerIdentity } from '../services/part11/resolve-signer-identity.js';
 import bcrypt from 'bcryptjs';
 import { createHash } from 'crypto';
 import { pool } from '../db.js';
@@ -273,30 +274,41 @@ router.post('/sign', async (req: Request, res: Response) => {
   // Load signer profile so signer_name / signer_email are denormalised on
   // the signature row (required for offline audit reproduction per Part 11).
   const session = (req as any).user ?? {};
-  let signerName: string = session.name ?? '';
-  let signerEmail: string = session.email ?? '';
-  // §11.50 signer title — resolved ONLY from the server-side users row, never
-  // from client input. Null when unresolvable (never fabricated).
-  let resolvedSignerTitle: string | null = null;
-  try {
-    // tenant-isolation-safe: signer self-lookup — userId is the authenticated user's own session id; denormalises signer_name/email/title onto the signature row for Part 11 offline audit.
-    const u = await pool.query(
-      `SELECT name, email, title FROM users WHERE id = $1 LIMIT 1`,
-      [userId]
-    );
-    if (u.rows[0]) {
-      signerName = signerName || u.rows[0].name || '';
-      signerEmail = signerEmail || u.rows[0].email || '';
-      // Server-resolved title only — never a client-asserted one.
-      resolvedSignerTitle = u.rows[0].title ?? null;
-    }
-  } catch (err: any) {
-    if (err?.code !== '42P01') {
-      console.warn('[esignature] signer lookup failed:', err?.message);
-    }
+  const orgId = Number(session.organizationId);
+  if (!Number.isFinite(orgId)) {
+    return res.status(403).json({
+      error: 'Organization context required to sign (§11.10).',
+      code: 'ESIGNATURE_ORG_REQUIRED',
+    });
   }
-  if (!signerEmail) {
-    return res.status(400).json({ error: 'signer email not resolvable from session' });
+
+  // §11.50 printed name, email and title — resolved from the membership record
+  // through the shared Part 11 lookup, never from the session and never
+  // defaulted.
+  //
+  // What this replaces: `session.name ?? ''` / `session.email ?? ''` seeded the
+  // values from client-controlled session fields, then filled gaps from a BARE
+  // PRIMARY-KEY read of `users` — unscoped, so a user id belonging to another
+  // tenant would still have resolved a name. Only the email was checked before
+  // signing, so the printed NAME could be written empty; and a failed lookup was
+  // swallowed with a console.warn, degrading identity to whatever the session
+  // asserted at exactly the moment the server could not confirm it.
+  let signerName: string;
+  let signerEmail: string;
+  let resolvedSignerTitle: string | null;
+  try {
+    const signer = await resolveSignerIdentity(pool, userId, orgId, 'esignature sign');
+    signerName = signer.name;
+    signerEmail = signer.email;
+    resolvedSignerTitle = signer.title;
+  } catch (err: any) {
+    if (err?.code === 'SIGNER_NOT_ATTRIBUTABLE') {
+      return res.status(403).json({
+        error: 'Signer identity is not attributable in this organization (§11.100).',
+        code: 'ESIGNATURE_SIGNER_NOT_ATTRIBUTABLE',
+      });
+    }
+    throw err;
   }
 
   const signedAt = new Date();
@@ -311,13 +323,6 @@ router.post('/sign', async (req: Request, res: Response) => {
   // bound_payload_digest. Fail CLOSED — never apply a signature to a version
   // that has no content (or whose row/table is absent). signatureHash above is
   // the §11.200 attribution hash; this is the §11.70 record-linking hash.
-  const orgId = Number(session.organizationId);
-  if (!Number.isFinite(orgId)) {
-    return res.status(403).json({
-      error: 'Organization context required to sign (§11.10).',
-      code: 'ESIGNATURE_ORG_REQUIRED',
-    });
-  }
   let boundPayloadDigest: string;
   try {
     // Tenant-scoped: the version is resolved only within the signer's org

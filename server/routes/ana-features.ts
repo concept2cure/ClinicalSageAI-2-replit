@@ -2257,10 +2257,12 @@ router.post(
         acknowledgeUnsupported: parsed.data.acknowledgeUnsupported ?? false,
         organizationId,
         userId,
-        userName:
-          (req as any).user?.name ||
-          (req as any).user?.email ||
-          `user-${userId}`,
+        // No `userName` fallback here. It used to synthesise `user-${userId}`
+        // when the session carried no name, and the service could not then tell
+        // an invented identity from a real one — so it wrote the invention into
+        // the §11.50 printed-name column. The service now resolves the signer
+        // from the membership record itself and refuses if it cannot.
+        userName: (req as any).user?.name ?? null,
         userEmail: (req as any).user?.email ?? null,
         userRole: (req as any).user?.role ?? 'regulatory',
         ipAddress:
