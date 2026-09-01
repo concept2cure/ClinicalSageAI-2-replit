@@ -5,6 +5,7 @@ import { writeThroughBatchRecord } from '../../services/cmc-write-through';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
 import { createScopedLogger } from '../../utils/logger';
 import * as metricsModule from '../../metrics.js';
+import { resolveActorUserId } from './governance';
 
 const router = express.Router();
 const logger = createScopedLogger('cmc-batch');
@@ -32,12 +33,6 @@ function observeWriteThroughFailure(recordId: string | number, err: unknown): vo
   }
 }
 
-function resolveActorUserId(req: express.Request): number {
-  const r = req as any;
-  const raw = r.userId ?? r.user?.id ?? 0;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
-  return Number.isFinite(n) && n > 0 ? n : 0;
-}
 
 // Validation schemas
 const createBatchSchema = z.object({

@@ -8,9 +8,19 @@ import {
   qcTestForm,
   containerClosureForm,
   containerClosureBody,
+  containerClosurePatch,
   referenceStandardForm,
   referenceStandardBody,
+  referenceStandardPatch,
+  qualifyForm,
+  qualifyBody,
   parseRowLines,
+  rowLinesOf,
+  MATERIAL_COLUMNS,
+  CHARACTERISATION_COLUMNS,
+} from '../surfaces/cmcRegisterForms';
+import type { ContainerClosureRow } from '../surfaces/cmcRegisterForms';
+import {
   qcTestBody,
   qcReviewBody,
   stabilityForm,
@@ -668,5 +678,152 @@ describe('referenceStandardBody', () => {
     expect(body.retestDate).toBe(new Date('2027-05-01').toISOString());
     expect(body.expiryDate).toBeUndefined();
     expect(body.projectId).toBe('a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab');
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   The adversarial review of the two registers: what the edit drawer destroyed,
+   what it could not clear, and what it silently dropped.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+describe('the edit drawer is seeded from the stored record', () => {
+  const stored: ContainerClosureRow = {
+    scope: 'drug_product',
+    systemName: '10 mL Type I vial / 20 mm stopper',
+    componentType: 'primary',
+    containerDescription: '10 mL clear Type I borosilicate glass vial',
+    closureDescription: '20 mm bromobutyl stopper',
+    supplier: 'Schott / West',
+    compendialStandards: ['USP <660>', 'USP <381>'],
+    suitabilityJustification: 'Protection and compatibility demonstrated over 12 months.',
+    materialsOfConstruction: [
+      { component: 'Vial', material: 'Type I borosilicate glass', supplier: 'Schott', specification: 'SPEC-VIAL-01', compendialReference: 'USP <660>' },
+      { component: 'Stopper', material: 'Bromobutyl rubber', supplier: 'West' },
+    ],
+    extractablesLeachables: {
+      studyType: 'Controlled extraction',
+      protocol: 'PR-EL-014',
+      conditions: '40C/75%RH, 6 months',
+      analyticalEvaluationThreshold: '1.5 ug/day',
+      results: [{ analyte: 'Zinc dibutyldithiocarbamate', level: '0.4', unit: 'ug/day', threshold: '1.5 ug/day', assessment: 'below AET' }],
+    },
+    integrityTesting: { method: 'Helium leak (USP <1207>)', acceptanceCriteria: '<= 6e-6 mbar L/s', result: '2.1e-6 mbar L/s', testDate: '2026-04-02T00:00:00.000Z' },
+    status: 'draft',
+  };
+  const valuesOf = (config: ReturnType<typeof containerClosureForm>) =>
+    Object.fromEntries(config.fields.map((f) => [f.key, f.default ?? '']));
+
+  /* The drawer opened blank over every json column. A packaging engineer adding
+     the E&L conclusion therefore sent an object containing only the conclusion,
+     and the PUT replaced the whole column — the analyte results, the protocol
+     and the threshold destroyed by a save that reported success. */
+  it('carries the stored E&L package, materials and integrity record into the form', () => {
+    const v = valuesOf(containerClosureForm(stored));
+    expect(v.elStudyType).toBe('Controlled extraction');
+    expect(v.elProtocol).toBe('PR-EL-014');
+    expect(v.elConditions).toBe('40C/75%RH, 6 months');
+    expect(v.elThreshold).toBe('1.5 ug/day');
+    expect(v.elResults).toContain('Zinc dibutyldithiocarbamate | 0.4 | ug/day | 1.5 ug/day | below AET');
+    expect(v.materialsOfConstruction).toContain('Vial | Type I borosilicate glass | Schott | SPEC-VIAL-01 | USP <660>');
+    expect(v.materialsOfConstruction).toContain('Stopper | Bromobutyl rubber | West');
+    expect(v.integrityMethod).toBe('Helium leak (USP <1207>)');
+    expect(v.integrityTestDate).toBe('2026-04-02');
+  });
+
+  it('a round trip through the drawer changes nothing it was not asked to change', () => {
+    const patched = containerClosurePatch(valuesOf(containerClosureForm(stored)));
+    expect(patched.materialsOfConstruction).toEqual(stored.materialsOfConstruction);
+    expect(patched.extractablesLeachables).toEqual(stored.extractablesLeachables);
+    expect(patched.integrityTesting).toEqual(stored.integrityTesting);
+    expect(patched.compendialStandards).toEqual(stored.compendialStandards);
+    expect(patched.suitabilityJustification).toBe(stored.suitabilityJustification);
+  });
+
+  it('adding one E&L conclusion keeps the results that were already recorded', () => {
+    const v = { ...valuesOf(containerClosureForm(stored)), elConclusion: 'All extractables below the AET.' };
+    const patched = containerClosurePatch(v);
+    expect(patched.extractablesLeachables?.conclusion).toBe('All extractables below the AET.');
+    expect(patched.extractablesLeachables?.results).toHaveLength(1);
+    expect(patched.extractablesLeachables?.protocol).toBe('PR-EL-014');
+  });
+
+  /* The mirror defect: `opt()` omits a blank, so a value entered against the
+     wrong record could be overwritten but never removed. */
+  it('a field the staffer clears is actually cleared', () => {
+    const v = { ...valuesOf(containerClosureForm(stored)), suitabilityJustification: '', supplier: '' };
+    const patched = containerClosurePatch(v);
+    expect(patched.suitabilityJustification).toBeNull();
+    expect(patched.supplier).toBeNull();
+    // Untouched fields are still carried, not nulled with it.
+    expect(patched.materialsOfConstruction).toHaveLength(2);
+  });
+
+  it('the reference standard drawer does the same for its characterisation', () => {
+    const row = {
+      scope: 'drug_substance', standardCode: 'RS-DS-001', standardName: 'Primary standard',
+      standardType: 'primary', status: 'draft',
+      characterization: [
+        { attribute: 'Identity', method: 'FTIR', result: 'Conforms' },
+        { attribute: 'Purity', method: 'RP-HPLC', result: '99.4% area' },
+      ],
+      certificateOfAnalysis: 'CoA-001',
+    };
+    const v = Object.fromEntries(referenceStandardForm(row).fields.map((f) => [f.key, f.default ?? '']));
+    expect(v.characterization).toBe('Identity | FTIR | Conforms\nPurity | RP-HPLC | 99.4% area');
+    const patched = referenceStandardPatch({ ...v, lotNumber: 'RS-LOT-2405' });
+    expect(patched.characterization).toEqual(row.characterization);
+    expect(patched.lotNumber).toBe('RS-LOT-2405');
+    expect(patched.expiryDate).toBeNull();
+  });
+});
+
+describe('neither register offers qualification as a status', () => {
+  /* Qualification is a Part 11 signature (POST .../:id/qualify) that records who
+     qualified the record, when and why. The API refuses a self-declared
+     'qualified' on create and update, so offering it here would only produce a
+     rejected save — and, worse, would look like the governed act. */
+  it('the status control cannot set qualified', () => {
+    for (const config of [containerClosureForm(), referenceStandardForm()]) {
+      const status = config.fields.find((f) => f.key === 'status')!;
+      expect(status.options).not.toContain('qualified');
+    }
+  });
+
+  it('a record already qualified does not come back as qualified in the status control', () => {
+    const status = containerClosureForm({ status: 'qualified' } as never).fields.find((f) => f.key === 'status')!;
+    expect(status.default).toBe('draft');
+  });
+
+  it('the qualification form collects a reason and a re-authentication', () => {
+    const keys = qualifyForm('container closure system', 'Vial system').fields.map((f) => f.key);
+    expect(keys).toEqual(expect.arrayContaining(['meaning', 'reason', 'password']));
+    const body = qualifyBody({ reason: 'Qualification report QR-014 accepted.', meaning: 'approval', password: 'pw', totp: '' });
+    expect(body).toEqual({
+      reason: 'Qualification report QR-014 accepted.',
+      meaning: 'approval',
+      reauth: { password: 'pw', totp: undefined },
+    });
+  });
+});
+
+describe('parseRowLines keeps what was typed', () => {
+  /* Iterating the KEYS silently dropped every cell past the last column: a note
+     typed as a sixth cell simply vanished from the record and the dossier. */
+  it('keeps cells beyond the declared columns rather than deleting them', () => {
+    expect(parseRowLines('Ferrule | Al | West | SPEC-1 | USP <381> | re-qualified 2026 | see NC-114', MATERIAL_COLUMNS))
+      .toEqual([{
+        component: 'Ferrule', material: 'Al', supplier: 'West', specification: 'SPEC-1',
+        compendialReference: 'USP <381> | re-qualified 2026 | see NC-114',
+      }]);
+  });
+
+  it('round-trips through rowLinesOf', () => {
+    const rows = [{ attribute: 'Identity', method: 'FTIR', result: 'Conforms' }];
+    expect(parseRowLines(rowLinesOf(rows, CHARACTERISATION_COLUMNS), CHARACTERISATION_COLUMNS)).toEqual(rows);
+  });
+
+  it('rowLinesOf is empty for a column that holds nothing', () => {
+    expect(rowLinesOf(null, MATERIAL_COLUMNS)).toBe('');
+    expect(rowLinesOf([{}], MATERIAL_COLUMNS)).toBe('');
   });
 });

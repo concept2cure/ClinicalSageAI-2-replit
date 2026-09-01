@@ -52,6 +52,22 @@ step "5. QC runs the test; a second person reviews (feeds 3.2.S.4)"
 CODE=$(req qc POST /api/cmc/qc-testing "{\"sampleId\":\"S-2026-001\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"2026-07-01T00:00:00.000Z\",\"testResults\":{\"value\":\"99.2\",\"unit\":\"%\"},\"specifications\":{\"acceptanceCriteria\":\"98.0-102.0%\"},\"passFailStatus\":\"pass\",\"projectId\":\"$PROGRAM\"}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "QC result recorded ($CODE)" || bad "QC failed ($CODE): $(head -c300 "$OUT/qc.json")"
 
+step "5b. The QC reviewer is the session, not the request body — and never the analyst"
+QCID=$(cat "$OUT/qc.json" | JQ '.data.id // .id // empty')
+# A forged reviewer is ignored: who verified a release result is a fact about
+# who was signed in, not a number a caller can choose.
+CODE=$(req qcrev PUT "/api/cmc/qc-testing/$QCID" '{"reviewedBy":999999,"passFailStatus":"pass"}')
+REVBY=$(cat "$OUT/qcrev.json" | JQ '.data.reviewedBy // empty')
+[ "$CODE" = 200 ] && [ -n "$REVBY" ] && [ "$REVBY" != "999999" ] \
+  && ok "review recorded against the signed-in user ($REVBY), not the body's 999999" \
+  || bad "QC review attribution: code=$CODE reviewedBy=$REVBY"
+# Second-person review, enforced by the API and not only by the button.
+CODE=$(req qcself POST /api/cmc/qc-testing "{\"sampleId\":\"S-2026-002\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"2026-07-02T00:00:00.000Z\",\"testResults\":{\"value\":\"99.0\",\"unit\":\"%\"},\"passFailStatus\":\"pass\",\"analyst\":$REVBY,\"projectId\":\"$PROGRAM\"}")
+SELFID=$(cat "$OUT/qcself.json" | JQ '.data.id // empty')
+CODE=$(req qcselfrev PUT "/api/cmc/qc-testing/$SELFID" '{"reviewedBy":1}')
+[ "$CODE" = 409 ] && ok "the analyst cannot review their own result (409)" \
+  || bad "self-review was accepted ($CODE): $(head -c200 "$OUT/qcselfrev.json")"
+
 step "6. QA sets the specification (feeds 3.2.S.4.1)"
 CODE=$(req spec POST /api/cmc/specifications "{\"projectId\":\"$PROGRAM\",\"materialType\":\"drug_substance\",\"materialName\":\"BX-701\",\"acceptanceCriteria\":{\"release\":\"98.0-102.0%\",\"shelf\":\"95.0-105.0%\"},\"testMethods\":{\"method\":\"AM-001\"},\"regulatoryBasis\":{\"ich\":\"ICH Q6B\"},\"justification\":\"Batch history n=12 supports the limits\",\"approvalStatus\":\"draft\"}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "specification created ($CODE)" || bad "spec failed ($CODE): $(head -c300 "$OUT/spec.json")"
@@ -68,18 +84,49 @@ step "8b. Packaging engineering records the container closure system + E&L (feed
 # The register neither section had. `scope` decides which of 3.2.S.6 / 3.2.P.7
 # the system files under, and the response says whether the row reached Module 3
 # at all rather than reporting an unqualified success.
-CODE=$(req ccs POST /api/cmc/container-closures "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_product\",\"systemName\":\"10 mL Type I vial / 20 mm stopper\",\"componentType\":\"primary\",\"containerDescription\":\"10 mL clear Type I borosilicate glass vial\",\"closureDescription\":\"20 mm bromobutyl stopper with aluminium flip-off seal\",\"supplier\":\"Schott / West\",\"compendialStandards\":[\"USP <660>\",\"USP <381>\"],\"suitabilityJustification\":\"Protection and compatibility demonstrated over 12 months at 25C/60%RH.\",\"materialsOfConstruction\":[{\"component\":\"Vial\",\"material\":\"Type I borosilicate glass\",\"supplier\":\"Schott\",\"specification\":\"SPEC-VIAL-01\",\"compendialReference\":\"USP <660>\"}],\"extractablesLeachables\":{\"studyType\":\"Controlled extraction 40C/75%RH 6 months\",\"protocol\":\"PR-EL-014\",\"analyticalEvaluationThreshold\":\"1.5 ug/day\",\"conclusion\":\"All extractables below the AET.\",\"results\":[{\"analyte\":\"Zinc dibutyldithiocarbamate\",\"level\":\"0.4\",\"unit\":\"ug/day\",\"threshold\":\"1.5 ug/day\",\"assessment\":\"below AET\"}]},\"integrityTesting\":{\"method\":\"Helium leak (USP <1207>)\",\"acceptanceCriteria\":\"<= 6e-6 mbar L/s\",\"result\":\"2.1e-6 mbar L/s\"},\"status\":\"qualified\"}")
+CODE=$(req ccs POST /api/cmc/container-closures "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_product\",\"systemName\":\"10 mL Type I vial / 20 mm stopper\",\"componentType\":\"primary\",\"containerDescription\":\"10 mL clear Type I borosilicate glass vial\",\"closureDescription\":\"20 mm bromobutyl stopper with aluminium flip-off seal\",\"supplier\":\"Schott / West\",\"compendialStandards\":[\"USP <660>\",\"USP <381>\"],\"suitabilityJustification\":\"Protection and compatibility demonstrated over 12 months at 25C/60%RH.\",\"materialsOfConstruction\":[{\"component\":\"Vial\",\"material\":\"Type I borosilicate glass\",\"supplier\":\"Schott\",\"specification\":\"SPEC-VIAL-01\",\"compendialReference\":\"USP <660>\"}],\"extractablesLeachables\":{\"studyType\":\"Controlled extraction 40C/75%RH 6 months\",\"protocol\":\"PR-EL-014\",\"analyticalEvaluationThreshold\":\"1.5 ug/day\",\"conclusion\":\"All extractables below the AET.\",\"results\":[{\"analyte\":\"Zinc dibutyldithiocarbamate\",\"level\":\"0.4\",\"unit\":\"ug/day\",\"threshold\":\"1.5 ug/day\",\"assessment\":\"below AET\"}]},\"integrityTesting\":{\"method\":\"Helium leak (USP <1207>)\",\"acceptanceCriteria\":\"<= 6e-6 mbar L/s\",\"result\":\"2.1e-6 mbar L/s\"}}")
 CCLINK=$(cat "$OUT/ccs.json" | JQ '.module3Linked // empty')
 [ "$CODE" = 200 -o "$CODE" = 201 ] && [ "$CCLINK" = "true" ] \
   && ok "container closure system recorded and linked to Module 3 ($CODE)" \
   || bad "container closure failed ($CODE, module3Linked=$CCLINK): $(head -c300 "$OUT/ccs.json")"
 
 step "8c. Analytical development records the reference standard (feeds 3.2.S.5)"
-CODE=$(req rstd POST /api/cmc/reference-standards "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_substance\",\"standardCode\":\"RS-DS-001\",\"standardName\":\"BX-701 primary reference standard\",\"standardType\":\"primary\",\"materialSource\":\"DS lot B-001\",\"lotNumber\":\"RS-LOT-2405\",\"assignedValue\":\"98.7% (as-is)\",\"characterization\":[{\"attribute\":\"Identity\",\"method\":\"FTIR\",\"result\":\"Conforms to reference spectrum\"},{\"attribute\":\"Purity\",\"method\":\"RP-HPLC\",\"result\":\"99.4% area\"}],\"certificateOfAnalysis\":\"CoA-RS-001-2405\",\"qualificationProtocol\":\"PR-RS-002\",\"storageConditions\":\"-70C desiccated\",\"status\":\"qualified\",\"retestDate\":\"2027-05-01T00:00:00.000Z\"}")
+CODE=$(req rstd POST /api/cmc/reference-standards "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_substance\",\"standardCode\":\"RS-DS-001\",\"standardName\":\"BX-701 primary reference standard\",\"standardType\":\"primary\",\"materialSource\":\"DS lot B-001\",\"lotNumber\":\"RS-LOT-2405\",\"assignedValue\":\"98.7% (as-is)\",\"characterization\":[{\"attribute\":\"Identity\",\"method\":\"FTIR\",\"result\":\"Conforms to reference spectrum\"},{\"attribute\":\"Purity\",\"method\":\"RP-HPLC\",\"result\":\"99.4% area\"}],\"certificateOfAnalysis\":\"CoA-RS-001-2405\",\"qualificationProtocol\":\"PR-RS-002\",\"storageConditions\":\"-70C desiccated\",\"retestDate\":\"2027-05-01T00:00:00.000Z\"}")
 RSLINK=$(cat "$OUT/rstd.json" | JQ '.module3Linked // empty')
 [ "$CODE" = 200 -o "$CODE" = 201 ] && [ "$RSLINK" = "true" ] \
   && ok "reference standard recorded and linked to Module 3 ($CODE)" \
   || bad "reference standard failed ($CODE, module3Linked=$RSLINK): $(head -c300 "$OUT/rstd.json")"
+
+step "8d. Qualification is a signature, not a field — the ungoverned path refuses, the governed one records who"
+CCSID=$(cat "$OUT/ccs.json" | JQ '.data.id // empty')
+RSTDID=$(cat "$OUT/rstd.json" | JQ '.data.id // empty')
+# An ordinary save cannot reach 'qualified': it would record a qualification
+# with no signer, no reason and no re-authentication.
+CODE=$(req ccsq0 PUT "/api/cmc/container-closures/$CCSID" '{"status":"qualified"}')
+[ "$CODE" = 409 ] && ok "self-declared qualification refused (409), governed path named" \
+  || bad "an ordinary PUT set status=qualified ($CODE): $(head -c200 "$OUT/ccsq0.json")"
+# Attribution is never caller-supplied either.
+CODE=$(req ccsq1 POST "/api/cmc/container-closures/$CCSID/qualify" '{"reason":"Qualification report QR-014 accepted; E&L below the AET.","meaning":"approval","reauth":{"password":"pass-word"}}')
+QBY=$(cat "$OUT/ccsq1.json" | JQ '.data.qualifiedBy // empty')
+QST=$(cat "$OUT/ccsq1.json" | JQ '.data.status // empty')
+QSIG=$(cat "$OUT/ccsq1.json" | JQ '.governance.actionId // empty')
+[ "$CODE" = 200 ] && [ "$QST" = "qualified" ] && [ -n "$QBY" ] && [ -n "$QSIG" ] \
+  && ok "container closure qualified under signature $QSIG by user $QBY" \
+  || bad "governed qualify failed ($CODE): $(head -c250 "$OUT/ccsq1.json")"
+# Signing twice would stamp a second person over the first.
+CODE=$(req ccsq2 POST "/api/cmc/container-closures/$CCSID/qualify" '{"reason":"Attempting to re-sign an already qualified system.","meaning":"approval","reauth":{"password":"pass-word"}}')
+[ "$CODE" = 409 ] && ok "a second signature over an already-qualified system is refused" \
+  || bad "re-qualification was accepted ($CODE)"
+CODE=$(req rstdq POST "/api/cmc/reference-standards/$RSTDID/qualify" '{"reason":"Characterisation complete; standard released for use.","meaning":"approval","reauth":{"password":"pass-word"}}')
+RQST=$(cat "$OUT/rstdq.json" | JQ '.data.status // empty')
+[ "$CODE" = 200 ] && [ "$RQST" = "qualified" ] && ok "reference standard qualified under signature" \
+  || bad "reference standard qualify failed ($CODE): $(head -c250 "$OUT/rstdq.json")"
+# The program a record is evidence for is fixed at creation.
+CODE=$(req ccsmove PUT "/api/cmc/container-closures/$CCSID" '{"projectId":"00000000-0000-4000-8000-000000000000","supplier":"Schott / West Pharmaceutical"}')
+MOVED=$(cat "$OUT/ccsmove.json" | JQ '.data.projectId // empty')
+[ "$CODE" = 200 ] && [ "$MOVED" = "$PROGRAM" ] \
+  && ok "an edit cannot repoint a record at another program (still $PROGRAM)" \
+  || bad "projectId was moved by an ordinary edit ($CODE, now $MOVED)"
 
 step "9. Change manager proposes a governed change WITH project (marks 3.2 stale)"
 CODE=$(req change POST /api/cmc-changes "{\"title\":\"Bioreactor scale-up 500L→2000L\",\"dosageFormFamily\":\"biologic\",\"changeCategory\":\"scale_up\",\"scaleChangeFactor\":\"within_10x\",\"touchesCriticalStep\":true,\"affects\":\"drug_substance\",\"cmcProjectId\":\"$PROGRAM\"}")

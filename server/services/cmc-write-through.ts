@@ -18,9 +18,11 @@ import {
   FINISHED_PRODUCT,
   NON_BATCH_SAMPLE_TYPES,
   impactedSectionsForSourceType,
-  normalizeMaterialScope,
   type CmcSourceType,
 } from './module3Composer';
+/* The scope rule is shared with the register surfaces, not owned by either
+   side: see shared/cmc/material-scope.ts. */
+import { normalizeMaterialScope } from '../../shared/cmc/material-scope';
 import unifiedTaskService from './unifiedTaskService';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -621,6 +623,11 @@ export function mapContainerClosurePayload(record: Record<string, any>): Record<
   const forDp = scope === 'drug_product' || scope === 'both';
 
   const systemName = record.systemName || record.system_name || '';
+  const componentType = String(record.componentType || record.component_type || '').trim().toLowerCase();
+  /* Unstated means primary: the column defaults to 'primary', and a system
+     recorded without a component type is the one holding the material far more
+     often than not. */
+  const isPrimary = componentType === '' || componentType === 'primary';
   const container = record.containerDescription || record.container_description || '';
   const closure = record.closureDescription || record.closure_description || '';
   const justification = record.suitabilityJustification || record.suitability_justification || '';
@@ -646,6 +653,7 @@ export function mapContainerClosurePayload(record: Record<string, any>): Record<
     scope,
     systemName,
     componentType: record.componentType || record.component_type || '',
+    isPrimaryPackaging: isPrimary,
     containerDescription: container,
     closureDescription: closure,
     suitabilityJustification: justification,
@@ -667,6 +675,18 @@ export function mapContainerClosurePayload(record: Record<string, any>): Record<
     drugProductContainerDescription: forDp && container ? container : null,
     drugProductClosureDescription: forDp && closure ? closure : null,
     drugProductSuitabilityJustification: forDp && justification ? justification : null,
+    /* ONE PRIMARY system carrying the whole story. Two things made a section
+       green that should not have: `availableFields` is a union across every
+       matched source, so two half-recorded systems satisfied the three keys
+       between them; and a fully described SECONDARY carton satisfied a section
+       whose subject is the container in contact with the material. §3.2.S.6 /
+       §3.2.P.7 are complete when the primary container closure system is
+       described with its suitability justification — a carton or a carrier can
+       add to that, never stand in for it. */
+    drugSubstanceContainerClosureComplete:
+      forDs && isPrimary && container && closure && justification ? (systemName || container) : null,
+    drugProductContainerClosureComplete:
+      forDp && isPrimary && container && closure && justification ? (systemName || container) : null,
     containerClosureStudies: forDp && studySummary ? studySummary : null,
   };
 }
@@ -724,6 +744,10 @@ export function mapReferenceStandardPayload(record: Record<string, any>): Record
     drugSubstanceReferenceStandardCoA: forDs && coa ? coa : null,
     drugProductReferenceStandard: forDp && description ? description : null,
     drugProductReferenceStandardCoA: forDp && coa ? coa : null,
+    /* One standard with both its identity and its Certificate of Analysis —
+       see the note on the container closure equivalent above. */
+    drugSubstanceReferenceStandardComplete: forDs && description && coa ? description : null,
+    drugProductReferenceStandardComplete: forDp && description && coa ? description : null,
   };
 }
 

@@ -164,6 +164,37 @@ describe('list_cmc_registers — the discovery the recorded tools point at', () 
     const out = JSON.parse(await call({ limit: 5000 }, { organizationId: 101 }));
     if (!out.error) expect(out.limit).toBeLessThanOrEqual(100);
   });
+
+  /* The two registers §3.2.S.5 / §3.2.S.6 / §3.2.P.6 / §3.2.P.7 compose from.
+     A model that cannot see them cannot answer "is the E&L package on file"
+     — the question a reviewer asks first — and would have to infer it. */
+  it('lists the container closure and reference standard registers too', async () => {
+    const out = JSON.parse(await call({}, { organizationId: 101 }));
+    if (out.error) return;
+    for (const key of ['container_closure', 'reference_standard']) {
+      expect(Object.keys(out.registers)).toContain(key);
+      const reg = out.registers[key];
+      expect(Array.isArray(reg) || reg?.unavailable === true).toBe(true);
+    }
+  });
+
+  it('declares both new registers as selectable values, so a scoped call is not a silent no-op', () => {
+    const listTool = ALL_ANA_TOOLS.find((t) => t.name === 'list_cmc_registers')!;
+    const register = listTool.input_schema.properties.register as { enum?: string[] } | undefined;
+    const values = register?.enum ?? [];
+    expect(values).toEqual(expect.arrayContaining(['container_closure', 'reference_standard']));
+  });
+
+  /* Identity and state only. Listing the E&L package itself would pull every
+     analyte result into the model's context on a broad discovery call. */
+  it('reports the E&L and characterisation packages as presence flags, not as payloads', async () => {
+    const out = JSON.parse(await call({ register: 'container_closure', limit: 5 }, { organizationId: 101 }));
+    if (out.error) return;
+    const rows = out.registers.container_closure;
+    if (!Array.isArray(rows) || rows.length === 0) return;
+    expect(rows[0]).not.toHaveProperty('extractablesLeachables');
+    expect(rows[0]).toHaveProperty('hasExtractablesLeachables');
+  });
 });
 
 describe('estimate_recorded_shelf_life — ICH Q1E over a study on file', () => {

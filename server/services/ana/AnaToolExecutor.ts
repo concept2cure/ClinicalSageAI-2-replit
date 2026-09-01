@@ -15866,6 +15866,29 @@ registerToolHandler('list_cmc_registers', async (input, ctx) => {
                 FROM qc_testing WHERE organization_id = $1`,
         searchCols: ['sample_id', 'test_method'],
       },
+      /* The two registers §3.2.S.5/§3.2.S.6/§3.2.P.6/§3.2.P.7 compose from.
+         `scope` is listed because it decides which section a row files under,
+         and the presence flags are listed rather than the packages themselves:
+         a model asking "is the E&L work on file" must get an answer without
+         pulling every analyte result into the context. */
+      container_closure: {
+        sql: `SELECT id, system_name AS "systemName", scope,
+                     component_type AS "componentType", supplier, status,
+                     (suitability_justification IS NOT NULL AND suitability_justification <> '') AS "hasSuitabilityJustification",
+                     (extractables_leachables IS NOT NULL) AS "hasExtractablesLeachables",
+                     (integrity_testing IS NOT NULL) AS "hasIntegrityTesting"
+                FROM cmc_container_closures WHERE organization_id = $1`,
+        searchCols: ['system_name', 'container_description', 'supplier'],
+      },
+      reference_standard: {
+        sql: `SELECT id, standard_code AS "standardCode", standard_name AS "standardName",
+                     scope, standard_type AS "standardType", lot_number AS "lotNumber",
+                     status, retest_date AS "retestDate", expiry_date AS "expiryDate",
+                     (characterization IS NOT NULL) AS "hasCharacterization",
+                     (certificate_of_analysis IS NOT NULL AND certificate_of_analysis <> '') AS "hasCertificateOfAnalysis"
+                FROM cmc_reference_standards WHERE organization_id = $1`,
+        searchCols: ['standard_code', 'standard_name', 'lot_number'],
+      },
     };
     const keys = wanted && REGISTERS[wanted] ? [wanted] : Object.keys(REGISTERS);
     const out: Record<string, unknown> = {};

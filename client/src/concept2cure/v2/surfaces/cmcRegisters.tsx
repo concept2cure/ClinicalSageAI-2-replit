@@ -14,11 +14,17 @@ import {
   drugSubstanceForm, drugSubstanceBody,
   drugProductForm, drugProductBody,
   comparabilityForm, comparabilityBody,
-  containerClosureForm, containerClosureBody,
-  referenceStandardForm, referenceStandardBody,
+  containerClosureForm, containerClosureBody, containerClosurePatch,
+  referenceStandardForm, referenceStandardBody, referenceStandardPatch,
+  qualifyForm, qualifyBody,
   asUserId,
 } from './cmcRegisterForms';
-import type { ContainerClosureBody, ReferenceStandardBody } from './cmcRegisterForms';
+import type { ContainerClosureRow, ReferenceStandardBody } from './cmcRegisterForms';
+/* The SAME scope resolver the composer uses. A register that matched the three
+   canonical strings exactly showed "--" for a row the composer was at that
+   moment filing into §3.2.S.6 — the screen disagreeing with the dossier about
+   one record. */
+import { materialScopeSections } from '@shared/cmc/material-scope';
 import { useAuth } from '@/services/portal/authService';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -990,15 +996,6 @@ export interface ContainerClosureApiRow {
   qualificationDate?: string | null;
 }
 
-/** Which CTD section a scoped record files into, in the staffer's words. */
-function scopeLabel(scope: unknown, sSection: string, pSection: string): string {
-  const v = String(scope ?? '').toLowerCase();
-  if (v === 'both') return `${sSection} + ${pSection}`;
-  if (v === 'drug_substance') return sSection;
-  if (v === 'drug_product') return pSection;
-  return '--';
-}
-
 /**
  * What the E&L record actually holds — never "yes" for an opened-and-abandoned
  * form. A study with no per-analyte results is reported as a study with no
@@ -1021,7 +1018,11 @@ export function CmContainerClosures() {
   const projectId = cmcProjectUuid();
   return (
     <RegisterCard<ContainerClosureApiRow>
-      path="/api/cmc/container-closures"
+      /* Scoped to the open program. An org-wide list mixes every program's
+         packaging, and the row a staffer then edits may belong to a different
+         dossier than the one on screen. Records with no project still appear —
+         they are unfiled, not somebody else's. */
+      path={`/api/cmc/container-closures${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`}
       title="Container closure systems"
       meta={(rows) => {
         const qualified = rows.filter((r) => String(r.status || '').toLowerCase() === 'qualified').length;
@@ -1050,23 +1051,44 @@ export function CmContainerClosures() {
           label: 'Update',
           icon: I.penLine,
           subject: 'container closure system',
-          form: (r) => containerClosureForm(r as Partial<ContainerClosureBody>),
+          /* Seeded from the stored record — the drawer opened blank over a
+             populated E&L package, and a staffer adding one line replaced the
+             whole column. The patch body then sends every editable field, so a
+             value the staffer clears is actually cleared. */
+          form: (r) => containerClosureForm(r as ContainerClosureRow),
           path: (r) => `/api/cmc/container-closures/${r.id}`,
-          toBody: (v, _r, pid) => containerClosureBody(v, pid ?? projectId),
+          toBody: (v) => containerClosurePatch(v),
+        },
+        {
+          label: 'Qualify',
+          icon: I.lock,
+          subject: 'qualification',
+          /* A Part 11 signature, not a status. The API refuses a self-declared
+             'qualified' on an ordinary save, and this is the only path that
+             records who qualified the system, when, and why. */
+          when: (r) => String(r.status || '').toLowerCase() !== 'qualified',
+          form: (r) => qualifyForm('container closure system', r.systemName),
+          path: (r) => `/api/cmc/container-closures/${r.id}/qualify`,
+          method: 'POST',
+          toBody: (v) => qualifyBody(v),
         },
       ]}
       columns={[
         { header: 'System', render: (r) => r.systemName, mono: true, bold: true },
-        { header: 'Files under', render: (r) => scopeLabel(r.scope, '3.2.S.6', '3.2.P.7') },
+        { header: 'Files under', render: (r) => materialScopeSections(r.scope, 'drug_product', '3.2.S.6', '3.2.P.7') },
         { header: 'Component', render: (r) => text(r.componentType) },
         { header: 'Container', render: (r) => r.containerDescription },
         { header: 'Closure', render: (r) => r.closureDescription },
         { header: 'Supplier', render: (r) => text(r.supplier) },
         {
-          header: 'Suitability',
+          /* States the fact, not a verdict. The composed section quotes the
+             justification as the applicant's statement and never concludes
+             suitability from it; a green "justified" chip over the text
+             "TBD - awaiting review" would say the opposite on the same record. */
+          header: 'Suitability text',
           render: (r) => (r.suitabilityJustification
-            ? <span className="rd-chip tone-ok">justified</span>
-            : <span className="rd-chip tone-warn">not justified</span>),
+            ? <span className="rd-chip tone-ok">recorded</span>
+            : <span className="rd-chip tone-warn">not recorded</span>),
         },
         { header: 'E&L', render: elSummary },
         { header: 'Integrity', render: (r) => text(r.integrityTesting?.result) },
@@ -1108,7 +1130,7 @@ export function CmReferenceStandards() {
   const projectId = cmcProjectUuid();
   return (
     <RegisterCard<ReferenceStandardApiRow>
-      path="/api/cmc/reference-standards"
+      path={`/api/cmc/reference-standards${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`}
       title="Reference standards"
       meta={(rows) => {
         const qualified = rows.filter((r) => String(r.status || '').toLowerCase() === 'qualified').length;
@@ -1137,13 +1159,23 @@ export function CmReferenceStandards() {
           subject: 'reference standard',
           form: (r) => referenceStandardForm(r as Partial<ReferenceStandardBody>),
           path: (r) => `/api/cmc/reference-standards/${r.id}`,
-          toBody: (v, _r, pid) => referenceStandardBody(v, pid ?? projectId),
+          toBody: (v) => referenceStandardPatch(v),
+        },
+        {
+          label: 'Qualify',
+          icon: I.lock,
+          subject: 'qualification',
+          when: (r) => String(r.status || '').toLowerCase() !== 'qualified',
+          form: (r) => qualifyForm('reference standard', `${r.standardCode} — ${r.standardName}`),
+          path: (r) => `/api/cmc/reference-standards/${r.id}/qualify`,
+          method: 'POST',
+          toBody: (v) => qualifyBody(v),
         },
       ]}
       columns={[
         { header: 'Code', render: (r) => r.standardCode, mono: true, bold: true },
         { header: 'Standard', render: (r) => r.standardName },
-        { header: 'Files under', render: (r) => scopeLabel(r.scope, '3.2.S.5', '3.2.P.6') },
+        { header: 'Files under', render: (r) => materialScopeSections(r.scope, 'drug_substance', '3.2.S.5', '3.2.P.6') },
         { header: 'Type', render: (r) => r.standardType },
         { header: 'Lot', render: (r) => text(r.lotNumber) },
         { header: 'Assigned value', render: (r) => text(r.assignedValue) },

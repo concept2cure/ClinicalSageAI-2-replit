@@ -1676,6 +1676,10 @@ export const C2C_MIGRATION_FILES = [
   // draft it says exists. Verified org-scoped at write time (no FK — the
   // authoring tables are ensure-DDL'd lazily). Idempotent ADD COLUMN.
   'db/migrations/20260830_reg_questions_response_doc.sql',
+  // Must follow the sweep above: that one keys on polqual (USING), which an
+  // INSERT policy does not have, so every write-only policy slipped through
+  // with its fail-open COALESCE intact. This closes them on polwithcheck.
+  'db/migrations/20260828_fail_closed_insert_withcheck_policies.sql',
 
   // ── CMC container closure + reference standard registers ─────────────────
   // The two canonical source types the Module 3 composer has demanded since it
@@ -1685,10 +1689,6 @@ export const C2C_MIGRATION_FILES = [
   // is stored rather than guessed, and both carry project_id as a column so the
   // canonical write-through does not depend on the client having sent one.
   'db/migrations/20260901_cmc_container_closure_reference_standard_registers.sql',
-  // Must follow the sweep above: that one keys on polqual (USING), which an
-  // INSERT policy does not have, so every write-only policy slipped through
-  // with its fail-open COALESCE intact. This closes them on polwithcheck.
-  'db/migrations/20260828_fail_closed_insert_withcheck_policies.sql',
 
   // ── Drop the audit-shaped tables that survived a from-scratch liveness
   //    re-check (ledger L13; docs/AUDIT_STORE_INVENTORY_2026-08.md §5.1) ─────

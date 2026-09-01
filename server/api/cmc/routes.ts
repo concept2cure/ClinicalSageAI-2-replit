@@ -34,7 +34,8 @@ import {
   insertCmcContainerClosureSchema,
   insertCmcReferenceStandardSchema,
 } from '../../../shared/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, or, isNull, type SQL } from 'drizzle-orm';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 /* Reading a stability programme's recorded series, and the ICH Q1E poolability
    assessment over it, both live in services/cmc/recorded-stability. The
    eligibility rules there are the safety story for a shelf-life claim and have
@@ -47,6 +48,8 @@ import {
   groupByParameter,
   assessRecordedPoolability,
 } from '../../services/cmc/recorded-stability';
+import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
+import { governedSignatureSchema, resolveActorUserId } from './governance';
 import { createScopedLogger } from '../../utils/logger';
 import * as metricsModule from '../../metrics.js';
 
@@ -495,12 +498,48 @@ router.put('/qc-testing/:id', async (req, res) => {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = qcTestingBody.partial().parse(req.body);
-    const { analyst: _analystIsARecord, ...safeData } = withoutOrgId(
-      validatedData as Record<string, unknown>
-    ) as { analyst?: unknown } & Record<string, unknown>;
+    /* `analyst` is a matter of record, not an edit. `reviewedBy` is the OTHER
+       half of the same fact and was accepted from the request body — so a
+       caller could record a colleague as the second person who verified a
+       release result they never saw. Both are now the session's fact: who
+       reviewed is whoever is signed in, and a review is only recorded when the
+       caller actually asks for one. */
+    const {
+      analyst: _analystIsARecord,
+      reviewedBy: _reviewerIsTheSession,
+      ...safeData
+    } = withoutOrgId(validatedData as Record<string, unknown>) as {
+      analyst?: unknown;
+      reviewedBy?: unknown;
+    } & Record<string, unknown>;
+    const claimsReview = 'reviewedBy' in (req.body as Record<string, unknown>);
+    const reviewerId = resolveActorUserId(req);
+    if (claimsReview && !reviewerId) {
+      return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
+    }
+    /* Second-person review, enforced where it counts. The register surface
+       disables the action for the analyst who ran the test; the API said
+       nothing, so the rule held only for callers who chose to follow it. */
+    if (claimsReview) {
+      const [existing] = await db
+        .select({ analyst: qcTesting.analyst })
+        .from(qcTesting)
+        .where(and(eq(qcTesting.id, id), eq(qcTesting.organizationId, orgId)));
+      if (!existing) return res.status(404).json({ success: false, error: 'QC test record not found' });
+      if (existing.analyst && existing.analyst === reviewerId) {
+        return res.status(409).json({
+          success: false,
+          error: 'QC review must be a second person: you recorded this result.',
+        });
+      }
+    }
     const [test] = await db
       .update(qcTesting)
-      .set({ ...safeData, updatedAt: new Date() })
+      .set({
+        ...safeData,
+        ...(claimsReview ? { reviewedBy: reviewerId } : {}),
+        updatedAt: new Date(),
+      })
       .where(and(eq(qcTesting.id, id), eq(qcTesting.organizationId, orgId)))
       .returning();
     if (!test) return res.status(404).json({ success: false, error: 'QC test record not found' });
@@ -722,20 +761,43 @@ router.put('/drug-products/:id', async (req, res) => {
 });
 
 
-/* ── Container closure systems — §3.2.S.6 / §3.2.P.7 ─────────────────────────
+/* ── Container closure systems and reference standards ───────────────────────
  *
- * The register behind two CTD sections that had no capture path at all. Both
- * the write-through and the composed section read `scope` to decide which side
- * a system is evidence for, so it is stored on the row, never inferred.
+ * The two registers behind §3.2.S.5 / §3.2.S.6 / §3.2.P.6 / §3.2.P.7, which had
+ * no capture path at all. Both the write-through and the composed section read
+ * `scope` to decide which side a record is evidence for, so it is stored on the
+ * row and never inferred.
  *
- * Unlike the older registers, `projectId` is a COLUMN here: the write-through
- * reads it off the persisted row and falls back to the request body only for a
- * caller that sends one without storing it. A create that carries no project at
- * all still succeeds — but the response says so, because a register row that
- * never reaches Module 3 looks identical to one that did.
+ * Three rules these two endpoints hold that the older registers do not:
+ *
+ *   1. `projectId` is a COLUMN, so the record knows its program after the
+ *      request that created it, and it is IMMUTABLE after creation — silently
+ *      repointing a qualified system's evidence at another program is not an
+ *      edit, it is a different record.
+ *   2. The canonical write-through is AWAITED and its real outcome reported.
+ *      `module3Linked: true` over a write that failed would be the exact lie
+ *      the field exists to prevent.
+ *   3. Qualification is a governed signature (POST .../:id/qualify), never a
+ *      field on an ordinary save: `status`, `qualifiedBy` and
+ *      `qualificationDate` cannot be written through create or update.
  */
 
-/** The project a canonical write-through should be keyed on, row first. */
+/**
+ * Scope a register read to one program when the caller names one.
+ *
+ * These two registers store `project_id`, so an org-wide list mixes the
+ * packaging systems of every program a CMC group runs — and the row a staffer
+ * then edits may belong to a different dossier than the one on screen. A record
+ * with NO project is always included: it is unfiled rather than another
+ * program's, and hiding it would leave a saved record nobody can find.
+ */
+function projectFilter(req: express.Request, column: AnyPgColumn): SQL | undefined {
+  const raw = typeof req.query.projectId === 'string' ? req.query.projectId.trim() : '';
+  if (!raw) return undefined;
+  return or(eq(column as never, raw), isNull(column as never));
+}
+
+/** The project a canonical write-through is keyed on, row first. */
 function writeThroughProjectId(row: { projectId?: string | null }, req: express.Request): string | null {
   const stored = typeof row.projectId === 'string' ? row.projectId.trim() : '';
   if (stored) return stored;
@@ -744,22 +806,210 @@ function writeThroughProjectId(row: { projectId?: string | null }, req: express.
 }
 
 /**
- * A register write that could not reach Module 3 is reported, not hidden.
+ * Link a saved register row into the Module 3 canonical layer and report what
+ * actually happened.
  *
- * `writeThroughToCanonicalSource` returns null and logs a warning when there is
- * no project, so the record silently stops at the register. The row is still
- * saved (it is real data), and the response carries `module3Linked: false` plus
- * the reason, so a client can tell the staffer their entry is not yet feeding
- * the dossier instead of showing an unqualified success.
+ * The older registers fire the write-through and forget it, which is fine while
+ * nothing claims it succeeded. These endpoints DO claim it — so the claim is
+ * awaited. `writeThroughToCanonicalSource` returns null on failure (it logs and
+ * rolls back rather than throwing), and a null is reported here as not linked,
+ * with the reason, and metered like any other propagation failure. The register
+ * row itself is never rolled back: it is real recorded data whether or not the
+ * dossier layer accepted it this second.
  */
-function module3Linkage(projectId: string | null): { module3Linked: boolean; module3Warning?: string } {
-  return projectId
-    ? { module3Linked: true }
-    : {
-        module3Linked: false,
-        module3Warning:
-          'Saved to the register only. No project is set on this record, so it does not feed Module 3 yet.',
-      };
+async function linkToModule3(
+  propagation: string,
+  orgId: number,
+  row: { id: number; projectId?: string | null },
+  req: express.Request,
+  writeThrough: (
+    orgId: number,
+    projectId: string,
+    recordId: string,
+    record: Record<string, any>,
+  ) => Promise<unknown>,
+): Promise<{ module3Linked: boolean; module3Warning?: string }> {
+  const projectId = writeThroughProjectId(row, req);
+  if (!projectId) {
+    return {
+      module3Linked: false,
+      module3Warning:
+        'Saved to the register only. No project is set on this record, so it does not feed Module 3 yet.',
+    };
+  }
+  try {
+    const result = await writeThrough(orgId, projectId, String(row.id), row as Record<string, any>);
+    if (result) return { module3Linked: true };
+    observeWriteThroughFailure(propagation, row.id, new Error('canonical write-through returned no result'));
+  } catch (err) {
+    observeWriteThroughFailure(propagation, row.id, err);
+  }
+  return {
+    module3Linked: false,
+    module3Warning:
+      'Saved to the register. The Module 3 canonical write did not complete, so this record is not composed into the dossier yet; saving it again re-attempts the link.',
+  };
+}
+
+/**
+ * Strip everything a caller must not set on an ordinary save.
+ *
+ * `qualifiedBy` is attribution — a signed fact about a person — and accepting it
+ * from a request body lets any caller record a colleague as having qualified a
+ * container closure system on a date they never touched it. `status` and
+ * `qualificationDate` move only through the governed signature endpoint below,
+ * so an ordinary PUT cannot reach 'qualified' by the side door.
+ */
+function withoutGovernedFields<T extends Record<string, unknown>>(
+  data: T,
+): Omit<T, 'organizationId' | 'qualifiedBy' | 'qualificationDate'> {
+  const {
+    organizationId: _org,
+    qualifiedBy: _by,
+    qualificationDate: _on,
+    ...rest
+  } = data as {
+    organizationId?: unknown;
+    qualifiedBy?: unknown;
+    qualificationDate?: unknown;
+  } & T;
+  return rest as Omit<T, 'organizationId' | 'qualifiedBy' | 'qualificationDate'>;
+}
+
+/**
+ * Refuse a self-declared qualification rather than accepting it silently.
+ *
+ * Returning 409 with the governed path named is the honest answer: the caller
+ * asked for a state change the product does allow, by a route that cannot
+ * record who made it.
+ */
+function refusesUngovernedQualification(
+  res: express.Response,
+  status: unknown,
+  registerPath: string,
+): boolean {
+  if (String(status ?? '').trim().toLowerCase() !== 'qualified') return false;
+  res.status(409).json({
+    success: false,
+    error:
+      `Qualification is a governed action and is recorded with a signature. ` +
+      `POST /api/cmc/${registerPath}/:id/qualify with a reason and re-authentication.`,
+  });
+  return true;
+}
+
+/**
+ * The governed qualification of a register record, on the same primitives as
+ * the specification approval and the batch release: re-auth first, the state
+ * change and the signature in ONE transaction, then the canonical write-through.
+ *
+ * `table` is a literal from a closed set, never caller input.
+ */
+async function qualifyRegisterRecord(
+  req: express.Request,
+  res: express.Response,
+  spec: {
+    table: 'cmc_container_closures' | 'cmc_reference_standards';
+    target: string;
+    surface: string;
+    subject: string;
+    propagation: string;
+    reselect: (id: number, orgId: number) => Promise<Record<string, any> | undefined>;
+    writeThrough: (
+      orgId: number,
+      projectId: string,
+      recordId: string,
+      record: Record<string, any>,
+    ) => Promise<unknown>;
+  },
+): Promise<express.Response> {
+  const parsed = governedSignatureSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ success: false, error: 'Invalid input data', details: parsed.error.errors });
+  }
+  const { reason, meaning, reauth, idempotencyKey } = parsed.data;
+
+  const id = parseInt(String(req.params.id));
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ success: false, error: `A ${spec.subject} id is required` });
+  }
+  let orgId: number;
+  try {
+    orgId = getOrgId(req);
+  } catch {
+    return res.status(401).json({ success: false, error: 'Organization context required' });
+  }
+  const userId = resolveActorUserId(req);
+  if (!userId) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
+
+  const reauthResult = await verifyReauth(userId, reauth);
+  if (!reauthResult.ok) {
+    res.setHeader('WWW-Authenticate', 'ReAuth required');
+    return res.status(401).json({ success: false, error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+  }
+
+  const pool = getPool();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const current = await client.query(
+      `SELECT * FROM ${spec.table} WHERE id = $1 AND organization_id = $2 FOR UPDATE`,
+      [id, orgId],
+    );
+    if (current.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, error: `${spec.subject} not found` });
+    }
+    /* Already signed. Re-signing would stamp a second person over the first and
+       lose who actually qualified it, so it is refused with the record's own
+       facts rather than overwritten. */
+    if (String(current.rows[0].status || '').toLowerCase() === 'qualified') {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        success: false,
+        error: `This ${spec.subject} is already qualified`,
+        qualifiedAt: current.rows[0].qualification_date ?? null,
+      });
+    }
+    await client.query(
+      `UPDATE ${spec.table}
+          SET status = 'qualified', qualified_by = $3, qualification_date = NOW(), updated_at = NOW()
+        WHERE id = $1 AND organization_id = $2`,
+      [id, orgId, userId],
+    );
+    const governance = await recordGovernedAction(client, {
+      orgId,
+      userId,
+      command: 'sign',
+      target: `${spec.target}:${id}`,
+      reason,
+      payload: { meaning },
+      domain: 'biopharma',
+      surface: spec.surface,
+      idempotencyKey: idempotencyKey ?? null,
+    });
+    await client.query('COMMIT');
+
+    /* Re-read through Drizzle so the response carries the same camelCase row
+       shape every other endpoint of this register returns — the register table
+       adopts the server row after a write, and a snake_case body would blank
+       every column it just filled in. */
+    const row = await spec.reselect(id, orgId);
+    const linkage = row
+      ? await linkToModule3(spec.propagation, orgId, row as { id: number; projectId?: string | null }, req, spec.writeThrough)
+      : { module3Linked: false, module3Warning: 'Qualified. The record could not be re-read to link it into Module 3.' };
+    return res.json({
+      success: true,
+      data: row,
+      governance: { actionId: governance.actionId, sha256Chain: governance.sha256Chain },
+      ...linkage,
+    });
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    return respondWriteError(res, error, `Failed to qualify ${spec.subject}`);
+  } finally {
+    client.release();
+  }
 }
 
 router.get('/container-closures', async (req, res) => {
@@ -768,60 +1018,81 @@ router.get('/container-closures', async (req, res) => {
     const rows = await db
       .select()
       .from(cmcContainerClosures)
-      .where(eq(cmcContainerClosures.organizationId, orgId));
+      .where(and(eq(cmcContainerClosures.organizationId, orgId), projectFilter(req, cmcContainerClosures.projectId)));
     res.json({ success: true, data: rows });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to fetch container closure systems');
   }
 });
 
+const reselectContainerClosure = async (id: number, orgId: number) => {
+  const [row] = await db
+    .select()
+    .from(cmcContainerClosures)
+    .where(and(eq(cmcContainerClosures.id, id), eq(cmcContainerClosures.organizationId, orgId)));
+  return row as Record<string, any> | undefined;
+};
+
 router.post('/container-closures', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = containerClosureBody.parse(req.body);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'container-closures')) return;
     const [row] = await db
       .insert(cmcContainerClosures)
-      .values({ ...validatedData, organizationId: orgId } as typeof cmcContainerClosures.$inferInsert)
+      .values({ ...withoutGovernedFields(validatedData as Record<string, unknown>), organizationId: orgId } as typeof cmcContainerClosures.$inferInsert)
       .returning();
-    const projectId = writeThroughProjectId(row, req);
-    if (projectId) {
-      writeThroughContainerClosure(orgId, projectId, String(row.id), row).catch(err =>
-        observeWriteThroughFailure('write_through_container_closure', row.id, err)
-      );
-    }
-    res.json({ success: true, data: row, ...module3Linkage(projectId) });
+    const linkage = await linkToModule3('write_through_container_closure', orgId, row, req, writeThroughContainerClosure);
+    res.json({ success: true, data: row, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to create container closure system');
   }
 });
 
 /**
- * Qualify a system, attach the E&L package, or correct the record. A container
- * closure system is qualified over months — the suitability justification and
- * the extractables/leachables results almost never exist on the day the system
- * is first recorded, so a create-only endpoint could never carry the section.
+ * Attach the E&L package, correct the record, or add the suitability
+ * justification. A container closure system is qualified over months — the
+ * justification and the extractables/leachables results almost never exist on
+ * the day the system is first recorded, so a create-only endpoint could never
+ * carry the section.
+ *
+ * `projectId` is dropped here: which program a system is evidence for is fixed
+ * at creation, and a silent repoint would move a qualified system's evidence
+ * to another dossier.
  */
 router.put('/container-closures/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = containerClosureBody.partial().parse(req.body);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'container-closures')) return;
+    const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
+      validatedData as Record<string, unknown>,
+    ) as { projectId?: unknown } & Record<string, unknown>;
     const [row] = await db
       .update(cmcContainerClosures)
-      .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
+      .set({ ...editable, updatedAt: new Date() })
       .where(and(eq(cmcContainerClosures.id, id), eq(cmcContainerClosures.organizationId, orgId)))
       .returning();
     if (!row) return res.status(404).json({ success: false, error: 'Container closure system not found' });
-    const projectId = writeThroughProjectId(row, req);
-    if (projectId) {
-      writeThroughContainerClosure(orgId, projectId, String(row.id), row).catch(err =>
-        observeWriteThroughFailure('write_through_container_closure', row.id, err)
-      );
-    }
-    res.json({ success: true, data: row, ...module3Linkage(projectId) });
+    const linkage = await linkToModule3('write_through_container_closure', orgId, row, req, writeThroughContainerClosure);
+    res.json({ success: true, data: row, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to update container closure system');
   }
+});
+
+/** The governed qualification of a container closure system (21 CFR Part 11). */
+router.post('/container-closures/:id/qualify', async (req, res) => {
+  return qualifyRegisterRecord(req, res, {
+    table: 'cmc_container_closures',
+    target: 'container_closure',
+    surface: 'cmc-container-closures',
+    subject: 'container closure system',
+    propagation: 'write_through_container_closure',
+    reselect: reselectContainerClosure,
+    writeThrough: writeThroughContainerClosure,
+  });
 });
 
 /* ── Reference standards — §3.2.S.5 / §3.2.P.6 ───────────────────────────────
@@ -836,55 +1107,71 @@ router.get('/reference-standards', async (req, res) => {
     const rows = await db
       .select()
       .from(cmcReferenceStandards)
-      .where(eq(cmcReferenceStandards.organizationId, orgId));
+      .where(and(eq(cmcReferenceStandards.organizationId, orgId), projectFilter(req, cmcReferenceStandards.projectId)));
     res.json({ success: true, data: rows });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to fetch reference standards');
   }
 });
 
+const reselectReferenceStandard = async (id: number, orgId: number) => {
+  const [row] = await db
+    .select()
+    .from(cmcReferenceStandards)
+    .where(and(eq(cmcReferenceStandards.id, id), eq(cmcReferenceStandards.organizationId, orgId)));
+  return row as Record<string, any> | undefined;
+};
+
 router.post('/reference-standards', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = referenceStandardBody.parse(req.body);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'reference-standards')) return;
     const [row] = await db
       .insert(cmcReferenceStandards)
-      .values({ ...validatedData, organizationId: orgId } as typeof cmcReferenceStandards.$inferInsert)
+      .values({ ...withoutGovernedFields(validatedData as Record<string, unknown>), organizationId: orgId } as typeof cmcReferenceStandards.$inferInsert)
       .returning();
-    const projectId = writeThroughProjectId(row, req);
-    if (projectId) {
-      writeThroughReferenceStandard(orgId, projectId, String(row.id), row).catch(err =>
-        observeWriteThroughFailure('write_through_reference_standard', row.id, err)
-      );
-    }
-    res.json({ success: true, data: row, ...module3Linkage(projectId) });
+    const linkage = await linkToModule3('write_through_reference_standard', orgId, row, req, writeThroughReferenceStandard);
+    res.json({ success: true, data: row, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to create reference standard');
   }
 });
 
-/** Qualify a standard, record its characterisation, or retire it. */
+/** Record the characterisation, correct the record, or retire the standard. */
 router.put('/reference-standards/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = referenceStandardBody.partial().parse(req.body);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'reference-standards')) return;
+    const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
+      validatedData as Record<string, unknown>,
+    ) as { projectId?: unknown } & Record<string, unknown>;
     const [row] = await db
       .update(cmcReferenceStandards)
-      .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
+      .set({ ...editable, updatedAt: new Date() })
       .where(and(eq(cmcReferenceStandards.id, id), eq(cmcReferenceStandards.organizationId, orgId)))
       .returning();
     if (!row) return res.status(404).json({ success: false, error: 'Reference standard not found' });
-    const projectId = writeThroughProjectId(row, req);
-    if (projectId) {
-      writeThroughReferenceStandard(orgId, projectId, String(row.id), row).catch(err =>
-        observeWriteThroughFailure('write_through_reference_standard', row.id, err)
-      );
-    }
-    res.json({ success: true, data: row, ...module3Linkage(projectId) });
+    const linkage = await linkToModule3('write_through_reference_standard', orgId, row, req, writeThroughReferenceStandard);
+    res.json({ success: true, data: row, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to update reference standard');
   }
+});
+
+/** The governed qualification of a reference standard (21 CFR Part 11). */
+router.post('/reference-standards/:id/qualify', async (req, res) => {
+  return qualifyRegisterRecord(req, res, {
+    table: 'cmc_reference_standards',
+    target: 'reference_standard',
+    surface: 'cmc-reference-standards',
+    subject: 'reference standard',
+    propagation: 'write_through_reference_standard',
+    reselect: reselectReferenceStandard,
+    writeThrough: writeThroughReferenceStandard,
+  });
 });
 
 // POST /api/cmc/insights/take-action - Take action on AI insights (DB-backed)

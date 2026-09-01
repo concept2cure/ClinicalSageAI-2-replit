@@ -3881,14 +3881,14 @@ export const cmcContainerClosures = pgTable(
     closureDescription: text('closure_description').notNull(),
     /* [{ component, material, supplier, specification, compendialReference }] —
        the materials of construction table §3.2.P.7 is built around. */
-    materialsOfConstruction: json('materials_of_construction'),
+    materialsOfConstruction: jsonb('materials_of_construction'),
     compendialStandards: text('compendial_standards').array(), // USP <661>, Ph. Eur. 3.2.1, ...
     suitabilityJustification: text('suitability_justification'),
     /* { studyType, protocol, conditions, analyticalEvaluationThreshold,
          results: [{ analyte, level, unit, threshold, assessment }], conclusion } */
-    extractablesLeachables: json('extractables_leachables'),
+    extractablesLeachables: jsonb('extractables_leachables'),
     /* { method, acceptanceCriteria, result, testDate } — CCI / seal integrity. */
-    integrityTesting: json('integrity_testing'),
+    integrityTesting: jsonb('integrity_testing'),
     supplier: text('supplier'),
     status: text('status').default('draft').notNull(), // draft, qualified, retired
     qualifiedBy: integer('qualified_by').references(() => users.id),
@@ -3930,7 +3930,7 @@ export const cmcReferenceStandards = pgTable(
     assignedValue: text('assigned_value'), // e.g. "98.7% (as-is)" — the potency assay results are reported against
     /* [{ attribute, method, result }] — how the standard was characterised, which
        is what qualifies it as a standard rather than just another lot. */
-    characterization: json('characterization'),
+    characterization: jsonb('characterization'),
     certificateOfAnalysis: text('certificate_of_analysis'),
     qualificationProtocol: text('qualification_protocol'),
     storageConditions: text('storage_conditions'),
