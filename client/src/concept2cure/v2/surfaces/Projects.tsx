@@ -957,9 +957,14 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         blockedCount: blocked.length,
         averageReadiness: health[1].n,
         // Enough to name a programme back to the user, not the whole row set.
+        // `p.lead` is deliberately NOT published: the server projects it as
+        // COALESCE(u.name, u.email, '—'), so a lead with no name set resolves to
+        // an EMAIL — PII that must not enter the model prompt. It stays on the
+        // card (where the person reads it); the sibling ProjectHome publisher
+        // drops the team member's email for the same reason.
         programs: list.slice(0, 12).map(p => ({
           id: p.id, code: p.code, title: p.title, workstream: p.ws, stage: p.stage,
-          status: p.status, readiness: p.readiness, lead: p.lead, due: p.due,
+          status: p.status, readiness: p.readiness, due: p.due,
           blocker: p.blocker ?? null,
         })),
       },

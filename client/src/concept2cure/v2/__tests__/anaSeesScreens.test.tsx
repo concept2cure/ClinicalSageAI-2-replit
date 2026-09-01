@@ -15,6 +15,9 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+vi.mock('@/services/portal/authService', () => ({
+  useAuth: () => ({ user: { id: 7, firstName: 'Ada' } }),
+}));
 vi.mock('@/utils/authToken', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/utils/authToken')>()),
   getAuthToken: () => 't',
@@ -26,6 +29,10 @@ import { IdentityConsole } from '../surfaces/IdentityConsole';
 import { Orchestration } from '../surfaces/Orchestration';
 import { BiopharmaJourney } from '../surfaces/BiopharmaJourney';
 import { AccessRequests } from '../surfaces/AccessRequests';
+import { TaskBoard } from '../surfaces/TaskBoard';
+import { DocJourney } from '../surfaces/DocJourney';
+import { Projects } from '../surfaces/Projects';
+import { AuditTrail } from '../surfaces/AdminSurfaces';
 import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 
 function ok(data: unknown) {
@@ -274,5 +281,116 @@ describe('security: access-requests never leaks a requester email, name, note or
     for (const leak of ['leak@sentinel.test', 'PII-NAME-SENTINEL', 'NOTE-SENTINEL', 'REASON-SENTINEL']) {
       expect(payload, `access-requests leaked ${leak}`).not.toContain(leak);
     }
+  });
+});
+
+/* ── Audit-driven regression guards (2026-08-31 adversarial audit) ─────────
+ * The subsystem audit confirmed four defects the hand review missed — two of
+ * them server-side COALESCE(name, email) projections the client cannot tell
+ * from a plain name. These guards pin the fixes: a failed read is a failure
+ * not an empty board, and no email-capable person field or user free-text
+ * reaches the published context. Each asserts an ALLOWED value did reach it,
+ * so a green is a scan of a populated payload.
+ */
+const svProps = (id: string) =>
+  ({ surface: { id, label: id } as never, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' });
+
+describe('audit: task board — a failed read is a failure, never a clean empty board', () => {
+  beforeEach(() => apiRequest.mockReset());
+
+  it('publishes "could not be read", not "0 tasks", when the board read fails', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/task-management/board') return fail(500);
+      return ok({ data: [] });
+    });
+    const seen = { current: null as SurfaceContext | null };
+    render(
+      <>
+        <TaskBoard {...svProps('tasks')} />
+        <Probe id="tasks" seen={seen} />
+      </>,
+    );
+    await waitFor(() => expect(seen.current?.summary).toContain('could not be read'));
+    expect(seen.current?.summary).not.toContain('0 tasks');
+    expect(seen.current?.summary).not.toContain('0 open');
+    expect((seen.current?.facts as Record<string, unknown>)?.readFailure).toBeTruthy();
+  });
+});
+
+describe('audit: doc-journey never publishes the actor name/email', () => {
+  beforeEach(() => apiRequest.mockReset());
+
+  it('publishes the active stage label but not its who (a name-or-email field)', async () => {
+    const STAGE = {
+      id: 'drafted', label: 'Drafted', ic: 'edit', when: '2h ago',
+      who: 'author@sentinel.test', ver: 'v3', done: true, active: true, sub: '', kind: 'authorship',
+    };
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/doc-journey') return ok({ data: [STAGE] });
+      return ok({ data: [] });
+    });
+    const seen = { current: null as SurfaceContext | null };
+    render(
+      <>
+        <DocJourney {...svProps('doc-journey')} />
+        <Probe id="doc-journey" seen={seen} />
+      </>,
+    );
+    // Ready state reached: the active stage is published by label.
+    await waitFor(() => expect(JSON.stringify(seen.current)).toContain('Drafted'));
+    expect(JSON.stringify(seen.current), 'doc-journey leaked the actor who').not.toContain('author@sentinel.test');
+  });
+});
+
+describe('audit: projects never publishes the lead email', () => {
+  beforeEach(() => apiRequest.mockReset());
+
+  it('publishes the program code but not its lead (a COALESCE(name,email) field)', async () => {
+    const PROG = {
+      id: 'p1', title: 'ZX-9 IND', ws: 'Pharma', code: 'ZX-9', stage: 'author',
+      readiness: 40, status: 'active', lead: 'lead@sentinel.test', blocker: null, due: 'Q4',
+    };
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/c2c/projects') return ok({ data: [PROG] });
+      return ok({ data: [] });
+    });
+    const seen = { current: null as SurfaceContext | null };
+    render(
+      <>
+        <Projects {...svProps('projects')} />
+        <Probe id="projects" seen={seen} />
+      </>,
+    );
+    await waitFor(() => expect(JSON.stringify(seen.current)).toContain('ZX-9'));
+    expect(JSON.stringify(seen.current), 'projects leaked the lead email').not.toContain('lead@sentinel.test');
+  });
+});
+
+describe('audit: audit-trail never publishes an actor name or a reason free-text', () => {
+  beforeEach(() => apiRequest.mockReset());
+
+  it('publishes the event meaning and hasReason boolean, not the actor or the reason text', async () => {
+    const ENTRY = {
+      id: 'AE-1', when: '1h ago', actor: 'ACTOR-NAME-SENTINEL', event: 'Document approved',
+      target: 'CSR §2.5', kind: 'approval', sig: true, hash: 'h1', prevHash: 'h0',
+      ip: '10.0.0.9', reason: 'REASON-FREETEXT-SENTINEL', meaning: 'APPROVAL',
+    };
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/audit-trail/ledger') return ok({ data: [ENTRY] });
+      return ok({ data: [] });
+    });
+    const seen = { current: null as SurfaceContext | null };
+    render(
+      <>
+        <AuditTrail {...svProps('audit-trail')} />
+        <Probe id="audit-trail" seen={seen} />
+      </>,
+    );
+    // Ready state reached: the entry is published by id, with its meaning enum.
+    await waitFor(() => expect(JSON.stringify(seen.current)).toContain('AE-1'));
+    const payload = JSON.stringify(seen.current);
+    expect(payload, 'audit-trail leaked the actor name').not.toContain('ACTOR-NAME-SENTINEL');
+    expect(payload, 'audit-trail leaked the reason free-text').not.toContain('REASON-FREETEXT-SENTINEL');
+    expect(payload, 'audit-trail leaked the ip').not.toContain('10.0.0.9');
   });
 });

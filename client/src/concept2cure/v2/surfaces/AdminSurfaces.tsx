@@ -1026,16 +1026,24 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
         hashChain: { total: chainStatus.total, verified: chainStatus.valid, intact: chainStatus.intact },
         hashChainViewOpen: chainView,
         // Enough to name an event back to the user, not the whole ledger.
+        // `actor` (an individual's name, or an email via the server's
+        // actorName fallback) and `reason` (user-authored signing/decision
+        // free-text) are deliberately NOT published: the name/email is PII and
+        // the free-text is both sensitive content and a prompt-injection vector
+        // folded verbatim into the model prompt. `meaning` (an
+        // APPROVAL/AUTHORSHIP/… enum) and `hasReason` carry the same grounding
+        // without the payload — the way this block already omits `e.ip`. The
+        // actor and reason stay on the ledger row, where the person reads them.
         recentEntries: log.slice(0, 10).map((e) => ({
-          id: e.id, when: e.when, actor: e.actor, event: e.event,
+          id: e.id, when: e.when, event: e.event,
           target: e.target, kind: e.kind, eSigned: e.sig,
-          reason: e.reason, meaning: e.meaning,
+          hasReason: Boolean(e.reason), meaning: e.meaning,
         })),
         selectedEntry: entry
           ? {
-              id: entry.id, when: entry.when, actor: entry.actor, event: entry.event,
+              id: entry.id, when: entry.when, event: entry.event,
               target: entry.target, kind: entry.kind, eSigned: entry.sig,
-              reason: entry.reason, meaning: entry.meaning,
+              hasReason: Boolean(entry.reason), meaning: entry.meaning,
             }
           : null,
         lastExportFailure: exportErr || null,

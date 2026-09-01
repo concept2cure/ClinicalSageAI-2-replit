@@ -337,7 +337,11 @@ export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
                 label: stage.label,
                 ...(stage.ver && stage.ver !== '—' ? { ver: stage.ver } : {}),
                 ...(stage.when ? { when: stage.when } : {}),
-                ...(stage.who ? { who: stage.who } : {}),
+                // `stage.who` is resolved server-side as actorName(name, email,
+                // …) — it can be an individual's EMAIL, which must not be folded
+                // into the model prompt. It stays on the rail (where the person
+                // reads it); the sibling Orchestration publisher omits person
+                // identities from its facts for the same reason.
               },
             }
           : {}),

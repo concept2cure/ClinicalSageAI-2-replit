@@ -601,6 +601,23 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
      scripts/ci/check-ana-surface-context.mjs now resolves aliases and fails a
      publish into an alias source rather than merely checking membership. */
   const anaContext = useMemo(() => {
+    // A failed board read must NOT publish "0 tasks, 0 open, 0 blocked" — that
+    // is a dead store reported to AnA as a clean board (the fail-open the
+    // repo's own rule forbids: an error is never rendered as an empty result).
+    // These two branches sit above the summary for the same reason every
+    // sibling surface guards them.
+    if (liveTasks.loading) {
+      return { summary: 'The task board is still loading; nothing on screen is final yet.' };
+    }
+    if (liveTasks.error) {
+      return {
+        summary:
+          'The task board could not be read, so this screen is showing no tasks because of a ' +
+          'failure, not because there are none — the counts below are unknown, not zero.',
+        facts: { readFailure: liveTasks.error },
+        availableActions: ['Retry the task-board read'],
+      };
+    }
     // `t.due` is server data, not a local invariant: a task row without it is a
     // plausible response and must not crash the board. Same class as the
     // ectd-compile defect — the guard has to cover the member, not the container.
@@ -641,7 +658,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         'Filter the board by module, priority, assignee or search text',
       ],
     };
-  }, [list, stats, sel, view]);
+  }, [list, stats, sel, view, liveTasks.loading, liveTasks.error]);
   usePublishSurfaceContext('tasks', anaContext);
 
   /* Critical path: topological-ish chain over dependsOn, criticalPath:true */
