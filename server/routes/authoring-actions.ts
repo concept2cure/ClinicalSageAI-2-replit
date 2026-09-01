@@ -1958,31 +1958,43 @@ router.post('/body-aware-gaps', async (req: Request, res: Response) => {
     }
 
     try {
-      const bodyAwareModule: any = await import('../services/body-aware-authoring.js');
-      const service = bodyAwareModule.bodyAwareAuthoringService
-        || bodyAwareModule.BodyAwareAuthoringService
-        || bodyAwareModule.default;
+      /* This looked for the capability under three names it was never published
+         under — `bodyAwareAuthoringService`, `BodyAwareAuthoringService` and
+         `default` — while server/services/body-aware-authoring.ts exports plain
+         NAMED functions. `service` was therefore always undefined, the guard
+         below never opened, and every call fell through to the
+         'service_unavailable' response at the end of the handler.
 
-      if (service) {
-        const svc = typeof service === 'function' ? new service() : service;
-        if (svc.detectBodySpecificGaps) {
-          const gaps = await svc.detectBodySpecificGaps(
-            regulatorBody,
-            submissionType,
-            sectionCode,
-            currentContent || ''
-          );
+         The capability was never missing. detectBodySpecificGaps is exported and
+         implemented, and its signature is exactly the four arguments this
+         handler already had ready to pass. So the endpoint has spent its whole
+         life reporting that body-aware gap detection is unavailable while the
+         function sat in the module it had just imported.
 
-          return res.json({
-            status: 'data',
-            action: 'body_aware_gaps',
-            regulatorBody,
-            submissionType,
-            sectionCode,
-            gaps: Array.isArray(gaps) ? gaps : gaps?.gaps || [],
-            gapCount: Array.isArray(gaps) ? gaps.length : gaps?.gaps?.length || 0,
-          });
-        }
+         Worth noting how it stayed hidden: the fallback is HONEST — it says the
+         analysis could not be run rather than returning an empty gap list — so
+         nothing ever looked wrong enough to investigate. An honest degraded
+         message is right, and it is also why a permanently-degraded path can go
+         unnoticed for a long time. */
+      const { detectBodySpecificGaps } = await import('../services/body-aware-authoring.js');
+
+      if (typeof detectBodySpecificGaps === 'function') {
+        const gaps = await detectBodySpecificGaps(
+          regulatorBody,
+          submissionType,
+          sectionCode,
+          currentContent || ''
+        );
+
+        return res.json({
+          status: 'data',
+          action: 'body_aware_gaps',
+          regulatorBody,
+          submissionType,
+          sectionCode,
+          gaps: Array.isArray(gaps) ? gaps : gaps?.gaps || [],
+          gapCount: Array.isArray(gaps) ? gaps.length : gaps?.gaps?.length || 0,
+        });
       }
     } catch {
       // Body-aware authoring service unavailable
