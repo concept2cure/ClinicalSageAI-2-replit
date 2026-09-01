@@ -58,6 +58,7 @@
 
 import { createHash } from 'crypto';
 import { sql, type SQL } from 'drizzle-orm';
+import { resolveSignerIdentity } from './resolve-signer-identity.js';
 
 /** Minimal pg-compatible client: node-pg Pool, PoolClient, or a test shim. */
 export interface SignatureDbClient {
@@ -500,45 +501,13 @@ export async function persistGovernedActionSignature(
 ): Promise<{ id: number; signedAt: Date }> {
   const command = params.command ?? 'sign';
 
-  // Signer snapshot (printed name — §11.50). Read on the caller's client so the
-  // lookup participates in the same transaction. Fail closed if unresolvable.
-  //
-  // Joined to organization_users so the printed name resolves ONLY for a signer
-  // who is a member of the org this signature is being made in. It used to be a
-  // bare primary-key read of `users`, which was safe as CALLED — both callers
-  // pass the authenticated actor's own id — but safe by convention: nothing
-  // stopped a future caller passing any user id, and §11.50 requires the
-  // printed name OF THE SIGNER. A name resolved across a tenant boundary is a
-  // misattributed signature in a filing an agency reads.
-  //
-  // NOT scoped on `users.default_organization_id`, which is the obvious fix and
-  // the wrong one: it names a preference, not a membership, so a signer
-  // legitimately acting outside their default org would fail to resolve and a
-  // valid signature would be refused. organization_users is the authorization
-  // relation — the same one `server/auth.ts` selects a session's tenant from.
-  //
-  // tenant-isolation-safe: the org predicate is on organization_users.organization_id, bound to params.orgId — the org the caller's transaction is already scoped to. Only name/email/title are read, to render the §11.50 printed name of the person signing.
-  const signer = await client.query(
-    `SELECT u.name, u.email, u.title
-       FROM users u
-       JOIN organization_users ou
-         ON ou.user_id = u.id
-        AND ou.organization_id = $2
-      WHERE u.id = $1
-      LIMIT 1`,
-    [params.userId, params.orgId],
-  );
-  if (signer.rows.length === 0) {
-    // Non-membership and non-existence are one refusal on purpose: both mean
-    // this org cannot attribute this signature, and distinguishing them in the
-    // error would disclose whether a user id exists in another tenant.
-    throw new Error(
-      `governed ${command}: signer user ${params.userId} is not a member of org ${params.orgId} — cannot attribute signature (§11.100).`,
-    );
-  }
-  const signerName: string = signer.rows[0].name || signer.rows[0].email;
-  const signerEmail: string = signer.rows[0].email;
-  const signerTitle: string | null = signer.rows[0].title ?? null;
+  // Signer snapshot (printed name — §11.50), on the caller's client so the
+  // lookup participates in the same transaction. Fails closed if unresolvable.
+  // The lookup itself lives in resolve-signer-identity, shared with the
+  // concept2cure_signatures writers so the two substrates cannot drift on the
+  // question of who signed — they had, and one of them was inventing names.
+  const { name: signerName, email: signerEmail, title: signerTitle } =
+    await resolveSignerIdentity(client, params.userId, params.orgId, `governed ${command}`);
 
   const binding = params.binding;
   const boundPayloadDigest = binding.digest ?? params.sha256Chain;

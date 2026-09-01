@@ -17,6 +17,7 @@
  * @module server/services/ana/submission-chat-apply-rewrite
  */
 import crypto from 'node:crypto';
+import { resolveSignerIdentity } from '../part11/resolve-signer-identity.js';
 import { getPool } from '../../db/runtime.js';
 import { saveChatMessage } from '../chat-thread-helpers.js';
 import { recordArtifactProvenanceBestEffort } from '../provenance/artifact-provenance';
@@ -521,6 +522,25 @@ export async function applyRewrite(
   try {
     await client.query('BEGIN');
 
+    // ── Who is doing this, resolved once, before anything is written ────
+    // Both the §11.10(e) audit row (`user_name`) and the §11.50 signature
+    // (`signer_name`) are NOT NULL, and that is why this file used to invent
+    // `user-${id}` for one and `user-${id}@unknown.local` for the other. A
+    // column that forbids null is not a reason to write something in its place.
+    //
+    // A GxP-relevant data change with no attributable actor should not be
+    // recorded at all, so this throws and the transaction rolls back. The route
+    // above already requires an authenticated tenant, so reaching here with an
+    // unattributable signer means something upstream is broken — precisely when
+    // inventing an actor is least defensible.
+    const actor = await resolveSignerIdentity(
+      client,
+      input.userId,
+      input.organizationId,
+      'rewrite_apply',
+    );
+    const auditUserName = actor.name;
+
     // ── Lock the artifact row to prevent concurrent rewrites racing ─────
     const cur = await client.query(
       `SELECT id, artifact_id, project_id, organization_id,
@@ -709,15 +729,21 @@ export async function applyRewrite(
     // attests to one version while pointing at another.
     let signatureId: string | null = null;
     if (hasSignature && input.signature) {
-      const signerName =
-        input.signature.signerName?.trim() ||
-        input.userName ||
-        `user-${input.userId}`;
-      const signerEmail =
-        input.signature.signerEmail?.trim() ||
-        input.userEmail ||
-        `user-${input.userId}@unknown.local`;
-      const authMethod = input.signature.authenticationMethod ?? 'session';
+      // §11.50 printed name — RESOLVED from the membership record on this same
+      // transaction, never taken from the caller and never synthesised. This
+      // used to fall back to `user-${id}` and `user-${id}@unknown.local`, which
+      // are not a person's name, and the signature hash below is computed over
+      // the email — so a signature hashed over an invented address could not be
+      // re-derived from the real signer and verification would report a
+      // mismatch that reads as tampering. If the signer is not attributable in
+      // this org, resolveSignerIdentity throws and the whole transaction rolls
+      // back: no signature, and no applied rewrite claiming to carry one.
+      const signerName = actor.name;
+      const signerEmail = actor.email;
+      // §11.200 authentication method: what the signer's session actually used.
+      // Defaulting an undeclared method to 'session' asserted a control that may
+      // not have been applied; an unstated method is recorded as unstated.
+      const authMethod = input.signature.authenticationMethod ?? null;
       const signatureSeed = [
         signerEmail,
         input.signature.meaning,
@@ -795,7 +821,7 @@ export async function applyRewrite(
         }),
         reason,
         input.userId,
-        input.userName ?? `user-${input.userId}`,
+        auditUserName,
         input.userRole ?? 'regulatory',
         input.ipAddress ?? 'ip-not-captured',
         now,

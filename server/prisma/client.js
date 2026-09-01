@@ -226,29 +226,14 @@ const document = {
 // signature  →  maps to the `electronic_signatures` table
 // ---------------------------------------------------------------------------
 const signature = {
-  async create({ data } = {}) {
-    const d = data ?? {};
-    const rows = await rawQuery(
-      `INSERT INTO electronic_signatures
-         (document_id, version_id, signature_type, signature_purpose, signer_id, signer_name,
-          signer_email, authentication_method, authentication_timestamp, signature_hash)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-       RETURNING *`,
-      [
-        d.documentId ?? d.document_id ?? 0,
-        d.versionId ?? d.version_id ?? 0,
-        d.signatureType ?? d.signature_type ?? 'approval',
-        d.signaturePurpose ?? d.signature_purpose ?? '',
-        d.signerId ?? d.signer_id ?? 0,
-        d.signerName ?? d.signer_name ?? '',
-        d.signerEmail ?? d.signer_email ?? '',
-        d.authenticationMethod ?? d.authentication_method ?? 'password',
-        d.authenticationTimestamp ?? d.authentication_timestamp ?? new Date(),
-        d.signatureHash ?? d.signature_hash ?? '',
-      ]
-    );
-    return rows[0];
-  },
+  // `create` deleted (ledger L137). It inserted into electronic_signatures with
+  // document_id defaulting to 0 and signer_name, signer_email and
+  // signature_hash defaulting to '' — a 21 CFR 11.50 printed name and a §11.200
+  // attribution hash written as empty strings, which are indistinguishable from
+  // real values once stored. It had no caller, which is why this is a deletion
+  // rather than an incident, and it bypassed persistElectronicSignature, so
+  // reviving it would have reopened the single-writer property L37 established.
+  // A signature written here belongs in server/services/part11.
 
   async findMany({ where, orderBy, take } = {}) {
     // Tenant-isolation guard: electronic_signatures must be scoped to a
