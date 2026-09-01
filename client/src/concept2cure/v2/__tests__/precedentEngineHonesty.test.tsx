@@ -339,3 +339,57 @@ describe('an unreachable FDA registry is not an empty registry', () => {
     expect(text()).not.toContain('The FDA 510(k) registry answered');
   });
 });
+
+/* ── The analysis lenses a device submitter is shown ─────────────────────────
+ *
+ * The board offered CRL triggers, RTF triggers, EMA Day-120/180 and AdComm risk
+ * on every search including a 510(k). The work order recorded RTF as the one
+ * device-correct lens; it is not — that checklist is Form FDA 356h, Orange Book
+ * patent certification, CTD modules and CDISC datasets. All four were drug
+ * analyses, and a device submitter was reading them as findings about their
+ * device. The board now names which lenses apply (`lenses`) and the surface
+ * renders that, rather than a hardcoded drug four.
+ */
+describe('the analysis tabs follow the pathway the board reports', () => {
+  it('shows the device lenses and none of the drug ones for a 510(k) board', async () => {
+    await mountWithBoard({
+      lenses: ['rta', 'ai', 'nse', 'predicate', 'panel'],
+      patterns: {
+        rta: { title: 'Refuse-to-Accept (510(k))', rate: '16 acceptance-review items', items: ['x'] },
+        ai: { title: 'Additional Information request drivers', rate: 'clock-stopping', items: ['x'] },
+        nse: { title: 'Not-substantially-equivalent routes', rate: 'FDA 510(k) SE flowchart', items: ['x'] },
+        predicate: { title: 'Predicate adequacy', rate: 'partial — see below', items: ['x'] },
+        panel: { title: 'Pathway escalation', rate: 'no panel in 510(k)', items: ['x'] },
+      },
+    });
+    const tabs = screen.getAllByRole('button').map((b) => b.textContent ?? '');
+    expect(tabs).toContain('NSE routes');
+    expect(tabs).toContain('Predicate adequacy');
+    // The four that had no business being on a device screen.
+    expect(tabs).not.toContain('CRL triggers');
+    expect(tabs).not.toContain('EMA D120/180');
+    expect(tabs).not.toContain('AdComm risk');
+  });
+
+  it('still shows the drug lenses for a drug board', async () => {
+    await mountWithBoard({ lenses: ['crl', 'rtf', 'ema', 'adcomm'] });
+    const tabs = screen.getAllByRole('button').map((b) => b.textContent ?? '');
+    expect(tabs).toContain('CRL triggers');
+    expect(tabs).toContain('EMA D120/180');
+    expect(tabs).not.toContain('NSE routes');
+  });
+
+  it('offers device and drug submission types as separate, named groups', () => {
+    // One screen serves both lanes and nothing reaching it reliably says which,
+    // so the families are labelled rather than half of them hidden on a guess.
+    apiRequest.mockResolvedValue({ ok: true, status: 200, json: async () => ({ data: [] }) });
+    render(
+      <PrecedentEngine
+        {...({ surface: { id: 'precedent-engine' }, onAsk: vi.fn(), onNav: vi.fn() } as any)}
+      />,
+    );
+    const groups = Array.from(document.querySelectorAll('optgroup')).map((g) => g.label);
+    expect(groups).toContain('Device pathways');
+    expect(groups).toContain('Drug and biologic pathways');
+  });
+});

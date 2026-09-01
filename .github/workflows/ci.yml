@@ -1464,6 +1464,13 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Must run in THIS job, after the build. The gate reads the built CSS
+      # chunks and refuses to report against a stale build (exit 2), so in a
+      # source-only job it would either fail on staleness or, worse, answer
+      # about a product that is not the one under test.
+      - name: Component class coverage (every rendered class has a rule)
+        run: npm run ci:component-class-coverage
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:

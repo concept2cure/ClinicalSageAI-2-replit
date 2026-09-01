@@ -618,7 +618,9 @@ router.post('/correspondence/intake', async (req, res) => {
         projectId: record.projectId,
         issue,
         ownerUserId: userId,
-        ownerName: `user-${userId}`,
+        // ownerName is nullable downstream, so an unresolved owner is recorded
+        // as unowned rather than as a person called `user-41`.
+        ownerName: (req as any).user?.name ?? (req as any).user?.email ?? null,
         linkedSectionKeys: impact.linkedSections.map(s => s.sectionKey),
       });
 

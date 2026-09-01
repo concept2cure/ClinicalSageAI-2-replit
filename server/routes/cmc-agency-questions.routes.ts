@@ -12,6 +12,11 @@
  * canonical shape, and these are its governed writes.
  *
  * Mounted at /api/cmc/agency-questions behind authenticateToken.
+ *   GET   /      — the file itself, org-scoped. ?status=CLOSED serves the
+ *                  answered history (the record the board's open filter
+ *                  deliberately leaves out — this is where "stays in the
+ *                  record" becomes readable, before the next agency
+ *                  interaction and at inspection).
  *   POST  /      — log a question the agency asked (org stamped from the
  *                  verified JWT, never the body; status starts OPEN).
  *   PATCH /:id   — triage updates: status / assignee / due date / priority /
@@ -135,6 +140,49 @@ function mapRow(r: RegQuestionRow) {
 
 export default function createCmcAgencyQuestionRoutes(): Router {
   const router = Router();
+
+  router.get('/', async (req: Request, res: Response) => {
+    const tenantId = resolveTenantId(req);
+    if (tenantId == null) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
+    // ?status filters to one lifecycle state; omitted serves the whole file.
+    // An unknown status is a refusal, not an empty list pretending to be one.
+    const status = typeof req.query.status === 'string' ? req.query.status.toUpperCase() : undefined;
+    if (status !== undefined && !(STATUSES as readonly string[]).includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: `status must be one of ${STATUSES.join(', ')}`,
+      });
+    }
+    try {
+      const params: unknown[] = [tenantId];
+      let statusClause = '';
+      if (status !== undefined) {
+        params.push(status);
+        statusClause = ` and status = $${params.length}`;
+      }
+      const { rows } = await q(
+        `select id, question_text, section_reference, priority, severity, status,
+                region, due_date, assigned_to, response_doc_id, created_at, updated_at
+           from reg_questions
+          where organization_id = $1${statusClause}
+            and (section_reference ilike '3.%' or section_reference ilike 'm3%'
+                 or section_reference is null)
+          order by updated_at desc, id desc
+          limit 100`,
+        params,
+      );
+      return res.json({ success: true, data: (rows as RegQuestionRow[]).map(mapRow) });
+    } catch (err) {
+      logger.error('agency-question list failed', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return res
+        .status(500)
+        .json({ success: false, error: 'The correspondence file could not be read.' });
+    }
+  });
 
   router.post('/', async (req: Request, res: Response) => {
     const tenantId = resolveTenantId(req);

@@ -123,6 +123,8 @@ interface CmcCorrespondence {
   assignedTo: string | null;
   /** The authoring document holding the drafted response, when one is linked. */
   responseDocId?: string | null;
+  /** Served by the file's GET (the closed-history read); the board omits it. */
+  updatedAt?: string | null;
 }
 interface CmcSection { key: string; path: string; st: string; _new?: boolean; }
 interface CmcChangeType { id: string; label: string; risk: string; }
@@ -2106,6 +2108,52 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
     }
   };
 
+  /* The CLOSED file — the record the board's open filter deliberately leaves
+     out, readable at last. Loaded on demand (the open list is the working
+     set; the answered history is a look-up before the next agency
+     interaction and at inspection), with honest loading/error/empty states.
+     Reopening a mistaken close was legal in the API from day one and
+     impossible from every screen; the Reopen door closes that. */
+  const [closedOpen, setClosedOpen] = useState(false);
+  const [closedRows, setClosedRows] = useState<CmcCorrespondence[]>([]);
+  const [closedState, setClosedState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const loadClosed = async () => {
+    setClosedState('loading');
+    try {
+      const res = await apiRequest('GET', '/api/cmc/agency-questions?status=CLOSED');
+      const pj = (await res.json().catch(() => null)) as { success?: boolean; data?: unknown } | null;
+      if (!res.ok || !pj?.success) throw new Error(serverMessage(pj) ?? `HTTP ${res.status}`);
+      setClosedRows(Array.isArray(pj.data) ? (pj.data as CmcCorrespondence[]) : []);
+      setClosedState('ready');
+    } catch {
+      // A failed read is an ERROR, never an empty history claiming nothing
+      // was ever closed.
+      setClosedState('error');
+      setClosedRows([]);
+    }
+  };
+  const toggleClosed = () => {
+    const next = !closedOpen;
+    setClosedOpen(next);
+    if (next) void loadClosed();
+  };
+  const reopenQuestion = async (c: CmcCorrespondence) => {
+    try {
+      /* Reopen to the truthful state: DRAFTED when a response draft is linked
+         (that draft still exists), OPEN otherwise. Guarded — only a row still
+         CLOSED reopens; a 409 means someone already moved it. */
+      await apiRequest('PATCH', '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)), {
+        status: c.responseDocId ? 'DRAFTED' : 'OPEN',
+        expectedStatus: 'CLOSED',
+      });
+      fireToast('Question reopened' + (c.sectionRef ? ' · §' + c.sectionRef : '') + ' — back on the open list.');
+    } catch (e) {
+      fireToast('Couldn’t reopen the question — ' + (e instanceof Error ? e.message : String(e)), 'error');
+    }
+    setCorrEpoch((e) => e + 1);
+    void loadClosed();
+  };
+
   /* Close = the question is answered and submitted; the row leaves the OPEN
      list but stays in the record. Inline confirm — a closed row disappears
      from this view, so a misclick must not do that silently. */
@@ -2124,9 +2172,40 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
       fireToast('Question closed' + (c.sectionRef ? ' · §' + c.sectionRef : '') + ' — it leaves the open list and stays in the record.');
       setClosingId(null);
       setCorrEpoch((e) => e + 1);
+      // The closed file is on screen? Then the row must appear there NOW.
+      if (closedOpen) void loadClosed();
     } catch (e) {
       fireToast('Couldn’t close the question — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
       setCorrEpoch((e) => e + 1);
+    }
+  };
+
+  /* Inline re-assignment. The Assigned column rendered the owner but only the
+     Log dialog could ever set one — changing who owns the response mid-life,
+     the everyday triage act, forced a raw API call. A blank value clears the
+     owner (the server stores NULL, the cell says so honestly). */
+  const [assigningId, setAssigningId] = useState<string | number | null>(null);
+  const [assignVal, setAssignVal] = useState('');
+  const saveAssignee = async (c: CmcCorrespondence) => {
+    const next = assignVal.trim();
+    if ((c.assignedTo ?? '') === next) {
+      setAssigningId(null);
+      return;
+    }
+    try {
+      await apiRequest(
+        'PATCH',
+        '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
+        { assignedTo: next || null },
+      );
+      fireToast(next ? 'Assigned to ' + next + '.' : 'Assignment cleared.');
+      setAssigningId(null);
+      setCorrEpoch((e) => e + 1);
+    } catch (e) {
+      fireToast(
+        'Couldn’t update the assignment — ' + (e instanceof Error ? e.message : String(e)),
+        'error',
+      );
     }
   };
 
@@ -2379,7 +2458,37 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
                   </span>
                 </td>
                 <td className="mono">{c.status}</td>
-                <td>{c.assignedTo ?? '—'}</td>
+                <td>
+                  {assigningId === c.id ? (
+                    <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+                      <input
+                        value={assignVal}
+                        autoFocus
+                        aria-label="Who owns the response — blank clears the assignment"
+                        placeholder="name or email"
+                        style={{ width: 150 }}
+                        onChange={(e) => setAssignVal(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') void saveAssignee(c);
+                          if (e.key === 'Escape') setAssigningId(null);
+                        }}
+                      />
+                      <button className="nda-open" onClick={() => void saveAssignee(c)}>Save</button>
+                      <button className="nda-open" onClick={() => setAssigningId(null)}>Cancel</button>
+                    </span>
+                  ) : (
+                    <button
+                      className="nda-open"
+                      title={c.assignedTo ? 'Change who owns the response' : 'Assign an owner for the response'}
+                      onClick={() => {
+                        setAssigningId(c.id);
+                        setAssignVal(c.assignedTo ?? '');
+                      }}
+                    >
+                      {c.assignedTo ?? 'Assign'}
+                    </button>
+                  )}
+                </td>
                 <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                   <div style={{ display: 'inline-flex', gap: 6 }}>
                     {/* The linked draft is a recorded fact on the row — the
@@ -2472,6 +2581,66 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
           </tbody>
             </table>
           )}
+          {/* ── The closed file ──
+              Rendered under BOTH branches above: a fresh screen with no open
+              questions still has (or will have) an answered history. */}
+          <div style={{ borderTop: '1px solid var(--c2c-line,#eef0f3)', marginTop: 10, paddingTop: 8 }}>
+            <button className="nda-open" onClick={toggleClosed}>
+              {closedOpen ? 'Hide the closed file' : 'Show the closed file'}
+            </button>
+            {closedOpen ? (
+              closedState === 'loading' ? (
+                <div className="cm-meta" style={{ marginTop: 8 }}>Loading the closed file…</div>
+              ) : closedState === 'error' ? (
+                <div className="sp-tone-err" style={{ marginTop: 8, fontSize: 12.5 }}>
+                  Couldn’t read the closed file — it didn’t load, and this list would be a lie if it rendered empty. Toggle to retry.
+                </div>
+              ) : closedRows.length === 0 ? (
+                <div className="cm-meta" style={{ marginTop: 8 }}>
+                  No closed questions yet — the answered file builds as questions close.
+                </div>
+              ) : (
+                <table className="reg-tbl" style={{ marginTop: 8 }}>
+                  <thead><tr><th>Closed</th><th>Section</th><th>Question</th><th>Assigned</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
+                  <tbody>
+                    {closedRows.map((c) => (
+                      <tr key={'cl-' + c.id}>
+                        <td style={{ whiteSpace: 'nowrap' }} className="cm-meta">
+                          {c.updatedAt ? new Date(c.updatedAt).toLocaleDateString() : '—'}
+                        </td>
+                        <td className="mono">{c.sectionRef ?? '—'}</td>
+                        <td title={c.question}>{c.question.length > 120 ? c.question.slice(0, 120) + '…' : c.question}</td>
+                        <td>{c.assignedTo ?? '—'}</td>
+                        <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'inline-flex', gap: 6 }}>
+                            {c.responseDocId && nav ? (
+                              <button
+                                className="nda-open"
+                                title="Open the response that answered this question"
+                                onClick={() => {
+                                  setEditorTarget({ docType: null, docId: c.responseDocId });
+                                  nav('document-authoring');
+                                }}
+                              >
+                                {I.fileText} Open response
+                              </button>
+                            ) : null}
+                            <button
+                              className="nda-open"
+                              title="Reopen this question — it returns to the open list"
+                              onClick={() => void reopenQuestion(c)}
+                            >
+                              Reopen
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
+            ) : null}
+          </div>
         </div>
       </div>
   );

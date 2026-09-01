@@ -32,6 +32,17 @@
  *     its own attributable row, and points the revoked row's `superseded_by` at
  *     it. A revocation that cannot resolve what it revokes REFUSES.
  *
+ * Ledger L37 folded the LAST remaining second INSERT in.
+ * `part11ComplianceService.createElectronicSignature` — the writer behind
+ * POST /api/submissions/:id/sign-release — had its own Drizzle
+ * `.insert(electronicSignatures)`. It was conforming (it bound content and set
+ * the org), but it wrote 20 of this table's 26 columns and could not express
+ * `binding_basis` at all, so a release signature and a document signature
+ * disagreed about what the row's `bound_payload_digest` was a digest OF. That
+ * INSERT is deleted; the service now composes the same record and hands it to
+ * `persistElectronicSignature` via `drizzleSignatureClient(tx)`, which keeps the
+ * signature on the SAME transaction as its device_audit_trail row.
+ *
  * Fail-closed invariants (Part 11 integrity is sacred):
  *   - Every row must be anchored: either (documentId AND versionId) or a
  *     non-empty signedTarget. Refuse to insert an anchorless "signature".
@@ -46,10 +57,50 @@
  */
 
 import { createHash } from 'crypto';
+import { sql, type SQL } from 'drizzle-orm';
+import { resolveSignerIdentity } from './resolve-signer-identity.js';
 
 /** Minimal pg-compatible client: node-pg Pool, PoolClient, or a test shim. */
 export interface SignatureDbClient {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
+}
+
+/** A Drizzle runner: the db handle, or a Drizzle transaction. */
+export interface DrizzleSignatureRunner {
+  execute: (query: SQL) => Promise<unknown>;
+}
+
+/**
+ * Adapt a Drizzle runner (the db handle, or — the reason this exists — a
+ * Drizzle TRANSACTION) to the pg-style `query(text, params)` this module's
+ * writer takes.
+ *
+ * `part11ComplianceService.createElectronicSignature` composes its signature
+ * with a `device_audit_trail` row inside one `db.transaction(...)`. Handing the
+ * writer a fresh pool client would put the signature on a DIFFERENT connection
+ * from its §11.10(e) audit row, and the two would no longer commit or roll back
+ * together — so the transaction is adapted rather than escaped.
+ *
+ * The writer's `$n` placeholders are re-bound as Drizzle parameters; the
+ * statement text passes through raw and NO value is ever interpolated into it.
+ * `sql.param` rather than a bare interpolation, because Drizzle expands a bare
+ * array value into a `(a, b, c)` tuple of separate placeholders.
+ */
+export function drizzleSignatureClient(runner: DrizzleSignatureRunner): SignatureDbClient {
+  return {
+    query: async (text: string, params: unknown[] = []) => {
+      const parts = text.split(/\$(\d+)/g);
+      const chunks: SQL[] = [];
+      for (let i = 0; i < parts.length; i += 1) {
+        chunks.push(
+          i % 2 === 0 ? sql.raw(parts[i]) : sql`${sql.param(params[Number(parts[i]) - 1])}`,
+        );
+      }
+      const result = (await runner.execute(sql.join(chunks))) as { rows?: unknown[] } | unknown[];
+      const rows = Array.isArray(result) ? result : (result?.rows ?? []);
+      return { rows: rows as any[] };
+    },
+  };
 }
 
 // Postgres SQLSTATE for "undefined_table" (schema not yet migrated in this env).
@@ -70,6 +121,14 @@ export const BINDING_BASIS = {
   C2C_DOCUMENT_SECTION: 'c2c-document-section-sha256',
   /** sha256 over the certified financial-disclosure snapshot (21 CFR 54 Form 3454/3455). */
   FINANCIAL_DISCLOSURE_CONTENT: 'financial-disclosure-content-sha256',
+  /**
+   * sha256 over the eCTD release package the submission orchestrator assembled:
+   * leaf-manifest digest || validator-outcome digest || tenant-scoped submission
+   * identity (see submission-package-orchestrator.computeBoundPayloadDigest).
+   * A real content digest — re-derivable from the persisted run — of the exact
+   * package the signer released.
+   */
+  SUBMISSION_RELEASE_PAYLOAD: 'submission-release-payload-sha256',
   /** sha256 over the frozen cmc_module3_section_versions snapshot approved at signing time. */
   CMC_MODULE3_SECTION_VERSION: 'cmc-module3-section-version-sha256',
   /**
@@ -442,45 +501,13 @@ export async function persistGovernedActionSignature(
 ): Promise<{ id: number; signedAt: Date }> {
   const command = params.command ?? 'sign';
 
-  // Signer snapshot (printed name — §11.50). Read on the caller's client so the
-  // lookup participates in the same transaction. Fail closed if unresolvable.
-  //
-  // Joined to organization_users so the printed name resolves ONLY for a signer
-  // who is a member of the org this signature is being made in. It used to be a
-  // bare primary-key read of `users`, which was safe as CALLED — both callers
-  // pass the authenticated actor's own id — but safe by convention: nothing
-  // stopped a future caller passing any user id, and §11.50 requires the
-  // printed name OF THE SIGNER. A name resolved across a tenant boundary is a
-  // misattributed signature in a filing an agency reads.
-  //
-  // NOT scoped on `users.default_organization_id`, which is the obvious fix and
-  // the wrong one: it names a preference, not a membership, so a signer
-  // legitimately acting outside their default org would fail to resolve and a
-  // valid signature would be refused. organization_users is the authorization
-  // relation — the same one `server/auth.ts` selects a session's tenant from.
-  //
-  // tenant-isolation-safe: the org predicate is on organization_users.organization_id, bound to params.orgId — the org the caller's transaction is already scoped to. Only name/email/title are read, to render the §11.50 printed name of the person signing.
-  const signer = await client.query(
-    `SELECT u.name, u.email, u.title
-       FROM users u
-       JOIN organization_users ou
-         ON ou.user_id = u.id
-        AND ou.organization_id = $2
-      WHERE u.id = $1
-      LIMIT 1`,
-    [params.userId, params.orgId],
-  );
-  if (signer.rows.length === 0) {
-    // Non-membership and non-existence are one refusal on purpose: both mean
-    // this org cannot attribute this signature, and distinguishing them in the
-    // error would disclose whether a user id exists in another tenant.
-    throw new Error(
-      `governed ${command}: signer user ${params.userId} is not a member of org ${params.orgId} — cannot attribute signature (§11.100).`,
-    );
-  }
-  const signerName: string = signer.rows[0].name || signer.rows[0].email;
-  const signerEmail: string = signer.rows[0].email;
-  const signerTitle: string | null = signer.rows[0].title ?? null;
+  // Signer snapshot (printed name — §11.50), on the caller's client so the
+  // lookup participates in the same transaction. Fails closed if unresolvable.
+  // The lookup itself lives in resolve-signer-identity, shared with the
+  // concept2cure_signatures writers so the two substrates cannot drift on the
+  // question of who signed — they had, and one of them was inventing names.
+  const { name: signerName, email: signerEmail, title: signerTitle } =
+    await resolveSignerIdentity(client, params.userId, params.orgId, `governed ${command}`);
 
   const binding = params.binding;
   const boundPayloadDigest = binding.digest ?? params.sha256Chain;

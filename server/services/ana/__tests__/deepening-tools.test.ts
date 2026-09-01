@@ -8,6 +8,8 @@ describe('deepening tools — registration', () => {
   it.each([
     'assess_batch_poolability',
     'assess_recorded_batch_poolability',
+    'list_cmc_registers',
+    'estimate_recorded_shelf_life',
     'get_submission_readiness_twin',
     'assess_benefit_risk',
   ])('%s is defined and registered', (name) => {
@@ -121,5 +123,113 @@ describe('get_submission_readiness_twin', () => {
     if (out.status === 'not_found') {
       expect(out.message).toMatch(/Do not report a readiness score/);
     }
+  });
+});
+
+
+/**
+ * The recorded-data pair the coverage evaluation asked for.
+ *
+ * ── The defect these pin against ─────────────────────────────────────────────
+ * Exactly ONE of ~9 CMC engines read recorded data; every other tool took
+ * typed-in numbers, so "run a model against our results" meant re-transcribing
+ * them into chat. And assess_recorded_batch_poolability's own instruction told
+ * the model to "list the stability register first" while NO tool could list
+ * any register — the pointer was dead.
+ */
+describe('list_cmc_registers — the discovery the recorded tools point at', () => {
+  const call = (input: Record<string, unknown>, ctx?: Record<string, unknown>) =>
+    getToolHandler('list_cmc_registers')!(input, ctx as never);
+
+  it('refuses without an organization context rather than reading across tenants', async () => {
+    expect(await call({})).toMatch(/organization context is required/i);
+  });
+
+  it('answers with the ids the recorded tools take, and never confuses unreadable with empty', async () => {
+    const out = JSON.parse(await call({ register: 'stability', limit: 5 }, { organizationId: 101 }));
+    if (out.error) {
+      // No database in this harness — the tool reports the failure, it does
+      // not answer "nothing recorded".
+      expect(out.error).toMatch(/list_cmc_registers failed/);
+      return;
+    }
+    expect(out.status).toBe('listed');
+    expect(out.instruction).toMatch(/unreadable, NOT as empty/);
+    const reg = out.registers.stability;
+    // Either real rows, or an explicit unavailable marker — never a bare [].
+    expect(Array.isArray(reg) || reg?.unavailable === true).toBe(true);
+  });
+
+  it('caps the page size so a broad call cannot pull a register wholesale', async () => {
+    const out = JSON.parse(await call({ limit: 5000 }, { organizationId: 101 }));
+    if (!out.error) expect(out.limit).toBeLessThanOrEqual(100);
+  });
+});
+
+describe('estimate_recorded_shelf_life — ICH Q1E over a study on file', () => {
+  const call = (input: Record<string, unknown>, ctx?: Record<string, unknown>) =>
+    getToolHandler('estimate_recorded_shelf_life')!(input, ctx as never);
+
+  it('refuses without an organization context', async () => {
+    expect(await call({ study_id: 1 })).toMatch(/organization context is required/i);
+  });
+
+  it('needs a real study id, and points at the register to find one', async () => {
+    for (const study_id of [undefined, 0, -2, 'x']) {
+      const out = JSON.parse(await call({ study_id }, { organizationId: 101 }));
+      expect(out.status).toBe('needs_parameters');
+      expect(out.message).toMatch(/list_cmc_registers/);
+    }
+  });
+
+  it('a study that is not this organization\'s is not found — never answered from elsewhere', async () => {
+    const out = JSON.parse(await call({ study_id: 90001 }, { organizationId: 101 }));
+    expect(['not_found', 'error']).toContain(out.status ?? 'error');
+  });
+});
+
+describe('the recorded engine is SHARED with the stability surface, not a second copy', () => {
+  it('estimateRecordedShelfLife refuses a multi-condition study — the same refusal the route serves', async () => {
+    const { estimateRecordedShelfLife } = await import('../../cmc/recorded-stability.js');
+    const outcome = await estimateRecordedShelfLife({
+      id: 1, storageConditions: ['LT', 'ACC'],
+      stabilityData: { results: [{ timePoint: '0', parameter: 'Assay', result: '99' }] },
+    });
+    expect(outcome.ok).toBe(false);
+    if (!outcome.ok) expect(outcome.error).toMatch(/placed at 2 storage conditions/);
+  });
+
+  it('refuses a study with no recorded pull points rather than fitting nothing', async () => {
+    const { estimateRecordedShelfLife } = await import('../../cmc/recorded-stability.js');
+    const outcome = await estimateRecordedShelfLife({ id: 2, storageConditions: ['LT'], stabilityData: null });
+    expect(outcome.ok).toBe(false);
+    if (!outcome.ok) expect(outcome.error).toMatch(/no recorded pull-point results/);
+  });
+
+  it('fits the limiting attribute from recorded results, and says why an attribute is not estimable', async () => {
+    const { estimateRecordedShelfLife } = await import('../../cmc/recorded-stability.js');
+    const outcome = await estimateRecordedShelfLife({
+      id: 3, studyTitle: 'BX-701 long term', productName: 'BX-701', batchNumber: 'B-001',
+      storageConditions: ['25C/60RH'], duration: 24,
+      stabilityData: {
+        results: [
+          { timePoint: '0', parameter: 'Assay', result: '101.2', specification: '>= 95.0%' },
+          { timePoint: '6', parameter: 'Assay', result: '99.1', specification: '>= 95.0%' },
+          { timePoint: '12', parameter: 'Assay', result: '97.4', specification: '>= 95.0%' },
+          { timePoint: '18', parameter: 'Assay', result: '96.1', specification: '>= 95.0%' },
+          // One point only: not estimable, and the reason must say so.
+          { timePoint: '0', parameter: 'Aggregates', result: '0.4', specification: '<= 2.0%' },
+        ],
+      },
+    });
+    expect(outcome.ok).toBe(true);
+    if (!outcome.ok) return;
+    expect(outcome.data.limitingParameter).toBe('Assay');
+    expect(typeof outcome.data.supportedShelfLife).toBe('number');
+    const agg = outcome.data.estimates.find((e) => e.parameter === 'Aggregates')!;
+    expect(agg.estimable).toBe(false);
+    expect(String(agg.reason)).toMatch(/at least 3 numeric timepoints/);
+    // The scope limit travels with the number so a pooled claim is never implied.
+    expect(outcome.data.scopeLimit).toMatch(/poolability .* is assessed separately|Batch poolability/);
   });
 });

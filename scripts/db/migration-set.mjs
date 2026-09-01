@@ -1681,6 +1681,21 @@ export const C2C_MIGRATION_FILES = [
   // with its fail-open COALESCE intact. This closes them on polwithcheck.
   'db/migrations/20260828_fail_closed_insert_withcheck_policies.sql',
 
+  // ── Drop the audit-shaped tables that survived a from-scratch liveness
+  //    re-check (ledger L13; docs/AUDIT_STORE_INVENTORY_2026-08.md §5.1) ─────
+  // MUST stay near the end, and specifically AFTER every entry above that
+  // CREATEs one of its targets — 20260524_program_workbench_schema (index 1),
+  // 081_grdhe_regulatory_mapping_layer (112) and
+  // 20260211_phase6_6e_proof_pack_exports (115). The set is replayed whole on
+  // every deploy, so a drop ordered before its creator would be undone by the
+  // creator's own CREATE TABLE IF NOT EXISTS on the same run.
+  //
+  // It is empty-only and fails soft: a table holding rows is KEPT with a NOTICE,
+  // because an audit table with records is Part 11 evidence with a retention
+  // obligation regardless of whether anything still writes it. Re-running after
+  // the records are dispositioned picks it up with no edit.
+  'db/migrations/20260901_drop_dead_audit_tables.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

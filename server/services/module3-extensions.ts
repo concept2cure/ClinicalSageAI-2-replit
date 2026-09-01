@@ -84,7 +84,8 @@ const APPENDIX_RULES: AppendixRule[] = [
       tables.push(kvTable('Facilities Summary', {
         'Manufacturing Site': mfgSite,
         'Synthetic/Manufacturing Route': route,
-        'Process Description': processDesc,
+        // One recorded process text must not fill two rows.
+        'Process Description': processDesc !== route ? processDesc : '',
       }));
       tables.push(kvTable('Primary Equipment / Container Closure', {
         'Primary Container': container,
@@ -112,7 +113,9 @@ const APPENDIX_RULES: AppendixRule[] = [
           `related controls used in the manufacture of the drug substance and drug product. ` +
           (mfgSite ? `Manufacturing operations are performed at ${mfgSite}. ` : 'Manufacturing site not yet recorded. ') +
           (route ? `The manufacturing route is: ${route}. ` : '') +
-          (processDesc ? `Process overview: ${processDesc}. ` : '') +
+          // The register records ONE process text, so route and description
+          // are often the same sentence — never printed twice.
+          (processDesc && processDesc !== route ? `Process overview: ${processDesc}. ` : '') +
           `\n\nPrimary container closure equipment and packaging components used during manufacture and storage are ` +
           (container ? `${container}` + (closure ? ` with ${closure}` : '') + `. ` : `not yet specified. `) +
           (justification ? `Suitability of the equipment and packaging is supported by: ${justification}. ` : '') +

@@ -82,6 +82,33 @@ SKIPPED=$(cat "$OUT/compile.json" | JQ '.bridgeSkips | length')
 [ "$CODE" = 200 ] && ok "compiled $COMPILED sections; bridged=$BRIDGED artifacts; bridgeSkips=$SKIPPED" || bad "compile failed ($CODE): $(head -c400 "$OUT/compile.json")"
 [ "${BRIDGED:-0}" -gt 0 ] && ok "auto-bridge created governed artifacts (pre-fix: 0, silently)" || bad "no artifacts bridged: $(cat "$OUT/compile.json" | JQ '.bridgeSkips' | head -c 300)"
 
+step "11b. The compiled §3.2.S.4 CONTAINS the recorded QC result — captured data reaches the document"
+# The whole point of QC capture: the batch-analyses table §3.2.S.4.4 exists to
+# carry. It gated completeness while being absent from the composed section.
+S4=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.S.4")][0]' 2>/dev/null)
+BATAB=$(echo "$S4" | jq -r '[.tables[]? | select(.title | test("Batch Analyses"))] | length' 2>/dev/null)
+HASSAMPLE=$(echo "$S4" | jq -r '[.tables[]? | select(.title | test("Batch Analyses")) | .rows[]? | select(.[0]=="S-2026-001")] | length' 2>/dev/null)
+NARR=$(echo "$S4" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "recorded QC result")
+[ "${BATAB:-0}" -ge 1 ] && [ "${HASSAMPLE:-0}" -ge 1 ] && [ "${NARR:-0}" -ge 1 ] \
+  && ok "§3.2.S.4 renders the batch-analyses table with sample S-2026-001 and reports it in the narrative" \
+  || bad "batch analyses missing from the composed §3.2.S.4: tables=$BATAB sampleRows=$HASSAMPLE narrative=$NARR"
+
+step "11c. The recorded shelf-life engine answers over the study on file (the AnA tools' engine)"
+# One implementation, two callers: this route and AnA's
+# estimate_recorded_shelf_life. A study with no recorded pull points must
+# REFUSE, not fit nothing.
+STABID=$(cat "$OUT/stab.json" | JQ '.data.id // .id // empty')
+CODE=$(req shelf POST "/api/cmc/stability-studies/$STABID/shelf-life" '{}')
+SHELFERR=$(cat "$OUT/shelf.json" | JQ '.error // empty')
+if [ "$CODE" = 409 ] && echo "$SHELFERR" | grep -q "no recorded pull-point results"; then
+  ok "shelf-life engine refuses a study with no recorded results (shared engine, honest refusal)"
+elif [ "$CODE" = 200 ]; then
+  LIMIT=$(cat "$OUT/shelf.json" | JQ '.data.limitingParameter // empty')
+  ok "shelf-life estimated from recorded results (limiting attribute: $LIMIT)"
+else
+  bad "shelf-life engine: code=$CODE err=$(echo "$SHELFERR" | head -c 160)"
+fi
+
 step "12. Contradiction sweep"
 CODE=$(req sweep POST "/api/cmc/module3-os/contradictions/$PROGRAM" '{}')
 FOUND=$(cat "$OUT/sweep.json" | JQ '.contradictions | length')
@@ -147,6 +174,11 @@ if [ "$CODE" = 200 ] && [ "$STATUS" = "completed" ] && [ "${RENDERED:-0}" -ge 17
 else
   bad "eCTD compile: code=$CODE status=$STATUS rendered=$RENDERED placeholders=$UNRENDERED"
 fi
+# The initial-sequence gate RECOGNIZES the placed Module 3: no required 3.2.*
+# section (3.2.S / 3.2.P / 3.2.R) may read as unplaced. This pins two fixes at
+# once — the gate's 'm'-prefix blindness, and 3.2.R being composable at all.
+M3REQ=$(cat "$OUT/ectd.json" | jq '[.validationResults[]? | select(.rule=="REQUIRED_SECTION_UNPLACED" and ((.sectionCode // "")|startswith("3.2")))] | length' 2>/dev/null)
+[ "${M3REQ:-1}" = 0 ] && ok "every required Module 3 section (3.2.S / 3.2.P / 3.2.R) is placed and recognized" || bad "required Module 3 sections still unplaced: $M3REQ"
 
 step "20. The IND checklist sees the M3 leaves"
 CODE=$(req checklist GET /api/ind-checklist)
@@ -219,6 +251,16 @@ ST=$(cat "$OUT/qclose.json" | JQ '.data.status // empty')
 CODE2=$(req board3 GET /api/cmc/module3-board)
 GONE=$(cat "$OUT/board3.json" | jq --argjson id "${QID:-0}" '[.data.correspondence[]? | select(.id == $id)] | length' 2>/dev/null)
 [ "$CODE" = 200 ] && [ "$ST" = "CLOSED" ] && [ "${GONE:-1}" = 0 ] && ok "closed: off the open list ($GONE), kept in the store" || bad "close: code=$CODE st=$ST stillListed=$GONE"
+# "Stays in the record" is now READABLE: the closed file serves the row…
+CODE=$(req qclosedlist GET "/api/cmc/agency-questions?status=CLOSED")
+INFILE=$(cat "$OUT/qclosedlist.json" | jq --argjson id "${QID:-0}" '[.data[]? | select(.id == $id)] | length' 2>/dev/null)
+[ "$CODE" = 200 ] && [ "${INFILE:-0}" = 1 ] && ok "closed file lists the answered question" || bad "closed file: code=$CODE listed=$INFILE"
+# …and a mistaken close can be UNDONE, guarded on CLOSED, back to the truthful
+# state (DRAFTED — its response draft is linked).
+CODE=$(req qreopen PATCH "/api/cmc/agency-questions/$QID" '{"status":"DRAFTED","expectedStatus":"CLOSED"}')
+ST=$(cat "$OUT/qreopen.json" | JQ '.data.status // empty')
+[ "$CODE" = 200 ] && [ "$ST" = "DRAFTED" ] && ok "reopened to DRAFTED (guarded on CLOSED)" || bad "reopen: $CODE $ST"
+req qreclose PATCH "/api/cmc/agency-questions/$QID" '{"status":"CLOSED","expectedStatus":"DRAFTED"}' >/dev/null
 
 echo; echo "════ RESULT: $PASS passed, $FAIL failed ════"
 exit $([ "$FAIL" = 0 ] && echo 0 || echo 1)

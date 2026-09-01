@@ -1,0 +1,113 @@
+# CMC Capture → Analysis → Module 3: Coverage Evaluation
+
+**Date:** 2026-08-31 · **Method:** five-lens adversarial code evaluation (workflow `wf_6af39bee-474`,
+5 agents, every claim carries file:line evidence; full per-lens output in the run journal) plus a
+direct audit of AnA's simulation tooling. Domain baseline: the `cmc-intelligence` entity model
+(materials → process steps → CPPs → IPCs → CQAs → methods → specifications → stability) and the
+ICH test universe (Q1/Q2/Q3/Q5/Q6/Q8–Q12).
+
+## Verdict
+
+**The PM's belief is correct.** The product is not close to "everything a CMC staffer needs, for all
+tests they may conduct, captured, analyzed, and usable in Module 3." One register — **stability** —
+achieves the full promise (structured capture → real ICH Q1E analysis → composed §3.2.S.7/§3.2.P.8),
+and it is the model the rest must be brought up to. Everything else is somewhere between *partially
+wired* and *absent*:
+
+- **9 of 19** composer-demanded source types have **no capture path a staffer can reach** (no table,
+  no route, or no UI): reference standards, container closure, excipients, raw-material specs,
+  impurity profile, dissolution profile, formulation record, manufacturing process, characterization.
+- **7 of 10** write-through mappers read **row keys their tables never had** — the exact defect class
+  found and fixed on the stability mapper (commit `df45b808`) repeats across drug substance (11/16
+  dead reads), analytical methods (11/14), process validation (6/8), drug product, specifications,
+  batch records, change control. A staffer types the manufacturer, the synthetic route, the ICH Q2
+  validation status — the save succeeds — and the compiled dossier still says *"not specified."*
+- **8 of 15** CTD content sections are unsatisfiable or effectively so from the product's own UI:
+  3.2.S.2, S.3, S.5, S.6, P.2, P.4, P.6, P.7.
+- Of ~30 **test families** a CMC staffer runs, 3 have a full structured home (assay, water content,
+  batch analyses); the rest can at best be buried in an unstructured JSON blob nothing reads.
+- **Analysis** beyond Q1E is thin: no trending/OOT on recorded series, no Q6A spec-vs-batch-data
+  justification (a Cpk engine exists but is stranded in the IVD route), Q3A/B/C/D calculators can't
+  see captured data, comparability statistics have no lot data to run on, the Q1E extrapolation cap
+  is not enforced, and the derived CPP→CQA linkage is computed then dropped.
+- **AnA simulation against recorded data: 1 of ~9 engines connected.** Only
+  `assess_recorded_batch_poolability` reads the stability register (org-scoped, deterministic,
+  honest refusals — the correct pattern). Every other CMC tool (`estimate_shelf_life`,
+  `validate_analytical_method`, `classify_impurity`, `set_specifications`,
+  `assess_process_validation`, `assess_comparability_protocol`, `design_stability_study`) takes
+  typed-in numbers only, and **no tool lists any register** — the one recorded tool's own
+  instructions point at a listing capability that does not exist.
+
+Three cross-cutting honesty defects sharpen the picture:
+
+1. **The guided CMC intelligence flow interviews the staffer about exactly the missing sections**
+   (container closure, E&L, polymorph screen…) **and then discards every answer** — nothing
+   persists to any governed store.
+2. **`batchAnalyses` gates section completeness but is never rendered** — recorded QC results turn
+   the dashboard green while the actual §3.2.S.4.4/§3.2.P.5.4 batch-analyses tables are absent from
+   the composed document.
+3. **Write-through silently skips when a register save carries no projectId** — rows exist forever
+   in the register and never reach any Module 3, with no signal to the staffer or QA.
+
+## Coverage tables
+
+### Source types (composer demand vs product supply)
+
+| Source type | Status | The missing half |
+|---|---|---|
+| stability | **full** | — (capture + Q1E analysis + composition; the reference implementation) |
+| qc_result | **full** | feeds completeness but results tables never render (see gap C3) |
+| specification | full* | mapper emits validationStatus/impurityLimits from columns that don't exist |
+| batch | full* | required `formulation` read from a column no migration creates; disposition never exported |
+| change_control | full* | change number / filing category dropped by mapper |
+| comparability | full* | status only — no lot data, so Q5E statistics can never run |
+| drug_substance | partial | manufacturer/route/characterization reads dead → S.1/S.2/S.3 starve |
+| drug_product | partial | container closure + process description reads dead |
+| method | partial | method identity + entire ICH Q2 record dropped by mapper |
+| process_validation | partial | CPPs/CQAs/control strategy captured, never mapped |
+| manufacturing_process | **absent** | no table, no route, no UI |
+| characterization | **absent** | no home for structural elucidation / physchem / bioactivity |
+| reference_standard | **absent** | §3.2.S.5/§3.2.P.6 permanently empty |
+| container_closure | **absent** | §3.2.S.6/§3.2.P.7 permanently empty |
+| excipient | **absent** | §3.2.P.4 permanently empty |
+| raw_material_spec | **absent** | — |
+| impurity_profile | **absent** | Q3A/Q6 content unwritable from data |
+| dissolution_profile | **absent** | §3.2.P.2/P.5 dissolution unwritable from data |
+| formulation_record | **absent** | pharmaceutical development (P.2) starves |
+
+(*full capture loop, with the named field-level caveat.)
+
+### CTD sections, as composable today from the product's own UI
+
+| Fully servable | Partially | Effectively unservable |
+|---|---|---|
+| 3.2.S.7, 3.2.P.1, 3.2.P.8, 3.1, 3.3 | 3.2.S.1, 3.2.S.4, 3.2.P.3, 3.2.P.5 | 3.2.S.2, 3.2.S.3, 3.2.S.5, 3.2.S.6, 3.2.P.2, 3.2.P.4, 3.2.P.6, 3.2.P.7 |
+
+## The build program to close it (ranked by value ÷ effort)
+
+1. **Mapper fidelity sweep (small, high)** — fix the 7 mismatched mappers to their real row shapes,
+   with the same failing-first test pattern used for stability. Recovers data staffers are typing
+   TODAY into S.1, S.2, S.4, P.3, P.5 narratives. Includes the P.3 `formulation` and spec
+   validationStatus column gaps.
+2. **Render what is captured (small–medium, high)** — batch-analyses tables into §3.2.S.4.4/§3.2.P.5.4;
+   change history, comparability rationale, and Q2 validation summaries into their sections. Data
+   already exists; only generators are missing.
+3. **AnA recorded-simulation twins (medium, high)** — a register-listing tool + `assess_recorded_*`
+   twins per engine (shelf-life, impurity qualification, spec justification, comparability), on the
+   `assess_recorded_batch_poolability` pattern: ids in, org-scoped read, deterministic engine, honest
+   refusal, zero writes. Unblocks "AnA runs structured simulations against CMC results."
+4. **The missing registers (large, high)** — structured capture for the 9 absent source types,
+   priority order by reviewer pressure: container closure (+E&L), reference standards, impurity
+   profile, dissolution profile, excipients/raw materials, formulation record, manufacturing
+   process, characterization. Each lands: table → routes → write-through → UI tab → composer render.
+5. **Persist the guided flow (medium, high)** — the intelligence interview's answers land as
+   canonical source objects (they cover exactly the sections in #4), instead of evaporating.
+6. **Analysis on the spine (medium)** — trending/OOT over recorded series; Q6A spec-vs-batch
+   justification (re-home the stranded Cpk engine); Q3A/B qualification against captured impurity
+   data (needs #4); enforce the Q1E extrapolation cap; keep the CPP→CQA trace.
+7. **Plumbing guards (small)** — refuse or warn on register saves without a projectId link; make the
+   canonical OOS flag computed, not self-declared; widen the OS source-objects enum to accept all
+   composer-demanded types.
+
+Item 1 is the same class of silent data loss already proven live once — it is the "stop the
+bleeding" item and should land first.

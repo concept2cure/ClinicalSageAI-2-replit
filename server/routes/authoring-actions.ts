@@ -125,6 +125,62 @@ export interface SectionPreflightVerdict {
   checksDidNotRun: string[];
 }
 
+/**
+ * The governed-authority verdict for an action, resolved FAIL-CLOSED.
+ *
+ * All three governed status transitions in this router asked
+ * decisionLifecycleService.checkAuthority(...) inside
+ *
+ *     try { … } catch { (a comment reading "non-blocking") }
+ *
+ * so a throw from the dynamic import or the check itself left the verdict unset
+ * and execution continued into the write. An authorization gate whose failure
+ * mode is "proceed" is not a gate. Worse, /promote-to-review never consulted
+ * `allowed` at all — it computed the verdict, used `authority.requiresReviewerApproval`
+ * as a descriptive field in the response, and promoted the artifact regardless
+ * of the caller's role.
+ *
+ * One resolver for all three. A check that cannot be completed refuses, and
+ * says that it is the CHECK that failed rather than implying the caller's role
+ * was the problem — those are different facts and only one of them is about the
+ * caller.
+ *
+ * The predicate itself (isActorAuthorized in shared/types/decision-architecture.ts)
+ * is already correct: it denies an unknown or missing role. Only the plumbing
+ * around it was wrong.
+ */
+export async function resolveGovernedAuthority(
+  action: string,
+  actorRole?: string,
+): Promise<{
+  allowed: boolean;
+  /* Structural rather than `unknown`: callers echo the requirement back to the
+     client so a refused actor can see WHAT was required of them. */
+  authority?: { level?: string; requiresReviewerApproval?: boolean } | undefined;
+  reason: string;
+  checkFailed: boolean;
+}> {
+  try {
+    const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
+    const check = decisionLifecycleService.checkAuthority(action as never, actorRole);
+    return {
+      allowed: check?.allowed === true,
+      authority: check?.authority,
+      reason: check?.reason ?? '',
+      checkFailed: false,
+    };
+  } catch {
+    return {
+      allowed: false,
+      authority: undefined,
+      reason:
+        'The authority check for this action could not be completed, so the action was refused. ' +
+        'This is a failure to CHECK, not a decision about your role.',
+      checkFailed: true,
+    };
+  }
+}
+
 export function sectionPreflightVerdict(
   checks: Record<string, { status?: string } | null | undefined>,
 ): SectionPreflightVerdict {
@@ -214,6 +270,12 @@ router.get('/promotion-blockers/:projectId', async (req: Request, res: Response)
     if (orgId == null) return;
 
     const blockers: Array<{ type: string; severity: string; message: string; source: string }> = [];
+    /* Which blocker sources actually produced an answer. Both sources below sit
+       in their own try, so a failure in one used to be indistinguishable from
+       that source finding nothing — and an empty blocker list reads as a clean
+       project. */
+    const checksRun: string[] = [];
+    const checksNotRun: string[] = [];
 
     // Check contradiction engine
     try {
@@ -241,43 +303,90 @@ router.get('/promotion-blockers/:projectId', async (req: Request, res: Response)
             }
           }
         }
+        checksRun.push('contradiction-engine');
+      } else {
+        checksNotRun.push('contradiction-engine');
       }
-    } catch {
-      // Contradiction engine unavailable — non-blocking
+    } catch (contradictionErr: any) {
+      checksNotRun.push('contradiction-engine');
+      console.warn(
+        '[authoring-actions] promotion-blockers: contradiction scan did not run:',
+        contradictionErr?.message,
+      );
     }
 
-    // Check readiness engine
+    /* Check readiness engine.
+       The payload used to be built by hand — `{ project: { id }, organizationId }`
+       cast through `as any` — and it carried none of the five fields the engine
+       reads. computeReadinessAssessment evaluates `completeness` first, whose
+       first statement is `payload.moduleMap.filter(...)`, so it threw a
+       TypeError on EVERY call. The bare catch below swallowed it and the
+       readiness blockers were simply never collected.
+
+       assembleCrossObjectPayload is the canonical builder for this payload —
+       continuity-service, lumen-context-builder and workflow-orchestrator all
+       use it — so this uses it too rather than hand-rolling a sixth shape. */
     try {
+      const { assembleCrossObjectPayload } = await import(
+        '../services/orchestration/cross-object-resolver.js'
+      );
       const { computeReadinessAssessment } = await import(
         '../services/orchestration/readiness-engine.js'
       );
-      if (computeReadinessAssessment) {
-        const assessment = await computeReadinessAssessment({
-          project: { id: Number(projectId) } as any,
-          organizationId: String(orgId),
-        } as any);
-        if (assessment?.blockers?.length) {
-          for (const b of assessment.blockers as any[]) {
-            blockers.push({
-              type: b.type || 'readiness',
-              severity: b.severity || 'major',
-              message: b.description || b.message || 'Readiness blocker',
-              source: 'readiness-engine',
-            });
-          }
+      const payload = await assembleCrossObjectPayload({
+        organizationId: Number(orgId),
+        projectId: Number(projectId),
+      });
+      const assessment = computeReadinessAssessment(payload);
+      if (assessment?.blockers?.length) {
+        for (const b of assessment.blockers as any[]) {
+          blockers.push({
+            type: b.type || b.category || 'readiness',
+            severity: b.severity || 'major',
+            message: b.description || b.message || 'Readiness blocker',
+            source: 'readiness-engine',
+          });
         }
       }
-    } catch {
-      // Readiness engine unavailable — non-blocking
+      checksRun.push('readiness-engine');
+    } catch (readinessErr: any) {
+      /* Recorded, not swallowed. See the note on the response below. */
+      checksNotRun.push('readiness-engine');
+      console.warn(
+        '[authoring-actions] promotion-blockers: readiness check did not run:',
+        readinessErr?.message,
+      );
     }
 
+    /* WHY `blocked` CAN BE NULL.
+       This answered `blocked: blockers.some(b => b.severity === 'critical')`
+       unconditionally. Both blocker sources above sat in bare catches, so when a
+       source failed to run its blockers were never collected — and an empty
+       list reads exactly like a clean one. With the readiness payload malformed
+       on every call, this endpoint reported `blocked: false, blockerCount: 0`
+       for a promotion gate that had evaluated nothing.
+
+       A gate that ran zero checks has not cleared anything. When every source
+       ran, `blocked` is the real verdict. When any source did not, it is null —
+       "cannot say" — and the sources that failed are named, so a caller can see
+       what the answer is missing rather than acting on a false all-clear. */
+    const checksIncomplete = checksNotRun.length > 0;
     return res.json({
       projectId,
       artifactId: artifactId || null,
       sectionCode: sectionCode || null,
-      blocked: blockers.some(b => b.severity === 'critical'),
+      blocked: checksIncomplete ? null : blockers.some(b => b.severity === 'critical'),
       blockerCount: blockers.length,
       blockers,
+      checksRun,
+      checksNotRun,
+      ...(checksIncomplete
+        ? {
+            message:
+              `${checksNotRun.length} blocker source(s) could not be evaluated ` +
+              `(${checksNotRun.join(', ')}), so whether this project is blocked is unknown.`,
+          }
+        : {}),
     });
   } catch (err: any) {
     console.error('[authoring-actions] promotion-blockers error:', err?.message);
@@ -491,16 +600,22 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
     }
 
     // Step 2: Authority check
-    let authorityCheck: any = null;
-    try {
-      const { decisionLifecycleService } = await import(
-        '../services/decision-lifecycle-service.js'
-      );
-      authorityCheck = decisionLifecycleService.checkAuthority(
-        'promote-to-review',
-        (req as any).userRole || undefined
-      );
-    } catch { /* non-blocking */ }
+    /* This verdict used to be computed and then ignored: `allowed` was never
+       consulted, and the only read of `authorityCheck` was
+       `authority.requiresReviewerApproval` as a descriptive field in the
+       response below. The promotion went through whatever the caller's role. */
+    const authorityCheck = await resolveGovernedAuthority(
+      'promote-to-review',
+      (req as any).userRole || undefined
+    );
+    if (!authorityCheck.allowed) {
+      return res.json({
+        promoted: false,
+        reason: authorityCheck.checkFailed ? 'authority-check-failed' : 'unauthorized',
+        message: authorityCheck.reason || 'Reviewer approval required',
+        authority: authorityCheck.authority,
+      });
+    }
 
     // Step 3: Execute promotion via existing governed path
     try {
@@ -734,18 +849,18 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
     }
 
     // Step 2: Authority check
-    let authorityCheck: any = null;
-    try {
-      const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
-      authorityCheck = decisionLifecycleService.checkAuthority('approve-artifact', userRole || undefined);
-      if (authorityCheck && !authorityCheck.allowed) {
-        return res.json({
-          approved: false, reason: 'unauthorized',
-          message: authorityCheck.reason || 'Reviewer approval required',
-          authority: authorityCheck.authority,
-        });
-      }
-    } catch { /* non-blocking */ }
+    const authorityCheck = await resolveGovernedAuthority(
+      'approve-artifact',
+      userRole || undefined
+    );
+    if (!authorityCheck.allowed) {
+      return res.json({
+        approved: false,
+        reason: authorityCheck.checkFailed ? 'authority-check-failed' : 'unauthorized',
+        message: authorityCheck.reason || 'Reviewer approval required',
+        authority: authorityCheck.authority,
+      });
+    }
 
     // Step 3: Execute status transition
     try {
@@ -919,13 +1034,15 @@ router.post('/lock-artifact', async (req: Request, res: Response) => {
     }
 
     // Step 2: Authority check
-    try {
-      const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
-      const authorityCheck = decisionLifecycleService.checkAuthority('lock-artifact', userRole || undefined);
-      if (authorityCheck && !authorityCheck.allowed) {
-        return res.json({ locked: false, reason: 'unauthorized', message: authorityCheck.reason || 'Reviewer approval required' });
-      }
-    } catch { /* non-blocking */ }
+    const lockAuthority = await resolveGovernedAuthority('lock-artifact', userRole || undefined);
+    if (!lockAuthority.allowed) {
+      return res.json({
+        locked: false,
+        reason: lockAuthority.checkFailed ? 'authority-check-failed' : 'unauthorized',
+        message: lockAuthority.reason || 'Reviewer approval required',
+        authority: lockAuthority.authority,
+      });
+    }
 
     // Step 3: Execute lock
     try {
@@ -1894,31 +2011,43 @@ router.post('/body-aware-gaps', async (req: Request, res: Response) => {
     }
 
     try {
-      const bodyAwareModule: any = await import('../services/body-aware-authoring.js');
-      const service = bodyAwareModule.bodyAwareAuthoringService
-        || bodyAwareModule.BodyAwareAuthoringService
-        || bodyAwareModule.default;
+      /* This looked for the capability under three names it was never published
+         under — `bodyAwareAuthoringService`, `BodyAwareAuthoringService` and
+         `default` — while server/services/body-aware-authoring.ts exports plain
+         NAMED functions. `service` was therefore always undefined, the guard
+         below never opened, and every call fell through to the
+         'service_unavailable' response at the end of the handler.
 
-      if (service) {
-        const svc = typeof service === 'function' ? new service() : service;
-        if (svc.detectBodySpecificGaps) {
-          const gaps = await svc.detectBodySpecificGaps(
-            regulatorBody,
-            submissionType,
-            sectionCode,
-            currentContent || ''
-          );
+         The capability was never missing. detectBodySpecificGaps is exported and
+         implemented, and its signature is exactly the four arguments this
+         handler already had ready to pass. So the endpoint has spent its whole
+         life reporting that body-aware gap detection is unavailable while the
+         function sat in the module it had just imported.
 
-          return res.json({
-            status: 'data',
-            action: 'body_aware_gaps',
-            regulatorBody,
-            submissionType,
-            sectionCode,
-            gaps: Array.isArray(gaps) ? gaps : gaps?.gaps || [],
-            gapCount: Array.isArray(gaps) ? gaps.length : gaps?.gaps?.length || 0,
-          });
-        }
+         Worth noting how it stayed hidden: the fallback is HONEST — it says the
+         analysis could not be run rather than returning an empty gap list — so
+         nothing ever looked wrong enough to investigate. An honest degraded
+         message is right, and it is also why a permanently-degraded path can go
+         unnoticed for a long time. */
+      const { detectBodySpecificGaps } = await import('../services/body-aware-authoring.js');
+
+      if (typeof detectBodySpecificGaps === 'function') {
+        const gaps = await detectBodySpecificGaps(
+          regulatorBody,
+          submissionType,
+          sectionCode,
+          currentContent || ''
+        );
+
+        return res.json({
+          status: 'data',
+          action: 'body_aware_gaps',
+          regulatorBody,
+          submissionType,
+          sectionCode,
+          gaps: Array.isArray(gaps) ? gaps : gaps?.gaps || [],
+          gapCount: Array.isArray(gaps) ? gaps.length : gaps?.gaps?.length || 0,
+        });
       }
     } catch {
       // Body-aware authoring service unavailable
@@ -3224,14 +3353,24 @@ router.get('/contradiction-context/:projectId', async (req: Request, res: Respon
  */
 router.post('/plan-contradiction-resolution', async (req: Request, res: Response) => {
   try {
-    const { projectId, findingId, finding, overlayRules } = req.body;
-    if (!projectId || !findingId || !finding) {
-      return res.status(400).json({ error: 'projectId, findingId, and finding are required' });
+    const { projectId, findingId, overlayRules } = req.body;
+    if (!projectId || !findingId) {
+      return res.status(400).json({ error: 'projectId and findingId are required' });
     }
 
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
     const userId = (req as any).userId || 0;
+
+    /* Loaded, not accepted — see the note on /execute-contradiction-resolution.
+       A `finding` supplied in the request body is ignored. */
+    const { contradictionEngineService } = await import(
+      '../services/contradiction-engine-service.js'
+    );
+    const finding = await contradictionEngineService.getFinding(findingId, Number(orgId));
+    if (!finding) {
+      return res.status(404).json({ error: 'Finding not found for this organization' });
+    }
 
     const { planContradictionResolution } = await import(
       '../services/resolution/contradiction-resolution-bridge.js'
@@ -3259,15 +3398,34 @@ router.post('/plan-contradiction-resolution', async (req: Request, res: Response
  */
 router.post('/execute-contradiction-resolution', async (req: Request, res: Response) => {
   try {
-    const { projectId, findingId, finding, overlayRules } = req.body;
-    if (!projectId || !findingId || !finding) {
-      return res.status(400).json({ error: 'projectId, findingId, and finding are required' });
+    const { projectId, findingId, overlayRules } = req.body;
+    if (!projectId || !findingId) {
+      return res.status(400).json({ error: 'projectId and findingId are required' });
     }
 
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
     const userId = (req as any).userId || 0;
     const actorRole = (req as any).userRole || undefined;
+
+    /* The finding is LOADED here, not accepted from the caller.
+       It used to arrive as `finding` in the request body and be passed straight
+       downstream, where its own fields drive the resolution — including
+       finding.authority*, which decides whether the action is permitted at all.
+       A client that supplies the object also supplies the authority state used
+       to judge it, and nothing checked that the finding existed, belonged to
+       this org, or matched the id alongside it.
+
+       /contradiction-consequence in this same file already does it correctly:
+       take the id, load the row scoped to the caller's org, refuse when it does
+       not resolve. Same pattern here. A `finding` in the body is now ignored. */
+    const { contradictionEngineService } = await import(
+      '../services/contradiction-engine-service.js'
+    );
+    const finding = await contradictionEngineService.getFinding(findingId, Number(orgId));
+    if (!finding) {
+      return res.status(404).json({ error: 'Finding not found for this organization' });
+    }
 
     const { executeContradictionResolution } = await import(
       '../services/resolution/contradiction-resolution-bridge.js'
@@ -3294,13 +3452,23 @@ router.post('/execute-contradiction-resolution', async (req: Request, res: Respo
  */
 router.post('/explain-contradiction-resolution', async (req: Request, res: Response) => {
   try {
-    const { projectId, findingId, finding, overlayRules } = req.body;
-    if (!projectId || !findingId || !finding) {
-      return res.status(400).json({ error: 'projectId, findingId, and finding are required' });
+    const { projectId, findingId, overlayRules } = req.body;
+    if (!projectId || !findingId) {
+      return res.status(400).json({ error: 'projectId and findingId are required' });
     }
 
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
+
+    /* Loaded, not accepted — see the note on /execute-contradiction-resolution.
+       A `finding` supplied in the request body is ignored. */
+    const { contradictionEngineService } = await import(
+      '../services/contradiction-engine-service.js'
+    );
+    const finding = await contradictionEngineService.getFinding(findingId, Number(orgId));
+    if (!finding) {
+      return res.status(404).json({ error: 'Finding not found for this organization' });
+    }
 
     const { explainContradictionResolution } = await import(
       '../services/resolution/contradiction-resolution-bridge.js'

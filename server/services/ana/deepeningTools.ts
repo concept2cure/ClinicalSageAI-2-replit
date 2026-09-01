@@ -2,6 +2,8 @@
  * Deepening tools — deterministic engines exposed to AnA:
  *   assess_batch_poolability          -> cmc/shelf-life-poolability.assessBatchPoolability
  *   assess_recorded_batch_poolability -> cmc/recorded-stability.assessRecordedPoolability
+ *   list_cmc_registers                -> the CMC registers' identity rows (discovery)
+ *   estimate_recorded_shelf_life      -> cmc/recorded-stability.estimateRecordedShelfLife
  *   get_submission_readiness_twin     -> innovation/submission-readiness-twin-service.getDashboard
  *   assess_benefit_risk               -> regulatory/benefit-risk.assessBenefitRisk
  *
@@ -133,10 +135,60 @@ export const ASSESS_BENEFIT_RISK: AnaTool = {
   },
 };
 
+
+/* ── Recorded-data tools ────────────────────────────────────────────────────
+   The coverage evaluation found ONE of ~9 CMC engines connected to recorded
+   data (assess_recorded_batch_poolability): every other tool took typed-in
+   numbers, so "run a model against our results" meant re-transcribing them
+   into chat — friction plus a transcription-error vector in a Part 11
+   product. Worse, that one tool's own instruction told the model to "list the
+   stability register first" and NO tool could list any register: the pointer
+   was dead. These two close that. */
+
+export const LIST_CMC_REGISTERS: AnaTool = {
+  name: 'list_cmc_registers',
+  description:
+    'List what the CMC registers actually hold for this organization — stability studies, analytical methods, specifications, batch records, QC results — with the ids the recorded-data tools need. Call this FIRST whenever the user names a product, a batch or a study by name rather than by id, and whenever you are about to run a recorded assessment. Returns identity and status per row (never the full result series), so it is safe to call broadly. Reads only; writes nothing. Say honestly when a register is empty rather than implying data exists.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      register: {
+        type: 'string',
+        description: 'Which register to list. Omit for a summary count of every register.',
+        enum: ['stability', 'method', 'specification', 'batch', 'qc_result'],
+      },
+      search: {
+        type: 'string',
+        description: 'Case-insensitive filter on the row\'s name/title/number — e.g. a product name or a batch number the user said.',
+      },
+      limit: { type: 'number', description: 'Maximum rows (default 25, max 100).' },
+    },
+    required: [],
+  },
+};
+
+export const ESTIMATE_RECORDED_SHELF_LIFE: AnaTool = {
+  name: 'estimate_recorded_shelf_life',
+  description:
+    'Fit the shelf life supported by a stability study ALREADY RECORDED in the register, per ICH Q1E — ordinary least squares with the one-sided 95% mean confidence limit against the recorded acceptance criterion, one attribute at a time, reporting the LIMITING attribute. Takes a study id and reads that study\'s own pull-point results; use this instead of estimate_shelf_life whenever the data are on file, which is the normal case. Refuses and says why when the study has no recorded results, spans more than one storage condition, has fewer than 3 numeric timepoints for an attribute, or has no numeric acceptance criterion recorded — relay the refusal verbatim rather than falling back to typed-in numbers. Single batch: batch poolability is assess_recorded_batch_poolability and is NOT implied by this estimate. Nothing is written: the registered shelf life is set by a person on the study close-out. DETERMINISTIC. ' + NOTE,
+  input_schema: {
+    type: 'object',
+    properties: {
+      study_id: {
+        type: 'number',
+        description: 'The stability study id. Use list_cmc_registers to find it if the user named a product or batch.',
+      },
+    },
+    required: ['study_id'],
+  },
+};
+
 /** Deepening tools, spread into ALL_ANA_TOOLS. */
 export const DEEPENING_TOOLS: AnaTool[] = [
   ASSESS_BATCH_POOLABILITY,
   ASSESS_RECORDED_BATCH_POOLABILITY,
+  LIST_CMC_REGISTERS,
+  ESTIMATE_RECORDED_SHELF_LIFE,
   GET_SUBMISSION_READINESS_TWIN,
   ASSESS_BENEFIT_RISK,
 ];

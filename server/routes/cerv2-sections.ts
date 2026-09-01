@@ -4,12 +4,16 @@
  */
 import { Router } from 'express';
 import { z } from 'zod';
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, sql, type SQL } from 'drizzle-orm';
 import { cerv2510kSections, cerv2SectionVersions } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import { db } from '../db';
 import { createScopedLogger } from '../utils/logger';
 import auditService from '../services/auditService';
+import {
+  recordCerv2SectionVersion,
+  type SectionVersionExec,
+} from '../services/cerv2/section-version.js';
 import { writeMutation } from './c2c/actions.js';
 
 const SECTION_APPROVAL_STATES: ReadonlySet<string> = new Set(['validated', 'approved']);
@@ -22,6 +26,65 @@ function statusBecameApproved(prev: string | null | undefined, next: string | nu
 
 const router = Router();
 const logger = createScopedLogger('cerv2-sections');
+
+/**
+ * Ledger L39 — this file no longer writes `cerv2_section_versions` itself.
+ *
+ * Three handlers here (create, PATCH, accept-ana-draft) each carried their own
+ * INSERT into that table, alongside the shared writer in
+ * services/cerv2/section-version.ts that AnA's write_kit_section tool uses.
+ * Four writers of one history table meant four answers to "was this change
+ * recorded, and with what?", and the three here were the untested ones. They
+ * now call the shared writer.
+ *
+ * WHAT MOVED, COLUMN BY COLUMN. The shared writer sets every column these
+ * inserts set, plus `completion_percentage`, which none of them recorded and
+ * which is now captured. `field_data` was the one column the inline inserts
+ * wrote that the shared writer had no parameter for; rather than let the
+ * migration quietly drop it, the parameter was added there and all three calls
+ * below pass it. A consolidation that loses a column is not a consolidation.
+ *
+ * The create handler also stops hardcoding `version_number: 1`. The shared
+ * writer derives it from MAX(version_number) + 1 scoped to (section,
+ * organization) — the same value for a brand-new section, and correct rather
+ * than lucky.
+ *
+ * Each call now runs on the SAME transaction as its content write, which the
+ * shared writer's contract requires: a history row that commits while the
+ * content rolls back attests to a change that never happened, and content that
+ * commits without history is the loss the writer exists to prevent.
+ */
+type DrizzleRunner = { execute: (query: SQL) => Promise<unknown> };
+
+/**
+ * Adapt a Drizzle runner (the db, or a transaction) to the pg-style
+ * `query(text, params)` the shared writer takes, so these handlers keep their
+ * Drizzle statements while their history goes through the one writer.
+ *
+ * The writer's `$n` placeholders are re-bound as Drizzle parameters; the
+ * statement text is passed through raw and no value is ever interpolated into
+ * it.
+ */
+function sectionVersionExec(runner: DrizzleRunner): SectionVersionExec {
+  return {
+    query: async (text: string, params: unknown[] = []) => {
+      const parts = text.split(/\$(\d+)/g);
+      const chunks: SQL[] = [];
+      for (let i = 0; i < parts.length; i += 1) {
+        // `sql.param` rather than a bare interpolation: Drizzle expands a bare
+        // array value into a `(a, b, c)` tuple of separate placeholders, which
+        // turns the writer's `fields_changed` text[] into a row expression the
+        // column will not take.
+        chunks.push(
+          i % 2 === 0 ? sql.raw(parts[i]) : sql`${sql.param(params[Number(parts[i]) - 1])}`,
+        );
+      }
+      const result = (await runner.execute(sql.join(chunks))) as { rows?: unknown[] } | unknown[];
+      const rows = Array.isArray(result) ? result : (result?.rows ?? []);
+      return { rows: rows as any[] };
+    },
+  };
+}
 
 const resolveOrganizationId = (req: any) => {
   const tenantOrg = req.tenantContext?.organizationId;
@@ -36,6 +99,17 @@ const resolveUserId = (req: any) => {
   const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : null;
 };
+
+/** Actor + request metadata every version row records, resolved once. */
+function versionActor(req: any) {
+  return {
+    changedBy: resolveUserId(req),
+    changedByEmail: req.userEmail ?? null,
+    changedByName: (req.user as { name?: string } | undefined)?.name ?? null,
+    ipAddress: req.ip ?? null,
+    userAgent: (req.headers['user-agent'] as string | undefined) ?? null,
+  };
+}
 
 const tableExists = async (_req: any, tableName: string) => {
   try {
@@ -238,43 +312,51 @@ router.post('/', authMiddleware, async (req, res) => {
       finalDisplayOrder = maxOrder + 1;
     }
 
-    const [inserted] = await db
-      .insert(cerv2510kSections)
-      .values({
-        organizationId,
-        documentId: document_id ?? null,
-        sectionNumber: payload.section_number,
-        sectionTitle: payload.section_title,
-        sectionKey: payload.section_key,
-        category: payload.category,
-        displayOrder: finalDisplayOrder,
-        isRequired: payload.is_required ?? false,
-        icon: payload.icon ?? null,
-        fields: payload.fields ?? [],
-        content: payload.content ?? '',
-        status: payload.status ?? 'todo',
-        sources: field_data ? { fieldData: field_data } : null,
-        updatedAt: new Date(),
-      })
-      .returning();
-
     const userId = resolveUserId(req);
-    await db.insert(cerv2SectionVersions).values({
-      sectionId: inserted.id,
-      organizationId,
-      versionNumber: 1,
-      changeType: 'created',
-      changeSummary: 'Section created',
-      content: inserted.content ?? '',
-      fieldData: field_data ?? null,
-      status: inserted.status ?? 'todo',
-      fieldsChanged: ['section_number', 'section_title', 'section_key'],
-      newValues: { ...payload, field_data },
-      changedBy: userId ?? undefined,
-      changedByEmail: req.userEmail ?? null,
-      changedByName: (req.user as { name?: string } | undefined)?.name ?? null,
-      ipAddress: req.ip ?? null,
-      userAgent: req.headers['user-agent'] ?? null,
+
+    /* The section row and its first history row commit together. If the
+       version write fails the section is not created either — an unversioned
+       section is the state this table exists to make impossible. */
+    const inserted = await db.transaction(async tx => {
+      const [created] = await tx
+        .insert(cerv2510kSections)
+        .values({
+          organizationId,
+          documentId: document_id ?? null,
+          sectionNumber: payload.section_number,
+          sectionTitle: payload.section_title,
+          sectionKey: payload.section_key,
+          category: payload.category,
+          displayOrder: finalDisplayOrder,
+          isRequired: payload.is_required ?? false,
+          icon: payload.icon ?? null,
+          fields: payload.fields ?? [],
+          content: payload.content ?? '',
+          status: payload.status ?? 'todo',
+          sources: field_data ? { fieldData: field_data } : null,
+          updatedAt: new Date(),
+        })
+        .returning();
+
+      await recordCerv2SectionVersion(sectionVersionExec(tx), {
+        sectionId: created.id,
+        organizationId,
+        changeType: 'created',
+        changeSummary: 'Section created',
+        content: created.content ?? '',
+        status: created.status ?? 'todo',
+        completionPercentage: created.completionPercentage ?? null,
+        fieldData: field_data ?? null,
+        fieldsChanged: ['section_number', 'section_title', 'section_key'],
+        /* A section being created has no prior state. The empty object says
+           that, rather than leaving a reader unable to tell "nothing existed"
+           from "nobody captured it". */
+        previousValues: {},
+        newValues: { ...payload, field_data: field_data ?? null },
+        ...versionActor(req),
+      });
+
+      return created;
     });
 
     void auditService.logAction({
@@ -360,51 +442,43 @@ router.patch('/:sectionId', authMiddleware, async (req, res) => {
       updatePayload.regulatoryReferences = updates.regulatory_references;
     }
 
-    const [updated] = await db
-      .update(cerv2510kSections)
-      .set(updatePayload)
-      .where(
-        and(
-          eq(cerv2510kSections.organizationId, organizationId),
-          eq(cerv2510kSections.id, sectionId)
-        )
-      )
-      .returning();
-
-    const [versionRow] = await db
-      .select({ maxVersion: sql<number>`max(${cerv2SectionVersions.versionNumber})` })
-      .from(cerv2SectionVersions)
-      .where(
-        and(
-          eq(cerv2SectionVersions.organizationId, organizationId),
-          eq(cerv2SectionVersions.sectionId, sectionId)
-        )
-      );
-
-    const nextVersion = Number(versionRow?.maxVersion || 0) + 1;
     const userId = resolveUserId(req);
 
-    await db.insert(cerv2SectionVersions).values({
-      sectionId,
-      organizationId,
-      versionNumber: nextVersion,
-      changeType: 'edited',
-      changeSummary: 'Section updated',
-      content: updated.content ?? '',
-      fieldData: field_data ?? (existing.sources as any)?.fieldData ?? null,
-      status: updated.status ?? 'todo',
-      fieldsChanged: Object.keys(parsed.data),
-      previousValues: {
-        content: existing.content ?? '',
-        field_data: (existing.sources as any)?.fieldData ?? null,
-        status: existing.status ?? 'todo',
-      },
-      newValues: { ...parsed.data },
-      changedBy: userId ?? undefined,
-      changedByEmail: req.userEmail ?? null,
-      changedByName: (req.user as { name?: string } | undefined)?.name ?? null,
-      ipAddress: req.ip ?? null,
-      userAgent: req.headers['user-agent'] ?? null,
+    /* Content and history on one transaction: the version row is the only
+       record of the text this UPDATE overwrites, so it cannot be allowed to
+       fail independently of the overwrite. */
+    const { updated, nextVersion } = await db.transaction(async tx => {
+      const [row] = await tx
+        .update(cerv2510kSections)
+        .set(updatePayload)
+        .where(
+          and(
+            eq(cerv2510kSections.organizationId, organizationId),
+            eq(cerv2510kSections.id, sectionId)
+          )
+        )
+        .returning();
+
+      const version = await recordCerv2SectionVersion(sectionVersionExec(tx), {
+        sectionId,
+        organizationId,
+        changeType: 'edited',
+        changeSummary: 'Section updated',
+        content: row.content ?? '',
+        status: row.status ?? 'todo',
+        completionPercentage: row.completionPercentage ?? null,
+        fieldData: (row.sources as any)?.fieldData ?? null,
+        fieldsChanged: Object.keys(parsed.data),
+        previousValues: {
+          content: existing.content ?? '',
+          field_data: (existing.sources as any)?.fieldData ?? null,
+          status: existing.status ?? 'todo',
+        },
+        newValues: { ...parsed.data },
+        ...versionActor(req),
+      });
+
+      return { updated: row, nextVersion: version };
     });
 
     // Reflect into the central audit_logs. The cerv2_section_versions row
@@ -590,56 +664,54 @@ router.post('/:sectionId/accept-ana-draft', authMiddleware, async (req, res) => 
     const nextStatus = parsed.data.status ?? 'ready_for_review';
     const nextContent = parsed.data.refined_content ?? existing.content ?? '';
 
-    const [updated] = await db
-      .update(cerv2510kSections)
-      .set({
-        content:                nextContent,
-        status:                 nextStatus,
-        draftSource:            null,
-        acceptedAt,
-        acceptedBy:             userId ?? null,
-        updatedAt:              acceptedAt,
-      })
-      .where(
-        and(
-          eq(cerv2510kSections.organizationId, organizationId),
-          eq(cerv2510kSections.id, sectionId),
-        ),
-      )
-      .returning();
+    /* Accepting a draft is the moment an AI-authored body becomes a human's
+       to answer for. The status flip and the row that records who took it
+       commit together or not at all. */
+    const { updated, nextVersion } = await db.transaction(async tx => {
+      const [row] = await tx
+        .update(cerv2510kSections)
+        .set({
+          content:                nextContent,
+          status:                 nextStatus,
+          draftSource:            null,
+          acceptedAt,
+          acceptedBy:             userId ?? null,
+          updatedAt:              acceptedAt,
+        })
+        .where(
+          and(
+            eq(cerv2510kSections.organizationId, organizationId),
+            eq(cerv2510kSections.id, sectionId),
+          ),
+        )
+        .returning();
 
-    const [versionRow] = await db
-      .select({ maxVersion: sql<number>`max(${cerv2SectionVersions.versionNumber})` })
-      .from(cerv2SectionVersions)
-      .where(
-        and(
-          eq(cerv2SectionVersions.organizationId, organizationId),
-          eq(cerv2SectionVersions.sectionId, sectionId),
-        ),
-      );
-    const nextVersion = Number(versionRow?.maxVersion || 0) + 1;
+      const version = await recordCerv2SectionVersion(sectionVersionExec(tx), {
+        sectionId,
+        organizationId,
+        changeType:    'edited',
+        changeSummary: 'Accepted AnA draft',
+        content:       row.content ?? '',
+        status:        row.status ?? 'todo',
+        completionPercentage: row.completionPercentage ?? null,
+        fieldData:     (row.sources as any)?.fieldData ?? null,
+        fieldsChanged: parsed.data.refined_content
+          ? ['content', 'status', 'draft_source']
+          : ['status', 'draft_source'],
+        previousValues: {
+          content:      existing.content ?? '',
+          status:       existing.status ?? 'todo',
+          draft_source: existing.draftSource,
+          /* The inline insert recorded the field values only in the
+             `field_data` column, which holds the state AFTER the change. The
+             pre-acceptance values were not recoverable from it; they are now. */
+          field_data:   (existing.sources as any)?.fieldData ?? null,
+        },
+        newValues: { ...parsed.data, draft_source: null, accepted_by: userId ?? null },
+        ...versionActor(req),
+      });
 
-    await db.insert(cerv2SectionVersions).values({
-      sectionId,
-      organizationId,
-      versionNumber: nextVersion,
-      changeType:    'edited',
-      changeSummary: 'Accepted AnA draft',
-      content:       updated.content ?? '',
-      fieldData:     (existing.sources as any)?.fieldData ?? null,
-      status:        updated.status ?? 'todo',
-      fieldsChanged: parsed.data.refined_content ? ['content', 'status', 'draft_source'] : ['status', 'draft_source'],
-      previousValues: {
-        content:      existing.content ?? '',
-        status:       existing.status ?? 'todo',
-        draft_source: existing.draftSource,
-      },
-      newValues: { ...parsed.data, draft_source: null, accepted_by: userId ?? null },
-      changedBy: userId === null ? undefined : userId,
-      changedByEmail: req.userEmail ?? null,
-      changedByName: (req.user as { name?: string } | undefined)?.name ?? null,
-      ipAddress: req.ip ?? null,
-      userAgent: req.headers['user-agent'] ?? null,
+      return { updated: row, nextVersion: version };
     });
 
     void auditService.logAction({

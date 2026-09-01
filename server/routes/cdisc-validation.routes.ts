@@ -55,9 +55,13 @@ router.post('/sdtm-domain/conformance', limiter, requireRole(AUTHOR), (req: Requ
 });
 
 /**
- * Generate a CDISC Define-XML v2.1 document from dataset/variable/codelist
- * metadata. Body: { studyName, standard?, datasets: DefineDataset[], codelists? }.
- * JSON (gaps + counts + xml) by default; `?format=xml` returns the define.xml.
+ * Generate a CDISC Define-XML document from dataset/variable/codelist metadata.
+ * Body: { studyName, standard?, defineVersion?: '2.0' | '2.1', datasets:
+ * DefineDataset[], codelists? }. Defaults to 2.1; an unrecognised defineVersion
+ * is a 400 rather than a silent fall back to the default, because the file's
+ * declared version is what the receiving gateway validates against.
+ * JSON (gaps + counts + version + xml) by default; `?format=xml` returns the
+ * define.xml.
  */
 router.post('/define-xml', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
   const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
@@ -66,8 +70,13 @@ router.post('/define-xml', limiter, requireRole(AUTHOR), (req: Request, res: Res
       .status(400)
       .json({ error: { code: 'VALIDATION', message: 'studyName (string) and datasets[] are required.' } });
   }
+  if (b.defineVersion !== undefined && b.defineVersion !== '2.0' && b.defineVersion !== '2.1') {
+    return res
+      .status(400)
+      .json({ error: { code: 'VALIDATION', message: "defineVersion must be '2.0' or '2.1'." } });
+  }
   try {
-    const result = generateDefineXml({ studyName: b.studyName, studyOID: b.studyOID, standard: b.standard, datasets: b.datasets, codelists: b.codelists });
+    const result = generateDefineXml({ studyName: b.studyName, studyOID: b.studyOID, standard: b.standard, defineVersion: b.defineVersion, datasets: b.datasets, codelists: b.codelists });
     if (String(req.query.format).toLowerCase() === 'xml') {
       res.setHeader('Content-Type', 'application/xml');
       return res.status(200).send(result.xml);
