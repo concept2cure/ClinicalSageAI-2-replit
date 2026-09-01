@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-01T07:42:48.098Z",
+  "generatedAt": "2026-09-01T08:13:55.588Z",
   "git": {
-    "sha": "63f07d86414fdb06bd1dc83b33362f33a86bcd84",
+    "sha": "dd689bf02dc7bb9c7daf0e7f9a4d363217693cac",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2189,7 +2189,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 152521
+        "bytes": 153124
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2335,7 +2335,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3458
+        "lines": 3466
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2574,12 +2574,12 @@
         "lines": 1696
       },
       {
-        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
-        "lines": 1678
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 1689
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1672
+        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
+        "lines": 1678
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
