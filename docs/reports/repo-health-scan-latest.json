@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-01T18:00:25.834Z",
+  "generatedAt": "2026-09-01T20:57:48.524Z",
   "git": {
-    "sha": "3eb73069e8e3aa46638d92804a9e42db9fe5d5e8",
+    "sha": "90bc64a845d8671fdd50f9ce07bb6854a0d47858",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2194,7 +2194,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "bytes": 150480
+        "bytes": 151761
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2323,12 +2323,12 @@
         "lines": 4444
       },
       {
-        "file": "server/services/intelligent-report-engine.ts",
-        "lines": 3563
+        "file": "server/routes/authoring-actions.ts",
+        "lines": 3578
       },
       {
-        "file": "server/routes/authoring-actions.ts",
-        "lines": 3553
+        "file": "server/services/intelligent-report-engine.ts",
+        "lines": 3563
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
