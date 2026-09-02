@@ -82,10 +82,12 @@ const TABLES = knownTables();
 
 const files = walk(path.join(repoRoot, 'server'));
 const reads = new Map();   // table -> Set(file)
-const writes = new Set();  // table
+const inserts = new Set(); // table — something can CREATE a row here
+const updates = new Set(); // table — something changes rows, which need not exist
 
 const READ_RE  = /\.from\(\s*([a-zA-Z_][a-zA-Z0-9_]*)/g;
-const WRITE_RE = /\.(?:insert|update|delete)\(\s*([a-zA-Z_][a-zA-Z0-9_]*)/g;
+const INSERT_RE = /\.insert\(\s*([a-zA-Z_][a-zA-Z0-9_]*)/g;
+const UPDATE_RE = /\.(?:update|delete)\(\s*([a-zA-Z_][a-zA-Z0-9_]*)/g;
 
 for (const f of files) {
   const src = fs.readFileSync(f, 'utf8');
@@ -95,7 +97,8 @@ for (const f of files) {
     if (!reads.has(m[1])) reads.set(m[1], new Set());
     reads.get(m[1]).add(rel);
   }
-  for (const m of src.matchAll(WRITE_RE)) if (TABLES.has(m[1])) writes.add(m[1]);
+  for (const m of src.matchAll(INSERT_RE)) if (TABLES.has(m[1])) inserts.add(m[1]);
+  for (const m of src.matchAll(UPDATE_RE)) if (TABLES.has(m[1])) updates.add(m[1]);
 }
 
 // Raw SQL writes count too — a table written by a service using raw SQL is
@@ -111,7 +114,12 @@ for (const f of files) {
 // only a PL/pgSQL writer, or only a seed, is NOT reported. Erring permissive is
 // the safe direction for a ratchet: a missed finding costs a later look, a
 // false one costs the gate its credibility.
+// Only a statement that can CREATE a row counts. An UPDATE against a table
+// nothing inserts into can never match a row — five such writers on
+// evidence_claims read as live for weeks and hid the table from this gate
+// (ledger L22). Those tables are reported, flagged update-only.
 const rawWriteNames = new Set();
+const rawUpdateNames = new Set();
 const sqlSources = [...files];
 for (const root of ['migrations', 'db/migrations']) {
   const abs = path.join(repoRoot, root);
@@ -129,16 +137,17 @@ for (const root of ['migrations', 'db/migrations']) {
 for (const f of sqlSources) {
   const src = fs.readFileSync(f, 'utf8');
   for (const m of src.matchAll(/INSERT\s+INTO\s+(?:public\.)?([a-zA-Z_][a-zA-Z0-9_]*)/gi)) rawWriteNames.add(m[1].toLowerCase());
-  for (const m of src.matchAll(/UPDATE\s+(?:public\.)?([a-zA-Z_][a-zA-Z0-9_]*)\s+SET/gi)) rawWriteNames.add(m[1].toLowerCase());
+  for (const m of src.matchAll(/UPDATE\s+(?:public\.)?([a-zA-Z_][a-zA-Z0-9_]*)\s+SET/gi)) rawUpdateNames.add(m[1].toLowerCase());
 }
 /** drizzle identifiers are camelCase; raw SQL is snake_case. Compare on snake. */
 const snake = (s) => s.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
 
 const findings = [];
 for (const [table, readers] of reads) {
-  if (writes.has(table)) continue;
+  if (inserts.has(table)) continue;
   if (rawWriteNames.has(snake(table))) continue;
-  findings.push({ table, readers: [...readers].sort() });
+  const updateOnly = updates.has(table) || rawUpdateNames.has(snake(table));
+  findings.push({ table, readers: [...readers].sort(), updateOnly });
 }
 findings.sort((a, b) => a.table.localeCompare(b.table));
 
@@ -146,7 +155,7 @@ let baseline = { stores: {} };
 if (fs.existsSync(BASELINE)) baseline = JSON.parse(fs.readFileSync(BASELINE, 'utf8'));
 
 if (LIST) {
-  for (const f of findings) console.log(`${f.table}  (${f.readers.length} reader file(s))\n    ${f.readers.join('\n    ')}`);
+  for (const f of findings) console.log(`${f.table}  (${f.readers.length} reader file(s))${f.updateOnly ? '  [update-only: nothing inserts, so no row can ever match]' : ''}\n    ${f.readers.join('\n    ')}`);
   console.log(`\n${findings.length} writerless store(s).`);
   process.exit(0);
 }
