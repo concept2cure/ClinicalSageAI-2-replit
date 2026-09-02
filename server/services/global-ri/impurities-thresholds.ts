@@ -285,10 +285,29 @@ export type ResolvedThresholdSet =
 const OUT_OF_SCOPE_CLASSES: Record<string, string> = {
   'residual-solvent': 'ICH Q3C(R8) residual-solvent classes and PDE limits',
   elemental: 'ICH Q3D(R2) elemental-impurity permitted daily exposures',
+  /* Inorganic impurities — salts, catalysts, filter aids, heavy metals — are
+     listed in Q3A §2.3 as a category the guideline explicitly does NOT set
+     thresholds for: they are addressed by pharmacopoeial procedures, and the
+     metals among them by Q3D. Leaving this class out gave a catalyst residue an
+     organic-impurity percentage the guideline never wrote, while the
+     synonymous 'elemental' next to it was correctly refused. */
+  inorganic: 'ICH Q3D(R2) for elemental species, or the pharmacopoeial procedure for the residue — Q3A/Q3B set no threshold for inorganic impurities',
   mutagenic: 'ICH M7(R2) mutagenic-impurity acceptable intakes',
   enantiomeric: 'the enantiomeric purity specification — Q3A excludes it',
   polymorphic: 'the polymorphic form control — Q3A excludes it',
 };
+
+/**
+ * Q3B governs DEGRADATION products of a drug product. A process-related
+ * impurity carried in with the substance is controlled through the drug
+ * substance specification and Q3A, not re-thresholded here (Q3B(R2) §1.2
+ * excludes it), so the drug-product matrix answers only for degradation.
+ */
+function outOfProductScope(impurityClass: ImpurityClass): string | null {
+  return impurityClass === 'organic'
+    ? 'ICH Q3A(R2) and the drug substance specification — Q3B(R2) covers degradation products of the drug product, not process impurities carried in with the substance'
+    : null;
+}
 
 /**
  * Resolve the ICH Q3A(R2) / Q3B(R2) thresholds for a dose and an impurity
@@ -314,7 +333,8 @@ export function resolveImpurityThresholds(input: {
         'The impurity class is not recorded, so no ICH threshold can be applied. Record whether this is an organic impurity, a degradation product, a residual solvent, an elemental impurity or a mutagenic impurity.',
     };
   }
-  const routeTo = OUT_OF_SCOPE_CLASSES[impurityClass];
+  const routeTo = OUT_OF_SCOPE_CLASSES[impurityClass]
+    || (matrix === 'drug_product' ? outOfProductScope(impurityClass) : null);
   if (routeTo) {
     return {
       ok: false,
@@ -383,8 +403,13 @@ export function resolveImpurityThresholds(input: {
   const reporting = mdd <= 1000
     ? resolveThreshold(0.1, null, mdd, '0.1%')
     : resolveThreshold(0.05, null, mdd, '0.05%');
+  /* Q3B(R2) Attachment 1 writes its identification and qualification bands with
+     STRICT lower bounds — "<1 mg", "1 mg - 10 mg", ">10 mg" and "<10 mg",
+     "10 mg - 100 mg", ">100 mg" — so a dose sitting exactly on 1 mg, 10 mg or
+     100 mg belongs to the HIGHER band, not the lower one. Reading them as
+     inclusive-upper quoted the wrong Attachment 1 row at exactly those doses. */
   const identification =
-    mdd <= 1
+    mdd < 1
       ? resolveThreshold(1.0, 0.005, mdd, '1.0% or 5 µg TDI (whichever is lower)')
       : mdd <= 10
         ? resolveThreshold(0.5, 0.02, mdd, '0.5% or 20 µg TDI (whichever is lower)')
@@ -392,7 +417,7 @@ export function resolveImpurityThresholds(input: {
           ? resolveThreshold(0.2, 2.0, mdd, '0.2% or 2 mg TDI (whichever is lower)')
           : resolveThreshold(0.1, null, mdd, '0.10%');
   const qualification =
-    mdd <= 10
+    mdd < 10
       ? resolveThreshold(1.0, 0.05, mdd, '1.0% or 50 µg TDI (whichever is lower)')
       : mdd <= 100
         ? resolveThreshold(0.5, 0.2, mdd, '0.5% or 200 µg TDI (whichever is lower)')

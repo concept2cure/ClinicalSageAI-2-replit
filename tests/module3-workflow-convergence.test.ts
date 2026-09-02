@@ -53,8 +53,15 @@ function makeSources(): CanonicalSource[] {
     { id: 'ex-1', sourceType: 'excipient', sourcePayload: { excipientSpecifications: 'Microcrystalline cellulose NF', excipientAnalyticalProcedures: 'Per USP monograph' } },
     { id: 'pv-1', sourceType: 'process_validation', sourcePayload: { processStep: 'Wet granulation', validationStatus: 'validated', consecutiveBatches: 3 } },
     { id: 'rm-1', sourceType: 'raw_material_spec', sourcePayload: { materialName: 'Amlodipine Besylate (starting material)', grade: 'Pharmaceutical grade', testParameters: ['Identity', 'Purity ≥ 99.0%'] } },
-    { id: 'ip-1', sourceType: 'impurity_profile', sourcePayload: { materialName: 'Amlodipine Besylate', impurities: [{ impurityName: 'Impurity A', observedLevel: 0.05, specLimit: 0.15 }], qualificationBasis: 'ICH Q3A' } },
-    { id: 'dp-1b', sourceType: 'dissolution_profile', sourcePayload: { condition: 'USP Apparatus II, 50 rpm, 900 mL', specification: 'Q ≥ 80% in 30 min', passFail: 'pass' } },
+    /* The impurity register holds ONE ROW PER IMPURITY, with the level in the
+       unit it was recorded in and the maximum daily dose the ICH threshold is
+       keyed to — the shape mapImpurityProfilePayload emits. The legacy blob
+       this replaced (an `impurities` array with a bare number) could not be
+       compared to a threshold at all. */
+    { id: 'ip-1', sourceType: 'impurity_profile', sourcePayload: { scope: 'drug_substance', materialName: 'Amlodipine Besylate', impurityName: 'Impurity A', impurityType: 'process-related', observedLevel: '0.05', levelUnit: '%', specificationLimit: 'NMT 0.15%', maximumDailyDose: '10 mg', qualificationBasis: 'Qualified per ICH Q3A against the toxicology batch', status: 'specified', drugSubstanceImpurityProfile: 'Impurity A', drugSubstanceImpurityProfileComplete: 'Impurity A' } },
+    /* Dissolution is purpose-scoped: this is the release-specification profile,
+       so it serves §3.2.P.5 and not §3.2.P.2. */
+    { id: 'dp-1b', sourceType: 'dissolution_profile', sourcePayload: { purpose: 'release-specification', productName: 'Amlodipine 5 mg tablet', batchNumber: 'B-2026-001', apparatus: 'USP II (paddle)', rotationSpeed: '50 rpm', medium: 'pH 6.8 phosphate buffer', mediumVolume: '900 mL', unitsTested: 12, dissolutionSpecification: 'Q = 80% at 30 min', dissolutionResults: [{ timepoint: '15', meanPercent: '72', rsd: '4.1', n: '12' }, { timepoint: '30', meanPercent: '94', rsd: '2.2', n: '12' }], status: 'reported', releaseDissolutionProfile: 'Amlodipine 5 mg tablet', releaseDissolutionProfileComplete: 'B-2026-001' } },
     { id: 'fr-1', sourceType: 'formulation_record', sourcePayload: { formulationName: 'Amlodipine 5mg tablet v2', version: 'F-v2.0', components: [{ component: 'Amlodipine Besylate', amount: '6.93 mg', role: 'Active' }] } },
   ];
 }
@@ -221,7 +228,16 @@ describe('Module 3 Composer — Missing Inputs', () => {
     // quantitative batch results is missing an input, not complete.
     // Side-scoped: §3.2.S.4 requires DRUG SUBSTANCE batch analyses, so a
     // finished-product result can no longer complete it from the other side.
-    expect(s4.missingInputs).toEqual(['acceptanceCriteria', 'validationStatus', 'drugSubstanceBatchAnalyses']);
+    // And §3.2.S.4.1 sets the impurity limits, so it requires an impurity the
+    // product can actually compare to its ICH threshold — the section used to
+    // report itself complete while rendering "the disposition is not
+    // established" for every impurity on file.
+    expect(s4.missingInputs).toEqual([
+      'acceptanceCriteria',
+      'validationStatus',
+      'drugSubstanceBatchAnalyses',
+      'drugSubstanceImpurityProfileComplete',
+    ]);
   });
 });
 

@@ -3988,7 +3988,12 @@ export const cmcImpurityProfiles = pgTable(
     relativeRetentionTime: text('relative_retention_time'),
     analyticalMethod: text('analytical_method'),
     observedLevel: text('observed_level'),
-    levelUnit: text('level_unit').default('%'),
+    /* Deliberately NO default. A column default of '%' filled in a unit the
+       analyst did not record, which made the assessment engine's "a level with
+       no unit cannot be compared to a threshold" refusal unreachable and turned
+       a ppm figure into a percentage — the exact defect the refusal exists to
+       prevent. The form requires a unit; the column does not invent one. */
+    levelUnit: text('level_unit'),
     specificationLimit: text('specification_limit'),
     /* The thresholds AS RECORDED. The Q3A/Q3B engine derives them from the
        maximum daily dose; where an applicant has recorded its own, the record
@@ -4059,7 +4064,10 @@ export const cmcDissolutionProfiles = pgTable(
     /* The reference profile a comparison is against, in the same row shape. */
     comparisonBatch: text('comparison_batch'),
     comparisonResults: jsonb('comparison_results'),
-    passFail: text('pass_fail'),
+    /* There is deliberately no pass_fail column. Whether a profile meets its
+       acceptance criterion is a comparison against the recorded specification,
+       which the composed section performs from the profile itself; a typed
+       verdict is a conclusion with no working shown, and nothing read it. */
     testDate: timestamp('test_date'),
     status: text('status').default('draft').notNull(), // draft | reported | retired
     createdAt: timestamp('created_at').defaultNow().notNull(),

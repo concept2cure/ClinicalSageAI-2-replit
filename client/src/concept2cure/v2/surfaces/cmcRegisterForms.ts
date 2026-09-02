@@ -841,6 +841,27 @@ export const CONTAINER_COMPONENT_TYPES = ['primary', 'secondary', 'administratio
  * self-declared 'qualified' on create and update, so offering it here would
  * only produce a rejected save.
  */
+/**
+ * The statuses an edit drawer may offer for a record.
+ *
+ * 'qualified' is never an option a save can CHOOSE — it is reached only through
+ * the Part 11 signature endpoint. But a record that is already qualified has to
+ * be able to keep that status through an ordinary edit: offering only the
+ * ungoverned statuses sent 'draft' on every Update, which reverted the
+ * signature while leaving qualified_by and qualification_date populated.
+ */
+export function statusOptionsFor(statuses: string[], current?: string | null): string[] {
+  const v = String(current ?? '').trim().toLowerCase();
+  return v === 'qualified' ? ['qualified', ...statuses.filter((s) => s !== 'draft')] : statuses;
+}
+
+/** The status an edit drawer opens on: the stored one where it is offerable. */
+export function statusDefaultFor(statuses: string[], current?: string | null): string {
+  const v = String(current ?? '').trim().toLowerCase();
+  if (v === 'qualified') return 'qualified';
+  return current && statuses.includes(current) ? current : 'draft';
+}
+
 export const CONTAINER_CLOSURE_STATUSES = ['draft', 'retired'];
 export const REFERENCE_STANDARD_STATUSES = ['draft', 'expired', 'retired'];
 
@@ -959,7 +980,7 @@ export function containerClosureForm(row?: ContainerClosureRow | null): C2CFormC
       { key: 'containerDescription', label: 'Container', type: 'textarea', required: true, rows: 2, default: row?.containerDescription ?? '', placeholder: 'e.g. 10 mL clear Type I borosilicate glass vial, 20 mm neck finish' },
       { key: 'closureDescription', label: 'Closure', type: 'textarea', required: true, rows: 2, default: row?.closureDescription ?? '', placeholder: 'e.g. 20 mm bromobutyl rubber stopper, fluoropolymer-laminated, aluminium flip-off seal' },
       { key: 'supplier', label: 'Supplier', type: 'text', half: true, default: row?.supplier ?? '', placeholder: 'e.g. Schott / West Pharmaceutical' },
-      { key: 'status', label: 'Status', type: 'seg', options: CONTAINER_CLOSURE_STATUSES, required: true, half: true, default: row?.status && CONTAINER_CLOSURE_STATUSES.includes(row.status) ? row.status : 'draft', desc: 'Qualification is a signed action, not a status you set here' },
+      { key: 'status', label: 'Status', type: 'seg', options: statusOptionsFor(CONTAINER_CLOSURE_STATUSES, row?.status), required: true, half: true, default: statusDefaultFor(CONTAINER_CLOSURE_STATUSES, row?.status), desc: 'Qualification is a signed action, not a status you set here' },
       { key: 'compendialStandards', label: 'Compendial standards', type: 'text', default: (row?.compendialStandards ?? []).join(', '), placeholder: 'e.g. USP <660>, USP <381>, Ph. Eur. 3.2.1' },
       { key: 'materialsOfConstruction', label: 'Materials of construction', type: 'textarea', rows: 3, default: rowLinesOf(row?.materialsOfConstruction, MATERIAL_COLUMNS), placeholder: 'One per line: Component | Material | Supplier | Specification | Compendial reference' },
       { key: 'suitabilityJustification', label: 'Suitability justification', type: 'textarea', rows: 3, default: row?.suitabilityJustification ?? '', placeholder: 'Protection, compatibility, safety and performance for the intended use — the applicant statement §3.2.S.6 / §3.2.P.7 is built on' },
@@ -1107,7 +1128,7 @@ export function referenceStandardForm(row?: Partial<ReferenceStandardBody> | nul
       { key: 'certificateOfAnalysis', label: 'CoA reference', type: 'text', half: true, default: row?.certificateOfAnalysis ?? '', placeholder: 'e.g. CoA-RS-001-2405' },
       { key: 'qualificationProtocol', label: 'Qualification protocol', type: 'text', half: true, default: row?.qualificationProtocol ?? '', placeholder: 'e.g. PR-RS-002' },
       { key: 'storageConditions', label: 'Storage', type: 'text', half: true, default: row?.storageConditions ?? '', placeholder: 'e.g. -70C, desiccated' },
-      { key: 'status', label: 'Status', type: 'seg', options: REFERENCE_STANDARD_STATUSES, required: true, half: true, default: row?.status && REFERENCE_STANDARD_STATUSES.includes(row.status) ? row.status : 'draft', desc: 'Qualification is a signed action, not a status you set here' },
+      { key: 'status', label: 'Status', type: 'seg', options: statusOptionsFor(REFERENCE_STANDARD_STATUSES, row?.status), required: true, half: true, default: statusDefaultFor(REFERENCE_STANDARD_STATUSES, row?.status), desc: 'Qualification is a signed action, not a status you set here' },
       { key: 'retestDate', label: 'Retest date', type: 'date', half: true, default: row?.retestDate ? String(row.retestDate).slice(0, 10) : '' },
       { key: 'expiryDate', label: 'Expiry date', type: 'date', half: true, default: row?.expiryDate ? String(row.expiryDate).slice(0, 10) : '' },
     ],
@@ -1273,7 +1294,11 @@ export function impurityProfileForm(row?: Partial<ImpurityProfileBody> | null): 
       { key: 'reportingThreshold', label: 'Reporting threshold (as recorded)', type: 'text', half: true, default: row?.reportingThreshold ?? '', placeholder: 'Leave blank to use the ICH threshold for the dose' },
       { key: 'identificationThreshold', label: 'Identification threshold (as recorded)', type: 'text', half: true, default: row?.identificationThreshold ?? '' },
       { key: 'qualificationThreshold', label: 'Qualification threshold (as recorded)', type: 'text', half: true, default: row?.qualificationThreshold ?? '' },
-      { key: 'status', label: 'Status', type: 'seg', options: IMPURITY_STATUSES, required: true, half: true, default: row?.status && IMPURITY_STATUSES.includes(row.status) ? row.status : 'draft', desc: 'Qualification is a signed action, not a status you set here' },
+      /* A qualified record keeps its status through an ordinary edit. Offering
+         only the ungoverned statuses sent 'draft' on every Update, which
+         silently reverted a Part 11 signature; the API refuses that now, so
+         without this the drawer could not save a qualified record at all. */
+      { key: 'status', label: 'Status', type: 'seg', options: statusOptionsFor(IMPURITY_STATUSES, row?.status), required: true, half: true, default: statusDefaultFor(IMPURITY_STATUSES, row?.status), desc: 'Qualification is a signed action, not a status you set here' },
     ],
   };
 }

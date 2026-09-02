@@ -244,8 +244,13 @@ S3THR=$(echo "$S3" | jq -r '[.tables[]? | select(.title | test("ICH Threshold Ba
 [ "${S3PPM:-0}" -ge 1 ] && [ "${S3PCT:-0}" = "0" ] && [ "${S3THR:-0}" -ge 1 ] \
   && ok "§3.2.S.3.2 renders 300 ppm as ppm (never 300%) and states the ICH threshold basis" \
   || bad "§3.2.S.3.2: ppmRows=$S3PPM percentRows=$S3PCT thresholdTables=$S3THR"
-S3OUT=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "does not set thresholds for this impurity class")
-[ "${S3OUT:-0}" -ge 0 ] && ok "§3.2.S.3.2 reports the out-of-scope class rather than applying a Q3A percentage to it"
+# The residual solvent is refused BY CLASS and routed to the guideline that does
+# govern it, and the section says which impurities it actually compared.
+S3OUT=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "Q3C")
+S3CMP=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "compared to an ICH threshold")
+[ "${S3OUT:-0}" -ge 1 ] && [ "${S3CMP:-0}" -ge 1 ] \
+  && ok "§3.2.S.3.2 routes the residual solvent to ICH Q3C and claims only what it compared" \
+  || bad "§3.2.S.3.2 out-of-scope routing: Q3C=$S3OUT comparedClaim=$S3CMP"
 
 P2=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.P.2")][0]' 2>/dev/null)
 P2DEV=$(echo "$P2" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("BX701-DP-2406"))] | length' 2>/dev/null)
