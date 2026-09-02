@@ -39,6 +39,10 @@ import { getAllINDSections } from '../../services/regulatory/ind-ectd-sections';
 import { IND_SECTIONS } from '../../server/services/ind/ind-section-registry';
 import { CTD_AUTHORING_GUIDANCE } from '../../server/services/ind/ctd/authoring-guidance';
 import { REGIONAL_MODULE1_REQUIREMENTS } from '../../server/services/global-ri/regional-module1-requirements';
+import { getRequiredArtifacts } from '../../server/services/regulatory/requiredArtifactMatrix';
+import { getModule1Structure, type CtdSectionDef } from '../../server/services/regulatory/ctd-module-structure';
+import { FDA_TEMPLATE, type CTDSection } from '../../server/services/regional-ctd-templates';
+import { FALLBACK_REQUIRED_MODULES, requiredSectionsFromPack } from '../../server/services/ectd/required-sections';
 
 const ROOT = path.resolve(__dirname, '../..');
 
@@ -98,6 +102,8 @@ const PLACEMENT_RULES: Array<{ label: string; title: RegExp; under: string | nul
 interface TreeNode {
   code: string;
   title: string;
+  parentKey?: string | null;
+  mandatory?: boolean;
 }
 
 function violationsFor(nodes: TreeNode[]): string[] {
@@ -122,8 +128,8 @@ function violationsFor(nodes: TreeNode[]): string[] {
 
 type SeededPack = { version: string; superseded: boolean; sections: TreeNode[]; file: string };
 
-function toNodes(sections: Array<{ key: string; label: string }>): TreeNode[] {
-  return sections.map((s) => ({ code: s.key, title: s.label }));
+function toNodes(sections: Array<{ key: string; label: string; parent_key?: string | null; mandatory?: boolean }>): TreeNode[] {
+  return sections.map((s) => ({ code: s.key, title: s.label, parentKey: s.parent_key ?? null, mandatory: !!s.mandatory }));
 }
 
 /** Every ind:fda pack one migration file seeds, in the three forms the repo uses. */
@@ -175,6 +181,16 @@ function liveIndFdaRulePack(): { version: string; sections: TreeNode[] } {
   const live = found.filter((p) => !supersededVersions.has(p.version));
   expect(live.length, `expected exactly one live ind:fda rule pack in migrations, found ${live.map((p) => `${p.version} (${p.file})`).join(', ') || 'none'}`).toBe(1);
   return { version: live[0].version, sections: live[0].sections };
+}
+
+/** Flatten the M1/M2 authoring-surface structure (code/title/children). */
+function flattenCtdDefs(defs: CtdSectionDef[]): TreeNode[] {
+  return defs.flatMap((d) => [{ code: d.code, title: d.title }, ...flattenCtdDefs(d.children ?? [])]);
+}
+
+/** Flatten a regional template's Module 1 (number/title/childSections). */
+function flattenTemplateSections(sections: CTDSection[]): TreeNode[] {
+  return sections.flatMap((s) => [{ code: s.number, title: s.title }, ...flattenTemplateSections(s.childSections ?? [])]);
 }
 
 /** Module 1 heading elements in the reference FDA backbone template. */
@@ -241,19 +257,77 @@ describe('FDA Module 1 numbering — one published heading list, every tree agre
     expect(violationsFor(nodes)).toEqual([]);
   });
 
-  it('the seeded IND tree can satisfy the eCTD compile gate for Module 1', () => {
-    // ECTD_MODULE_DEFS is module-private to the compile route; read the list
-    // from the source so the two cannot drift apart silently.
-    const src = fs.readFileSync(path.join(ROOT, 'server/routes/ectd-compile.ts'), 'utf8');
-    const m = src.match(/m1:\s*\{[\s\S]*?requiredSections:\s*\[([^\]]+)\]/);
-    expect(m, 'compile route no longer declares Module 1 required sections').toBeTruthy();
-    const required = [...m![1].matchAll(/'([^']+)'/g)].map((x) => x[1]).filter((c) => c.startsWith('1'));
-    expect(required.length).toBeGreaterThan(3);
+  it('the required-artifact matrix (IND / NDA / BLA project bootstrap) files Module 1 where FDA does', () => {
+    for (const registry of ['US_IND', 'US_IND_AMENDMENT', 'US_NDA', 'US_BLA']) {
+      const nodes = getRequiredArtifacts(registry).flatMap((a) =>
+        a.sectionCodes.map((code) => ({ code, title: a.label })),
+      );
+      expect(nodes.length, `${registry} declares no artifacts`).toBeGreaterThan(1);
+      expect(violationsFor(nodes), registry).toEqual([]);
+    }
+  });
+
+  it('the Module 1 authoring-surface structure (M1/M2 build state) files Module 1 where FDA does', () => {
+    const nodes = flattenCtdDefs(getModule1Structure('FDA'));
+    expect(nodes.length).toBeGreaterThan(10);
+    expect(violationsFor(nodes)).toEqual([]);
+  });
+
+  it('the FDA regional template (dispatch-readiness required sections) files Module 1 where FDA does', () => {
+    const nodes = flattenTemplateSections(FDA_TEMPLATE.module1Sections);
+    expect(nodes.length).toBeGreaterThan(10);
+    expect(violationsFor(nodes)).toEqual([]);
+  });
+
+  it('the FDA regional template requires of an IND only what an IND files, and of an NDA only what an NDA files', () => {
+    const all = flattenTemplateSections(FDA_TEMPLATE.module1Sections);
+    const requiredFor = (app: string): string[] => {
+      const out: string[] = [];
+      const walk = (sections: CTDSection[]) => {
+        for (const s of sections) {
+          if (s.required && (!s.requiredFor || s.requiredFor.includes(app))) out.push(normalize(s.number));
+          walk(s.childSections ?? []);
+        }
+      };
+      walk(FDA_TEMPLATE.module1Sections);
+      return out;
+    };
+    expect(all.length).toBeGreaterThan(10);
+    const ind = requiredFor('ind');
+    const nda = requiredFor('nda');
+    // An IND files its plan and brochure; it does not file debarment, financial disclosure or draft labeling.
+    expect(ind).toEqual(expect.arrayContaining(['1.20', '1.14.4.1', '1.12.14']));
+    expect(ind).not.toContain('1.3.3');
+    expect(ind).not.toContain('1.3.4');
+    expect(ind).not.toContain('1.14.1');
+    // A marketing application is the reverse.
+    expect(nda).toEqual(expect.arrayContaining(['1.3.3', '1.3.4', '1.14.1']));
+    expect(nda).not.toContain('1.20');
+    expect(nda).not.toContain('1.14.4.1');
+  });
+
+  it('the compile gate baseline (unknown program type) files Module 1 where FDA does', () => {
+    const nodes = FALLBACK_REQUIRED_MODULES.flatMap((m) => m.requiredSections.map((code) => ({ code, title: `${m.name} ${code}` })));
+    expect(nodes.length).toBeGreaterThan(5);
+    expect(violationsFor(nodes)).toEqual([]);
+  });
+
+  it('what the compile gate requires of an IND (the live rule pack) is what the seeded IND tree creates', () => {
+    // The compile/validate/readiness gates derive their required set from the
+    // live ind:fda pack (services/ectd/required-sections); the project
+    // bootstrap seeds the deep IND map. The two must agree, or an
+    // outline-complete IND can never read complete.
+    const pack = liveIndFdaRulePack();
+    const required = requiredSectionsFromPack(
+      pack.sections.map((n) => ({ key: n.code, parent_key: n.parentKey ?? null, mandatory: n.mandatory })),
+    ).flatMap((m) => m.requiredSections);
+    expect(required.length).toBeGreaterThan(20);
+    expect(violationsFor(required.map((code) => ({ code, title: code })))).toEqual([]);
 
     const seeded = new Set(getAllINDSections().map((s) => normalize(s.code)));
     const unsatisfiable = required.filter(
-      (r) => ![...seeded].some((c) => c === r || c.startsWith(`${r}.`)),
+      (r) => ![...seeded].some((c) => c === r || c.startsWith(`${r}.`) || r.startsWith(`${c}.`)),
     );
-    expect(unsatisfiable, 'compile requires Module 1 sections the seeded IND tree never creates').toEqual([]);
+    expect(unsatisfiable, `ind:fda ${pack.version} requires sections the seeded IND tree never creates`).toEqual([]);
   });
 });

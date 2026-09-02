@@ -860,6 +860,11 @@ export const C2C_MIGRATION_FILES = [
   // v2.0 pack stopped at four M1 headings, so the compile gate's required
   // 1.20 / 1.14.4.x could never be satisfied from the editor. Supersedes v2.0.
   'migrations/20260901_ind_fda_m1_v2_3_outline.sql',
+  // ind:fda ich-m4-v2.2: same outline, two initial-IND flags corrected now that
+  // the compile/validate/readiness gates read the pack's mandatory flags —
+  // 1.3.1 (post-initial contact changes) and 5.2 (prior-study listing) are
+  // optional for an initial IND. Supersedes v2.1.
+  'migrations/20260902_ind_fda_outline_v2_2_initial_ind_flags.sql',
   // k510:fda and denovo:fda re-seeded to the eSTAR-era structure: the retired
   // Form 3514 cover sheet and the De Novo ToC are gone; the Part 807 mandatory
   // items (510(k) summary/statement, truthful & accuracy, Class III cert,

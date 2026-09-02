@@ -63,6 +63,9 @@ const IND_M1 = path.join(REPO_ROOT, 'migrations/20260901_ind_fda_m1_v2_3_outline
 // k510:fda and denovo:fda re-seeded to the eSTAR-era structure (no retired Form
 // 3514 cover sheet; Part 807 mandatory items present); supersedes the 2024 packs.
 const ESTAR_DEVICE = path.join(REPO_ROOT, 'migrations/20260901b_estar_510k_denovo_outlines.sql');
+// ind:fda ich-m4-v2.2: same outline, 1.3.1 and 5.2 optional for an initial IND
+// now that the compile gates read the pack's mandatory flags; supersedes v2.1.
+const IND_M1_V22 = path.join(REPO_ROOT, 'migrations/20260902_ind_fda_outline_v2_2_initial_ind_flags.sql');
 
 const ORG = 7;
 const PROJECT = '11111111-2222-3333-4444-555555555555';
@@ -86,6 +89,7 @@ async function boot(
   withOutlines = true,
   withAndaIde = withOutlines,
   withSept2026 = withOutlines,
+  withIndV22 = withSept2026,
 ) {
   pg = new PGlite();
   await pg.exec(`
@@ -116,6 +120,7 @@ async function boot(
   if (withOutlines) await pg.exec(fs.readFileSync(EU_DEVICE, 'utf8'));
   if (withSept2026) await pg.exec(fs.readFileSync(IND_M1, 'utf8'));
   if (withSept2026) await pg.exec(fs.readFileSync(ESTAR_DEVICE, 'utf8'));
+  if (withIndV22) await pg.exec(fs.readFileSync(IND_M1_V22, 'utf8'));
 }
 
 /** The one live pack for a (doc_type, agency), as the scaffolder selects it. */
@@ -747,9 +752,9 @@ describe('the guard is falsifiable', () => {
 describe('ind:fda files Module 1 where FDA files it, at the granularity an IND is authored at', () => {
   beforeEach(() => boot());
 
-  it('the live pack is ich-m4-v2.1 with five modules and the 21 CFR 312.23 Module 1 content', async () => {
+  it('the live pack is ich-m4-v2.2 with five modules and the 21 CFR 312.23 Module 1 content', async () => {
     const pack = await livePack('ind', 'fda');
-    expect(pack.version).toBe('ich-m4-v2.1');
+    expect(pack.version).toBe('ich-m4-v2.2');
     const roots = pack.secs.filter((x) => x.parent_key === null).map((x) => x.key);
     expect(roots).toEqual(['M1', 'M2', 'M3', 'M4', 'M5']);
     // FDA eCTD Module 1 Specification v2.3 headings an initial IND must carry.
@@ -774,11 +779,31 @@ describe('ind:fda files Module 1 where FDA files it, at the granularity an IND i
     const d = await pg.query<{ rule_pack_version: string }>(
       `SELECT rule_pack_version FROM c2c_documents WHERE id = $1`, [res.documentId],
     );
-    expect(d.rows[0].rule_pack_version).toBe('ich-m4-v2.1');
+    expect(d.rows[0].rule_pack_version).toBe('ich-m4-v2.2');
     const n = await pg.query<{ n: string }>(
       `SELECT count(*)::text AS n FROM c2c_document_sections WHERE document_id = $1`, [res.documentId],
     );
     expect(Number(n.rows[0].n)).toBeGreaterThan(80);
+  });
+
+  it('an initial IND is not asked for post-initial contact changes (1.3.1) or a prior-study listing (5.2)', async () => {
+    const pack = await livePack('ind', 'fda');
+    const flag = (k: string) => pack.secs.find((x) => x.key === k)?.mandatory;
+    expect(flag('1.3.1')).toBe(false);
+    expect(flag('5.2')).toBe(false);
+    // The initial-IND content is still mandatory.
+    for (const k of ['1.1.1', '1.2', '1.20', '1.14.4.1', '1.12.14', '5.3.5.1']) {
+      expect(flag(k), `${k} must stay mandatory`).toBe(true);
+    }
+  });
+
+  it('FALSIFIABLE: without 20260902 the live pack is v2.1 and still demands 1.3.1 and 5.2 of an initial IND', async () => {
+    await pg.close();
+    await boot(true, true, true, false);
+    const pack = await livePack('ind', 'fda');
+    expect(pack.version).toBe('ich-m4-v2.1');
+    expect(pack.secs.find((x) => x.key === '1.3.1')?.mandatory).toBe(true);
+    expect(pack.secs.find((x) => x.key === '5.2')?.mandatory).toBe(true);
   });
 
   it('FALSIFIABLE: without 20260901 the live ind:fda pack has no 1.20 and still uses the 24-node outline', async () => {
