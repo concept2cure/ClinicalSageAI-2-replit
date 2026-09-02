@@ -699,7 +699,12 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
     const w = workflows[r.id];
     return Array.isArray(w?.steps) ? w.steps : [];
   };
+  /* "N documents are at YOUR sign-off step" — the board is read with the
+     default scope=all, so this counted every sign-off step in the org as the
+     reader's. Ownership is decided server-side (assignedTo vs. the caller) and
+     is now sent per item as `mine`; only those steps are attributed to you. */
   const signSteps = queue.filter((r) => {
+    if (r.mine !== true) return false;
     const cs = stepsFor(r).find((s) => s.status === 'current');
     return Boolean(cs && (cs.requiredActions ?? []).includes('sign'));
   });

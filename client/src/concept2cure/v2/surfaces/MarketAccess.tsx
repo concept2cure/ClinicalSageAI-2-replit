@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import '../styles/project-home-v2.css';
 import { shellProgramName } from '../shellProject';
 
@@ -81,6 +82,20 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
     ['coding', 'Coding strategy'],
     ['strategy', 'Access strategy'],
   ];
+
+  /* AnA can open any of the four tabs — the same view-state switch a person
+     makes by clicking. The registry enum has already validated `tab`; the
+     defensive lookup keeps the handler honest if the registry drifts. */
+  useSurfaceActionHandlers('market-access', {
+    'market-access.open-tab': (params) => {
+      const target = params.tab;
+      const hit = tabs.find((t) => t[0] === target);
+      if (!hit) return { ok: false, reason: `"${target}" is not a market-access tab.` };
+      if (tab === target) return { ok: true, detail: `Already on the ${hit[1]} tab` };
+      setTab(target);
+      return { ok: true, detail: `Opened the ${hit[1]} tab` };
+    },
+  });
 
   /* Code-centric view of the same real rows: the billing codes in play across
      the org's payer positions (a projection, not a second store). */

@@ -1,12 +1,19 @@
 import { Router, type Request } from 'express';
 import archiver from 'archiver';
-import { createHash } from 'crypto';
 import { PassThrough } from 'stream';
 import { z } from 'zod';
 import { stylePacks } from '../export/stylePacks/config';
-import { renderPdfBuffersFor510k } from '../export/renderers';
+import {
+  renderPdfBuffersFor510k,
+  renderPdfBuffersPerSection,
+  renderCombinedPdf,
+  renderCombinedDocx,
+} from '../export/renderers';
 import { authMiddleware } from '../auth';
-import { createGovernedExportConsequence } from '../services/export/governedExportConsequence';
+import {
+  createGovernedExportConsequence,
+  createAuditedUnplacedExport,
+} from '../services/export/governedExportConsequence';
 import { fillEstarSubmission } from '../services/pathway-engines/estar/estar-fill';
 import { assembleDeviceSubmission } from '../services/pathway-engines/device-assembly/assemble-device-submission';
 import {
@@ -35,13 +42,14 @@ import {
   loadAuthoredDeviceSections,
   resolveDeviceContentScope,
   sectionsToEditorJson,
+  type AuthoredDeviceSection,
 } from '../services/pathway-engines/estar/estar-content-leaves';
+import { PMA_SUBMISSION_TYPES } from '../services/pathway-engines/pma/pma-mapper';
 import { and, eq } from 'drizzle-orm';
 import { requestDb } from '../db/requestDb';
 import { fda510kProjects } from '../../shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
-import auditService from '../services/auditService';
 import {
   getEstarRegistration,
   upsertEstarRegistration,
@@ -260,8 +268,95 @@ function resolveOrgId(req: any): number | null {
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
+/** One file in the draft package ZIP. */
+interface DraftPackageEntry {
+  name: string;
+  buffer: Buffer;
+}
+
+/**
+ * The draft-package families /build can produce, derived from the class of the
+ * governed document that answered the content load (PMA_ASSEMBLY):
+ *   - '510k' — the six fixed 510(k) section PDFs (also what the legacy store
+ *              and a client-supplied payload get, exactly as before);
+ *   - 'pma'  — one PDF per authored 21 CFR 814.20 section in outline order plus
+ *              the combined PDF/DOCX. A governed PMA used to be forced through
+ *              the 510(k) renderer: most of its sections dropped, the
+ *              510(k)-only slots stamped "content not found", the ZIP labelled
+ *              and ledgered as a 510(k) package.
+ * Neither is an eSTAR; the labels below say so.
+ */
+type DraftPackageFamily = '510k' | 'pma';
+
+const DRAFT_PACKAGE_LABELS: Record<
+  DraftPackageFamily,
+  { filenameSuffix: string; package: string; title: string; ctdSection: string; suggestedPlacement: string }
+> = {
+  '510k': {
+    filenameSuffix: 'content-package-draft',
+    package: 'content package draft (not an eSTAR)',
+    title: '510(k) content package (draft)',
+    ctdSection: 'm1.5',
+    suggestedPlacement: 'Module 1 / 510(k) content package (draft)',
+  },
+  pma: {
+    filenameSuffix: 'pma-content-package-draft',
+    package: 'PMA content package draft (not an eSTAR)',
+    title: 'PMA content package (draft)',
+    ctdSection: 'm2.5',
+    suggestedPlacement: 'Module 2 / PMA content package (draft)',
+  },
+};
+
+function draftPackageFamilyFor(source: string, docType: string | undefined): DraftPackageFamily {
+  return source === 'governed_program' && docType === 'pma' ? 'pma' : '510k';
+}
+
+/**
+ * Render the package's files for its family. The 510(k) family keeps its six
+ * fixed slots; the PMA family is every authored section (the editor JSON holds
+ * one H1 per authored governed section, in path_order) named by its rule-pack
+ * key, plus the combined document through the generic cerv2_pma renderers.
+ */
+async function renderDraftPackageEntries(
+  family: DraftPackageFamily,
+  content: unknown,
+  packageId: string,
+  sections: ReadonlyArray<AuthoredDeviceSection>,
+): Promise<DraftPackageEntry[]> {
+  if (family === 'pma') {
+    const [perSection, combinedPdf, combinedDocx] = await Promise.all([
+      renderPdfBuffersPerSection(content, stylePacks['pma_v1']),
+      renderCombinedPdf('cerv2_pma', content),
+      renderCombinedDocx('cerv2_pma', content),
+    ]);
+    // The per-section PDFs come back in document order, which is the loader's
+    // outline order; the rule-pack key rides along only when the two line up.
+    const aligned = perSection.length === sections.length;
+    const entries: DraftPackageEntry[] = perSection.map((s, i) => {
+      const code = aligned ? sections[i]?.sectionCode : undefined;
+      const stem = sanitizeFilename(`${code ?? ''} ${s.title}`.trim()).replace(/^_+|_+$/g, '').slice(0, 80);
+      return { name: `${String(i + 1).padStart(2, '0')}_${stem}.pdf`, buffer: s.buffer };
+    });
+    const id = sanitizeFilename(packageId);
+    entries.push({ name: `${id}_Combined.pdf`, buffer: combinedPdf });
+    entries.push({ name: `${id}_Combined.docx`, buffer: combinedDocx });
+    return entries;
+  }
+  const pdf = await renderPdfBuffersFor510k(content, stylePacks['510k_v1']);
+  return [
+    { name: '01_CoverLetter.pdf', buffer: pdf.coverLetter },
+    { name: '02_510kSummary.pdf', buffer: pdf.summary },
+    { name: '03_DeviceDescription.pdf', buffer: pdf.deviceDescription },
+    { name: '04_SE_Discussion.pdf', buffer: pdf.seDiscussion },
+    { name: '05_PerformanceTesting.pdf', buffer: pdf.performanceTesting },
+    { name: '06_Labeling.pdf', buffer: pdf.labeling },
+  ];
+}
+
+/** The ONE zip builder for every draft-package family. */
 async function buildZipBuffer(
-  pdf: Awaited<ReturnType<typeof renderPdfBuffersFor510k>>,
+  entries: ReadonlyArray<DraftPackageEntry>,
   attachments: Array<{ filename: string; buffer: string }>
 ) {
   const archive = archiver('zip', { zlib: { level: 9 } });
@@ -276,12 +371,9 @@ async function buildZipBuffer(
   });
 
   archive.pipe(pass);
-  archive.append(pdf.coverLetter, { name: '01_CoverLetter.pdf' });
-  archive.append(pdf.summary, { name: '02_510kSummary.pdf' });
-  archive.append(pdf.deviceDescription, { name: '03_DeviceDescription.pdf' });
-  archive.append(pdf.seDiscussion, { name: '04_SE_Discussion.pdf' });
-  archive.append(pdf.performanceTesting, { name: '05_PerformanceTesting.pdf' });
-  archive.append(pdf.labeling, { name: '06_Labeling.pdf' });
+  for (const entry of entries) {
+    archive.append(entry.buffer, { name: entry.name });
+  }
 
   for (const attachment of attachments) {
     const buffer = Buffer.from(attachment.buffer, 'base64');
@@ -331,12 +423,17 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
     return res.status(404).json({ error: 'Project not found in your organization' });
   }
 
+  // The package family follows the governed document's class; a client-supplied
+  // payload and the legacy store are 510(k)-shaped exactly as before.
+  let family: DraftPackageFamily = '510k';
+  let authoredSections: AuthoredDeviceSection[] = [];
+
   if (content === undefined && useProjectContent) {
     // A program anchor reads ITS governed document (the rows the editor saves
     // into) when that document holds authored content; otherwise the legacy
     // store answers as before, and the response says which (ESTAR-01/02).
     const orgId = getOrganizationId(req);
-    const { scope, source } = await resolveDeviceContentScope(orgId, {
+    const { scope, source, docType } = await resolveDeviceContentScope(orgId, {
       programId: documentId === undefined ? (anchor.programUuid ?? undefined) : undefined,
       documentId,
     });
@@ -346,11 +443,13 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
         error: 'NO_AUTHORED_CONTENT',
         deviceContentSource: source,
         message:
-          'No authored 510(k) sections found for this organization' +
+          'No authored device sections found for this organization' +
           (documentId ? ` (document ${documentId})` : '') +
           ' — author section content before exporting a draft package.',
       });
     }
+    family = draftPackageFamilyFor(source, docType);
+    authoredSections = sections;
     content = sectionsToEditorJson(sections);
   }
 
@@ -378,9 +477,10 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
   }
 
   try {
-    const pdf = await renderPdfBuffersFor510k(content, stylePacks['510k_v1']);
-    const zipBuffer = await buildZipBuffer(pdf, attachments);
-    const filename = `${sanitizeFilename(meta.id)}_content-package-draft.zip`;
+    const labels = DRAFT_PACKAGE_LABELS[family];
+    const entries = await renderDraftPackageEntries(family, content, meta.id, authoredSections);
+    const zipBuffer = await buildZipBuffer(entries, attachments);
+    const filename = `${sanitizeFilename(meta.id)}_${labels.filenameSuffix}.zip`;
 
     // E1 — ADVISORY market-formatting check. The FDA eSTAR spec (us-estar) already
     // encodes CDRH's file-naming / format / size / no-encryption rules; run the
@@ -394,12 +494,11 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
       const spec = getMarketSpec('us-estar');
       if (spec) {
         const leaves: LeafFileDescriptor[] = [
-          { fileName: '01_CoverLetter.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.coverLetter.length },
-          { fileName: '02_510kSummary.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.summary.length },
-          { fileName: '03_DeviceDescription.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.deviceDescription.length },
-          { fileName: '04_SE_Discussion.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.seDiscussion.length },
-          { fileName: '05_PerformanceTesting.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.performanceTesting.length },
-          { fileName: '06_Labeling.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.labeling.length },
+          ...entries.map((e) => ({
+            fileName: e.name,
+            fileFormat: e.name.toLowerCase().endsWith('.docx') ? 'DOCX' : 'PDF',
+            fileSizeBytes: e.buffer.length,
+          })),
           ...attachments.map((a) => ({
             fileName: sanitizeFilename(a.filename),
             fileSizeBytes: Buffer.from(a.buffer, 'base64').length,
@@ -421,7 +520,8 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
     const exportMetadata = {
       format: 'zip',
       attachmentCount: attachments.length,
-      package: 'content package draft (not an eSTAR)',
+      package: labels.package,
+      packageFamily: family,
       officialEstarPdf: false,
       programId: anchor.programUuid ?? undefined,
       formattingErrors: (formattingReport as { errors?: number } | undefined)?.errors ?? 0,
@@ -433,11 +533,11 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
         organizationId: getOrganizationId(req),
         projectId: anchor.anchorProjectId,
         userId: getUserId(req),
-        title: meta.title || meta.submissionName || `${meta.id} — 510(k) content package (draft)`,
+        title: meta.title || meta.submissionName || `${meta.id} — ${labels.title}`,
         contentForArtifact: typeof content === 'string' ? content : JSON.stringify(content),
         sourceType: 'export_estar_zip',
-        ctdSection: meta.ctdSection || 'm1.5',
-        suggestedPlacement: 'Module 1 / 510(k) content package (draft)',
+        ctdSection: meta.ctdSection || labels.ctdSection,
+        suggestedPlacement: labels.suggestedPlacement,
         backendRoute: 'POST /api/510k/estar/build',
         binaryOutput: zipBuffer,
         mimeType: 'application/zip',
@@ -456,42 +556,23 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
     // the program spine; the document-identity contract — RECONCILE.md §6 —
     // owns the mapping). Deliver the ZIP and audit-log the export with its
     // SHA-256 so provenance is preserved; say plainly that registry placement
-    // is pending rather than pretending it happened.
-    const zipSha256 = createHash('sha256').update(zipBuffer).digest('hex');
-    await auditService.logAction({
+    // is pending rather than pretending it happened. ONE implementation:
+    // createAuditedUnplacedExport (shared with cerv2 + technical-file routes).
+    const unplaced = await createAuditedUnplacedExport({
       organizationId: getOrganizationId(req),
       userId: getUserId(req),
-      action: 'EXPORT_GENERATED',
+      sourceType: 'export_estar_zip',
+      backendRoute: 'POST /api/510k/estar/build',
       resourceType: 'estar_content_package',
       resourceId: anchor.programUuid ?? meta.id,
-      details: {
-        backendRoute: 'POST /api/510k/estar/build',
-        sourceType: 'export_estar_zip',
-        filename,
-        sha256: zipSha256,
-        artifactRegistry: 'unplaced_pending_document_identity_contract',
-        ...exportMetadata,
-      },
+      programUuid: anchor.programUuid,
+      filename,
+      mimeType: 'application/zip',
+      buffer: zipBuffer,
+      metadata: exportMetadata,
     });
 
-    return res.status(200).json({
-      governed: false,
-      audited: true,
-      source_type: 'export_estar_zip',
-      artifact_id: null,
-      artifact_registry:
-        'unplaced — artifact registry requires a PM-spine project row; ' +
-        'export is audit-logged with its SHA-256 (pending document-identity contract)',
-      program_id: anchor.programUuid,
-      sha256: zipSha256,
-      downloadable_output_ref: {
-        encoding: 'base64',
-        mime_type: 'application/zip',
-        filename,
-        data: zipBuffer.toString('base64'),
-      },
-      formattingReport: formattingReport ?? null,
-    });
+    return res.status(200).json({ ...unplaced, formattingReport: formattingReport ?? null });
   } catch (error: any) {
     logger.error('governed export failure', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({
@@ -716,41 +797,23 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
     }
 
     // Program-spine project without a registry anchor — same audited-delivery
-    // contract as /build (see that handler's comment; RECONCILE.md §6).
-    const pdfSha256 = createHash('sha256').update(pdfBuffer).digest('hex');
-    await auditService.logAction({
+    // contract as /build (see that handler's comment; RECONCILE.md §6), through
+    // the ONE shared implementation.
+    const unplaced = await createAuditedUnplacedExport({
       organizationId: getOrganizationId(req),
       userId: getUserId(req),
-      action: 'EXPORT_GENERATED',
+      sourceType: 'export_estar_pdf',
+      backendRoute: 'POST /api/510k/estar/official',
       resourceType: 'estar_official_pdf',
       resourceId: anchor.programUuid ?? meta.id,
-      details: {
-        backendRoute: 'POST /api/510k/estar/official',
-        sourceType: 'export_estar_pdf',
-        filename,
-        sha256: pdfSha256,
-        artifactRegistry: 'unplaced_pending_document_identity_contract',
-        ...officialMetadata,
-      },
+      programUuid: anchor.programUuid,
+      filename,
+      mimeType: 'application/pdf',
+      buffer: pdfBuffer,
+      metadata: officialMetadata,
     });
 
-    return res.status(200).json({
-      governed: false,
-      audited: true,
-      source_type: 'export_estar_pdf',
-      artifact_id: null,
-      artifact_registry:
-        'unplaced — artifact registry requires a PM-spine project row; ' +
-        'export is audit-logged with its SHA-256 (pending document-identity contract)',
-      program_id: anchor.programUuid,
-      sha256: pdfSha256,
-      downloadable_output_ref: {
-        encoding: 'base64',
-        mime_type: 'application/pdf',
-        filename,
-        data: pdfBuffer.toString('base64'),
-      },
-    });
+    return res.status(200).json(unplaced);
   } catch (error: any) {
     logger.error('official eSTAR export failure', {
       err: error instanceof Error ? error.message : String(error),
@@ -762,8 +825,12 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
   }
 });
 
+const PMA_SUBMISSION_TYPE_VALUES = PMA_SUBMISSION_TYPES.map((t) => t.value) as [string, ...string[]];
+
 const assembleSchema = z.object({
-  pathway: z.enum(['510k', 'de_novo']).default('510k'),
+  pathway: z.enum(['510k', 'de_novo', 'pma']).default('510k'),
+  /** PMA only: original vs a 21 CFR 814.39 supplement/notice (scopes the modules owed). */
+  pmaSubmissionType: z.enum(PMA_SUBMISSION_TYPE_VALUES).optional(),
   variant: z.enum(ESTAR_VARIANTS).default('device'),
   /** Narrow the authored-content load to one LEGACY document's sections. */
   documentId: z.coerce.number().int().positive().optional(),
@@ -775,11 +842,13 @@ const assembleSchema = z.object({
 
 /**
  * POST /api/510k/estar/assemble
- * body: { pathway?, variant?, documentId?, market? }
+ * body: { pathway?, pmaSubmissionType?, variant?, documentId?, programId?, market? }
  *
  * The device-assembly contract (spec B5) over HTTP: computes what can honestly
- * be produced for the caller org's REAL authored content (cerv2_510k_sections
- * → readiness leaves) against the REAL vendored template drop-point — the same
+ * be produced for the caller org's REAL authored content (the program's
+ * governed document, else cerv2_510k_sections → readiness leaves) against the
+ * REAL vendored template drop-point. Pathway 'pma' scores the content against
+ * the 21 CFR 814 modules (pma-mapper), never the 510(k) eSTAR slots — the same
  * deterministic engine the assemble_device_submission AnA tool uses, with the
  * inputs loaded server-side instead of caller-supplied. Returns the assembly
  * result plus a validationReport whose errors are the blockers that prevent a
@@ -790,7 +859,7 @@ router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEnt
   if (!validation.success) {
     return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
   }
-  const { pathway, variant, documentId, programId, market } = validation.data;
+  const { pathway, pmaSubmissionType, variant, documentId, programId, market } = validation.data;
 
   try {
     const orgId = getOrganizationId(req);
@@ -802,6 +871,7 @@ router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEnt
 
     const result = assembleDeviceSubmission({
       pathway,
+      pmaSubmissionType: pmaSubmissionType as (typeof PMA_SUBMISSION_TYPES)[number]['value'] | undefined,
       variant,
       leaves,
       presentTemplates: vendored.map((t) => t.fileName),

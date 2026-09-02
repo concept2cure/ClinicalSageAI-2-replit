@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-02T16:23:47.571Z",
+  "generatedAt": "2026-09-02T18:33:57.134Z",
   "git": {
-    "sha": "cb0a7423d624def239a6777a6df470c74a2e53ae",
+    "sha": "7b788f2947bcb25f43dff9f5ede58b43f5c87a36",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -18,7 +18,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 34,
-    "largeFilesByLines": 84
+    "largeFilesByLines": 86
   },
   "findings": {
     "duplicateBasenames": [
@@ -2146,11 +2146,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 994552
+        "bytes": 995349
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 845191
+        "bytes": 845853
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2284,11 +2284,11 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19953
+        "lines": 19961
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19347
+        "lines": 19357
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2475,12 +2475,12 @@
         "lines": 2002
       },
       {
-        "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
-        "lines": 1962
+        "file": "server/api/cmc/routes.ts",
+        "lines": 1987
       },
       {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 1955
+        "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
+        "lines": 1962
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
@@ -2511,6 +2511,10 @@
         "lines": 1866
       },
       {
+        "file": "server/services/module3Composer.ts",
+        "lines": 1865
+      },
+      {
         "file": "server/services/digital-health/digital-health-knowledge.ts",
         "lines": 1864
       },
@@ -2535,6 +2539,10 @@
         "lines": 1824
       },
       {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1817
+      },
+      {
         "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",
         "lines": 1815
       },
@@ -2555,20 +2563,12 @@
         "lines": 1785
       },
       {
-        "file": "server/services/module3Composer.ts",
-        "lines": 1776
-      },
-      {
         "file": "server/services/ana/submission-chat-handler.ts",
         "lines": 1756
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1740
-      },
-      {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 1733
+        "lines": 1737
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
@@ -2595,6 +2595,10 @@
         "lines": 1650
       },
       {
+        "file": "server/routes/submissions.ts",
+        "lines": 1648
+      },
+      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1628
       },
@@ -2617,6 +2621,10 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
+      },
+      {
+        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+        "lines": 1511
       }
     ]
   },
@@ -2626,7 +2634,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 399,
       "largeByBytes": 25,
-      "largeByLines": 70
+      "largeByLines": 72
     },
     {
       "owner": "Unassigned (TBD)",

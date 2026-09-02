@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import { I } from '../icons';
 import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
@@ -283,6 +284,20 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   const tabs: [string, string][] = [['ctd', 'CTD readiness'], ['m1', 'Module 1 admin'], ['clock', 'PDUFA review clock'], ['rtf', 'Refuse-to-File risk'], ['bla', 'BLA biologics']];
+
+  /* AnA can open any cockpit tab — the same view-state switch a person makes.
+     The registry enum has validated `tab`; the defensive lookup keeps the
+     handler honest if the registry drifts. */
+  useSurfaceActionHandlers('nda-cockpit', {
+    'nda-cockpit.open-tab': (params) => {
+      const target = params.tab;
+      const hit = tabs.find((t) => t[0] === target);
+      if (!hit) return { ok: false, reason: `"${target}" is not an NDA/BLA cockpit tab.` };
+      if (tab === target) return { ok: true, detail: `Already on the ${hit[1]} tab` };
+      setTab(target);
+      return { ok: true, detail: `Opened the ${hit[1]} tab` };
+    },
+  });
 
   /* Context-aware human lead */
   const highs = rtf.filter(r => r.sev === 'high');

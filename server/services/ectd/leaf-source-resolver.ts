@@ -9,6 +9,11 @@
  *   - ctd_onboarding_documents — an UPLOADED binary file (storage_path/mime);
  *                                staged directly AS A LEAF when it is already a
  *                                PDF (org-scoped, %PDF-verified), else unresolved
+ *   - c2c_document_sections    — the GOVERNED authoring store (the rows the MDx
+ *                                editor and the eu-mdr / eu-ivdr rule packs
+ *                                write); plain text rendered via renderLeafPdf,
+ *                                tenant-scoped through the parent
+ *                                c2c_documents.org_id (renderable)
  *   - vault_documents          — an S3-backed binary (UUID-keyed, separate
  *                                `vault` schema); not addressable from an integer
  *                                leaf id and has no org scope → unresolved
@@ -32,12 +37,13 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { coauthorDocuments } from '../../../shared/schema';
 import { unifiedDocuments, workflowDocumentVersions } from '../../../shared/schema/unified_workflow';
 import { ctdOnboardingDocuments } from '../../../shared/schema/ctd-projects';
 import { readLocalUploadBuffer } from '../anthropic-files';
+import { sectionPlainText, C2C_SECTION_COMPLETE_STATUSES } from '../c2c/section-content';
 import { renderLeafPdf } from './leaf-pdf-renderer';
 import type { ResolvedFile } from './core-to-packager';
 
@@ -52,7 +58,7 @@ function looksLikePdf(buf: Buffer): boolean {
 }
 
 /** Tables whose content is stored locally and can be rendered to a PDF leaf. */
-export const RENDERABLE_DOCUMENT_TABLES = new Set(['coauthor_documents', 'unified_documents']);
+export const RENDERABLE_DOCUMENT_TABLES = new Set(['coauthor_documents', 'unified_documents', 'c2c_document_sections']);
 
 /**
  * Tables whose content lives in an EXTERNAL system / as a binary upload and is
@@ -113,6 +119,25 @@ export interface MaterializeLeafSourcesResult {
 const FINALIZED_SOURCE_STATUSES = new Set(['approved', 'finalized']);
 function isFinalizedStatus(status: string | null | undefined): boolean {
   return FINALIZED_SOURCE_STATUSES.has((status ?? '').toLowerCase());
+}
+
+/**
+ * A GOVERNED section (c2c_document_sections) is finalized when its status is
+ * one the readiness trigger counts as complete — `approved` or `locked`
+ * (C2C_SECTION_COMPLETE_STATUSES, mirrored from the migration). The governed
+ * vocabulary is todo | drafted | review | approved | locked, so the generic
+ * `approved | finalized` check above would have mis-read a locked section as
+ * a draft; this branch-specific check keeps the two vocabularies honest.
+ */
+function isFinalizedGovernedSectionStatus(status: string | null | undefined): boolean {
+  return C2C_SECTION_COMPLETE_STATUSES.has((status ?? '').toLowerCase());
+}
+
+/** Rows of a `db.execute` result across drivers (node-postgres QueryResult / PGlite Results / bare array). */
+function rowsOf(result: unknown): Array<Record<string, unknown>> {
+  if (Array.isArray(result)) return result as Array<Record<string, unknown>>;
+  const rows = (result as { rows?: unknown } | null)?.rows;
+  return Array.isArray(rows) ? (rows as Array<Record<string, unknown>>) : [];
 }
 
 function safeName(s: string): string {
@@ -320,6 +345,53 @@ export async function materializeLeafSources(
         sha256: createHash('sha256').update(buf).digest('hex'),
       });
       materialized++;
+      continue;
+    }
+
+    if (documentTable === 'c2c_document_sections') {
+      // The GOVERNED authoring store. c2c_document_sections carries NO
+      // organization column: its tenant scope is the parent c2c_documents.org_id,
+      // so the JOIN below IS the tenant gate — a section is never rendered for a
+      // caller from another organization (it reads as "not found"). Issued via
+      // the drizzle `db.execute` path (not the raw pool) so the same `db` mock /
+      // PGlite harness the sibling branches use covers it.
+      const res = await db.execute(sql`
+        SELECT s.id, s.section_key, s.label, s.status, s.content
+          FROM c2c_document_sections s
+          JOIN c2c_documents d ON d.id = s.document_id
+         WHERE s.id = ${documentId} AND d.org_id = ${organizationId}
+         LIMIT 1`);
+      const row = rowsOf(res)[0] as
+        | { section_key: string; label: string; status: string | null; content: unknown }
+        | undefined;
+      if (!row) {
+        unresolved.push({ documentTable, documentId, reason: 'c2c_document_sections row not found in this organization' });
+        continue;
+      }
+      // jsonb arrives parsed from node-postgres and PGlite; tolerate a driver
+      // that hands back the serialized string.
+      let content: unknown = row.content;
+      if (typeof content === 'string') {
+        try { content = JSON.parse(content); } catch { /* keep as text */ }
+      }
+      const text = sectionPlainText(content).trim();
+      if (!text) {
+        // An empty section is a GAP in the package, never a blank leaf.
+        unresolved.push({
+          documentTable,
+          documentId,
+          reason: `section ${row.section_key} has no authored content — not materialized`,
+        });
+        continue;
+      }
+      await write(key, row.section_key || row.label, text, {
+        title: row.label ?? undefined,
+        sectionCode: row.section_key ?? undefined,
+      });
+      if (!isFinalizedGovernedSectionStatus(row.status)) {
+        unfinalized++;
+        unfinalizedSections.push({ sectionCode: row.section_key || `c2c_document_sections:${documentId}`, status: row.status ?? 'todo' });
+      }
       continue;
     }
 

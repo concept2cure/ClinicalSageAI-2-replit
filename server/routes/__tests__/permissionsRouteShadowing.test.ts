@@ -62,22 +62,31 @@ describe('ownership of /api/authoring/docs/:docId/permissions', () => {
     expect(permissionsRouter).toMatch(/recordPermissionAudit/);
   });
 
-  it('leaves only the creator auto-grant writing doc_permissions here', () => {
-    /* One INSERT remains, and it is a DIFFERENT flow: POST /docs grants the
-       creator AUTHOR on the document it just made, best-effort and outside the
-       transaction. That is not permission MANAGEMENT and does not belong to the
-       canonical router — it is a bootstrap grant without which the creator is
-       denied on their next edit. Asserted as exactly one so the deleted
-       management route cannot quietly return alongside it. */
+  it('writes doc_permissions through the canonical grant writer, never with its own INSERT', () => {
+    /* This router used to carry one remaining raw INSERT: POST /docs granting
+       the creator AUTHOR on the document it had just made, best-effort and
+       outside the transaction. That was a second, weaker writer — email-only,
+       no principal id, no grantor, no reason — sitting beside the canonical
+       DDL trigger that already seeds the creator as OWNER + AUTHOR keyed on the
+       verified principal. The bootstrap grant is still made here (without it
+       the creator is denied on their next edit, with the per-user matrix
+       enforced by default), but it goes through grantAuthoringPermission, which
+       is idempotent against the trigger and records what the canonical
+       decision reads.
+
+       So the assertion is now stronger than "exactly one": this file may
+       contain NO raw write to the permission store at all. The deleted
+       management route cannot return, and neither can a hand-rolled grant. */
     /* Comments stripped first — the deletion note above the removed routes
        quotes the statement it is describing, and a prose mention is not a
        writer. */
     const code = authoringRouter
       .replace(/\/\*[\s\S]*?\*\//g, '')
       .replace(/^\s*\/\/.*$/gm, '');
-    const inserts = code.match(/INSERT INTO doc_permissions/g) ?? [];
-    expect(inserts).toHaveLength(1);
-    expect(code).toMatch(/creator auto-grant skipped/);
+    expect(code.match(/INSERT INTO doc_permissions/g)).toBeNull();
+    expect(code).toMatch(/grantAuthoringPermission\(/);
+    // …and the one caller is the creator bootstrap, which cannot fail the create.
+    expect(code).toMatch(/creator ownership grant failed/);
   });
 
   it('drops the constant that only the deleted route used', () => {

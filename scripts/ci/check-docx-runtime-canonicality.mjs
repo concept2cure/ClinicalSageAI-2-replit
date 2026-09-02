@@ -38,7 +38,6 @@ const APPROVED_JS = new Set([
   // Known legacy consumers — documented, not new entry points
   'server/services/documentReconstruction.js',
   'server/services/cerGenerationService.ts',
-  'server/services/pmaDocumentGenerator.js',
   'server/services/universal-packager.ts',
   'server/routes/authoring.router.ts',
   'scripts/generate_sso_spec.js',

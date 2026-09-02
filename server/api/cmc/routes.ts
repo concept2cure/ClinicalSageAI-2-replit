@@ -53,13 +53,7 @@ import type { AnyPgColumn } from 'drizzle-orm/pg-core';
    eligibility rules there are the safety story for a shelf-life claim and have
    two callers — this route and AnA's `assess_recorded_batch_poolability` tool —
    so there is exactly one copy of them. */
-import {
-  readRecordedStabilityResults,
-  parseNumeric,
-  parseAcceptanceCriterion,
-  groupByParameter,
-  assessRecordedPoolability,
-} from '../../services/cmc/recorded-stability';
+import { assessRecordedPoolability } from '../../services/cmc/recorded-stability';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
 import { governedSignatureSchema, resolveActorUserId } from './governance';
 import { createScopedLogger } from '../../utils/logger';
