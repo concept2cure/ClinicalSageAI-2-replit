@@ -30,6 +30,10 @@ export const VALID_PROGRAM_TYPES = new Set([
   // and every one created a US NDA, because the API had no value for them to
   // land on. Backed by real packs as of migrations/20260810b.
   'mdr', 'ivdr',
+  // Drug / active substance master file. Module 3 content plus a letter of
+  // authorization; scaffolds against the harmonised Module 3 pack (mod3:ich)
+  // through PROGRAM_TO_DOC_TYPE. Before this the wizard filed a DMF as an IND.
+  'dmf',
 ]);
 export const VALID_PRODUCT_TYPES = new Set<string>(listProductTypes());
 

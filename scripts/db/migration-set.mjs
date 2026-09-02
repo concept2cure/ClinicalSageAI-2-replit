@@ -854,6 +854,17 @@ export const C2C_MIGRATION_FILES = [
   // one, and a view reporting reviewed-but-changed when the tree moves out from
   // under an honest review. Marks nothing reviewed. Must run AFTER 20260810c.
   'migrations/20260810d_rule_pack_review_attribution.sql',
+  // ind:fda re-seeded as ich-m4-v2.1: Module 1 numbered per the FDA eCTD Module 1
+  // Specification v2.3 (1.20 general investigational plan, 1.14.4.1 IB, 1.12.14
+  // environmental analysis) and Modules 2–5 at ICH M4 leaf granularity. The
+  // v2.0 pack stopped at four M1 headings, so the compile gate's required
+  // 1.20 / 1.14.4.x could never be satisfied from the editor. Supersedes v2.0.
+  'migrations/20260901_ind_fda_m1_v2_3_outline.sql',
+  // k510:fda and denovo:fda re-seeded to the eSTAR-era structure: the retired
+  // Form 3514 cover sheet and the De Novo ToC are gone; the Part 807 mandatory
+  // items (510(k) summary/statement, truthful & accuracy, Class III cert,
+  // financial cert) and cybersecurity / EMC / human factors sections exist.
+  'migrations/20260901b_estar_510k_denovo_outlines.sql',
   //   • 068_regulatory_schema_alignment — creates only regulatory.information_
   //     requests, which C-35's schema-qualification fix showed is not referenced
   //     by server code at all. It is dead schema, not a live gap; the "missing

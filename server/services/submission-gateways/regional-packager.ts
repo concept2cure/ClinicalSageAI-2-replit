@@ -220,6 +220,13 @@ ${leafElement(f.leaf, assignId(f.leaf), resolve(f.leaf)).split('\n').map((l) => 
  * the coded admin block (application-type / submission-type / submission-sub-
  * type / form-type as `fdaXX` attributes), and nests content leaves under
  * FDA-published section heading elements (e.g. `<m1-2-cover-letters>`).
+ *
+ * DTD path: the regional backbone is written two levels deep (m1/<cc>/<cc>-regional.xml)
+ * while the vendored DTDs are bundled at the sequence root (util/dtd/), so the
+ * DOCTYPE must climb two levels (`../../util/dtd/…`) — the form FDA's own example
+ * us-regional.xml uses. A single `../` resolved to m1/util/dtd/, which no package
+ * contains, so every regional backbone was un-validatable the moment a DTD was
+ * dropped in. Pinned by __tests__/regional-backbone-dtd-path.test.ts.
  */
 function buildFdaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRef): string {
   const fda = input.fda ?? {};
@@ -250,7 +257,7 @@ function buildFdaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRe
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE fda-regional:fda-regional SYSTEM "../util/dtd/us-regional-v3-3.dtd">
+<!DOCTYPE fda-regional:fda-regional SYSTEM "../../util/dtd/us-regional-v3-3.dtd">
 <?xml-stylesheet type="text/xsl" href="../util/style/us-regional.xsl"?>
 <fda-regional:fda-regional dtd-version="3.3" xml:lang="en"
     xmlns:fda-regional="http://www.ich.org/fda"
@@ -287,7 +294,7 @@ function buildEmaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRe
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE eu-regional SYSTEM "../util/dtd/eu-regional.dtd">
+<!DOCTYPE eu-regional SYSTEM "../../util/dtd/eu-regional.dtd">
 <eu-regional xmlns:xlink="http://www.w3.org/1999/xlink"
              dtd-version="3.0">
   <admin>
@@ -324,7 +331,7 @@ function buildPmdaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafR
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE jp-regional SYSTEM "../util/dtd/jp-regional.dtd">
+<!DOCTYPE jp-regional SYSTEM "../../util/dtd/jp-regional.dtd">
 <jp-regional xmlns:xlink="http://www.w3.org/1999/xlink"
              dtd-version="1.0">
   <admin>
@@ -363,7 +370,7 @@ function buildHcBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRef
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE ca-regional SYSTEM "../util/dtd/ca-regional.dtd">
+<!DOCTYPE ca-regional SYSTEM "../../util/dtd/ca-regional.dtd">
 <ca-regional xmlns:xlink="http://www.w3.org/1999/xlink"
              dtd-version="3.0">
   <admin>

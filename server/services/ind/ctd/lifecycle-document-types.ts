@@ -1028,6 +1028,9 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
     "ctdSectionCodes": [
       "1.1",
       "1.2",
+      "1.12.14",
+      "1.14.4",
+      "1.20",
       "2.3",
       "2.4",
       "2.5",
@@ -2570,7 +2573,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
     "timing": "Submit and obtain FDA approval BEFORE distributing product made with the change. FDA review clock is 4 months (major change) unless designated for a different classification; user must not distribute until an approval letter issues.",
     "ctdSectionCodes": [
       "1.2",
-      "1.3.1",
+      "1.3",
       "1.14.1",
       "3.2.S",
       "3.2.P",
@@ -2688,7 +2691,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
     "timing": "Product may be distributed 30 days after FDA receives the supplement, provided FDA has not, within 30 days of receipt, informed the applicant that the change requires prior approval or that the submission is deficient. Applicant bears the risk if FDA later disapproves.",
     "ctdSectionCodes": [
       "1.2",
-      "1.3.1",
+      "1.3",
       "1.14.1",
       "3.2.S",
       "3.2.P",
@@ -2792,7 +2795,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
     "timing": "The change may be implemented immediately upon FDA receipt of the supplement (day 0). FDA reviews and may later require modification or disapprove; the applicant assumes the risk of distributing before the review is complete.",
     "ctdSectionCodes": [
       "1.2",
-      "1.3.1",
+      "1.3",
       "1.14.1",
       "2.7.4",
       "3.2.S",

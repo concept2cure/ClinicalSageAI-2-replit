@@ -53,10 +53,23 @@ describe('Registry coverage', () => {
   describe('per-entry coverage', () => {
     it('US IND requires forms 1571/1572/3674 and they are FDA-registry backed and implemented', () => {
       const cov = getDocumentCoverage('US_IND')!;
-      const numbers = cov.requiredForms.map((f) => f.formNumber).filter(Boolean);
-      expect(numbers).toEqual(expect.arrayContaining(['1571', '1572', '3674']));
+      const numbers = cov.requiredForms.map((f) => f.formNumber).sort();
+      expect(numbers).toEqual(['1571', '1572', '3674']);
       expect(cov.requiredForms.every((f) => f.registered && f.implemented)).toBe(true);
-      expect(cov.formsFullyBacked).toBe(true);
+    });
+
+    it('US IND is NOT reported form-backed while the official FDA editions are unreviewed dynamic XFA', () => {
+      // templates/forms/acroforms/*.manifest.json all carry assetTrusted:false,
+      // fillSupported:false and an empty fieldMap: the builders render a
+      // reconstruction or a watermarked draft, never the official form. Reporting
+      // formsFullyBacked=true on the builder flag alone told a product owner the
+      // package would carry the official 1571/1572/3674 when it would not.
+      // This flips to true only when a reviewed, fillable official edition is
+      // installed — the manifest is the single source both this report and the
+      // fill service read.
+      const cov = getDocumentCoverage('US_IND')!;
+      expect(cov.requiredForms.every((f) => f.officialAssetTrusted)).toBe(false);
+      expect(cov.formsFullyBacked).toBe(false);
     });
 
     it('the named regions have an eCTD backbone reference', () => {

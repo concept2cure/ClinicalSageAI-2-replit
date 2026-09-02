@@ -34,6 +34,8 @@ import {
 import { DEDICATED_SECTION_BLUEPRINT_IDS } from '../sectionBlueprintCatalog.js';
 import { DEDICATED_TASK_BLUEPRINT_IDS } from '../taskBlueprintCatalog.js';
 import { FDAFormsRegistry, governedFormDefinition } from '../../../config/FDAFormsRegistry.js';
+import { readFileSync } from 'node:fs';
+import { join as joinPath } from 'node:path';
 import type {
   RegulatoryApplicationType,
   Region,
@@ -58,6 +60,13 @@ export interface RequiredFormCoverage {
   registered: boolean;
   /** Registry marks it as a fully-implemented builder (`implementationStatus: 'full'`). */
   implemented: boolean;
+  /**
+   * The official FDA edition is installed AND its manifest is reviewed and
+   * fillable (`assetTrusted` + `fillSupported` + non-empty `fieldMap`). Without
+   * it the builder renders a labeled draft or a reconstruction — never the
+   * form FDA ingests — so a filing is not form-backed however 'full' the code.
+   */
+  officialAssetTrusted: boolean;
 }
 
 export interface DocumentCoverage {
@@ -126,6 +135,39 @@ function taskTier(entry: RegulatoryApplicationType): BlueprintTier {
   return 'generic';
 }
 
+/**
+ * Whether the official FDA edition of a form is installed and reviewed for
+ * filling. Reads the sidecar manifest the fill service gates on
+ * (`templates/forms/acroforms/<formId>.pdf.manifest.json`, or
+ * IND_FORM_TEMPLATES_DIR) — the same file, so this report and the renderer
+ * cannot disagree. Absent or unreviewed ⇒ false. Never throws.
+ *
+ * ── Why the coverage report has to read it ───────────────────────────────────
+ * `implementationStatus: 'full'` describes the BUILDER (field builders, QC,
+ * rendering). Every bundled official PDF today is a dynamic XFA edition with
+ * `fillSupported: false` and an empty `fieldMap`, so a 'full' form renders a
+ * watermarked draft or a labeled reconstruction. Reporting US NDA/BLA/IND as
+ * "forms fully backed" on the builder flag alone told a product owner the
+ * package would carry the official 356h/1571 when it would not.
+ */
+function officialFormAssetTrusted(formId: string): boolean {
+  const dir = process.env.IND_FORM_TEMPLATES_DIR || joinPath(process.cwd(), 'templates', 'forms', 'acroforms');
+  try {
+    const raw = readFileSync(joinPath(dir, `${formId}.pdf.manifest.json`), 'utf8');
+    const m = JSON.parse(raw) as {
+      assetTrusted?: unknown;
+      fillSupported?: unknown;
+      fieldMap?: unknown;
+      reviewedBy?: unknown;
+    };
+    const fieldMapPopulated =
+      m.fieldMap !== null && typeof m.fieldMap === 'object' && Object.keys(m.fieldMap as object).length > 0;
+    return m.assetTrusted === true && m.fillSupported === true && fieldMapPopulated && Boolean(m.reviewedBy);
+  } catch {
+    return false;
+  }
+}
+
 function requiredFormCoverage(entry: RegulatoryApplicationType): RequiredFormCoverage[] {
   return entry.requiredArtifacts
     .filter((a) => /^form[\s_-]/i.test(a) || /^form_?\d/i.test(a))
@@ -136,7 +178,14 @@ function requiredFormCoverage(entry: RegulatoryApplicationType): RequiredFormCov
       const implemented = registered
         ? governedFormDefinition(form!).implementationStatus === 'full'
         : false;
-      return { artifact, formNumber: registered ? form!.formNumber : undefined, registered, implemented };
+      const officialAssetTrusted = registered ? officialFormAssetTrusted(form!.formId) : false;
+      return {
+        artifact,
+        formNumber: registered ? form!.formNumber : undefined,
+        registered,
+        implemented,
+        officialAssetTrusted,
+      };
     });
 }
 
@@ -154,7 +203,12 @@ export function getDocumentCoverage(idOrEntry: string | RegulatoryApplicationTyp
   const section = sectionTier(entry);
   const task = taskTier(entry);
   const requiredForms = requiredFormCoverage(entry);
-  const formsFullyBacked = requiredForms.every((f) => f.registered && f.implemented);
+  // A filing is form-backed only when every required form is registered,
+  // has a full builder AND the official FDA edition is installed and reviewed
+  // for filling. The third condition is what the package actually carries.
+  const formsFullyBacked = requiredForms.every(
+    (f) => f.registered && f.implemented && f.officialAssetTrusted,
+  );
 
   return {
     id: entry.id,
