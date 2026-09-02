@@ -105,6 +105,7 @@
     "ci:artifact-provenance": "node scripts/ci/check-artifact-provenance.mjs",
     "ci:unreferenced-modules:strict": "node scripts/ci/check-unreferenced-modules.mjs --strict",
     "ci:unreferenced-modules:write-baseline": "node scripts/ci/check-unreferenced-modules.mjs --write-baseline",
+    "test:clock-shift": "TIME_SHIFT_DAYS=${TIME_SHIFT_DAYS:-365} vitest run --config vitest.clock-shift.config.ts",
     "test:schema-contract": "vitest run --config vitest.config.ts tests/schema-contract",
     "test:golden-journeys": "vitest run --config vitest.config.ts tests/golden-journeys",
     "test:export-proof": "vitest run --config vitest.config.ts tests/golden-journeys/submission-export-validation.journey.test.ts",
