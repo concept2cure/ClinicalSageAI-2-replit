@@ -1,4 +1,15 @@
 import { createSourceHash } from './cmc-module3-compiler';
+/* The ICH Q3A/Q3B comparison lives in services/cmc/impurity-assessment, which
+   consumes the threshold tables in services/global-ri/impurities-thresholds.
+   This composer renders the verdict; it does not restate the guideline. */
+import { assessRecordedImpurity, type ImpurityAssessmentResult } from './cmc/impurity-assessment';
+/* The dissolution purposes live in shared/, not in the write-through module:
+   that module already imports FROM this composer, and importing back would make
+   a cycle. One definition, reachable by both, and by the register surface. */
+import {
+  DISSOLUTION_DEVELOPMENT_PURPOSES,
+  DISSOLUTION_RELEASE_PURPOSE,
+} from '../../shared/cmc/dissolution-purpose';
 import {
   normalizeMaterialScope,
   scopeCovers,
@@ -74,12 +85,25 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
   // --- Drug Substance (S) subsections ---
   { sectionKey: '3.2.S.1', requiredSourceTypes: ['drug_substance'], requiredFields: ['name', 'manufacturer'] },
   { sectionKey: '3.2.S.2', requiredSourceTypes: ['drug_substance', 'manufacturing_process', 'process_validation'], requiredFields: ['manufacturingRoute', 'processDescription', 'processControls'] },
-  { sectionKey: '3.2.S.3', requiredSourceTypes: ['drug_substance', 'characterization', 'impurity_profile'], requiredFields: ['structuralElucidation', 'physicochemicalProperties', 'biologicalActivity'] },
+  { sectionKey: '3.2.S.3', requiredSourceTypes: ['drug_substance', 'characterization', 'impurity_profile'], requiredFields: ['structuralElucidation', 'physicochemicalProperties', 'biologicalActivity', 'drugSubstanceImpurityProfileComplete'] },
   /* `drugSubstanceBatchAnalyses`, not the generic `batchAnalyses`: the
      renderer files a finished-product result to §3.2.P.5.4 only, so counting
      it here turned this section green on a table it never renders. The QC
      mapper decides the side once and emits the matching key. */
   { sectionKey: '3.2.S.4', requiredSourceTypes: ['specification', 'method', 'impurity_profile', 'qc_result'], requiredFields: ['acceptanceCriteria', 'validationStatus', 'drugSubstanceBatchAnalyses'] },
+  /* §3.2.S.3.2 and §3.2.P.5.5 ARE the impurity sections, so an impurity profile
+     that can actually be compared to its ICH threshold is required for them:
+     both sections could previously report 100% complete over zero impurity
+     data. `*ImpurityProfileComplete` means one record carries a named impurity,
+     a level WITH its unit, the maximum daily dose the threshold is keyed to,
+     and a class Q3A/Q3B governs — i.e. the comparison the section exists to
+     make can be made.
+
+     Dissolution is deliberately NOT a required field anywhere. It is
+     dosage-form specific: requiring it would mark every parenteral and every
+     biologic programme permanently incomplete for lacking a test that does not
+     apply to it. The sections state its absence in words instead, which is the
+     honest half of the same fact. */
   /* The `*Complete` keys close the union hole. `availableFields` is a union
      over every matched source, so a register holding one system with a
      container and closure and ANOTHER system with a suitability justification
@@ -103,7 +127,7 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
   { sectionKey: '3.2.P.2', requiredSourceTypes: ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile', 'container_closure'], requiredFields: ['formulationDevelopment', 'manufacturingProcessDev', 'containerClosureStudies'] },
   { sectionKey: '3.2.P.3', requiredSourceTypes: ['drug_product', 'batch', 'change_control', 'process_validation'], requiredFields: ['formulation', 'batchNumber'] },
   { sectionKey: '3.2.P.4', requiredSourceTypes: ['excipient', 'raw_material_spec'], requiredFields: ['excipientSpecifications', 'excipientAnalyticalProcedures'] },
-  { sectionKey: '3.2.P.5', requiredSourceTypes: ['specification', 'method', 'dissolution_profile', 'impurity_profile', 'qc_result'], requiredFields: ['releaseCriteria', 'methodName', 'drugProductBatchAnalyses'] },
+  { sectionKey: '3.2.P.5', requiredSourceTypes: ['specification', 'method', 'dissolution_profile', 'impurity_profile', 'qc_result'], requiredFields: ['releaseCriteria', 'methodName', 'drugProductBatchAnalyses', 'drugProductImpurityProfileComplete'] },
   { sectionKey: '3.2.P.6', requiredSourceTypes: ['drug_product', 'reference_standard'], requiredFields: ['drugProductReferenceStandard', 'drugProductReferenceStandardCoA', 'drugProductReferenceStandardComplete'] },
   { sectionKey: '3.2.P.7', requiredSourceTypes: ['container_closure'], requiredFields: ['drugProductContainerDescription', 'drugProductClosureDescription', 'drugProductSuitabilityJustification', 'drugProductContainerClosureComplete'] },
   { sectionKey: '3.2.P.8', requiredSourceTypes: ['stability', 'comparability'], requiredFields: ['shelfLifeClaim', 'comparabilityStatus'] },
@@ -729,6 +753,250 @@ function containerClosureSection(
   return { narrative, tables };
 }
 
+/* ── Impurities (§3.2.S.3.2 / §3.2.P.5.5) ──────────────────────────────────────
+ *
+ * Every impurity_profile source for one side, assessed against the ICH
+ * threshold that governs it. The register holds ONE ROW PER IMPURITY, so these
+ * collect across sources: a first-match `valArr(m, 'impurities')` read renders
+ * exactly one impurity out of a register of twelve and silently drops the rest.
+ *
+ * The level is rendered in the unit it was RECORDED in. The previous table
+ * appended a percent sign to whatever number was in the field, so a residual
+ * solvent recorded in ppm printed as a percentage — a twenty-thousand-fold
+ * overstatement in a filing.
+ */
+function impurityRows(
+  sources: CanonicalSource[],
+  side: 'drug_substance' | 'drug_product',
+): Array<Record<string, any>> {
+  return scopedPayloads(sources, 'impurity_profile', side, 'drug_substance')
+    .filter((p) => String(p.impurityName || '').trim());
+}
+
+/** The level as recorded, never re-unitised and never given a unit it lacks. */
+function impurityLevelText(p: Record<string, any>): string {
+  const level = String(p.observedLevel ?? '').trim();
+  if (!level) return '—';
+  const unit = String(p.levelUnit ?? '').trim();
+  return unit ? `${level} ${unit}` : `${level} (unit not recorded)`;
+}
+
+interface ImpurityRendering {
+  tables: GeneratedTable[];
+  narrative: string;
+  /** Impurities at or above the reporting threshold — what the section reports. */
+  reportedCount: number;
+}
+
+function impurityRendering(
+  sources: CanonicalSource[],
+  side: 'drug_substance' | 'drug_product',
+): ImpurityRendering {
+  const rows = impurityRows(sources, side);
+  const material = side === 'drug_product' ? 'drug product' : 'drug substance';
+  const suffix = side === 'drug_product' ? 'Drug Product' : 'Drug Substance';
+  if (rows.length === 0) {
+    return {
+      tables: [],
+      narrative: `No impurity is recorded for the ${material}; the impurity profile is not established by this section. `,
+      reportedCount: 0,
+    };
+  }
+
+  const assessed = rows.map((p) => ({ p, a: assessRecordedImpurity(p, side) }));
+  const reported = assessed.filter((x) => x.a.ok && x.a.disposition !== 'below-reporting');
+  const belowReporting = assessed.filter((x) => x.a.ok && x.a.disposition === 'below-reporting');
+  /* Refusals are carried with their reason: an impurity the product cannot
+     compare to a threshold is stated as such, never dropped and never reported
+     as if it had cleared one. */
+  const unassessable = assessed
+    .map((x) => x.a)
+    .filter((a): a is Extract<ImpurityAssessmentResult, { ok: false }> => !a.ok);
+
+  const tables: GeneratedTable[] = [];
+  tables.push({
+    title: `Impurity Profile — ${suffix}`,
+    headers: ['Impurity', 'Class', 'Origin', 'RRT', 'Method', 'Observed Level', 'Specification Limit', 'ICH Disposition', 'Structure', 'Qualification Basis'],
+    rows: assessed.map(({ p, a }) => [
+      String(p.impurityName),
+      String(p.impurityType || '—'),
+      String(p.origin || '—'),
+      String(p.relativeRetentionTime || '—'),
+      String(p.analyticalMethod || '—'),
+      impurityLevelText(p),
+      String(p.specificationLimit || '—'),
+      a.ok
+        ? a.disposition === 'below-reporting'
+          ? `below the reporting threshold (${a.thresholds.reporting.expression})`
+          : a.disposition === 'reportable'
+            ? `reportable (at or above ${a.thresholds.reporting.expression})`
+            : a.disposition === 'above-identification'
+              ? `at or above the identification threshold (${a.thresholds.identification.expression})`
+              : `at or above the qualification threshold (${a.thresholds.qualification.expression})`
+        : `not assessable — ${(a as { message: string }).message}`,
+      String(p.structure || p.molecularFormula || '—'),
+      String(p.qualificationBasis || '—'),
+    ]),
+  });
+
+  /* The threshold basis, stated ONCE with the dose it is keyed to. A threshold
+     printed without its maximum daily dose is unverifiable, and the doses
+     recorded across a register can disagree — which is a finding, not something
+     to average away. */
+  const doses = Array.from(new Set(rows.map((p) => String(p.maximumDailyDose || '').trim()).filter(Boolean)));
+  const firstOk = assessed.find((x) => x.a.ok);
+  if (firstOk && firstOk.a.ok && doses.length === 1) {
+    tables.push(
+      kvTable(`ICH Threshold Basis — ${suffix}`, {
+        'Maximum Daily Dose': doses[0],
+        'Reporting Threshold': firstOk.a.thresholds.reporting.expression,
+        'Identification Threshold': firstOk.a.thresholds.identification.expression,
+        'Qualification Threshold': firstOk.a.thresholds.qualification.expression,
+        Citation: firstOk.a.citation,
+      }),
+    );
+  }
+
+  const outstanding = assessed.flatMap(({ p, a }) =>
+    a.ok ? a.outstanding.map((o) => `${String(p.impurityName)} is ${o}`) : [],
+  );
+
+  let narrative =
+    `${rows.length} impurity/ies are recorded for the ${material}. ` +
+    (reported.length > 0
+      ? `${reported.length} are at or above the ICH reporting threshold and are reported above. `
+      : `None is at or above the ICH reporting threshold. `) +
+    (belowReporting.length > 0
+      ? `${belowReporting.length} are below the reporting threshold and are not reported as impurities of the ${material}. `
+      : '');
+  if (doses.length === 0) {
+    narrative +=
+      `No maximum daily dose is recorded, so no ICH Q3A/Q3B threshold can be keyed to these levels and their disposition is not established by this section. `;
+  } else if (doses.length > 1) {
+    narrative +=
+      `The recorded maximum daily doses disagree (${doses.join('; ')}), so the applicable thresholds are not established by this section. `;
+  }
+  if (unassessable.length > 0) {
+    narrative +=
+      `${unassessable.length} recorded impurity/ies cannot be compared to a threshold: ` +
+      `${unassessable.map((a) => `${a.impurityName} — ${a.message}`).join('; ')} `;
+  }
+  if (outstanding.length > 0) {
+    narrative += `Outstanding against ICH: ${outstanding.join('; ')}. `;
+  }
+  /* A total is only ever stated over a complete, assessed set. Summing whatever
+     rows happen to be in the register would present a partial file as the
+     product's total impurity content. */
+  narrative +=
+    `A total impurity figure is not stated here; it is a specification test reported with the batch analyses. `;
+
+  return { tables, narrative, reportedCount: reported.length };
+}
+
+/* ── Dissolution (§3.2.P.2 / §3.2.P.5) ─────────────────────────────────────────
+ *
+ * Purpose-scoped. §3.2.P.2 carries the profiles the method was developed and
+ * compared on; §3.2.P.5 carries the profile the release acceptance criterion is
+ * judged against. Both sections previously read the same four generic keys
+ * through first-match helpers, so one record rendered identically into both and
+ * four different records could each supply one row of a table presented as a
+ * single test.
+ */
+function dissolutionProfilesFor(
+  sources: CanonicalSource[],
+  purposes: string[],
+): Array<Record<string, any>> {
+  return sources
+    .filter((s) => s.sourceType === 'dissolution_profile')
+    .map((s) => (s.sourcePayload || {}) as Record<string, any>)
+    .filter((p) => purposes.includes(String(p.purpose || 'development')));
+}
+
+/** One profile's per-timepoint rows, or [] when it holds no usable point. */
+function profilePoints(p: Record<string, any>): Array<Record<string, any>> {
+  const pts = p.dissolutionResults;
+  if (!Array.isArray(pts)) return [];
+  return pts.filter((r) => r && typeof r === 'object');
+}
+
+function dissolutionRendering(
+  sources: CanonicalSource[],
+  purposes: string[],
+  label: string,
+): { tables: GeneratedTable[]; narrative: string } {
+  const profiles = dissolutionProfilesFor(sources, purposes);
+  if (profiles.length === 0) {
+    return {
+      tables: [],
+      narrative: `No ${label} dissolution profile is recorded. `,
+    };
+  }
+  const tables: GeneratedTable[] = [];
+  tables.push({
+    title: `Dissolution Method — ${label}`,
+    headers: ['Batch', 'Strength', 'Apparatus', 'Speed', 'Medium', 'Volume', 'Temperature', 'Units Tested', 'Acceptance Criterion'],
+    rows: profiles.map((p) => [
+      String(p.batchNumber || '—'),
+      String(p.strength || '—'),
+      String(p.apparatus || '—'),
+      String(p.rotationSpeed || '—'),
+      String(p.medium || '—'),
+      String(p.mediumVolume || '—'),
+      String(p.temperature || '—'),
+      p.unitsTested ? String(p.unitsTested) : 'not recorded',
+      String(p.dissolutionSpecification || 'not recorded'),
+    ]),
+  });
+
+  const pointRows: string[][] = [];
+  for (const p of profiles) {
+    for (const pt of profilePoints(p)) {
+      pointRows.push([
+        String(p.batchNumber || p.productName || '—'),
+        String(pt.timepoint ?? pt.timepointMin ?? '—'),
+        pt.meanPercent !== undefined && pt.meanPercent !== null && pt.meanPercent !== '' ? String(pt.meanPercent) : '—',
+        pt.sd !== undefined && pt.sd !== null && pt.sd !== '' ? String(pt.sd) : '—',
+        pt.rsd !== undefined && pt.rsd !== null && pt.rsd !== '' ? String(pt.rsd) : '—',
+        pt.min !== undefined && pt.min !== null && pt.min !== '' ? String(pt.min) : '—',
+        pt.max !== undefined && pt.max !== null && pt.max !== '' ? String(pt.max) : '—',
+        pt.n !== undefined && pt.n !== null && pt.n !== '' ? String(pt.n) : (p.unitsTested ? String(p.unitsTested) : '—'),
+      ]);
+    }
+  }
+  if (pointRows.length > 0) {
+    tables.push({
+      title: `Dissolution Profile — ${label}`,
+      headers: ['Batch', 'Timepoint (min)', 'Mean % Dissolved', 'SD', '%RSD', 'Min', 'Max', 'n'],
+      rows: pointRows,
+    });
+  }
+
+  const withoutUnits = profiles.filter((p) => !p.unitsTested);
+  const withoutSpec = profiles.filter((p) => !String(p.dissolutionSpecification || '').trim());
+  const withoutVariability = profiles.filter((p) =>
+    profilePoints(p).every((pt) => (pt.sd === undefined || pt.sd === '') && (pt.rsd === undefined || pt.rsd === '')),
+  );
+
+  const narrative =
+    `${profiles.length} ${label} dissolution profile(s) are recorded` +
+    (pointRows.length > 0 ? `, reported per timepoint above. ` : `, none of which carries a per-timepoint result. `) +
+    (withoutUnits.length > 0
+      ? `${withoutUnits.length} profile(s) do not record how many units were tested; a mean without its unit count does not support a conformance or a comparison, and none is asserted for them. `
+      : '') +
+    (withoutVariability.length > 0
+      ? `${withoutVariability.length} profile(s) record no standard deviation or %RSD. `
+      : '') +
+    (withoutSpec.length > 0
+      ? `${withoutSpec.length} profile(s) record no acceptance criterion, so conformance is not stated for them. `
+      : '') +
+    /* Similarity is never asserted here. f2 has eligibility conditions this
+       section cannot check from a rendered table, and a similarity claim
+       without them is a regulatorily void number presented as a conclusion. */
+    `Profile similarity (f2) is not asserted in this section; it is computed from the recorded profiles by the dissolution comparison engine, which reports the eligibility conditions it evaluated. `;
+
+  return { tables, narrative };
+}
+
 // ── Section-specific narrative + table generators ──────────────────────────────
 
 type SectionGenerator = (matched: CanonicalSource[]) => { narrative: string; tables: GeneratedTable[] };
@@ -785,28 +1053,21 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const struct = val(m, 'structuralElucidation');
     const phys = val(m, 'physicochemicalProperties');
     const bio = val(m, 'biologicalActivity');
-    const impurities = valArr(m, 'impurities');
-    const qualBasis = val(m, 'qualificationBasis');
     const tables: GeneratedTable[] = [];
     tables.push(kvTable('Characterisation Summary', { 'Structural Elucidation': struct, 'Physicochemical Properties': phys, 'Biological Activity': bio }));
-    if (impurities.length > 0) {
-      tables.push({
-        title: 'Impurity Profile — Drug Substance',
-        headers: ['Impurity', 'Observed Level', 'Specification Limit', 'Identification'],
-        rows: impurities.map((imp: any) => [
-          imp.impurityName || 'Unknown',
-          imp.observedLevel !== undefined ? `${imp.observedLevel}%` : '—',
-          imp.specLimit !== undefined ? `${imp.specLimit}%` : '—',
-          imp.identification || '—',
-        ]),
-      });
-    }
+    /* §3.2.S.3.2 — the impurity register, assessed against the ICH threshold
+       that governs each level. The table this replaced appended a percent sign
+       to whatever number was in the field (so a ppm figure printed as a
+       percentage), read one first-match array out of a register holding one row
+       per impurity, and stated a count of "identified and characterized"
+       impurities over rows that carried neither. */
+    const impurities = impurityRendering(m, 'drug_substance');
+    tables.push(...impurities.tables);
     return {
       narrative: `Structural elucidation of the drug substance was confirmed by ${struct || '[methods not specified]'}. ` +
         (phys ? `Physicochemical properties: ${phys}. ` : '') +
         (bio ? `Biological activity: ${bio}. ` : '') +
-        (impurities.length > 0 ? `${impurities.length} impurity/ies have been identified and characterized. ` : '') +
-        (qualBasis ? `Qualification basis: ${qualBasis}.` : ''),
+        impurities.narrative,
       tables,
     };
   },
@@ -836,8 +1097,6 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
             .join('; ')
         : status;
     const impurityLimits = valObj(m, 'impurityLimits');
-    const impurities = valArr(m, 'impurities');
-    const qualBasis = val(m, 'qualificationBasis');
     const tables: GeneratedTable[] = [];
     if (criteria) {
       tables.push({
@@ -876,18 +1135,13 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
           return [impurity, String(l.identification || '—'), String(l.qualification || '—'), String(l.specLimit || String(limits))];
         }),
       });
-    } else if (impurities.length > 0) {
-      tables.push({
-        title: 'Impurity Limits — Drug Substance',
-        headers: ['Impurity', 'Observed Level', 'Specification Limit', 'Identification'],
-        rows: impurities.map((imp: any) => [
-          imp.impurityName || 'Unknown',
-          imp.observedLevel !== undefined ? `${imp.observedLevel}%` : '—',
-          imp.specLimit !== undefined ? `${imp.specLimit}%` : '—',
-          imp.identification || '—',
-        ]),
-      });
     }
+    /* §3.2.S.4.1's impurity limits, from the register that produces them,
+       assessed against the ICH threshold each level is governed by. The branch
+       this replaced read a first-match array (one impurity out of a register of
+       many) and appended a percent sign to whatever number it found. */
+    const dsImpurities = impurityRendering(m, 'drug_substance');
+    tables.push(...dsImpurities.tables);
     return {
       narrative: `The drug substance specification defines acceptance criteria for quality attributes. ` +
         (statusSummary
@@ -897,9 +1151,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
           : '') +
         (criteria ? `${Object.keys(criteria).length} test(s) are defined in the specification. ` : '') +
         batchAnalysesSentence(m, 'drug_substance') +
-        (impurityLimits ? `Impurity limits are established for ${Object.keys(impurityLimits).length} identified impurity/ies per ICH Q3A. ` :
-          impurities.length > 0 ? `${impurities.length} specified impurity/ies characterized. ` : '') +
-        (qualBasis ? `Qualification basis per ICH Q3A: ${qualBasis}. ` : ''),
+        (impurityLimits ? `Impurity limits are established for ${Object.keys(impurityLimits).length} identified impurity/ies per ICH Q3A. ` : '') +
+        dsImpurities.narrative,
       tables,
     };
   },
@@ -1008,10 +1261,11 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const mfgDev = val(m, 'manufacturingProcessDev');
     const ccStudies = val(m, 'containerClosureStudies');
     const devHistory = val(m, 'developmentHistory');
-    const dissCondition = val(m, 'condition');
-    const dissSpec = val(m, 'specification');
-    const dissResults = valArr(m, 'results');
-    const dissPassFail = val(m, 'passFail');
+    const developmentDissolution = dissolutionRendering(
+      m,
+      DISSOLUTION_DEVELOPMENT_PURPOSES,
+      'development',
+    );
     const tables: GeneratedTable[] = [];
     tables.push(kvTable('Pharmaceutical Development Summary', {
       'Formulation Development': formDev,
@@ -1019,29 +1273,19 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
       'Container Closure Studies': ccStudies,
       ...(devHistory ? { 'Development History': devHistory } : {}),
     }));
-    if (dissCondition || dissResults.length > 0) {
-      const dissRows: string[][] = [];
-      if (dissCondition) dissRows.push(['Test Condition', dissCondition]);
-      if (dissSpec) dissRows.push(['Specification', dissSpec]);
-      for (const r of dissResults) {
-        if (typeof r === 'object' && r !== null) {
-          dissRows.push([r.timepoint || 'N/A', r.result || '—']);
-        }
-      }
-      if (dissPassFail) dissRows.push(['Overall Result', dissPassFail]);
-      tables.push({
-        title: 'Dissolution Profile — Development',
-        headers: ['Parameter', 'Value'],
-        rows: dissRows,
-      });
-    }
+    /* The development and comparability profiles, from the dissolution register.
+       This section and §3.2.P.5 used to read the SAME four generic first-match
+       keys, so a single recorded profile rendered identically into both — the
+       method-development record and the release control presented as the same
+       test. The register stores which one a profile is. */
+    tables.push(...developmentDissolution.tables);
     return {
       narrative: `Pharmaceutical development studies were conducted to support the proposed formulation and manufacturing process. ` +
         (formDev ? `Formulation development: ${formDev}. ` : '') +
         (mfgDev ? `Manufacturing process development: ${mfgDev}. ` : '') +
         (ccStudies ? `Container closure studies: ${ccStudies}. ` : '') +
         (devHistory ? `Development history: ${devHistory}. ` : '') +
-        (dissCondition ? `Dissolution testing performed under: ${dissCondition}` + (dissPassFail ? ` — ${dissPassFail}` : '') + `. ` : ''),
+        developmentDissolution.narrative,
       tables,
     };
   },
@@ -1200,14 +1444,6 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const shelfLifeTests = valArr(m, 'shelfLifeTests');
     const dissolutionSpec = valObj(m, 'dissolutionSpecification');
     const impurityLimits = valObj(m, 'impurityLimits');
-    // Fields from dissolution_profile source type
-    const dissCondition = val(m, 'condition');
-    const dissSpecStr = val(m, 'specification');
-    const dissResults = valArr(m, 'results');
-    const dissPassFail = val(m, 'passFail');
-    // Fields from impurity_profile source type
-    const impurities = valArr(m, 'impurities');
-    const qualBasis = val(m, 'qualificationBasis');
     const tables: GeneratedTable[] = [];
     // Release/shelf-life specification matrix
     if (releaseTests.length > 0 || shelfLifeTests.length > 0) {
@@ -1253,30 +1489,22 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     // §3.2.P.5.4 — the recorded finished-product results themselves.
     const dpBatchTable = batchAnalysesTable(m, 'drug_product');
     if (dpBatchTable) tables.push(dpBatchTable);
-    // Dissolution specification (from dissolutionSpecification object or dissolution_profile source)
+    /* A canonical caller may pass a `dissolutionSpecification` object. The
+       product's own producer is the dissolution register, rendered here scoped
+       to the RELEASE profiles: this section is the acceptance criterion, and
+       the development profiles belong to §3.2.P.2. Both sections used to read
+       the same four first-match keys, so one record rendered identically into
+       both and four different records could each supply one row of a table
+       presented as one test. */
     if (dissolutionSpec) {
       tables.push({
         title: 'Dissolution Specification',
         headers: ['Parameter', 'Value'],
         rows: Object.entries(dissolutionSpec).map(([k, v]) => [k, String(v)]),
       });
-    } else if (dissCondition || dissResults.length > 0) {
-      const dissRows: string[][] = [];
-      if (dissCondition) dissRows.push(['Test Condition', dissCondition]);
-      if (dissSpecStr) dissRows.push(['Specification', dissSpecStr]);
-      for (const r of dissResults) {
-        if (typeof r === 'object' && r !== null) {
-          dissRows.push([r.timepoint || 'N/A', r.result || '—']);
-        }
-      }
-      if (dissPassFail) dissRows.push(['Pass/Fail', dissPassFail]);
-      tables.push({
-        title: 'Dissolution Profile',
-        headers: ['Parameter', 'Value'],
-        rows: dissRows,
-      });
     }
-    // Impurity limits (from impurityLimits object or impurity_profile source)
+    const releaseDissolution = dissolutionRendering(m, [DISSOLUTION_RELEASE_PURPOSE], 'release specification');
+    tables.push(...releaseDissolution.tables);
     if (impurityLimits) {
       tables.push({
         title: 'Impurity Limits — Drug Product',
@@ -1286,18 +1514,10 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
           return [impurity, String(l.identification || '—'), String(l.qualification || '—'), String(l.specLimit || String(limits))];
         }),
       });
-    } else if (impurities.length > 0) {
-      tables.push({
-        title: 'Impurity Profile — Drug Product',
-        headers: ['Impurity', 'Observed Level', 'Specification Limit', 'Identification'],
-        rows: impurities.map((imp: any) => [
-          imp.impurityName || 'Unknown',
-          imp.observedLevel !== undefined ? `${imp.observedLevel}%` : '—',
-          imp.specLimit !== undefined ? `${imp.specLimit}%` : '—',
-          imp.identification || '—',
-        ]),
-      });
     }
+    // §3.2.P.5.5 — the drug-product impurities, assessed against ICH Q3B.
+    const dpImpurities = impurityRendering(m, 'drug_product');
+    tables.push(...dpImpurities.tables);
     return {
       narrative: `The drug product specification defines release and shelf-life acceptance criteria. ` +
         (method
@@ -1309,8 +1529,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         (criteria ? `Release criteria: ${criteria}. ` : '') +
         (shelfCriteria ? `Shelf-life criteria: ${shelfCriteria}. ` : '') +
         batchAnalysesSentence(m, 'drug_product') +
-        (dissolutionSpec || dissCondition ? `Dissolution specifications are established per ICH Q6A. ` : '') +
-        (impurities.length > 0 ? `${impurities.length} specified impurity/ies characterized` + (qualBasis ? ` (${qualBasis})` : '') + `. ` : '') +
+        (dissolutionSpec ? `Dissolution specifications are established per ICH Q6A. ` : '') +
+        releaseDissolution.narrative +
+        dpImpurities.narrative +
         (status ? `Validation status: ${status}.` : ''),
       tables,
     };

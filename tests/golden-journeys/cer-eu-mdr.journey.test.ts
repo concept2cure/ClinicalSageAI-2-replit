@@ -51,6 +51,7 @@ import {
   makeRequestDbClient,
   JourneyRecorder,
   type JourneyDb,
+  assertNoSchemaGaps,
 } from './harness';
 
 const T = 180_000;
@@ -162,6 +163,8 @@ beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: `${baseline}\n${literature}`,
     migrations: [
+      // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
+      'db/migrations/20260813_audit_tamper_proof_log.sql',
       'migrations/20260527_mutation_primitives.sql',
       'migrations/20260609_audit_hmac_seal.sql',
       'migrations/20260524_program_workbench_schema.sql',
@@ -221,7 +224,7 @@ beforeAll(async () => {
       r.userRole = role;
       r.tenantId = orgId;
       r.tenantContext = { organizationId: orgId };
-      r.dbClient = makeRequestDbClient(jdb.pglite);
+      r.dbClient = makeRequestDbClient(jdb.pglite, jdb.schemaGaps);
     }
     next();
   });
@@ -233,6 +236,9 @@ beforeAll(async () => {
 }, T);
 
 afterAll(async () => {
+  // A journey that ran against a database missing a table its subject writes
+  // to proves less than it claims (ledger L145).
+  assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('cer-eu-mdr');
   // eslint-disable-next-line no-console
   console.info(`[journey] manifest: ${jsonPath}\n[journey] report:   ${mdPath}`);

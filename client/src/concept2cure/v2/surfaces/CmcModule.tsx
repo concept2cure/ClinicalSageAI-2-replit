@@ -34,6 +34,8 @@ import {
   CmQcTesting,
   CmContainerClosures,
   CmReferenceStandards,
+  CmImpurityProfiles,
+  CmDissolutionProfiles,
   CmChangeRegister,
   CmComparabilityStudies,
   CmProcessValidation,
@@ -843,6 +845,12 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
       <CmMethodLibrary />
       <CmQcTesting />
       <CmReferenceStandards />
+      {/* The impurity file and the dissolution profile are both specification
+          content: §3.2.S.3.2 / §3.2.P.5.5 set the impurity limits a release
+          test is judged against, and §3.2.P.5 carries the dissolution
+          criterion. */}
+      <CmImpurityProfiles />
+      <CmDissolutionProfiles />
       {edit && <C2CForm config={FORM(edit === 'new' ? null : edit)} onCancel={() => setEdit(null)} onSubmit={save} />}
       {sign && <C2CForm config={signForm(sign.attr + ' -- ' + sign.material)} onCancel={() => setSign(null)} onSubmit={doSign} />}
       <C2CToast msg={toast} />

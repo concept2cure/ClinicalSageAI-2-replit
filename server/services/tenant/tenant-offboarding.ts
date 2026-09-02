@@ -476,4 +476,9 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      residue for the coverage ratchet to baseline. */
   'cmc_container_closures',
   'cmc_reference_standards',
+  /* The impurity and dissolution registers, for the same reason: an impurity
+     profile with its qualification basis and a dissolution profile with its
+     per-unit results are the tenant's data. Leaves, like the two above. */
+  'cmc_impurity_profiles',
+  'cmc_dissolution_profiles',
 ]);

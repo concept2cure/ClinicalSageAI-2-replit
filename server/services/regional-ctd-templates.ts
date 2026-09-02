@@ -28,6 +28,13 @@ export interface CTDSection {
   title: string;
   titleLocal?: string; // In local language (JP/CN)
   required: boolean;
+  /**
+   * Application types (lower-case registry applicationType: ind | nda | bla |
+   * anda) for which `required` applies. Absent = every application type. A
+   * debarment certification is required for a marketing application and not
+   * for an IND; the general investigational plan is the reverse.
+   */
+  requiredFor?: string[];
   description: string;
   template?: string;
   childSections?: CTDSection[];
@@ -65,36 +72,63 @@ export const FDA_TEMPLATE: RegionalTemplate = {
     'User fee (PDUFA) payment required',
     'English language required',
   ],
+  // FDA eCTD Module 1 Specification v2.3 headings — the same list the packager
+  // derives its us-regional.xml elements from (controlled-vocab/cv-v4-data.ts).
+  // Drives the dispatch-readiness required-section check for every FDA
+  // sequence, so an IND is asked for its plan and brochure, a marketing
+  // application for its debarment certification and draft labeling. Held to the
+  // FDA list by tests/regulatory/fda-module1-numbering.test.ts.
   module1Sections: [
-    { number: '1.1', title: 'Comprehensive Table of Contents', required: true, description: 'Auto-generated listing of all documents in the submission' },
+    { number: '1.1', title: 'Forms', required: true, description: 'FDA forms filed under the forms heading: 1571 (IND), 356h (NDA/BLA/ANDA), 3674 (ClinicalTrials.gov certification), 3397 (user fee cover sheet), 2253' },
     { number: '1.2', title: 'Cover Letter', required: true, description: 'Submission cover letter addressed to the appropriate FDA review division' },
     {
-      number: '1.3', title: 'Administrative Information', required: true, description: 'Forms, contact information, certifications',
+      number: '1.3', title: 'Administrative Information', required: true, description: 'Certifications, disclosures, patent and contact changes',
       childSections: [
-        { number: '1.3.1', title: 'Contact/Sponsor Information', required: true, description: 'Sponsor name, address, contact details' },
+        { number: '1.3.1', title: 'Contact/Sponsor/Applicant Information', required: false, description: 'Changes of address, contact agent, sponsor or ownership; transfer of obligation (1.3.1.1–1.3.1.5). Initial contact details travel on Form 1571 / 356h.' },
         { number: '1.3.2', title: 'Field Copy Certification', required: false, description: 'Certification for field copy submissions' },
-        { number: '1.3.3', title: 'Debarment Certification', required: true, description: 'Certification under 21 USC 335a' },
-        { number: '1.3.4', title: 'Financial Certification/Disclosure', required: true, description: 'Financial information for clinical investigators (21 CFR 54)' },
-        { number: '1.3.5', title: 'Patent and Exclusivity', required: false, description: 'Patent information and exclusivity claims' },
+        { number: '1.3.3', title: 'Debarment Certification', required: true, requiredFor: ['nda', 'bla', 'anda'], description: 'Certification under 21 USC 335a — marketing applications' },
+        { number: '1.3.4', title: 'Financial Certification and Disclosure', required: true, requiredFor: ['nda', 'bla', 'anda'], description: 'Forms FDA 3454/3455 for clinical investigators (21 CFR 54)' },
+        { number: '1.3.5', title: 'Patent and Exclusivity Information', required: false, description: '1.3.5.1 patent information, 1.3.5.2 patent certification, 1.3.5.3 exclusivity claim' },
       ],
     },
     {
-      number: '1.4', title: 'References', required: false, description: 'Letters of authorization, right of reference',
+      number: '1.4', title: 'References', required: false, description: 'Letters of authorization, right of reference, cross-references',
       childSections: [
-        { number: '1.4.1', title: 'Letters of Authorization', required: false, description: 'Right of reference letters' },
+        { number: '1.4.1', title: 'Letters of Authorization', required: false, description: 'Authorization to reference a DMF or another application' },
         { number: '1.4.2', title: 'Statement of Right of Reference', required: false, description: 'Statement allowing FDA to access referenced data' },
+        { number: '1.4.3', title: 'List of Authorized Persons to Incorporate by Reference', required: false, description: 'Persons authorized to incorporate the file by reference' },
+        { number: '1.4.4', title: 'Cross Reference to Previously Submitted Information', required: false, description: 'Cross-reference to information in another application' },
       ],
     },
-    { number: '1.5', title: 'Application Status', required: false, description: 'Withdrawal or inactivation notifications' },
+    { number: '1.5', title: 'Application Status', required: false, description: 'Withdrawal, inactivation, reactivation and reinstatement requests' },
+    { number: '1.6', title: 'Meetings', required: false, description: 'Meeting requests, background materials and correspondence regarding meetings' },
+    { number: '1.9', title: 'Pediatric Administrative Information', required: false, description: 'Waiver, deferral and pediatric study plan requests and correspondence' },
     {
-      number: '1.14', title: 'Labeling', required: true, description: 'US Prescribing Information (USPI)',
+      number: '1.12', title: 'Other Correspondence', required: false, description: 'Pre-IND correspondence, requests and waivers, environmental analysis',
       childSections: [
-        { number: '1.14.1', title: 'Draft Labeling', required: true, description: 'Proposed US Prescribing Information' },
-        { number: '1.14.2', title: 'Patient Package Insert', required: false, description: 'Patient-facing labeling' },
-        { number: '1.14.3', title: 'Medication Guide', required: false, description: 'REMS medication guide if applicable' },
+        { number: '1.12.1', title: 'Pre-IND Correspondence', required: false, description: 'Pre-IND meeting materials carried into the application' },
+        { number: '1.12.14', title: 'Environmental Analysis', required: true, requiredFor: ['ind', 'nda', 'bla', 'anda'], description: 'Environmental assessment or claim of categorical exclusion (21 CFR 25.31)' },
       ],
     },
-    { number: '1.15', title: 'Clinical Trial Information', required: true, description: 'ClinicalTrials.gov compliance certification (Form 3674)' },
+    { number: '1.13', title: 'Annual Report', required: false, description: 'IND (21 CFR 312.33) and NDA/BLA (21 CFR 314.81) annual reports, DSUR' },
+    {
+      number: '1.14', title: 'Labeling', required: true, description: 'Draft, final, listed-drug and investigational labeling',
+      childSections: [
+        { number: '1.14.1', title: 'Draft Labeling', required: true, requiredFor: ['nda', 'bla', 'anda'], description: 'Draft carton and container labels, annotated and clean draft labeling text (Prescribing Information, Medication Guide, PPI)' },
+        { number: '1.14.2', title: 'Final Labeling', required: false, description: 'Final carton/container labels, final package insert, final labeling text' },
+        { number: '1.14.3', title: 'Listed Drug Labeling', required: false, description: 'ANDA / 505(b)(2) annotated comparison with the reference listed drug' },
+        {
+          number: '1.14.4', title: 'Investigational Drug Labeling', required: true, requiredFor: ['ind'], description: "Investigator's brochure and investigational drug labeling for an IND",
+          childSections: [
+            { number: '1.14.4.1', title: "Investigator's Brochure", required: true, requiredFor: ['ind'], description: '21 CFR 312.23(a)(5)' },
+            { number: '1.14.4.2', title: 'Investigational Drug Labeling', required: true, requiredFor: ['ind'], description: '21 CFR 312.6; 312.23(a)(7)(iv)(d)' },
+          ],
+        },
+      ],
+    },
+    { number: '1.15', title: 'Promotional Material', required: false, description: 'Promotional labeling and advertising submissions (Form 2253 travels under 1.1)' },
+    { number: '1.16', title: 'Risk Management Plan / REMS', required: false, description: 'Risk management (non-REMS) and REMS documents' },
+    { number: '1.20', title: 'General Investigational Plan for Initial IND', required: true, requiredFor: ['ind'], description: 'Introductory statement and general investigational plan (21 CFR 312.23(a)(3))' },
   ],
 };
 

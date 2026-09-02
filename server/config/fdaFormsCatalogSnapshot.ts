@@ -62,8 +62,8 @@ export const FDA_FORMS_CANDIDATE_SNAPSHOT: FdaFormCandidate[] = [
   { formId: 'FDA_3455', formNumber: '3455', title: 'Disclosure: Financial Interests and Arrangements of Clinical Investigators', sourceUrl: FDA_FORMS_CATALOG_URL, verified: false },
   { formId: 'FDA_356H', formNumber: '356h', title: 'Application to Market a New or Abbreviated New Drug or Biologic for Human Use', sourceUrl: FDA_FORMS_CATALOG_URL, verified: false },
   { formId: 'FDA_3674', formNumber: '3674', title: 'Certification of Compliance, under 42 U.S.C. § 282(j)(5)(B) (ClinicalTrials.gov)', sourceUrl: FDA_FORMS_CATALOG_URL, verified: false },
-  { formId: 'FDA_2891', formNumber: '2891', title: 'Truthful and Accurate Statement', sourceUrl: FDA_FORMS_CATALOG_URL, verified: false },
-  { formId: 'FDA_3654', formNumber: '3654', title: 'Certification/Disclosure Statement', sourceUrl: FDA_FORMS_CATALOG_URL, verified: false },
+  { formId: 'FDA_2891', formNumber: '2891', title: 'Truthful and Accuracy Statement (21 CFR 807.87(k)) — not FDA form 2891, which is the device establishment registration', sourceUrl: FDA_FORMS_CATALOG_URL, verified: false },
+  { formId: 'FDA_3654', formNumber: '3654', title: 'Standards Data Report for 510(k)s', sourceUrl: FDA_FORMS_CATALOG_URL, verified: false },
 
   // ── Device: 510(k) / PMA / De Novo / special ──
   { formId: 'FDA_3514', formNumber: '3514', title: 'CDRH Premarket Notification 510(k) Cover Sheet', sourceUrl: FDA_FORMS_CATALOG_URL, verified: false },

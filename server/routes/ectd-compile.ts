@@ -41,6 +41,11 @@ import { Router, Request, Response } from 'express';
 import { pool } from '../db';
 import { resolveSubmissionSpine, type SubmissionSpine } from '../services/cmc/submission-spine';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
+import {
+  resolveRequiredSections,
+  type RequiredSectionSet,
+  type RequiredSectionProvenance,
+} from '../services/ectd/required-sections';
 
 const router = Router();
 
@@ -169,6 +174,8 @@ interface CompileAnchor {
   productName: string | null;
   /** Program type (ind/cta/nda/…) — maps to submissions.application_type. */
   programType: string | null;
+  /** Program primary agency ('FDA', 'EMA', …) — selects the rule pack. */
+  primaryAgency: string | null;
   /** Stable human label used in compilation names + the history filter. */
   label: string;
 }
@@ -191,13 +198,14 @@ async function resolveCompileAnchor(ident: string, orgId: number): Promise<Compi
       title: null,
       productName: null,
       programType: null,
+      primaryAgency: null,
       label: `Project ${numeric}`,
     };
   }
   const byUuid = UUID_RE.test(ident);
   try {
     const result = await pool.query(
-      `SELECT id, code, name, product_name, program_type FROM regulatory_programs
+      `SELECT id, code, name, product_name, program_type, primary_agency FROM regulatory_programs
         WHERE ${byUuid ? 'id = $1' : 'code = $1'} AND organization_id = $2 AND deleted_at IS NULL
         LIMIT 1`,
       [ident, orgId],
@@ -211,6 +219,7 @@ async function resolveCompileAnchor(ident: string, orgId: number): Promise<Compi
         title: row.name != null ? String(row.name) : null,
         productName: row.product_name != null ? String(row.product_name) : null,
         programType: row.program_type != null ? String(row.program_type) : null,
+        primaryAgency: row.primary_agency != null ? String(row.primary_agency) : null,
         label: `Program ${row.code ?? row.id}`,
       };
     }
@@ -326,6 +335,9 @@ interface CompilationResult {
   submissionReady: boolean;
   /** Why not, in the caller's words. Empty exactly when submissionReady. */
   submissionBlockers: string[];
+  /** Where the required-section set came from: the program's live rule pack,
+   *  or the labelled ICH baseline when no pack applies (with the reason). */
+  requiredSectionSource: RequiredSectionProvenance;
   /** The governed submission this spine-backed compile ran against — the
    *  handle POST /api/ectd/export/:submissionId needs to hand the caller the
    *  actual package bytes. Absent on draft-backbone compiles, which assemble
@@ -369,31 +381,9 @@ interface ValidationResult {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ICH eCTD 4.0 MODULE DEFINITIONS
+// REQUIRED SECTIONS — resolved per program from its live rule pack
+// (services/ectd/required-sections); the labelled ICH baseline when none applies.
 // ═══════════════════════════════════════════════════════════════════════════════
-
-const ECTD_MODULE_DEFS: Record<string, { name: string; requiredSections: string[] }> = {
-  m1: {
-    name: 'Administrative Information',
-    requiredSections: ['1.1', '1.2', '1.3.1', '1.3.3', '1.3.4', '1.14.4.2', '1.20'],
-  },
-  m2: {
-    name: 'CTD Summaries',
-    requiredSections: ['2.2', '2.3', '2.4', '2.5', '2.6.2', '2.6.4', '2.6.6', '2.7.1'],
-  },
-  m3: {
-    name: 'Quality (CMC)',
-    requiredSections: ['3.2.S', '3.2.P', '3.2.R'],
-  },
-  m4: {
-    name: 'Nonclinical Study Reports',
-    requiredSections: ['4.2.1', '4.2.2', '4.2.3'],
-  },
-  m5: {
-    name: 'Clinical Study Reports',
-    requiredSections: ['5.2', '5.3.5.1'],
-  },
-};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /:projectIdent/compile — Full eCTD compilation
@@ -408,6 +398,10 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
 
   try {
     const { modules: targetModules, submissionType = 'initial', region = 'FDA' } = req.body;
+    const required = await resolveRequiredSections(pool, {
+      programType: anchor.programType,
+      primaryAgency: anchor.primaryAgency,
+    });
     const moduleFilter = Array.isArray(targetModules)
       ? new Set(targetModules.map((m: string) => String(m).toLowerCase()))
       : null;
@@ -424,6 +418,7 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
         spine,
         submissionType: String(submissionType),
         moduleFilter,
+        required,
       });
     }
 
@@ -450,13 +445,14 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
     );
 
     // 2. Run pre-compile validation
-    const validationResults = withAnchorFindings(runPreCompileValidation(sections, region), anchor);
+    const validationResults = withAnchorFindings(runPreCompileValidation(sections, region, required), anchor);
     const hasBlockingErrors = validationResults.some(v => v.severity === 'error');
 
     // 3. Build module compilation status
-    const moduleStatuses: ModuleCompilationStatus[] = Object.entries(ECTD_MODULE_DEFS)
-      .filter(([code]) => !moduleFilter || moduleFilter.has(code))
-      .map(([code, def]) => {
+    const moduleStatuses: ModuleCompilationStatus[] = required.modules
+      .filter((def) => !moduleFilter || moduleFilter.has(def.code))
+      .map((def) => {
+        const code = def.code;
         const moduleSections = sections.filter(
           s => s.section_code?.startsWith(code.replace('m', '')) || s.module?.toLowerCase() === code
         );
@@ -563,6 +559,7 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
       contentValidationPassed: errors.length === 0,
       submissionReady: blockers.length === 0,
       submissionBlockers: blockers,
+      requiredSectionSource: required.provenance,
       // The draft path renders nothing to disk — 0 is the honest count. The
       // spine-backed path reports the leaves it actually materialized.
       leafFilesRendered: 0,
@@ -632,11 +629,11 @@ interface SpineLeafRow {
  */
 function leafPlacementFindings(
   leaves: SpineLeafRow[],
-  opts: { initialSequence: boolean; isMaterialized?: (l: SpineLeafRow) => boolean },
+  opts: { initialSequence: boolean; required: RequiredSectionSet; isMaterialized?: (l: SpineLeafRow) => boolean },
 ): ValidationResult[] {
   const results: ValidationResult[] = [];
   const missingSeverity: ValidationResult['severity'] = opts.initialSequence ? 'error' : 'warning';
-  const allRequired = Object.values(ECTD_MODULE_DEFS).flatMap((m) => m.requiredSections);
+  const allRequired = opts.required.modules.flatMap((m) => m.requiredSections);
 
   for (const reqCode of allRequired) {
     const found = leaves.find((l) => sectionMatches(l.section_code, reqCode));
@@ -695,10 +692,12 @@ function moduleStatusesFromLeaves(
   leaves: SpineLeafRow[],
   isMaterialized: (l: SpineLeafRow) => boolean,
   moduleFilter: Set<string> | null,
+  required: RequiredSectionSet,
 ): ModuleCompilationStatus[] {
-  return Object.entries(ECTD_MODULE_DEFS)
-    .filter(([code]) => !moduleFilter || moduleFilter.has(code))
-    .map(([code, def]) => {
+  return required.modules
+    .filter((def) => !moduleFilter || moduleFilter.has(def.code))
+    .map((def) => {
+      const code = def.code;
       const digit = code.replace('m', '');
       const moduleLeaves = leaves.filter((l) => sectionMatches(l.section_code, digit));
       const completedRequired = def.requiredSections.filter((rs) =>
@@ -747,9 +746,10 @@ async function compileFromSpine(
     spine: SubmissionSpine;
     submissionType: string;
     moduleFilter: Set<string> | null;
+    required: RequiredSectionSet;
   },
 ): Promise<void> {
-  const { orgId, anchor, ident, spine, submissionType, moduleFilter } = args;
+  const { orgId, anchor, ident, spine, submissionType, moduleFilter, required } = args;
   const seq = spine.sequence!;
   const startedAt = new Date().toISOString();
 
@@ -817,7 +817,7 @@ async function compileFromSpine(
     !unresolvedKeys.has(`${l.document_table ?? ''}:${l.document_id ?? ''}`);
 
   const initialSequence = seq.sequenceNumber === '0000';
-  const validationResults = leafPlacementFindings(leaves, { initialSequence, isMaterialized });
+  const validationResults = leafPlacementFindings(leaves, { initialSequence, required, isMaterialized });
   if (assembleFailure != null) {
     validationResults.unshift({
       rule: 'ASSEMBLY_REFUSED',
@@ -831,7 +831,7 @@ async function compileFromSpine(
   // separation the draft path pins ("the backbone DID compile"): findings and
   // blockers answer submittability, `failed` means the assembly itself refused.
   const compileStatus: CompilationResult['status'] = assembleFailure != null ? 'failed' : 'completed';
-  const moduleStatuses = moduleStatusesFromLeaves(leaves, isMaterialized, moduleFilter);
+  const moduleStatuses = moduleStatusesFromLeaves(leaves, isMaterialized, moduleFilter, required);
 
   // Blockers computed from the REAL assembly outcome.
   const blockers: string[] = [];
@@ -905,6 +905,7 @@ async function compileFromSpine(
     contentValidationPassed: errors.length === 0,
     submissionReady: blockers.length === 0,
     submissionBlockers: blockers,
+    requiredSectionSource: required.provenance,
     leafFilesRendered: materialized,
     submissionId: spine.submissionId,
     sequenceNumber: seq.sequenceNumber,
@@ -942,8 +943,13 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
       { orderBy: 'section_code', swallow: true },
     );
 
-    // Module-level readiness
-    const moduleReadiness = Object.entries(ECTD_MODULE_DEFS).map(([code, def]) => {
+    // Module-level readiness, against the program's own required set.
+    const required = await resolveRequiredSections(pool, {
+      programType: anchor.programType,
+      primaryAgency: anchor.primaryAgency,
+    });
+    const moduleReadiness = required.modules.map((def) => {
+      const code = def.code;
       const moduleSections = sections.filter(
         s => s.section_code?.startsWith(code.replace('m', '')) || s.module?.toLowerCase() === code
       );
@@ -993,6 +999,7 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
         ? submissionBlockers([], anchor, spine)
         : ['Required sections are not all complete.', ...submissionBlockers([], anchor, spine)],
       modules: moduleReadiness,
+      requiredSectionSource: required.provenance,
       totalSections: sections.length,
       totalRequired,
       totalCompleted,
@@ -1069,6 +1076,10 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
 
   try {
     const { region = 'FDA' } = req.body;
+    const required = await resolveRequiredSections(pool, {
+      programType: anchor.programType,
+      primaryAgency: anchor.primaryAgency,
+    });
 
     // Spine-backed programs validate against their PLACED LEAVES — the store
     // the canonical compile actually assembles — not the (empty) legacy section
@@ -1094,6 +1105,7 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
         },
         ...leafPlacementFindings(leafRes.rows as SpineLeafRow[], {
           initialSequence: spine.sequence.sequenceNumber === '0000',
+          required,
         }),
       ];
     } else {
@@ -1103,7 +1115,7 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
         `section_code, title, status, content, word_count, module, required`,
         { swallow: true },
       );
-      results = withAnchorFindings(runPreCompileValidation(sections, region), anchor);
+      results = withAnchorFindings(runPreCompileValidation(sections, region, required), anchor);
     }
     const passCount = results.filter(r => r.severity === 'info').length;
     const warnCount = results.filter(r => r.severity === 'warning').length;
@@ -1114,6 +1126,7 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
       projectIdent: ident,
       programId: anchor.programId,
       valid: errorCount === 0,
+      requiredSectionSource: required.provenance,
       results,
       summary: { pass: passCount, warnings: warnCount, errors: errorCount },
     });
@@ -1127,11 +1140,15 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function runPreCompileValidation(sections: any[], region: string): ValidationResult[] {
+function runPreCompileValidation(
+  sections: any[],
+  region: string,
+  required: RequiredSectionSet,
+): ValidationResult[] {
   const results: ValidationResult[] = [];
 
   // 1. Check for required sections
-  const allRequired = Object.values(ECTD_MODULE_DEFS).flatMap(m => m.requiredSections);
+  const allRequired = required.modules.flatMap((m) => m.requiredSections);
   for (const reqCode of allRequired) {
     const found = sections.find(s => s.section_code?.startsWith(reqCode));
     if (!found) {
@@ -1183,7 +1200,7 @@ function runPreCompileValidation(sections: any[], region: string): ValidationRes
       results.push({
         rule: 'FDA_FORMS_MISSING',
         severity: 'error',
-        message: 'FDA Forms (1571, 1572, 3674) are required for IND submission',
+        message: 'FDA forms (1571/1572 for an IND, 356h for a marketing application, 3674) are required under Module 1.1',
         sectionCode: '1.1',
         fix: 'Upload completed FDA forms to Module 1.1',
       });

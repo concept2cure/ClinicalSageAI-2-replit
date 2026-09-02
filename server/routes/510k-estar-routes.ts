@@ -33,6 +33,7 @@ import {
 import {
   loadDeviceContentLeaves,
   loadAuthoredDeviceSections,
+  resolveDeviceContentScope,
   sectionsToEditorJson,
 } from '../services/pathway-engines/estar/estar-content-leaves';
 import { and, eq } from 'drizzle-orm';
@@ -331,10 +332,19 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
   }
 
   if (content === undefined && useProjectContent) {
-    const sections = await loadAuthoredDeviceSections(getOrganizationId(req), { documentId });
+    // A program anchor reads ITS governed document (the rows the editor saves
+    // into) when that document holds authored content; otherwise the legacy
+    // store answers as before, and the response says which (ESTAR-01/02).
+    const orgId = getOrganizationId(req);
+    const { scope, source } = await resolveDeviceContentScope(orgId, {
+      programId: documentId === undefined ? (anchor.programUuid ?? undefined) : undefined,
+      documentId,
+    });
+    const sections = await loadAuthoredDeviceSections(orgId, scope);
     if (sections.length === 0) {
       return res.status(422).json({
         error: 'NO_AUTHORED_CONTENT',
+        deviceContentSource: source,
         message:
           'No authored 510(k) sections found for this organization' +
           (documentId ? ` (document ${documentId})` : '') +
@@ -370,7 +380,7 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
   try {
     const pdf = await renderPdfBuffersFor510k(content, stylePacks['510k_v1']);
     const zipBuffer = await buildZipBuffer(pdf, attachments);
-    const filename = `${sanitizeFilename(meta.id)}_eSTAR.zip`;
+    const filename = `${sanitizeFilename(meta.id)}_content-package-draft.zip`;
 
     // E1 — ADVISORY market-formatting check. The FDA eSTAR spec (us-estar) already
     // encodes CDRH's file-naming / format / size / no-encryption rules; run the
@@ -405,11 +415,13 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
 
     // This route produces a ZIP of rendered section PDFs, NOT the official FDA
     // eSTAR interactive PDF that CDRH ingests. `officialEstarPdf: false` keeps
-    // that honest so no downstream surface presents this as a submittable eSTAR.
+    // that honest so no downstream surface presents this as a submittable eSTAR,
+    // and the package label and file name say what it is rather than borrowing
+    // the name of the FDA-issued dynamic PDF this is not (ESTAR-06).
     const exportMetadata = {
       format: 'zip',
       attachmentCount: attachments.length,
-      package: 'eSTAR',
+      package: 'content package draft (not an eSTAR)',
       officialEstarPdf: false,
       programId: anchor.programUuid ?? undefined,
       formattingErrors: (formattingReport as { errors?: number } | undefined)?.errors ?? 0,
@@ -484,7 +496,7 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
     logger.error('governed export failure', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({
       error: 'GOVERNED_EXPORT_FAILED',
-      message: error.message || 'Governed eSTAR export failed before consequence persistence',
+      message: error.message || 'Governed content package draft (not an eSTAR) export failed before consequence persistence',
     });
   }
 });
@@ -753,8 +765,10 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
 const assembleSchema = z.object({
   pathway: z.enum(['510k', 'de_novo']).default('510k'),
   variant: z.enum(ESTAR_VARIANTS).default('device'),
-  /** Narrow the authored-content load to one document's sections. */
+  /** Narrow the authored-content load to one LEGACY document's sections. */
   documentId: z.coerce.number().int().positive().optional(),
+  /** Read the GOVERNED device document of this regulatory program instead. */
+  programId: z.string().uuid().optional(),
   /** Target market for the readiness overlay (optional). */
   market: z.string().min(1).optional(),
 });
@@ -776,12 +790,13 @@ router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEnt
   if (!validation.success) {
     return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
   }
-  const { pathway, variant, documentId, market } = validation.data;
+  const { pathway, variant, documentId, programId, market } = validation.data;
 
   try {
     const orgId = getOrganizationId(req);
+    const { scope, source } = await resolveDeviceContentScope(orgId, { programId, documentId });
     const [leaves, vendored] = await Promise.all([
-      loadDeviceContentLeaves(orgId, { documentId }),
+      loadDeviceContentLeaves(orgId, scope),
       listVendoredTemplates(),
     ]);
 
@@ -796,6 +811,7 @@ router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEnt
 
     return res.status(200).json({
       ...result,
+      deviceContentSource: source,
       validationReport: {
         // Every blocker prevents a submittable official eSTAR — errors, not advice.
         errors: result.blockers,
@@ -1056,6 +1072,8 @@ const filingReadinessSchema = z.object({
   // list. `documentId` narrows to one document's sections; omit for org-wide.
   useProjectContent: z.boolean().optional(),
   documentId: z.coerce.number().int().positive().optional(),
+  /** With useProjectContent: read the GOVERNED device document of this program. */
+  programId: z.string().uuid().optional(),
   qSubType: z
     .enum([
       'pre_submission',
@@ -1083,7 +1101,7 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
   if (!validation.success) {
     return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
   }
-  const { catalogKey, variant, leaves, qSubType, useProjectContent, documentId } = validation.data;
+  const { catalogKey, variant, leaves, qSubType, useProjectContent, documentId, programId } = validation.data;
 
   const entry = getCatalogEntry(catalogKey as EstarCatalogKey);
   if (!entry) {
@@ -1107,10 +1125,11 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
     // Content: explicit body leaves, plus the org's REAL authored device content
     // when requested — so readiness reflects what's actually written, not a
     // hand-fed list. Content-bearing sections only (a gap is never invented).
-    const contentLeaves =
+    const content =
       useProjectContent && organizationId
-        ? await loadDeviceContentLeaves(organizationId, documentId !== undefined ? { documentId } : {})
-        : [];
+        ? await resolveDeviceContentScope(organizationId, { programId, documentId })
+        : null;
+    const contentLeaves = content ? await loadDeviceContentLeaves(organizationId!, content.scope) : [];
     const effectiveLeaves = [...(leaves as FilingLeaf[]), ...contentLeaves];
 
     // Resolve official-template producibility from the single source of truth. The
@@ -1134,7 +1153,10 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
     if (!result) {
       return res.status(400).json({ error: 'UNKNOWN_CATALOG_KEY', message: `No eSTAR submission catalog entry for "${catalogKey}".` });
     }
-    return res.status(200).json(result);
+    return res.status(200).json({
+      ...result,
+      ...(content ? { deviceContentSource: content.source } : {}),
+    });
   } catch (error: any) {
     logger.error('estar filing-readiness failure', {
       err: error instanceof Error ? error.message : String(error),

@@ -36,6 +36,9 @@
 import type { C2CFormConfig } from '../C2CForm';
 /* The scope vocabulary is the composer's, not the form's: shared/cmc/material-scope.ts. */
 import { CMC_MATERIAL_SCOPES } from '@shared/cmc/material-scope';
+/* The dissolution purposes are the composer's, not the form's: one definition,
+   so the section a profile files under is decided once. */
+import { DISSOLUTION_PURPOSES } from '@shared/cmc/dissolution-purpose';
 
 /* ── Small shared helpers ─────────────────────────────────────────────────── */
 
@@ -1199,5 +1202,250 @@ export function qualifyBody(v: Record<string, string>): QualifyBody {
     reason: req(v.reason),
     meaning: req(v.meaning) || 'approval',
     reauth: { password: v.password || undefined, totp: v.totp || undefined },
+  };
+}
+
+/* ═══════════ Impurity profiles — POST/PUT /api/cmc/impurity-profiles ═════════
+   One row per impurity: what it is, how much of it, and what ICH says at that
+   level. */
+
+export const IMPURITY_TYPES = [
+  'process-related', 'degradation', 'inorganic', 'residual-solvent', 'elemental',
+  'mutagenic', 'enantiomeric', 'polymorphic',
+];
+
+/** The units a level can be recorded in. There is no blank option: a number
+ *  with no unit cannot be compared to a threshold, and the register refuses to
+ *  guess one from the column default. */
+export const IMPURITY_LEVEL_UNITS = ['%', 'ppm', 'ppb', 'mg/day', 'µg/day'];
+
+export const IMPURITY_STATUSES = ['draft', 'specified', 'retired'];
+
+export interface ImpurityProfileBody {
+  projectId?: string;
+  scope: string;
+  materialName: string;
+  impurityName: string;
+  impurityType: string;
+  origin?: string | null;
+  casNumber?: string | null;
+  molecularFormula?: string | null;
+  structure?: string | null;
+  relativeRetentionTime?: string | null;
+  analyticalMethod?: string | null;
+  observedLevel?: string | null;
+  levelUnit: string;
+  specificationLimit?: string | null;
+  reportingThreshold?: string | null;
+  identificationThreshold?: string | null;
+  qualificationThreshold?: string | null;
+  maximumDailyDose?: string | null;
+  qualificationBasis?: string | null;
+  controlStrategy?: string | null;
+  batchesObserved?: string[] | null;
+  status: string;
+}
+
+export function impurityProfileForm(row?: Partial<ImpurityProfileBody> | null): C2CFormConfig {
+  return {
+    eyebrow: 'Impurities — §3.2.S.3.2 / §3.2.P.5.5',
+    title: row ? 'Edit impurity' : 'Record an impurity',
+    sub: 'What it is, how much of it, and what ICH Q3A/Q3B says at that level',
+    submitLabel: row ? 'Save impurity' : 'Record impurity',
+    fields: [
+      { key: 'impurityName', label: 'Impurity', type: 'text', required: true, half: true, default: row?.impurityName ?? '', placeholder: 'e.g. Impurity A (desmethyl analogue)' },
+      { key: 'materialName', label: 'Material', type: 'text', required: true, half: true, default: row?.materialName ?? '', placeholder: 'What it is an impurity IN, e.g. BX-204 drug substance' },
+      { key: 'scope', label: 'Evidence for', type: 'select', options: CMC_MATERIAL_SCOPES, required: true, half: true, default: row?.scope ?? 'drug_substance', desc: 'Decides whether ICH Q3A (substance) or Q3B (product) governs it' },
+      { key: 'impurityType', label: 'Class', type: 'select', options: IMPURITY_TYPES, required: true, half: true, default: row?.impurityType ?? 'process-related', desc: 'Q3A/Q3B do not set thresholds for solvents, elemental or mutagenic impurities' },
+      { key: 'origin', label: 'Origin', type: 'text', default: row?.origin ?? '', placeholder: 'Where it comes from — a step, a reagent, a degradation route' },
+      { key: 'observedLevel', label: 'Observed level', type: 'text', half: true, default: row?.observedLevel ?? '', placeholder: 'e.g. 0.08' },
+      { key: 'levelUnit', label: 'Unit', type: 'select', options: IMPURITY_LEVEL_UNITS, required: true, half: true, default: row?.levelUnit ?? '%', desc: 'A level with no unit cannot be compared to a threshold' },
+      { key: 'maximumDailyDose', label: 'Maximum daily dose', type: 'text', half: true, default: row?.maximumDailyDose ?? '', placeholder: 'e.g. 500 mg — every ICH threshold is keyed to it' },
+      { key: 'specificationLimit', label: 'Specification limit', type: 'text', half: true, default: row?.specificationLimit ?? '', placeholder: 'e.g. NMT 0.15%' },
+      { key: 'analyticalMethod', label: 'Analytical method', type: 'text', half: true, default: row?.analyticalMethod ?? '', placeholder: 'e.g. AM-014 RP-HPLC' },
+      { key: 'relativeRetentionTime', label: 'RRT', type: 'text', half: true, default: row?.relativeRetentionTime ?? '', placeholder: 'e.g. 0.78' },
+      { key: 'casNumber', label: 'CAS number', type: 'text', half: true, default: row?.casNumber ?? '' },
+      { key: 'molecularFormula', label: 'Molecular formula', type: 'text', half: true, default: row?.molecularFormula ?? '' },
+      { key: 'structure', label: 'Structure', type: 'text', default: row?.structure ?? '', placeholder: 'SMILES or a structural reference — an impurity above the identification threshold needs one' },
+      { key: 'qualificationBasis', label: 'Qualification basis', type: 'textarea', rows: 2, default: row?.qualificationBasis ?? '', placeholder: 'The study, comparator exposure or monograph that qualifies this level. Qualification is signed over this text.' },
+      { key: 'controlStrategy', label: 'Control strategy', type: 'textarea', rows: 2, default: row?.controlStrategy ?? '', placeholder: 'How it is controlled — a process step, a purge, a specification test' },
+      { key: 'batchesObserved', label: 'Batches observed in', type: 'text', default: (row?.batchesObserved ?? []).join(', '), placeholder: 'e.g. B-001, B-002, B-003' },
+      { key: 'reportingThreshold', label: 'Reporting threshold (as recorded)', type: 'text', half: true, default: row?.reportingThreshold ?? '', placeholder: 'Leave blank to use the ICH threshold for the dose' },
+      { key: 'identificationThreshold', label: 'Identification threshold (as recorded)', type: 'text', half: true, default: row?.identificationThreshold ?? '' },
+      { key: 'qualificationThreshold', label: 'Qualification threshold (as recorded)', type: 'text', half: true, default: row?.qualificationThreshold ?? '' },
+      { key: 'status', label: 'Status', type: 'seg', options: IMPURITY_STATUSES, required: true, half: true, default: row?.status && IMPURITY_STATUSES.includes(row.status) ? row.status : 'draft', desc: 'Qualification is a signed action, not a status you set here' },
+    ],
+  };
+}
+
+export function impurityProfileBody(v: Record<string, string>, projectId?: string): ImpurityProfileBody {
+  const body: ImpurityProfileBody = {
+    scope: req(v.scope) || 'drug_substance',
+    materialName: req(v.materialName),
+    impurityName: req(v.impurityName),
+    impurityType: req(v.impurityType) || 'process-related',
+    levelUnit: req(v.levelUnit) || '%',
+    status: req(v.status) || 'draft',
+  };
+  const optionalText: Array<keyof ImpurityProfileBody> = [
+    'origin', 'casNumber', 'molecularFormula', 'structure', 'relativeRetentionTime',
+    'analyticalMethod', 'observedLevel', 'specificationLimit', 'reportingThreshold',
+    'identificationThreshold', 'qualificationThreshold', 'maximumDailyDose',
+    'qualificationBasis', 'controlStrategy',
+  ];
+  for (const key of optionalText) {
+    const value = opt(v[key as string]);
+    if (value) (body as unknown as Record<string, unknown>)[key as string] = value;
+  }
+  const batches = csvToArray(v.batchesObserved);
+  if (batches.length > 0) body.batchesObserved = batches;
+  if (projectId) body.projectId = projectId;
+  return body;
+}
+
+/** The UPDATE body — every editable field, with an explicit null for a cleared one. */
+export function impurityProfilePatch(v: Record<string, string>): ImpurityProfileBody {
+  const batches = csvToArray(v.batchesObserved);
+  return {
+    scope: req(v.scope) || 'drug_substance',
+    materialName: req(v.materialName),
+    impurityName: req(v.impurityName),
+    impurityType: req(v.impurityType) || 'process-related',
+    levelUnit: req(v.levelUnit) || '%',
+    status: req(v.status) || 'draft',
+    origin: opt(v.origin) ?? null,
+    casNumber: opt(v.casNumber) ?? null,
+    molecularFormula: opt(v.molecularFormula) ?? null,
+    structure: opt(v.structure) ?? null,
+    relativeRetentionTime: opt(v.relativeRetentionTime) ?? null,
+    analyticalMethod: opt(v.analyticalMethod) ?? null,
+    observedLevel: opt(v.observedLevel) ?? null,
+    specificationLimit: opt(v.specificationLimit) ?? null,
+    reportingThreshold: opt(v.reportingThreshold) ?? null,
+    identificationThreshold: opt(v.identificationThreshold) ?? null,
+    qualificationThreshold: opt(v.qualificationThreshold) ?? null,
+    maximumDailyDose: opt(v.maximumDailyDose) ?? null,
+    qualificationBasis: opt(v.qualificationBasis) ?? null,
+    controlStrategy: opt(v.controlStrategy) ?? null,
+    batchesObserved: batches.length > 0 ? batches : null,
+  };
+}
+
+/* ═══════════ Dissolution profiles — /api/cmc/dissolution-profiles ════════════
+   A method, a set of units, and a mean with its variability at each timepoint. */
+
+export const DISSOLUTION_APPARATUS = [
+  'USP I (basket)', 'USP II (paddle)', 'USP III (reciprocating cylinder)', 'USP IV (flow-through cell)',
+];
+
+export const DISSOLUTION_STATUSES = ['draft', 'reported', 'retired'];
+
+export const DISSOLUTION_POINT_COLUMNS = ['timepoint', 'meanPercent', 'sd', 'rsd', 'min', 'max', 'n'];
+
+export interface DissolutionProfileBody {
+  projectId?: string;
+  purpose: string;
+  productName: string;
+  batchNumber?: string | null;
+  strength?: string | null;
+  apparatus: string;
+  rotationSpeed?: string | null;
+  medium: string;
+  mediumVolume?: string | null;
+  temperature?: string | null;
+  sinker?: string | null;
+  specification?: string | null;
+  unitsTested?: number | null;
+  results?: Array<Record<string, string>> | null;
+  comparisonBatch?: string | null;
+  comparisonResults?: Array<Record<string, string>> | null;
+  testDate?: string | null;
+  status: string;
+}
+
+export function dissolutionProfileForm(row?: Partial<DissolutionProfileBody> | null): C2CFormConfig {
+  return {
+    eyebrow: 'Dissolution — §3.2.P.2 / §3.2.P.5',
+    title: row ? 'Edit dissolution profile' : 'Record a dissolution profile',
+    sub: 'The method, the units, and the mean with its variability at each timepoint',
+    submitLabel: row ? 'Save profile' : 'Record profile',
+    fields: [
+      { key: 'productName', label: 'Product', type: 'text', required: true, half: true, default: row?.productName ?? '', placeholder: 'e.g. BX-204 film-coated tablet' },
+      { key: 'purpose', label: 'Recorded for', type: 'select', options: DISSOLUTION_PURPOSES, required: true, half: true, default: row?.purpose ?? 'development', desc: 'Development and comparability profiles file under §3.2.P.2; a release-specification profile under §3.2.P.5' },
+      { key: 'batchNumber', label: 'Batch', type: 'text', half: true, default: row?.batchNumber ?? '', placeholder: 'e.g. BX204-DP-2407' },
+      { key: 'strength', label: 'Strength', type: 'text', half: true, default: row?.strength ?? '', placeholder: 'e.g. 5 mg' },
+      { key: 'apparatus', label: 'Apparatus', type: 'select', options: DISSOLUTION_APPARATUS, required: true, half: true, default: row?.apparatus ?? 'USP II (paddle)' },
+      { key: 'rotationSpeed', label: 'Speed', type: 'text', half: true, default: row?.rotationSpeed ?? '', placeholder: 'e.g. 50 rpm' },
+      { key: 'medium', label: 'Medium', type: 'text', required: true, half: true, default: row?.medium ?? '', placeholder: 'e.g. pH 6.8 phosphate buffer' },
+      { key: 'mediumVolume', label: 'Volume', type: 'text', half: true, default: row?.mediumVolume ?? '', placeholder: 'e.g. 900 mL' },
+      { key: 'temperature', label: 'Temperature', type: 'text', half: true, default: row?.temperature ?? '', placeholder: 'e.g. 37.0 +/- 0.5 C' },
+      { key: 'sinker', label: 'Sinker', type: 'text', half: true, default: row?.sinker ?? '' },
+      { key: 'unitsTested', label: 'Units tested', type: 'number', min: 1, half: true, default: row?.unitsTested != null ? String(row.unitsTested) : '', desc: 'A mean without its unit count supports no conformance and no comparison' },
+      { key: 'specification', label: 'Acceptance criterion', type: 'text', half: true, default: row?.specification ?? '', placeholder: 'e.g. Q = 80% at 30 min' },
+      { key: 'results', label: 'Profile', type: 'textarea', rows: 4, default: rowLinesOf(row?.results, DISSOLUTION_POINT_COLUMNS), placeholder: 'One per line: Timepoint (min) | Mean % dissolved | SD | %RSD | Min | Max | n' },
+      { key: 'comparisonBatch', label: 'Reference batch', type: 'text', half: true, default: row?.comparisonBatch ?? '', placeholder: 'The batch this profile is compared against, if any' },
+      { key: 'testDate', label: 'Tested on', type: 'date', half: true, default: row?.testDate ? String(row.testDate).slice(0, 10) : '' },
+      { key: 'comparisonResults', label: 'Reference profile', type: 'textarea', rows: 4, default: rowLinesOf(row?.comparisonResults, DISSOLUTION_POINT_COLUMNS), placeholder: 'Same columns as above — the reference profile an f2 comparison is computed against' },
+      { key: 'status', label: 'Status', type: 'seg', options: DISSOLUTION_STATUSES, required: true, half: true, default: row?.status && DISSOLUTION_STATUSES.includes(row.status) ? row.status : 'draft' },
+    ],
+  };
+}
+
+/** A units count, or null — never a default. */
+function unitsOf(raw: string | undefined): number | null {
+  const n = Number(String(raw ?? '').trim());
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : null;
+}
+
+export function dissolutionProfileBody(v: Record<string, string>, projectId?: string): DissolutionProfileBody {
+  const body: DissolutionProfileBody = {
+    purpose: req(v.purpose) || 'development',
+    productName: req(v.productName),
+    apparatus: req(v.apparatus) || 'USP II (paddle)',
+    medium: req(v.medium),
+    status: req(v.status) || 'draft',
+  };
+  const optionalText: Array<keyof DissolutionProfileBody> = [
+    'batchNumber', 'strength', 'rotationSpeed', 'mediumVolume', 'temperature', 'sinker',
+    'specification', 'comparisonBatch',
+  ];
+  for (const key of optionalText) {
+    const value = opt(v[key as string]);
+    if (value) (body as unknown as Record<string, unknown>)[key as string] = value;
+  }
+  const units = unitsOf(v.unitsTested);
+  if (units !== null) body.unitsTested = units;
+  const results = parseRowLines(v.results, DISSOLUTION_POINT_COLUMNS);
+  if (results.length > 0) body.results = results;
+  const comparison = parseRowLines(v.comparisonResults, DISSOLUTION_POINT_COLUMNS);
+  if (comparison.length > 0) body.comparisonResults = comparison;
+  const tested = isoDate(v.testDate);
+  if (tested) body.testDate = tested;
+  if (projectId) body.projectId = projectId;
+  return body;
+}
+
+/** The UPDATE body — see the note on `containerClosurePatch`. */
+export function dissolutionProfilePatch(v: Record<string, string>): DissolutionProfileBody {
+  const results = parseRowLines(v.results, DISSOLUTION_POINT_COLUMNS);
+  const comparison = parseRowLines(v.comparisonResults, DISSOLUTION_POINT_COLUMNS);
+  return {
+    purpose: req(v.purpose) || 'development',
+    productName: req(v.productName),
+    apparatus: req(v.apparatus) || 'USP II (paddle)',
+    medium: req(v.medium),
+    status: req(v.status) || 'draft',
+    batchNumber: opt(v.batchNumber) ?? null,
+    strength: opt(v.strength) ?? null,
+    rotationSpeed: opt(v.rotationSpeed) ?? null,
+    mediumVolume: opt(v.mediumVolume) ?? null,
+    temperature: opt(v.temperature) ?? null,
+    sinker: opt(v.sinker) ?? null,
+    specification: opt(v.specification) ?? null,
+    comparisonBatch: opt(v.comparisonBatch) ?? null,
+    unitsTested: unitsOf(v.unitsTested),
+    results: results.length > 0 ? results : null,
+    comparisonResults: comparison.length > 0 ? comparison : null,
+    testDate: isoDate(v.testDate) ?? null,
   };
 }

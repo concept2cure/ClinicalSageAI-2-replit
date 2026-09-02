@@ -923,13 +923,13 @@ The general information demonstrates that [DRUG_SUBSTANCE_NAME] is adequately ch
   {
     id: 12,
     name: 'Module_4_2_3_Safety_Pharmacology',
-    title: 'Module 4.2.3 - Safety Pharmacology',
-    template_name: 'Module 4.2.3 - Safety Pharmacology',
+    title: 'Module 4.2.1.3 - Safety Pharmacology',
+    template_name: 'Module 4.2.1.3 - Safety Pharmacology',
     region: 'FDA',
     version: '4.0',
     description: 'Safety pharmacology studies on vital organ systems',
     module_number: '4',
-    granule_id: 'm4-2-3-safety-pharmacology',
+    granule_id: 'm4-2-1-3-safety-pharmacology',
     category: 'nonclinical',
     content: `MODULE 4.2.3 - SAFETY PHARMACOLOGY
 
@@ -1035,13 +1035,13 @@ The safety pharmacology studies demonstrate that [TEST_ARTICLE_NAME] has an acce
   {
     id: 13,
     name: 'Module_4_3_1_Single_Dose_Toxicity',
-    title: 'Module 4.3.1 - Single Dose Toxicity',
-    template_name: 'Module 4.3.1 - Single Dose Toxicity',
+    title: 'Module 4.2.3.1 - Single Dose Toxicity',
+    template_name: 'Module 4.2.3.1 - Single Dose Toxicity',
     region: 'FDA',
     version: '4.0',
     description: 'Single dose toxicity studies',
     module_number: '4',
-    granule_id: 'm4-3-1-single-dose-toxicity',
+    granule_id: 'm4-2-3-1-single-dose-toxicity',
     category: 'nonclinical',
     content: `MODULE 4.3.1 - SINGLE DOSE TOXICITY
 

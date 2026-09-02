@@ -407,15 +407,22 @@ export class DecisionLifecycleService {
      so any authenticated caller could read another organization's governed
      decisions and receipts by supplying an id.
 
-     `organizationId` is optional so the five internal service callers compile
-     unchanged, but when it IS supplied the match is strict: a record whose
-     organizationId is undefined does not match a numeric one. recordDecision
-     already warns when a decision is stored without tenant context, and an
-     unattributed record must not be handed to a specific tenant. */
+     `organizationId` was optional so the five internal service callers could
+     compile unchanged. All of them now pass it, so the optionality is no longer
+     load-bearing — and an absent tenant no longer means "no filter". It means
+     no records. Passing the tenant at every call site is a convention, and a
+     convention only holds until the next call site; a caller that omits the
+     tenant now reads nothing instead of reading every organization.
+
+     The match is strict in both directions: a record whose organizationId is
+     undefined does not match a numeric one either. recordDecision already warns
+     when a decision is stored without tenant context, and an unattributed
+     record must not be handed to a specific tenant. */
   getDecision(id: string, organizationId?: number): FormalDecisionRecord | undefined {
+    if (organizationId == null) return undefined;
     const decision = decisionStore.get(id);
     if (!decision) return undefined;
-    if (organizationId != null && decision.organizationId !== organizationId) return undefined;
+    if (decision.organizationId !== organizationId) return undefined;
     return decision;
   }
 
@@ -447,6 +454,9 @@ export class DecisionLifecycleService {
       limit?: number;
     }
   ): FormalDecisionRecord[] {
+    /* No tenant, no records. See getDecision: this is the whole boundary. */
+    if (filters?.organizationId == null) return [];
+
     const ids = projectIndex.get(projectId);
     if (!ids) return [];
 
@@ -457,9 +467,7 @@ export class DecisionLifecycleService {
 
     /* Applied before every other filter and before the limit, so a caller can
        never page through another tenant's records. */
-    if (filters?.organizationId != null) {
-      decisions = decisions.filter(d => d.organizationId === filters.organizationId);
-    }
+    decisions = decisions.filter(d => d.organizationId === filters.organizationId);
     if (filters?.kind) decisions = decisions.filter(d => d.kind === filters.kind);
     if (filters?.status) decisions = decisions.filter(d => d.status === filters.status);
     if (filters?.sectionCode) decisions = decisions.filter(d => d.sectionCode === filters.sectionCode);
@@ -581,7 +589,12 @@ export class DecisionLifecycleService {
    */
   computeDecisionAwareStatus(
     projectId: string,
-    scope: { moduleCode?: string; dossierId?: string }
+    scope: {
+      moduleCode?: string;
+      dossierId?: string;
+      /** See getDecision — strict when supplied, absent for internal callers. */
+      organizationId?: number;
+    }
   ): {
     hasUnresolvedContradictions: boolean;
     hasProvisionalDecisions: boolean;
@@ -594,6 +607,7 @@ export class DecisionLifecycleService {
   } {
     const decisions = this.getProjectDecisions(projectId, {
       moduleCode: scope.moduleCode,
+      organizationId: scope.organizationId,
     });
 
     const unresolved = decisions.filter(

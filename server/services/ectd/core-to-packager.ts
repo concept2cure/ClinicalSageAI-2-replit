@@ -34,6 +34,8 @@ export interface CoreLeaf {
   documentTable?: string | null;
   documentId?: number | null;
   granularity?: string | null;
+  /** submission_leaves.document_type (e.g. 'ind_safety_report', 'ind_annual_report'). */
+  documentType?: string | null;
 }
 
 /** The on-disk file a leaf's document resolves to. */
@@ -104,6 +106,40 @@ export function mapCoreLeafToEctdLeaf(leaf: CoreLeaf, resolved: ResolvedFile): E
 export interface CoreSequence {
   sequenceNumber: string; // '0000'
   region: string; // fda | eu | jp
+  /** ectd_sequences.type: original | amendment | response | variation | annual | withdrawal */
+  type?: string | null;
+}
+
+/**
+ * The FDA us-regional submission-type / sub-type for a sequence.
+ *
+ * ── The defect this closes ───────────────────────────────────────────────────
+ * The packager received `submissionType: submission.applicationType` — the
+ * string 'ind' — and resolved it through the v3.2.2 submission-type vocabulary,
+ * where the only entry containing "IND" is `fdast9 · IND Safety Reports`. Every
+ * IND sequence — the original, a protocol amendment, an annual report — left
+ * the packager coded as an IND safety report in us-regional.xml.
+ *
+ * The submission type is a property of the SEQUENCE, not the application:
+ *   original / amendment / response  → fdast1 Original Application
+ *                                       (sub-type original / amendment)
+ *   annual                            → fdast5 Annual Report
+ *   a sequence carrying an IND safety-report leaf → fdast9 IND Safety Reports
+ * (FDA eCTD Module 1 Specification v2.3, submission-type and sub-type codes;
+ * see controlled-vocab/cv-v3-data.ts). Pinned by __tests__/core-to-packager-fda-admin.test.ts.
+ */
+export function fdaSubmissionTypeFor(
+  sequence: CoreSequence,
+  leaves: ReadonlyArray<Pick<CoreLeaf, 'documentType'>>,
+): { submissionType: string; submissionSubType: string } {
+  const type = String(sequence.type ?? 'original').toLowerCase();
+  const carriesSafetyReport = leaves.some((l) => /safety[_-]?report|icsr/i.test(String(l.documentType ?? '')));
+  if (carriesSafetyReport) return { submissionType: 'ind_safety_report', submissionSubType: 'original' };
+  if (type === 'annual') return { submissionType: 'annual', submissionSubType: 'original' };
+  if (type === 'amendment' || type === 'response' || type === 'variation') {
+    return { submissionType: 'original', submissionSubType: 'amendment' };
+  }
+  return { submissionType: 'original', submissionSubType: 'original' };
 }
 
 export interface CoreSubmission {
@@ -148,8 +184,10 @@ export function buildPackagerInputFromCore(args: BuildPackagerInputArgs): BuildP
     leaves.push(mapCoreLeafToEctdLeaf(leaf, resolved));
   }
 
+  const region = toPackagerRegion(args.sequence.region);
+  const fdaType = fdaSubmissionTypeFor(args.sequence, args.leaves);
   const input: PackagerInput = {
-    region: toPackagerRegion(args.sequence.region),
+    region,
     applicationId: args.applicationId,
     sequence: args.sequence.sequenceNumber,
     submissionType: args.submission.applicationType,
@@ -159,9 +197,22 @@ export function buildPackagerInputFromCore(args: BuildPackagerInputArgs): BuildP
     leaves,
     outputDir: args.outputDir,
     emitUnzipped: args.emitUnzipped,
+    // The us-regional admin block: application type from the submission
+    // ('ind' → fdaat4), submission type and sub-type from the SEQUENCE. Without
+    // this the packager resolved 'ind' as a submission type and coded every IND
+    // sequence fdast9 (IND Safety Reports).
+    ...(region === 'fda'
+      ? {
+          fda: {
+            applicationType: args.submission.applicationType,
+            submissionType: fdaType.submissionType,
+            submissionSubType: fdaType.submissionSubType,
+          },
+        }
+      : {}),
   };
 
   return { input, skipped };
 }
 
-export default { toPackagerRegion, mapCoreLeafToEctdLeaf, buildPackagerInputFromCore };
+export default { toPackagerRegion, mapCoreLeafToEctdLeaf, buildPackagerInputFromCore, fdaSubmissionTypeFor };

@@ -551,8 +551,10 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
       product: x.product, agency: x.agency, indication: x.indication,
       requestedOrGranted: x.date, prevalence: x.prevalence, benefit: x.benefit, status: x.status,
     }));
-    const r = readContext(liveRpd, rpd, (x) => ({ product: x.product, kind: x.kind, value: x.value, status: x.status, notes: x.notes }));
-    const v = readContext(liveAdv, adv, (x) => ({ product: x.product, organisation: x.org, engagement: x.engagement }));
+    // `notes` and `engagement` are user-authored free-text — their presence
+    // travels, the prose stays on screen, uniform with the rest of the subsystem.
+    const r = readContext(liveRpd, rpd, (x) => ({ product: x.product, kind: x.kind, value: x.value, status: x.status, hasNotes: Boolean(x.notes) }));
+    const v = readContext(liveAdv, adv, (x) => ({ product: x.product, organisation: x.org, hasEngagement: Boolean(x.engagement) }));
     return {
       summary:
         `Orphan and rare disease: ${readLine('designation record(s)', d)}; ` +

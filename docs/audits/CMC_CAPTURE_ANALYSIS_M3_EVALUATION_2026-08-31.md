@@ -71,8 +71,8 @@ Three cross-cutting honesty defects sharpen the picture:
 | container_closure | **full** (closed 2026-09-01) | register + E&L/integrity capture + §3.2.S.6/§3.2.P.7 render, and §3.2.P.2's containerClosureStudies |
 | excipient | **absent** | §3.2.P.4 permanently empty |
 | raw_material_spec | **absent** | — |
-| impurity_profile | **absent** | Q3A/Q6 content unwritable from data |
-| dissolution_profile | **absent** | §3.2.P.2/P.5 dissolution unwritable from data |
+| impurity_profile | **full** (closed 2026-09-02) | register + ICH Q3A/Q3B assessment engine + §3.2.S.3.2 / §3.2.P.5.5 render, side-scoped |
+| dissolution_profile | **full** (closed 2026-09-02) | register + per-timepoint profile + §3.2.P.2 / §3.2.P.5 render, purpose-scoped |
 | formulation_record | **absent** | pharmaceutical development (P.2) starves |
 
 (*full capture loop, with the named field-level caveat.)
@@ -81,12 +81,13 @@ Three cross-cutting honesty defects sharpen the picture:
 
 | Fully servable | Partially | Effectively unservable |
 |---|---|---|
-| 3.2.S.7, 3.2.P.1, 3.2.P.8, 3.1, 3.3, **3.2.S.5, 3.2.S.6, 3.2.P.6, 3.2.P.7** | 3.2.S.1, 3.2.S.4, 3.2.P.3, 3.2.P.5, **3.2.P.2** | 3.2.S.2, 3.2.S.3, 3.2.P.4 |
+| 3.2.S.7, 3.2.P.1, 3.2.P.8, 3.1, 3.3, 3.2.S.5, 3.2.S.6, 3.2.P.6, 3.2.P.7, **3.2.S.3, 3.2.P.5** | 3.2.S.1, 3.2.S.4, 3.2.P.3, 3.2.P.2 | 3.2.S.2, 3.2.P.4 |
 
-The four bolded sections moved on 2026-09-01 with the container closure and
-reference standard registers (commit c9ed0979). 3.2.P.2 moved to partial because
-its `containerClosureStudies` input now has a producer; its formulation and
-process development inputs still do not.
+The four sections marked on 2026-09-01 moved with the container closure and
+reference standard registers (commit c9ed0979). 3.2.S.3 and 3.2.P.5 moved on
+2026-09-02 with the impurity and dissolution registers (commit 4e489b38), which
+also gave 3.2.P.2 its dissolution content; 3.2.P.2 stays partial because its
+formulation and process-development inputs still have no producer.
 
 ## The build program to close it (ranked by value ÷ effort)
 
@@ -103,11 +104,12 @@ process development inputs still do not.
    refusal, zero writes. Unblocks "AnA runs structured simulations against CMC results."
 4. **The missing registers (large, high)** — structured capture for the 9 absent source types,
    priority order by reviewer pressure: ~~container closure (+E&L)~~, ~~reference standards~~,
-   impurity profile, dissolution profile, excipients/raw materials, formulation record,
+   ~~impurity profile~~, ~~dissolution profile~~, excipients/raw materials, formulation record,
    manufacturing process, characterization. Each lands: table → routes → write-through → UI tab →
-   composer render. **2 of 9 done (2026-09-01)**: the two struck through above, each with a stored
-   `scope` so §3.2.S and §3.2.P cannot green each other, and each visible to AnA through
-   `list_cmc_registers`. 7 remain.
+   composer render. **4 of 9 done**: the four struck through above, each with a stored scoping
+   column (`scope` for a material side, `purpose` for a dissolution profile) so one section cannot
+   green another, each visible to AnA through `list_cmc_registers`, and each a tenant-purge child.
+   5 remain.
 5. **Persist the guided flow (medium, high)** — the intelligence interview's answers land as
    canonical source objects (they cover exactly the sections in #4), instead of evaporating.
 6. **Analysis on the spine (medium)** — trending/OOT over recorded series; Q6A spec-vs-batch
@@ -127,7 +129,7 @@ bleeding" item and should land first.
 | 1. Mapper fidelity sweep | **done** | all 7 mappers rewritten to real row shapes, adversarially reviewed |
 | 2. Render what is captured | **done** | batch analyses, change history, comparability, Q2 summaries |
 | 3. AnA recorded twins | **done** | `list_cmc_registers` + `estimate_recorded_shelf_life` on the shared engine |
-| 4. The missing registers | **2 of 9** | container closure (+E&L), reference standards |
+| 4. The missing registers | **4 of 9** | container closure (+E&L), reference standards, impurities, dissolution |
 | 5. Persist the guided flow | open | |
-| 6. Analysis on the spine | open | |
+| 6. Analysis on the spine | **started** | ICH Q3A/Q3B threshold assessment over recorded impurity levels, on the canonical tables (a duplicate, wrong copy deleted). f2 similarity next. |
 | 7. Plumbing guards | open | partially anticipated: both new registers store `project_id` and report `module3Linked` |

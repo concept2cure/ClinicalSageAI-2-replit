@@ -15,6 +15,10 @@
  * @module server/services/cmc-quality/cmc-quality-knowledge
  */
 
+/* The ICH Q3A/Q3B threshold tables are NOT restated in this module: they live
+   in services/global-ri/impurities-thresholds, which owns them. */
+import { resolveImpurityThresholds } from '../global-ri/impurities-thresholds';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Section 0 — Common Utility Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1214,80 +1218,11 @@ export interface ImpurityClassificationResult {
   citations: string[];
 }
 
-// ── 3.2 Reference Data — ICH Q3A Drug Substance Thresholds ──
-
-interface Q3AThresholdRow {
-  maxDailyDoseLow: number;
-  maxDailyDoseHigh: number;
-  reporting: string;
-  identification: string;
-  qualification: string;
-}
-
-const Q3A_THRESHOLDS: Q3AThresholdRow[] = [
-  {
-    maxDailyDoseLow: 0,
-    maxDailyDoseHigh: 2000,
-    reporting: '>= 0.05%',
-    identification: '>= 0.10% or 1.0 mg/day intake (whichever is lower)',
-    qualification: '>= 0.15% or 1.0 mg/day intake (whichever is lower)',
-  },
-  {
-    maxDailyDoseLow: 2000.01,
-    maxDailyDoseHigh: Infinity,
-    reporting: '>= 0.03%',
-    identification: '>= 0.05%',
-    qualification: '>= 0.05%',
-  },
-];
-
-// ── 3.3 Reference Data — ICH Q3B Drug Product Thresholds ──
-
-interface Q3BThresholdRow {
-  maxDailyDoseLow: number;
-  maxDailyDoseHigh: number;
-  reporting: string;
-  identification: string;
-  qualification: string;
-}
-
-const Q3B_THRESHOLDS: Q3BThresholdRow[] = [
-  {
-    maxDailyDoseLow: 0,
-    maxDailyDoseHigh: 1,
-    reporting: '1.0% or 5 ug TDI (whichever is lower)',
-    identification: '1.0% or 5 ug TDI (whichever is lower)',
-    qualification: '1.0% or 5 ug TDI (whichever is lower)',
-  },
-  {
-    maxDailyDoseLow: 1.01,
-    maxDailyDoseHigh: 10,
-    reporting: '0.5%',
-    identification: '0.2% or 2 mg TDI (whichever is lower)',
-    qualification: '0.2% or 2 mg TDI (whichever is lower)',
-  },
-  {
-    maxDailyDoseLow: 10.01,
-    maxDailyDoseHigh: 100,
-    reporting: '0.2%',
-    identification: '0.2% or 2 mg TDI (whichever is lower)',
-    qualification: '0.2% or 3 mg TDI (whichever is lower)',
-  },
-  {
-    maxDailyDoseLow: 100.01,
-    maxDailyDoseHigh: 2000,
-    reporting: '0.1%',
-    identification: '0.2% or 2 mg TDI (whichever is lower)',
-    qualification: '0.2% or 3 mg TDI (whichever is lower)',
-  },
-  {
-    maxDailyDoseLow: 2000.01,
-    maxDailyDoseHigh: Infinity,
-    reporting: '0.05%',
-    identification: '0.2% or 2 mg TDI (whichever is lower)',
-    qualification: '0.05% or 1.5 mg TDI (whichever is lower)',
-  },
-];
+/* ── ICH Q3A / Q3B thresholds ─────────────────────────────────────────────────
+   Deliberately NOT restated here. services/global-ri/impurities-thresholds owns
+   the tables; this module reads them through resolveImpurityThresholds. The
+   copy that used to live here disagreed with the guideline in the Q3B rows and
+   fell open through a band gap in the Q3A rows. */
 
 // ── 3.4 Reference Data — ICH Q3C Residual Solvents ──
 
@@ -1707,20 +1642,30 @@ export function classifyImpurity(params: ImpurityClassificationParams): Impurity
 
   // ── Organic impurities (Q3A / Q3B) ──
   if (impurityType === 'organic') {
-    const thresholds = context === 'drug_substance' ? Q3A_THRESHOLDS : Q3B_THRESHOLDS;
-    const row = thresholds.find(
-      (r) => maximumDailyDose_mg >= r.maxDailyDoseLow && maximumDailyDose_mg <= r.maxDailyDoseHigh,
-    );
-
-    if (row) {
-      reportingThreshold = { value: row.reporting, unit: '% (w/w) or TDI', basis: context === 'drug_substance' ? 'ICH Q3A(R2)' : 'ICH Q3B(R2)' };
-      identificationThreshold = { value: row.identification, unit: '% (w/w) or TDI', basis: context === 'drug_substance' ? 'ICH Q3A(R2)' : 'ICH Q3B(R2)' };
-      qualificationThreshold = { value: row.qualification, unit: '% (w/w) or TDI', basis: context === 'drug_substance' ? 'ICH Q3A(R2)' : 'ICH Q3B(R2)' };
+    /* The ICH tables live in services/global-ri/impurities-thresholds, which is
+       their single source. The copy that used to sit in this file had a band
+       gap (its second Q3A row started at 2000.01, so a dose of exactly 2000.5
+       matched nothing and FELL THROUGH to a hardcoded "default" — a fabricated
+       threshold under this repo's fail-closed rule) and a Q3B table that
+       invented five reporting bands where Q3B has two and returned the wrong
+       qualification threshold above 2 g. Both are deleted; this reads the
+       canonical table, and a dose it cannot key a threshold to is now a
+       refusal rather than a default. */
+    const resolved = resolveImpurityThresholds({
+      matrix: context === 'drug_substance' ? 'drug_substance' : 'drug_product',
+      maxDailyDoseMg: maximumDailyDose_mg,
+      impurityClass: 'organic',
+    });
+    const basis = context === 'drug_substance' ? 'ICH Q3A(R2)' : 'ICH Q3B(R2)';
+    if (resolved.ok) {
+      reportingThreshold = { value: resolved.reporting.expression, unit: '% (w/w) or TDI', basis };
+      identificationThreshold = { value: resolved.identification.expression, unit: '% (w/w) or TDI', basis };
+      qualificationThreshold = { value: resolved.qualification.expression, unit: '% (w/w) or TDI', basis };
     } else {
-      // Fallback for edge case
-      reportingThreshold = { value: '>= 0.05%', unit: '% (w/w)', basis: 'ICH Q3A(R2) default' };
-      identificationThreshold = { value: '>= 0.10%', unit: '% (w/w)', basis: 'ICH Q3A(R2) default' };
-      qualificationThreshold = { value: '>= 0.15%', unit: '% (w/w)', basis: 'ICH Q3A(R2) default' };
+      const refusal = `Not established — ${resolved.message}`;
+      reportingThreshold = { value: refusal, unit: 'not established', basis };
+      identificationThreshold = { value: refusal, unit: 'not established', basis };
+      qualificationThreshold = { value: refusal, unit: 'not established', basis };
     }
 
     qualificationStrategy = [

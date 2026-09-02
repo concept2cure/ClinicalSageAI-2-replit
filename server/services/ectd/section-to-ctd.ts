@@ -36,6 +36,35 @@ export function normalizeCtdCode(value: string | null | undefined): string | nul
   return `${m[1]}${m[2]}`;
 }
 
+/**
+ * Infer the FDA Module 1 HEADING for a loosely-keyed regional document, when
+ * the key names one unambiguously. A section keyed 'form-1571' or 'cover-letter'
+ * used to resolve to the bare module '1', which the packager nests under an
+ * `<m1>` element the us-regional DTD does not define — so a transmit built from
+ * those keys failed DTD validation at the gateway. FDA eCTD Module 1
+ * Specification v2.3 files every one of these at a specific heading:
+ *   forms (1571/1572/356h/3674/3397/2253) → 1.1 · cover letters → 1.2 ·
+ *   debarment → 1.3.3 · financial (3454/3455) → 1.3.4 · patents → 1.3.5 ·
+ *   letters of authorization → 1.4.1 · environmental → 1.12.14 ·
+ *   annual report → 1.13 · investigator's brochure → 1.14.4.1 · labeling → 1.14
+ * Returns null when the key names none of them (the module inference below
+ * still applies).
+ */
+export function module1HeadingForSectionKey(sectionKey: string): string | null {
+  const k = (sectionKey || '').toLowerCase();
+  if (/(3454|3455|financial[-_ ]?(cert|disclos))/.test(k)) return '1.3.4';
+  if (/(1571|1572|356h|3674|3397|2253|\bform\b)/.test(k)) return '1.1';
+  if (/cover[-_ ]?letter/.test(k)) return '1.2';
+  if (/debarment/.test(k)) return '1.3.3';
+  if (/patent|exclusivity/.test(k)) return '1.3.5';
+  if (/letter[-_ ]?of[-_ ]?authori[sz]ation|\bloa\b/.test(k)) return '1.4.1';
+  if (/environmental/.test(k)) return '1.12.14';
+  if (/annual[-_ ]?report|\bdsur\b/.test(k)) return '1.13';
+  if (/investigator[-_' ]*s?[-_ ]?brochure|\bib\b/.test(k)) return '1.14.4.1';
+  if (/(labell?ing|\blabel\b|package[-_ ]?insert|prescribing[-_ ]?information|\bifu\b|\bpi\b|medication[-_ ]?guide)/.test(k)) return '1.14';
+  return null;
+}
+
 /** Infer the CTD module (1-5) from a loose product section key. Mirrors the
  *  keyword mapping the transmit path already used for module folders. */
 export function moduleForSectionKey(sectionKey: string): 1 | 2 | 3 | 4 | 5 | null {
@@ -74,12 +103,17 @@ export function resolveCtdSection(
     .sort((a, b) => b.length - a.length);
   if (declared.length > 0) return declared[0];
 
-  // 3. Keyword-inferred module.
+  // 3. A Module 1 heading the key names unambiguously (forms, cover letter,
+  //    labeling, …) — a bare module '1' is not a placeable FDA regional leaf.
+  const heading = module1HeadingForSectionKey(sectionKey);
+  if (heading) return heading;
+
+  // 4. Keyword-inferred module.
   const mod = moduleForSectionKey(sectionKey);
   if (mod) return String(mod);
 
-  // 4. Not inferable — the caller must not guess.
+  // 5. Not inferable — the caller must not guess.
   return null;
 }
 
-export default { normalizeCtdCode, moduleForSectionKey, resolveCtdSection };
+export default { normalizeCtdCode, module1HeadingForSectionKey, moduleForSectionKey, resolveCtdSection };

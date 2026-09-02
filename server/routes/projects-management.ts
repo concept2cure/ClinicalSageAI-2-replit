@@ -15,9 +15,10 @@ const log = createScopedLogger('projects-management');
 // `licenses WHERE organization_id = $1 AND status = 'active'` and answered
 // 403 'No active license for this organization' when it found nothing. No
 // writer in the platform produces that row: the licenses table is the
-// consultant → client-workspace licence (keyed by client_id, listed and
-// updated through client_workspaces.organization_id in license-routes.js), and
-// its INSERT never sets organization_id. So the check could only ever deny —
+// consultant → client-workspace licence (keyed by client_id, reached through
+// client_workspaces.organization_id), and the only writer it ever had — the
+// license-management router, since removed because every one of its handlers
+// threw — never set organization_id. So the check could only ever deny —
 // on a fresh install, on a paying enterprise tenant, on every organization —
 // and the V2 task board and collaboration launcher, which read /api/projects,
 // showed the 403 as an error on day one. It was a third gate with its own dead
