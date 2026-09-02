@@ -1,16 +1,78 @@
 /**
  * Atomic Quota Enforcement Service
  *
- * Production-grade quota enforcement with transaction safety
- * Prevents race conditions through database-level locking
- * Ensures concurrent requests cannot exceed licensed limits
+ * Transactional quota enforcement for the two governed "create" paths that
+ * consume a per-organization ceiling: projects and members. Each function
+ * locks the organization row (SELECT … FOR UPDATE), counts inside the same
+ * transaction, and inserts only when the count is under the ceiling, so two
+ * concurrent requests cannot both squeeze under the same limit.
+ *
+ * The ceilings are organizations.max_projects and organizations.max_users —
+ * the values the tenant's plan writes and install-fresh / signup seed, and the
+ * same values server/services/license-manager.ts reports as LicenseInfo.
+ *
+ * History, because it explains the shape of this file: every function here
+ * used to lock a row in `licenses` keyed by organization_id and answer
+ * NO_LICENSE when it found none. Nothing ever wrote an organization-keyed
+ * licence row — `licenses` was the consultant → client-workspace licence,
+ * keyed by client_id, and its only writer (a router whose every handler called
+ * `db.query` on a Drizzle instance and threw) never ran. The member path then
+ * counted seats in `license_users`, a table no migration creates. So on every
+ * install, fresh or paying, POST /api/projects and POST /api/tenant-users
+ * answered 400 NO_LICENSE, verified live against a fully provisioned database.
+ * Purchased-seat enforcement (organizations.seats_purchased) is a separate,
+ * stricter ceiling owned by server/services/seat-licensing.ts; the route
+ * applies it before calling here.
  */
 
 import { pool } from '../db.js';
+import { unusableInvitePasswordHash } from './password-setup-token.js';
 
 /**
- * Atomically check and consume project quota
- * Uses SELECT...FOR UPDATE to prevent concurrent violations
+ * Fallbacks for a NULL ceiling. They match the column defaults in
+ * shared/schema.ts (organizations.max_users / max_projects) and the values
+ * license-manager.ts substitutes, so a NULL means the same thing everywhere.
+ */
+const DEFAULT_MAX_PROJECTS = 10;
+const DEFAULT_MAX_USERS = 5;
+
+/**
+ * Lock the organization row and return its ceilings, or null when the
+ * organization does not exist. Must run inside the caller's transaction.
+ */
+async function lockOrganization(client, organizationId) {
+  const result = await client.query(
+    `SELECT max_projects, max_users FROM organizations WHERE id = $1 FOR UPDATE`,
+    [organizationId]
+  );
+  return result.rows[0] ?? null;
+}
+
+async function countMembers(client, organizationId) {
+  const result = await client.query(
+    `SELECT COUNT(*) as count FROM organization_users WHERE organization_id = $1`,
+    [organizationId]
+  );
+  return parseInt(result.rows[0].count, 10);
+}
+
+function quotaExceeded(kind, currentCount, maximum) {
+  return {
+    success: false,
+    error: 'QUOTA_EXCEEDED',
+    message: `${kind} quota exceeded. Current: ${currentCount}, Maximum: ${maximum}`,
+    details: { current: currentCount, maximum, remaining: 0 },
+  };
+}
+
+const ORGANIZATION_NOT_FOUND = Object.freeze({
+  success: false,
+  error: 'ORGANIZATION_NOT_FOUND',
+  message: 'Organization not found',
+});
+
+/**
+ * Atomically check and consume project quota.
  *
  * @param {number} organizationId - Organization to check
  * @param {object} projectData - Project data to create if quota available
@@ -22,56 +84,34 @@ export async function atomicCreateProject(organizationId, projectData) {
   try {
     await client.query('BEGIN');
 
-    // Lock the license row to prevent concurrent reads
-    const licenseResult = await client.query(
-      `SELECT * FROM licenses
-       WHERE organization_id = $1 AND status = 'active'
-       FOR UPDATE`,
-      [organizationId]
-    );
-
-    if (licenseResult.rows.length === 0) {
+    const organization = await lockOrganization(client, organizationId);
+    if (!organization) {
       await client.query('ROLLBACK');
-      return {
-        success: false,
-        error: 'NO_LICENSE',
-        message: 'No active license found for this organization',
-      };
+      return { ...ORGANIZATION_NOT_FOUND };
     }
 
-    const license = licenseResult.rows[0];
-
-    // Count current projects within the same transaction
     const countResult = await client.query(
-      `SELECT COUNT(*) as count
-       FROM projects
-       WHERE organization_id = $1`,
+      `SELECT COUNT(*) as count FROM projects WHERE organization_id = $1`,
       [organizationId]
     );
-
-    const currentCount = parseInt(countResult.rows[0].count);
-    const maxProjects = license.max_projects || 20;
+    const currentCount = parseInt(countResult.rows[0].count, 10);
+    const maxProjects = organization.max_projects || DEFAULT_MAX_PROJECTS;
 
     if (currentCount >= maxProjects) {
       await client.query('ROLLBACK');
-      return {
-        success: false,
-        error: 'QUOTA_EXCEEDED',
-        message: `Project quota exceeded. Current: ${currentCount}, Maximum: ${maxProjects}`,
-        details: {
-          current: currentCount,
-          maximum: maxProjects,
-          remaining: 0,
-        },
-      };
+      return quotaExceeded('Project', currentCount, maxProjects);
     }
 
-    // Create the project within the same transaction
+    // created_by_id / owner_id record WHO created the project — the attribution
+    // an audit reader expects on a governed object. The route passes the
+    // authenticated user's id; null only when the caller has no numeric id.
+    const createdById = projectData.createdById ?? null;
     const projectResult = await client.query(
       `INSERT INTO projects (
         name, description, type, priority, target_end_date,
-        organization_id, client_workspace_id, status, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+        organization_id, client_workspace_id, status,
+        created_by_id, owner_id, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
       RETURNING *`,
       [
         projectData.name,
@@ -82,6 +122,8 @@ export async function atomicCreateProject(organizationId, projectData) {
         organizationId,
         projectData.clientWorkspaceId,
         projectData.status || 'active',
+        createdById,
+        projectData.ownerId ?? createdById,
       ]
     );
 
@@ -98,12 +140,13 @@ export async function atomicCreateProject(organizationId, projectData) {
     };
   } catch (error) {
     await client.query('ROLLBACK');
+    // The driver's message names tables and columns; it belongs in the log,
+    // never in the response.
     console.error('Atomic project creation failed:', error);
     return {
       success: false,
       error: 'DATABASE_ERROR',
       message: 'Failed to create project atomically',
-      details: error.message,
     };
   } finally {
     client.release();
@@ -111,8 +154,9 @@ export async function atomicCreateProject(organizationId, projectData) {
 }
 
 /**
- * Atomically check and consume user quota
- * Uses SELECT...FOR UPDATE to prevent concurrent violations
+ * Atomically check and consume member quota, then create the user and their
+ * membership — or, for a user who already belongs to another organization, a
+ * pending invitation that needs their consent.
  *
  * @param {number} organizationId - Organization to check
  * @param {object} userData - User data to create if quota available
@@ -124,48 +168,18 @@ export async function atomicCreateUser(organizationId, userData) {
   try {
     await client.query('BEGIN');
 
-    // Lock the license row to prevent concurrent reads
-    const licenseResult = await client.query(
-      `SELECT * FROM licenses
-       WHERE organization_id = $1 AND status = 'active'
-       FOR UPDATE`,
-      [organizationId]
-    );
-
-    if (licenseResult.rows.length === 0) {
+    const organization = await lockOrganization(client, organizationId);
+    if (!organization) {
       await client.query('ROLLBACK');
-      return {
-        success: false,
-        error: 'NO_LICENSE',
-        message: 'No active license found for this organization',
-      };
+      return { ...ORGANIZATION_NOT_FOUND };
     }
 
-    const license = licenseResult.rows[0];
-
-    // Count current users within the same transaction
-    const countResult = await client.query(
-      `SELECT COUNT(*) as count
-       FROM license_users
-       WHERE license_id = $1`,
-      [license.id]
-    );
-
-    const currentCount = parseInt(countResult.rows[0].count);
-    const maxUsers = license.max_users || 10;
+    const currentCount = await countMembers(client, organizationId);
+    const maxUsers = organization.max_users || DEFAULT_MAX_USERS;
 
     if (currentCount >= maxUsers) {
       await client.query('ROLLBACK');
-      return {
-        success: false,
-        error: 'QUOTA_EXCEEDED',
-        message: `User quota exceeded. Current: ${currentCount}, Maximum: ${maxUsers}`,
-        details: {
-          current: currentCount,
-          maximum: maxUsers,
-          remaining: 0,
-        },
-      };
+      return quotaExceeded('User', currentCount, maxUsers);
     }
 
     // Check if user already exists
@@ -175,6 +189,7 @@ export async function atomicCreateUser(organizationId, userData) {
     ]);
 
     let userId;
+    let createdNewUser = false;
 
     if (existingUserResult.rows.length > 0) {
       userId = existingUserResult.rows[0].id;
@@ -255,11 +270,23 @@ export async function atomicCreateUser(organizationId, userData) {
           'User already belongs to another organization. A pending invitation requiring their consent was created; membership will be added when they accept.',
       };
     } else {
-      // Create new user
+      // Create new user.
+      //
+      // password_hash is NOT NULL and an invitee has no password yet, so the
+      // row carries an UNUSABLE hash (`invite:<uuid>`, the SCIM/SAML
+      // convention — bcrypt.compare can never match it) and
+      // must_change_password. The route then mints a password-setup token
+      // and sends the invitation; until it is redeemed this account cannot
+      // sign in. Before this the INSERT omitted password_hash and every
+      // invitation of a new address died on the NOT NULL constraint.
+      //
       // tenant-isolation-safe: user creation is org-less by design — a users row is a global identity; org membership is added separately via organization_users after the quota check above.
       const createUserResult = await client.query(
-        `INSERT INTO users (email, name, title, department, status, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        `INSERT INTO users (
+           email, name, title, department, status,
+           password_hash, must_change_password, created_at, updated_at
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, true, NOW(), NOW())
          RETURNING id`,
         [
           userData.email,
@@ -267,9 +294,11 @@ export async function atomicCreateUser(organizationId, userData) {
           userData.title || null,
           userData.department || null,
           'active',
+          unusableInvitePasswordHash(),
         ]
       );
       userId = createUserResult.rows[0].id;
+      createdNewUser = true;
     }
 
     // Add user to organization
@@ -277,14 +306,6 @@ export async function atomicCreateUser(organizationId, userData) {
       `INSERT INTO organization_users (user_id, organization_id, role, created_at, updated_at)
        VALUES ($1, $2, $3, NOW(), NOW())`,
       [userId, organizationId, userData.role || 'member']
-    );
-
-    // Add to license_users for quota tracking
-    await client.query(
-      `INSERT INTO license_users (license_id, user_id, created_at)
-       VALUES ($1, $2, NOW())
-       ON CONFLICT (license_id, user_id) DO NOTHING`,
-      [license.id, userId]
     );
 
     await client.query('COMMIT');
@@ -296,6 +317,9 @@ export async function atomicCreateUser(organizationId, userData) {
         email: userData.email,
         name: userData.name,
         role: userData.role,
+        // True when this call created the users row (and so an activation
+        // token is needed); false when an existing account was added.
+        createdNewUser,
       },
       quotaInfo: {
         used: currentCount + 1,
@@ -310,7 +334,6 @@ export async function atomicCreateUser(organizationId, userData) {
       success: false,
       error: 'DATABASE_ERROR',
       message: 'Failed to create user atomically',
-      details: error.message,
     };
   } finally {
     client.release();
@@ -320,9 +343,9 @@ export async function atomicCreateUser(organizationId, userData) {
 /**
  * Atomically accept a pending cross-org invitation (decision-register item
  * 12, issue #727). Self-only: the caller must BE the invited user. Creates
- * the organization_users membership (and license_users quota row) inside the
- * same transaction that marks the invitation accepted, re-checking the user
- * quota with the same SELECT...FOR UPDATE discipline as atomicCreateUser.
+ * the organization_users membership inside the same transaction that marks
+ * the invitation accepted, re-checking the member quota with the same
+ * SELECT...FOR UPDATE discipline as atomicCreateUser.
  *
  * @param {number} invitationId - Invitation to accept
  * @param {number} callerUserId - Session user id (must equal invitation.user_id)
@@ -369,43 +392,19 @@ export async function atomicAcceptInvitation(invitationId, callerUserId) {
 
     const organizationId = invitation.organization_id;
 
-    // Re-check quota at accept time — the invite path no longer consumes it.
-    const licenseResult = await client.query(
-      `SELECT * FROM licenses
-       WHERE organization_id = $1 AND status = 'active'
-       FOR UPDATE`,
-      [organizationId]
-    );
-
-    if (licenseResult.rows.length === 0) {
+    // Re-check quota at accept time — the invite path does not consume it.
+    const organization = await lockOrganization(client, organizationId);
+    if (!organization) {
       await client.query('ROLLBACK');
-      return {
-        success: false,
-        error: 'NO_LICENSE',
-        message: 'No active license found for this organization',
-      };
+      return { ...ORGANIZATION_NOT_FOUND };
     }
 
-    const license = licenseResult.rows[0];
-
-    const countResult = await client.query(
-      `SELECT COUNT(*) as count
-       FROM license_users
-       WHERE license_id = $1`,
-      [license.id]
-    );
-
-    const currentCount = parseInt(countResult.rows[0].count);
-    const maxUsers = license.max_users || 10;
+    const currentCount = await countMembers(client, organizationId);
+    const maxUsers = organization.max_users || DEFAULT_MAX_USERS;
 
     if (currentCount >= maxUsers) {
       await client.query('ROLLBACK');
-      return {
-        success: false,
-        error: 'QUOTA_EXCEEDED',
-        message: `User quota exceeded. Current: ${currentCount}, Maximum: ${maxUsers}`,
-        details: { current: currentCount, maximum: maxUsers, remaining: 0 },
-      };
+      return quotaExceeded('User', currentCount, maxUsers);
     }
 
     // Consent given: create the membership now.
@@ -414,13 +413,6 @@ export async function atomicAcceptInvitation(invitationId, callerUserId) {
        VALUES ($1, $2, $3, NOW(), NOW())
        ON CONFLICT (user_id, organization_id) DO NOTHING`,
       [organizationId, invitation.user_id, invitation.role || 'member']
-    );
-
-    await client.query(
-      `INSERT INTO license_users (license_id, user_id, created_at)
-       VALUES ($1, $2, NOW())
-       ON CONFLICT (license_id, user_id) DO NOTHING`,
-      [license.id, invitation.user_id]
     );
 
     await client.query(
@@ -449,171 +441,7 @@ export async function atomicAcceptInvitation(invitationId, callerUserId) {
       success: false,
       error: 'DATABASE_ERROR',
       message: 'Failed to accept invitation atomically',
-      details: error.message,
     };
-  } finally {
-    client.release();
-  }
-}
-
-/**
- * Atomically check and consume submission quota
- * Uses SELECT...FOR UPDATE to prevent concurrent violations
- *
- * @param {number} organizationId - Organization to check
- * @param {object} submissionData - Submission data to create if quota available
- * @returns {object} Result with success, data, and error details
- */
-export async function atomicCreateSubmission(organizationId, submissionData) {
-  const client = await pool.connect();
-
-  try {
-    await client.query('BEGIN');
-
-    // Lock the license row to prevent concurrent reads
-    const licenseResult = await client.query(
-      `SELECT l.*
-       FROM licenses l
-       INNER JOIN client_workspaces cw ON CAST(l.client_id AS INTEGER) = cw.id
-       WHERE cw.organization_id = $1 AND l.status = 'active'
-       FOR UPDATE`,
-      [organizationId]
-    );
-
-    if (licenseResult.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return {
-        success: false,
-        error: 'NO_LICENSE',
-        message: 'No active license found for this organization',
-      };
-    }
-
-    const license = licenseResult.rows[0];
-
-    // Count current month's submissions within the same transaction
-    const currentDate = new Date();
-    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
-
-    const countResult = await client.query(
-      `SELECT COUNT(*) as count
-       FROM submissions
-       WHERE license_id = $1
-       AND created_at >= $2
-       AND created_at < $3`,
-      [license.id, startOfMonth, endOfMonth]
-    );
-
-    const currentCount = parseInt(countResult.rows[0].count);
-    const maxSubmissions = license.max_submissions || 50;
-
-    if (currentCount >= maxSubmissions) {
-      await client.query('ROLLBACK');
-      return {
-        success: false,
-        error: 'QUOTA_EXCEEDED',
-        message: `Monthly submission quota exceeded. Current: ${currentCount}, Maximum: ${maxSubmissions}`,
-        details: {
-          current: currentCount,
-          maximum: maxSubmissions,
-          remaining: 0,
-          resetDate: endOfMonth.toISOString(),
-        },
-      };
-    }
-
-    // Create the submission within the same transaction
-    const submissionResult = await client.query(
-      `INSERT INTO submissions (
-        license_id, submission_type, device_name,
-        regulatory_body, status, metadata, created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, NOW())
-      RETURNING *`,
-      [
-        license.id,
-        submissionData.type,
-        submissionData.deviceName,
-        submissionData.regulatoryBody || 'FDA',
-        submissionData.status || 'draft',
-        JSON.stringify(submissionData.metadata || {}),
-      ]
-    );
-
-    await client.query('COMMIT');
-
-    return {
-      success: true,
-      data: submissionResult.rows[0],
-      quotaInfo: {
-        used: currentCount + 1,
-        maximum: maxSubmissions,
-        remaining: maxSubmissions - currentCount - 1,
-        resetDate: endOfMonth.toISOString(),
-      },
-    };
-  } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('Atomic submission creation failed:', error);
-    return {
-      success: false,
-      error: 'DATABASE_ERROR',
-      message: 'Failed to create submission atomically',
-      details: error.message,
-    };
-  } finally {
-    client.release();
-  }
-}
-
-/**
- * Add database constraints as a safety net
- * These should be run once during setup to enforce quotas at DB level
- */
-export async function createQuotaConstraints() {
-  const client = await pool.connect();
-
-  try {
-    // Create a function to check project quotas
-    await client.query(`
-      CREATE OR REPLACE FUNCTION check_project_quota()
-      RETURNS TRIGGER AS $$
-      DECLARE
-        project_count INTEGER;
-        max_projects INTEGER;
-      BEGIN
-        SELECT COUNT(*) INTO project_count
-        FROM projects
-        WHERE organization_id = NEW.organization_id;
-
-        SELECT l.max_projects INTO max_projects
-        FROM licenses l
-        INNER JOIN client_workspaces cw ON l.id = cw.license_id
-        WHERE cw.organization_id = NEW.organization_id
-        LIMIT 1;
-
-        IF project_count >= COALESCE(max_projects, 20) THEN
-          RAISE EXCEPTION 'Project quota exceeded for organization %', NEW.organization_id;
-        END IF;
-
-        RETURN NEW;
-      END;
-      $$ LANGUAGE plpgsql;
-    `);
-
-    // Create trigger for project quota
-    await client.query(`
-      DROP TRIGGER IF EXISTS enforce_project_quota ON projects;
-      CREATE TRIGGER enforce_project_quota
-      BEFORE INSERT ON projects
-      FOR EACH ROW
-      EXECUTE FUNCTION check_project_quota();
-    `);
-
-    console.log('✅ Database-level quota constraints created successfully');
-  } catch (error) {
-    console.error('Failed to create quota constraints:', error);
-    throw error;
   } finally {
     client.release();
   }
