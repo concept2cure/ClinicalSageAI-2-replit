@@ -2931,3 +2931,244 @@
 /* Wide tables (GSPR matrix, literature results) scroll inside their own
    container — the page body never scrolls horizontally. */
 .mdx-shell .tbl-scroll { overflow-x: auto; }
+
+
+/* ─── Pre-Sub manager (ps-*) ───────────────────────────────────────────────
+   510(k) Q-Submission tracker: filter row · list/detail two-pane · stage
+   strip · question cards · timeline · commitments table. This surface
+   shipped routed (device-presub) with no stylesheet at all — its 70 classes
+   were defined nowhere (ledger L139). Same rhythm and tokens as the
+   submissions two-pane (.sub-*) above; motion is the contract's
+   200ms ease-out only. Small text sits on --text-300, not --text-400: the
+   latter measures 3.37:1 on --bg-000 (see app-v2.css), below AA for text. */
+
+.mdx-shell .ps-filter-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.mdx-shell .ps-filter-spacer { flex: 1; }
+
+.mdx-shell .ps-layout {
+  display: grid; grid-template-columns: minmax(320px, 400px) 1fr;
+  gap: 16px; align-items: start;
+}
+@media (max-width: 960px) {
+  .mdx-shell .ps-layout { grid-template-columns: 1fr; }
+}
+.mdx-shell .ps-list { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+/* One Q-Sub in the list — a button, so it is keyboard-reachable. */
+.mdx-shell .ps-row {
+  display: flex; gap: 12px; align-items: flex-start;
+  width: 100%; padding: 12px 14px; text-align: left; cursor: pointer;
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--bg-000); color: inherit; font-family: inherit;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.mdx-shell .ps-row:hover { border-color: var(--border-strong); }
+.mdx-shell .ps-row:focus-visible { outline: 2px solid var(--accent-100); outline-offset: 2px; }
+.mdx-shell .ps-row[data-on="true"] { border-color: var(--accent-100); background: var(--accent-000); }
+.mdx-shell .ps-row-l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.mdx-shell .ps-row-r { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.mdx-shell .ps-row-id { display: flex; align-items: center; gap: 6px; }
+.mdx-shell .ps-row-title { font-size: 13px; font-weight: 500; color: var(--text-100); line-height: 1.3; }
+.mdx-shell .ps-row-prog { font-size: 11px; color: var(--text-300); }
+.mdx-shell .ps-row-stage {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 500; color: var(--text-200); white-space: nowrap;
+}
+.mdx-shell .ps-row-stage-dot {
+  width: 7px; height: 7px; border-radius: 99px; background: var(--text-400);
+}
+.mdx-shell .ps-row-stage[data-tone="ok"]   .ps-row-stage-dot { background: var(--success); }
+.mdx-shell .ps-row-stage[data-tone="warn"] .ps-row-stage-dot { background: var(--warning); }
+.mdx-shell .ps-row-stage[data-tone="err"]  .ps-row-stage-dot { background: var(--error); }
+.mdx-shell .ps-row-stage-days { color: var(--text-300); font-weight: 400; font-variant-numeric: tabular-nums; }
+.mdx-shell .ps-row-meta {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+  font-size: 11px; color: var(--text-300); font-variant-numeric: tabular-nums;
+}
+.mdx-shell .ps-row-commit { color: var(--warning); }
+.mdx-shell .ps-row-commit[data-on="true"] { color: var(--success); }
+
+/* Q-Submission type chip — same family as the vault's file-type badge. */
+.mdx-shell .ps-type {
+  padding: 1px 5px; border-radius: 3px; font-size: 9px; font-weight: 600;
+  letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;
+  background: var(--bg-100); color: var(--text-300); font-family: var(--font-mono);
+}
+.mdx-shell .ps-type-presub { background: color-mix(in oklab, var(--accent-100) 14%, transparent); color: var(--accent-200); }
+.mdx-shell .ps-type-sir    { background: color-mix(in oklab, var(--warning) 12%, transparent); color: var(--warning); }
+.mdx-shell .ps-type-srd    { background: color-mix(in oklab, var(--ai) 12%, transparent); color: var(--ai); }
+.mdx-shell .ps-type-agree  { background: color-mix(in oklab, var(--success) 12%, transparent); color: var(--success); }
+.mdx-shell .ps-type-info   { background: var(--bg-100); color: var(--text-300); }
+
+/* Detail pane */
+.mdx-shell .ps-detail {
+  min-width: 0; background: var(--bg-050); border-radius: var(--radius-md);
+  padding: 20px 22px 24px; display: flex; flex-direction: column; gap: 16px;
+}
+.mdx-shell .ps-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.mdx-shell .ps-detail-eyebrow {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  font-size: 11px; color: var(--text-300); text-transform: uppercase; letter-spacing: 0.04em;
+}
+.mdx-shell .ps-detail-title { margin: 4px 0 2px; font-size: 16px; font-weight: 600; color: var(--text-100); line-height: 1.3; }
+.mdx-shell .ps-detail-target { font-size: 12px; color: var(--text-300); }
+.mdx-shell .ps-detail-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.mdx-shell .ps-summary { font-size: 13px; line-height: 1.55; color: var(--text-200); }
+
+/* Stage strip: six cells, the active one lifted, the done ones settled. */
+.mdx-shell .ps-strip-wrap { display: flex; flex-direction: column; gap: 10px; }
+.mdx-shell .ps-strip {
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px;
+}
+.mdx-shell .ps-strip-cell {
+  padding: 8px 8px 7px; border-radius: var(--radius-md);
+  border: 1px solid var(--border); background: var(--bg-000);
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.mdx-shell .ps-strip-cell[data-state="done"]   { background: var(--bg-100); border-color: var(--border); }
+.mdx-shell .ps-strip-cell[data-state="active"] { border-color: var(--accent-100); background: var(--accent-000); }
+.mdx-shell .ps-strip-cell[data-state="todo"]   { color: var(--text-300); }
+.mdx-shell .ps-strip-num {
+  font-family: var(--font-mono); font-size: 10px; color: var(--text-300);
+  font-variant-numeric: tabular-nums;
+}
+.mdx-shell .ps-strip-cell[data-state="active"] .ps-strip-num { color: var(--accent-200); }
+.mdx-shell .ps-strip-lbl { font-size: 11px; font-weight: 500; color: var(--text-200); line-height: 1.25; }
+.mdx-shell .ps-strip-cell[data-state="todo"] .ps-strip-lbl { color: var(--text-300); font-weight: 400; }
+
+.mdx-shell .ps-meeting {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--bg-000); font-size: 12px;
+}
+.mdx-shell .ps-meeting > .ico { color: var(--text-300); display: inline-flex; }
+.mdx-shell .ps-meeting > .ico svg { width: 14px; height: 14px; }
+.mdx-shell .ps-meeting-when { font-weight: 500; color: var(--text-100); }
+.mdx-shell .ps-meeting-meta { font-size: 11px; color: var(--text-300); }
+.mdx-shell .ps-meeting-state {
+  margin-left: auto; padding: 1px 8px; border-radius: 99px;
+  font-size: 10px; font-weight: 600;
+}
+.mdx-shell .ps-meeting-state.ok   { background: var(--success-muted); color: var(--success); }
+.mdx-shell .ps-meeting-state.warn { background: var(--warning-muted); color: var(--warning); }
+
+/* Detail tabs */
+.mdx-shell .ps-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); }
+.mdx-shell .ps-tab {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 12px; margin-bottom: -1px; cursor: pointer;
+  border: 0; border-bottom: 2px solid transparent; background: transparent;
+  color: var(--text-300); font: inherit; font-size: 12px; font-weight: 500;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.mdx-shell .ps-tab:hover { color: var(--text-100); }
+.mdx-shell .ps-tab:focus-visible { outline: 2px solid var(--accent-100); outline-offset: -2px; }
+.mdx-shell .ps-tab[data-on="true"] { color: var(--text-100); border-bottom-color: var(--text-100); }
+.mdx-shell .ps-tab-n {
+  min-width: 18px; padding: 0 6px; border-radius: 99px; text-align: center;
+  font-size: 10px; font-weight: 600; background: var(--bg-100); color: var(--text-300);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Questions */
+.mdx-shell .ps-q-list { display: flex; flex-direction: column; gap: 10px; }
+.mdx-shell .ps-q {
+  padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--bg-000); display: flex; flex-direction: column; gap: 10px;
+}
+.mdx-shell .ps-q[data-status="pending"] { box-shadow: inset 2px 0 0 var(--warning); }
+.mdx-shell .ps-q[data-status="answered"] { box-shadow: inset 2px 0 0 var(--success); }
+.mdx-shell .ps-q-head { display: flex; align-items: center; gap: 8px; }
+.mdx-shell .ps-q-n { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--text-100); }
+.mdx-shell .ps-q-status {
+  margin-left: auto; padding: 1px 8px; border-radius: 99px;
+  font-size: 10px; font-weight: 600; background: var(--warning-muted); color: var(--warning);
+}
+.mdx-shell .ps-q-status-answered { background: var(--success-muted); color: var(--success); }
+.mdx-shell .ps-q-status-pending  { background: var(--warning-muted); color: var(--warning); }
+.mdx-shell .ps-q-text { font-size: 13px; line-height: 1.5; color: var(--text-100); }
+.mdx-shell .ps-q-pos, .mdx-shell .ps-q-fda {
+  padding: 10px 12px; border-radius: var(--radius-md); background: var(--bg-050);
+}
+.mdx-shell .ps-q-fda { border-left: 2px solid var(--success); }
+.mdx-shell .ps-q-pos-lbl, .mdx-shell .ps-q-fda-lbl {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--text-300); margin-bottom: 4px;
+}
+.mdx-shell .ps-q-pos-body, .mdx-shell .ps-q-fda-body { font-size: 12px; line-height: 1.5; color: var(--text-200); }
+
+/* A commitment attached to a question, linking into the dossier. */
+.mdx-shell .ps-q-commit {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--bg-000);
+}
+.mdx-shell .ps-q-commit[data-rolled="true"]  { border-color: var(--success); }
+.mdx-shell .ps-q-commit[data-blocker="true"] { border-color: var(--error); }
+.mdx-shell .ps-q-commit-l { display: flex; gap: 8px; min-width: 0; }
+.mdx-shell .ps-q-commit-ico { color: var(--text-300); display: inline-flex; margin-top: 2px; }
+.mdx-shell .ps-q-commit[data-rolled="true"] .ps-q-commit-ico { color: var(--success); }
+.mdx-shell .ps-q-commit-ico svg { width: 14px; height: 14px; }
+.mdx-shell .ps-q-commit-lbl {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-300);
+}
+.mdx-shell .ps-q-commit-body { font-size: 12px; line-height: 1.45; color: var(--text-100); }
+.mdx-shell .ps-q-commit-r { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.mdx-shell .ps-q-commit-link {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; cursor: pointer;
+  border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-000);
+  color: var(--accent-200); font: inherit; font-size: 11px; font-weight: 500;
+  transition: border-color var(--dur) var(--ease);
+}
+.mdx-shell .ps-q-commit-link:hover { border-color: var(--border-strong); }
+.mdx-shell .ps-q-commit-link .ico svg { width: 12px; height: 12px; }
+.mdx-shell .ps-q-commit-state, .mdx-shell .ps-commit-state {
+  padding: 1px 8px; border-radius: 99px; font-size: 10px; font-weight: 600; white-space: nowrap;
+}
+.mdx-shell .ps-q-commit-state.ok,   .mdx-shell .ps-commit-state.ok   { background: var(--success-muted); color: var(--success); }
+.mdx-shell .ps-q-commit-state.warn, .mdx-shell .ps-commit-state.warn { background: var(--warning-muted); color: var(--warning); }
+.mdx-shell .ps-q-commit-state.err,  .mdx-shell .ps-commit-state.err  { background: var(--error-muted);   color: var(--error); }
+
+/* Timeline */
+.mdx-shell .ps-timeline { display: flex; flex-direction: column; }
+.mdx-shell .ps-timeline-row {
+  display: grid; grid-template-columns: 96px 140px 1fr; gap: 12px; align-items: baseline;
+  padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px;
+}
+.mdx-shell .ps-timeline-row:last-child { border-bottom: 0; }
+.mdx-shell .ps-timeline-when { font-family: var(--font-mono); font-size: 11px; color: var(--text-300); font-variant-numeric: tabular-nums; }
+.mdx-shell .ps-timeline-who  { color: var(--text-300); }
+.mdx-shell .ps-timeline-what { color: var(--text-100); min-width: 0; }
+
+/* Commitments table — scrolls inside itself; the page never scrolls sideways. */
+.mdx-shell .ps-commit-table { display: flex; flex-direction: column; gap: 6px; overflow-x: auto; }
+.mdx-shell .ps-commit-row {
+  display: grid; grid-template-columns: 88px minmax(200px, 1fr) 72px auto auto;
+  gap: 10px; align-items: center;
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--bg-000); font-size: 12px;
+}
+.mdx-shell .ps-commit-row[data-rolled="true"]  { border-color: var(--success); }
+.mdx-shell .ps-commit-row[data-blocker="true"] { border-color: var(--error); }
+.mdx-shell .ps-commit-id   { color: var(--text-300); }
+.mdx-shell .ps-commit-text { color: var(--text-100); line-height: 1.4; min-width: 0; }
+.mdx-shell .ps-commit-from { font-size: 11px; color: var(--text-300); white-space: nowrap; }
+.mdx-shell .ps-commit-jump {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; cursor: pointer;
+  border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-000);
+  color: var(--accent-200); font: inherit; font-size: 11px; font-weight: 500; white-space: nowrap;
+  transition: border-color var(--dur) var(--ease);
+}
+.mdx-shell .ps-commit-jump:hover { border-color: var(--border-strong); }
+.mdx-shell .ps-commit-jump svg { width: 12px; height: 12px; }
+
+/* Honest empty state inside the list or the commitments tab. */
+.mdx-shell .ps-empty {
+  padding: 22px 16px; text-align: center; border: 1px dashed var(--border);
+  border-radius: var(--radius-md); color: var(--text-300);
+}
+.mdx-shell .ps-empty-t { font-size: 13px; font-weight: 500; color: var(--text-200); }
+.mdx-shell .ps-empty-s { font-size: 11px; margin-top: 4px; }
