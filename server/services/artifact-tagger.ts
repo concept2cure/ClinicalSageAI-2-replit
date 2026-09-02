@@ -14,6 +14,7 @@
  * @compliance FDA 21 CFR Part 11 — immutable audit trail
  */
 
+import { governedActor } from './part11/governed-actor';
 import { createHash, randomUUID } from 'node:crypto';
 
 import { getPool } from '../db/runtime.js';
@@ -208,8 +209,7 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
                 sourceRefs: [`section:${sectionCode}`],
               },
             },
-            userId: userId || 0,
-            userEmail: `user-${userId || 0}@system.local`,
+            ...governedActor(userId, 'artifact-tagger'),
             userRole: 'regulatory',
           } as any,
           projectId,

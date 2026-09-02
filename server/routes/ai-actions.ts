@@ -158,7 +158,12 @@ function getUserId(req: Request): number {
 }
 
 function getUserName(req: Request): string {
-  return (req.user as { name?: string } | undefined)?.name || req.user?.email || `user-${getUserId(req)}`;
+  const name = (req.user as { name?: string } | undefined)?.name || req.user?.email;
+  if (name) return name;
+  // An authenticated identity with neither a name nor an email cannot be
+  // attributed. Refusing is the honest answer; `user-${id}` was a person-shaped
+  // guess an inspector could not tell from a real one (ledger L142).
+  throw new Error('Authentication required');
 }
 
 function getUserRole(req: Request): string {

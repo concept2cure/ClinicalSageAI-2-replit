@@ -76,7 +76,10 @@ function getUserId(req: Request): number {
 }
 
 function getUserName(req: Request): string {
-  return req.user?.email || `user-${getUserId(req)}`;
+  if (req.user?.email) return req.user.email;
+  // Refuse rather than invent: `user-${id}` was a person-shaped guess an
+  // inspector could not tell from a real address (ledger L142).
+  throw new Error('Authentication required');
 }
 
 function getUserRole(req: Request): string {
@@ -637,17 +640,17 @@ async function recordGateAudit(req: Request, response: {
   assessedAt: string;
 }): Promise<void> {
   let userId: number;
-  let userName: string;
   try {
     userId = getUserId(req);
-    userName = getUserName(req);
   } catch {
     // System / unauthenticated callers (internal jobs) still get audited
     // but with a sentinel user. The route auth middleware should normally
     // prevent this branch in production.
     userId = 0;
-    userName = 'system';
   }
+  // An authenticated caller is attributed or refused — never filed as the
+  // sentinel, which would record a person's action as the system's.
+  const userName = userId ? getUserName(req) : 'system';
   const { db } = await import('../db.js');
   const { regulatoryAuditLogs } = await import('../../shared/schema.js');
   const auditId = `gate-${response.projectId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

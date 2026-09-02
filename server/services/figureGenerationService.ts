@@ -76,7 +76,8 @@ export interface FigureMetadata {
   footnotes?: string[];
   sourceReference?: string; // "Source: Study XYZ-001, Table 14.2.1"
   generatedAt: string;
-  generatedBy: string;
+  /** The requesting user's id — an id, not a person-shaped label (ledger L142). */
+  generatedByUserId: number;
   modelUsed: string;
   tokensUsed?: number;
 }
@@ -314,7 +315,7 @@ export async function generateFigure(
         footnotes: [],
         sourceReference: sourceData.map(s => s.name).join('; '),
         generatedAt: new Date().toISOString(),
-        generatedBy: `user-${request.userId}`,
+        generatedByUserId: request.userId,
         modelUsed: model,
         tokensUsed,
       },
@@ -711,7 +712,7 @@ function buildPlaceholderFigure(
       generatedFormat: format as FigureSpec['generatedFormat'],
       metadata: {
         generatedAt: new Date().toISOString(),
-        generatedBy: `user-${request.userId}`,
+        generatedByUserId: request.userId,
         modelUsed: 'placeholder',
       },
       confidence: 0,

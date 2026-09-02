@@ -50,6 +50,13 @@ const PATTERNS = [
     what: 'placeholder email domain',
   },
   {
+    // `${userName}@concept2cure.local`, `${username}@trialsage.ai` — an address
+    // manufactured from a display name, a username or a role is an identity
+    // nobody owns, and it reads exactly like one somebody does (ledger L142).
+    re: /`[^`]*\$\{[^}]+\}[^`]*@[a-z0-9.-]+\.[a-z]+[^`]*`/,
+    what: 'email address manufactured from an interpolated value',
+  },
+  {
     // `signerName: x ?? ''` / `userEmail: y || ""` — an empty string is not a name.
     re: /\b(?:signer|user|owner|actor|changedBy|approver)_?(?:Name|Email|name|email)\s*:\s*[^,;\n]*(?:\?\?|\|\|)\s*['"`]{2}/,
     what: 'empty string as a fallback identity',
