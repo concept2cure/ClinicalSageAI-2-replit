@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-01T23:56:59.661Z",
+  "generatedAt": "2026-09-02T04:43:33.310Z",
   "git": {
-    "sha": "6aab6b6a6fca62a3c7c08f3c0e37654ba50384cc",
+    "sha": "486519bc7c3e23b3974550ef5bb12da77cc773cc",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2158,11 +2158,11 @@
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
-        "bytes": 472815
+        "bytes": 474008
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "bytes": 341859
+        "bytes": 341900
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2304,7 +2304,7 @@
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
-        "lines": 5560
+        "lines": 5558
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2344,7 +2344,7 @@
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "lines": 3113
+        "lines": 3116
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2412,7 +2412,7 @@
       },
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
-        "lines": 2254
+        "lines": 2276
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
