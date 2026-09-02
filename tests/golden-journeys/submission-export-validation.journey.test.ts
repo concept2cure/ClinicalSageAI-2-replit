@@ -188,6 +188,12 @@ beforeAll(async () => {
 }, T);
 
 afterAll(async () => {
+  // NOT schema-gap checked. This journey runs on `createIndPgliteDb`
+  // (server/db/pglite-harness), which hands the services a Drizzle instance
+  // directly and has no single query chokepoint to observe a failed statement
+  // at — unlike `createJourneyDb`, whose pool shim records every 42P01/42703
+  // for `assertNoSchemaGaps`. So the check the other seven journeys now carry
+  // does not cover this one. Ledger L147.
   try {
     R.write('submission-export-validation');
   } finally {
