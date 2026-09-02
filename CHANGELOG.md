@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### AnA at work — live progress, work queue and tools, visible to the client
+
+- **A docked work panel** (`AnaWorkPanel`) in the persistent AnA rail and in the full-page conversation surface shows, while a turn runs: a **numbered progress list** of the phases the turn has actually passed through (planning, loading project memory, generating, running N steps, round 2, reading results, composing, finalizing) with the phase in flight highlighted and a running **"Still working · 57s"** clock; the **work queue** — this run's tool steps by round, steers accepted but not yet spliced into a round, and the tenant's background deep investigations (running / stalled / recently finished, read from the existing `GET /api/ana-ri/agent-activity`); the **tools** she called with their server-measured durations and an inputs disclosure for audit; the conversation's **outputs** (drafts and whether they were saved, executed actions, sign-offs waiting, reports); and the **context** she is grounded on. The rail remembers per browser whether the dock is shown.
+- Honesty rules carried over from the transcript's activity record: phases are derived from the stream's own `status` events and never templated, a stopped turn reads "Stopped after …" not "Finished", a failed queue read says so instead of showing an empty queue, and there is still no progress bar or percentage.
+- `useAnaChat` now keeps the ordered phase record (`progress`), the turn's wall-clock end (`completedAt`), per-step start/end clocks, and `pendingSteers`; the stream's `tool_result` event carries the server-side `latencyMs` it already logged to tool telemetry.
+
 ### Collaboration & Tasking — GA
 
 - **Task Board runs on real data.** Live project/assignee/current-user rosters (the project filter, "My tasks" and owner names previously bound to fixture slugs and returned nothing on live rows); a real Blocked column; explicit status transitions; optimistic moves with revert-and-explain; overdue computed from machine-readable due dates; workflow templates listable (`GET /api/tasks/templates`, org templates + built-in NDA/BLA / 510(k) / IND catalogs) and instantiable server-side with dependency linking. Board state (view/project/module/mine) is session-persisted and URL-shareable.

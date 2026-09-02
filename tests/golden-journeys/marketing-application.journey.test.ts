@@ -72,7 +72,10 @@ const OTHER_PROJECT = 202;
  * endpoint aggregates.
  */
 const PREREQ = `
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
+  -- \`uuid\` as db/migrations/20260129_add_org_uuid_alignment.sql adds it; the
+  -- org-membership middleware LEFT JOINs it on every request and, without it,
+  -- degrades to a membership-only decision with orgUuid = null (ledger L148).
+  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid UUID NOT NULL DEFAULT gen_random_uuid());
   CREATE TABLE users (id SERIAL PRIMARY KEY, email TEXT);
   CREATE TABLE projects (id SERIAL PRIMARY KEY, organization_id INTEGER REFERENCES organizations(id), name TEXT);
   CREATE TABLE ectd_modules (id SERIAL PRIMARY KEY, name TEXT);

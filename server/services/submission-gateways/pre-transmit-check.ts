@@ -36,6 +36,10 @@ import {
 } from '../ectd/external-validator';
 import { pdfaRequiredFromEnv } from '../ectd/pdfa-readiness';
 import { dtdRequiredFromEnv } from '../ectd/dtd-bundler';
+import {
+  evaluateRegionalBackboneGate,
+  regionalBackboneRequiredFromEnv,
+} from '../ectd/regional-backbone-readiness';
 
 /** Gateway region (lowercase) → regulatory region (uppercase) for the size limit. */
 const REGION_TO_REGULATORY: Record<Region, RegulatoryRegion> = {
@@ -125,6 +129,19 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
   } else if (isProd && dtdRequired) {
     warnings.push('ECTD_REQUIRE_DTD is set but the bundle carries no DTD status — cannot prove self-containment at transmit time.');
   }
+
+  // 3b. Regional Module 1 backbone conformance. The eight widened regions ship an
+  // EMA-structure PLACEHOLDER as `<cc>-regional.xml`; it is always surfaced and
+  // blocks a production transmit only when ECTD_REQUIRE_REGIONAL_BACKBONE=true
+  // (same opt-in posture as the PDF/A + DTD gates).
+  const regionalGate = evaluateRegionalBackboneGate({
+    status: input.bundle.regionalBackbone,
+    environment: input.environment,
+    required: regionalBackboneRequiredFromEnv(env),
+  });
+  if (regionalGate.check) checks.push(regionalGate.check);
+  blockers.push(...regionalGate.blockers);
+  warnings.push(...regionalGate.warnings);
 
   // 4. External agency-grade validation gate (route layer only — see enforceExternal).
   if (input.enforceExternal !== false) {

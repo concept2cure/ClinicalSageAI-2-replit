@@ -224,7 +224,7 @@ beforeAll(async () => {
       r.userRole = role;
       r.tenantId = orgId;
       r.tenantContext = { organizationId: orgId };
-      r.dbClient = makeRequestDbClient(jdb.pglite, jdb.schemaGaps);
+      r.dbClient = makeRequestDbClient(jdb.pglite);
     }
     next();
   });

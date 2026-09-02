@@ -1763,6 +1763,86 @@
 .c2c-v2 .ana-chip-gov{display:inline-flex;align-items:center;margin-left:3px;color:var(--text-400);}
 .c2c-v2 .ana-chip-gov svg{font-size:10px;}
 
+/* ── AnA at work — the live dock (AnaWorkPanel) ─────────────────────────── */
+/* Same rules as the activity record above: body text is --text-300 or darker
+   (the --text-400 exception is for large text and glyphs only), motion is the
+   one 1.6s opacity pulse reused from the activity dot, and it stops under
+   prefers-reduced-motion. Sections stack; each header is a real button. */
+.c2c-v2 .ana-work{display:flex;flex-direction:column;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.c2c-v2 .ana-work-hdr{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);background:var(--bg-050);}
+.c2c-v2 .ana-work-title{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .ana-work-mark{display:inline-flex;color:var(--accent-200);}
+.c2c-v2 .ana-work-mark svg{font-size:13px;}
+.c2c-v2 .ana-work-elapsed{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.c2c-v2 .ana-work-pulse{display:inline-flex;color:var(--accent-200);animation:ana-activity-pulse 1600ms ease-out infinite;}
+.c2c-v2 .ana-work-pulse svg{font-size:11px;}
+.c2c-v2 .ana-work-x{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border:0;border-radius:var(--radius-sm);background:none;color:var(--text-400);cursor:pointer;transition:color 200ms ease-out,background 200ms ease-out;}
+.c2c-v2 .ana-work-x:hover{color:var(--text-100);background:var(--bg-200);}
+.c2c-v2 .ana-work-x:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
+.c2c-v2 .ana-work-x svg{font-size:12px;}
+.c2c-v2 .ana-work-idle{padding:12px;font-size:11.5px;line-height:1.55;color:var(--text-300);}
+.c2c-v2 .ana-work-sec{border-bottom:1px solid var(--border);}
+.c2c-v2 .ana-work-sec:last-child{border-bottom:0;}
+.c2c-v2 .ana-work-sec-h{display:flex;align-items:center;gap:6px;width:100%;padding:8px 12px;border:0;background:none;font:inherit;font-size:11.5px;font-weight:600;color:var(--text-100);text-align:left;cursor:pointer;transition:background 200ms ease-out;}
+.c2c-v2 .ana-work-sec-h:hover{background:var(--bg-050);}
+.c2c-v2 .ana-work-sec-h:focus-visible{outline:2px solid var(--accent-200);outline-offset:-2px;}
+.c2c-v2 .ana-work-sec-t{flex:1;min-width:0;}
+.c2c-v2 .ana-work-sec-m{font-size:10.5px;font-weight:500;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.c2c-v2 .ana-work-sec-chev{display:inline-flex;color:var(--text-400);}
+.c2c-v2 .ana-work-sec-chev svg{font-size:12px;}
+.c2c-v2 .ana-work-sec-b{display:flex;flex-direction:column;gap:8px;padding:2px 12px 10px;}
+.c2c-v2 .ana-work-group{display:flex;flex-direction:column;gap:4px;}
+.c2c-v2 .ana-work-group-h{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-300);margin-top:4px;}
+.c2c-v2 .ana-work-round{display:flex;flex-direction:column;gap:3px;}
+.c2c-v2 .ana-work-round-h{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-300);margin-top:3px;}
+/* The numbered plan. The number sits in a ring; a done phase swaps it for a
+   check, a stopped one for a cross, and the active one carries the accent. */
+.c2c-v2 .ana-work-phases{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
+.c2c-v2 .ana-work-phase{display:grid;grid-template-columns:18px 1fr auto;column-gap:8px;align-items:center;font-size:11.5px;color:var(--text-300);}
+.c2c-v2 .ana-work-num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;border:1px solid var(--border);font-size:10px;font-weight:600;color:var(--text-300);font-variant-numeric:tabular-nums;}
+.c2c-v2 .ana-work-num svg{font-size:11px;}
+.c2c-v2 .ana-work-phase.is-active{color:var(--text-100);}
+.c2c-v2 .ana-work-phase.is-active .ana-work-num{border-color:var(--accent-200);color:var(--accent-200);}
+.c2c-v2 .ana-work-phase.is-done .ana-work-num{border-color:var(--success);color:var(--success);}
+.c2c-v2 .ana-work-phase.is-stopped .ana-work-num{border-color:var(--warning);color:var(--warning);}
+.c2c-v2 .ana-work-phase-l{min-width:0;overflow-wrap:anywhere;}
+.c2c-v2 .ana-work-phase-t{font-size:10.5px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.c2c-v2 .ana-work-current{grid-column:2 / span 2;display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-300);}
+.c2c-v2 .ana-work-current svg{font-size:11px;}
+/* Steps, queue rows and outputs share one row shape. */
+.c2c-v2 .ana-work-step{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:11.5px;color:var(--text-300);}
+.c2c-v2 .ana-work-glyph{display:inline-flex;color:var(--text-400);}
+.c2c-v2 .ana-work-glyph svg{font-size:12px;}
+.c2c-v2 .ana-work-step.is-success .ana-work-glyph{color:var(--success);}
+.c2c-v2 .ana-work-step.is-error .ana-work-glyph{color:var(--warning);}
+.c2c-v2 .ana-work-step.is-running .ana-work-glyph{color:var(--accent-200);}
+.c2c-v2 .ana-work-step-l{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;}
+.c2c-v2 .ana-work-step-t{font-size:10.5px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.c2c-v2 .ana-work-note{color:var(--warning);font-size:10.5px;flex:1 0 100%;box-sizing:border-box;padding-left:18px;}
+.c2c-v2 .ana-work-link{font:inherit;font-size:10.5px;color:var(--text-300);background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;transition:color 200ms ease-out;}
+.c2c-v2 .ana-work-link:hover{color:var(--text-100);}
+.c2c-v2 .ana-work-link:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:var(--radius-sm);}
+.c2c-v2 .ana-work-pre{flex:1 0 100%;box-sizing:border-box;margin:0;padding:6px 8px;max-height:160px;overflow:auto;font-family:var(--font-mono);font-size:10.5px;line-height:1.5;color:var(--text-200);background:var(--bg-100);border:1px solid var(--border);border-radius:var(--radius-sm);white-space:pre-wrap;overflow-wrap:anywhere;}
+.c2c-v2 .ana-work-pre:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
+.c2c-v2 .ana-work-sum{font-size:11.5px;color:var(--text-300);line-height:1.5;}
+.c2c-v2 .ana-work-empty{font-size:11px;color:var(--text-300);line-height:1.5;}
+.c2c-v2 .ana-work-err{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:11px;color:var(--warning);}
+.c2c-v2 .ana-work-err svg{font-size:12px;}
+.c2c-v2 .ana-work-qi{display:flex;flex-direction:column;gap:2px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-050);}
+.c2c-v2 .ana-work-qi-q{font-size:11.5px;color:var(--text-100);overflow-wrap:anywhere;}
+.c2c-v2 .ana-work-qi-s{font-size:10.5px;color:var(--text-300);}
+.c2c-v2 .ana-work-asof{font-size:10px;color:var(--text-300);}
+.c2c-v2 .ana-work-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.c2c-v2 .ana-work-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:var(--bg-100);font-size:10.5px;color:var(--text-300);}
+.c2c-v2 .ana-work-chip svg{font-size:10px;}
+.c2c-v2 .ana-work-kv{display:grid;grid-template-columns:84px 1fr;column-gap:8px;align-items:start;font-size:11.5px;}
+.c2c-v2 .ana-work-k{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-300);font-weight:600;padding-top:2px;}
+.c2c-v2 .ana-work-v{color:var(--text-100);min-width:0;overflow-wrap:anywhere;}
+@media (prefers-reduced-motion:reduce){
+  .c2c-v2 .ana-work-pulse{animation:none;opacity:1;}
+  .c2c-v2 .ana-work-x,.c2c-v2 .ana-work-sec-h,.c2c-v2 .ana-work-link{transition:none;}
+}
+
 /* ── Page header ── */
 .c2c-v2 .ph{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:24px;}
 /* --accent-200, not --accent-100: the identity orange is the colour the brand
@@ -2612,6 +2692,12 @@
 /* ── conversation + live artifact panel split ── */
 .c2c-v2 .ct-main{flex:1;min-height:0;display:flex;}
 .c2c-v2 .ct-conv{flex:1;min-width:0;display:flex;flex-direction:column;}
+/* The side column stacks AnA's live work dock over the artifact panel; the
+   artifacts keep their width and take whatever height the dock leaves. */
+.c2c-v2 .ct-side{display:flex;flex-direction:column;flex-shrink:0;min-height:0;}
+.c2c-v2 .ct-side-work{width:384px;box-sizing:border-box;flex-shrink:0;max-height:52%;overflow-y:auto;padding:12px 12px 0;border-left:1px solid var(--border);background:var(--bg-050);}
+.c2c-v2 .ct-side .ct-artifacts{flex:1;}
+.c2c-v2 .ct-side .ct-art-rail{flex:1;}
 .c2c-v2 .ct-artifacts{width:384px;flex-shrink:0;border-left:1px solid var(--border);background:var(--bg-050);display:flex;flex-direction:column;min-height:0;}
 .c2c-v2 .ct-art-panel-h{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 4px;}
 .c2c-v2 .ct-art-panel-t{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--text-100);}

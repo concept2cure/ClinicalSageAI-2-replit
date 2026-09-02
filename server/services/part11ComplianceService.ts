@@ -184,7 +184,7 @@ class Part11ComplianceService {
       // The attribution hash is computed over the EXACT manifest that is
       // persisted. Previously the hash covered signatureData while the stored
       // manifest additionally carried boundPayloadDigest, so
-      // validateElectronicSignature's integrity re-derivation (which hashes
+      // verifySignatureIntegrity's integrity re-derivation (which hashes
       // the stored manifest) could never match — every signature verified as
       // "integrity compromised". Hash and manifest must be the same bytes.
       const signatureManifest = { ...signatureData, boundPayloadDigest };
@@ -357,85 +357,6 @@ class Part11ComplianceService {
       versionNumber: version.versionNumber,
       content: version.content,
     });
-  }
-
-  /**
-   * Validate electronic signature
-   */
-  async validateElectronicSignature(signatureId: number, documentId: number) {
-    try {
-      const dbInstance = this.getDb();
-      const [signature] = await dbInstance
-        .select()
-        .from(electronicSignatures)
-        .where(eq(electronicSignatures.id, signatureId))
-        .limit(1);
-
-      if (!signature) {
-        return {
-          valid: false,
-          reason: 'Signature not found',
-        };
-      }
-
-      if (signature.documentId !== documentId) {
-        return {
-          valid: false,
-          reason: 'Signature does not match document',
-        };
-      }
-
-      const manifest = signature.signatureManifest ?? {};
-      const integrityCheck = this.verifySignatureIntegrity(
-        JSON.stringify(manifest),
-        signature.signatureHash
-      );
-
-      if (!integrityCheck.valid) {
-        return {
-          valid: false,
-          reason: 'Signature integrity compromised',
-        };
-      }
-
-      const expiryCheck = this.checkSignatureExpiry(signature.signedAt);
-      if (!expiryCheck.valid) {
-        return {
-          valid: false,
-          reason: 'Signature has expired',
-        };
-      }
-
-      // §11.70 record binding: re-derive the content digest of the SIGNED version
-      // and confirm it still matches what was signed. This is what detects a
-      // post-signing content change — the guarantee the signature exists to make.
-      // versionId is nullable since D6 (governed-target rows anchor via
-      // signed_target and never reach here — the documentId match above already
-      // rejected them); a null version cannot be re-derived, so it reports as
-      // unverifiable rather than silently valid.
-      const bound = (signature as { boundPayloadDigest?: string | null }).boundPayloadDigest;
-      const current = bound && bound.length > 0 && signature.versionId != null
-        ? await this.computeVersionBindingDigest(signature.versionId)
-        : null;
-      const binding = evaluateBindingVerification(bound, current);
-      if (!binding.valid) {
-        return { valid: false, bindingVerified: false, reason: binding.reason };
-      }
-      return {
-        valid: true,
-        bindingVerified: binding.bindingVerified,
-        signedBy: signature.signerId,
-        signedAt: signature.signedAt,
-        reason: signature.signaturePurpose,
-        meaning: signature.signatureMeaning,
-      };
-    } catch (error) {
-      console.error('Error validating electronic signature:', error);
-      return {
-        valid: false,
-        reason: 'Validation error',
-      };
-    }
   }
 
   /**
@@ -826,35 +747,6 @@ class Part11ComplianceService {
       // (route handlers have req.ip), or null when unknown — never a fabricated
       // 127.0.0.1. See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: Part 11 attribution).
       ipAddress: ipAddress ?? null,
-    };
-  }
-
-  /**
-   * Verify signature integrity
-   */
-  verifySignatureIntegrity(signatureData: string, expectedHash: string) {
-    const calculatedHash = crypto
-      .createHash(this.hashAlgorithm)
-      .update(signatureData)
-      .digest('hex');
-
-    return {
-      valid: calculatedHash === expectedHash,
-    };
-  }
-
-  /**
-   * Check signature expiry
-   */
-  checkSignatureExpiry(signedAt: string | Date) {
-    // Signatures valid for 10 years by default
-    const expiryYears = 10;
-    const expiryDate = new Date(signedAt);
-    expiryDate.setFullYear(expiryDate.getFullYear() + expiryYears);
-
-    return {
-      valid: new Date() < expiryDate,
-      expiryDate,
     };
   }
 

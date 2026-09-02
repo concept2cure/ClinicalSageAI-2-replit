@@ -132,7 +132,10 @@ const PREREQ = `
     ip_address    TEXT,
     user_agent    TEXT
   );
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
+  -- \`uuid\` as db/migrations/20260129_add_org_uuid_alignment.sql adds it; the
+  -- org-membership middleware LEFT JOINs it on every request and, without it,
+  -- degrades to a membership-only decision with orgUuid = null (ledger L148).
+  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid UUID NOT NULL DEFAULT gen_random_uuid());
   -- users.id is INTEGER, standing in for the production serial. It was UUID for
   -- a history join that read u.id = r.created_by::uuid; that join was removed
   -- (Postgres rejects integer = uuid at parse time) and now compares as text,

@@ -98,13 +98,38 @@ for (const f of files) {
   for (const m of src.matchAll(WRITE_RE)) if (TABLES.has(m[1])) writes.add(m[1]);
 }
 
-// Raw SQL writes anywhere in the repo count too — a table written by a service
-// using raw SQL is written, however it got there.
+// Raw SQL writes count too — a table written by a service using raw SQL is
+// written, however it got there.
+//
+// AND SQL-SIDE WRITERS COUNT. Ledger L144 found that the audit-store inventory
+// grepped TypeScript alone and produced a delete list 24 tables too long,
+// because this codebase's Part 11 stores are written by SECURITY DEFINER
+// functions and BEFORE INSERT hash-chain triggers defined in db/migrations/ —
+// every store whose only writer is a database function read as dead. Its
+// conclusion generalises: a liveness claim made from TypeScript alone is
+// unsound here. So the migration trees are scanned as well, and a table with
+// only a PL/pgSQL writer, or only a seed, is NOT reported. Erring permissive is
+// the safe direction for a ratchet: a missed finding costs a later look, a
+// false one costs the gate its credibility.
 const rawWriteNames = new Set();
-for (const f of files) {
+const sqlSources = [...files];
+for (const root of ['migrations', 'db/migrations']) {
+  const abs = path.join(repoRoot, root);
+  if (!fs.existsSync(abs)) continue;
+  const stack = [abs];
+  while (stack.length) {
+    const dir = stack.pop();
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p2 = path.join(dir, e.name);
+      if (e.isDirectory()) stack.push(p2);
+      else if (/\.sql$/i.test(e.name)) sqlSources.push(p2);
+    }
+  }
+}
+for (const f of sqlSources) {
   const src = fs.readFileSync(f, 'utf8');
-  for (const m of src.matchAll(/INSERT\s+INTO\s+([a-zA-Z_][a-zA-Z0-9_.]*)/gi)) rawWriteNames.add(m[1].toLowerCase());
-  for (const m of src.matchAll(/UPDATE\s+([a-zA-Z_][a-zA-Z0-9_.]*)\s+SET/gi)) rawWriteNames.add(m[1].toLowerCase());
+  for (const m of src.matchAll(/INSERT\s+INTO\s+(?:public\.)?([a-zA-Z_][a-zA-Z0-9_]*)/gi)) rawWriteNames.add(m[1].toLowerCase());
+  for (const m of src.matchAll(/UPDATE\s+(?:public\.)?([a-zA-Z_][a-zA-Z0-9_]*)\s+SET/gi)) rawWriteNames.add(m[1].toLowerCase());
 }
 /** drizzle identifiers are camelCase; raw SQL is snake_case. Compare on snake. */
 const snake = (s) => s.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();

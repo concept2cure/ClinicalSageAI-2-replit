@@ -54,7 +54,6 @@ import {
   JourneyRecorder,
   type JourneyDb,
   assertNoSchemaGaps,
-  withExpectedSchemaGaps,
 } from './harness';
 import {
   SUBMISSION_CORE_PGLITE_DDL,
@@ -256,7 +255,7 @@ beforeAll(async () => {
       r.userRole = role;
       r.tenantId = orgId;
       r.tenantContext = { organizationId: orgId };
-      r.dbClient = makeRequestDbClient(jdb.pglite, jdb.schemaGaps);
+      r.dbClient = makeRequestDbClient(jdb.pglite);
     }
     next();
   });
@@ -267,7 +266,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
   // A journey that ran against a database missing a table its subject writes
-  // to proves less than it claims (ledger L145).
+  // to proves less than it claims (ledger L145). The one 42P01 this journey
+  // provokes on purpose — the rollback probe hides audit_logs for a single
+  // request — is captured and asserted inside that step, so no allowlist here.
   assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('drug-nda-ectd');
   // eslint-disable-next-line no-console
@@ -381,22 +382,29 @@ describe('golden journey — drug NDA / eCTD', () => {
       // Make the audit store unavailable for exactly one request. The audit row
       // is written LAST, after the programme, the scaffold, the spine and the
       // anchor — so anything that survives proves the transaction was not one.
-      // The 42P01 this provokes is INTENDED, so it is licensed for exactly this
-      // window rather than allowed for the whole journey — a blanket allowance
-      // would also hide a genuine missing table everywhere else.
-      const res = await withExpectedSchemaGaps(jdb, ['audit_logs'], async () => {
-        await jdb.pool.query(`ALTER TABLE audit_logs RENAME TO audit_logs_journey_hidden`);
-        try {
-          return await asPrincipal(ORG, USER)(request(app).post('/api/c2c/projects')).send({
-            name: 'Rollback Probe NDA',
-            productName: 'Rollbackinib',
-            programType: 'nda',
-            primaryAgency: 'FDA',
-          });
-        } finally {
-          await jdb.pool.query(`ALTER TABLE audit_logs_journey_hidden RENAME TO audit_logs`);
-        }
-      });
+      await jdb.pool.query(`ALTER TABLE audit_logs RENAME TO audit_logs_journey_hidden`);
+      // The recorder (L145) sees the audit write fail with 42P01 inside this
+      // window. That is the step working, not a schema gap: capture it here,
+      // prove the hidden store was actually written to, and take it out of the
+      // journey's gap list so afterAll needs no allowlist (ledger L146).
+      const gapsBefore = jdb.schemaGaps.length;
+      let res;
+      try {
+        res = await asPrincipal(ORG, USER)(request(app).post('/api/c2c/projects')).send({
+          name: 'Rollback Probe NDA',
+          productName: 'Rollbackinib',
+          programType: 'nda',
+          primaryAgency: 'FDA',
+        });
+      } finally {
+        await jdb.pool.query(`ALTER TABLE audit_logs_journey_hidden RENAME TO audit_logs`);
+      }
+      // A probe blocked for any other reason proves nothing about the audit
+      // write, so "the hidden store was reached" is part of the verdict, not a
+      // throw — inside expectBlocked a throw reads as the block itself.
+      const auditStoreReached = jdb.schemaGaps
+        .splice(gapsBefore)
+        .some((g) => g.code === '42P01' && g.message.includes('"audit_logs"'));
       const after = await jdb.pool.query(
         `SELECT (SELECT count(*)::int FROM regulatory_programs) AS g,
                 (SELECT count(*)::int FROM submissions) AS s,
@@ -406,11 +414,13 @@ describe('golden journey — drug NDA / eCTD', () => {
       const a = after.rows[0] as { g: number; s: number; p: number };
       return {
         blocked:
+          auditStoreReached &&
           res.status === 503 &&
           res.body.error === 'PENDING_STORE' &&
           b.g === a.g &&
           b.s === a.s &&
           b.p === a.p,
+        auditStoreReached,
         status: res.status,
         error: res.body?.error,
         programsBefore: b.g,
