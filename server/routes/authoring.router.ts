@@ -35,7 +35,7 @@ import {
   grantAuthoringPermission,
   resolveAuthoringSectionScope,
 } from '../services/authoring/authoring-permissions';
-import { sectionInsertIndex } from '../../shared/regulatory/section-code';
+import { sectionInsertIndex, sectionStructureIssues } from '../../shared/regulatory/section-code';
 import {
   computeChainHash,
   sha256Hex,
@@ -2146,10 +2146,25 @@ router.get('/docs/:docId/sections', async (req: Request, res: Response) => {
       [docId, tenantId]
     );
 
+    /* Two structural facts about the document as a whole, computed from the
+       rows just read — no second query, and every client that already reads
+       this endpoint gets them.
+
+       They are worth stating because neither is visible from any one section:
+       a code filed twice puts two 3.2.S in the assembled dossier with nothing
+       to say which is meant, and a stored order that disagrees with the codes
+       means the dossier assembles in the wrong order. Documents created before
+       the section-create path assigned a real position have every section at
+       index 0, so this is how one is recognised. */
+    const structure = sectionStructureIssues(
+      result.rows.map((r: { code?: string | null }) => String(r.code ?? '')),
+    );
+
     res.json({
       success: true,
       sections: result.rows,
       count: result.rowCount,
+      structure,
     });
   } catch (error) {
     console.error('Error getting sections:', error);
