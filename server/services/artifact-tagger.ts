@@ -209,7 +209,10 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
               },
             },
             userId: userId || 0,
-            userEmail: `user-${userId || 0}@system.local`,
+            // No userEmail. resolveGovernedContext resolves the actor as
+            // `userId || userEmail || 'unknown'`, so a synthesised address only ever
+            // displaced that honest 'unknown' — and did it with a person-shaped
+            // string an inspector cannot tell from a real one (ledger L142).
             userRole: 'regulatory',
           } as any,
           projectId,

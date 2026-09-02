@@ -604,7 +604,10 @@ async function storeExtractedArtifacts(
         },
       },
       userId: job.userId,
-      userEmail: `user-${job.userId}@system.local`,
+      // No userEmail. The job carries the submitting user's real id, which
+      // resolveGovernedContext prefers anyway; the synthesised address was only
+      // reachable when that id was absent, and there the honest answer is the
+      // 'unknown' it already falls back to (ledger L142).
       userRole: 'regulatory',
     } as any,
     projectId: job.projectId,
@@ -719,7 +722,8 @@ async function storeExtractedArtifacts(
           },
         },
         userId: job.userId,
-        userEmail: `user-${job.userId}@system.local`,
+        // No userEmail — see the note on the first governed-context call above
+        // (ledger L142).
         userRole: 'regulatory',
       } as any,
       projectId: job.projectId,
@@ -824,7 +828,8 @@ async function storeExtractedArtifacts(
             },
           },
           userId: job.userId,
-          userEmail: `user-${job.userId}@system.local`,
+          // No userEmail — see the note on the first governed-context call above
+          // (ledger L142).
           userRole: 'regulatory',
         } as any,
         projectId: job.projectId,
