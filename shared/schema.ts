@@ -1905,7 +1905,6 @@ export const documentVersions = pgTable(
 // AUDIT TRAIL (21 CFR PART 11 COMPLIANT - IMMUTABLE)
 // Field-level change tracking with electronic signature integration.
 // Use for: individual field changes, signature events, permission changes.
-// See also: documentAuditLog (higher-level version/review tracking)
 // ============================================================================
 
 export const documentAuditTrail = pgTable(
@@ -4660,48 +4659,6 @@ export type QualityManagementPlan = InferSelectModel<typeof qualityManagementPla
 export type InsertQualityManagementPlan = z.infer<typeof insertQualityManagementPlanSchema>;
 
 /**
- * QMP Audit Trail Table
- *
- * Tracks changes to quality management plans for compliance and audit purposes.
- */
-export const qmpAuditTrail = pgTable(
-  'qmp_audit_trail',
-  {
-    id: serial('id').primaryKey(),
-    organizationId: integer('organization_id')
-      .notNull()
-      .references(() => organizations.id),
-    qmpId: integer('qmp_id')
-      .notNull()
-      .references(() => qualityManagementPlans.id),
-    userId: integer('user_id').references(() => users.id),
-    actionType: text('action_type').notNull(), // create, update, approve, review, retire
-    entityType: text('entity_type').notNull(), // qmp, ctq_factor, section_gate, etc.
-    entityId: text('entity_id').notNull(),
-    description: text('description').notNull(),
-    previousState: json('previous_state'),
-    newState: json('new_state'),
-    ipAddress: text('ip_address'),
-    userAgent: text('user_agent'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-  },
-  table => ({
-    idx_qmp_audit_trail_org: index('idx_qmp_audit_trail_org').on(table.organizationId),
-  })
-);
-
-// QMP Audit Trail Insert Schema
-export const insertQmpAuditTrailSchema = createInsertSchemaOmit(qmpAuditTrail, {
-  id: true,
-  createdAt: true,
-});
-
-// QMP Audit Trail Types
-export type QmpAuditTrail = InferSelectModel<typeof qmpAuditTrail>;
-export type InsertQmpAuditTrail = z.infer<typeof insertQmpAuditTrailSchema>;
-
-/**
  * CTQ (Critical-to-Quality) Factors Table
  *
  * Stores critical quality factors with risk-based categorization.
@@ -4848,7 +4805,6 @@ export const qualityManagementPlansRelations = relations(
     }),
     ctqFactors: many(ctqFactors),
     sectionGating: many(qmpSectionGating),
-    auditTrail: many(qmpAuditTrail),
     traceabilityMatrix: many(qmpTraceabilityMatrix),
   })
 );
@@ -5318,56 +5274,6 @@ export const insertSimpleDocumentSchema = createInsertSchemaOmit(simpleDocuments
 // Simple Document Types
 export type SimpleDocument = InferSelectModel<typeof simpleDocuments>;
 export type InsertSimpleDocument = z.infer<typeof insertSimpleDocumentSchema>;
-
-/**
- * Document Audit Log Table
- *
- * Higher-level document version and review tracking for compliance.
- * Use for: version transitions, reviews, approvals, compliance scoring.
- * See also: documentAuditTrail (field-level immutable audit trail)
- */
-export const documentAuditLog = pgTable(
-  'document_audit_log',
-  {
-    id: serial('id').primaryKey(),
-    organizationId: integer('organization_id')
-      .notNull()
-      .references(() => organizations.id),
-    documentId: integer('document_id')
-      .notNull()
-      .references(() => documents.id),
-    userId: integer('user_id')
-      .notNull()
-      .references(() => users.id),
-    action: text('action').notNull(), // created, modified, reviewed, approved, rejected, published, archived, restored
-    previousVersion: text('previous_version'),
-    newVersion: text('new_version').notNull(),
-    changes: json('changes'), // Array of change objects: {field, oldValue, newValue, changeType}
-    metadata: json('metadata'), // contentLength, wordCount, complianceScore, ipAddress, userAgent, sessionId
-    comments: text('comments'),
-    reviewDetails: json('review_details'), // reviewerId, reviewerName, reviewType, decision, feedback
-    complianceScore: integer('compliance_score'), // 0-100 score
-    ipAddress: text('ip_address'),
-    userAgent: text('user_agent'),
-    sessionId: text('session_id'),
-    timestamp: timestamp('timestamp').defaultNow().notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-  },
-  table => ({
-    idx_document_audit_log_org: index('idx_document_audit_log_org').on(table.organizationId),
-  })
-);
-
-// Document Audit Log Insert Schema
-export const insertDocumentAuditLogSchema = createInsertSchemaOmit(documentAuditLog, {
-  id: true,
-  timestamp: true,
-});
-
-// Document Audit Log Types
-export type DocumentAuditLogEntry = InferSelectModel<typeof documentAuditLog>;
-export type InsertDocumentAuditLog = z.infer<typeof insertDocumentAuditLogSchema>;
 
 /**
  * Projects Table
@@ -11766,62 +11672,6 @@ export const coauthorDocumentVersions = pgTable(
 );
 
 /**
- * Co-Author Document Status History Table
- *
- * Tracks all status transitions for eCTD Co-Author documents
- * Provides audit trail for document lifecycle management
- */
-export const coauthorStatusHistory = pgTable(
-  'coauthor_status_history',
-  {
-    id: serial('id').primaryKey(),
-    documentId: integer('document_id')
-      .notNull()
-      .references(() => coauthorDocuments.id, { onDelete: 'cascade' }),
-    organizationId: integer('organization_id')
-      .notNull()
-      .references(() => organizations.id),
-
-    // Status Transition Information
-    fromStatus: text('from_status'), // null for initial status
-    toStatus: text('to_status').notNull(), // draft, in-review, approved, published
-
-    // Change Context
-    reason: text('reason'), // Reason for status change
-    comments: text('comments'), // Additional comments or feedback
-
-    // For approval workflow
-    isApproval: boolean('is_approval').default(false), // Whether this is an approval action
-    approvalLevel: text('approval_level'), // Level of approval if applicable (e.g., 'manager', 'director', 'fda')
-
-    // User Information
-    changedById: integer('changed_by_id')
-      .notNull()
-      .references(() => users.id),
-    changedByName: text('changed_by_name').notNull(), // Store name for display even if user is deleted
-    changedByRole: text('changed_by_role'), // User's role at time of change
-
-    // Email Notification Tracking
-    notificationSent: boolean('notification_sent').default(false),
-    notificationSentAt: timestamp('notification_sent_at'),
-    notificationRecipients: json('notification_recipients'), // Array of email addresses
-
-    // Metadata
-    metadata: json('metadata'), // Additional context-specific data
-    changedAt: timestamp('changed_at').defaultNow().notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-  },
-  table => ({
-    documentIdx: index('coauthor_status_document_idx').on(table.documentId),
-    orgIdx: index('coauthor_status_org_idx').on(table.organizationId),
-    statusIdx: index('coauthor_status_to_idx').on(table.toStatus),
-    changedByIdx: index('coauthor_status_changed_by_idx').on(table.changedById),
-    changedAtIdx: index('coauthor_status_changed_at_idx').on(table.changedAt),
-  })
-);
-
-/**
  * Component Content Management System (CCMS) Tables
  * For granular component-based storage and versioning
  */
@@ -12173,102 +12023,6 @@ export const insertDocumentVectorSchema = createInsertSchemaOmit(documentVectors
 // Document Vectors Types
 export type DocumentVector = InferSelectModel<typeof documentVectors>;
 export type InsertDocumentVector = z.infer<typeof insertDocumentVectorSchema>;
-
-// Co-Author Status History Insert Schema
-export const insertCoauthorStatusHistorySchema = createInsertSchemaOmit(coauthorStatusHistory, {
-  id: true,
-  changedAt: true,
-});
-
-// Co-Author Status History Types
-export type CoauthorStatusHistory = InferSelectModel<typeof coauthorStatusHistory>;
-export type InsertCoauthorStatusHistory = z.infer<typeof insertCoauthorStatusHistorySchema>;
-
-/**
- * eCTD Co-Author Import History Table
- *
- * Tracks imports from IND submissions into eCTD documents with full audit trail
- */
-export const coauthorImportHistory = pgTable(
-  'coauthor_import_history',
-  {
-    id: serial('id').primaryKey(),
-    organizationId: integer('organization_id')
-      .notNull()
-      .references(() => organizations.id),
-
-    // Import Source
-    sourceType: text('source_type').notNull(), // 'ind_submission', 'ind_document', 'cmc_data', 'csr_data'
-    sourceId: text('source_id').notNull(), // ID of the source record (submission_id, document_id, etc.)
-    indSubmissionId: text('ind_submission_id').references(() => indSubmissions.submissionId),
-
-    // Import Target
-    targetDocumentId: integer('target_document_id')
-      .notNull()
-      .references(() => coauthorDocuments.id, { onDelete: 'cascade' }),
-    targetModule: text('target_module').notNull(), // e.g., 'Module 2.5', 'Module 2.7'
-
-    // Import Details
-    importType: text('import_type').notNull(), // 'full', 'partial', 'merge'
-    sectionsImported: json('sections_imported').notNull(), // Array of section identifiers that were imported
-    fieldMappings: json('field_mappings').notNull(), // Mapping of source fields to target sections
-
-    // Import Result
-    status: text('status').notNull(), // 'pending', 'in_progress', 'completed', 'failed'
-    progress: integer('progress').default(0), // 0-100
-
-    // Content Changes
-    contentBefore: text('content_before'), // Snapshot of content before import
-    contentAfter: text('content_after'), // Snapshot of content after import
-    changesSummary: json('changes_summary'), // Summary of what was changed
-
-    // Data Mapping Configuration
-    mappingConfiguration: json('mapping_configuration'), // Flexible field mapping rules
-    transformationsApplied: json('transformations_applied'), // Any transformations applied during import
-
-    // Conflict Resolution
-    conflictResolution: text('conflict_resolution'), // 'merge', 'overwrite', 'skip'
-    conflicts: json('conflicts'), // Array of conflicts encountered
-
-    // Error Handling
-    errorMessage: text('error_message'),
-    errorDetails: json('error_details'),
-
-    // User Information
-    importedById: integer('imported_by_id')
-      .notNull()
-      .references(() => users.id),
-    importedByName: text('imported_by_name').notNull(),
-
-    // Timestamps
-    startedAt: timestamp('started_at').defaultNow().notNull(),
-    completedAt: timestamp('completed_at'),
-
-    // Metadata
-    metadata: json('metadata'), // Additional import-specific metadata,
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-  },
-  table => ({
-    orgIdx: index('coauthor_import_org_idx').on(table.organizationId),
-    targetDocIdx: index('coauthor_import_target_doc_idx').on(table.targetDocumentId),
-    sourceIdx: index('coauthor_import_source_idx').on(table.sourceType, table.sourceId),
-    statusIdx: index('coauthor_import_status_idx').on(table.status),
-    indSubmissionIdx: index('coauthor_import_ind_submission_idx').on(table.indSubmissionId),
-    importedByIdx: index('coauthor_import_by_idx').on(table.importedById),
-    startedAtIdx: index('coauthor_import_started_idx').on(table.startedAt),
-  })
-);
-
-// Co-Author Import History Insert Schema
-export const insertCoauthorImportHistorySchema = createInsertSchemaOmit(coauthorImportHistory, {
-  id: true,
-  startedAt: true,
-});
-
-// Co-Author Import History Types
-export type CoauthorImportHistory = InferSelectModel<typeof coauthorImportHistory>;
-export type InsertCoauthorImportHistory = z.infer<typeof insertCoauthorImportHistorySchema>;
 
 /**
  * ======================================================================================
@@ -14323,36 +14077,6 @@ export type InsertCoauthorDocumentVersion = z.infer<typeof insertCoauthorDocumen
  * Includes NER extraction, global change management, and audit trail for 21 CFR Part 11
  */
 
-// AI Audit Log for comprehensive tracking of all AI operations
-export const aiAuditLog = pgTable(
-  'ai_audit_log',
-  {
-    id: uuid('id')
-      .primaryKey()
-      .default(sql`gen_random_uuid()`),
-    transactionId: uuid('transaction_id').unique().notNull(),
-    userId: text('user_id'),
-    aiService: varchar('ai_service', { length: 50 }).notNull(), // 'ner-extract', 'generate-embedding', 'consistency-check'
-    promptFull: text('prompt_full'),
-    modelUsed: varchar('model_used', { length: 50 }),
-    responseStructured: json('response_structured'),
-    affectedUdis: json('affected_udis'), // Array of component UDIs
-    tokensUsed: integer('tokens_used').default(0),
-    success: boolean('success').default(false),
-    approvalStatus: varchar('approval_status', { length: 20 }),
-    digitalSignature: text('digital_signature'),
-    createdAt: timestamp('created_at').defaultNow(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-    ipAddress: varchar('ip_address', { length: 45 }),
-    sessionId: varchar('session_id'),
-  },
-  table => ({
-    transactionIdx: index('ai_audit_transaction_idx').on(table.transactionId),
-    serviceIdx: index('ai_audit_service_idx').on(table.aiService),
-    createdIdx: index('ai_audit_created_idx').on(table.createdAt),
-  })
-);
-
 // Change Requests for global change management
 export const changeRequests = pgTable(
   'change_requests',
@@ -14459,11 +14183,6 @@ export const replacementRules = pgTable(
 );
 
 // Insert schemas for Phase 3 tables
-export const insertAiAuditLogSchema = createInsertSchemaOmit(aiAuditLog, {
-  id: true,
-  createdAt: true,
-});
-
 export const insertChangeRequestSchema = createInsertSchemaOmit(changeRequests, {
   id: true,
   createdAt: true,
@@ -14488,9 +14207,6 @@ export const insertReplacementRuleSchema = createInsertSchemaOmit(replacementRul
 });
 
 // Type definitions for Phase 3 tables
-export type AiAuditLog = InferSelectModel<typeof aiAuditLog>;
-export type InsertAiAuditLog = z.infer<typeof insertAiAuditLogSchema>;
-
 export type ChangeRequest = InferSelectModel<typeof changeRequests>;
 export type InsertChangeRequest = z.infer<typeof insertChangeRequestSchema>;
 
@@ -15158,7 +14874,6 @@ export const documentsRelations = relations(documents, ({ one, many }) => ({
   }),
   versions: many(documentVersions),
   auditTrail: many(documentAuditTrail),
-  auditLog: many(documentAuditLog),
 }));
 
 export const clientWorkspacesRelations = relations(clientWorkspaces, ({ one, many }) => ({

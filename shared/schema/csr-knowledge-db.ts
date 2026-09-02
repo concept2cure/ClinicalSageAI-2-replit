@@ -1301,53 +1301,6 @@ export const csrModelPerformance = pgTable(
   })
 );
 
-// ---------------------------------------------------------------------------
-// 3.8 Extraction Audit Log — Track every extraction event for provenance
-// ---------------------------------------------------------------------------
-export const csrExtractionLog = pgTable(
-  'csr_extraction_log',
-  {
-    id: serial('id').primaryKey(),
-    studyId: integer('study_id')
-      .references(() => csrStudies.id),
-    organizationId: integer('organization_id')
-      .notNull()
-      .references(() => organizations.id),
-
-    sourceFile: text('source_file'),
-    sourceType: varchar('source_type', { length: 30 }).notNull(),
-    extractorVersion: varchar('extractor_version', { length: 20 }),
-
-    // Processing details
-    status: varchar('status', { length: 20 }).notNull(),
-    startedAt: timestamp('started_at').notNull(),
-    completedAt: timestamp('completed_at'),
-    durationMs: integer('duration_ms'),
-
-    // Quality metrics
-    overallConfidence: real('overall_confidence'),
-    sectionConfidences: json('section_confidences'),
-    sectionsExtracted: integer('sections_extracted'),
-    tablesExtracted: integer('tables_extracted'),
-    figuresExtracted: integer('figures_extracted'),
-    warningCount: integer('warning_count'),
-    errorCount: integer('error_count'),
-    warnings: json('warnings'),
-    errors: json('errors'),
-
-    // Triggering context
-    triggeredBy: integer('triggered_by').references(() => users.id),
-    triggerMethod: varchar('trigger_method', { length: 30 }),
-
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  },
-  table => ({
-    studyIdx: index('csr_extlog_study_idx').on(table.studyId),
-    orgIdx: index('csr_extlog_org_idx').on(table.organizationId),
-    statusIdx: index('csr_extlog_status_idx').on(table.status),
-  })
-);
-
 // ============================================================================
 // EXPORT SUMMARY — All tables in this module
 // ============================================================================
@@ -1385,7 +1338,6 @@ export const CSR_KNOWLEDGE_DB_TABLES = [
   'csrKnowledgeEdges',
   'csrTrainingData',
   'csrModelPerformance',
-  'csrExtractionLog',
 ] as const;
 
 export type CsrKnowledgeDbTableName = typeof CSR_KNOWLEDGE_DB_TABLES[number];
