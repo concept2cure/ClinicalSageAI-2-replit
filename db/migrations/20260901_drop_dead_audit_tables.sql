@@ -1,3 +1,23 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Drop only the audit-shaped tables that survived a from-scratch liveness re-check, refusing per table to drop one that holds rows.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Cross-cutting (audit store; no single CTD module)
+--   - Integrity Risk Addressed: audit-store sprawl — a published delete list applied without re-verification, where 24 of 43 rows failed the re-check because their writers are PL/pgSQL, not TypeScript
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - EMPTY-ONLY and fail-soft by construction: a table holding rows is left
+--     standing and reported, so no Part 11 record can be destroyed by this file.
+--   - Idempotent: every drop is guarded (DROP TABLE IF EXISTS after a row check).
+-- =============================================================================
+
 -- ═══════════════════════════════════════════════════════════════════════════
 -- Drop the audit-shaped tables that survived a from-scratch liveness re-check,
 -- and ONLY those — refusing, per table, to drop one that holds rows.

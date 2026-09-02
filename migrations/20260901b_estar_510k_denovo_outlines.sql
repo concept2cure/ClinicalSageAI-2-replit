@@ -1,3 +1,22 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Replace the retired FDA 3514 cover-sheet sections in the k510:fda and denovo:fda outlines with the eSTAR-era sections 21 CFR Part 807 makes mandatory.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Device premarket submission outlines (eSTAR 510(k) and De Novo) — the CTD Module 1 equivalent for CDRH
+--   - Integrity Risk Addressed: a mandatory section that no longer exists — both packs demanded a cover sheet FDA retired when eSTAR became mandatory (510(k) 2023-10-01, De Novo 2025-10-01), while the 807.92/807.93, 807.87(k) and Class III items eSTAR asks for by name had no section at all
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - Outline data only: section identity, order and mandatory flags.
+--   - Idempotent reseed; authored content and filings are untouched.
+-- =============================================================================
+
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- k510:fda and denovo:fda — the eSTAR-era outlines
 --

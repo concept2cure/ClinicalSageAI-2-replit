@@ -1,3 +1,22 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Correct the mandatory flags of the ind:fda outline so an INITIAL IND is not blocked by sections that only a later amendment can carry.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 1 — 1.3.1 (contact/sponsor changes) and the companion flags read by the compile, validate and readiness gates
+--   - Integrity Risk Addressed: an unsatisfiable readiness gate — required-sections now derives what an IND must file from these flags, so a heading that holds CHANGES (change of address, of agent, of sponsor, of ownership) was demanded of a submission that by definition has none
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - Flag data only; no section is added, renamed or removed.
+--   - Idempotent; scoped to the ich-m4-v2.2 pack.
+-- =============================================================================
+
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- ind:fda ich-m4-v2.2 — the mandatory flags of an INITIAL IND
 --
