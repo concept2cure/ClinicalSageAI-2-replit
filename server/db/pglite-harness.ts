@@ -453,6 +453,47 @@ CREATE TABLE IF NOT EXISTS concept2cure_artifacts (
 );
 `;
 
+/**
+ * Governed authoring store — c2c_documents + c2c_document_sections, the rows
+ * the MDx editor and the eu-mdr / eu-ivdr rule packs write. Used by the
+ * leaf-source-resolver and technical-file assembler tests to prove that an
+ * authored MDR/IVDR section can be materialized into a package. Column names
+ * mirror migrations/20260528_phase9_document_schema.sql; NO FK to
+ * regulatory_programs (not part of this harness) and no triggers, so the
+ * fixture stays self-contained. Only the columns the resolver/loader read plus
+ * the NOT NULL columns needed to insert a row are included.
+ */
+export const GOVERNED_SECTIONS_PGLITE_DDL = `
+CREATE TABLE IF NOT EXISTS c2c_documents (
+  id                 TEXT PRIMARY KEY,
+  org_id             INTEGER NOT NULL,
+  project_id         UUID NOT NULL,
+  doc_type           TEXT NOT NULL,
+  agency             TEXT NOT NULL,
+  rule_pack_version  TEXT NOT NULL,
+  title              TEXT NOT NULL,
+  status             TEXT NOT NULL DEFAULT 'draft',
+  readiness          INTEGER NOT NULL DEFAULT 0,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS c2c_document_sections (
+  id                 BIGSERIAL PRIMARY KEY,
+  document_id        TEXT NOT NULL REFERENCES c2c_documents(id) ON DELETE CASCADE,
+  section_key        TEXT NOT NULL,
+  parent_key         TEXT,
+  label              TEXT NOT NULL,
+  path_order         INTEGER NOT NULL,
+  mandatory          BOOLEAN NOT NULL DEFAULT false,
+  status             TEXT NOT NULL DEFAULT 'todo',
+  content            JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (document_id, section_key)
+);
+`;
+
 export interface IndPgliteDb {
   pglite: PGlite;
   /** Drizzle instance over PGlite (insert/select against the pg-core schema). */
@@ -466,13 +507,14 @@ export interface IndPgliteDb {
  * submission_leaves (for the full filing → sequence → leaf flow).
  */
 export async function createIndPgliteDb(
-  opts: { submissionCore?: boolean; leafSources?: boolean; formArtifacts?: boolean } = {}
+  opts: { submissionCore?: boolean; leafSources?: boolean; formArtifacts?: boolean; governedSections?: boolean } = {}
 ): Promise<IndPgliteDb> {
   const pglite = new PGlite();
   await pglite.exec(IND_PGLITE_DDL);
   if (opts.submissionCore) await pglite.exec(SUBMISSION_CORE_PGLITE_DDL);
   if (opts.leafSources) await pglite.exec(LEAF_SOURCE_PGLITE_DDL);
   if (opts.formArtifacts) await pglite.exec(FORM_ARTIFACT_PGLITE_DDL);
+  if (opts.governedSections) await pglite.exec(GOVERNED_SECTIONS_PGLITE_DDL);
   const db = drizzle(pglite);
   return { pglite, db, close: () => pglite.close() };
 }

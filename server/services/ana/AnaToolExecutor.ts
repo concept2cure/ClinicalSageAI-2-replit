@@ -15562,15 +15562,23 @@ registerToolHandler('assess_submission_package', async (input: Record<string, un
   }
 });
 
-// Device/IVD eSTAR assembly state (510(k) / De Novo) — wires the deterministic
-// device-assembly engine that previously had no AnA tool surface. No render/
-// transmit; computes the producible artifact kind + every blocker, honestly.
+// Device/IVD eSTAR assembly state (510(k) / De Novo / PMA) — wires the
+// deterministic device-assembly engine that previously had no AnA tool surface.
+// No render/transmit; computes the producible artifact kind + every blocker,
+// honestly. A PMA is scored against the 21 CFR 814 modules (pma-mapper).
 registerToolHandler('assemble_device_submission', async (input: Record<string, unknown>) => {
   try {
     const pathway = input.pathway;
     const variant = input.variant;
-    if (pathway !== '510k' && pathway !== 'de_novo') {
-      return JSON.stringify({ status: 'needs_parameters', message: "pathway must be '510k' or 'de_novo'." });
+    if (pathway !== '510k' && pathway !== 'de_novo' && pathway !== 'pma') {
+      return JSON.stringify({ status: 'needs_parameters', message: "pathway must be '510k', 'de_novo' or 'pma'." });
+    }
+    // The ONE PMA submission-type taxonomy (21 CFR 814.20 / 814.39) lives in pma-mapper.
+    const { PMA_SUBMISSION_TYPES } = await import('../pathway-engines/pma/pma-mapper.js');
+    const pmaTypeValues = PMA_SUBMISSION_TYPES.map((t) => t.value);
+    const pmaSubmissionType = input.pmaSubmissionType;
+    if (pmaSubmissionType !== undefined && !(pmaTypeValues as unknown[]).includes(pmaSubmissionType)) {
+      return JSON.stringify({ status: 'needs_parameters', message: `pmaSubmissionType must be one of ${pmaTypeValues.join(', ')}.` });
     }
     if (variant !== 'device' && variant !== 'ivd') {
       return JSON.stringify({ status: 'needs_parameters', message: "variant must be 'device' or 'ivd'." });
@@ -15590,6 +15598,7 @@ registerToolHandler('assemble_device_submission', async (input: Record<string, u
     const { assembleDeviceSubmission } = await import('../pathway-engines/device-assembly/assemble-device-submission.js');
     const result = assembleDeviceSubmission({
       pathway,
+      pmaSubmissionType: pmaSubmissionType as (typeof pmaTypeValues)[number] | undefined,
       variant,
       leaves,
       presentTemplates: Array.isArray(input.presentTemplates) ? (input.presentTemplates as unknown[]).map(String) : undefined,

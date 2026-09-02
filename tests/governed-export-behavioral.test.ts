@@ -318,12 +318,49 @@ import path from 'path';
 
 const ROOT = path.resolve(__dirname, '..');
 
+/**
+ * The symbols a file imports from a module, whatever the import is spelled like.
+ *
+ * These assertions used to be `src.toContain('import { createGovernedExportConsequence }')`
+ * — a literal one-line spelling. When the route legitimately began importing a
+ * second symbol from the same module the brace list wrapped onto several lines
+ * and the test reported a governed export route as ungoverned. That is the same
+ * failure the header assertion below already documents: a test that knows only
+ * one spelling reports a refactor as lost governance.
+ *
+ * Parsing the import binding is STRICTER than the substring it replaces, not
+ * looser: a substring match also passes on a comment or a string literal that
+ * merely mentions the name, while this requires a real `import { … } from
+ * '<module>'` statement that binds the symbol.
+ */
+function importedSymbols(src: string, moduleSuffix: string): Set<string> {
+  const out = new Set<string>();
+  const re = new RegExp(`import\\s*\\{([^}]*)\\}\\s*from\\s*['"]([^'"]*${moduleSuffix})['"]`, 'g');
+  for (const m of src.matchAll(re)) {
+    for (const raw of m[1].split(',')) {
+      const name = raw.trim().replace(/^type\s+/, '').split(/\s+as\s+/)[0].trim();
+      if (name) out.add(name);
+    }
+  }
+  return out;
+}
+
+/** Index of the import statement that binds `symbol` from `moduleSuffix`, or -1. */
+function importStatementIndex(src: string, moduleSuffix: string, symbol: string): number {
+  const re = new RegExp(`import\\s*\\{([^}]*)\\}\\s*from\\s*['"]([^'"]*${moduleSuffix})['"]`, 'g');
+  for (const m of src.matchAll(re)) {
+    if (m[1].split(',').some((raw) => raw.trim().replace(/^type\s+/, '').split(/\s+as\s+/)[0].trim() === symbol)) {
+      return m.index ?? -1;
+    }
+  }
+  return -1;
+}
+
 describe('CER v2 export routes — governed wiring', () => {
   const src = fs.readFileSync(path.join(ROOT, 'server/routes/cerv2-export-routes.ts'), 'utf-8');
 
   it('imports createGovernedExportConsequence from governed service', () => {
-    expect(src).toContain('import { createGovernedExportConsequence }');
-    expect(src).toContain('governedExportConsequence');
+    expect(importedSymbols(src, 'governedExportConsequence')).toContain('createGovernedExportConsequence');
   });
 
   it('PDF route calls createGovernedExportConsequence before response', () => {
@@ -366,13 +403,14 @@ describe('510(k) eSTAR build route — governed wiring', () => {
   const src = fs.readFileSync(path.join(ROOT, 'server/routes/510k-estar-routes.ts'), 'utf-8');
 
   it('imports createGovernedExportConsequence', () => {
-    expect(src).toContain('import { createGovernedExportConsequence }');
+    expect(importedSymbols(src, 'governedExportConsequence')).toContain('createGovernedExportConsequence');
   });
 
   it('calls createGovernedExportConsequence in build handler', () => {
     expect(src).toContain('createGovernedExportConsequence');
     // Verify it appears after the import (i.e. it's called, not just imported)
-    const importIdx = src.indexOf('import { createGovernedExportConsequence }');
+    const importIdx = importStatementIndex(src, 'governedExportConsequence', 'createGovernedExportConsequence');
+    expect(importIdx).toBeGreaterThanOrEqual(0);
     const callIdx = src.indexOf('createGovernedExportConsequence(');
     expect(callIdx).toBeGreaterThan(importIdx);
   });
