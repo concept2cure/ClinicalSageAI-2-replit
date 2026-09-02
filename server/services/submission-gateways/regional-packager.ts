@@ -49,6 +49,7 @@ import {
   dtdRequiredFromEnv,
   type DtdRegion,
 } from '../ectd/dtd-bundler';
+import { classifyRegionalBackbone } from '../ectd/regional-backbone-readiness';
 import {
   resolveApplicationTypeCode,
   resolveSubmissionTypeCode,
@@ -782,6 +783,10 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       missing: dtdGate.missing,
       selfContained: dtdGate.selfContained,
     },
+    // Honest regional-M1 status: only fda/ema/pmda/ca have their own backbone
+    // builder; the eight widened regions reuse the EMA structure, so their
+    // `<cc>-regional.xml` is a PLACEHOLDER and must never read as conformant.
+    regionalBackbone: classifyRegionalBackbone(region, regionalPath),
     ...(stfSummary ? { stf: stfSummary } : {}),
     ...(input.crossReferences?.length
       ? {

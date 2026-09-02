@@ -1,10 +1,10 @@
 /**
  * Document attachment — input contract and boundary validation.
  *
- * Split out of ModuleIntegrationService: this is the self-contained edge that
- * decides whether an attachment RECORD may be written at all, before any
- * transaction is opened. The service owns the act (insert / delete / list,
- * each tenant-scoped and audited); this module owns the shape.
+ * The self-contained edge that decides whether an attachment RECORD may be
+ * written at all, before any transaction is opened. attachment-service owns
+ * the acts (list / get / add / remove, each tenant-scoped, the writes audited
+ * in the same transaction); this module owns the shape.
  *
  * Nothing here touches the database, the filesystem or the request. It reuses
  * the repo's canonical validators rather than restating them — a second copy
@@ -13,6 +13,7 @@
 
 import { isAllowedUpload } from '../../middleware/uploadAllowlist';
 import { hasUnsafePathSyntax } from '../submission-gateways/bundle-namespace';
+import { AttachmentRejectedException } from './errors';
 
 /**
  * The attachment-record input contract.
@@ -60,22 +61,6 @@ const VAULT_VERSION_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0
 /** True when `value` is a storage-provider version id. */
 export function isVaultVersionId(value: unknown): value is string {
   return typeof value === 'string' && VAULT_VERSION_ID_RE.test(value);
-}
-
-/** An attachment that does not exist on the named document, in this tenant. */
-export class AttachmentNotFoundException extends Error {
-  constructor(attachmentId: number | string) {
-    super(`Attachment with ID ${attachmentId} not found`);
-    this.name = 'AttachmentNotFoundException';
-  }
-}
-
-/** An attachment record this boundary refuses to write. */
-export class AttachmentRejectedException extends Error {
-  constructor(reason: string) {
-    super(reason);
-    this.name = 'AttachmentRejectedException';
-  }
 }
 
 function requireText(value: unknown, field: string): string {

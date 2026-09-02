@@ -1,3 +1,23 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Create the impurity and dissolution registers that Module 3 composition has required as canonical sources since it was modelled.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 3 — 3.2.S.3 / 3.2.S.4 (impurity profile), 3.2.P.2 / 3.2.P.5 (dissolution profile)
+--   - Integrity Risk Addressed: unrecordable CMC evidence — the ICH Q3A/Q3B threshold question and the f2 similarity question could not be answered from stored data, only from an unstructured json blob nothing writes
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - The section a record files into is STORED (scope / purpose), never guessed,
+--     on the rule the container closure and reference standard registers set.
+--   - Tenant-scoped with the canonical policy; idempotent (IF NOT EXISTS).
+-- =============================================================================
+
 -- CMC registers for the impurity profile and the dissolution profile.
 --
 -- ── What was missing ─────────────────────────────────────────────────────────

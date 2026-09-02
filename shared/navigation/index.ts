@@ -157,6 +157,10 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // then the underlying tools (PV / HEOR) are still reachable from chat.
   { id: 'safety', label: 'Safety / Pharmacovigilance', description: 'The safety/PV workspace — SAE line listings, E2B(R3) ICSR composition, and PV deliverables for the project.', scope: 'project', group: 'module' },
   { id: 'market-access', label: 'Market Access / HEOR', description: 'The health-economics & market-access workspace — budget-impact, cost-effectiveness (ICER), Markov, and PSA modeling for payer dossiers.', scope: 'project', group: 'module' },
+  { id: 'nda-cockpit', label: 'NDA/BLA cockpit', description: 'The NDA/BLA marketing-application cockpit — CTD readiness, Module 1 admin, the PDUFA clock, Refuse-to-File risk, and biologics.', scope: 'project', group: 'module' },
+  { id: 'maa-cockpit', label: 'MAA cockpit', description: 'The EU MAA marketing-application cockpit.', scope: 'project', group: 'module' },
+  { id: 'haq-manager', label: 'Health-authority questions', description: 'The HAQ manager — agency questions grouped by round, with analysis, drafts and commitments.', scope: 'project', group: 'module' },
+  { id: 'mission-control', label: 'Mission control', description: 'The portfolio mission-control board — every program and its cross-program status.', scope: 'global', group: 'global' },
 
   // ── Device & diagnostics workstream (all render via MdxSurfaceHost; program
   // scope comes from the project in context when one is open) ──

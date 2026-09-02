@@ -36,6 +36,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest, extractApiError, serverMessage } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import {
   MODALITIES,
   MODALITY_LABEL,
@@ -294,6 +295,42 @@ export function MissionControl(_props: SurfaceViewProps) {
 
     return () => { cancelled = true; };
   }, [selectedId]);
+
+  /* AnA can select a program by its name or code — the same row click a person
+     makes — so a drive can land on a specific program before reading its
+     readiness. Resolved against the REAL portfolio with honest misses; held
+     (retry) while the list is still loading, and re-attempted on the ready
+     signal below. Selecting is view-state only; nothing governed happens here. */
+  useSurfaceActionHandlers('mission-control', {
+    'mission-control.select-program': (params) => {
+      const raw = String(params.program ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a program by its name or code.' };
+      if (programs.state === 'loading' || programs.state === 'idle') {
+        return { ok: false, reason: 'The program list is still loading.', retry: true };
+      }
+      if (programs.state === 'error') {
+        return { ok: false, reason: 'The program list did not load, so there are no programs to select from.' };
+      }
+      const list = programs.data ?? [];
+      if (list.length === 0) return { ok: false, reason: 'No programs are recorded in this organization yet.' };
+      const needle = raw.toLowerCase();
+      // Exact code, then exact name, then an unambiguous partial name.
+      const byCode = list.filter((p) => (p.code ?? '').toLowerCase() === needle);
+      const byName = list.filter((p) => p.name.toLowerCase() === needle);
+      const hits = byCode.length ? byCode
+        : byName.length ? byName
+        : list.filter((p) => p.name.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No program named "${raw}" in this organization.` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} programs — name one exactly.` };
+      const p = hits[0];
+      if (selectedId === p.id) return { ok: true, detail: `Already on ${p.name}` };
+      setSelectedId(p.id);
+      return { ok: true, detail: `Selected ${p.name}${p.code ? ` (${p.code})` : ''}` };
+    },
+  });
+  useEffect(() => {
+    if (programs.state === 'ready') notifySurfaceActionReady('mission-control');
+  }, [programs.state]);
 
   const createProgram = useCallback(async () => {
     if (!draft.name.trim()) { fireToast('Enter a program name.', 'error'); return; }

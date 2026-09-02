@@ -1154,14 +1154,17 @@ export function mountStreamRoute(router: Router): void {
                 errorMessage: toolErrorMessage,
                 latencyMs: Date.now() - toolStart,
               });
-              return { toolUse, resultStr, toolStatus, toolErrorMessage };
+              // The same server-measured duration the telemetry row gets, so the
+              // client's work panel can show how long each step really took
+              // rather than timing the round-trip from its own side.
+              return { toolUse, resultStr, toolStatus, toolErrorMessage, latencyMs: Date.now() - toolStart };
             },
             4
           );
 
           const entries: ToolResultEntry[] = [];
           const roundFailures: FailedToolCall[] = [];
-          for (const { toolUse, resultStr, toolStatus, toolErrorMessage } of ran) {
+          for (const { toolUse, resultStr, toolStatus, toolErrorMessage, latencyMs } of ran) {
             entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
             const stepLabel = describeToolPlan([toolUse])[0].label;
             // Record this call in the turn's tool-trace memory + evidence corpus.
@@ -1194,6 +1197,7 @@ export function mountStreamRoute(router: Router): void {
                 name: toolUse.name,
                 label: stepLabel,
                 status: toolStatus,
+                latencyMs,
                 ...(humanMessage ? { message: humanMessage } : {}),
                 result: resultStr,
               })}\n\n`

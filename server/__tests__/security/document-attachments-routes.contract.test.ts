@@ -7,9 +7,10 @@
  * stored, the two independent tenant boundaries on download, and the headers
  * a download carries.
  *
- * The service, the storage provider, the upload-safety gate and the tenant
- * scope runner are all mocked, so every assertion is about what the route did
- * and in what order — not about what those collaborators do internally.
+ * DocumentAttachmentService, the storage provider, the upload-safety gate and
+ * the tenant scope runner are all mocked, so every assertion is about what the
+ * route did and in what order — not about what those collaborators do
+ * internally.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -63,41 +64,38 @@ vi.mock('../../db/tenantStore', () => ({
 vi.mock('../../services/WorkflowService', () => ({
   WorkflowService: class {},
 }));
-vi.mock('../../services/ModuleIntegrationService', async importOriginal => {
-  const actual = await importOriginal<typeof import('../../services/ModuleIntegrationService')>();
-  return {
-    ...actual,
-    ModuleIntegrationService: class {
-      assertDocumentOwned = (...args: unknown[]) => {
-        calls.push('assertOwned');
-        service.assertDocumentOwned(...args);
-        if (state.assertOwnedThrows) throw state.assertOwnedThrows;
-        return Promise.resolve();
-      };
-      addDocumentAttachment = (...args: unknown[]) => {
-        calls.push('addRecord');
-        service.addDocumentAttachment(...args);
-        if (state.addThrows) throw state.addThrows;
-        const input = args[1] as Record<string, unknown>;
-        return Promise.resolve({ id: ATTACHMENT_ID, documentId: DOC_A, ...input });
-      };
-      getDocumentAttachment = (...args: unknown[]) => {
-        calls.push('getRecord');
-        service.getDocumentAttachment(...args);
-        if (state.getAttachmentThrows) throw state.getAttachmentThrows;
-        return Promise.resolve({
-          id: ATTACHMENT_ID,
-          documentId: DOC_A,
-          fileName: 'stability "summary" é.pdf',
-          fileType: 'application/pdf',
-          fileSize: PDF_BYTES.length,
-          filePath: VERSION_ID,
-          metadata: { sha256: PDF_SHA },
-        });
-      };
-    },
-  };
-});
+vi.mock('../../services/module-integration/attachment-service', () => ({
+  DocumentAttachmentService: class {
+    assertDocumentOwned = (...args: unknown[]) => {
+      calls.push('assertOwned');
+      service.assertDocumentOwned(...args);
+      if (state.assertOwnedThrows) throw state.assertOwnedThrows;
+      return Promise.resolve();
+    };
+    add = (...args: unknown[]) => {
+      calls.push('addRecord');
+      service.addDocumentAttachment(...args);
+      if (state.addThrows) throw state.addThrows;
+      const input = args[1] as Record<string, unknown>;
+      return Promise.resolve({ id: ATTACHMENT_ID, documentId: DOC_A, ...input });
+    };
+    get = (...args: unknown[]) => {
+      calls.push('getRecord');
+      service.getDocumentAttachment(...args);
+      if (state.getAttachmentThrows) throw state.getAttachmentThrows;
+      return Promise.resolve({
+        id: ATTACHMENT_ID,
+        documentId: DOC_A,
+        fileName: 'stability "summary" é.pdf',
+        fileType: 'application/pdf',
+        fileSize: PDF_BYTES.length,
+        filePath: VERSION_ID,
+        metadata: { sha256: PDF_SHA },
+      });
+    };
+    list = () => Promise.resolve([]);
+  },
+}));
 vi.mock('../../services/storage', () => ({
   getStorageProvider: () => ({
     put: async (opts: unknown) => {
@@ -156,10 +154,10 @@ beforeEach(async () => {
     filename: 'x.pdf',
   };
 
-  const svc = await import('../../services/ModuleIntegrationService');
-  DocumentNotFoundException = svc.DocumentNotFoundException;
-  AttachmentNotFoundException = svc.AttachmentNotFoundException;
-  AttachmentRejectedException = svc.AttachmentRejectedException;
+  const errs = await import('../../services/module-integration/errors');
+  DocumentNotFoundException = errs.DocumentNotFoundException;
+  AttachmentNotFoundException = errs.AttachmentNotFoundException;
+  AttachmentRejectedException = errs.AttachmentRejectedException;
   UploadSafetyError = (await import('../../middleware/uploadSafety')).UploadSafetyError;
 
   const router = (await import('../../routes/moduleIntegrationRoutes')).default;

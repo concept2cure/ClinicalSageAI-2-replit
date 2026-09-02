@@ -440,6 +440,42 @@ const REQUIRED_OBJECT_CONTRACT = [
     // Global for the same reason as ana_capability_registry.
     tenantColumn: null,
   },
+  {
+    table: 'doc_permissions',
+    capability: 'Authoring object-level authorization (who may edit which section)',
+    // The columns decideAuthoringPermission actually reads
+    // (server/services/authoring/authoring-permissions.ts): the grant's scope,
+    // the identity it names, and its lifecycle. This entry exists because the
+    // table-presence check could not tell the difference between the table the
+    // 20260725 loop-tables migration creates — id, doc_id, section_id, email,
+    // role, tenant_id, created_at — and the one 20260727 brings it up to. On
+    // the narrower shape the decision query throws 42703 and the gate fails
+    // CLOSED, so every authoring object action is refused and the readiness
+    // banner still reads green. Three test suites and one golden journey were
+    // caught by exactly that gap.
+    columns: [
+      'id',
+      'doc_id',
+      'section_id',
+      'tenant_id',
+      'principal_id',
+      'email',
+      'role',
+      'granted_by',
+      'grant_reason',
+      'valid_from',
+      'valid_until',
+      'revoked_at',
+    ],
+    // Tenant-consistent parentage: a grant cannot name a document (or section)
+    // belonging to another tenant, because the FK is composite on (id, tenant).
+    foreignKeys: [
+      { column: 'doc_id', references: 'authoring_documents' },
+      { column: 'section_id', references: 'authoring_sections' },
+    ],
+    indexedColumns: ['tenant_id', 'doc_id'],
+    tenantColumn: 'tenant_id',
+  },
 ];
 
 /**

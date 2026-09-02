@@ -1,3 +1,24 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Add the gateway transport receipt id that alone justifies an ICSR row reading status = 'transmitted'.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 5 / IND safety reporting (ICSR transmission to the FDA gateway)
+--   - Integrity Risk Addressed: an unevidenced regulatory claim — a 15-day IND safety report was flipped to 'transmitted' by a state-only helper, with nothing on the row able to show whether a byte ever reached a gateway
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - One additive, nullable column: NULL is the truthful state for every row
+--     that has no receipt, which is every existing row and every 'prepared' one.
+--   - Written in the same UPDATE that sets status, and only from a real,
+--     non-simulated receipt. Idempotent (ADD COLUMN IF NOT EXISTS).
+-- =============================================================================
+
 -- ════════════════════════════════════════════════════════════════════════════
 -- ind_icsr_transmissions.transport_receipt_id — the gateway receipt that alone
 -- justifies status = 'transmitted'.

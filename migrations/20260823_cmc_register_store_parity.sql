@@ -1,3 +1,24 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Give the CMC specification and batch-record routes the tables and columns they actually write, so the Specifications and Batch Records tabs stop 500-ing on a freshly provisioned database.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 3 — 3.2.S.4 / 3.2.P.5 (specifications), 3.2.P.3.4 (batch records and governed release)
+--   - Integrity Risk Addressed: a route and its table maintained by different authorities — quality_specifications was created by no migration at all, and cmc_batch_records carried a shape older than the code, so governed release evidence could not be written
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - Additive only: nothing is dropped or renamed, and every statement is
+--     guarded (CREATE TABLE / ADD COLUMN IF NOT EXISTS).
+--   - Same class of defect 20260821_vault_documents_canonical_shape.sql fixed
+--     for vault.documents; found by driving the workflow live, not by a mock.
+-- =============================================================================
+
 -- CMC register store parity — the tables the register routes actually write.
 --
 -- ── The defect (found by live simulation, not by tests) ───────────────────────

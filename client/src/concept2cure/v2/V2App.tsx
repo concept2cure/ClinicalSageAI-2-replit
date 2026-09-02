@@ -798,6 +798,10 @@ export function V2App() {
           onResume={() => void anaChat.resume()}
           onStop={() => anaChat.stop()}
           onSteer={(m) => void anaChat.interject(m)}
+          /* The live work dock reads the raw turns: progress phases, tool
+             timings, pending steers and outputs that the adapted rail message
+             shape does not carry. */
+          work={{ messages: anaChat.messages, pendingSteers: anaChat.pendingSteers }}
           liveDrive={{
             on: prefs.liveDrive,
             locked: drive.lock,
