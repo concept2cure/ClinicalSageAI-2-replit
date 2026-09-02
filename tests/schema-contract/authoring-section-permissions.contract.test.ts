@@ -174,9 +174,20 @@ describe('G-01: object-level section-permission enforcement', () => {
     expect(denied.status).toBe(403);
 
     // 3. A grant on ANOTHER document must NOT authorise this section (OR-bug fix).
-    const grant = await asUser(QA)(request(app).post(`/api/authoring/docs/${docId2}/permissions`))
-      .send({ email: UNRELATED.email, role: 'AUTHOR' }); // doc-level grant, section_id NULL, on doc2
-    expect(grant.status).toBe(200);
+    //
+    // Seeded directly rather than posted. The HTTP writer this used to call was
+    // authoring.router.ts's own POST /docs/:docId/permissions, deleted in
+    // 3eb7306 as a shadowed duplicate: register-inline-routes mounts
+    // authoringPermissionsRouter on '/api' ahead of authoring.router on
+    // '/api/authoring', and it owns the same full path, so the router-local
+    // copy never ran in the app. This file mounts authoring.router alone, which
+    // is the only reason it ever reached it. The subject here is the gate's
+    // predicate, and the row it reads is the same either way.
+    await jdb.pool.query(
+      `INSERT INTO doc_permissions (doc_id, section_id, email, role, tenant_id)
+       VALUES ($1, NULL, $2, 'AUTHOR', 1)`, // doc-level grant, section_id NULL, on doc2
+      [docId2, UNRELATED.email],
+    );
     const stillDenied = await asUser(UNRELATED)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
       .send({ content: 'v3 via cross-doc grant' });
     expect(stillDenied.status).toBe(403);
