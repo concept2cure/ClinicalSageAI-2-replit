@@ -183,12 +183,42 @@ export const ESTIMATE_RECORDED_SHELF_LIFE: AnaTool = {
   },
 };
 
+export const COMPARE_RECORDED_DISSOLUTION: AnaTool = {
+  name: 'compare_recorded_dissolution',
+  description:
+    'Compute f2 similarity between two dissolution profiles ALREADY RECORDED in the CMC dissolution register, ' +
+    'reading their timepoints, means, unit counts and variability from the register rather than taking them ' +
+    'typed in. Takes two register ids (use list_cmc_registers to find them). Applies every eligibility ' +
+    'condition and REFUSES with the reason when one fails: profiles sampled at different times, fewer than ' +
+    'three comparable timepoints after excluding t=0 and truncating above 85% dissolution, no recorded unit ' +
+    'count (never assumed to be 12), no recorded SD or %RSD, or variability above the 20% early / 10% later ' +
+    'limits. Both profiles reaching 85% within 15 minutes is reported as "no f2 needed", not as a number. ' +
+    'Relay a refusal verbatim rather than falling back to assess_dissolution_similarity with typed-in numbers: ' +
+    'that would be the same comparison with the eligibility check removed. Reports the timepoints it used, ' +
+    'what it discarded and every condition it evaluated. Writes nothing. DETERMINISTIC. ' + NOTE,
+  input_schema: {
+    type: 'object',
+    properties: {
+      reference_profile_id: {
+        type: 'number',
+        description: 'The dissolution register id of the REFERENCE profile.',
+      },
+      test_profile_id: {
+        type: 'number',
+        description: 'The dissolution register id of the TEST profile.',
+      },
+    },
+    required: ['reference_profile_id', 'test_profile_id'],
+  },
+};
+
 /** Deepening tools, spread into ALL_ANA_TOOLS. */
 export const DEEPENING_TOOLS: AnaTool[] = [
   ASSESS_BATCH_POOLABILITY,
   ASSESS_RECORDED_BATCH_POOLABILITY,
   LIST_CMC_REGISTERS,
   ESTIMATE_RECORDED_SHELF_LIFE,
+  COMPARE_RECORDED_DISSOLUTION,
   GET_SUBMISSION_READINESS_TWIN,
   ASSESS_BENEFIT_RISK,
 ];

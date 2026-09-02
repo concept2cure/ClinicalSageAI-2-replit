@@ -187,6 +187,14 @@ describe('list_cmc_registers — the discovery the recorded tools point at', () 
 
   /* Identity and state only. Listing the E&L package itself would pull every
      analyte result into the model's context on a broad discovery call. */
+  it('lists the impurity and dissolution registers, with the ICH inputs a threshold needs', async () => {
+    const out = JSON.parse(await call({}, { organizationId: 101 }));
+    if (out.error) return;
+    for (const key of ['impurity_profile', 'dissolution_profile']) {
+      expect(Object.keys(out.registers)).toContain(key);
+    }
+  });
+
   it('reports the E&L and characterisation packages as presence flags, not as payloads', async () => {
     const out = JSON.parse(await call({ register: 'container_closure', limit: 5 }, { organizationId: 101 }));
     if (out.error) return;
@@ -262,5 +270,48 @@ describe('the recorded engine is SHARED with the stability surface, not a second
     expect(String(agg.reason)).toMatch(/at least 3 numeric timepoints/);
     // The scope limit travels with the number so a pooled claim is never implied.
     expect(outcome.data.scopeLimit).toMatch(/poolability .* is assessed separately|Batch poolability/);
+  });
+});
+
+/* f2 over profiles ON FILE. The eligibility conditions and the arithmetic live
+   in services/cmc/dissolution-comparison and are covered there; what matters
+   HERE is the boundary this tool owns — tenant scope, two real ids, and the
+   refusal it must relay rather than route around. */
+describe('compare_recorded_dissolution', () => {
+  const call = (input: Record<string, unknown>, ctx?: Record<string, unknown>) =>
+    getToolHandler('compare_recorded_dissolution')!(input, ctx as never);
+
+  it('is defined and registered', () => {
+    expect(names).toContain('compare_recorded_dissolution');
+    expect(typeof getToolHandler('compare_recorded_dissolution')).toBe('function');
+  });
+
+  it('refuses without an organization context rather than reading across tenants', async () => {
+    expect(await call({ reference_profile_id: 1, test_profile_id: 2 })).toMatch(/organization context is required/i);
+  });
+
+  it('needs two real ids, and points at the register to find them', async () => {
+    for (const input of [{}, { reference_profile_id: 1 }, { reference_profile_id: 0, test_profile_id: 2 }]) {
+      const out = JSON.parse(await call(input, { organizationId: 101 }));
+      expect(out.status).toBe('needs_parameters');
+    }
+  });
+
+  it('refuses to compare a profile against itself', async () => {
+    const out = JSON.parse(await call({ reference_profile_id: 7, test_profile_id: 7 }, { organizationId: 101 }));
+    expect(out.status).toBe('needs_parameters');
+    expect(out.message).toMatch(/100 by construction/);
+  });
+
+  it('will not answer from a partial set when a profile is not this organization', async () => {
+    const out = JSON.parse(await call({ reference_profile_id: 90001, test_profile_id: 90002 }, { organizationId: 101 }));
+    expect(['not_found', 'error']).toContain(out.status ?? 'error');
+    if (out.status === 'not_found') expect(out.message).toMatch(/No comparison is made/);
+  });
+
+  it('tells the model to relay a refusal rather than route around it with typed numbers', () => {
+    const tool = ALL_ANA_TOOLS.find((t) => t.name === 'compare_recorded_dissolution')!;
+    expect(tool.description).toMatch(/Relay a refusal verbatim/);
+    expect(tool.description).toMatch(/never assumed to be 12/);
   });
 });

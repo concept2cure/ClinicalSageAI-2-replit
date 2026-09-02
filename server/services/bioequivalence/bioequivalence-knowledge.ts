@@ -14,6 +14,10 @@
  * @module server/services/bioequivalence/bioequivalence-knowledge
  */
 
+/* f2 and every eligibility condition around it live in services/cmc/
+   dissolution-comparison, which the CMC dissolution register calls too. */
+import { compareDissolutionProfiles } from '../cmc/dissolution-comparison';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. BCS Classification System — Reference Data
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1244,6 +1248,10 @@ export interface DissolutionProfile {
   timePoints_min: number[];
   /** Mean % dissolved at each time point (0-100). Must be same length as timePoints_min. */
   meanDissolved: number[];
+  /** %RSD at each time point. Without it the CV eligibility conditions cannot be evaluated and f2 is refused. */
+  rsdPercent?: number[];
+  /** Absolute SD at each time point, as an alternative to rsdPercent. */
+  sdPercent?: number[];
 }
 
 export interface AssessDissolutionSimilarityParams {
@@ -1251,7 +1259,7 @@ export interface AssessDissolutionSimilarityParams {
   reference: DissolutionProfile;
   /** Test product dissolution profile. */
   test: DissolutionProfile;
-  /** Number of units tested per product (default 12). */
+  /** Units tested per product. REQUIRED: it is never defaulted to 12. */
   unitsPerProduct?: number;
 }
 
@@ -1285,130 +1293,103 @@ export interface DissolutionSimilarityResult {
 export function assessDissolutionSimilarity(
   params: AssessDissolutionSimilarityParams,
 ): DissolutionSimilarityResult {
-  const { reference, test, unitsPerProduct = 12 } = params;
-  const warnings: string[] = [];
+  /* The statistic and every eligibility condition live in
+     services/cmc/dissolution-comparison, which the CMC dissolution register and
+     the AnA recorded twin call too. This adapter maps the typed-number input
+     onto it and reports what it says.
 
-  // Validate matching time points
-  if (reference.timePoints_min.length !== reference.meanDissolved.length) {
-    throw new Error('Reference: timePoints_min and meanDissolved arrays must have the same length.');
-  }
-  if (test.timePoints_min.length !== test.meanDissolved.length) {
-    throw new Error('Test: timePoints_min and meanDissolved arrays must have the same length.');
-  }
-  if (reference.timePoints_min.length !== test.timePoints_min.length) {
-    throw new Error('Reference and test profiles must have the same number of time points.');
-  }
+     What that engine changed, and why this function no longer computes anything
+     itself: it accepted profiles sampled at DIFFERENT times as long as the
+     arrays matched in length (returning f2 = 100 "SIMILAR" for 10/20/30 min
+     against 15/30/60 min with identical means); it graded f2 on as few as one
+     surviving timepoint; it never excluded t = 0, where both profiles are 0 by
+     construction; it defaulted the unit count to 12 and then printed "12 units
+     tested per product" as a fact; it listed the 20%/10% coefficient-of-
+     variation limits in `conditions` with no variability field in its input to
+     evaluate them against; and it compared a rounded f2 against 50, so a true
+     49.99973 was reported as similar. */
+  const { reference, test, unitsPerProduct } = params;
+  const toPoints = (p: DissolutionProfile) =>
+    p.timePoints_min.map((t, i) => ({
+      timepointMin: t,
+      meanPercent: p.meanDissolved[i],
+      unitsTested: unitsPerProduct,
+      rsdPercent: p.rsdPercent ? p.rsdPercent[i] : undefined,
+      sdPercent: p.sdPercent ? p.sdPercent[i] : undefined,
+    }));
 
-  const n = reference.timePoints_min.length;
+  const outcome = compareDissolutionProfiles(
+    { role: 'reference', points: toPoints(reference) },
+    { role: 'test', points: toPoints(test) },
+    { referenceUnits: unitsPerProduct, testUnits: unitsPerProduct },
+  );
 
-  // FDA f2 rule: only ONE time point >= 85% dissolved for EITHER product may be included.
-  // Select time points up to and including the first time point where either R or T >= 85%.
-  let usablePoints = n;
-  for (let i = 0; i < n; i++) {
-    if (reference.meanDissolved[i] >= 85 || test.meanDissolved[i] >= 85) {
-      usablePoints = i + 1;
-      if (i < n - 1) {
-        warnings.push(
-          'Time points beyond ' + reference.timePoints_min[i] + ' min excluded: ' +
-            'FDA requires only one measurement at or above 85% dissolved to be included in f2 calculation.',
-        );
-      }
-      break;
-    }
-  }
-
-  // Check: if both dissolve >= 85% in <= 15 min, f2 comparison not necessary (very rapidly dissolving)
-  const veryRapidBoth =
-    reference.meanDissolved.some((d, i) => d >= 85 && reference.timePoints_min[i] <= 15) &&
-    test.meanDissolved.some((d, i) => d >= 85 && test.timePoints_min[i] <= 15);
-
-  if (veryRapidBoth) {
-    warnings.push(
-      'Both test and reference are very rapidly dissolving (>= 85% in 15 min). ' +
-        'f2 comparison is not required per FDA/EMA/ICH M9 guidance — profiles are considered similar.',
-    );
-  }
-
-  // Compute f2
-  let sumSquaredDiff = 0;
-  for (let i = 0; i < usablePoints; i++) {
-    const diff = reference.meanDissolved[i] - test.meanDissolved[i];
-    sumSquaredDiff += diff * diff;
-  }
-  const meanSquaredDiff = sumSquaredDiff / usablePoints;
-  const f2 =
-    50 * Math.log10(Math.pow(1 + meanSquaredDiff, -0.5) * 100);
-  const f2Rounded = Math.round(f2 * 100) / 100;
-  const f2Pass = f2Rounded >= 50;
-
-  // Compute f1
-  let sumAbsDiff = 0;
-  let sumRef = 0;
-  for (let i = 0; i < usablePoints; i++) {
-    sumAbsDiff += Math.abs(reference.meanDissolved[i] - test.meanDissolved[i]);
-    sumRef += reference.meanDissolved[i];
-  }
-  const f1 = sumRef > 0 ? (sumAbsDiff / sumRef) * 100 : 0;
-  const f1Rounded = Math.round(f1 * 100) / 100;
-  const f1Pass = f1Rounded <= 15;
-
-  // Interpretation
-  let interpretation: string;
-  if (veryRapidBoth) {
-    interpretation =
-      'Both products are very rapidly dissolving (>= 85% in 15 min). Dissolution profiles are considered similar without requiring f2 >= 50.';
-  } else if (f2Pass && f1Pass) {
-    interpretation =
-      'Dissolution profiles are SIMILAR. f2 = ' + f2Rounded + ' (>= 50: PASS), f1 = ' + f1Rounded + ' (<= 15: PASS). The test product meets dissolution similarity criteria.';
-  } else if (f2Pass && !f1Pass) {
-    interpretation =
-      'f2 = ' + f2Rounded + ' (>= 50: PASS) indicates similarity, but f1 = ' + f1Rounded + ' (> 15: caution). f2 is the primary criterion; f1 is supplementary. Overall: SIMILAR per f2 criterion.';
-  } else {
-    interpretation =
-      'Dissolution profiles are NOT SIMILAR. f2 = ' + f2Rounded + ' (< 50: FAIL). The test product does not meet dissolution similarity criteria. An in vivo BE study is required.';
-  }
-
-  const conditions = [
-    unitsPerProduct + ' units tested per product (FDA recommends >= 12)',
-    'Sampling times should be identical for test and reference',
-    'Coefficient of variation at earlier time points should not exceed 20%',
-    'CV at later time points should not exceed 10%',
-    'Dissolution conditions must be the same for test and reference',
+  const CITATIONS = [
+    'FDA Guidance: Dissolution Testing of Immediate Release Solid Oral Dosage Forms (1997)',
+    'FDA Guidance: Waiver of In Vivo BA/BE Studies for IR SODF Based on BCS (2017)',
+    'FDA SUPAC-IR Guidance (1995) — f2 comparison for post-approval changes',
+    'EMA/CHMP/QWP/428693/2017 Section 5.1.1 — Dissolution profile comparison',
+    'ICH M9 Step 4 (2019) Section 2.2 — Dissolution similarity assessment',
+    'Moore & Flanner (1996) — Mathematical comparison of dissolution profiles, Pharm Tech 20:64-74',
   ];
+  const FORMULAE = {
+    f2Formula: 'f2 = 50 * log10{ [1 + (1/n) * SUM(Rt - Tt)^2]^(-0.5) * 100 }',
+    f1Formula: 'f1 = { SUM|Rt - Tt| / SUM(Rt) } * 100',
+  };
 
-  if (unitsPerProduct < 12) {
-    warnings.push(
-      'Only ' + unitsPerProduct + ' units tested; FDA recommends >= 12 units per product for f2 comparison.',
-    );
+  if (outcome.outcome === 'refused') {
+    /* A refusal is reported AS a refusal. There is no f2 to report, so none is
+       invented: the numbers stay NaN-free by being absent from the verdict, and
+       `interpretation` carries the reason a reader has to act on. */
+    return {
+      f2: Number.NaN,
+      f2Pass: false,
+      f1: Number.NaN,
+      f1Pass: false,
+      interpretation: 'f2 was NOT computed. ' + outcome.message,
+      ...FORMULAE,
+      conditions: outcome.offending.map(
+        (o) =>
+          [o.role, o.timepointMin !== undefined ? o.timepointMin + ' min' : null, 'observed ' + (o.observed ?? 'nothing'), 'required ' + o.required]
+            .filter(Boolean)
+            .join(' — '),
+      ),
+      timePointsUsed: 0,
+      warnings: [outcome.message],
+      regulatoryInterpretation: [
+        'No similarity conclusion is available from these profiles.',
+        outcome.alternative ? 'Suggested route: ' + outcome.alternative : 'Record the missing inputs and re-run.',
+      ],
+      citations: CITATIONS,
+    };
   }
 
   return {
-    f2: f2Rounded,
-    f2Pass,
-    f1: f1Rounded,
-    f1Pass,
-    interpretation,
-    f2Formula: 'f2 = 50 * log10{ [1 + (1/n) * SUM(Rt - Tt)^2]^(-0.5) * 100 }',
-    f1Formula: 'f1 = { SUM|Rt - Tt| / SUM(Rt) } * 100',
-    conditions,
-    timePointsUsed: usablePoints,
-    warnings,
+    f2: Number(outcome.f2Reported),
+    f2Pass: outcome.f2Similar,
+    f1: Number(outcome.f1Reported),
+    f1Pass: outcome.f1WithinBand,
+    interpretation:
+      'f2 = ' + outcome.f2Reported + (outcome.f2Similar ? ' (>= 50): the profiles are similar' : ' (< 50): the profiles are not similar') +
+      ', over ' + outcome.inputsUsed.n + ' timepoint(s) at ' + outcome.inputsUsed.includedTimepointsMin.join(', ') + ' min. ' +
+      outcome.scope,
+    ...FORMULAE,
+    // Every condition below was evaluated against the input, with its observed value.
+    conditions: outcome.checksEvaluated.map(
+      (c) => c.condition + ': required ' + c.required + ', observed ' + c.observed,
+    ),
+    timePointsUsed: outcome.inputsUsed.n,
+    warnings: outcome.inputsUsed.above85Truncation.applied
+      ? ['Timepoints after ' + outcome.inputsUsed.above85Truncation.atTimepointMin + ' min excluded: at most one point at or above 85% dissolution is included.']
+      : [],
     regulatoryInterpretation: [
       'f2 >= 50: profiles are similar (FDA, EMA, WHO, ICH M9)',
       'f1 <= 15: supplementary criterion for acceptable difference',
       'f2 range: 0 (no similarity) to 100 (identical profiles)',
       'f2 = 50 corresponds to a mean 10% difference at all time points',
       'If both products dissolve >= 85% in 15 min: f2 not required (very rapidly dissolving)',
-      'If both products dissolve >= 85% in 30 min: FDA may accept without f2 for BCS Class I',
     ],
-    citations: [
-      'FDA Guidance: Dissolution Testing of Immediate Release Solid Oral Dosage Forms (1997)',
-      'FDA Guidance: Waiver of In Vivo BA/BE Studies for IR SODF Based on BCS (2017)',
-      'FDA SUPAC-IR Guidance (1995) — f2 comparison for post-approval changes',
-      'EMA/CHMP/QWP/428693/2017 Section 5.1.1 — Dissolution profile comparison',
-      'ICH M9 Step 4 (2019) Section 2.2 — Dissolution similarity assessment',
-      'Moore & Flanner (1996) — Mathematical comparison of dissolution profiles, Pharm Tech 20:64-74',
-    ],
+    citations: CITATIONS,
   };
 }
 
