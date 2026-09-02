@@ -176,3 +176,32 @@ describe('CrlPremortemPanel', () => {
     expect(strip.getAttribute('aria-live')).toBe('polite');
   });
 });
+
+describe('CrlPremortemPanel — an empty fix-list is not a finding of "none required"', () => {
+  /* The fix-list section rendered "No remediations required by codified
+     patterns." on ANY empty list — including a `not_assessed` artifact, where
+     the premortem had insufficient grounding and identified nothing, fixes
+     included. That is clearance copy over a state the system itself labelled
+     not assessed. `artifact.status` is the positive evidence assessmentState.ts
+     asks for, and it was already on the artifact. */
+  it('a not_assessed artifact never says no remediations are required', () => {
+    render(<CrlPremortemPanel artifact={artifact({ status: 'not_assessed', exportable: false, sealable: false, fixList: [] })} />);
+    const body = document.body.textContent ?? '';
+    expect(/No remediations required/i.test(body), 'clearance over a not-assessed artifact').toBe(false);
+    expect(/Not assessed/i.test(body)).toBe(true);
+  });
+
+  it('a sample artifact never says no remediations are required', () => {
+    render(<CrlPremortemPanel artifact={artifact({ status: 'sample', exportable: false, sealable: false, fixList: [] })} />);
+    expect(/No remediations required/i.test(document.body.textContent ?? '')).toBe(false);
+  });
+
+  it('an ASSESSED artifact with an empty list still says so — hedged like its Top-risks sibling', () => {
+    // Over-correction guard: the earned copy stays reachable, and it carries the
+    // same "not proof of soundness" hedge the section above it already uses.
+    render(<CrlPremortemPanel artifact={artifact({ status: 'estimated', fixList: [] })} />);
+    const body = document.body.textContent ?? '';
+    expect(/No remediations required by codified patterns/i.test(body)).toBe(true);
+    expect(/not proof of soundness/i.test(body)).toBe(true);
+  });
+});
