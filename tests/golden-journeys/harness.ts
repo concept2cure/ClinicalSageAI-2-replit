@@ -385,6 +385,19 @@ export class JourneyRecorder {
       return evidence;
     } catch (err) {
       if (err instanceof Error && /expected a block/.test(err.message)) throw err;
+      // A thrown error is how a service-level block manifests — but a failed
+      // assertion inside the step is the TEST failing, not the subject
+      // blocking, and must not be filed as the block the step exists to prove.
+      if (err instanceof Error && err.name === 'AssertionError') {
+        this.steps.push({
+          seq: this.seq,
+          name,
+          kind: 'known-bad',
+          status: 'failed',
+          evidence: { error: err.message },
+        });
+        throw err;
+      }
       const evidence = { thrown: err instanceof Error ? err.message : String(err) };
       this.steps.push({ seq: this.seq, name, kind: 'known-bad', status: 'blocked-as-expected', evidence });
       return evidence;
