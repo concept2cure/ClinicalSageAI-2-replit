@@ -139,3 +139,4 @@ scripts/visual-qa/probe-*.spec.tsx
 # slash — `node_modules/` matched directories only, which is exactly how a
 # symlink of that name slipped into history.
 eslint-report.json
+.scratch/
