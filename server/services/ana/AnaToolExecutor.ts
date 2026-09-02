@@ -15880,6 +15880,32 @@ registerToolHandler('list_cmc_registers', async (input, ctx) => {
                 FROM cmc_container_closures WHERE organization_id = $1`,
         searchCols: ['system_name', 'container_description', 'supplier'],
       },
+      /* One row per impurity, with the ICH inputs a threshold comparison needs
+         (class, level with its unit, the daily dose) surfaced so a model can see
+         WHY an impurity is or is not assessable without pulling the record. */
+      impurity_profile: {
+        sql: `SELECT id, impurity_name AS "impurityName", material_name AS "materialName",
+                     scope, impurity_type AS "impurityType",
+                     observed_level AS "observedLevel", level_unit AS "levelUnit",
+                     specification_limit AS "specificationLimit",
+                     maximum_daily_dose AS "maximumDailyDose", status,
+                     (qualification_basis IS NOT NULL AND qualification_basis <> '') AS "hasQualificationBasis",
+                     (structure IS NOT NULL AND structure <> '') AS "hasStructure"
+                FROM cmc_impurity_profiles WHERE organization_id = $1`,
+        searchCols: ['impurity_name', 'material_name', 'analytical_method'],
+      },
+      /* The method and the shape of the profile, not the profile itself: a
+         broad discovery call must not pull every timepoint of every batch. */
+      dissolution_profile: {
+        sql: `SELECT id, product_name AS "productName", batch_number AS "batchNumber",
+                     purpose, apparatus, medium, rotation_speed AS "rotationSpeed",
+                     units_tested AS "unitsTested", specification, status,
+                     test_date AS "testDate",
+                     jsonb_array_length(COALESCE(results, '[]'::jsonb)) AS "timepointCount",
+                     (comparison_results IS NOT NULL) AS "hasReferenceProfile"
+                FROM cmc_dissolution_profiles WHERE organization_id = $1`,
+        searchCols: ['product_name', 'batch_number', 'medium'],
+      },
       reference_standard: {
         sql: `SELECT id, standard_code AS "standardCode", standard_name AS "standardName",
                      scope, standard_type AS "standardType", lot_number AS "lotNumber",

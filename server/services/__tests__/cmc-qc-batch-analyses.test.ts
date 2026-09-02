@@ -116,7 +116,13 @@ describe('qc_result reaches the batch-analyses sections', () => {
     const composed = composeModule3FromCanonicalSources(sources as never);
     const p5 = composed.find(c => c.sectionKey === '3.2.P.5')!;
     expect(p5.missingInputs).not.toContain('drugProductBatchAnalyses');
-    expect(p5.completeness).toBe(100);
+    /* §3.2.P.5.5 is the impurity characterisation subsection, so the section
+       also requires an impurity profile it can compare to an ICH threshold.
+       This fixture records none, and the section says so rather than reporting
+       itself served — the recorded QC result satisfies its own input and
+       nothing more. */
+    expect(p5.missingInputs).toEqual(['drugProductImpurityProfileComplete']);
+    expect(p5.completeness).toBe(75);
     // …and the section that will NOT render this row stays honestly short.
     const s4 = composed.find(c => c.sectionKey === '3.2.S.4')!;
     expect(s4.missingInputs).toContain('drugSubstanceBatchAnalyses');

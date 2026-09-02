@@ -16,10 +16,18 @@ import {
   comparabilityForm, comparabilityBody,
   containerClosureForm, containerClosureBody, containerClosurePatch,
   referenceStandardForm, referenceStandardBody, referenceStandardPatch,
+  impurityProfileForm, impurityProfileBody, impurityProfilePatch,
+  dissolutionProfileForm, dissolutionProfileBody, dissolutionProfilePatch,
   qualifyForm, qualifyBody,
   asUserId,
 } from './cmcRegisterForms';
-import type { ContainerClosureRow, ReferenceStandardBody } from './cmcRegisterForms';
+import type {
+  ContainerClosureRow,
+  ReferenceStandardBody,
+  ImpurityProfileBody,
+  DissolutionProfileBody,
+} from './cmcRegisterForms';
+import { dissolutionPurposeSection } from '@shared/cmc/dissolution-purpose';
 /* The SAME scope resolver the composer uses. A register that matched the three
    canonical strings exactly showed "--" for a row the composer was at that
    moment filing into §3.2.S.6 — the screen disagreeing with the dossier about
@@ -1187,6 +1195,209 @@ export function CmReferenceStandards() {
         },
         { header: 'CoA', render: (r) => text(r.certificateOfAnalysis) },
         { header: 'Retest / expiry', render: (r) => fmtDate(r.retestDate || r.expiryDate) },
+        { header: 'Status', render: (r) => chip(r.status, 'draft') },
+      ]}
+    />
+  );
+}
+
+/* ═══════════ Impurity profiles — GET /api/cmc/impurity-profiles ═════════════ */
+
+export interface ImpurityProfileApiRow {
+  id: number;
+  projectId?: string | null;
+  scope: string;
+  materialName: string;
+  impurityName: string;
+  impurityType: string;
+  origin?: string | null;
+  casNumber?: string | null;
+  molecularFormula?: string | null;
+  structure?: string | null;
+  relativeRetentionTime?: string | null;
+  analyticalMethod?: string | null;
+  observedLevel?: string | null;
+  levelUnit?: string | null;
+  specificationLimit?: string | null;
+  maximumDailyDose?: string | null;
+  qualificationBasis?: string | null;
+  controlStrategy?: string | null;
+  batchesObserved?: string[] | null;
+  status: string;
+  qualificationDate?: string | null;
+}
+
+/**
+ * The level in the unit it was RECORDED in.
+ *
+ * The composed §3.2.S.3.2 table used to append a percent sign to whatever
+ * number was in the field, so a residual solvent recorded in ppm printed as a
+ * percentage. The register shows the same thing the dossier does.
+ */
+function impurityLevel(r: ImpurityProfileApiRow): React.ReactNode {
+  const level = String(r.observedLevel ?? '').trim();
+  if (!level) return '--';
+  const unit = String(r.levelUnit ?? '').trim();
+  return unit ? `${level} ${unit}` : <span className="rd-chip tone-warn">{level} — no unit</span>;
+}
+
+/**
+ * The impurity register — one row per impurity, which is how ICH Q3A/Q3B reads
+ * them: each has its own level, its own threshold at the product's dose, and
+ * its own qualification.
+ */
+export function CmImpurityProfiles() {
+  const projectId = cmcProjectUuid();
+  return (
+    <RegisterCard<ImpurityProfileApiRow>
+      path={`/api/cmc/impurity-profiles${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`}
+      title="Impurities"
+      meta={(rows) => {
+        const qualified = rows.filter((r) => String(r.status || '').toLowerCase() === 'qualified').length;
+        const withBasis = rows.filter((r) => String(r.qualificationBasis || '').trim()).length;
+        const noDose = rows.filter((r) => !String(r.maximumDailyDose || '').trim()).length;
+        return `${rows.length} impurities -- ${withBasis} with a qualification basis -- ${qualified} qualified -- ${noDose} with no daily dose recorded`;
+      }}
+      icon={I.sigma}
+      loadingTitle="Loading impurities…"
+      emptyTitle="No impurity recorded yet"
+      emptyHint="Each impurity, its observed level, and the ICH Q3A/Q3B threshold that governs it at the product's maximum daily dose. Sections 3.2.S.3.2 and 3.2.P.5.5 compose from this register."
+      errorTitle="Couldn’t load impurities"
+      errorHint="The org-scoped impurity register didn’t load. Sign in and try again."
+      rowKey={(r) => r.id}
+      create={{
+        label: 'Record impurity',
+        subject: 'impurity',
+        path: '/api/cmc/impurity-profiles',
+        form: () => impurityProfileForm(),
+        toBody: (v, pid) => impurityProfileBody(v, pid),
+        needsProject: true,
+      }}
+      rowActions={[
+        {
+          label: 'Update',
+          icon: I.penLine,
+          subject: 'impurity',
+          form: (r) => impurityProfileForm(r as Partial<ImpurityProfileBody>),
+          path: (r) => `/api/cmc/impurity-profiles/${r.id}`,
+          toBody: (v) => impurityProfilePatch(v),
+        },
+        {
+          label: 'Qualify',
+          icon: I.lock,
+          subject: 'qualification',
+          /* Signed over the recorded basis. The API refuses the signature when
+             no basis is recorded, so the button refuses first and says why. */
+          when: (r) => String(r.status || '').toLowerCase() !== 'qualified',
+          disabledReason: (r) =>
+            String(r.qualificationBasis || '').trim()
+              ? null
+              : 'Record the qualification basis before signing — a signature over an empty basis qualifies nothing',
+          form: (r) => qualifyForm('impurity', `${r.impurityName} in ${r.materialName}`),
+          path: (r) => `/api/cmc/impurity-profiles/${r.id}/qualify`,
+          method: 'POST',
+          toBody: (v) => qualifyBody(v),
+        },
+      ]}
+      columns={[
+        { header: 'Impurity', render: (r) => r.impurityName, mono: true, bold: true },
+        { header: 'Material', render: (r) => r.materialName },
+        { header: 'Files under', render: (r) => materialScopeSections(r.scope, 'drug_substance', '3.2.S.3.2', '3.2.P.5.5') },
+        { header: 'Class', render: (r) => r.impurityType },
+        { header: 'Level', render: impurityLevel },
+        { header: 'Spec limit', render: (r) => text(r.specificationLimit) },
+        { header: 'Daily dose', render: (r) => (r.maximumDailyDose ? r.maximumDailyDose : <span className="rd-chip tone-warn">not recorded</span>) },
+        { header: 'Structure', render: (r) => (r.structure || r.molecularFormula ? 'recorded' : <span className="rd-chip tone-warn">none</span>) },
+        { header: 'Qualification basis', render: (r) => (r.qualificationBasis ? <span className="rd-chip tone-ok">recorded</span> : <span className="rd-chip tone-warn">none</span>) },
+        { header: 'Status', render: (r) => chip(r.status, 'draft') },
+      ]}
+    />
+  );
+}
+
+/* ═══════════ Dissolution profiles — GET /api/cmc/dissolution-profiles ════════ */
+
+export interface DissolutionProfileApiRow {
+  id: number;
+  projectId?: string | null;
+  purpose: string;
+  productName: string;
+  batchNumber?: string | null;
+  strength?: string | null;
+  apparatus: string;
+  rotationSpeed?: string | null;
+  medium: string;
+  mediumVolume?: string | null;
+  temperature?: string | null;
+  sinker?: string | null;
+  specification?: string | null;
+  unitsTested?: number | null;
+  results?: Array<Record<string, string>> | null;
+  comparisonBatch?: string | null;
+  comparisonResults?: Array<Record<string, string>> | null;
+  testDate?: string | null;
+  status: string;
+}
+
+/** How much of a profile is actually on file, stated rather than implied. */
+function profileDepth(r: DissolutionProfileApiRow): React.ReactNode {
+  const points = Array.isArray(r.results) ? r.results.length : 0;
+  if (points === 0) return <span className="rd-chip tone-warn">no timepoints</span>;
+  return `${points} timepoint${points === 1 ? '' : 's'}`;
+}
+
+/**
+ * The dissolution register. `Recorded for` is the column that decides whether a
+ * profile is §3.2.P.2 development evidence or the §3.2.P.5 release control —
+ * both sections used to read the same record and present it as their own.
+ */
+export function CmDissolutionProfiles() {
+  const projectId = cmcProjectUuid();
+  return (
+    <RegisterCard<DissolutionProfileApiRow>
+      path={`/api/cmc/dissolution-profiles${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`}
+      title="Dissolution profiles"
+      meta={(rows) => {
+        const release = rows.filter((r) => String(r.purpose || '') === 'release-specification').length;
+        const noUnits = rows.filter((r) => !r.unitsTested).length;
+        return `${rows.length} profiles -- ${release} release specification -- ${noUnits} with no unit count`;
+      }}
+      icon={I.barChart}
+      loadingTitle="Loading dissolution profiles…"
+      emptyTitle="No dissolution profile recorded yet"
+      emptyHint="The apparatus, the medium, the units tested, and the mean with its variability at each timepoint. Sections 3.2.P.2 and 3.2.P.5 compose from this register, and an f2 comparison is computed from the recorded profiles."
+      errorTitle="Couldn’t load dissolution profiles"
+      errorHint="The org-scoped dissolution register didn’t load. Sign in and try again."
+      rowKey={(r) => r.id}
+      create={{
+        label: 'Record profile',
+        subject: 'dissolution profile',
+        path: '/api/cmc/dissolution-profiles',
+        form: () => dissolutionProfileForm(),
+        toBody: (v, pid) => dissolutionProfileBody(v, pid),
+        needsProject: true,
+      }}
+      rowActions={[
+        {
+          label: 'Update',
+          icon: I.penLine,
+          subject: 'dissolution profile',
+          form: (r) => dissolutionProfileForm(r as Partial<DissolutionProfileBody>),
+          path: (r) => `/api/cmc/dissolution-profiles/${r.id}`,
+          toBody: (v) => dissolutionProfilePatch(v),
+        },
+      ]}
+      columns={[
+        { header: 'Product', render: (r) => r.productName, bold: true },
+        { header: 'Batch', render: (r) => text(r.batchNumber), mono: true },
+        { header: 'Files under', render: (r) => dissolutionPurposeSection(r.purpose) },
+        { header: 'Purpose', render: (r) => r.purpose },
+        { header: 'Apparatus', render: (r) => r.apparatus },
+        { header: 'Medium', render: (r) => r.medium },
+        { header: 'Units', render: (r) => (r.unitsTested ? String(r.unitsTested) : <span className="rd-chip tone-warn">not recorded</span>) },
+        { header: 'Profile', render: profileDepth },
+        { header: 'Criterion', render: (r) => text(r.specification) },
+        { header: 'Tested', render: (r) => fmtDate(r.testDate) },
         { header: 'Status', render: (r) => chip(r.status, 'draft') },
       ]}
     />

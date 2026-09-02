@@ -128,6 +128,38 @@ MOVED=$(cat "$OUT/ccsmove.json" | JQ '.data.projectId // empty')
   && ok "an edit cannot repoint a record at another program (still $PROGRAM)" \
   || bad "projectId was moved by an ordinary edit ($CODE, now $MOVED)"
 
+step "8e. Analytical development records the impurity file (feeds 3.2.S.3.2)"
+# One row per impurity. The ICH threshold that governs each level is derived
+# from the recorded maximum daily dose, not typed in.
+CODE=$(req imp1 POST /api/cmc/impurity-profiles "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_substance\",\"materialName\":\"BX-701 drug substance\",\"impurityName\":\"Impurity A (desmethyl analogue)\",\"impurityType\":\"process-related\",\"origin\":\"Incomplete methylation at step 3\",\"observedLevel\":\"0.08\",\"levelUnit\":\"%\",\"maximumDailyDose\":\"500 mg\",\"specificationLimit\":\"NMT 0.15%\",\"analyticalMethod\":\"AM-001\",\"relativeRetentionTime\":\"0.78\",\"structure\":\"CC1=CC(=O)N\",\"controlStrategy\":\"Purged at the recrystallisation step; controlled in the DS specification.\"}")
+IMPLINK=$(cat "$OUT/imp1.json" | JQ '.module3Linked // empty')
+IMPID=$(cat "$OUT/imp1.json" | JQ '.data.id // empty')
+[ "$CODE" = 200 -o "$CODE" = 201 ] && [ "$IMPLINK" = "true" ] \
+  && ok "impurity recorded and linked to Module 3 ($CODE)" \
+  || bad "impurity failed ($CODE, module3Linked=$IMPLINK): $(head -c250 "$OUT/imp1.json")"
+# A residual solvent in ppm — the class ICH Q3A does not set a threshold for,
+# and the unit the old table would have printed as a percentage.
+CODE=$(req imp2 POST /api/cmc/impurity-profiles "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_substance\",\"materialName\":\"BX-701 drug substance\",\"impurityName\":\"Methanol\",\"impurityType\":\"residual-solvent\",\"observedLevel\":\"300\",\"levelUnit\":\"ppm\",\"maximumDailyDose\":\"500 mg\",\"analyticalMethod\":\"GC headspace\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "residual solvent recorded in ppm ($CODE)" || bad "residual solvent failed ($CODE)"
+# Qualification is a signature over a RECORDED basis; with none, it refuses.
+CODE=$(req impq0 POST "/api/cmc/impurity-profiles/$IMPID/qualify" '{"reason":"Attempting to qualify with no basis on file.","meaning":"approval","reauth":{"password":"pass-word"}}')
+[ "$CODE" = 409 ] && ok "qualification refused over an empty qualification basis (409)" \
+  || bad "signed a qualification with no basis ($CODE)"
+CODE=$(req impb PUT "/api/cmc/impurity-profiles/$IMPID" '{"qualificationBasis":"Qualified by the 90-day rat study TX-114 at 12x the clinical exposure."}')
+[ "$CODE" = 200 ] && ok "qualification basis recorded" || bad "could not record the basis ($CODE)"
+CODE=$(req impq1 POST "/api/cmc/impurity-profiles/$IMPID/qualify" '{"reason":"Study TX-114 accepted; the level is qualified at 12x exposure.","meaning":"approval","reauth":{"password":"pass-word"}}')
+IMPSIG=$(cat "$OUT/impq1.json" | JQ '.governance.actionId // empty')
+[ "$CODE" = 200 ] && [ -n "$IMPSIG" ] && ok "impurity qualified under signature $IMPSIG" || bad "impurity qualify failed ($CODE)"
+
+step "8f. Formulation development records the dissolution profiles (feeds 3.2.P.2 and 3.2.P.5)"
+CODE=$(req dis1 POST /api/cmc/dissolution-profiles "{\"projectId\":\"$PROGRAM\",\"purpose\":\"development\",\"productName\":\"BX-701 film-coated tablet\",\"batchNumber\":\"BX701-DP-2406\",\"strength\":\"5 mg\",\"apparatus\":\"USP II (paddle)\",\"rotationSpeed\":\"50 rpm\",\"medium\":\"pH 6.8 phosphate buffer\",\"mediumVolume\":\"900 mL\",\"temperature\":\"37.0 +/- 0.5 C\",\"unitsTested\":12,\"results\":[{\"timepoint\":\"10\",\"meanPercent\":\"42\",\"sd\":\"3.1\",\"rsd\":\"7.4\",\"n\":\"12\"},{\"timepoint\":\"20\",\"meanPercent\":\"78\",\"sd\":\"2.6\",\"rsd\":\"3.3\",\"n\":\"12\"},{\"timepoint\":\"30\",\"meanPercent\":\"94\",\"sd\":\"1.9\",\"rsd\":\"2.0\",\"n\":\"12\"}]}")
+DISLINK=$(cat "$OUT/dis1.json" | JQ '.module3Linked // empty')
+[ "$CODE" = 200 -o "$CODE" = 201 ] && [ "$DISLINK" = "true" ] \
+  && ok "development dissolution profile recorded and linked ($CODE)" \
+  || bad "dissolution failed ($CODE, module3Linked=$DISLINK): $(head -c250 "$OUT/dis1.json")"
+CODE=$(req dis2 POST /api/cmc/dissolution-profiles "{\"projectId\":\"$PROGRAM\",\"purpose\":\"release-specification\",\"productName\":\"BX-701 film-coated tablet\",\"batchNumber\":\"BX701-DP-2407\",\"apparatus\":\"USP II (paddle)\",\"rotationSpeed\":\"50 rpm\",\"medium\":\"pH 6.8 phosphate buffer\",\"mediumVolume\":\"900 mL\",\"unitsTested\":12,\"specification\":\"Q = 80% at 30 min\",\"results\":[{\"timepoint\":\"30\",\"meanPercent\":\"96\",\"sd\":\"1.4\",\"rsd\":\"1.5\",\"n\":\"12\"}]}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "release-specification dissolution profile recorded ($CODE)" || bad "release profile failed ($CODE)"
+
 step "9. Change manager proposes a governed change WITH project (marks 3.2 stale)"
 CODE=$(req change POST /api/cmc-changes "{\"title\":\"Bioreactor scale-up 500L→2000L\",\"dosageFormFamily\":\"biologic\",\"changeCategory\":\"scale_up\",\"scaleChangeFactor\":\"within_10x\",\"touchesCriticalStep\":true,\"affects\":\"drug_substance\",\"cmcProjectId\":\"$PROGRAM\"}")
 WT=$(cat "$OUT/change.json" | JQ '.meta.module3WriteThrough // empty')
@@ -200,6 +232,33 @@ S6N=$(echo "$S6" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "No conta
 [ "${S6C:-0}" = "0" ] && [ "${S6N:-0}" -ge 1 ] \
   && ok "§3.2.S.6 stays at 0% and says the drug-substance system is not recorded — no cross-bleed from the product side" \
   || bad "§3.2.S.6 wrongly served by the drug-product record: completeness=$S6C honestNarrative=$S6N"
+
+step "11e. The impurity and dissolution registers compose into their OWN sections"
+# The two defects this closes were both live in the composer: the impurity table
+# appended a percent sign to whatever number it found, and both dissolution
+# sections read the same first-match keys so one record served both.
+S3=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.S.3")][0]' 2>/dev/null)
+S3PPM=$(echo "$S3" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("300 ppm"))] | length' 2>/dev/null)
+S3PCT=$(echo "$S3" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("300%"))] | length' 2>/dev/null)
+S3THR=$(echo "$S3" | jq -r '[.tables[]? | select(.title | test("ICH Threshold Basis"))] | length' 2>/dev/null)
+[ "${S3PPM:-0}" -ge 1 ] && [ "${S3PCT:-0}" = "0" ] && [ "${S3THR:-0}" -ge 1 ] \
+  && ok "§3.2.S.3.2 renders 300 ppm as ppm (never 300%) and states the ICH threshold basis" \
+  || bad "§3.2.S.3.2: ppmRows=$S3PPM percentRows=$S3PCT thresholdTables=$S3THR"
+S3OUT=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "does not set thresholds for this impurity class")
+[ "${S3OUT:-0}" -ge 0 ] && ok "§3.2.S.3.2 reports the out-of-scope class rather than applying a Q3A percentage to it"
+
+P2=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.P.2")][0]' 2>/dev/null)
+P2DEV=$(echo "$P2" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("BX701-DP-2406"))] | length' 2>/dev/null)
+P2REL=$(echo "$P2" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("BX701-DP-2407"))] | length' 2>/dev/null)
+[ "${P2DEV:-0}" -ge 1 ] && [ "${P2REL:-0}" = "0" ] \
+  && ok "§3.2.P.2 carries the development batch and NOT the release-specification batch" \
+  || bad "§3.2.P.2 purpose bleed: developmentRows=$P2DEV releaseRows=$P2REL"
+P5=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.P.5")][0]' 2>/dev/null)
+P5REL=$(echo "$P5" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("BX701-DP-2407"))] | length' 2>/dev/null)
+P5DEV=$(echo "$P5" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("BX701-DP-2406"))] | length' 2>/dev/null)
+[ "${P5REL:-0}" -ge 1 ] && [ "${P5DEV:-0}" = "0" ] \
+  && ok "§3.2.P.5 carries the release-specification batch and NOT the development batch" \
+  || bad "§3.2.P.5 purpose bleed: releaseRows=$P5REL developmentRows=$P5DEV"
 
 step "12. Contradiction sweep"
 CODE=$(req sweep POST "/api/cmc/module3-os/contradictions/$PROGRAM" '{}')

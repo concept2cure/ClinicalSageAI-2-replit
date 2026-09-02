@@ -1690,6 +1690,14 @@ export const C2C_MIGRATION_FILES = [
   // canonical write-through does not depend on the client having sent one.
   'db/migrations/20260901_cmc_container_closure_reference_standard_registers.sql',
 
+  // ── CMC impurity + dissolution registers ─────────────────────────────────
+  // The other two source types the Module 3 composer demands and nothing
+  // produced: 3.2.S.3 / 3.2.S.4 read impurity_profile, 3.2.P.2 / 3.2.P.5 read
+  // dissolution_profile. Both store the column the section rules scope on
+  // (scope / purpose) so a drug-substance impurity cannot green a drug-product
+  // section and a development profile cannot green the release specification.
+  'db/migrations/20260902_cmc_impurity_dissolution_registers.sql',
+
   // ── Drop the audit-shaped tables that survived a from-scratch liveness
   //    re-check (ledger L13; docs/AUDIT_STORE_INVENTORY_2026-08.md §5.1) ─────
   // MUST stay near the end, and specifically AFTER every entry above that

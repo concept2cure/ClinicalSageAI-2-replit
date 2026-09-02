@@ -3948,6 +3948,130 @@ export const cmcReferenceStandards = pgTable(
   })
 );
 
+/* ── Impurity profiles — §3.2.S.3.2 / §3.2.S.4 / §3.2.P.5.5 ───────────────────
+ *
+ * The composer has demanded an `impurity_profile` source since Module 3 was
+ * modelled. The only impurity storage that existed was an unstructured
+ * `drug_substances.impurities_profile` json blob that the product's own drug
+ * substance form never writes — so the ICH Q3A/Q3B story a reviewer works
+ * through first (what is it, how much of it, is it above the identification or
+ * qualification threshold, and if so what qualifies it) could not be recorded
+ * at all.
+ *
+ * One row per impurity per material. `scope` decides which side it files under,
+ * on the same rule as the container closure and reference standard registers.
+ *
+ * There is deliberately no `qualified` boolean: an impurity is reported as
+ * qualified only where a qualification BASIS is recorded, so the claim always
+ * carries its own evidence rather than a checkbox somebody ticked.
+ */
+export const cmcImpurityProfiles = pgTable(
+  'cmc_impurity_profiles',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: text('project_id'),
+    scope: text('scope').default('drug_substance').notNull(), // drug_substance | drug_product | both
+    materialName: text('material_name').notNull(),
+    impurityName: text('impurity_name').notNull(),
+    /* ICH Q3A governs process-related impurities and degradation products of a
+       drug substance; Q3B governs degradation products of a drug product;
+       residual solvents are Q3C and elemental impurities Q3D, with their own
+       limits. The type is stored so the threshold engine can refuse to apply a
+       Q3A/Q3B threshold to a class those guidelines do not cover. */
+    impurityType: text('impurity_type').default('process-related').notNull(),
+    origin: text('origin'),
+    casNumber: text('cas_number'),
+    molecularFormula: text('molecular_formula'),
+    structure: text('structure'),
+    relativeRetentionTime: text('relative_retention_time'),
+    analyticalMethod: text('analytical_method'),
+    observedLevel: text('observed_level'),
+    levelUnit: text('level_unit').default('%'),
+    specificationLimit: text('specification_limit'),
+    /* The thresholds AS RECORDED. The Q3A/Q3B engine derives them from the
+       maximum daily dose; where an applicant has recorded its own, the record
+       governs and the engine's derivation is reported alongside it rather than
+       silently replacing it. */
+    reportingThreshold: text('reporting_threshold'),
+    identificationThreshold: text('identification_threshold'),
+    qualificationThreshold: text('qualification_threshold'),
+    maximumDailyDose: text('maximum_daily_dose'),
+    /* How the impurity is qualified — a study, a comparator exposure, a
+       compendial monograph. Its PRESENCE is what qualification means here. */
+    qualificationBasis: text('qualification_basis'),
+    controlStrategy: text('control_strategy'),
+    batchesObserved: text('batches_observed').array(),
+    status: text('status').default('draft').notNull(), // draft | specified | qualified | retired
+    /* Qualification is a Part 11 signature over the recorded qualification
+       basis, not a status a save can set: who reached the toxicological
+       conclusion, and when. The register refuses the signature when the basis
+       is empty, so these columns are never populated over nothing. */
+    qualifiedBy: integer('qualified_by').references(() => users.id),
+    qualificationDate: timestamp('qualification_date'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_cmc_impurity_profiles_org: index('idx_cmc_impurity_profiles_org').on(table.organizationId),
+    idx_cmc_impurity_profiles_project: index('idx_cmc_impurity_profiles_project').on(table.projectId),
+  })
+);
+
+/* ── Dissolution profiles — §3.2.P.2 / §3.2.P.5 ───────────────────────────────
+ *
+ * The other source type §3.2.P.5 demands and nothing produced. A dissolution
+ * result is not one number: it is a method (apparatus, medium, speed), a set of
+ * units, and a mean with its variability at each timepoint — and a comparison
+ * against a reference profile is what a formulation or site change turns on.
+ *
+ * `purpose` plays the role `scope` plays in the other registers: a development
+ * profile belongs to §3.2.P.2 and a release-specification profile to §3.2.P.5,
+ * and one must not complete the other's section.
+ */
+export const cmcDissolutionProfiles = pgTable(
+  'cmc_dissolution_profiles',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: text('project_id'),
+    // development | release-specification | comparability | biowaiver
+    purpose: text('purpose').default('development').notNull(),
+    productName: text('product_name').notNull(),
+    batchNumber: text('batch_number'),
+    strength: text('strength'),
+    apparatus: text('apparatus').notNull(), // USP I (basket), USP II (paddle), USP III, USP IV
+    rotationSpeed: text('rotation_speed'),
+    medium: text('medium').notNull(),
+    mediumVolume: text('medium_volume'),
+    temperature: text('temperature'),
+    sinker: text('sinker'),
+    /* The acceptance criterion, as recorded — e.g. "Q = 80% at 30 min". */
+    specification: text('specification'),
+    unitsTested: integer('units_tested'),
+    /* [{ timepoint, meanPercent, sd, rsd, min, max, n }] — the profile itself.
+       A mean with no n and no variability is not a profile a comparison can be
+       computed from, and the f2 engine refuses on exactly that. */
+    results: jsonb('results'),
+    /* The reference profile a comparison is against, in the same row shape. */
+    comparisonBatch: text('comparison_batch'),
+    comparisonResults: jsonb('comparison_results'),
+    passFail: text('pass_fail'),
+    testDate: timestamp('test_date'),
+    status: text('status').default('draft').notNull(), // draft | reported | retired
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_cmc_dissolution_profiles_org: index('idx_cmc_dissolution_profiles_org').on(table.organizationId),
+    idx_cmc_dissolution_profiles_project: index('idx_cmc_dissolution_profiles_project').on(table.projectId),
+  })
+);
+
 // Regulatory Documents Table
 export const regulatoryDocuments = pgTable(
   'regulatory_documents',
@@ -4029,6 +4153,18 @@ export const insertCmcReferenceStandardSchema = createInsertSchemaOmit(cmcRefere
   updatedAt: true,
 });
 
+export const insertCmcImpurityProfileSchema = createInsertSchemaOmit(cmcImpurityProfiles, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCmcDissolutionProfileSchema = createInsertSchemaOmit(cmcDissolutionProfiles, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // CMC Types
 export type AnalyticalMethod = InferSelectModel<typeof analyticalMethods>;
 export type InsertAnalyticalMethod = z.infer<typeof insertAnalyticalMethodSchema>;
@@ -4048,6 +4184,10 @@ export type CmcContainerClosure = InferSelectModel<typeof cmcContainerClosures>;
 export type InsertCmcContainerClosure = z.infer<typeof insertCmcContainerClosureSchema>;
 export type CmcReferenceStandard = InferSelectModel<typeof cmcReferenceStandards>;
 export type InsertCmcReferenceStandard = z.infer<typeof insertCmcReferenceStandardSchema>;
+export type CmcImpurityProfile = InferSelectModel<typeof cmcImpurityProfiles>;
+export type InsertCmcImpurityProfile = z.infer<typeof insertCmcImpurityProfileSchema>;
+export type CmcDissolutionProfile = InferSelectModel<typeof cmcDissolutionProfiles>;
+export type InsertCmcDissolutionProfile = z.infer<typeof insertCmcDissolutionProfileSchema>;
 
 // Regulatory Document Insert Schema
 export const insertRegulatoryDocumentSchema = createInsertSchemaOmit(regulatoryDocuments, {

@@ -1,0 +1,103 @@
+-- CMC registers for the impurity profile and the dissolution profile.
+--
+-- ── What was missing ─────────────────────────────────────────────────────────
+-- server/services/module3Composer.ts has demanded an `impurity_profile` and a
+-- `dissolution_profile` canonical source since Module 3 was modelled:
+--
+--   3.2.S.3 / 3.2.S.4   requiredSourceTypes include impurity_profile
+--   3.2.P.2 / 3.2.P.5   requiredSourceTypes include dissolution_profile
+--
+-- Neither had a table. The only impurity storage anywhere was an unstructured
+-- drug_substances.impurities_profile json blob that the product's own drug
+-- substance form never writes, and dissolution had nothing at all -- so the two
+-- questions a reviewer works through first for an oral solid product (is this
+-- impurity above the ICH Q3A/Q3B identification or qualification threshold, and
+-- are these two dissolution profiles similar) could not be recorded, let alone
+-- answered from recorded data.
+--
+-- Both registers carry the scoping column the section rules read, on the rule
+-- established by the container closure and reference standard registers: the
+-- section a record files into is stored, never guessed. For impurities that is
+-- `scope` (drug_substance | drug_product | both); for dissolution it is
+-- `purpose` (development | release-specification | comparability | biowaiver),
+-- because a development profile belongs to 3.2.P.2 and a release-specification
+-- profile to 3.2.P.5 and one must not complete the other's section.
+--
+-- Both carry project_id as a column so the canonical write-through does not
+-- depend on a client having sent one, and both are tenant-purge children (see
+-- server/services/tenant/tenant-offboarding.ts).
+--
+-- Additive and idempotent. Nothing is dropped or renamed.
+
+CREATE TABLE IF NOT EXISTS cmc_impurity_profiles (
+  id serial PRIMARY KEY,
+  organization_id integer NOT NULL REFERENCES organizations(id),
+  project_id text,
+  scope text NOT NULL DEFAULT 'drug_substance',
+  material_name text NOT NULL,
+  impurity_name text NOT NULL,
+  impurity_type text NOT NULL DEFAULT 'process-related',
+  origin text,
+  cas_number text,
+  molecular_formula text,
+  structure text,
+  relative_retention_time text,
+  analytical_method text,
+  observed_level text,
+  level_unit text DEFAULT '%',
+  specification_limit text,
+  reporting_threshold text,
+  identification_threshold text,
+  qualification_threshold text,
+  maximum_daily_dose text,
+  qualification_basis text,
+  control_strategy text,
+  batches_observed text[],
+  status text NOT NULL DEFAULT 'draft',
+  qualified_by integer REFERENCES users(id),
+  qualification_date timestamp,
+  created_at timestamp NOT NULL DEFAULT now(),
+  updated_at timestamp NOT NULL DEFAULT now()
+);
+
+-- Qualification is a Part 11 signature over the recorded qualification basis;
+-- these carry who signed and when. Stated as ALTERs as well so a database that
+-- already has the table from an earlier run of this file gains them.
+ALTER TABLE cmc_impurity_profiles ADD COLUMN IF NOT EXISTS qualified_by integer REFERENCES users(id);
+ALTER TABLE cmc_impurity_profiles ADD COLUMN IF NOT EXISTS qualification_date timestamp;
+
+CREATE INDEX IF NOT EXISTS idx_cmc_impurity_profiles_org
+  ON cmc_impurity_profiles (organization_id);
+CREATE INDEX IF NOT EXISTS idx_cmc_impurity_profiles_project
+  ON cmc_impurity_profiles (project_id);
+
+CREATE TABLE IF NOT EXISTS cmc_dissolution_profiles (
+  id serial PRIMARY KEY,
+  organization_id integer NOT NULL REFERENCES organizations(id),
+  project_id text,
+  purpose text NOT NULL DEFAULT 'development',
+  product_name text NOT NULL,
+  batch_number text,
+  strength text,
+  apparatus text NOT NULL,
+  rotation_speed text,
+  medium text NOT NULL,
+  medium_volume text,
+  temperature text,
+  sinker text,
+  specification text,
+  units_tested integer,
+  results jsonb,
+  comparison_batch text,
+  comparison_results jsonb,
+  pass_fail text,
+  test_date timestamp,
+  status text NOT NULL DEFAULT 'draft',
+  created_at timestamp NOT NULL DEFAULT now(),
+  updated_at timestamp NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_cmc_dissolution_profiles_org
+  ON cmc_dissolution_profiles (organization_id);
+CREATE INDEX IF NOT EXISTS idx_cmc_dissolution_profiles_project
+  ON cmc_dissolution_profiles (project_id);
