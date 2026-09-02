@@ -268,18 +268,68 @@ function makeSeedSources(): CanonicalSource[] {
         testParameters: ['Identity (NMR)', 'Purity (HPLC) ≥ 99.0%', 'Residual solvents (GC)'],
       },
     },
-    // Impurity Profile
+    /* Impurity Profile — ONE canonical source per impurity, which is what the
+       product stores: cmc_impurity_profiles.impurity_name is NOT NULL and the
+       write-through emits a source per row (cmc-write-through.ts). This fixture
+       previously held a single source carrying a nested `impurities: [...]`
+       array, a shape the product never wrote — the migration that created the
+       register records that the only prior storage was a
+       drug_substances.impurities_profile blob "the product's own drug substance
+       form never writes". The composer reads p.impurityName off each payload, so
+       the nested form produced no rows and 3.2.S.3 rendered "No impurity is
+       recorded" while the fixture believed it had seeded three.
+
+       levelUnit and maximumDailyDose are carried because the ICH Q3A comparison
+       is what these sections exist for: a level with no unit, or a threshold
+       with no dose to key it to, is explicitly not assessable. */
     {
       id: 'src-imp-001',
       sourceType: 'impurity_profile',
       sourcePayload: {
+        scope: 'drug_substance',
         materialName: DRUG_NAME,
-        impurities: [
-          { impurityName: 'Impurity A (phosphoramidate isomer)', observedLevel: 0.08, specLimit: 0.15, identification: 'Characterized by MS/NMR' },
-          { impurityName: 'Impurity B (des-phosphoryl)', observedLevel: 0.03, specLimit: 0.10, identification: 'Characterized by MS' },
-          { impurityName: 'Total degradation products', observedLevel: 0.42, specLimit: 1.0, identification: 'Per ICH Q3A' },
-        ],
-        qualificationBasis: 'Qualified per ICH Q3A(R2) — all specified impurities below qualification threshold',
+        impurityName: 'Impurity A (phosphoramidate isomer)',
+        impurityType: 'process-related',
+        observedLevel: '0.08',
+        levelUnit: '%',
+        specificationLimit: 'NMT 0.15%',
+        maximumDailyDose: '400 mg',
+        structure: 'Characterized by MS/NMR',
+        analyticalMethod: 'HPLC-UV',
+        qualificationBasis: 'Qualified per ICH Q3A(R2) — below the qualification threshold',
+      },
+    },
+    {
+      id: 'src-imp-002',
+      sourceType: 'impurity_profile',
+      sourcePayload: {
+        scope: 'drug_substance',
+        materialName: DRUG_NAME,
+        impurityName: 'Impurity B (des-phosphoryl)',
+        impurityType: 'degradation-product',
+        observedLevel: '0.03',
+        levelUnit: '%',
+        specificationLimit: 'NMT 0.10%',
+        maximumDailyDose: '400 mg',
+        structure: 'Characterized by MS',
+        analyticalMethod: 'HPLC-UV',
+        qualificationBasis: 'Qualified per ICH Q3A(R2) — below the qualification threshold',
+      },
+    },
+    {
+      id: 'src-imp-003',
+      sourceType: 'impurity_profile',
+      sourcePayload: {
+        scope: 'drug_substance',
+        materialName: DRUG_NAME,
+        impurityName: 'Total degradation products',
+        impurityType: 'degradation-product',
+        observedLevel: '0.42',
+        levelUnit: '%',
+        specificationLimit: 'NMT 1.0%',
+        maximumDailyDose: '400 mg',
+        analyticalMethod: 'HPLC-UV',
+        qualificationBasis: 'Per ICH Q3A(R2)',
       },
     },
     // Dissolution Profile
