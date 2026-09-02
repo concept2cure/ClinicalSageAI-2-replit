@@ -8,7 +8,9 @@ import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
 import { SignoffList } from '../SignoffList';
 import { apiCall, apiErrorText } from '../apiCall';
 import { downloadBlob, safeFileName } from '../download';
-import { readShellProject } from '../shellProject';
+import { readShellProject, shellProgramName } from '../shellProject';
+import { AnaWorkPanel } from '../AnaWorkPanel';
+import { useAgentActivity } from '../useAgentActivity';
 import { C2CToast, useToast, type FireToast } from '../toast';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -603,6 +605,9 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+  /* The background queue the work dock shows — read only while the side
+     column is open, re-read the moment a turn ends. */
+  const agentActivity = useAgentActivity(!panelCollapsed, anaChat.isStreaming);
 
   /* ── The attach button was decoration ─────────────────────────────────────
      It rendered a paperclip with `title="Attach a document for AnA to use"` and
@@ -817,9 +822,31 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
           </div>
         </div>
 
-        <ArtifactPanel artifacts={artifacts} openId={openId} setOpenId={setOpenId} onNav={onNav}
-          collapsed={panelCollapsed} setCollapsed={setPanelCollapsed}
-          projectId={shellProjectId} pendingDraftIds={pendingDraftIds} fireToast={fireToast} />
+        {/* The side column: AnA's live work above the governed outputs. The
+            dock is the same component the shell rail mounts — progress, queue,
+            tools, outputs, context — and collapses with the artifacts so the
+            conversation can take the full width. */}
+        <div className="ct-side" data-collapsed={panelCollapsed ? 'true' : 'false'}>
+          {!panelCollapsed && (
+            <div className="ct-side-work">
+              <AnaWorkPanel
+                messages={anaChat.messages}
+                streaming={anaChat.isStreaming}
+                runStatus={anaChat.runStatus}
+                pendingSteers={anaChat.pendingSteers}
+                queue={agentActivity}
+                announce
+                context={{
+                  project: shellProgramName(),
+                  surface: 'Conversation',
+                }}
+              />
+            </div>
+          )}
+          <ArtifactPanel artifacts={artifacts} openId={openId} setOpenId={setOpenId} onNav={onNav}
+            collapsed={panelCollapsed} setCollapsed={setPanelCollapsed}
+            projectId={shellProjectId} pendingDraftIds={pendingDraftIds} fireToast={fireToast} />
+        </div>
       </div>
       <C2CToast msg={toast} />
     </div>

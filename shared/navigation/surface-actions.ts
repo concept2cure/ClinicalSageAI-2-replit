@@ -1117,6 +1117,65 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
+  // ── Market access / HEOR ──
+  {
+    id: 'market-access.open-tab',
+    surfaceId: 'market-access',
+    label: 'Open a market-access tab',
+    description:
+      'On the market-access workspace, switch between the coverage-status, value-dossier, coding-strategy, and access-strategy tabs.',
+    params: [
+      { name: 'tab', required: true, description: 'The tab to open.', enum: ['coverage', 'dossier', 'coding', 'strategy'] },
+    ],
+  },
+
+  // ── IND checklist / lifecycle ──
+  {
+    id: 'ind-checklist.open-tab',
+    surfaceId: 'ind-checklist',
+    label: 'Open an IND tab',
+    description: 'On the IND surface, switch between the File-the-IND checklist and the Lifecycle view.',
+    params: [
+      { name: 'tab', required: true, description: 'The tab to open.', enum: ['file', 'lifecycle'] },
+    ],
+  },
+
+  // ── NDA/BLA cockpit ──
+  {
+    id: 'nda-cockpit.open-tab',
+    surfaceId: 'nda-cockpit',
+    label: 'Open an NDA/BLA cockpit tab',
+    description:
+      'On the NDA/BLA cockpit, switch between CTD readiness, Module 1 admin, the PDUFA review clock, Refuse-to-File risk, and BLA biologics.',
+    params: [
+      { name: 'tab', required: true, description: 'The tab to open.', enum: ['ctd', 'm1', 'clock', 'rtf', 'bla'] },
+    ],
+  },
+
+  // ── Mission control ──
+  {
+    id: 'mission-control.select-program',
+    surfaceId: 'mission-control',
+    label: 'Select a program',
+    description:
+      'On mission control, select a program by name or code so its cross-program status shows — the same row click a person makes. Resolved against the real portfolio with honest misses; held while it loads.',
+    params: [
+      { name: 'program', required: true, description: 'The program name or code as listed (case-insensitive; partial names resolve when unambiguous).' },
+    ],
+  },
+
+  // ── Health-authority questions ──
+  {
+    id: 'haq-manager.select-question',
+    surfaceId: 'haq-manager',
+    label: 'Open a health-authority question',
+    description:
+      'On the HAQ manager, open an agency question by its id or its text so its analysis, draft and commitments show. Drafting an answer and committing a response stay governed human acts. Honest misses; held while the rounds load.',
+    params: [
+      { name: 'question', required: true, description: 'The question id (e.g. "HAQ-01") or a distinctive phrase from its text.' },
+    ],
+  },
+
   // ── Deep research ──
   {
     id: 'deep-research.open-tab',

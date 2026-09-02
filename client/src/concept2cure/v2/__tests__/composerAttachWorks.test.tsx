@@ -51,6 +51,7 @@ vi.mock('../../hooks/useChatUpload', () => ({
     clear: () => {},
   }),
   attachmentReadLabel: () => 'read · 12 words',
+  SR_ONLY_STYLE: { position: 'absolute', width: 1, height: 1, overflow: 'hidden' },
 }));
 
 /** The chat transport is not under test; stub it so the composers mount. */

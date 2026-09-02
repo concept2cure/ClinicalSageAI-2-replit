@@ -2,7 +2,7 @@
 /**
  * The review board may not report a clear approval queue it has not read.
  *
- * ── The finding ──────────────────────────────────────────────────────────────
+ * ── The finding ────────────────────────────────────────────────────────────────
  * The AnswerLead — the first and largest sentence on the review surface — was a
  * two-branch conditional on `signSteps.length`, and the zero branch said:
  *
@@ -173,7 +173,7 @@ describe('Review — a queue whose approval chain was not read is not a clear qu
     expect(/Nothing is in review/i.test(text()), 'must not state an unread queue is empty').toBe(false);
   });
 
-  /* ── OVER-CORRECTION GUARD ────────────────────────────────────────────────
+  /* ── OVER-CORRECTION GUARD ─────────────────────────────────────────────────────
      Every case above would also pass if the surface had simply stopped
      reassuring, which would make the review board useless: a reviewer with a
      genuinely clear queue must be told so. These two prove the earned states
@@ -192,7 +192,10 @@ describe('Review — a queue whose approval chain was not read is not a clear qu
   });
 
   it('still names the documents at a sign-off step, and still says nothing is in review when nothing is', async () => {
-    serve([ok({ queue: [ROW], workflows: { 'wf-1': step(['review', 'sign']) }, thread: [] })]);
+    // `mine` is the server's finding that the caller owns the current step.
+    // Without it, "at YOUR sign-off step" was asserted over every org-wide
+    // sign-off step because the board is read with scope=all.
+    serve([ok({ queue: [{ ...ROW, mine: true }], workflows: { 'wf-1': step(['review', 'sign']) }, thread: [] })]);
     const view = mount();
     await waitFor(() => expect(/at your sign-off step/i.test(text())).toBe(true));
     expect(CLEAR.test(text())).toBe(false);
@@ -201,5 +204,12 @@ describe('Review — a queue whose approval chain was not read is not a clear qu
     serve([ok({ queue: [], workflows: {}, thread: [] })]);
     mount();
     await waitFor(() => expect(/Nothing is in review/i.test(text())).toBe(true));
+  });
+
+  it("a sign-off step the caller does not own is not reported as 'your' sign-off", async () => {
+    serve([ok({ queue: [{ ...ROW, mine: false }], workflows: { 'wf-1': step(['review', 'sign']) }, thread: [] })]);
+    mount();
+    await waitFor(() => expect(/Nothing is blocked on your signature/i.test(text())).toBe(true));
+    expect(/at your sign-off step/i.test(text())).toBe(false);
   });
 });

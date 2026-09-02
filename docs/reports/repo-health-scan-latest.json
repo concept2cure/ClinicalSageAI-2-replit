@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-02T17:05:34.420Z",
+  "generatedAt": "2026-09-02T18:33:57.134Z",
   "git": {
-    "sha": "adec89864beb79f521f1f8f9554e3fd13af1cd68",
+    "sha": "7b788f2947bcb25f43dff9f5ede58b43f5c87a36",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2539,6 +2539,10 @@
         "lines": 1824
       },
       {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1817
+      },
+      {
         "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",
         "lines": 1815
       },
@@ -2563,12 +2567,8 @@
         "lines": 1756
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1740
-      },
-      {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 1733
+        "lines": 1737
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
