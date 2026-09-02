@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-02T16:53:46.322Z",
+  "generatedAt": "2026-09-02T17:05:34.420Z",
   "git": {
-    "sha": "db0104e71bff557fe127db2fb1c132f1b8b24c91",
+    "sha": "adec89864beb79f521f1f8f9554e3fd13af1cd68",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -17,8 +17,8 @@
     "duplicateBasenames": 221,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 35,
-    "largeFilesByLines": 87
+    "largeFilesByBytes": 34,
+    "largeFilesByLines": 86
   },
   "findings": {
     "duplicateBasenames": [
@@ -2149,10 +2149,6 @@
         "bytes": 995349
       },
       {
-        "file": "server/services/ana/__verif_head_AnaToolExecutor.ts",
-        "bytes": 994613
-      },
-      {
         "file": "shared/schema.ts",
         "bytes": 845853
       },
@@ -2293,10 +2289,6 @@
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
         "lines": 19357
-      },
-      {
-        "file": "server/services/ana/__verif_head_AnaToolExecutor.ts",
-        "lines": 19348
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2484,7 +2476,7 @@
       },
       {
         "file": "server/api/cmc/routes.ts",
-        "lines": 1993
+        "lines": 1987
       },
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
@@ -2641,8 +2633,8 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 399,
-      "largeByBytes": 26,
-      "largeByLines": 73
+      "largeByBytes": 25,
+      "largeByLines": 72
     },
     {
       "owner": "Unassigned (TBD)",
