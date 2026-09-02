@@ -216,3 +216,56 @@ describe('loadDeviceContentLeaves / loadAuthoredDeviceSections with a programId'
     expect(deviceContentSource({})).toBe('legacy_org_wide');
   });
 });
+
+// ── PMA_ASSEMBLY: the governed document's class travels with the scope ────────
+//
+// /build must choose its renderer and package label from the governed
+// document's doc_type (a PMA is not a six-slot 510(k) package). The class comes
+// from the SAME org-scoped c2c_documents lookup the loader already runs —
+// never a second, unscoped lookup by document id.
+
+function governedClientWithType(opts: { document?: { id: string; doc_type: string } | null; sections?: GovernedDeviceSectionRow[] }): DeviceContentClient & { calls: Array<{ sql: string; params: unknown[] }> } {
+  const calls: Array<{ sql: string; params: unknown[] }> = [];
+  return {
+    calls,
+    async query(sql: string, params: unknown[] = []) {
+      calls.push({ sql, params });
+      if (/FROM c2c_documents/.test(sql)) {
+        return { rows: opts.document ? [opts.document] : [] } as never;
+      }
+      if (/FROM c2c_document_sections/.test(sql)) {
+        return { rows: opts.sections ?? [] } as never;
+      }
+      throw new Error(`unexpected query: ${sql}`);
+    },
+  };
+}
+
+describe('resolveDeviceContentScope reports the governed document class', () => {
+  it("a governed PMA program resolves docType 'pma' from the org-scoped document lookup", async () => {
+    const client = governedClientWithType({ document: { id: 'doc_pma', doc_type: 'pma' }, sections: GOVERNED_ROWS });
+    const r = await resolveDeviceContentScope(ORG, { programId: PROGRAM, client });
+    expect(r.source).toBe('governed_program');
+    expect(r.docType).toBe('pma');
+    // Tenant scoping: the class came from the same org/program-scoped query.
+    const docLookups = client.calls.filter((c) => /FROM c2c_documents/.test(c.sql));
+    expect(docLookups).toHaveLength(1);
+    expect(docLookups[0].params).toEqual([ORG, PROGRAM, ['k510', 'denovo', 'pma', 'cer']]);
+    expect(docLookups[0].sql).toMatch(/doc_type/);
+  });
+
+  it('a 510(k) program resolves its own class, and the legacy fallback carries none', async () => {
+    const k510 = await resolveDeviceContentScope(ORG, { programId: PROGRAM, client: governedClientWithType({ document: { id: 'doc_k', doc_type: 'k510' }, sections: GOVERNED_ROWS }) });
+    expect(k510.docType).toBe('k510');
+
+    const none = await resolveDeviceContentScope(ORG, { programId: PROGRAM, client: governedClientWithType({ document: null }) });
+    expect(none.source).toBe('legacy_org_wide');
+    expect(none.docType).toBeUndefined();
+  });
+
+  it('governed authored sections carry their rule-pack key as sectionCode for package file naming', async () => {
+    const client = governedClientWithType({ document: { id: 'doc_pma', doc_type: 'pma' }, sections: GOVERNED_ROWS });
+    const authored = await loadAuthoredDeviceSections(ORG, { programId: PROGRAM, client });
+    expect(authored.map((a) => a.sectionCode)).toEqual(['3', '5', '8']);
+  });
+});

@@ -299,6 +299,29 @@ export async function renderPdfBuffersFor510k(
   };
 }
 
+/**
+ * Render ONE PDF per top-level section (H1) of the editor document, in
+ * document order, with no bucket selection and no placeholder for anything
+ * absent. The fixed-slot renderers above pick one heading per named bucket
+ * and print "content not found" for the rest — honest for a six-slot 510(k)
+ * package, lossy for a governed 67-section 21 CFR 814.20 outline, where most
+ * authored sections match no bucket and are silently dropped. Here every
+ * authored section is a file; nothing that was not authored is invented.
+ */
+export async function renderPdfBuffersPerSection(
+  content: any,
+  pack: StylePack,
+): Promise<Array<{ title: string; buffer: Buffer }>> {
+  const sections = extractSectionsFromEditor(content);
+  return Promise.all(
+    sections.map(async (section) => {
+      const html = buildSectionHtml(section.title, section.html, 'This section has no body text.');
+      const buffer = await renderHtmlToPdf(await renderHtmlWithStylePack(html, pack));
+      return { title: section.title, buffer };
+    }),
+  );
+}
+
 export async function renderPdfBuffersForPma(content: any, pack: StylePack = stylePacks['pma_v1']) {
   const sections = extractSectionsFromEditor(content);
 
