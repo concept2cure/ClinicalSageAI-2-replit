@@ -54,6 +54,7 @@ import {
   JourneyRecorder,
   type JourneyDb,
   assertNoSchemaGaps,
+  withExpectedSchemaGaps,
 } from './harness';
 import {
   SUBMISSION_CORE_PGLITE_DDL,
@@ -267,16 +268,7 @@ beforeAll(async () => {
 afterAll(async () => {
   // A journey that ran against a database missing a table its subject writes
   // to proves less than it claims (ledger L145).
-  assertNoSchemaGaps(jdb, [
-    // `audit_logs` IS in this journey's extractTableDdl list above and the
-    // migrations that add its chain columns ARE applied, yet the
-    // /api/c2c/projects step still reports `[c2c-projects] Store not
-    // provisioned — request failed closed` with 42P01 on it. The route is
-    // behaving correctly; the provisioning is not, and why is not yet known.
-    // Recorded rather than papered over: this journey currently proves the NDA
-    // path with its project-creation step failing closed. See ledger L146.
-    { relation: 'audit_logs', row: 'L146' },
-  ]);
+  assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('drug-nda-ectd');
   // eslint-disable-next-line no-console
   console.info(`[journey] manifest: ${jsonPath}\n[journey] report:   ${mdPath}`);
@@ -389,18 +381,22 @@ describe('golden journey — drug NDA / eCTD', () => {
       // Make the audit store unavailable for exactly one request. The audit row
       // is written LAST, after the programme, the scaffold, the spine and the
       // anchor — so anything that survives proves the transaction was not one.
-      await jdb.pool.query(`ALTER TABLE audit_logs RENAME TO audit_logs_journey_hidden`);
-      let res;
-      try {
-        res = await asPrincipal(ORG, USER)(request(app).post('/api/c2c/projects')).send({
-          name: 'Rollback Probe NDA',
-          productName: 'Rollbackinib',
-          programType: 'nda',
-          primaryAgency: 'FDA',
-        });
-      } finally {
-        await jdb.pool.query(`ALTER TABLE audit_logs_journey_hidden RENAME TO audit_logs`);
-      }
+      // The 42P01 this provokes is INTENDED, so it is licensed for exactly this
+      // window rather than allowed for the whole journey — a blanket allowance
+      // would also hide a genuine missing table everywhere else.
+      const res = await withExpectedSchemaGaps(jdb, ['audit_logs'], async () => {
+        await jdb.pool.query(`ALTER TABLE audit_logs RENAME TO audit_logs_journey_hidden`);
+        try {
+          return await asPrincipal(ORG, USER)(request(app).post('/api/c2c/projects')).send({
+            name: 'Rollback Probe NDA',
+            productName: 'Rollbackinib',
+            programType: 'nda',
+            primaryAgency: 'FDA',
+          });
+        } finally {
+          await jdb.pool.query(`ALTER TABLE audit_logs_journey_hidden RENAME TO audit_logs`);
+        }
+      });
       const after = await jdb.pool.query(
         `SELECT (SELECT count(*)::int FROM regulatory_programs) AS g,
                 (SELECT count(*)::int FROM submissions) AS s,

@@ -140,6 +140,38 @@ export interface SchemaGap {
  * Call this in an `afterAll` in every journey. `check-journey-schema-gaps.mjs`
  * enforces that every journey does.
  */
+/**
+ * Run `fn` with gaps on `relations` treated as INTENDED rather than recorded.
+ *
+ * Some journeys make a store unavailable on purpose — the drug-NDA journey
+ * renames `audit_logs` away for exactly one request to prove the create
+ * transaction is atomic, since anything that survives proves it was not one.
+ * That produces a real 42P01 which `assertNoSchemaGaps` would otherwise report
+ * as the journey running against an under-provisioned database.
+ *
+ * Scoped to the window rather than allowed for the whole run, because a blanket
+ * allowance would also hide a genuine missing table for the rest of the file —
+ * which is the failure this check exists to catch.
+ */
+export async function withExpectedSchemaGaps<T>(
+  jdb: Pick<JourneyDb, 'schemaGaps'>,
+  relations: readonly string[],
+  fn: () => Promise<T>,
+): Promise<T> {
+  const before = jdb.schemaGaps.length;
+  try {
+    return await fn();
+  } finally {
+    const raised = jdb.schemaGaps.splice(before);
+    const unexpected = raised.filter(
+      (g) => !relations.some((rel) => g.message.includes(`"${rel}"`)),
+    );
+    // Anything the window did NOT license is put back, so a second, real gap
+    // inside a deliberate outage is still reported.
+    jdb.schemaGaps.push(...unexpected);
+  }
+}
+
 export function assertNoSchemaGaps(
   jdb: Pick<JourneyDb, 'schemaGaps'>,
   /**
