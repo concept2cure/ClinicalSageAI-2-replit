@@ -84,6 +84,15 @@ async function baseSchemaFixture(): Promise<PGlite> {
   // overlay, not the journal). The D11d IVDR entries FK it, so the fixture
   // must present it the way a real deploy does.
   await safe(readMig('migrations/20260524_program_workbench_schema.sql'));
+  // Same class as regulatory_programs above, for the same reason. The batch
+  // slice starts at BATCH_START, which sits AFTER this file in the applied set,
+  // so ectd_compilations reaches the batch with only the columns the drizzle
+  // journal gives it. 20260828_ectd_compilations_submission_id.sql — which IS
+  // in the batch — indexes (submission_id, sequence_number), and sequence_number
+  // is added here. A real deploy runs both in this order and is unaffected; the
+  // fixture has to present the same starting state or it fails the set for a
+  // gap of its own making.
+  await safe(readMig('db/migrations/20260730_ectd_compilations_sequence_columns.sql'));
   return pg;
 }
 
