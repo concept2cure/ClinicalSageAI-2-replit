@@ -260,7 +260,14 @@ const referenceStandardBody = withoutTenantKey(insertCmcReferenceStandardSchema)
   retestDate: optionalDate,
   qualificationDate: optionalDate,
 });
-const impurityProfileBody = withoutTenantKey(insertCmcImpurityProfileSchema);
+const impurityProfileBody = withoutTenantKey(insertCmcImpurityProfileSchema).extend({
+  /* The register's own GET returns qualificationDate as an ISO string, so a
+     client that reads a row and writes it back would have been rejected by the
+     z.date() drizzle-zod generates for the column. The field is stripped by
+     withoutGovernedFields regardless — the coercion is what stops the whole
+     request failing before it gets there. */
+  qualificationDate: optionalDate,
+});
 const dissolutionProfileBody = withoutTenantKey(insertCmcDissolutionProfileSchema).extend({
   testDate: optionalDate,
 });
@@ -897,15 +904,39 @@ function refusesUngovernedQualification(
   res: express.Response,
   status: unknown,
   registerPath: string,
+  storedStatus?: unknown,
 ): boolean {
-  if (String(status ?? '').trim().toLowerCase() !== 'qualified') return false;
-  res.status(409).json({
-    success: false,
-    error:
-      `Qualification is a governed action and is recorded with a signature. ` +
-      `POST /api/cmc/${registerPath}/:id/qualify with a reason and re-authentication.`,
-  });
-  return true;
+  const incoming = String(status ?? '').trim().toLowerCase();
+  const stored = String(storedStatus ?? '').trim().toLowerCase();
+  /* Refuse the TRANSITION into qualified, not the word. A record that is
+     already qualified must be able to round-trip its own status through an
+     ordinary edit — otherwise correcting a typo in a qualified record is
+     impossible without a second signature. */
+  if (incoming === 'qualified' && stored !== 'qualified') {
+    res.status(409).json({
+      success: false,
+      error:
+        `Qualification is a governed action and is recorded with a signature. ` +
+        `POST /api/cmc/${registerPath}/:id/qualify with a reason and re-authentication.`,
+    });
+    return true;
+  }
+  /* And refuse the transition OUT of it. Pressing Update on a qualified record
+     silently reverted it to draft while leaving qualified_by and
+     qualification_date populated — an unsigned de-qualification that left the
+     signature stranded on a record that no longer claimed to be qualified.
+     Retiring a qualified record is still allowed: that is a lifecycle end, not
+     a reversal of the conclusion. */
+  if (stored === 'qualified' && incoming && incoming !== 'qualified' && incoming !== 'retired') {
+    res.status(409).json({
+      success: false,
+      error:
+        `This record is qualified under a recorded signature and cannot be returned to "${incoming}" by an ordinary edit. ` +
+        `Retire it, or record a new assessment.`,
+    });
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -931,6 +962,12 @@ async function qualifyRegisterRecord(
       recordId: string,
       record: Record<string, any>,
     ) => Promise<unknown>;
+    /**
+     * A register-specific condition the record must meet to be signable,
+     * evaluated on the row LOCKED inside the signing transaction. Returns the
+     * refusal message, or null when the record may be signed.
+     */
+    precondition?: (row: Record<string, any>) => string | null;
   },
 ): Promise<express.Response> {
   const parsed = governedSignatureSchema.safeParse(req.body);
@@ -980,6 +1017,11 @@ async function qualifyRegisterRecord(
         error: `This ${spec.subject} is already qualified`,
         qualifiedAt: current.rows[0].qualification_date ?? null,
       });
+    }
+    const unmet = spec.precondition ? spec.precondition(current.rows[0]) : null;
+    if (unmet) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ success: false, error: unmet });
     }
     await client.query(
       `UPDATE ${spec.table}
@@ -1075,7 +1117,8 @@ router.put('/container-closures/:id', async (req, res) => {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = containerClosureBody.partial().parse(req.body);
-    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'container-closures')) return;
+    const stored = await reselectContainerClosure(id, orgId);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'container-closures', stored?.status)) return;
     const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
       validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;
@@ -1154,7 +1197,8 @@ router.put('/reference-standards/:id', async (req, res) => {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = referenceStandardBody.partial().parse(req.body);
-    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'reference-standards')) return;
+    const stored = await reselectReferenceStandard(id, orgId);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'reference-standards', stored?.status)) return;
     const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
       validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;
@@ -1240,7 +1284,8 @@ router.put('/impurity-profiles/:id', async (req, res) => {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = impurityProfileBody.partial().parse(req.body);
-    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'impurity-profiles')) return;
+    const stored = await reselectImpurityProfile(id, orgId);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'impurity-profiles', stored?.status)) return;
     const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
       validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;
@@ -1267,22 +1312,6 @@ router.put('/impurity-profiles/:id', async (req, res) => {
  * of a qualification nobody can point at.
  */
 router.post('/impurity-profiles/:id/qualify', async (req, res) => {
-  const id = parseInt(String(req.params.id));
-  if (Number.isInteger(id) && id > 0) {
-    try {
-      const orgId = getOrgId(req);
-      const existing = await reselectImpurityProfile(id, orgId);
-      if (existing && !String(existing.qualificationBasis || '').trim()) {
-        return res.status(409).json({
-          success: false,
-          error:
-            'This impurity has no qualification basis recorded. Qualification is a signature over the study, comparator exposure or monograph that qualifies the level — record that first.',
-        });
-      }
-    } catch {
-      /* The org check below refuses on its own; this pre-check is advisory. */
-    }
-  }
   return qualifyRegisterRecord(req, res, {
     table: 'cmc_impurity_profiles',
     target: 'impurity_profile',
@@ -1291,6 +1320,15 @@ router.post('/impurity-profiles/:id/qualify', async (req, res) => {
     propagation: 'write_through_impurity_profile',
     reselect: reselectImpurityProfile,
     writeThrough: writeThroughImpurityProfile,
+    /* A signature over an empty basis qualifies nothing. Enforced INSIDE the
+       signing transaction, on the row locked FOR UPDATE — as a pre-check before
+       it, a concurrent edit that cleared the basis between the check and the
+       signature produced a signed qualification with nothing behind it, and the
+       check also disclosed the record's state before re-authentication. */
+    precondition: (row) =>
+      String(row.qualification_basis || '').trim()
+        ? null
+        : 'This impurity has no qualification basis recorded. Qualification is a signature over the study, comparator exposure or monograph that qualifies the level — record that first.',
   });
 });
 

@@ -2,7 +2,7 @@ import { createSourceHash } from './cmc-module3-compiler';
 /* The ICH Q3A/Q3B comparison lives in services/cmc/impurity-assessment, which
    consumes the threshold tables in services/global-ri/impurities-thresholds.
    This composer renders the verdict; it does not restate the guideline. */
-import { assessRecordedImpurity, type ImpurityAssessmentResult } from './cmc/impurity-assessment';
+import { assessRecordedImpurity, parseDoseMg, type ImpurityAssessmentResult } from './cmc/impurity-assessment';
 /* The dissolution purposes live in shared/, not in the write-through module:
    that module already imports FROM this composer, and importing back would make
    a cycle. One definition, reachable by both, and by the register surface. */
@@ -90,7 +90,7 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
      renderer files a finished-product result to §3.2.P.5.4 only, so counting
      it here turned this section green on a table it never renders. The QC
      mapper decides the side once and emits the matching key. */
-  { sectionKey: '3.2.S.4', requiredSourceTypes: ['specification', 'method', 'impurity_profile', 'qc_result'], requiredFields: ['acceptanceCriteria', 'validationStatus', 'drugSubstanceBatchAnalyses'] },
+  { sectionKey: '3.2.S.4', requiredSourceTypes: ['specification', 'method', 'impurity_profile', 'qc_result'], requiredFields: ['acceptanceCriteria', 'validationStatus', 'drugSubstanceBatchAnalyses', 'drugSubstanceImpurityProfileComplete'] },
   /* §3.2.S.3.2 and §3.2.P.5.5 ARE the impurity sections, so an impurity profile
      that can actually be compared to its ICH threshold is required for them:
      both sections could previously report 100% complete over zero impurity
@@ -770,7 +770,23 @@ function impurityRows(
   side: 'drug_substance' | 'drug_product',
 ): Array<Record<string, any>> {
   return scopedPayloads(sources, 'impurity_profile', side, 'drug_substance')
-    .filter((p) => String(p.impurityName || '').trim());
+    .filter((p) => String(p.impurityName || '').trim())
+    /* A retired record is superseded, not current. Composing it as part of the
+       impurity profile would present withdrawn data as the filing's own. */
+    .filter((p) => String(p.status || '').toLowerCase() !== 'retired');
+}
+
+/**
+ * A threshold as the guideline words it, with the limit that actually governs
+ * at this dose. The wording alone reads as the verdict's basis, so a level of
+ * 0.08% came out as "above 0.10% or 1.0 mg/day (whichever is lower)" — two
+ * numbers, neither of them the one the comparison used.
+ */
+function thresholdText(t: { expression: string; effectivePercent: number; governing: string }): string {
+  const resolved = `${Number(t.effectivePercent.toFixed(4))}%`;
+  return t.governing === 'absolute' || !t.expression.startsWith(resolved)
+    ? `${resolved}; ${t.expression}`
+    : t.expression;
 }
 
 /** The level as recorded, never re-unitised and never given a unit it lacks. */
@@ -827,12 +843,12 @@ function impurityRendering(
       String(p.specificationLimit || '—'),
       a.ok
         ? a.disposition === 'below-reporting'
-          ? `below the reporting threshold (${a.thresholds.reporting.expression})`
+          ? `not above the reporting threshold (${thresholdText(a.thresholds.reporting)})`
           : a.disposition === 'reportable'
-            ? `reportable (at or above ${a.thresholds.reporting.expression})`
+            ? `reportable (above ${thresholdText(a.thresholds.reporting)})`
             : a.disposition === 'above-identification'
-              ? `at or above the identification threshold (${a.thresholds.identification.expression})`
-              : `at or above the qualification threshold (${a.thresholds.qualification.expression})`
+              ? `above the identification threshold (${thresholdText(a.thresholds.identification)})`
+              : `above the qualification threshold (${thresholdText(a.thresholds.qualification)})`
         : `not assessable — ${(a as { message: string }).message}`,
       String(p.structure || p.molecularFormula || '—'),
       String(p.qualificationBasis || '—'),
@@ -843,7 +859,17 @@ function impurityRendering(
      printed without its maximum daily dose is unverifiable, and the doses
      recorded across a register can disagree — which is a finding, not something
      to average away. */
-  const doses = Array.from(new Set(rows.map((p) => String(p.maximumDailyDose || '').trim()).filter(Boolean)));
+  /* Compared as doses, not as spellings: "500 mg" and "0.5 g" are the same
+     dose, and reporting them as a disagreement put a defect in the dossier that
+     the register does not contain. An unparseable dose keeps its raw text so it
+     is still visible as different. */
+  const doseTexts = rows.map((p) => String(p.maximumDailyDose || '').trim()).filter(Boolean);
+  const doseKeys = new Map<string, string>();
+  for (const text of doseTexts) {
+    const parsed = parseDoseMg(text);
+    doseKeys.set(parsed.ok ? `mg:${parsed.mg}` : `raw:${text.toLowerCase()}`, text);
+  }
+  const doses = Array.from(doseKeys.values());
   const firstOk = assessed.find((x) => x.a.ok);
   if (firstOk && firstOk.a.ok && doses.length === 1) {
     tables.push(
@@ -861,11 +887,20 @@ function impurityRendering(
     a.ok ? a.outstanding.map((o) => `${String(p.impurityName)} is ${o}`) : [],
   );
 
+  /* "None is above the reporting threshold" is a CLAIM about every recorded
+     impurity, and it is only true of the ones that were actually compared to a
+     threshold. Asserted over a register whose impurities were all refused —
+     no dose, no unit, an out-of-scope class — it stated the opposite of the
+     truth: nothing had been compared to anything. It is made only over the
+     assessed set, and only when there is one. */
+  const assessedCount = reported.length + belowReporting.length;
   let narrative =
     `${rows.length} impurity/ies are recorded for the ${material}. ` +
-    (reported.length > 0
-      ? `${reported.length} are at or above the ICH reporting threshold and are reported above. `
-      : `None is at or above the ICH reporting threshold. `) +
+    (assessedCount === 0
+      ? `None has been compared to an ICH threshold, so their disposition is not established by this section. `
+      : reported.length > 0
+        ? `Of the ${assessedCount} compared to an ICH threshold, ${reported.length} are above the reporting threshold and are reported above. `
+        : `None of the ${assessedCount} compared to an ICH threshold is above it. `) +
     (belowReporting.length > 0
       ? `${belowReporting.length} are below the reporting threshold and are not reported as impurities of the ${material}. `
       : '');
@@ -879,7 +914,19 @@ function impurityRendering(
   if (unassessable.length > 0) {
     narrative +=
       `${unassessable.length} recorded impurity/ies cannot be compared to a threshold: ` +
-      `${unassessable.map((a) => `${a.impurityName} — ${a.message}`).join('; ')} `;
+      `${unassessable
+        .map((a) => `${a.impurityName} — ${a.message}${a.routeTo ? ` (governed instead by ${a.routeTo})` : ''}`)
+        .join('; ')} `;
+  }
+  /* Where the applicant recorded its OWN thresholds and they differ from the
+     guideline's, the disagreement is stated. The register captured them, the
+     mapper carried them, and nothing rendered them — so a record contradicting
+     ICH was silently replaced by ICH in the composed section. */
+  const contradicting = assessed.filter((x) => x.a.ok && x.a.recordedThresholdDiffers);
+  if (contradicting.length > 0) {
+    narrative +=
+      `${contradicting.length} record(s) state thresholds that differ from the ICH values applied above ` +
+      `(${contradicting.map((x) => String(x.p.impurityName)).join(', ')}); the recorded values are reported in the table and the difference is not resolved by this section. `;
   }
   if (outstanding.length > 0) {
     narrative += `Outstanding against ICH: ${outstanding.join('; ')}. `;
@@ -909,7 +956,9 @@ function dissolutionProfilesFor(
   return sources
     .filter((s) => s.sourceType === 'dissolution_profile')
     .map((s) => (s.sourcePayload || {}) as Record<string, any>)
-    .filter((p) => purposes.includes(String(p.purpose || 'development')));
+    .filter((p) => purposes.includes(String(p.purpose || 'development')))
+    // A retired profile is superseded, not current. See impurityRows.
+    .filter((p) => String(p.status || '').toLowerCase() !== 'retired');
 }
 
 /** One profile's per-timepoint rows, or [] when it holds no usable point. */
@@ -934,7 +983,7 @@ function dissolutionRendering(
   const tables: GeneratedTable[] = [];
   tables.push({
     title: `Dissolution Method — ${label}`,
-    headers: ['Batch', 'Strength', 'Apparatus', 'Speed', 'Medium', 'Volume', 'Temperature', 'Units Tested', 'Acceptance Criterion'],
+    headers: ['Batch', 'Strength', 'Apparatus', 'Speed', 'Medium', 'Volume', 'Temperature', 'Sinker', 'Units Tested', 'Acceptance Criterion', 'Tested'],
     rows: profiles.map((p) => [
       String(p.batchNumber || '—'),
       String(p.strength || '—'),
@@ -943,8 +992,10 @@ function dissolutionRendering(
       String(p.medium || '—'),
       String(p.mediumVolume || '—'),
       String(p.temperature || '—'),
+      String(p.sinker || '—'),
       p.unitsTested ? String(p.unitsTested) : 'not recorded',
       String(p.dissolutionSpecification || 'not recorded'),
+      dayOf(p.testDate) || '—',
     ]),
   });
 
@@ -971,15 +1022,53 @@ function dissolutionRendering(
     });
   }
 
+  /* The reference profile a comparison is against. The register captures it and
+     nothing rendered it, so a comparability profile arrived in §3.2.P.2 with
+     the batch it was compared to missing — the half of the comparison a
+     reviewer reads first. */
+  const referenceRows: string[][] = [];
+  for (const p of profiles) {
+    const ref = p.comparisonResults;
+    if (!Array.isArray(ref) || ref.length === 0) continue;
+    for (const pt of ref.filter((r) => r && typeof r === 'object') as Array<Record<string, any>>) {
+      referenceRows.push([
+        String(p.batchNumber || p.productName || '—'),
+        String(p.comparisonBatch || 'reference batch not named'),
+        String(pt.timepoint ?? pt.timepointMin ?? '—'),
+        pt.meanPercent !== undefined && pt.meanPercent !== null && pt.meanPercent !== '' ? String(pt.meanPercent) : '—',
+        pt.rsd !== undefined && pt.rsd !== null && pt.rsd !== '' ? String(pt.rsd) : '—',
+        pt.n !== undefined && pt.n !== null && pt.n !== '' ? String(pt.n) : '—',
+      ]);
+    }
+  }
+  if (referenceRows.length > 0) {
+    tables.push({
+      title: `Reference Profile Compared Against — ${label}`,
+      headers: ['Profile', 'Reference Batch', 'Timepoint (min)', 'Mean % Dissolved', '%RSD', 'n'],
+      rows: referenceRows,
+    });
+  }
+
   const withoutUnits = profiles.filter((p) => !p.unitsTested);
   const withoutSpec = profiles.filter((p) => !String(p.dissolutionSpecification || '').trim());
+  /* A JSON null is "not recorded" exactly as an absent key is: the register's
+     own patch body writes null for a cleared cell, so checking only undefined
+     dropped the disclosure for every profile edited through the drawer. */
+  const unrecorded = (v: unknown) => v === undefined || v === null || String(v).trim() === '';
   const withoutVariability = profiles.filter((p) =>
-    profilePoints(p).every((pt) => (pt.sd === undefined || pt.sd === '') && (pt.rsd === undefined || pt.rsd === '')),
+    profilePoints(p).every((pt) => unrecorded(pt.sd) && unrecorded(pt.rsd)),
   );
 
+  const withPoints = profiles.filter((p) => profilePoints(p).length > 0);
   const narrative =
     `${profiles.length} ${label} dissolution profile(s) are recorded` +
-    (pointRows.length > 0 ? `, reported per timepoint above. ` : `, none of which carries a per-timepoint result. `) +
+    (withPoints.length === profiles.length && withPoints.length > 0
+      ? `, reported per timepoint above. `
+      : withPoints.length > 0
+        /* Stated per profile: "reported per timepoint above" over a set where
+           only one profile carries timepoints reads as though all of them do. */
+        ? `, of which ${withPoints.length} carry per-timepoint results, reported above. `
+        : `, none of which carries a per-timepoint result. `) +
     (withoutUnits.length > 0
       ? `${withoutUnits.length} profile(s) do not record how many units were tested; a mean without its unit count does not support a conformance or a comparison, and none is asserted for them. `
       : '') +

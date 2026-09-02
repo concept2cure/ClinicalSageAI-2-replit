@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS cmc_impurity_profiles (
   relative_retention_time text,
   analytical_method text,
   observed_level text,
-  level_unit text DEFAULT '%',
+  level_unit text,
   specification_limit text,
   reporting_threshold text,
   identification_threshold text,
@@ -59,6 +59,12 @@ CREATE TABLE IF NOT EXISTS cmc_impurity_profiles (
   created_at timestamp NOT NULL DEFAULT now(),
   updated_at timestamp NOT NULL DEFAULT now()
 );
+
+-- A level with no unit cannot be compared to an ICH threshold, and the
+-- assessment engine refuses it. A column DEFAULT of '%' filled in a unit the
+-- analyst never recorded, made that refusal unreachable, and turned a ppm figure
+-- into a percentage. Dropped here and on an estate that already ran this file.
+ALTER TABLE cmc_impurity_profiles ALTER COLUMN level_unit DROP DEFAULT;
 
 -- Qualification is a Part 11 signature over the recorded qualification basis;
 -- these carry who signed and when. Stated as ALTERs as well so a database that
@@ -90,12 +96,19 @@ CREATE TABLE IF NOT EXISTS cmc_dissolution_profiles (
   results jsonb,
   comparison_batch text,
   comparison_results jsonb,
-  pass_fail text,
   test_date timestamp,
   status text NOT NULL DEFAULT 'draft',
   created_at timestamp NOT NULL DEFAULT now(),
   updated_at timestamp NOT NULL DEFAULT now()
 );
+
+-- pass_fail was a release-conformance verdict a caller could type, that nothing
+-- read: whether a profile meets its criterion is a comparison against the
+-- recorded specification, which the composed section performs from the profile
+-- itself. A typed verdict is a conclusion with no working shown. Stated AFTER
+-- the CREATE above: DROP COLUMN IF EXISTS does not guard the table's existence,
+-- so on a fresh database an ALTER placed before it fails outright.
+ALTER TABLE cmc_dissolution_profiles DROP COLUMN IF EXISTS pass_fail;
 
 CREATE INDEX IF NOT EXISTS idx_cmc_dissolution_profiles_org
   ON cmc_dissolution_profiles (organization_id);

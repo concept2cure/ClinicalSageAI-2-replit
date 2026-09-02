@@ -15901,7 +15901,8 @@ registerToolHandler('list_cmc_registers', async (input, ctx) => {
                      purpose, apparatus, medium, rotation_speed AS "rotationSpeed",
                      units_tested AS "unitsTested", specification, status,
                      test_date AS "testDate",
-                     jsonb_array_length(COALESCE(results, '[]'::jsonb)) AS "timepointCount",
+                     CASE WHEN jsonb_typeof(results) = 'array'
+                          THEN jsonb_array_length(results) ELSE 0 END AS "timepointCount",
                      (comparison_results IS NOT NULL) AS "hasReferenceProfile"
                 FROM cmc_dissolution_profiles WHERE organization_id = $1`,
         searchCols: ['product_name', 'batch_number', 'medium'],

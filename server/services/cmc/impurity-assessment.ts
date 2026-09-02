@@ -81,6 +81,24 @@ export interface ImpurityAssessmentRefusal {
 export type ImpurityAssessmentResult = ImpurityAssessment | ImpurityAssessmentRefusal;
 
 /**
+ * Can this record actually be compared to a threshold?
+ *
+ * The write-through mapper decides whether an impurity completes §3.2.S.3 /
+ * §3.2.P.5, and it used to decide with a field-presence proxy — a name, a
+ * level, a unit, a dose, a class that is not 'unresolved'. The proxy is weaker
+ * than the engine: an unparseable dose, a unit that does not convert, a class
+ * ICH does not govern, and a comparator-prefixed level all pass it and are then
+ * REFUSED here — so a section reported itself complete over impurities the same
+ * section rendered as "not assessable". One rule, asked once.
+ */
+export function isAssessableImpurity(
+  record: Record<string, any>,
+  matrix: 'drug_substance' | 'drug_product',
+): boolean {
+  return assessRecordedImpurity(record, matrix).ok;
+}
+
+/**
  * Parse a recorded dose into milligrams per day.
  *
  * Accepts what a CMC staffer types: "500 mg", "2 g/day", "0.5g", "250". A bare
@@ -135,8 +153,20 @@ export function normaliseLevelToPercent(
     return { ok: false, code: 'LEVEL_MISSING', message: 'No level is recorded for this impurity.' };
   }
   const levelText = String(rawLevel).trim();
-  const numeric = Number(levelText.replace(/[%\s]/g, '').replace(/^[<>≤≥~]/, ''));
-  if (!Number.isFinite(numeric)) {
+  /* A comparator is not decoration. "<0.15" means the assay did not measure a
+     value; stripping the operator and comparing 0.15 against a 0.15% threshold
+     reported an impurity as sitting ON the threshold — a deficiency statement
+     over a result that says the opposite. A comparator-prefixed level is
+     refused rather than read as an exact value. */
+  if (/^[<>≤≥]/.test(levelText)) {
+    return {
+      ok: false,
+      code: 'LEVEL_UNPARSEABLE',
+      message: `The level "${levelText}" is recorded as a limit rather than a measured value, so it cannot be placed against a threshold. Record the measured level, or record the impurity as below the reporting threshold.`,
+    };
+  }
+  const numeric = Number(levelText.replace(/[%\s]/g, ''));
+  if (!Number.isFinite(numeric) || levelText.replace(/[%\s]/g, '') === '') {
     return { ok: false, code: 'LEVEL_UNPARSEABLE', message: `The recorded level "${levelText}" is not a number.` };
   }
   const unit = String(rawUnit ?? '').trim().toLowerCase();
@@ -170,6 +200,24 @@ export function normaliseLevelToPercent(
 export function impurityClassOf(raw: unknown): ImpurityClass {
   const v = String(raw ?? '').trim().toLowerCase().replace(/[\s_]+/g, '-');
   if (!v) return 'unresolved';
+  /* Exact matches first — these are the values the register's own control
+     offers, and a substring pass over them misrouted: "process-related residual
+     material" matched `residual` before anything else and was sent to Q3C as a
+     solvent. Only an unrecognised string falls through to the substring
+     vocabulary below, which exists for records written by an integration. */
+  const EXACT: Record<string, ImpurityClass> = {
+    'process-related': 'organic',
+    organic: 'organic',
+    degradation: 'degradation',
+    'degradation-product': 'degradation',
+    inorganic: 'inorganic',
+    'residual-solvent': 'residual-solvent',
+    elemental: 'elemental',
+    mutagenic: 'mutagenic',
+    enantiomeric: 'enantiomeric',
+    polymorphic: 'polymorphic',
+  };
+  if (EXACT[v]) return EXACT[v];
   if (v.includes('residual') || v.includes('solvent')) return 'residual-solvent';
   if (v.includes('elemental') || v.includes('metal')) return 'elemental';
   if (v.includes('mutagen') || v.includes('genotox')) return 'mutagenic';
@@ -197,6 +245,15 @@ export function assessRecordedImpurity(
   const impurityName = String(record.impurityName || record.impurity_name || 'Unnamed impurity');
   const impurityClass = impurityClassOf(record.impurityType ?? record.impurity_type);
 
+  /* Class FIRST. An impurity ICH Q3A/Q3B does not govern is out of scope
+     whatever its dose, and reporting "no maximum daily dose is recorded" for a
+     residual solvent sends the reader to fix the wrong thing — the dose would
+     not have produced a threshold for it either way. */
+  const scoped = resolveImpurityThresholds({ matrix, maxDailyDoseMg: 1, impurityClass });
+  if (!scoped.ok && (scoped.code === 'CLASS_OUT_OF_SCOPE' || scoped.code === 'CLASS_UNRESOLVED')) {
+    return { ok: false, impurityName, code: scoped.code, message: scoped.message, routeTo: scoped.routeTo };
+  }
+
   const dose = parseDoseMg(record.maximumDailyDose ?? record.maximum_daily_dose);
   if (!dose.ok) return { ok: false, impurityName, code: dose.code, message: dose.message };
 
@@ -222,12 +279,17 @@ export function assessRecordedImpurity(
   );
   if (!level.ok) return { ok: false, impurityName, code: level.code, message: level.message };
 
+  /* ICH acts on an impurity at a level GREATER THAN a threshold, not at it
+     (Q3A(R2) §2.2, §3.3, §3.4 and the Q3B equivalents all read "greater than").
+     Using >= manufactured a deficiency statement for an impurity sitting
+     exactly on the qualification threshold, which the guideline does not
+     require to be qualified. */
   const disposition: ImpurityDisposition =
-    level.percent >= thresholds.qualification.effectivePercent
+    level.percent > thresholds.qualification.effectivePercent
       ? 'above-qualification'
-      : level.percent >= thresholds.identification.effectivePercent
+      : level.percent > thresholds.identification.effectivePercent
         ? 'above-identification'
-        : level.percent >= thresholds.reporting.effectivePercent
+        : level.percent > thresholds.reporting.effectivePercent
           ? 'reportable'
           : 'below-reporting';
 
@@ -247,18 +309,22 @@ export function assessRecordedImpurity(
     );
   }
 
-  const recordedThresholds = [
-    record.reportingThreshold ?? record.reporting_threshold,
-    record.identificationThreshold ?? record.identification_threshold,
-    record.qualificationThreshold ?? record.qualification_threshold,
-  ].map((v) => String(v ?? '').trim()).filter(Boolean);
-  const guidelineExpressions = [
-    thresholds.reporting.expression,
-    thresholds.identification.expression,
-    thresholds.qualification.expression,
+  /* Does the applicant's own recorded threshold disagree with the guideline's?
+     Compared PAIRWISE — reporting against reporting, identification against
+     identification — and only where the applicant recorded one. The earlier
+     form compacted the recorded array before indexing it, so a record that
+     stated only a qualification threshold compared it against the REPORTING
+     row; and it accepted a match against any of the three, so a recorded
+     "0.05%" qualification threshold was silently taken as agreeing with the
+     0.05% reporting threshold. */
+  const recordedPairs: Array<[string, string]> = [
+    [String(record.reportingThreshold ?? record.reporting_threshold ?? '').trim(), thresholds.reporting.expression],
+    [String(record.identificationThreshold ?? record.identification_threshold ?? '').trim(), thresholds.identification.expression],
+    [String(record.qualificationThreshold ?? record.qualification_threshold ?? '').trim(), thresholds.qualification.expression],
   ];
-  const recordedThresholdDiffers = recordedThresholds.some(
-    (r, i) => r && !guidelineExpressions.some((g) => g.startsWith(r) || r.startsWith(g.split(' ')[0])) && r !== guidelineExpressions[i],
+  const normalise = (v: string) => v.toLowerCase().replace(/\s+/g, ' ').replace(/^(nmt|<=|≤)\s*/, '').trim();
+  const recordedThresholdDiffers = recordedPairs.some(
+    ([recorded, guideline]) => recorded !== '' && normalise(recorded) !== normalise(guideline) && !normalise(guideline).startsWith(normalise(recorded)),
   );
 
   return {

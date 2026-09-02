@@ -30,7 +30,7 @@ import {
 } from '../../shared/cmc/dissolution-purpose';
 /* The ICH impurity classes are the assessment engine's vocabulary, not this
    module's: one definition, in services/cmc/impurity-assessment. */
-import { impurityClassOf } from './cmc/impurity-assessment';
+import { isAssessableImpurity } from './cmc/impurity-assessment';
 import unifiedTaskService from './unifiedTaskService';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -790,17 +790,15 @@ export function mapImpurityProfilePayload(record: Record<string, any>): Record<s
   const impurityType = String(record.impurityType || record.impurity_type || '').trim();
   const qualificationBasis = String(record.qualificationBasis || record.qualification_basis || '').trim();
 
-  /* Assessable means the ICH comparison can actually be made: a named impurity,
-     a level with a unit, a dose to key the threshold to, and a class the
-     guideline covers. It is the section's `*Complete` key because a section
-     whose impurities cannot be compared to their thresholds has not done the
-     one thing §3.2.S.3.2 / §3.2.P.5.5 exist for. */
-  const assessable =
-    Boolean(impurityName) &&
-    String(observedLevel).trim() !== '' &&
-    Boolean(levelUnit) &&
-    Boolean(maximumDailyDose) &&
-    impurityClassOf(impurityType) !== 'unresolved';
+  /* Assessable means the ICH comparison can actually be made — and that question
+     is ASKED OF THE ENGINE, not approximated here. A field-presence proxy (a
+     name, a level, a unit, a dose, a class that is not 'unresolved') is weaker
+     than the engine in four ways: an unparseable dose, a unit that does not
+     convert, a class ICH does not govern, and a comparator-prefixed level all
+     satisfy the proxy and are then refused by the engine. The section reported
+     itself 100% complete over impurities it rendered as "not assessable". */
+  const assessableForDs = forDs && isAssessableImpurity(record, 'drug_substance');
+  const assessableForDp = forDp && isAssessableImpurity(record, 'drug_product');
 
   return {
     scope,
@@ -831,8 +829,8 @@ export function mapImpurityProfilePayload(record: Record<string, any>): Record<s
     // Side-scoped completeness keys — §3.2.S.3 / §3.2.S.4 versus §3.2.P.5.
     drugSubstanceImpurityProfile: forDs && impurityName ? impurityName : null,
     drugProductImpurityProfile: forDp && impurityName ? impurityName : null,
-    drugSubstanceImpurityProfileComplete: forDs && assessable ? impurityName : null,
-    drugProductImpurityProfileComplete: forDp && assessable ? impurityName : null,
+    drugSubstanceImpurityProfileComplete: assessableForDs ? impurityName : null,
+    drugProductImpurityProfileComplete: assessableForDp ? impurityName : null,
   };
 }
 

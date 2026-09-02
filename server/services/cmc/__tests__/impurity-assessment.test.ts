@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 import {
   assessRecordedImpurity,
   impurityClassOf,
+  isAssessableImpurity,
   normaliseLevelToPercent,
   parseDoseMg,
 } from '../impurity-assessment';
@@ -208,5 +209,113 @@ describe('assessRecordedImpurity — one recorded impurity, one verdict', () => 
       expect(a.disposition).toBe('below-reporting');
       expect(a.observedAsRecorded).toBe('300 ppm');
     }
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   The adversarial review of the engine. Each of these is a defect six review
+   lenses converged on, and the case that used to produce the wrong answer.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+describe('review: scope is decided before the dose, and covers every class ICH excludes', () => {
+  it('refuses an inorganic impurity instead of giving it organic thresholds', () => {
+    /* 'elemental' next to it was refused; 'inorganic' fell through and was given
+       an ICH Q3A organic-impurity percentage the guideline never wrote for it. */
+    const r = resolveImpurityThresholds({ matrix: 'drug_substance', maxDailyDoseMg: 500, impurityClass: 'inorganic' });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.code).toBe('CLASS_OUT_OF_SCOPE');
+  });
+
+  it('refuses a process impurity in the DRUG PRODUCT — Q3B governs degradation products', () => {
+    const process = resolveImpurityThresholds({ matrix: 'drug_product', maxDailyDoseMg: 500, impurityClass: 'organic' });
+    expect(process.ok).toBe(false);
+    if (!process.ok) expect(process.routeTo).toContain('Q3A');
+    const degradant = resolveImpurityThresholds({ matrix: 'drug_product', maxDailyDoseMg: 500, impurityClass: 'degradation' });
+    expect(degradant.ok).toBe(true);
+  });
+
+  it('reports an out-of-scope class as out of scope even when the dose is also missing', () => {
+    /* Parsing the dose first sent the reader to fix the dose for a residual
+       solvent, which would not have produced a Q3A threshold either way. */
+    const a = assessRecordedImpurity(
+      { impurityName: 'Methanol', impurityType: 'residual-solvent', observedLevel: '300', levelUnit: 'ppm' },
+      'drug_substance',
+    );
+    expect(a.ok).toBe(false);
+    if (!a.ok) {
+      expect(a.code).toBe('CLASS_OUT_OF_SCOPE');
+      expect(a.routeTo).toContain('Q3C');
+    }
+  });
+
+  it('maps the register vocabulary exactly before falling back to substrings', () => {
+    // "process-related residual material" matched `residual` and became a solvent.
+    expect(impurityClassOf('process-related')).toBe('organic');
+    expect(impurityClassOf('process related residual material')).toBe('residual-solvent');
+    expect(impurityClassOf('inorganic')).toBe('inorganic');
+  });
+});
+
+describe('review: the comparison itself', () => {
+  const base = { impurityName: 'Impurity A', impurityType: 'process-related', maximumDailyDose: '500 mg', levelUnit: '%' };
+
+  it('acts ABOVE a threshold, not at it', () => {
+    /* ICH reads "greater than" throughout. Using >= manufactured a deficiency
+       for an impurity sitting exactly on the qualification threshold. */
+    const exactly = assessRecordedImpurity({ ...base, observedLevel: '0.15' }, 'drug_substance');
+    if (!exactly.ok) throw new Error('expected an assessment');
+    expect(exactly.disposition).toBe('above-identification');
+    expect(exactly.outstanding.join(' ')).not.toContain('qualification basis');
+
+    const above = assessRecordedImpurity({ ...base, observedLevel: '0.16' }, 'drug_substance');
+    if (!above.ok) throw new Error('expected an assessment');
+    expect(above.disposition).toBe('above-qualification');
+  });
+
+  it('refuses a level recorded as a limit rather than reading it as an exact value', () => {
+    /* "<0.15" means the assay did not measure a value. Stripping the operator
+       reported the impurity as sitting on the 0.15% threshold — a deficiency
+       over a result that says the opposite. */
+    const a = assessRecordedImpurity({ ...base, observedLevel: '<0.15' }, 'drug_substance');
+    expect(a.ok).toBe(false);
+    if (!a.ok) {
+      expect(a.code).toBe('LEVEL_UNPARSEABLE');
+      expect(a.message).toContain('recorded as a limit');
+    }
+  });
+
+  it('refuses a level that reduces to nothing rather than reading it as zero', () => {
+    const a = assessRecordedImpurity({ ...base, observedLevel: '%' }, 'drug_substance');
+    expect(a.ok).toBe(false);
+    if (!a.ok) expect(a.code).toBe('LEVEL_UNPARSEABLE');
+  });
+
+  it('quotes the Q3B row the dose actually falls in at 1 mg and 10 mg', () => {
+    /* Q3B(R2) writes these bands with strict lower bounds, so a dose sitting
+       exactly on a boundary belongs to the HIGHER band. */
+    const atOne = resolveImpurityThresholds({ matrix: 'drug_product', maxDailyDoseMg: 1, impurityClass: 'degradation' });
+    if (!atOne.ok) throw new Error('expected a resolved set');
+    expect(atOne.identification.expression).toContain('0.5%');
+    const atTen = resolveImpurityThresholds({ matrix: 'drug_product', maxDailyDoseMg: 10, impurityClass: 'degradation' });
+    if (!atTen.ok) throw new Error('expected a resolved set');
+    expect(atTen.qualification.expression).toContain('0.5%');
+  });
+});
+
+describe('review: isAssessableImpurity is the engine, not a proxy for it', () => {
+  it('agrees with the engine on every record the proxy used to pass', () => {
+    const cases = [
+      // Field-present but the engine refuses each one.
+      { impurityName: 'A', impurityType: 'process-related', observedLevel: '0.08', levelUnit: '%', maximumDailyDose: 'two tablets' },
+      { impurityName: 'B', impurityType: 'process-related', observedLevel: '0.08', levelUnit: 'AU', maximumDailyDose: '500 mg' },
+      { impurityName: 'C', impurityType: 'residual-solvent', observedLevel: '300', levelUnit: 'ppm', maximumDailyDose: '500 mg' },
+      { impurityName: 'D', impurityType: 'process-related', observedLevel: '<0.15', levelUnit: '%', maximumDailyDose: '500 mg' },
+    ];
+    for (const record of cases) {
+      expect(isAssessableImpurity(record, 'drug_substance')).toBe(false);
+      expect(assessRecordedImpurity(record, 'drug_substance').ok).toBe(false);
+    }
+    const good = { impurityName: 'E', impurityType: 'process-related', observedLevel: '0.08', levelUnit: '%', maximumDailyDose: '500 mg' };
+    expect(isAssessableImpurity(good, 'drug_substance')).toBe(true);
   });
 });

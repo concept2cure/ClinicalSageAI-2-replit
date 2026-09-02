@@ -1236,9 +1236,13 @@ describe('mapImpurityProfilePayload — one row per impurity, assessed against I
       src('impurity_profile', impurity({ observedLevel: '0.02' })),
     ]);
     const s3 = composed.find((c) => c.sectionKey === '3.2.S.3')!;
-    expect(s3.narrativeDraft).toContain('None is at or above the ICH reporting threshold');
+    /* The claim is made over the impurities that were actually COMPARED to a
+       threshold, and says so: asserted over a register whose impurities were
+       all refused, "none is above the reporting threshold" stated the opposite
+       of the truth — nothing had been compared to anything. */
+    expect(s3.narrativeDraft).toContain('None of the 1 compared to an ICH threshold is above it');
     expect(s3.narrativeDraft).toContain('1 are below the reporting threshold');
-    expect(tablesToMarkdown(s3.tables)).toContain('below the reporting threshold');
+    expect(tablesToMarkdown(s3.tables)).toContain('not above the reporting threshold');
   });
 
   it('forces the statement when an impurity is above the qualification threshold with no basis', () => {
@@ -1390,5 +1394,117 @@ describe('mapDissolutionProfilePayload — a profile files under ONE section', (
     });
     expect(p.releaseDissolutionProfileComplete).toBeNull();
     expect(p.releaseDissolutionProfile).toBeTruthy();
+  });
+});
+
+describe('review: the impurity section claims only what it compared', () => {
+  it('says nothing was compared when every impurity was refused', () => {
+    /* The headline finding, converged on by six independent review lenses:
+       "None is at or above the ICH reporting threshold" was asserted over a
+       register whose every impurity had been REFUSED — no dose, no unit, an
+       out-of-scope class. It stated the opposite of the truth. */
+    const composed = composeModule3FromCanonicalSources([
+      src('impurity_profile', impurity({ impurityName: 'Impurity A', maximumDailyDose: '' })),
+      src('impurity_profile', impurity({ impurityName: 'Methanol', impurityType: 'residual-solvent', levelUnit: 'ppm', observedLevel: '300' })),
+    ]);
+    const s3 = composed.find((c) => c.sectionKey === '3.2.S.3')!;
+    expect(s3.narrativeDraft).toContain('None has been compared to an ICH threshold');
+    expect(s3.narrativeDraft).not.toContain('None of the');
+    expect(s3.narrativeDraft).toContain('cannot be compared to a threshold');
+    // …and names the guideline that does govern the refused one.
+    expect(s3.narrativeDraft).toContain('Q3C');
+  });
+
+  it('does not report a section complete over impurities it cannot assess', () => {
+    /* The completeness key used a field-presence proxy weaker than the engine,
+       so the section went green over records it rendered as "not assessable". */
+    const composed = composeModule3FromCanonicalSources([
+      src('impurity_profile', impurity({ maximumDailyDose: 'two tablets' })),
+      src('drug_substance', { structuralElucidation: 'NMR', physicochemicalProperties: 'white powder', biologicalActivity: 'n/a' }),
+    ]);
+    const s3 = composed.find((c) => c.sectionKey === '3.2.S.3')!;
+    expect(s3.missingInputs).toContain('drugSubstanceImpurityProfileComplete');
+    expect(s3.completeness).toBeLessThan(100);
+  });
+
+  it('reads two spellings of the same dose as the same dose', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('impurity_profile', impurity({ impurityName: 'A', maximumDailyDose: '500 mg' })),
+      src('impurity_profile', impurity({ impurityName: 'B', maximumDailyDose: '0.5 g' })),
+    ]);
+    const s3 = composed.find((c) => c.sectionKey === '3.2.S.3')!;
+    expect(s3.narrativeDraft).not.toContain('doses disagree');
+    expect(tablesToMarkdown(s3.tables)).toContain('ICH Threshold Basis');
+  });
+
+  it('prints the limit the comparison actually used, not only the guideline wording', () => {
+    /* At a 1500 mg dose the 1.0 mg/day alternative governs (0.067%), and the
+       section said an impurity was "above 0.10% or 1.0 mg/day (whichever is
+       lower)" — two numbers, neither of them the one it compared against. */
+    const composed = composeModule3FromCanonicalSources([
+      src('impurity_profile', impurity({ maximumDailyDose: '1500 mg', observedLevel: '0.09' })),
+    ]);
+    expect(tablesToMarkdown(composed.find((c) => c.sectionKey === '3.2.S.3')!.tables)).toContain('0.0667%');
+  });
+
+  it('leaves a retired impurity out of the current profile', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('impurity_profile', impurity({ impurityName: 'Superseded', status: 'retired' })),
+    ]);
+    expect(composed.find((c) => c.sectionKey === '3.2.S.3')!.narrativeDraft)
+      .toContain('No impurity is recorded for the drug substance');
+  });
+
+  it('states a recorded threshold that contradicts the guideline instead of replacing it silently', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('impurity_profile', impurity({ qualificationThreshold: '0.50%' })),
+    ]);
+    expect(composed.find((c) => c.sectionKey === '3.2.S.3')!.narrativeDraft)
+      .toContain('state thresholds that differ from the ICH values applied above');
+  });
+});
+
+describe('review: the dissolution section', () => {
+  it('renders the reference profile a comparison is against', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('dissolution_profile', profile({
+        purpose: 'comparability',
+        comparisonBatch: 'BX204-DP-2401',
+        comparisonResults: [{ timepoint: '10', meanPercent: '40', rsd: '6.0', n: '12' }],
+      })),
+    ]);
+    const md = tablesToMarkdown(composed.find((c) => c.sectionKey === '3.2.P.2')!.tables);
+    expect(md).toContain('Reference Profile Compared Against');
+    expect(md).toContain('BX204-DP-2401');
+  });
+
+  it('says how many profiles carry timepoints when only some do', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('dissolution_profile', profile()),
+      src('dissolution_profile', profile({ batchNumber: 'EMPTY', results: [] })),
+    ]);
+    expect(composed.find((c) => c.sectionKey === '3.2.P.2')!.narrativeDraft)
+      .toContain('of which 1 carry per-timepoint results');
+  });
+
+  it('reports variability as unrecorded when the register stored an explicit null', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('dissolution_profile', profile({
+        results: [
+          { timepoint: '10', meanPercent: '42', sd: null, rsd: null, n: '12' },
+          { timepoint: '20', meanPercent: '78', sd: null, rsd: null, n: '12' },
+        ],
+      })),
+    ]);
+    expect(composed.find((c) => c.sectionKey === '3.2.P.2')!.narrativeDraft)
+      .toContain('record no standard deviation or %RSD');
+  });
+
+  it('leaves a retired profile out of the section', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('dissolution_profile', profile({ status: 'retired' })),
+    ]);
+    expect(composed.find((c) => c.sectionKey === '3.2.P.2')!.narrativeDraft)
+      .toContain('No development dissolution profile is recorded');
   });
 });
