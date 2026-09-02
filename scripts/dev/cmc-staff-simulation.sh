@@ -330,11 +330,14 @@ P1COMP=$(echo "$P1" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | te
 
 P4=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.P.4")][0]' 2>/dev/null)
 P4EXC=$(echo "$P4" | jq -r '[.tables[]? | select(.title | test("Control of Excipients")) | .rows[]?] | length' 2>/dev/null)
-P4RAW=$(echo "$P4" | jq -r '[.tables[]? | select(.title | test("Raw and Starting")) | .rows[]? | select(.[] | tostring | test("Intermediate INT-2"))] | length' 2>/dev/null)
-P4XRAW=$(echo "$P4" | jq -r '[.tables[]? | select(.title | test("Control of Excipients")) | .rows[]? | select(.[] | tostring | test("Intermediate INT-2"))] | length' 2>/dev/null)
-[ "${P4EXC:-0}" -ge 2 ] && [ "${P4RAW:-0}" -ge 1 ] && [ "${P4XRAW:-0}" = "0" ] \
-  && ok "§3.2.P.4 lists both excipients and files the starting material separately" \
-  || bad "§3.2.P.4: excipientRows=$P4EXC rawRows=$P4RAW leakedIntoExcipients=$P4XRAW"
+# The starting material belongs to §3.2.S.2.3 Control of Materials, which is what
+# the register grid tells the staffer. It rendered inside §3.2.P.4 Control of
+# EXCIPIENTS because that was the only section rule naming raw_material_spec.
+S2RAW=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.S.2") | .tables[]? | select(.title | test("Raw and Starting")) | .rows[]? | select(.[] | tostring | test("Intermediate INT-2"))] | length' 2>/dev/null)
+P4XRAW=$(echo "$P4" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("Intermediate INT-2"))] | length' 2>/dev/null)
+[ "${P4EXC:-0}" -ge 2 ] && [ "${S2RAW:-0}" -ge 1 ] && [ "${P4XRAW:-0}" = "0" ] \
+  && ok "§3.2.P.4 lists both excipients; the starting material files under §3.2.S.2.3" \
+  || bad "§3.2.P.4: excipientRows=$P4EXC rawRowsInS2=$S2RAW leakedIntoP4=$P4XRAW"
 
 # The animal-origin question, answered from the recorded origin rather than a
 # regex over free text — and never answered at all over an empty register.
@@ -445,7 +448,10 @@ M3REQ=$(cat "$OUT/ectd.json" | jq '[.validationResults[]? | select(.rule=="REQUI
 
 step "20. The IND checklist sees the M3 leaves"
 CODE=$(req checklist GET /api/ind-checklist)
-M3=$(cat "$OUT/checklist.json" | jq '[.data[0].sections[]? | select(.code | tostring | startswith("m3"))] | length' 2>/dev/null)
+# Across every submission the checklist returns, not data[0]: an org that has
+# run this simulation before carries more than one submission, and which one
+# sorts first is not this step's subject.
+M3=$(cat "$OUT/checklist.json" | jq '[.data[]?.sections[]? | select(.code | tostring | startswith("m3"))] | length' 2>/dev/null)
 [ "$CODE" = 200 ] && [ "${M3:-0}" -ge 17 ] && ok "checklist shows $M3 Module 3 sections" || bad "checklist m3 sections=$M3 ($CODE)"
 
 step "21. The data room lists the Module 3 branch + an upload"

@@ -962,8 +962,14 @@ export function mapMaterialSpecPayload(record: Record<string, any>): Record<stri
     : (monograph ? `Complies with ${monograph}` : '');
 
   /* A material the section can actually describe: named, with a specification
-     (its own tests or a monograph it complies with) and a way of testing it. */
-  const describable = Boolean(materialName) && Boolean(specText);
+     (its own tests or a monograph it complies with) AND a way of testing it.
+     The analytical procedure was named in this comment and not tested, which
+     left open exactly the union the key exists to close: one excipient could
+     carry the completeness key while a DIFFERENT one supplied
+     excipientAnalyticalProcedures, and §3.2.P.4 scored complete over an
+     excipient with no recorded way of being tested. */
+  const testable = Boolean(analyticalProcedures) || Boolean(monograph);
+  const describable = Boolean(materialName) && Boolean(specText) && testable;
 
   return {
     materialRole: role,
@@ -1035,9 +1041,14 @@ export function mapFormulationRecordPayload(record: Record<string, any>): Record
     status,
     /* §3.2.P.1 is complete when ONE formulation carries a named composition
        with its components — not when a name and a component list arrive on two
-       different records. */
+       different records — and only when that formulation is the CURRENT one.
+       The section renders the quantitative composition only for a record marked
+       current, so scoring it complete on a draft said the composition section
+       was finished in the same breath as the section text said the governing
+       composition was not established. */
     formulationComposition: formulationName && rows.length > 0 ? formulationName : null,
     formulationCompositionComplete:
+      status.toLowerCase() === 'current' &&
       formulationName && rows.length > 0 && rows.every((c: any) => String(c.component || c.name || '').trim())
         ? formulationName
         : null,
@@ -1121,6 +1132,14 @@ export function mapManufacturingProcessPayload(record: Record<string, any>): Rec
     processScope: side,
     processName,
     processType: record.processType || record.process_type || '',
+    /* This register's lifecycle column is validation_status, not status -- the
+       table predates the register family and its two readers already use that
+       name. The composer drops a RETIRED source by reading `status`, so the
+       lifecycle has to reach it under that key or a superseded synthetic route
+       composes as the process the filing describes. It was emitted only as
+       processValidationStatus, which the retirement filter cannot see and
+       nothing rendered. */
+    status: validationStatus,
     processSteps: ordered.length > 0 ? ordered : null,
     criticalProcessParameters: cpps.length > 0 ? cpps : null,
     processControlRows: allControls.length > 0 ? allControls : null,

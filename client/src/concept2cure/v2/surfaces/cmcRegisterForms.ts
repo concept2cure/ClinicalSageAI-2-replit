@@ -850,16 +850,31 @@ export const CONTAINER_COMPONENT_TYPES = ['primary', 'secondary', 'administratio
  * ungoverned statuses sent 'draft' on every Update, which reverted the
  * signature while leaving qualified_by and qualification_date populated.
  */
-export function statusOptionsFor(statuses: string[], current?: string | null): string[] {
+export function statusOptionsFor(
+  statuses: string[],
+  current?: string | null,
+  /* The signed value differs by register: a reference standard is `qualified`,
+     a manufacturing process is `validated`. The server generalised its guard on
+     the same axis; hard-coding the word here meant a VALIDATED process opened
+     its drawer on a status the server then refused, so the record was
+     permanently uneditable through the product — no step could ever be added to
+     a validated process. */
+  signedValue = 'qualified',
+): string[] {
   const v = String(current ?? '').trim().toLowerCase();
-  return v === 'qualified' ? ['qualified', ...statuses.filter((s) => s !== 'draft')] : statuses;
+  const base = statuses[0] ?? 'draft';
+  return v === signedValue ? [signedValue, ...statuses.filter((s) => s !== base)] : statuses;
 }
 
 /** The status an edit drawer opens on: the stored one where it is offerable. */
-export function statusDefaultFor(statuses: string[], current?: string | null): string {
+export function statusDefaultFor(
+  statuses: string[],
+  current?: string | null,
+  signedValue = 'qualified',
+): string {
   const v = String(current ?? '').trim().toLowerCase();
-  if (v === 'qualified') return 'qualified';
-  return current && statuses.includes(current) ? current : 'draft';
+  if (v === signedValue) return signedValue;
+  return current && statuses.includes(current) ? current : (statuses[0] ?? 'draft');
 }
 
 export const CONTAINER_CLOSURE_STATUSES = ['draft', 'retired'];
@@ -1700,7 +1715,7 @@ export interface ManufacturingProcessBody {
 }
 
 export function manufacturingProcessForm(row?: Partial<ManufacturingProcessBody> | null): C2CFormConfig {
-  const statuses = statusOptionsFor(PROCESS_VALIDATION_STATUSES, row?.validationStatus);
+  const statuses = statusOptionsFor(PROCESS_VALIDATION_STATUSES, row?.validationStatus, 'validated');
   return {
     eyebrow: 'Manufacturing — §3.2.S.2.2 / §3.2.P.3.3',
     title: row ? 'Edit manufacturing process' : 'Record a manufacturing process',
@@ -1710,7 +1725,7 @@ export function manufacturingProcessForm(row?: Partial<ManufacturingProcessBody>
       { key: 'processName', label: 'Process', type: 'text', required: true, half: true, default: row?.processName ?? '', placeholder: 'e.g. BX-204 drug substance synthesis' },
       { key: 'processType', label: 'Side', type: 'select', options: PROCESS_SIDES, required: true, half: true, default: row?.processType ?? 'drug_substance', desc: 'A drug substance process files under §3.2.S.2; a drug product process under §3.2.P.3' },
       { key: 'batchSize', label: 'Batch size', type: 'text', half: true, default: row?.batchSize ?? '', placeholder: 'e.g. 25 kg' },
-      { key: 'validationStatus', label: 'Validation', type: 'seg', options: statuses, required: true, half: true, default: statusDefaultFor(PROCESS_VALIDATION_STATUSES, row?.validationStatus) === 'draft' ? 'not-started' : statusDefaultFor(PROCESS_VALIDATION_STATUSES, row?.validationStatus), desc: 'Validated is recorded with a signature, on the Validate action' },
+      { key: 'validationStatus', label: 'Validation', type: 'seg', options: statuses, required: true, half: true, default: statusDefaultFor(PROCESS_VALIDATION_STATUSES, row?.validationStatus, 'validated'), desc: 'Validated is recorded with a signature, on the Validate action' },
       { key: 'processDescription', label: 'Process description', type: 'textarea', rows: 3, default: row?.processDescription ?? '', placeholder: 'Left blank, the section describes the process from the recorded steps' },
       { key: 'processSteps', label: 'Steps', type: 'textarea', rows: 5, default: rowLinesOf(row?.processSteps, PROCESS_STEP_COLUMNS), placeholder: 'One per line: Step no. | Unit operation | Description | Equipment | Hold time' },
       { key: 'criticalProcessParameters', label: 'Critical process parameters', type: 'textarea', rows: 4, default: rowLinesOf(row?.criticalProcessParameters, PROCESS_CPP_COLUMNS), placeholder: 'One per line: Parameter | Step | Target | Range low | Range high | Unit | Criticality | Linked CQA' },

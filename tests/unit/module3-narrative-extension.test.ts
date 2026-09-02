@@ -362,3 +362,74 @@ describe('refineSectionWithAI — gateway integration', () => {
     expect(result.grounding).toEqual([]);
   });
 });
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * §3.2.A.3 — what the excipient-origin section is allowed to CLAIM
+ *
+ * This is the CTD section that declares whether any excipient is of human or
+ * animal origin, and it draws a TSE/BSE safety conclusion from that. Two
+ * defects made it draw one it had not earned.
+ * ────────────────────────────────────────────────────────────────────────── */
+describe('composeAppendices — 3.2.A.3 claims only what the register records', () => {
+  const source = (sourceType: string, sourcePayload: Record<string, unknown>) =>
+    ({ id: 's-' + sourceType, sourceType, sourcePayload, sourceHash: 'h' }) as never;
+  const formulation = (components: Array<Record<string, unknown>>) =>
+    source('formulation_record', { formulationName: 'F3', status: 'current', components });
+  const a3Of = (sources: never[]) =>
+    composeAppendices(sources).find((s) => s.sectionKey === '3.2.A.3')!;
+  const rowValue = (sec: { tables: Array<{ rows: string[][] }> }, label: string) =>
+    sec.tables.flatMap((t) => t.rows).find((r) => r[0] === label)?.[1];
+
+  it('counts each formulation component once', () => {
+    /* The rewritten collector spread every formulation record's components and
+       THEN appended a first-match `valArr(m, 'components')` over the same
+       matched sources — and formulation_record is one of this section's source
+       types, so its rows were added twice. Every excipient count the section
+       printed, in the CTD section whose purpose is enumerating excipients for
+       TSE/BSE assessment, was doubled. */
+    const sec = a3Of([
+      formulation([
+        { component: 'A', origin: 'plant' },
+        { component: 'B', origin: 'synthetic' },
+        { component: 'C', origin: 'mineral' },
+      ]),
+      source('drug_product', { dosageFormDescription: 'Tablet' }),
+    ] as never[]);
+    expect(rowValue(sec, 'Excipients Recorded')).toBe('3');
+    expect(rowValue(sec, 'Origin Recorded For')).toBe('3 of 3');
+    expect(sec.narrativeDraft).toContain('All 3 recorded excipients');
+  });
+
+  it('draws the TSE/BSE conclusion only where every origin was recorded', () => {
+    const sec = a3Of([
+      formulation([
+        { component: 'A', origin: 'plant' },
+        { component: 'B', origin: 'synthetic' },
+      ]),
+      source('drug_product', { dosageFormDescription: 'Tablet' }),
+    ] as never[]);
+    expect(sec.narrativeDraft).toContain('no additional TSE/BSE or viral safety documentation is required');
+  });
+
+  it('refuses the TSE/BSE conclusion when any origin is unrecorded', () => {
+    /* The closing sentence sat OUTSIDE the conditional, so the section stated
+       that no TSE/BSE documentation was required in the same paragraph as it
+       stated that the origin of some excipients was NOT established — a
+       positive safety claim drawn from the absence of a signal in data that was
+       never scanned. A gelatin capsule shell recorded without its origin field
+       produced a written all-clear. */
+    const sec = a3Of([
+      formulation([
+        { component: 'A', origin: 'synthetic' },
+        { component: 'B' },
+        { component: 'C' },
+      ]),
+      source('drug_product', { dosageFormDescription: 'Tablet' }),
+    ] as never[]);
+    expect(sec.narrativeDraft).not.toContain('no additional TSE/BSE or viral safety documentation is required');
+    expect(sec.narrativeDraft).toContain('NOT established');
+    expect(sec.narrativeDraft).toContain('Record the origin of each');
+    expect(rowValue(sec, 'Origin Recorded For')).toBe('1 of 3');
+  });
+});

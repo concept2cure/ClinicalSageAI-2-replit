@@ -1487,9 +1487,16 @@ async function currentFormulationConflict(
   orgId: number,
   incoming: Record<string, unknown>,
   excludeId: number | null,
+  /* The project the record ACTUALLY belongs to. On an update the body does not
+     carry it — projectId is fixed at creation and the client's patch never
+     sends it — so scoping the check to the body meant every edit that promoted
+     a version to current was compared against unfiled records instead of the
+     project's own, and the guard was dead on the exact action it governs. */
+  storedProjectId?: string | null,
 ): Promise<string | null> {
   if (String(incoming.status ?? '').trim().toLowerCase() !== 'current') return null;
-  const projectId = typeof incoming.projectId === 'string' ? incoming.projectId.trim() : '';
+  const fromRow = typeof storedProjectId === 'string' ? storedProjectId.trim() : '';
+  const projectId = fromRow || (typeof incoming.projectId === 'string' ? incoming.projectId.trim() : '');
   const existing = await db
     .select({ id: cmcFormulationRecords.id, name: cmcFormulationRecords.formulationName, version: cmcFormulationRecords.version })
     .from(cmcFormulationRecords)
@@ -1608,7 +1615,14 @@ router.put('/formulation-records/:id', async (req, res) => {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = formulationRecordBody.partial().parse(req.body);
-    const conflict = await currentFormulationConflict(orgId, validatedData as Record<string, unknown>, id);
+    const [storedRow] = await db
+      .select({ projectId: cmcFormulationRecords.projectId })
+      .from(cmcFormulationRecords)
+      .where(and(eq(cmcFormulationRecords.id, id), eq(cmcFormulationRecords.organizationId, orgId)));
+    if (!storedRow) return res.status(404).json({ success: false, error: 'Formulation record not found' });
+    const conflict = await currentFormulationConflict(
+      orgId, validatedData as Record<string, unknown>, id, storedRow.projectId,
+    );
     if (conflict) return res.status(409).json({ success: false, error: conflict });
     const { projectId: _fixedAtCreation, ...editable } = withoutOrgId(
       validatedData as Record<string, unknown>,
@@ -1697,12 +1711,52 @@ router.post('/manufacturing-processes', async (req, res) => {
 /** Add the later steps, attach the parameters, or correct the record. */
 router.put('/manufacturing-processes/:id', async (req, res) => {
   try {
-    const id = String(req.params.id);
+    const id = String(req.params.id ?? '').trim();
+    /* Same guard as the GET on this table: its primary key is a uuid, and
+       Postgres answers a malformed one with 22P02, which respondWriteError
+       turned into a 500 and logged as a CMC write failure. A client-side typo
+       is a bad request, not a server fault. */
+    if (!UUID_RE.test(id)) {
+      return res.status(400).json({ success: false, error: 'A manufacturing process id must be a uuid' });
+    }
     const orgId = getOrgId(req);
     const validatedData = manufacturingProcessBody.partial().parse(req.body);
     const stored = await reselectManufacturingProcess(id, orgId);
     if (!stored) return res.status(404).json({ success: false, error: 'Manufacturing process not found' });
-    if (refusesUngovernedQualification(res, validatedData.validationStatus, 'manufacturing-processes', stored.validationStatus, PROCESS_VOCAB)) return;
+    const sentStatus = Object.prototype.hasOwnProperty.call(req.body ?? {}, 'validationStatus');
+    const clearedStatus = sentStatus && !String(validatedData.validationStatus ?? '').trim();
+    /* An EXPLICIT clear is a de-signing. refusesUngovernedQualification's
+       out-of-signed-state branch is guarded on a truthy incoming value, so a
+       null or empty string slipped past both branches and wrote SQL NULL over
+       validation_status — stranding validated_by and validation_date on a
+       record that no longer claimed to be validated, and re-opening the
+       governed route for a second person to sign over the first. */
+    if (clearedStatus) {
+      if (String(stored.validationStatus ?? '').toLowerCase() === PROCESS_SIGNING.signedValue) {
+        return res.status(409).json({
+          success: false,
+          error:
+            'This process is validated under a recorded signature and its validation status cannot be cleared by an ordinary edit. ' +
+            'Retire it, or record a new assessment.',
+        });
+      }
+    } else if (refusesUngovernedQualification(res, validatedData.validationStatus, 'manufacturing-processes', stored.validationStatus, PROCESS_VOCAB)) {
+      return;
+    }
+    /* The state a validation signature was refused over must not be reachable
+       one PUT after signing. The /validate precondition refuses to sign a
+       process that records no steps; clearing the steps afterwards would leave
+       the signature attached to a process the register does not describe. */
+    if (String(stored.validationStatus ?? '').toLowerCase() === PROCESS_SIGNING.signedValue
+        && Object.prototype.hasOwnProperty.call(req.body ?? {}, 'processSteps')
+        && (validatedData.processSteps ?? []).length === 0) {
+      return res.status(409).json({
+        success: false,
+        error:
+          'This process is validated under a recorded signature. Removing its steps would leave that signature ' +
+          'attached to a process the register does not describe — retire it, or record a new process.',
+      });
+    }
     /* The signature columns are written by the governed route only, and the
        project a process belongs to is fixed at creation. */
     const {
@@ -1711,6 +1765,9 @@ router.put('/manufacturing-processes/:id', async (req, res) => {
       validationDate: _signedAt,
       ...editable
     } = validatedData as Record<string, unknown>;
+    /* Never write an empty lifecycle: an omitted or cleared status leaves the
+       stored one alone rather than nulling the column. */
+    if (clearedStatus) delete (editable as Record<string, unknown>).validationStatus;
     const [row] = await db
       .update(manufacturingProcesses)
       .set({ ...editable, updatedAt: new Date() })
@@ -1800,6 +1857,25 @@ router.put('/characterization-studies/:id', async (req, res) => {
     const validatedData = characterizationStudyBody.partial().parse(req.body);
     const stored = await reselectCharacterizationStudy(String(id), orgId);
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'characterization-studies', stored?.status)) return;
+    /* The /qualify precondition refuses to sign a study that establishes
+       nothing; clearing the result afterwards would leave the signature
+       attached to exactly that. What the incoming edit leaves behind is what
+       matters, so the check runs over the merged state, not the patch. */
+    if (stored && String(stored.status ?? '').toLowerCase() === 'qualified') {
+      const body = req.body as Record<string, unknown>;
+      const merged = (key: 'result' | 'conclusion') =>
+        Object.prototype.hasOwnProperty.call(body ?? {}, key)
+          ? String((validatedData as Record<string, unknown>)[key] ?? '').trim()
+          : String(stored[key] ?? '').trim();
+      if (!merged('result') && !merged('conclusion')) {
+        return res.status(409).json({
+          success: false,
+          error:
+            'This study is qualified under a recorded signature. Clearing what it established would leave that ' +
+            'signature attesting to nothing — retire it, or record a new study.',
+        });
+      }
+    }
     const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
       validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;

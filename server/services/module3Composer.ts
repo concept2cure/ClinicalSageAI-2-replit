@@ -89,7 +89,7 @@ interface SectionRule {
 export const MODULE3_SECTION_RULES: SectionRule[] = [
   // --- Drug Substance (S) subsections ---
   { sectionKey: '3.2.S.1', requiredSourceTypes: ['drug_substance'], requiredFields: ['name', 'manufacturer'] },
-  { sectionKey: '3.2.S.2', requiredSourceTypes: ['drug_substance', 'manufacturing_process', 'process_validation'], requiredFields: ['manufacturingRoute', 'processDescription', 'processControls', 'manufacturingProcessComplete'] },
+  { sectionKey: '3.2.S.2', requiredSourceTypes: ['drug_substance', 'manufacturing_process', 'process_validation', 'raw_material_spec'], requiredFields: ['manufacturingRoute', 'processDescription', 'processControls', 'manufacturingProcessComplete'] },
   { sectionKey: '3.2.S.3', requiredSourceTypes: ['drug_substance', 'characterization', 'impurity_profile'], requiredFields: ['structuralElucidation', 'physicochemicalProperties', 'biologicalActivity', 'drugSubstanceImpurityProfileComplete'] },
   /* `drugSubstanceBatchAnalyses`, not the generic `batchAnalyses`: the
      renderer files a finished-product result to §3.2.P.5.4 only, so counting
@@ -129,9 +129,19 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
   { sectionKey: '3.2.S.7', requiredSourceTypes: ['stability'], requiredFields: ['timePoints', 'storageCondition'] },
   // --- Drug Product (P) subsections ---
   { sectionKey: '3.2.P.1', requiredSourceTypes: ['drug_product', 'formulation_record'], requiredFields: ['dosageFormDescription', 'composition', 'strength', 'formulationCompositionComplete'] },
-  { sectionKey: '3.2.P.2', requiredSourceTypes: ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile', 'container_closure'], requiredFields: ['formulationDevelopment', 'manufacturingProcessDev', 'containerClosureStudies'] },
+  /* `characterization` is here because a drug-product characterisation study —
+     a polymorph screen on the compressed tablet, say — is pharmaceutical
+     development evidence. Without it, the register wrote such a study through to
+     cmc_source_objects, the form and the register grid both told the staffer it
+     filed under §3.2.P.2, and it reached no composed section at all. */
+  { sectionKey: '3.2.P.2', requiredSourceTypes: ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile', 'container_closure', 'characterization'], requiredFields: ['formulationDevelopment', 'manufacturingProcessDev', 'containerClosureStudies'] },
   { sectionKey: '3.2.P.3', requiredSourceTypes: ['drug_product', 'batch', 'change_control', 'process_validation', 'manufacturing_process'], requiredFields: ['formulation', 'batchNumber', 'drugProductProcessComplete'] },
-  { sectionKey: '3.2.P.4', requiredSourceTypes: ['excipient', 'raw_material_spec'], requiredFields: ['excipientSpecifications', 'excipientAnalyticalProcedures', 'excipientControlComplete'] },
+  /* §3.2.P.4 is Control of EXCIPIENTS. `raw_material_spec` was listed here
+     because this was the only rule that named it, so a drug-substance starting
+     material rendered inside the drug product's excipient section while the
+     register grid told the staffer it filed under §3.2.S.2.3. It belongs to
+     §3.2.S.2 above. */
+  { sectionKey: '3.2.P.4', requiredSourceTypes: ['excipient'], requiredFields: ['excipientSpecifications', 'excipientAnalyticalProcedures', 'excipientControlComplete'] },
   { sectionKey: '3.2.P.5', requiredSourceTypes: ['specification', 'method', 'dissolution_profile', 'impurity_profile', 'qc_result'], requiredFields: ['releaseCriteria', 'methodName', 'drugProductBatchAnalyses', 'drugProductImpurityProfileComplete'] },
   { sectionKey: '3.2.P.6', requiredSourceTypes: ['drug_product', 'reference_standard'], requiredFields: ['drugProductReferenceStandard', 'drugProductReferenceStandardCoA', 'drugProductReferenceStandardComplete'] },
   { sectionKey: '3.2.P.7', requiredSourceTypes: ['container_closure'], requiredFields: ['drugProductContainerDescription', 'drugProductClosureDescription', 'drugProductSuitabilityJustification', 'drugProductContainerClosureComplete'] },
@@ -1119,11 +1129,48 @@ function materialSpecText(p: Record<string, any>): string {
   return String(p.compendialMonograph || '') ? `Complies with ${p.compendialMonograph}` : '—';
 }
 
+/**
+ * §3.2.S.2.3 — the raw and starting materials the drug substance is made from.
+ *
+ * These rendered inside §3.2.P.4 Control of EXCIPIENTS, because that was the
+ * only rule listing `raw_material_spec` — so a reviewer opening the drug
+ * product's excipient section found a drug-substance synthetic intermediate,
+ * and the register grid told the staffer the same row filed under §3.2.S.2.3.
+ * The screen and the dossier disagreeing about where a record belongs is the
+ * failure shared/cmc/material-scope.ts exists to prevent.
+ */
+function rawMaterialRendering(
+  sources: CanonicalSource[],
+): { tables: GeneratedTable[]; narrative: string } {
+  const rawMaterials = materialRows(sources, 'raw_material_spec');
+  if (rawMaterials.length === 0) return { tables: [], narrative: '' };
+  const unspecified = rawMaterials.filter((p) => materialSpecText(p) === '—');
+  return {
+    tables: [{
+      title: 'Raw and Starting Material Specifications',
+      headers: ['Material', 'Role', 'Grade', 'Compendial Monograph', 'Specification', 'Supplier', 'Site'],
+      rows: rawMaterials.map((p) => [
+        String(p.materialName),
+        String(p.materialRole || '—'),
+        String(p.grade || '—'),
+        String(p.compendialMonograph || '—'),
+        materialSpecText(p),
+        String(p.supplier || '—'),
+        String(p.manufacturerSite || '—'),
+      ]),
+    }],
+    narrative:
+      `${rawMaterials.length} raw or starting material specification(s) are recorded for the drug substance, reported above. ` +
+      (unspecified.length > 0
+        ? `${unspecified.length} of them record neither a specification nor a compendial monograph, so what they are controlled to is not established by this section. `
+        : ''),
+  };
+}
+
 function materialRendering(
   sources: CanonicalSource[],
 ): { tables: GeneratedTable[]; narrative: string } {
   const excipients = materialRows(sources, 'excipient');
-  const rawMaterials = materialRows(sources, 'raw_material_spec');
   const tables: GeneratedTable[] = [];
 
   if (excipients.length > 0) {
@@ -1142,33 +1189,23 @@ function materialRendering(
       ]),
     });
   }
-  if (rawMaterials.length > 0) {
-    tables.push({
-      title: 'Raw and Starting Material Specifications',
-      headers: ['Material', 'Role', 'Grade', 'Compendial Monograph', 'Specification', 'Supplier', 'Site'],
-      rows: rawMaterials.map((p) => [
-        String(p.materialName),
-        String(p.materialRole || '—'),
-        String(p.grade || '—'),
-        String(p.compendialMonograph || '—'),
-        materialSpecText(p),
-        String(p.supplier || '—'),
-        String(p.manufacturerSite || '—'),
-      ]),
-    });
-  }
 
   const novel = excipients.filter((p) => p.novelExcipient);
   const unjustifiedNovel = novel.filter((p) => !String(p.novelExcipientJustification || '').trim());
   const unspecified = excipients.filter((p) => materialSpecText(p) === '—');
 
+  /* "each controlled to the specification reported above" was unconditional,
+     and the very next clause named the excipients that record no specification
+     at all — a blanket claim of control the same paragraph disproved, in the
+     sentence a reader takes as the section's statement of control. */
+  const specified = excipients.length - unspecified.length;
   const narrative =
-    (excipients.length > 0
-      ? `${excipients.length} excipient(s) are recorded for the drug product, each controlled to the specification reported above. `
-      : `No excipient is recorded for the drug product; the control of excipients is not established by this section. `) +
-    (unspecified.length > 0
-      ? `${unspecified.length} of them record neither a specification nor a compendial monograph, so what they are controlled to is not established. `
-      : '') +
+    (excipients.length === 0
+      ? `No excipient is recorded for the drug product; the control of excipients is not established by this section. `
+      : unspecified.length === 0
+        ? `${excipients.length} excipient(s) are recorded for the drug product, each controlled to the specification reported above. `
+        : `${excipients.length} excipient(s) are recorded for the drug product. ${specified} of them are controlled to the specification reported above; ` +
+          `${unspecified.length} record neither a specification nor a compendial monograph, so what those are controlled to is not established by this section. `) +
     /* A novel excipient carries its own safety package (ICH M4Q 3.2.P.4.6).
        Recording one without a justification is a gap the section states. */
     (novel.length > 0
@@ -1177,9 +1214,7 @@ function materialRendering(
           ? `; ${unjustifiedNovel.length} of those record no justification, which is not supplied by this section. `
           : `, whose justification is recorded against each. `)
       : '') +
-    (rawMaterials.length > 0
-      ? `${rawMaterials.length} raw or starting material specification(s) are recorded. `
-      : '');
+    '';
 
   return { tables, narrative };
 }
@@ -1352,6 +1387,32 @@ function processRendering(
     });
   }
 
+  /* The register's process-level control list, attributed to its own process.
+     `processControlRows` was written by the mapper and read by nothing: the only
+     path those controls took into a section was the flattened text, which both
+     §3.2.S.2 and §3.2.P.3 read with a FIRST-MATCH helper over a register that is
+     one row per process — so with two processes on a side, the second process's
+     controls appeared in no table and no sentence anywhere in Module 3. */
+  const controlRows: string[][] = [];
+  for (const p of all) {
+    for (const c of objectRows(p.processControlRows)) {
+      controlRows.push([
+        String(p.processName || '—'),
+        String(c.test || c.control || c.parameter || '—'),
+        String(c.acceptanceCriteria || c.acceptance_criteria || c.limit || '—'),
+        String(c.samplingPoint || c.sampling_point || c.step || '—'),
+        String(c.frequency || '—'),
+      ]);
+    }
+  }
+  if (controlRows.length > 0) {
+    tables.push({
+      title: 'In-Process Controls',
+      headers: ['Process', 'Test', 'Acceptance Criteria', 'Sampling Point', 'Frequency'],
+      rows: controlRows,
+    });
+  }
+
   const equipRows: string[][] = [];
   for (const p of all) {
     for (const e of objectRows(p.equipmentList)) {
@@ -1374,8 +1435,18 @@ function processRendering(
 
   const batchSizes = all.map((p) => String(p.processBatchSize || '').trim()).filter(Boolean);
   const withSteps = all.filter((p) => objectRows(p.processSteps).length > 0);
-  const withControls = all.filter((p) => String(p.processControls || '').trim());
+  /* The mapper side-scopes the control text — §3.2.S.2's required field is
+     `processControls` and the drug-product twin is `drugProductProcessControls`
+     — so reading only the first made this clause unconditionally true for
+     §3.2.P.3: the section stated "No in-process control is recorded" directly
+     under a table printing the controls it was denying. */
+  const controlTextOf = (p: Record<string, any>) =>
+    String(p.processControls || p.drugProductProcessControls || '').trim();
+  const withControls = all.filter((p) => controlTextOf(p));
   const reprocessing = all.map((p) => String(p.reprocessing || '').trim()).filter(Boolean);
+  const validatedNames = all
+    .filter((p) => String(p.processValidationStatus || '').trim().toLowerCase() === 'validated')
+    .map((p) => String(p.processName || 'unnamed process'));
   const material = side === 'drug_substance' ? 'drug substance' : 'drug product';
 
   const narrative =
@@ -1398,6 +1469,14 @@ function processRendering(
         ? `${withControls.length} of ${all.length} record in-process controls. `
         : '') +
     (batchSizes.length > 0 ? `Recorded batch size(s): ${batchSizes.join('; ')}. ` : '') +
+    /* The register's own validation state, which is a Part 11 signature on this
+       table and was emitted by the mapper and read by nothing — so a process
+       signed as validated composed a section that said nothing about it. */
+    (validatedNames.length === all.length
+      ? `Each is recorded as validated in the process register. `
+      : validatedNames.length > 0
+        ? `${validatedNames.join(', ')} ${validatedNames.length === 1 ? 'is' : 'are'} recorded as validated in the process register; the remainder are not established as validated by this section. `
+        : `None is recorded as validated in the process register. `) +
     (reprocessing.length > 0 ? `Reprocessing: ${reprocessing.join(' ')} ` : '');
 
   return { tables, narrative };
@@ -1474,12 +1553,19 @@ function characterizationRendering(
      exactly the studies this clause exists to name. */
   const recordedButEmpty = all.filter((p) => p.characterizationEstablishes === false);
 
+  /* The three-question completeness claim belongs to §3.2.S.3.1, which asks
+     for structure, physicochemical properties AND biological activity. A
+     drug-product study is §3.2.P.2 development evidence and that section asks
+     for none of the three, so reporting them as "not established" there would
+     invent a requirement the CTD does not make of it. */
   const narrative =
-    `${all.length} characterisation study/ies are recorded, reported above. ` +
-    (missing.length === 0
-      ? `Structure, physicochemical properties and biological activity are each established by at least one recorded study. `
-      : `No recorded study establishes ${missing.map((t) => CHARACTERIZATION_TYPE_LABEL[t].toLowerCase()).join(' or ')}; ` +
-        `that is not established by this section. `) +
+    `${all.length} characterisation study/ies are recorded${side === 'drug_product' ? ' for the drug product' : ''}, reported above. ` +
+    (side === 'drug_substance'
+      ? missing.length === 0
+        ? `Structure, physicochemical properties and biological activity are each established by at least one recorded study. `
+        : `No recorded study establishes ${missing.map((t) => CHARACTERIZATION_TYPE_LABEL[t].toLowerCase()).join(' or ')}; ` +
+          `that is not established by this section. `
+      : '') +
     (recordedButEmpty.length > 0
       ? `${recordedButEmpty.length} study/ies are on file with neither a result nor a conclusion recorded. `
       : '');
@@ -1523,6 +1609,10 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
        the drug substance form and called it the manufacturing process. */
     const process = processRendering(m, 'drug_substance');
     tables.push(...process.tables);
+    /* §3.2.S.2.3 Control of Materials — the raw and starting materials the
+       route consumes. */
+    const rawMaterials = rawMaterialRendering(m);
+    tables.push(...rawMaterials.tables);
     if (pvStatus || pvProtocol) {
       tables.push({
         title: 'Process Validation Summary',
@@ -1540,6 +1630,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         (desc ? `The manufacturing process consists of: ${desc}. ` : '') +
         (controls ? `In-process controls include: ${controls}. ` : '') +
         process.narrative +
+        rawMaterials.narrative +
         (pvStatus ? `Process validation status: ${pvStatus}` + (pvProtocol ? ` (protocol: ${pvProtocol})` : '') + `. ` : '') +
         (pvBatches ? `${pvBatches} consecutive batch(es) validated.` : ''),
       tables,
@@ -1773,13 +1864,20 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
        method-development record and the release control presented as the same
        test. The register stores which one a profile is. */
     tables.push(...developmentDissolution.tables);
+    /* Drug-product characterisation studies. §3.2.S.3 is the drug SUBSTANCE's
+       characterisation section and the CTD has no drug-product twin, so these
+       belong here — which is what the register grid and the form's own field
+       description tell the staffer. */
+    const productCharacterization = characterizationRendering(m, 'drug_product');
+    tables.push(...productCharacterization.tables);
     return {
       narrative: `Pharmaceutical development studies were conducted to support the proposed formulation and manufacturing process. ` +
         (formDev ? `Formulation development: ${formDev}. ` : '') +
         (mfgDev ? `Manufacturing process development: ${mfgDev}. ` : '') +
         (ccStudies ? `Container closure studies: ${ccStudies}. ` : '') +
         (devHistory ? `Development history: ${devHistory}. ` : '') +
-        developmentDissolution.narrative,
+        developmentDissolution.narrative +
+        productCharacterization.narrative,
       tables,
     };
   },

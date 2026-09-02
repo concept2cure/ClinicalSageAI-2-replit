@@ -242,7 +242,18 @@ const APPENDIX_RULES: AppendixRule[] = [
             origin: p.origin,
             tseCertification: p.tseCertificate,
           })),
-        ...valArr(m, 'components').filter((c) => c && typeof c === 'object'),
+        /* The drug product register's own composition array, for a project that
+           captured components there before the formulation register existed.
+           Read from the DRUG PRODUCT source only: as a first-match `valArr` over
+           every matched source it re-read the formulation record's own array —
+           formulation_record is one of this section's source types — and every
+           excipient count the section printed was doubled. */
+        ...m
+          .filter((s) => s.sourceType === 'drug_product')
+          .flatMap((s) => {
+            const rows = (s.sourcePayload as Record<string, any> | undefined)?.components;
+            return Array.isArray(rows) ? rows.filter((c) => c && typeof c === 'object') : [];
+          }),
       ];
       /* Whether anything at all was recorded. "No excipients of human or animal
          origin are used" is a POSITIVE SAFETY CLAIM, and it was made whenever
@@ -368,9 +379,22 @@ const APPENDIX_RULES: AppendixRule[] = [
                 `\n\nNo excipient of human or animal origin is identified among the ${components.length} recorded for the drug product formulation` +
                 (formulationName ? ` (${formulationName})` : '') + `. ` +
                 `Origin is recorded for ${originRecorded} of them; for the remaining ${components.length - originRecorded} it is not recorded, and their origin is NOT established by this section. `) +
-            `\n\nAccordingly, no additional TSE/BSE or viral safety documentation is required for this section. ` +
-            `Any future formulation change introducing a human- or animal-derived excipient would trigger ` +
-            `re-evaluation and supplementary safety documentation per EMA EMEA/410/01 rev. 3.`,
+            /* The safety CONCLUSION may only be drawn where the origins it rests
+               on were actually recorded. It sat outside this conditional and was
+               emitted by both arms, so the section stated that no TSE/BSE
+               documentation was required in the same paragraph as it stated that
+               the origin of some excipients was not established — a positive
+               safety claim over the absence of a signal in unscanned data. A
+               gelatin capsule shell recorded without its origin field produced a
+               written all-clear. */
+            (originRecorded === components.length
+              ? `\n\nAccordingly, no additional TSE/BSE or viral safety documentation is required for this section. ` +
+                `Any future formulation change introducing a human- or animal-derived excipient would trigger ` +
+                `re-evaluation and supplementary safety documentation per EMA EMEA/410/01 rev. 3.`
+              : `\n\nWhether additional TSE/BSE or viral safety documentation is required is therefore NOT established ` +
+                `by this section: that conclusion rests on the origin of every excipient, and ${components.length - originRecorded} ` +
+                `of ${components.length} have none recorded. Record the origin of each, per EMA EMEA/410/01 rev. 3, ` +
+                `before this section is relied on.`),
           tables,
         };
       }
