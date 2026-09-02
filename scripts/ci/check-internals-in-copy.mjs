@@ -73,7 +73,12 @@ const INTERNALS = [
   { re: /\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*_(?:URL|KEY|SECRET|TOKEN|DIR|PATH|PASSWORD|DSN|HOST|PORT)\b/, what: 'env var' },
   { re: /(?:^|[\s(])\/(?:home|usr|var|opt|app|etc)\//, what: 'absolute file path' },
   { re: /\.(?:ts|tsx|js|mjs|cjs):\d+/, what: 'source location' },
-  { re: /\b[\w.-]+\.(?:ts|tsx|mjs|cjs|sql)\b/, what: 'source file' },
+  // Extensions the product's own repo actually uses. The list started at
+  // ts|tsx|mjs|cjs|sql and let a `.md` filename through: document-authoring's
+  // customer-visible note read "See HANDOFF_TO_DESIGN_document_authoring.md",
+  // rendered as the tool card's whole description on Project Home. A rule that
+  // bans source paths in copy has to know what a source path looks like here.
+  { re: /\b[\w.-]+\.(?:ts|tsx|js|jsx|mjs|cjs|sql|md|json|ya?ml|sh|py)\b/, what: 'source file' },
 ];
 
 /** Copy-bearing JSX attributes: `hint="…"` / `title={'…'}`. */
