@@ -184,7 +184,7 @@ function SurfaceChunkFallback() {
  * a promise thrown on first render, which is a white screen anywhere no
  * ancestor draws a `Suspense`. That is not hypothetical here —
  * `SURFACE_VIEWS[id].component` is rendered directly, with no boundary of its
- * own, by surfaceRender, liveBranchRender, workflowAudit, a11ySemantics,
+ * own, by surfaceRender, workflowAudit, a11ySemantics,
  * hostilePayloadProbe, guardsPreserveContent and scripts/visual-qa. Keeping the
  * boundary inside the registration means the exported shape is still what every
  * one of those already assumes — "a component you can render" — which is also
