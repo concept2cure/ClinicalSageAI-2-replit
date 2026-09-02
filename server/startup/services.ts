@@ -350,14 +350,37 @@ export async function initializeEarlyServices(): Promise<void> {
 
   // Seed AnA Capability Registry (fire-and-forget — don't block startup).
   // Delay slightly to ensure DB pool is ready.
+  //
+  // The seeder declares its own SYSTEM tenant scope (see
+  // ana-capability-registry.ts): the pool refuses ANY statement issued with no
+  // tenant scope once RLS_ENFORCE=on — the only value production accepts — so
+  // this seed failed on every production boot, the table stayed empty, and
+  // ana-context-router.ts (which reads it to route a turn to a capability) had
+  // nothing to route with. The warning below called that "non-blocking"; it
+  // was a silently degraded product. The outcome is now recorded for /readyz
+  // (see ana-readiness-state.ts) and a failure is an error, not a warning.
   setTimeout(() => {
-    import('../services/ana-capability-registry.js')
-      .then(({ seedCapabilityRegistry }) => seedCapabilityRegistry())
-      .then(({ seeded, total }) => {
-        console.log(`✅ AnA Capability Registry seeded (${seeded} new, ${total} total)`);
-      })
+    Promise.all([
+      import('../services/ana-capability-registry.js'),
+      import('./ana-readiness-state.js'),
+    ])
+      .then(([{ seedCapabilityRegistry }, readiness]) =>
+        seedCapabilityRegistry().then(({ seeded, total }) => {
+          readiness.setCapabilityRegistryState(
+            total > 0 ? 'seeded' : 'empty',
+            `${seeded} new, ${total} total`
+          );
+          console.log(`✅ AnA Capability Registry seeded (${seeded} new, ${total} total)`);
+        }, (err: any) => {
+          readiness.setCapabilityRegistryState('failed', String(err?.message ?? err));
+          throw err;
+        })
+      )
       .catch((err: any) => {
-        console.warn('⚠️ AnA Capability Registry seeding failed (non-blocking):', err?.message);
+        console.error(
+          '❌ AnA Capability Registry seeding FAILED — capability routing is degraded until it succeeds:',
+          err?.message
+        );
       });
   }, 3000);
 
@@ -418,10 +441,18 @@ export async function initializeParallelServices(httpServer: Server, pool: Pool)
 
   if (patternReg.status === 'fulfilled') {
     try {
+      // loadPatternRegistry declares its own system scope: this runs before
+      // any request exists, and an unscoped read is refused once
+      // RLS_ENFORCE=on. Before that, every production boot logged "no
+      // persisted data found" — an error rendered as an empty result.
       const result = await patternReg.value.loadPatternRegistry(1);
       if (result.loaded) {
         console.log(
           `✅ RIM pattern registry loaded (${patternReg.value.patternRegistry.size} patterns, ${result.learnedCount} learned)`
+        );
+      } else if (result.error) {
+        console.warn(
+          `⚠️ RIM pattern registry load FAILED (${result.error}) — falling back to ${patternReg.value.patternRegistry.size} seed patterns; persisted learning is NOT loaded`
         );
       } else {
         console.log(

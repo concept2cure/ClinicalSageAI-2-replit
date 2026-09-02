@@ -24,6 +24,8 @@ import {
 import {
   getAnaReadiness,
   getAnaReadinessDetail,
+  getCapabilityRegistryDetail,
+  getCapabilityRegistryState,
   isAnaReadinessServing,
 } from './ana-readiness-state';
 
@@ -148,6 +150,12 @@ export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
     // on the success path will read fixtures as a working product.
     const anaDetail = getAnaReadinessDetail();
 
+    // The capability registry seed's outcome, on BOTH paths, for the reason
+    // the schema and AnA verdicts are: a degradation only visible on the
+    // failure path is one nobody reads until it is an outage.
+    const capabilityRegistry = getCapabilityRegistryState();
+    const capabilityRegistryDetail = getCapabilityRegistryDetail();
+
     if (failed.length > 0) {
       const body: Record<string, unknown> = {
         ready: false,
@@ -155,7 +163,11 @@ export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
         dependencies: deps,
         schemaState: schema,
         anaState: ana,
+        capabilityRegistry,
       };
+      if (capabilityRegistry === 'failed' && capabilityRegistryDetail) {
+        body.capabilityRegistryDetail = capabilityRegistryDetail;
+      }
       if (deps.schema === 'down') {
         body.schemaDetail =
           schemaDetail ||
@@ -178,7 +190,11 @@ export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
       dependencies: deps,
       schemaState: schema,
       anaState: ana,
+      capabilityRegistry,
     };
+    if (capabilityRegistry === 'failed' && capabilityRegistryDetail) {
+      body.capabilityRegistryDetail = capabilityRegistryDetail;
+    }
     if (schema === 'degraded' && schemaDetail) body.schemaDetail = schemaDetail;
     if (ana === 'deterministic' && anaDetail) body.anaDetail = anaDetail;
     return res.json(body);
