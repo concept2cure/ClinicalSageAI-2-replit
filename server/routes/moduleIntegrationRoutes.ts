@@ -17,6 +17,7 @@ import {
   isModuleType,
 } from '../services/ModuleIntegrationService';
 import { WorkflowService } from '../services/WorkflowService';
+import { DocumentAttachmentService } from '../services/module-integration/attachment-service';
 import { getStorageProvider } from '../services/storage';
 import { cacheResponse } from '../middleware/enterprise-performance';
 import { asyncHandler } from '../middleware/errorHandler';
@@ -30,6 +31,9 @@ const logger = createScopedLogger('module-integration');
 const router = Router();
 const moduleIntegrationService = new ModuleIntegrationService(db);
 const workflowService = new WorkflowService(db);
+// Attachments are their own service; the routes below use it directly rather
+// than reaching through ModuleIntegrationService for it.
+const attachmentService = new DocumentAttachmentService(db);
 
 // Middleware to handle tenant context
 const setTenantContext = (req: any, res: any, next: any) => {
@@ -319,7 +323,7 @@ router.get('/workflow-history/:id', asyncHandler(async (req, res) => {
   res.json(history);
 }));
 
-// ─── Document attachments: bytes in, bytes out ───────────────────────────────
+// ─── Document attachments: bytes in, bytes out ─────────────────────────────
 //
 // The attachment RECORD lives in document_attachments (ModuleIntegrationService,
 // tenant-scoped and audited). The BYTES live in the storage provider, which is
@@ -441,7 +445,7 @@ router.post(
     const runScoped = tenantScopeRunner(req);
 
     try {
-      await runScoped(() => moduleIntegrationService.assertDocumentOwned(documentId, organizationId));
+      await runScoped(() => attachmentService.assertDocumentOwned(documentId, organizationId));
     } catch (error) {
       if (error instanceof DocumentNotFoundException) {
         return res.status(404).json({ error: error.message });
@@ -471,7 +475,7 @@ router.post(
 
     try {
       const stored = await runScoped(() =>
-        moduleIntegrationService.addDocumentAttachment(
+        attachmentService.add(
           documentId,
           {
             fileName: file.originalname,
@@ -525,13 +529,9 @@ router.get(
       return res.status(400).json({ error: 'documentId and attachmentId must be positive integers' });
     }
 
-    let attachment: Awaited<ReturnType<ModuleIntegrationService['getDocumentAttachment']>>;
+    let attachment: Awaited<ReturnType<DocumentAttachmentService['get']>>;
     try {
-      attachment = await moduleIntegrationService.getDocumentAttachment(
-        documentId,
-        attachmentId,
-        organizationId,
-      );
+      attachment = await attachmentService.get(documentId, attachmentId, organizationId);
     } catch (error) {
       if (error instanceof DocumentNotFoundException || error instanceof AttachmentNotFoundException) {
         return res.status(404).json({ error: 'Attachment not found' });
