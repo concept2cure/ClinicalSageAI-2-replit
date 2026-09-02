@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-02T14:06:54.536Z",
+  "generatedAt": "2026-09-02T14:42:02.603Z",
   "git": {
-    "sha": "38cf9f778cd6813a268de5d329790bbd3cfa7bd3",
+    "sha": "aa672457ac4fd31ab7015c70d15a407c4e680672",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2146,11 +2146,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 988272
+        "bytes": 990062
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 837935
+        "bytes": 845191
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2186,7 +2186,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 166265
+        "bytes": 166628
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2206,7 +2206,7 @@
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
-        "bytes": 139064
+        "bytes": 138306
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2284,11 +2284,11 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19813
+        "lines": 19953
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19226
+        "lines": 19252
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2331,12 +2331,12 @@
         "lines": 3563
       },
       {
-        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
-        "lines": 3472
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
         "lines": 3466
+      },
+      {
+        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
+        "lines": 3417
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2356,7 +2356,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2932
+        "lines": 2940
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2479,6 +2479,10 @@
         "lines": 1981
       },
       {
+        "file": "server/api/cmc/routes.ts",
+        "lines": 1955
+      },
+      {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
         "lines": 1927
       },
@@ -2551,8 +2555,8 @@
         "lines": 1785
       },
       {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 1775
+        "file": "server/services/module3Composer.ts",
+        "lines": 1776
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
@@ -2613,10 +2617,6 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
-      },
-      {
-        "file": "server/services/module3Composer.ts",
-        "lines": 1555
       }
     ]
   },
