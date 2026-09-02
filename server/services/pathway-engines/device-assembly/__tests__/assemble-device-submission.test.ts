@@ -44,6 +44,9 @@ describe('assembleDeviceSubmission (B5)', () => {
     });
     expect(r.canProduceOfficialEstar).toBe(false);
     expect(r.artifactKind).toBe('content-package-draft');
+    // The assembled kind never names itself an eSTAR (ESTAR-06): an eSTAR is
+    // an FDA-issued dynamic PDF, and the registry has no template to fill.
+    expect(r.artifactKind).not.toMatch(/estar/i);
     expect(r.blockers.join(' ')).toMatch(/Cannot produce a submittable eSTAR/);
   });
 

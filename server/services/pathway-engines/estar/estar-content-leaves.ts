@@ -4,9 +4,26 @@
  *
  * The readiness engine (estar-filing-readiness / the mappers) consumes canonical
  * leaves ({sectionCode, title, documentType}). Authored device/IVD content lives
- * in `cerv2_510k_sections` (the same table the live document-preview reads). This
- * adapter projects those sections onto leaves so filing-readiness reflects what a
- * client has actually written — turning readiness from a demo into a real tool.
+ * in two stores, and this adapter projects either onto leaves so readiness and
+ * assembly reflect what a client has actually written:
+ *
+ *   - the GOVERNED store — c2c_documents / c2c_document_sections, keyed by the
+ *     regulatory program the v2 wizard scaffolded (k510 / denovo / pma / cer
+ *     rule packs, Part 11 attribution, the same rows the editor saves into);
+ *   - the LEGACY store — cerv2_510k_sections, keyed by organization and an
+ *     optional document id (the table the live document-preview reads).
+ *
+ * ── ESTAR-01 / ESTAR-02 ───────────────────────────────────────────────────────
+ * The loaders read only the legacy store, org-wide by default: two device
+ * programs in one organization shared one content set, and a program authored
+ * in the governed editor was invisible to /assemble, /filing-readiness and the
+ * draft package. `programId` now selects the governed store for that program.
+ * The two stores are never merged: `resolveDeviceContentScope` answers from the
+ * program's governed document when it holds authored content, and otherwise
+ * from the legacy store exactly as before (the legacy editor is still a live
+ * authoring path) — and the routes echo which store answered
+ * (`deviceContentSource`), so an org-wide legacy answer is never mistaken for
+ * the program's own.
  *
  * HONEST-BY-CONSTRUCTION: a section becomes a leaf ONLY when it carries actual
  * authored content (non-empty body) — an empty section is NOT a leaf, so it
@@ -21,8 +38,9 @@
  */
 
 import { and, asc, eq } from 'drizzle-orm';
-import { db } from '../../../db';
+import { db, pool } from '../../../db';
 import { cerv2510kSections } from '../../../../shared/schema';
+import { sectionPlainText } from '../../c2c/section-content';
 import type { FilingLeaf } from './estar-filing-readiness';
 
 /** The subset of a cerv2_510k_sections row the adapter needs. */
@@ -40,10 +58,10 @@ function isAuthored(s: DeviceSectionInput): boolean {
   return (s.content ?? '').trim().length > 0;
 }
 
-/** Statuses that represent finalized, non-draft content. */
-const FINALIZED_STATUSES = new Set(['approved', 'finalized', 'final']);
+/** Statuses that represent finalized, non-draft content (legacy + governed vocabularies). */
+const FINALIZED_STATUSES = new Set(['approved', 'finalized', 'final', 'locked']);
 /** Statuses that are explicitly still in progress — never substantive regardless of length. */
-const DRAFT_STATUSES = new Set(['draft', 'in_review', 'in-progress', 'in_progress']);
+const DRAFT_STATUSES = new Set(['draft', 'drafted', 'todo', 'not_started', 'review', 'in_review', 'in-progress', 'in_progress']);
 
 /** Bare placeholder bodies that must never count as real content, whatever their length. */
 const PLACEHOLDER_BODIES = new Set(['tbd', 'todo', 'tba', 'n/a', 'placeholder', 'coming soon', 'to be determined']);
@@ -105,9 +123,119 @@ export function sectionsToLeaves(sections: DeviceSectionInput[]): FilingLeaf[] {
   }));
 }
 
+/** Minimal query surface — the node-postgres Pool, a PoolClient, or PGlite. */
+export interface DeviceContentClient {
+  query<T = Record<string, unknown>>(text: string, params?: unknown[]): Promise<{ rows: T[] }>;
+}
+
 export interface LoadDeviceContentLeavesOptions {
-  /** Scope to one document's sections (cerv2_510k_sections.document_id) when known. */
+  /** Scope to one legacy document's sections (cerv2_510k_sections.document_id) when known. */
   documentId?: number;
+  /**
+   * The regulatory program (regulatory_programs.id) whose GOVERNED device
+   * document to read. When set, the legacy store is not consulted at all.
+   */
+  programId?: string;
+  /** Query client for the governed store (defaults to the shared pool). */
+  client?: DeviceContentClient;
+}
+
+/** Which store answered a content load — echoed by the routes so a caller can tell. */
+export type DeviceContentSource = 'governed_program' | 'legacy_document' | 'legacy_org_wide';
+
+export function deviceContentSource(opts: Pick<LoadDeviceContentLeavesOptions, 'documentId' | 'programId'>): DeviceContentSource {
+  if (opts.programId) return 'governed_program';
+  if (opts.documentId !== undefined) return 'legacy_document';
+  return 'legacy_org_wide';
+}
+
+/**
+ * Decide which store a load should read, and say so.
+ *
+ * A program anchor reads its governed document when that document holds at
+ * least one authored section. A program whose governed document is empty, or
+ * that has none (authored through the legacy editor), reads the legacy store as
+ * before — narrowed to `documentId` when given, else org-wide. The returned
+ * `scope` is what the loaders take; `source` is what the routes echo.
+ */
+export async function resolveDeviceContentScope(
+  organizationId: number,
+  opts: LoadDeviceContentLeavesOptions = {},
+): Promise<{ scope: LoadDeviceContentLeavesOptions; source: DeviceContentSource }> {
+  if (opts.programId) {
+    let authored = false;
+    try {
+      const rows = await loadGovernedDeviceSections(organizationId, opts.programId, opts.client);
+      authored = governedSectionsToDeviceSections(rows).some(isAuthored);
+    } catch {
+      authored = false;
+    }
+    if (authored) {
+      return { scope: { programId: opts.programId, client: opts.client }, source: 'governed_program' };
+    }
+  }
+  const legacy: LoadDeviceContentLeavesOptions = { documentId: opts.documentId, client: opts.client };
+  return { scope: legacy, source: deviceContentSource(legacy) };
+}
+
+/** The governed document classes that hold device / IVD content. */
+export const GOVERNED_DEVICE_DOC_TYPES: ReadonlyArray<string> = ['k510', 'denovo', 'pma', 'cer'];
+
+/** A c2c_document_sections row, as the governed store returns it. */
+export interface GovernedDeviceSectionRow {
+  section_key: string;
+  label: string;
+  status: string | null;
+  content: unknown;
+  mandatory?: boolean | null;
+}
+
+/**
+ * Pure: a governed section row → the adapter's section shape. The label is the
+ * documentType source (the mappers match 'device_description', 'labeling', …
+ * against it); the rule-pack key is the section code. Content is read through
+ * the same reader the editor's lineage gate uses, so `{text}`, `{paragraphs}`
+ * and `{markdown}` bodies all count.
+ */
+export function governedSectionsToDeviceSections(rows: ReadonlyArray<GovernedDeviceSectionRow>): DeviceSectionInput[] {
+  return rows.map((r) => ({
+    sectionNumber: r.section_key,
+    sectionKey: r.section_key,
+    sectionTitle: r.label,
+    category: r.label,
+    status: r.status,
+    content: sectionPlainText(r.content),
+  }));
+}
+
+/**
+ * Load the governed device document for a program — tenant-scoped, the most
+ * recently created k510 / denovo / pma / cer document of that program — and its
+ * sections in outline order. Returns no rows (never throws) when the program has
+ * no governed device document in this organization.
+ */
+export async function loadGovernedDeviceSections(
+  organizationId: number,
+  programId: string,
+  client: DeviceContentClient = pool,
+): Promise<GovernedDeviceSectionRow[]> {
+  const doc = await client.query<{ id: string }>(
+    `SELECT id FROM c2c_documents
+      WHERE org_id = $1 AND project_id = $2 AND doc_type = ANY($3::text[])
+      ORDER BY created_at DESC
+      LIMIT 1`,
+    [organizationId, programId, [...GOVERNED_DEVICE_DOC_TYPES]],
+  );
+  const documentId = doc.rows[0]?.id;
+  if (!documentId) return [];
+  const sections = await client.query<GovernedDeviceSectionRow>(
+    `SELECT section_key, label, status, content, mandatory
+       FROM c2c_document_sections
+      WHERE document_id = $1
+      ORDER BY path_order ASC, section_key ASC`,
+    [documentId],
+  );
+  return sections.rows;
 }
 
 /**
@@ -122,6 +250,10 @@ export async function loadDeviceContentLeaves(
   opts: LoadDeviceContentLeavesOptions = {},
 ): Promise<FilingLeaf[]> {
   try {
+    if (opts.programId) {
+      const rows = await loadGovernedDeviceSections(organizationId, opts.programId, opts.client);
+      return sectionsToLeaves(governedSectionsToDeviceSections(rows));
+    }
     const where =
       opts.documentId !== undefined
         ? and(
@@ -192,6 +324,12 @@ export async function loadAuthoredDeviceSections(
   opts: LoadDeviceContentLeavesOptions = {},
 ): Promise<AuthoredDeviceSection[]> {
   try {
+    if (opts.programId) {
+      const rows = await loadGovernedDeviceSections(organizationId, opts.programId, opts.client);
+      return governedSectionsToDeviceSections(rows)
+        .filter(isAuthored)
+        .map((r) => ({ title: String(r.sectionTitle), content: String(r.content) }));
+    }
     const where =
       opts.documentId !== undefined
         ? and(
@@ -221,4 +359,13 @@ export async function loadAuthoredDeviceSections(
   }
 }
 
-export default { sectionsToLeaves, loadDeviceContentLeaves, sectionsToEditorJson, loadAuthoredDeviceSections };
+export default {
+  sectionsToLeaves,
+  loadDeviceContentLeaves,
+  sectionsToEditorJson,
+  loadAuthoredDeviceSections,
+  loadGovernedDeviceSections,
+  governedSectionsToDeviceSections,
+  deviceContentSource,
+  resolveDeviceContentScope,
+};

@@ -870,6 +870,10 @@ export const C2C_MIGRATION_FILES = [
   // items (510(k) summary/statement, truthful & accuracy, Class III cert,
   // financial cert) and cybersecurity / EMC / human factors sections exist.
   'migrations/20260901b_estar_510k_denovo_outlines.sql',
+  // LIFE-03: ind_icsr_transmissions gains transport_receipt_id — the gateway
+  // receipt that alone justifies status = 'transmitted'. Additive, nullable,
+  // guarded on the table existing (a fresh install gets it via drizzle push).
+  'migrations/20260902_ind_icsr_transmissions_transport_receipt.sql',
   //   • 068_regulatory_schema_alignment — creates only regulatory.information_
   //     requests, which C-35's schema-qualification fix showed is not referenced
   //     by server code at all. It is dead schema, not a live gap; the "missing

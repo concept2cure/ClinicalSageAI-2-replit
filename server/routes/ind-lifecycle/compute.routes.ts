@@ -9,10 +9,10 @@ import { requireRole } from '../../middleware/auth';
 import { evaluateIndReadiness } from '../../services/ind-lifecycle/ind-readiness-service';
 import { evaluateRegulatoryClock } from '../../services/ind-lifecycle/ind-regulatory-clock';
 import { buildIndTimeline } from '../../services/ind-lifecycle/ind-timeline-service';
-import { validateSequenceLeaves } from '../../services/ind-lifecycle/ind-sequence-validation';
+import { validateSequenceLeaves, isSequenceFilingType } from '../../services/ind-lifecycle/ind-sequence-validation';
 import { deriveIndActionItems } from '../../services/ind-lifecycle/ind-action-items';
 import { validateSequenceTypeTransition, auditSequenceHistory } from '../../services/ind-lifecycle/ind-sequence-lifecycle-validator';
-import { AUTHOR, limiter, body, fail, readinessFrom, validationFrom } from './shared';
+import { AUTHOR, limiter, body, fail, readinessFrom, validationFrom, FILING_TYPE_VALUES } from './shared';
 
 const router = Router();
 
@@ -97,12 +97,14 @@ router.post('/action-items', limiter, requireRole(AUTHOR), (req, res) => {
 
 /**
  * Validate a set of leaves against the required IND section map (pure).
- * Body: { filingType: 'initial'|'amendment', leaves: [{ sectionCode }] }.
+ * Body: { filingType: 'initial'|'amendment'|'safety_report'|'annual'|'response'|'withdrawal', leaves: [{ sectionCode }] }.
+ * (There is no stored sequence to default the filing type from here; the
+ * sequence-scoped GET /sequence/:seqId/validate derives it when omitted.)
  */
 router.post('/sequence/validate', limiter, requireRole(AUTHOR), (req, res) => {
   const b = body(req);
-  if ((b.filingType !== 'initial' && b.filingType !== 'amendment') || !Array.isArray(b.leaves)) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: "filingType ('initial'|'amendment') and leaves[] are required." } });
+  if (!isSequenceFilingType(b.filingType) || !Array.isArray(b.leaves)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: `filingType (${FILING_TYPE_VALUES}) and leaves[] are required.` } });
   }
   try {
     res.json(validateSequenceLeaves({ filingType: b.filingType, leaves: b.leaves }));
