@@ -177,6 +177,29 @@ export async function runRIMAssessment(ctx: RIMContext): Promise<RIMAssessment> 
   const crossModuleResult = crossModule.status === 'fulfilled' ? crossModule.value : null;
   const feedbackResult = feedbackSummary.status === 'fulfilled' ? feedbackSummary.value : null;
 
+  // A REJECTED critical input (readiness / recommendations / cross-module) is
+  // coerced to null/[] above so a partial report can still be produced — but the
+  // report must NOT then present as a complete, authoritative assessment. A
+  // failed readiness read (→ readinessResult null, empty gaps) can otherwise
+  // yield a high "Submission Ready" verdict from a read that never ran. Record
+  // the failed sources; the run is marked 'partial' (the already-defined status
+  // this path never used) below so consumers treat the verdict as not-a-clean-
+  // bill rather than an authoritative ready.
+  const failedInputs: string[] = [];
+  for (const [name, settled] of [
+    ['readiness', readiness],
+    ['recommendations', recommendations],
+    ['cross-module', crossModule],
+  ] as const) {
+    if (settled.status === 'rejected') {
+      failedInputs.push(name);
+      console.warn(
+        `[RIM] Run ${runId} ${name} input read failed:`,
+        settled.reason instanceof Error ? settled.reason.message : String(settled.reason),
+      );
+    }
+  }
+
   // ── Step 2: Build evidence chains from recommendations ──
   const evidenceChains: EvidenceChain[] = recsResult
     .filter(r => r.evidence.length > 0)
@@ -270,12 +293,22 @@ export async function runRIMAssessment(ctx: RIMContext): Promise<RIMAssessment> 
   // ── Step 6: Persist signals — NEVER silent ──
   const persistenceResult = await persistSignals(organizationId, projectId, runId);
 
-  let runStatus: RIMRunStatus = 'complete';
-  let degradedReason: string | undefined;
+  // A failed critical INPUT read makes this a partial assessment, not a complete
+  // one — recorded before the persistence check so an input failure is never
+  // reported as a clean run.
+  let runStatus: RIMRunStatus = failedInputs.length > 0 ? 'partial' : 'complete';
+  let degradedReason: string | undefined =
+    failedInputs.length > 0
+      ? `Incomplete inputs — these reads failed and were treated as empty: ${failedInputs.join(', ')}`
+      : undefined;
 
   if (!persistenceResult.success) {
+    // Persistence failure is a harder problem than a partial input — 'degraded'
+    // supersedes 'partial'; keep the input reason so both causes are visible.
     runStatus = 'degraded';
-    degradedReason = `Persistence failed: ${persistenceResult.error}`;
+    degradedReason = [degradedReason, `Persistence failed: ${persistenceResult.error}`]
+      .filter(Boolean)
+      .join('; ');
     console.warn(`[RIM] Run ${runId} degraded — ${degradedReason}`);
   }
 

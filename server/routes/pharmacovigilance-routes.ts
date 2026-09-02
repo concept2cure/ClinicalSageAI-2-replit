@@ -174,10 +174,24 @@ export default function createPharmacovigilanceRoutes(): Router {
         getAdverseEvents(orgId),
       ]);
 
-      const overdue = overdueEvents.status === 'fulfilled' ? overdueEvents.value : [];
-      const signals = pendingSignals.status === 'fulfilled' ? pendingSignals.value : [];
-      const upcoming = upcomingReports.status === 'fulfilled' ? upcomingReports.value : [];
-      const events = allEvents.status === 'fulfilled' ? allEvents.value : [];
+      // A REJECTED read is a real DB failure, never "no data yet": each of these
+      // services already maps the legitimately-unprovisioned 42P01 case to []
+      // internally (pharmacovigilanceService.ts). Coercing a rejection to [] here
+      // was catastrophic on a SAFETY surface — totalEvents fell to 0, which makes
+      // the complianceRate ternary below emit 100, so a failed read published
+      // "100% compliant, 0 overdue, 0 pending signals" to the assistant: a
+      // manufactured all-clear from a read that failed. Fail closed (→ the outer
+      // catch's 500) so the pv-cockpit publisher reports the overview as
+      // UNREADABLE, exactly as the sibling board route does. Half an overview
+      // (one read down) is still unreadable, not a partial all-clear.
+      if (overdueEvents.status === 'rejected') throw overdueEvents.reason;
+      if (pendingSignals.status === 'rejected') throw pendingSignals.reason;
+      if (upcomingReports.status === 'rejected') throw upcomingReports.reason;
+      if (allEvents.status === 'rejected') throw allEvents.reason;
+      const overdue = overdueEvents.value;
+      const signals = pendingSignals.value;
+      const upcoming = upcomingReports.value;
+      const events = allEvents.value;
 
       const totalEvents = events.length;
       const saeCount = events.filter(e => e.eventType === 'SAE' || e.eventType === 'SUSAR').length;
