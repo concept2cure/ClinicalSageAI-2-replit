@@ -7,16 +7,21 @@
  * second branch never referenced the target section — a doc-level grant on ANY
  * document authorised a section of a DIFFERENT document, across tenants.
  *
- * This suite forces enforcement ON and drives the REAL authoring router over
- * HTTP against the canonical DDL (loop-tables + the new doc_permissions
- * migration) to prove:
- *   - the document creator can edit their own section (creator auto-grant);
+ * This suite forces enforcement ON and drives the authoring surface over HTTP
+ * exactly as production mounts it — the canonical permission router and the
+ * mandatory object-authorization middleware on /api, then the authoring router
+ * (server/bootstrap/register-inline-routes.ts) — against the canonical DDL
+ * (loop-tables + the object-permissions migration) to prove:
+ *   - the document creator can edit their own section (the DDL seeds the
+ *     creator as OWNER + AUTHOR, and the router's own grant is idempotent
+ *     against that);
  *   - an unrelated same-tenant user is denied (least privilege);
  *   - a grant on ANOTHER document does NOT authorise this section (OR-bug fix);
- *   - a QA/RA_CMC role overrides;
+ *   - a bare QA role is NOT a grant (the legacy blanket override never ran in
+ *     production; the canonical decision has no such rule);
  *   - an APPROVED document is read-only even to the author;
- *   - a cross-tenant caller is denied;
- *   - commenting is NOT gated by edit permission (reviewers may annotate).
+ *   - a cross-tenant caller cannot see the object at all;
+ *   - commenting is gated by the same object permission as editing.
  *
  * @compliance 21 CFR Part 11 §11.10(d) — limiting system access to authorized
  *             individuals, at the object (document/section) level.
@@ -59,6 +64,8 @@ async function mint(u: { id: string; organizationId: number; email: string }, ro
     email: u.email,
     organizationId: u.organizationId,
     tenant_id: u.organizationId,
+    // What the login flow issues; the /api auth boundary admits only access tokens.
+    type: 'access',
   };
   if (roles) claims.roles = roles;
   return new SignJWT(claims)
@@ -76,7 +83,18 @@ const PREREQ = `
      it cannot drift from what writeChainedAuditRow writes; the CI gate
      scripts/ci/check-audit-logs-fixture.mjs enforces that agreement. */
   ${AUDIT_LOGS_PGLITE_DDL}
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
+  /* The /api auth boundary this file mounts (authenticateToken) runs the
+     tenant-lifecycle and storage-quota guards on every request, and both read
+     the organization row — status + payment_status for the posture, max_storage
+     for the quota — failing CLOSED (503) when they cannot. These are the columns
+     production carries; a fixture without them proves nothing past the 503. */
+  CREATE TABLE organizations (
+    id SERIAL PRIMARY KEY,
+    name TEXT,
+    status TEXT NOT NULL DEFAULT 'active',
+    payment_status TEXT NOT NULL DEFAULT 'active',
+    max_storage INTEGER
+  );
   CREATE TABLE users (id UUID PRIMARY KEY, name TEXT, email TEXT);
   INSERT INTO organizations (id, name) VALUES (1, 'org-a'), (2, 'org-b');
   INSERT INTO users (id, name, email) VALUES
@@ -101,10 +119,11 @@ beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
     migrations: [
-      // doc_permissions is created by the loop-tables migration above (with BOTH
-      // composite tenant-parent FKs), so no separate permission-store migration
-      // is loaded here.
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      // The canonical permission store: role/grant metadata on doc_permissions
+      // and the SECURITY DEFINER trigger that seeds each creator as OWNER +
+      // AUTHOR. Same position the durable applier uses.
+      'db/migrations/20260727_authoring_object_permissions.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
       // ALTERs doc_revisions above with the ledger columns the router now writes
       // (content/chain hashes, origin, input manifest) and installs the
@@ -129,9 +148,21 @@ beforeAll(async () => {
   tokens.set(QA.id, await mint(QA, ['QA']));
   tokens.set(OUTSIDER.id, await mint(OUTSIDER));
 
+  // Mounted in the order server/bootstrap/register-inline-routes.ts mounts
+  // them behind the /api auth boundary.
+  const { authenticateToken } = await import('../../server/middleware/auth');
+  const { default: authoringPermissionsRouter } = await import(
+    '../../server/routes/authoring-permissions'
+  );
+  const { default: authoringObjectAuthorization } = await import(
+    '../../server/middleware/authoringObjectAuthorization'
+  );
   const { default: authoringRouter } = await import('../../server/routes/authoring.router');
   app = express();
   app.use(express.json());
+  app.use('/api', authenticateToken);
+  app.use('/api', authoringPermissionsRouter);
+  app.use('/api', authoringObjectAuthorization);
   app.use('/api/authoring', authoringRouter);
 }, T);
 
@@ -163,7 +194,16 @@ describe('G-01: object-level section-permission enforcement', () => {
     expect(d2.status).toBe(201);
     const docId2 = d2.body.document.id as string;
 
-    // 1. Creator can edit their own section (auto-grant).
+    // 1. Creator can edit their own section. The DDL trigger seeded OWNER +
+    //    AUTHOR on insert; the router's own creator grant is idempotent against
+    //    it, so the creator holds exactly one active row per role — not the
+    //    trigger's pair plus an unattributed email-only duplicate.
+    const seeded = await jdb.pool.query(
+      `SELECT role FROM doc_permissions
+        WHERE doc_id = $1 AND principal_id = $2 AND revoked_at IS NULL ORDER BY role`,
+      [docId1, AUTHOR.id],
+    );
+    expect((seeded.rows as { role: string }[]).map(r => r.role)).toEqual(['AUTHOR', 'OWNER']);
     const edit = await asUser(AUTHOR)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
       .send({ content: 'v2 by author' });
     expect(edit.status).toBe(200);
@@ -174,19 +214,28 @@ describe('G-01: object-level section-permission enforcement', () => {
     expect(denied.status).toBe(403);
 
     // 3. A grant on ANOTHER document must NOT authorise this section (OR-bug fix).
-    const grant = await asUser(QA)(request(app).post(`/api/authoring/docs/${docId2}/permissions`))
-      .send({ email: UNRELATED.email, role: 'AUTHOR' }); // doc-level grant, section_id NULL, on doc2
-    expect(grant.status).toBe(200);
+    //    Granted by the creator, who is OWNER of doc2 by the same seed.
+    const grant = await asUser(AUTHOR)(request(app).post(`/api/authoring/docs/${docId2}/permissions`))
+      .send({ principalId: UNRELATED.id, email: UNRELATED.email, role: 'AUTHOR', reason: 'doc2 only' });
+    expect(grant.status).toBe(201);
+    expect(grant.body.permission).toMatchObject({ tenant_id: 1, principal_id: UNRELATED.id, section_id: null });
     const stillDenied = await asUser(UNRELATED)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
       .send({ content: 'v3 via cross-doc grant' });
     expect(stillDenied.status).toBe(403);
 
-    // 4. QA role overrides.
+    // 4. A bare QA role is NOT a grant. The legacy gate let QA / RA_CMC edit any
+    //    section of the tenant; the canonical middleware that production mounts
+    //    in front of it never had that rule, so the override never decided a
+    //    request. The gate now delegates to the same decision.
     const qaEdit = await asUser(QA)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
       .send({ content: 'v4 by qa' });
-    expect(qaEdit.status).toBe(200);
+    expect(qaEdit.status).toBe(403);
+    //    Neither may QA manage the access list: that is the owner's.
+    const qaGrant = await asUser(QA)(request(app).post(`/api/authoring/docs/${docId1}/permissions`))
+      .send({ principalId: QA.id, email: QA.email, role: 'AUTHOR', reason: 'self-grant' });
+    expect(qaGrant.status).toBe(403);
 
-    // 5. Commenting is gated by the SAME section permission as editing.
+    // 5. Commenting is gated by the SAME object permission as editing.
     //
     // This asserts the platform's actual (stricter) behaviour: a caller with no
     // grant on the section cannot annotate it either. Recorded here rather than
@@ -198,18 +247,25 @@ describe('G-01: object-level section-permission enforcement', () => {
       .send({ doc_id: docId1, body: 'A reviewer note' });
     expect(comment.status).toBe(403);
 
-    // 6. A cross-tenant caller is denied.
+    // 6. A cross-tenant caller cannot even see the object.
     const crossTenant = await asUser(OUTSIDER)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
       .send({ content: 'v5 by outsider' });
-    expect(crossTenant.status).toBe(403);
+    expect(crossTenant.status).toBe(404);
 
-    // 7. An APPROVED document is read-only even to the author.
+    // 7. An APPROVED document is read-only even to the author — and the
+    //    refusal names the seal (409), not a missing permission.
     await jdb.pool.query(
       `UPDATE authoring_documents SET status = 'APPROVED' WHERE id = $1 AND tenant_id = 1`,
       [docId1],
     );
     const frozenEdit = await asUser(AUTHOR)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
       .send({ content: 'v6 after approval' });
-    expect(frozenEdit.status).toBe(403);
+    expect(frozenEdit.status).toBe(409);
+    expect(frozenEdit.body.error.code).toBe('AUTHORING_DOCUMENT_IMMUTABLE');
+    const finalContent = await jdb.pool.query(
+      `SELECT content FROM authoring_sections WHERE id = $1`,
+      [sectionId1],
+    );
+    expect((finalContent.rows[0] as { content: string }).content).toBe('v2 by author');
   }, T);
 });
