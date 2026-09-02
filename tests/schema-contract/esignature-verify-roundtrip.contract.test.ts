@@ -5,9 +5,9 @@
  *
  * TWO integrity properties the release-gate audit (2026-07-30) left unproven:
  *
- *   1. createElectronicSignature → validateElectronicSignature must round-trip
+ *   1. createElectronicSignature → verifySignatureIntegrity (the LIVE endpoint) must round-trip
  *      to `valid: true`. The attribution hash is computed over the manifest
- *      that is persisted; validateElectronicSignature re-hashes the STORED
+ *      that is persisted; verifySignatureIntegrity re-hashes the STORED
  *      manifest and compares. Before the audit's fix the hash covered a
  *      DIFFERENT object than the stored manifest (missing boundPayloadDigest),
  *      so every signature verified as "integrity compromised" — a §11.70
@@ -118,7 +118,14 @@ describe('e-signature verify round-trip (§11.70 integrity)', () => {
     });
     expect(created.signatureId).toBeGreaterThan(0);
 
-    const verdict = await part11.validateElectronicSignature(created.signatureId, 10);
+    // The LIVE verify endpoint, not a service-only twin: this is the path
+    // GET /electronic-signature/:id/verify runs, and it is the one that was
+    // reporting every genuine signature as COMPROMISED because it re-hashed an
+    // identifier payload no writer produces. A real write followed by the real
+    // verify is the only test that could have shown that.
+    const { verifySignatureIntegrity } = await import('../../server/services/auth-security-service');
+    const verdict = await verifySignatureIntegrity(created.signatureId);
+    expect(verdict.details?.hashIntegrity).toBe('VERIFIED');
     expect(verdict.valid).toBe(true);
   }, T);
 
@@ -142,9 +149,10 @@ describe('e-signature verify round-trip (§11.70 integrity)', () => {
     );
     const forgedId = (r.rows[0] as { id: number }).id;
 
-    const verdict = await part11.validateElectronicSignature(forgedId, 20);
+    const { verifySignatureIntegrity } = await import('../../server/services/auth-security-service');
+    const verdict = await verifySignatureIntegrity(forgedId);
     expect(verdict.valid).toBe(false);
-    expect(verdict.reason).toMatch(/integrity/i);
+    expect(verdict.details?.hashIntegrity).toBe('COMPROMISED');
   }, T);
 });
 

@@ -48,7 +48,7 @@
  *     non-empty signedTarget. Refuse to insert an anchorless "signature".
  *   - The §11.200 attribution hash is computed over the EXACT manifest bytes
  *     that are persisted (hash and manifest are the same bytes — the
- *     re-derivation in validateElectronicSignature depends on this).
+ *     re-derivation in verifySignatureIntegrity depends on this).
  *   - A derivation failure that is NOT "table absent" propagates, so the
  *     caller's transaction (ledger write included) rolls back rather than
  *     recording a signature with an unverified binding.
@@ -174,6 +174,20 @@ export function canonicalJson(value: unknown): string {
 }
 
 const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
+
+/**
+ * The §11.200 attribution hash of a signature manifest — THE recipe, used by the
+ * writer and by every verifier.
+ *
+ * It is JSON.stringify over the manifest object as built, NOT canonicalJson:
+ * the writer has always hashed the manifest's own bytes, and a verifier that
+ * re-serialised with sorted keys would fail every row ever written. Exported so
+ * the verifier calls the same function the writer does. Two hand-copied
+ * recipes drifted once — the live verify endpoint hashed an identifier payload
+ * no writer ever produced, and reported every genuine signature as COMPROMISED.
+ */
+export const manifestSignatureHash = (manifest: unknown): string =>
+  sha256Hex(JSON.stringify(manifest ?? {}));
 
 /**
  * sha256 over the canonical JSON of `value` — the ONE way a caller-supplied
@@ -542,7 +556,7 @@ export async function persistGovernedActionSignature(
     bindingNote: binding.note,
     ...(params.extraManifest ?? {}),
   };
-  const signatureHash = sha256Hex(JSON.stringify(signatureManifest));
+  const signatureHash = manifestSignatureHash(signatureManifest);
 
   return persistElectronicSignature(client, {
     documentId: null,
