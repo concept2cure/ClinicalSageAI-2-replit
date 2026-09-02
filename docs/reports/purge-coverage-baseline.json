@@ -1,6 +1,8 @@
 {
-  "generatedAt": "2026-08-21T21:31:35.074Z",
+  "generatedAt": "2026-09-01T23:53:17.632Z",
   "purgeChildTables": [
+    "module_access_requests",
+    "project_workflows",
     "organization_users",
     "client_workspaces",
     "projects",
@@ -8,9 +10,12 @@
     "vault_documents",
     "document_chunks",
     "regulatory_programs",
-    "file_uploads"
+    "file_uploads",
+    "regulatory_twin_simulations",
+    "cmc_container_closures",
+    "cmc_reference_standards"
   ],
-  "count": 615,
+  "count": 613,
   "tables": [
     "account_canon_items",
     "account_canon_resolution_log",
@@ -45,7 +50,6 @@
     "api_keys",
     "api_usage_logs",
     "arm_level_data",
-    "assumption_history",
     "audit_events",
     "authoring_ai_draft_candidates",
     "authoring_plans",
@@ -521,7 +525,6 @@
     "regulatory_outcomes",
     "regulatory_submissions",
     "regulatory_tasks",
-    "relation_extraction_log",
     "replacement_rules",
     "report_atom_provenance",
     "report_definitions",
