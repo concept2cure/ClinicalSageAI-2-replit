@@ -22,7 +22,7 @@
 
 import express from 'express';
 import request from 'supertest';
-import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterAll } from 'vitest';
 
 // Auth stub — synthesizes req.user from `TestToken userId:orgId:role:email`.
 // No token → 401 (locks that the route requires auth). Same shape the real
@@ -46,12 +46,28 @@ vi.mock('../../auth', () => ({
 const queryMock = vi.fn();
 vi.mock('../../db', () => ({ pool: { query: (...a: unknown[]) => queryMock(...a) } }));
 
+/**
+ * Every date in the fixtures below is absolute, so "now" has to be absolute
+ * too or the suite grades the calendar instead of the code. Only Date is
+ * faked — supertest and express need real timers to resolve a request.
+ */
+const NOW = new Date('2026-07-20T00:00:00.000Z');
+
 let app: express.Express;
+let nextFromProject: typeof import('../client-portal').nextFromProject;
 beforeAll(async () => {
-  const router = (await import('../client-portal')).default;
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(NOW);
+  const mod = await import('../client-portal');
+  const router = mod.default;
+  nextFromProject = mod.nextFromProject;
   app = express();
   app.use(express.json());
   app.use('/api/client-portal', router);
+});
+
+afterAll(() => {
+  vi.useRealTimers();
 });
 
 type Rows = { rows: unknown[] };
@@ -107,7 +123,12 @@ function callMatching(re: RegExp): [string, unknown[]] | undefined {
   return queryMock.mock.calls.find((c) => re.test(String(c[0]))) as [string, unknown[]] | undefined;
 }
 
-beforeEach(() => queryMock.mockReset());
+// Block body on purpose: `() => queryMock.mockReset()` returns the mock, and
+// vitest treats a function returned from a hook as that hook's teardown and
+// calls it after every test — a phantom pool.query() with no SQL.
+beforeEach(() => {
+  queryMock.mockReset();
+});
 
 describe('GET /api/client-portal/overview — access model', () => {
   it('external client is auto-scoped to their own workspace (mode: client)', async () => {
@@ -222,7 +243,18 @@ describe('GET /api/client-portal/overview — sharing filter & shaping', () => {
     const progs = res.body.data.programs;
     expect(progs[0]).toMatchObject({ id: 'MER-204', title: 'MER-204 — IND enabling', pathway: 'IND', readiness: 72, status: 'active' });
     expect(progs[0].blocker).toBeNull(); // no blocker column → documented null
-    expect(progs[0].next).toMatch(/milestone/); // derived from target_end_date
+    // 2026-07-20 → 2026-09-01 is 43 days. Exact, not /milestone/: with the
+    // clock frozen there is no reason to accept a family of strings.
+    expect(progs[0].next).toBe('Next milestone · 43 days');
+    // A row whose target_end_date is null must not invent one.
+    expect(progs[1].next).toBe('In active');
+    // Shaping adds exactly these keys — a new one has to be asserted, not
+    // silently shipped to a client-facing surface.
+    expect(Object.keys(progs[0]).sort()).toEqual(
+      ['blocker', 'id', 'next', 'pathway', 'readiness', 'status', 'title'],
+    );
+    // `code` is the id; the numeric PK is not exposed to the client.
+    expect(JSON.stringify(progs)).not.toContain('501');
   });
 
   it('degrades one facet closed on a missing table — view still 200', async () => {
@@ -242,5 +274,59 @@ describe('GET /api/client-portal/overview — sharing filter & shaping', () => {
     expect(res.body.data.programs).toEqual([]); // facet degraded
     expect(res.body.data.client).toBe('Meridian Therapeutics'); // rest intact
     expect(res.body.data.deliverables).toHaveLength(2);
+  });
+});
+
+/**
+ * The shaping test above exercises one branch through HTTP. These pin the rest
+ * directly, against an explicit `now` — the case that broke (a target already
+ * in the past) is now a test rather than a Tuesday.
+ */
+describe('nextFromProject — every branch, against an explicit clock', () => {
+  const now = NOW.getTime();
+
+  it('a completed project is Complete regardless of its target date', () => {
+    expect(nextFromProject('completed', '2026-09-01T00:00:00Z', now)).toBe('Complete');
+    expect(nextFromProject('completed', null, now)).toBe('Complete');
+    // Even a target long past does not override completion.
+    expect(nextFromProject('completed', '2020-01-01T00:00:00Z', now)).toBe('Complete');
+  });
+
+  it('no target date falls back to the status, and invents nothing without one', () => {
+    expect(nextFromProject('active', null, now)).toBe('In active');
+    expect(nextFromProject(null, null, now)).toBe('');
+    expect(nextFromProject('', null, now)).toBe('');
+  });
+
+  it('an unparseable target yields empty, never NaN or Invalid Date', () => {
+    const out = nextFromProject('active', 'not a date', now);
+    expect(out).toBe('');
+    expect(out).not.toMatch(/NaN|Invalid/);
+  });
+
+  it('a target in the past reports how far past — the case that broke this suite', () => {
+    expect(nextFromProject('active', '2026-07-19T00:00:00Z', now)).toBe('Target passed 1d ago');
+    expect(nextFromProject('active', '2026-06-20T00:00:00Z', now)).toBe('Target passed 30d ago');
+  });
+
+  it('a target today is Target today, not 0 days', () => {
+    expect(nextFromProject('active', '2026-07-20T00:00:00Z', now)).toBe('Target today');
+    // Same calendar day, later hour — still rounds to today, not a day out.
+    expect(nextFromProject('active', '2026-07-20T06:00:00Z', now)).toBe('Target today');
+  });
+
+  it('a future target counts days forward', () => {
+    expect(nextFromProject('active', '2026-07-21T00:00:00Z', now)).toBe('Next milestone · 1 days');
+    expect(nextFromProject('active', '2026-09-01T00:00:00Z', now)).toBe('Next milestone · 43 days');
+  });
+
+  it('is a pure function of its arguments — the wall clock cannot change it', () => {
+    const target = '2026-09-01T00:00:00Z';
+    const atNow = nextFromProject('active', target, now);
+    // A year later the same call must produce a different, still-correct answer,
+    // proving the result is derived from `now` and not from Date.now().
+    const aYearOn = nextFromProject('active', target, now + 365 * 86_400_000);
+    expect(atNow).toBe('Next milestone · 43 days');
+    expect(aYearOn).toBe('Target passed 322d ago');
   });
 });
