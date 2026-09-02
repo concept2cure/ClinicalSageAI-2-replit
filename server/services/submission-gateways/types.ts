@@ -145,6 +145,20 @@ export interface SubmissionBundle {
     selfContained: boolean;
   };
   /**
+   * Optional regional Module 1 backbone status: whether the region has its OWN
+   * conformant M1 backbone (fda / ema / pmda / ca) or the written
+   * `<cc>-regional.xml` is an EMA-structure PLACEHOLDER (the eight widened
+   * regions). Set by the packager; consumed by the pre-transmit gate so a
+   * placeholder can never be read as region-conformant. Shape matches
+   * `RegionalBackboneStatus` in server/services/ectd/regional-backbone-readiness.ts.
+   */
+  regionalBackbone?: {
+    region: Region;
+    file: string;
+    regionConformant: boolean;
+    placeholderOf?: Region;
+  };
+  /**
    * Optional Study Tagging File (STF) roll-up: how many per-study stf.xml files
    * were generated + cross-linked into M4/M5, and how many study leaves were
    * untagged (missing a studyId). Set by the packager when study leaves are
