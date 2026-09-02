@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-02T14:57:20.123Z",
+  "generatedAt": "2026-09-02T16:23:47.571Z",
   "git": {
-    "sha": "41b22c380b0072dd56daa917259522536604a538",
+    "sha": "cb0a7423d624def239a6777a6df470c74a2e53ae",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2166,7 +2166,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 317163
+        "bytes": 318353
       },
       {
         "file": "server/statistics-service.ts",
@@ -2296,7 +2296,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7408
+        "lines": 7425
       },
       {
         "file": "server/statistics-service.ts",
@@ -2423,12 +2423,12 @@
         "lines": 2175
       },
       {
-        "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
+        "file": "server/routes/auth.ts",
         "lines": 2155
       },
       {
-        "file": "server/routes/auth.ts",
-        "lines": 2150
+        "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
+        "lines": 2155
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2567,12 +2567,12 @@
         "lines": 1740
       },
       {
-        "file": "server/services/combination-products/combination-products-knowledge.ts",
-        "lines": 1726
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 1733
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 1711
+        "file": "server/services/combination-products/combination-products-knowledge.ts",
+        "lines": 1726
       },
       {
         "file": "server/routes/ivdr-routes.ts",
