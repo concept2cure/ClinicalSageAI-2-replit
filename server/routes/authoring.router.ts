@@ -6846,80 +6846,47 @@ router.post('/users/pin', async (req: Request, res: Response) => {
 
 // ============= AI ANALYSIS & SUGGESTIONS =============
 
-// POST /api/authoring/ai/suggestions - Get real-time suggestions
-router.post('/ai/suggestions', async (req: Request, res: Response) => {
-  try {
-    const { text, context, suggestion_type = 'all' } = req.body;
-    const tenantId = getTenantId(req);
-
-    if (!text) {
-      return res.status(400).json({ error: 'Text is required' });
-    }
-
-    const suggestions: any[] = [];
-
-    // Quick grammar checks
-    const grammarIssues = [
-      { pattern: /\s{2,}/g, type: 'spacing', message: 'Multiple spaces detected' },
-      { pattern: /[.!?]{2,}/g, type: 'punctuation', message: 'Duplicate punctuation' },
-      { pattern: /\b(\w+)\s+\1\b/gi, type: 'duplicate', message: 'Duplicate word' },
-    ];
-
-    grammarIssues.forEach(issue => {
-      const matches = text.matchAll(issue.pattern);
-      for (const match of matches) {
-        suggestions.push({
-          type: 'grammar',
-          severity: 'style',
-          position: { start: match.index, end: match.index + match[0].length },
-          original: match[0],
-          suggested: match[0].replace(issue.pattern, ' '),
-          explanation: issue.message,
-          confidence: 0.95,
-        });
-      }
-    });
-
-    // Regulatory terminology checks
-    const termChecks = [
-      { incorrect: /adverse event/gi, correct: 'adverse event (AE)', type: 'terminology' },
-      {
-        incorrect: /serious adverse event/gi,
-        correct: 'serious adverse event (SAE)',
-        type: 'terminology',
-      },
-      {
-        incorrect: /Good Manufacturing Practice/gi,
-        correct: 'Good Manufacturing Practice (GMP)',
-        type: 'terminology',
-      },
-    ];
-
-    termChecks.forEach(check => {
-      const matches = text.matchAll(check.incorrect);
-      for (const match of matches) {
-        suggestions.push({
-          type: check.type,
-          severity: 'enhancement',
-          position: { start: match.index, end: match.index + match[0].length },
-          original: match[0],
-          suggested: check.correct,
-          explanation: 'Use standard regulatory abbreviation',
-          confidence: 0.9,
-        });
-      }
-    });
-
-    res.json({
-      success: true,
-      suggestions,
-      count: suggestions.length,
-    });
-  } catch (error) {
-    console.error('Suggestion generation error:', error);
-    res.status(500).json({ error: 'Failed to generate suggestions' });
-  }
-});
+/* POST /api/authoring/ai/suggestions has been DELETED.
+ *
+ * It had no caller. The route was mounted — register-inline-routes.ts mounts
+ * this router on '/api/authoring' — so the full path was
+ * /api/authoring/ai/suggestions, and the only occurrence of that path anywhere
+ * in the repository was the comment that used to sit on this line. The nearby
+ * "suggestions" matches in the client are all the editor's own
+ * `editor/suggestions` module, the tracked-change marks, which is a different
+ * thing entirely and is why a fragment search reports this endpoint as live.
+ *
+ * There was no AI in it. It was six hardcoded regexes — three grammar, three
+ * regulatory-terminology — each returning a `confidence` of 0.95 or 0.9.
+ * Nothing scored anything, so those numbers had nothing behind them, and a
+ * fabricated confidence on a governed document surface is the defect this
+ * repository keeps deleting.
+ *
+ * Two of the three grammar rules emitted DESTRUCTIVE replacements, because the
+ * suggestion was built as `match[0].replace(issue.pattern, ' ')` — replacing the
+ * whole match with one space instead of repairing it:
+ *
+ *     "the the"  ->  " "     (deletes the word, at confidence 0.95)
+ *     "Done..."  ->  " "     (an ellipsis becomes a space)
+ *     "Stop!!"   ->  " "     (the punctuation is deleted)
+ *
+ * Only the multiple-spaces rule was right. Accepting a suggestion from this
+ * endpoint would have removed the author's text from a regulated document.
+ *
+ * The terminology rules also overlapped: /adverse event/ and
+ * /serious adverse event/ both match "A serious adverse event occurred.", at
+ * offsets 10 and 2, so one phrase drew two contradictory edits over overlapping
+ * ranges — and both fired unconditionally, so text already reading
+ * "adverse event (AE)" was told to become "adverse event (AE)" again.
+ *
+ * The capability it claimed is served by the canonical paths: real drafting by
+ * AuthoringAiDraft (surfaces/AuthoringAiDraft.tsx, mounted inside
+ * DocumentAuthoring), and heuristic section checks by
+ * POST /sections/:sectionId/ai/deficiency-scan. This was a third parallel path,
+ * which the zero-duplication rule does not allow.
+ *
+ * Pinned by tests/routes/aiSuggestionsDeleted.test.ts.
+ */
 
 /* POST /api/authoring/ai/validate-compliance has been DELETED.
  *
