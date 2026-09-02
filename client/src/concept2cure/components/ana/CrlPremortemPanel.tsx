@@ -198,7 +198,23 @@ export function CrlPremortemPanel({ artifact, onExport, exporting }: CrlPremorte
       <div className={styles.premortemSection}>
         <h3 className={styles.premortemSectionTitle}>Prioritized fix-list</h3>
         {artifact.fixList.length === 0 ? (
-          <p className={styles.premortemDetail}>No remediations required by codified patterns.</p>
+          /* An empty fix-list is NOT a finding of "none required". The artifact
+             carries its own status: `not_assessed` means the premortem had
+             insufficient grounding and identified nothing — including nothing to
+             fix — so the old unconditional "No remediations required" was
+             clearance copy over a state the system itself labelled not assessed.
+             `artifact.status` is the positive evidence assessmentState.ts asks
+             for; only an `estimated` (assessed) artifact may say the list is
+             empty, and even then it hedges the way the Top-risks sibling above
+             does — "codified patterns" is a bounded check, not proof of
+             soundness. */
+          <p className={styles.premortemDetail}>
+            {artifact.status === 'not_assessed'
+              ? 'Not assessed — the premortem had insufficient grounding to identify remediations, so none can be listed.'
+              : artifact.status === 'sample'
+                ? 'Sample artifact — no remediation list is produced for a sample.'
+                : 'No remediations required by codified patterns. This is not proof of soundness — a human reviewer must still confirm completeness.'}
+          </p>
         ) : (
           <ol className={styles.premortemFixList}>
             {artifact.fixList.map((fix) => (
