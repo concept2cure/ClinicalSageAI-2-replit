@@ -47,7 +47,10 @@ export type {
   RunControlStatus,
   UseAnaChatReturn,
   DriveSseEvent,
+  AnaProgressPhase,
 } from './useAnaChat.types';
+
+import { advanceProgress, closeProgress, CLIENT_PHASE_LABELS } from './anaProgress';
 
 import type {
   AnaChatAction,
@@ -308,7 +311,18 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
 
   const pause = useCallback(() => control('pause'), [control]);
   const resume = useCallback(() => control('resume'), [control]);
-  const interject = useCallback((message: string) => control('interject', message), [control]);
+  // Steers the server accepted but has not yet spliced into a round. A steer
+  // lands at the NEXT round boundary, which can be many seconds away; until
+  // the `interjected` event confirms it, this is the only evidence it exists.
+  const [pendingSteers, setPendingSteers] = useState<string[]>([]);
+  const interject = useCallback(
+    async (message: string) => {
+      const ok = await control('interject', message);
+      if (ok) setPendingSteers(prev => [...prev, message]);
+      return ok;
+    },
+    [control],
+  );
 
   const stop = useCallback(() => {
     // Cancel server-side too (the fetch abort alone leaves the server
@@ -676,10 +690,18 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // have arrived yet (statusPhase is cleared on first text chunk).
               const phase: string = event.message || event.phase || '';
               if (phase) {
+                const phaseId: string = typeof event.phase === 'string' && event.phase ? event.phase : phase;
+                const at = Date.now();
                 setMessages(prev =>
                   prev.map(m =>
-                    m.id === assistantId && m.text === ''
-                      ? { ...m, statusPhase: phase }
+                    m.id === assistantId
+                      ? {
+                          ...m,
+                          // The label only stands in for the body before the
+                          // first token; the progress record keeps every phase.
+                          ...(m.text === '' ? { statusPhase: phase } : {}),
+                          progress: advanceProgress(m.progress, phaseId, phase, at),
+                        }
                       : m
                   )
                 );
@@ -689,10 +711,16 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               if (!chunk) continue;
               streamedText += chunk;
               const next = streamedText;
+              const at = Date.now();
               setMessages(prev =>
                 prev.map(m =>
                   m.id === assistantId
-                    ? { ...m, text: next, statusPhase: undefined }
+                    ? {
+                        ...m,
+                        text: next,
+                        statusPhase: undefined,
+                        progress: advanceProgress(m.progress, 'composing', CLIENT_PHASE_LABELS.composing, at),
+                      }
                     : m
                 )
               );
@@ -703,10 +731,16 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               if (!chunk) continue;
               streamedThinking += chunk;
               const thinkingNow = streamedThinking;
+              const at = Date.now();
               setMessages(prev =>
                 prev.map(m =>
                   m.id === assistantId
-                    ? { ...m, thinking: thinkingNow, statusPhase: undefined }
+                    ? {
+                        ...m,
+                        thinking: thinkingNow,
+                        statusPhase: undefined,
+                        progress: advanceProgress(m.progress, 'reasoning', CLIENT_PHASE_LABELS.reasoning, at),
+                      }
                     : m
                 )
               );
@@ -724,6 +758,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // Surface the accepted steer as a small note on the assistant turn.
               const msg: string = typeof event.message === 'string' ? event.message : '';
               if (msg) {
+                // Confirmed spliced into a round: it is no longer waiting.
+                setPendingSteers(prev => {
+                  const i = prev.indexOf(msg);
+                  return i === -1 ? prev : [...prev.slice(0, i), ...prev.slice(i + 1)];
+                });
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
@@ -739,6 +778,19 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // the request when a governance policyHint pinned the strategy).
               capturedEffortUsed =
                 typeof event.effortUsed === 'string' ? event.effortUsed : undefined;
+              // The answer has landed; the server's background finishing work
+              // (evidence check, actions, persistence) runs until `post_done`.
+              const at = Date.now();
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === assistantId
+                    ? {
+                        ...m,
+                        progress: advanceProgress(m.progress, 'finalizing', CLIENT_PHASE_LABELS.finalizing, at),
+                      }
+                    : m
+                )
+              );
             } else if (event.type === 'post_done') {
               const cleaned: string | undefined = event.cleanedResponse;
               const actions: AnaChatAction[] | undefined = Array.isArray(event.executedActions)
@@ -761,6 +813,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                         : m.text,
                     streaming: false,
                     statusPhase: undefined,
+                    completedAt: Date.now(),
+                    progress: closeProgress(m.progress, 'done', Date.now()),
                     executedActions: actions,
                     pendingSignoffs: pendingSignoffs.length > 0 ? pendingSignoffs : undefined,
                     groundingSources:
@@ -867,6 +921,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                               name,
                               label,
                               status: 'running' as const,
+                              startedAt: Date.now(),
                               ...(round ? { round } : {}),
                               ...(event.input !== undefined ? { input: event.input } : {}),
                             },
@@ -943,6 +998,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                       calls[realIdx] = {
                         ...calls[realIdx],
                         status: failed ? 'error' : 'success',
+                        endedAt: Date.now(),
+                        ...(typeof event.latencyMs === 'number' && event.latencyMs >= 0
+                          ? { latencyMs: event.latencyMs }
+                          : {}),
                         ...(cappedResult !== undefined ? { result: cappedResult } : {}),
                         ...(humanNote !== undefined ? { message: humanNote } : {}),
                       };
@@ -1068,6 +1127,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     : 'AnA stopped responding before finishing this turn. The prior turns are preserved.',
                 streaming: false,
                 statusPhase: undefined,
+                completedAt: Date.now(),
+                progress: closeProgress(m.progress, 'stopped', Date.now()),
                 warnings: [...(m.warnings || []), 'Response timed out'],
               };
             })
@@ -1077,7 +1138,14 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           setMessages(prev =>
             prev.map(m =>
               m.id === assistantId
-                ? { ...m, streaming: false, statusPhase: undefined, stopped: true }
+                ? {
+                    ...m,
+                    streaming: false,
+                    statusPhase: undefined,
+                    stopped: true,
+                    completedAt: Date.now(),
+                    progress: closeProgress(m.progress, 'stopped', Date.now()),
+                  }
                 : m
             )
           );
@@ -1094,6 +1162,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     : 'AnA is unreachable — the network or the AI gateway did not respond. Prior turns are preserved.',
                 streaming: false,
                 statusPhase: undefined,
+                completedAt: Date.now(),
+                progress: closeProgress(m.progress, 'stopped', Date.now()),
               };
             })
           );
@@ -1112,6 +1182,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           // pause/resume affordances (a stale run id can never be controlled).
           runIdRef.current = null;
           setRunStatus(null);
+          // A steer the run never reached is not pending anymore; it was lost
+          // with the run, and the transcript's interjections say which landed.
+          setPendingSteers([]);
         }
       }
     },
@@ -1143,6 +1216,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     pause,
     resume,
     interject,
+    pendingSteers,
     reset,
     loadThread,
     threadId: threadIdRef.current,
