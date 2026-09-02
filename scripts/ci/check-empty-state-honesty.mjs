@@ -203,12 +203,43 @@ function splitBranches(src, qIndex) {
         // Not a ternary colon if it is `::` or a TS type annotation in an arg list.
         return {
           consequent: src.slice(qIndex + 1, i),
-          alternate: src.slice(i + 1, Math.min(src.length, i + 1200)),
+          alternate: boundedExpression(src, i + 1),
         };
       }
     }
   }
   return null;
+}
+
+/**
+ * The alternate of a ternary is ONE expression. Read it as one: walk forward
+ * with depth tracking and stop at the first depth-0 `;` (a statement boundary —
+ * we have left the expression) or when a closer takes depth below zero (the
+ * enclosing `{…}` / `(…)` container has ended, so the branch has too).
+ *
+ * The previous form took a blind 1200-character raw window after the colon. It
+ * ran straight past the branch into whatever followed — following statements,
+ * sibling JSX rows — and produced two false positives from text that was never
+ * in the branch at all: a refusal reason (`return { ok: false, reason: 'No
+ * contradiction named …' }`) two statements later, and "Nothing to pay." from
+ * an unrelated row. A gate that flags copy the branch never contained is one
+ * people learn to ignore. Still capped at 1200 so a pathological file cannot
+ * hang the scan.
+ */
+function boundedExpression(src, start) {
+  let depth = 0;
+  const end = Math.min(src.length, start + 1200);
+  for (let i = start; i < end; i++) {
+    const c = src[i];
+    if (c === '(' || c === '{' || c === '[') depth++;
+    else if (c === ')' || c === '}' || c === ']') {
+      depth--;
+      if (depth < 0) return src.slice(start, i);
+    } else if (c === ';' && depth === 0) {
+      return src.slice(start, i);
+    }
+  }
+  return src.slice(start, end);
 }
 
 /** Human-readable copy inside a JSX branch: drop expressions and tags. */
@@ -270,6 +301,9 @@ function scanSource(code, label) {
 
     const text = prose(emptyBranch);
     if (text.length < 8) continue;
+    // Code, not copy: an arrow, a return, a statement terminator, or a call
+    // shape survived the strip. Clearance a user reads contains none of these.
+    if (/=>|\breturn\b|;|\bconst\b|\bif\s*\(|\.filter\(|\.map\(/.test(text)) continue;
 
     const matched = CLEARANCE.find((c) => c.test(text));
     if (!matched) continue;
