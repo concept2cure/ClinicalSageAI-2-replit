@@ -220,7 +220,39 @@ const APPENDIX_RULES: AppendixRule[] = [
     generator: (m) => {
       const comp = val(m, 'composition');
       const formulationName = val(m, 'formulationName');
-      const components = valArr(m, 'components');
+      /* Every recorded formulation's components, plus the excipient register
+         itself — which records `origin` as a field rather than leaving it to be
+         inferred from a name. `valArr` took the first matching array, so a
+         project with several formulation versions was scanned for animal origin
+         through one of them. */
+      const components = [
+        ...m
+          .filter((s) => s.sourceType === 'formulation_record')
+          .flatMap((s) => {
+            const rows = (s.sourcePayload as Record<string, any> | undefined)?.components;
+            return Array.isArray(rows) ? rows.filter((c) => c && typeof c === 'object') : [];
+          }),
+        ...m
+          .filter((s) => s.sourceType === 'excipient')
+          .map((s) => (s.sourcePayload || {}) as Record<string, any>)
+          .filter((p) => String(p.materialName || '').trim() && String(p.status || '').toLowerCase() !== 'retired')
+          .map((p) => ({
+            component: p.materialName,
+            role: p.functionInFormulation,
+            origin: p.origin,
+            tseCertification: p.tseCertificate,
+          })),
+        ...valArr(m, 'components').filter((c) => c && typeof c === 'object'),
+      ];
+      /* Whether anything at all was recorded. "No excipients of human or animal
+         origin are used" is a POSITIVE SAFETY CLAIM, and it was made whenever
+         the scan found nothing — including when there was nothing to scan. A
+         project with no formulation and no excipient register got a TSE/BSE
+         all-clear over zero data. */
+      const excipientRecordCount = m.filter(
+        (s) => s.sourceType === 'excipient' || s.sourceType === 'formulation_record',
+      ).length;
+      const originRecorded = components.filter((c: any) => String(c?.origin || c?.source || '').trim()).length;
       const excipientSources = m.filter((s) => s.sourceType === 'excipient');
       const novelExcipients = excipientSources.filter((e) => e.sourcePayload?.novel === true);
 
@@ -293,19 +325,49 @@ const APPENDIX_RULES: AppendixRule[] = [
 
       const tables: GeneratedTable[] = [];
 
+      /* Nothing recorded is not the same as nothing found. Fail closed: the
+         section reports that the question is unanswered rather than clearing
+         the product of animal-origin excipients over an empty register. */
+      if (components.length === 0 && excipientRecordCount === 0 && !comp) {
+        tables.push(kvTable('Excipients of Human or Animal Origin', {
+          Applicability: 'Not established — no excipient or formulation record is on file',
+          'Drug Product Formulation': formulationName || '—',
+        }));
+        return {
+          narrative: `Per ICH M4Q, Section 3.2.A.3 (Excipients of Human or Animal Origin) addresses TSE/BSE, ` +
+            `viral, and other adventitious-agent risks associated with excipients of human or animal origin. ` +
+            `\n\nNo excipient or formulation record is on file for this product, so whether any excipient is of ` +
+            `human or animal origin is NOT ESTABLISHED by this section. This is not a statement that none is used: ` +
+            `it is a statement that the question has not been answered. Record the formulation and the excipient ` +
+            `specifications, each with its origin, before this section is relied upon.`,
+          tables,
+        };
+      }
+
       if (confidence === 'none') {
         tables.push(kvTable('Excipients of Human or Animal Origin', {
-          'Applicability': 'Not applicable — no excipients of human or animal origin',
+          'Applicability':
+            originRecorded === components.length && components.length > 0
+              ? 'Not applicable — no excipients of human or animal origin'
+              : 'No human or animal origin found among the recorded excipients; origin is not recorded for all of them',
+          'Excipients Recorded': String(components.length),
+          'Origin Recorded For': `${originRecorded} of ${components.length}`,
           'Drug Product Formulation': formulationName || '—',
           'Composition': comp || '—',
         }));
         return {
           narrative: `Per ICH M4Q, Section 3.2.A.3 (Excipients of Human or Animal Origin) addresses TSE/BSE, ` +
             `viral, and other adventitious-agent risks associated with excipients of human or animal origin. ` +
-            `\n\nNo excipients of human or animal origin are used in the drug product formulation` +
-            (formulationName ? ` (${formulationName})` : '') + `. ` +
-            `All excipients are of plant, mineral, or synthetic origin and comply with the relevant compendial ` +
-            `monographs (USP/NF, Ph. Eur., JP) as detailed in 3.2.P.4. ` +
+            (originRecorded === components.length
+              ? `\n\nNo excipients of human or animal origin are used in the drug product formulation` +
+                (formulationName ? ` (${formulationName})` : '') + `. ` +
+                `All ${components.length} recorded excipients declare an origin that is plant, mineral or synthetic, and comply with the relevant compendial ` +
+                `monographs (USP/NF, Ph. Eur., JP) as detailed in 3.2.P.4. `
+              : /* Origin is recorded for only some of them. The claim is scoped
+                   to what was actually declared, and the gap is named. */
+                `\n\nNo excipient of human or animal origin is identified among the ${components.length} recorded for the drug product formulation` +
+                (formulationName ? ` (${formulationName})` : '') + `. ` +
+                `Origin is recorded for ${originRecorded} of them; for the remaining ${components.length - originRecorded} it is not recorded, and their origin is NOT established by this section. `) +
             `\n\nAccordingly, no additional TSE/BSE or viral safety documentation is required for this section. ` +
             `Any future formulation change introducing a human- or animal-derived excipient would trigger ` +
             `re-evaluation and supplementary safety documentation per EMA EMEA/410/01 rev. 3.`,

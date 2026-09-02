@@ -123,10 +123,10 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
   { sectionKey: '3.2.S.6', requiredSourceTypes: ['container_closure'], requiredFields: ['drugSubstanceContainerDescription', 'drugSubstanceClosureDescription', 'drugSubstanceSuitabilityJustification', 'drugSubstanceContainerClosureComplete'] },
   { sectionKey: '3.2.S.7', requiredSourceTypes: ['stability'], requiredFields: ['timePoints', 'storageCondition'] },
   // --- Drug Product (P) subsections ---
-  { sectionKey: '3.2.P.1', requiredSourceTypes: ['drug_product', 'formulation_record'], requiredFields: ['dosageFormDescription', 'composition', 'strength'] },
+  { sectionKey: '3.2.P.1', requiredSourceTypes: ['drug_product', 'formulation_record'], requiredFields: ['dosageFormDescription', 'composition', 'strength', 'formulationCompositionComplete'] },
   { sectionKey: '3.2.P.2', requiredSourceTypes: ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile', 'container_closure'], requiredFields: ['formulationDevelopment', 'manufacturingProcessDev', 'containerClosureStudies'] },
   { sectionKey: '3.2.P.3', requiredSourceTypes: ['drug_product', 'batch', 'change_control', 'process_validation'], requiredFields: ['formulation', 'batchNumber'] },
-  { sectionKey: '3.2.P.4', requiredSourceTypes: ['excipient', 'raw_material_spec'], requiredFields: ['excipientSpecifications', 'excipientAnalyticalProcedures'] },
+  { sectionKey: '3.2.P.4', requiredSourceTypes: ['excipient', 'raw_material_spec'], requiredFields: ['excipientSpecifications', 'excipientAnalyticalProcedures', 'excipientControlComplete'] },
   { sectionKey: '3.2.P.5', requiredSourceTypes: ['specification', 'method', 'dissolution_profile', 'impurity_profile', 'qc_result'], requiredFields: ['releaseCriteria', 'methodName', 'drugProductBatchAnalyses', 'drugProductImpurityProfileComplete'] },
   { sectionKey: '3.2.P.6', requiredSourceTypes: ['drug_product', 'reference_standard'], requiredFields: ['drugProductReferenceStandard', 'drugProductReferenceStandardCoA', 'drugProductReferenceStandardComplete'] },
   { sectionKey: '3.2.P.7', requiredSourceTypes: ['container_closure'], requiredFields: ['drugProductContainerDescription', 'drugProductClosureDescription', 'drugProductSuitabilityJustification', 'drugProductContainerClosureComplete'] },
@@ -1086,6 +1086,180 @@ function dissolutionRendering(
   return { tables, narrative };
 }
 
+/* ── Materials (§3.2.P.4 excipients, §3.2.S.2.3 raw materials) ────────────────
+ *
+ * The material register holds ONE ROW PER MATERIAL, and §3.2.P.4 read a single
+ * first-match `materialName` / `grade` pair — so a project using twelve
+ * excipients rendered one of them, and which one depended on arrival order.
+ */
+function materialRows(
+  sources: CanonicalSource[],
+  sourceType: 'excipient' | 'raw_material_spec',
+): Array<Record<string, any>> {
+  return sources
+    .filter((s) => s.sourceType === sourceType)
+    .map((s) => (s.sourcePayload || {}) as Record<string, any>)
+    .filter((p) => String(p.materialName || '').trim())
+    // A retired material is superseded, not current.
+    .filter((p) => String(p.status || '').toLowerCase() !== 'retired');
+}
+
+/** The specification a material is controlled to, as recorded. */
+function materialSpecText(p: Record<string, any>): string {
+  const rows = Array.isArray(p.testParameters) ? p.testParameters.filter((r: any) => r && typeof r === 'object') : [];
+  if (rows.length > 0) {
+    return rows.map((r: any) => [r.test, r.acceptanceCriteria].filter(Boolean).join(' ')).filter(Boolean).join('; ');
+  }
+  return String(p.compendialMonograph || '') ? `Complies with ${p.compendialMonograph}` : '—';
+}
+
+function materialRendering(
+  sources: CanonicalSource[],
+): { tables: GeneratedTable[]; narrative: string } {
+  const excipients = materialRows(sources, 'excipient');
+  const rawMaterials = materialRows(sources, 'raw_material_spec');
+  const tables: GeneratedTable[] = [];
+
+  if (excipients.length > 0) {
+    tables.push({
+      title: 'Control of Excipients',
+      headers: ['Excipient', 'Function', 'Grade', 'Compendial Monograph', 'Specification', 'Analytical Procedure', 'Supplier', 'Origin'],
+      rows: excipients.map((p) => [
+        String(p.materialName),
+        String(p.functionInFormulation || '—'),
+        String(p.grade || '—'),
+        String(p.compendialMonograph || '—'),
+        materialSpecText(p),
+        String(p.analyticalProcedures || (p.compendialMonograph ? `Per ${p.compendialMonograph}` : '—')),
+        String(p.supplier || '—'),
+        String(p.origin || 'not recorded'),
+      ]),
+    });
+  }
+  if (rawMaterials.length > 0) {
+    tables.push({
+      title: 'Raw and Starting Material Specifications',
+      headers: ['Material', 'Role', 'Grade', 'Compendial Monograph', 'Specification', 'Supplier', 'Site'],
+      rows: rawMaterials.map((p) => [
+        String(p.materialName),
+        String(p.materialRole || '—'),
+        String(p.grade || '—'),
+        String(p.compendialMonograph || '—'),
+        materialSpecText(p),
+        String(p.supplier || '—'),
+        String(p.manufacturerSite || '—'),
+      ]),
+    });
+  }
+
+  const novel = excipients.filter((p) => p.novelExcipient);
+  const unjustifiedNovel = novel.filter((p) => !String(p.novelExcipientJustification || '').trim());
+  const unspecified = excipients.filter((p) => materialSpecText(p) === '—');
+
+  const narrative =
+    (excipients.length > 0
+      ? `${excipients.length} excipient(s) are recorded for the drug product, each controlled to the specification reported above. `
+      : `No excipient is recorded for the drug product; the control of excipients is not established by this section. `) +
+    (unspecified.length > 0
+      ? `${unspecified.length} of them record neither a specification nor a compendial monograph, so what they are controlled to is not established. `
+      : '') +
+    /* A novel excipient carries its own safety package (ICH M4Q 3.2.P.4.6).
+       Recording one without a justification is a gap the section states. */
+    (novel.length > 0
+      ? `${novel.length} excipient(s) are recorded as novel and require the safety documentation of §3.2.P.4.6` +
+        (unjustifiedNovel.length > 0
+          ? `; ${unjustifiedNovel.length} of those record no justification, which is not supplied by this section. `
+          : `, whose justification is recorded against each. `)
+      : '') +
+    (rawMaterials.length > 0
+      ? `${rawMaterials.length} raw or starting material specification(s) are recorded. `
+      : '');
+
+  return { tables, narrative };
+}
+
+/* ── Formulation (§3.2.P.1 composition) ───────────────────────────────────────
+ *
+ * §3.2.P.1's composition table read a first-match `components` array, so a
+ * project with several formulation versions rendered whichever arrived first.
+ * The register records a version and a status; the section renders the CURRENT
+ * one and says what it superseded.
+ */
+function formulationRecords(sources: CanonicalSource[]): Array<Record<string, any>> {
+  return sources
+    .filter((s) => s.sourceType === 'formulation_record')
+    .map((s) => (s.sourcePayload || {}) as Record<string, any>)
+    .filter((p) => String(p.formulationName || '').trim());
+}
+
+function formulationRendering(
+  sources: CanonicalSource[],
+): { tables: GeneratedTable[]; narrative: string; current: Record<string, any> | null } {
+  const all = formulationRecords(sources);
+  if (all.length === 0) {
+    return { tables: [], narrative: '', current: null };
+  }
+  /* "Current" is a recorded status, never a guess at which arrived last. Where
+     no record claims it, the section says so instead of electing one. */
+  const current = all.filter((p) => String(p.status || '').toLowerCase() === 'current');
+  const superseded = all.filter((p) => String(p.status || '').toLowerCase() === 'superseded');
+  const chosen = current.length === 1 ? current[0] : null;
+
+  const tables: GeneratedTable[] = [];
+  const componentsOf = (p: Record<string, any>) =>
+    Array.isArray(p.components) ? p.components.filter((c: any) => c && typeof c === 'object') : [];
+
+  if (chosen) {
+    tables.push({
+      title: 'Quantitative Composition',
+      headers: ['Component', 'Function / Role', 'Amount per Unit', '% w/w', 'Amount per Batch', 'Overage', 'Compendial Reference', 'Origin'],
+      rows: componentsOf(chosen).map((c: any) => [
+        String(c.component || c.name || 'Unknown'),
+        String(c.role || c.function || '—'),
+        [c.amountPerUnit ?? c.amount, c.unit].filter(Boolean).join(' ') || '—',
+        String(c.percentWeight ?? '—'),
+        String(c.amountPerBatch ?? '—'),
+        String(c.overage ?? '—'),
+        String(c.compendialReference ?? '—'),
+        String(c.origin ?? 'not recorded'),
+      ]),
+    });
+  }
+  if (all.length > 1) {
+    tables.push({
+      title: 'Formulation Versions',
+      headers: ['Formulation', 'Version', 'Status', 'Batch Size', 'Supersedes', 'Components'],
+      rows: all.map((p) => [
+        String(p.formulationName),
+        String(p.version || '—'),
+        String(p.status || 'draft'),
+        String(p.batchSize || '—'),
+        String(p.supersedes || '—'),
+        String(componentsOf(p).length),
+      ]),
+    });
+  }
+
+  const unjustified = all.reduce((n, p) => n + (Number(p.unjustifiedOverageCount) || 0), 0);
+  const narrative =
+    (chosen
+      ? `The current formulation is ${String(chosen.formulationName)}` +
+        (chosen.version ? ` (${String(chosen.version)})` : '') +
+        `, comprising ${componentsOf(chosen).length} component(s) reported above` +
+        (chosen.batchSize ? ` at a batch size of ${String(chosen.batchSize)}` : '') + `. `
+      : current.length > 1
+        ? `${current.length} formulation records are marked current, so which composition governs is not established by this section. `
+        : `${all.length} formulation record(s) are on file and none is marked current, so the governing composition is not established by this section. `) +
+    (superseded.length > 0 ? `${superseded.length} superseded version(s) are retained in the record. ` : '') +
+    /* An overage is a regulatory question in its own right (ICH Q8 §2.3): one
+       recorded without a justification is a gap, not a detail. */
+    (unjustified > 0
+      ? `${unjustified} component overage(s) are recorded without a justification; the reason for the overage is not established by this section. `
+      : '');
+
+  return { tables, narrative, current: chosen };
+}
+
 // ── Section-specific narrative + table generators ──────────────────────────────
 
 type SectionGenerator = (matched: CanonicalSource[]) => { narrative: string; tables: GeneratedTable[] };
@@ -1314,32 +1488,22 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const form = val(m, 'dosageFormDescription');
     const comp = val(m, 'composition');
     const strength = val(m, 'strength');
-    const formulationName = val(m, 'formulationName');
-    const formulationVersion = val(m, 'version');
-    const components = valArr(m, 'components');
+    /* The formulation register, which records a VERSION and its status. The
+       read this replaced took a first-match `components` array, so a project
+       with several formulation versions rendered whichever arrived first. */
+    const formulation = formulationRendering(m);
     const tables: GeneratedTable[] = [];
     tables.push(kvTable('Drug Product Description and Composition', {
       'Dosage Form': form, 'Strength': strength,
-      ...(formulationName ? { 'Formulation': formulationName } : {}),
-      ...(formulationVersion ? { 'Formulation Version': formulationVersion } : {}),
+      ...(formulation.current ? { 'Formulation': String(formulation.current.formulationName) } : {}),
+      ...(formulation.current?.version ? { 'Formulation Version': String(formulation.current.version) } : {}),
       'Composition': comp,
     }));
-    if (components.length > 0) {
-      tables.push({
-        title: 'Quantitative Composition',
-        headers: ['Component', 'Function / Role', 'Amount per Unit'],
-        rows: components.map((c: any) => [
-          c.component || c.name || 'Unknown',
-          c.role || c.function || '—',
-          c.amount || '—',
-        ]),
-      });
-    }
+    tables.push(...formulation.tables);
     return {
       narrative: `The drug product is a ${form || '[dosage form not specified]'} ` +
         (strength ? `with a strength of ${strength}. ` : '. ') +
-        (formulationName ? `Formulation: ${formulationName}` + (formulationVersion ? ` (${formulationVersion})` : '') + `. ` : '') +
-        (components.length > 0 ? `The formulation comprises ${components.length} component(s). ` : '') +
+        (formulation.narrative || `No formulation record is on file; the composition is not established by this section. `) +
         (comp ? `Composition: ${comp}.` : ''),
       tables,
     };
@@ -1483,36 +1647,12 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
   },
 
   '3.2.P.4': (m) => {
-    const specs = val(m, 'excipientSpecifications');
-    const procs = val(m, 'excipientAnalyticalProcedures');
-    const rmName = val(m, 'materialName');
-    const rmGrade = val(m, 'grade');
-    const rmSupplier = val(m, 'supplier');
-    const rmCompliance = val(m, 'compendialCompliance');
-    const rmTestParams = valArr(m, 'testParameters');
-    const tables: GeneratedTable[] = [];
-    tables.push(kvTable('Control of Excipients', { 'Excipient Specifications': specs, 'Analytical Procedures': procs }));
-    if (rmName || rmGrade) {
-      const rmRows: string[][] = [];
-      if (rmName) rmRows.push(['Material Name', rmName]);
-      if (rmGrade) rmRows.push(['Grade', rmGrade]);
-      if (rmSupplier) rmRows.push(['Supplier', rmSupplier]);
-      if (rmCompliance) rmRows.push(['Compendial Compliance', rmCompliance]);
-      if (rmTestParams.length > 0) rmRows.push(['Test Parameters', rmTestParams.join('; ')]);
-      tables.push({
-        title: 'Raw Material / Starting Material Specifications',
-        headers: ['Property', 'Value'],
-        rows: rmRows,
-      });
-    }
-    return {
-      narrative: `Excipients used in the drug product formulation are controlled to compendial or in-house specifications. ` +
-        (specs ? `Excipient specifications: ${specs}. ` : '') +
-        (procs ? `Analytical procedures: ${procs}. ` : '') +
-        (rmName ? `Raw material specifications are established for ${rmName}` + (rmGrade ? ` (${rmGrade})` : '') + `. ` : '') +
-        (rmCompliance ? `Compendial compliance: ${rmCompliance}.` : ''),
-      tables,
-    };
+    /* Every recorded material, not the first one. The reads this replaced took a
+       single first-match `materialName` / `grade` pair out of a register that
+       holds one row per material, so a product using twelve excipients rendered
+       one of them and the choice depended on arrival order. */
+    const materials = materialRendering(m);
+    return { narrative: materials.narrative, tables: materials.tables };
   },
 
   '3.2.P.5': (m) => {

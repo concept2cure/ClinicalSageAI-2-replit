@@ -15907,6 +15907,27 @@ registerToolHandler('list_cmc_registers', async (input, ctx) => {
                 FROM cmc_dissolution_profiles WHERE organization_id = $1`,
         searchCols: ['product_name', 'batch_number', 'medium'],
       },
+      /* The materials, with the origin §3.2.A.3 answers the TSE/BSE question
+         from surfaced directly: a model asked "is any excipient animal-derived"
+         must be able to see which ones have no origin recorded at all. */
+      material_spec: {
+        sql: `SELECT id, material_name AS "materialName", material_role AS "materialRole",
+                     function_in_formulation AS "function", grade,
+                     compendial_monograph AS "compendialMonograph", supplier, origin,
+                     novel_excipient AS "novelExcipient", status,
+                     (tse_certificate IS NOT NULL AND tse_certificate <> '') AS "hasTseCertificate",
+                     (origin IS NULL OR origin = '') AS "originNotRecorded"
+                FROM cmc_material_specs WHERE organization_id = $1`,
+        searchCols: ['material_name', 'grade', 'supplier'],
+      },
+      formulation_record: {
+        sql: `SELECT id, formulation_name AS "formulationName", version, dosage_form AS "dosageForm",
+                     strength, batch_size AS "batchSize", supersedes, status,
+                     CASE WHEN jsonb_typeof(components) = 'array'
+                          THEN jsonb_array_length(components) ELSE 0 END AS "componentCount"
+                FROM cmc_formulation_records WHERE organization_id = $1`,
+        searchCols: ['formulation_name', 'version', 'dosage_form'],
+      },
       reference_standard: {
         sql: `SELECT id, standard_code AS "standardCode", standard_name AS "standardName",
                      scope, standard_type AS "standardType", lot_number AS "lotNumber",

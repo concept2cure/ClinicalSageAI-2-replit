@@ -481,4 +481,8 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      per-unit results are the tenant's data. Leaves, like the two above. */
   'cmc_impurity_profiles',
   'cmc_dissolution_profiles',
+  /* The material specifications and the formulation record: supplier names,
+     grades, batch formulae and overages are the tenant's own. Leaves. */
+  'cmc_material_specs',
+  'cmc_formulation_records',
 ]);

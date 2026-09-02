@@ -30,6 +30,8 @@ import {
   mapReferenceStandardPayload,
   mapImpurityProfilePayload,
   mapDissolutionProfilePayload,
+  mapMaterialSpecPayload,
+  mapFormulationRecordPayload,
 } from '../cmc-write-through';
 import { MODULE3_SECTION_RULES, composeModule3FromCanonicalSources, tablesToMarkdown } from '../module3Composer';
 
@@ -103,7 +105,15 @@ describe('mapDrugProductPayload — the §3.2.P register row (nested packaging/p
   const p = mapDrugProductPayload(row);
 
   it("3.2.P.1's required fields survive — composition as TEXT, because every consumer reads it with val()", () => {
-    expect(required('3.2.P.1')).toEqual(['dosageFormDescription', 'composition', 'strength']);
+    /* §3.2.P.1 also requires ONE formulation record carrying its own
+       composition: the quantitative composition table is the section's
+       substance, and it read a first-match components array. */
+    expect(required('3.2.P.1')).toEqual([
+      'dosageFormDescription',
+      'composition',
+      'strength',
+      'formulationCompositionComplete',
+    ]);
     expect(p.dosageFormDescription).toBe('Solution for injection');
     expect(p.strength).toBe('50 mg/mL');
     // An object here rendered "[object Object]" into 3.2.P.1/3.2.R.1 and hid
@@ -354,7 +364,11 @@ describe('register row → payload → composed section: the whole chain, no "[o
     const p1 = sections.find((s) => s.sectionKey === '3.2.P.1')!;
     expect(p1.narrativeDraft).toMatch(/Gelatin capsule shell/);
     expect(p1.narrativeDraft).not.toMatch(/object Object/);
-    expect(p1.missingInputs).toEqual([]);
+    /* The composition text alone no longer completes the section: §3.2.P.1's
+       substance is the quantitative composition, which comes from the
+       formulation register. */
+    expect(p1.missingInputs).toEqual(['formulationCompositionComplete']);
+    expect(p1.narrativeDraft).toContain('No formulation record is on file');
   });
 
   it('an EMPTY composition {} leaves 3.2.P.1 honestly incomplete', () => {
@@ -1506,5 +1520,136 @@ describe('review: the dissolution section', () => {
     ]);
     expect(composed.find((c) => c.sectionKey === '3.2.P.2')!.narrativeDraft)
       .toContain('No development dissolution profile is recorded');
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §3.2.P.4 materials and §3.2.P.1 formulation — the last three source types
+   the composer demanded with a first-match read standing in for a register.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const material = (over: Record<string, unknown> = {}) =>
+  mapMaterialSpecPayload({
+    materialRole: 'excipient',
+    materialName: 'Microcrystalline cellulose',
+    functionInFormulation: 'Diluent',
+    grade: 'PH-102',
+    compendialMonograph: 'USP-NF',
+    supplier: 'DuPont',
+    origin: 'plant',
+    status: 'specified',
+    ...over,
+  });
+
+const formulation = (over: Record<string, unknown> = {}) =>
+  mapFormulationRecordPayload({
+    formulationName: 'BX-701 5 mg film-coated tablet',
+    version: 'F-v2.0',
+    batchSize: '250,000 tablets',
+    components: [
+      { component: 'BX-701', role: 'Active', amountPerUnit: '5', unit: 'mg', percentWeight: '4.0' },
+      { component: 'Microcrystalline cellulose', role: 'Diluent', amountPerUnit: '80', unit: 'mg', percentWeight: '64.0' },
+    ],
+    status: 'current',
+    ...over,
+  });
+
+describe('mapMaterialSpecPayload — one register, two source types', () => {
+  it('renders EVERY excipient, not the first one', () => {
+    /* §3.2.P.4 read a single first-match materialName/grade pair out of a
+       register holding one row per material, so a product using twelve
+       excipients rendered one — and which one depended on arrival order. */
+    const composed = composeModule3FromCanonicalSources([
+      src('excipient', material({ materialName: 'Microcrystalline cellulose' })),
+      src('excipient', material({ materialName: 'Croscarmellose sodium', functionInFormulation: 'Disintegrant' })),
+      src('excipient', material({ materialName: 'Magnesium stearate', functionInFormulation: 'Lubricant' })),
+    ]);
+    const md = tablesToMarkdown(composed.find((c) => c.sectionKey === '3.2.P.4')!.tables);
+    for (const name of ['Microcrystalline cellulose', 'Croscarmellose sodium', 'Magnesium stearate']) {
+      expect(md).toContain(name);
+    }
+  });
+
+  it('a raw material does not complete the drug product excipient section', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('raw_material_spec', material({ materialRole: 'starting-material', materialName: 'Intermediate INT-2' })),
+    ]);
+    const p4 = composed.find((c) => c.sectionKey === '3.2.P.4')!;
+    expect(p4.missingInputs).toContain('excipientControlComplete');
+    expect(p4.narrativeDraft).toContain('No excipient is recorded for the drug product');
+    // …and it DOES render as a raw material specification.
+    expect(tablesToMarkdown(p4.tables)).toContain('Intermediate INT-2');
+  });
+
+  it('says when an excipient records neither a specification nor a monograph', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('excipient', material({ compendialMonograph: '', testParameters: null })),
+    ]);
+    const p4 = composed.find((c) => c.sectionKey === '3.2.P.4')!;
+    expect(p4.narrativeDraft).toContain('record neither a specification nor a compendial monograph');
+    expect(p4.missingInputs).toContain('excipientControlComplete');
+  });
+
+  it('names a novel excipient recorded without a justification', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('excipient', material({ novelExcipient: true })),
+    ]);
+    expect(composed.find((c) => c.sectionKey === '3.2.P.4')!.narrativeDraft)
+      .toContain('record no justification');
+  });
+
+  it('carries the recorded origin without inferring one', () => {
+    const p = material({ origin: '' });
+    expect(p.origin).toBe('');
+    expect(p.humanOrAnimalOrigin).toBeNull();
+    const gelatin = material({ materialName: 'Gelatin capsule shell', origin: 'bovine', tseCertificate: 'CEP R1-CEP 2019-123' });
+    expect(gelatin.humanOrAnimalOrigin).toBe(true);
+  });
+});
+
+describe('mapFormulationRecordPayload — one current version, rendered', () => {
+  it('renders the CURRENT formulation, not whichever arrived first', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('formulation_record', formulation({ formulationName: 'Old tablet', version: 'F-v1.0', status: 'superseded', components: [{ component: 'Lactose', role: 'Diluent' }] })),
+      src('formulation_record', formulation()),
+      src('drug_product', { dosageFormDescription: 'Film-coated tablet', strength: '5 mg', composition: 'BX-701 5 mg' }),
+    ]);
+    const p1 = composed.find((c) => c.sectionKey === '3.2.P.1')!;
+    expect(p1.narrativeDraft).toContain('The current formulation is BX-701 5 mg film-coated tablet');
+    const md = tablesToMarkdown(p1.tables);
+    expect(md).toContain('Microcrystalline cellulose');
+    // The superseded version is retained in the record, as a version row.
+    expect(md).toContain('F-v1.0');
+    expect(p1.narrativeDraft).toContain('1 superseded version(s) are retained');
+  });
+
+  it('refuses to elect a current formulation when none is marked current', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('formulation_record', formulation({ status: 'draft' })),
+      src('drug_product', { dosageFormDescription: 'Tablet', strength: '5 mg', composition: 'x' }),
+    ]);
+    const p1 = composed.find((c) => c.sectionKey === '3.2.P.1')!;
+    expect(p1.narrativeDraft).toContain('none is marked current');
+    expect(p1.narrativeDraft).toContain('not established by this section');
+  });
+
+  it('says which composition governs is not established when two claim to be current', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('formulation_record', formulation({ version: 'F-v2.0' })),
+      src('formulation_record', formulation({ version: 'F-v3.0' })),
+    ]);
+    expect(composed.find((c) => c.sectionKey === '3.2.P.1')!.narrativeDraft)
+      .toContain('are marked current, so which composition governs is not established');
+  });
+
+  it('names an overage recorded without a justification', () => {
+    /* An overage is a regulatory question in its own right (ICH Q8 §2.3). */
+    const composed = composeModule3FromCanonicalSources([
+      src('formulation_record', formulation({
+        components: [{ component: 'BX-701', role: 'Active', amountPerUnit: '5', unit: 'mg', overage: '2%' }],
+      })),
+    ]);
+    expect(composed.find((c) => c.sectionKey === '3.2.P.1')!.narrativeDraft)
+      .toContain('component overage(s) are recorded without a justification');
   });
 });

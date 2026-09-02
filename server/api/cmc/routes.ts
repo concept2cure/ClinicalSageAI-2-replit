@@ -15,6 +15,8 @@ import {
   writeThroughReferenceStandard,
   writeThroughImpurityProfile,
   writeThroughDissolutionProfile,
+  writeThroughMaterialSpec,
+  writeThroughFormulationRecord,
 } from '../../services/cmc-write-through';
 import {
   analyticalMethods,
@@ -28,6 +30,8 @@ import {
   cmcReferenceStandards,
   cmcImpurityProfiles,
   cmcDissolutionProfiles,
+  cmcMaterialSpecs,
+  cmcFormulationRecords,
   insertAnalyticalMethodSchema,
   insertProcessValidationSchema,
   insertStabilityStudySchema,
@@ -39,6 +43,8 @@ import {
   insertCmcReferenceStandardSchema,
   insertCmcImpurityProfileSchema,
   insertCmcDissolutionProfileSchema,
+  insertCmcMaterialSpecSchema,
+  insertCmcFormulationRecordSchema,
 } from '../../../shared/schema';
 import { eq, and, inArray, or, isNull, type SQL } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
@@ -271,6 +277,8 @@ const impurityProfileBody = withoutTenantKey(insertCmcImpurityProfileSchema).ext
 const dissolutionProfileBody = withoutTenantKey(insertCmcDissolutionProfileSchema).extend({
   testDate: optionalDate,
 });
+const materialSpecBody = withoutTenantKey(insertCmcMaterialSpecSchema);
+const formulationRecordBody = withoutTenantKey(insertCmcFormulationRecordSchema);
 
 router.post('/analytical-methods', async (req, res) => {
   try {
@@ -1389,6 +1397,157 @@ router.put('/dissolution-profiles/:id', async (req, res) => {
     res.json({ success: true, data: row, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to update dissolution profile');
+  }
+});
+
+/**
+ * Exactly one formulation version may claim to be the current one.
+ *
+ * §3.2.P.1 renders the CURRENT composition; two records claiming it means the
+ * governing composition is not established, and the section says so. Refusing
+ * the second write is better than composing the ambiguity: the staffer marking
+ * a new version current is told to supersede the old one first.
+ */
+async function currentFormulationConflict(
+  orgId: number,
+  incoming: Record<string, unknown>,
+  excludeId: number | null,
+): Promise<string | null> {
+  if (String(incoming.status ?? '').trim().toLowerCase() !== 'current') return null;
+  const projectId = typeof incoming.projectId === 'string' ? incoming.projectId.trim() : '';
+  const existing = await db
+    .select({ id: cmcFormulationRecords.id, name: cmcFormulationRecords.formulationName, version: cmcFormulationRecords.version })
+    .from(cmcFormulationRecords)
+    .where(
+      and(
+        eq(cmcFormulationRecords.organizationId, orgId),
+        eq(cmcFormulationRecords.status, 'current'),
+        projectId ? eq(cmcFormulationRecords.projectId, projectId) : isNull(cmcFormulationRecords.projectId),
+      ),
+    );
+  const other = existing.filter((r) => r.id !== excludeId);
+  if (other.length === 0) return null;
+  const named = other.map((r) => `${r.name}${r.version ? ` (${r.version})` : ''}`).join(', ');
+  return `${named} is already the current formulation for this project. Mark it superseded before making another version current — §3.2.P.1 renders one governing composition.`;
+}
+
+
+/* ── Material specifications — §3.2.P.4 excipients, §3.2.S.2.3 raw materials ──
+ *
+ * One register, two canonical source types: `materialRole` decides which, so an
+ * excipient files under §3.2.P.4 and a starting material under §3.2.S.2.3
+ * without either completing the other's section.
+ */
+router.get('/material-specs', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const rows = await db
+      .select()
+      .from(cmcMaterialSpecs)
+      .where(and(eq(cmcMaterialSpecs.organizationId, orgId), projectFilter(req, cmcMaterialSpecs.projectId)));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch material specifications');
+  }
+});
+
+router.post('/material-specs', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const validatedData = materialSpecBody.parse(req.body);
+    const [row] = await db
+      .insert(cmcMaterialSpecs)
+      .values({ ...withoutOrgId(validatedData as Record<string, unknown>), organizationId: orgId } as typeof cmcMaterialSpecs.$inferInsert)
+      .returning();
+    const linkage = await linkToModule3('write_through_material_spec', orgId, row, req, writeThroughMaterialSpec);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create material specification');
+  }
+});
+
+/** Record the supplier's origin declaration, attach the TSE certificate, or correct the entry. */
+router.put('/material-specs/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = materialSpecBody.partial().parse(req.body);
+    const { projectId: _fixedAtCreation, ...editable } = withoutOrgId(
+      validatedData as Record<string, unknown>,
+    ) as { projectId?: unknown } & Record<string, unknown>;
+    const [row] = await db
+      .update(cmcMaterialSpecs)
+      .set({ ...editable, updatedAt: new Date() })
+      .where(and(eq(cmcMaterialSpecs.id, id), eq(cmcMaterialSpecs.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Material specification not found' });
+    const linkage = await linkToModule3('write_through_material_spec', orgId, row, req, writeThroughMaterialSpec);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update material specification');
+  }
+});
+
+/* ── Formulation records — §3.2.P.1 composition, §3.2.P.3.2 batch formula ───── */
+router.get('/formulation-records', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const rows = await db
+      .select()
+      .from(cmcFormulationRecords)
+      .where(and(eq(cmcFormulationRecords.organizationId, orgId), projectFilter(req, cmcFormulationRecords.projectId)));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch formulation records');
+  }
+});
+
+/**
+ * Record a formulation version.
+ *
+ * Exactly one version may be `current` at a time: §3.2.P.1 renders the current
+ * composition, and two records claiming it means the governing composition is
+ * not established. The register enforces that in the same transaction as the
+ * write, rather than letting the section discover the ambiguity later.
+ */
+router.post('/formulation-records', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const validatedData = formulationRecordBody.parse(req.body);
+    const conflict = await currentFormulationConflict(orgId, validatedData as Record<string, unknown>, null);
+    if (conflict) return res.status(409).json({ success: false, error: conflict });
+    const [row] = await db
+      .insert(cmcFormulationRecords)
+      .values({ ...withoutOrgId(validatedData as Record<string, unknown>), organizationId: orgId } as typeof cmcFormulationRecords.$inferInsert)
+      .returning();
+    const linkage = await linkToModule3('write_through_formulation_record', orgId, row, req, writeThroughFormulationRecord);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create formulation record');
+  }
+});
+
+/** Revise a formulation, or mark it superseded when a new version takes over. */
+router.put('/formulation-records/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = formulationRecordBody.partial().parse(req.body);
+    const conflict = await currentFormulationConflict(orgId, validatedData as Record<string, unknown>, id);
+    if (conflict) return res.status(409).json({ success: false, error: conflict });
+    const { projectId: _fixedAtCreation, ...editable } = withoutOrgId(
+      validatedData as Record<string, unknown>,
+    ) as { projectId?: unknown } & Record<string, unknown>;
+    const [row] = await db
+      .update(cmcFormulationRecords)
+      .set({ ...editable, updatedAt: new Date() })
+      .where(and(eq(cmcFormulationRecords.id, id), eq(cmcFormulationRecords.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Formulation record not found' });
+    const linkage = await linkToModule3('write_through_formulation_record', orgId, row, req, writeThroughFormulationRecord);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update formulation record');
   }
 });
 

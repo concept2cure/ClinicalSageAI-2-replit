@@ -1718,6 +1718,13 @@ export const C2C_MIGRATION_FILES = [
   // section and a development profile cannot green the release specification.
   'db/migrations/20260902_cmc_impurity_dissolution_registers.sql',
 
+  // ── CMC material spec + formulation registers ────────────────────────────
+  // The producers for the composer's excipient, raw_material_spec and
+  // formulation_record source types. One table serves the two material types,
+  // keyed on material_role; `origin` is what lets 3.2.A.3 answer the
+  // human/animal-origin question from data instead of a regex over free text.
+  'db/migrations/20260903_cmc_material_formulation_registers.sql',
+
   // ── Drop the audit-shaped tables that survived a from-scratch liveness
   //    re-check (ledger L13; docs/AUDIT_STORE_INVENTORY_2026-08.md §5.1) ─────
   // MUST stay near the end, and specifically AFTER every entry above that

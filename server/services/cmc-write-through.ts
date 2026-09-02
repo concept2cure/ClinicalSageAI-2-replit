@@ -76,6 +76,7 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
   excipient: 'Excipient',
   impurity_profile: 'Impurity Profile',
   dissolution_profile: 'Dissolution Profile',
+  material_spec: 'Material Specification',
   qc_result: 'QC Result',
   raw_material_spec: 'Raw Material Specification',
   formulation_record: 'Formulation Record',
@@ -902,6 +903,143 @@ export function mapDissolutionProfilePayload(record: Record<string, any>): Recor
   };
 }
 
+
+/** The material roles that are §3.2.P.4 excipient content. */
+export const EXCIPIENT_ROLES = ['excipient', 'capsule-shell', 'coating', 'processing-aid'];
+
+/** Read a stored material role without inventing one. */
+export function normalizeMaterialRole(raw: unknown): string {
+  const v = String(raw ?? '').trim().toLowerCase().replace(/[\s_]+/g, '-');
+  if (!v) return 'excipient';
+  if (v === 'raw-material' || v === 'raw' || v === 'reagent') return 'raw-material';
+  if (v === 'starting-material' || v === 'starting') return 'starting-material';
+  if (EXCIPIENT_ROLES.includes(v)) return v;
+  return 'excipient';
+}
+
+/** Is a recorded origin one that puts a material under §3.2.A.3? */
+export function isHumanOrAnimalOrigin(raw: unknown): boolean {
+  return /^(animal|human|bovine|porcine|ovine|equine|murine|hamster|fish|egg|milk)$/i.test(
+    String(raw ?? '').trim(),
+  );
+}
+
+/**
+ * Map a cmc_material_specs row to a canonical source payload.
+ *
+ * The role decides the source TYPE — see writeThroughMaterialSpec below — and
+ * the payload carries the same fields either way, because §3.2.P.4 and
+ * §3.2.S.2.3 ask the same questions of a material.
+ *
+ * `origin` is emitted exactly as recorded and never inferred. §3.2.A.3 reads
+ * it: an excipient with no recorded origin is a question that section must ask,
+ * not one it may answer.
+ */
+export function mapMaterialSpecPayload(record: Record<string, any>): Record<string, any> {
+  const role = normalizeMaterialRole(record.materialRole ?? record.material_role);
+  const isExcipient = EXCIPIENT_ROLES.includes(role);
+  const materialName = String(record.materialName || record.material_name || '').trim();
+  const analyticalProcedures = String(record.analyticalProcedures || record.analytical_procedures || '').trim();
+  const testParameters = record.testParameters ?? record.test_parameters ?? null;
+  const origin = String(record.origin || '').trim();
+  const monograph = String(record.compendialMonograph || record.compendial_monograph || '').trim();
+
+  /* The specification, projected to the text §3.2.P.4 renders. A json array of
+     {test, method, acceptanceCriteria} rows is what the register stores; the
+     section's required field is a description of the specification. */
+  const specRows = Array.isArray(testParameters)
+    ? testParameters.filter((r) => r && typeof r === 'object')
+    : [];
+  const specText = specRows.length > 0
+    ? specRows
+        .map((r: any) => [r.test, r.acceptanceCriteria].filter(Boolean).join(' '))
+        .filter(Boolean)
+        .join('; ')
+    : (monograph ? `Complies with ${monograph}` : '');
+
+  /* A material the section can actually describe: named, with a specification
+     (its own tests or a monograph it complies with) and a way of testing it. */
+  const describable = Boolean(materialName) && Boolean(specText);
+
+  return {
+    materialRole: role,
+    materialName,
+    functionInFormulation: record.functionInFormulation || record.function_in_formulation || '',
+    grade: record.grade || '',
+    compendialMonograph: monograph,
+    compendialCompliance: record.compendialCompliance || record.compendial_compliance || '',
+    supplier: record.supplier || '',
+    manufacturerSite: record.manufacturerSite || record.manufacturer_site || '',
+    /* Never normalised and never guessed: §3.2.A.3 distinguishes "recorded as
+       plant" from "not recorded", and a blank is the second. */
+    origin,
+    originDetail: record.originDetail || record.origin_detail || '',
+    humanOrAnimalOrigin: origin ? isHumanOrAnimalOrigin(origin) : null,
+    tseCertificate: record.tseCertificate || record.tse_certificate || '',
+    testParameters: hasRecordedValue(testParameters) ? testParameters : null,
+    analyticalProcedures,
+    novelExcipient: Boolean(record.novelExcipient ?? record.novel_excipient),
+    novelExcipientJustification: record.novelExcipientJustification || record.novel_excipient_justification || '',
+    status: record.status || 'draft',
+    /* §3.2.P.4's required fields, emitted from the EXCIPIENT side only: a
+       starting material for the drug substance is §3.2.S.2.3 content and must
+       not complete the drug product's excipient control section. */
+    excipientSpecifications: isExcipient && specText ? specText : null,
+    excipientAnalyticalProcedures:
+      isExcipient && (analyticalProcedures || monograph)
+        ? analyticalProcedures || `Per ${monograph}`
+        : null,
+    excipientControlComplete: isExcipient && describable ? materialName : null,
+    /* And the raw-material side, for §3.2.S.2.3. */
+    rawMaterialSpecification: !isExcipient && specText ? specText : null,
+  };
+}
+
+/**
+ * Map a cmc_formulation_records row to a canonical source payload.
+ *
+ * §3.2.P.1's composition table read a first-match `components` array, so a
+ * project with several formulation versions rendered whichever arrived first
+ * and dropped the others. The payload carries the version and its status so the
+ * section can render the CURRENT formulation and say what it superseded.
+ */
+export function mapFormulationRecordPayload(record: Record<string, any>): Record<string, any> {
+  const components = record.components ?? null;
+  const rows = Array.isArray(components) ? components.filter((c) => c && typeof c === 'object') : [];
+  const formulationName = String(record.formulationName || record.formulation_name || '').trim();
+  const status = String(record.status || 'draft');
+
+  /* An overage is a regulatory question in its own right (ICH Q8): a component
+     carrying one without a recorded justification is something §3.2.P.1 must
+     state rather than pass over. */
+  const overaged = rows.filter((c: any) => String(c.overage ?? '').trim());
+  const unjustifiedOverages = overaged.filter(
+    (c: any) => !String(c.overageJustification ?? '').trim() && !String(record.overageJustification || record.overage_justification || '').trim(),
+  );
+
+  return {
+    formulationName,
+    version: record.version || '',
+    dosageForm: record.dosageForm || record.dosage_form || '',
+    strength: record.strength || '',
+    batchSize: record.batchSize || record.batch_size || '',
+    components: rows.length > 0 ? rows : null,
+    theoreticalYield: record.theoreticalYield || record.theoretical_yield || '',
+    overageJustification: record.overageJustification || record.overage_justification || '',
+    unjustifiedOverageCount: unjustifiedOverages.length,
+    supersedes: record.supersedes || '',
+    status,
+    /* §3.2.P.1 is complete when ONE formulation carries a named composition
+       with its components — not when a name and a component list arrive on two
+       different records. */
+    formulationComposition: formulationName && rows.length > 0 ? formulationName : null,
+    formulationCompositionComplete:
+      formulationName && rows.length > 0 && rows.every((c: any) => String(c.component || c.name || '').trim())
+        ? formulationName
+        : null,
+  };
+}
+
 // ── Core write-through function ────────────────────────────────────────────
 
 /**
@@ -1168,6 +1306,36 @@ export async function writeThroughDissolutionProfile(
     orgId, projectId, sourceType: 'dissolution_profile',
     sourceKey: `dissolution_profile:${recordId}`,
     sourcePayload: mapDissolutionProfilePayload(record),
+    createdBy,
+  });
+}
+
+/**
+ * The material register writes one of TWO canonical source types, decided by
+ * the role: an excipient is §3.2.P.4 content, a raw or starting material is
+ * §3.2.S.2.3 content. One register, one mapper, the section chosen by what the
+ * material IS.
+ */
+export async function writeThroughMaterialSpec(
+  orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
+): Promise<WriteThroughResult | null> {
+  const role = normalizeMaterialRole(record.materialRole ?? record.material_role);
+  const sourceType: CmcSourceType = EXCIPIENT_ROLES.includes(role) ? 'excipient' : 'raw_material_spec';
+  return writeThroughToCanonicalSource({
+    orgId, projectId, sourceType,
+    sourceKey: `${sourceType}:${recordId}`,
+    sourcePayload: mapMaterialSpecPayload(record),
+    createdBy,
+  });
+}
+
+export async function writeThroughFormulationRecord(
+  orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
+): Promise<WriteThroughResult | null> {
+  return writeThroughToCanonicalSource({
+    orgId, projectId, sourceType: 'formulation_record',
+    sourceKey: `formulation_record:${recordId}`,
+    sourcePayload: mapFormulationRecordPayload(record),
     createdBy,
   });
 }

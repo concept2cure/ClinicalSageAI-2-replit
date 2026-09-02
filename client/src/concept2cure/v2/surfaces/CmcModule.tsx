@@ -36,6 +36,8 @@ import {
   CmReferenceStandards,
   CmImpurityProfiles,
   CmDissolutionProfiles,
+  CmMaterialSpecs,
+  CmFormulationRecords,
   CmChangeRegister,
   CmComparabilityStudies,
   CmProcessValidation,
@@ -1910,6 +1912,12 @@ function CmMaterials({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
       {/* Process validation is the §3.2.P.3.5 evidence that the product's
           process does what its description says. */}
       <CmProcessValidation />
+
+      {/* The formulation IS the product's composition (§3.2.P.1), and the
+          materials are what it is made of and what each is controlled to
+          (§3.2.P.4 for an excipient, §3.2.S.2.3 for a raw material). */}
+      <CmFormulationRecords />
+      <CmMaterialSpecs />
 
       <div className="cm-sub-head">Container closure — §3.2.S.6 / §3.2.P.7</div>
       {/* The system that holds the material, and the extractables/leachables

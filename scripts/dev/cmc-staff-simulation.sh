@@ -160,6 +160,24 @@ DISLINK=$(cat "$OUT/dis1.json" | JQ '.module3Linked // empty')
 CODE=$(req dis2 POST /api/cmc/dissolution-profiles "{\"projectId\":\"$PROGRAM\",\"purpose\":\"release-specification\",\"productName\":\"BX-701 film-coated tablet\",\"batchNumber\":\"BX701-DP-2407\",\"apparatus\":\"USP II (paddle)\",\"rotationSpeed\":\"50 rpm\",\"medium\":\"pH 6.8 phosphate buffer\",\"mediumVolume\":\"900 mL\",\"unitsTested\":12,\"specification\":\"Q = 80% at 30 min\",\"results\":[{\"timepoint\":\"30\",\"meanPercent\":\"96\",\"sd\":\"1.4\",\"rsd\":\"1.5\",\"n\":\"12\"}]}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "release-specification dissolution profile recorded ($CODE)" || bad "release profile failed ($CODE)"
 
+step "8g. Formulation development records the composition and the excipients (feeds 3.2.P.1 / 3.2.P.4 / 3.2.A.3)"
+CODE=$(req form1 POST /api/cmc/formulation-records "{\"projectId\":\"$PROGRAM\",\"formulationName\":\"BX-701 5 mg film-coated tablet\",\"version\":\"F-v2.0\",\"dosageForm\":\"Film-coated tablet\",\"strength\":\"5 mg\",\"batchSize\":\"250,000 tablets\",\"status\":\"current\",\"components\":[{\"component\":\"BX-701\",\"role\":\"Active\",\"amountPerUnit\":\"5\",\"unit\":\"mg\",\"percentWeight\":\"4.0\",\"origin\":\"synthetic\"},{\"component\":\"Microcrystalline cellulose\",\"role\":\"Diluent\",\"amountPerUnit\":\"80\",\"unit\":\"mg\",\"percentWeight\":\"64.0\",\"origin\":\"plant\"},{\"component\":\"Gelatin\",\"role\":\"Binder\",\"amountPerUnit\":\"3\",\"unit\":\"mg\",\"origin\":\"bovine\"}]}")
+FORMLINK=$(cat "$OUT/form1.json" | JQ '.module3Linked // empty')
+[ "$CODE" = 200 -o "$CODE" = 201 ] && [ "$FORMLINK" = "true" ] \
+  && ok "formulation recorded as the current version and linked ($CODE)" \
+  || bad "formulation failed ($CODE, module3Linked=$FORMLINK): $(head -c250 "$OUT/form1.json")"
+# Exactly one version may be current: §3.2.P.1 renders one governing composition.
+CODE=$(req form2 POST /api/cmc/formulation-records "{\"projectId\":\"$PROGRAM\",\"formulationName\":\"BX-701 5 mg film-coated tablet\",\"version\":\"F-v3.0\",\"status\":\"current\",\"components\":[{\"component\":\"BX-701\",\"role\":\"Active\"}]}")
+[ "$CODE" = 409 ] && ok "a second current formulation is refused (409)" || bad "two formulations claim to be current ($CODE)"
+CODE=$(req mat1 POST /api/cmc/material-specs "{\"projectId\":\"$PROGRAM\",\"materialRole\":\"excipient\",\"materialName\":\"Microcrystalline cellulose\",\"functionInFormulation\":\"Diluent\",\"grade\":\"PH-102\",\"compendialMonograph\":\"USP-NF\",\"supplier\":\"DuPont\",\"origin\":\"plant\",\"analyticalProcedures\":\"Per USP-NF monograph\",\"testParameters\":[{\"test\":\"Identification\",\"method\":\"IR\",\"acceptanceCriteria\":\"Conforms\"},{\"test\":\"Loss on drying\",\"method\":\"USP <731>\",\"acceptanceCriteria\":\"NMT 7.0%\"}],\"status\":\"specified\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "excipient specification recorded ($CODE)" || bad "excipient failed ($CODE)"
+# An animal-origin excipient with its TSE certificate — what 3.2.A.3 exists for.
+CODE=$(req mat2 POST /api/cmc/material-specs "{\"projectId\":\"$PROGRAM\",\"materialRole\":\"excipient\",\"materialName\":\"Gelatin\",\"functionInFormulation\":\"Binder\",\"compendialMonograph\":\"Ph. Eur. 0330\",\"origin\":\"bovine\",\"originDetail\":\"EU-sourced, ruminant-free feed\",\"tseCertificate\":\"R1-CEP 2019-123\",\"analyticalProcedures\":\"Per Ph. Eur. 0330\",\"testParameters\":[{\"test\":\"Identification\",\"method\":\"Ph. Eur.\",\"acceptanceCriteria\":\"Conforms\"}],\"status\":\"specified\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "animal-origin excipient recorded with its TSE certificate ($CODE)" || bad "gelatin failed ($CODE)"
+# A starting material is §3.2.S.2.3 content, not §3.2.P.4 content.
+CODE=$(req mat3 POST /api/cmc/material-specs "{\"projectId\":\"$PROGRAM\",\"materialRole\":\"starting-material\",\"materialName\":\"Intermediate INT-2\",\"grade\":\"In-house\",\"supplier\":\"Lonza AG\",\"origin\":\"synthetic\",\"testParameters\":[{\"test\":\"Assay\",\"method\":\"HPLC\",\"acceptanceCriteria\":\"NLT 98.0%\"}],\"status\":\"specified\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "starting material recorded ($CODE)" || bad "starting material failed ($CODE)"
+
 step "9. Change manager proposes a governed change WITH project (marks 3.2 stale)"
 CODE=$(req change POST /api/cmc-changes "{\"title\":\"Bioreactor scale-up 500L→2000L\",\"dosageFormFamily\":\"biologic\",\"changeCategory\":\"scale_up\",\"scaleChangeFactor\":\"within_10x\",\"touchesCriticalStep\":true,\"affects\":\"drug_substance\",\"cmcProjectId\":\"$PROGRAM\"}")
 WT=$(cat "$OUT/change.json" | JQ '.meta.module3WriteThrough // empty')
@@ -264,6 +282,31 @@ P5DEV=$(echo "$P5" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | tes
 [ "${P5REL:-0}" -ge 1 ] && [ "${P5DEV:-0}" = "0" ] \
   && ok "§3.2.P.5 carries the release-specification batch and NOT the development batch" \
   || bad "§3.2.P.5 purpose bleed: releaseRows=$P5REL developmentRows=$P5DEV"
+
+step "11f. §3.2.P.1, §3.2.P.4 and §3.2.A.3 compose from the formulation and material registers"
+P1=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.P.1")][0]' 2>/dev/null)
+P1CUR=$(echo "$P1" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "The current formulation is")
+P1COMP=$(echo "$P1" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("Microcrystalline cellulose"))] | length' 2>/dev/null)
+[ "${P1CUR:-0}" -ge 1 ] && [ "${P1COMP:-0}" -ge 1 ] \
+  && ok "§3.2.P.1 names the current formulation and renders its quantitative composition" \
+  || bad "§3.2.P.1: currentClaim=$P1CUR componentRows=$P1COMP"
+
+P4=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.P.4")][0]' 2>/dev/null)
+P4EXC=$(echo "$P4" | jq -r '[.tables[]? | select(.title | test("Control of Excipients")) | .rows[]?] | length' 2>/dev/null)
+P4RAW=$(echo "$P4" | jq -r '[.tables[]? | select(.title | test("Raw and Starting")) | .rows[]? | select(.[] | tostring | test("Intermediate INT-2"))] | length' 2>/dev/null)
+P4XRAW=$(echo "$P4" | jq -r '[.tables[]? | select(.title | test("Control of Excipients")) | .rows[]? | select(.[] | tostring | test("Intermediate INT-2"))] | length' 2>/dev/null)
+[ "${P4EXC:-0}" -ge 2 ] && [ "${P4RAW:-0}" -ge 1 ] && [ "${P4XRAW:-0}" = "0" ] \
+  && ok "§3.2.P.4 lists both excipients and files the starting material separately" \
+  || bad "§3.2.P.4: excipientRows=$P4EXC rawRows=$P4RAW leakedIntoExcipients=$P4XRAW"
+
+# The animal-origin question, answered from the recorded origin rather than a
+# regex over free text — and never answered at all over an empty register.
+A3=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.A.3")][0]' 2>/dev/null)
+A3GEL=$(echo "$A3" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("Gelatin"))] | length' 2>/dev/null)
+A3FREE=$(echo "$A3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "No excipients of human or animal origin are used")
+[ "${A3GEL:-0}" -ge 1 ] && [ "${A3FREE:-0}" = "0" ] \
+  && ok "§3.2.A.3 names the animal-origin excipient and never calls the product animal-free" \
+  || bad "§3.2.A.3: gelatinRows=$A3GEL animalFreeClaim=$A3FREE"
 
 step "12. Contradiction sweep"
 CODE=$(req sweep POST "/api/cmc/module3-os/contradictions/$PROGRAM" '{}')

@@ -18,6 +18,8 @@ import {
   referenceStandardForm, referenceStandardBody, referenceStandardPatch,
   impurityProfileForm, impurityProfileBody, impurityProfilePatch,
   dissolutionProfileForm, dissolutionProfileBody, dissolutionProfilePatch,
+  materialSpecForm, materialSpecBody, materialSpecPatch,
+  formulationRecordForm, formulationRecordBody, formulationRecordPatch,
   qualifyForm, qualifyBody,
   asUserId,
 } from './cmcRegisterForms';
@@ -26,6 +28,8 @@ import type {
   ReferenceStandardBody,
   ImpurityProfileBody,
   DissolutionProfileBody,
+  MaterialSpecBody,
+  FormulationRecordBody,
 } from './cmcRegisterForms';
 import { dissolutionPurposeSection } from '@shared/cmc/dissolution-purpose';
 /* The SAME scope resolver the composer uses. A register that matched the three
@@ -1398,6 +1402,210 @@ export function CmDissolutionProfiles() {
         { header: 'Profile', render: profileDepth },
         { header: 'Criterion', render: (r) => text(r.specification) },
         { header: 'Tested', render: (r) => fmtDate(r.testDate) },
+        { header: 'Status', render: (r) => chip(r.status, 'draft') },
+      ]}
+    />
+  );
+}
+
+/* ═══════════ Material specifications — GET /api/cmc/material-specs ══════════ */
+
+export interface MaterialSpecApiRow {
+  id: number;
+  projectId?: string | null;
+  materialRole: string;
+  materialName: string;
+  functionInFormulation?: string | null;
+  grade?: string | null;
+  compendialMonograph?: string | null;
+  compendialCompliance?: string | null;
+  supplier?: string | null;
+  manufacturerSite?: string | null;
+  origin?: string | null;
+  originDetail?: string | null;
+  tseCertificate?: string | null;
+  testParameters?: Array<Record<string, string>> | null;
+  analyticalProcedures?: string | null;
+  novelExcipient: boolean;
+  novelExcipientJustification?: string | null;
+  status: string;
+}
+
+const ANIMAL_ORIGINS = ['animal', 'human'];
+
+/**
+ * The origin as RECORDED — and "not recorded" as its own state.
+ *
+ * §3.2.A.3 has to state whether any excipient is of human or animal origin, and
+ * an unrecorded origin is a question it must ask rather than answer. The
+ * register shows the same three states the section distinguishes.
+ */
+function originChip(r: MaterialSpecApiRow): React.ReactNode {
+  const v = String(r.origin || '').trim().toLowerCase();
+  if (!v) return <span className="rd-chip tone-warn">not recorded</span>;
+  if (ANIMAL_ORIGINS.includes(v)) {
+    return (
+      <span className={r.tseCertificate ? 'rd-chip tone-ok' : 'rd-chip tone-warn'}>
+        {v}{r.tseCertificate ? ' — TSE cert' : ' — no TSE cert'}
+      </span>
+    );
+  }
+  return v;
+}
+
+/**
+ * The material register — excipients and raw materials in one file, because
+ * they are one shape. `Files under` is the column that decides which section a
+ * material is evidence for.
+ */
+export function CmMaterialSpecs() {
+  const projectId = cmcProjectUuid();
+  return (
+    <RegisterCard<MaterialSpecApiRow>
+      path={`/api/cmc/material-specs${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`}
+      title="Materials"
+      meta={(rows) => {
+        const excipients = rows.filter((r) => !String(r.materialRole || '').includes('material')).length;
+        const noOrigin = rows.filter((r) => !String(r.origin || '').trim()).length;
+        const novel = rows.filter((r) => r.novelExcipient).length;
+        return `${rows.length} materials -- ${excipients} excipients -- ${novel} novel -- ${noOrigin} with no origin recorded`;
+      }}
+      icon={I.atom}
+      loadingTitle="Loading materials…"
+      emptyTitle="No material recorded yet"
+      emptyHint="Excipients and raw materials, each with the specification it is controlled to and the origin section 3.2.A.3 answers the TSE/BSE question from. Sections 3.2.P.4 and 3.2.S.2.3 compose from this register."
+      errorTitle="Couldn’t load materials"
+      errorHint="The org-scoped material register didn’t load. Sign in and try again."
+      rowKey={(r) => r.id}
+      create={{
+        label: 'Record material',
+        subject: 'material specification',
+        path: '/api/cmc/material-specs',
+        form: () => materialSpecForm(),
+        toBody: (v, pid) => materialSpecBody(v, pid),
+        needsProject: true,
+      }}
+      rowActions={[
+        {
+          label: 'Update',
+          icon: I.penLine,
+          subject: 'material specification',
+          form: (r) => materialSpecForm(r as Partial<MaterialSpecBody>),
+          path: (r) => `/api/cmc/material-specs/${r.id}`,
+          toBody: (v) => materialSpecPatch(v),
+        },
+      ]}
+      columns={[
+        { header: 'Material', render: (r) => r.materialName, bold: true },
+        { header: 'Role', render: (r) => r.materialRole },
+        { header: 'Files under', render: (r) => (String(r.materialRole || '').includes('material') ? '3.2.S.2.3' : '3.2.P.4') },
+        { header: 'Function', render: (r) => text(r.functionInFormulation) },
+        { header: 'Grade', render: (r) => text(r.grade) },
+        { header: 'Monograph', render: (r) => text(r.compendialMonograph) },
+        {
+          header: 'Specification',
+          render: (r) => (Array.isArray(r.testParameters) && r.testParameters.length > 0
+            ? `${r.testParameters.length} test${r.testParameters.length === 1 ? '' : 's'}`
+            : r.compendialMonograph ? 'per monograph' : <span className="rd-chip tone-warn">none</span>),
+        },
+        { header: 'Origin', render: originChip },
+        { header: 'Supplier', render: (r) => text(r.supplier) },
+        {
+          header: 'Novel',
+          render: (r) => (r.novelExcipient
+            ? <span className={r.novelExcipientJustification ? 'rd-chip tone-ok' : 'rd-chip tone-warn'}>{r.novelExcipientJustification ? 'justified' : 'unjustified'}</span>
+            : '--'),
+        },
+        { header: 'Status', render: (r) => chip(r.status, 'draft') },
+      ]}
+    />
+  );
+}
+
+/* ═══════════ Formulation records — GET /api/cmc/formulation-records ══════════ */
+
+export interface FormulationRecordApiRow {
+  id: number;
+  projectId?: string | null;
+  formulationName: string;
+  version?: string | null;
+  dosageForm?: string | null;
+  strength?: string | null;
+  batchSize?: string | null;
+  components?: Array<Record<string, string>> | null;
+  theoreticalYield?: string | null;
+  overageJustification?: string | null;
+  supersedes?: string | null;
+  status: string;
+}
+
+/**
+ * The formulation register — one row per version, with exactly one current.
+ *
+ * §3.2.P.1 renders the CURRENT composition; the API refuses a second record
+ * claiming it, because two governing compositions is not a state the section
+ * can render honestly.
+ */
+export function CmFormulationRecords() {
+  const projectId = cmcProjectUuid();
+  return (
+    <RegisterCard<FormulationRecordApiRow>
+      path={`/api/cmc/formulation-records${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`}
+      title="Formulation records"
+      meta={(rows) => {
+        const current = rows.filter((r) => String(r.status || '') === 'current').length;
+        const withOverage = rows.filter((r) => (r.components || []).some((c) => String(c.overage || '').trim())).length;
+        return `${rows.length} versions -- ${current} current -- ${withOverage} with a component overage`;
+      }}
+      icon={I.clipboardList}
+      loadingTitle="Loading formulation records…"
+      emptyTitle="No formulation recorded yet"
+      emptyHint="The batch formula: what goes into the product, how much of each, and what that scales to per unit. Section 3.2.P.1's quantitative composition composes from this register."
+      errorTitle="Couldn’t load formulation records"
+      errorHint="The org-scoped formulation register didn’t load. Sign in and try again."
+      rowKey={(r) => r.id}
+      create={{
+        label: 'Record formulation',
+        subject: 'formulation record',
+        path: '/api/cmc/formulation-records',
+        form: () => formulationRecordForm(),
+        toBody: (v, pid) => formulationRecordBody(v, pid),
+        needsProject: true,
+      }}
+      rowActions={[
+        {
+          label: 'Update',
+          icon: I.penLine,
+          subject: 'formulation record',
+          form: (r) => formulationRecordForm(r as Partial<FormulationRecordBody>),
+          path: (r) => `/api/cmc/formulation-records/${r.id}`,
+          toBody: (v) => formulationRecordPatch(v),
+        },
+      ]}
+      columns={[
+        { header: 'Formulation', render: (r) => r.formulationName, bold: true },
+        { header: 'Version', render: (r) => text(r.version), mono: true },
+        { header: 'Dosage form', render: (r) => text(r.dosageForm) },
+        { header: 'Strength', render: (r) => text(r.strength) },
+        { header: 'Batch size', render: (r) => text(r.batchSize) },
+        {
+          header: 'Components',
+          render: (r) => (Array.isArray(r.components) && r.components.length > 0
+            ? String(r.components.length)
+            : <span className="rd-chip tone-warn">none</span>),
+        },
+        {
+          header: 'Overages',
+          render: (r) => {
+            const over = (r.components || []).filter((c) => String(c.overage || '').trim());
+            if (over.length === 0) return '--';
+            const unjustified = over.filter((c) => !String(c.overageJustification || '').trim() && !String(r.overageJustification || '').trim());
+            return unjustified.length > 0
+              ? <span className="rd-chip tone-warn">{unjustified.length} unjustified</span>
+              : <span className="rd-chip tone-ok">{over.length} justified</span>;
+          },
+        },
+        { header: 'Supersedes', render: (r) => text(r.supersedes) },
         { header: 'Status', render: (r) => chip(r.status, 'draft') },
       ]}
     />
