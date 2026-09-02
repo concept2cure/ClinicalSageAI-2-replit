@@ -240,7 +240,7 @@ beforeAll(async () => {
       r.tenantId = orgId;
       r.tenantContext = { organizationId: orgId };
       // The real request-scoped client requestDb(req)/requestPgClient(req) wrap.
-      r.dbClient = makeRequestDbClient(jdb.pglite, jdb.schemaGaps);
+      r.dbClient = makeRequestDbClient(jdb.pglite);
     }
     next();
   });
@@ -339,7 +339,7 @@ describe('golden journey — device 510(k) eSTAR path', () => {
         '../../server/services/c2c/program-project-anchor'
       );
       const { requestDb } = await import('../../server/db/requestDb');
-      const req = { dbClient: makeRequestDbClient(jdb.pglite, jdb.schemaGaps) } as never;
+      const req = { dbClient: makeRequestDbClient(jdb.pglite) } as never;
       const resolved = await resolveProgramProjectAnchor(requestDb(req), {
         programId,
         orgId: ORG,
