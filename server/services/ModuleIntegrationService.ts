@@ -541,6 +541,22 @@ export class ModuleIntegrationService {
   }
 
   /**
+   * Prove the caller's organization owns a document, and nothing more.
+   *
+   * The upload route calls this BEFORE it hands bytes to the storage provider:
+   * a document the caller cannot see must fail here, cheaply, rather than
+   * after a file has been written into the vault with nothing to reference
+   * it. DocumentNotFoundException, indistinguishable from a missing document.
+   *
+   * @param documentId Document ID
+   * @param organizationId The caller's organization ID (required)
+   */
+  async assertDocumentOwned(documentId: number, organizationId: unknown): Promise<void> {
+    const orgId = requireOrgId(organizationId, 'assertDocumentOwned');
+    await this.requireOwnedDocument(this.db, documentId, orgId);
+  }
+
+  /**
    * List the attachments on a document, scoped to one organization.
    *
    * This is the reader half. addDocumentAttachment gave document_attachments
@@ -574,6 +590,39 @@ export class ModuleIntegrationService {
       .from(documentAttachments)
       .where(eq(documentAttachments.documentId, documentId))
       .orderBy(desc(documentAttachments.uploadedAt), desc(documentAttachments.id));
+  }
+
+  /**
+   * One attachment on a document, scoped to one organization — the record a
+   * download route needs before it may ask the storage provider for bytes.
+   *
+   * Ownership through the document first, then the attachment keyed by BOTH
+   * its id and the document id, so an attachment cannot be reached through a
+   * document it does not belong to. A foreign or missing attachment is the
+   * same AttachmentNotFoundException — never "forbidden", which would confirm
+   * the id exists.
+   *
+   * @param documentId Document ID
+   * @param attachmentId Attachment ID
+   * @param organizationId The caller's organization ID (required)
+   * @returns The attachment row
+   */
+  async getDocumentAttachment(documentId: number, attachmentId: number, organizationId: unknown) {
+    const orgId = requireOrgId(organizationId, 'getDocumentAttachment');
+    await this.requireOwnedDocument(this.db, documentId, orgId);
+
+    const rows = await this.db
+      .select()
+      .from(documentAttachments)
+      .where(
+        and(
+          eq(documentAttachments.id, attachmentId),
+          eq(documentAttachments.documentId, documentId)
+        )
+      )
+      .limit(1);
+    if (!rows.length) throw new AttachmentNotFoundException(attachmentId);
+    return rows[0];
   }
 
   /**
