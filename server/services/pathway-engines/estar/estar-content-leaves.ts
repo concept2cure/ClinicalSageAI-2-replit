@@ -161,17 +161,25 @@ export function deviceContentSource(opts: Pick<LoadDeviceContentLeavesOptions, '
 export async function resolveDeviceContentScope(
   organizationId: number,
   opts: LoadDeviceContentLeavesOptions = {},
-): Promise<{ scope: LoadDeviceContentLeavesOptions; source: DeviceContentSource }> {
+): Promise<{ scope: LoadDeviceContentLeavesOptions; source: DeviceContentSource; docType?: string }> {
   if (opts.programId) {
     let authored = false;
+    let docType: string | undefined;
     try {
-      const rows = await loadGovernedDeviceSections(organizationId, opts.programId, opts.client);
-      authored = governedSectionsToDeviceSections(rows).some(isAuthored);
+      const doc = await loadGovernedDeviceDocument(organizationId, opts.programId, opts.client);
+      if (doc) {
+        docType = doc.docType;
+        const rows = await loadGovernedSectionRows(doc.id, opts.client ?? pool);
+        authored = governedSectionsToDeviceSections(rows).some(isAuthored);
+      }
     } catch {
       authored = false;
     }
     if (authored) {
-      return { scope: { programId: opts.programId, client: opts.client }, source: 'governed_program' };
+      // The class travels with the scope so /build can pick a renderer and a
+      // package label that match the document (a PMA is not a 510(k) package).
+      // It comes from the SAME tenant-scoped lookup the loader runs.
+      return { scope: { programId: opts.programId, client: opts.client }, source: 'governed_program', docType };
     }
   }
   const legacy: LoadDeviceContentLeavesOptions = { documentId: opts.documentId, client: opts.client };
@@ -183,6 +191,8 @@ export const GOVERNED_DEVICE_DOC_TYPES: ReadonlyArray<string> = ['k510', 'denovo
 
 /** A c2c_document_sections row, as the governed store returns it. */
 export interface GovernedDeviceSectionRow {
+  /** c2c_document_sections.id (bigserial — some drivers return it as a string). */
+  id?: number | string;
   section_key: string;
   label: string;
   status: string | null;
@@ -209,27 +219,75 @@ export function governedSectionsToDeviceSections(rows: ReadonlyArray<GovernedDev
 }
 
 /**
+ * The ONE authored-ness rule for a governed section row, shared with the
+ * MDR/IVDR technical-file assembler so it cannot drift from readiness: a row is
+ * authored only when its body (read through sectionPlainText) is non-empty.
+ */
+export function governedSectionIsAuthored(row: GovernedDeviceSectionRow): boolean {
+  return isAuthored(governedSectionsToDeviceSections([row])[0]);
+}
+
+/**
  * Load the governed device document for a program — tenant-scoped, the most
- * recently created k510 / denovo / pma / cer document of that program — and its
- * sections in outline order. Returns no rows (never throws) when the program has
- * no governed device document in this organization.
+ * recently created document of one of `docTypes` (default: the k510 / denovo /
+ * pma / cer device classes) for that program — and its sections in outline
+ * order. Returns no rows (never throws) when the program has no such governed
+ * document in this organization.
+ *
+ * `docTypes` lets the EU technical-file assembler select ONLY the program's
+ * `mdr` (or `ivdr`) document: "latest governed document of any device type"
+ * would let a CER be packaged as the MDR technical file.
  */
 export async function loadGovernedDeviceSections(
   organizationId: number,
   programId: string,
   client: DeviceContentClient = pool,
+  docTypes: ReadonlyArray<string> = GOVERNED_DEVICE_DOC_TYPES,
 ): Promise<GovernedDeviceSectionRow[]> {
-  const doc = await client.query<{ id: string }>(
-    `SELECT id FROM c2c_documents
+  const doc = await loadGovernedDeviceDocument(organizationId, programId, client, docTypes);
+  if (!doc) return [];
+  return loadGovernedSectionRows(doc.id, client);
+}
+
+/** The governed device document a program's content load reads: its id and class. */
+export interface GovernedDeviceDocumentRef {
+  id: string;
+  /** c2c_documents.doc_type — k510 / denovo / pma / cer (or the caller's `docTypes`). */
+  docType: string;
+}
+
+/**
+ * The ONE tenant-scoped c2c_documents lookup behind every governed load: the
+ * most recently created document of one of `docTypes` for that program in
+ * this organization, with its class. Null (never a throw from an empty result)
+ * when the program has none here — the row's class is never looked up by
+ * document id alone, so a doc_type can never be read across a tenant boundary.
+ */
+export async function loadGovernedDeviceDocument(
+  organizationId: number,
+  programId: string,
+  client: DeviceContentClient = pool,
+  docTypes: ReadonlyArray<string> = GOVERNED_DEVICE_DOC_TYPES,
+): Promise<GovernedDeviceDocumentRef | null> {
+  const doc = await client.query<{ id: string; doc_type?: string | null }>(
+    `SELECT id, doc_type FROM c2c_documents
       WHERE org_id = $1 AND project_id = $2 AND doc_type = ANY($3::text[])
       ORDER BY created_at DESC
       LIMIT 1`,
-    [organizationId, programId, [...GOVERNED_DEVICE_DOC_TYPES]],
+    [organizationId, programId, [...docTypes]],
   );
-  const documentId = doc.rows[0]?.id;
-  if (!documentId) return [];
+  const row = doc.rows[0];
+  if (!row?.id) return null;
+  return { id: row.id, docType: String(row.doc_type ?? '') };
+}
+
+/** The sections of one governed document, in outline order. */
+async function loadGovernedSectionRows(
+  documentId: string,
+  client: DeviceContentClient,
+): Promise<GovernedDeviceSectionRow[]> {
   const sections = await client.query<GovernedDeviceSectionRow>(
-    `SELECT section_key, label, status, content, mandatory
+    `SELECT id, section_key, label, status, content, mandatory
        FROM c2c_document_sections
       WHERE document_id = $1
       ORDER BY path_order ASC, section_key ASC`,
@@ -285,6 +343,12 @@ export async function loadDeviceContentLeaves(
 export interface AuthoredDeviceSection {
   title: string;
   content: string;
+  /**
+   * The section's rule-pack key (c2c_document_sections.section_key — 'A.3',
+   * 'G.5' …) when it came from the governed store, so a per-section package
+   * can name its files by outline key. Absent for the legacy store.
+   */
+  sectionCode?: string;
 }
 
 /**
@@ -328,7 +392,7 @@ export async function loadAuthoredDeviceSections(
       const rows = await loadGovernedDeviceSections(organizationId, opts.programId, opts.client);
       return governedSectionsToDeviceSections(rows)
         .filter(isAuthored)
-        .map((r) => ({ title: String(r.sectionTitle), content: String(r.content) }));
+        .map((r) => ({ title: String(r.sectionTitle), content: String(r.content), sectionCode: String(r.sectionKey ?? '') || undefined }));
     }
     const where =
       opts.documentId !== undefined
@@ -365,7 +429,9 @@ export default {
   sectionsToEditorJson,
   loadAuthoredDeviceSections,
   loadGovernedDeviceSections,
+  loadGovernedDeviceDocument,
   governedSectionsToDeviceSections,
+  governedSectionIsAuthored,
   deviceContentSource,
   resolveDeviceContentScope,
 };

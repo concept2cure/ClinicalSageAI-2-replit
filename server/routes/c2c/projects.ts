@@ -107,20 +107,67 @@ const router = Router();
  * do I provision?" — is answered by one log lookup on an id the user can read
  * off the screen and quote, so nothing is lost except the disclosure.
  */
-function pendingStore(
+/**
+ * Returns null when the 42P01 is NOT a provisioning problem, so the caller
+ * reports a server error instead.
+ *
+ * A 42P01 names a relation in its message and the route used to take that name
+ * at face value. It is not always the cause. On this route the golden drug-NDA
+ * journey produces `relation "audit_logs" does not exist` from inside the
+ * project-creation transaction while `to_regclass('public.audit_logs')` returns
+ * the table — so the operator was being told to provision a store that is
+ * already there, on the one code path whose whole job is to say what is wrong.
+ * A false diagnosis on a fail-closed path is worse than a generic one: it sends
+ * the reader somewhere confidently, and the second hop dead-ends too.
+ *
+ * So the relation is CHECKED before it is named. If it resolves, this is not a
+ * missing store and the caller must not say it is.
+ */
+async function pendingStore(
   err: unknown,
   step: string,
   req: Request,
-): { error: string; step: string; message: string; correlationId: string } {
+): Promise<{ error: string; step: string; message: string; correlationId: string } | null> {
   const raw = (err as { message?: string })?.message ?? '';
   const match = /relation "([^"]+)" does not exist/i.exec(raw);
   const store = match ? match[1] : null;
   const correlationId = (req as unknown as { requestId?: string }).requestId || randomUUID();
 
+  // Verified on a FRESH connection: the one the error came from may be in an
+  // aborted transaction, where every further statement fails regardless.
+  let resolves: boolean | null = null;
+  if (store) {
+    try {
+      const probe = await pool.query('SELECT to_regclass($1) AS reg', [store]);
+      resolves = Boolean((probe.rows[0] as { reg?: string } | undefined)?.reg);
+    } catch {
+      // Could not check. Say so rather than asserting either way.
+      resolves = null;
+    }
+  }
+
+  if (resolves === true) {
+    logger.error('42P01 names a relation that EXISTS — not a provisioning failure', {
+      correlationId,
+      step,
+      store,
+      code: (err as { code?: string })?.code ?? null,
+      route: req.originalUrl,
+      detail: raw.slice(0, 300),
+    });
+    return null;
+  }
+
   logger.error('Store not provisioned — request failed closed', {
     correlationId,
     step,
     store,
+    // Three-valued on purpose: 'absent' means to_regclass was asked and said
+    // no; 'unverified' means the check itself could not run (an aborted
+    // transaction fails every further statement) and the claim below is an
+    // assumption. Collapsing those two would make an unchecked guess read
+    // exactly like a confirmed finding.
+    storeCheck: resolves === false ? 'absent' : 'unverified',
     code: (err as { code?: string })?.code ?? null,
     route: req.originalUrl,
   });
@@ -501,7 +548,9 @@ router.post('/', async (req: Request, res: Response) => {
     // documented PENDING_STORE contract rather than reporting a missing table
     // as a billing refusal.
     if ((e as { code?: string })?.code === '42P01') {
-      return res.status(503).json(pendingStore(e, 'the licensed-program quota check', req));
+      const pending = await pendingStore(e, 'the licensed-program quota check', req);
+      if (pending) return res.status(503).json(pending);
+      return serverError(res, logger, 'the licensed-program quota check', e);
     }
     throw e;
   }
@@ -781,7 +830,9 @@ router.post('/', async (req: Request, res: Response) => {
     });
   } catch (err: unknown) {
     if ((err as { code?: string })?.code === '42P01') {
-      return res.status(503).json(pendingStore(err, 'creating the project', req));
+      const pending = await pendingStore(err, 'creating the project', req);
+      if (pending) return res.status(503).json(pending);
+      return serverError(res, logger, 'creating the project', err);
     }
     return serverError(res, logger, 'creating the project', err);
   }
@@ -1016,7 +1067,9 @@ router.get('/:id/evidence', async (req: Request, res: Response) => {
     // cannot distinguish "no pinned evidence" from "the query failed".
     if ((err as { code?: string })?.code === '42P01') {
       // c2c_project_pinned_evidence may not exist in all environments yet.
-      return res.status(503).json(pendingStore(err, 'reading pinned evidence', req));
+      const pending = await pendingStore(err, 'reading pinned evidence', req);
+      if (pending) return res.status(503).json(pending);
+      return serverError(res, logger, 'reading pinned evidence', err);
     }
     return serverError(res, logger, 'loading the pinned evidence', err, { programId: String(req.params.id) });
   }
@@ -1135,7 +1188,9 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
     // The activity feed is an audit-log read; a caught failure must not render
     // as an empty feed (indistinguishable from a project with no activity).
     if ((err as { code?: string })?.code === '42P01') {
-      return res.status(503).json(pendingStore(err, 'reading the activity feed', req));
+      const pending = await pendingStore(err, 'reading the activity feed', req);
+      if (pending) return res.status(503).json(pending);
+      return serverError(res, logger, 'reading the activity feed', err);
     }
     return serverError(res, logger, 'loading the project activity', err, { programId: String(req.params.id) });
   }

@@ -1,3 +1,23 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Reseed the ind:fda outline with FDA eCTD Module 1 Specification v2.3 numbering and the leaf granularity an IND is actually authored at.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 1 (FDA regional, v2.3 heading list); Modules 2–5 to leaf granularity (3.2.S.4, 4.2.3.2, 5.3.5.1)
+--   - Integrity Risk Addressed: broken cross-refs and an unsatisfiable compile gate — the live pack's Module 1 stopped at four headings, so 21 CFR 312.23(a)(3)/(a)(5) and 21 CFR 25.31 content had nowhere to be authored and the platform's own 1.20 / 1.14.4.x check could never pass
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - Numbering authority: the same v2.3 heading list the packager derives its
+--     us-regional.xml heading elements from, so tree and package agree.
+--   - Idempotent reseed of the outline pack; no customer content is altered.
+-- =============================================================================
+
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- ind:fda — Module 1 numbered the way FDA files it, and the leaves an IND is
 -- actually authored at

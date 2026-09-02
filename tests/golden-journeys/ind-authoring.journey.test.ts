@@ -224,6 +224,16 @@ beforeAll(async () => {
       // to a raw actor id. It is on the durable apply path
       // (C2C_MIGRATION_FILES) — this list was simply behind it.
       'migrations/20260728_authoring_comments_threading.sql',
+      // Object-level authorization. The section-edit gate and the creator
+      // auto-grant both go through the canonical permission service now
+      // (services/authoring/authoring-permissions.ts), which reads and writes
+      // the grant's identity and lifecycle columns — principal_id, granted_by,
+      // valid_from/valid_until, revoked_at. Without this migration the journey
+      // ran against a doc_permissions narrower than the code under test: the
+      // decision threw 42703 and fail-closed denied, which the harness catches
+      // rather than letting the journey pass on a database smaller than
+      // production's. On the durable apply path via AUTHORING_SUBSYSTEM_FILES.
+      'db/migrations/20260727_authoring_object_permissions.sql',
     ],
   });
   h.db = jdb.db;

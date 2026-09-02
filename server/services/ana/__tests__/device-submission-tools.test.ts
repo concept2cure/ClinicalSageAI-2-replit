@@ -25,10 +25,35 @@ describe('device-submission tools — registration', () => {
 
 describe('assemble_device_submission', () => {
   it('validates pathway and variant', async () => {
-    const bad = JSON.parse(await getToolHandler('assemble_device_submission')!({ pathway: 'pma', variant: 'device', leaves: [] }));
+    const bad = JSON.parse(await getToolHandler('assemble_device_submission')!({ pathway: 'mdr', variant: 'device', leaves: [] }));
     expect(bad.status).toBe('needs_parameters');
     const bad2 = JSON.parse(await getToolHandler('assemble_device_submission')!({ pathway: '510k', variant: 'nope', leaves: [] }));
     expect(bad2.status).toBe('needs_parameters');
+  });
+
+  // PMA_ASSEMBLY: the tool used to reject pathway 'pma' as a validation error,
+  // so AnA could never state a PMA's assembly verdict. It now dispatches to the
+  // PMA mapper (21 CFR 814 modules) through the same deterministic engine.
+  it("computes a PMA's assembly state against the PMA modules (pathway 'pma')", async () => {
+    const out = JSON.parse(
+      await getToolHandler('assemble_device_submission')!({
+        pathway: 'pma',
+        pmaSubmissionType: '30_day_notice',
+        variant: 'device',
+        leaves: [
+          { sectionCode: 'A', title: 'A · Administrative information (21 CFR 814.20(b)(1)–(2))', substantive: true },
+          { sectionCode: 'D', title: 'D · Manufacturing, processing, packing, storage and installation (814.20(b)(4)(v))', substantive: true },
+        ],
+        presentTemplates: [],
+        environment: 'staging',
+      }),
+    );
+    expect(out.status).toBe('computed');
+    expect(out.result.pathway).toBe('pma');
+    expect(out.result.artifactKind).toBe('content-package-draft');
+    expect(out.result.estar.submissionType).toBe('30_day_notice');
+    expect(out.result.estar.summary.ready).toBe(true);
+    expect(out.result.provenance.modules).toContain('pathway-engines/pma/pma-mapper');
   });
 
   it('requires leaves[]', async () => {

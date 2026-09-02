@@ -39,7 +39,6 @@ const APPROVED = new Set([
   'server/services/documentExportService.ts',
   'server/services/documentQuality/pdfValidationAttachment.ts',
   'server/services/biotech-artifact-generator.ts',
-  'server/services/pmaDocumentGenerator.js',
   'server/services/universal-packager.ts',
   'server/services/tools/index.ts',
   'server/routes/concept2cure.ts',

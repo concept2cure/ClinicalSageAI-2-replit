@@ -136,21 +136,36 @@ type Matcher = (l: PmaInputLeaf) => boolean;
 const dt = (...t: string[]): Matcher => (l) => !!l.documentType && t.includes(l.documentType);
 const ti = (...n: string[]): Matcher => (l) => n.some((x) => l.title.toLowerCase().includes(x));
 const any = (...m: Matcher[]): Matcher => (l) => m.some((f) => f(l));
+/**
+ * Match a leaf by its rule-pack section key. The governed pma:fda pack
+ * (fda-pma-21cfr814-20-v1.0) keys its 21 CFR 814.20 tree by letter — A
+ * administrative, B SSED, C device description, D manufacturing, F nonclinical,
+ * G clinical (G.5 statistics), H labeling, I post-approval, K bibliography —
+ * and a sponsor authors the LEAVES (A.3, G.1, G.5 …), not the folders. A
+ * child's label ("Study protocols and amendments") does not name its module;
+ * its key does, so a title-only matcher reported 'clinical' missing on a PMA
+ * whose protocols were written. Anchored and case-sensitive: a legacy numeric
+ * code ('1', '3') or a lower-case token never matches.
+ */
+const key = (...roots: string[]): Matcher => (l) => {
+  const code = (l.sectionCode ?? '').trim();
+  return roots.some((r) => code === r || code.startsWith(`${r}.`));
+};
 
 // FDA PMA structure (21 CFR 814.20). Module numbers per the conventional PMA
 // 10-module layout. Required = the core of a fileable original PMA; the rest are
 // conditionally required and modeled as optional here so readiness is honest.
 const PMA_SLOTS: Array<PmaSlot & { match: Matcher }> = [
-  { id: 'admin-regulatory', module: 1, label: 'Administrative & regulatory information (cover, 814.20 checklist)', required: true, match: any(dt('cover_letter', 'administrative', 'regulatory_info'), ti('cover letter', 'administrative', 'table of contents')) },
-  { id: 'device-description', module: 2, label: 'Device description & indications for use', required: true, match: any(dt('device_description', 'indications_for_use'), ti('device description', 'indications for use')) },
-  { id: 'manufacturing', module: 3, label: 'Manufacturing information (QSR / 820)', required: true, match: any(dt('manufacturing', 'qsr', 'quality_system'), ti('manufacturing', 'quality system', 'qsr')) },
-  { id: 'nonclinical', module: 4, label: 'Nonclinical laboratory studies (bench, animal, biocompatibility)', required: true, match: any(dt('nonclinical', 'bench_testing', 'biocompatibility', 'animal_study'), ti('nonclinical', 'bench', 'biocompatibility', 'animal stud')) },
-  { id: 'clinical', module: 5, label: 'Clinical investigations (pivotal study, GCP)', required: true, match: any(dt('clinical_study', 'clinical_data', 'pivotal_study'), ti('clinical investigation', 'clinical study', 'pivotal')) },
-  { id: 'labeling', module: 6, label: 'Proposed labeling', required: true, match: any(dt('labeling', 'labelling', 'label', 'ifu'), ti('labeling', 'instructions for use', 'proposed labeling')) },
-  { id: 'ssed-summary', module: 7, label: 'Summary of safety and effectiveness data (SSED)', required: true, match: any(dt('ssed', 'safety_effectiveness_summary'), ti('safety and effectiveness', 'ssed')) },
-  { id: 'statistical-analysis', module: 9, label: 'Statistical analysis plan & results', required: true, match: any(dt('statistical_analysis_plan', 'sap', 'biostatistics'), ti('statistical analysis', 'sap', 'biostatistic')) },
-  { id: 'post-approval-study', module: 8, label: 'Post-approval study plan', required: false, match: any(dt('post_approval_study', 'pas'), ti('post-approval', 'post approval study')) },
-  { id: 'references', module: 10, label: 'References & bibliography', required: false, match: any(dt('references', 'bibliography'), ti('references', 'bibliography')) },
+  { id: 'admin-regulatory', module: 1, label: 'Administrative & regulatory information (cover, 814.20 checklist)', required: true, match: any(key('A'), dt('cover_letter', 'administrative', 'regulatory_info'), ti('cover letter', 'administrative', 'table of contents')) },
+  { id: 'device-description', module: 2, label: 'Device description & indications for use', required: true, match: any(key('C'), dt('device_description', 'indications_for_use'), ti('device description', 'indications for use')) },
+  { id: 'manufacturing', module: 3, label: 'Manufacturing information (QSR / 820)', required: true, match: any(key('D'), dt('manufacturing', 'qsr', 'quality_system'), ti('manufacturing', 'quality system', 'qsr')) },
+  { id: 'nonclinical', module: 4, label: 'Nonclinical laboratory studies (bench, animal, biocompatibility)', required: true, match: any(key('F'), dt('nonclinical', 'bench_testing', 'biocompatibility', 'animal_study'), ti('nonclinical', 'bench', 'biocompatibility', 'animal stud')) },
+  { id: 'clinical', module: 5, label: 'Clinical investigations (pivotal study, GCP)', required: true, match: any(key('G'), dt('clinical_study', 'clinical_data', 'pivotal_study'), ti('clinical investigation', 'clinical study', 'pivotal')) },
+  { id: 'labeling', module: 6, label: 'Proposed labeling', required: true, match: any(key('H'), dt('labeling', 'labelling', 'label', 'ifu'), ti('labeling', 'instructions for use', 'proposed labeling')) },
+  { id: 'ssed-summary', module: 7, label: 'Summary of safety and effectiveness data (SSED)', required: true, match: any(key('B'), dt('ssed', 'safety_effectiveness_summary'), ti('safety and effectiveness', 'ssed')) },
+  { id: 'statistical-analysis', module: 9, label: 'Statistical analysis plan & results', required: true, match: any(key('G.5'), dt('statistical_analysis_plan', 'sap', 'biostatistics'), ti('statistical analysis', 'sap', 'biostatistic')) },
+  { id: 'post-approval-study', module: 8, label: 'Post-approval study plan', required: false, match: any(key('I.1'), dt('post_approval_study', 'pas'), ti('post-approval', 'post approval study')) },
+  { id: 'references', module: 10, label: 'References & bibliography', required: false, match: any(key('K'), dt('references', 'bibliography'), ti('references', 'bibliography')) },
 ];
 
 /**

@@ -1710,6 +1710,38 @@ export const C2C_MIGRATION_FILES = [
   // canonical write-through does not depend on the client having sent one.
   'db/migrations/20260901_cmc_container_closure_reference_standard_registers.sql',
 
+  // ── CMC register store parity + the dead third change-control store
+  //    (2026-08-23; root-tree files wired here 10 days late) ─────────────────
+  // Both sat in the root tree on no durable applier, so every database upgraded
+  // by deploy-migrate (every provisioned tenant) never got them: the Module 3
+  // Specifications register 500'd on create/update/approve (no
+  // quality_specifications), and the batch register rejected every create on
+  // the columns batchRecordRoutes writes. KNOWN_UNLISTED in the manifest test
+  // was not an honest home: quality_specifications is declared in
+  // shared/cmc-schema.ts and cmc_batch_records in shared/schema/
+  // regulatory-atoms.ts, neither of which drizzle.config.ts pushes; and a
+  // DROP CONSTRAINT + ADD COLUMN block on an existing table is exactly what
+  // push cannot reproduce.
+  // Order: after 20260730_cmc_evidence_tables (specification_audit_log, which
+  // the spec routes write with every row), after 20260730_cmc_change_control_
+  // store (the store that superseded c2c_cmc_changes), after 20260401_cmc_
+  // convergence_os (adds tenant_id to the batch table where it exists), and
+  // above the isolation pair below so quality_specifications.tenant_id INTEGER
+  // gets a policy. Note the spec routes filter `tenant_id = $n OR tenant_id IS
+  // NULL`; under RLS_ENFORCE=on NULL-tenant rows are invisible — pre-existing
+  // route semantics, not introduced by the policy.
+  // cmc_batch_records is created ONLY by root migrations/0006 (fresh installs),
+  // so the parity file's ALTER block is IF EXISTS-guarded: a database without
+  // the table gets a NOTICE and quality_specifications, not a halted deploy.
+  // Follow-up, out of scope here: 0006's batch table still has no durable
+  // creator, so the batch register stays honestly 42P01 on such a database.
+  'migrations/20260823_cmc_register_store_parity.sql',
+  // DROP TABLE IF EXISTS c2c_cmc_changes (seed-only demo content, zero live
+  // references). Its creator db/migrations/20260718_cmc_changes_store.sql is on
+  // no applier, so there is no create-then-drop ordering hazard; same shape as
+  // the 20260901 audit-table drop below.
+  'migrations/20260823_drop_dead_c2c_cmc_changes.sql',
+
   // ── CMC impurity + dissolution registers ─────────────────────────────────
   // The other two source types the Module 3 composer demands and nothing
   // produced: 3.2.S.3 / 3.2.S.4 read impurity_profile, 3.2.P.2 / 3.2.P.5 read

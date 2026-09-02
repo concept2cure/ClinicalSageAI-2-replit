@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-02T16:31:40.238Z",
+  "generatedAt": "2026-09-02T17:05:34.420Z",
   "git": {
-    "sha": "db3a8867d6aff9756173e9d9c52593738ec72c83",
+    "sha": "adec89864beb79f521f1f8f9554e3fd13af1cd68",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -15,9 +15,9 @@
   ],
   "summary": {
     "duplicateBasenames": 221,
-    "contentDuplicateGroups": 1,
-    "contentDuplicateFiles": 2,
-    "largeFilesByBytes": 35,
+    "contentDuplicateGroups": 0,
+    "contentDuplicateFiles": 0,
+    "largeFilesByBytes": 34,
     "largeFilesByLines": 86
   },
   "findings": {
@@ -2142,24 +2142,11 @@
         ]
       }
     ],
-    "contentDuplicates": [
-      {
-        "hash": "78e5aa6f8ab3",
-        "count": 2,
-        "paths": [
-          "server/services/ana/AnaToolExecutor.ts",
-          "server/services/ana/__verif_head_AnaToolExecutor.ts"
-        ]
-      }
-    ],
+    "contentDuplicates": [],
     "largeFilesByBytes": [
       {
-        "file": "server/services/ana/__verif_head_AnaToolExecutor.ts",
-        "bytes": 994613
-      },
-      {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 994613
+        "bytes": 995349
       },
       {
         "file": "shared/schema.ts",
@@ -2300,12 +2287,8 @@
         "lines": 19961
       },
       {
-        "file": "server/services/ana/__verif_head_AnaToolExecutor.ts",
-        "lines": 19348
-      },
-      {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19348
+        "lines": 19357
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2493,7 +2476,7 @@
       },
       {
         "file": "server/api/cmc/routes.ts",
-        "lines": 1993
+        "lines": 1987
       },
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
@@ -2612,6 +2595,10 @@
         "lines": 1650
       },
       {
+        "file": "server/routes/submissions.ts",
+        "lines": 1648
+      },
+      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1628
       },
@@ -2646,7 +2633,7 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 399,
-      "largeByBytes": 26,
+      "largeByBytes": 25,
       "largeByLines": 72
     },
     {
