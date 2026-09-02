@@ -38,6 +38,8 @@ import {
   CmDissolutionProfiles,
   CmMaterialSpecs,
   CmFormulationRecords,
+  CmManufacturingProcesses,
+  CmCharacterizationStudies,
   CmChangeRegister,
   CmComparabilityStudies,
   CmProcessValidation,
@@ -1906,6 +1908,14 @@ function CmMaterials({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
       {/* The method library sits with the substance because §3.2.S.4.2 is the
           analytical procedures section: the substance's control depends on it. */}
       <CmMethodLibrary />
+      {/* What the substance IS (§3.2.S.3.1) and how it is MADE (§3.2.S.2.2).
+          Both sections have been demanded by the composer since it was written
+          and had no producer: characterisation had no table at all, and the
+          process wrote into a table the compliance checker read and no screen
+          filled. Each row states which side of the dossier it files under, so
+          one register serves the drug product's §3.2.P.3.3 too. */}
+      <CmCharacterizationStudies />
+      <CmManufacturingProcesses />
 
       <div className="cm-sub-head">Drug product — §3.2.P</div>
       <CmDrugProducts />

@@ -4179,6 +4179,66 @@ export const cmcFormulationRecords = pgTable(
   })
 );
 
+/* ── Characterisation studies — §3.2.S.3.1 ────────────────────────────────────
+ *
+ * The composer has demanded a `characterization` source type since it was
+ * written and nothing produced one, so §3.2.S.3 could never be complete: its
+ * three required fields were answered, if at all, out of three free-text
+ * columns on the drug substance register.
+ *
+ * One row is one study, typed by what the study establishes. §3.2.S.3.1 asks
+ * for structure, physicochemical properties and biological activity, and those
+ * come from different experiments run at different times -- so unlike the
+ * registers where a *Complete key had to close the composer's union across
+ * sources, the union is the correct reading here: an NMR study and a solubility
+ * study together do establish two of the three, and neither establishes the
+ * third.
+ */
+export const cmcCharacterizationStudies = pgTable(
+  'cmc_characterization_studies',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: text('project_id'),
+    /* Which side of the dossier the study files into. Stored, not guessed:
+       the same rule as `materialRole` on the material register and `purpose`
+       on the dissolution register. */
+    scope: text('scope').default('drug_substance').notNull(),
+    /* structural | physicochemical | biological — decides which of §3.2.S.3.1's
+       three required fields this study can answer. A solubility measurement
+       does not elucidate a structure, and the composer must not read it as if
+       it did. */
+    studyType: text('study_type').default('structural').notNull(),
+    studyTitle: text('study_title').notNull(),
+    technique: text('technique'),
+    attribute: text('attribute'),
+    result: text('result'),
+    /* No default. A number whose unit is assumed is a number that means
+       nothing; the section says the unit is not recorded rather than
+       inventing one. */
+    resultUnit: text('result_unit'),
+    acceptanceReference: text('acceptance_reference'),
+    conclusion: text('conclusion'),
+    studyReference: text('study_reference'),
+    performedBy: text('performed_by'),
+    performedDate: timestamp('performed_date'),
+    /* [{ label, value, unit, note }] — spectra assignments, peak tables, the
+       per-parameter detail behind a single headline result. */
+    supportingData: jsonb('supporting_data'),
+    status: text('status').default('draft').notNull(), // draft | in-review | qualified | retired
+    qualifiedBy: text('qualified_by'),
+    qualificationDate: timestamp('qualification_date'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_cmc_characterization_studies_org: index('idx_cmc_characterization_studies_org').on(table.organizationId),
+    idx_cmc_characterization_studies_project: index('idx_cmc_characterization_studies_project').on(table.projectId),
+  })
+);
+
 // Regulatory Documents Table
 export const regulatoryDocuments = pgTable(
   'regulatory_documents',
@@ -4284,6 +4344,12 @@ export const insertCmcFormulationRecordSchema = createInsertSchemaOmit(cmcFormul
   updatedAt: true,
 });
 
+export const insertCmcCharacterizationStudySchema = createInsertSchemaOmit(cmcCharacterizationStudies, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // CMC Types
 export type AnalyticalMethod = InferSelectModel<typeof analyticalMethods>;
 export type InsertAnalyticalMethod = z.infer<typeof insertAnalyticalMethodSchema>;
@@ -4311,6 +4377,8 @@ export type CmcMaterialSpec = InferSelectModel<typeof cmcMaterialSpecs>;
 export type InsertCmcMaterialSpec = z.infer<typeof insertCmcMaterialSpecSchema>;
 export type CmcFormulationRecord = InferSelectModel<typeof cmcFormulationRecords>;
 export type InsertCmcFormulationRecord = z.infer<typeof insertCmcFormulationRecordSchema>;
+export type CmcCharacterizationStudy = InferSelectModel<typeof cmcCharacterizationStudies>;
+export type InsertCmcCharacterizationStudy = z.infer<typeof insertCmcCharacterizationStudySchema>;
 
 // Regulatory Document Insert Schema
 export const insertRegulatoryDocumentSchema = createInsertSchemaOmit(regulatoryDocuments, {

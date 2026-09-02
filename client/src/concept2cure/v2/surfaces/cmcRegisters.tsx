@@ -20,6 +20,8 @@ import {
   dissolutionProfileForm, dissolutionProfileBody, dissolutionProfilePatch,
   materialSpecForm, materialSpecBody, materialSpecPatch,
   formulationRecordForm, formulationRecordBody, formulationRecordPatch,
+  manufacturingProcessForm, manufacturingProcessBody, manufacturingProcessPatch,
+  characterizationStudyForm, characterizationStudyBody, characterizationStudyPatch,
   qualifyForm, qualifyBody,
   asUserId,
 } from './cmcRegisterForms';
@@ -30,6 +32,8 @@ import type {
   DissolutionProfileBody,
   MaterialSpecBody,
   FormulationRecordBody,
+  ManufacturingProcessBody,
+  CharacterizationStudyBody,
 } from './cmcRegisterForms';
 import { dissolutionPurposeSection } from '@shared/cmc/dissolution-purpose';
 /* The SAME scope resolver the composer uses. A register that matched the three
@@ -37,6 +41,7 @@ import { dissolutionPurposeSection } from '@shared/cmc/dissolution-purpose';
    moment filing into §3.2.S.6 — the screen disagreeing with the dossier about
    one record. */
 import { materialScopeSections } from '@shared/cmc/material-scope';
+import { CHARACTERIZATION_TYPE_LABEL, characterizationTypeSection, normalizeCharacterizationType } from '@shared/cmc/characterization-type';
 import { useAuth } from '@/services/portal/authService';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1606,6 +1611,237 @@ export function CmFormulationRecords() {
           },
         },
         { header: 'Supersedes', render: (r) => text(r.supersedes) },
+        { header: 'Status', render: (r) => chip(r.status, 'draft') },
+      ]}
+    />
+  );
+}
+
+
+/* ═══════════ Manufacturing processes — GET /api/cmc/manufacturing-processes ══ */
+
+export interface ManufacturingProcessApiRow {
+  id: string;
+  projectId?: string | null;
+  processName: string;
+  processType?: string | null;
+  processDescription?: string | null;
+  processSteps?: Array<Record<string, string>> | null;
+  criticalProcessParameters?: Array<Record<string, string>> | null;
+  processControls?: Array<Record<string, string>> | null;
+  equipmentList?: Array<Record<string, string>> | null;
+  batchSize?: string | null;
+  processDevelopment?: string | null;
+  reprocessing?: string | null;
+  validationStatus?: string | null;
+}
+
+/**
+ * The manufacturing process register — §3.2.S.2.2 and §3.2.P.3.3.
+ *
+ * It writes `manufacturing_processes`, the table the ICH compliance checker and
+ * the QbD analyzer have always read and no screen had ever written.
+ */
+export function CmManufacturingProcesses() {
+  const projectId = cmcProjectUuid();
+  return (
+    <RegisterCard<ManufacturingProcessApiRow>
+      path={`/api/cmc/manufacturing-processes${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`}
+      title="Manufacturing processes"
+      meta={(rows) => {
+        const validated = rows.filter((r) => String(r.validationStatus || '') === 'validated').length;
+        const withSteps = rows.filter((r) => (r.processSteps || []).length > 0).length;
+        return `${rows.length} processes -- ${withSteps} with recorded steps -- ${validated} validated`;
+      }}
+      icon={I.workflow}
+      loadingTitle="Loading manufacturing processes…"
+      emptyTitle="No manufacturing process recorded yet"
+      emptyHint="The ordered unit operations, their critical parameters and their in-process controls. Sections 3.2.S.2.2 and 3.2.P.3.3 compose from this register."
+      errorTitle="Couldn’t load manufacturing processes"
+      errorHint="The org-scoped process register didn’t load. Sign in and try again."
+      rowKey={(r) => r.id}
+      create={{
+        label: 'Record process',
+        subject: 'manufacturing process',
+        path: '/api/cmc/manufacturing-processes',
+        form: () => manufacturingProcessForm(),
+        toBody: (v, pid) => manufacturingProcessBody(v, pid),
+        needsProject: true,
+      }}
+      rowActions={[
+        {
+          label: 'Update',
+          icon: I.penLine,
+          subject: 'manufacturing process',
+          form: (r) => manufacturingProcessForm(r as Partial<ManufacturingProcessBody>),
+          path: (r) => `/api/cmc/manufacturing-processes/${r.id}`,
+          toBody: (v) => manufacturingProcessPatch(v),
+        },
+        {
+          label: 'Validate',
+          icon: I.lock,
+          subject: 'process validation',
+          /* Signed over the recorded steps. The API refuses the signature when
+             the process describes none, so the button refuses first and says
+             why rather than producing a rejected save. */
+          when: (r) => String(r.validationStatus || '').toLowerCase() !== 'validated',
+          disabledReason: (r) =>
+            (r.processSteps || []).length > 0
+              ? null
+              : 'Record the unit operations before signing — a validation signature over no steps attests to nothing',
+          form: (r) => qualifyForm('manufacturing process', r.processName),
+          path: (r) => `/api/cmc/manufacturing-processes/${r.id}/validate`,
+          method: 'POST',
+          toBody: (v) => qualifyBody(v),
+        },
+      ]}
+      columns={[
+        { header: 'Process', render: (r) => r.processName, bold: true },
+        { header: 'Files under', render: (r) => materialScopeSections(r.processType, 'drug_substance', '3.2.S.2', '3.2.P.3') },
+        {
+          header: 'Steps',
+          render: (r) => ((r.processSteps || []).length > 0
+            ? String((r.processSteps || []).length)
+            : <span className="rd-chip tone-warn">none</span>),
+        },
+        {
+          header: 'CPPs',
+          render: (r) => {
+            const cpps = r.criticalProcessParameters || [];
+            if (cpps.length === 0) return <span className="rd-chip tone-warn">none</span>;
+            const noRange = cpps.filter((c) => !String(c.rangeLow || '').trim() || !String(c.rangeHigh || '').trim());
+            return noRange.length > 0
+              ? <span className="rd-chip tone-warn">{noRange.length} of {cpps.length} without a range</span>
+              : <span className="rd-chip tone-ok">{cpps.length}</span>;
+          },
+        },
+        {
+          header: 'In-process controls',
+          render: (r) => {
+            const own = (r.processControls || []).length;
+            const onSteps = (r.processSteps || []).reduce(
+              (n, st) => n + (Array.isArray((st as Record<string, unknown>).inProcessControls)
+                ? ((st as unknown as { inProcessControls: unknown[] }).inProcessControls).length
+                : 0),
+              0,
+            );
+            const total = own + onSteps;
+            return total > 0 ? String(total) : <span className="rd-chip tone-warn">none</span>;
+          },
+        },
+        { header: 'Batch size', render: (r) => text(r.batchSize) },
+        { header: 'Equipment', render: (r) => ((r.equipmentList || []).length > 0 ? String((r.equipmentList || []).length) : '--') },
+        { header: 'Validation', render: (r) => chip(r.validationStatus, 'not-started') },
+      ]}
+    />
+  );
+}
+
+/* ═══════════ Characterisation — GET /api/cmc/characterization-studies ════════ */
+
+export interface CharacterizationStudyApiRow {
+  id: number;
+  projectId?: string | null;
+  scope: string;
+  studyType: string;
+  studyTitle: string;
+  technique?: string | null;
+  attribute?: string | null;
+  result?: string | null;
+  resultUnit?: string | null;
+  acceptanceReference?: string | null;
+  conclusion?: string | null;
+  studyReference?: string | null;
+  performedBy?: string | null;
+  performedDate?: string | null;
+  supportingData?: Array<Record<string, string>> | null;
+  status: string;
+}
+
+/**
+ * The characterisation register — §3.2.S.3.1.
+ *
+ * The section asks three questions, so the card reports which of them the
+ * recorded studies actually answer rather than a count of studies.
+ */
+export function CmCharacterizationStudies() {
+  const projectId = cmcProjectUuid();
+  return (
+    <RegisterCard<CharacterizationStudyApiRow>
+      path={`/api/cmc/characterization-studies${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`}
+      title="Characterisation studies"
+      meta={(rows) => {
+        /* Which of §3.2.S.3.1's three questions are answered — over the studies
+           that established something, on the drug substance side. A count of
+           studies would say "3 recorded" over three NMR runs and leave the
+           reader thinking the section was covered. */
+        const live = rows.filter((r) => String(r.status || '').toLowerCase() !== 'retired');
+        const answers = (t: string) => live.some(
+          (r) => normalizeCharacterizationType(r.studyType) === t
+            && String(r.scope || 'drug_substance') !== 'drug_product'
+            && (String(r.result || '').trim() || String(r.conclusion || '').trim()),
+        );
+        const answered = ['structural', 'physicochemical', 'biological'].filter(answers).length;
+        return `${live.length} studies -- ${answered} of 3 characterisation questions answered`;
+      }}
+      icon={I.microscope}
+      loadingTitle="Loading characterisation studies…"
+      emptyTitle="No characterisation study recorded yet"
+      emptyHint="Section 3.2.S.3.1 asks three separate questions — the structure, the physicochemical properties and the biological activity — and each study answers the one it is typed as."
+      errorTitle="Couldn’t load characterisation studies"
+      errorHint="The org-scoped characterisation register didn’t load. Sign in and try again."
+      rowKey={(r) => r.id}
+      create={{
+        label: 'Record study',
+        subject: 'characterisation study',
+        path: '/api/cmc/characterization-studies',
+        form: () => characterizationStudyForm(),
+        toBody: (v, pid) => characterizationStudyBody(v, pid),
+        needsProject: true,
+      }}
+      rowActions={[
+        {
+          label: 'Update',
+          icon: I.penLine,
+          subject: 'characterisation study',
+          form: (r) => characterizationStudyForm(r as Partial<CharacterizationStudyBody>),
+          path: (r) => `/api/cmc/characterization-studies/${r.id}`,
+          toBody: (v) => characterizationStudyPatch(v),
+        },
+        {
+          label: 'Qualify',
+          icon: I.lock,
+          subject: 'qualification',
+          when: (r) => String(r.status || '').toLowerCase() !== 'qualified',
+          disabledReason: (r) =>
+            String(r.result || '').trim() || String(r.conclusion || '').trim()
+              ? null
+              : 'Record what the study established before signing — a signature over no result attests to nothing',
+          form: (r) => qualifyForm('characterisation study', r.studyTitle),
+          path: (r) => `/api/cmc/characterization-studies/${r.id}/qualify`,
+          method: 'POST',
+          toBody: (v) => qualifyBody(v),
+        },
+      ]}
+      columns={[
+        { header: 'Study', render: (r) => r.studyTitle, bold: true },
+        { header: 'Establishes', render: (r) => CHARACTERIZATION_TYPE_LABEL[normalizeCharacterizationType(r.studyType)] },
+        { header: 'Files under', render: (r) => characterizationTypeSection(r.scope) },
+        { header: 'Technique', render: (r) => text(r.technique) },
+        { header: 'Attribute', render: (r) => text(r.attribute) },
+        {
+          header: 'Result',
+          render: (r) => {
+            const value = String(r.result || '').trim();
+            if (!value) return <span className="rd-chip tone-warn">none</span>;
+            const unit = String(r.resultUnit || '').trim();
+            /* A number with no recorded unit is shown as such — the dossier
+               says the same thing, and the two must not disagree. */
+            return unit ? `${value} ${unit}` : <span className="rd-chip tone-warn">{value} (unit not recorded)</span>;
+          },
+        },
+        { header: 'Conclusion', render: (r) => (String(r.conclusion || '').trim() ? <span className="rd-chip tone-ok">recorded</span> : <span className="rd-chip tone-warn">none</span>) },
+        { header: 'Reference', render: (r) => text(r.studyReference), mono: true },
         { header: 'Status', render: (r) => chip(r.status, 'draft') },
       ]}
     />

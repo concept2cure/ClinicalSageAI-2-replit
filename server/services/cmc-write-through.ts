@@ -30,6 +30,10 @@ import {
 } from '../../shared/cmc/dissolution-purpose';
 /* The ICH impurity classes are the assessment engine's vocabulary, not this
    module's: one definition, in services/cmc/impurity-assessment. */
+import {
+  CHARACTERIZATION_TYPE_FIELD,
+  normalizeCharacterizationType,
+} from '../../shared/cmc/characterization-type';
 import { isAssessableImpurity } from './cmc/impurity-assessment';
 import unifiedTaskService from './unifiedTaskService';
 
@@ -1040,6 +1044,197 @@ export function mapFormulationRecordPayload(record: Record<string, any>): Record
   };
 }
 
+
+/** Rows of a jsonb column that is meant to hold an array of objects. */
+function jsonObjectRows(value: unknown): Record<string, any>[] {
+  return Array.isArray(value) ? value.filter((r) => r && typeof r === 'object') : [];
+}
+
+/**
+ * Map a manufacturing_processes row to a canonical source payload.
+ *
+ * §3.2.S.2.2 and §3.2.P.3.3 want the same three things of a process: what the
+ * steps are, what the critical parameters are and what is controlled in-process.
+ * The register holds each as structured rows, so the payload carries both the
+ * rows (for the tables) and the text the section narrative reads.
+ *
+ * The side is the stored `processType`, resolved through the shared material
+ * scope so a drug-substance process cannot complete §3.2.P.3 and a drug-product
+ * one cannot complete §3.2.S.2 — the same rule as the container closure and
+ * reference standard registers.
+ */
+export function mapManufacturingProcessPayload(record: Record<string, any>): Record<string, any> {
+  const side = normalizeMaterialScope(record.processType ?? record.process_type, 'drug_substance');
+  const forSubstance = side === 'drug_substance' || side === 'both';
+  const forProduct = side === 'drug_product' || side === 'both';
+
+  const processName = String(record.processName || record.process_name || '').trim();
+  const description = String(record.processDescription || record.process_description || '').trim();
+  const steps = jsonObjectRows(record.processSteps ?? record.process_steps);
+  const cpps = jsonObjectRows(record.criticalProcessParameters ?? record.critical_process_parameters);
+  const controls = jsonObjectRows(record.processControls ?? record.process_controls);
+  const equipment = jsonObjectRows(record.equipmentList ?? record.equipment_list);
+  const validationStatus = String(record.validationStatus || record.validation_status || '').trim();
+
+  /* The ordered unit operations ARE the process description when no prose one
+     was written: "the process consists of X, then Y, then Z" is sourced from
+     the recorded steps, not invented. Steps are rendered in the order they were
+     recorded when none carries a number — reordering an unnumbered list would
+     assert a sequence the register does not hold. */
+  const ordered = steps
+    .map((st, i) => ({ st, i, n: Number(st.stepNumber ?? st.step_number ?? st.order) }))
+    .sort((a, b) => {
+      const an = Number.isFinite(a.n) ? a.n : Number.POSITIVE_INFINITY;
+      const bn = Number.isFinite(b.n) ? b.n : Number.POSITIVE_INFINITY;
+      return an === bn ? a.i - b.i : an - bn;
+    })
+    .map(({ st }) => st);
+
+  const stepText = ordered
+    .map((st: any) => String(st.unitOperation || st.unit_operation || st.stepName || st.step_name || '').trim())
+    .filter(Boolean)
+    .join('; ');
+
+  /* In-process controls come from two places the register offers — a
+     process-level control list and per-step controls — and a section that read
+     only one of them would report "no in-process controls" over a process that
+     records them on every step. */
+  const stepControls = ordered.flatMap((st: any) => jsonObjectRows(st.inProcessControls ?? st.in_process_controls));
+  const allControls = [...controls, ...stepControls];
+  const controlText = allControls
+    .map((c: any) =>
+      [c.test || c.control || c.parameter, c.acceptanceCriteria || c.acceptance_criteria || c.limit]
+        .filter(Boolean)
+        .join(' ')
+    )
+    .filter(Boolean)
+    .join('; ');
+
+  /* A process the section can actually describe: named, with an ordered set of
+     steps and at least one in-process control. Emitted as ONE key from ONE
+     record, because the composer's completeness is a union across matched
+     sources — without it, a record carrying only a name and a second carrying
+     only steps would add up to a complete manufacturing section. */
+  const describable = Boolean(processName) && ordered.length > 0 && allControls.length > 0;
+
+  return {
+    processScope: side,
+    processName,
+    processType: record.processType || record.process_type || '',
+    processSteps: ordered.length > 0 ? ordered : null,
+    criticalProcessParameters: cpps.length > 0 ? cpps : null,
+    processControlRows: allControls.length > 0 ? allControls : null,
+    /* §3.2.S.2's two required fields are emitted from the DRUG SUBSTANCE side
+       only. The composer's completeness is a union across every matched source,
+       and `manufacturing_process` matches §3.2.S.2 whatever side it is on — so
+       an unscoped `processDescription` would have let a tablet compression
+       process complete the drug substance's manufacturing section. The
+       drug-product side carries the same two facts under its own names; §3.2.P.3
+       renders them from the side-scoped tables. */
+    processDescription: forSubstance ? (description || stepText || '') : null,
+    /* Text, because the §3.2.S.2 narrative reads processControls with a
+       first-match string helper; the rows travel alongside for the table. */
+    processControls: forSubstance ? (controlText || null) : null,
+    drugProductProcessDescription: forProduct ? (description || stepText || '') : null,
+    drugProductProcessControls: forProduct ? (controlText || null) : null,
+    equipmentList: equipment.length > 0 ? equipment : null,
+    facilityInfo: hasRecordedValue(record.facilityInfo ?? record.facility_info)
+      ? (record.facilityInfo ?? record.facility_info)
+      : null,
+    processBatchSize: record.batchSize || record.batch_size || '',
+    yieldData: hasRecordedValue(record.yieldData ?? record.yield_data)
+      ? (record.yieldData ?? record.yield_data)
+      : null,
+    scaleUpData: hasRecordedValue(record.scaleUpData ?? record.scale_up_data)
+      ? (record.scaleUpData ?? record.scale_up_data)
+      : null,
+    processDevelopment: record.processDevelopment || record.process_development || '',
+    reprocessing: record.reprocessing || '',
+    processValidationStatus: validationStatus,
+    /* §3.2.S.2's completeness key, drug-substance side only. */
+    manufacturingProcessComplete: forSubstance && describable ? processName : null,
+    /* §3.2.P.3's, drug-product side only. */
+    drugProductProcessComplete: forProduct && describable ? processName : null,
+  };
+}
+
+/**
+ * Map a cmc_characterization_studies row to a canonical source payload.
+ *
+ * A study answers ONE of §3.2.S.3.1's three questions — the one its stored
+ * `studyType` names — and the payload emits only that field. This is the whole
+ * point of storing the type: the composer's completeness is a union across
+ * matched sources, so three NMR studies emitting all three fields would have
+ * reported the characterisation section complete over no physicochemical data
+ * and no bioactivity data at all.
+ *
+ * Unlike the registers where a *Complete key had to close that union, the union
+ * IS correct across types here: an NMR study and a solubility study together do
+ * establish two of the three.
+ */
+export function mapCharacterizationStudyPayload(record: Record<string, any>): Record<string, any> {
+  const type = normalizeCharacterizationType(record.studyType ?? record.study_type);
+  const side = normalizeMaterialScope(record.scope, 'drug_substance');
+  const forSubstance = side === 'drug_substance' || side === 'both';
+
+  const studyTitle = String(record.studyTitle || record.study_title || '').trim();
+  const technique = String(record.technique || '').trim();
+  const attribute = String(record.attribute || '').trim();
+  const result = String(record.result ?? '').trim();
+  /* No unit is invented. A recorded number whose unit was never captured is
+     reported as unrecorded, the same refusal the impurity register makes. */
+  const resultUnit = String(record.resultUnit || record.result_unit || '').trim();
+  const conclusion = String(record.conclusion || '').trim();
+
+  /* The sentence the section can stand behind: a technique and what it showed.
+     A study with a title and nothing else establishes nothing, so it answers no
+     required field — it still renders in the table, where a reviewer can see
+     that it was run and that its result is missing. */
+  const statement = [
+    [technique, attribute].filter(Boolean).join(' — '),
+    result ? `${result}${resultUnit ? ` ${resultUnit}` : ''}` : '',
+    conclusion,
+  ]
+    .filter(Boolean)
+    .join(': ');
+  const establishes = Boolean(technique) && Boolean(result || conclusion);
+
+  const payload: Record<string, any> = {
+    characterizationScope: side,
+    characterizationType: type,
+    studyTitle,
+    technique,
+    attribute,
+    characterizationResult: result,
+    /* Emitted as recorded, so the section can say "unit not recorded" instead
+       of printing a bare number that reads as whatever unit the reader assumes. */
+    characterizationResultUnit: resultUnit,
+    acceptanceReference: record.acceptanceReference || record.acceptance_reference || '',
+    conclusion,
+    studyReference: record.studyReference || record.study_reference || '',
+    performedBy: record.performedBy || record.performed_by || '',
+    performedDate: record.performedDate || record.performed_date || null,
+    supportingData: hasRecordedValue(record.supportingData ?? record.supporting_data)
+      ? (record.supportingData ?? record.supporting_data)
+      : null,
+    status: record.status || 'draft',
+    characterizationStatement: statement || null,
+    /* Whether the study established anything — a technique AND a readout. The
+       statement alone is not that test: a study with a technique and no result
+       still produces a statement naming the technique, and a section counting
+       statements would have reported it as a finding. */
+    characterizationEstablishes: establishes,
+  };
+
+  /* The one field this study type can answer — and only when the study
+     actually established something, and only on the drug-substance side,
+     because §3.2.S.3 is the drug substance's characterisation section. */
+  payload[CHARACTERIZATION_TYPE_FIELD[type]] =
+    forSubstance && establishes ? (statement || studyTitle) : null;
+
+  return payload;
+}
+
 // ── Core write-through function ────────────────────────────────────────────
 
 /**
@@ -1336,6 +1531,28 @@ export async function writeThroughFormulationRecord(
     orgId, projectId, sourceType: 'formulation_record',
     sourceKey: `formulation_record:${recordId}`,
     sourcePayload: mapFormulationRecordPayload(record),
+    createdBy,
+  });
+}
+
+export async function writeThroughManufacturingProcess(
+  orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
+): Promise<WriteThroughResult | null> {
+  return writeThroughToCanonicalSource({
+    orgId, projectId, sourceType: 'manufacturing_process',
+    sourceKey: `manufacturing_process:${recordId}`,
+    sourcePayload: mapManufacturingProcessPayload(record),
+    createdBy,
+  });
+}
+
+export async function writeThroughCharacterizationStudy(
+  orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
+): Promise<WriteThroughResult | null> {
+  return writeThroughToCanonicalSource({
+    orgId, projectId, sourceType: 'characterization',
+    sourceKey: `characterization:${recordId}`,
+    sourcePayload: mapCharacterizationStudyPayload(record),
     createdBy,
   });
 }

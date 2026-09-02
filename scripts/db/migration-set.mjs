@@ -1757,6 +1757,17 @@ export const C2C_MIGRATION_FILES = [
   // human/animal-origin question from data instead of a regex over free text.
   'db/migrations/20260903_cmc_material_formulation_registers.sql',
 
+  // ── CMC manufacturing process + characterisation registers ───────────────
+  // The last two source types the composer demanded with no producer:
+  // 3.2.S.2 reads manufacturing_process, 3.2.S.3 reads characterization.
+  // The manufacturing half ALTERs the existing manufacturing_processes table
+  // rather than adding one: that table already has two live readers
+  // (ich-compliance-checker, qbd-analyzer) and is cmc_process_steps' FK
+  // target, so it must be the table the writer fills. MUST stay after
+  // db/migrations/20260730_manufacturing_processes_reconstruction.sql, which
+  // creates it.
+  'db/migrations/20260903_cmc_manufacturing_characterization_registers.sql',
+
   // ── Drop the audit-shaped tables that survived a from-scratch liveness
   //    re-check (ledger L13; docs/AUDIT_STORE_INVENTORY_2026-08.md §5.1) ─────
   // MUST stay near the end, and specifically AFTER every entry above that
