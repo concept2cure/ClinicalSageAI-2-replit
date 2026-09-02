@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-02T04:43:33.310Z",
+  "generatedAt": "2026-09-02T14:04:39.582Z",
   "git": {
-    "sha": "486519bc7c3e23b3974550ef5bb12da77cc773cc",
+    "sha": "f3527b59e51d07d2f6cfe1a7f8ca01e422204164",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2194,7 +2194,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "bytes": 152834
+        "bytes": 152903
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2595,24 +2595,24 @@
         "lines": 1628
       },
       {
-        "file": "services/regulatory/globalPyramids.ts",
-        "lines": 1623
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "lines": 1624
       },
       {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1615
+        "file": "services/regulatory/globalPyramids.ts",
+        "lines": 1623
       },
       {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
         "lines": 1606
       },
       {
-        "file": "server/services/toxicology/toxicology-knowledge.ts",
+        "file": "server/services/contradiction-engine-service.ts",
         "lines": 1602
       },
       {
-        "file": "server/services/contradiction-engine-service.ts",
-        "lines": 1601
+        "file": "server/services/toxicology/toxicology-knowledge.ts",
+        "lines": 1602
       },
       {
         "file": "server/services/module3Composer.ts",

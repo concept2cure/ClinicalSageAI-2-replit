@@ -2277,7 +2277,7 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
         '../services/decision-lifecycle-service.js'
       );
       decisionAwareStatus = decisionLifecycleService.computeDecisionAwareStatus(
-        String(projectId), { moduleCode }
+        String(projectId), { moduleCode, organizationId: orgId }
       );
     } catch { /* non-blocking */ }
 
@@ -2510,7 +2510,7 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
         '../services/decision-lifecycle-service.js'
       );
       decisionAwareStatus = decisionLifecycleService.computeDecisionAwareStatus(
-        String(projectId), {}
+        String(projectId), { organizationId: orgId }
       );
     } catch { /* non-blocking */ }
 
@@ -3216,7 +3216,7 @@ router.post('/contradiction-scan', async (req: Request, res: Response) => {
         '../services/decision-lifecycle-service.js'
       );
       const context = decisionLifecycleService.getContradictionDecisionContext(
-        String(projectId), { limit: 20 }
+        String(projectId), { limit: 20, organizationId: orgId }
       );
       linkedDecisionIds = context
         .filter(c => c.isContradictionDecision)
