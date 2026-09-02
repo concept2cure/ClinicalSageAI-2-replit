@@ -444,7 +444,20 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
             <div className="pj-card-h">
               <span className="t">Contradictions</span>
               <span className="s">
-                {open.length} open{criticalOpen.length ? ` -- ${criticalOpen.length} critical` : ''} -- across specifications, methods, stability, batch and comparability
+                {/* This header claimed "0 open -- across specifications, methods,
+                    stability, batch and comparability" UNCONDITIONALLY — while the
+                    read was in flight and after it had failed. useLiveRows hands
+                    back empty rows on a failed read exactly as on a genuinely empty
+                    one; only its loading/error flags tell them apart, and the card
+                    BODY below already branches on both. The header never did, so a
+                    reviewer skimming the summary of a filing-blocking gate took "0
+                    open" as a clean sweep that had not happened. It now says what
+                    the body says: a count only from a settled, successful read. */}
+                {contradictions.loading
+                  ? 'Loading contradictions…'
+                  : contradictions.error
+                    ? 'Couldn’t load contradictions — no count is claimed'
+                    : `${open.length} open${criticalOpen.length ? ` -- ${criticalOpen.length} critical` : ''} -- across specifications, methods, stability, batch and comparability`}
               </span>
             </div>
             <div className="pj-card-b" style={{ padding: 0 }}>
