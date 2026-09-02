@@ -94,7 +94,10 @@ vi.mock('../../server/auth', () => ({
   authMiddleware: (_req: any, _res: any, next: any) => next(),
 }));
 
-vi.mock('../../server/services/export/governedExportConsequence', () => ({
+// Stub only the registry-backed consequence; the audited-unplaced helper is
+// the real one (it writes the EXPORT_GENERATED row these tests observe).
+vi.mock('../../server/services/export/governedExportConsequence', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   createGovernedExportConsequence: mockGovernedConsequence,
 }));
 

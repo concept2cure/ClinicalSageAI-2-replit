@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-02T16:31:40.238Z",
+  "generatedAt": "2026-09-02T16:53:46.322Z",
   "git": {
-    "sha": "db3a8867d6aff9756173e9d9c52593738ec72c83",
+    "sha": "db0104e71bff557fe127db2fb1c132f1b8b24c91",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -15,10 +15,10 @@
   ],
   "summary": {
     "duplicateBasenames": 221,
-    "contentDuplicateGroups": 1,
-    "contentDuplicateFiles": 2,
+    "contentDuplicateGroups": 0,
+    "contentDuplicateFiles": 0,
     "largeFilesByBytes": 35,
-    "largeFilesByLines": 86
+    "largeFilesByLines": 87
   },
   "findings": {
     "duplicateBasenames": [
@@ -2142,23 +2142,14 @@
         ]
       }
     ],
-    "contentDuplicates": [
-      {
-        "hash": "78e5aa6f8ab3",
-        "count": 2,
-        "paths": [
-          "server/services/ana/AnaToolExecutor.ts",
-          "server/services/ana/__verif_head_AnaToolExecutor.ts"
-        ]
-      }
-    ],
+    "contentDuplicates": [],
     "largeFilesByBytes": [
       {
-        "file": "server/services/ana/__verif_head_AnaToolExecutor.ts",
-        "bytes": 994613
+        "file": "server/services/ana/AnaToolExecutor.ts",
+        "bytes": 995349
       },
       {
-        "file": "server/services/ana/AnaToolExecutor.ts",
+        "file": "server/services/ana/__verif_head_AnaToolExecutor.ts",
         "bytes": 994613
       },
       {
@@ -2300,11 +2291,11 @@
         "lines": 19961
       },
       {
-        "file": "server/services/ana/__verif_head_AnaToolExecutor.ts",
-        "lines": 19348
+        "file": "server/services/ana/AnaToolExecutor.ts",
+        "lines": 19357
       },
       {
-        "file": "server/services/ana/AnaToolExecutor.ts",
+        "file": "server/services/ana/__verif_head_AnaToolExecutor.ts",
         "lines": 19348
       },
       {
@@ -2612,6 +2603,10 @@
         "lines": 1650
       },
       {
+        "file": "server/routes/submissions.ts",
+        "lines": 1648
+      },
+      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1628
       },
@@ -2647,7 +2642,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 399,
       "largeByBytes": 26,
-      "largeByLines": 72
+      "largeByLines": 73
     },
     {
       "owner": "Unassigned (TBD)",
