@@ -628,6 +628,34 @@ const SCHED_STATUS_TONE: Record<string, string> = {
   blocked: 'tone-warn',
 };
 
+/**
+ * The program-header status chip was hardcoded `tone-ok`, so a program whose
+ * recorded status was blocked, at_risk or on_hold wore a GREEN pill — a health
+ * verdict drawn without consulting the value it was tied to. A director scanning
+ * the top of the page for at-a-glance health read green-next-to-"blocked" as
+ * good news. `status` is a free-text column, so this maps the values that
+ * carry a verdict and defaults everything else to NEUTRAL: an unknown status
+ * must never read as healthy.
+ */
+const PROGRAM_STATUS_TONE: Record<string, string> = {
+  active: 'tone-ok',
+  on_track: 'tone-ok',
+  completed: 'tone-ok',
+  at_risk: 'tone-warn',
+  blocked: 'tone-warn',
+  slipped: 'tone-warn',
+  on_hold: 'tone-warn',
+  suspended: 'tone-warn',
+  cancelled: 'tone-warn',
+  inactive: 'tone-idle',
+  archived: 'tone-idle',
+};
+/** Same defect one chip over: "priority: low" wore a warn tone. */
+const PRIORITY_TONE: Record<string, string> = {
+  critical: 'tone-warn',
+  high: 'tone-warn',
+};
+
 function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) => void }) {
   const ident = pid && SCHED_IDENT_RE.test(pid) ? pid : null;
   const [reloadKey, setReloadKey] = useState(0);
@@ -1179,7 +1207,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
       availableActions: [
         'Move through the programme lifecycle stages',
         'Open a recent draft section in the document editor',
-        'Open this project\u2019s documents in the Vault surface, or its filings in the Submission Center',
+        'Open this project’s documents in the Vault surface, or its filings in the Submission Center',
         'Read the per-module completion rollup and the recent audited activity',
       ],
     };
@@ -1239,8 +1267,8 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
             {submissionType && <span className="rd-chip tone-idle">{submissionType}</span>}
             {region && <span className="rd-chip tone-idle">{region}</span>}
             {indication && <span className="rd-chip tone-idle">{indication}</span>}
-            {status && <span className="rd-chip tone-ok">{status}</span>}
-            {priority && <span className="rd-chip tone-warn">priority: {priority}</span>}
+            {status && <span className={`rd-chip ${PROGRAM_STATUS_TONE[status] ?? 'tone-idle'}`}>{status}</span>}
+            {priority && <span className={`rd-chip ${PRIORITY_TONE[priority] ?? 'tone-idle'}`}>priority: {priority}</span>}
             {phase && <span className="rd-chip tone-idle">{phase}</span>}
           </div>
         </div>
