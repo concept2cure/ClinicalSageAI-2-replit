@@ -214,6 +214,35 @@ afterAll(async () => {
   await jdb?.close();
 });
 
+/**
+ * Seed a grant straight into doc_permissions.
+ *
+ * The HTTP writer these cases used to call lived in authoring.router.ts and was
+ * deleted in 3eb7306: register-inline-routes mounts authoringPermissionsRouter
+ * on '/api' BEFORE authoring.router on '/api/authoring', and it owns the same
+ * full path, so the router-local copy had never executed in the running app.
+ * This file mounts authoring.router ALONE, which is why it kept reaching the
+ * shadowed duplicate — and why those calls 404 now that it is gone.
+ *
+ * Seeding directly is what this file already does for the AND/OR precedence
+ * case, for the reason stated there: the subject here is the section-edit
+ * GATE's predicate, not the writer. The canonical writer has its own coverage
+ * in services/authoring/__tests__/authoring-object-permissions.integration.test.ts.
+ */
+async function seedGrant(
+  docId: string,
+  email: string,
+  role: string,
+  sectionId: string | null = null,
+  tenantId: number = ORG_A,
+) {
+  await jdb.pool.query(
+    `INSERT INTO doc_permissions (doc_id, section_id, email, role, tenant_id)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [docId, sectionId, email, role, tenantId],
+  );
+}
+
 describe('the permission store is REAL, not a phantom', () => {
   it('doc_permissions exists with the tenant-keyed shape the gate queries', async () => {
     const r = await jdb.pool.query(
@@ -347,14 +376,9 @@ describe('the fine-grained matrix WORKS when enabled (flag ON)', () => {
   }, T);
 
   it('an AUTHOR granted on the document CAN edit its section', async () => {
-    const grant = await request(app)
-      .post(`/api/authoring/docs/${DOC_DRAFT}/permissions`)
-      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
-      .send({ email: GRANTEE.email, role: 'AUTHOR' });
-    expect(grant.status).toBe(200);
-    // The grant must be written with the granter's VERIFIED tenant, or the
-    // tenant-scoped gate could never match it.
-    expect(grant.body.tenant_id).toBe(ORG_A);
+    // Tenant-keyed on purpose: a row written with the wrong tenant could never
+    // match the tenant-scoped gate, which is the thing under test.
+    await seedGrant(DOC_DRAFT, GRANTEE.email, 'AUTHOR');
 
     const res = await patchAs(GRANTEE, SEC_DRAFT, 'EDITED-BY-GRANTED-AUTHOR');
     expect(res.status).toBe(200);
@@ -364,11 +388,7 @@ describe('the fine-grained matrix WORKS when enabled (flag ON)', () => {
   it('a grant on a DIFFERENT document does NOT authorise this section', async () => {
     // GRANTEE already holds AUTHOR on DOC_DRAFT from the previous case; give
     // MEMBER a doc-level grant on an unrelated document instead.
-    const grant = await request(app)
-      .post(`/api/authoring/docs/${DOC_OTHER}/permissions`)
-      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
-      .send({ email: MEMBER.email, role: 'AUTHOR' });
-    expect(grant.status).toBe(200);
+    await seedGrant(DOC_OTHER, MEMBER.email, 'AUTHOR');
 
     // Permitted on the document it was granted for …
     const allowed = await patchAs(MEMBER, SEC_OTHER, 'EDITED-ON-GRANTED-DOC');
@@ -420,11 +440,7 @@ describe('the fine-grained matrix WORKS when enabled (flag ON)', () => {
        ON CONFLICT (id) DO NOTHING`,
       [extra, DOC_OTHER, ORG_A],
     );
-    const grant = await request(app)
-      .post(`/api/authoring/docs/${DOC_OTHER}/permissions`)
-      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
-      .send({ email: 'narrow@authoring.example', role: 'REVIEWER', section_id: extra });
-    expect(grant.status).toBe(200);
+    await seedGrant(DOC_OTHER, 'narrow@authoring.example', 'REVIEWER', extra);
 
     const narrow: Principal = {
       id: 'fa1c2a10-0000-4000-8000-00000000a004',
@@ -435,50 +451,53 @@ describe('the fine-grained matrix WORKS when enabled (flag ON)', () => {
     expect((await patchAs(narrow, SEC_OTHER, 'NARROW-LEAK')).status).toBe(403);
   }, T);
 
-  it('a grant naming a document in ANOTHER tenant is refused at the writer', async () => {
-    const res = await request(app)
-      .post(`/api/authoring/docs/${DOC_B}/permissions`)
-      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
-      .send({ email: MEMBER.email, role: 'AUTHOR' });
-    expect(res.status).toBe(404);
-    const rows = await jdb.pool.query(`SELECT id FROM doc_permissions WHERE doc_id = $1`, [DOC_B]);
-    expect(rows.rows).toHaveLength(0);
-  }, T);
+  /* Three cases lived here that tested the WRITER, not the gate:
+       - a grant naming a document in another tenant is refused
+       - an ungrantable role is rejected rather than stored as an inert row
+       - the permission listing is tenant-scoped
+     They addressed authoring.router.ts's own POST/GET for
+     /docs/:docId/permissions, which 3eb7306 deleted as a shadowed duplicate.
+     They are not re-pointed at the canonical writer here because that writer
+     takes a different contract (principalId rather than email, 201 rather than
+     200, and requirePermissionManager's owner/admin gate) and lives behind a
+     different auth chain than this file's JWT mint().
 
-  it('an ungrantable role is rejected rather than stored as an inert row', async () => {
-    const res = await request(app)
-      .post(`/api/authoring/docs/${DOC_DRAFT}/permissions`)
-      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
-      .send({ email: MEMBER.email, role: 'ADMIN' });
-    expect(res.status).toBe(400);
-  }, T);
+     Their behaviour is covered against the canonical implementation in
+     services/authoring/__tests__/authoring-object-permissions.integration.test.ts:
+     'rejects cross-tenant document and section permission links at the database
+     boundary', 'does not let a permission on one section authorize a different
+     section', and 'grants reviewer and approver authority explicitly, without
+     edit escalation'.
+
+     The cross-tenant case is worth naming: after the deletion it still passed,
+     because it asserted 404 and a missing route also returns 404. A test that
+     goes on passing once its subject is gone is worse than one that fails. */
 
   it('a valid grant still cannot edit a FROZEN record', async () => {
-    const grant = await request(app)
-      .post(`/api/authoring/docs/${DOC_FROZEN}/permissions`)
-      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
-      .send({ email: GRANTEE.email, role: 'AUTHOR' });
-    expect(grant.status).toBe(200);
+    await seedGrant(DOC_FROZEN, GRANTEE.email, 'AUTHOR');
 
     const res = await patchAs(GRANTEE, SEC_FROZEN, 'TAMPERED-WITH-GRANT');
     expect(res.status).toBe(403);
     expect(await contentOf(SEC_FROZEN)).toBe('ORIGINAL');
   }, T);
 
-  it('the permission listing is tenant-scoped', async () => {
-    const mine = await request(app)
-      .get(`/api/authoring/docs/${DOC_DRAFT}/permissions`)
-      .set('Authorization', `Bearer ${await mint(QA_USER)}`);
-    expect(mine.status).toBe(200);
-    expect(Array.isArray(mine.body)).toBe(true);
-    expect(mine.body.length).toBeGreaterThan(0);
+  it('a grant carrying the wrong tenant cannot be stored at all', async () => {
+    // Replaces the deleted listing endpoint's tenant-scoping case. The intent
+    // was to prove the gate ignores a grant belonging to another tenant; the
+    // schema turns out to make that row unstorable in the first place, which is
+    // the stronger statement. doc_permissions_doc_tenant_fkey ties (doc_id,
+    // tenant_id) to the document's own tenant, so a mismatched grant is refused
+    // by the database rather than merely unmatched by a query — no application
+    // path can leave one behind for a later predicate change to start honouring.
+    await expect(
+      seedGrant(DOC_DRAFT, 'stranger@authoring.example', 'AUTHOR', null, ORG_B),
+    ).rejects.toThrow(/foreign key|doc_tenant/i);
 
-    // Same document id, a caller from another tenant: no rows, ever.
-    const theirs = await request(app)
-      .get(`/api/authoring/docs/${DOC_DRAFT}/permissions`)
-      .set('Authorization', `Bearer ${await mint(OUTSIDER)}`);
-    expect(theirs.status).toBe(200);
-    expect(theirs.body).toHaveLength(0);
+    const rows = await jdb.pool.query(
+      `SELECT id FROM doc_permissions WHERE doc_id = $1 AND tenant_id = $2`,
+      [DOC_DRAFT, ORG_B],
+    );
+    expect(rows.rows).toHaveLength(0);
   }, T);
 });
 

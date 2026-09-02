@@ -583,11 +583,20 @@ async function enrichWithKnowledgeSearch(query: string, projectId: string | numb
   }
 }
 
-async function enrichWithDecisions(projectId: string | number): Promise<string> {
+async function enrichWithDecisions(
+  projectId: string | number,
+  organizationId?: number,
+): Promise<string> {
   try {
     const { decisionLifecycleService } = await import('../decision-lifecycle-service.js');
-    const decisionCtx = decisionLifecycleService.getDecisionContext(String(projectId), { limit: 12 });
-    const decisionAwareStatus = decisionLifecycleService.computeDecisionAwareStatus(String(projectId), {});
+    const decisionCtx = decisionLifecycleService.getDecisionContext(String(projectId), {
+      limit: 12,
+      organizationId,
+    });
+    const decisionAwareStatus = decisionLifecycleService.computeDecisionAwareStatus(
+      String(projectId),
+      { organizationId },
+    );
 
     if (decisionCtx.length === 0) {
       return '\n\n## Decision Audit Trail\nNo formal decisions recorded for this project yet.';
@@ -1112,7 +1121,7 @@ export async function enrichContextForChat(params: {
       consistency: () => enrichWithCrossModule(projectId, organizationId),
       deficiencies: () => enrichWithDeficiencies(submissionType),
       knowledge: () => enrichWithKnowledgeSearch(slash.args || message, projectId, organizationId),
-      decisions: () => enrichWithDecisions(projectId),
+      decisions: () => enrichWithDecisions(projectId, organizationId),
       sap: () => enrichWithBiostatContext(projectId, submissionType, organizationId),
       power: () => enrichWithBiostatContext(projectId, submissionType, organizationId),
       dose: () => enrichWithBiostatContext(projectId, submissionType, organizationId),

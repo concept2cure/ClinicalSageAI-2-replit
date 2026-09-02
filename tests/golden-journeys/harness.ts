@@ -20,7 +20,20 @@ export const REPO_ROOT = path.resolve(__dirname, '..', '..');
 
 /** Canonical migrations a journey database carries, in order. */
 export const CANONICAL_JOURNEY_MIGRATIONS = [
+  // Cross-cutting: the 21 CFR Part 11 tamper-evident store. Four journeys were
+  // asserting Part 11 claims while every write to it failed with `relation
+  // "audit.tamper_proof_log" does not exist` — swallowed by the caller, which
+  // falls back to a console writer and logs the failure as non-fatal. That
+  // fallback is correct in production and fatal to the evidence here, so the
+  // journeys passed. Self-contained and role-guarded, so it runs under PGlite.
+  'db/migrations/20260813_audit_tamper_proof_log.sql',
   'db/migrations/20260323_assumption_decision_contradiction.sql',
+  // The reactive dependency layer — governed_dependencies / impact_propagation_log.
+  // The HAQ-correction journey's whole subject is propagating a correction across
+  // dependent documents, and it was running with neither table present: every
+  // dependency read and every propagation write failed and was swallowed, and the
+  // journey still reported the correction propagating.
+  'db/migrations/20260323_reactive_dependency_layer.sql',
   'db/migrations/20260725_governance_boundary_tables.sql',
   'db/migrations/20260725_resolution_orchestration_tables.sql',
   'db/migrations/20260725_bundle_execution_receipts.sql',
@@ -89,7 +102,76 @@ export interface JourneyDb {
       release: () => void;
     }>;
   };
+  /**
+   * Every query this journey issued that failed because the SCHEMA did not have
+   * what the code asked for — an undefined table (42P01) or an undefined column
+   * (42703). See `assertNoSchemaGaps`.
+   */
+  schemaGaps: SchemaGap[];
   close: () => Promise<void>;
+}
+
+/** A query that failed because the journey's database lacked a relation or column. */
+export interface SchemaGap {
+  /** Postgres SQLSTATE: 42P01 undefined_table, 42703 undefined_column. */
+  code: string;
+  message: string;
+  /** The statement, trimmed — enough to identify the caller. */
+  sql: string;
+}
+
+/**
+ * A journey that provoked a missing table or column and still passed is proving
+ * less than it claims.
+ *
+ * Journeys build their database by naming the tables they need
+ * (`extractTableDdl`) — a hand-maintained list, and the failure mode is not that
+ * the list is short but that a SHORT LIST IS INVISIBLE. The route under test
+ * writes to a table nobody named; the write fails; the service swallows it
+ * (audit and telemetry writers are deliberately non-fatal, which is correct in
+ * production and fatal to the evidence here); the assertion under test still
+ * passes; and the journey reports that a regulated claim holds.
+ *
+ * Found in `submission-release-signature.journey.test.ts` (ledger L138/L145):
+ * it asserted the §11.10(e) audit claim of the Part 11 release gate with NO
+ * `audit_logs` table in the database at all. Nothing failed, because the write
+ * that needed it was outside the transaction and swallowed its own error.
+ *
+ * Call this in an `afterAll` in every journey. `check-journey-schema-gaps.mjs`
+ * enforces that every journey does.
+ */
+export function assertNoSchemaGaps(
+  jdb: Pick<JourneyDb, 'schemaGaps'>,
+  /**
+   * Relations this journey is KNOWN to run without, each with the ledger row
+   * that owns closing it. Shrink-only by convention: an entry here is a journey
+   * proving less than it claims, recorded so it is visible rather than silent.
+   * Never add one to make a run green — add the missing table instead.
+   */
+  known: readonly { relation: string; row: string }[] = [],
+): void {
+  const allowed = new Set(known.map((k) => k.relation));
+  const unexplained = jdb.schemaGaps.filter(
+    (g) => ![...allowed].some((rel) => g.message.includes(`"${rel}"`)),
+  );
+  jdb = { schemaGaps: unexplained };
+  if (jdb.schemaGaps.length === 0) return;
+  const seen = new Set<string>();
+  const lines = jdb.schemaGaps
+    .filter((g) => {
+      const k = `${g.code}:${g.message}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    })
+    .map((g) => `  [${g.code}] ${g.message}\n      ${g.sql}`);
+  throw new Error(
+    `This journey ran against a database missing ${seen.size} relation(s)/column(s) its own ` +
+      `subject asked for, and still reached its assertions:\n\n${lines.join('\n')}\n\n` +
+      `Add the missing table(s) to this journey's extractTableDdl list, or the missing ` +
+      `column(s) via the ALTER the real migration performs. A journey whose database is ` +
+      `smaller than the code under test proves less than it says it does.`,
+  );
 }
 
 /**
@@ -107,7 +189,17 @@ export interface JourneyDb {
  * connection carrying the tenant session variables. Ported from the proven shim
  * in server/routes/__tests__/saved-precedent-queries.rls.test.ts.
  */
-export function makeRequestDbClient(pglite: import('@electric-sql/pglite').PGlite) {
+export function makeRequestDbClient(
+  pglite: import('@electric-sql/pglite').PGlite,
+  /**
+   * Pass `jdb.schemaGaps` so a missing relation on the REQUEST-SCOPED client is
+   * recorded too. Three journeys put their real request traffic through this
+   * client rather than the pool, so leaving it uninstrumented would have made
+   * `assertNoSchemaGaps` quietly weaker on exactly the paths that matter most.
+   */
+  schemaGaps?: SchemaGap[],
+) {
+  const SCHEMA_GAP_CODES = new Set(['42P01', '42703']);
   return {
     query: async (textOrConfig: unknown, values?: unknown[]) => {
       const text =
@@ -116,11 +208,24 @@ export function makeRequestDbClient(pglite: import('@electric-sql/pglite').PGlit
         typeof textOrConfig === 'string'
           ? undefined
           : (textOrConfig as { rowMode?: string }).rowMode;
-      const r = await pglite.query(
-        text,
-        (values ?? []) as unknown[],
-        rowMode === 'array' ? { rowMode: 'array' } : undefined,
-      );
+      let r;
+      try {
+        r = await pglite.query(
+          text,
+          (values ?? []) as unknown[],
+          rowMode === 'array' ? { rowMode: 'array' } : undefined,
+        );
+      } catch (err) {
+        const code = (err as { code?: string })?.code ?? '';
+        if (schemaGaps && SCHEMA_GAP_CODES.has(code)) {
+          schemaGaps.push({
+            code,
+            message: (err as Error).message,
+            sql: text.replace(/\s+/g, ' ').trim().slice(0, 160),
+          });
+        }
+        throw err;
+      }
       const rows = r.rows as unknown[];
       const affected = (r as { affectedRows?: number }).affectedRows ?? 0;
       return {
@@ -163,16 +268,36 @@ export async function createJourneyDb(options?: {
   // second form (e.g. createSubmissionTx inside the C2C intake transaction);
   // without it PGlite is handed an object where it expects a string and the
   // route reports an opaque INTERNAL_ERROR.
+  // Every statement a journey issues passes through here, which makes it the one
+  // place a missing relation is observable regardless of whether the caller
+  // swallows the error. Recorded, then rethrown unchanged — the code under test
+  // must see exactly what it would see in production.
+  const schemaGaps: SchemaGap[] = [];
+  const SCHEMA_GAP_CODES = new Set(['42P01', '42703']); // undefined_table, undefined_column
+
   const runQuery = async (textOrConfig: unknown, params?: unknown[]) => {
     const text =
       typeof textOrConfig === 'string' ? textOrConfig : (textOrConfig as { text: string }).text;
     const rowMode =
       typeof textOrConfig === 'string' ? undefined : (textOrConfig as { rowMode?: string }).rowMode;
-    const r = await pglite.query(
-      text,
-      params as unknown[],
-      rowMode === 'array' ? { rowMode: 'array' } : undefined,
-    );
+    let r;
+    try {
+      r = await pglite.query(
+        text,
+        params as unknown[],
+        rowMode === 'array' ? { rowMode: 'array' } : undefined,
+      );
+    } catch (err) {
+      const code = (err as { code?: string })?.code ?? '';
+      if (SCHEMA_GAP_CODES.has(code)) {
+        schemaGaps.push({
+          code,
+          message: (err as Error).message,
+          sql: text.replace(/\s+/g, ' ').trim().slice(0, 160),
+        });
+      }
+      throw err;
+    }
     const rows = r.rows as unknown[];
     // PGlite reports affectedRows: 0 for SELECTs, so prefer rows.length and fall
     // back to affectedRows only for row-less commands (UPDATE without
@@ -187,6 +312,7 @@ export async function createJourneyDb(options?: {
 
   return {
     pglite,
+    schemaGaps,
     db: drizzle(pglite),
     pool: {
       query: runQuery,

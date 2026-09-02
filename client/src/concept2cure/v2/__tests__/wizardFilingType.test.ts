@@ -73,6 +73,17 @@ describe('the New Project wizard creates the filing type that was chosen', () =>
     expect(ctx.submissionFormat).toBe('CTIS');
   });
 
+  it('a 505(b)(2) is an NDA, a 351(k) is a BLA, a DMF is a master file — none of them is an IND', () => {
+    // Each fell through every branch to the final 'ind' default before this.
+    expect(programTypeFor(selFor('us_505b2'), 'biotech')).toBe('nda');
+    expect(programTypeFor(selFor('us_351k'), 'biotech')).toBe('bla');
+    expect(programTypeFor(selFor('us_dmf'), 'biotech')).toBe('dmf');
+    for (const id of ['us_505b2', 'us_351k', 'us_dmf']) {
+      expect(getSubmissionTypeContext(id), `${id} vanished from the registry`).toBeTruthy();
+      expect(programTypeFor(selFor(id), 'biotech')).not.toBe('ind');
+    }
+  });
+
   it('the controls still map correctly', () => {
     // If these break, the fix above changed something it should not have.
     expect(programTypeFor(selFor('us_ind'), 'biotech')).toBe('ind');

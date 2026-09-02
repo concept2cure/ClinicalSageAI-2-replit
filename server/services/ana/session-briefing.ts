@@ -125,6 +125,7 @@ export async function getSessionBriefing(opts: {
     try {
       const ctx = decisionLifecycleService.getDecisionContext(String(opts.projectId), {
         limit: opts.decisionLimit ?? 5,
+        organizationId: opts.organizationId,
       });
       decisions = ctx.map(({ decision }) => ({
         id: decision.id,

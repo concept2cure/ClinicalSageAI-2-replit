@@ -399,8 +399,31 @@ export class DecisionLifecycleService {
 
   // ── Query decisions ─────────────────────────────────────────────
 
-  getDecision(id: string): FormalDecisionRecord | undefined {
-    return decisionStore.get(id);
+  /* TENANT SCOPING ON THE READ PATH.
+     decisionStore and receiptStore are in-memory Maps, so there is no database
+     row-level security behind them — the RLS that protects concept2cure_artifacts
+     cannot help here. These accessors took an id and returned whatever was under
+     it, and the three HTTP routes that call them never resolved a tenant at all,
+     so any authenticated caller could read another organization's governed
+     decisions and receipts by supplying an id.
+
+     `organizationId` was optional so the five internal service callers could
+     compile unchanged. All of them now pass it, so the optionality is no longer
+     load-bearing — and an absent tenant no longer means "no filter". It means
+     no records. Passing the tenant at every call site is a convention, and a
+     convention only holds until the next call site; a caller that omits the
+     tenant now reads nothing instead of reading every organization.
+
+     The match is strict in both directions: a record whose organizationId is
+     undefined does not match a numeric one either. recordDecision already warns
+     when a decision is stored without tenant context, and an unattributed
+     record must not be handed to a specific tenant. */
+  getDecision(id: string, organizationId?: number): FormalDecisionRecord | undefined {
+    if (organizationId == null) return undefined;
+    const decision = decisionStore.get(id);
+    if (!decision) return undefined;
+    if (decision.organizationId !== organizationId) return undefined;
+    return decision;
   }
 
   getReceipt(id: string): DecisionReceipt | undefined {
@@ -422,6 +445,8 @@ export class DecisionLifecycleService {
   getProjectDecisions(
     projectId: string,
     filters?: {
+      /** See getDecision — strict when supplied, absent for internal callers. */
+      organizationId?: number;
       kind?: DecisionKind;
       status?: DecisionStatus;
       sectionCode?: string;
@@ -429,6 +454,9 @@ export class DecisionLifecycleService {
       limit?: number;
     }
   ): FormalDecisionRecord[] {
+    /* No tenant, no records. See getDecision: this is the whole boundary. */
+    if (filters?.organizationId == null) return [];
+
     const ids = projectIndex.get(projectId);
     if (!ids) return [];
 
@@ -437,6 +465,9 @@ export class DecisionLifecycleService {
       .filter(Boolean)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
+    /* Applied before every other filter and before the limit, so a caller can
+       never page through another tenant's records. */
+    decisions = decisions.filter(d => d.organizationId === filters.organizationId);
     if (filters?.kind) decisions = decisions.filter(d => d.kind === filters.kind);
     if (filters?.status) decisions = decisions.filter(d => d.status === filters.status);
     if (filters?.sectionCode) decisions = decisions.filter(d => d.sectionCode === filters.sectionCode);
@@ -450,12 +481,19 @@ export class DecisionLifecycleService {
    */
   getDecisionContext(
     projectId: string,
-    opts?: { sectionCode?: string; moduleCode?: string; limit?: number }
+    opts?: {
+      /** See getDecision — strict when supplied. */
+      organizationId?: number;
+      sectionCode?: string;
+      moduleCode?: string;
+      limit?: number;
+    }
   ): Array<{
     decision: FormalDecisionRecord;
     receipt?: DecisionReceipt;
   }> {
     const decisions = this.getProjectDecisions(projectId, {
+      organizationId: opts?.organizationId,
       sectionCode: opts?.sectionCode,
       moduleCode: opts?.moduleCode,
       limit: opts?.limit ?? 10,
@@ -551,7 +589,12 @@ export class DecisionLifecycleService {
    */
   computeDecisionAwareStatus(
     projectId: string,
-    scope: { moduleCode?: string; dossierId?: string }
+    scope: {
+      moduleCode?: string;
+      dossierId?: string;
+      /** See getDecision — strict when supplied, absent for internal callers. */
+      organizationId?: number;
+    }
   ): {
     hasUnresolvedContradictions: boolean;
     hasProvisionalDecisions: boolean;
@@ -564,6 +607,7 @@ export class DecisionLifecycleService {
   } {
     const decisions = this.getProjectDecisions(projectId, {
       moduleCode: scope.moduleCode,
+      organizationId: scope.organizationId,
     });
 
     const unresolved = decisions.filter(
@@ -638,7 +682,13 @@ export class DecisionLifecycleService {
    */
   getContradictionDecisionContext(
     projectId: string,
-    opts?: { sectionCode?: string; moduleCode?: string; limit?: number }
+    opts?: {
+      /** See getDecision — strict when supplied. */
+      organizationId?: number;
+      sectionCode?: string;
+      moduleCode?: string;
+      limit?: number;
+    }
   ): Array<{
     decision: FormalDecisionRecord;
     receipt?: DecisionReceipt;
@@ -646,6 +696,7 @@ export class DecisionLifecycleService {
     isContradictionDecision: boolean;
   }> {
     const decisions = this.getProjectDecisions(projectId, {
+      organizationId: opts?.organizationId,
       sectionCode: opts?.sectionCode,
       moduleCode: opts?.moduleCode,
       limit: opts?.limit ?? 15,

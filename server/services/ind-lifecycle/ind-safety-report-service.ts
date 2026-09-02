@@ -61,6 +61,7 @@ import {
   type SeriousnessCriteria,
   type RegulatoryRegion,
 } from '../compliance/pharmacovigilanceService';
+import { IND_SAFETY_REPORT_SECTION } from './ind-sequence-validation';
 
 // ---------------------------------------------------------------------------
 // Classification types
@@ -463,7 +464,8 @@ export function buildAmendmentIntent(
 
   const leaves: AmendmentLeafIntent[] = [
     {
-      sectionCode: 'm1.12.4',
+      // The sequence validator requires the report at this same placement.
+      sectionCode: IND_SAFETY_REPORT_SECTION,
       title: `IND Safety Report — ${labelForObligation(classification.obligation)}`,
       granularity: 'leaf',
       lifecycleOp: 'new',

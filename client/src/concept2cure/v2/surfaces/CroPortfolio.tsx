@@ -209,13 +209,17 @@ export function CroPortfolio({ onAsk, onNav }: SurfaceViewProps) {
         pipelineByState: Object.fromEntries(pipe.map((p) => [p.k, p.n])),
         sponsors: sponsors.slice(0, 12).map((s) => ({
           id: s.id, name: s.name, type: s.type, lead: s.lead,
-          sowState: s.sow ?? null, sowNote: s.sowNote,
+          // `sowNote` is a user-authored free-text note (cro_clients.notes) —
+          // out of the every-turn prompt channel, like every other free-text
+          // field in this subsystem; its presence travels, the prose stays on
+          // screen (the tooltip at the row still shows it).
+          sowState: s.sow ?? null, hasSowNote: Boolean(s.sowNote),
           studies: (s.studies ?? []).length, submissions: (s.subs ?? []).length,
         })),
         selectedSponsor: sel
           ? {
               id: sel.id, name: sel.name, type: sel.type, lead: sel.lead,
-              sowState: sel.sow ?? null, sowNote: sel.sowNote,
+              sowState: sel.sow ?? null, hasSowNote: Boolean(sel.sowNote),
               studies: selStudies.map((st) => ({
                 code: st.code, phase: st.phase, ind: st.ind, status: st.status, enrolment: st.n,
               })),

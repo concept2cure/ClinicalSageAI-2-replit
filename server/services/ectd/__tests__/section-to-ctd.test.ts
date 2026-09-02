@@ -36,9 +36,22 @@ describe('resolveCtdSection', () => {
   });
   it('falls back to the keyword-inferred module when nothing is declared', () => {
     expect(resolveCtdSection('module3_cmc', [])).toBe('3');
-    expect(resolveCtdSection('labeling', [])).toBe('1');
     expect(resolveCtdSection('nonclinical-tox', [])).toBe('4');
     expect(resolveCtdSection('clinical-csr', [])).toBe('5');
+  });
+  it('places a Module 1 document at the FDA heading its key names, never at the bare module', () => {
+    // A bare '1' nests under an <m1> element the us-regional DTD does not define.
+    expect(resolveCtdSection('form-1571', [])).toBe('1.1');
+    expect(resolveCtdSection('356h', [])).toBe('1.1');
+    expect(resolveCtdSection('form_3674', [])).toBe('1.1');
+    expect(resolveCtdSection('financial-disclosure-3455', [])).toBe('1.3.4');
+    expect(resolveCtdSection('cover-letter', [])).toBe('1.2');
+    expect(resolveCtdSection('labeling', [])).toBe('1.14');
+    expect(resolveCtdSection('investigators-brochure', [])).toBe('1.14.4.1');
+    expect(resolveCtdSection('environmental-assessment', [])).toBe('1.12.14');
+    for (const key of ['form-1571', 'cover-letter', 'labeling']) {
+      expect(resolveCtdSection(key, [])).not.toBe('1');
+    }
   });
   it('returns null when nothing can be honestly inferred (caller must not guess)', () => {
     expect(resolveCtdSection('misc-attachment', [])).toBeNull();

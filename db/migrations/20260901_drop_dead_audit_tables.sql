@@ -55,16 +55,15 @@
 -- deploy and `CREATE TABLE IF NOT EXISTS` would otherwise re-materialise a table
 -- this file had already dropped.
 --
--- ── The tables that are NOT here, and why ──────────────────────────────────
--- Six survivors are also withheld: document_audit_log, ai_audit_log,
--- qmp_audit_trail, coauthor_import_history, coauthor_status_history and
--- csr_extraction_log are dead in every code path, but each is declared as a
--- `pgTable` on the drizzle push surface (shared/schema.ts and the modules it
--- re-exports). `drizzle-kit push` recreates them on every fresh install, so a
--- SQL-only DROP produces a table that comes back — the deletion that does not
--- delete. Removing them needs the pgTable declarations and their `relations()`
--- entries to go in the same change; that is a typed edit with its own
--- verification and it is tracked in §5.1 rather than half-done here.
+-- ── The six that were withheld, and now are not ────────────────────────────
+-- document_audit_log, ai_audit_log, qmp_audit_trail, coauthor_import_history,
+-- coauthor_status_history and csr_extraction_log were held out of the first
+-- version of this list. They are dead in every code path, but each was declared
+-- as a `pgTable` on the drizzle push surface (shared/schema.ts and the modules
+-- it re-exports), and `drizzle-kit push` recreates those on every fresh
+-- install — so a SQL-only DROP produced a table that came back, the deletion
+-- that does not delete. Ledger L143 removed the declarations and their
+-- `relations()` entries, so the drop now holds and they are listed above.
 --
 -- The guard that keeps this true is scripts/ci/check-dead-audit-tables.mjs.
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -95,6 +94,19 @@ BEGIN
     -- that acquired it out of band is cleaned up too; on every database this
     -- repo provisions it is simply absent and this is a no-op.
     'public.vault_document_audit_logs',
+    -- The six formerly withheld (ledger L143). They were held back because
+    -- `drizzle-kit push` recreated them from shared/schema.ts on every fresh
+    -- install, so a SQL DROP produced a table that came back. Their pgTable
+    -- declarations and relations() entries are now gone, so the drop holds.
+    -- `migrations/0000_sweet_joseph.sql` still CREATEs them — it is history and
+    -- is not edited — which is exactly why they belong in this list: that file
+    -- runs first on a fresh install and this one runs last.
+    'public.document_audit_log',
+    'public.ai_audit_log',
+    'public.qmp_audit_trail',
+    'public.coauthor_import_history',
+    'public.coauthor_status_history',
+    'public.csr_extraction_log',
     -- non-public schemas
     'audit.request_correlations',
     'cortex.confidence_history',

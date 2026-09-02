@@ -7,7 +7,7 @@
 
 import { Router } from 'express';
 import { requireRole } from '../../middleware/auth';
-import { validateSequenceLeaves } from '../../services/ind-lifecycle/ind-sequence-validation';
+import { validateSequenceLeaves, filingTypeForSequence } from '../../services/ind-lifecycle/ind-sequence-validation';
 import { buildPackageManifest } from '../../services/ind-lifecycle/ind-package-manifest';
 import { evaluateDispatchGate } from '../../services/ind-lifecycle/ind-dispatch-gate';
 import { deriveIndActionItems } from '../../services/ind-lifecycle/ind-action-items';
@@ -18,7 +18,7 @@ import { createDispatchSnapshot, listDispatchSnapshots } from '../../services/in
 import { renderPackageManifestPdf, renderSequenceDiffPdf } from '../../services/ind-lifecycle/ind-document-renderer';
 import { listLeaves, getSequence } from '../../services/submission-service/submission-service';
 import { getCrossReferenceRegister } from '../../services/ind-lifecycle/ind-cross-reference-persistence';
-import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf, readinessFrom } from './shared';
+import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf, readinessFrom, filingTypeParam, FILING_TYPE_VALUES } from './shared';
 
 const router = Router();
 
@@ -54,8 +54,10 @@ async function sequenceForDiff(seqId: number, ctx: Ctx) {
  * the API result shape and the parts needed to persist a snapshot.
  */
 async function computeGateForSequence(seqId: number, b: any, ctx: Ctx) {
-  const filingType = b.filingType === 'amendment' ? 'amendment' : 'initial';
+  const explicitFilingType = filingTypeParam(b.filingType);
+  if (explicitFilingType === null) throw new Error(`VALIDATION: filingType must be one of ${FILING_TYPE_VALUES}.`);
   const [sequence, leaves] = await Promise.all([getSequence(seqId, ctx), listLeaves(seqId, ctx)]);
+  const filingType = explicitFilingType ?? filingTypeForSequence(sequence.type, leaves);
   const sequenceValidation = validateSequenceLeaves({ filingType, leaves: leaves.map((l) => ({ sectionCode: l.sectionCode })) });
   const manifest = buildPackageManifest({
     sequenceNumber: sequence.sequenceNumber,
@@ -87,16 +89,22 @@ async function computeGateForSequence(seqId: number, b: any, ctx: Ctx) {
 
 /**
  * Validate an existing sequence's leaves against the required section map.
- * Loads the sequence's leaves tenant-scoped. Query: ?filingType=initial|amendment.
+ * Loads the sequence + its leaves tenant-scoped. Query: ?filingType=initial|
+ * amendment|safety_report|annual|response|withdrawal; when omitted it is derived
+ * from the sequence's stored type + leaves (filingTypeForSequence).
  */
 router.get('/sequence/:seqId/validate', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return noAuth(res);
   const seqId = seqIdOf(req.params.seqId);
   if (!seqId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid sequence id.' } });
-  const filingType = req.query.filingType === 'amendment' ? 'amendment' : 'initial';
+  const explicitFilingType = filingTypeParam(req.query.filingType);
+  if (explicitFilingType === null) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: `filingType must be one of ${FILING_TYPE_VALUES}.` } });
+  }
   try {
-    const leaves = await listLeaves(seqId, ctx);
+    const [sequence, leaves] = await Promise.all([getSequence(seqId, ctx), listLeaves(seqId, ctx)]);
+    const filingType = explicitFilingType ?? filingTypeForSequence(sequence.type, leaves);
     res.json(validateSequenceLeaves({ filingType, leaves: leaves.map((l) => ({ sectionCode: l.sectionCode })) }));
   } catch (err) {
     fail(res, err);
@@ -107,6 +115,7 @@ router.get('/sequence/:seqId/validate', limiter, requireRole(AUTHOR), async (req
  * Dispatch-readiness gate — the go/no-go for an eCTD sequence (validation +
  * manifest checksum completeness + unresolved critical actions).
  * Body: { filingType?, readinessInput?, clockInput?, timelineInput?, overdueSafetyReports? }.
+ * filingType defaults from the sequence's stored type + leaves (filingTypeForSequence).
  */
 router.post('/sequence/:seqId/dispatch-gate', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);

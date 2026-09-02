@@ -177,6 +177,7 @@ CREATE TABLE IF NOT EXISTS ind_icsr_transmissions (
   status                      TEXT NOT NULL DEFAULT 'prepared',
   transmit_ready              BOOLEAN NOT NULL DEFAULT FALSE,
   transmitted_at              TIMESTAMPTZ,
+  transport_receipt_id        TEXT,
   acknowledged_at             TIMESTAMPTZ,
   ack_code                    TEXT,
   acknowledged_message_number TEXT,

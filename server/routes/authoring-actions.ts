@@ -1646,82 +1646,33 @@ router.post('/resolution-changelog', async (req: Request, res: Response) => {
   }
 });
 
-// ACTION 9: Module readiness — uses readiness-engine with module breakdown
-router.get('/module-readiness/:projectId/:moduleCode', async (req: Request, res: Response) => {
-  try {
-    const { projectId, moduleCode } = req.params;
-    if (!projectId) return res.status(400).json({ error: 'projectId is required' });
-
-    try {
-      const { computeReadinessAssessment } = await import(
-        '../services/orchestration/readiness-engine.js'
-      );
-      if (computeReadinessAssessment) {
-        const orgId = requireTenantId(req, res);
-        if (orgId == null) return;
-        const assessment = await computeReadinessAssessment({
-          project: { id: Number(projectId) } as any,
-          organizationId: String(orgId),
-        } as any);
-
-        // Find specific module in breakdown
-        const moduleBreakdown = assessment?.moduleBreakdown || [];
-        const moduleCodeStr = Array.isArray(moduleCode) ? moduleCode[0] : moduleCode;
-        const targetModule = moduleCodeStr
-          ? moduleBreakdown.find((m: any) =>
-              m.module === moduleCodeStr || m.module === `Module ${String(moduleCodeStr).replace('m', '')}`)
-          : null;
-
-        // Filter blockers relevant to this module
-        const moduleBlockers = (assessment?.blockers || []).filter(
-          (b: any) => !moduleCode || b.module === moduleCode || !b.module
-        );
-
-        return res.json({
-          status: 'data',
-          action: 'module_readiness',
-          overallScore: assessment?.overallScore ?? null,
-          overallStatus: assessment?.status ?? 'unknown',
-          module: targetModule ? {
-            code: moduleCode,
-            label: targetModule.label || `Module ${moduleCode}`,
-            score: targetModule.score,
-            status: targetModule.status,
-            documentCount: targetModule.documentCount,
-            expectedDocumentCount: targetModule.expectedDocumentCount,
-            validatedCount: targetModule.validatedCount,
-            blockerCount: targetModule.blockerCount,
-          } : null,
-          blockers: moduleBlockers.slice(0, 10).map((b: any) => ({
-            severity: b.severity,
-            category: b.category,
-            message: b.message || b.description,
-            suggestedResolution: b.suggestedResolution,
-          })),
-          moduleBreakdown: moduleBreakdown.map((m: any) => ({
-            module: m.module,
-            label: m.label,
-            score: m.score,
-            status: m.status,
-            documentCount: m.documentCount,
-          })),
-        });
-      }
-    } catch {
-      // Readiness engine unavailable
-    }
-
-    return res.json({
-      status: 'service_unavailable',
-      action: 'module_readiness',
-      message: 'Readiness engine is not available. Module readiness data could not be computed.',
-      context: { projectId, moduleCode },
-    });
-  } catch (err: any) {
-    console.error('[authoring-actions] module-readiness error:', err?.message);
-    return res.status(500).json({ error: 'Failed to compute module readiness' });
-  }
-});
+/* GET /module-readiness/:projectId/:moduleCode has been DELETED.
+ *
+ * It never once returned readiness data. The handler built the engine payload
+ * by hand — `{ project: { id }, organizationId }` cast through `as any` —
+ * carrying none of the five fields computeReadinessAssessment reads. The engine
+ * evaluates `completeness` first, whose first statement is
+ * `payload.moduleMap.filter(...)`, so it threw a TypeError on EVERY call. A bare
+ * catch swallowed the throw without logging, and the handler fell through to
+ * HTTP 200 with "Readiness engine is not available. Module readiness data could
+ * not be computed."
+ *
+ * That message was false in the way that matters: the engine IS available and
+ * working. The caller passed it garbage and then blamed the service. A reader
+ * chasing this would go looking for an outage that never happened. (The same
+ * malformed payload at /promotion-blockers was worse — it silently dropped every
+ * readiness blocker and answered blocked:false for a gate that had evaluated
+ * nothing — and was fixed rather than removed, because that route has no
+ * canonical equivalent.)
+ *
+ * This one does have an equivalent, so it goes rather than being repaired:
+ * GET /api/orchestration/projects/:projectId/readiness?module=… (routes/
+ * orchestration.ts, mounted at register-inline-routes.ts:1114) resolves the org
+ * from the request, validates the project id, builds the payload with
+ * assembleCrossObjectPayload — the canonical builder — and calls the engine
+ * correctly. It accepts the module as a query parameter, so it covers the
+ * per-module breakdown this route existed to provide.
+ */
 
 // ACTION 10: Section evidence — uses EvidenceManagementService + gap analysis
 router.get('/section-evidence/:projectId/:sectionCode', async (req: Request, res: Response) => {
@@ -2122,6 +2073,43 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
       });
     }
 
+    /* The readiness assessment is per-PROJECT, so it is computed once here
+       rather than once per section inside the map below. The payload used to be
+       hand-rolled inside the loop — `{ project: { id }, organizationId }` cast
+       through `as any` — carrying none of the five fields the engine reads, so
+       computeReadinessAssessment threw a TypeError on every section, the inner
+       catch recorded `readiness: { status: 'unknown' }`, and this route could
+       never actually assess readiness at all.
+
+       assembleCrossObjectPayload is the canonical builder (continuity-service,
+       lumen-context-builder, workflow-orchestrator and the orchestration
+       readiness route all use it). Building it once also stops the map from
+       issuing the same set of queries per section. A genuine failure here still
+       leaves every section's readiness check 'unknown', which the verdict below
+       already refuses to treat as a pass. */
+    let projectAssessment: { blockers?: unknown[] } | null = null;
+    let readinessFailed = false;
+    try {
+      const { assembleCrossObjectPayload } = await import(
+        '../services/orchestration/cross-object-resolver.js'
+      );
+      const { computeReadinessAssessment } = await import(
+        '../services/orchestration/readiness-engine.js'
+      );
+      const payload = await assembleCrossObjectPayload({
+        organizationId: Number(orgId),
+        projectId: Number(projectId),
+        module: moduleCode,
+      });
+      projectAssessment = computeReadinessAssessment(payload);
+    } catch (readinessErr: any) {
+      readinessFailed = true;
+      console.warn(
+        '[authoring-actions] module-preflight: readiness assessment did not run:',
+        readinessErr?.message,
+      );
+    }
+
     // Run section preflights in parallel (reuse the internal logic)
     const sectionResults: any[] = [];
     const sectionPreflightPromises = moduleSections.map(async (sec) => {
@@ -2131,18 +2119,16 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
         // Use simplified check aggregation
         const checks: Record<string, any> = {};
 
-        // Readiness
-        try {
-          const { computeReadinessAssessment } = await import('../services/orchestration/readiness-engine.js');
-          if (computeReadinessAssessment) {
-            const assessment = await computeReadinessAssessment({ project: { id: Number(projectId) } as any, organizationId: String(orgId) } as any);
-            const major = sec.ctdSection.split('.')[0];
-            const blockers = (assessment?.blockers || [])
-              .filter((b: any) => !b.module || b.module === `m${major}`)
-              .slice(0, 5).map((b: any) => ({ code: b.category || 'BLOCK', severity: b.severity, message: b.message || b.description }));
-            checks.readiness = { status: blockers.some((b: any) => b.severity === 'critical') ? 'fail' : blockers.length ? 'warn' : 'pass', blockers };
-          }
-        } catch { checks.readiness = { status: 'unknown' }; }
+        // Readiness — from the single project-level assessment computed above.
+        if (readinessFailed || !projectAssessment) {
+          checks.readiness = { status: 'unknown' };
+        } else {
+          const major = sec.ctdSection.split('.')[0];
+          const blockers = ((projectAssessment.blockers as any[]) || [])
+            .filter((b: any) => !b.module || b.module === `m${major}`)
+            .slice(0, 5).map((b: any) => ({ code: b.category || 'BLOCK', severity: b.severity, message: b.message || b.description }));
+          checks.readiness = { status: blockers.some((b: any) => b.severity === 'critical') ? 'fail' : blockers.length ? 'warn' : 'pass', blockers };
+        }
 
         // Contradictions
         try {
@@ -2291,7 +2277,7 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
         '../services/decision-lifecycle-service.js'
       );
       decisionAwareStatus = decisionLifecycleService.computeDecisionAwareStatus(
-        String(projectId), { moduleCode }
+        String(projectId), { moduleCode, organizationId: orgId }
       );
     } catch { /* non-blocking */ }
 
@@ -2406,9 +2392,19 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
     // Run real readiness engine for enrichment
     let readinessBlockers: any[] = [];
     try {
+      /* Canonical payload builder — see the note in /module-preflight. The
+         hand-rolled payload threw on every call and was silently swallowed. */
+      const { assembleCrossObjectPayload } = await import(
+        '../services/orchestration/cross-object-resolver.js'
+      );
       const { computeReadinessAssessment } = await import('../services/orchestration/readiness-engine.js');
       if (computeReadinessAssessment) {
-        const assessment = await computeReadinessAssessment({ project: { id: Number(projectId) } as any, organizationId: String(orgId) } as any);
+        const assessment = computeReadinessAssessment(
+          await assembleCrossObjectPayload({
+            organizationId: Number(orgId),
+            projectId: Number(projectId),
+          }),
+        );
         readinessBlockers = (assessment?.blockers || []).filter((b: any) => b.severity === 'critical' || b.severity === 'major')
           .slice(0, 10).map((b: any) => ({
             kind: 'readiness-blocker', severity: b.severity,
@@ -2514,7 +2510,7 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
         '../services/decision-lifecycle-service.js'
       );
       decisionAwareStatus = decisionLifecycleService.computeDecisionAwareStatus(
-        String(projectId), {}
+        String(projectId), { organizationId: orgId }
       );
     } catch { /* non-blocking */ }
 
@@ -2596,13 +2592,20 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
         // 1. Readiness
         (async () => {
           try {
+            const { assembleCrossObjectPayload } = await import(
+              '../services/orchestration/cross-object-resolver.js'
+            );
             const { computeReadinessAssessment } = await import(
               '../services/orchestration/readiness-engine.js'
             );
             if (!computeReadinessAssessment) return null;
-            const assessment = await computeReadinessAssessment({
-              project: { id: Number(projectId) } as any, organizationId: String(orgId),
-            } as any);
+            /* Canonical payload builder — see the note in /module-preflight. */
+            const assessment = computeReadinessAssessment(
+              await assembleCrossObjectPayload({
+                organizationId: Number(orgId),
+                projectId: Number(projectId),
+              }),
+            );
             const major = (Array.isArray(sectionCode) ? sectionCode[0] : sectionCode).split('.')[0];
             const moduleItem = (assessment?.moduleBreakdown || []).find(
               (m: any) => m.module === `Module ${major}` || m.module === `m${major}`
@@ -2840,14 +2843,20 @@ router.get('/section-context/:projectId/:sectionCode', async (req: Request, res:
 
     // Fetch readiness data
     try {
+      const { assembleCrossObjectPayload } = await import(
+        '../services/orchestration/cross-object-resolver.js'
+      );
       const { computeReadinessAssessment } = await import(
         '../services/orchestration/readiness-engine.js'
       );
       if (computeReadinessAssessment) {
-        const assessment = await computeReadinessAssessment({
-          project: { id: Number(projectId) } as any,
-          organizationId: String(orgId),
-        } as any);
+        /* Canonical payload builder — see the note in /module-preflight. */
+        const assessment = computeReadinessAssessment(
+          await assembleCrossObjectPayload({
+            organizationId: Number(orgId),
+            projectId: Number(projectId),
+          }),
+        );
         // Extract section-level readiness from module breakdown
         const moduleBreakdown = assessment?.moduleBreakdown || [];
         const sectionCodeStr = Array.isArray(sectionCode) ? sectionCode[0] : sectionCode;
@@ -2924,6 +2933,14 @@ router.get('/decisions/:projectId', async (req: Request, res: Response) => {
     const { projectId } = req.params;
     const { kind, status, sectionCode, moduleCode, limit } = req.query;
 
+    /* These three decision reads resolved no tenant at all — unlike every
+       adjacent route in this file — and the store behind them is an in-memory
+       Map, so there is no row-level security to fall back on. Any authenticated
+       caller could read another organization's governed decisions and receipts
+       by supplying an id. */
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
+
     const { decisionLifecycleService } = await import(
       '../services/decision-lifecycle-service.js'
     );
@@ -2931,6 +2948,7 @@ router.get('/decisions/:projectId', async (req: Request, res: Response) => {
     const decisions = decisionLifecycleService.getProjectDecisions(
       String(projectId ?? ''),
       {
+        organizationId: orgId,
         kind: kind as any || undefined,
         status: status as any || undefined,
         sectionCode: sectionCode as string || undefined,
@@ -2972,11 +2990,21 @@ router.get('/decision/:decisionId', async (req: Request, res: Response) => {
   try {
     const { decisionId } = req.params;
 
+    /* These three decision reads resolved no tenant at all — unlike every
+       adjacent route in this file — and the store behind them is an in-memory
+       Map, so there is no row-level security to fall back on. Any authenticated
+       caller could read another organization's governed decisions and receipts
+       by supplying an id. */
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
+
     const { decisionLifecycleService } = await import(
       '../services/decision-lifecycle-service.js'
     );
 
-    const decision = decisionLifecycleService.getDecision(String(decisionId ?? ''));
+    /* A decision belonging to another organization is reported as not found,
+       not as forbidden — a 403 would confirm the id exists. */
+    const decision = decisionLifecycleService.getDecision(String(decisionId ?? ''), orgId);
     if (!decision) {
       return res.status(404).json({ error: 'Decision not found' });
     }
@@ -3038,6 +3066,11 @@ router.get('/decision-context/:projectId', async (req: Request, res: Response) =
     const { projectId } = req.params;
     const { sectionCode, moduleCode, limit } = req.query;
 
+    /* Same gap as the two decision reads above, and this one returns MORE per
+       record — full receipts alongside the decisions. */
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
+
     const { decisionLifecycleService } = await import(
       '../services/decision-lifecycle-service.js'
     );
@@ -3045,6 +3078,7 @@ router.get('/decision-context/:projectId', async (req: Request, res: Response) =
     const context = decisionLifecycleService.getDecisionContext(
       String(projectId ?? ''),
       {
+        organizationId: orgId,
         sectionCode: sectionCode as string || undefined,
         moduleCode: moduleCode as string || undefined,
         limit: limit ? Number(limit) : 10,
@@ -3182,7 +3216,7 @@ router.post('/contradiction-scan', async (req: Request, res: Response) => {
         '../services/decision-lifecycle-service.js'
       );
       const context = decisionLifecycleService.getContradictionDecisionContext(
-        String(projectId), { limit: 20 }
+        String(projectId), { limit: 20, organizationId: orgId }
       );
       linkedDecisionIds = context
         .filter(c => c.isContradictionDecision)

@@ -95,7 +95,7 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
     );
 
   const { input, skipped } = buildPackagerInputFromCore({
-    sequence: { sequenceNumber: sequence.sequenceNumber, region: sequence.region },
+    sequence: { sequenceNumber: sequence.sequenceNumber, region: sequence.region, type: sequence.type },
     submission: { applicationType: submission.applicationType, productName: submission.productName },
     leaves: leafRows.map((l) => ({
       sectionCode: l.sectionCode,
@@ -105,6 +105,7 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
       documentTable: l.documentTable,
       documentId: l.documentId,
       granularity: l.granularity,
+      documentType: l.documentType,
     })),
     resolveFile: params.resolveFile,
     applicationId: params.applicationId,

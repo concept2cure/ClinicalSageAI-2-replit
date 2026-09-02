@@ -53,6 +53,7 @@ import {
   makeRequestDbClient,
   JourneyRecorder,
   type JourneyDb,
+  assertNoSchemaGaps,
 } from './harness';
 import {
   SUBMISSION_CORE_PGLITE_DDL,
@@ -171,6 +172,8 @@ beforeAll(async () => {
     // what a submission/sequence/leaf is.
     prereqSql: `${baseline}\n${SUBMISSION_CORE_PGLITE_DDL}\n${LEAF_SOURCE_PGLITE_DDL}`,
     migrations: [
+      // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
+      'db/migrations/20260813_audit_tamper_proof_log.sql',
       'migrations/20260527_mutation_primitives.sql',
       'migrations/20260609_audit_hmac_seal.sql',
       'migrations/20260524_program_workbench_schema.sql',
@@ -252,7 +255,7 @@ beforeAll(async () => {
       r.userRole = role;
       r.tenantId = orgId;
       r.tenantContext = { organizationId: orgId };
-      r.dbClient = makeRequestDbClient(jdb.pglite);
+      r.dbClient = makeRequestDbClient(jdb.pglite, jdb.schemaGaps);
     }
     next();
   });
@@ -262,6 +265,18 @@ beforeAll(async () => {
 }, T);
 
 afterAll(async () => {
+  // A journey that ran against a database missing a table its subject writes
+  // to proves less than it claims (ledger L145).
+  assertNoSchemaGaps(jdb, [
+    // `audit_logs` IS in this journey's extractTableDdl list above and the
+    // migrations that add its chain columns ARE applied, yet the
+    // /api/c2c/projects step still reports `[c2c-projects] Store not
+    // provisioned — request failed closed` with 42P01 on it. The route is
+    // behaving correctly; the provisioning is not, and why is not yet known.
+    // Recorded rather than papered over: this journey currently proves the NDA
+    // path with its project-creation step failing closed. See ledger L146.
+    { relation: 'audit_logs', row: 'L146' },
+  ]);
   const { jsonPath, mdPath } = R.write('drug-nda-ectd');
   // eslint-disable-next-line no-console
   console.info(`[journey] manifest: ${jsonPath}\n[journey] report:   ${mdPath}`);

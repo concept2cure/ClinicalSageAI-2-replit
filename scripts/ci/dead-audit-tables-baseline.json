@@ -1,7 +1,7 @@
 {
-  "$comment": "Files permitted to mention each table that db/migrations/20260901_drop_dead_audit_tables.sql dropped (dropped) or deliberately withheld because drizzle-kit push would recreate it (withheld). These lists may only SHRINK. A file naming a dead table that is not on its list is a resurrection — a new writer, a new reader, a re-added pgTable, or a second CREATE TABLE migration — and fails the build. Regenerate with npm run ci:dead-audit-tables:write-baseline only after a real reduction.",
+  "$comment": "Files permitted to mention each dead audit table. `dropped` is the settled list: dead in every code path and off the drizzle push surface. `withheld` is the burndown list — dead in code but still declared as a pgTable, so a SQL-only DROP would not hold — and is empty since L143. These lists may only SHRINK. A file naming a dead table that is not on its list is a resurrection — a new writer, a new reader, a re-added pgTable, or a second CREATE TABLE migration — and fails the build. The six L143 tables (ai_audit_log, coauthor_import_history, coauthor_status_history, csr_extraction_log, document_audit_log, qmp_audit_trail) moved from withheld to dropped when their pgTable declarations went; their remaining mentions are the creator migrations, which are history. Regenerate with npm run ci:dead-audit-tables:write-baseline only after a real reduction.",
   "generatedBy": "scripts/ci/check-dead-audit-tables.mjs --write-baseline",
-  "count": 86,
+  "count": 80,
   "dropped": {
     "public.assumption_history": [
       "db/migrations/20260901_drop_dead_audit_tables.sql",
@@ -88,46 +88,39 @@
       "db/migrations/20260901_drop_dead_audit_tables.sql",
       "scripts/ci/check-dead-audit-tables.mjs",
       "scripts/ci/check-dead-audit-tables.selftest.mjs"
-    ]
-  },
-  "withheld": {
+    ],
     "public.ai_audit_log": [
       "db/migrations/20260901_drop_dead_audit_tables.sql",
       "migrations/0000_sweet_joseph.sql",
-      "scripts/ci/check-dead-audit-tables.mjs",
-      "shared/schema.ts"
+      "scripts/ci/check-dead-audit-tables.mjs"
     ],
     "public.coauthor_import_history": [
       "db/migrations/20260901_drop_dead_audit_tables.sql",
       "migrations/0000_sweet_joseph.sql",
-      "scripts/ci/check-dead-audit-tables.mjs",
-      "shared/schema.ts"
+      "scripts/ci/check-dead-audit-tables.mjs"
     ],
     "public.coauthor_status_history": [
       "db/migrations/20260901_drop_dead_audit_tables.sql",
       "migrations/0000_sweet_joseph.sql",
-      "scripts/ci/check-dead-audit-tables.mjs",
-      "shared/schema.ts"
+      "scripts/ci/check-dead-audit-tables.mjs"
     ],
     "public.csr_extraction_log": [
       "db/migrations/20260901_drop_dead_audit_tables.sql",
       "migrations/0005_csr_knowledge_database.sql",
-      "scripts/ci/check-dead-audit-tables.mjs",
-      "shared/schema/csr-knowledge-db.ts"
+      "scripts/ci/check-dead-audit-tables.mjs"
     ],
     "public.document_audit_log": [
       "db/migrations/20260901_drop_dead_audit_tables.sql",
       "migrations/0000_sweet_joseph.sql",
-      "scripts/ci/check-dead-audit-tables.mjs",
-      "shared/schema.ts"
+      "scripts/ci/check-dead-audit-tables.mjs"
     ],
     "public.qmp_audit_trail": [
       "db/migrations/20260901_drop_dead_audit_tables.sql",
       "db/migrations/_consolidated/0002_add_org_id_column.ts",
       "db/migrations/_consolidated/0004_add_tenant_indexes.ts",
       "migrations/0000_sweet_joseph.sql",
-      "scripts/ci/check-dead-audit-tables.mjs",
-      "shared/schema.ts"
+      "scripts/ci/check-dead-audit-tables.mjs"
     ]
-  }
+  },
+  "withheld": {}
 }
