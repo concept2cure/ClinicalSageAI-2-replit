@@ -23,6 +23,16 @@
  * parse exactly as they always did; it is the meaning of the present that
  * changes. A test that already freezes its own clock (vi.setSystemTime) is
  * unaffected, which is the point — that is the fix this diagnostic asks for.
+ *
+ * Reading a result: run it over a SLICE, not the whole suite in one process.
+ * A full-suite shifted run reports failures that do not reproduce when the same
+ * file is run alone — resource contention at that scale, not clock sensitivity —
+ * and a diagnostic you have to second-guess is not much of a diagnostic. Confirm
+ * every candidate in isolation before believing it:
+ *
+ *   TIME_SHIFT_DAYS=365 npx vitest run --config vitest.clock-shift.config.ts <the file>
+ *
+ * A real one fails alone under the shift and passes alone without it.
  */
 const SHIFT_MS = Number(process.env.TIME_SHIFT_DAYS || '365') * 86_400_000;
 const RealDate = Date;

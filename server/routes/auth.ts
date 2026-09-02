@@ -10,7 +10,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import { db } from '../db';
@@ -18,6 +17,13 @@ import { createScopedLogger } from '../utils/logger.js';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { requireAccessTokenReason } from '../middleware/tokenType';
 import auditService from '../services/auditService';
+import {
+  PASSWORD_RESET_TTL_MS,
+  hashPasswordSetupToken,
+  mintPasswordSetupToken,
+  passwordSetupUrl,
+  resolveAppBaseUrl,
+} from '../services/password-setup-token';
 
 // Scoped logger — every log line flows through the redaction walker in
 // server/utils/logger so credentials, tokens, MFA secrets, etc. are
@@ -1736,10 +1742,10 @@ async function handleForgotPassword(req: Request, res: Response) {
       return res.json(successResponse);
     }
 
-    // Generate secure reset token
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    // Generate secure reset token (the same token an invitation mints —
+    // server/services/password-setup-token.ts — so one redeem path serves both)
+    const { token: resetToken, tokenHash: resetTokenHash, expiresAt } =
+      mintPasswordSetupToken(PASSWORD_RESET_TTL_MS);
 
     // Store hashed token on the user row
     await db
@@ -1751,8 +1757,7 @@ async function handleForgotPassword(req: Request, res: Response) {
       .where(eq(users.id, user[0].id));
 
     // Build the reset URL (frontend route)
-    const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-    const resetUrl = `${baseUrl}/concept2cure/password-reset?token=${resetToken}`;
+    const resetUrl = passwordSetupUrl(resolveAppBaseUrl(req), resetToken);
 
     /* The reset email states "This request is logged per FDA 21 CFR Part
        11.10(e)". Until this call existed that sentence was false — the flow
@@ -1814,7 +1819,7 @@ async function handleResetPassword(req: Request, res: Response) {
     if (!requireDb(res)) return;
 
     // Hash the incoming token to compare against stored hash
-    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const tokenHash = hashPasswordSetupToken(token);
 
     const user = await db
       .select({

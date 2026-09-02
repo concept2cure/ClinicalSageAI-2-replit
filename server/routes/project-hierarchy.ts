@@ -226,13 +226,13 @@ router.post('/:projectId/children', async (req: Request, res: Response) => {
     // Compute materialized path
     const childPath = parent.path ? `${parent.path}/${parentId}` : String(parentId);
 
-    // Enforce project quota before insert (same logic as atomicCreateProject)
+    // Enforce project quota before insert — the same limit atomicCreateProject
+    // enforces: organizations.max_projects. This used to read the consultant →
+    // client licence's max_projects through client_workspaces and skip the
+    // check entirely when no such licence existed, so a tenant with no client
+    // licences had no ceiling here while the flat create had a dead one.
     const quotaResult = await pool.query(
-      `SELECT l.max_projects
-       FROM licenses l
-       INNER JOIN client_workspaces cw ON CAST(l.client_id AS INTEGER) = cw.id
-       WHERE cw.organization_id = $1 AND l.status = 'active'
-       LIMIT 1`,
+      `SELECT max_projects FROM organizations WHERE id = $1`,
       [organizationId]
     );
     if (quotaResult.rows.length > 0) {

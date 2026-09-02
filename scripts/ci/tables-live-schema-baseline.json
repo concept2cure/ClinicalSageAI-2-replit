@@ -3,7 +3,7 @@
   "generatedAt": "2026-08-13T03:51:34.426Z",
   "liveRelationCount": 1246,
   "referencedCount": 787,
-  "count": 85,
+  "count": 81,
   "tables": {
     "academic_embeddings": [
       "server/academic-knowledge-tracker.ts"
@@ -197,17 +197,6 @@
     ],
     "pg_stat_statements": [
       "server/utils/database-optimizer.ts"
-    ],
-    "project_workflows": [
-      "server/api/cmc/routes.ts"
-    ],
-    "quality_specifications": [
-      "server/api/cmc/module3OperatingSystemRoutes.ts",
-      "server/api/cmc/specificationRoutes.ts",
-      "server/routes/c2c/actions.ts",
-      "server/services/ana-ri/module3-command-handlers.ts",
-      "server/services/cmc/ich-compliance-checker.ts",
-      "server/services/cmc/qbd-analyzer.ts"
     ],
     "reg_changes": [
       "server/src/services/reg/rpi.ts"

@@ -29,6 +29,12 @@ import {
 // (interactive save AND section create) applies the identical rule.
 // See server/services/clinical-regulatory-evidence/lineage-gate.ts.
 import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/lineage-gate';
+import {
+  authoringPrincipalFromRequest,
+  decideAuthoringPermission,
+  grantAuthoringPermission,
+  resolveAuthoringSectionScope,
+} from '../services/authoring/authoring-permissions';
 import { sectionInsertIndex } from '../../shared/regulatory/section-code';
 import {
   computeChainHash,
@@ -259,7 +265,9 @@ function sectionPermsEnforced(): boolean {
  *
  * WHAT THE FLAG NOW GATES
  * -----------------------
- * ONLY the optional per-user AUTHOR/REVIEWER matrix. The non-negotiable
+ * ONLY the optional per-user object matrix — and that matrix is decided by the
+ * canonical service (decideAuthoringPermission), never by a second query here.
+ * The non-negotiable
  * guarantees — verified principal, tenant isolation, object existence within
  * that tenant, and the Part 11 immutability lock — run on every call regardless
  * of configuration. Flag-off is therefore no longer allow-all: it is
@@ -280,8 +288,7 @@ async function canEditSection(
 
     // Identity and tenant come from the VERIFIED principal only — never a
     // header, body or query value.
-    const email = getActorEmail(req);
-    if (!email) return false;
+    if (!getActorId(req)) return false;
     const tenantId = authedOrgId(req);
     if (tenantId == null) return false;
 
@@ -313,34 +320,33 @@ async function canEditSection(
     // ── Fine-grained per-user matrix: ON by default in prod/staging ──────────
     if (!sectionPermsEnforced()) return true;
 
-    // Roles from the verified token, read with the same typed access
-    // requireAny() uses.
-    const claimed = ((req.user as { roles?: unknown } | undefined)?.roles ?? []) as unknown[];
-    const roles = (Array.isArray(claimed) ? claimed : [claimed]).map(r =>
-      String(r).toUpperCase()
-    );
-    if (roles.includes('QA') || roles.includes('RA_CMC')) return true;
-
-    // Every predicate is anchored to the REQUESTED section and the caller's
-    // tenant; the doc-level branch is parenthesised so it can no longer escape
-    // that anchor. `p.section_id IS NULL` = a grant over the whole document.
-    const grant = (
-      await pool.query(
-        `SELECT 1
-           FROM authoring_sections s
-           JOIN doc_permissions p
-             ON p.doc_id = s.doc_id AND p.tenant_id = s.tenant_id
-          WHERE s.id = $1
-            AND s.tenant_id = $2
-            AND p.tenant_id = $2
-            AND LOWER(p.email) = LOWER($3)
-            AND UPPER(p.role) IN ('AUTHOR', 'REVIEWER')
-            AND (p.section_id IS NULL OR p.section_id = s.id)
-          LIMIT 1`,
-        [sectionId, tenantId, email]
-      )
-    ).rows[0];
-    return !!grant;
+    // ONE implementation of the object-level decision.
+    //
+    // This used to be a second copy: an email-only join over doc_permissions
+    // that accepted AUTHOR and REVIEWER, ignored revoked_at and valid_until, and
+    // let a bare QA / RA_CMC role edit any section of the tenant. In production
+    // that copy never decided anything — the canonical middleware
+    // (server/middleware/authoringObjectAuthorization.ts, mounted on /api ahead
+    // of this router) had already refused every caller it would have admitted,
+    // and a revoked grant it would still have honoured was already dead at the
+    // gateway. Two gates with two rule sets is exactly the divergence the
+    // working agreement forbids, and the proof-tier tests were proving the
+    // copy production never ran. The decision now comes from
+    // decideAuthoringPermission, so a revocation, an expiry, an OWNER grant or
+    // a global-admin role means the same thing here as it does at the gateway.
+    // This gate stays as the fail-closed backstop the middleware is documented
+    // to have: one mis-ordered mount and it is still the last word.
+    const principal = authoringPrincipalFromRequest(req);
+    if (!principal) return false;
+    const scope = await resolveAuthoringSectionScope(pool, tenantId, sectionId);
+    if (!scope) return false;
+    const decision = await decideAuthoringPermission({
+      pool,
+      principal,
+      scope,
+      action: 'edit',
+    });
+    return decision.allowed;
   } catch (error) {
     // Fail CLOSED: a permission store that cannot be consulted authorises
     // nothing. Logged so an operator sees a broken store rather than a silent
@@ -1990,36 +1996,47 @@ router.post('/docs', async (req: Request, res: Response) => {
       txClient.release();
     }
 
-    // Creator auto-grant — the mandatory companion to sectionPermsEnforced().
+    // Creator ownership — the mandatory companion to sectionPermsEnforced().
     //
-    // With the per-user matrix enforced by default, a document whose creator holds
-    // no grant is a document nobody can edit. This writes the doc-level AUTHOR grant
-    // (section_id NULL = the whole document) so creating a document still means you
-    // can author it.
-    //
-    // The email MUST come from getActorEmail() — the same accessor canEditSection
-    // compares with `LOWER(p.email) = LOWER($3)`. `createdBy` above is getActorId(),
-    // a different value whenever the JWT carries an email claim; granting on that
-    // would silently lock the creator out of their own document.
+    // With the per-user matrix enforced by default, a document whose creator
+    // holds no grant is a document nobody can edit. The canonical DDL
+    // (db/migrations/20260727_authoring_object_permissions.sql) seeds the
+    // creator as OWNER + AUTHOR in the same database operation that inserts
+    // the document, keyed on the verified principal id. This used to be a
+    // SECOND, weaker write on top of that: an email-only AUTHOR row with no
+    // principal, no grantor and no reason — so a creator held AUTHOR twice, and
+    // on a database provisioned without the trigger held only the one row the
+    // canonical decision can attribute by email alone. It now goes through the
+    // one grant writer, which is idempotent against the trigger (an active
+    // grant for the same principal, role and scope is returned, never
+    // duplicated), so the creator ends up with exactly one OWNER and one AUTHOR
+    // grant however the database was provisioned — and OWNER is what lets a
+    // creator manage who else may work on the document.
     //
     // Best-effort AND outside the transaction, deliberately: a failed grant
     // must not fail (or roll back) document creation — the document is
-    // committed and valid without it — but it is logged loudly because a
+    // committed and valid without it — but it is logged as an ERROR because a
     // grant-store outage means the creator will hit a 403 on their next edit.
-    const creatorEmail = getActorEmail(req);
-    if (creatorEmail) {
-      try {
-        await pool.query(
-          `INSERT INTO doc_permissions (doc_id, section_id, email, role, tenant_id)
-           VALUES ($1, NULL, $2, 'AUTHOR', $3)`,
-          [docId, creatorEmail.toLowerCase(), tenantId],
-        );
-      } catch (grantErr) {
-        logger.warn('creator auto-grant skipped; creator may be denied on next edit', {
+    try {
+      const creatorEmail = req.user?.email ? String(req.user.email).toLowerCase() : null;
+      for (const role of ['OWNER', 'AUTHOR'] as const) {
+        await grantAuthoringPermission({
+          pool,
+          tenantId,
           docId,
-          error: grantErr instanceof Error ? grantErr.message : String(grantErr),
+          sectionId: null,
+          principalId: createdBy,
+          email: creatorEmail,
+          role,
+          grantedBy: createdBy,
+          reason: 'Document creator',
         });
       }
+    } catch (grantErr) {
+      logger.error('creator ownership grant failed; creator will be denied on next edit', {
+        docId,
+        error: grantErr instanceof Error ? grantErr.message : String(grantErr),
+      });
     }
 
     res.status(201).json({

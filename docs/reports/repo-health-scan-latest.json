@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-02T14:42:02.603Z",
+  "generatedAt": "2026-09-02T16:23:47.571Z",
   "git": {
-    "sha": "aa672457ac4fd31ab7015c70d15a407c4e680672",
+    "sha": "cb0a7423d624def239a6777a6df470c74a2e53ae",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2146,7 +2146,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 990062
+        "bytes": 994552
       },
       {
         "file": "shared/schema.ts",
@@ -2166,7 +2166,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 317163
+        "bytes": 318353
       },
       {
         "file": "server/statistics-service.ts",
@@ -2288,7 +2288,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19252
+        "lines": 19347
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2296,7 +2296,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7408
+        "lines": 7425
       },
       {
         "file": "server/statistics-service.ts",
@@ -2423,12 +2423,12 @@
         "lines": 2175
       },
       {
-        "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
+        "file": "server/routes/auth.ts",
         "lines": 2155
       },
       {
-        "file": "server/routes/auth.ts",
-        "lines": 2150
+        "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
+        "lines": 2155
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2476,7 +2476,7 @@
       },
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
-        "lines": 1981
+        "lines": 1962
       },
       {
         "file": "server/api/cmc/routes.ts",
@@ -2567,12 +2567,12 @@
         "lines": 1740
       },
       {
-        "file": "server/services/combination-products/combination-products-knowledge.ts",
-        "lines": 1726
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 1733
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 1711
+        "file": "server/services/combination-products/combination-products-knowledge.ts",
+        "lines": 1726
       },
       {
         "file": "server/routes/ivdr-routes.ts",

@@ -95,6 +95,16 @@ function dispatch(h: Handlers) {
   });
 }
 
+/**
+ * Target dates are derived from `Date.now()` at query time, never written as a
+ * calendar date: `nextFromProject` compares the target against the clock, so a
+ * fixed date is a time bomb — the original '2026-09-01' fixture passed the day
+ * it was written and failed the day the calendar reached it.
+ */
+const DAY_MS = 86_400_000;
+const daysFromNow = (n: number) => new Date(Date.now() + n * DAY_MS).toISOString();
+const MER_204_TARGET_DAYS = 30;
+
 /** The one workspace the external-client fixture is scoped to. */
 const CLIENT_WS = {
   clientAccess: () => ({
@@ -103,7 +113,7 @@ const CLIENT_WS = {
   previewOwned: () => ({ rows: [] }),
   programs: () => ({
     rows: [
-      { id: 501, name: 'MER-204 — IND enabling', code: 'MER-204', type: 'IND', status: 'active', progress: 72, target_end_date: '2026-09-01T00:00:00Z' },
+      { id: 501, name: 'MER-204 — IND enabling', code: 'MER-204', type: 'IND', status: 'active', progress: 72, target_end_date: daysFromNow(MER_204_TARGET_DAYS) },
       { id: 502, name: 'MER-118 — 510(k)', code: 'MER-118', type: '510(k)', status: 'active', progress: 48, target_end_date: null },
     ],
   }),
@@ -243,9 +253,10 @@ describe('GET /api/client-portal/overview — sharing filter & shaping', () => {
     const progs = res.body.data.programs;
     expect(progs[0]).toMatchObject({ id: 'MER-204', title: 'MER-204 — IND enabling', pathway: 'IND', readiness: 72, status: 'active' });
     expect(progs[0].blocker).toBeNull(); // no blocker column → documented null
-    // 2026-07-20 → 2026-09-01 is 43 days. Exact, not /milestone/: with the
-    // clock frozen there is no reason to accept a family of strings.
-    expect(progs[0].next).toBe('Next milestone · 43 days');
+    // Future target → forward-looking copy, derived from target_end_date. The
+    // fixture's target is relative to the frozen clock, so the assertion is
+    // exact without being a date that expires.
+    expect(progs[0].next).toBe(`Next milestone · ${MER_204_TARGET_DAYS} days`);
     // A row whose target_end_date is null must not invent one.
     expect(progs[1].next).toBe('In active');
     // Shaping adds exactly these keys — a new one has to be asserted, not
@@ -255,6 +266,24 @@ describe('GET /api/client-portal/overview — sharing filter & shaping', () => {
     );
     // `code` is the id; the numeric PK is not exposed to the client.
     expect(JSON.stringify(progs)).not.toContain('501');
+  });
+
+  it('renders a passed target in the past tense — never as a future milestone', async () => {
+    const PASSED_DAYS = 3;
+    dispatch({
+      ...CLIENT_WS,
+      programs: () => ({
+        rows: [
+          { id: 501, name: 'MER-204 — IND enabling', code: 'MER-204', type: 'IND', status: 'active', progress: 72, target_end_date: daysFromNow(-PASSED_DAYS) },
+        ],
+      }),
+    });
+    const res = await request(app).get('/api/client-portal/overview').set('Authorization', 'TestToken 1::user');
+    expect(res.status).toBe(200);
+    const progs = res.body.data.programs;
+    expect(progs).toHaveLength(1);
+    expect(progs[0].next).toBe(`Target passed ${PASSED_DAYS}d ago`);
+    expect(progs[0].next).not.toMatch(/milestone/);
   });
 
   it('degrades one facet closed on a missing table — view still 200', async () => {

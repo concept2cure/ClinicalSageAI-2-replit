@@ -25,8 +25,11 @@ import {
  */
 const MEMBER_SIGNER = { name: 'Dr. Jane Roe', email: 'jane@example.com', title: 'RA Lead' };
 
+/** The §11.100 attribution lookup: who this user is IN this organization. */
+const SIGNER_IDENTITY_SQL = /FROM users u[\s\S]*organization_users/;
+
 function signerLookup(sql: string, signer: typeof MEMBER_SIGNER | null) {
-  if (/FROM users u/.test(sql) && /organization_users/.test(sql)) {
+  if (SIGNER_IDENTITY_SQL.test(sql)) {
     return { rows: signer ? [signer] : [] };
   }
   return null;
@@ -246,6 +249,18 @@ describe('sealVerifiedVersion — §11.100 signer attribution', () => {
     expect(sqls.some((s) => /INSERT INTO concept2cure_signatures/.test(s))).toBe(false);
     expect(sqls).toContain('ROLLBACK');
     expect(sqls).not.toContain('COMMIT');
+
+    // The lookup that refused was scoped to the org the signature is being
+    // made IN — a membership anywhere else must not name this signer.
+    const refusedAt = queries.findIndex((q) => SIGNER_IDENTITY_SQL.test(q.sql));
+    expect(refusedAt).toBeGreaterThan(0);
+    expect(queries[refusedAt].params).toEqual([baseInput().userId, baseInput().organizationId]);
+
+    // Nothing at all is written after the refusal: no provenance, no audit —
+    // the only statement that follows is the ROLLBACK.
+    const afterRefusal = sqls.slice(refusedAt + 1);
+    expect(afterRefusal.filter((s) => /INSERT INTO/i.test(s))).toEqual([]);
+    expect(afterRefusal).toEqual(['ROLLBACK']);
   });
 
   it('does not take the printed name from caller input — it resolves it', async () => {

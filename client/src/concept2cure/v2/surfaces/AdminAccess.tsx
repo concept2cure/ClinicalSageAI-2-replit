@@ -178,7 +178,31 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
         );
         return;
       }
-      fireToast(`${(v.name || '').trim()} invited as ${v.role}.`);
+      // The server says how the invitee gets their setup link. When this
+      // deployment has no email delivery, the link comes back once, here, and
+      // the admin hands it over — so put it on the clipboard and say so.
+      const body = await res.json().catch(() => null);
+      const inv = body && typeof body === 'object' ? (body as { invitation?: { delivery?: string; setupUrl?: string } }).invitation : undefined;
+      const who = (v.name || '').trim();
+      if (inv && inv.delivery === 'failed') {
+        fireToast(
+          `${who} was added as ${v.role}, but no activation link could be issued — they cannot sign in yet. Ask them to use "Forgot password", or retry the invitation.`,
+          'error',
+        );
+      } else if (inv && inv.delivery === 'link' && inv.setupUrl) {
+        let copied = false;
+        try {
+          await navigator.clipboard?.writeText(inv.setupUrl);
+          copied = true;
+        } catch {
+          copied = false;
+        }
+        fireToast(
+          `${who} invited as ${v.role}. This server sends no email, so ${copied ? 'their password setup link is on your clipboard' : `share this setup link with them: ${inv.setupUrl}`} — it expires in 21 days.`,
+        );
+      } else {
+        fireToast(`${who} invited as ${v.role}. An invitation email with their password setup link was sent.`);
+      }
       setAdminEpoch((n) => n + 1);
     } catch (e) {
       fireToast(
