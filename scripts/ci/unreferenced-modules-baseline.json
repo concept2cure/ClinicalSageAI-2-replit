@@ -1,7 +1,7 @@
 {
   "$comment": "Modules under server/ or client/src/ that nothing in the repository references. This list may only shrink: delete the module, or wire it up, then regenerate with npm run ci:unreferenced-modules:write-baseline. Adding an entry by hand is a regression, not a fix.",
   "generatedBy": "scripts/ci/check-unreferenced-modules.mjs --write-baseline",
-  "count": 102,
+  "count": 101,
   "modules": [
     "client/src/setupTests.js",
     "server/academic-resource-upload.ts",
@@ -88,7 +88,6 @@
     "server/templates/strategic-report-markdown.js",
     "server/templates/strategic-report-template.js",
     "server/test/quality-api-test.ts",
-    "server/test/services/openai-service.ts",
     "server/types/index.ts",
     "server/utils/applicationHealthCheck.ts",
     "server/utils/database-optimizer.ts",
