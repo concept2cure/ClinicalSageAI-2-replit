@@ -67,8 +67,8 @@ Three cross-cutting honesty defects sharpen the picture:
 | process_validation | partial | CPPs/CQAs/control strategy captured, never mapped |
 | manufacturing_process | **absent** | no table, no route, no UI |
 | characterization | **absent** | no home for structural elucidation / physchem / bioactivity |
-| reference_standard | **absent** | §3.2.S.5/§3.2.P.6 permanently empty |
-| container_closure | **absent** | §3.2.S.6/§3.2.P.7 permanently empty |
+| reference_standard | **full** (closed 2026-09-01) | register + routes + write-through + UI + §3.2.S.5/§3.2.P.6 render, side-scoped |
+| container_closure | **full** (closed 2026-09-01) | register + E&L/integrity capture + §3.2.S.6/§3.2.P.7 render, and §3.2.P.2's containerClosureStudies |
 | excipient | **absent** | §3.2.P.4 permanently empty |
 | raw_material_spec | **absent** | — |
 | impurity_profile | **absent** | Q3A/Q6 content unwritable from data |
@@ -81,7 +81,12 @@ Three cross-cutting honesty defects sharpen the picture:
 
 | Fully servable | Partially | Effectively unservable |
 |---|---|---|
-| 3.2.S.7, 3.2.P.1, 3.2.P.8, 3.1, 3.3 | 3.2.S.1, 3.2.S.4, 3.2.P.3, 3.2.P.5 | 3.2.S.2, 3.2.S.3, 3.2.S.5, 3.2.S.6, 3.2.P.2, 3.2.P.4, 3.2.P.6, 3.2.P.7 |
+| 3.2.S.7, 3.2.P.1, 3.2.P.8, 3.1, 3.3, **3.2.S.5, 3.2.S.6, 3.2.P.6, 3.2.P.7** | 3.2.S.1, 3.2.S.4, 3.2.P.3, 3.2.P.5, **3.2.P.2** | 3.2.S.2, 3.2.S.3, 3.2.P.4 |
+
+The four bolded sections moved on 2026-09-01 with the container closure and
+reference standard registers (commit c9ed0979). 3.2.P.2 moved to partial because
+its `containerClosureStudies` input now has a producer; its formulation and
+process development inputs still do not.
 
 ## The build program to close it (ranked by value ÷ effort)
 
@@ -97,9 +102,12 @@ Three cross-cutting honesty defects sharpen the picture:
    `assess_recorded_batch_poolability` pattern: ids in, org-scoped read, deterministic engine, honest
    refusal, zero writes. Unblocks "AnA runs structured simulations against CMC results."
 4. **The missing registers (large, high)** — structured capture for the 9 absent source types,
-   priority order by reviewer pressure: container closure (+E&L), reference standards, impurity
-   profile, dissolution profile, excipients/raw materials, formulation record, manufacturing
-   process, characterization. Each lands: table → routes → write-through → UI tab → composer render.
+   priority order by reviewer pressure: ~~container closure (+E&L)~~, ~~reference standards~~,
+   impurity profile, dissolution profile, excipients/raw materials, formulation record,
+   manufacturing process, characterization. Each lands: table → routes → write-through → UI tab →
+   composer render. **2 of 9 done (2026-09-01)**: the two struck through above, each with a stored
+   `scope` so §3.2.S and §3.2.P cannot green each other, and each visible to AnA through
+   `list_cmc_registers`. 7 remain.
 5. **Persist the guided flow (medium, high)** — the intelligence interview's answers land as
    canonical source objects (they cover exactly the sections in #4), instead of evaporating.
 6. **Analysis on the spine (medium)** — trending/OOT over recorded series; Q6A spec-vs-batch
@@ -111,3 +119,15 @@ Three cross-cutting honesty defects sharpen the picture:
 
 Item 1 is the same class of silent data loss already proven live once — it is the "stop the
 bleeding" item and should land first.
+
+## Progress against this program
+
+| Item | State | Landed |
+|---|---|---|
+| 1. Mapper fidelity sweep | **done** | all 7 mappers rewritten to real row shapes, adversarially reviewed |
+| 2. Render what is captured | **done** | batch analyses, change history, comparability, Q2 summaries |
+| 3. AnA recorded twins | **done** | `list_cmc_registers` + `estimate_recorded_shelf_life` on the shared engine |
+| 4. The missing registers | **2 of 9** | container closure (+E&L), reference standards |
+| 5. Persist the guided flow | open | |
+| 6. Analysis on the spine | open | |
+| 7. Plumbing guards | open | partially anticipated: both new registers store `project_id` and report `module3Linked` |

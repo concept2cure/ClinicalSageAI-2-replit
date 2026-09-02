@@ -56,9 +56,17 @@ vi.mock('../../db', () => ({
 // The best-effort SECONDARY audit log is a separate concern with its own tests
 // and must not need a database here. The DURABLE §11.10(e) row is the
 // device_audit_trail write inside the transaction, which is exercised for real.
-vi.mock('../auditService', () => ({
-  default: { logAction: vi.fn(async () => ({ persisted: true })) },
-}));
+// The default export's logAction is the best-effort SECONDARY log and is
+// stubbed. `writeChainedAuditRow` is NOT stubbed — it is the real chained write
+// the signature transaction now performs (L138), and stubbing it would make the
+// atomicity test below assert nothing.
+vi.mock('../auditService', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../auditService')>();
+  return {
+    ...actual,
+    default: { logAction: vi.fn(async () => ({ persisted: true })) },
+  };
+});
 
 import part11ComplianceService from '../part11ComplianceService';
 import {
@@ -130,6 +138,25 @@ CREATE TABLE electronic_signatures (
   CONSTRAINT electronic_signatures_anchor_ck CHECK (
     (document_id IS NOT NULL AND version_id IS NOT NULL) OR signed_target IS NOT NULL
   )
+);
+
+CREATE TABLE audit_logs (
+  id            TEXT PRIMARY KEY,
+  tenant_id     INTEGER,
+  user_id       INTEGER,
+  action        TEXT,
+  table_name    TEXT,
+  record_id     TEXT,
+  actor_id      INTEGER,
+  target        TEXT,
+  payload_hash  TEXT,
+  sha256_chain  TEXT,
+  occurred_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  hmac_seal     TEXT,
+  old_values    JSONB,
+  new_values    JSON,
+  ip_address    TEXT,
+  user_agent    TEXT
 );
 
 CREATE TABLE device_audit_trail (
@@ -386,5 +413,49 @@ describe('both call paths write through the same writer, into the same shape', (
         createHash('sha256').update(manifestBytes(sig.signature_manifest)).digest('hex'),
       ).toBe(sig.signature_hash);
     }
+  });
+});
+
+describe('the release audit event commits WITH the signature, or not at all (L138)', () => {
+  const releaseEvent = {
+    tenantId: ORG,
+    userId: SIGNER,
+    action: 'release_signature_created',
+    resourceType: 'submission_release',
+    resourceId: 'run-123',
+  };
+
+  it('writes the route-level event on the signature transaction', async () => {
+    await signRelease({ transactionalAuditEvent: releaseEvent });
+    const [audit] = await rows(
+      `SELECT action, tenant_id, actor_id, target, sha256_chain FROM audit_logs WHERE action = $1`,
+      ['release_signature_created'],
+    );
+    expect(audit, 'the release event must be persisted').toBeDefined();
+    expect(Number(audit.tenant_id)).toBe(ORG);
+    expect(Number(audit.actor_id)).toBe(SIGNER);
+    expect(audit.target).toBe('submission_release:run-123');
+    // Chained, not a bare row — §11.10(e) links each entry to the previous.
+    expect(audit.sha256_chain).toEqual(expect.any(String));
+  });
+
+  it('REGRESSION: an unwritable audit row leaves NO signature behind', async () => {
+    // The property L138 exists for, and the only test here that fails if the
+    // write leaves the transaction. The route used to log this event after the
+    // signature had already committed on another connection, so an audit outage
+    // produced a committed signature with no route-level event and a 200.
+    //
+    // Break the audit table specifically — the signature's own INSERT and its
+    // device_audit_trail row are untouched, so if the two are not atomic the
+    // signature commits and this assertion finds it.
+    await pg.exec('ALTER TABLE audit_logs RENAME COLUMN sha256_chain TO sha256_chain_moved');
+
+    await expect(signRelease({ transactionalAuditEvent: releaseEvent })).rejects.toThrow();
+
+    const sigs = await rows(`SELECT id FROM electronic_signatures`);
+    expect(sigs, 'a signature that could not be audited must not exist').toHaveLength(0);
+    // And nothing half-landed on the way there either.
+    const trail = await rows(`SELECT id FROM device_audit_trail`);
+    expect(trail, 'the device_audit_trail row rolls back with it').toHaveLength(0);
   });
 });

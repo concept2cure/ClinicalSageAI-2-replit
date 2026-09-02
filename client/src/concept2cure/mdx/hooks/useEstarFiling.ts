@@ -153,14 +153,20 @@ export interface FilingReadinessResult {
   blockers: string[];
   currentVersion: string | null;
   ombNumbers: string[];
+  /** Which store answered a useProjectContent load. */
+  deviceContentSource?: 'governed_program' | 'legacy_document' | 'legacy_org_wide';
 }
 
 export interface AssessFilingReadinessBody {
   catalogKey: string;
   variant?: 'device' | 'ivd';
-  /** Load the org's authored device content (cerv2_510k_sections) as leaves. */
+  /** Load authored device content as leaves. With `programId`, the program's
+   *  governed document answers when it holds authored content; otherwise the
+   *  legacy store (cerv2_510k_sections) does, and the verdict's
+   *  `deviceContentSource` says which. */
   useProjectContent?: boolean;
   documentId?: number;
+  programId?: string;
   qSubType?: string;
 }
 

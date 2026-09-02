@@ -34,6 +34,8 @@
  */
 
 import type { C2CFormConfig } from '../C2CForm';
+/* The scope vocabulary is the composer's, not the form's: shared/cmc/material-scope.ts. */
+import { CMC_MATERIAL_SCOPES } from '@shared/cmc/material-scope';
 
 /* ── Small shared helpers ─────────────────────────────────────────────────── */
 
@@ -820,4 +822,382 @@ export function comparabilityBody(v: Record<string, string>, projectId?: string)
   if (outcome) body.outcome = outcome;
   if (projectId) body.projectId = projectId;
   return body;
+}
+
+/* ═══════════ Container closure — POST/PUT /api/cmc/container-closures ════════
+   The system that holds the material, and the evidence that it is fit to. */
+
+export const CONTAINER_COMPONENT_TYPES = ['primary', 'secondary', 'administration-device'];
+
+/**
+ * Which statuses an ordinary save may set.
+ *
+ * 'qualified' is deliberately ABSENT from both registers' status controls:
+ * qualification is a 21 CFR Part 11 signature (POST .../:id/qualify) that
+ * records who qualified the record, when, and why. The API refuses a
+ * self-declared 'qualified' on create and update, so offering it here would
+ * only produce a rejected save.
+ */
+export const CONTAINER_CLOSURE_STATUSES = ['draft', 'retired'];
+export const REFERENCE_STANDARD_STATUSES = ['draft', 'expired', 'retired'];
+
+/**
+ * Pipe-delimited lines → typed json rows.
+ *
+ * The drawer has no repeatable-row control, and materials of construction, E&L
+ * results and standard characterisation are all genuinely tabular. A textarea
+ * with a documented column order is the honest middle: what the scientist types
+ * is exactly what is stored, blank cells are omitted rather than stored as
+ * empty strings, and a line with nothing in it produces no row at all.
+ *
+ * Cells BEYOND the declared columns are kept, joined onto the last one. Dropping
+ * them (which iterating the keys does by default) deletes typed text with no
+ * signal — a note like "re-qualified 2026" typed as a sixth cell simply
+ * vanished from the record and from the dossier.
+ */
+export function parseRowLines(
+  value: string | undefined | null,
+  keys: string[],
+): Array<Record<string, string>> {
+  if (!value) return [];
+  const rows: Array<Record<string, string>> = [];
+  for (const line of String(value).split('\n')) {
+    if (!line.trim()) continue;
+    const cells = line.split('|').map((c) => c.trim());
+    const overflow = cells.slice(keys.length).filter(Boolean);
+    const row: Record<string, string> = {};
+    keys.forEach((k, i) => {
+      const cell = i === keys.length - 1 && overflow.length > 0
+        ? [cells[i], ...overflow].filter(Boolean).join(' | ')
+        : cells[i];
+      if (cell) row[k] = cell;
+    });
+    if (Object.keys(row).length > 0) rows.push(row);
+  }
+  return rows;
+}
+
+/**
+ * The inverse: stored json rows → the pipe-delimited text the drawer edits.
+ *
+ * Without this the edit drawer opened blank over a populated jsonb column, and
+ * a staffer adding one line replaced the whole column with that line — the E&L
+ * per-analyte results, the other materials of construction, the rest of the
+ * characterisation, silently destroyed by a save that reported success.
+ */
+export function rowLinesOf(rows: unknown, keys: string[]): string {
+  if (!Array.isArray(rows)) return '';
+  return rows
+    .filter((r) => r && typeof r === 'object')
+    .map((r) => {
+      const cells = keys.map((k) => String((r as Record<string, unknown>)[k] ?? '').trim());
+      // Trailing empties add nothing and make the line harder to read back.
+      while (cells.length > 0 && !cells[cells.length - 1]) cells.pop();
+      return cells.join(' | ');
+    })
+    .filter(Boolean)
+    .join('\n');
+}
+
+export const MATERIAL_COLUMNS = ['component', 'material', 'supplier', 'specification', 'compendialReference'];
+export const EL_RESULT_COLUMNS = ['analyte', 'level', 'unit', 'threshold', 'assessment'];
+export const CHARACTERISATION_COLUMNS = ['attribute', 'method', 'result'];
+
+export interface ExtractablesLeachables {
+  studyType?: string;
+  protocol?: string;
+  conditions?: string;
+  analyticalEvaluationThreshold?: string;
+  conclusion?: string;
+  results?: Array<Record<string, string>>;
+}
+
+export interface IntegrityTesting {
+  method?: string;
+  acceptanceCriteria?: string;
+  result?: string;
+  testDate?: string;
+}
+
+export interface ContainerClosureBody {
+  projectId?: string;
+  scope: string;
+  systemName: string;
+  componentType: string;
+  containerDescription: string;
+  closureDescription: string;
+  supplier?: string | null;
+  compendialStandards?: string[] | null;
+  suitabilityJustification?: string | null;
+  materialsOfConstruction?: Array<Record<string, string>> | null;
+  extractablesLeachables?: ExtractablesLeachables | null;
+  integrityTesting?: IntegrityTesting | null;
+  status: string;
+}
+
+/** The shape the edit drawer is seeded from — the API row, as it comes back. */
+export interface ContainerClosureRow extends Partial<ContainerClosureBody> {
+  extractablesLeachables?: ExtractablesLeachables | null;
+  integrityTesting?: IntegrityTesting | null;
+}
+
+export function containerClosureForm(row?: ContainerClosureRow | null): C2CFormConfig {
+  const el = row?.extractablesLeachables ?? undefined;
+  const it = row?.integrityTesting ?? undefined;
+  return {
+    eyebrow: 'Container closure — §3.2.S.6 / §3.2.P.7',
+    title: row ? 'Edit container closure system' : 'Record a container closure system',
+    sub: 'The container, the closure, and the evidence they are fit for the material',
+    submitLabel: row ? 'Save system' : 'Record system',
+    fields: [
+      { key: 'systemName', label: 'System name', type: 'text', required: true, default: row?.systemName ?? '', placeholder: 'e.g. 10 mL Type I glass vial / 20 mm bromobutyl stopper' },
+      { key: 'scope', label: 'Evidence for', type: 'select', options: CMC_MATERIAL_SCOPES, required: true, half: true, default: row?.scope ?? 'drug_product', desc: 'Decides whether this system files under §3.2.S.6 or §3.2.P.7' },
+      { key: 'componentType', label: 'Component', type: 'select', options: CONTAINER_COMPONENT_TYPES, required: true, half: true, default: row?.componentType ?? 'primary' },
+      { key: 'containerDescription', label: 'Container', type: 'textarea', required: true, rows: 2, default: row?.containerDescription ?? '', placeholder: 'e.g. 10 mL clear Type I borosilicate glass vial, 20 mm neck finish' },
+      { key: 'closureDescription', label: 'Closure', type: 'textarea', required: true, rows: 2, default: row?.closureDescription ?? '', placeholder: 'e.g. 20 mm bromobutyl rubber stopper, fluoropolymer-laminated, aluminium flip-off seal' },
+      { key: 'supplier', label: 'Supplier', type: 'text', half: true, default: row?.supplier ?? '', placeholder: 'e.g. Schott / West Pharmaceutical' },
+      { key: 'status', label: 'Status', type: 'seg', options: CONTAINER_CLOSURE_STATUSES, required: true, half: true, default: row?.status && CONTAINER_CLOSURE_STATUSES.includes(row.status) ? row.status : 'draft', desc: 'Qualification is a signed action, not a status you set here' },
+      { key: 'compendialStandards', label: 'Compendial standards', type: 'text', default: (row?.compendialStandards ?? []).join(', '), placeholder: 'e.g. USP <660>, USP <381>, Ph. Eur. 3.2.1' },
+      { key: 'materialsOfConstruction', label: 'Materials of construction', type: 'textarea', rows: 3, default: rowLinesOf(row?.materialsOfConstruction, MATERIAL_COLUMNS), placeholder: 'One per line: Component | Material | Supplier | Specification | Compendial reference' },
+      { key: 'suitabilityJustification', label: 'Suitability justification', type: 'textarea', rows: 3, default: row?.suitabilityJustification ?? '', placeholder: 'Protection, compatibility, safety and performance for the intended use — the applicant statement §3.2.S.6 / §3.2.P.7 is built on' },
+      { key: 'elStudyType', label: 'E&L study', type: 'text', half: true, default: el?.studyType ?? '', placeholder: 'e.g. Controlled extraction study' },
+      { key: 'elProtocol', label: 'E&L protocol', type: 'text', half: true, default: el?.protocol ?? '', placeholder: 'e.g. PR-EL-014' },
+      { key: 'elConditions', label: 'E&L conditions', type: 'text', half: true, default: el?.conditions ?? '', placeholder: 'e.g. 40C/75%RH, 6 months, inverted' },
+      { key: 'elThreshold', label: 'Analytical evaluation threshold', type: 'text', half: true, default: el?.analyticalEvaluationThreshold ?? '', placeholder: 'e.g. 1.5 ug/day' },
+      { key: 'elConclusion', label: 'E&L conclusion', type: 'text', default: el?.conclusion ?? '', placeholder: 'The recorded conclusion, if the study has reached one' },
+      { key: 'elResults', label: 'E&L results', type: 'textarea', rows: 3, default: rowLinesOf(el?.results, EL_RESULT_COLUMNS), placeholder: 'One per line: Analyte | Level | Unit | Threshold | Assessment' },
+      { key: 'integrityMethod', label: 'Integrity test method', type: 'text', half: true, default: it?.method ?? '', placeholder: 'e.g. Helium leak (USP <1207>)' },
+      { key: 'integrityCriteria', label: 'Integrity acceptance criteria', type: 'text', half: true, default: it?.acceptanceCriteria ?? '', placeholder: 'e.g. <= 6e-6 mbar L/s' },
+      { key: 'integrityResult', label: 'Integrity result', type: 'text', half: true, default: it?.result ?? '', placeholder: 'The measured outcome, as recorded' },
+      { key: 'integrityTestDate', label: 'Integrity tested on', type: 'date', half: true, default: it?.testDate ? String(it.testDate).slice(0, 10) : '' },
+    ],
+  };
+}
+
+/** The E&L record the drawer describes, or undefined when nothing was entered. */
+function elFrom(v: Record<string, string>): ExtractablesLeachables | undefined {
+  const results = parseRowLines(v.elResults, EL_RESULT_COLUMNS);
+  const el: ExtractablesLeachables = {
+    ...(opt(v.elStudyType) ? { studyType: opt(v.elStudyType) } : {}),
+    ...(opt(v.elProtocol) ? { protocol: opt(v.elProtocol) } : {}),
+    ...(opt(v.elConditions) ? { conditions: opt(v.elConditions) } : {}),
+    ...(opt(v.elThreshold) ? { analyticalEvaluationThreshold: opt(v.elThreshold) } : {}),
+    ...(opt(v.elConclusion) ? { conclusion: opt(v.elConclusion) } : {}),
+    ...(results.length > 0 ? { results } : {}),
+  };
+  return Object.keys(el).length > 0 ? el : undefined;
+}
+
+/** The integrity record the drawer describes, or undefined when it is empty. */
+function integrityFrom(v: Record<string, string>): IntegrityTesting | undefined {
+  const testDate = isoDate(v.integrityTestDate);
+  const it: IntegrityTesting = {
+    ...(opt(v.integrityMethod) ? { method: opt(v.integrityMethod) } : {}),
+    ...(opt(v.integrityCriteria) ? { acceptanceCriteria: opt(v.integrityCriteria) } : {}),
+    ...(opt(v.integrityResult) ? { result: opt(v.integrityResult) } : {}),
+    ...(testDate ? { testDate } : {}),
+  };
+  return Object.keys(it).length > 0 ? it : undefined;
+}
+
+export function containerClosureBody(v: Record<string, string>, projectId?: string): ContainerClosureBody {
+  const body: ContainerClosureBody = {
+    scope: req(v.scope) || 'drug_product',
+    systemName: req(v.systemName),
+    componentType: req(v.componentType) || 'primary',
+    containerDescription: req(v.containerDescription),
+    closureDescription: req(v.closureDescription),
+    status: req(v.status) || 'draft',
+  };
+  const supplier = opt(v.supplier);
+  if (supplier) body.supplier = supplier;
+  const compendial = csvToArray(v.compendialStandards);
+  if (compendial.length > 0) body.compendialStandards = compendial;
+  const justification = opt(v.suitabilityJustification);
+  if (justification) body.suitabilityJustification = justification;
+  const materials = parseRowLines(v.materialsOfConstruction, MATERIAL_COLUMNS);
+  if (materials.length > 0) body.materialsOfConstruction = materials;
+  /* The E&L study and the integrity record are sent only when something about
+     them was actually entered. An empty object is truthy: storing one would be
+     recorded as a study that does not exist, and the composed section would
+     stop saying the package is absent — the only signal a reviewer has. */
+  const el = elFrom(v);
+  if (el) body.extractablesLeachables = el;
+  const integrity = integrityFrom(v);
+  if (integrity) body.integrityTesting = integrity;
+  if (projectId) body.projectId = projectId;
+  return body;
+}
+
+/**
+ * The UPDATE body: every editable field, with an explicit null for the ones
+ * left blank.
+ *
+ * A create omits what was not entered. An update must not: the drawer is seeded
+ * from the stored record, so a field the staffer cleared was cleared
+ * deliberately, and omitting it from a PATCH leaves the old value in place —
+ * there was no way at all to remove a suitability justification entered against
+ * the wrong system, or a wrong retest date.
+ *
+ * `projectId` is absent by design: the program a record is evidence for is
+ * fixed at creation and the API refuses to move it.
+ */
+export function containerClosurePatch(v: Record<string, string>): ContainerClosureBody {
+  const compendial = csvToArray(v.compendialStandards);
+  const materials = parseRowLines(v.materialsOfConstruction, MATERIAL_COLUMNS);
+  return {
+    scope: req(v.scope) || 'drug_product',
+    systemName: req(v.systemName),
+    componentType: req(v.componentType) || 'primary',
+    containerDescription: req(v.containerDescription),
+    closureDescription: req(v.closureDescription),
+    status: req(v.status) || 'draft',
+    supplier: opt(v.supplier) ?? null,
+    compendialStandards: compendial.length > 0 ? compendial : null,
+    suitabilityJustification: opt(v.suitabilityJustification) ?? null,
+    materialsOfConstruction: materials.length > 0 ? materials : null,
+    extractablesLeachables: elFrom(v) ?? null,
+    integrityTesting: integrityFrom(v) ?? null,
+  };
+}
+
+/* ═══════════ Reference standards — POST/PUT /api/cmc/reference-standards ═════
+   The standard every potency and purity number is reported against. */
+
+export const REFERENCE_STANDARD_TYPES = [
+  'primary', 'secondary', 'working', 'compendial', 'system-suitability',
+];
+
+export interface ReferenceStandardBody {
+  projectId?: string;
+  scope: string;
+  standardCode: string;
+  standardName: string;
+  standardType: string;
+  materialSource?: string | null;
+  lotNumber?: string | null;
+  assignedValue?: string | null;
+  characterization?: Array<Record<string, string>> | null;
+  certificateOfAnalysis?: string | null;
+  qualificationProtocol?: string | null;
+  storageConditions?: string | null;
+  expiryDate?: string | null;
+  retestDate?: string | null;
+  status: string;
+}
+
+export function referenceStandardForm(row?: Partial<ReferenceStandardBody> | null): C2CFormConfig {
+  return {
+    eyebrow: 'Reference standards — §3.2.S.5 / §3.2.P.6',
+    title: row ? 'Edit reference standard' : 'Record a reference standard',
+    sub: 'The standard results are reported against, and how it was qualified',
+    submitLabel: row ? 'Save standard' : 'Record standard',
+    fields: [
+      { key: 'standardCode', label: 'Standard code', type: 'text', required: true, half: true, default: row?.standardCode ?? '', placeholder: 'e.g. RS-DS-001' },
+      { key: 'standardName', label: 'Standard name', type: 'text', required: true, half: true, default: row?.standardName ?? '', placeholder: 'e.g. BX-204 drug substance primary reference standard' },
+      { key: 'scope', label: 'Evidence for', type: 'select', options: CMC_MATERIAL_SCOPES, required: true, half: true, default: row?.scope ?? 'drug_substance', desc: 'Decides whether this standard files under §3.2.S.5 or §3.2.P.6' },
+      { key: 'standardType', label: 'Type', type: 'select', options: REFERENCE_STANDARD_TYPES, required: true, half: true, default: row?.standardType ?? 'primary' },
+      { key: 'lotNumber', label: 'Lot', type: 'text', half: true, default: row?.lotNumber ?? '', placeholder: 'e.g. RS-LOT-2405' },
+      { key: 'assignedValue', label: 'Assigned value', type: 'text', half: true, default: row?.assignedValue ?? '', placeholder: 'e.g. 98.7% (as-is)' },
+      { key: 'materialSource', label: 'Prepared from', type: 'text', default: row?.materialSource ?? '', placeholder: 'The lot it was prepared from, or the compendial catalogue entry it is traceable to' },
+      { key: 'characterization', label: 'Characterisation', type: 'textarea', rows: 3, default: rowLinesOf(row?.characterization, CHARACTERISATION_COLUMNS), placeholder: 'One per line: Attribute | Method | Result' },
+      { key: 'certificateOfAnalysis', label: 'CoA reference', type: 'text', half: true, default: row?.certificateOfAnalysis ?? '', placeholder: 'e.g. CoA-RS-001-2405' },
+      { key: 'qualificationProtocol', label: 'Qualification protocol', type: 'text', half: true, default: row?.qualificationProtocol ?? '', placeholder: 'e.g. PR-RS-002' },
+      { key: 'storageConditions', label: 'Storage', type: 'text', half: true, default: row?.storageConditions ?? '', placeholder: 'e.g. -70C, desiccated' },
+      { key: 'status', label: 'Status', type: 'seg', options: REFERENCE_STANDARD_STATUSES, required: true, half: true, default: row?.status && REFERENCE_STANDARD_STATUSES.includes(row.status) ? row.status : 'draft', desc: 'Qualification is a signed action, not a status you set here' },
+      { key: 'retestDate', label: 'Retest date', type: 'date', half: true, default: row?.retestDate ? String(row.retestDate).slice(0, 10) : '' },
+      { key: 'expiryDate', label: 'Expiry date', type: 'date', half: true, default: row?.expiryDate ? String(row.expiryDate).slice(0, 10) : '' },
+    ],
+  };
+}
+
+export function referenceStandardBody(v: Record<string, string>, projectId?: string): ReferenceStandardBody {
+  const body: ReferenceStandardBody = {
+    scope: req(v.scope) || 'drug_substance',
+    standardCode: req(v.standardCode),
+    standardName: req(v.standardName),
+    standardType: req(v.standardType) || 'primary',
+    status: req(v.status) || 'draft',
+  };
+  const source = opt(v.materialSource);
+  if (source) body.materialSource = source;
+  const lot = opt(v.lotNumber);
+  if (lot) body.lotNumber = lot;
+  const assigned = opt(v.assignedValue);
+  if (assigned) body.assignedValue = assigned;
+  const characterization = parseRowLines(v.characterization, CHARACTERISATION_COLUMNS);
+  if (characterization.length > 0) body.characterization = characterization;
+  const coa = opt(v.certificateOfAnalysis);
+  if (coa) body.certificateOfAnalysis = coa;
+  const protocol = opt(v.qualificationProtocol);
+  if (protocol) body.qualificationProtocol = protocol;
+  const storage = opt(v.storageConditions);
+  if (storage) body.storageConditions = storage;
+  const retest = isoDate(v.retestDate);
+  if (retest) body.retestDate = retest;
+  const expiry = isoDate(v.expiryDate);
+  if (expiry) body.expiryDate = expiry;
+  if (projectId) body.projectId = projectId;
+  return body;
+}
+
+/** The UPDATE body — see the note on `containerClosurePatch`. */
+export function referenceStandardPatch(v: Record<string, string>): ReferenceStandardBody {
+  const characterization = parseRowLines(v.characterization, CHARACTERISATION_COLUMNS);
+  return {
+    scope: req(v.scope) || 'drug_substance',
+    standardCode: req(v.standardCode),
+    standardName: req(v.standardName),
+    standardType: req(v.standardType) || 'primary',
+    status: req(v.status) || 'draft',
+    materialSource: opt(v.materialSource) ?? null,
+    lotNumber: opt(v.lotNumber) ?? null,
+    assignedValue: opt(v.assignedValue) ?? null,
+    characterization: characterization.length > 0 ? characterization : null,
+    certificateOfAnalysis: opt(v.certificateOfAnalysis) ?? null,
+    qualificationProtocol: opt(v.qualificationProtocol) ?? null,
+    storageConditions: opt(v.storageConditions) ?? null,
+    retestDate: isoDate(v.retestDate) ?? null,
+    expiryDate: isoDate(v.expiryDate) ?? null,
+  };
+}
+
+/* ═══════════ The governed qualification signature ═══════════════════════════
+   POST /api/cmc/{container-closures,reference-standards}/:id/qualify */
+
+export interface QualifyBody {
+  reason: string;
+  meaning: string;
+  reauth: { password?: string; totp?: string };
+}
+
+/**
+ * Qualifying a container closure system or a reference standard is a Part 11
+ * signature: who, when, why, and what the signature means, recorded against the
+ * record. It is deliberately not a status a save can set.
+ */
+export function qualifyForm(subject: string, name: string): C2CFormConfig {
+  return {
+    eyebrow: 'Qualification — 21 CFR Part 11 signature',
+    title: `Qualify ${subject}`,
+    sub: name,
+    submitLabel: 'Sign and qualify',
+    governed:
+      'Your name, the time and the reason below are recorded against this record. ' +
+      'Qualification cannot be undone by an ordinary edit.',
+    fields: [
+      { key: 'meaning', label: 'Meaning of signature', type: 'select', options: ['approval', 'review', 'responsibility', 'authorship'], default: 'approval', required: true, half: true },
+      { key: 'reason', label: 'Reason', type: 'textarea', required: true, placeholder: 'What qualifies this record — the protocol executed, the report accepted, the data reviewed…' },
+      { key: 'password', label: 'Password', type: 'password', placeholder: 'Re-enter your password', required: true, half: true },
+      { key: 'totp', label: 'Authenticator', type: 'text', placeholder: '6-digit code', half: true },
+    ],
+  };
+}
+
+export function qualifyBody(v: Record<string, string>): QualifyBody {
+  return {
+    reason: req(v.reason),
+    meaning: req(v.meaning) || 'approval',
+    reauth: { password: v.password || undefined, totp: v.totp || undefined },
+  };
 }

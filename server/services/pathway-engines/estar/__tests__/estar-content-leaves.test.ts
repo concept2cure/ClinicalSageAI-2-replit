@@ -95,3 +95,124 @@ describe('sectionsToLeaves (authored content → readiness leaves)', () => {
     expect(sectionsToLeaves(undefined as unknown as DeviceSectionInput[])).toEqual([]);
   });
 });
+
+// ── ESTAR-01 / ESTAR-02: the governed store, keyed by program ─────────────────
+//
+// The loaders read only cerv2_510k_sections, org-wide: two device programs in
+// one organization shared one content set, and a program authored in the
+// governed editor (c2c_documents / c2c_document_sections) was invisible to
+// /assemble, /filing-readiness and the draft package. With `programId` the
+// governed document of THAT program answers, and the legacy store is never
+// touched — the fake below throws if it is.
+
+import { vi } from 'vitest';
+import {
+  governedSectionsToDeviceSections,
+  loadDeviceContentLeaves,
+  loadAuthoredDeviceSections,
+  deviceContentSource,
+  resolveDeviceContentScope,
+  type DeviceContentClient,
+  type GovernedDeviceSectionRow,
+} from '../estar-content-leaves';
+
+vi.mock('../../../../db', () => ({
+  db: {
+    select: () => {
+      throw new Error('the legacy store (cerv2_510k_sections) must not be read for a program-scoped load');
+    },
+  },
+  pool: {
+    query: async () => {
+      throw new Error('the shared pool must not be used when a client is injected');
+    },
+  },
+}));
+
+const ORG = 7;
+const PROGRAM = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
+
+function governedClient(opts: { document?: string | null; sections?: GovernedDeviceSectionRow[] }): DeviceContentClient & { calls: Array<{ sql: string; params: unknown[] }> } {
+  const calls: Array<{ sql: string; params: unknown[] }> = [];
+  return {
+    calls,
+    async query(sql: string, params: unknown[] = []) {
+      calls.push({ sql, params });
+      if (/FROM c2c_documents/.test(sql)) {
+        return { rows: opts.document ? [{ id: opts.document }] : [] } as never;
+      }
+      if (/FROM c2c_document_sections/.test(sql)) {
+        return { rows: opts.sections ?? [] } as never;
+      }
+      throw new Error(`unexpected query: ${sql}`);
+    },
+  };
+}
+
+const GOVERNED_ROWS: GovernedDeviceSectionRow[] = [
+  { section_key: '3', label: 'Device Description', status: 'approved', content: { text: REAL_CONTENT }, mandatory: true },
+  { section_key: '5', label: 'Performance Testing', status: 'drafted', content: { paragraphs: [{ text: REAL_CONTENT }] }, mandatory: true },
+  { section_key: '8', label: 'Labeling', status: 'locked', content: { text: REAL_CONTENT }, mandatory: true },
+  { section_key: '10', label: 'Software', status: 'todo', content: {}, mandatory: false },
+];
+
+describe('governedSectionsToDeviceSections (c2c_document_sections → adapter sections)', () => {
+  it('reads the editor content shapes and derives the documentType from the label', () => {
+    const sections = governedSectionsToDeviceSections(GOVERNED_ROWS);
+    expect(sections.map((s) => s.sectionKey)).toEqual(['3', '5', '8', '10']);
+    expect(sections[0]).toMatchObject({ sectionTitle: 'Device Description', category: 'Device Description', status: 'approved', content: REAL_CONTENT });
+    expect(sections[1].content).toBe(REAL_CONTENT); // {paragraphs} shape
+    expect(sections[3].content).toBe(''); // an empty section is not authored
+    const leaves = sectionsToLeaves(sections);
+    expect(leaves.map((l) => l.documentType)).toEqual(['device_description', 'performance_testing', 'labeling']);
+  });
+
+  it('applies the governed status vocabulary: locked is substantive, drafted/todo are not', () => {
+    const leaves = sectionsToLeaves(governedSectionsToDeviceSections(GOVERNED_ROWS));
+    expect(leaves.find((l) => l.sectionCode === '8')?.substantive).toBe(true);
+    expect(leaves.find((l) => l.sectionCode === '5')?.substantive).toBe(false);
+  });
+});
+
+describe('loadDeviceContentLeaves / loadAuthoredDeviceSections with a programId', () => {
+  it("reads the program's governed document, tenant-scoped, and never the legacy store", async () => {
+    const client = governedClient({ document: 'doc_1', sections: GOVERNED_ROWS });
+    const leaves = await loadDeviceContentLeaves(ORG, { programId: PROGRAM, client });
+    expect(leaves).toHaveLength(3);
+    expect(client.calls[0].params).toEqual([ORG, PROGRAM, ['k510', 'denovo', 'pma', 'cer']]);
+    expect(client.calls[1].params).toEqual(['doc_1']);
+
+    const authored = await loadAuthoredDeviceSections(ORG, { programId: PROGRAM, client });
+    expect(authored.map((a) => a.title)).toEqual(['Device Description', 'Performance Testing', 'Labeling']);
+  });
+
+  it('a program with no governed device document yields no leaves — honest, not the org-wide set', async () => {
+    const client = governedClient({ document: null });
+    expect(await loadDeviceContentLeaves(ORG, { programId: PROGRAM, client })).toEqual([]);
+    expect(await loadAuthoredDeviceSections(ORG, { programId: PROGRAM, client })).toEqual([]);
+    expect(client.calls).toHaveLength(2); // one document lookup per load; no section query
+  });
+
+  it('resolveDeviceContentScope: a program with authored governed content reads the governed store', async () => {
+    const client = governedClient({ document: 'doc_1', sections: GOVERNED_ROWS });
+    const r = await resolveDeviceContentScope(ORG, { programId: PROGRAM, documentId: 4, client });
+    expect(r.source).toBe('governed_program');
+    expect(r.scope.programId).toBe(PROGRAM);
+    expect(r.scope.documentId).toBeUndefined();
+  });
+
+  it('resolveDeviceContentScope: a program whose governed document is empty or absent falls back to the legacy store, and says so', async () => {
+    const empty = await resolveDeviceContentScope(ORG, { programId: PROGRAM, client: governedClient({ document: 'doc_1', sections: [GOVERNED_ROWS[3]] }) });
+    expect(empty).toMatchObject({ source: 'legacy_org_wide', scope: { documentId: undefined } });
+    expect(empty.scope.programId).toBeUndefined();
+
+    const none = await resolveDeviceContentScope(ORG, { programId: PROGRAM, documentId: 4, client: governedClient({ document: null }) });
+    expect(none).toMatchObject({ source: 'legacy_document', scope: { documentId: 4 } });
+  });
+
+  it('names the store that answered', () => {
+    expect(deviceContentSource({ programId: PROGRAM })).toBe('governed_program');
+    expect(deviceContentSource({ documentId: 4 })).toBe('legacy_document');
+    expect(deviceContentSource({})).toBe('legacy_org_wide');
+  });
+});

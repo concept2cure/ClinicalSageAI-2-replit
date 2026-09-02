@@ -872,17 +872,82 @@ router.post('/:id/lock', async (req: Request, res: Response) => {
 
 // ── POST /api/c2c/documents/:id/submit ───────────────────────────────────────
 //
-// Sets submitted_at and status='submitted'. Snapshot to concept2cure_artifacts
-// and gateway fire are Moat #5 scope — not wired here.
+// Sets submitted_at and status='submitted' — on evidence that a filing actually
+// happened. This route used to flip the status on a reason string alone: no
+// package assembled, no sequence dispatched, nothing left the platform, yet the
+// document (and every surface that reads its status) claimed it had been filed.
+// A status of 'submitted' is a regulatory claim, and this was the one place in
+// the product that could make it without a basis.
+//
+// Two bases are accepted. Whichever is given is persisted on the governed
+// ledger row this route already writes (c2c_ana_actions.payload, hash-chained
+// into audit_logs) beside the actor and the reason:
+//
+//   sequenceId     — an ectd_sequences row in the caller's organization that
+//                    has been dispatched (status 'dispatched', or dispatch_status
+//                    'sent' / 'acknowledged'). submission_leaves cannot tie a
+//                    sequence to a c2c document in the current schema — its
+//                    document_id is an INTEGER polymorphic key and
+//                    c2c_documents.id is TEXT — and c2c_documents has no
+//                    sequence column, so the tie is recorded on the ledger row
+//                    rather than inferred from a leaf that cannot exist.
+//   externalFiling — { channel, reference, filedAt }: an explicit attestation
+//                    that the filing was made outside the platform (ESG, CDRH
+//                    portal, CESP, courier), with the gateway receipt or portal
+//                    confirmation number. The operator's assertion, attributed
+//                    to them — not the platform's.
+//
+// Snapshot to concept2cure_artifacts is Moat #5 scope — not wired here.
+
+const DISPATCHED_DISPATCH_STATUSES = new Set(['sent', 'acknowledged']);
 
 router.post('/:id/submit', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
   const orgId  = resolveOrgId(req);
   if (!userId || !orgId) return send403(res);
 
-  const { reason } = req.body as { reason?: string };
+  const { reason, sequenceId, externalFiling } = req.body as {
+    reason?: string;
+    sequenceId?: unknown;
+    externalFiling?: unknown;
+  };
   if (!reason || typeof reason !== 'string' || reason.trim() === '') {
     return send400(res, 'reason required');
+  }
+
+  // Shape validation before any database work — the same hand validation the
+  // rest of this file uses.
+  let sequenceIdNum: number | null = null;
+  if (sequenceId !== undefined) {
+    const n = typeof sequenceId === 'string' ? Number(sequenceId) : sequenceId;
+    if (typeof n !== 'number' || !Number.isInteger(n) || n <= 0) {
+      return send400(res, 'sequenceId must be a positive integer');
+    }
+    sequenceIdNum = n;
+  }
+
+  let external: { channel: string; reference: string; filedAt: string } | null = null;
+  if (externalFiling !== undefined) {
+    const ef = externalFiling as Record<string, unknown> | null;
+    if (!ef || typeof ef !== 'object' || Array.isArray(ef)) {
+      return send400(res, 'externalFiling must be an object { channel, reference, filedAt }');
+    }
+    const channel   = typeof ef.channel   === 'string' ? ef.channel.trim()   : '';
+    const reference = typeof ef.reference === 'string' ? ef.reference.trim() : '';
+    const filedAt   = typeof ef.filedAt   === 'string' ? Date.parse(ef.filedAt) : NaN;
+    if (!channel)   return send400(res, 'externalFiling.channel required');
+    if (!reference) return send400(res, 'externalFiling.reference required (gateway receipt or portal confirmation number)');
+    if (Number.isNaN(filedAt)) return send400(res, 'externalFiling.filedAt must be an ISO 8601 date');
+    external = { channel, reference, filedAt: new Date(filedAt).toISOString() };
+  }
+
+  if (sequenceIdNum === null && external === null) {
+    return res.status(409).json({
+      error: 'FILING_EVIDENCE_REQUIRED',
+      message:
+        'Nothing has been filed. Supply the dispatched sequenceId, or an externalFiling ' +
+        '{ channel, reference, filedAt } attestation for a filing made outside the platform.',
+    });
   }
 
   try {
@@ -897,6 +962,42 @@ router.post('/:id/submit', async (req: Request, res: Response) => {
       return res.status(409).json({ error: 'ALREADY_SUBMITTED' });
     }
 
+    const filing: Record<string, unknown> = {};
+    if (sequenceIdNum !== null) {
+      // Org-scoped, like the 'ectd-sequence' target resolver in actions.ts: an
+      // id that does not resolve in this organization is indistinguishable
+      // from one that does not exist.
+      const seq = await pool.query(
+        `SELECT id, status, dispatch_status, sequence_number, region
+           FROM ectd_sequences
+          WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
+          LIMIT 1`,
+        [sequenceIdNum, orgId],
+      );
+      if (seq.rows.length === 0) return send400(res, 'SEQUENCE_NOT_FOUND');
+      const row = seq.rows[0] as {
+        status: string; dispatch_status: string | null; sequence_number: string; region: string;
+      };
+      const dispatched =
+        row.status === 'dispatched' ||
+        (row.dispatch_status != null && DISPATCHED_DISPATCH_STATUSES.has(row.dispatch_status));
+      if (!dispatched) {
+        return res.status(409).json({
+          error: 'SEQUENCE_NOT_DISPATCHED',
+          sequenceStatus: row.status,
+          dispatchStatus: row.dispatch_status,
+        });
+      }
+      filing.sequence = {
+        sequenceId: sequenceIdNum,
+        sequenceNumber: row.sequence_number,
+        region: row.region,
+        status: row.status,
+        dispatchStatus: row.dispatch_status,
+      };
+    }
+    if (external) filing.external = external;
+
     // Atomic: the governed-action audit and the submit UPDATE commit or roll back
     // together, so the ledger can never record a submission that didn't take.
     const client = await pool.connect();
@@ -904,7 +1005,7 @@ router.post('/:id/submit', async (req: Request, res: Response) => {
       await client.query('BEGIN');
       const result = await writeMutation(
         'transition',
-        { target: `document:${req.params.id}`, reason: reason.trim() },
+        { target: `document:${req.params.id}`, reason: reason.trim(), payload: { filing } },
         userId,
         orgId,
         'api',
@@ -918,7 +1019,7 @@ router.post('/:id/submit', async (req: Request, res: Response) => {
         [req.params.id],
       );
       await client.query('COMMIT');
-      return res.json({ ...result, status: 'submitted' });
+      return res.json({ ...result, status: 'submitted', filing });
     } catch (txnErr) {
       await client.query('ROLLBACK').catch(() => {});
       throw txnErr;

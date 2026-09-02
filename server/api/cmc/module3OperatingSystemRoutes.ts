@@ -21,7 +21,7 @@ import {
   sha256CanonicalJson,
   BINDING_BASIS,
 } from '../../services/part11/signature-persistence';
-import { SIGNATURE_MEANINGS } from './specificationRoutes';
+import { SIGNATURE_MEANINGS, resolveActorUserId } from './governance';
 
 /** The §11.50(a)(3) meanings a signature may carry. */
 type SignatureMeaning = (typeof SIGNATURE_MEANINGS)[number];
@@ -63,12 +63,6 @@ function getOrgId(req: express.Request): number {
   return orgId;
 }
 
-function resolveActorUserId(req: express.Request): number {
-  const r = req as any;
-  const raw = r.userId ?? r.user?.id ?? 0;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
-  return Number.isFinite(n) && n > 0 ? n : 0;
-}
 
 router.post('/source-objects/:projectId', async (req, res) => {
   try {

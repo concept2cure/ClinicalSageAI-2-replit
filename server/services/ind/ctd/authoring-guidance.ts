@@ -15,48 +15,6 @@
 import type { CtdSection } from './types.js';
 
 export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
-  "1.1": {
-    "code": "1.1",
-    "title": "Cover Letter",
-    "module": 1,
-    "moduleName": "Administrative",
-    "required": true,
-    "requiredFor": [
-      "IND",
-      "NDA",
-      "BLA"
-    ],
-    "contentType": "narrative",
-    "guidance": "The cover letter orients the FDA review division to the submission's purpose, contents, and any special handling requests. It is the first document a regulatory project manager (RPM) reads and it frames triage: submission type, sequence, and whether the package is complete or a partial/amendment.",
-    "authoringGuidance": "The cover letter is a signed transmittal that identifies the application, states the submission type and purpose in the first paragraph, and lists the significant contents so the RPM can route the package correctly. An FDA reviewer reads it to confirm the submission matches the intended action (original IND, protocol amendment, information amendment, NDA/BLA original, resubmission) and to catch any requested meetings, expedited-program designations, or prior agreements being fulfilled. What makes it acceptable is precise identification data (application number, product name, sponsor), an accurate one-line statement of purpose, explicit cross-references to any FDA correspondence or advice being addressed, and a named, reachable regulatory contact. Keep it factual and concise — it is a routing and commitment document, not a scientific argument. Flag any items requiring prompt attention (e.g., safety report, clinical hold response, PDUFA-relevant filing) up front.",
-    "keyContentElements": [
-      "Date, application/submission type, and application number (IND/NDA/BLA number; 'pre-assigned' if original)",
-      "Sponsor/applicant name and full address; product proprietary and established (nonproprietary) name",
-      "One-paragraph statement of purpose (original submission, amendment type, resubmission, response to FDA request)",
-      "Itemized list of the submission's major contents and eCTD modules included",
-      "Cross-references to prior FDA meetings, minutes, advice letters, or agreements being addressed (with dates)",
-      "Identification of any expedited program (Fast Track, Breakthrough, Accelerated Approval, Priority Review) and designation numbers",
-      "Explicit callout of time-sensitive or special-handling items (safety reports, clinical hold responses, waiver/exception requests)",
-      "Named regulatory contact with direct phone and email; authorized signatory name, title, and signature",
-      "Statement of the eCTD sequence number and whether the submission is paper, hybrid, or fully electronic"
-    ],
-    "generationPrompt": "Draft an FDA cover letter for {{SPONSOR}}'s {{PHASE}} submission of {{PRODUCT_NAME}} for the treatment of {{INDICATION}}. Open with a single-sentence statement of the submission type and purpose, then identify the application number, sponsor, and product proprietary/established names. Provide an itemized list of the major contents by eCTD module, cross-reference any relevant prior FDA meetings or correspondence (use bracketed placeholders for dates and minute references), note any expedited-program designations, flag any time-sensitive items, and close with a named regulatory contact (phone/email) and authorized signatory block. Keep the tone factual and transmittal-oriented; do not argue scientific conclusions.",
-    "parentCode": "1",
-    "commonPitfalls": [
-      "Omitting or misstating the application number or eCTD sequence, causing misrouting or a technical rejection",
-      "Vague purpose statement that forces the RPM to open multiple modules to understand what the submission is",
-      "Failing to reference the specific FDA advice, meeting minutes, or IR being responded to, so the reviewer cannot confirm commitments were met",
-      "Listing contents that do not match the actual eCTD backbone, triggering a validation or completeness question",
-      "Providing a generic mailbox or an unreachable contact, delaying any subsequent information request"
-    ],
-    "wordCountRange": [
-      300,
-      700
-    ],
-    "dependencies": [
-      "1.2"
-    ]
-  },
   "1.1.1": {
     "code": "1.1.1",
     "title": "Form FDA 1571 — Investigational New Drug Application",
@@ -95,7 +53,7 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       400
     ],
     "dependencies": [
-      "1.1",
+      "1.2",
       "1.1.2",
       "1.1.3"
     ]
@@ -215,17 +173,16 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       550
     ],
     "dependencies": [
-      "1.1",
       "1.2",
-      "1.3.1",
-      "1.14",
-      "1.15",
+      "1.14.1.3",
+      "1.3.5.1",
+      "1.3.3",
       "1.3.4"
     ]
   },
   "1.2": {
     "code": "1.2",
-    "title": "Comprehensive Table of Contents",
+    "title": "Cover Letter",
     "module": 1,
     "moduleName": "Administrative",
     "required": true,
@@ -235,90 +192,37 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       "BLA"
     ],
     "contentType": "narrative",
-    "guidance": "The comprehensive table of contents provides a complete map of the submission across all CTD modules, enabling reviewers to locate every document. In an eCTD submission this function is largely served by the XML backbone, but a comprehensive TOC/navigation aid remains expected for orientation.",
-    "authoringGuidance": "The comprehensive table of contents is required by 21 CFR 314.50(b) (Index) for NDAs and is expected for INDs and BLAs to give reviewers a single navigational map to every volume and document across Modules 1–5. In a fully electronic submission the eCTD XML backbone and study tagging files perform the granular navigation, but the applicant still provides a coherent, hyperlinked orientation so a reviewer can move from a section reference to the exact leaf. Acceptability depends on the TOC being complete, accurate to the actual granularity of the submission, and consistent with the eCTD backbone — a TOC that references documents not present, or omits present documents, is a filing-review flag. Pagination/volume references (for hybrid or paper) and hyperlink integrity (for electronic) must be verified before submission.",
+    "guidance": "The cover letter orients the FDA review division to the submission's purpose, contents, and any special handling requests. It is the first document a regulatory project manager (RPM) reads and it frames triage: submission type, sequence, and whether the package is complete or a partial/amendment.",
+    "authoringGuidance": "The cover letter is a signed transmittal that identifies the application, states the submission type and purpose in the first paragraph, and lists the significant contents so the RPM can route the package correctly. An FDA reviewer reads it to confirm the submission matches the intended action (original IND, protocol amendment, information amendment, NDA/BLA original, resubmission) and to catch any requested meetings, expedited-program designations, or prior agreements being fulfilled. What makes it acceptable is precise identification data (application number, product name, sponsor), an accurate one-line statement of purpose, explicit cross-references to any FDA correspondence or advice being addressed, and a named, reachable regulatory contact. Keep it factual and concise — it is a routing and commitment document, not a scientific argument. Flag any items requiring prompt attention (e.g., safety report, clinical hold response, PDUFA-relevant filing) up front.",
     "keyContentElements": [
-      "Complete listing of Modules 1 through 5 with their major sections and subsections",
-      "Document-level entries mapped to eCTD leaf titles and locations (or volume/page in hybrid/paper)",
-      "Working internal hyperlinks/bookmarks from TOC entries to their targets (electronic)",
-      "Consistent granularity matching the CTD/eCTD specification for the region",
-      "Identification of study reports and their appendices within Module 5, and CMC sections within Module 3",
-      "Cross-reference conventions for documents incorporated by reference from other applications/master files",
-      "Version/sequence identification aligning the TOC with the current eCTD lifecycle"
+      "Date, application/submission type, and application number (IND/NDA/BLA number; 'pre-assigned' if original)",
+      "Sponsor/applicant name and full address; product proprietary and established (nonproprietary) name",
+      "One-paragraph statement of purpose (original submission, amendment type, resubmission, response to FDA request)",
+      "Itemized list of the submission's major contents and eCTD modules included",
+      "Cross-references to prior FDA meetings, minutes, advice letters, or agreements being addressed (with dates)",
+      "Identification of any expedited program (Fast Track, Breakthrough, Accelerated Approval, Priority Review) and designation numbers",
+      "Explicit callout of time-sensitive or special-handling items (safety reports, clinical hold responses, waiver/exception requests)",
+      "Named regulatory contact with direct phone and email; authorized signatory name, title, and signature",
+      "Statement of the eCTD sequence number and whether the submission is paper, hybrid, or fully electronic"
     ],
-    "generationPrompt": "Generate the structure and drafting guidance for a comprehensive Table of Contents for {{SPONSOR}}'s {{PHASE}} submission of {{PRODUCT_NAME}} in {{INDICATION}}. Lay out the Module 1–5 hierarchy to CTD granularity, describe how each entry maps to an eCTD leaf title/location, specify hyperlink and consistency requirements against the eCTD backbone and the 356h/1571 contents checklist, and note how documents incorporated by reference or from master files should appear. Use bracketed placeholders for specific study numbers and section counts.",
+    "generationPrompt": "Draft an FDA cover letter for {{SPONSOR}}'s {{PHASE}} submission of {{PRODUCT_NAME}} for the treatment of {{INDICATION}}. Open with a single-sentence statement of the submission type and purpose, then identify the application number, sponsor, and product proprietary/established names. Provide an itemized list of the major contents by eCTD module, cross-reference any relevant prior FDA meetings or correspondence (use bracketed placeholders for dates and minute references), note any expedited-program designations, flag any time-sensitive items, and close with a named regulatory contact (phone/email) and authorized signatory block. Keep the tone factual and transmittal-oriented; do not argue scientific conclusions.",
     "parentCode": "1",
     "commonPitfalls": [
-      "TOC entries that reference documents not actually included, or that omit included documents",
-      "Broken or mistargeted hyperlinks/bookmarks in the electronic navigation",
-      "Granularity that does not match the eCTD specification, complicating reviewer navigation",
-      "Inconsistency between the TOC, the 356h/1571 contents checklist, and the eCTD backbone",
-      "Failing to update the comprehensive TOC when amendments add or replace documents"
+      "Omitting or misstating the application number or eCTD sequence, causing misrouting or a technical rejection",
+      "Vague purpose statement that forces the RPM to open multiple modules to understand what the submission is",
+      "Failing to reference the specific FDA advice, meeting minutes, or IR being responded to, so the reviewer cannot confirm commitments were met",
+      "Listing contents that do not match the actual eCTD backbone, triggering a validation or completeness question",
+      "Providing a generic mailbox or an unreachable contact, delaying any subsequent information request"
     ],
     "wordCountRange": [
-      200,
-      500
+      300,
+      700
     ],
-    "dependencies": [
-      "1.1"
-    ]
+    "dependencies": []
   },
-  "1.3.1": {
-    "code": "1.3.1",
-    "title": "Prescribing Information / Package Insert (PLR: Highlights + Full PI Sections 1–17)",
-    "module": 1,
-    "moduleName": "Administrative",
-    "required": false,
-    "requiredFor": [
-      "NDA",
-      "BLA"
-    ],
-    "contentType": "mixed",
-    "guidance": "The prescribing information is the FDA-approved labeling that governs how the product may be promoted and used. It must follow the Physician Labeling Rule (PLR) format — a Highlights of Prescribing Information summary, a Table of Contents, and the Full Prescribing Information organized into the 17 numbered sections. This is the single most scrutinized administrative document in a marketing application.",
-    "authoringGuidance": "The prescribing information (PI) is governed by 21 CFR 201.56 and 201.57 (the Physician Labeling Rule format for applications submitted or pending after June 30, 2006). It is a negotiated, evidence-bounded document: every claim must be supported by data elsewhere in the application, and the reviewer cross-checks each statement against the clinical, nonclinical, and CMC modules. The PLR structure has three parts — Highlights of Prescribing Information (a half-page concise summary), a Contents (table of contents) to the Full PI, and the Full Prescribing Information organized into 17 numbered sections in fixed order. Acceptability requires strict format compliance (Highlights length limit, required bolded headings, the Highlights limitation statement, the initial U.S. approval year), consistency between Highlights and the corresponding Full PI sections, adherence to labeling content rules for each population and warning, and the mandated cross-references (e.g., each Highlights item citing its Full PI section number). The FDA reviewer treats the PI as the deliverable the whole application exists to support; unsubstantiated, promotional, or comparative claims draw immediate labeling deficiencies.",
-    "keyContentElements": [
-      "HIGHLIGHTS: the required limitation statement, product name(s) and dosage form/route, initial U.S. approval year",
-      "HIGHLIGHTS: Boxed Warning summary (if any), Recent Major Changes with dates, Indications and Usage, Dosage and Administration, Dosage Forms and Strengths",
-      "HIGHLIGHTS: Contraindications, Warnings and Precautions, Adverse Reactions (with the FDA adverse-reaction reporting statement), Drug Interactions, Use in Specific Populations, and the patient counseling/Medication Guide statement with revision date",
-      "CONTENTS: a table of contents listing all Full PI sections and subsections that appear",
-      "FULL PI Section 1 Indications and Usage; Section 2 Dosage and Administration; Section 3 Dosage Forms and Strengths",
-      "FULL PI Section 4 Contraindications; Section 5 Warnings and Precautions; Section 6 Adverse Reactions (clinical trials + postmarketing subsections)",
-      "FULL PI Section 7 Drug Interactions; Section 8 Use in Specific Populations (Pregnancy, Lactation, Females and Males of Reproductive Potential, Pediatric, Geriatric per the Pregnancy and Lactation Labeling Rule)",
-      "FULL PI Section 9 Drug Abuse and Dependence; Section 10 Overdosage; Section 11 Description (with established name, structure, formulation)",
-      "FULL PI Section 12 Clinical Pharmacology (12.1 Mechanism of Action, 12.2 Pharmacodynamics, 12.3 Pharmacokinetics, 12.4/12.5 as applicable); Section 13 Nonclinical Toxicology (13.1 Carcinogenesis/Mutagenesis/Impairment of Fertility, 13.2 Animal Toxicology)",
-      "FULL PI Section 14 Clinical Studies; Section 15 References; Section 16 How Supplied/Storage and Handling; Section 17 Patient Counseling Information",
-      "Boxed Warning at the top of the Full PI (if applicable) and consistent cross-references between Highlights and Full PI section numbers"
-    ],
-    "generationPrompt": "Draft PLR-format prescribing information for {{SPONSOR}}'s {{PRODUCT_NAME}} for {{INDICATION}}. Produce three parts: (1) HIGHLIGHTS OF PRESCRIBING INFORMATION with the required limitation statement, product/dosage-form line, initial U.S. approval placeholder, any Boxed Warning summary, Recent Major Changes, and concise entries for Indications, Dosage and Administration, Dosage Forms and Strengths, Contraindications, Warnings and Precautions, Adverse Reactions with the FDA reporting statement, Drug Interactions, Use in Specific Populations, and the patient counseling/revision line — each cross-referenced to its Full PI section number; (2) a CONTENTS list; and (3) the FULL PRESCRIBING INFORMATION as the 17 numbered sections in fixed order, with Section 8 following PLLR subsection structure and Section 12 broken into 12.1–12.3. Insert bracketed placeholders wherever a specific study result, incidence value, PK parameter, or NDC would go — do not fabricate data. Keep all language evidence-bounded and non-promotional.",
-    "parentCode": "1.3",
-    "expectedData": [
-      "Adverse reaction incidence tables (treatment vs comparator/placebo) supporting Section 6",
-      "Pharmacokinetic parameter tables (Cmax, AUC, t1/2, effect of intrinsic/extrinsic factors) supporting Section 12.3",
-      "Clinical efficacy results tables (endpoints, effect sizes, confidence intervals) supporting Section 14",
-      "Dosage/strength and How Supplied tables (NDC numbers, package configurations) supporting Sections 3 and 16",
-      "Drug-interaction summary tables supporting Section 7"
-    ],
-    "commonPitfalls": [
-      "Highlights exceeding the length limit or omitting required elements (limitation statement, initial U.S. approval, reporting statement), an automatic format deficiency",
-      "Claims in labeling not substantiated by data in Modules 4/5, or promotional/comparative language not supported by adequate and well-controlled studies",
-      "Inconsistency between Highlights and the corresponding Full PI section, or broken cross-references to section numbers",
-      "Section 8 not conforming to the Pregnancy and Lactation Labeling Rule (PLLR) subsection structure and risk-summary format",
-      "Adverse-reaction tables that do not reconcile with the integrated safety analysis, prompting reviewer reconciliation requests",
-      "Boxed Warning content or placement not matching the agreed risk, or missing required Medication Guide/REMS cross-references"
-    ],
-    "wordCountRange": [
-      3000,
-      9000
-    ],
-    "dependencies": [
-      "1.3.2",
-      "1.3.3",
-      "1.2"
-    ]
-  },
-  "1.3.2": {
-    "code": "1.3.2",
-    "title": "Medication Guide / Patient Labeling",
+  "1.3.3": {
+    "code": "1.3.3",
+    "title": "Debarment Certification",
     "module": 1,
     "moduleName": "Administrative",
     "required": false,
@@ -327,80 +231,31 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       "BLA"
     ],
     "contentType": "narrative",
-    "guidance": "The Medication Guide is FDA-approved patient labeling required for products that pose a serious and significant public health concern where patient-directed information is necessary for safe use. Patient Package Inserts and Instructions for Use are related patient-labeling deliverables. When a Medication Guide is required it is often a component of a REMS.",
-    "authoringGuidance": "Medication Guides are governed by 21 CFR Part 208 and are required when FDA determines that patient labeling could help prevent serious adverse effects, that the product has serious risks relative to benefits that patients should be aware of, or that patient adherence to directions is crucial. The reviewer assesses whether a Medication Guide is triggered by the product's risk profile and whether its content mirrors the approved PI's serious risks in plain, patient-accessible language at the mandated reading level. Acceptability requires the Part 208 content and format (question-and-answer style, required headings, the 'What is the most important information' section aligned to Boxed Warnings/serious risks), consistency with Section 17 of the PI and any REMS, and a distribution plan ensuring the Guide reaches patients. Instructions for Use (IFU) accompany products with complex administration (injectors, inhalers); Patient Package Inserts (PPIs) are separately required for certain classes (e.g., oral contraceptives, estrogens).",
+    "guidance": "The debarment certification is the applicant's sworn statement that it did not and will not use, in any capacity in connection with the application, the services of any person debarred under the FD&C Act. It is a mandatory integrity certification for marketing applications.",
+    "authoringGuidance": "The debarment certification is required by Section 306(k)(1) of the Federal Food, Drug, and Cosmetic Act (21 U.S.C. 335a(k)(1)) and must accompany each NDA and BLA. The applicant certifies that it did not and will not use in any capacity, in connection with the application, the services of any person debarred under Section 306. FDA uses this certification as part of its application-integrity framework; a false certification is grounds for refusal to file, application withdrawal, and criminal liability. Acceptability requires a certification statement that tracks the statutory language, is signed by an authorized official of the applicant, and — if any debarred person's services were in fact used — a list of those persons in lieu of or in addition to the certification as the statute requires. The certification is typically provided as a signed statement in Module 1 and is also attested on Form FDA 356h.",
     "keyContentElements": [
-      "Determination and justification of whether a Medication Guide, PPI, or IFU is required under Part 208",
-      "The 'What is the most important information I should know about [drug]?' section aligned to the Boxed Warning/serious risks",
-      "'What is [drug]?' and approved use in plain language",
-      "'Who should not take/use [drug]?' reflecting contraindications",
-      "'What should I tell my healthcare provider?' covering relevant conditions, pregnancy/lactation, and concomitant medications",
-      "'How should I take/use [drug]?' with administration and missed-dose guidance",
-      "'What are the possible side effects?' covering serious and common adverse reactions",
-      "Storage and general safe-use information, and the FDA/manufacturer contact and reporting statement",
-      "Plain-language reading level, required Part 208 headings, and revision date consistent with the PI",
-      "Cross-reference to REMS if the Medication Guide is a REMS element; separate Instructions for Use for device/complex-administration products"
+      "Certification statement tracking FD&C Act 306(k)(1) that no debarred person's services were or will be used in connection with the application",
+      "Applicant name and the specific application/product to which the certification applies",
+      "Name, title, and signature of an authorized official of the applicant",
+      "Date of certification consistent with the submission",
+      "If applicable, a list of any debarred persons whose services were used, as the statute contemplates",
+      "Cross-reference to the corresponding attestation on Form FDA 356h"
     ],
-    "generationPrompt": "Draft a Part 208-compliant Medication Guide for {{SPONSOR}}'s {{PRODUCT_NAME}} for {{INDICATION}}. First state whether a Medication Guide is triggered and why. Then produce the patient-facing content using the required question-and-answer headings: most important information (aligned to any Boxed Warning), what the drug is and its use, who should not take it, what to tell the healthcare provider, how to take it, possible serious and common side effects, storage, and the manufacturer/FDA reporting contact. Write at a plain-language reading level, keep every statement consistent with the prescribing information, and use bracketed placeholders for specific risks, doses, and contact details. Note separately whether an Instructions for Use is also needed.",
+    "generationPrompt": "Draft a debarment certification for {{SPONSOR}}'s {{PRODUCT_NAME}} marketing application for {{INDICATION}} that tracks Section 306(k)(1) of the FD&C Act (21 U.S.C. 335a). Provide the certification statement that the applicant did not and will not use the services of any debarred person in connection with the application, identify the applicant and product, include an authorized-official signature block with bracketed placeholders, and note the statutory list requirement if any debarred person's services were used. Cross-reference the corresponding Form FDA 356h attestation.",
     "parentCode": "1.3",
     "commonPitfalls": [
-      "Content that diverges from the approved PI's serious risks or uses technical language above the required patient reading level",
-      "Missing or misaligned 'most important information' section relative to the Boxed Warning",
-      "Failing to establish a distribution mechanism ensuring patients actually receive the Guide (a Part 208 requirement)",
-      "Not recognizing that the product triggers a Medication Guide, or conflating a Medication Guide with a PPI or IFU",
-      "Revision date or content out of sync with the final negotiated PI"
+      "Certification language that does not track the statutory 306(k)(1) wording",
+      "Signature by an individual not authorized to bind the applicant",
+      "Omitting the certification entirely, a refuse-to-file basis for a marketing application",
+      "Failing to reconcile the certification with the 356h attestation",
+      "Certifying without having actually screened contractors/consultants against the debarment list"
     ],
     "wordCountRange": [
-      800,
-      2500
+      150,
+      400
     ],
     "dependencies": [
-      "1.3.1"
-    ]
-  },
-  "1.3.3": {
-    "code": "1.3.3",
-    "title": "Carton and Container Labeling",
-    "module": 1,
-    "moduleName": "Administrative",
-    "required": false,
-    "requiredFor": [
-      "NDA",
-      "BLA"
-    ],
-    "contentType": "mixed",
-    "guidance": "Carton and container labeling comprises the immediate container label and the outer carton labeling for every proposed presentation. FDA reviews these for compliance with content-and-format requirements, consistency with the PI, and avoidance of medication errors and name/look-alike confusion.",
-    "authoringGuidance": "Container and carton labeling is governed by 21 CFR 201.100 (prescription drug labeling), the general labeling requirements of 201.1–201.25, and for biologics 21 CFR 610.60–610.65. Reviewers, including the Division of Medication Error Prevention and Analysis (DMEPA), examine the mock-ups for required content (established and proprietary names with the correct name prominence, strength expressed per total and per mL where relevant, net quantity, storage, Rx statement, lot and expiration placeholders, NDC, manufacturer/distributor) and for design features that reduce medication errors (differentiation across strengths, barcode compliance, avoidance of error-prone abbreviations). Acceptability requires legible, to-scale color mock-ups for each presentation, exact consistency with the approved PI (strength, concentration, storage, indication class), NDC assignment consistent with the establishment/listing, and DMEPA-aligned human-factors considerations. For biologics, the specific 610 statements (proper name, licensed manufacturer, dating period) must appear.",
-    "keyContentElements": [
-      "To-scale, legible color mock-ups of every immediate container label and outer carton for each strength/presentation",
-      "Proprietary and established (proper) names with correct name juxtaposition and prominence",
-      "Strength/concentration expressed per total content and per mL (for injectables/liquids) to prevent dosing errors",
-      "Net quantity of contents and dosage form",
-      "NDC number for each presentation consistent with establishment registration and drug listing",
-      "Storage and handling statements consistent with the stability data and PI Section 16",
-      "'Rx only' statement and route of administration",
-      "Lot number and expiration date placeholders, and barcode (linear/2D) meeting bar-code label requirements",
-      "Manufacturer/distributor name and address; for biologics the 21 CFR 610 proper-name, license-number, and dating-period statements",
-      "Warnings/Boxed Warning callouts and any REMS/Medication Guide references where space and rules require"
-    ],
-    "generationPrompt": "Prepare carton and container labeling guidance and annotated text content for each proposed presentation of {{SPONSOR}}'s {{PRODUCT_NAME}} for {{INDICATION}}. For every strength/presentation, specify the immediate-container and outer-carton content: proprietary and established names with correct prominence, strength/concentration expressed per total and per mL where applicable, net quantity, dosage form, NDC placeholder, storage statement consistent with PI Section 16, 'Rx only', route, lot/expiration placeholders, barcode requirement, and manufacturer/distributor. Add the 21 CFR 610 proper-name/license/dating statements if {{PRODUCT_NAME}} is a biologic. Provide a presentations table (strength, container/closure, fill volume, NDC, configuration) with bracketed placeholders, and flag medication-error/DMEPA design considerations. Do not invent NDCs or lot data.",
-    "parentCode": "1.3",
-    "expectedData": [
-      "Table of proposed presentations mapping strength, container/closure, fill volume, NDC, and package configuration"
-    ],
-    "commonPitfalls": [
-      "Strength or concentration expressed ambiguously (e.g., per mL vs per total volume) inviting DMEPA medication-error deficiencies",
-      "Insufficient visual differentiation between strengths or look-alike/sound-alike naming concerns",
-      "Storage statements inconsistent with the stability program and PI Section 16",
-      "Missing or non-compliant barcode, NDC inconsistencies, or missing 21 CFR 610 statements for biologics",
-      "Mock-ups not to scale or illegible, preventing DMEPA human-factors review"
-    ],
-    "wordCountRange": [
-      500,
-      1500
-    ],
-    "dependencies": [
-      "1.3.1"
+      "1.1.4"
     ]
   },
   "1.3.4": {
@@ -446,47 +301,92 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       "1.1.4"
     ]
   },
-  "1.4.1": {
-    "code": "1.4.1",
-    "title": "Investigator's Brochure (Reference)",
+  "1.3.5.1": {
+    "code": "1.3.5.1",
+    "title": "Patent Information and Certification (1.3.5.1 patent information · 1.3.5.2 patent certification · 1.3.5.3 exclusivity claim)",
     "module": 1,
     "moduleName": "Administrative",
-    "required": true,
+    "required": false,
     "requiredFor": [
-      "IND"
+      "NDA",
+      "BLA"
     ],
-    "contentType": "narrative",
-    "guidance": "In the FDA regional module the Investigator's Brochure (IB) is referenced under 1.4.1 as one of the references/cross-references for the submission. The IB compiles the clinical and nonclinical information relevant to the study drug for the investigators; the submitted IND must include a current IB and each amendment must reference the version in effect.",
-    "authoringGuidance": "The Investigator's Brochure is required by 21 CFR 312.23(a)(5), which enumerates its content; 21 CFR 312.55 separately obligates the sponsor to furnish the current IB to each participating investigator. ICH E6(R2)/E6(R3) Good Clinical Practice Section 7 defines the standard IB structure. In the US eCTD regional backbone the IB appears at 1.4.1 as a reference document that gives investigators and the FDA reviewer a consolidated, current summary of the physical/chemical/pharmaceutical properties, nonclinical pharmacology and toxicology, pharmacokinetics, and available clinical safety and efficacy data — plus guidance for the investigator on possible risks and adverse-reaction management. Acceptability requires that the version referenced matches the version supporting the current protocol, that the safety information (including a summary of known and potential risks) is current as of the submission, and that the IB is internally consistent with the protocol, the 1571, and Module 4/5 data. A stale IB that does not reflect new safety findings is a common information-amendment trigger.",
+    "contentType": "mixed",
+    "guidance": "Patent information identifies the patents claiming the drug substance, drug product, or approved methods of use for Orange Book listing, and — for 505(b)(2) applications — provides the required patent certifications or statements against patents listed for any referenced listed drug. This section carries significant Hatch-Waxman exclusivity and litigation consequences.",
+    "authoringGuidance": "Patent information and certifications are governed by 21 CFR 314.53 (submission of patent information) and 314.50(i) (patent certification requirements), implementing the Hatch-Waxman framework. For a 505(b)(1) NDA the applicant submits patent information (Form FDA 3542a for submission and 3542 for Orange Book listing) identifying drug substance, drug product, and method-of-use patents. For a 505(b)(2) application, the applicant must, for each patent listed on a referenced listed drug, submit one of the paragraph I–IV certifications or a section viii statement (method-of-use carve-out). The reviewer and the Orange Book staff use this to establish listable patents, exclusivity interplay, and, for Paragraph IV, the notice and 30-month-stay machinery. Acceptability requires correct patent numbers and expiration dates, correct patent-use codes for method-of-use patents, the correct certification type per referenced patent, and — for Paragraph IV — a plan for the required notice to the NDA holder and patent owner. Errors here have direct legal and exclusivity consequences, so accuracy and internal consistency are paramount. (Note: BLAs use the BPCIA 'patent dance' rather than Orange Book listing, so 505(b)(2)-style certifications generally do not apply to biologics; include only the applicable patent representations.)",
     "keyContentElements": [
-      "Title page with product identifier, IB version/edition number, and date",
-      "Summary of physical, chemical, and pharmaceutical properties and formulation",
-      "Summary of nonclinical pharmacology, toxicology, and pharmacokinetics/ADME",
-      "Summary of available clinical pharmacokinetics, safety, and efficacy data",
-      "A guidance-for-the-investigator section describing known and potential risks and adverse-reaction management",
-      "Reference safety information (expected/listed adverse events) used for expedited-reporting assessments",
-      "Clear version control and identification of the edition supporting the current protocol",
-      "Cross-reference to the underlying nonclinical (Module 4) and clinical (Module 5) data sources"
+      "Identification of the application basis (505(b)(1) vs 505(b)(2); or BLA) determining which patent obligations apply",
+      "Drug substance, drug product, and method-of-use patents with patent numbers and expiration dates (Form FDA 3542a)",
+      "Patent-use code descriptions for each method-of-use patent tied to specific approved indications",
+      "For 505(b)(2): the required certification (Paragraph I, II, III, or IV) or section viii statement for each patent listed on the referenced listed drug",
+      "For Paragraph IV: a statement of intent to provide notice to the NDA holder and patent owner and the factual/legal basis of the certification",
+      "Declaration/signature of the responsible official attesting to the accuracy of the patent information",
+      "Cross-reference to the referenced listed drug (RLD) and its Orange Book patent listings for 505(b)(2)",
+      "For BLAs: applicable patent representations consistent with BPCIA rather than Orange Book certification"
     ],
-    "generationPrompt": "Prepare the 1.4.1 Investigator's Brochure reference content and version-control guidance for {{SPONSOR}}'s {{PHASE}} IND for {{PRODUCT_NAME}} in {{INDICATION}}. Describe the IB edition/date being referenced and confirm it supports the current protocol; summarize the required IB sections (physicochemical/pharmaceutical properties, nonclinical pharmacology/toxicology/PK, available clinical safety and efficacy, guidance for the investigator on known and potential risks, and reference safety information for expectedness assessments); and specify the cross-references to Module 4 and Module 5. Emphasize version control and consistency with the 1571 and protocol. Use bracketed placeholders for edition numbers, dates, and specific findings; do not fabricate data.",
-    "parentCode": "1.4",
+    "generationPrompt": "Prepare patent information and certification content for {{SPONSOR}}'s {{PRODUCT_NAME}} marketing application for {{INDICATION}}. First identify the application basis (505(b)(1), 505(b)(2), or BLA) and the resulting patent obligations. For a 505(b)(1) NDA, structure the drug-substance, drug-product, and method-of-use patent submission (Form FDA 3542a) with a patents table (number, type, use code, expiration). For a 505(b)(2), specify the required Paragraph I–IV certification or section viii statement for each patent listed on the referenced listed drug and describe Paragraph IV notice obligations. For a BLA, describe the applicable BPCIA representations instead of Orange Book certification. Use bracketed placeholders for all patent numbers, dates, and RLD identifiers; do not invent patent data.",
+    "parentCode": "1.3.5",
     "expectedData": [
-      "Summary tables of nonclinical toxicology findings and exposure margins",
-      "Summary tables of clinical safety (adverse events) and available PK parameters"
+      "Table of listed patents (patent number, type: substance/product/use, use code, expiration date) for the product or referenced listed drug"
     ],
     "commonPitfalls": [
-      "Referencing an outdated IB edition that does not reflect newly identified safety information",
-      "IB reference safety information inconsistent with the safety-reporting assessments (expectedness determinations)",
-      "Version/date on the IB not matching the protocol it is meant to support",
-      "Summaries that overstate efficacy or understate risk relative to the underlying Module 4/5 data",
-      "Failing to update or re-reference the IB when an amendment changes the risk profile"
+      "Incorrect or omitted patent numbers, expiration dates, or use codes causing Orange Book listing errors",
+      "Selecting the wrong certification type (e.g., Paragraph III vs IV) for a referenced patent in a 505(b)(2)",
+      "Failing to address every patent listed for the referenced listed drug in a 505(b)(2) application",
+      "Missing or defective Paragraph IV notice planning, which can invalidate the certification's legal effect",
+      "Applying Orange Book certification logic to a BLA where BPCIA governs, or vice versa"
     ],
     "wordCountRange": [
-      300,
-      800
+      400,
+      1200
     ],
     "dependencies": [
-      "1.1.1"
+      "1.1.4"
+    ]
+  },
+  "1.9": {
+    "code": "1.9",
+    "title": "Pediatric Study Plan / PREA and Pediatric Assessment (FDA heading 1.9: 1.9.1 waiver · 1.9.2 deferral · 1.9.4 proposed pediatric study request)",
+    "module": 1,
+    "moduleName": "Administrative",
+    "required": false,
+    "requiredFor": [
+      "NDA",
+      "BLA"
+    ],
+    "contentType": "mixed",
+    "guidance": "This section addresses the applicant's pediatric obligations: the initial Pediatric Study Plan (iPSP) submitted during development and the pediatric assessment, waiver, or deferral request in the marketing application under the Pediatric Research Equity Act (PREA). It documents how pediatric use will be studied or why studies are waived/deferred.",
+    "authoringGuidance": "Pediatric obligations are governed by the Pediatric Research Equity Act, codified at Section 505B of the FD&C Act (21 U.S.C. 355c), with the initial Pediatric Study Plan (iPSP) required generally no later than 60 days after an end-of-Phase-2 meeting. In the marketing application the applicant must contain a pediatric assessment for the same indication being sought in adults, or a request for a partial/full waiver or deferral with justification. The reviewer and the Pediatric Review Committee (PeRC) evaluate whether the pediatric plan adequately addresses each pediatric age group, whether requested waivers meet the statutory criteria (e.g., studies impossible/impracticable, product does not represent a meaningful therapeutic benefit and is unlikely to be used in a substantial number of pediatric patients, or evidence the product would be unsafe/ineffective in pediatrics), and whether deferrals are justified with timelines. Acceptability requires alignment with the agreed iPSP, coverage of all relevant pediatric age groups, proposed pediatric formulation considerations, and clearly justified waiver/deferral requests with milestone dates. Note any orphan-designation interplay (PREA does not apply to orphan-designated indications) and any BPCA (pediatric exclusivity) considerations.",
+    "keyContentElements": [
+      "Statement of the applicant's PREA obligations for the indication under review and the pediatric age groups implicated",
+      "Reference to the agreed initial Pediatric Study Plan (iPSP) and any agreed amendments",
+      "Proposed pediatric studies (objectives, age groups, endpoints, and timelines) or the pediatric assessment being submitted",
+      "Requests for full or partial waiver with the specific statutory basis under 505B",
+      "Requests for deferral with justification and proposed study completion milestone dates",
+      "Pediatric formulation development plan or justification for why a pediatric formulation is/is not needed",
+      "Extrapolation strategy from adult (or older pediatric) efficacy where scientifically justified",
+      "Interaction history with FDA/PeRC and any orphan-designation or BPCA (pediatric exclusivity) considerations",
+      "Cross-reference to any pediatric data in Module 5 and to labeling Section 8.4"
+    ],
+    "generationPrompt": "Prepare the PREA pediatric content for {{SPONSOR}}'s {{PRODUCT_NAME}} marketing application for {{INDICATION}}. State the Section 505B obligations and the pediatric age groups implicated by the adult indication; reference the agreed initial Pediatric Study Plan; and present either the pediatric assessment or the requested full/partial waiver and/or deferral with the specific statutory basis and dated milestones. Include the pediatric formulation plan, any efficacy-extrapolation strategy, a table mapping pediatric age groups to studies and waiver/deferral status, and cross-references to Module 5 pediatric data and labeling Section 8.4. Note orphan-designation and BPCA considerations. Use bracketed placeholders for dates and study identifiers; do not fabricate results.",
+    "parentCode": "1",
+    "expectedData": [
+      "Table of pediatric age groups mapped to planned/completed studies, waiver/deferral status, and milestone dates"
+    ],
+    "commonPitfalls": [
+      "Requesting a waiver without meeting or clearly articulating the statutory 505B criteria",
+      "Failing to address all relevant pediatric age groups or omitting a required pediatric formulation plan",
+      "Deferral requests lacking justified, dated completion milestones",
+      "Marketing-application pediatric plan inconsistent with the previously agreed iPSP",
+      "Overlooking that PREA does not apply to orphan-designated indications, or conflating PREA obligations with BPCA voluntary incentives"
+    ],
+    "wordCountRange": [
+      500,
+      1500
+    ],
+    "dependencies": [
+      "1.1.4",
+      "1.14.1.3"
     ]
   },
   "1.12.14": {
@@ -532,9 +432,9 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       "1.1.4"
     ]
   },
-  "1.14": {
-    "code": "1.14",
-    "title": "Patent Information and Certification",
+  "1.14.1.1": {
+    "code": "1.14.1.1",
+    "title": "Draft Carton and Container Labels",
     "module": 1,
     "moduleName": "Administrative",
     "required": false,
@@ -543,119 +443,217 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       "BLA"
     ],
     "contentType": "mixed",
-    "guidance": "Patent information identifies the patents claiming the drug substance, drug product, or approved methods of use for Orange Book listing, and — for 505(b)(2) applications — provides the required patent certifications or statements against patents listed for any referenced listed drug. This section carries significant Hatch-Waxman exclusivity and litigation consequences.",
-    "authoringGuidance": "Patent information and certifications are governed by 21 CFR 314.53 (submission of patent information) and 314.50(i) (patent certification requirements), implementing the Hatch-Waxman framework. For a 505(b)(1) NDA the applicant submits patent information (Form FDA 3542a for submission and 3542 for Orange Book listing) identifying drug substance, drug product, and method-of-use patents. For a 505(b)(2) application, the applicant must, for each patent listed on a referenced listed drug, submit one of the paragraph I–IV certifications or a section viii statement (method-of-use carve-out). The reviewer and the Orange Book staff use this to establish listable patents, exclusivity interplay, and, for Paragraph IV, the notice and 30-month-stay machinery. Acceptability requires correct patent numbers and expiration dates, correct patent-use codes for method-of-use patents, the correct certification type per referenced patent, and — for Paragraph IV — a plan for the required notice to the NDA holder and patent owner. Errors here have direct legal and exclusivity consequences, so accuracy and internal consistency are paramount. (Note: BLAs use the BPCIA 'patent dance' rather than Orange Book listing, so 505(b)(2)-style certifications generally do not apply to biologics; include only the applicable patent representations.)",
+    "guidance": "Carton and container labeling comprises the immediate container label and the outer carton labeling for every proposed presentation. FDA reviews these for compliance with content-and-format requirements, consistency with the PI, and avoidance of medication errors and name/look-alike confusion.",
+    "authoringGuidance": "Container and carton labeling is governed by 21 CFR 201.100 (prescription drug labeling), the general labeling requirements of 201.1–201.25, and for biologics 21 CFR 610.60–610.65. Reviewers, including the Division of Medication Error Prevention and Analysis (DMEPA), examine the mock-ups for required content (established and proprietary names with the correct name prominence, strength expressed per total and per mL where relevant, net quantity, storage, Rx statement, lot and expiration placeholders, NDC, manufacturer/distributor) and for design features that reduce medication errors (differentiation across strengths, barcode compliance, avoidance of error-prone abbreviations). Acceptability requires legible, to-scale color mock-ups for each presentation, exact consistency with the approved PI (strength, concentration, storage, indication class), NDC assignment consistent with the establishment/listing, and DMEPA-aligned human-factors considerations. For biologics, the specific 610 statements (proper name, licensed manufacturer, dating period) must appear.",
     "keyContentElements": [
-      "Identification of the application basis (505(b)(1) vs 505(b)(2); or BLA) determining which patent obligations apply",
-      "Drug substance, drug product, and method-of-use patents with patent numbers and expiration dates (Form FDA 3542a)",
-      "Patent-use code descriptions for each method-of-use patent tied to specific approved indications",
-      "For 505(b)(2): the required certification (Paragraph I, II, III, or IV) or section viii statement for each patent listed on the referenced listed drug",
-      "For Paragraph IV: a statement of intent to provide notice to the NDA holder and patent owner and the factual/legal basis of the certification",
-      "Declaration/signature of the responsible official attesting to the accuracy of the patent information",
-      "Cross-reference to the referenced listed drug (RLD) and its Orange Book patent listings for 505(b)(2)",
-      "For BLAs: applicable patent representations consistent with BPCIA rather than Orange Book certification"
+      "To-scale, legible color mock-ups of every immediate container label and outer carton for each strength/presentation",
+      "Proprietary and established (proper) names with correct name juxtaposition and prominence",
+      "Strength/concentration expressed per total content and per mL (for injectables/liquids) to prevent dosing errors",
+      "Net quantity of contents and dosage form",
+      "NDC number for each presentation consistent with establishment registration and drug listing",
+      "Storage and handling statements consistent with the stability data and PI Section 16",
+      "'Rx only' statement and route of administration",
+      "Lot number and expiration date placeholders, and barcode (linear/2D) meeting bar-code label requirements",
+      "Manufacturer/distributor name and address; for biologics the 21 CFR 610 proper-name, license-number, and dating-period statements",
+      "Warnings/Boxed Warning callouts and any REMS/Medication Guide references where space and rules require"
     ],
-    "generationPrompt": "Prepare patent information and certification content for {{SPONSOR}}'s {{PRODUCT_NAME}} marketing application for {{INDICATION}}. First identify the application basis (505(b)(1), 505(b)(2), or BLA) and the resulting patent obligations. For a 505(b)(1) NDA, structure the drug-substance, drug-product, and method-of-use patent submission (Form FDA 3542a) with a patents table (number, type, use code, expiration). For a 505(b)(2), specify the required Paragraph I–IV certification or section viii statement for each patent listed on the referenced listed drug and describe Paragraph IV notice obligations. For a BLA, describe the applicable BPCIA representations instead of Orange Book certification. Use bracketed placeholders for all patent numbers, dates, and RLD identifiers; do not invent patent data.",
-    "parentCode": "1",
+    "generationPrompt": "Prepare carton and container labeling guidance and annotated text content for each proposed presentation of {{SPONSOR}}'s {{PRODUCT_NAME}} for {{INDICATION}}. For every strength/presentation, specify the immediate-container and outer-carton content: proprietary and established names with correct prominence, strength/concentration expressed per total and per mL where applicable, net quantity, dosage form, NDC placeholder, storage statement consistent with PI Section 16, 'Rx only', route, lot/expiration placeholders, barcode requirement, and manufacturer/distributor. Add the 21 CFR 610 proper-name/license/dating statements if {{PRODUCT_NAME}} is a biologic. Provide a presentations table (strength, container/closure, fill volume, NDC, configuration) with bracketed placeholders, and flag medication-error/DMEPA design considerations. Do not invent NDCs or lot data.",
+    "parentCode": "1.14.1",
     "expectedData": [
-      "Table of listed patents (patent number, type: substance/product/use, use code, expiration date) for the product or referenced listed drug"
+      "Table of proposed presentations mapping strength, container/closure, fill volume, NDC, and package configuration"
     ],
     "commonPitfalls": [
-      "Incorrect or omitted patent numbers, expiration dates, or use codes causing Orange Book listing errors",
-      "Selecting the wrong certification type (e.g., Paragraph III vs IV) for a referenced patent in a 505(b)(2)",
-      "Failing to address every patent listed for the referenced listed drug in a 505(b)(2) application",
-      "Missing or defective Paragraph IV notice planning, which can invalidate the certification's legal effect",
-      "Applying Orange Book certification logic to a BLA where BPCIA governs, or vice versa"
-    ],
-    "wordCountRange": [
-      400,
-      1200
-    ],
-    "dependencies": [
-      "1.1.4"
-    ]
-  },
-  "1.15": {
-    "code": "1.15",
-    "title": "Debarment Certification",
-    "module": 1,
-    "moduleName": "Administrative",
-    "required": false,
-    "requiredFor": [
-      "NDA",
-      "BLA"
-    ],
-    "contentType": "narrative",
-    "guidance": "The debarment certification is the applicant's sworn statement that it did not and will not use, in any capacity in connection with the application, the services of any person debarred under the FD&C Act. It is a mandatory integrity certification for marketing applications.",
-    "authoringGuidance": "The debarment certification is required by Section 306(k)(1) of the Federal Food, Drug, and Cosmetic Act (21 U.S.C. 335a(k)(1)) and must accompany each NDA and BLA. The applicant certifies that it did not and will not use in any capacity, in connection with the application, the services of any person debarred under Section 306. FDA uses this certification as part of its application-integrity framework; a false certification is grounds for refusal to file, application withdrawal, and criminal liability. Acceptability requires a certification statement that tracks the statutory language, is signed by an authorized official of the applicant, and — if any debarred person's services were in fact used — a list of those persons in lieu of or in addition to the certification as the statute requires. The certification is typically provided as a signed statement in Module 1 and is also attested on Form FDA 356h.",
-    "keyContentElements": [
-      "Certification statement tracking FD&C Act 306(k)(1) that no debarred person's services were or will be used in connection with the application",
-      "Applicant name and the specific application/product to which the certification applies",
-      "Name, title, and signature of an authorized official of the applicant",
-      "Date of certification consistent with the submission",
-      "If applicable, a list of any debarred persons whose services were used, as the statute contemplates",
-      "Cross-reference to the corresponding attestation on Form FDA 356h"
-    ],
-    "generationPrompt": "Draft a debarment certification for {{SPONSOR}}'s {{PRODUCT_NAME}} marketing application for {{INDICATION}} that tracks Section 306(k)(1) of the FD&C Act (21 U.S.C. 335a). Provide the certification statement that the applicant did not and will not use the services of any debarred person in connection with the application, identify the applicant and product, include an authorized-official signature block with bracketed placeholders, and note the statutory list requirement if any debarred person's services were used. Cross-reference the corresponding Form FDA 356h attestation.",
-    "parentCode": "1",
-    "commonPitfalls": [
-      "Certification language that does not track the statutory 306(k)(1) wording",
-      "Signature by an individual not authorized to bind the applicant",
-      "Omitting the certification entirely, a refuse-to-file basis for a marketing application",
-      "Failing to reconcile the certification with the 356h attestation",
-      "Certifying without having actually screened contractors/consultants against the debarment list"
-    ],
-    "wordCountRange": [
-      150,
-      400
-    ],
-    "dependencies": [
-      "1.1.4"
-    ]
-  },
-  "1.20": {
-    "code": "1.20",
-    "title": "Pediatric Study Plan / PREA and Pediatric Assessment",
-    "module": 1,
-    "moduleName": "Administrative",
-    "required": false,
-    "requiredFor": [
-      "NDA",
-      "BLA"
-    ],
-    "contentType": "mixed",
-    "guidance": "This section addresses the applicant's pediatric obligations: the initial Pediatric Study Plan (iPSP) submitted during development and the pediatric assessment, waiver, or deferral request in the marketing application under the Pediatric Research Equity Act (PREA). It documents how pediatric use will be studied or why studies are waived/deferred.",
-    "authoringGuidance": "Pediatric obligations are governed by the Pediatric Research Equity Act, codified at Section 505B of the FD&C Act (21 U.S.C. 355c), with the initial Pediatric Study Plan (iPSP) required generally no later than 60 days after an end-of-Phase-2 meeting. In the marketing application the applicant must contain a pediatric assessment for the same indication being sought in adults, or a request for a partial/full waiver or deferral with justification. The reviewer and the Pediatric Review Committee (PeRC) evaluate whether the pediatric plan adequately addresses each pediatric age group, whether requested waivers meet the statutory criteria (e.g., studies impossible/impracticable, product does not represent a meaningful therapeutic benefit and is unlikely to be used in a substantial number of pediatric patients, or evidence the product would be unsafe/ineffective in pediatrics), and whether deferrals are justified with timelines. Acceptability requires alignment with the agreed iPSP, coverage of all relevant pediatric age groups, proposed pediatric formulation considerations, and clearly justified waiver/deferral requests with milestone dates. Note any orphan-designation interplay (PREA does not apply to orphan-designated indications) and any BPCA (pediatric exclusivity) considerations.",
-    "keyContentElements": [
-      "Statement of the applicant's PREA obligations for the indication under review and the pediatric age groups implicated",
-      "Reference to the agreed initial Pediatric Study Plan (iPSP) and any agreed amendments",
-      "Proposed pediatric studies (objectives, age groups, endpoints, and timelines) or the pediatric assessment being submitted",
-      "Requests for full or partial waiver with the specific statutory basis under 505B",
-      "Requests for deferral with justification and proposed study completion milestone dates",
-      "Pediatric formulation development plan or justification for why a pediatric formulation is/is not needed",
-      "Extrapolation strategy from adult (or older pediatric) efficacy where scientifically justified",
-      "Interaction history with FDA/PeRC and any orphan-designation or BPCA (pediatric exclusivity) considerations",
-      "Cross-reference to any pediatric data in Module 5 and to labeling Section 8.4"
-    ],
-    "generationPrompt": "Prepare the PREA pediatric content for {{SPONSOR}}'s {{PRODUCT_NAME}} marketing application for {{INDICATION}}. State the Section 505B obligations and the pediatric age groups implicated by the adult indication; reference the agreed initial Pediatric Study Plan; and present either the pediatric assessment or the requested full/partial waiver and/or deferral with the specific statutory basis and dated milestones. Include the pediatric formulation plan, any efficacy-extrapolation strategy, a table mapping pediatric age groups to studies and waiver/deferral status, and cross-references to Module 5 pediatric data and labeling Section 8.4. Note orphan-designation and BPCA considerations. Use bracketed placeholders for dates and study identifiers; do not fabricate results.",
-    "parentCode": "1",
-    "expectedData": [
-      "Table of pediatric age groups mapped to planned/completed studies, waiver/deferral status, and milestone dates"
-    ],
-    "commonPitfalls": [
-      "Requesting a waiver without meeting or clearly articulating the statutory 505B criteria",
-      "Failing to address all relevant pediatric age groups or omitting a required pediatric formulation plan",
-      "Deferral requests lacking justified, dated completion milestones",
-      "Marketing-application pediatric plan inconsistent with the previously agreed iPSP",
-      "Overlooking that PREA does not apply to orphan-designated indications, or conflating PREA obligations with BPCA voluntary incentives"
+      "Strength or concentration expressed ambiguously (e.g., per mL vs per total volume) inviting DMEPA medication-error deficiencies",
+      "Insufficient visual differentiation between strengths or look-alike/sound-alike naming concerns",
+      "Storage statements inconsistent with the stability program and PI Section 16",
+      "Missing or non-compliant barcode, NDC inconsistencies, or missing 21 CFR 610 statements for biologics",
+      "Mock-ups not to scale or illegible, preventing DMEPA human-factors review"
     ],
     "wordCountRange": [
       500,
       1500
     ],
     "dependencies": [
-      "1.1.4",
-      "1.3.1"
+      "1.14.1.3"
+    ]
+  },
+  "1.14.1.3": {
+    "code": "1.14.1.3",
+    "title": "Draft Labeling Text — Prescribing Information (PLR: Highlights + Full PI Sections 1–17) and Patient Labeling",
+    "module": 1,
+    "moduleName": "Administrative",
+    "required": false,
+    "requiredFor": [
+      "NDA",
+      "BLA"
+    ],
+    "contentType": "mixed",
+    "guidance": "The prescribing information is the FDA-approved labeling that governs how the product may be promoted and used. It must follow the Physician Labeling Rule (PLR) format — a Highlights of Prescribing Information summary, a Table of Contents, and the Full Prescribing Information organized into the 17 numbered sections. This is the single most scrutinized administrative document in a marketing application. Draft labeling text (FDA heading 1.14.1.3) carries the Prescribing Information together with the Medication Guide, Patient Package Insert and Instructions for Use; the annotated PI goes to 1.14.1.2 and carton/container labels to 1.14.1.1.",
+    "authoringGuidance": "The prescribing information (PI) is governed by 21 CFR 201.56 and 201.57 (the Physician Labeling Rule format for applications submitted or pending after June 30, 2006). It is a negotiated, evidence-bounded document: every claim must be supported by data elsewhere in the application, and the reviewer cross-checks each statement against the clinical, nonclinical, and CMC modules. The PLR structure has three parts — Highlights of Prescribing Information (a half-page concise summary), a Contents (table of contents) to the Full PI, and the Full Prescribing Information organized into 17 numbered sections in fixed order. Acceptability requires strict format compliance (Highlights length limit, required bolded headings, the Highlights limitation statement, the initial U.S. approval year), consistency between Highlights and the corresponding Full PI sections, adherence to labeling content rules for each population and warning, and the mandated cross-references (e.g., each Highlights item citing its Full PI section number). The FDA reviewer treats the PI as the deliverable the whole application exists to support; unsubstantiated, promotional, or comparative claims draw immediate labeling deficiencies.",
+    "keyContentElements": [
+      "HIGHLIGHTS: the required limitation statement, product name(s) and dosage form/route, initial U.S. approval year",
+      "HIGHLIGHTS: Boxed Warning summary (if any), Recent Major Changes with dates, Indications and Usage, Dosage and Administration, Dosage Forms and Strengths",
+      "HIGHLIGHTS: Contraindications, Warnings and Precautions, Adverse Reactions (with the FDA adverse-reaction reporting statement), Drug Interactions, Use in Specific Populations, and the patient counseling/Medication Guide statement with revision date",
+      "CONTENTS: a table of contents listing all Full PI sections and subsections that appear",
+      "FULL PI Section 1 Indications and Usage; Section 2 Dosage and Administration; Section 3 Dosage Forms and Strengths",
+      "FULL PI Section 4 Contraindications; Section 5 Warnings and Precautions; Section 6 Adverse Reactions (clinical trials + postmarketing subsections)",
+      "FULL PI Section 7 Drug Interactions; Section 8 Use in Specific Populations (Pregnancy, Lactation, Females and Males of Reproductive Potential, Pediatric, Geriatric per the Pregnancy and Lactation Labeling Rule)",
+      "FULL PI Section 9 Drug Abuse and Dependence; Section 10 Overdosage; Section 11 Description (with established name, structure, formulation)",
+      "FULL PI Section 12 Clinical Pharmacology (12.1 Mechanism of Action, 12.2 Pharmacodynamics, 12.3 Pharmacokinetics, 12.4/12.5 as applicable); Section 13 Nonclinical Toxicology (13.1 Carcinogenesis/Mutagenesis/Impairment of Fertility, 13.2 Animal Toxicology)",
+      "FULL PI Section 14 Clinical Studies; Section 15 References; Section 16 How Supplied/Storage and Handling; Section 17 Patient Counseling Information",
+      "Boxed Warning at the top of the Full PI (if applicable) and consistent cross-references between Highlights and Full PI section numbers",
+      "Medication Guide / patient labeling: Determination and justification of whether a Medication Guide, PPI, or IFU is required under Part 208",
+      "Medication Guide / patient labeling: The 'What is the most important information I should know about [drug]?' section aligned to the Boxed Warning/serious risks",
+      "Medication Guide / patient labeling: 'What is [drug]?' and approved use in plain language",
+      "Medication Guide / patient labeling: 'Who should not take/use [drug]?' reflecting contraindications"
+    ],
+    "generationPrompt": "Draft PLR-format prescribing information for {{SPONSOR}}'s {{PRODUCT_NAME}} for {{INDICATION}}. Produce three parts: (1) HIGHLIGHTS OF PRESCRIBING INFORMATION with the required limitation statement, product/dosage-form line, initial U.S. approval placeholder, any Boxed Warning summary, Recent Major Changes, and concise entries for Indications, Dosage and Administration, Dosage Forms and Strengths, Contraindications, Warnings and Precautions, Adverse Reactions with the FDA reporting statement, Drug Interactions, Use in Specific Populations, and the patient counseling/revision line — each cross-referenced to its Full PI section number; (2) a CONTENTS list; and (3) the FULL PRESCRIBING INFORMATION as the 17 numbered sections in fixed order, with Section 8 following PLLR subsection structure and Section 12 broken into 12.1–12.3. Insert bracketed placeholders wherever a specific study result, incidence value, PK parameter, or NDC would go — do not fabricate data. Keep all language evidence-bounded and non-promotional.",
+    "parentCode": "1.14.1",
+    "expectedData": [
+      "Adverse reaction incidence tables (treatment vs comparator/placebo) supporting Section 6",
+      "Pharmacokinetic parameter tables (Cmax, AUC, t1/2, effect of intrinsic/extrinsic factors) supporting Section 12.3",
+      "Clinical efficacy results tables (endpoints, effect sizes, confidence intervals) supporting Section 14",
+      "Dosage/strength and How Supplied tables (NDC numbers, package configurations) supporting Sections 3 and 16",
+      "Drug-interaction summary tables supporting Section 7"
+    ],
+    "commonPitfalls": [
+      "Highlights exceeding the length limit or omitting required elements (limitation statement, initial U.S. approval, reporting statement), an automatic format deficiency",
+      "Claims in labeling not substantiated by data in Modules 4/5, or promotional/comparative language not supported by adequate and well-controlled studies",
+      "Inconsistency between Highlights and the corresponding Full PI section, or broken cross-references to section numbers",
+      "Section 8 not conforming to the Pregnancy and Lactation Labeling Rule (PLLR) subsection structure and risk-summary format",
+      "Adverse-reaction tables that do not reconcile with the integrated safety analysis, prompting reviewer reconciliation requests",
+      "Boxed Warning content or placement not matching the agreed risk, or missing required Medication Guide/REMS cross-references",
+      "Content that diverges from the approved PI's serious risks or uses technical language above the required patient reading level",
+      "Missing or misaligned 'most important information' section relative to the Boxed Warning"
+    ],
+    "wordCountRange": [
+      3000,
+      9000
+    ],
+    "dependencies": [
+      "1.14.1.1"
+    ]
+  },
+  "1.14.4.1": {
+    "code": "1.14.4.1",
+    "title": "Investigator's Brochure",
+    "module": 1,
+    "moduleName": "Administrative",
+    "required": true,
+    "requiredFor": [
+      "IND"
+    ],
+    "contentType": "narrative",
+    "guidance": "In the FDA regional module the Investigator's Brochure (IB) is referenced under 1.4.1 as one of the references/cross-references for the submission. The IB compiles the clinical and nonclinical information relevant to the study drug for the investigators; the submitted IND must include a current IB and each amendment must reference the version in effect.",
+    "authoringGuidance": "The Investigator's Brochure is required by 21 CFR 312.23(a)(5), which enumerates its content; 21 CFR 312.55 separately obligates the sponsor to furnish the current IB to each participating investigator. ICH E6(R2)/E6(R3) Good Clinical Practice Section 7 defines the standard IB structure. In the US eCTD regional backbone the IB appears at 1.4.1 as a reference document that gives investigators and the FDA reviewer a consolidated, current summary of the physical/chemical/pharmaceutical properties, nonclinical pharmacology and toxicology, pharmacokinetics, and available clinical safety and efficacy data — plus guidance for the investigator on possible risks and adverse-reaction management. Acceptability requires that the version referenced matches the version supporting the current protocol, that the safety information (including a summary of known and potential risks) is current as of the submission, and that the IB is internally consistent with the protocol, the 1571, and Module 4/5 data. A stale IB that does not reflect new safety findings is a common information-amendment trigger.",
+    "keyContentElements": [
+      "Title page with product identifier, IB version/edition number, and date",
+      "Summary of physical, chemical, and pharmaceutical properties and formulation",
+      "Summary of nonclinical pharmacology, toxicology, and pharmacokinetics/ADME",
+      "Summary of available clinical pharmacokinetics, safety, and efficacy data",
+      "A guidance-for-the-investigator section describing known and potential risks and adverse-reaction management",
+      "Reference safety information (expected/listed adverse events) used for expedited-reporting assessments",
+      "Clear version control and identification of the edition supporting the current protocol",
+      "Cross-reference to the underlying nonclinical (Module 4) and clinical (Module 5) data sources"
+    ],
+    "generationPrompt": "Prepare the 1.4.1 Investigator's Brochure reference content and version-control guidance for {{SPONSOR}}'s {{PHASE}} IND for {{PRODUCT_NAME}} in {{INDICATION}}. Describe the IB edition/date being referenced and confirm it supports the current protocol; summarize the required IB sections (physicochemical/pharmaceutical properties, nonclinical pharmacology/toxicology/PK, available clinical safety and efficacy, guidance for the investigator on known and potential risks, and reference safety information for expectedness assessments); and specify the cross-references to Module 4 and Module 5. Emphasize version control and consistency with the 1571 and protocol. Use bracketed placeholders for edition numbers, dates, and specific findings; do not fabricate data.",
+    "parentCode": "1.14.4",
+    "expectedData": [
+      "Summary tables of nonclinical toxicology findings and exposure margins",
+      "Summary tables of clinical safety (adverse events) and available PK parameters"
+    ],
+    "commonPitfalls": [
+      "Referencing an outdated IB edition that does not reflect newly identified safety information",
+      "IB reference safety information inconsistent with the safety-reporting assessments (expectedness determinations)",
+      "Version/date on the IB not matching the protocol it is meant to support",
+      "Summaries that overstate efficacy or understate risk relative to the underlying Module 4/5 data",
+      "Failing to update or re-reference the IB when an amendment changes the risk profile"
+    ],
+    "wordCountRange": [
+      300,
+      800
+    ],
+    "dependencies": [
+      "1.1.1"
+    ]
+  },
+  "1.14.4.2": {
+    "code": "1.14.4.2",
+    "title": "Investigational Drug Labeling",
+    "module": 1,
+    "moduleName": "Administrative",
+    "required": true,
+    "requiredFor": [
+      "IND"
+    ],
+    "contentType": "mixed",
+    "guidance": "21 CFR 312.23(a)(7)(iv)(d) requires a copy of all labels and labeling to be provided to each investigator, and 21 CFR 312.6 prescribes the investigational-use caution statement. FDA eCTD Module 1 Specification v2.3 files investigational drug labeling at heading 1.14.4.2, beside the Investigator's Brochure at 1.14.4.1.",
+    "authoringGuidance": "Investigational labeling establishes that clinical supplies are identified, controlled, and legally marked for investigational use. The immediate-container label and any outer package label must carry the statement required by 21 CFR 312.6(a) (\"Caution: New Drug — Limited by Federal (or United States) law to investigational use\") and must not bear any statement that is false or misleading or that represents the drug as safe or effective for the investigational purpose. The reviewer checks the label against the drug product description in Module 3 (name, strength, dosage form, lot/batch identification, storage conditions, sponsor identity) and against the protocol's blinding and packaging scheme. Acceptability depends on every presentation to be shipped being represented, consistency with the CMC section, and — for blinded studies — a labeling scheme that preserves the blind while remaining traceable.",
+    "keyContentElements": [
+      "Immediate-container label text for every strength and presentation to be supplied to investigators",
+      "Outer package / carton label text where applicable",
+      "The 21 CFR 312.6(a) investigational-use caution statement, verbatim",
+      "Product name, strength, dosage form, quantity, lot or batch number, storage conditions, and sponsor identity",
+      "Blinded-study labeling scheme (placebo/comparator naming, kit numbering) and how the blind is preserved",
+      "Any investigator-directed instructions for use accompanying the supplies"
+    ],
+    "generationPrompt": "Prepare the investigational drug labeling text (21 CFR 312.6; 312.23(a)(7)(iv)(d); FDA eCTD heading 1.14.4.2) for {{SPONSOR}}'s IND for {{PRODUCT_NAME}} in {{INDICATION}}. Provide immediate-container and outer-package label text for each presentation with the verbatim investigational-use caution statement, product identity, strength, dosage form, lot/batch, storage and sponsor fields, and the blinded-study labeling scheme where the protocol is blinded. Use bracketed placeholders for values you were not given.",
+    "parentCode": "1.14.4",
+    "commonPitfalls": [
+      "Omitting or paraphrasing the 21 CFR 312.6(a) caution statement",
+      "Label strength or dosage form inconsistent with the Module 3 drug product description",
+      "A labeling scheme that breaks the blind or makes kits untraceable",
+      "Filing the labeling under 1.3 (administrative information) instead of 1.14"
+    ],
+    "wordCountRange": [
+      200,
+      800
+    ],
+    "dependencies": [
+      "3.2.P.1",
+      "5.3.5"
+    ]
+  },
+  "1.20": {
+    "code": "1.20",
+    "title": "Introductory Statement and General Investigational Plan",
+    "module": 1,
+    "moduleName": "Administrative",
+    "required": true,
+    "requiredFor": [
+      "IND"
+    ],
+    "contentType": "narrative",
+    "guidance": "21 CFR 312.23(a)(3) requires every initial IND to open with a brief introductory statement and a general investigational plan for the first year. FDA eCTD Module 1 Specification v2.3 files it as one document at heading 1.20 (general investigational plan for initial IND) — not at 1.6, which is the meetings heading.",
+    "authoringGuidance": "The introductory statement and general investigational plan is the first scientific narrative the review division reads and it frames the 30-day safety review: it tells the division what the drug is, what the sponsor intends to learn in the first year, and why the proposed exposure is reasonable. The introductory statement gives the drug's name and all active ingredients, pharmacological class, structural formula, formulation and route, and the broad objectives and planned duration of the investigation, together with a summary of previous human experience (marketing or investigation outside the US, and any withdrawal for safety or effectiveness). The general investigational plan states the rationale for the drug or research study, the indication(s) to be studied, the general approach to evaluating the drug, the clinical trials to be conducted in the first year (or a statement that plans are not developed beyond the initial protocol), the estimated number of subjects, and any risks of particular severity or seriousness anticipated from nonclinical or prior human data. It must be consistent with the Form 1571 phase designation, the protocol in Module 5, and the nonclinical package in Module 4; a plan that promises studies the toxicology program cannot yet support is the most common trigger for a clinical-hold question.",
+    "keyContentElements": [
+      "Drug name (proprietary and established), all active ingredients, pharmacological class, and structural formula",
+      "Dosage form, formulation, and route of administration",
+      "Broad objectives and planned duration of the proposed clinical investigation(s)",
+      "Summary of previous human experience, including marketing or investigation in other countries and any withdrawal for safety or effectiveness reasons",
+      "Rationale for the drug or the research study, and the indication(s) to be studied",
+      "General approach to be followed in evaluating the drug",
+      "Clinical trials to be conducted during the first year following submission, or a statement that plans are limited to the initial protocol",
+      "Estimated number of subjects to be given the drug in those studies",
+      "Any risks of particular severity or seriousness anticipated on the basis of toxicological data in animals or prior studies in humans"
+    ],
+    "generationPrompt": "Draft the Introductory Statement and General Investigational Plan (21 CFR 312.23(a)(3); FDA eCTD heading 1.20) for {{SPONSOR}}'s initial IND for {{PRODUCT_NAME}} in {{INDICATION}} at {{PHASE}}. Cover the drug's identity, pharmacological class, structural formula, formulation and route; the broad objectives and planned duration; a summary of previous human experience (or a first-in-human statement); the rationale and indication(s); the general evaluation approach; the studies planned for the first year with estimated subject numbers; and anticipated risks of particular severity. Keep it consistent with the Form 1571 phase and the Module 5 protocol. Use bracketed placeholders for values you were not given; do not fabricate data.",
+    "parentCode": "1",
+    "commonPitfalls": [
+      "Filing the plan at heading 1.6 (meetings) or 1.5 (application status) instead of 1.20, so the reviewer cannot find it in the backbone",
+      "First-year plan that exceeds what the nonclinical program supports (duration or dose), inviting a clinical-hold question",
+      "Phase or indication inconsistent with Form 1571 or the Module 5 protocol",
+      "Omitting the previous-human-experience summary, or asserting first-in-human status when the drug has been marketed or studied abroad",
+      "No estimate of subject numbers or no statement of anticipated serious risks"
+    ],
+    "wordCountRange": [
+      800,
+      2500
+    ],
+    "dependencies": [
+      "1.1.1",
+      "2.4",
+      "5.3.5"
     ]
   },
   "2.2": {

@@ -11,9 +11,14 @@
  * organization_id tenant column + drizzle-zod insert), so the service scopes
  * every query by the caller's organizationId.
  *
+ * A row moves to 'transmitted' ONLY on a real gateway receipt; the receipt id is
+ * stored beside the timestamp so "transmitted" is never a bare status flag.
+ *
  * INTEGRATION NOTES (human):
  *   1. Add `export * from './ind-icsr-transmissions'` to shared/schema/index.ts.
  *   2. Run migrations/20260615_ind_icsr_transmissions.sql.
+ *   3. Run migrations/20260902_ind_icsr_transmissions_transport_receipt.sql
+ *      (transport_receipt_id; registered in scripts/db/migration-set.mjs).
  */
 
 import { InferSelectModel } from 'drizzle-orm';
@@ -45,6 +50,12 @@ export const indIcsrTransmissions = pgTable(
     transmitReady: boolean('transmit_ready').notNull().default(false),
 
     transmittedAt: timestamp('transmitted_at', { withTimezone: true }),
+    /**
+     * Transport-layer receipt id the gateway returned. Written only from a real
+     * (non-simulated) receipt, in the same update that sets status
+     * 'transmitted'; null until then. Migration 20260902.
+     */
+    transportReceiptId: text('transport_receipt_id'),
     acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
     /** ICH ICSR ack code AA/AE/AR (null until acknowledged). */
     ackCode: text('ack_code'),

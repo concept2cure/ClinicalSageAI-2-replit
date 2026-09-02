@@ -26,6 +26,8 @@ import {
   mapProcessValidationPayload,
   mapQcTestingPayload,
   mapSpecificationPayload,
+  mapContainerClosurePayload,
+  mapReferenceStandardPayload,
 } from '../cmc-write-through';
 import { MODULE3_SECTION_RULES, composeModule3FromCanonicalSources, tablesToMarkdown } from '../module3Composer';
 
@@ -684,5 +686,476 @@ describe('§3.2.P.8 — the comparability rationale, not just its one-word statu
     expect(p8.narrativeDraft).toMatch(/1 comparability assessment\(s\) are summarized above/);
     // Without a stability source, no shelf life is claimed.
     expect(p8.narrativeDraft).toMatch(/No drug product stability study is present/);
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §3.2.S.5 / §3.2.S.6 / §3.2.P.6 / §3.2.P.7 — the two registers that did not
+   exist.
+
+   The composer has demanded a `container_closure` and a `reference_standard`
+   source since Module 3 was modelled and no table anywhere held one, so those
+   four sections could never leave zero completeness no matter what a CMC
+   staffer recorded. These pin the new capture path end to end: the register row
+   the route hands over, the payload, the completeness decision, and what the
+   composed section actually says.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+describe('mapContainerClosurePayload — the cmc_container_closures row', () => {
+  const dpRow = {
+    id: 7,
+    organizationId: 42,
+    projectId: 'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab',
+    scope: 'drug_product',
+    systemName: '10 mL Type I vial / 20 mm stopper',
+    componentType: 'primary',
+    containerDescription: '10 mL clear Type I borosilicate glass vial, 20 mm neck finish',
+    closureDescription: '20 mm bromobutyl rubber stopper, fluoropolymer-laminated, aluminium flip-off seal',
+    supplier: 'Schott / West',
+    compendialStandards: ['USP <660>', 'USP <381>', 'Ph. Eur. 3.2.1'],
+    suitabilityJustification:
+      'Protection from light and moisture demonstrated over 12 months; compatibility shown by unchanged assay and impurity profile.',
+    materialsOfConstruction: [
+      { component: 'Vial', material: 'Type I borosilicate glass', supplier: 'Schott', specification: 'SPEC-VIAL-01', compendialReference: 'USP <660>' },
+      { component: 'Stopper', material: 'Bromobutyl rubber', supplier: 'West', specification: 'SPEC-STP-04', compendialReference: 'USP <381>' },
+    ],
+    extractablesLeachables: {
+      studyType: 'Controlled extraction, 40C/75%RH, 6 months',
+      protocol: 'PR-EL-014',
+      analyticalEvaluationThreshold: '1.5 ug/day',
+      conclusion: 'All extractables below the analytical evaluation threshold.',
+      results: [
+        { analyte: 'Zinc dibutyldithiocarbamate', level: '0.4', unit: 'ug/day', threshold: '1.5 ug/day', assessment: 'below AET' },
+      ],
+    },
+    integrityTesting: { method: 'Helium leak (USP <1207>)', acceptanceCriteria: '<= 6e-6 mbar L/s', result: '2.1e-6 mbar L/s' },
+    status: 'qualified',
+    qualificationDate: '2026-06-01T00:00:00.000Z',
+  };
+
+  it('carries the container, closure, materials, E&L and integrity data through', () => {
+    const p = mapContainerClosurePayload(dpRow);
+    expect(p.containerDescription).toContain('Type I borosilicate');
+    expect(p.closureDescription).toContain('bromobutyl');
+    expect(p.materialsOfConstruction).toHaveLength(2);
+    expect((p.extractablesLeachables as Record<string, unknown>).protocol).toBe('PR-EL-014');
+    expect((p.integrityTesting as Record<string, unknown>).result).toBe('2.1e-6 mbar L/s');
+    expect(p.compendialStandards).toContain('USP <381>');
+  });
+
+  it('emits ONLY the drug-product side keys for a drug-product system', () => {
+    const p = mapContainerClosurePayload(dpRow);
+    expect(p.drugProductContainerDescription).toBeTruthy();
+    expect(p.drugProductClosureDescription).toBeTruthy();
+    expect(p.drugProductSuitabilityJustification).toBeTruthy();
+    expect(p.drugSubstanceContainerDescription).toBeNull();
+    expect(p.drugSubstanceClosureDescription).toBeNull();
+    expect(p.drugSubstanceSuitabilityJustification).toBeNull();
+  });
+
+  it('emits both sides for a system recorded as evidence for both', () => {
+    const p = mapContainerClosurePayload({ ...dpRow, scope: 'both' });
+    expect(p.drugSubstanceContainerDescription).toBeTruthy();
+    expect(p.drugProductContainerDescription).toBeTruthy();
+  });
+
+  it('reports no E&L study for a form that was opened and left blank', () => {
+    /* `{}` and `{ studyType: '' }` are both truthy. Storing either as a
+       recorded study would erase the section's "no E&L study is recorded"
+       statement — the one thing that tells a reviewer the package is absent. */
+    const blank = mapContainerClosurePayload({ ...dpRow, extractablesLeachables: {}, integrityTesting: { method: '' } });
+    expect(blank.extractablesLeachables).toBeNull();
+    expect(blank.integrityTesting).toBeNull();
+    expect(blank.containerClosureStudies).toBeNull();
+  });
+
+  it('names the studies on file for §3.2.P.2, from the drug-product side only', () => {
+    const dp = mapContainerClosurePayload(dpRow);
+    expect(String(dp.containerClosureStudies)).toContain('extractables/leachables');
+    expect(String(dp.containerClosureStudies)).toContain('container closure integrity');
+    const ds = mapContainerClosurePayload({ ...dpRow, scope: 'drug_substance' });
+    expect(ds.containerClosureStudies).toBeNull();
+  });
+
+  it('does not complete a section from a system recorded without a suitability justification', () => {
+    const p = mapContainerClosurePayload({ ...dpRow, suitabilityJustification: '' });
+    expect(p.drugProductSuitabilityJustification).toBeNull();
+    const composed = composeModule3FromCanonicalSources([src('container_closure', p)]);
+    const p7 = composed.find((c) => c.sectionKey === '3.2.P.7')!;
+    expect(p7.missingInputs).toContain('drugProductSuitabilityJustification');
+    expect(p7.completeness).toBeLessThan(100);
+  });
+});
+
+describe('mapReferenceStandardPayload — the cmc_reference_standards row', () => {
+  const dsRow = {
+    id: 4,
+    organizationId: 42,
+    projectId: 'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab',
+    scope: 'drug_substance',
+    standardCode: 'RS-DS-001',
+    standardName: 'BX-204 primary reference standard',
+    standardType: 'primary',
+    materialSource: 'DS lot BX204-DS-2403',
+    lotNumber: 'RS-LOT-2405',
+    assignedValue: '98.7% (as-is)',
+    characterization: [
+      { attribute: 'Identity', method: 'FTIR', result: 'Conforms to reference spectrum' },
+      { attribute: 'Purity', method: 'RP-HPLC', result: '99.4% area' },
+    ],
+    certificateOfAnalysis: 'CoA-RS-001-2405',
+    qualificationProtocol: 'PR-RS-002',
+    storageConditions: '-70C, desiccated',
+    retestDate: '2027-05-01T00:00:00.000Z',
+    status: 'qualified',
+  };
+
+  it('builds the description from the record own fields and keeps the CoA', () => {
+    const p = mapReferenceStandardPayload(dsRow);
+    expect(p.referenceStandardDescription).toContain('BX-204 primary reference standard');
+    expect(p.referenceStandardDescription).toContain('RS-DS-001');
+    expect(p.referenceStandardDescription).toContain('lot RS-LOT-2405');
+    expect(p.referenceStandardDescription).toContain('assigned value 98.7% (as-is)');
+    expect(p.certificateOfAnalysis).toBe('CoA-RS-001-2405');
+    expect(p.characterization).toHaveLength(2);
+  });
+
+  it('emits ONLY the drug-substance side keys for a drug-substance standard', () => {
+    const p = mapReferenceStandardPayload(dsRow);
+    expect(p.drugSubstanceReferenceStandard).toBeTruthy();
+    expect(p.drugSubstanceReferenceStandardCoA).toBe('CoA-RS-001-2405');
+    expect(p.drugProductReferenceStandard).toBeNull();
+    expect(p.drugProductReferenceStandardCoA).toBeNull();
+  });
+
+  it('produces no description at all for a record with neither a name nor a code', () => {
+    const p = mapReferenceStandardPayload({ ...dsRow, standardCode: '', standardName: '' });
+    expect(p.referenceStandardDescription).toBeNull();
+    expect(p.drugSubstanceReferenceStandard).toBeNull();
+  });
+});
+
+describe('the two new registers reach their sections, and only their own', () => {
+  const containerDp = mapContainerClosurePayload({
+    scope: 'drug_product',
+    systemName: 'PVC/Aclar blister',
+    containerDescription: 'PVC/PVdC-Aclar 300 blister with 20 um hard-temper aluminium lidding',
+    closureDescription: 'Heat-sealed aluminium lidding foil',
+    suitabilityJustification: 'Moisture ingress below the limit over 12 months at 40C/75%RH.',
+    compendialStandards: ['USP <671>'],
+    materialsOfConstruction: [{ component: 'Blister film', material: 'PVC/PVdC-Aclar', compendialReference: 'USP <661.1>' }],
+    extractablesLeachables: {
+      studyType: 'Simulated-use leachables, 6 months',
+      results: [{ analyte: 'Bisphenol A', level: '< 0.05', unit: 'ug/blister', threshold: '1.5 ug/day', assessment: 'below AET' }],
+      conclusion: 'No leachable exceeded the analytical evaluation threshold.',
+    },
+    status: 'qualified',
+  });
+  const standardDs = mapReferenceStandardPayload({
+    scope: 'drug_substance',
+    standardCode: 'RS-DS-001',
+    standardName: 'BX-204 primary reference standard',
+    standardType: 'primary',
+    certificateOfAnalysis: 'CoA-RS-001-2405',
+    characterization: [{ attribute: 'Identity', method: 'FTIR', result: 'Conforms' }],
+    status: 'qualified',
+  });
+
+  const composed = composeModule3FromCanonicalSources([
+    src('container_closure', containerDp),
+    src('reference_standard', standardDs),
+    src('drug_substance', { name: 'BX-204', manufacturer: 'Lonza AG' }),
+    src('drug_product', { name: 'BX-204 tablets', dosageFormDescription: 'Film-coated tablet' }),
+  ]);
+  const section = (key: string) => composed.find((c) => c.sectionKey === key)!;
+
+  it('completes §3.2.P.7 and §3.2.S.5 from the recorded registers', () => {
+    expect(section('3.2.P.7').completeness).toBe(100);
+    expect(section('3.2.S.5').completeness).toBe(100);
+  });
+
+  /* THE cross-bleed pin. A drug-product blister and a drug-substance standard
+     must not turn the OTHER side's section green: both container closure
+     sections match every container_closure source and both reference standard
+     sections match every reference_standard source, so without the side-scoped
+     keys one recorded system would complete a section that never renders it. */
+  it('leaves §3.2.S.6 and §3.2.P.6 honestly incomplete — the other side has no record', () => {
+    const s6 = section('3.2.S.6');
+    expect(s6.completeness).toBe(0);
+    expect(s6.missingInputs).toEqual(
+      expect.arrayContaining(['drugSubstanceContainerDescription', 'drugSubstanceSuitabilityJustification']),
+    );
+    expect(s6.narrativeDraft).toContain('No container closure system is recorded for the drug substance');
+    expect(s6.tables).toHaveLength(0);
+
+    const p6 = section('3.2.P.6');
+    expect(p6.completeness).toBe(0);
+    expect(p6.narrativeDraft).toContain('No reference standard is recorded for the drug product');
+  });
+
+  it('renders the drug-product container closure system with its materials, E&L and compendial citations', () => {
+    const p7 = section('3.2.P.7');
+    const md = tablesToMarkdown(p7.tables);
+    expect(md).toContain('PVC/PVdC-Aclar');
+    expect(md).toContain('USP <661.1>');
+    expect(md).toContain('Bisphenol A');
+    expect(md).toContain('below AET');
+    expect(p7.narrativeDraft).toContain('USP <671>');
+    expect(p7.narrativeDraft).toContain('Moisture ingress below the limit');
+    /* Suitability is the applicant's recorded statement, never the composer's
+       conclusion. */
+    expect(p7.narrativeDraft).toContain('Suitability justification recorded by the applicant');
+  });
+
+  it('renders the drug-substance reference standard with its characterisation', () => {
+    const s5 = section('3.2.S.5');
+    const md = tablesToMarkdown(s5.tables);
+    expect(md).toContain('RS-DS-001');
+    expect(md).toContain('FTIR');
+    expect(s5.narrativeDraft).toContain('1 primary standard(s) are recorded');
+    expect(s5.narrativeDraft).toContain('All recorded standards carry a qualified status');
+  });
+
+  it('feeds the drug-product container closure studies to §3.2.P.2', () => {
+    const p2 = section('3.2.P.2');
+    expect(p2.missingInputs).not.toContain('containerClosureStudies');
+  });
+});
+
+describe('the composed sections refuse to assert what the register does not say', () => {
+  it('does not report a standard as qualified because it exists', () => {
+    const draft = mapReferenceStandardPayload({
+      scope: 'drug_product',
+      standardCode: 'RS-DP-002',
+      standardName: 'BX-204 tablet working standard',
+      standardType: 'working',
+      certificateOfAnalysis: 'CoA-RS-002',
+      status: 'draft',
+    });
+    const composed = composeModule3FromCanonicalSources([src('reference_standard', draft)]);
+    const p6 = composed.find((c) => c.sectionKey === '3.2.P.6')!;
+    expect(p6.narrativeDraft).toContain('0 of 1 recorded standard(s) carry a qualified status');
+    expect(p6.narrativeDraft).toContain('No primary standard is recorded');
+    expect(p6.narrativeDraft).toContain('No characterisation data are recorded');
+  });
+
+  it('does not assert an E&L safety conclusion the study has not reached', () => {
+    const noConclusion = mapContainerClosurePayload({
+      scope: 'drug_substance',
+      systemName: 'HDPE drum with LDPE liner',
+      containerDescription: 'HDPE drum, 25 kg',
+      closureDescription: 'Screw cap with tamper-evident seal',
+      suitabilityJustification: 'Protects from moisture over the retest period.',
+      extractablesLeachables: { studyType: 'Controlled extraction', protocol: 'PR-EL-020' },
+      status: 'draft',
+    });
+    const composed = composeModule3FromCanonicalSources([src('container_closure', noConclusion)]);
+    const s6 = composed.find((c) => c.sectionKey === '3.2.S.6')!;
+    expect(s6.narrativeDraft).toContain('no study conclusion supported by per-analyte results is recorded');
+    expect(s6.narrativeDraft).not.toContain('below AET');
+    /* The study exists but has no per-analyte results — reported as a study
+       design row, never as data. */
+    expect(tablesToMarkdown(s6.tables)).toContain('no per-analyte results recorded');
+    expect(s6.narrativeDraft).toContain('No container closure integrity testing is recorded');
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   The adversarial review of the registers above. Each of these is a defect a
+   review lens found in the shipped code and a scenario the section got wrong.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+describe('review: a section is never assembled out of records that are each incomplete', () => {
+  /* `availableFields` is a UNION over every matched source, so the section's
+     completeness asked only whether SOME record carried each key. Two systems
+     neither of which carries a suitability justification must not report a
+     served section, and the narrative must name how many are unjustified. */
+  it('a register of systems none of which is justified does not complete §3.2.P.7', () => {
+    const primary = mapContainerClosurePayload({
+      scope: 'drug_product',
+      systemName: '10 mL Type I vial / 20 mm stopper',
+      componentType: 'primary',
+      containerDescription: '10 mL Type I borosilicate glass vial',
+      closureDescription: '20 mm bromobutyl stopper',
+      status: 'draft',
+    });
+    const other = mapContainerClosurePayload({
+      scope: 'drug_product',
+      systemName: 'Prefilled syringe presentation',
+      componentType: 'primary',
+      containerDescription: '1 mL long glass syringe barrel',
+      closureDescription: 'Rigid needle shield',
+      status: 'draft',
+    });
+    const composed = composeModule3FromCanonicalSources([
+      src('container_closure', primary),
+      src('container_closure', other),
+    ]);
+    const p7 = composed.find((c) => c.sectionKey === '3.2.P.7')!;
+    expect(p7.completeness).toBeLessThan(100);
+    expect(p7.missingInputs).toEqual(
+      expect.arrayContaining(['drugProductSuitabilityJustification', 'drugProductContainerClosureComplete']),
+    );
+    expect(p7.narrativeDraft).toContain('No suitability justification is recorded');
+  });
+
+  it('one fully recorded system does complete it', () => {
+    const whole = mapContainerClosurePayload({
+      scope: 'drug_product',
+      systemName: 'PVC/Aclar blister',
+      containerDescription: 'PVC/PVdC-Aclar 300 blister',
+      closureDescription: 'Heat-sealed aluminium lidding foil',
+      suitabilityJustification: 'Moisture ingress below the limit over 12 months.',
+      status: 'draft',
+    });
+    const composed = composeModule3FromCanonicalSources([src('container_closure', whole)]);
+    expect(composed.find((c) => c.sectionKey === '3.2.P.7')!.completeness).toBe(100);
+  });
+
+  it('the same rule holds for a reference standard: identity and CoA on ONE record', () => {
+    const named = mapReferenceStandardPayload({
+      scope: 'drug_substance', standardCode: 'RS-A', standardName: 'Standard A', standardType: 'primary', status: 'draft',
+    });
+    const alsoNamed = mapReferenceStandardPayload({
+      scope: 'drug_substance', standardCode: 'RS-B', standardName: 'Standard B', standardType: 'working', status: 'draft',
+    });
+    /* A register of standards, none of which has a Certificate of Analysis.
+       The CoA key is genuinely missing and the section says so. */
+    const split = composeModule3FromCanonicalSources([
+      src('reference_standard', named),
+      src('reference_standard', alsoNamed),
+    ]).find((c) => c.sectionKey === '3.2.S.5')!;
+    expect(split.completeness).toBeLessThan(100);
+    expect(split.missingInputs).toEqual(
+      expect.arrayContaining(['drugSubstanceReferenceStandardCoA', 'drugSubstanceReferenceStandardComplete']),
+    );
+    /* And one standard carrying BOTH completes it — the union is allowed to
+       find a whole record, never to assemble one. */
+    const whole = mapReferenceStandardPayload({
+      scope: 'drug_substance', standardCode: 'RS-C', standardName: 'Standard C', standardType: 'primary',
+      certificateOfAnalysis: 'CoA-C-2405', status: 'qualified',
+    });
+    const served = composeModule3FromCanonicalSources([
+      src('reference_standard', named),
+      src('reference_standard', whole),
+    ]).find((c) => c.sectionKey === '3.2.S.5')!;
+    expect(served.completeness).toBe(100);
+  });
+
+  /* A fully described SECONDARY carton is not a container closure system for
+     the purposes of §3.2.P.7: the section's subject is the packaging in contact
+     with the product. */
+  it('a complete secondary carton does not stand in for an undescribed primary container', () => {
+    const primary = mapContainerClosurePayload({
+      scope: 'drug_product', systemName: 'Blister', componentType: 'primary',
+      containerDescription: 'PVC/Aclar blister', closureDescription: 'Aluminium lidding', status: 'draft',
+    });
+    const carton = mapContainerClosurePayload({
+      scope: 'drug_product', systemName: 'Secondary carton', componentType: 'secondary',
+      containerDescription: 'Printed folding carton', closureDescription: 'Tamper-evident flap seal',
+      suitabilityJustification: 'Provides light protection in transit.', status: 'draft',
+    });
+    const p7 = composeModule3FromCanonicalSources([
+      src('container_closure', primary),
+      src('container_closure', carton),
+    ]).find((c) => c.sectionKey === '3.2.P.7')!;
+    expect(p7.completeness).toBeLessThan(100);
+    expect(p7.missingInputs).toContain('drugProductContainerClosureComplete');
+  });
+});
+
+describe('review: the composed text never credits what the data does not carry', () => {
+  it('an E&L conclusion with no per-analyte results is reported as unsupported', () => {
+    const claimed = mapContainerClosurePayload({
+      scope: 'drug_substance',
+      systemName: 'HDPE drum',
+      containerDescription: 'HDPE drum, 25 kg',
+      closureDescription: 'Screw cap',
+      suitabilityJustification: 'Protects from moisture over the retest period.',
+      extractablesLeachables: {
+        studyType: 'Controlled extraction',
+        protocol: 'PR-EL-020',
+        conclusion: 'All extractables below the analytical evaluation threshold.',
+      },
+      status: 'draft',
+    });
+    const s6 = composeModule3FromCanonicalSources([src('container_closure', claimed)])
+      .find((c) => c.sectionKey === '3.2.S.6')!;
+    expect(s6.narrativeDraft).toContain('no study conclusion supported by per-analyte results is recorded');
+    expect(s6.narrativeDraft).toContain('1 recorded conclusion(s) have no per-analyte results in this section');
+    expect(tablesToMarkdown(s6.tables)).toContain('no per-analyte results recorded');
+  });
+
+  /* The system's supplier is not the component's. A materials line typed with
+     the supplier cell left blank rendered the vial maker's name against a
+     stopper nobody said they made. */
+  it('a component with no recorded supplier does not inherit the system supplier', () => {
+    const p = mapContainerClosurePayload({
+      scope: 'drug_product',
+      systemName: 'Vial system',
+      containerDescription: '10 mL vial',
+      closureDescription: '20 mm stopper',
+      suitabilityJustification: 'Demonstrated over 12 months.',
+      supplier: 'Schott / West',
+      materialsOfConstruction: [{ component: 'Stopper', material: 'Bromobutyl rubber' }],
+      status: 'draft',
+    });
+    const p7 = composeModule3FromCanonicalSources([src('container_closure', p)])
+      .find((c) => c.sectionKey === '3.2.P.7')!;
+    const materials = p7.tables.find((t) => t.title.startsWith('Materials of Construction'))!;
+    expect(materials.rows[0]).toEqual(['Vial system', 'Stopper', 'Bromobutyl rubber', '—', '—', '—']);
+  });
+
+  /* §3.3 read ONE description with val(), which returns the first matched
+     source — so whichever standard was recorded first was named "the primary
+     reference standard", working standards included. */
+  it('§3.3 names as primary only a standard the register records as primary', () => {
+    const working = mapReferenceStandardPayload({
+      scope: 'drug_product', standardCode: 'RS-DP-002', standardName: 'Tablet working standard',
+      standardType: 'working', lotNumber: 'WS-2406', certificateOfAnalysis: 'CoA-002', status: 'draft',
+    });
+    const primary = mapReferenceStandardPayload({
+      scope: 'drug_substance', standardCode: 'RS-DS-001', standardName: 'BX-204 primary reference standard',
+      standardType: 'primary', certificateOfAnalysis: 'CoA-001', status: 'qualified',
+    });
+    const s33 = composeModule3FromCanonicalSources([
+      src('reference_standard', working),
+      src('reference_standard', primary),
+      src('drug_substance', { name: 'BX-204' }),
+      src('drug_product', { dosageFormDescription: 'Film-coated tablet' }),
+    ]).find((c) => c.sectionKey === '3.3')!;
+    expect(s33.narrativeDraft).toContain('Primary reference standard: BX-204 primary reference standard');
+    expect(s33.narrativeDraft).not.toContain('Primary reference standard: Tablet working standard');
+  });
+
+  it('§3.3 asserts no primacy at all when the register records none', () => {
+    const working = mapReferenceStandardPayload({
+      scope: 'both', standardCode: 'RS-W', standardName: 'Working standard',
+      standardType: 'working', certificateOfAnalysis: 'CoA-W', status: 'draft',
+    });
+    const s33 = composeModule3FromCanonicalSources([src('reference_standard', working)])
+      .find((c) => c.sectionKey === '3.3')!;
+    expect(s33.narrativeDraft).toContain('none is recorded as a primary standard');
+  });
+
+  /* Captured and read by nothing: the date a reviewer checks a retest interval
+     from, and the date a packaging system was signed off. */
+  it('the recorded qualification dates reach both sections', () => {
+    const standard = mapReferenceStandardPayload({
+      scope: 'drug_substance', standardCode: 'RS-DS-001', standardName: 'Primary standard',
+      standardType: 'primary', certificateOfAnalysis: 'CoA-001', status: 'qualified',
+      qualificationDate: '2026-06-01T00:00:00.000Z',
+    });
+    const system = mapContainerClosurePayload({
+      scope: 'drug_product', systemName: 'Vial system', containerDescription: '10 mL vial',
+      closureDescription: '20 mm stopper', suitabilityJustification: 'Demonstrated.',
+      status: 'qualified', qualificationDate: '2026-05-04T00:00:00.000Z',
+    });
+    const composed = composeModule3FromCanonicalSources([
+      src('reference_standard', standard),
+      src('container_closure', system),
+    ]);
+    expect(tablesToMarkdown(composed.find((c) => c.sectionKey === '3.2.S.5')!.tables)).toContain('2026-06-01');
+    expect(tablesToMarkdown(composed.find((c) => c.sectionKey === '3.2.P.7')!.tables)).toContain('2026-05-04');
   });
 });

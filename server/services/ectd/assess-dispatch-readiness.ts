@@ -18,7 +18,7 @@
 
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db';
-import { submissionLeaves, ectdSequences } from '../../../shared/schema/submissions';
+import { submissionLeaves, ectdSequences, submissions } from '../../../shared/schema/submissions';
 import { shadowReviewFindings, shadowReviewRuns } from '../../../shared/schema/shadow-review';
 import { getSubmissionRegionProfile } from '../region-profiles/region-profile-service';
 import { computeDispatchReadiness, type DispatchReadinessReport } from './dispatch-readiness';
@@ -134,19 +134,43 @@ async function countCompletedShadowRuns(
   return value ?? 0;
 }
 
-/** Flatten a region profile's Module-1 tree to the section codes marked required. */
-function requiredModule1Codes(region: string): string[] {
+/**
+ * Flatten a region profile's Module-1 tree to the section codes marked required
+ * for this application type. A section that declares `requiredFor` is required
+ * only for those application types (a debarment certification for a marketing
+ * application, the general investigational plan for an IND); when the
+ * application type is unknown every required section is kept — conservative,
+ * as before.
+ */
+export function requiredModule1Codes(region: string, applicationType?: string | null): string[] {
   const profile = getSubmissionRegionProfile(region);
   if (!profile) return [];
+  const app = applicationType ? String(applicationType).toLowerCase() : null;
   const out: string[] = [];
   const walk = (sections: typeof profile.module1Sections): void => {
     for (const s of sections) {
-      if (s.required) out.push(s.number);
+      const applies = !s.requiredFor || !app || s.requiredFor.includes(app);
+      if (s.required && applies) out.push(s.number);
       if (s.childSections?.length) walk(s.childSections);
     }
   };
   walk(profile.module1Sections);
   return out;
+}
+
+/**
+ * The application type decides which Module 1 sections are required (an IND
+ * needs its plan and brochure; a marketing application its debarment
+ * certification and draft labeling). Tenant-scoped; null when the submission
+ * row is not visible to this organization.
+ */
+async function loadApplicationType(submissionId: number, organizationId: number): Promise<string | null> {
+  const [row] = await db
+    .select({ applicationType: submissions.applicationType })
+    .from(submissions)
+    .where(and(eq(submissions.id, submissionId), eq(submissions.organizationId, organizationId)))
+    .limit(1);
+  return row?.applicationType ?? null;
 }
 
 /**
@@ -167,6 +191,7 @@ export async function assessSequenceDispatchReadiness(
   if (!sequence) {
     throw Object.assign(new Error('Sequence not found in this organization.'), { code: 'NOT_FOUND' });
   }
+  const submissionApplicationType = await loadApplicationType(sequence.submissionId, organizationId);
 
   // 2. Tenant-scoped, non-deleted leaves.
   const leaves = await db
@@ -190,7 +215,7 @@ export async function assessSequenceDispatchReadiness(
       documentId: l.documentId,
     })),
     {
-      requiredSections: requiredModule1Codes(sequence.region),
+      requiredSections: requiredModule1Codes(sequence.region, submissionApplicationType),
       // An original is type 'original' or sequence number '0000'.
       isOriginalSequence: sequence.type === 'original' || sequence.sequenceNumber === '0000',
       sequenceNumber: sequence.sequenceNumber,

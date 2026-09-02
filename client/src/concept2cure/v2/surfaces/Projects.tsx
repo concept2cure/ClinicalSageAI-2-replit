@@ -150,6 +150,22 @@ export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   // prefix match would file a Japanese device approval as a J-NDA. The
   // pathwayKey carries the intent now.
   if (id.includes('jnda') || pw === 'jnda') return 'jnda';
+  // A 505(b)(2) IS an NDA (21 CFR 314.50 dossier) and a 351(k) IS a BLA. Their
+  // pathway keys ('505b2', 'biosimilar') matched nothing below and fell through
+  // to the final `'ind'` default — so a marketing-application customer was
+  // scaffolded a 108-section IND and an IND submission spine. 'biosimilar' is
+  // shared across regions, so the region prefix picks the application.
+  if (pw === '505b2') return 'nda';
+  if (pw === 'biosimilar') {
+    if (id.startsWith('us_')) return 'bla';
+    if (id.startsWith('eu_')) return 'maa';
+    if (id.startsWith('jp_')) return 'jnda';
+    return 'nda';
+  }
+  // A DMF is Module 3 content (3.2.S / 3.2.A / 3.2.R) with a letter of
+  // authorization — not an IND. It files against the harmonised Module 3 pack
+  // (mod3:ich) via PROGRAM_TO_DOC_TYPE, never a 108-section IND outline.
+  if (pw === 'dmf' || id === 'us_dmf' || id === 'eu_asmf') return 'dmf';
   if (id.includes('bla') || pw === 'bla') return 'bla';
   if (id.includes('maa') || pw === 'maa') return 'maa';
   if (id.includes('anda') || pw === 'anda') return 'anda';

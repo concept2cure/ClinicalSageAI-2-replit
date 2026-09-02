@@ -428,42 +428,45 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
     expect(hoisted.updateCalls.length).toBe(0);
     expect(hoisted.poolQuery).not.toHaveBeenCalled();
 
-    // Audit row written.
-    expect(hoisted.auditLogAction).toHaveBeenCalledTimes(1);
-    const auditCall = hoisted.auditLogAction.mock.calls[0][0] as {
-      tenantId: number;
-      userId: number;
-      action: string;
-      resourceType: string;
-      resourceId: string;
+    // Audit row written ON THE SIGNATURE'S TRANSACTION (ledger L138). The event
+    // is handed to createElectronicSignature rather than logged afterwards, so
+    // it commits with the signature or the signature does not exist.
+    expect(hoisted.auditLogAction).not.toHaveBeenCalled();
+    const sigCall = hoisted.createElectronicSignature.mock.calls[0][0] as {
+      transactionalAuditEvent?: {
+        tenantId: number;
+        userId: number;
+        action: string;
+        resourceType: string;
+        resourceId: string;
+      };
     };
-    expect(auditCall.tenantId).toBe(100);
-    expect(auditCall.userId).toBe(7);
-    expect(auditCall.action).toBe('release_signature_created');
-    expect(auditCall.resourceId).toBe('run-123');
+    const auditCall = sigCall.transactionalAuditEvent;
+    expect(auditCall, 'the release event must ride the signature transaction').toBeDefined();
+    expect(auditCall!.tenantId).toBe(100);
+    expect(auditCall!.userId).toBe(7);
+    expect(auditCall!.action).toBe('release_signature_created');
+    expect(auditCall!.resourceType).toBe('submission_release');
+    expect(auditCall!.resourceId).toBe('run-123');
   });
 
-  it('tells the signer when the signature is real but its audit entry is not', async () => {
-    // §11.10(e): the row committed on a separate connection before this point,
-    // so retracting it would be a worse lie than the one being reported. The
-    // route returns the signature AND says the audit trail does not have it.
-    // Nothing covered this branch, which is the one that matters most when it
-    // fires — a signer who is told nothing would rely on an audit trail that
-    // has no record of the release.
+  it('REGRESSION: a signature whose audit row cannot be written does not exist at all', async () => {
+    // This replaces a test that asserted the OPPOSITE outcome, and the change
+    // is the point of ledger L138. The route used to write
+    // `release_signature_created` after the signature had already committed on
+    // another connection, so an audit outage produced a committed signature and
+    // a 200 — the old test asserted the honest warning the route returned with
+    // it, which was the best answer available while the write was outside the
+    // transaction. The event is now written INSIDE it, so the failure mode that
+    // warning described cannot occur: the transaction rolls back and there is
+    // no signature to warn about. §11.10(e) says a signature has an audit
+    // record; the route can now make that claim rather than apologise for it.
     hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
     hoisted.findActiveReleaseSignature.mockResolvedValue(null);
     hoisted.verifyUserCredentials.mockResolvedValue(true);
-    hoisted.createElectronicSignature.mockResolvedValue({
-      success: true,
-      signatureId: 999,
-      signedBy: 'Test User',
-      signedAt: new Date('2026-06-29T00:00:00.000Z'),
-      signatureHash: 'attribution-hash',
-      verificationCode: 'ABCD1234',
-    });
-    hoisted.auditLogAction.mockResolvedValue({
-      persisted: false, chained: false, tamperProof: false, error: 'audit store unreachable',
-    });
+    hoisted.createElectronicSignature.mockRejectedValue(
+      Object.assign(new Error('relation "audit_logs" does not exist'), { code: '42P01' }),
+    );
 
     const res = await request(makeApp())
       .post('/api/submissions/sub-1/sign-release')
@@ -474,10 +477,12 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
         reason: 'release authorization',
       });
 
-    expect(res.status).toBe(200);
-    expect(res.body.signatureId).toBe(999);
-    expect(res.body.auditWriteFailed).toBe(true);
-    expect(res.body.auditWarning).toMatch(/audit-trail entry could not be written/i);
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('signature_creation_failed');
+    // No signature id is handed back, and no "we signed but could not audit it"
+    // consolation prize — there is nothing to consolidate.
+    expect(res.body.signatureId).toBeUndefined();
+    expect(res.body.auditWriteFailed).toBeUndefined();
   });
 
   it('returns the existing signatureId without creating a duplicate when one already exists (idempotent)', async () => {

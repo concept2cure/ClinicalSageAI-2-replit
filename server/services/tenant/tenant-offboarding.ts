@@ -467,4 +467,13 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   // have reached it even in principle. A leaf (its only FK is to organizations,
   // which a purge updates rather than deletes), so its position here is free.
   'regulatory_twin_simulations',
+  /* The container closure and reference standard registers. Customer content
+     in full — the extractables/leachables package behind a packaging system and
+     the Certificate of Analysis of a reference standard are the tenant's data,
+     not ours. Both are leaves (their only FKs are to organizations, which a
+     purge updates rather than deletes, and users), so their position here is
+     free; they are listed so a purge ERASES them rather than leaving them as
+     residue for the coverage ratchet to baseline. */
+  'cmc_container_closures',
+  'cmc_reference_standards',
 ]);

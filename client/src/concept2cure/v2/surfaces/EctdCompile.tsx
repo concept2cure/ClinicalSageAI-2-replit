@@ -49,6 +49,15 @@ interface ModuleReadiness {
   completionPct: number;
   ready: boolean;
 }
+/** Where the required-section set came from: the program's live rule pack,
+ *  or the labelled ICH baseline when no pack applies (with the reason). */
+interface RequiredSectionSource {
+  source: 'rule_pack' | 'fallback';
+  docType?: string;
+  agency?: string;
+  packVersion?: string;
+  reason?: string;
+}
 interface StatusView {
   /** Legacy numeric project id, or null when the ident named a program. */
   projectId: number | null;
@@ -61,6 +70,7 @@ interface StatusView {
   /** Why the package cannot be transmitted. Empty exactly when submissionReady. */
   submissionBlockers?: string[];
   modules: ModuleReadiness[];
+  requiredSectionSource?: RequiredSectionSource;
   totalSections: number;
   totalRequired: number;
   totalCompleted: number;
@@ -391,6 +401,16 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
             // loading", when the truthful answer is the empty state below.
             <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No module readiness yet" hint="Readiness is derived from the program’s sections. Draft and approve sections, then readiness appears per CTD module." /></div>
           ) : (
+            <>
+            {/* Which required set the numbers below are measured against. A
+                generic baseline must never pass for the program's own outline. */}
+            {status.requiredSectionSource && (
+              <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--c2c-dim,#667085)', borderBottom: '1px solid var(--c2c-line,#eef0f3)' }}>
+                {status.requiredSectionSource.source === 'rule_pack'
+                  ? `Required sections from rule pack ${status.requiredSectionSource.docType ?? ''}:${status.requiredSectionSource.agency ?? ''} ${status.requiredSectionSource.packVersion ?? ''}`.replace(/\s+/g, ' ').trim()
+                  : `Required sections are the generic ICH baseline, not this program's outline. ${status.requiredSectionSource.reason ?? ''}`.trim()}
+              </div>
+            )}
             <table className="reg-tbl"><thead><tr><th>Module</th><th>Required complete</th><th>Sections</th><th>Completion</th><th style={{ textAlign: 'right' }}>Status</th></tr></thead>
               <tbody>{status.modules.map((m) => (
                 <tr key={m.moduleCode}>
@@ -405,6 +425,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
                   </td>
                   <td style={{ textAlign: 'right' }}><span className={'rd-chip tone-' + (m.ready ? 'ok' : 'warn')}>{m.ready ? 'ready' : 'partial'}</span></td>
                 </tr>))}</tbody></table>
+            </>
           )}
         </div>
       </div>

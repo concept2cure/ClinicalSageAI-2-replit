@@ -49,9 +49,10 @@ import {
 import {
   prepareIcsrTransmission,
   listIcsrTransmissions,
-  markIcsrTransmitted,
+  transmitIcsrTransmission,
   recordIcsrAcknowledgment,
   IcsrTransmissionError,
+  type IcsrTransmissionErrorCode,
 } from '../../services/ind-lifecycle/ind-icsr-transmission-persistence';
 import type { IcsrGateway } from '../../services/ind-lifecycle/e2b-icsr-message';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, coerceEventDates } from './shared';
@@ -422,6 +423,14 @@ router.get('/amendments/:amendmentId', limiter, requireRole(AUTHOR), async (req,
 
 const VALID_GATEWAYS = ['FDA_FAERS', 'EMA_EUDRAVIGILANCE'];
 
+/** ICSR transmission service codes → HTTP status. 503/502 mean NOT transmitted; the row stays 'prepared'. */
+const ICSR_TX_CODE_STATUS: Record<IcsrTransmissionErrorCode, number> = {
+  NOT_FOUND: 404,
+  NOT_READY: 422,
+  GATEWAY_NOT_CONFIGURED: 503,
+  GATEWAY_TRANSMIT_FAILED: 502,
+};
+
 /**
  * Prepare + persist an E2B(R3) ICSR transmission for a submission: compose the
  * ICSR, build the transmittable message, and store it as 'prepared'. Body:
@@ -469,17 +478,21 @@ router.get('/submission/:id/icsr-transmissions', limiter, requireRole(AUTHOR), a
   }
 });
 
-/** Mark a prepared ICSR transmission as transmitted (422 if not transmit-ready). */
+/**
+ * Transmit a prepared ICSR to its agency gateway. Only a real gateway receipt
+ * marks it transmitted: 422 not-ready (gaps returned), 503 gateway not
+ * configured (or a simulated receipt), 502 transport failure — in each case
+ * nothing was sent and the row stays 'prepared'.
+ */
 router.post('/icsr-transmissions/:txId/transmit', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return noAuth(res);
   const id = String(Array.isArray(req.params.txId) ? req.params.txId[0] : req.params.txId);
   try {
-    res.json(await markIcsrTransmitted(id, ctx));
+    res.json(await transmitIcsrTransmission(id, ctx));
   } catch (err) {
     if (err instanceof IcsrTransmissionError) {
-      const status = err.code === 'NOT_FOUND' ? 404 : 422;
-      return res.status(status).json({ error: { code: err.code, message: err.message } });
+      return res.status(ICSR_TX_CODE_STATUS[err.code]).json({ error: { code: err.code, message: err.message, ...err.details } });
     }
     fail(res, err);
   }
