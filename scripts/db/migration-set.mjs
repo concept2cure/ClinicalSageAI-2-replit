@@ -1755,6 +1755,10 @@ export const C2C_MIGRATION_FILES = [
   // and before the sweep; it only needs public.organizations, which exists long
   // before this point.
   'db/migrations/20260902_clinical_ops_schema.sql',
+  // manufacturing.responses. Its router created the table on the first request
+  // — the comment there said so, naming migration 066's omission as the reason
+  // — which the runtime role may not do, so the finding-response surface 500'd.
+  'db/migrations/20260902_manufacturing_responses.sql',
 
   // ── Drop the audit-shaped tables that survived a from-scratch liveness
   //    re-check (ledger L13; docs/AUDIT_STORE_INVENTORY_2026-08.md §5.1) ─────
