@@ -14,13 +14,23 @@
  * decision, so it is a required input here (compute it from listSequences at the
  * call site) rather than guessed.
  *
+ * ── LIFE-01 ──────────────────────────────────────────────────────────────────
+ * Callers used to pass a bare md5 per section: the route rendered the PDF,
+ * hashed it, and discarded the bytes. The leaf then carried a checksum and NO
+ * document reference, so the assembler skipped it entirely — every filed
+ * lifecycle sequence assembled with zero leaf files and was permanently
+ * dispatch-blocked. The contract is now a leaf SOURCE per section
+ * ({documentTable, documentId, checksum}, from storeRenderedLeafFile), so the
+ * bytes that were filed can be materialized back into the package. A section
+ * with no source still files as metadata — honestly unresolvable, exactly as
+ * before — rather than claiming bytes that were never retained.
+ *
  * INTEGRATION NOTES (human): exposed at POST /api/ind-lifecycle/safety-report/file
- * and /amendment/file. The leaves are created as metadata (sectionCode / title /
- * lifecycleOp / documentType); attach the rendered PDF bytes (see
- * ind-document-renderer) to each leaf's document reference as a follow-up.
+ * and /amendment/file.
  */
 
 import { createSequence, upsertLeaf } from '../submission-service/submission-service';
+import type { RenderedLeafSource } from '../ectd/rendered-leaf-files';
 import type { IndSafetyReportAmendmentIntent } from './ind-safety-report-service';
 import type { IndAmendmentPlan } from './ind-amendment-service';
 
@@ -43,15 +53,18 @@ interface LeafIntentLike {
   granularity?: string | null;
 }
 
+/** Retained rendered bytes per CTD section, keyed exactly as the leaf is. */
+export type LeafSourceBySection = Record<string, RenderedLeafSource>;
+
 async function persistLeaves(
   sequenceId: number,
   intents: LeafIntentLike[],
   ctx: PersistCtx,
-  checksumBySection?: Record<string, string>,
+  sourceBySection?: LeafSourceBySection,
 ): Promise<Leaf[]> {
   const leaves: Leaf[] = [];
   for (const l of intents) {
-    const checksum = checksumBySection?.[l.sectionCode];
+    const source = sourceBySection?.[l.sectionCode];
     leaves.push(
       await upsertLeaf(
         {
@@ -61,7 +74,13 @@ async function persistLeaves(
           granularity: l.granularity ?? 'leaf',
           lifecycleOp: l.lifecycleOp,
           documentType: l.documentType,
-          ...(checksum ? { checksum } : {}),
+          ...(source
+            ? {
+                documentTable: source.documentTable,
+                documentId: source.documentId,
+                checksum: source.checksum,
+              }
+            : {}),
         },
         ctx,
       ),
@@ -79,13 +98,13 @@ export async function persistSafetyReportIntent(
   intent: IndSafetyReportAmendmentIntent,
   sequenceNumber: string,
   ctx: PersistCtx,
-  checksumBySection?: Record<string, string>,
+  sourceBySection?: LeafSourceBySection,
 ): Promise<PersistedAmendment> {
   const sequence = await createSequence(
     { submissionId, region: intent.region, sequenceNumber, type: intent.sequenceType },
     ctx,
   );
-  const leaves = await persistLeaves(sequence.id, intent.leaves, ctx, checksumBySection);
+  const leaves = await persistLeaves(sequence.id, intent.leaves, ctx, sourceBySection);
   return { sequence, leaves };
 }
 
@@ -97,7 +116,7 @@ export async function persistAnnualReport(
   submissionId: number,
   sequenceNumber: string,
   ctx: PersistCtx,
-  checksum?: string,
+  source?: RenderedLeafSource,
 ): Promise<PersistedAmendment> {
   const sequence = await createSequence(
     { submissionId, region: 'fda', sequenceNumber, type: 'annual' },
@@ -107,7 +126,7 @@ export async function persistAnnualReport(
     sequence.id,
     [{ sectionCode: 'm1.13', title: 'IND Annual Report', lifecycleOp: 'new', documentType: 'ind_annual_report' }],
     ctx,
-    checksum ? { 'm1.13': checksum } : undefined,
+    source ? { 'm1.13': source } : undefined,
   );
   return { sequence, leaves };
 }
@@ -132,20 +151,20 @@ export async function persistAmendmentPlan(
 /**
  * Persist a Module 1.4 cross-reference filing (Letter of Authorization, and
  * optionally the Statement of Right of Reference) as an amendment sequence +
- * leaves, with the rendered-PDF md5s attached per CTD section. Used to file the
- * authorization for a tracked cross-reference dependency.
+ * leaves, with the retained rendered PDF attached per CTD section. Used to file
+ * the authorization for a tracked cross-reference dependency.
  */
 export async function persistCrossReferenceFiling(
   submissionId: number,
   leafIntents: LeafIntentLike[],
   sequenceNumber: string,
   ctx: PersistCtx,
-  checksumBySection?: Record<string, string>,
+  sourceBySection?: LeafSourceBySection,
 ): Promise<PersistedAmendment> {
   const sequence = await createSequence(
     { submissionId, region: 'fda', sequenceNumber, type: 'amendment' },
     ctx,
   );
-  const leaves = await persistLeaves(sequence.id, leafIntents, ctx, checksumBySection);
+  const leaves = await persistLeaves(sequence.id, leafIntents, ctx, sourceBySection);
   return { sequence, leaves };
 }
