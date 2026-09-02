@@ -3,6 +3,11 @@
  * live DB: a fake client records every query so we can assert that the version,
  * the sealed-record signature, the provenance event, and the audit log are all
  * written inside ONE BEGIN/COMMIT.
+ *
+ * The signer's §11.50 printed name is RESOLVED on the transaction from the
+ * membership record (server/services/part11/resolve-signer-identity.ts), never
+ * taken from the caller, so the fixture has to answer that lookup the way the
+ * real JOIN would: a row for a member of THIS org, nothing for anyone else.
  */
 import { describe, it, expect, vi } from 'vitest';
 
@@ -12,16 +17,46 @@ import {
   type SealPool,
   type SealVerifiedVersionInput,
 } from '../verifiedSealService';
+import { SignerNotAttributableError } from '../../part11/resolve-signer-identity';
+
+/**
+ * The one membership the fixture knows: user 42 is a member of org 1.
+ *
+ * `resolveSignerIdentity` joins `users` to `organization_users` on
+ * `(user_id = $1, organization_id = $2)` and reads `name`, `email`, `title`.
+ * The answer below is keyed on BOTH params so the fixture models the
+ * membership relation, not a bare user lookup — the same signer asked for in
+ * another org resolves to nothing, exactly as the real query would.
+ */
+const MEMBER_USER_ID = 42;
+const MEMBER_ORG_ID = 1;
+const MEMBER_ROW = { name: 'Dr. Jane Roe', email: 'jane@example.com', title: 'Regulatory Affairs Lead' };
+const SIGNER_IDENTITY_SQL = /SELECT u\.name, u\.email, u\.title\s+FROM users u\s+JOIN organization_users ou/;
+
+type Answer = { rows: any[] };
+/** Per-test override; return `undefined` to fall through to the canned rows. */
+type Answerer = (sql: string, params?: unknown[]) => Answer | undefined;
+
+/** Canned rows for every statement the service issues. `override` is consulted first. */
+function answer(sql: string, params: unknown[] | undefined, override?: Answerer): Answer {
+  const overridden = override?.(sql, params);
+  if (overridden) return overridden;
+  if (SIGNER_IDENTITY_SQL.test(sql)) {
+    const [userId, orgId] = params ?? [];
+    return userId === MEMBER_USER_ID && orgId === MEMBER_ORG_ID ? { rows: [MEMBER_ROW] } : { rows: [] };
+  }
+  if (/INSERT INTO concept2cure_artifacts\b/.test(sql)) return { rows: [{ id: 101 }] };
+  if (/INSERT INTO concept2cure_artifact_versions\b/.test(sql)) return { rows: [{ id: 202, version: 1 }] };
+  return { rows: [] };
+}
 
 /** A fake PoolClient that records queries and returns canned RETURNING rows. */
-function makePool() {
+function makePool(override?: Answerer) {
   const queries: { sql: string; params?: unknown[] }[] = [];
   const client = {
     query: vi.fn(async (sql: string, params?: unknown[]) => {
       queries.push({ sql, params });
-      if (/INSERT INTO concept2cure_artifacts\b/.test(sql)) return { rows: [{ id: 101 }] };
-      if (/INSERT INTO concept2cure_artifact_versions\b/.test(sql)) return { rows: [{ id: 202, version: 1 }] };
-      return { rows: [] };
+      return answer(sql, params, override);
     }),
     release: vi.fn(),
   };
@@ -31,9 +66,9 @@ function makePool() {
 
 function baseInput(over: Partial<SealVerifiedVersionInput> = {}): SealVerifiedVersionInput {
   return {
-    organizationId: 1,
+    organizationId: MEMBER_ORG_ID,
     projectId: 7,
-    userId: 42,
+    userId: MEMBER_USER_ID,
     signerName: 'Dr. Jane Roe',
     signerEmail: 'jane@example.com',
     signerRole: 'ra_lead',
@@ -65,6 +100,21 @@ describe('sealVerifiedVersion — happy path (one transaction)', () => {
     expect(result.signatureId).toMatch(/^sig_/);
   });
 
+  it('resolves the §11.50 printed name on the SAME transaction, scoped to the signing org', async () => {
+    const { pool, queries } = makePool();
+    await sealVerifiedVersion(baseInput(), pool);
+
+    const idx = queries.findIndex((q) => SIGNER_IDENTITY_SQL.test(q.sql));
+    expect(idx).toBeGreaterThan(0); // after BEGIN …
+    expect(queries[idx].params).toEqual([MEMBER_USER_ID, MEMBER_ORG_ID]); // … (user, org) — membership, not a bare PK read
+    expect(queries.findIndex((q) => q.sql === 'COMMIT')).toBeGreaterThan(idx); // … before COMMIT
+
+    // The row asserts the RESOLVED identity, not whatever the caller sent.
+    const sig = queries.find((q) => /INSERT INTO concept2cure_signatures/.test(q.sql));
+    expect(sig?.params).toContain(MEMBER_ROW.name);
+    expect(sig?.params).toContain(MEMBER_ROW.email);
+  });
+
   it('records the §11.50 meaning + reason in the signature manifest', async () => {
     const { pool, queries } = makePool();
     await sealVerifiedVersion(baseInput(), pool);
@@ -82,19 +132,13 @@ describe('sealVerifiedVersion — happy path (one transaction)', () => {
     // The client knows only the EXTERNAL artifact id and the version NUMBER — not
     // the row PKs. The service must resolve both org-scoped and seal the existing
     // row, never the fallback INSERT.
-    const queries: { sql: string; params?: unknown[] }[] = [];
-    const client = {
-      query: vi.fn(async (sql: string, params?: unknown[]) => {
-        queries.push({ sql, params });
-        // External-id → artifact PK resolution (org-scoped SELECT).
-        if (/SELECT id FROM concept2cure_artifacts/.test(sql)) return { rows: [{ id: 777 }] };
-        // version number → version-row PK resolution (org-scoped SELECT).
-        if (/SELECT id, version FROM concept2cure_artifact_versions/.test(sql)) return { rows: [{ id: 888, version: 4 }] };
-        return { rows: [] };
-      }),
-      release: vi.fn(),
-    };
-    const pool: SealPool = { connect: vi.fn(async () => client) };
+    const { pool, queries } = makePool((sql) => {
+      // External-id → artifact PK resolution (org-scoped SELECT).
+      if (/SELECT id FROM concept2cure_artifacts/.test(sql)) return { rows: [{ id: 777 }] };
+      // version number → version-row PK resolution (org-scoped SELECT).
+      if (/SELECT id, version FROM concept2cure_artifact_versions/.test(sql)) return { rows: [{ id: 888, version: 4 }] };
+      return undefined;
+    });
 
     const result = await sealVerifiedVersion(
       baseInput({ artifactExternalId: 'artifact_persisted_e11', existingVersionNumber: 4 }),
@@ -122,18 +166,10 @@ describe('sealVerifiedVersion — happy path (one transaction)', () => {
   });
 
   it('E11: falls back to a fresh insert when the external id resolves to nothing (foreign/unknown id)', async () => {
-    const queries: { sql: string; params?: unknown[] }[] = [];
-    const client = {
-      query: vi.fn(async (sql: string, params?: unknown[]) => {
-        queries.push({ sql, params });
-        if (/SELECT id FROM concept2cure_artifacts/.test(sql)) return { rows: [] }; // not found / wrong org
-        if (/INSERT INTO concept2cure_artifacts\b/.test(sql)) return { rows: [{ id: 101 }] };
-        if (/INSERT INTO concept2cure_artifact_versions\b/.test(sql)) return { rows: [{ id: 202, version: 1 }] };
-        return { rows: [] };
-      }),
-      release: vi.fn(),
-    };
-    const pool: SealPool = { connect: vi.fn(async () => client) };
+    const { pool, queries } = makePool((sql) => {
+      if (/SELECT id FROM concept2cure_artifacts/.test(sql)) return { rows: [] }; // not found / wrong org
+      return undefined;
+    });
     const result = await sealVerifiedVersion(
       baseInput({ artifactExternalId: 'artifact_unknown', existingVersionNumber: 9 }),
       pool,
@@ -182,16 +218,43 @@ describe('sealVerifiedVersion — fail-closed gates (no DB work)', () => {
   });
 
   it('rolls back when a write fails mid-transaction', async () => {
-    const { pool, client, queries } = makePool();
-    client.query.mockImplementation(async (sql: string, params?: unknown[]) => {
-      queries.push({ sql, params });
-      if (/INSERT INTO concept2cure_artifacts\b/.test(sql)) return { rows: [{ id: 101 }] };
-      if (/INSERT INTO concept2cure_artifact_versions\b/.test(sql)) return { rows: [{ id: 202, version: 1 }] };
+    const { pool, client, queries } = makePool((sql) => {
       if (/INSERT INTO concept2cure_signatures/.test(sql)) throw new Error('db write failed');
-      return { rows: [] };
+      return undefined;
     });
     await expect(sealVerifiedVersion(baseInput(), pool)).rejects.toThrow('db write failed');
     expect(queries.map((q) => q.sql)).toContain('ROLLBACK');
+    expect(client.release).toHaveBeenCalled();
+  });
+});
+
+describe('sealVerifiedVersion — §11.100 signer attribution', () => {
+  it('refuses a signer who is not a member of the signing org, and writes nothing after the refusal', async () => {
+    const { pool, client, queries } = makePool();
+    // Same person, a different org: the membership JOIN returns no row. The
+    // fixture is keyed on (user, org), so this is the real query's answer —
+    // not a hand-tuned "throw here".
+    const foreignOrg = MEMBER_ORG_ID + 1;
+    const rejection = sealVerifiedVersion(baseInput({ organizationId: foreignOrg }), pool);
+    await expect(rejection).rejects.toBeInstanceOf(SignerNotAttributableError);
+    await expect(rejection).rejects.toMatchObject({ code: 'SIGNER_NOT_ATTRIBUTABLE' });
+
+    const sqls = queries.map((q) => q.sql);
+    const refusedAt = sqls.findIndex((s) => SIGNER_IDENTITY_SQL.test(s));
+    expect(refusedAt).toBeGreaterThan(0);
+    // The lookup was scoped to the org the signature is being made IN.
+    expect(queries[refusedAt].params).toEqual([MEMBER_USER_ID, foreignOrg]);
+
+    // Once the signer cannot be named, nothing else is written: no signature,
+    // no provenance, no audit — the only statement after the refusal is the
+    // ROLLBACK that discards what preceded it.
+    const afterRefusal = sqls.slice(refusedAt + 1);
+    expect(afterRefusal.filter((s) => /INSERT INTO/i.test(s))).toEqual([]);
+    expect(afterRefusal).toEqual(['ROLLBACK']);
+    expect(sqls.some((s) => /INSERT INTO concept2cure_signatures/.test(s))).toBe(false);
+    expect(sqls.some((s) => /INSERT INTO concept2cure_provenance_events/.test(s))).toBe(false);
+    expect(sqls.some((s) => /INSERT INTO regulatory_audit_logs/.test(s))).toBe(false);
+    expect(sqls).not.toContain('COMMIT');
     expect(client.release).toHaveBeenCalled();
   });
 });
