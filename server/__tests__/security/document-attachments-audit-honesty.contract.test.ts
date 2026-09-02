@@ -50,12 +50,18 @@ const ATTACHMENT_ID = 900;
 const OLDER_ATTACHMENT_ID = 899;
 const FOREIGN_ATTACHMENT_ID = 950;
 
+/** Storage-provider version ids (randomUUIDs), as put() would return them. */
+const VERSION_NEW = '7d5a2c1e-4f6b-4a8d-9c3e-1b2a3c4d5e6f';
+const VERSION_EXISTING = '0a1b2c3d-4e5f-4a6b-8c9d-0e1f2a3b4c5d';
+const VERSION_OLDER = '11111111-2222-4333-8444-555555555555';
+const VERSION_FOREIGN = '99999999-8888-4777-8666-555555555555';
+
 /** A valid attachment payload; individual tests spread and override. */
 const validAttachment = () => ({
   fileName: 'stability-summary.pdf',
   fileType: 'application/pdf',
   fileSize: 20_480,
-  filePath: 'uploads/org-7/stability-summary.pdf',
+  filePath: VERSION_NEW,
   description: 'ICH Q1A stability summary',
 });
 
@@ -151,7 +157,7 @@ function fixtureRows(): Record<string, any[]> {
         fileName: 'older.pdf',
         fileType: 'application/pdf',
         fileSize: 5,
-        filePath: 'uploads/org-7/older.pdf',
+        filePath: VERSION_OLDER,
         uploadedBy: 'user-a',
         uploadedAt: new Date('2026-08-01T10:00:00Z'),
       },
@@ -161,7 +167,7 @@ function fixtureRows(): Record<string, any[]> {
         fileName: 'existing.pdf',
         fileType: 'application/pdf',
         fileSize: 10,
-        filePath: 'uploads/org-7/existing.pdf',
+        filePath: VERSION_EXISTING,
         uploadedBy: 'user-a',
         uploadedAt: new Date('2026-08-02T10:00:00Z'),
       },
@@ -171,7 +177,7 @@ function fixtureRows(): Record<string, any[]> {
         fileName: 'sponsor-b-secret.pdf',
         fileType: 'application/pdf',
         fileSize: 7,
-        filePath: 'uploads/org-991/secret.pdf',
+        filePath: VERSION_FOREIGN,
         uploadedBy: 'user-b',
         uploadedAt: new Date('2026-08-03T10:00:00Z'),
       },
@@ -372,8 +378,9 @@ describe('Attachments — the record is validated at the boundary', () => {
     ['a fileName that is really a path', { fileName: '../../etc/passwd' }, /file name, not a path/i],
     ['a fileName with a separator', { fileName: 'nested/report.pdf' }, /file name, not a path/i],
     ['a missing fileType', { fileType: '' }, /fileType is required/i],
-    ['a traversal filePath', { filePath: 'uploads/../../secrets.pdf' }, /traversal/i],
-    ['a filePath with an embedded NUL', { filePath: 'uploads/a\0.pdf' }, /traversal|filePath/i],
+    ['a filesystem path as filePath', { filePath: 'uploads/org-7/file.pdf' }, /storage version id/i],
+    ['a traversal path as filePath', { filePath: '../../etc/passwd' }, /storage version id/i],
+    ['a non-UUID token as filePath', { filePath: 'not-a-version-id' }, /storage version id/i],
     ['a negative fileSize', { fileSize: -1 }, /non-negative integer/i],
     ['a non-integer fileSize', { fileSize: 1.5 }, /non-negative integer/i],
     ['a fileSize past the column width', { fileSize: 2_147_483_648 }, /exceeds the maximum/i],
@@ -410,7 +417,7 @@ describe('Attachments — the record is validated at the boundary', () => {
 
     const stored = await service.addDocumentAttachment(
       DOC_A,
-      { fileName: 'dataset.csv', fileType: 'text/csv', fileSize: 12, filePath: 'uploads/d.csv' },
+      { fileName: 'dataset.csv', fileType: 'text/csv', fileSize: 12, filePath: VERSION_NEW },
       'user-a',
       ORG_A,
     );
@@ -483,5 +490,48 @@ describe('Attachments — the reader', () => {
     listed = await service.listDocumentAttachments(DOC_A, ORG_A);
     expect(listed.map((a: any) => a.id)).not.toContain(ATTACHMENT_ID);
     expect(listed.map((a: any) => a.id)).toContain(stored.id);
+  });
+});
+
+describe('Attachments — the single-row reader a download needs', () => {
+  it('returns an owned attachment by document and id', async () => {
+    const fake = makeFakeDb();
+    const service = new ModuleIntegrationService(fake.db);
+
+    const row = await service.getDocumentAttachment(DOC_A, ATTACHMENT_ID, ORG_A);
+    expect(row.id).toBe(ATTACHMENT_ID);
+    expect(row.filePath).toBe(VERSION_EXISTING);
+  });
+
+  it('cannot reach an attachment through a document it does not belong to', async () => {
+    const fake = makeFakeDb();
+    const service = new ModuleIntegrationService(fake.db);
+
+    // ATTACHMENT_ID hangs off DOC_A. ORG_B owns DOC_B, so the ownership check
+    // passes and only the id/document pairing stands between B and A's bytes.
+    await expect(
+      service.getDocumentAttachment(DOC_B, ATTACHMENT_ID, ORG_B),
+    ).rejects.toThrow(/not found/i);
+  });
+
+  it('reports another organization\'s attachment as not found, never forbidden', async () => {
+    const fake = makeFakeDb();
+    const service = new ModuleIntegrationService(fake.db);
+
+    await expect(
+      service.getDocumentAttachment(DOC_B, FOREIGN_ATTACHMENT_ID, ORG_A),
+    ).rejects.toThrow(/not found/i);
+    await expect(
+      service.getDocumentAttachment(DOC_A, 424242, ORG_A),
+    ).rejects.toThrow(/not found/i);
+  });
+
+  it('fails closed when the caller has no organization', async () => {
+    const fake = makeFakeDb();
+    const service = new ModuleIntegrationService(fake.db);
+
+    await expect(
+      service.getDocumentAttachment(DOC_A, ATTACHMENT_ID, null),
+    ).rejects.toThrow(/organization context/i);
   });
 });

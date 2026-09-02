@@ -23,17 +23,25 @@ import { hasUnsafePathSyntax } from '../submission-gateways/bundle-namespace';
  * `any` boundary defers a missing one to a runtime 23502 inside an open
  * transaction instead of rejecting it at the edge with a usable message.
  *
- * This records an attachment; it does not receive or store the bytes.
- * `filePath` must already point at a file placed through the caller's own
- * storage path — this boundary validates the SYNTAX it is handed and the file
- * type policy, and nothing here should be read as having verified that the
- * file exists or is what it claims.
+ * This records an attachment; it does not receive or store the bytes. The
+ * bytes live in the storage provider (services/storage), which is the ONLY
+ * tenant boundary object storage has — its `get(vaultVersionId, orgId)`
+ * requires the organization, and a foreign file reads as missing. So
+ * `filePath` is not a path: it is the `vaultVersionId` that `put()` returned,
+ * and nothing else is accepted. A record whose filePath is anything else
+ * could be audited and listed but never downloaded, which is an attachment
+ * that lies about itself.
+ *
+ * This boundary validates shape and file-type policy; nothing here should be
+ * read as having verified that the bytes exist or are what they claim. The
+ * upload route proves that, through assertUploadSafe, before `put()`.
  */
 export interface DocumentAttachmentInput {
   fileName: string;
   fileType: string;
   /** Bytes. Stored in an `integer` column, so bounded by INT4_MAX. */
   fileSize: number;
+  /** The storage provider's version id for the bytes — see above. */
   filePath: string;
   description?: string | null;
   metadata?: Record<string, unknown>;
@@ -41,6 +49,18 @@ export interface DocumentAttachmentInput {
 
 /** `file_size integer` — Postgres rejects anything past this, so we do first. */
 export const INT4_MAX = 2_147_483_647;
+
+/**
+ * A storage-provider version id, as minted by `generateVersionId()` (a
+ * randomUUID). The same shape the local provider checks before it will join
+ * an id onto a path.
+ */
+const VAULT_VERSION_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** True when `value` is a storage-provider version id. */
+export function isVaultVersionId(value: unknown): value is string {
+  return typeof value === 'string' && VAULT_VERSION_ID_RE.test(value);
+}
 
 /** An attachment that does not exist on the named document, in this tenant. */
 export class AttachmentNotFoundException extends Error {
@@ -103,8 +123,8 @@ export function assertAttachmentRecordable(
   if (hasUnsafePathSyntax(fileName) || /[\\/]/.test(fileName)) {
     throw new AttachmentRejectedException('fileName must be a file name, not a path');
   }
-  if (hasUnsafePathSyntax(filePath)) {
-    throw new AttachmentRejectedException('filePath must not contain traversal syntax');
+  if (!isVaultVersionId(filePath)) {
+    throw new AttachmentRejectedException('filePath must be a storage version id');
   }
   if (!isAllowedUpload(fileName, fileType)) {
     throw new AttachmentRejectedException(`Unsupported file type: ${fileName}`);
