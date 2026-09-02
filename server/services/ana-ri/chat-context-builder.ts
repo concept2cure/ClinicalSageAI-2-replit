@@ -25,7 +25,7 @@ import { buildMemoryContextForChat } from '../memory-context-assembler.js';
 import { getIntelligencePrefix, buildSectionSpecificPrompt } from '../lumen-context-builder.js';
 import { enrichContextForChat } from './context-enrichment.js';
 import type { EnrichmentResult } from './context-enrichment.js';
-import { getThreadMessages } from '../chat-thread-helpers.js';
+import { getThreadMessages, resolveAccessibleThread } from '../chat-thread-helpers.js';
 import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
 import { decisionLifecycleService } from '../decision-lifecycle-service.js';
 import { buildMdxContextBlock } from './mdx-context-resolver.js';
@@ -350,6 +350,8 @@ export async function prefetchRouteIntelligenceContext(params: {
             ? authoringContext.moduleCode
             : undefined,
         limit: 10,
+        organizationId:
+          organizationId && Number.isFinite(organizationId) ? organizationId : undefined,
       });
     } catch {
       // Non-blocking — decision context is optional enrichment.
@@ -637,11 +639,16 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   // Build messages array
   const messages: GatewayMessage[] = [{ role: 'system', content: fullSystemPrompt }];
 
-  // Load thread history (prefer server, fall back to client)
+  // Load thread history (prefer server, fall back to client). The id is the
+  // client's; it is resolved AS THE CALLER first — in this organization, to
+  // this user's own thread — and a thread that does not resolve contributes
+  // no history. Reading it unscoped put another user's transcript into the
+  // model context on the strength of an id alone.
   let historyLoaded = false;
   if (thread_id) {
     try {
-      const serverHistory = await getThreadMessages(thread_id);
+      const accessible = await resolveAccessibleThread(thread_id, numericOrgId, userId);
+      const serverHistory = accessible ? await getThreadMessages(accessible.id) : [];
       if (serverHistory.length > 0) {
         for (const msg of serverHistory.slice(-20)) {
           messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });

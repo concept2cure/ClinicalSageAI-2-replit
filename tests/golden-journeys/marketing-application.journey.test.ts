@@ -33,7 +33,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
-import { createJourneyDb, JourneyRecorder, type JourneyDb } from './harness';
+import { createJourneyDb, JourneyRecorder, type JourneyDb, assertNoSchemaGaps } from './harness';
 
 const T = 180_000;
 
@@ -133,6 +133,8 @@ beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
     migrations: [
+      // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
+      'db/migrations/20260813_audit_tamper_proof_log.sql',
       'db/migrations/20260220_ind_section_tracking.sql',
       'db/migrations/20260725_project_sections_content_columns.sql',
     ],
@@ -159,6 +161,9 @@ beforeAll(async () => {
 }, T);
 
 afterAll(async () => {
+  // A journey that ran against a database missing a table its subject writes
+  // to proves less than it claims (ledger L145).
+  assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('marketing-application');
   // eslint-disable-next-line no-console
   console.info(`[journey] manifest: ${jsonPath}\n[journey] report:   ${mdPath}`);

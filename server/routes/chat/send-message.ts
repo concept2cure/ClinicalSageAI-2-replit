@@ -15,6 +15,7 @@ import { pool } from '../../db.js';
 import {
   getOrCreateThread,
   getThreadMessages,
+  ThreadAccessError,
   saveChatMessage as saveMessage,
 } from '../../services/chat-thread-helpers.js';
 import { getEmbeddingService } from '../../services/enhancedEmbeddingService.js';
@@ -103,7 +104,26 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
 
     // ── STEP 2: CREATE / VALIDATE THREAD ─────────────────────────────────────────
     const requestedThreadId = Array.isArray(thread_id) ? thread_id[0] : thread_id;
-    const threadId = await getOrCreateThread(requestedThreadId ?? null, (req as any).user?.id);
+    // Resolved AS THE CALLER: in this organization, and to this user's own
+    // thread. A colleague's thread id is refused; an unknown or foreign id
+    // mints a fresh thread rather than touching a row nothing verified.
+    let threadId: string;
+    try {
+      threadId = await getOrCreateThread(
+        requestedThreadId ?? null,
+        (req as any).user?.id,
+        'thread',
+        numericOrgId
+      );
+    } catch (e: any) {
+      if (e instanceof ThreadAccessError) {
+        return res.status(403).json({
+          error: 'That conversation belongs to another user',
+          code: e.code,
+        });
+      }
+      throw e;
+    }
 
     // Fix B: Enforce thread ownership — if thread_id was supplied, verify org match
     if (requestedThreadId && numericOrgId) {
@@ -429,9 +449,18 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         try {
           const { decisionLifecycleService } =
             await import('../../services/decision-lifecycle-service.js');
-          decisionContext = decisionLifecycleService.getDecisionContext(String(project_id), {
-            limit: 5,
-          });
+          // Scoped to the caller's tenant: this context is fed to the
+          // orchestrator as grounding, so an unscoped read would not just
+          // leak another organization's decisions, it would let the model
+          // quote them back in an answer. numericOrgId is resolved above and
+          // used throughout this handler; the decision read was the one that
+          // did not pass it.
+          decisionContext = numericOrgId
+            ? decisionLifecycleService.getDecisionContext(String(project_id), {
+                limit: 5,
+                organizationId: numericOrgId,
+              })
+            : [];
         } catch {
           /* non-blocking */
         }

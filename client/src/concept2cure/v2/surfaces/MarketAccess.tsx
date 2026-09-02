@@ -118,7 +118,10 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
         positions: positions.slice(0, 12).map((pp) => ({
           id: pp.id, program: pp.program, market: pp.market, payer: pp.payer,
           mechanism: pp.mechanism, code: pp.code, status: pp.status,
-          decisionDate: pp.decisionDate, note: pp.note,
+          // `note` is a user-authored free-text payer-position note
+          // (market_access_positions.note) — its presence travels, the prose
+          // stays on screen, matching the rest of the subsystem.
+          decisionDate: pp.decisionDate, hasNote: Boolean(pp.note),
         })),
       },
       availableActions: [

@@ -789,9 +789,16 @@ describe('neither register offers qualification as a status', () => {
     }
   });
 
-  it('a record already qualified does not come back as qualified in the status control', () => {
+  /* A qualified record KEEPS its status through an ordinary edit. Offering only
+     the ungoverned statuses sent 'draft' on every Update, which reverted a Part
+     11 signature while leaving qualified_by and qualification_date populated —
+     an unsigned de-qualification the drawer performed automatically. */
+  it('a qualified record round-trips its own status instead of reverting to draft', () => {
     const status = containerClosureForm({ status: 'qualified' } as never).fields.find((f) => f.key === 'status')!;
-    expect(status.default).toBe('draft');
+    expect(status.default).toBe('qualified');
+    expect(status.options).toContain('qualified');
+    // …and it still cannot be sent BACK to draft from the drawer.
+    expect(status.options).not.toContain('draft');
   });
 
   it('the qualification form collects a reason and a re-authentication', () => {

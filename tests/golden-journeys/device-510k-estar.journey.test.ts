@@ -54,6 +54,7 @@ import {
   makeRequestDbClient,
   JourneyRecorder,
   type JourneyDb,
+  assertNoSchemaGaps,
 } from './harness';
 
 const T = 180_000;
@@ -147,6 +148,8 @@ beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: baseline,
     migrations: [
+      // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
+      'db/migrations/20260813_audit_tamper_proof_log.sql',
       // audit_logs chain columns + the c2c_ana_actions ledger the scaffold's
       // governed action writes to.
       'migrations/20260527_mutation_primitives.sql',
@@ -237,7 +240,7 @@ beforeAll(async () => {
       r.tenantId = orgId;
       r.tenantContext = { organizationId: orgId };
       // The real request-scoped client requestDb(req)/requestPgClient(req) wrap.
-      r.dbClient = makeRequestDbClient(jdb.pglite);
+      r.dbClient = makeRequestDbClient(jdb.pglite, jdb.schemaGaps);
     }
     next();
   });
@@ -247,6 +250,9 @@ beforeAll(async () => {
 }, T);
 
 afterAll(async () => {
+  // A journey that ran against a database missing a table its subject writes
+  // to proves less than it claims (ledger L145).
+  assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('device-510k-estar');
   // eslint-disable-next-line no-console
   console.info(`[journey] manifest: ${jsonPath}\n[journey] report:   ${mdPath}`);
@@ -333,7 +339,7 @@ describe('golden journey — device 510(k) eSTAR path', () => {
         '../../server/services/c2c/program-project-anchor'
       );
       const { requestDb } = await import('../../server/db/requestDb');
-      const req = { dbClient: makeRequestDbClient(jdb.pglite) } as never;
+      const req = { dbClient: makeRequestDbClient(jdb.pglite, jdb.schemaGaps) } as never;
       const resolved = await resolveProgramProjectAnchor(requestDb(req), {
         programId,
         orgId: ORG,

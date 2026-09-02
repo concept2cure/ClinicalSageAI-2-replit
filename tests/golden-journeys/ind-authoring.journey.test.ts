@@ -27,7 +27,7 @@ import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 import { randomBytes } from 'node:crypto';
-import { createJourneyDb, JourneyRecorder, type JourneyDb } from './harness';
+import { createJourneyDb, JourneyRecorder, type JourneyDb, assertNoSchemaGaps } from './harness';
 
 // The authoring router carries its own jose JWT verification (HS256 over
 // JWT_SECRET) — so this journey authenticates with REAL signed tokens, and the
@@ -239,6 +239,9 @@ beforeAll(async () => {
 }, T);
 
 afterAll(async () => {
+  // A journey that ran against a database missing a table its subject writes
+  // to proves less than it claims (ledger L145).
+  assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('ind-authoring');
   // eslint-disable-next-line no-console
   console.info(`[journey] manifest: ${jsonPath}\n[journey] report:   ${mdPath}`);

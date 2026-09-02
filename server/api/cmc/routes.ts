@@ -13,6 +13,8 @@ import {
   writeThroughComparability,
   writeThroughContainerClosure,
   writeThroughReferenceStandard,
+  writeThroughImpurityProfile,
+  writeThroughDissolutionProfile,
 } from '../../services/cmc-write-through';
 import {
   analyticalMethods,
@@ -24,6 +26,8 @@ import {
   drugProducts,
   cmcContainerClosures,
   cmcReferenceStandards,
+  cmcImpurityProfiles,
+  cmcDissolutionProfiles,
   insertAnalyticalMethodSchema,
   insertProcessValidationSchema,
   insertStabilityStudySchema,
@@ -33,6 +37,8 @@ import {
   insertDrugProductSchema,
   insertCmcContainerClosureSchema,
   insertCmcReferenceStandardSchema,
+  insertCmcImpurityProfileSchema,
+  insertCmcDissolutionProfileSchema,
 } from '../../../shared/schema';
 import { eq, and, inArray, or, isNull, type SQL } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
@@ -253,6 +259,17 @@ const referenceStandardBody = withoutTenantKey(insertCmcReferenceStandardSchema)
   expiryDate: optionalDate,
   retestDate: optionalDate,
   qualificationDate: optionalDate,
+});
+const impurityProfileBody = withoutTenantKey(insertCmcImpurityProfileSchema).extend({
+  /* The register's own GET returns qualificationDate as an ISO string, so a
+     client that reads a row and writes it back would have been rejected by the
+     z.date() drizzle-zod generates for the column. The field is stripped by
+     withoutGovernedFields regardless — the coercion is what stops the whole
+     request failing before it gets there. */
+  qualificationDate: optionalDate,
+});
+const dissolutionProfileBody = withoutTenantKey(insertCmcDissolutionProfileSchema).extend({
+  testDate: optionalDate,
 });
 
 router.post('/analytical-methods', async (req, res) => {
@@ -887,15 +904,39 @@ function refusesUngovernedQualification(
   res: express.Response,
   status: unknown,
   registerPath: string,
+  storedStatus?: unknown,
 ): boolean {
-  if (String(status ?? '').trim().toLowerCase() !== 'qualified') return false;
-  res.status(409).json({
-    success: false,
-    error:
-      `Qualification is a governed action and is recorded with a signature. ` +
-      `POST /api/cmc/${registerPath}/:id/qualify with a reason and re-authentication.`,
-  });
-  return true;
+  const incoming = String(status ?? '').trim().toLowerCase();
+  const stored = String(storedStatus ?? '').trim().toLowerCase();
+  /* Refuse the TRANSITION into qualified, not the word. A record that is
+     already qualified must be able to round-trip its own status through an
+     ordinary edit — otherwise correcting a typo in a qualified record is
+     impossible without a second signature. */
+  if (incoming === 'qualified' && stored !== 'qualified') {
+    res.status(409).json({
+      success: false,
+      error:
+        `Qualification is a governed action and is recorded with a signature. ` +
+        `POST /api/cmc/${registerPath}/:id/qualify with a reason and re-authentication.`,
+    });
+    return true;
+  }
+  /* And refuse the transition OUT of it. Pressing Update on a qualified record
+     silently reverted it to draft while leaving qualified_by and
+     qualification_date populated — an unsigned de-qualification that left the
+     signature stranded on a record that no longer claimed to be qualified.
+     Retiring a qualified record is still allowed: that is a lifecycle end, not
+     a reversal of the conclusion. */
+  if (stored === 'qualified' && incoming && incoming !== 'qualified' && incoming !== 'retired') {
+    res.status(409).json({
+      success: false,
+      error:
+        `This record is qualified under a recorded signature and cannot be returned to "${incoming}" by an ordinary edit. ` +
+        `Retire it, or record a new assessment.`,
+    });
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -909,7 +950,7 @@ async function qualifyRegisterRecord(
   req: express.Request,
   res: express.Response,
   spec: {
-    table: 'cmc_container_closures' | 'cmc_reference_standards';
+    table: 'cmc_container_closures' | 'cmc_reference_standards' | 'cmc_impurity_profiles';
     target: string;
     surface: string;
     subject: string;
@@ -921,6 +962,12 @@ async function qualifyRegisterRecord(
       recordId: string,
       record: Record<string, any>,
     ) => Promise<unknown>;
+    /**
+     * A register-specific condition the record must meet to be signable,
+     * evaluated on the row LOCKED inside the signing transaction. Returns the
+     * refusal message, or null when the record may be signed.
+     */
+    precondition?: (row: Record<string, any>) => string | null;
   },
 ): Promise<express.Response> {
   const parsed = governedSignatureSchema.safeParse(req.body);
@@ -970,6 +1017,11 @@ async function qualifyRegisterRecord(
         error: `This ${spec.subject} is already qualified`,
         qualifiedAt: current.rows[0].qualification_date ?? null,
       });
+    }
+    const unmet = spec.precondition ? spec.precondition(current.rows[0]) : null;
+    if (unmet) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ success: false, error: unmet });
     }
     await client.query(
       `UPDATE ${spec.table}
@@ -1065,7 +1117,8 @@ router.put('/container-closures/:id', async (req, res) => {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = containerClosureBody.partial().parse(req.body);
-    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'container-closures')) return;
+    const stored = await reselectContainerClosure(id, orgId);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'container-closures', stored?.status)) return;
     const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
       validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;
@@ -1144,7 +1197,8 @@ router.put('/reference-standards/:id', async (req, res) => {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = referenceStandardBody.partial().parse(req.body);
-    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'reference-standards')) return;
+    const stored = await reselectReferenceStandard(id, orgId);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'reference-standards', stored?.status)) return;
     const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
       validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;
@@ -1172,6 +1226,170 @@ router.post('/reference-standards/:id/qualify', async (req, res) => {
     reselect: reselectReferenceStandard,
     writeThrough: writeThroughReferenceStandard,
   });
+});
+
+
+/* ── Impurity profiles — §3.2.S.3.2 / §3.2.P.5.5 ─────────────────────────────
+ *
+ * One row per impurity. `scope` decides which side it files under, on the same
+ * rule as the registers above; `project_id` is a column and is immutable after
+ * creation; the canonical write-through is awaited and its true outcome
+ * reported; and qualification is a Part 11 signature over a recorded
+ * qualification basis, never a status a save can set.
+ */
+router.get('/impurity-profiles', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const rows = await db
+      .select()
+      .from(cmcImpurityProfiles)
+      .where(and(eq(cmcImpurityProfiles.organizationId, orgId), projectFilter(req, cmcImpurityProfiles.projectId)));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch impurity profiles');
+  }
+});
+
+const reselectImpurityProfile = async (id: number, orgId: number) => {
+  const [row] = await db
+    .select()
+    .from(cmcImpurityProfiles)
+    .where(and(eq(cmcImpurityProfiles.id, id), eq(cmcImpurityProfiles.organizationId, orgId)));
+  return row as Record<string, any> | undefined;
+};
+
+router.post('/impurity-profiles', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const validatedData = impurityProfileBody.parse(req.body);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'impurity-profiles')) return;
+    const [row] = await db
+      .insert(cmcImpurityProfiles)
+      .values({ ...withoutGovernedFields(validatedData as Record<string, unknown>), organizationId: orgId } as typeof cmcImpurityProfiles.$inferInsert)
+      .returning();
+    const linkage = await linkToModule3('write_through_impurity_profile', orgId, row, req, writeThroughImpurityProfile);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create impurity profile');
+  }
+});
+
+/**
+ * Record the level from a new batch, attach the qualification basis, or correct
+ * the entry. An impurity's file grows over a programme: the level is measured
+ * long before the toxicological qualification that justifies it exists.
+ */
+router.put('/impurity-profiles/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = impurityProfileBody.partial().parse(req.body);
+    const stored = await reselectImpurityProfile(id, orgId);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'impurity-profiles', stored?.status)) return;
+    const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
+      validatedData as Record<string, unknown>,
+    ) as { projectId?: unknown } & Record<string, unknown>;
+    const [row] = await db
+      .update(cmcImpurityProfiles)
+      .set({ ...editable, updatedAt: new Date() })
+      .where(and(eq(cmcImpurityProfiles.id, id), eq(cmcImpurityProfiles.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Impurity profile not found' });
+    const linkage = await linkToModule3('write_through_impurity_profile', orgId, row, req, writeThroughImpurityProfile);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update impurity profile');
+  }
+});
+
+/**
+ * The governed qualification of an impurity (21 CFR Part 11).
+ *
+ * ICH Q3A/Q3B qualification is a toxicological conclusion about a specific
+ * level of a specific impurity. Signing it records who reached that conclusion
+ * and on what basis; the register REFUSES the signature when no qualification
+ * basis is recorded, because a signature over an empty basis is the exact shape
+ * of a qualification nobody can point at.
+ */
+router.post('/impurity-profiles/:id/qualify', async (req, res) => {
+  return qualifyRegisterRecord(req, res, {
+    table: 'cmc_impurity_profiles',
+    target: 'impurity_profile',
+    surface: 'cmc-impurity-profiles',
+    subject: 'impurity profile',
+    propagation: 'write_through_impurity_profile',
+    reselect: reselectImpurityProfile,
+    writeThrough: writeThroughImpurityProfile,
+    /* A signature over an empty basis qualifies nothing. Enforced INSIDE the
+       signing transaction, on the row locked FOR UPDATE — as a pre-check before
+       it, a concurrent edit that cleared the basis between the check and the
+       signature produced a signed qualification with nothing behind it, and the
+       check also disclosed the record's state before re-authentication. */
+    precondition: (row) =>
+      String(row.qualification_basis || '').trim()
+        ? null
+        : 'This impurity has no qualification basis recorded. Qualification is a signature over the study, comparator exposure or monograph that qualifies the level — record that first.',
+  });
+});
+
+/* ── Dissolution profiles — §3.2.P.2 / §3.2.P.5 ──────────────────────────────
+ *
+ * `purpose` plays the part `scope` plays above: a development profile is
+ * §3.2.P.2 evidence and a release-specification profile is §3.2.P.5 evidence,
+ * and one must not complete the other's section.
+ *
+ * There is no qualify endpoint here: a dissolution profile is a measurement,
+ * not a state somebody signs. What IS signed is the specification it supports,
+ * which lives in the specification register and already has one.
+ */
+router.get('/dissolution-profiles', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const rows = await db
+      .select()
+      .from(cmcDissolutionProfiles)
+      .where(and(eq(cmcDissolutionProfiles.organizationId, orgId), projectFilter(req, cmcDissolutionProfiles.projectId)));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch dissolution profiles');
+  }
+});
+
+router.post('/dissolution-profiles', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const validatedData = dissolutionProfileBody.parse(req.body);
+    const [row] = await db
+      .insert(cmcDissolutionProfiles)
+      .values({ ...withoutOrgId(validatedData as Record<string, unknown>), organizationId: orgId } as typeof cmcDissolutionProfiles.$inferInsert)
+      .returning();
+    const linkage = await linkToModule3('write_through_dissolution_profile', orgId, row, req, writeThroughDissolutionProfile);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create dissolution profile');
+  }
+});
+
+/** Add the later timepoints, attach the reference profile, correct the record. */
+router.put('/dissolution-profiles/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = dissolutionProfileBody.partial().parse(req.body);
+    const { projectId: _fixedAtCreation, ...editable } = withoutOrgId(
+      validatedData as Record<string, unknown>,
+    ) as { projectId?: unknown } & Record<string, unknown>;
+    const [row] = await db
+      .update(cmcDissolutionProfiles)
+      .set({ ...editable, updatedAt: new Date() })
+      .where(and(eq(cmcDissolutionProfiles.id, id), eq(cmcDissolutionProfiles.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Dissolution profile not found' });
+    const linkage = await linkToModule3('write_through_dissolution_profile', orgId, row, req, writeThroughDissolutionProfile);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update dissolution profile');
+  }
 });
 
 // POST /api/cmc/insights/take-action - Take action on AI insights (DB-backed)

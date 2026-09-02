@@ -23,6 +23,14 @@ import {
 /* The scope rule is shared with the register surfaces, not owned by either
    side: see shared/cmc/material-scope.ts. */
 import { normalizeMaterialScope } from '../../shared/cmc/material-scope';
+import {
+  DISSOLUTION_DEVELOPMENT_PURPOSES,
+  DISSOLUTION_RELEASE_PURPOSE,
+  normalizeDissolutionPurpose,
+} from '../../shared/cmc/dissolution-purpose';
+/* The ICH impurity classes are the assessment engine's vocabulary, not this
+   module's: one definition, in services/cmc/impurity-assessment. */
+import { isAssessableImpurity } from './cmc/impurity-assessment';
 import unifiedTaskService from './unifiedTaskService';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -66,6 +74,11 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
   reference_standard: 'Reference Standard',
   container_closure: 'Container Closure',
   excipient: 'Excipient',
+  impurity_profile: 'Impurity Profile',
+  dissolution_profile: 'Dissolution Profile',
+  qc_result: 'QC Result',
+  raw_material_spec: 'Raw Material Specification',
+  formulation_record: 'Formulation Record',
 };
 
 // ── Mapping helpers: legacy CMC record → canonical source payload ─────────
@@ -751,6 +764,144 @@ export function mapReferenceStandardPayload(record: Record<string, any>): Record
   };
 }
 
+
+/**
+ * Map a cmc_impurity_profiles row to a canonical source payload.
+ *
+ * One row is ONE impurity. The composer collects across every impurity_profile
+ * source rather than reading a first-match array, because a first-match read
+ * over one-row-per-impurity payloads renders exactly one impurity and silently
+ * drops the rest.
+ *
+ * Nothing is defaulted. In particular the unit is not: the column has a default
+ * of '%', but a number recorded with the unit field cleared is not a percentage
+ * because a column says so, and a ppm figure rendered as a percentage overstates
+ * it twenty-thousand-fold. The assessment engine refuses that record instead.
+ */
+export function mapImpurityProfilePayload(record: Record<string, any>): Record<string, any> {
+  const scope = normalizeMaterialScope(record.scope, 'drug_substance');
+  const forDs = scope === 'drug_substance' || scope === 'both';
+  const forDp = scope === 'drug_product' || scope === 'both';
+
+  const impurityName = String(record.impurityName || record.impurity_name || '').trim();
+  const observedLevel = record.observedLevel ?? record.observed_level ?? '';
+  const levelUnit = String(record.levelUnit ?? record.level_unit ?? '').trim();
+  const maximumDailyDose = String(record.maximumDailyDose ?? record.maximum_daily_dose ?? '').trim();
+  const impurityType = String(record.impurityType || record.impurity_type || '').trim();
+  const qualificationBasis = String(record.qualificationBasis || record.qualification_basis || '').trim();
+
+  /* Assessable means the ICH comparison can actually be made — and that question
+     is ASKED OF THE ENGINE, not approximated here. A field-presence proxy (a
+     name, a level, a unit, a dose, a class that is not 'unresolved') is weaker
+     than the engine in four ways: an unparseable dose, a unit that does not
+     convert, a class ICH does not govern, and a comparator-prefixed level all
+     satisfy the proxy and are then refused by the engine. The section reported
+     itself 100% complete over impurities it rendered as "not assessable". */
+  const assessableForDs = forDs && isAssessableImpurity(record, 'drug_substance');
+  const assessableForDp = forDp && isAssessableImpurity(record, 'drug_product');
+
+  return {
+    scope,
+    materialName: record.materialName || record.material_name || '',
+    impurityName,
+    impurityType,
+    origin: record.origin || '',
+    casNumber: record.casNumber || record.cas_number || '',
+    molecularFormula: record.molecularFormula || record.molecular_formula || '',
+    structure: record.structure || '',
+    relativeRetentionTime: record.relativeRetentionTime || record.relative_retention_time || '',
+    analyticalMethod: record.analyticalMethod || record.analytical_method || '',
+    observedLevel: String(observedLevel),
+    levelUnit,
+    specificationLimit: record.specificationLimit || record.specification_limit || '',
+    reportingThreshold: record.reportingThreshold || record.reporting_threshold || '',
+    identificationThreshold: record.identificationThreshold || record.identification_threshold || '',
+    qualificationThreshold: record.qualificationThreshold || record.qualification_threshold || '',
+    maximumDailyDose,
+    /* Qualification is the PRESENCE of a recorded basis, never a boolean a save
+       can set. §3.2.S.3.2 reports an impurity as qualified only where this
+       carries the study or comparator that qualifies it. */
+    qualificationBasis,
+    controlStrategy: record.controlStrategy || record.control_strategy || '',
+    batchesObserved: record.batchesObserved || record.batches_observed || null,
+    status: record.status || 'draft',
+    qualifiedAt: record.qualificationDate || record.qualification_date || null,
+    // Side-scoped completeness keys — §3.2.S.3 / §3.2.S.4 versus §3.2.P.5.
+    drugSubstanceImpurityProfile: forDs && impurityName ? impurityName : null,
+    drugProductImpurityProfile: forDp && impurityName ? impurityName : null,
+    drugSubstanceImpurityProfileComplete: assessableForDs ? impurityName : null,
+    drugProductImpurityProfileComplete: assessableForDp ? impurityName : null,
+  };
+}
+
+/**
+ * Map a cmc_dissolution_profiles row to a canonical source payload.
+ *
+ * `purpose` plays the part `scope` plays for the material-sided registers.
+ * §3.2.P.2 is where the method was developed and where profiles are compared;
+ * §3.2.P.5 is where the release acceptance criterion lives. The generic keys
+ * both sections used to read — `condition`, `specification`, `results`,
+ * `passFail` — are deliberately NOT emitted: they are first-match reads, so one
+ * record would have rendered identically into both sections and four different
+ * records could each have supplied one row of a table presented as one test.
+ *
+ * `passFail` is not carried from the record either. Whether a profile meets its
+ * acceptance criterion is a comparison against the recorded specification, which
+ * the section performs from the profile itself; a typed pass/fail is a
+ * conclusion with no working shown.
+ */
+export function mapDissolutionProfilePayload(record: Record<string, any>): Record<string, any> {
+  const purpose = normalizeDissolutionPurpose(record.purpose);
+  const forDevelopment = DISSOLUTION_DEVELOPMENT_PURPOSES.includes(purpose);
+  const forRelease = purpose === DISSOLUTION_RELEASE_PURPOSE;
+
+  const results = record.results ?? null;
+  const points = Array.isArray(results) ? results.filter((r) => r && typeof r === 'object') : [];
+  const specification = String(record.specification || '').trim();
+  const apparatus = String(record.apparatus || '').trim();
+  const medium = String(record.medium || '').trim();
+  const unitsTested = Number(record.unitsTested ?? record.units_tested);
+
+  /* A profile the section can actually say something about: a method (what was
+     it run on, in what), at least one timepoint with a mean, and the number of
+     units behind that mean. A mean with no n is not a result a section can
+     report a conformance or a comparison from. */
+  const hasMeans = points.some((p: any) => p.meanPercent !== undefined && p.meanPercent !== null && p.meanPercent !== '');
+  const hasUnits = Number.isFinite(unitsTested) && unitsTested > 0;
+  const profileUsable = Boolean(apparatus) && Boolean(medium) && hasMeans && hasUnits;
+
+  return {
+    purpose,
+    productName: record.productName || record.product_name || '',
+    batchNumber: record.batchNumber || record.batch_number || '',
+    strength: record.strength || '',
+    apparatus,
+    rotationSpeed: record.rotationSpeed || record.rotation_speed || '',
+    medium,
+    mediumVolume: record.mediumVolume || record.medium_volume || '',
+    temperature: record.temperature || '',
+    sinker: record.sinker || '',
+    dissolutionSpecification: specification,
+    unitsTested: hasUnits ? unitsTested : null,
+    dissolutionResults: points.length > 0 ? points : null,
+    comparisonBatch: record.comparisonBatch || record.comparison_batch || '',
+    comparisonResults: hasRecordedValue(record.comparisonResults ?? record.comparison_results)
+      ? (record.comparisonResults ?? record.comparison_results)
+      : null,
+    testDate: record.testDate || record.test_date || null,
+    status: record.status || 'draft',
+    // Purpose-scoped completeness keys — §3.2.P.2 versus §3.2.P.5.
+    developmentDissolutionProfile: forDevelopment && points.length > 0 ? (record.productName || record.product_name || 'profile') : null,
+    releaseDissolutionProfile: forRelease && points.length > 0 ? (record.productName || record.product_name || 'profile') : null,
+    developmentDissolutionProfileComplete: forDevelopment && profileUsable ? (record.batchNumber || record.batch_number || 'profile') : null,
+    /* The release section additionally needs the acceptance criterion the
+       profile is judged against: a profile with no specification cannot carry a
+       conformance statement, and a specification with no profile is a criterion
+       nobody has measured against. */
+    releaseDissolutionProfileComplete: forRelease && profileUsable && specification ? (record.batchNumber || record.batch_number || 'profile') : null,
+  };
+}
+
 // ── Core write-through function ────────────────────────────────────────────
 
 /**
@@ -995,6 +1146,28 @@ export async function writeThroughReferenceStandard(
     orgId, projectId, sourceType: 'reference_standard',
     sourceKey: `reference_standard:${recordId}`,
     sourcePayload: mapReferenceStandardPayload(record),
+    createdBy,
+  });
+}
+
+export async function writeThroughImpurityProfile(
+  orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
+): Promise<WriteThroughResult | null> {
+  return writeThroughToCanonicalSource({
+    orgId, projectId, sourceType: 'impurity_profile',
+    sourceKey: `impurity_profile:${recordId}`,
+    sourcePayload: mapImpurityProfilePayload(record),
+    createdBy,
+  });
+}
+
+export async function writeThroughDissolutionProfile(
+  orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
+): Promise<WriteThroughResult | null> {
+  return writeThroughToCanonicalSource({
+    orgId, projectId, sourceType: 'dissolution_profile',
+    sourceKey: `dissolution_profile:${recordId}`,
+    sourcePayload: mapDissolutionProfilePayload(record),
     createdBy,
   });
 }

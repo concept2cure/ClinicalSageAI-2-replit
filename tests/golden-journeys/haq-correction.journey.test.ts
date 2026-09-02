@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import { createJourneyDb, JourneyRecorder, type JourneyDb } from './harness';
+import { createJourneyDb, JourneyRecorder, type JourneyDb, assertNoSchemaGaps } from './harness';
 
 const T = 180_000;
 
@@ -55,6 +55,9 @@ beforeAll(async () => {
 }, T);
 
 afterAll(async () => {
+  // A journey that ran against a database missing a table its subject writes
+  // to proves less than it claims (ledger L145).
+  assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('haq-correction');
   // eslint-disable-next-line no-console
   console.info(`[journey] manifest: ${jsonPath}\n[journey] report:   ${mdPath}`);

@@ -708,6 +708,19 @@ export async function persistPatternRegistry(
 export async function loadPatternRegistry(
   organizationId: number
 ): Promise<{ loaded: boolean; learnedCount: number; error?: string }> {
+  // Startup runs this in no request and no job; with RLS_ENFORCE=on the pool
+  // refuses an unscoped read, and the caller used to report that refusal as
+  // "no persisted data found". The read owns its scope, and a failure comes
+  // back as `error`, never as an empty result.
+  const { runWithSystemTenantScope } = await import('../../db/tenantStore.js');
+  return runWithSystemTenantScope('pattern-registry:load', () =>
+    loadPatternRegistryUnscoped(organizationId)
+  );
+}
+
+async function loadPatternRegistryUnscoped(
+  organizationId: number
+): Promise<{ loaded: boolean; learnedCount: number; error?: string }> {
   try {
     const { db } = await import('../../db.js');
     const { projectMemoryEntries } = await import('../../../shared/schema.js');

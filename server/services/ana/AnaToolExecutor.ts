@@ -15889,6 +15889,33 @@ registerToolHandler('list_cmc_registers', async (input, ctx) => {
                 FROM cmc_container_closures WHERE organization_id = $1`,
         searchCols: ['system_name', 'container_description', 'supplier'],
       },
+      /* One row per impurity, with the ICH inputs a threshold comparison needs
+         (class, level with its unit, the daily dose) surfaced so a model can see
+         WHY an impurity is or is not assessable without pulling the record. */
+      impurity_profile: {
+        sql: `SELECT id, impurity_name AS "impurityName", material_name AS "materialName",
+                     scope, impurity_type AS "impurityType",
+                     observed_level AS "observedLevel", level_unit AS "levelUnit",
+                     specification_limit AS "specificationLimit",
+                     maximum_daily_dose AS "maximumDailyDose", status,
+                     (qualification_basis IS NOT NULL AND qualification_basis <> '') AS "hasQualificationBasis",
+                     (structure IS NOT NULL AND structure <> '') AS "hasStructure"
+                FROM cmc_impurity_profiles WHERE organization_id = $1`,
+        searchCols: ['impurity_name', 'material_name', 'analytical_method'],
+      },
+      /* The method and the shape of the profile, not the profile itself: a
+         broad discovery call must not pull every timepoint of every batch. */
+      dissolution_profile: {
+        sql: `SELECT id, product_name AS "productName", batch_number AS "batchNumber",
+                     purpose, apparatus, medium, rotation_speed AS "rotationSpeed",
+                     units_tested AS "unitsTested", specification, status,
+                     test_date AS "testDate",
+                     CASE WHEN jsonb_typeof(results) = 'array'
+                          THEN jsonb_array_length(results) ELSE 0 END AS "timepointCount",
+                     (comparison_results IS NOT NULL) AS "hasReferenceProfile"
+                FROM cmc_dissolution_profiles WHERE organization_id = $1`,
+        searchCols: ['product_name', 'batch_number', 'medium'],
+      },
       reference_standard: {
         sql: `SELECT id, standard_code AS "standardCode", standard_name AS "standardName",
                      scope, standard_type AS "standardType", lot_number AS "lotNumber",
@@ -15936,6 +15963,101 @@ registerToolHandler('list_cmc_registers', async (input, ctx) => {
     });
   } catch (err: any) {
     return JSON.stringify({ error: `list_cmc_registers failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+/* f2 over two profiles ON FILE — the same engine the typed-number tool and the
+   CMC dissolution surface call, so a model and a screen can never report
+   different similarity for the same two batches. */
+registerToolHandler('compare_recorded_dissolution', async (input, ctx) => {
+  const orgId = ctx?.organizationId;
+  if (!orgId) return 'An active organization context is required to read the dissolution register.';
+  const refId = Number(input.reference_profile_id);
+  const testId = Number(input.test_profile_id);
+  if (!Number.isInteger(refId) || refId <= 0 || !Number.isInteger(testId) || testId <= 0) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: 'Two numeric dissolution profile ids are required. Use list_cmc_registers to find them.',
+    });
+  }
+  if (refId === testId) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: 'A profile cannot be compared against itself; f2 would be 100 by construction.',
+    });
+  }
+  try {
+    const [{ db }, { cmcDissolutionProfiles }, { and, eq, inArray }, engine] = await Promise.all([
+      import('../../db.js'),
+      import('../../../shared/schema.js'),
+      import('drizzle-orm'),
+      import('../cmc/dissolution-comparison.js'),
+    ]);
+    const rows = await db
+      .select()
+      .from(cmcDissolutionProfiles)
+      .where(and(eq(cmcDissolutionProfiles.organizationId, orgId), inArray(cmcDissolutionProfiles.id, [refId, testId])));
+    const byId = new Map(rows.map((r: Record<string, any>) => [r.id, r]));
+    const reference = byId.get(refId);
+    const test = byId.get(testId);
+    if (!reference || !test) {
+      /* Never answered from a partial set: comparing one recorded profile
+         against nothing is a different question than the one asked. */
+      return JSON.stringify({
+        status: 'not_found',
+        message: `Not this organization's dissolution profiles: ${[!reference ? refId : null, !test ? testId : null].filter(Boolean).join(', ')}. No comparison is made.`,
+      });
+    }
+    const outcome = engine.compareDissolutionProfiles(
+      {
+        role: 'reference',
+        productName: reference.productName,
+        batchNumber: reference.batchNumber,
+        method: { apparatus: reference.apparatus, medium: reference.medium, rotationSpeed: reference.rotationSpeed },
+        points: engine.pointsFromRecordedProfile(reference.results),
+      },
+      {
+        role: 'test',
+        productName: test.productName,
+        batchNumber: test.batchNumber,
+        method: { apparatus: test.apparatus, medium: test.medium, rotationSpeed: test.rotationSpeed },
+        points: engine.pointsFromRecordedProfile(test.results),
+      },
+      { referenceUnits: reference.unitsTested, testUnits: test.unitsTested },
+    );
+    const identity = {
+      reference: { id: refId, batch: reference.batchNumber, apparatus: reference.apparatus, medium: reference.medium },
+      test: { id: testId, batch: test.batchNumber, apparatus: test.apparatus, medium: test.medium },
+      methodsMatch:
+        reference.apparatus === test.apparatus &&
+        reference.medium === test.medium &&
+        reference.rotationSpeed === test.rotationSpeed,
+    };
+    if (outcome.outcome === 'refused') {
+      return JSON.stringify({
+        status: 'not_comparable',
+        ...identity,
+        refusal: { code: outcome.code, message: outcome.message, offending: outcome.offending, alternative: outcome.alternative ?? null },
+        instruction:
+          'Relay this refusal verbatim. Do NOT re-run the comparison through assess_dissolution_similarity with the same numbers typed in: that is the same computation with the eligibility check removed.',
+      });
+    }
+    return JSON.stringify({
+      status: 'computed',
+      ...identity,
+      f2: outcome.f2Reported,
+      similar: outcome.f2Similar,
+      f1: outcome.f1Reported,
+      inputsUsed: outcome.inputsUsed,
+      checksEvaluated: outcome.checksEvaluated,
+      scope: outcome.scope,
+      instruction:
+        identity.methodsMatch
+          ? 'Report the f2 with the timepoints it used and the scope statement. It is not a bioequivalence conclusion.'
+          : 'The two profiles were run under DIFFERENT dissolution conditions. Report that alongside the f2: a comparison across methods does not establish similarity of the products.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `compare_recorded_dissolution failed: ${err?.message || 'unknown error'}` });
   }
 });
 
