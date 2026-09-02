@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-02T14:42:02.603Z",
+  "generatedAt": "2026-09-02T14:57:20.123Z",
   "git": {
-    "sha": "aa672457ac4fd31ab7015c70d15a407c4e680672",
+    "sha": "41b22c380b0072dd56daa917259522536604a538",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2146,7 +2146,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 990062
+        "bytes": 994552
       },
       {
         "file": "shared/schema.ts",
@@ -2288,7 +2288,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19252
+        "lines": 19347
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2476,7 +2476,7 @@
       },
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
-        "lines": 1981
+        "lines": 1962
       },
       {
         "file": "server/api/cmc/routes.ts",
