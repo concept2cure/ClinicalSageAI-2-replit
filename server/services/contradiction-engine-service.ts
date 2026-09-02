@@ -1536,6 +1536,7 @@ class ContradictionEngineService {
       const decisions = decisionLifecycleService.getProjectDecisions(String(projectId), {
         kind: 'contradiction-resolution-decision',
         limit: 20,
+        organizationId,
       });
       linkedDecisionIds.push(...decisions.map(d => d.id));
     } catch {

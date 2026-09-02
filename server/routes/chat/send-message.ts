@@ -429,9 +429,18 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         try {
           const { decisionLifecycleService } =
             await import('../../services/decision-lifecycle-service.js');
-          decisionContext = decisionLifecycleService.getDecisionContext(String(project_id), {
-            limit: 5,
-          });
+          // Scoped to the caller's tenant: this context is fed to the
+          // orchestrator as grounding, so an unscoped read would not just
+          // leak another organization's decisions, it would let the model
+          // quote them back in an answer. numericOrgId is resolved above and
+          // used throughout this handler; the decision read was the one that
+          // did not pass it.
+          decisionContext = numericOrgId
+            ? decisionLifecycleService.getDecisionContext(String(project_id), {
+                limit: 5,
+                organizationId: numericOrgId,
+              })
+            : [];
         } catch {
           /* non-blocking */
         }

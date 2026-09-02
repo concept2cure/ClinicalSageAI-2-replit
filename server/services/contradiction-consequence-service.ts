@@ -523,6 +523,7 @@ class ContradictionConsequenceService {
       // Find the decision linked to this contradiction
       const decisions = decisionLifecycleService.getProjectDecisions(String(projectId), {
         kind: 'contradiction-resolution-decision',
+        organizationId,
       });
       const linkedDecision = decisions.find(d =>
         d.linkedContradictionIds?.includes(finding.id)

@@ -350,6 +350,8 @@ export async function prefetchRouteIntelligenceContext(params: {
             ? authoringContext.moduleCode
             : undefined,
         limit: 10,
+        organizationId:
+          organizationId && Number.isFinite(organizationId) ? organizationId : undefined,
       });
     } catch {
       // Non-blocking — decision context is optional enrichment.
