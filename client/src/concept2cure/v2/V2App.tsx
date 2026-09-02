@@ -103,6 +103,11 @@ import './styles/pathway-panels-v2.css';
    `--text-300` on every element that establishes a tinted surface, so it has to
    load after the sheets that declare those surfaces — a custom property set
    earlier in the cascade would be overwritten by the rule it is correcting.
+   This is the v2/ slice — one generated sheet per shell tree, because Vite keeps
+   every shell CSS chunk in <head> for the session and a class defined in two
+   trees is a page-wide collision (ci:check-shell-css-collisions). It also
+   carries the stylesheets outside the three trees (index.css, styles/,
+   _shared/, quality/), which v2 owns as the root shell that mounts the others.
    GENERATED: scripts/design/generate-surface-text-ramp.mjs, drift-checked by
    ci:surface-text-ramp. See GA ledger L102. */
 import './styles/surface-text-ramp.css';

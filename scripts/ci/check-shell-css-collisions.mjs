@@ -102,11 +102,28 @@ function definedClasses(css) {
       const s = sel.trim();
       if (!s || s.startsWith('@') || /^\d|^from$|^to$/.test(s)) continue; // keyframe stops
 
-      // The first compound: up to the first descendant/child/sibling combinator.
-      const firstCompound = s.split(/[\s>+~]+/)[0] ?? '';
-      const scoped = SHELL_ROOTS.some(
-        (r) => firstCompound === `.${r}` || firstCompound.startsWith(`.${r}.`) ||
-               firstCompound.startsWith(`.${r}[`) || firstCompound.startsWith(`.${r}:`),
+      // Confined if ANY compound on the ancestor chain is a shell root, not
+      // only the first. The first version looked at the first compound alone,
+      // so `[data-theme="dark"] .mdx-shell .x` — which can only ever match
+      // inside the mdx shell — was read as mdx defining `.x` page-wide, while
+      // the light-mode twin `.mdx-shell .x` was correctly skipped. The
+      // generated surface-text-ramp sheets emit exactly that dark-mode shape
+      // (`[data-theme="dark"] :is(.mdx-shell .a, .mdx-shell .b, …)`), and
+      // after the comma split above the FIRST alternative of every such list
+      // begins with the theme attribute rather than the root. A leading
+      // `:is(` / `:where(` wrapper is stripped before the comparison for the
+      // same reason; `:not(` is deliberately NOT stripped — `:not(.mdx-shell)`
+      // is the opposite of confinement.
+      // A compound may carry the wrapper mid-token (`[data-theme="dark"]:is(.mdx-shell`),
+      // so each compound is split on the wrapper and every piece is judged.
+      const compounds = s
+        .split(/[\s>+~]+/)
+        .flatMap((c) => c.split(/:(?:is|where)\(/));
+      const scoped = compounds.some((compound) =>
+        SHELL_ROOTS.some(
+          (r) => compound === `.${r}` || compound.startsWith(`.${r}.`) ||
+                 compound.startsWith(`.${r}[`) || compound.startsWith(`.${r}:`),
+        ),
       );
       if (scoped) continue; // confined to one shell — cannot leak
 
