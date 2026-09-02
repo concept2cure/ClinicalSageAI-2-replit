@@ -6,11 +6,19 @@
  * managing documents across different modules.
  */
 
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, desc } from 'drizzle-orm';
 import type { RequestDb } from '../db/requestDb';
 import { WorkflowService } from './WorkflowService';
-import { isAllowedUpload } from '../middleware/uploadAllowlist';
-import { hasUnsafePathSyntax } from './submission-gateways/bundle-namespace';
+import {
+  assertAttachmentRecordable,
+  requireOrgId,
+  AttachmentNotFoundException,
+} from './module-integration/attachment-input';
+export {
+  AttachmentNotFoundException,
+  AttachmentRejectedException,
+  type DocumentAttachmentInput,
+} from './module-integration/attachment-input';
 import {
   unifiedDocuments,
   moduleDocuments,
@@ -55,34 +63,6 @@ export interface RegisterDocumentInput {
 }
 
 /**
- * The attachment-record input contract.
- *
- * Declared here rather than accepted as `any`, for the same reason
- * RegisterDocumentInput is: fileName / fileType / fileSize / filePath are the
- * NOT NULL columns of document_attachments (migrations/20260729b), so an
- * `any` boundary defers a missing one to a runtime 23502 inside an open
- * transaction instead of rejecting it at the edge with a usable message.
- *
- * This service records an attachment; it does not receive or store the bytes.
- * `filePath` must already point at a file placed through the caller's own
- * storage path — this boundary validates the SYNTAX it is handed and the file
- * type policy, and nothing here should be read as having verified that the
- * file exists or is what it claims.
- */
-export interface DocumentAttachmentInput {
-  fileName: string;
-  fileType: string;
-  /** Bytes. Stored in an `integer` column, so bounded by INT4_MAX. */
-  fileSize: number;
-  filePath: string;
-  description?: string | null;
-  metadata?: Record<string, unknown>;
-}
-
-/** `file_size integer` — Postgres rejects anything past this, so we do first. */
-const INT4_MAX = 2_147_483_647;
-
-/**
  * Exception for document not found errors
  */
 export class DocumentNotFoundException extends Error {
@@ -90,91 +70,6 @@ export class DocumentNotFoundException extends Error {
     super(`Document with ID ${documentId} not found`);
     this.name = 'DocumentNotFoundException';
   }
-}
-
-/** An attachment that does not exist on the named document, in this tenant. */
-export class AttachmentNotFoundException extends Error {
-  constructor(attachmentId: number | string) {
-    super(`Attachment with ID ${attachmentId} not found`);
-    this.name = 'AttachmentNotFoundException';
-  }
-}
-
-/** An attachment record this boundary refuses to write. */
-export class AttachmentRejectedException extends Error {
-  constructor(reason: string) {
-    super(reason);
-    this.name = 'AttachmentRejectedException';
-  }
-}
-
-/**
- * Narrow an untrusted attachment payload, or throw.
- *
- * Reuses the repo's canonical validators rather than restating them:
- * `hasUnsafePathSyntax` (empty / embedded NUL / `..` traversal, in either
- * separator style) and `isAllowedUpload` (the shared extension + MIME policy,
- * which rejects the BLOCKED_EXTENSIONS executables outright). A second copy of
- * either rule here is a second place for them to drift apart.
- *
- * `fileName` is checked for path syntax too: a name is not a path, and one
- * carrying separators or `..` is either a mistake or an attempt to make a
- * later consumer join it onto a directory.
- */
-function requireText(value: unknown, field: string): string {
-  if (typeof value !== 'string' || value.trim() === '') {
-    throw new AttachmentRejectedException(`${field} is required`);
-  }
-  return value;
-}
-
-/** `file_size` is a NOT NULL `integer`; anything else is rejected here, not by PG. */
-function requireByteCount(value: unknown): number {
-  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) {
-    throw new AttachmentRejectedException('fileSize must be a non-negative integer number of bytes');
-  }
-  if (value > INT4_MAX) {
-    throw new AttachmentRejectedException('fileSize exceeds the maximum this record can store');
-  }
-  return value;
-}
-
-function assertAttachmentRecordable(input: unknown): asserts input is DocumentAttachmentInput {
-  const candidate = input as Partial<DocumentAttachmentInput> | null | undefined;
-  if (!candidate || typeof candidate !== 'object') {
-    throw new AttachmentRejectedException('attachment data is required');
-  }
-
-  const fileName = requireText(candidate.fileName, 'fileName');
-  const fileType = requireText(candidate.fileType, 'fileType');
-  const filePath = requireText(candidate.filePath, 'filePath');
-  requireByteCount(candidate.fileSize);
-
-  if (hasUnsafePathSyntax(fileName) || /[\\/]/.test(fileName)) {
-    throw new AttachmentRejectedException('fileName must be a file name, not a path');
-  }
-  if (hasUnsafePathSyntax(filePath)) {
-    throw new AttachmentRejectedException('filePath must not contain traversal syntax');
-  }
-  if (!isAllowedUpload(fileName, fileType)) {
-    throw new AttachmentRejectedException(`Unsupported file type: ${fileName}`);
-  }
-}
-
-/**
- * The tenant a governed write is filed under is never optional and never
- * inferred. An unusable organization id fails closed rather than reaching a
- * query as NaN — `Number(undefined)` and `Number('x')` are both NaN, and a NaN
- * in an equality predicate matches nothing, which reads as "not found" instead
- * of "you did not pass a tenant".
- */
-function requireOrgId(organizationId: unknown, method: string): number {
-  const parsed =
-    typeof organizationId === 'number' ? organizationId : Number(String(organizationId ?? '').trim());
-  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
-    throw new Error(`${method} requires an organization context`);
-  }
-  return parsed;
 }
 
 export class ModuleIntegrationService {
@@ -454,11 +349,21 @@ export class ModuleIntegrationService {
       )
       .limit(1);
 
+    // Attachments ride on the existing document read rather than a new
+    // endpoint. GET /api/module-integration/document/:id is already mounted,
+    // already org-scoped, and is where a caller looking at a document would
+    // expect to see what is attached to it. listDocumentAttachments re-runs
+    // the ownership check this method has just done; one indexed PK lookup is
+    // a cheap price for a single implementation of the tenant walk, and it
+    // matches the defence-in-depth this file already practises.
+    const attachments = await this.listDocumentAttachments(documentId, organizationId);
+
     return {
       ...document[0],
       moduleType: moduleDoc[0]?.moduleType,
       originalId: moduleDoc[0]?.originalId,
       version: latestVersion[0],
+      attachments,
     };
   }
 
@@ -633,6 +538,42 @@ export class ModuleIntegrationService {
     // does not exist, so the error cannot be used to probe for document ids.
     if (!rows.length) throw new DocumentNotFoundException(documentId);
     return rows[0];
+  }
+
+  /**
+   * List the attachments on a document, scoped to one organization.
+   *
+   * This is the reader half. addDocumentAttachment gave document_attachments
+   * its first writer; until this method existed the table still had no reader
+   * anywhere in the codebase — a row could be stored, audited and removed
+   * without any surface ever being able to show it. That is the "writerless
+   * store" defect (918c9e801) seen from the other side, and it is the same
+   * dishonesty: an audit trail that says "attachment_added" is only as good as
+   * the caller's ability to go and look.
+   *
+   * Ownership is established through the document, exactly as the writers do,
+   * so an attachment on another organization's document is not listable —
+   * DocumentNotFoundException, indistinguishable from a document that does not
+   * exist. The predicate on document_id is the only one the table offers; it
+   * is bound to a document that has just been proven to be the caller's.
+   *
+   * Newest first: `uploaded_at DESC, id DESC`. The id tiebreak keeps the order
+   * total when two uploads share a timestamp, which `now()` at transaction
+   * granularity makes routine.
+   *
+   * @param documentId Document ID
+   * @param organizationId The caller's organization ID (required)
+   * @returns Attachment rows, newest first
+   */
+  async listDocumentAttachments(documentId: number, organizationId: unknown) {
+    const orgId = requireOrgId(organizationId, 'listDocumentAttachments');
+    await this.requireOwnedDocument(this.db, documentId, orgId);
+
+    return this.db
+      .select()
+      .from(documentAttachments)
+      .where(eq(documentAttachments.documentId, documentId))
+      .orderBy(desc(documentAttachments.uploadedAt), desc(documentAttachments.id));
   }
 
   /**
