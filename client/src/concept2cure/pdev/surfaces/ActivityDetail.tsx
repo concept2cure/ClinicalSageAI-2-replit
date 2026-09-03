@@ -187,9 +187,9 @@ export function PdevActivityDetail({
               <span className={`pdev-state-pill state-${tone}`}>
                 {PDEV_STATE_LABELS[state]}
               </span>
-              <span className="dot-sep">·</span>
+              <span className="dot-sep" aria-hidden="true">·</span>
               <span>{PDEV_WORKSTREAM_LABELS[activity.registry.workstream]}</span>
-              <span className="dot-sep">·</span>
+              <span className="dot-sep" aria-hidden="true">·</span>
               <span>{PDEV_STAGE_LABELS[activity.registry.stage]}</span>
             </div>
           </div>

@@ -2398,17 +2398,17 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
               <span className="rse-dot" style={{ background: SAVE_META[saveState].dot }} />
               {SAVE_META[saveState].label}
             </span>
-            <span className="rse-foot-sep">{'·'}</span>
+            <span className="rse-foot-sep" aria-hidden="true">{'·'}</span>
             <span>{displayWords.toLocaleString()} words</span>
             {trackOn && (
               <>
-                <span className="rse-foot-sep">{'·'}</span>
+                <span className="rse-foot-sep" aria-hidden="true">{'·'}</span>
                 <span style={{ color: 'var(--warning)', fontWeight: 600 }}>Track changes on</span>
               </>
             )}
             {collabStatus !== 'off' && (
               <>
-                <span className="rse-foot-sep">{'·'}</span>
+                <span className="rse-foot-sep" aria-hidden="true">{'·'}</span>
                 <span data-collab={collabStatus}>
                   {collabStatus === 'connected'
                     ? 'Live sync connected'

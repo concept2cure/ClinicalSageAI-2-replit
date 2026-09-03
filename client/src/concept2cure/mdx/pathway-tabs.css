@@ -175,7 +175,7 @@
 .mdx-shell .cs-num { color: var(--text-100); font-weight: 600; }
 .mdx-shell .cs-num.err { color: var(--error); }
 .mdx-shell .cs-num.warn { color: var(--warning); }
-.mdx-shell .cs-sep { color: var(--text-500); }
+.mdx-shell .cs-sep { color: var(--text-400); }
 
 .mdx-shell .corr-grid {
   display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
