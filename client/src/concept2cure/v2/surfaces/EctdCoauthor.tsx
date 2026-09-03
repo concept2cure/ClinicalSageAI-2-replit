@@ -302,6 +302,13 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
      memory with the rail, and the background queue read only while shown. */
   const [workDockOpen, setWorkDockOpen] = useWorkDockVisible();
   const anaWorkQueue = useAgentActivity(workDockOpen, anaChat.isStreaming);
+  /* Focus goes to the header toggle before the dock (and its close button)
+     unmounts, so a keyboard user is not dropped onto <body>. */
+  const workToggleRef = useRef<HTMLButtonElement>(null);
+  const hideWorkDock = () => {
+    workToggleRef.current?.focus();
+    setWorkDockOpen(false);
+  };
   const turns = anaChat.messages;
 
   /* Validation + compliance are per-document — clear stale results when the
@@ -689,6 +696,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
           <span className="hint">co-authoring &sect;{activeRef || '—'} -- {live ? 'live' : 'bound to dossier'}</span>
           <button
             type="button"
+            ref={workToggleRef}
             className="ana-work-toggle"
             aria-pressed={workDockOpen}
             aria-label={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
@@ -714,7 +722,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
                   module: 'eCTD co-author',
                   surface: activeRef ? `Section ${activeRef}` : null,
                 }}
-                onClose={() => setWorkDockOpen(false)}
+                onClose={hideWorkDock}
               />
             </div>
           )}

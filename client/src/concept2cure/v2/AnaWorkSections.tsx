@@ -20,7 +20,7 @@ import {
   type ToolTally,
 } from '../components/ana/anaProgress';
 import type { AgentActivityView } from './useAgentActivity';
-import { byRound, clip, formatClock, stepDuration, type OutputRow } from './anaWorkModel';
+import { byRound, clip, formatClock, stepDuration, SENDING_PLACEHOLDER, type OutputRow } from './anaWorkModel';
 
 function glyph(status: AnaToolCall['status']): React.ReactElement {
   if (status === 'success') return I.check;
@@ -45,18 +45,23 @@ export function Section({
   children: React.ReactNode;
 }) {
   const id = React.useId();
+  /* The body stays mounted and is hidden with the `hidden` attribute rather
+     than conditionally rendered: the header's aria-controls must point at an
+     element that exists while the section is collapsed, or the reference
+     dangles (SC 4.1.2). The title is a real heading wrapping the disclosure
+     button, so a screen reader browsing by heading finds the five sections. */
   return (
     <section className="ana-work-sec" data-open={open ? 'true' : 'false'}>
-      <button type="button" className="ana-work-sec-h" aria-expanded={open} aria-controls={id} onClick={onToggle}>
-        <span className="ana-work-sec-t">{title}</span>
-        {meta ? <span className="ana-work-sec-m">{meta}</span> : null}
-        <span className="ana-work-sec-chev" aria-hidden="true">{open ? I.chevDown : I.chevRight}</span>
-      </button>
-      {open && (
-        <div className="ana-work-sec-b" id={id}>
-          {children}
-        </div>
-      )}
+      <h3 className="ana-work-sec-hh">
+        <button type="button" className="ana-work-sec-h" aria-expanded={open} aria-controls={id} onClick={onToggle}>
+          <span className="ana-work-sec-t">{title}</span>
+          {meta ? <span className="ana-work-sec-m">{meta}</span> : null}
+          <span className="ana-work-sec-chev" aria-hidden="true">{open ? I.chevDown : I.chevRight}</span>
+        </button>
+      </h3>
+      <div className="ana-work-sec-b" id={id} hidden={!open}>
+        {children}
+      </div>
     </section>
   );
 }
@@ -87,17 +92,34 @@ export function Row({
 
 function ToolRow({ c, now }: { c: AnaToolCall; now: number }) {
   const [open, setOpen] = React.useState(false);
+  const inputsId = React.useId();
   const hasInput = c.input !== undefined && c.input !== null;
   return (
     <Row status={c.status} label={c.label || c.name} trailing={c.status === 'running' ? 'running' : stepDuration(c, now)}>
       {c.status === 'error' && <span className="ana-work-note">{c.message || 'did not complete'}</span>}
       {hasInput && (
-        <button type="button" className="ana-work-link" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <button
+          type="button"
+          className="ana-work-link"
+          aria-expanded={open}
+          aria-controls={inputsId}
+          onClick={() => setOpen((o) => !o)}
+        >
           {open ? 'Hide inputs' : 'Inputs'}
         </button>
       )}
-      {hasInput && open && (
-        <pre className="ana-work-pre" tabIndex={0} aria-label="Inputs AnA passed to this step">
+      {hasInput && (
+        /* Mounted while the row exists so aria-controls resolves; a scroll
+           container with a tab stop, named as a region like the reasoning
+           block in AnaActivity (SC 2.1.1). */
+        <pre
+          className="ana-work-pre"
+          id={inputsId}
+          hidden={!open}
+          tabIndex={0}
+          role="region"
+          aria-label="Inputs AnA passed to this step"
+        >
           {JSON.stringify(c.input, null, 2)}
         </pre>
       )}
@@ -150,7 +172,7 @@ export function ProgressBody({ turn, live, now }: { turn: AnaChatMessage; live: 
       <ol className="ana-work-phases" aria-label="Progress">
         <li className="ana-work-phase is-active" aria-current="step">
           <span className="ana-work-num">1</span>
-          <span className="ana-work-phase-l">{turn.statusPhase || 'Sending to AnA…'}</span>
+          <span className="ana-work-phase-l">{turn.statusPhase || SENDING_PLACEHOLDER}</span>
         </li>
       </ol>
     );

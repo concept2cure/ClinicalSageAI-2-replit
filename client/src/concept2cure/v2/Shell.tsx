@@ -615,6 +615,14 @@ export function AnaRail({
      (workDock.ts) that every host of the dock honours. */
   const [workOpen, setWorkDock] = useWorkDockVisible();
   const workVisible = Boolean(work) && workOpen;
+  /* The dock's own close button unmounts with the dock, so focus must be
+     handed to the header toggle BEFORE the state change — otherwise a
+     keyboard user's position falls to <body> with nothing to show for it. */
+  const workToggleRef = React.useRef<HTMLButtonElement>(null);
+  const hideWorkDock = () => {
+    workToggleRef.current?.focus();
+    setWorkDock(false);
+  };
   /* Background investigations: read only while the dock shows them, and
      re-read the moment a turn ends (a turn can start or finish one). */
   const agentActivity = useAgentActivity(workVisible, streaming);
@@ -720,6 +728,7 @@ export function AnaRail({
           {work && (
             <button
               type="button"
+              ref={workToggleRef}
               className={`tb-btn${workOpen ? ' on' : ''}`}
               onClick={() => setWorkDock(!workOpen)}
               aria-pressed={workOpen}
@@ -761,7 +770,7 @@ export function AnaRail({
               surface: surface.label,
               engine: model,
             }}
-            onClose={() => setWorkDock(false)}
+            onClose={hideWorkDock}
           />
         )}
         {welcome && (
