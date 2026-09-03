@@ -25,15 +25,6 @@ import { authedOrgId } from '../utils/authedOrgId';
 const logger = createScopedLogger('cognitive-ecosystem');
 
 import {
-  AgentRuntimeService,
-  CheckpointManager,
-  CognitiveAuditService,
-  GlobalDossierService,
-  ManufacturingService,
-  DigitalTwinRuntime,
-  FederatedLearningCoordinator,
-  FHIRValidationEngine,
-  LangGraphOrchestrator
 } from '../services/cognitive-ecosystem';
 import { serverError } from '../lib/api-response';
 

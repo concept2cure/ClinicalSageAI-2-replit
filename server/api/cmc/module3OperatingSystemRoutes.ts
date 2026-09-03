@@ -621,7 +621,7 @@ router.get('/readiness/:projectId', async (req, res) => {
           completenessScore: totalSections > 0 ? approvedSections / totalSections : 0,
         },
       });
-    } catch (fabricErr) {
+    } catch {
       canonicalGovernedState = { error: 'Canonical governed-state evaluation failed', degraded: true };
     }
 
@@ -732,7 +732,7 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
           isStale: false,
         },
       });
-    } catch (fabricErr) {
+    } catch {
       canonicalGovernedState = { error: 'Canonical governed-state evaluation failed', degraded: true };
     }
 

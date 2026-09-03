@@ -52,7 +52,14 @@ export interface PoolabilityResult {
   decision: 'pooled' | 'minimum-of-batches';
   /** The recommended shelf life. */
   shelfLife: number;
-  perBatchShelfLives: Array<{ batchId: string; shelfLife: number; exceedsEvaluatedRange: boolean }>;
+  /**
+   * Where the confidence limit actually crosses the specification, before the
+   * ICH Q1E extrapolation cap. Two attributes capped to the same proposable
+   * shelf life are told apart by this — it is what makes one of them the
+   * limiting attribute rather than their order in the record.
+   */
+  statisticalCrossing: number;
+  perBatchShelfLives: Array<{ batchId: string; shelfLife: number; statisticalCrossing: number; exceedsEvaluatedRange: boolean }>;
   pooledShelfLife: number | null;
   notes: string[];
 }
@@ -130,7 +137,7 @@ export function assessBatchPoolability(input: PoolabilityInput): PoolabilityResu
   // Per-batch shelf lives (always computed; used when not poolable, and informative otherwise).
   const perBatch = input.batches.map((b) => {
     const est = estimateShelfLife({ data: b.data, specLimit: input.specLimit, direction: input.direction, alpha: input.alpha, maxTime: input.maxTime });
-    return { batchId: b.batchId, shelfLife: est.shelfLife, exceedsEvaluatedRange: est.exceedsEvaluatedRange };
+    return { batchId: b.batchId, shelfLife: est.shelfLife, statisticalCrossing: est.statisticalCrossing, exceedsEvaluatedRange: est.exceedsEvaluatedRange };
   });
 
   let interceptTest: AncovaTest | null = null;
@@ -151,15 +158,18 @@ export function assessBatchPoolability(input: PoolabilityInput): PoolabilityResu
 
   let pooledShelfLife: number | null = null;
   let shelfLife: number;
+  let statisticalCrossing: number;
   let decision: 'pooled' | 'minimum-of-batches';
   if (poolable) {
     const pooledEst = estimateShelfLife({ data: allPoints, specLimit: input.specLimit, direction: input.direction, alpha: input.alpha, maxTime: input.maxTime });
     pooledShelfLife = pooledEst.shelfLife;
     shelfLife = pooledEst.shelfLife;
+    statisticalCrossing = pooledEst.statisticalCrossing;
     decision = 'pooled';
     notes.push('Batches are combinable — shelf life is from the single pooled regression.');
   } else {
     shelfLife = Math.min(...perBatch.map((p) => p.shelfLife));
+    statisticalCrossing = Math.min(...perBatch.map((p) => p.statisticalCrossing));
     decision = 'minimum-of-batches';
   }
 
@@ -171,6 +181,7 @@ export function assessBatchPoolability(input: PoolabilityInput): PoolabilityResu
     poolable,
     decision,
     shelfLife: round(shelfLife, 2),
+    statisticalCrossing: round(statisticalCrossing, 2),
     perBatchShelfLives: perBatch,
     pooledShelfLife: pooledShelfLife === null ? null : round(pooledShelfLife, 2),
     notes,

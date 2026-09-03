@@ -79,8 +79,8 @@ export interface EstarTemplateDescriptor {
  */
 export const ESTAR_TEMPLATE_MANIFEST: EstarTemplateDescriptor[] = [
   // nIVD / IVD eSTAR — marketing pathways
-  { id: '510k-device', type: '510k', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-510k-non-ivd.pdf', version: 'unset' },
-  { id: '510k-ivd', type: '510k', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-510k-ivd.pdf', version: 'unset' },
+  { id: '510k-device', type: '510k', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-510k-non-ivd.pdf', version: '7.0' },
+  { id: '510k-ivd', type: '510k', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-510k-ivd.pdf', version: '7.0' },
   { id: 'de_novo-device', type: 'de_novo', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-denovo-non-ivd.pdf', version: 'unset' },
   { id: 'de_novo-ivd', type: 'de_novo', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-denovo-ivd.pdf', version: 'unset' },
   { id: 'pma-device', type: 'pma', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-pma-non-ivd.pdf', version: 'unset' },

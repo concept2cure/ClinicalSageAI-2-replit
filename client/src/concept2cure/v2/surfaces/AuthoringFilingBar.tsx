@@ -25,7 +25,7 @@ import React, { useState } from 'react';
 import { I } from '../icons';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
-import { apiRequest, redactInternals, type ApiRequestError } from '@/lib/queryClient';
+import { apiRequest, extractApiError, redactInternals, type ApiRequestError } from '@/lib/queryClient';
 
 export interface AuthoringFilingBarProps {
   docId: string;
@@ -143,6 +143,13 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
         ...(unresolved && v.acknowledge === 'seal' ? { acknowledgeUnresolved: true } : {}),
       });
       const json = await res.json().catch(() => null);
+      /* apiRequest throws on every non-2xx EXCEPT 401, which it returns so
+         callers can say "sign in" rather than "server error". This handler
+         relied on the throw alone, so an expired session fell straight through
+         to "Document frozen and sealed" — a seal claim, plus a refresh, over a
+         freeze the server refused. Same guard the e-sign handler below has. */
+      if (res.status === 401) { fireToast('Not frozen — your session isn’t authenticated. Sign in and try again; nothing was sealed.', 'error'); return; }
+      if (!res.ok) { fireToast('Couldn’t freeze the document — ' + (extractApiError(json, res.status).message) + '. Nothing was sealed.', 'error'); return; }
       const hash = (json as { contentHash?: string })?.contentHash;
       fireToast('Document frozen and sealed' + (hash ? ' · ' + String(hash).slice(0, 12) + '…' : '') + '.');
       setUnresolved(null);

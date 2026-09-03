@@ -498,7 +498,11 @@ describe('§3.2.P.5.4 / §3.2.S.4.4 — the recorded QC results are RENDERED, no
     expect(table!.rows[0]).toEqual([
       'S-2407-118', 'finished-product', 'AM-011 RP-HPLC assay', '95.0–105.0%', '99.2 %', 'pass', 'reviewed',
     ]);
-    expect(p5.narrativeDraft).toMatch(/1 recorded QC result\(s\).*1 conforming, 0 out of specification/);
+    /* The disposition is COMPUTED from the result against its criterion, not
+       read off passFailStatus — a declared "pass" over a failing number used to
+       compose as "1 conforming, 0 out of specification". Here the record and
+       the numbers agree. */
+    expect(p5.narrativeDraft).toMatch(/1 recorded QC result\(s\).*1 within criterion, 0 out of specification/s);
   });
 
   it('an out-of-specification result is reported as recorded — never smoothed into a pass', () => {

@@ -180,7 +180,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
         enforceTenantLifecycle(req, res, () => enforceStorageQuota(req, res, next))
       )
     );
-  } catch (error) {
+  } catch {
     return res.status(401).json({
       error: { code: 'AUTH_002', message: 'Invalid or expired token' },
     });

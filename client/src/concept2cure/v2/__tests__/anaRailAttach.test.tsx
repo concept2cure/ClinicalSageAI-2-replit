@@ -23,11 +23,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 vi.mock('../dataConnect', () => ({
-  useLive: () => ({ data: null, sample: true, loading: false }),
   connected: () => false,
-  SampleTag: ({ sample }: { sample: boolean }) => (
-    <span data-testid="sample-tag">{sample ? 'Sample data' : 'Live'}</span>
-  ),
 }));
 
 vi.mock('../../../utils/authToken', () => ({

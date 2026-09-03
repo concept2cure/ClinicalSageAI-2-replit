@@ -23,28 +23,16 @@ import { apiRequest, redactInternals } from '@/lib/queryClient';
 import { I } from './icons';
 import { getAuthToken } from '@/utils/authToken';
 
-export interface LiveResult<T> {
-  data: T;
-  sample: boolean;
-  error?: string;
-}
-
 export function connected(): boolean {
   return Boolean(getAuthToken());
 }
-
-
-export interface UseLiveState<T> extends LiveResult<T> {
-  loading: boolean;
-}
-
 
 /**
  * Unwrap the project's canonical success envelope. The `ok(res, rows, meta)`
  * helper (`server/lib/api-response.ts`) returns `{ data: rows, meta }`, so most
  * list reads arrive as `{ data: [...] }` rather than a bare array; some legacy
  * routes still return the bare array. Return the inner list in both cases so
- * `matchesShape` inspects the rows, not the envelope.
+ * callers inspect the rows, not the envelope.
  */
 export function unwrapList(payload: unknown): unknown {
   if (Array.isArray(payload)) return payload;
@@ -58,52 +46,22 @@ export function unwrapList(payload: unknown): unknown {
   return payload;
 }
 
-
-
-/**
- * The provenance pill a live-backed surface shows (styles in app-v2.css).
- *
- * It no longer takes a `sample` flag, because nothing can set one: the
- * `live ?? fixture` helpers that produced `sample: true` are deleted (ledger
- * L72), and the pill's only caller already passed a literal `false`. A prop
- * whose true branch is unreachable is a claim the component can no longer
- * make — which is the point. A surface that has not loaded must render its
- * own empty or error state rather than a pill saying anything at all.
- */
-export function SampleTag() {
-  return (
-    <span
-      className="c2c-sample-tag is-live"
-      title="Live data from the concept2cure-v2 backend"
-    >
-      Live
-    </span>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════
    Fixture-free contract — the real-data standard.
 
-   There used to be `live ?? fixture` helpers above — liveGet, useLive,
-   useLiveList — which fell back to a codebase fixture with a "Sample data"
-   pill whenever the backend was unreachable or empty. For a regulated
-   product a surface must render REAL persisted data, an honest EMPTY state,
-   or an honest ERROR state, never a fabricated stand-in presented as
-   content. Those helpers are DELETED (ledger L72), along with SampleTag's
-   `sample` prop.
-
-   That is deliberately stronger than the convention it replaces. While the
-   helpers existed the rule was "don't call them"; a surface could still
-   render a fixture and label it, and a reviewer had to check each caller.
-   With them gone the module cannot produce a fabricated row at all — there
-   is no code path that returns one and no flag that says a rendered row was
-   invented. The rule is now a property of the code rather than a habit.
+   A surface renders REAL persisted data, an honest EMPTY state, or an honest
+   ERROR state — never a fabricated stand-in presented as content. The
+   `live ?? fixture` helpers this module used to export (liveGet / useLive /
+   useLiveList / matchesShape / SampleTag) fell back to a codebase fixture
+   behind a "Sample data" pill whenever the backend was unreachable or empty;
+   their last consumers were migrated and they were deleted (ledger L72), so
+   the ability to render a fixture as live no longer exists in this module.
 
      liveGetOrNull(path)  → { data: T | null, error?, status } — no fixture.
      useLiveData(path)    → object payload hook  { data, loading, error, empty }.
      useLiveRows(path)    → list payload hook     { rows, loading, error, empty }.
      <EmptyState .../>    → the honest "nothing here yet" / "couldn't load" panel.
-   ═══════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════ */
 
 /**
  * Unwrap the canonical success envelope for a single payload (object or list).

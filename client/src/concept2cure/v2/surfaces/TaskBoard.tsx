@@ -282,7 +282,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
 
   const [view, setView] = useState('board');
   const [proj, setProj] = useState<string>(() => {
-    try { return (window as any).C2C_TASK_FILTER || 'all'; } catch (_e) { return 'all'; }
+    try { return (window as any).C2C_TASK_FILTER || 'all'; } catch { return 'all'; }
   });
   const [mine, setMine] = useState(false);
   const [mod, setMod] = useState('all');
@@ -803,7 +803,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           </select>
           <button className={`tb-chip${mine ? ' on' : ''}`} onClick={() => setMine(m => !m)}>{I.user} My tasks</button>
         </div>
-        <div className="seg tb-views">
+        <div className="seg">
           {([['board', 'Board'], ['path', 'Critical path'], ['analytics', 'Analytics'], ['table', 'Table']] as const).map(([v, l]) => (
             <button key={v} className={`seg-b${view === v ? ' on' : ''}`} onClick={() => setView(v)}>{l}</button>
           ))}
@@ -911,7 +911,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       )}
 
       {view === 'analytics' && (
-        <div className="tb-an">
+        <div>
           <div className="metrics">
             {([['Open tasks', stats.open, ''], ['On critical path', stats.crit, 'ai'], ['Regulatory impact', stats.reg, 'warn'], ['Blocked', stats.blocked, stats.blocked ? 'err' : ''], ['Approvals pending', stats.appr, 'warn']] as const).map((m, i) => (
               <div key={i} className="metric" data-tone={m[2]}><div className="metric-l">{m[0]}</div><div className="metric-n">{m[1]}</div></div>

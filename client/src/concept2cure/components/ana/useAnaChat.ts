@@ -256,6 +256,43 @@ function toolLabel(name: string): string {
 
 
 
+/**
+ * Persisted tool-trace entries → the transcript's step rows. Exported for its
+ * test. A `not_found` step (no handler here) is a step that did not complete,
+ * with the same sentence the live stream uses for it, so the record reads the
+ * same whether it was watched live or reopened later.
+ */
+export function hydrateToolTrace(
+  trace: Array<{ tool?: string; label?: string; status?: string; resultSummary?: string }> | undefined,
+): AnaToolCall[] {
+  if (!Array.isArray(trace)) return [];
+  const calls: AnaToolCall[] = [];
+  for (const t of trace) {
+    const name = typeof t?.tool === 'string' ? t.tool : '';
+    if (!name) continue;
+    const label = typeof t.label === 'string' && t.label ? t.label : toolLabel(name);
+    const humanStep = label.charAt(0).toLowerCase() + label.slice(1);
+    if (t.status === 'success') {
+      calls.push({ name, label, status: 'success' });
+    } else if (t.status === 'not_found') {
+      calls.push({
+        name,
+        label,
+        status: 'error',
+        message: `This step (${humanStep}) isn't available here. AnA will work around it.`,
+      });
+    } else {
+      calls.push({
+        name,
+        label,
+        status: 'error',
+        message: `AnA couldn't finish ${humanStep}. She'll continue with what she has.`,
+      });
+    }
+  }
+  return calls;
+}
+
 export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   const [messages, setMessages] = useState<AnaChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -376,7 +413,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         messages?: Array<{
           role?: string;
           content?: string;
-          metadata?: { reasoning?: string } | null;
+          metadata?: {
+            reasoning?: string;
+            toolTrace?: Array<{ tool?: string; label?: string; status?: string; resultSummary?: string }>;
+            humanControls?: Array<{ action?: string; message?: string }>;
+          } | null;
         }>;
       };
       const rows = Array.isArray(body.messages) ? body.messages : [];
@@ -395,11 +436,26 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             m.role === 'assistant' && typeof m.metadata?.reasoning === 'string'
               ? m.metadata.reasoning
               : undefined;
+          // The persisted tool trace (server/services/ana/tool-trace.ts) is
+          // the turn's real step record: which tools ran, under which label,
+          // and whether each succeeded. Rehydrating it is what lets a reopened
+          // conversation show the work AnA did, rather than an answer with no
+          // visible steps behind it. Durations are not persisted, so none are
+          // claimed. The recorded steers come back the same way.
+          const toolCalls = m.role === 'assistant' ? hydrateToolTrace(m.metadata?.toolTrace) : [];
+          const interjections =
+            m.role === 'assistant'
+              ? (m.metadata?.humanControls ?? [])
+                  .filter(c => c?.action === 'interject' && typeof c.message === 'string' && c.message)
+                  .map(c => c.message as string)
+              : [];
           return {
             id: `t-${threadId}-${idx}`,
             role: m.role as 'user' | 'assistant',
             text: m.content as string,
             ...(reasoning ? { thinking: reasoning } : {}),
+            ...(toolCalls.length > 0 ? { toolCalls } : {}),
+            ...(interjections.length > 0 ? { interjections } : {}),
           };
         });
       threadIdRef.current = threadId;

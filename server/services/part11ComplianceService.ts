@@ -15,12 +15,12 @@
 
 import { db } from '../db';
 import { writeChainedAuditRow } from './auditService.js';
-import { deviceAuditTrail, electronicSignatures, users, organizations } from '../../shared/schema';
+import { deviceAuditTrail, users } from '../../shared/schema';
 import { documentVersions, documents, submissions } from '../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import crypto from 'crypto';
 import auditService from './auditService';
-import { buildVersionBindingDigest, evaluateBindingVerification } from './part11/version-binding';
+import { buildVersionBindingDigest } from './part11/version-binding';
 import {
   BINDING_BASIS,
   drizzleSignatureClient,

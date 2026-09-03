@@ -19,6 +19,7 @@
  * @compliance FDA 21 CFR Part 11 data integrity
  */
 
+import { governedActor } from './part11/governed-actor';
 import { pool } from '../db.js';
 import auditService from './auditService';
 import { recordArtifactProvenance } from './provenance/artifact-provenance';
@@ -603,11 +604,7 @@ async function storeExtractedArtifacts(
           traceId: job.id,
         },
       },
-      userId: job.userId,
-      // No userEmail. The job carries the submitting user's real id, which
-      // resolveGovernedContext prefers anyway; the synthesised address was only
-      // reachable when that id was absent, and there the honest answer is the
-      // 'unknown' it already falls back to (ledger L142).
+      ...governedActor(job.userId, 'auto-extraction'),
       userRole: 'regulatory',
     } as any,
     projectId: job.projectId,
@@ -721,9 +718,7 @@ async function storeExtractedArtifacts(
             traceId: `${job.id}:table:${table.id}`,
           },
         },
-        userId: job.userId,
-        // No userEmail — see the note on the first governed-context call above
-        // (ledger L142).
+        ...governedActor(job.userId, 'auto-extraction'),
         userRole: 'regulatory',
       } as any,
       projectId: job.projectId,
@@ -827,9 +822,7 @@ async function storeExtractedArtifacts(
               traceId: `${job.id}:section:${section.code}`,
             },
           },
-          userId: job.userId,
-          // No userEmail — see the note on the first governed-context call above
-          // (ledger L142).
+          ...governedActor(job.userId, 'auto-extraction'),
           userRole: 'regulatory',
         } as any,
         projectId: job.projectId,

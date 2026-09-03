@@ -2,7 +2,15 @@ import { createSourceHash } from './cmc-module3-compiler';
 /* The ICH Q3A/Q3B comparison lives in services/cmc/impurity-assessment, which
    consumes the threshold tables in services/global-ri/impurities-thresholds.
    This composer renders the verdict; it does not restate the guideline. */
-import { assessRecordedImpurity, isThresholdAssessment, parseDoseMg, type ImpurityAssessmentResult } from './cmc/impurity-assessment';
+import { assessRecordedImpurity, isThresholdAssessment, parseDoseMg, type ImpurityAssessmentResult } from './cmc/impurity-assessment'
+/* The recorded-stability readers and the acceptance-criterion parser: the
+   stability verdict is a comparison of numbers to limits, and both live there
+   already — one copy, used by the shelf-life engine and by this section. */
+import {
+  parseAcceptanceCriterion,
+  parseNumeric,
+  readRecordedStabilityResults,
+} from './cmc/recorded-stability';
 /* The dissolution purposes live in shared/, not in the write-through module:
    that module already imports FROM this composer, and importing back would make
    a cycle. One definition, reachable by both, and by the register surface. */
@@ -218,7 +226,120 @@ function valArr(sources: CanonicalSource[], field: string): any[] {
  */
 type StabilityOutcome = 'pass' | 'concern' | 'defer';
 
+/**
+ * The recorded pull-point results, compared to the acceptance criterion each
+ * one records.
+ *
+ * This is what a stability conclusion IS. readStabilitySignal below serialised
+ * every result-shaped field into one string and ran two word regexes over it —
+ * it never read a number and never compared one to a limit, so a study whose
+ * `conclusion` said "meets its specification at all time points" composed as
+ * conforming while its 12-month assay sat at 88.1% against 95.0 - 105.0 %.
+ */
+function assessRecordedStability(stabilitySources: CanonicalSource[]): {
+  compared: number;
+  outOfSpec: Array<{ parameter: string; timePoint: string; result: number; criterion: string }>;
+  uncomparable: number;
+} {
+  const outOfSpec: Array<{ parameter: string; timePoint: string; result: number; criterion: string }> = [];
+  let compared = 0;
+  let uncomparable = 0;
+
+  for (const s of stabilitySources) {
+    const payload = (s.sourcePayload || {}) as Record<string, unknown>;
+    const series = [
+      ...readRecordedStabilityResults(payload.results),
+      ...readRecordedStabilityResults(payload.stabilityData ?? payload.stability_data),
+      ...readRecordedStabilityResults(payload.stabilityParameters),
+    ];
+    for (const point of series) {
+      const value = parseNumeric(point.result);
+      if (value === null) continue;
+      const criterion = parseAcceptanceCriterion([
+        point.specification,
+        (point as Record<string, unknown>).acceptanceCriteria,
+        payload.acceptanceCriteria,
+        payload.releaseCriteria,
+      ]);
+      if (!criterion) { uncomparable += 1; continue; }
+      compared += 1;
+      /* A two-sided range fails on either side; a one-sided criterion fails on
+         the side it names. `direction` says which way the attribute trends
+         TOWARD its limit, so `increasing` means the limit is an upper bound. */
+      const belowLower = criterion.direction === 'decreasing' && value < criterion.limit;
+      const aboveUpper = criterion.direction === 'increasing' && value > criterion.limit;
+      const aboveRange = criterion.twoSided && criterion.upperLimit !== null && value > criterion.upperLimit;
+      if (belowLower || aboveUpper || aboveRange) {
+        outOfSpec.push({
+          parameter: String(point.parameter ?? 'the recorded attribute'),
+          timePoint: String(point.timePoint ?? '—'),
+          result: value,
+          criterion: String(
+            point.specification ??
+              (point as Record<string, unknown>).acceptanceCriteria ??
+              payload.acceptanceCriteria ??
+              '',
+          ).trim(),
+        });
+      }
+    }
+  }
+  return { compared, outOfSpec, uncomparable };
+}
+
+/**
+ * The stability conclusion a section may state, and the basis it rests on.
+ *
+ * The old wording said the results "remain within the acceptance criteria at
+ * the reported time points" whenever a word regex found a positive-sounding
+ * phrase anywhere on the payload. That is a claim about numbers, so it is made
+ * from numbers or it is not made: a comparison names how many points were
+ * compared, a failure names the point that failed, and a study whose results
+ * carry no acceptance criterion gets neither verdict.
+ */
+function stabilityConclusion(
+  sources: CanonicalSource[],
+  material: 'drug substance' | 'drug product',
+): string {
+  const { compared, outOfSpec, uncomparable } = assessRecordedStability(sources);
+
+  if (outOfSpec.length > 0) {
+    const named = outOfSpec
+      .slice(0, 4)
+      .map((p) => `${p.parameter} at ${p.timePoint} = ${p.result}${p.criterion ? ` against ${p.criterion}` : ''}`)
+      .join('; ');
+    return (
+      `${outOfSpec.length} of the ${compared} recorded result(s) compared here fall outside its recorded acceptance criterion ` +
+      `(${named}${outOfSpec.length > 4 ? `; and ${outOfSpec.length - 4} more` : ''}). ` +
+      `The stability conclusion and the proposed storage period are NOT established by this section.`
+    );
+  }
+  if (compared > 0) {
+    return (
+      `All ${compared} recorded result(s) carrying an acceptance criterion are within their recorded acceptance criteria at the reported time points, ` +
+      `supporting stability of the ${material} under the proposed storage conditions` +
+      (uncomparable > 0
+        ? `. A further ${uncomparable} recorded result(s) carry no acceptance criterion and were not compared.`
+        : '.')
+    );
+  }
+  if (uncomparable > 0) {
+    return (
+      `${uncomparable} recorded result(s) carry no recorded acceptance criterion, so whether they conform is NOT verified by this section. ` +
+      `Any conclusion stated on the study is the applicant's and was not checked against the data here.`
+    );
+  }
+  return `The stability conclusion and proposed storage period are subject to review of the stability results summarized above and are not asserted in this section.`;
+}
+
 function readStabilitySignal(stabilitySources: CanonicalSource[]): StabilityOutcome {
+  /* The NUMBERS decide. The word regexes below survive only as the last resort
+     for a study that records no comparable result at all, and the section says
+     when that is the basis. */
+  const measured = assessRecordedStability(stabilitySources);
+  if (measured.outOfSpec.length > 0) return 'concern';
+  if (measured.compared > 0) return 'pass';
+
   const NEG = /\b(oos|out[\s-]?of[\s-]?spec(?:ification)?|fail(?:ed|ing|ure)?|degrad\w*|non[\s-]?conform\w*|does not (?:meet|conform)|not within|exceed\w*|reject\w*|unstable)\b/i;
   const POS = /\b(pass(?:ed|ing)?|meets?|within (?:the )?(?:spec(?:ification)?|acceptance|limits?|criteria)|conform\w*|compl(?:ies|iant|y)|no significant change|satisfactory|in[\s-]?spec(?:ification)?)\b/i;
 
@@ -335,12 +456,64 @@ function batchAnalysesTable(
       String(p.testMethod || '—'),
       criteriaText(p),
       resultText(p),
-      String(p.passFailStatus || 'pending'),
+      /* The RECORDED disposition and, where the numbers allow one, the
+         computed one. A declared "pass" over a result its own criterion fails
+         is stated as the contradiction it is rather than passed through. */
+      (() => {
+        const declared = String(p.passFailStatus || 'pending').toLowerCase();
+        const verdict = qcResultVerdict(p);
+        if (verdict === 'not-comparable') return declared;
+        if (verdict === 'outside' && declared === 'pass') {
+          return 'declared pass — the recorded result is OUTSIDE its recorded acceptance criterion';
+        }
+        if (verdict === 'within' && declared === 'fail') {
+          return 'declared fail — the recorded result is within its recorded acceptance criterion';
+        }
+        return declared === 'pending' ? (verdict === 'outside' ? 'out of specification (computed)' : 'within criterion (computed)') : declared;
+      })(),
       // §11 two-person review: an unreviewed result is not releasable
       // evidence, and a reader must be able to tell which it is looking at.
       p.reviewed ? 'reviewed' : 'not reviewed',
     ]),
   };
+}
+
+/**
+ * Whether a recorded QC result actually meets its recorded acceptance criterion.
+ *
+ * `passFailStatus` is typed by whoever entered the result and nothing checked
+ * it: a result of 3.4 % against a recorded criterion of "<= 2.0 %" submitted as
+ * "pass" was written verbatim into the canonical source object and composed as
+ * "1 conforming, 0 out of specification". A disposition in a dossier is a claim
+ * about a number against a limit, so it is computed where both are recorded,
+ * and the declared value is reported as the declaration it is.
+ */
+function qcResultVerdict(p: Record<string, any>): 'within' | 'outside' | 'not-comparable' {
+  /* The result and the criterion as the QC mapper actually stores them — a
+     `testResults: { value, unit, observation }` object and a `specifications:
+     { acceptanceCriteria }` object — not the flat keys. Reading only the flat
+     ones made every real record not-comparable, which is a silent no-op
+     dressed as a refusal. */
+  const results = p.testResults;
+  const value = parseNumeric(
+    results && typeof results === 'object' && !Array.isArray(results)
+      ? (results as Record<string, unknown>).value
+      : results ?? p.resultValue ?? p.result ?? p.testResult,
+  );
+  if (value === null) return 'not-comparable';
+  const specs = p.specifications ?? p.specification;
+  const criterion = parseAcceptanceCriterion([
+    specs && typeof specs === 'object' && !Array.isArray(specs)
+      ? (specs as Record<string, unknown>).acceptanceCriteria
+      : specs,
+    p.acceptanceCriteria,
+    p.specificationLimit,
+  ]);
+  if (!criterion) return 'not-comparable';
+  const belowLower = criterion.direction === 'decreasing' && value < criterion.limit;
+  const aboveUpper = criterion.direction === 'increasing' && value > criterion.limit;
+  const aboveRange = criterion.twoSided && criterion.upperLimit !== null && value > criterion.upperLimit;
+  return belowLower || aboveUpper || aboveRange ? 'outside' : 'within';
 }
 
 /** A sentence about the recorded results, or '' when none were recorded. */
@@ -350,14 +523,34 @@ function batchAnalysesSentence(
 ): string {
   const rows = qcResultRows(sources, side);
   if (rows.length === 0) return '';
-  const passed = rows.filter((p) => String(p.passFailStatus || '').toLowerCase() === 'pass').length;
-  const failed = rows.filter((p) => String(p.passFailStatus || '').toLowerCase() === 'fail').length;
-  const pending = rows.length - passed - failed;
+  /* Counted on the COMPUTED verdict where the record allows one. Counting the
+     declared field said "1 conforming, 0 out of specification" over a result of
+     3.4 % against a criterion of NMT 2.0 %. */
+  const verdicts = rows.map((p) => ({ p, v: qcResultVerdict(p), declared: String(p.passFailStatus || '').toLowerCase() }));
+  const comparable = verdicts.filter((x) => x.v !== 'not-comparable');
+  const outside = comparable.filter((x) => x.v === 'outside');
+  const contradicted = comparable.filter(
+    (x) => (x.v === 'outside' && x.declared === 'pass') || (x.v === 'within' && x.declared === 'fail'),
+  );
+  const uncomparable = verdicts.filter((x) => x.v === 'not-comparable');
+  const declaredPass = uncomparable.filter((x) => x.declared === 'pass').length;
+  const declaredFail = uncomparable.filter((x) => x.declared === 'fail').length;
   const unreviewed = rows.filter((p) => !p.reviewed).length;
   return (
-    `${rows.length} recorded QC result(s) are reported in the batch analyses table: ` +
-    `${passed} conforming, ${failed} out of specification, ${pending} pending. ` +
-    (failed > 0
+    `${rows.length} recorded QC result(s) are reported in the batch analyses table. ` +
+    (comparable.length > 0
+      ? `${comparable.length} carry both a numeric result and an acceptance criterion and were compared here: ` +
+        `${comparable.length - outside.length} within criterion, ${outside.length} out of specification. `
+      : '') +
+    (uncomparable.length > 0
+      ? `${uncomparable.length} record no numeric result or no acceptance criterion and were NOT compared; ` +
+        `their recorded disposition (${declaredPass} pass, ${declaredFail} fail, ${uncomparable.length - declaredPass - declaredFail} pending) is the applicant's and is not verified by this section. `
+      : '') +
+    (contradicted.length > 0
+      ? `${contradicted.length} recorded disposition(s) CONTRADICT the recorded result: ` +
+        `${contradicted.map((x) => String(x.p.sampleId || 'an unnamed sample')).join(', ')}. That disagreement is not resolved by this section. `
+      : '') +
+    (outside.length > 0
       ? `Out-of-specification results are reported as recorded; their investigation and disposition are not asserted by this section. `
       : '') +
     (unreviewed > 0 ? `${unreviewed} result(s) have not completed second-person review. ` : '')
@@ -1856,13 +2049,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     // Read a deterministic pass/concern signal from the matched stability
     // source(s); assert stability only on a clear positive signal, flag a clear
     // negative one, and otherwise defer to review of the summarized data.
-    const signal = readStabilitySignal(m);
-    const conclusion =
-      signal === 'pass'
-        ? `The stability results summarized above remain within the acceptance criteria at the reported time points, supporting stability of the drug substance under the proposed storage conditions.`
-        : signal === 'concern'
-        ? `The stability results summarized above include out-of-specification or degradation findings; the stability conclusion and proposed storage period are not established by this section and are subject to review of these data.`
-        : `The stability conclusion and proposed storage period are subject to review of the stability results summarized above and are not asserted in this section.`;
+    const conclusion = stabilityConclusion(m, 'drug substance');
     return {
       narrative: `Stability studies for the drug substance were conducted under ${condition || '[condition not specified]'} ` +
         (timePoints.length > 0 ? `at time points: ${timePoints.join(', ')} months. ` : '. ') +
@@ -2222,12 +2409,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
       narrative += shelf
         ? `A shelf life of ${shelf} is proposed, subject to review of the stability data summarized above. `
         : `The proposed shelf life is subject to review of the stability data summarized above. `;
-      const signal = readStabilitySignal(stabilitySources);
-      narrative += signal === 'pass'
-        ? `The stability results summarized above remain within the acceptance criteria at the reported time points, supporting stability of the drug product under the proposed storage conditions. `
-        : signal === 'concern'
-        ? `The stability results summarized above include out-of-specification or degradation findings; the stability conclusion is not established by this section and is subject to review of these data. `
-        : `The stability conclusion is subject to review of the stability results summarized above and is not asserted in this section. `;
+      narrative += `${stabilityConclusion(stabilitySources, 'drug product')} `;
     } else {
       narrative += `No drug product stability study is present in this section; a shelf life and the stability of the drug product are not established here. `;
     }

@@ -39,6 +39,7 @@ import React from 'react';
 import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { I } from './icons';
 import type { AnaToolCall } from '../components/ana/useAnaChat';
+import { formatElapsed } from '../components/ana/anaProgress';
 
 /** How AnA read the question. Rendered as her opening decision, not a label. */
 /**
@@ -72,6 +73,26 @@ export interface AnaActivityProps {
   thinking?: string;
   /** Title of the deliverable produced this turn, if one was. */
   draftTitle?: string;
+  /**
+   * Client clock (ms) when the turn was sent, and when it ended. With both the
+   * collapsed line can say how long the turn took; with only the first, the
+   * live phase carries a running clock ("Running 2 steps… · 57s") so a long
+   * silent window reads as time passing rather than as a stall.
+   */
+  startedAt?: number;
+  completedAt?: number;
+}
+
+/** A 1 Hz clock while the turn is live; frozen otherwise. */
+function useNow(active: boolean): number {
+  const [now, setNow] = React.useState(() => Date.now());
+  React.useEffect(() => {
+    if (!active) return;
+    setNow(Date.now());
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [active]);
+  return now;
 }
 
 /**
@@ -133,8 +154,15 @@ export function AnaActivity({
   toolCalls,
   thinking,
   draftTitle,
+  startedAt,
+  completedAt,
 }: AnaActivityProps) {
   const calls = toolCalls ?? [];
+  // The clock ticks only while the turn is live AND has a start; a settled turn
+  // reads its recorded end, and a turn with no start claims no duration.
+  const now = useNow(Boolean(streaming) && typeof startedAt === 'number');
+  const elapsed =
+    typeof startedAt === 'number' ? formatElapsed((completedAt ?? now) - startedAt) : '';
   const rounds = byRound(calls);
   const multiRound = rounds.length > 1;
   const ran = calls.filter(c => c.status !== 'running').length;
@@ -172,6 +200,10 @@ export function AnaActivity({
     if (failed > 0) parts.push(`${failed} failed`);
     if (draftTitle) parts.push(`Drafted ${draftTitle}`);
     if (thinking) parts.push('reasoning');
+    // Only a turn with a recorded END gets a duration on its collapsed line; a
+    // turn that settled without one (stopped, failed, or reopened from history)
+    // must not read a clock off the current time.
+    if (elapsed && typeof completedAt === 'number') parts.push(`in ${elapsed}`);
     return parts.length > 0 ? parts.join(' · ') : 'How this was read';
   })();
 
@@ -216,6 +248,7 @@ export function AnaActivity({
             <div className="ana-activity-phase">
               <span className="ana-activity-pulse" aria-hidden="true">{I.dot}</span>
               {phase}
+              {elapsed && <span className="ana-activity-clock">· {elapsed}</span>}
             </div>
           )}
 

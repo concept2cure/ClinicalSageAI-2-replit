@@ -266,7 +266,11 @@ export function describeAuditMetadata(
     /* The quoted text is what makes the row resolvable — accepting a
        suggestion strips its mark, so the document no longer holds it. */
     const quoted = text ? ` — “${text.length > 160 ? text.slice(0, 160) + '…' : text}”` : '';
-    const by = proposedBy ? ` (proposed by ${proposedBy})` : '';
+    /* `proposedBy` is copied by the server from the editing client's own
+       request (the editor's suggestion mark carries the author's display
+       name), not derived from a verified identity. Rendered unqualified it
+       read as the audit trail's finding; the qualifier keeps the two apart. */
+    const by = proposedBy ? ` (proposed by ${proposedBy}, as recorded by the editing client)` : '';
     return `${verb} ${what}${by}${quoted}`;
   }
 
@@ -618,7 +622,7 @@ async function readJson<T = any>(
     const res = await apiRequest('GET', path);
     const body = (await res.json().catch(() => null)) as T | null;
     return { ok: res.ok, status: res.status, body };
-  } catch (e) {
+  } catch {
     return { ok: false, status: 0, body: null };
   }
 }
@@ -994,7 +998,11 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   // 'error' is a distinct state on purpose: an empty list because the read
   // failed and an empty list because there are no revisions are the same value
   // and opposite facts.
-  const [revisionsState, setRevisionsState] = useState<'ready' | 'error'>('ready');
+  /* 'loading' was missing: the rail rendered "No prior revisions" for the whole
+     of every GET, and kept the PREVIOUS section's revisions — with a live Revert
+     button — under the next section's header until its response landed. */
+  const [revisionsState, setRevisionsState] = useState<'loading' | 'ready' | 'error'>('ready');
+  const historySectionRef = useRef<string | null>(null);
   const [comments, setComments] = useState<AuthComment[]>([]);
   const [commentsState, setCommentsState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [newComment, setNewComment] = useState('');
@@ -1122,15 +1130,18 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
   /** Every in-surface navigation that unmounts the canvas goes through here. */
   const requestLeave = useCallback(
-    (target: LeaveTarget) => {
+    (target: LeaveTarget): boolean => {
       const alreadyThere =
         target.kind === 'section' ? target.id === activeSectionId : target.id === activeDocId;
-      if (alreadyThere) return;
+      if (alreadyThere) return true;
       if (!dirty) {
         applyNav(target);
-        return;
+        return true;
       }
+      /* Held by the unsaved-work guard: the author can still cancel, so a
+         caller must not announce the open as done. Returns false so it knows. */
       setPendingLeave(target);
+      return false;
     },
     [dirty, activeSectionId, activeDocId, applyNav]
   );
@@ -1455,9 +1466,12 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
            switch unmounts the section-keyed canvas, and if the author typed
            anything while this resolution was pending, the guard dialog gets
            to hold the navigation (see requestLeave above). */
-        requestLeave({ kind: 'document', id: linked.id });
+        const opened = requestLeave({ kind: 'document', id: linked.id });
         setTreeScrollNonce(n => n + 1);
-        fireToast(`Opened “${linked.title}” — the linked document.`);
+        /* "Opened …" used to fire regardless — including when the guard held
+           the navigation and the author then cancelled it. */
+        if (opened) fireToast(`Opened “${linked.title}” — the linked document.`);
+        else fireToast(`“${linked.title}” will open once you decide about the unsaved work here.`);
       } else {
         setTargetNotice(
           'Couldn’t open the linked document — it isn’t in the documents in scope ' +
@@ -1721,6 +1735,9 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
   /* ── Load the right-rail data for the active section on demand ── */
   const loadHistory = useCallback(async (sectionId: string) => {
+    historySectionRef.current = sectionId;
+    setRevisionsState('loading');
+    setRevisions([]);
     // `ok` is honoured because a read FAILURE must never be rendered as an
     // assertion about the record. This destructured only `body`, so a 500 —
     // which this endpoint returned on every single call while its join was
@@ -1731,6 +1748,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     const { ok, body } = await readJson<{ revisions?: AuthRevision[] }>(
       `/api/authoring/sections/${encodeURIComponent(sectionId)}/history`
     );
+    if (historySectionRef.current !== sectionId) return; // a later section is on screen
     if (!ok) {
       setRevisionsState('error');
       setRevisions([]);
@@ -1755,6 +1773,14 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const loadComments = useCallback(async (docId: string) => {
     commentsDocRef.current = docId;
     setCommentsState('loading');
+    /* The ref above stops a stale RESPONSE landing; nothing stopped the stale
+       DISPLAY. On a document switch the previous document's threads stayed on
+       screen — with live Resolve / Reply controls that write by comment id —
+       until the new read returned. Cleared here, with the thread focus. */
+    setComments([]);
+    setFocusedCommentId(null);
+    setReplyTo(null);
+    setResolveFor(null);
     const { ok, body } = await readJson<{ comments?: AuthComment[] }>(
       `/api/authoring/documents/${encodeURIComponent(docId)}/comments`
     );
@@ -1797,11 +1823,20 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      an empty list: "we could not load what this section cites" and "this section
      cites nothing" are different facts, and on a regulated surface conflating
      them is the more dangerous mistake. */
+  const sourcesSectionRef = useRef<string | null>(null);
   const loadSources = useCallback(async (sectionId: string) => {
+    /* Section-scoped like the other loaders: without the ref, fast section
+       switching let §A's citation list resolve last and render as §B's
+       "Drafted from" — with Re-read / Remove buttons that then posted §A's
+       citation ids against §B — and fed the editor's citation picker the
+       wrong section's library for the same window. */
+    sourcesSectionRef.current = sectionId;
     setSourcesState('loading');
+    setSources([]);
     const { ok, body } = await readJson<{ sources?: SectionSource[] }>(
       `/api/authoring/sections/${encodeURIComponent(sectionId)}/sources`
     );
+    if (sourcesSectionRef.current !== sectionId) return;
     if (!ok || !body) {
       setSourcesState('error');
       setSources([]);
@@ -1960,7 +1995,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         if (!res.ok) {
           fireToast(
             'Couldn’t record the source — ' +
-              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              (serverMessage(json) ?? 'the server refused it') +
               '. Nothing was saved.',
             'error'
           );
@@ -1975,7 +2010,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         void loadSources(activeSectionId);
       } catch (e) {
         fireToast(
-          'Couldn’t record the source — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'Couldn’t record the source — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
         );
       }
@@ -1987,19 +2022,33 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const uncite = useCallback(
     async (sourceId: number) => {
       if (!activeSectionId) return;
-      const res = await apiRequest(
-        'DELETE',
-        `/api/authoring/sections/${activeSectionId}/cite-source/${sourceId}`
-      );
-      if (!res.ok) {
+      /* apiRequest THROWS on the server's actual refusal (404 "a frozen
+         citation is immutable") and RETURNS a 401. The old shape had no catch,
+         so the real refusal was an unhandled rejection with no toast and a row
+         that just sat there — while the only reachable message, on 401, blamed
+         freeze-immutability for an expired session. */
+      try {
+        const res = await apiRequest(
+          'DELETE',
+          `/api/authoring/sections/${activeSectionId}/cite-source/${sourceId}`
+        );
+        if (res.status === 401) {
+          fireToast('Not removed — your session isn’t authenticated. Nothing was changed.', 'error');
+          return;
+        }
+        if (!res.ok) {
+          const json = await res.json().catch(() => null);
+          fireToast('Couldn’t remove the citation — ' + (serverMessage(json) ?? 'the server refused it') + '. Nothing was changed.', 'error');
+          return;
+        }
+        fireToast('Citation removed.');
+        void loadSources(activeSectionId);
+      } catch (e) {
         fireToast(
-          'Couldn’t remove the citation — a frozen citation is immutable. Nothing was changed.',
+          'Couldn’t remove the citation — ' + redactInternals(e instanceof Error ? e.message : '', 'the server refused it') + '. Nothing was changed.',
           'error'
         );
-        return;
       }
-      fireToast('Citation removed.');
-      void loadSources(activeSectionId);
     },
     [activeSectionId, fireToast, loadSources]
   );
@@ -2010,23 +2059,35 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const reresolve = useCallback(
     async (citationId: string) => {
       if (!activeSectionId) return;
-      const res = await apiRequest(
-        'POST',
-        `/api/authoring/sections/${activeSectionId}/refresh-token`,
-        {
-          cite_id: citationId,
+      /* The route refuses with a phrased reason (frozen citation, source no
+         longer resolves) as a 404/409 — which apiRequest THROWS, and this
+         handler had no catch: "Re-read source" was a silent no-op on exactly
+         the cases the comment above promises a reason for. */
+      try {
+        const res = await apiRequest(
+          'POST',
+          `/api/authoring/sections/${activeSectionId}/refresh-token`,
+          {
+            cite_id: citationId,
+          }
+        );
+        const json = await res.json().catch(() => null);
+        if (res.status === 401) {
+          fireToast('Not re-read — your session isn’t authenticated. Nothing was changed.', 'error');
+          return;
         }
-      );
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
+        if (!res.ok) {
+          fireToast('Couldn’t re-read the source — ' + (serverMessage(json) ?? 'the server refused it') + '. Nothing was changed.', 'error');
+          return;
+        }
+        fireToast(serverMessage(json) ?? 'Source re-read.');
+        void loadSources(activeSectionId);
+      } catch (e) {
         fireToast(
-          (json as any)?.message ?? 'Couldn’t re-read the source. Nothing was changed.',
+          'Couldn’t re-read the source — ' + redactInternals(e instanceof Error ? e.message : '', 'the server refused it') + '. Nothing was changed.',
           'error'
         );
-        return;
       }
-      fireToast((json as any)?.message ?? 'Source re-read.');
-      void loadSources(activeSectionId);
     },
     [activeSectionId, fireToast, loadSources]
   );
@@ -2084,7 +2145,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     } catch (e) {
       fireToast(
         'Couldn’t re-read this document’s sources — ' +
-          (e instanceof Error ? e.message : String(e)) +
+          redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') +
           '. Nothing was changed.',
         'error',
       );
@@ -2276,7 +2337,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       if (!res.ok) {
         fireToast(
           'Couldn’t change track changes — ' +
-            ((json as any)?.error ?? `HTTP ${res.status}`) +
+            (serverMessage(json) ?? 'the server refused it') +
             '. The mode is unchanged.',
           'error'
         );
@@ -2335,7 +2396,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         }
         if (!res.ok) {
           fireToast(
-            'Couldn’t revert — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.',
+            'Couldn’t revert — ' + (serverMessage(json) ?? 'the server refused it') + '.',
             'error'
           );
           return;
@@ -2354,7 +2415,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         void loadHistory(activeSection.id);
       } catch (e) {
         fireToast(
-          'Couldn’t revert — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'Couldn’t revert — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
         );
       }
@@ -2383,7 +2444,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       }
       if (!res.ok) {
         fireToast(
-          'Couldn’t post the comment — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.',
+          'Couldn’t post the comment — ' + (serverMessage(json) ?? 'the server refused it') + '.',
           'error'
         );
         return;
@@ -2401,7 +2462,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       void loadComments(activeDocId);
     } catch (e) {
       fireToast(
-        'Couldn’t post the comment — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'Couldn’t post the comment — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
         'error'
       );
     }
@@ -2439,7 +2500,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         }
         if (!res.ok) {
           fireToast(
-            'Couldn’t post the reply — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.',
+            'Couldn’t post the reply — ' + (serverMessage(json) ?? 'the server refused it') + '.',
             'error'
           );
           return;
@@ -2450,7 +2511,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         void loadComments(activeDocId);
       } catch (e) {
         fireToast(
-          'Couldn’t post the reply — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'Couldn’t post the reply — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
         );
       }
@@ -2487,7 +2548,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         if (!res.ok) {
           fireToast(
             'Couldn’t update the comment — ' +
-              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              (serverMessage(json) ?? 'the server refused it') +
               '. Its status is unchanged.',
             'error'
           );
@@ -2501,7 +2562,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         void loadComments(activeDocId);
       } catch (e) {
         fireToast(
-          'Couldn’t update the comment — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'Couldn’t update the comment — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
         );
       }
@@ -2550,9 +2611,21 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         title,
       });
       const json = await res.json().catch(() => null);
-      /* No `if (!res.ok)` branch: apiRequest THROWS on any non-2xx except 401,
-         so a refused rename lands in the catch below with the server's own
-         sentence and code, not this dead check. */
+      /* apiRequest THROWS on any non-2xx EXCEPT 401 — which it returns. This
+         handler's comment used to say so and then forgot it: a 401 landed here,
+         `adopted` was undefined, the CLIENT's code/title were written into the
+         section list, and the toast said "Section renamed" over a rename the
+         server refused. Section code drives eCTD placement, so the tree and
+         the cross-reference resolvers then ran against a code the record did
+         not hold. The 401 is handled here, before anything is adopted. */
+      if (res.status === 401) {
+        fireToast('Not renamed — your session isn’t authenticated. Nothing was changed.', 'error');
+        return;
+      }
+      if (!res.ok) {
+        fireToast('Couldn’t rename the section — ' + (serverMessage(json) ?? 'the server refused it') + '. Nothing was changed.', 'error');
+        return;
+      }
       const adopted = (json as { section?: AuthSection })?.section;
       setSections(ss =>
         ss.map(s => (s.id === activeSection.id ? { ...s, ...(adopted ?? { code, title }) } : s))
@@ -2617,7 +2690,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         if (!res.ok) {
           fireToast(
             'Couldn’t move the section — ' +
-              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              (serverMessage(json) ?? 'the server refused it') +
               ' The order is unchanged.',
             'error'
           );
@@ -2631,7 +2704,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         );
       } catch (e) {
         fireToast(
-          'Couldn’t move the section — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'Couldn’t move the section — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
         );
       } finally {
@@ -2678,7 +2751,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       setCheck(json.scan_results);
     } catch (e) {
       fireToast(
-        'Couldn’t check the section — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'Couldn’t check the section — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
         'error'
       );
     } finally {
@@ -2770,7 +2843,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         fireToast(
           `${batch.length === 1 ? 'That decision was' : `${batch.length} decisions were`} applied ` +
             'to the document but NOT recorded on the audit trail — ' +
-            (e instanceof Error ? e.message : String(e)) +
+            redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') +
             '. The content is still saved on the next save; report the missing record.',
           'error',
         );
@@ -2834,11 +2907,24 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               ? `${filing.document.doc_type.toUpperCase()} · ${filing.document.agency.toUpperCase()} · ${
                   filing.flat.length
                 } sections`
-              : `${docs.length} document${docs.length === 1 ? '' : 's'} · ${status.replace(
-                  '_',
-                  ' '
-                )}`}
+              : docsState === 'ready'
+                ? `${docs.length} document${docs.length === 1 ? '' : 's'} · ${status.replace('_', ' ')}`
+                : docsState === 'error'
+                  ? /* was "0 documents · all", directly above "Couldn't load documents" */
+                    `documents not read · ${status.replace('_', ' ')}`
+                  : `reading documents… · ${status.replace('_', ' ')}`}
           </div>
+          {/* A failed outline read used to degrade this pane, silently, to the
+              flat document list — indistinguishable from a project with no
+              rule pack. The failure and the wait are now said. */}
+          {filing.loading && (
+            <div className="scaf-note" style={{ padding: '4px 0' }}>Reading the governed filing outline…</div>
+          )}
+          {filing.error && (
+            <div className="scaf-note" role="alert" style={{ padding: '4px 0' }}>
+              The governed filing outline could not be read — what is listed below is the document list, not the filing outline.
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
             {/* The Module select is gone. It defaulted every filing type to
                 "M3" and hid the rest of the dossier behind a dropdown; the
@@ -2887,21 +2973,36 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             style={{ flex: '0 0 auto', maxHeight: '46%', borderBottom: '1px solid var(--border)' }}
           >
             {filing.flat.map(node => {
-              const bound = findSectionForNode(sections, node.key);
+              /* `sections` is [] while the read is in flight and after it
+                 failed, so every node rendered dimmed, "not started in this
+                 document yet", with its "required" chip and a "no draft yet"
+                 toast on click — drafting-status claims produced by a read that
+                 had not happened. Unread is now its own state. */
+              const sectionsUnread = sectionsState !== 'ready';
+              const bound = sectionsUnread ? null : findSectionForNode(sections, node.key);
               const isActive = bound != null && bound.id === activeSectionId;
               return (
                 <button
                   key={node.key}
                   className="ed-tree-row"
                   data-active={isActive || undefined}
-                  style={{ paddingLeft: 10 + node.depth * 12, opacity: bound ? 1 : 0.62 }}
+                  style={{ paddingLeft: 10 + node.depth * 12, opacity: bound || sectionsUnread ? 1 : 0.62 }}
                   title={
-                    bound
-                      ? `${node.label} — open`
-                      : `${node.label} — not started in this document yet`
+                    sectionsUnread
+                      ? `${node.label} — this document’s sections have not been read yet`
+                      : bound
+                        ? `${node.label} — open`
+                        : `${node.label} — not started in this document yet`
                   }
                   onClick={() => {
-                    if (bound) {
+                    if (sectionsUnread) {
+                      fireToast(
+                        sectionsState === 'error'
+                          ? 'This document’s sections could not be read, so nothing is known about whether this part is drafted. Retry from the tree.'
+                          : 'This document’s sections are still being read.',
+                        'error'
+                      );
+                    } else if (bound) {
                       // The module rides with the navigation: a nav the guard
                       // holds must not move the create/export default to a
                       // section the author never opened.
@@ -2923,7 +3024,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                   <span className="ed-lbl" style={{ fontWeight: node.depth === 0 ? 600 : 400 }}>
                     {node.label}
                   </span>
-                  {node.mandatory && !bound && (
+                  {node.mandatory && !bound && !sectionsUnread && (
                     <span
                       className="rd-chip tone-idle"
                       style={{ marginLeft: 'auto' }}
@@ -3369,7 +3470,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                   <div className="ed-mast-num">{activeDoc.module}</div>
                   <h1 className="ed-mast-t">{activeDoc.title}</h1>
                   <div className="ed-mast-meta">
-                    {sections.length} section{sections.length === 1 ? '' : 's'}
+                    {/* "0 sections" printed over a failed or in-flight read,
+                        directly above a body that said the read failed. */}
+                    {sectionsState === 'ready'
+                      ? `${sections.length} section${sections.length === 1 ? '' : 's'}`
+                      : sectionsState === 'error'
+                        ? 'sections not read'
+                        : 'reading sections…'}
                     {docSealed ? ' · frozen' : ''}
                   </div>
                 </div>
@@ -3380,6 +3487,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     title="Couldn’t read this document’s sections"
                     hint="The document is not empty — the read failed. Retry from the tree."
                   />
+                ) : sectionsState !== 'ready' ? (
+                  /* Every document open, and every reorder, passes through
+                     'loading' — and this pane said "This document has no
+                     sections yet" for the whole of it. The tree pane had the
+                     loading branch; the assembled document, the thing a
+                     reviewer receives, did not. */
+                  <EmptyState icon={I.fileText} title="Reading this document’s sections…" busy />
                 ) : sections.length === 0 ? (
                   <EmptyState
                     icon={I.fileText}
@@ -4066,6 +4180,8 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               title="Revision history unavailable"
               hint="The history could not be loaded. This is a failure to read the record — it does not mean the section has no revisions."
             />
+          ) : revisionsState === 'loading' ? (
+            <EmptyState icon={I.clock} title="Reading revision history…" busy />
           ) : revisions.length === 0 ? (
             <EmptyState
               icon={I.clock}

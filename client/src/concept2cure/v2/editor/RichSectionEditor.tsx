@@ -51,7 +51,6 @@ import React, {
 } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { generateJSON } from '@tiptap/core';
-import type { JSONContent } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { TableKit } from '@tiptap/extension-table';
@@ -112,6 +111,7 @@ import {
   type CitationSource,
 } from '@shared/authoring/citations';
 import { I } from '../icons';
+import '../styles/rich-section-editor.css';
 
 /* ── Public contract ──────────────────────────────────────────── */
 
@@ -2445,86 +2445,6 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           />
         )}
 
-        <style>{`
-        .rse-root { display:flex; flex-direction:column; min-height:0; background:var(--bg-000,#fff); border-radius:inherit; }
-        .rse-gate { display:flex; gap:10px; align-items:baseline; padding:8px 12px; font-size:12px; color:var(--text-300,#475467); background:var(--bg-50,#f9fafb); border-bottom:1px solid var(--border,#e4e7ec); }
-        .rse-ribbon { display:flex; align-items:center; gap:2px; padding:4px 8px; background:var(--bg-000,#fff); border-bottom:1px solid var(--border,#e4e7ec); flex-wrap:wrap; }
-        .rse-sel { font-size:11px; border:1px solid var(--border-control,#d0d5dd); border-radius:4px; padding:2px 6px; background:var(--bg-50,#f9fafb); color:var(--text-100,#101828); cursor:pointer; height:24px; }
-        .rse-sep { width:1px; height:18px; background:var(--border,#e4e7ec); margin:0 3px; }
-        .rse-rb { min-width:24px; height:24px; padding:0 4px; font-size:12px; border:1px solid transparent; border-radius:4px; background:transparent; cursor:pointer; color:var(--text-200,#344054); display:inline-flex; align-items:center; justify-content:center; }
-        .rse-rb[data-active] { background:var(--bg-100,#f2f4f7); border-color:var(--border,#e4e7ec); }
-        .rse-chip { font-size:11px; height:24px; padding:0 10px; border-radius:12px; border:1px solid var(--warning,#b54708); color:var(--warning,#b54708); background:transparent; cursor:pointer; font-weight:600; }
-        .rse-track { display:flex; align-items:center; gap:4px; font-size:10px; color:var(--text-400,#667085); cursor:pointer; margin-left:6px; }
-        .rse-review { border-bottom:1px solid var(--border,#e4e7ec); background:var(--bg-50,#f9fafb); max-height:200px; overflow-y:auto; }
-        .rse-review-h { display:flex; gap:10px; padding:6px 12px; font-size:11px; font-weight:600; color:var(--text-300,#475467); }
-        .rse-review-row { display:flex; align-items:center; gap:8px; padding:4px 12px; font-size:12px; }
-        .rse-review-jump { display:flex; align-items:baseline; gap:8px; flex:1; min-width:0; background:none; border:none; cursor:pointer; text-align:left; padding:0; }
-        .rse-review-kind { font-size:10px; font-weight:700; text-transform:uppercase; }
-        .rse-review-kind[data-kind="insertion"] { color:var(--success,#067647); }
-        .rse-review-kind[data-kind="deletion"] { color:var(--error,#b42318); }
-        .rse-review-by { font-weight:600; color:var(--text-200,#344054); white-space:nowrap; }
-        .rse-review-txt { color:var(--text-300,#475467); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .rse-link { font-size:11px; border:none; background:none; color:var(--accent-100,#2563eb); cursor:pointer; padding:2px 4px; }
-        .rse-link:disabled { color:var(--text-400,#667085); cursor:default; }
-        .rse-find { display:flex; align-items:center; gap:6px; padding:6px 10px; background:var(--bg-50,#f9fafb); border-bottom:1px solid var(--border,#e4e7ec); flex-wrap:wrap; }
-        .rse-find-label { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:var(--text-300,#475467); }
-        .rse-find-input { flex:0 1 220px; min-width:120px; height:24px; font-size:12px; padding:2px 8px; border:1px solid var(--border-control,#d0d5dd); border-radius:4px; background:var(--bg-000,#fff); color:var(--text-100,#101828); }
-        .rse-find-count { font-size:11px; color:var(--text-400,#667085); min-width:64px; }
-        .rse-find-err { font-size:11px; color:var(--error,#b42318); }
-        .rse-find-note { font-size:10px; color:var(--warning,#b54708); }
-        .rse-find-hit { background:color-mix(in srgb, var(--warning,#b54708) 25%, transparent); border-radius:2px; }
-        .rse-find-hit-active { background:color-mix(in srgb, var(--warning,#b54708) 50%, transparent); box-shadow:0 0 0 1px var(--warning,#b54708); }
-        .rse-hl-glyph { background:color-mix(in srgb, var(--warning,#b54708) 30%, transparent); padding:0 3px; border-radius:2px; }
-        .rse-body { flex:1; min-height:0; overflow-y:auto; }
-        .rse-body .tiptap { outline:none; min-height:320px; padding:18px 20px; font-size:14px; line-height:1.75; color:var(--text-100,#101828); font-family:var(--font-serif,Georgia,"Times New Roman",serif); }
-        /* Measure lives on the prose blocks, not the canvas: a CTD table must be
-           free to use the full column while paragraphs keep a readable line. */
-        .rse-body .tiptap > p, .rse-body .tiptap > h1, .rse-body .tiptap > h2, .rse-body .tiptap > h3, .rse-body .tiptap > ul, .rse-body .tiptap > ol, .rse-body .tiptap > blockquote { max-width:78ch; }
-        .rse-body .tiptap p { margin:0 0 12px; }
-        .rse-body .tiptap h1 { font-size:18px; font-weight:700; margin:0 0 8px; }
-        .rse-body .tiptap h2 { font-size:15px; font-weight:700; margin:20px 0 8px; }
-        .rse-body .tiptap h3 { font-size:13px; font-weight:600; margin:16px 0 6px; }
-        .rse-body .tiptap ul, .rse-body .tiptap ol { margin:0 0 12px 24px; }
-        .rse-body .tiptap li { margin-bottom:6px; }
-        .rse-body .tiptap table { width:100%; border-collapse:collapse; margin:16px 0; font-size:13px; }
-        .rse-body .tiptap th { padding:8px 12px; background:var(--bg-50,#f9fafb); border:1px solid var(--border,#e4e7ec); font-weight:600; text-align:left; }
-        .rse-body .tiptap td { padding:7px 12px; border:1px solid var(--border,#e4e7ec); }
-        .rse-body .tiptap mark { background:color-mix(in srgb, var(--warning,#b54708) 28%, transparent); padding:0 1px; border-radius:2px; }
-        .rse-img { margin:16px auto; max-width:100%; text-align:center; }
-        .rse-img img { max-width:100%; height:auto; border-radius:4px; }
-        .rse-img img:not([src]) { display:none; }
-        .rse-img-status { display:block; font-size:11px; color:var(--text-400,#667085); padding:16px 12px; background:var(--bg-50,#f9fafb); border:1px dashed var(--border-control,#d0d5dd); border-radius:4px; }
-        .rse-img[data-error="1"] .rse-img-status { color:var(--error,#b42318); border-color:var(--error,#b42318); }
-        .rse-body .tiptap .ProseMirror-selectednode { outline:2px solid var(--accent-100,#2563eb); outline-offset:2px; border-radius:4px; }
-        .rse-body .tiptap a { color:var(--accent-100,#2563eb); text-decoration:underline; text-underline-offset:2px; }
-        .rse-body .tiptap .selectedCell { outline:2px solid color-mix(in srgb, var(--accent-100,#2563eb) 55%, transparent); outline-offset:-2px; }
-        .rse-body .tiptap p.is-editor-empty:first-child::before { content:attr(data-placeholder); float:left; color:var(--text-400,#667085); pointer-events:none; height:0; }
-        .rse-ins { background:color-mix(in srgb, var(--success,#067647) 14%, transparent); text-decoration:underline; text-decoration-color:var(--success,#067647); }
-        .rse-del { background:color-mix(in srgb, var(--error,#b42318) 12%, transparent); text-decoration:line-through; text-decoration-color:var(--error,#b42318); }
-        .rse-comment-anchor { background:color-mix(in srgb, var(--accent-100,#2563eb) 14%, transparent); border-bottom:1px dotted var(--accent-100,#2563eb); cursor:pointer; }
-        /* A resolved cross-reference reads as a reference; a broken one reads as
-           broken, in words. Colour is never the only signal — the missing state
-           says what is wrong in full. */
-        /* The numbered caption a table or figure carries in the canvas. Drawn
-           by a decoration, never by content: the number is a rendering of
-           position, and putting it into the document would write it into the
-           governed record — the exact defect this feature removes. Placed below
-           the object, which is where the print stylesheet puts it. */
-        .rse-caption { display:block; margin:-8px 0 14px; font-size:11px; font-style:italic; color:var(--text-300,#475467); text-align:center; }
-        .rse-caption[data-kind="table"] { text-align:left; }
-        .rse-xref { color:var(--accent-100,#2563eb); border-bottom:1px solid color-mix(in srgb, var(--accent-100,#2563eb) 40%, transparent); white-space:nowrap; }
-        .rse-xref[data-missing="1"] { color:var(--error,#b42318); border-bottom:1px dashed var(--error,#b42318); font-style:italic; white-space:normal; }
-        /* A citation shows the number its source holds in this document's
-           reference list — derived from position, never stored. */
-        .rse-cite { color:var(--accent-100,#2563eb); white-space:nowrap; }
-        .rse-cite[data-missing="1"] { color:var(--error,#b42318); border-bottom:1px dashed var(--error,#b42318); font-style:italic; white-space:normal; }
-        .rse-source { width:100%; min-height:320px; resize:vertical; border:none; outline:none; padding:18px 20px; font-size:13px; line-height:1.6; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--text-100,#101828); background:var(--bg-000,#fff); }
-        .rse-empty-cta { padding:10px 20px 0; }
-        .rse-foot { display:flex; align-items:center; gap:8px; padding:6px 12px; background:var(--bg-000,#fff); border-top:1px solid var(--border,#e4e7ec); font-size:10px; color:var(--text-400,#667085); flex-wrap:wrap; }
-        .rse-save { display:flex; align-items:center; gap:5px; }
-        .rse-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
-        .rse-foot-sep { color:var(--bg-200,#eaecf0); }
-        `}</style>
       </div>
     );
   },
