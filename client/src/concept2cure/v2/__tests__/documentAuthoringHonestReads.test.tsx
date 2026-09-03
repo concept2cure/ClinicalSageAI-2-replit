@@ -208,4 +208,48 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
       delete (window as any).C2C_PROJECT;
     }
   });
+  it('a failed filing-outline read is said in the tree header, not degraded silently to the document list', async () => {
+    (window as any).C2C_PROJECT = { id: 'P-1' };
+    try {
+      wire((m, u) => (m === 'GET' && u.startsWith('/api/c2c/documents?projectId=') ? fail(500) : undefined));
+      render(<DocumentAuthoring {...props()} />);
+      await waitFor(() => expect(text()).toMatch(/governed filing outline could not be read/));
+    } finally {
+      delete (window as any).C2C_PROJECT;
+    }
+  });
+
+  it('switching sections never shows the previous section’s sources under the next section’s header', async () => {
+    (window as any).C2C_PROJECT = { id: 'P-1' };
+    try {
+      const TWO = { success: true, sections: [
+        { ...SECTIONS.sections[0], citation_count: 1 },
+        { ...SECTIONS.sections[0], id: 'S2', code: '3.2.S.2', title: 'Manufacture', citation_count: 1 },
+      ] };
+      const citation = {
+        citationId: 'cite-1', citedAt: '2026-07-01T00:00:00Z', citationText: null, citedChecksum: 'sha-1', state: 'current',
+        source: { id: 5, title: 'protocol-v2.pdf', checksum: 'sha-1', extractionStatus: 'extracted', mimeType: 'application/pdf' },
+      };
+      // The race: §1's sources read is slow and lands AFTER §2 is on screen.
+      let releaseS1: (r: Response) => void = () => {};
+      const slowS1 = new Promise<Response>((resolve) => { releaseS1 = resolve; });
+      wire((m, u) => {
+        if (m === 'GET' && u === '/api/authoring/docs/D1/sections') return ok(TWO);
+        if (m === 'GET' && u === '/api/authoring/sections/S1/sources') return slowS1;
+        if (m === 'GET' && u === '/api/authoring/sections/S2/sources') return ok({ sources: [] });
+        return undefined;
+      });
+      render(<DocumentAuthoring {...props()} />);
+      fireEvent.click(await screen.findByRole('button', { name: /Sources/ }));
+      fireEvent.click(await screen.findByRole('button', { name: /Manufacture/ }));
+      await waitFor(() => expect(text()).toMatch(/Manufacture/));
+      await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[1] === '/api/authoring/sections/S2/sources')).toBe(true));
+      // §1's stale response now lands, last.
+      releaseS1(ok({ sources: [citation] }));
+      await new Promise((r) => setTimeout(r, 50));
+      expect(text()).not.toMatch(/protocol-v2\.pdf/);
+    } finally {
+      delete (window as any).C2C_PROJECT;
+    }
+  });
 });

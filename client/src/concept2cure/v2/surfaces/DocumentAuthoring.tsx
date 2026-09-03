@@ -1126,15 +1126,18 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
   /** Every in-surface navigation that unmounts the canvas goes through here. */
   const requestLeave = useCallback(
-    (target: LeaveTarget) => {
+    (target: LeaveTarget): boolean => {
       const alreadyThere =
         target.kind === 'section' ? target.id === activeSectionId : target.id === activeDocId;
-      if (alreadyThere) return;
+      if (alreadyThere) return true;
       if (!dirty) {
         applyNav(target);
-        return;
+        return true;
       }
+      /* Held by the unsaved-work guard: the author can still cancel, so a
+         caller must not announce the open as done. Returns false so it knows. */
       setPendingLeave(target);
+      return false;
     },
     [dirty, activeSectionId, activeDocId, applyNav]
   );
@@ -1459,9 +1462,12 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
            switch unmounts the section-keyed canvas, and if the author typed
            anything while this resolution was pending, the guard dialog gets
            to hold the navigation (see requestLeave above). */
-        requestLeave({ kind: 'document', id: linked.id });
+        const opened = requestLeave({ kind: 'document', id: linked.id });
         setTreeScrollNonce(n => n + 1);
-        fireToast(`Opened “${linked.title}” — the linked document.`);
+        /* "Opened …" used to fire regardless — including when the guard held
+           the navigation and the author then cancelled it. */
+        if (opened) fireToast(`Opened “${linked.title}” — the linked document.`);
+        else fireToast(`“${linked.title}” will open once you decide about the unsaved work here.`);
       } else {
         setTargetNotice(
           'Couldn’t open the linked document — it isn’t in the documents in scope ' +
@@ -1813,11 +1819,20 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      an empty list: "we could not load what this section cites" and "this section
      cites nothing" are different facts, and on a regulated surface conflating
      them is the more dangerous mistake. */
+  const sourcesSectionRef = useRef<string | null>(null);
   const loadSources = useCallback(async (sectionId: string) => {
+    /* Section-scoped like the other loaders: without the ref, fast section
+       switching let §A's citation list resolve last and render as §B's
+       "Drafted from" — with Re-read / Remove buttons that then posted §A's
+       citation ids against §B — and fed the editor's citation picker the
+       wrong section's library for the same window. */
+    sourcesSectionRef.current = sectionId;
     setSourcesState('loading');
+    setSources([]);
     const { ok, body } = await readJson<{ sources?: SectionSource[] }>(
       `/api/authoring/sections/${encodeURIComponent(sectionId)}/sources`
     );
+    if (sourcesSectionRef.current !== sectionId) return;
     if (!ok || !body) {
       setSourcesState('error');
       setSources([]);
@@ -2895,6 +2910,17 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     `documents not read · ${status.replace('_', ' ')}`
                   : `reading documents… · ${status.replace('_', ' ')}`}
           </div>
+          {/* A failed outline read used to degrade this pane, silently, to the
+              flat document list — indistinguishable from a project with no
+              rule pack. The failure and the wait are now said. */}
+          {filing.loading && (
+            <div className="scaf-note" style={{ padding: '4px 0' }}>Reading the governed filing outline…</div>
+          )}
+          {filing.error && (
+            <div className="scaf-note" role="alert" style={{ padding: '4px 0' }}>
+              The governed filing outline could not be read — what is listed below is the document list, not the filing outline.
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
             {/* The Module select is gone. It defaulted every filing type to
                 "M3" and hid the rest of the dossier behind a dropdown; the
