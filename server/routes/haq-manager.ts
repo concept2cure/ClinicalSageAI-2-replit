@@ -12,8 +12,12 @@
 
 import { Router, Request, Response } from 'express';
 import { createFeatureStore } from '../utils/feature-persistence';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('haq-manager');
 const store = createFeatureStore('haq_question');
 
 function getOrgId(req: Request): number {
@@ -165,9 +169,7 @@ router.post('/questions', async (req: Request, res: Response) => {
 
     return res.status(201).json({ data, meta: { created: true } });
   } catch (err: any) {
-    return res
-      .status(500)
-      .json({ error: err?.message || 'Failed to log question' });
+    return serverError(res, logger, 'saving questions', err);
   }
 });
 
@@ -197,7 +199,7 @@ router.get('/letters', async (_req: Request, res: Response) => {
 
     res.json({ success: true, data: enriched });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Failed to fetch letters' });
+    return serverError(res, logger, 'loading letters', err);
   }
 });
 
@@ -219,7 +221,7 @@ router.get('/letters/:id', async (req: Request, res: Response) => {
     const letter = letters[0];
     res.json({ success: true, data: { ...letter, questions } });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Failed to fetch letter' });
+    return serverError(res, logger, 'loading letters', err);
   }
 });
 
@@ -240,9 +242,7 @@ router.get('/letters/:id/questions', async (req: Request, res: Response) => {
 
     res.json({ success: true, data: questions });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({ success: false, error: err.message || 'Failed to fetch questions' });
+    return serverError(res, logger, 'loading questions', err);
   }
 });
 
@@ -266,7 +266,7 @@ router.post('/letters/:id/questions/:qid/assign', async (req: Request, res: Resp
     const result = await store.update(questionDbId, orgId, updated);
     res.json({ success: true, data: result });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Failed to assign question' });
+    return serverError(res, logger, 'assigning questions', err);
   }
 });
 
@@ -292,7 +292,7 @@ router.post('/letters/:id/questions/:qid/ai-draft', async (req: Request, res: Re
     const result = await store.update(questionDbId, orgId, updated);
     res.json({ success: true, data: result });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Failed to generate draft' });
+    return serverError(res, logger, 'saving AI draft', err);
   }
 });
 
@@ -319,9 +319,7 @@ router.post('/letters/:id/questions/:qid/review', async (req: Request, res: Resp
     const result = await store.update(questionDbId, orgId, updated);
     res.json({ success: true, data: result });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({ success: false, error: err.message || 'Failed to submit for review' });
+    return serverError(res, logger, 'saving review', err);
   }
 });
 
@@ -340,7 +338,7 @@ router.post('/letters/:id/questions/:qid/approve', async (req: Request, res: Res
 
     res.json({ success: true, data: result });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Failed to approve' });
+    return serverError(res, logger, 'approving questions', err);
   }
 });
 
@@ -505,9 +503,7 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
       },
     });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({ success: false, error: err.message || 'Failed to compute dashboard' });
+    return serverError(res, logger, 'loading dashboard', err);
   }
 });
 

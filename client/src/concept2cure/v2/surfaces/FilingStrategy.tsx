@@ -48,6 +48,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest, extractApiError } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 
@@ -212,6 +213,20 @@ const TABS: Array<[string, string]> = [
 export function FilingStrategy(_props: SurfaceViewProps) {
   const [toast, fireToast] = useToast();
   const [tab, setTab] = useState('sequence');
+
+  /* AnA can open any of the three tabs — the same view-state switch a person
+     makes. The registry enum has validated `tab`; the defensive lookup keeps the
+     handler honest if the registry drifts. */
+  useSurfaceActionHandlers('filing-strategy', {
+    'filing-strategy.open-tab': (params) => {
+      const target = params.tab;
+      const hit = TABS.find((t) => t[0] === target);
+      if (!hit) return { ok: false, reason: `"${target}" is not a filing-strategy tab.` };
+      if (tab === target) return { ok: true, detail: `Already on the ${hit[1]} tab` };
+      setTab(target);
+      return { ok: true, detail: `Opened the ${hit[1]} tab` };
+    },
+  });
 
   // Filing sequence
   const [seq, setSeq] = useState({ productType: '', therapeuticArea: '', optimizeFor: 'balanced' });

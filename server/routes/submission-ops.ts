@@ -76,8 +76,12 @@ import {
   VALIDATOR_REGISTRY,
   runHttpValidator,
 } from '../services/submission-gateways/validator-registry';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('submission-ops');
 
 // Middleware: extract orgId from auth context
 function getOrgId(req: Request): number {
@@ -166,7 +170,7 @@ router.get('/packages', async (req: Request, res: Response) => {
 
     res.json({ data: packages });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading packages', e);
   }
 });
 
@@ -213,7 +217,7 @@ router.post('/packages', async (req: Request, res: Response) => {
 
     res.status(201).json({ data: pkg });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'saving packages', e);
   }
 });
 
@@ -240,7 +244,7 @@ router.get('/packages/:packageId', async (req: Request, res: Response) => {
 
     res.json({ data: { ...pkg, sections } });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading packages', e);
   }
 });
 
@@ -271,7 +275,7 @@ router.get('/packages/:packageId/sections', async (req: Request, res: Response) 
 
     res.json({ data: sections });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading sections', e);
   }
 });
 
@@ -360,7 +364,7 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
 
     res.status(201).json({ data: mapping });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'saving artifact section map', e);
   }
 });
 
@@ -400,7 +404,7 @@ router.get('/sections/:sectionDbId/artifacts', async (req: Request, res: Respons
       })),
     });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading artifacts', e);
   }
 });
 
@@ -452,7 +456,7 @@ router.get('/packages/:packageId/milestones', async (req: Request, res: Response
 
     res.json({ data: result });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading milestones', e);
   }
 });
 
@@ -512,7 +516,7 @@ router.post('/packages/:packageId/milestones', async (req: Request, res: Respons
 
     res.status(201).json({ data: milestone });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'saving milestones', e);
   }
 });
 
@@ -531,7 +535,7 @@ router.get('/policies', async (req: Request, res: Response) => {
 
     res.json({ data: policies });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading policies', e);
   }
 });
 
@@ -594,7 +598,7 @@ router.post('/policies', async (req: Request, res: Response) => {
 
     res.status(201).json({ data: policy });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'saving policies', e);
   }
 });
 
@@ -633,7 +637,7 @@ router.put('/policies/:policyId', async (req: Request, res: Response) => {
     if (!updated) return res.status(404).json({ error: 'Policy not found' });
     res.json({ data: updated });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'updating policies', e);
   }
 });
 
@@ -653,7 +657,7 @@ router.delete('/policies/:policyId', async (req: Request, res: Response) => {
     if (!deleted) return res.status(404).json({ error: 'Policy not found' });
     res.json({ data: { deleted: true } });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'deleting policies', e);
   }
 });
 
@@ -665,7 +669,7 @@ router.post('/policies/resolve', async (req: Request, res: Response) => {
     const all = await resolveAllPolicies(ctx);
     res.json({ data: { resolved, allMatching: all } });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'resolving policies', e);
   }
 });
 
@@ -728,7 +732,7 @@ router.get('/packages/:packageId/readiness', async (req: Request, res: Response)
       rimCrossArtifact,
     });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading readiness', e);
   }
 });
 
@@ -759,7 +763,7 @@ router.get('/packages/:packageId/readiness-history', async (req: Request, res: R
 
     res.json({ data: snapshots });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading readiness history', e);
   }
 });
 
@@ -810,7 +814,7 @@ router.get('/blockers', async (req: Request, res: Response) => {
 
     res.json({ data: blockers });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading blockers', e);
   }
 });
 
@@ -835,7 +839,7 @@ router.patch('/blockers/:blockerId', async (req: Request, res: Response) => {
     if (!updated) return res.status(404).json({ error: 'Blocker not found' });
     res.json({ data: updated });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'updating blockers', e);
   }
 });
 
@@ -891,7 +895,7 @@ router.get('/approval-bottlenecks', async (req: Request, res: Response) => {
 
     res.json({ data: bottlenecks });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading approval bottlenecks', e);
   }
 });
 
@@ -906,7 +910,7 @@ router.get('/workload', async (req: Request, res: Response) => {
     const canonical = await readCanonicalDueSoonAndWorkload({ orgId, projectId });
     res.json({ data: canonical.workload, source: 'c2c_project_work_items' });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading workload', e);
   }
 });
 
@@ -932,7 +936,7 @@ router.get('/unified-work', async (req: Request, res: Response) => {
     const view = await loadUnifiedWork({ organizationId: orgId, projectId });
     res.json({ ...view, sources: ['project_tasks', 'c2c_project_work_items', 'estar_submissions'] });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading unified work', e);
   }
 });
 
@@ -1008,7 +1012,7 @@ router.get('/hotspots', async (req: Request, res: Response) => {
 
     res.json({ data: hotspots });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading hotspots', e);
   }
 });
 
@@ -1028,7 +1032,7 @@ router.post('/automation/run', async (req: Request, res: Response) => {
     const result = await runAutomationSweep(orgId, projectId, packageDbId);
     res.json({ data: result });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'running automation', e);
   }
 });
 
@@ -1049,7 +1053,7 @@ router.get('/automation/runs', async (req: Request, res: Response) => {
 
     res.json({ data: runs });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading runs', e);
   }
 });
 
@@ -1073,7 +1077,7 @@ router.get('/automation/runs/:runId/actions', async (req: Request, res: Response
 
     res.json({ data: actions });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading actions', e);
   }
 });
 
@@ -1094,7 +1098,7 @@ router.get('/due-soon', async (req: Request, res: Response) => {
       source: 'c2c_project_work_items',
     });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading due soon', e);
   }
 });
 
@@ -1122,7 +1126,7 @@ router.get('/digests', async (req: Request, res: Response) => {
 
     res.json({ data: digests });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading digests', e);
   }
 });
 
@@ -1138,7 +1142,7 @@ router.post('/digests/:digestId/read', async (req: Request, res: Response) => {
     if (!updated) return res.status(404).json({ error: 'Digest not found' });
     res.json({ data: updated });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'marking read digests', e);
   }
 });
 
@@ -1269,7 +1273,7 @@ router.get('/command-center', async (req: Request, res: Response) => {
       },
     });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading command center', e);
   }
 });
 
@@ -1396,7 +1400,7 @@ router.post('/packages/:packageId/publish', async (req: Request, res: Response) 
       readiness,
     });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'publishing packages', e);
   }
 });
 
@@ -1873,7 +1877,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       },
     });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'saving assemble', e);
   }
 });
 
@@ -2121,7 +2125,7 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
       },
     });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'saving preflight', e);
   }
 });
 

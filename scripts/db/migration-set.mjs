@@ -874,6 +874,12 @@ export const C2C_MIGRATION_FILES = [
   // receipt that alone justifies status = 'transmitted'. Additive, nullable,
   // guarded on the table existing (a fresh install gets it via drizzle push).
   'migrations/20260902_ind_icsr_transmissions_transport_receipt.sql',
+  // LIFE-01: rendered_leaf_files — the retained bytes of a server-rendered
+  // filing document. The lifecycle routes rendered the safety/annual report,
+  // kept an md5 and discarded the bytes, so every filed lifecycle sequence
+  // assembled with zero leaf files and was permanently dispatch-blocked. New
+  // table only; no backfill (nothing records what pre-existing rows contained).
+  'migrations/20260903_rendered_leaf_files.sql',
   //   • 068_regulatory_schema_alignment — creates only regulatory.information_
   //     requests, which C-35's schema-qualification fix showed is not referenced
   //     by server code at all. It is dead schema, not a live gap; the "missing
@@ -1777,6 +1783,13 @@ export const C2C_MIGRATION_FILES = [
   // db/migrations/20260730_manufacturing_processes_reconstruction.sql, which
   // creates it.
   'db/migrations/20260903_cmc_manufacturing_characterization_registers.sql',
+
+  // ── The route of administration on the impurity register ─────────────────
+  // ICH Q3D sets a different permitted daily exposure per route, so an
+  // elemental impurity cannot be assessed without it. MUST stay after
+  // db/migrations/20260902_cmc_impurity_dissolution_registers.sql, which
+  // creates the table.
+  'db/migrations/20260903_cmc_impurity_route_of_administration.sql',
 
   // ── Drop the audit-shaped tables that survived a from-scratch liveness
   //    re-check (ledger L13; docs/AUDIT_STORE_INVENTORY_2026-08.md §5.1) ─────

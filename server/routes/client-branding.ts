@@ -12,6 +12,7 @@ import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger';
 import { createFeatureStore } from '../utils/feature-persistence';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
+import { serverError } from '../lib/api-response';
 
 const logger = createScopedLogger('client-branding');
 const router = Router();
@@ -52,7 +53,7 @@ router.get('/settings', async (req: Request, res: Response) => {
       updatedAt: new Date().toISOString(),
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to fetch settings' });
+    return serverError(res, logger, 'loading settings', err);
   }
 });
 
@@ -89,7 +90,7 @@ router.patch('/settings', async (req: Request, res: Response) => {
 
     res.json(updated);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to update settings' });
+    return serverError(res, logger, 'updating settings', err);
   }
 });
 
@@ -130,7 +131,7 @@ router.post('/upload-logo', async (req: Request, res: Response) => {
     logger.info(`Logo uploaded for org ${orgId}`);
     res.json({ logoUrl, updated: true });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to upload logo' });
+    return serverError(res, logger, 'saving upload logo', err);
   }
 });
 
@@ -163,7 +164,7 @@ router.get('/logo/:orgId', async (req: Request, res: Response) => {
       res.status(400).json({ error: 'Invalid logo format' });
     }
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to serve logo' });
+    return serverError(res, logger, 'loading logo', err);
   }
 });
 
@@ -204,7 +205,7 @@ router.post('/upload-letterhead', async (req: Request, res: Response) => {
     logger.info(`Letterhead uploaded for org ${orgId}`);
     res.json({ letterheadUrl: letterheadUrl, updated: true });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to upload letterhead' });
+    return serverError(res, logger, 'saving upload letterhead', err);
   }
 });
 
@@ -221,7 +222,7 @@ router.get('/templates', async (req: Request, res: Response) => {
 
     res.json(templates);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to fetch templates' });
+    return serverError(res, logger, 'loading templates', err);
   }
 });
 
@@ -237,7 +238,7 @@ router.get('/templates/:id', async (req: Request, res: Response) => {
 
     res.json(template);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to fetch template' });
+    return serverError(res, logger, 'loading templates', err);
   }
 });
 
@@ -280,7 +281,7 @@ router.post('/templates', async (req: Request, res: Response) => {
     logger.info(`Template ${template.id} created: ${name} [${category}]`);
     res.status(201).json(template);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to create template' });
+    return serverError(res, logger, 'saving templates', err);
   }
 });
 
@@ -314,7 +315,7 @@ router.patch('/templates/:id', async (req: Request, res: Response) => {
 
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to update template' });
+    return serverError(res, logger, 'updating templates', err);
   }
 });
 
@@ -340,7 +341,7 @@ router.delete('/templates/:id', async (req: Request, res: Response) => {
 
     res.json({ deleted: true });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to delete template' });
+    return serverError(res, logger, 'deleting templates', err);
   }
 });
 
@@ -396,7 +397,7 @@ router.post('/render-template/:id', async (req: Request, res: Response) => {
       usedPlaceholders: Object.keys(allValues),
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to render template' });
+    return serverError(res, logger, 'saving render template', err);
   }
 });
 

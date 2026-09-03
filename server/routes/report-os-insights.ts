@@ -37,6 +37,8 @@ import {
   listSubscriptions,
   setEnabled,
 } from '../services/report-os/scheduling/subscription-service';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 /** typeId + human label for each live prediction kind, sourced from the seed. */
 const PREDICTION_KIND_TO_TYPE: Record<string, { typeId: string; label: string }> = {
@@ -55,6 +57,8 @@ const PREDICTION_KIND_TO_TYPE: Record<string, { typeId: string; label: string }>
 };
 
 const router = Router();
+
+const logger = createScopedLogger('report-os-insights');
 router.use(authMiddleware);
 
 /** Roles allowed to read the cross-prediction calibration / quality view. */
@@ -227,7 +231,7 @@ router.get('/quality', async (req: Request, res: Response) => {
 
     return res.json({ data: { organizationId, quality, freshness } });
   } catch (error: any) {
-    return res.status(500).json({ error: error?.message ?? 'Internal error' });
+    return serverError(res, logger, 'loading quality', error);
   }
 });
 
@@ -260,7 +264,7 @@ router.post('/predictions', async (req: Request, res: Response) => {
     const renderedReport = assemblePredictionReport(input, meta);
     return res.json({ data: renderedReport });
   } catch (error: any) {
-    return res.status(500).json({ error: error?.message ?? 'Internal error' });
+    return serverError(res, logger, 'saving predictions', error);
   }
 });
 
@@ -353,7 +357,7 @@ router.post('/predictions/run', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    return res.status(500).json({ error: error?.message ?? 'Internal error' });
+    return serverError(res, logger, 'running predictions', error);
   }
 });
 
@@ -370,7 +374,7 @@ router.get('/subscriptions', async (req: Request, res: Response) => {
     const rows = await listSubscriptions(organizationId);
     return res.json({ data: rows });
   } catch (error: any) {
-    return res.status(500).json({ error: error?.message ?? 'Internal error' });
+    return serverError(res, logger, 'loading subscriptions', error);
   }
 });
 
@@ -392,7 +396,7 @@ router.post('/subscriptions', async (req: Request, res: Response) => {
     });
     return res.status(201).json({ data: row });
   } catch (error: any) {
-    return res.status(500).json({ error: error?.message ?? 'Internal error' });
+    return serverError(res, logger, 'saving subscriptions', error);
   }
 });
 
@@ -417,7 +421,7 @@ router.patch('/subscriptions/:id', async (req: Request, res: Response) => {
     }
     return res.json({ data: row });
   } catch (error: any) {
-    return res.status(500).json({ error: error?.message ?? 'Internal error' });
+    return serverError(res, logger, 'updating subscriptions', error);
   }
 });
 

@@ -75,8 +75,14 @@ function getUserId(req: Request): number {
   throw new Error('Authentication required');
 }
 
+/**
+ * The actor's name for the audit row — never manufactured from their id.
+ * See the note on the same helper in routes/ai-actions.ts (ledger L142).
+ * 'unknown' matches the 'system' sentinel this file already uses a few hundred
+ * lines below for the genuinely unauthenticated case.
+ */
 function getUserName(req: Request): string {
-  return req.user?.email || `user-${getUserId(req)}`;
+  return req.user?.email || 'unknown';
 }
 
 function getUserRole(req: Request): string {

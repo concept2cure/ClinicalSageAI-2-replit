@@ -1256,7 +1256,7 @@ describe('mapImpurityProfilePayload — one row per impurity, assessed against I
        threshold, and says so: asserted over a register whose impurities were
        all refused, "none is above the reporting threshold" stated the opposite
        of the truth — nothing had been compared to anything. */
-    expect(s3.narrativeDraft).toContain('None of the 1 compared to an ICH threshold is above it');
+    expect(s3.narrativeDraft).toContain('None of the 1 compared to an ICH Q3A/Q3B threshold is above it');
     expect(s3.narrativeDraft).toContain('1 are below the reporting threshold');
     expect(tablesToMarkdown(s3.tables)).toContain('not above the reporting threshold');
   });
@@ -1281,12 +1281,35 @@ describe('mapImpurityProfilePayload — one row per impurity, assessed against I
   });
 
   it('refuses to apply a Q3A threshold to a class the guideline does not cover', () => {
+    /* Inorganic. A residual solvent and an elemental impurity USED to land here
+       too; they are governed by Q3C and Q3D, those tables are modelled, and
+       they are now assessed under them rather than refused. */
     const composed = composeModule3FromCanonicalSources([
-      src('impurity_profile', impurity({ impurityName: 'Lead', impurityType: 'elemental', observedLevel: '3', levelUnit: 'ppm' })),
+      src('impurity_profile', impurity({ impurityName: 'Chloride', impurityType: 'inorganic', observedLevel: '3', levelUnit: 'ppm' })),
     ]);
     const s3 = composed.find((c) => c.sectionKey === '3.2.S.3')!;
     expect(s3.narrativeDraft).toContain('cannot be compared to a threshold');
     expect(tablesToMarkdown(s3.tables)).toContain('does not set thresholds for this impurity class');
+  });
+
+  it('assesses an elemental impurity under Q3D once its route is recorded', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('impurity_profile', impurity({
+        impurityName: 'Pb', impurityType: 'elemental',
+        observedLevel: '3', levelUnit: 'µg/day', routeOfAdministration: 'oral',
+      })),
+    ]);
+    const s3 = composed.find((c) => c.sectionKey === '3.2.S.3')!;
+    expect(s3.narrativeDraft).toContain('assessed against ICH Q3D(R2)');
+    expect(tablesToMarkdown(s3.tables)).toContain('within the ICH Q3D');
+  });
+
+  it('refuses an elemental impurity whose route was never recorded', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('impurity_profile', impurity({ impurityName: 'Pb', impurityType: 'elemental', observedLevel: '3', levelUnit: 'µg/day' })),
+    ]);
+    expect(composed.find((c) => c.sectionKey === '3.2.S.3')!.narrativeDraft)
+      .toContain('route of administration is not recorded');
   });
 
   it('never states a total impurity figure from whatever rows are on file', () => {
@@ -1421,7 +1444,11 @@ describe('review: the impurity section claims only what it compared', () => {
        out-of-scope class. It stated the opposite of the truth. */
     const composed = composeModule3FromCanonicalSources([
       src('impurity_profile', impurity({ impurityName: 'Impurity A', maximumDailyDose: '' })),
-      src('impurity_profile', impurity({ impurityName: 'Methanol', impurityType: 'residual-solvent', levelUnit: 'ppm', observedLevel: '300' })),
+      /* A solvent OUTSIDE the Q3C catalog: still refused, and refused by name.
+         Methanol was the original example here and is now assessed under Q3C,
+         which is the point of that change — the refusal case had to move to a
+         record that genuinely cannot be assessed. */
+      src('impurity_profile', impurity({ impurityName: 'Chlorobutanol', impurityType: 'residual-solvent', levelUnit: 'ppm', observedLevel: '300' })),
     ]);
     const s3 = composed.find((c) => c.sectionKey === '3.2.S.3')!;
     expect(s3.narrativeDraft).toContain('None has been compared to an ICH threshold');
@@ -1429,6 +1456,8 @@ describe('review: the impurity section claims only what it compared', () => {
     expect(s3.narrativeDraft).toContain('cannot be compared to a threshold');
     // …and names the guideline that does govern the refused one.
     expect(s3.narrativeDraft).toContain('Q3C');
+    // …and never invents the Class 3 limit for a solvent it does not recognise.
+    expect(s3.narrativeDraft).not.toContain('5000');
   });
 
   it('does not report a section complete over impurities it cannot assess', () => {

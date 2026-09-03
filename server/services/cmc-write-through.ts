@@ -836,6 +836,11 @@ export function mapImpurityProfilePayload(record: Record<string, any>): Record<s
     analyticalMethod: alias(record, 'analyticalMethod', 'analytical_method'),
     observedLevel: String(observedLevel),
     levelUnit,
+    /* Carried so an elemental impurity can be assessed against the ICH Q3D
+       permitted daily exposure for the route it is actually given by. Without
+       it the assessment refuses, which is correct — Q3D's oral PDE is the most
+       permissive of the three for most elements and may not be assumed. */
+    routeOfAdministration: alias(record, 'routeOfAdministration', 'route_of_administration'),
     specificationLimit: alias(record, 'specificationLimit', 'specification_limit'),
     reportingThreshold: alias(record, 'reportingThreshold', 'reporting_threshold'),
     identificationThreshold: alias(record, 'identificationThreshold', 'identification_threshold'),

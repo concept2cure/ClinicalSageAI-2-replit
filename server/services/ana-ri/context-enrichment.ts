@@ -174,14 +174,23 @@ function buildChallengeOrRedteam(message: string, submissionType?: string): stri
 
 // ─── Enrichment functions ────────────────────────────────────────────────────
 
-async function enrichWithProjectMemory(
+// Reads project memory and returns the formatted block, `''` for a GENUINE
+// empty (no rows, or a legitimately-unprovisioned table), or `null` for a READ
+// FAILURE. The null is the honest signal a caller needs to tell "nothing
+// recorded" from "the read did not complete" — the difference between an
+// honest empty state and a manufactured absence asserted into the model's
+// prompt. `enrichWithProjectMemory` below collapses null → '' for the many
+// callers that only concatenate the block (a failed read simply omits it);
+// `enrichWithDomainMemory` keeps the distinction because it would otherwise
+// print "No {domain} data found" on a failed read.
+async function readProjectMemory(
   projectId: string | number,
   categories: string[],
   label: string,
   description: string,
   limit = 5,
   orgId?: number,
-): Promise<string> {
+): Promise<string | null> {
   try {
     const catPlaceholders = categories.map((_, i) => `$${i + 3}`).join(', ');
     const limitParam = `$${categories.length + 3}`;
@@ -206,9 +215,31 @@ async function enrichWithProjectMemory(
     }).join('\n');
 
     return `\n\n## ${label}\n${description}\n${items}`;
-  } catch (e: unknown) { logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
-    return '';
+  } catch (e: unknown) {
+    // A legitimately-unprovisioned table is a genuine "nothing recorded yet" —
+    // return '' so it reads as empty. Any OTHER error is a real read failure
+    // (timeout, dropped connection, SQL error): return null so a failed read is
+    // never laundered into a confident absence.
+    const code = (e as { code?: string })?.code;
+    if (code === '42P01') return '';
+    logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
+    return null;
   }
+}
+
+// Back-compat wrapper: a failed read is omitted (''), which is exactly the
+// fail-soft behavior every concatenating caller already relied on. Only
+// enrichWithDomainMemory reads readProjectMemory directly, because it is the
+// one caller that would otherwise assert a false absence on a failed read.
+async function enrichWithProjectMemory(
+  projectId: string | number,
+  categories: string[],
+  label: string,
+  description: string,
+  limit = 5,
+  orgId?: number,
+): Promise<string> {
+  return (await readProjectMemory(projectId, categories, label, description, limit, orgId)) ?? '';
 }
 
 async function enrichWithForesight(projectId: string | number, orgId?: number): Promise<string> {
@@ -618,8 +649,13 @@ async function enrichWithDecisions(
 }
 
 async function enrichWithDomainMemory(projectId: string | number, domain: string, categories: string[], label: string): Promise<string> {
-  const memBlock = await enrichWithProjectMemory(projectId, categories, label,
+  const memBlock = await readProjectMemory(projectId, categories, label,
     `Project-specific ${domain} data. Reference directly in your response.`, 5);
+  // A READ FAILURE (null) omits the block entirely — the model is told nothing
+  // rather than a false "No {domain} data found," which on a safety / CMC / CSR
+  // surface is a manufactured all-clear injected straight into the prompt. Only
+  // a genuine empty ('') earns the affirmative "nothing recorded yet" sentence.
+  if (memBlock === null) return '';
   return memBlock || `\n\n## ${label}\nNo ${domain} data found for this project yet. Ask the user what ${domain} work they need and gather parameters conversationally.`;
 }
 
@@ -815,6 +851,12 @@ async function enrichWithDiagnostics(projectId: string | number): Promise<string
 async function enrichWithBiostatContext(projectId: string | number, submissionType?: string, organizationId?: number): Promise<string> {
   // Inject biostatistics knowledge + project-specific signals
   const parts: string[] = [];
+  // A REAL read failure (not a missing table) must not be laundered into "No
+  // biostatistics signals found" — on a statistical-defensibility surface that
+  // is a manufactured all-clear in the model's prompt. Track it and omit the
+  // affirmative-absence sentence when the reads did not complete.
+  let readFailed = false;
+  const isMissingTable = (e: unknown) => (e as { code?: string })?.code === '42P01';
 
   // Get project biostat signals
   try {
@@ -832,7 +874,7 @@ async function enrichWithBiostatContext(projectId: string | number, submissionTy
       ).join('\n');
       parts.push(`**Active Biostat Signals (${result.rows.length}):**\n${signalLines}`);
     }
-  } catch { /* table might not exist yet */ }
+  } catch (e) { if (!isMissingTable(e)) readFailed = true; /* else: table not provisioned — a genuine empty */ }
 
   // Get existing assumptions
   try {
@@ -850,9 +892,11 @@ async function enrichWithBiostatContext(projectId: string | number, submissionTy
       ).join('\n');
       parts.push(`**Statistical Assumptions:**\n${assLines}`);
     }
-  } catch { /* table might not exist */ }
+  } catch (e) { if (!isMissingTable(e)) readFailed = true; /* else: table not provisioned — a genuine empty */ }
 
   if (parts.length === 0) {
+    // A failed read omits the block — assert nothing rather than a false empty.
+    if (readFailed) return '';
     return `\n\n## Biostatistics Context\nNo biostatistics signals or assumptions found for this project yet. You can compute sample size, generate SAP sections, run defensibility assessments, or design dose escalation protocols. Ask the user what statistical work they need.`;
   }
 
