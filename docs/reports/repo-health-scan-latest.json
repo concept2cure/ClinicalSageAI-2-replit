@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T03:22:50.179Z",
+  "generatedAt": "2026-09-03T03:24:54.300Z",
   "git": {
-    "sha": "98c6c18f632a4ac12a9f092fe65b467208f12aaf",
+    "sha": "445067e68ce20cb235bc5540af8f620a573db036",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2225,16 +2225,16 @@
         "bytes": 132966
       },
       {
+        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
+        "bytes": 132755
+      },
+      {
         "file": "shared/regulatory/global-document-registry.ts",
         "bytes": 131820
       },
       {
         "file": "server/services/module3Composer.ts",
         "bytes": 130739
-      },
-      {
-        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
-        "bytes": 130466
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2355,16 +2355,16 @@
         "lines": 3326
       },
       {
+        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
+        "lines": 3119
+      },
+      {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
         "lines": 3116
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
         "lines": 3092
-      },
-      {
-        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
-        "lines": 3089
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
