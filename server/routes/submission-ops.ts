@@ -74,6 +74,7 @@ import {
   readBundleBytes,
 } from '../services/submission-bundle-storage';
 import { validateEctdLeafs } from '../services/submission-gateways/ectd-structural-validator';
+import { ValidationError as PackagerValidationError } from '../services/submission-gateways/types';
 import type { EctdFinding } from '../services/submission-gateways/ectd-structural-validator';
 import {
   VALIDATOR_REGISTRY,
@@ -1897,10 +1898,16 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           : `s${section.id}`;
         const fileName = ectdLeafFileName(leafSlug(section.sectionKey), disc, seenPaths);
         seenPaths.add(fileName);
-        // Module-level path for the internal structural validator (which checks
-        // media type, %PDF magic, empty markers and Module 1 presence). The
-        // packager derives the real in-package path from the CTD section.
-        const modulePath = `m${placement.code.split('.')[0]}/${fileName}`;
+        // The leaf's IN-PACKAGE path, derived the way the canonical packager
+        // derives it (`m<module>/<section-dashed>/<file>`, Module 1 under the
+        // region directory), so the validator's findings cite a path that
+        // exists in the zip rather than a module-level approximation.
+        const moduleDigit = placement.code.split('.')[0];
+        const sectionDashed = placement.code.replace(/\./g, '-');
+        const modulePath =
+          moduleDigit === '1'
+            ? `m1/${regionCode}/${sectionDashed}/${fileName}`
+            : `m${moduleDigit}/${sectionDashed}/${fileName}`;
 
         let markdown: string;
         if (!artifact) {
@@ -1996,6 +2003,46 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           dtdStatus: canonical.dtdStatus,
           regionalBackbone: canonical.regionalBackbone,
         };
+      } catch (packErr) {
+        if (!(packErr instanceof PackagerValidationError)) throw packErr;
+        // The packager REFUSED the package (its findings say why). This used to
+        // surface as a bare 500 with the findings lost, while the previous
+        // descriptor on metadata.bundle stayed intact and transmittable — a
+        // failed re-assembly left an old zip as the package's bundle. Persist
+        // the refusal as blocking findings, clear the stale descriptor, and
+        // answer 422 so the caller sees the reasons.
+        for (const f of packErr.findings ?? []) {
+          const message =
+            f && typeof f === 'object' && typeof (f as { message?: unknown }).message === 'string'
+              ? (f as { message: string }).message
+              : String(f);
+          validation.findings.push({ severity: 'error', ruleId: 'PACKAGER-REFUSED', message });
+          validation.errorCount += 1;
+        }
+        if (!(packErr.findings ?? []).length) {
+          validation.findings.push({ severity: 'error', ruleId: 'PACKAGER-REFUSED', message: packErr.message });
+          validation.errorCount += 1;
+        }
+        const { bundle: _staleBundle, ...metadataWithoutBundle } = existingMetadata;
+        const refusal = {
+          errorCount: validation.errorCount,
+          warningCount: validation.warningCount,
+          infoCount: validation.infoCount,
+          findings: validation.findings,
+        };
+        await db
+          .update(c2cSubmissionPackages)
+          .set({
+            metadata: { ...metadataWithoutBundle, assemblyRefusal: { at: new Date().toISOString(), by: userId, validation: refusal } },
+            updatedAt: new Date(),
+          })
+          .where(eq(c2cSubmissionPackages.id, pkg.id));
+        return res.status(422).json({
+          error: packErr.message,
+          code: 'PACKAGER_REFUSED',
+          staleBundleCleared: _staleBundle !== undefined,
+          validation: refusal,
+        });
       } finally {
         await fs.promises.rm(work, { recursive: true, force: true }).catch(() => {});
       }
