@@ -10770,8 +10770,10 @@ registerToolHandler('update_consent_element', async (input, ctx) => {
   if (!Number.isInteger(elementId)) return JSON.stringify({ error: 'element_id is required.' });
   const { updateElementTx } = await import('../protocol-consent/protocol-consent-service.js');
   return governedPdev(ctx, 'update', `consent-element:${elementId}`, 'Consent element updated via AnA', input, async (client) => {
-    await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, present: typeof input.present === 'boolean' ? input.present : undefined });
-    return { elementId };
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
+    const { sources, dropped } = await resolveDraftSources(ctx.organizationId!, input.sources, client);
+    const gate = await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, present: typeof input.present === 'boolean' ? input.present : undefined, sources }, ctx.userId!);
+    return { elementId, lineage: describeDraftLineage(gate, sources, dropped) };
   });
 });
 
@@ -10813,8 +10815,10 @@ registerToolHandler('update_dms_plan_element', async (input, ctx) => {
   if (!Number.isInteger(elementId)) return JSON.stringify({ error: 'element_id is required.' });
   const { updateElementTx } = await import('../dmsp/dmsp-service.js');
   return governedPdev(ctx, 'update', `dms-plan-element:${elementId}`, 'DMS plan element updated via AnA', input, async (client) => {
-    await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined });
-    return { elementId };
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
+    const { sources, dropped } = await resolveDraftSources(ctx.organizationId!, input.sources, client);
+    const gate = await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined, sources }, ctx.userId!);
+    return { elementId, lineage: describeDraftLineage(gate, sources, dropped) };
   });
 });
 

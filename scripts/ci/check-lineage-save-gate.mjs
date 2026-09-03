@@ -80,6 +80,24 @@ const GUARDED = [
     why: 'PATCH /:sectionId and POST /:sectionId/accept-ana-draft write device kit section prose (cerv2_510k_sections.content) — the surfaces a 510(k)/PMA/CER is assembled from',
   },
   {
+    file: 'server/services/dmsp/dmsp-service.ts',
+    why: 'updateElementTx writes NIH Data Management & Sharing Plan prose (dms_plan_elements.content)',
+    transaction: 'caller',
+    txOwners: [
+      'server/routes/dmsp.ts', // governed() opens the transaction
+      'server/services/ana/AnaToolExecutor.ts', // update_dms_plan_element opens the transaction
+    ],
+  },
+  {
+    file: 'server/services/protocol-consent/protocol-consent-service.ts',
+    why: 'updateElementTx writes informed-consent form prose (consent_form_elements.content)',
+    transaction: 'caller',
+    txOwners: [
+      'server/routes/protocol-consent.ts', // governed() opens the transaction
+      'server/services/ana/AnaToolExecutor.ts', // update_consent_element opens the transaction
+    ],
+  },
+  {
     file: 'server/routes/q-sub.ts',
     why: 'PUT /:id/sections/:sectionKey writes device Q-Sub section prose (q_sub_section_bodies.content)',
   },
