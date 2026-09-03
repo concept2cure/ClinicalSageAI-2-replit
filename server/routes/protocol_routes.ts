@@ -459,7 +459,7 @@ router.post('/parse-file', upload.single('file'), async (req, res) => {
       // For other file types, use appropriate extraction methods
       try {
         extractedText = fs.readFileSync(filePath, 'utf8');
-      } catch (readError) {
+      } catch {
         return res.status(422).json({
           success: false,
           message: 'Could not read file content',

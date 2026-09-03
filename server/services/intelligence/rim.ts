@@ -16,7 +16,6 @@
 
 import {
   computeReadinessScore,
-  type ReadinessScore,
 } from './readiness-scoring-engine.js';
 
 import {

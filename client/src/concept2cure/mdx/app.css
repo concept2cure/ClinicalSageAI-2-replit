@@ -32,6 +32,19 @@
   --ana-seam:       32px;
 
   --black: #141413;
+
+  /* Status/severity tone pairs for the ported mdx surfaces — see the
+     "Ported surfaces" deviation notes further down. */
+  --mdx-tone-ok-bg:   #ecf1e4;  --mdx-tone-ok-fg:   #4d6235;  --mdx-tone-ok-line:   #cfd9bd;
+  --mdx-tone-warn-bg: #f6e9cf;  --mdx-tone-warn-fg: #7e5510;  --mdx-tone-warn-line: #e2c98c;
+  --mdx-tone-err-bg:  #f3d6d2;  --mdx-tone-err-fg:  #7c1f1f;  --mdx-tone-err-line:  #dca5a0;
+  --mdx-tone-info-bg: #e2e8f5;  --mdx-tone-info-fg: #355270;
+  --mdx-tone-alt-bg:  #ece9f7;  --mdx-tone-alt-fg:  #544698;
+  /* Muted variants — the ISO 14971 heat map's zero-count cells, which carry a
+     tone (the cell's risk band) with no count to print. */
+  --mdx-tone-ok-bg-muted:   #f5f6ef;  --mdx-tone-ok-line-muted:   #e6e9d8;
+  --mdx-tone-warn-bg-muted: #f8efde;  --mdx-tone-warn-line-muted: #e9d6a8;
+  --mdx-tone-err-bg-muted:  #f6e6e3;  --mdx-tone-err-line-muted:  #ecbeb6;
 }
 
 /* ─── Reset ─── */
@@ -3053,19 +3066,9 @@
    divergence forced no choice here.
    ═════════════════════════════════════════════════════════════ */
 
-.mdx-shell {
-  /* Status/severity tone pairs — see deviation 4 above. */
-  --mdx-tone-ok-bg:   #ecf1e4;  --mdx-tone-ok-fg:   #4d6235;  --mdx-tone-ok-line:   #cfd9bd;
-  --mdx-tone-warn-bg: #f6e9cf;  --mdx-tone-warn-fg: #7e5510;  --mdx-tone-warn-line: #e2c98c;
-  --mdx-tone-err-bg:  #f3d6d2;  --mdx-tone-err-fg:  #7c1f1f;  --mdx-tone-err-line:  #dca5a0;
-  --mdx-tone-info-bg: #e2e8f5;  --mdx-tone-info-fg: #355270;
-  --mdx-tone-alt-bg:  #ece9f7;  --mdx-tone-alt-fg:  #544698;
-  /* Muted variants — the ISO 14971 heat map's zero-count cells, which carry a
-     tone (the cell's risk band) with no count to print. */
-  --mdx-tone-ok-bg-muted:   #f5f6ef;  --mdx-tone-ok-line-muted:   #e6e9d8;
-  --mdx-tone-warn-bg-muted: #f8efde;  --mdx-tone-warn-line-muted: #e9d6a8;
-  --mdx-tone-err-bg-muted:  #f6e6e3;  --mdx-tone-err-line-muted:  #ecbeb6;
-}
+/* The status/severity tone pairs the ported mdx surfaces read (deviation 4
+   above) are declared with the shell's other custom properties at the top of
+   this file — one `.mdx-shell` block, so nothing shadows silently. */
 
 .mdx-shell .small-mono {
   font-family: var(--font-mono);

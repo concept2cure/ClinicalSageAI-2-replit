@@ -322,7 +322,12 @@ describe('POST /stability-studies/poolability — the verdict', () => {
     const water = r.body.data.assessments.find((a: any) => a.parameter === 'Water');
     const assay = r.body.data.assessments.find((a: any) => a.parameter === 'Assay');
     expect(water.direction).toBe('increasing');
-    expect(water.shelfLife).toBeLessThan(assay.shelfLife);
+    // Both attributes run past the ICH Q1E extrapolation limit, so both
+    // PROPOSABLE shelf lives are the cap and tie. The statistical crossing —
+    // where each attribute's data actually run out — is what makes water the
+    // limiting attribute rather than its position in the record.
+    expect(water.shelfLife).toBe(assay.shelfLife);
+    expect(water.statisticalCrossing).toBeLessThan(assay.statisticalCrossing);
     expect(r.body.data.supportedShelfLife).toBe(water.shelfLife);
   });
 });

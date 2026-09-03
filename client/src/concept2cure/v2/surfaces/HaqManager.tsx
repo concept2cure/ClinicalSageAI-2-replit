@@ -237,7 +237,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
             ((q && q.id) || 'question'),
         });
       }
-    } catch (_e) {
+    } catch {
       /* noop */
     }
   }, [effActiveId, effRoundId]);

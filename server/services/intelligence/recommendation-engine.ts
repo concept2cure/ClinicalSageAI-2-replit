@@ -18,11 +18,9 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../../db.js';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import {
   projectIntelligenceProfiles,
-  projectMemoryEntries,
-  projects,
 } from '../../../shared/schema.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════

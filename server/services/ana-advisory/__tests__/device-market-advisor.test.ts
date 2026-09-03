@@ -26,6 +26,13 @@ const COMPLETE_510K_LEAVES: EstarInputLeaf[] = [
   { sectionCode: 'bio', title: 'Biocompatibility', documentType: 'biocompatibility', substantive: true },
   { sectionCode: 'perf', title: 'Performance testing', documentType: 'performance_testing', substantive: true },
   { sectionCode: 'se', title: 'Substantial equivalence', documentType: 'substantial_equivalence', substantive: true },
+  // Always-required since W1-5: the statutory administrative forms and the
+  // risk file are part of every 510(k), so a "complete" set carries them.
+  { sectionCode: '3514', title: 'CDRH Premarket Review Submission Cover Sheet', documentType: 'cdrh_cover_sheet', substantive: true },
+  { sectionCode: '3601', title: 'MDUFA user fee cover sheet', documentType: 'user_fee', substantive: true },
+  { sectionCode: 'tas', title: 'Truthful and Accurate Statement', documentType: 'truthful_accurate', substantive: true },
+  { sectionCode: 'rm', title: 'Risk management file', documentType: 'risk_management', substantive: true },
+  { sectionCode: 'sum', title: '510(k) Summary', documentType: '510k_summary', substantive: true },
 ];
 
 const OFFICIAL_510K_DEVICE_TEMPLATE = 'eSTAR-510k-non-ivd.pdf';

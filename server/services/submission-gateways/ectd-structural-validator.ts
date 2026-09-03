@@ -41,6 +41,8 @@ export interface EctdValidationResult {
   findings: EctdFinding[];
 }
 
+import { FILENAME_PATTERN } from '../ectd/ectd-regional-rules';
+
 const PDF_MAGIC = Buffer.from('%PDF-', 'utf8');
 const EMPTY_SECTION_MARKER = '[EMPTY SECTION]';
 
@@ -57,10 +59,14 @@ interface EctdLeaf {
  * @param opts.region eCTD region (informational; reserved for region rules).
  * @param opts.emptyLeafPaths Paths the caller already flagged empty (in addition
  *        to leafs whose content begins with the `[EMPTY SECTION]` marker).
+ * @param opts.enforceFileNames Apply the eCTD leaf file-name rule
+ *        (FILENAME_PATTERN: lowercase [a-z0-9.-], ≤ 64 characters including the
+ *        extension) as an ERROR. Set for eCTD bundles; a device form (eSTAR /
+ *        EUDAMED) is not an eCTD leaf and is not subject to it.
  */
 export function validateEctdLeafs(
   leafs: EctdLeaf[],
-  opts: { region: string; emptyLeafPaths?: string[] },
+  opts: { region: string; emptyLeafPaths?: string[]; enforceFileNames?: boolean },
 ): EctdValidationResult {
   const findings: EctdFinding[] = [];
   const emptySet = new Set(opts.emptyLeafPaths ?? []);
@@ -98,6 +104,22 @@ export function validateEctdLeafs(
         message: 'PDF leaf does not begin with the %PDF- magic bytes (corrupt or non-PDF content).',
         filePath: leaf.path,
       });
+    }
+
+    // LEAF-FILENAME: the eCTD file-name rule the regional validator treats as
+    // blocking (EMA-CESP-005). Nothing on the assemble/transmit path applied it
+    // before, so a long section key shipped an 84-character leaf name with a
+    // clean gate.
+    if (opts.enforceFileNames) {
+      const baseName = leaf.path.slice(leaf.path.lastIndexOf('/') + 1);
+      if (!FILENAME_PATTERN.test(baseName)) {
+        findings.push({
+          severity: 'error',
+          ruleId: 'LEAF-FILENAME',
+          message: `Leaf file name '${baseName}' breaks the eCTD file-name rule (lowercase a-z, 0-9, '.', '-'; at most 64 characters including the extension).`,
+          filePath: leaf.path,
+        });
+      }
     }
 
     // SECTION-EMPTY: an empty-section placeholder leaf (warning, not blocking).

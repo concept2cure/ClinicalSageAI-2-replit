@@ -14,7 +14,7 @@
  */
 
 import { db } from '../../db.js';
-import { eq, and, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES

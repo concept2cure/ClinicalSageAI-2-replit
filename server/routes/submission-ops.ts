@@ -37,10 +37,8 @@ import {
   c2cAutomationActions,
   c2cDigests,
   concept2cureArtifacts,
-  concept2cureReviewThreads,
   concept2cureReviewTasks,
   concept2cureReviewAssignments,
-  concept2cureNotifications,
 } from '../../shared/schema';
 import { eq, and, desc, sql, count, inArray, isNull, asc } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
@@ -56,6 +54,11 @@ import { buildECTDZip } from '../src/services/ectd';
 // conformant one (see server/services/ectd/package-leaf-bytes.ts).
 import { packageLeafBytes } from '../services/ectd/package-leaf-bytes';
 import { moduleForSectionKey, resolveArtifactPlacement } from '../services/ectd/section-to-ctd';
+import {
+  readRegulatoryIdentifiers,
+  usableIdentifier,
+  REGULATORY_IDENTIFIER_FIELDS,
+} from '../services/ectd/regulatory-identifiers';
 import { recordGovernedAction } from './c2c/actions';
 import PDFDocument from 'pdfkit';
 import { PassThrough } from 'stream';
@@ -1452,6 +1455,24 @@ function leafSlug(value: string): string {
 }
 
 /**
+ * Compose `<base>-<disc>.pdf` within the eCTD file-name limit (FILENAME_PATTERN:
+ * 64 characters including the extension), trimming the base — never the
+ * discriminator — and appending a numeric tiebreaker only when the name is
+ * already taken. The result always satisfies FILENAME_PATTERN.
+ */
+function ectdLeafFileName(base: string, disc: string, taken: Set<string>): string {
+  const MAX = 64;
+  const compose = (suffix: string): string => {
+    const tail = `-${disc}${suffix}.pdf`;
+    const head = base.slice(0, Math.max(1, MAX - tail.length)).replace(/-+$/, '') || 'leaf';
+    return `${head}${tail}`;
+  };
+  let name = compose('');
+  for (let n = 2; taken.has(name); n += 1) name = compose(`-${n}`);
+  return name;
+}
+
+/**
  * Best-effort ICH module (1–5) for a c2c_package_sections sectionKey. These
  * keys are semantic (e.g. `module3_cmc`, `labeling`, `cer`), not ICH-numeric,
  * so we derive the module from, in order: an explicit module-N prefix, an
@@ -1528,6 +1549,133 @@ const assembleBody = z.object({
  * the bundle hash bound to a frozen package. Re-assembling overwrites (idempotent
  * per content); no confirmation header is required.
  */
+/**
+ * PUT /packages/:packageId/regulatory-identifiers
+ *
+ * Record the agency application number and applicant identity the regional
+ * Module 1 backbone must carry. The assemble route REFUSES to fabricate them
+ * (REGULATORY-IDENTIFIER-MISSING blocks transmit), and the package model has no
+ * columns for them, so this is the governed way to supply them:
+ *   - the same charset contract as the assemble gate (shared module) — a value
+ *     that cannot be carried safely in a filename / XML text is refused, never
+ *     silently normalized;
+ *   - allowed on a locked package (assembly requires the lock), but a bundle
+ *     assembled under different identifiers is STALE (its backbone carries the
+ *     old ones) and is cleared so the transmit gate cannot ship it;
+ *   - recorded as a governed action with the caller's reason.
+ */
+const regulatoryIdentifiersBody = z.object({
+  applicationNumber: z.string().min(1).max(64),
+  applicantId: z.string().min(1).max(64),
+  applicantName: z.string().min(1).max(200),
+  reason: z.string().min(8, 'reason must be at least 8 characters'),
+});
+
+router.put('/packages/:packageId/regulatory-identifiers', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+
+    const parsed = regulatoryIdentifiersBody.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
+    const invalid = REGULATORY_IDENTIFIER_FIELDS.filter((f) => usableIdentifier(f, parsed.data[f]) === null);
+    if (invalid.length > 0) {
+      return res.status(400).json({
+        error:
+          `Identifier(s) do not meet the agency-identifier contract: ${invalid.join(', ')}. ` +
+          'Application number and applicant id: letters, digits, ".", "_" or "-" (start alphanumeric, max 64). ' +
+          'Applicant name: no control characters, max 200.',
+        code: 'REGULATORY_IDENTIFIER_INVALID',
+        fields: invalid,
+      });
+    }
+
+    const [pkg] = await db
+      .select()
+      .from(c2cSubmissionPackages)
+      .where(
+        and(
+          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          eq(c2cSubmissionPackages.orgId, orgId),
+        ),
+      );
+    if (!pkg) return res.status(404).json({ error: 'Package not found' });
+
+    const existingMetadata =
+      pkg.metadata && typeof pkg.metadata === 'object' ? (pkg.metadata as Record<string, unknown>) : {};
+    const previous = readRegulatoryIdentifiers(existingMetadata).values;
+    const next = {
+      applicationNumber: usableIdentifier('applicationNumber', parsed.data.applicationNumber)!,
+      applicantId: usableIdentifier('applicantId', parsed.data.applicantId)!,
+      applicantName: usableIdentifier('applicantName', parsed.data.applicantName)!,
+    };
+    const changed = REGULATORY_IDENTIFIER_FIELDS.some((f) => previous[f] !== next[f]);
+    const regulatory = { ...next, recordedAt: new Date().toISOString(), recordedBy: userId };
+
+    // A bundle assembled under different identifiers carries the OLD ones in its
+    // backbone. Clear it so the transmit gate cannot ship it; re-assemble.
+    const { bundle: existingBundle, ...metadataWithoutBundle } = existingMetadata;
+    const staleBundleCleared = changed && existingBundle !== undefined;
+    const metadata = staleBundleCleared
+      ? { ...metadataWithoutBundle, regulatory }
+      : { ...existingMetadata, regulatory };
+
+    await db
+      .update(c2cSubmissionPackages)
+      .set({ metadata, updatedAt: new Date() })
+      .where(eq(c2cSubmissionPackages.id, pkg.id));
+
+    // Governed action, same posture as assemble: the write is real and must not
+    // be lost over an audit outage, but the caller is told when the ledger row
+    // could not be written.
+    let ledgerWriteFailed = false;
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await recordGovernedAction(client as any, {
+          orgId,
+          userId,
+          command: 'transition',
+          target: `submission:${pkg.id}`,
+          reason: parsed.data.reason,
+          payload: {
+            change: 'regulatory-identifiers',
+            applicationNumber: next.applicationNumber,
+            applicantId: next.applicantId,
+            applicantName: next.applicantName,
+            changed,
+            staleBundleCleared,
+          },
+          domain: 'mdx',
+          surface: 'submission-gateway',
+        });
+        await client.query('COMMIT');
+      } catch (ledgerErr) {
+        try { await client.query('ROLLBACK'); } catch { /* noop */ }
+        throw ledgerErr;
+      } finally {
+        client.release();
+      }
+    } catch (ledgerErr) {
+      ledgerWriteFailed = true;
+      console.error(
+        '[submission-ops] regulatory-identifiers-ledger-write-failed',
+        ledgerErr instanceof Error ? ledgerErr.message : ledgerErr,
+      );
+    }
+
+    return res.json({
+      success: true,
+      data: { packageId: pkg.packageId, regulatory, changed, staleBundleCleared, ledgerWriteFailed },
+    });
+  } catch (e) {
+    return serverError(res, logger, 'recording regulatory identifiers', e);
+  }
+});
+
 router.post('/packages/:packageId/assemble', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
@@ -1583,12 +1731,21 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       }
       return { region: resolvedRegion, format: resolvedFormat };
     })();
-    if (
-      (format === 'ectd' || format === 'pmda_ectd') &&
-      (format === 'pmda_ectd') !== (region === 'PMDA')
-    ) {
+    // Every format pins its region: pmda_ectd ⇔ PMDA; ectd ⇔ FDA or EMA;
+    // estar ⇔ FDA (an eSTAR is a CDRH form); eudamed_register ⇔ EMA. A body
+    // override that contradicts the format is a 400 for device families too —
+    // the check used to guard only the two eCTD formats, so {region:'PMDA'} on
+    // a 510(k) built an 'estar' bundle with Japanese Module 1 paths.
+    const requiredRegion =
+      format === 'pmda_ectd' ? 'PMDA' : format === 'estar' ? 'FDA' : format === 'eudamed_register' ? 'EMA' : null;
+    const regionFormatConsistent = requiredRegion
+      ? region === requiredRegion
+      : !(format === 'ectd' && region === 'PMDA');
+    if (!regionFormatConsistent) {
       return res.status(400).json({
-        error: `format '${format}' is inconsistent with region '${region}': pmda_ectd is the PMDA format and ectd is the FDA/EMA format.`,
+        error:
+          `format '${format}' is inconsistent with region '${region}': ` +
+          (requiredRegion ? `${format} is the ${requiredRegion} format.` : 'ectd is the FDA/EMA format; PMDA uses pmda_ectd.'),
         code: 'REGION_FORMAT_MISMATCH',
       });
     }
@@ -1614,6 +1771,8 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     // `leafs` is ALWAYS the set that ships — validation, counts and the ledger
     // are computed over it, never over a parallel list that can diverge.
     const isEctdFormat = format === 'ectd' || format === 'pmda_ectd';
+    // Placement is region-aware: Module 1 headings are published per agency.
+    const packagerRegion = region === 'EMA' ? 'ema' : region === 'PMDA' ? 'pmda' : 'fda';
     const seenPaths = new Set<string>();
     const leafs: { path: string; mediaType: string; content: Buffer }[] = [];
     const emptyLeafPaths: string[] = [];
@@ -1622,6 +1781,11 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     // Placement findings (unplaced / disagreement), merged into the validation
     // result below so the governed transmit gate sees them.
     const placementFindings: Array<{ severity: 'error' | 'warning'; ruleId: string; message: string }> = [];
+    // An artifact ships as ONE leaf. The section map has no uniqueness on
+    // (artifact, section), so a duplicate row — or the same artifact mapped
+    // into two sections — used to ship a second copy under a suffixed name with
+    // no finding. artifactDbId → the section label it shipped from.
+    const shippedArtifacts = new Map<number, string>();
 
     for (const section of sections) {
       const mapped = await db
@@ -1679,13 +1843,21 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       // unit becomes a blocking LEAF-UNPLACED finding so transmit refuses it.
       const units =
         mapped.length === 0
-          ? [{ artifact: null, placement: resolveArtifactPlacement(section.sectionKey, null) }]
-          : mapped.map((a) => ({ artifact: a, placement: resolveArtifactPlacement(section.sectionKey, a.ctdSection) }));
+          ? [{ artifact: null, placement: resolveArtifactPlacement(section.sectionKey, null, packagerRegion) }]
+          : mapped.map((a) => ({ artifact: a, placement: resolveArtifactPlacement(section.sectionKey, a.ctdSection, packagerRegion) }));
 
       for (const { artifact, placement } of units) {
         const unitLabel = artifact
           ? `${artifact.title} (${artifact.artifactId} v${artifact.version}) in ${sectionLabel}`
           : sectionLabel;
+        if (artifact && shippedArtifacts.has(artifact.artifactDbId)) {
+          placementFindings.push({
+            severity: 'warning',
+            ruleId: 'LEAF-DUPLICATE-MAPPING',
+            message: `${unitLabel}: this artifact already ships as a leaf from ${shippedArtifacts.get(artifact.artifactDbId)}; an artifact is one leaf, so this mapping was skipped. Remove the duplicate mapping.`,
+          });
+          continue;
+        }
         if (!placement.code) {
           const sectionModule = moduleForSectionKey(section.sectionKey);
           placementFindings.push({
@@ -1714,11 +1886,16 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           });
         }
 
-        const slug = leafSlug(artifact ? `${section.sectionKey}-${artifact.artifactId}` : section.sectionKey);
-        let fileName = `${slug}.pdf`;
-        if (seenPaths.has(fileName)) {
-          fileName = `${slug}-${artifact ? artifact.artifactDbId : section.id}.pdf`;
-        }
+        // eCTD file names are lowercase [a-z0-9.-] and at most 64 characters
+        // INCLUDING the extension (FILENAME_PATTERN). The section slug is cut to
+        // the budget left after a discriminator — the artifact id's random
+        // suffix, or the section id for a placeholder — so two artifacts in one
+        // section never collide and a long section key cannot overflow the rule
+        // (it used to reach 84 characters with no finding).
+        const disc = artifact
+          ? artifact.artifactId.replace(/^artifact_/, '').slice(-12).toLowerCase().replace(/[^a-z0-9]/g, '') || `a${artifact.artifactDbId}`
+          : `s${section.id}`;
+        const fileName = ectdLeafFileName(leafSlug(section.sectionKey), disc, seenPaths);
         seenPaths.add(fileName);
         // Module-level path for the internal structural validator (which checks
         // media type, %PDF magic, empty markers and Module 1 presence). The
@@ -1737,13 +1914,14 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         const bytes = await buildLeafPdf(title, markdown);
         ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title });
         leafs.push({ path: modulePath, mediaType: 'application/pdf', content: bytes });
+        if (artifact) shippedArtifacts.set(artifact.artifactDbId, sectionLabel);
       }
     }
 
     // Internal eCTD structural validation (pre-flight). Findings are stored on
     // the descriptor and surfaced to the UI; transmit hard-blocks on errors.
     // This is INTERNAL structural validation only — NOT an agency validator.
-    const validation = validateEctdLeafs(leafs, { region, emptyLeafPaths });
+    const validation = validateEctdLeafs(leafs, { region, emptyLeafPaths, enforceFileNames: isEctdFormat });
 
     // Assemble the real zip buffer.
     //
@@ -1785,25 +1963,9 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       // values that say UNASSIGNED, and a blocking finding is recorded — never
       // an internal id dressed up as an agency identifier. Both also become
       // filename components in the packager, so the charset is enforced.
-      const IDENT = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
-      const regulatory =
-        existingMetadata.regulatory && typeof existingMetadata.regulatory === 'object'
-          ? (existingMetadata.regulatory as Record<string, unknown>)
-          : {};
-      const ident = (key: string, pattern: RegExp = IDENT): string | null => {
-        const v = regulatory[key];
-        return typeof v === 'string' && pattern.test(v.trim()) ? v.trim() : null;
-      };
-      const applicationNumber = ident('applicationNumber');
-      const applicantId = ident('applicantId');
-      // Names may contain spaces/punctuation; only control characters (which
-      // would break the XML backbone) are refused.
-      const applicantName = ident('applicantName', /^[^\x00-\x1f\x7f]{1,200}$/);
-      const missingIdentifiers = [
-        !applicationNumber && 'regulatory.applicationNumber',
-        !applicantId && 'regulatory.applicantId',
-        !applicantName && 'regulatory.applicantName',
-      ].filter((x): x is string => typeof x === 'string');
+      const identifiers = readRegulatoryIdentifiers(existingMetadata);
+      const { applicationNumber, applicantId, applicantName } = identifiers.values;
+      const missingIdentifiers = identifiers.missing;
       if (missingIdentifiers.length > 0) {
         validation.findings.push({
           severity: 'error',
@@ -1813,7 +1975,6 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         validation.errorCount += 1;
       }
 
-      const packagerRegion = region === 'EMA' ? 'ema' : region === 'PMDA' ? 'pmda' : 'fda';
       const work = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'c2c-assemble-'));
       try {
         const canonical = await packageLeafBytes({
@@ -1886,6 +2047,9 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       // The format the package was actually BUILT as (the packager's own), so a
       // PMDA build can never be persisted labelled as FDA/EMA eCTD.
       format: canonicalEvidence?.format ?? format,
+      // The region the bundle was BUILT for, so a downstream reader can detect a
+      // contradiction without inferring it from the backbone.
+      region,
       leafCount: leafs.length,
       emptyLeafCount,
       storage,

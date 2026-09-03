@@ -204,6 +204,11 @@ export function adaptChatMessage(m: AnaChatMessage): AnaMessage {
       toolCalls: m.toolCalls,
       thinking: m.thinking,
       draftTitle: m.generatedDraft?.title,
+      /* The clock. Sent-at has been on every turn since the hook was written
+         and was dropped here like the rest; completed-at is recorded on
+         post_done, stop and failure. */
+      startedAt: m.sentAt,
+      completedAt: m.completedAt,
     },
   };
 }

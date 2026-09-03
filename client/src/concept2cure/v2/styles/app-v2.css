@@ -1720,6 +1720,9 @@
 .c2c-v2 .ana-activity-toggle svg{font-size:12px;}
 .c2c-v2 .ana-activity-body{display:flex;flex-direction:column;gap:3px;margin-top:5px;padding-left:9px;border-left:1px solid var(--border);}
 .c2c-v2 .ana-activity-phase{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-300);}
+/* The running clock beside the live phase: tabular so "57s" → "1m 00s" does
+   not jiggle the line, and the same --text-300 as the phase it qualifies. */
+.c2c-v2 .ana-activity-clock{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--text-300);}
 /* Indented to the same text column as the phase and the step rows, which begin
    after a 12px glyph and a 6px gap. Flush left, it read as a PARENT of the
    line above it rather than a sibling. */
@@ -1810,23 +1813,30 @@
 .c2c-v2 .ana-work-current{grid-column:2 / span 2;display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-300);}
 .c2c-v2 .ana-work-current svg{font-size:11px;}
 /* Steps, queue rows and outputs share one row shape. */
-.c2c-v2 .ana-work-step{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:11.5px;color:var(--text-300);}
-.c2c-v2 .ana-work-glyph{display:inline-flex;color:var(--text-400);}
+/* A grid, not a wrapping flex row: glyph | label | trailing on one line, with
+   the label free to wrap INSIDE its column. The first version wrapped the whole
+   row, so a long label ("Searching the literature for IRB accreditation
+   standards") pushed the check onto a line of its own and "done" onto a third —
+   seen in the Chromium render, not in jsdom. Notes, the inputs link and the
+   inputs block take their own line under the label. */
+.c2c-v2 .ana-work-step{display:grid;grid-template-columns:12px minmax(0,1fr) auto;column-gap:6px;row-gap:3px;align-items:start;font-size:11.5px;line-height:1.45;color:var(--text-300);}
+.c2c-v2 .ana-work-glyph{display:inline-flex;color:var(--text-400);margin-top:2px;}
 .c2c-v2 .ana-work-glyph svg{font-size:12px;}
 .c2c-v2 .ana-work-step.is-success .ana-work-glyph{color:var(--success);}
 .c2c-v2 .ana-work-step.is-error .ana-work-glyph{color:var(--warning);}
 .c2c-v2 .ana-work-step.is-running .ana-work-glyph{color:var(--accent-200);}
-.c2c-v2 .ana-work-step-l{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;}
-.c2c-v2 .ana-work-step-t{font-size:10.5px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
-.c2c-v2 .ana-work-note{color:var(--warning);font-size:10.5px;flex:1 0 100%;box-sizing:border-box;padding-left:18px;}
-.c2c-v2 .ana-work-link{font:inherit;font-size:10.5px;color:var(--text-300);background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;transition:color 200ms ease-out;}
+.c2c-v2 .ana-work-step-l{min-width:0;overflow-wrap:anywhere;}
+.c2c-v2 .ana-work-step-t{font-size:10.5px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;padding-top:1px;}
+.c2c-v2 .ana-work-note{grid-column:2 / -1;color:var(--warning);font-size:10.5px;}
+.c2c-v2 .ana-work-link{grid-column:2;justify-self:start;font:inherit;font-size:10.5px;color:var(--text-300);background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;transition:color 200ms ease-out;}
 .c2c-v2 .ana-work-link:hover{color:var(--text-100);}
 .c2c-v2 .ana-work-link:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:var(--radius-sm);}
-.c2c-v2 .ana-work-pre{flex:1 0 100%;box-sizing:border-box;margin:0;padding:6px 8px;max-height:160px;overflow:auto;font-family:var(--font-mono);font-size:10.5px;line-height:1.5;color:var(--text-200);background:var(--bg-100);border:1px solid var(--border);border-radius:var(--radius-sm);white-space:pre-wrap;overflow-wrap:anywhere;}
+.c2c-v2 .ana-work-pre{grid-column:2 / -1;box-sizing:border-box;margin:0;padding:6px 8px;max-height:160px;overflow:auto;font-family:var(--font-mono);font-size:10.5px;line-height:1.5;color:var(--text-200);background:var(--bg-100);border:1px solid var(--border);border-radius:var(--radius-sm);white-space:pre-wrap;overflow-wrap:anywhere;}
 .c2c-v2 .ana-work-pre:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
 .c2c-v2 .ana-work-sum{font-size:11.5px;color:var(--text-300);line-height:1.5;}
 .c2c-v2 .ana-work-empty{font-size:11px;color:var(--text-300);line-height:1.5;}
 .c2c-v2 .ana-work-err{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:11px;color:var(--warning);}
+.c2c-v2 .ana-work-err .ana-work-link{grid-column:auto;}
 .c2c-v2 .ana-work-err svg{font-size:12px;}
 .c2c-v2 .ana-work-qi{display:flex;flex-direction:column;gap:2px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-050);}
 .c2c-v2 .ana-work-qi-q{font-size:11.5px;color:var(--text-100);overflow-wrap:anywhere;}
@@ -2568,12 +2578,18 @@
 .c2c-v2 .ct-head-r{display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .c2c-v2 .ct-head-model{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-400);}
 .c2c-v2 .ct-head-model svg{width:12px;height:12px;}
-.c2c-v2 .ct-head-open{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;color:var(--accent-100);background:none;border:1px solid var(--border);border-radius:7px;padding:6px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+/* --accent-200, not --accent-100: the identity orange is the colour the brand
+   is SEEN in, and this is 11.5px text — at that size --accent-100 measures
+   2.96:1 on --bg-000 (same reason as .ph-eyebrow). */
+.c2c-v2 .ct-head-open{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;color:var(--accent-200);background:none;border:1px solid var(--border);border-radius:7px;padding:6px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
 .c2c-v2 .ct-head-open:hover{background:var(--bg-050);}
 .c2c-v2 .ct-head-open svg{width:13px;height:13px;}
 
 .c2c-v2 .ct-scroll{flex:1;min-height:0;overflow-y:auto;}
 .c2c-v2 .ct-col{max-width:768px;margin:0 auto;padding:26px 24px 40px;display:flex;flex-direction:column;gap:22px;}
+/* The reading measure is widened in steps below the composer rules — see
+   the @media block after .ct-comp-foot, which must follow every rule it
+   overrides. */
 
 .c2c-v2 .ct-turn{display:flex;}
 .c2c-v2 .ct-user{justify-content:flex-end;}
@@ -2581,22 +2597,15 @@
 .c2c-v2 .ct-ana{gap:13px;align-items:flex-start;}
 .c2c-v2 .ct-ana-av{width:28px;height:28px;border-radius:8px;background:var(--accent-100);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:2px;}
 .c2c-v2 .ct-ana-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;}
+/* .ana-activity carries margin-top:8px for the rail's 3px message gap; this
+   body already spaces its children by 10px. */
+.c2c-v2 .ct-ana-body .ana-activity{margin-top:0;}
 
-.c2c-v2 .ct-think{align-self:flex-start;text-align:left;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:7px;padding:0;}
-/* --text-300, not --text-400: 11.5px is small text, so SC 1.4.3 wants 4.5:1
-   and --text-400 measures 3.37:1 light / 4.27:1 dark. Same defect, and same
-   reason the contrast gate stayed green on it, as the ana-activity block. */
-.c2c-v2 .ct-think-h{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-300);}
-.c2c-v2 .ct-think-h svg{width:13px;height:13px;transition:transform var(--dur);}
-.c2c-v2 .ct-think.on .ct-think-h svg:last-child{transform:rotate(180deg);}
-.c2c-v2 .ct-think-b{font-size:12.5px;line-height:1.6;color:var(--text-300);border-left:2px solid var(--border);padding:2px 0 2px 12px;font-style:italic;}
-
-.c2c-v2 .ct-tool{display:flex;align-items:center;gap:8px;font-size:11.5px;font-family:var(--font-mono);background:var(--bg-050);border:1px solid var(--border);border-radius:8px;padding:7px 10px;flex-wrap:wrap;}
-.c2c-v2 .ct-tool-ic{color:var(--text-400);display:inline-flex;}.c2c-v2 .ct-tool-ic svg{width:13px;height:13px;}
-.c2c-v2 .ct-tool-n{font-weight:600;color:var(--text-200);}
-.c2c-v2 .ct-tool-a{color:var(--text-400);min-width:0;overflow:hidden;text-overflow:ellipsis;}
-.c2c-v2 .ct-tool-r{margin-left:auto;color:var(--success);display:inline-flex;align-items:center;gap:4px;}
-.c2c-v2 .ct-tool-r svg{width:12px;height:12px;}
+/* `.ct-think*` (the thread's own "Thought for a moment" disclosure) and
+   `.ct-tool*` (a tool row `toTurn` never populated, so it never rendered)
+   were here. The turn's reasoning and its tool calls are both drawn by
+   <AnaActivity /> now — `.ana-activity*` above — the one renderer for the
+   work record on every surface. Deleted with their renderers. */
 
 .c2c-v2 .ct-prop{border:1px solid var(--accent-100);border-radius:12px;overflow:hidden;background:var(--bg-000);box-shadow:var(--v2-shadow-sm);}
 .c2c-v2 .ct-prop-h{display:flex;align-items:center;gap:9px;padding:11px 13px;background:var(--accent-000);border-bottom:1px solid var(--border);}
@@ -2660,10 +2669,8 @@
 .c2c-v2 .ct-empty-chip{background:var(--bg-050);border:1px solid var(--border);border-radius:20px;padding:8px 14px;font-size:12px;color:var(--text-200);cursor:pointer;}
 .c2c-v2 .ct-empty-chip:hover{background:var(--bg-100);border-color:var(--accent-100);}
 
-.c2c-v2 .ct-typing{display:flex;gap:4px;padding:6px 0;}
-.c2c-v2 .ct-typing span{width:7px;height:7px;border-radius:50%;background:var(--text-500);animation:ctblink 1.2s infinite;}
-.c2c-v2 .ct-typing span:nth-child(2){animation-delay:.2s;}.c2c-v2 .ct-typing span:nth-child(3){animation-delay:.4s;}
-@keyframes ctblink{0%,60%,100%{opacity:.25;}30%{opacity:1;}}
+/* `.ct-typing` — the three animated dots — is gone with its renderer: the
+   in-flight turn's own activity record is the waiting state. */
 
 .c2c-v2 .ct-composer-wrap{flex-shrink:0;border-top:1px solid var(--border);padding:14px 24px 16px;background:var(--bg-000);}
 .c2c-v2 .ct-composer{max-width:768px;margin:0 auto;display:flex;align-items:flex-end;gap:8px;border:1px solid var(--border);border-radius:14px;padding:8px 10px;background:var(--bg-000);box-shadow:var(--v2-shadow-sm);}
@@ -2687,17 +2694,29 @@
 .c2c-v2 .ct-att-x{border:none;background:none;color:var(--text-400);cursor:pointer;font-size:14px;line-height:1;padding:0 2px;}
 .c2c-v2 .ct-att-x:hover{color:var(--text-100);}
 .c2c-v2 .ct-comp-foot{max-width:768px;margin:8px auto 0;font-size:10.5px;color:var(--text-300);display:flex;align-items:center;gap:5px;justify-content:center;text-align:center;}
+/* A reading measure, widened in steps rather than removed: long-form
+   regulatory prose is unreadable at a 1400px line, and 768px beside a 384px
+   dock read as a strip with dead margin on a wide display. The composer, its
+   attachment row and its footer track the column so the reply box stays
+   aligned with the transcript above it. Placed after all four base rules,
+   which an @media override must be to win. */
+@media (min-width:1600px){.c2c-v2 .ct-col,.c2c-v2 .ct-composer,.c2c-v2 .ct-comp-atts,.c2c-v2 .ct-comp-foot{max-width:860px;}}
+@media (min-width:1920px){.c2c-v2 .ct-col,.c2c-v2 .ct-composer,.c2c-v2 .ct-comp-atts,.c2c-v2 .ct-comp-foot{max-width:940px;}}
 .c2c-v2 .ct-comp-foot svg{width:11px;height:11px;flex-shrink:0;}
 
 /* ── conversation + live artifact panel split ── */
 .c2c-v2 .ct-main{flex:1;min-height:0;display:flex;}
 .c2c-v2 .ct-conv{flex:1;min-width:0;display:flex;flex-direction:column;}
-/* The side column stacks AnA's live work dock over the artifact panel; the
-   artifacts keep their width and take whatever height the dock leaves. */
+/* The side column stacks AnA's live work dock over the artifact panel. The
+   dock takes the height it needs and the artifacts take the remainder; the
+   dock is capped only once there are artifacts to make room for, so with an
+   empty panel a long run gets the whole column instead of scrolling its own
+   history out of a half-height box (this was max-height:52% unconditionally,
+   beside an artifact panel that sat mostly empty). */
 .c2c-v2 .ct-side{display:flex;flex-direction:column;flex-shrink:0;min-height:0;}
-.c2c-v2 .ct-side-work{width:384px;box-sizing:border-box;flex-shrink:0;max-height:52%;overflow-y:auto;padding:12px 12px 0;border-left:1px solid var(--border);background:var(--bg-050);}
-.c2c-v2 .ct-side .ct-artifacts{flex:1;}
-.c2c-v2 .ct-side .ct-art-rail{flex:1;}
+.c2c-v2 .ct-side-work{width:384px;box-sizing:border-box;flex:1 1 auto;min-height:0;overflow-y:auto;padding:12px 12px 0;border-left:1px solid var(--border);background:var(--bg-050);}
+.c2c-v2 .ct-side[data-artifacts="true"] .ct-side-work{max-height:60%;}
+.c2c-v2 .ct-side .ct-artifacts{flex:0 1 auto;}
 .c2c-v2 .ct-artifacts{width:384px;flex-shrink:0;border-left:1px solid var(--border);background:var(--bg-050);display:flex;flex-direction:column;min-height:0;}
 .c2c-v2 .ct-art-panel-h{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 4px;}
 .c2c-v2 .ct-art-panel-t{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--text-100);}
@@ -2709,11 +2728,9 @@
 .c2c-v2 .ct-art-list{flex:1;min-height:0;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;}
 .c2c-v2 .ct-art-empty{font-size:12px;line-height:1.6;color:var(--text-300);padding:18px 6px;}
 
-.c2c-v2 .ct-art-rail{align-self:stretch;flex-shrink:0;width:48px;border-left:1px solid var(--border);background:var(--bg-050);display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:18px;cursor:pointer;}
-.c2c-v2 .ct-art-rail:hover{background:var(--bg-100);}
-.c2c-v2 .ct-art-rail-ic{color:var(--accent-100);} .c2c-v2 .ct-art-rail-ic svg{width:18px;height:18px;}
-.c2c-v2 .ct-art-rail-n{background:var(--accent-100);color:#fff;border-radius:99px;font-size:10px;font-weight:700;min-width:18px;text-align:center;padding:1px 5px;}
-.c2c-v2 .ct-art-rail-l{writing-mode:vertical-rl;font-size:11px;color:var(--text-400);letter-spacing:.06em;text-transform:uppercase;margin-top:4px;}
+/* `.ct-art-rail*` — the 48px "Artifacts" stub the collapsed side column left
+   behind — is gone with its renderer: hidden now means not rendered, and the
+   thread header's labelled toggle brings the column back. */
 
 .c2c-v2 .ct-art{border:1px solid var(--border);border-radius:11px;background:var(--bg-000);overflow:hidden;}
 .c2c-v2 .ct-art[data-open]{border-color:var(--accent-muted);}

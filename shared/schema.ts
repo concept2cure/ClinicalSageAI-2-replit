@@ -21,7 +21,6 @@ import {
   uuid,
   json,
   unique,
-  primaryKey,
   varchar,
   real,
   index,

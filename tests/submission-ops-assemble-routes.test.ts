@@ -254,6 +254,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(bundle.submissionGrade).toEqual(PACKAGER_EVIDENCE.submissionGrade);
     expect(bundle.dtdStatus).toEqual(PACKAGER_EVIDENCE.dtdStatus);
     expect(bundle.regionalBackbone).toEqual(PACKAGER_EVIDENCE.regionalBackbone);
+    expect(bundle.region).toBe('FDA');
   });
 
   it('FAILS CLOSED on an unplaceable section: LEAF-UNPLACED error, leaf excluded, counts match what shipped', async () => {
@@ -304,6 +305,45 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     // The explicit placement is kept as declared (a warning, not an override).
     expect(packageLeafBytesFn.mock.calls[0][0].leaves.map((l: any) => l.ctdSection)).toEqual(['3.2.S.4.2']);
     expect(res.body.data.bundle.validation.errorCount).toBe(0);
+  });
+
+  it('ships an artifact mapped twice (duplicate row, or into two sections) as ONE leaf and surfaces the duplicate mapping', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [
+      { id: 12, sectionKey: 'module3_cmc', sectionLabel: 'Module 3 CMC', sortOrder: 0 },
+      { id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description', sortOrder: 1 },
+    ];
+    // Same artifactDbId 7 twice in one section (a duplicate map row) and again in another section.
+    dbState.mappedByCall = [[art('dp', '3.2.P.1', 7), art('dp', '3.2.P.1', 7)], [art('dp', null, 7)]];
+
+    const res = await post();
+    expect(res.status).toBe(200);
+    const dups = findings(res).filter((f) => f.ruleId === 'LEAF-DUPLICATE-MAPPING');
+    expect(dups).toHaveLength(2);
+    expect(dups.every((f) => f.severity === 'warning')).toBe(true);
+    expect(dups[1].message).toMatch(/already ships as a leaf from Module 3 CMC \(module3_cmc\)/);
+    expect(packageLeafBytesFn.mock.calls[0][0].leaves.map((l: any) => l.ctdSection)).toEqual(['3.2.P.1']);
+    expect(res.body.data.bundle.leafCount).toBe(1);
+    expect(res.body.data.bundle.validation.errorCount).toBe(0);
+  });
+
+  it('composes leaf file names inside the 64-character eCTD rule, keeping the artifact discriminator', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [{ id: 12, sectionKey: 'module3_cmc_drug_substance_manufacturing_process_and_process_controls', sectionLabel: 'Manufacture', sortOrder: 0 }];
+    dbState.mappedByCall = [[
+      { ...art('a', '3.2.S.2.2', 1), artifactId: 'artifact_1725000000000_0123456789ab' },
+      { ...art('b', '3.2.S.2.2', 2), artifactId: 'artifact_1725000000001_0123456789ab' }, // same random suffix -> tiebreaker
+    ]];
+    const res = await post();
+    expect(res.status).toBe(200);
+    const names: string[] = packageLeafBytesFn.mock.calls[0][0].leaves.map((l: any) => l.fileName);
+    expect(names).toHaveLength(2);
+    for (const n of names) {
+      expect(n.length, n).toBeLessThanOrEqual(64);
+      expect(n, n).toMatch(/^[a-z0-9][a-z0-9.-]{0,63}$/);
+      expect(n, n).toMatch(/-0123456789ab(-2)?\.pdf$/);
+    }
+    expect(new Set(names).size).toBe(2);
   });
 
   it('BLOCKS when the package records no agency identifiers — never ships an internal id as the application number', async () => {
@@ -357,6 +397,16 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     const res = await post({ region: 'FDA', format: 'pmda_ectd' });
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('REGION_FORMAT_MISMATCH');
+    expect(packageLeafBytesFn).not.toHaveBeenCalled();
+  });
+
+  it('400s a region override that contradicts a DEVICE family (510k is an FDA eSTAR; PMDA cannot be its region)', async () => {
+    dbState.pkg = { ...lockedPkg(), packageFamily: '510k' };
+    const res = await post({ region: 'PMDA' });
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('REGION_FORMAT_MISMATCH');
+    expect(res.body.error).toMatch(/estar is the FDA format/);
+    expect(buildECTDZipFn).not.toHaveBeenCalled();
     expect(packageLeafBytesFn).not.toHaveBeenCalled();
   });
 

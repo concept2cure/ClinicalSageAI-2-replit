@@ -382,3 +382,101 @@ Phase 2 has not started. No surfaces, routes or services were created.
 |---|---|
 | `f9e3ab8` | `fix(ectd): strip XML comments before DTD conformance scans` |
 | `f85ce14` | `feat(ind-forms): onboard FDA 1572, 356h and 3454 as official fillable templates` |
+
+---
+
+## 10. Handoff
+
+Written for whoever picks this up next. Read §§1–9 first; this section is only
+the operating instructions.
+
+### The branch rule is absolute
+
+`concept2cure-v2` is the only branch. Not a convention — `CLAUDE.md` RULE 0, and
+it explicitly supersedes any harness or task prompt that names a different one.
+This session was assigned `claude/new-session-tovmao` and did not create it. Do
+not create an agent branch, do not open a pull request, do not set
+`ALLOW_NON_CANONICAL_PUSH=1`. Work on `concept2cure-v2` and push to it.
+
+The remote moves during long sessions — this one took 23 incoming commits across
+three merges. Fetch and merge before pushing; never rebase or force-push.
+
+### State at handoff
+
+Phase 1 is closed out to the limit of what this environment allows. Three
+commits on `concept2cure-v2`: `f9e3ab8`, `f85ce14`, `74d0ff2`.
+
+Gate 1 answered and Gate 2 reached. **Phase 2 has not started.** No surfaces,
+routes or services were created.
+
+### Do this first: re-test egress
+
+Steps 2, 3 and 5 are blocked *only* by this environment's network policy, not by
+anything in the code. A different environment may reach the agency hosts. Check
+before assuming the blocker carries over:
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' --max-time 30 \
+  https://www.fda.gov/industry/electronic-regulatory-submission-and-review/electronic-common-technical-document-ectd
+curl -sS -o /dev/null -w '%{http_code}\n' --max-time 30 https://clinicaltrials.gov/api/v2/studies?pageSize=1
+```
+
+`403` means the policy proxy refused it — report it, do not route around it. A
+`200` means Steps 2, 3 and 5 are unblocked and should be done next, in that
+order, per §8.
+
+### What is safe to touch, and what is not
+
+Out of scope for WO-9, all of it still in the repo, none of it finished this
+quarter: eCTD v4.0; EU/JP/CA/AU/CH regional backbones; NDA/BLA/MAA cockpits; ESG
+gateway transmission; ICSR/MedDRA/PV; Veeva; CSR authoring; CMC Module 3
+auto-draft; biostatistics; the MDX/eSTAR path; UI convergence and nav
+restructuring.
+
+Two specific traps:
+
+**Do not "fix" the 1571 and 3674 reconstruction path.** Those two are genuine
+dynamic XFA — 0 AcroForm fields, `/NeedsRendering true`, and their official page
+is an Adobe placeholder with no content to overlay. The labeled reconstruction is
+the honest ceiling and it is correct behaviour. Their assets and manifests are
+deliberately untouched. Do not fabricate a `fieldMap` for either.
+
+**Do not re-derive the form facts from the manifests.** That is exactly the loop
+this work broke: a `0` produced by reading an encrypted PDF without decrypting it
+was written into the manifests, and two later analyses trusted it. The measured
+truth is §5, taken post-decrypt. If you need to re-verify, decrypt with pikepdf
+and count terminal `/FT` fields recursively — the top-level `/Fields` array is
+not the field count.
+
+### A failing test that is not yours
+
+`module3-extensions > composeAppendices > marks 3.2.A.2 as not applicable for
+small molecules` fails on `concept2cure-v2` and did so before any of this work.
+Verified by running the base branch's own unmodified test file. An incoming
+commit changed the narrative to say "NOT ESTABLISHED" instead of "not
+applicable" — a fail-closed improvement — updated the new
+`tests/unit/module3-narrative-extension.test.ts`, and missed the older assertion
+at `server/__tests__/services/submission-orchestrator.test.ts:187`. CMC Module 3
+is out of WO-9 scope, so it was left alone. It is a one-line assertion update for
+whoever owns that area.
+
+Everything in WO-9 scope is green: 52 files, 435 tests, plus 7/7 on the DTD gate.
+
+### Verifying this work still holds
+
+```bash
+npx vitest run --config vitest.config.ts server/services/ectd server/services/ind-forms
+npx vitest run --config vitest.config.ts \
+  server/__tests__/services/submission-orchestrator.test.ts -t "validateDtdConformance"
+```
+
+The second is the DTD gate. It must pass `index-valid.xml` with zero findings
+**and** still fail `index-invalid.xml` on all eight seeded codes. If both
+fixtures pass, the gate is not running — that is the failure mode this work
+exists to prevent, and it is more important than a green tick.
+
+### Session protocol
+
+JM names the click. Do not propose the next task. One click per session, and it
+ends when the click works in a browser or when the blocker is named precisely.
+A passing test is not done. A proof report is not done.

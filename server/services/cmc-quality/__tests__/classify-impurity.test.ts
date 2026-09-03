@@ -93,4 +93,35 @@ describe('classifyImpurity — elemental impurities', () => {
     expect(r.elementalClassification).toBeUndefined();
     expect(r.reportingThreshold?.value).toMatch(/not in the ICH Q3D|risk assessment/i);
   });
+
+  it('REFUSES a route Q3D does not tabulate (topical) instead of emitting undefined/NaN thresholds', () => {
+    // 'topical' is a declared route enum value and passes the `!route` guard,
+    // but Q3D(R2) tabulates a PDE only for oral/parenteral/inhalation. The old
+    // code read pdeMicrogramsPerDay['topical'] === undefined and shipped
+    // "undefined ug/day" / "NaN ug/day" cited to Q3D(R2).
+    const r = classifyImpurity({ impurityType: 'elemental', elementName: 'Cd', route: 'topical' } as never);
+    for (const t of [r.reportingThreshold, r.identificationThreshold, r.qualificationThreshold]) {
+      expect(t?.value).not.toMatch(/undefined|NaN/i);
+      expect(t?.value).toMatch(/does not tabulate|not established|derived and justified/i);
+      expect(t?.unit).toBe('not established');
+    }
+    // The three tabulated PDEs are still surfaced honestly for the reviewer.
+    expect(r.elementalClassification?.oralPDE_ug_per_day).toBe(5);
+  });
+
+  it('still gives the real PDE for the routes Q3D DOES tabulate (unchanged path)', () => {
+    const r = classifyImpurity({ impurityType: 'elemental', elementName: 'Cd', route: 'inhalation' } as never);
+    expect(r.reportingThreshold?.unit).toBe('ug/day');
+    expect(r.reportingThreshold?.value).not.toMatch(/undefined|NaN/i);
+  });
+});
+
+describe('classifyImpurity — inorganic impurities', () => {
+  it('attributes the pharmacopeial threshold to the monograph, not to ICH Q3A (organic-only)', () => {
+    const r = classifyImpurity({ impurityType: 'inorganic' } as never);
+    // Q3A/Q3B govern ORGANIC impurities; the canonical engine holds inorganic
+    // out of their scope, so the reporting basis must not cite Q3A.
+    expect(r.reportingThreshold?.basis).not.toMatch(/Q3A/i);
+    expect(r.reportingThreshold?.basis).toMatch(/pharmacopeial monograph/i);
+  });
 });

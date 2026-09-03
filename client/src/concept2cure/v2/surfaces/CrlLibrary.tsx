@@ -305,10 +305,14 @@ export function CrlLibrary({ onAsk }: SurfaceViewProps) {
     'crl-library.select-finding': (params) => {
       const raw = String(params.finding ?? '').trim();
       if (!raw) return { ok: false, reason: 'Name a finding by its id.' };
-      if (res.loading && !res.data) {
+      // Gate on res.loading/res.error alone: during a refetch useLiveData keeps
+      // the PRIOR query's `findings`, so resolving then would select against
+      // stale results. Held (retry) re-attempts on the ready signal once the new
+      // search lands.
+      if (res.loading) {
         return { ok: false, reason: 'The CRL findings are still loading.', retry: true };
       }
-      if (res.error && !res.data) {
+      if (res.error) {
         return { ok: false, reason: 'The CRL search did not respond, so there are no findings to open.' };
       }
       if (findings.length === 0) return { ok: false, reason: 'No findings in these results to open.' };
@@ -342,10 +346,17 @@ export function CrlLibrary({ onAsk }: SurfaceViewProps) {
      every finding for the same reason it is on screen: an extracted, unreviewed
      finding must not be quoted back as established fact. */
   const anaContext = useMemo(() => {
-    if (res.loading && !res.data) {
+    // Gate on res.loading / res.error ALONE, not `&& !res.data`: useLiveData
+    // KEEPS the previous query's data while a new fetch is in flight, and this
+    // surface rebuilds `path` from `applied` on every Search — so during a
+    // refetch `res.data` is the PRIOR query's payload while `filters` below is
+    // the NEW query. Falling through would publish the old counts as though they
+    // answered the new filters (and a prior genuine zero as a false "no findings
+    // for these constraints"). A search in progress is not an answer.
+    if (res.loading) {
       return { summary: 'The regulatory evidence graph is still being searched; nothing on screen is final yet.' };
     }
-    if (res.error && !res.data) {
+    if (res.error) {
       return {
         summary:
           'The regulatory evidence graph could not be reached, so this screen is showing no findings ' +
