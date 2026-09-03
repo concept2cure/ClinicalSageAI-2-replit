@@ -26,7 +26,7 @@
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
 import { assumptionRegistryService, type AssumptionRecord } from './assumption-registry-service';
-import { decisionRecordService, type DecisionRecord } from './decision-record-service';
+import { decisionRecordService } from './decision-record-service';
 
 const log = createScopedLogger('contradiction-engine');
 

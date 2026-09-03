@@ -998,7 +998,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
     try {
       publishShellProject({ id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status });
       if (window.C2C?.setSurface) window.C2C.setSurface('project-home', pr.title);
-    } catch (_) { /* noop */ }
+    } catch { /* noop */ }
     onNav('project-home');
   };
 

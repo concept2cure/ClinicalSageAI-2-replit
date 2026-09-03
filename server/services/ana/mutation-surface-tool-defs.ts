@@ -245,6 +245,21 @@ export const WRITE_Q_SUB_SECTION: AnaTool = {
       },
       content:     { type: 'string', description: 'Markdown-style content (≥ 40 chars).' },
       summary_note: { type: 'string', description: 'Optional one-line note for the audit trail.' },
+      sources: {
+        type: 'array',
+        description:
+          "The passages the text was grounded in, exactly as project_knowledge_search returned them: pass each passage's evidence_source_id (or artifact_id) and its text as excerpt. Every clause of the content that quotes an excerpt verbatim is recorded as a citation of that Data Room source; everything else is recorded as your own assertion. Only sources that exist in this organization are accepted — any other entry is dropped and reported back.",
+        items: {
+          type: 'object',
+          properties: {
+            evidence_source_id: { type: 'integer', description: 'cre_evidence_sources.id from a retrieval passage.' },
+            artifact_id: { type: 'string', description: 'The retrieval artifact id, when no evidence_source_id was returned.' },
+            excerpt: { type: 'string', description: 'The passage text as retrieved (required).' },
+            title: { type: 'string' },
+          },
+          required: ['excerpt'],
+        },
+      },
     },
     required: ['q_sub_id', 'section_key', 'content'],
   },

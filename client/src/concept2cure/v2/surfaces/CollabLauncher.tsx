@@ -114,8 +114,8 @@ const defer = (typeof queueMicrotask === 'function')
 
 function emit(): void {
   defer(() => {
-    subs.forEach(fn => { try { fn(); } catch (_e) { /* subscriber error */ } });
-    try { window.dispatchEvent(new CustomEvent('c2c:tasks')); } catch (_e) { /* noop */ }
+    subs.forEach(fn => { try { fn(); } catch { /* subscriber error */ } });
+    try { window.dispatchEvent(new CustomEvent('c2c:tasks')); } catch { /* noop */ }
   });
 }
 
@@ -282,7 +282,7 @@ export const C2C = {
     try {
       const proj = (window as any).C2C_PROJECT as { id?: string } | undefined;
       if (proj?.id) live.project = String(proj.id);
-    } catch (_e) { /* no window / no selection — keep whatever ctx holds */ }
+    } catch { /* no window / no selection — keep whatever ctx holds */ }
 
     // Only adopt the URL's surface when nothing has refined the context for a
     // specific entity; a surface that called setContext({ entityLabel }) is
@@ -297,7 +297,7 @@ export const C2C = {
           live.entityType = d.et;
           live.moduleType = d.mod;
         }
-      } catch (_e) { /* no location — keep ctx */ }
+      } catch { /* no location — keep ctx */ }
     }
 
     return live;

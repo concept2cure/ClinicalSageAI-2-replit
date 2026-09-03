@@ -135,8 +135,9 @@ describe('DocumentAuthoring — real editable canvas', () => {
       expect(patch![1]).toBe('/api/authoring/sections/S1');
       expect((patch![2] as any).content).toContain('Revised substance description.');
     });
-    // Honest confirmation that a revision was recorded server-side.
-    expect(await screen.findByText(/revision was recorded/i)).toBeTruthy();
+    // Honest confirmation, keyed to the revision counter the server returned
+    // (3) — not asserted from the 2xx alone.
+    expect(await screen.findByText(/revision 3 recorded/i)).toBeTruthy();
   });
 
   it('surfaces a failed save honestly and keeps the user’s text (no fabrication)', async () => {

@@ -118,6 +118,52 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     expect(await screen.findByText(/transmittal #3 is already active/)).toBeTruthy();
   });
 
+  it('renders the structural gate’s findings on a 422 (errors first) so the refusal is actionable, and clears them on the next attempt', async () => {
+    // The 422 body carries the findings recorded on the stored bundle at
+    // assembly. The toast alone showed only the summary line, so the operator
+    // never saw WHICH rule refused — here, the one naming the identifiers still
+    // to be recorded.
+    const refuse = async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/transmit')) {
+        return {
+          ok: false, status: 422,
+          json: async () => ({
+            error: 'Bundle failed eCTD structural validation (1 error); re-assemble after fixing.',
+            details: { findings: [
+              { severity: 'info', ruleId: 'SUMMARY', message: '2 leaf(s), 0 empty' },
+              { severity: 'error', ruleId: 'REGULATORY-IDENTIFIER-MISSING', message: 'The regional Module 1 backbone must carry the agency application number and applicant identity (missing package metadata: regulatory.applicationNumber). Record the real identifiers before transmitting.' },
+            ] },
+          }),
+        } as Response;
+      }
+      return env(null);
+    };
+    apiRequest.mockImplementation(refuse);
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+
+    expect(await screen.findByText(/structural gate rejected the bundle/)).toBeTruthy();
+    const card = await screen.findByRole('region', { name: 'Structural gate refusal' });
+    expect(card.textContent).toMatch(/re-assemble the package, then transmit again/);
+    expect(screen.getByText(/regulatory\.applicationNumber/)).toBeTruthy();
+    // Errors are listed before informational findings.
+    const chips = Array.from(card.querySelectorAll('.rd-chip')).map((c) => c.textContent);
+    expect(chips).toEqual(['REGULATORY-IDENTIFIER-MISSING', 'SUMMARY']);
+
+    // The next attempt succeeds: the refusal card is gone, not left as stale state.
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'POST' && url.endsWith('/transmit')) return env({ result: { transactionId: 'ESG-NEW-2' } }, 201);
+      return refuse(method, url);
+    });
+    fireEvent.click(screen.getByTestId('form-submit'));
+    expect(await screen.findByText(/gateway ref ESG-NEW-2/)).toBeTruthy();
+    expect(screen.queryByRole('region', { name: 'Structural gate refusal' })).toBeNull();
+  });
+
   it('polls the live gateway status for a transmittal', async () => {
     render(<GatewayTransmittals {...props()} />);
     await screen.findByText('ESG-XYZ');

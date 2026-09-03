@@ -19,7 +19,6 @@ import { ragRouter } from '../services/ragRouter.js';
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
 
 // AI generation is routed through the unified AI client (gateway-backed).
-import { ai } from '../lib/unified-ai-client';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 

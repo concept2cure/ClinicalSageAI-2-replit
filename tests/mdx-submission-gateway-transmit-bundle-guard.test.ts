@@ -512,6 +512,22 @@ describe('POST transmit — packager evidence is forwarded to the pre-transmit g
     expect(arg.bundle.regionalBackbone).toEqual(evidence.regionalBackbone);
   });
 
+  it('DROPS malformed evidence blocks instead of forwarding them (`{}` as a PDF/A grade read as full compliance)', async () => {
+    packages = [{
+      id: 5, orgId: CALLER_ORG,
+      bundle: goodDescriptor({ submissionGrade: {}, dtdStatus: { selfContained: 'yes' }, regionalBackbone: { region: 'fda' } }),
+    }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4245, transmissionId: 'mdn-malformed', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    const arg = transmitFn.mock.calls[0][0];
+    expect(arg.bundle.submissionGrade).toBeUndefined();
+    expect(arg.bundle.dtdStatus).toBeUndefined();
+    expect(arg.bundle.regionalBackbone).toBeUndefined();
+  });
+
   it('and the gate REFUSES that exact forwarded shape when the operator opts in (production + ECTD_REQUIRE_DTD / _PDFA)', () => {
     const forwarded = {
       path: legitPath, sha256: legitSha, sizeBytes: legitSize, format: 'ectd' as const,

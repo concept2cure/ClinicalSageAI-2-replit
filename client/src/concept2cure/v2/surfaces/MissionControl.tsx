@@ -403,6 +403,20 @@ export function MissionControl(_props: SurfaceViewProps) {
      ask the user to restate what is already on their screen. */
   const anaContext = useMemo(() => {
     if (!selected) {
+      // The program list's OWN state gates this branch — a loading or failed
+      // list must never read as a genuinely empty org. programCount:0 is only
+      // published once the list is actually 'ready'.
+      if (programs.state === 'loading' || programs.state === 'idle') {
+        return { summary: 'Mission Control — the program list is still loading; nothing to report yet.' };
+      }
+      if (programs.state === 'error') {
+        return {
+          summary:
+            'Mission Control — the program list could not be loaded, so no programs are shown because of a ' +
+            'failure, not because there are none.',
+          availableActions: ['Retry the program list read'],
+        };
+      }
       return {
         summary: 'Mission Control with no program selected.',
         facts: { programCount: asArray(programs.data).length },
@@ -412,7 +426,7 @@ export function MissionControl(_props: SurfaceViewProps) {
     return {
       summary:
         `Mission Control, program "${selected.name}"` +
-        (readiness.data ? ` at ${readiness.data.overallConfidence}% overall readiness.` : '.'),
+        (readiness.state === 'ready' && readiness.data ? ` at ${readiness.data.overallConfidence}% overall readiness.` : '.'),
       facts: {
         programId: selected.id,
         programName: selected.name,
@@ -420,13 +434,17 @@ export function MissionControl(_props: SurfaceViewProps) {
         modality: selectedModality ? MODALITY_LABEL[selectedModality] : null,
         regulatoryFrame: selectedModality ? frameSummary(selectedModality) : null,
         indication: selected.indication ?? null,
-        overallConfidence: readiness.data?.overallConfidence ?? null,
+        // Every count/list below is gated on its OWN read's state: `null` means
+        // the read is still in flight or failed (UNKNOWN), never a false 0/[]
+        // that reads as "assessed and found clear." Each of readiness / artifacts
+        // / risks / stale is an independent Load, so each is checked separately.
+        overallConfidence: readiness.state === 'ready' ? (readiness.data?.overallConfidence ?? null) : null,
         readinessLoaded: readiness.state === 'ready',
-        blockers: asArray<any>(readiness.data?.blockers).map(b => `${b.severity}: ${b.message}`),
-        nextActions: asArray<any>(readiness.data?.nextActions).map(a => `${a.action} — ${a.target}`),
-        artifactCount: asArray(artifacts.data).length,
-        riskCount: asArray(risks.data).length,
-        staleDependencyCount: asArray(stale.data).length,
+        blockers: readiness.state === 'ready' ? asArray<any>(readiness.data?.blockers).map(b => `${b.severity}: ${b.message}`) : null,
+        nextActions: readiness.state === 'ready' ? asArray<any>(readiness.data?.nextActions).map(a => `${a.action} — ${a.target}`) : null,
+        artifactCount: artifacts.state === 'ready' ? asArray(artifacts.data).length : null,
+        riskCount: risks.state === 'ready' ? asArray(risks.data).length : null,
+        staleDependencyCount: stale.state === 'ready' ? asArray(stale.data).length : null,
       },
       availableActions: [
         'Create a program',
@@ -435,7 +453,7 @@ export function MissionControl(_props: SurfaceViewProps) {
         'Explain what is blocking this program',
       ],
     };
-  }, [selected, selectedModality, programs.data, readiness.state, readiness.data, artifacts.data, risks.data, stale.data]);
+  }, [selected, selectedModality, programs.state, programs.data, readiness.state, readiness.data, artifacts.state, artifacts.data, risks.state, risks.data, stale.state, stale.data]);
 
   usePublishSurfaceContext('mission-control', anaContext);
 

@@ -134,7 +134,7 @@ function currentProjectId(): string | null {
     const p = (window as unknown as { C2C_PROJECT?: { id?: string | number } }).C2C_PROJECT;
     const id = p && p.id != null ? String(p.id).trim() : '';
     return id || null;
-  } catch (_e) {
+  } catch {
     return null;
   }
 }

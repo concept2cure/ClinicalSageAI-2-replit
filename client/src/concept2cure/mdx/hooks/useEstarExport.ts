@@ -6,7 +6,11 @@
  *                         rendered section PDFs; NOT the official eSTAR)
  *   exportOfficialEstar() POST /api/510k/estar/official  (the submittable FDA
  *                         eSTAR PDF; 422 with blockers until the official
- *                         template + verified field map are vendored)
+ *                         template + verified field map are vendored). With
+ *                         useProgramData the administrative fields are filled
+ *                         from the org's governed records — governed wins,
+ *                         typed values fill only the gaps — and the response's
+ *                         fieldReport says what was and was not written.
  *
  * Both send meta.ident (program UUID / code / numeric project id — resolved
  * org-scoped server-side) and useProjectContent so the package is assembled
@@ -47,7 +51,80 @@ export interface EstarExportOutcome {
   blockedByEntitlement: boolean;
   /** Minimum plan tier the server named alongside NOT_ENTITLED (never invented). */
   requiredTier: string | null;
+  /** What the official fill wrote and left blank — null on the draft path,
+   *  on failure, or when the server sent no report. */
+  fieldReport: EstarFieldReport | null;
   error: string | null;
+}
+
+/** The server's account of the administrative fill (POST /official 200). */
+export interface EstarFieldReport {
+  mappedCount: number;
+  filledCount: number;
+  blankCount: number;
+  /** Canonical keys the fill left blank — the platform held no value. */
+  blankKeys: string[];
+  /** Typed keys the server dropped: a governed value took precedence, or the
+   *  key is not on the template. */
+  ignoredRequestKeys: string[];
+}
+
+export interface OfficialEstarOptions {
+  /** Fill the administrative fields from the program's governed records. */
+  useProgramData?: boolean;
+  /** Values typed for this export only; empty/whitespace entries are dropped
+   *  before sending (see cleanRequestData). */
+  data?: Record<string, string>;
+}
+
+/**
+ * Keep only the entries a user actually typed: non-empty after trimming,
+ * trimmed. Pure + exported so the "only typed keys travel" rule is
+ * unit-testable without a DOM.
+ */
+export function cleanRequestData(
+  data: Record<string, string> | undefined,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!data) return out;
+  for (const [key, raw] of Object.entries(data)) {
+    if (typeof raw !== 'string') continue;
+    const value = raw.trim();
+    if (value) out[key] = value;
+  }
+  return out;
+}
+
+/**
+ * The administrative-fill clause of the success line — filled of mapped, and
+ * the blank count when anything was left blank. Pure so the wording is pinned
+ * by a test rather than by however the JSX reads.
+ */
+export function fieldReportClause(report: EstarFieldReport | null): string {
+  if (!report) return '';
+  const blank = report.blankCount > 0 ? ` · ${report.blankCount} left blank` : '';
+  return ` · ${report.filledCount} of ${report.mappedCount} administrative fields filled${blank}`;
+}
+
+function parseFieldReport(raw: unknown): EstarFieldReport | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  if (
+    typeof r.mappedCount !== 'number' ||
+    typeof r.filledCount !== 'number' ||
+    typeof r.blankCount !== 'number'
+  ) {
+    return null;
+  }
+  const strings = (v: unknown): string[] =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+  return {
+    mappedCount: r.mappedCount,
+    filledCount: r.filledCount,
+    blankCount: r.blankCount,
+    blankKeys: strings(r.blankKeys),
+    ignoredRequestKeys: strings(r.ignoredRequestKeys),
+  };
 }
 
 /**
@@ -66,7 +143,7 @@ export function exportStatusLine(busy: boolean, outcome: EstarExportOutcome | nu
         ? ` · ${outcome.formattingErrors} formatting errors, ${outcome.formattingWarnings} warnings to fix before submitting`
         : '';
     const registry = outcome.governed ? '' : ' · audit-logged; artifact registry placement pending';
-    return `Downloaded ${outcome.filename ?? 'package'}${formatting}${registry}`;
+    return `Downloaded ${outcome.filename ?? 'package'}${fieldReportClause(outcome.fieldReport)}${formatting}${registry}`;
   }
   if (outcome.blockedByEntitlement) {
     return outcome.requiredTier
@@ -101,7 +178,15 @@ export interface UseEstarExportResult {
   /** Outcome of the most recent export attempt (null until one runs). */
   outcome: EstarExportOutcome | null;
   exportDraftPackage: (program: ProgramRef) => Promise<EstarExportOutcome>;
-  exportOfficialEstar: (program: ProgramRef, variant?: 'device' | 'ivd') => Promise<EstarExportOutcome>;
+  exportOfficialEstar: (
+    program: ProgramRef,
+    variant?: 'device' | 'ivd',
+    opts?: OfficialEstarOptions,
+  ) => Promise<EstarExportOutcome>;
+  /** Forget the last outcome. A surface calls this when the program it shows
+   *  changes, so a previous program's "Downloaded … filled/blank" line and its
+   *  blank-caption list never sit under the next program's header. Stable. */
+  reset: () => void;
 }
 
 async function postExport(url: string, body: unknown): Promise<EstarExportOutcome> {
@@ -136,6 +221,7 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
         blockedByEntitlement,
         requiredTier:
           blockedByEntitlement && typeof json?.requiredTier === 'string' ? json.requiredTier : null,
+        fieldReport: null,
         error: message,
       };
     }
@@ -155,6 +241,7 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
       blockers: [],
       blockedByEntitlement: false,
       requiredTier: null,
+      fieldReport: parseFieldReport(json?.fieldReport),
       error: null,
     };
   } catch {
@@ -170,6 +257,7 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
       blockers: [],
       blockedByEntitlement: false,
       requiredTier: null,
+      fieldReport: null,
       error: 'Export request failed',
     };
   }
@@ -204,7 +292,7 @@ export function useEstarExport(): UseEstarExportResult {
   );
 
   const exportOfficialEstar = useCallback(
-    (program: ProgramRef, variant: 'device' | 'ivd' = 'device') =>
+    (program: ProgramRef, variant: 'device' | 'ivd' = 'device', opts: OfficialEstarOptions = {}) =>
       run('/api/510k/estar/official', {
         meta: {
           id: program.code || program.id,
@@ -213,10 +301,15 @@ export function useEstarExport(): UseEstarExportResult {
         },
         type: '510k',
         variant,
-        data: {},
+        /* Governed records win server-side; typed values fill only the gaps.
+           Without useProgramData the route fills `data` verbatim, as before. */
+        useProgramData: opts.useProgramData === true,
+        data: cleanRequestData(opts.data),
       }),
     [run],
   );
 
-  return { busy, outcome, exportDraftPackage, exportOfficialEstar };
+  const reset = useCallback(() => setOutcome(IDLE), []);
+
+  return { busy, outcome, exportDraftPackage, exportOfficialEstar, reset };
 }

@@ -79,8 +79,10 @@ export interface AnaWorkPanelProps {
   /**
    * Own a polite live region for phase changes. Off by default: the rail also
    * mounts AnaActivity, which announces the same phase, and two regions saying
-   * one thing is worse than one. The conversation surface, which has no other
-   * announcer, turns it on.
+   * one thing is worse than one. The conversation surface turned it on while
+   * it had no other announcer; since WO-11 it mounts AnaActivity on every
+   * turn too, so no host passes this today. It stays for a host that mounts
+   * the panel without a per-turn record.
    */
   announce?: boolean;
   /** Hosts pass their own collapse control; the panel renders the button. */

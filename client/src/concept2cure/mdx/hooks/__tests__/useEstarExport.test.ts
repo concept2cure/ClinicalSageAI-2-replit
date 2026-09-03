@@ -15,6 +15,8 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import {
   useEstarExport,
   exportStatusLine,
+  cleanRequestData,
+  fieldReportClause,
   type EstarExportOutcome,
 } from '../useEstarExport';
 
@@ -140,10 +142,162 @@ describe('exportStatusLine (pure)', () => {
       blockers: [],
       blockedByEntitlement: true,
       requiredTier: null,
+      fieldReport: null,
       error: 'NOT_ENTITLED',
     };
     expect(exportStatusLine(false, outcome)).toBe(
       'Requires a higher plan — device assembly readiness',
     );
+  });
+});
+
+/* ─── Phase 2: governed administrative data ────────────────────────────── */
+
+const SUCCESS: EstarExportOutcome = {
+  ok: true,
+  governed: true,
+  filename: 'BX-204_eSTAR.pdf',
+  formattingErrors: 0,
+  formattingWarnings: 0,
+  blockers: [],
+  blockedByEntitlement: false,
+  requiredTier: null,
+  fieldReport: null,
+  error: null,
+};
+
+describe('cleanRequestData (pure) — only typed keys travel', () => {
+  it('drops empty, whitespace and non-string entries and trims the rest', () => {
+    expect(
+      cleanRequestData({
+        deviceCommonName: '  Glucose monitor ',
+        correspondentTelephone: '',
+        correspondentCompanyName: '   ',
+        indicationsForUseCitation: 'Section 4',
+        bogus: 42 as unknown as string,
+      }),
+    ).toEqual({ deviceCommonName: 'Glucose monitor', indicationsForUseCitation: 'Section 4' });
+    expect(cleanRequestData(undefined)).toEqual({});
+  });
+});
+
+describe('useEstarExport.exportOfficialEstar — useProgramData + data', () => {
+  it('sends useProgramData:true and only the non-empty trimmed keys', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        governed: true,
+        officialEstarPdf: true,
+        fieldReport: {
+          mappedCount: 20,
+          filledCount: 7,
+          blankCount: 13,
+          blankKeys: ['deviceCommonName', 'declarationCompanyAddress'],
+          ignoredRequestKeys: ['deviceTradeName'],
+        },
+      }),
+    );
+    const { result } = renderHook(() => useEstarExport());
+    let outcome: EstarExportOutcome | undefined;
+    await act(async () => {
+      outcome = await result.current.exportOfficialEstar(PROGRAM, 'device', {
+        useProgramData: true,
+        data: { deviceCommonName: ' Glucose monitor ', correspondentTelephone: '   ', deviceTradeName: 'X' },
+      });
+    });
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('/api/510k/estar/official');
+    const body = JSON.parse(String(init.body)) as Record<string, unknown>;
+    expect(body.useProgramData).toBe(true);
+    expect(body.variant).toBe('device');
+    expect(body.data).toEqual({ deviceCommonName: 'Glucose monitor', deviceTradeName: 'X' });
+    // The report is parsed, not invented.
+    expect(outcome?.ok).toBe(true);
+    expect(outcome?.fieldReport).toEqual({
+      mappedCount: 20,
+      filledCount: 7,
+      blankCount: 13,
+      blankKeys: ['deviceCommonName', 'declarationCompanyAddress'],
+      ignoredRequestKeys: ['deviceTradeName'],
+    });
+  });
+
+  it('without opts sends useProgramData:false and an empty data map (today\'s behaviour)', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ governed: true }));
+    const { result } = renderHook(() => useEstarExport());
+    let outcome: EstarExportOutcome | undefined;
+    await act(async () => {
+      outcome = await result.current.exportOfficialEstar(PROGRAM);
+    });
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(String(init.body)) as Record<string, unknown>;
+    expect(body.useProgramData).toBe(false);
+    expect(body.data).toEqual({});
+    // No report on the wire ⇒ null, never a fabricated count.
+    expect(outcome?.fieldReport).toBeNull();
+  });
+
+  it('a malformed fieldReport is null rather than partially trusted', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ governed: true, fieldReport: { filledCount: 'seven' } }));
+    const { result } = renderHook(() => useEstarExport());
+    let outcome: EstarExportOutcome | undefined;
+    await act(async () => {
+      outcome = await result.current.exportOfficialEstar(PROGRAM, 'ivd', { useProgramData: true });
+    });
+    expect(outcome?.fieldReport).toBeNull();
+  });
+});
+
+describe('exportStatusLine — administrative fill wording', () => {
+  it('names filled of mapped and the blank count', () => {
+    const outcome: EstarExportOutcome = {
+      ...SUCCESS,
+      fieldReport: {
+        mappedCount: 20,
+        filledCount: 7,
+        blankCount: 13,
+        blankKeys: [],
+        ignoredRequestKeys: [],
+      },
+    };
+    expect(exportStatusLine(false, outcome)).toBe(
+      'Downloaded BX-204_eSTAR.pdf · 7 of 20 administrative fields filled · 13 left blank',
+    );
+  });
+
+  it('omits the blank clause when nothing was left blank', () => {
+    const outcome: EstarExportOutcome = {
+      ...SUCCESS,
+      fieldReport: {
+        mappedCount: 20,
+        filledCount: 20,
+        blankCount: 0,
+        blankKeys: [],
+        ignoredRequestKeys: [],
+      },
+    };
+    expect(exportStatusLine(false, outcome)).toBe(
+      'Downloaded BX-204_eSTAR.pdf · 20 of 20 administrative fields filled',
+    );
+    expect(fieldReportClause(null)).toBe('');
+  });
+
+  it('a success without a report keeps the existing wording', () => {
+    expect(exportStatusLine(false, SUCCESS)).toBe('Downloaded BX-204_eSTAR.pdf');
+  });
+});
+
+describe('useEstarExport — reset()', () => {
+  it('forgets the last outcome, and is stable across renders', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ governed: true }));
+    const { result, rerender } = renderHook(() => useEstarExport());
+    const firstReset = result.current.reset;
+    await act(async () => {
+      await result.current.exportDraftPackage(PROGRAM);
+    });
+    await waitFor(() => expect(result.current.outcome?.ok).toBe(true));
+    act(() => result.current.reset());
+    expect(result.current.outcome).toBeNull();
+    rerender();
+    expect(result.current.reset).toBe(firstReset);
   });
 });

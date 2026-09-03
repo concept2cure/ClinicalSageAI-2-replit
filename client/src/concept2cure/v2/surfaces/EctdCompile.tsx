@@ -118,7 +118,7 @@ async function readJson<T = any>(method: 'GET' | 'POST', path: string, body?: un
     const res = await apiRequest(method, path, body);
     const parsed = (await res.json().catch(() => null)) as T | null;
     return { ok: res.ok, status: res.status, body: parsed };
-  } catch (e) {
+  } catch {
     return { ok: false, status: 0, body: null };
   }
 }

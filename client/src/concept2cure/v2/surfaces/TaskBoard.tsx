@@ -282,7 +282,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
 
   const [view, setView] = useState('board');
   const [proj, setProj] = useState<string>(() => {
-    try { return (window as any).C2C_TASK_FILTER || 'all'; } catch (_e) { return 'all'; }
+    try { return (window as any).C2C_TASK_FILTER || 'all'; } catch { return 'all'; }
   });
   const [mine, setMine] = useState(false);
   const [mod, setMod] = useState('all');

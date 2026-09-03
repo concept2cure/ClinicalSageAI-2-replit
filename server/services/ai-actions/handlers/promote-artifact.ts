@@ -13,12 +13,11 @@
  */
 
 import { governedActor } from '../../part11/governed-actor';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import * as crypto from 'crypto';
 import {
   concept2cureArtifacts,
 } from '../../../../shared/schema';
-import { OperatingSystemIntegration } from '../../operating-system-integration';
 import { unifiedDocuments, workflowDocumentVersions } from '../../../../shared/schema/unified_workflow';
 import { resolveGovernedContext } from '../../concept2cure/governedDocumentContractService.js';
 import { fetchArtifact } from '../shared-utils';
