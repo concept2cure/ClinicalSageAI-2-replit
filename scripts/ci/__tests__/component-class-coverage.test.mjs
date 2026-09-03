@@ -68,6 +68,34 @@ test('keeps a whole class when the interpolation can only append a space', () =>
   );
 });
 
+test("drops a literal INSIDE an interpolation that the text before it glues to", () => {
+  // PathwayPanes renders `dd-att-ico kind-${f.kind || 'file'}`. The element's
+  // class is `kind-file`; nothing in the product ever renders `file`. The
+  // reader used to report `file` because adjacency only ran inward — the chunk
+  // learned whether the interpolation could extend it, and the interpolation
+  // never learned whether the chunk extended IT.
+  assert.deepEqual(
+    classes("<span className={`dd-att-ico kind-${f.kind || 'file'}`} />"),
+    ['dd-att-ico'],
+  );
+  // Every arm of a ternary sits at the same position, so both are glued.
+  assert.deepEqual(
+    classes("<span className={`tone-${ok ? 'good' : 'bad'} keep-me`} />"),
+    ['keep-me'],
+  );
+  // The mirror: text AFTER the interpolation glues to it too.
+  assert.deepEqual(
+    classes("<span className={`${prefix || 'lead'}-tail spaced`} />"),
+    ['spaced'],
+  );
+  // And the space-prefixed modifier is still whole — the fix must not
+  // re-break the case the previous fix existed for.
+  assert.deepEqual(
+    classes("<div className={`docs-panel${compact ? ' docs-panel-compact' : ''}`} />"),
+    ['docs-panel', 'docs-panel-compact'],
+  );
+});
+
 test('does not read call arguments or comparison operands as classes', () => {
   assert.ok(!classes('<div className={`anl-delta ${k.delta.startsWith("-") ? "down" : "up"}`} />').includes('-'));
   assert.deepEqual(classes('<tr className={row[0] === "Overall" ? "is-overall" : ""} />'), ['is-overall']);

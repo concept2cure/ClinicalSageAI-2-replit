@@ -3973,3 +3973,46 @@
 .mdx-shell .eng-heat-n {
   font-family: var(--font-mono);
 }
+
+/* ═════════════════════════════════════════════════════════════
+   Two classes these surfaces render that no kit defines.
+
+   The surfaces.css port above deliberately stopped at the kit's edge, and
+   `eng-trace-summary` and `scope-note` fell outside it: EngineeringSurface
+   invented both, so there is nothing to port and they stayed on the L139
+   baseline as an honest gap rather than an invented rule.
+
+   They are still two elements the product renders with no rule behind them,
+   on a surface a customer opens daily, and closing that is design work rather
+   than porting work. Done here as design, stated as design:
+
+   `.scope-note` is the "Organization-wide" marker `ScopeNote` renders beside
+   four panel headings, for panels whose source has no program column yet. With
+   no rule it was 13px body text sitting against a 14px semibold h2 — it read
+   as part of the heading, which is the one thing it must not do, because it
+   qualifies the SCOPE of the numbers below it. A quiet pill separates it. The
+   `--text-300` on `--bg-100` pairing is not chosen here; it is the pairing the
+   kit already uses for `.udi-status-pill.pending`, and it clears 4.5:1 where
+   `.section-sub`'s `--text-400` (3.37:1) would not have.
+
+   `.eng-trace-summary` is the "n traceability rows tracked · n verified" line
+   under the design-controls table. `mono tiny` already give it 10px mono type;
+   what it had no rule for was the gap above it and its own colour, so it sat
+   flush against the table it summarises in full body colour.
+   ═════════════════════════════════════════════════════════════ */
+
+.mdx-shell .scope-note {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--bg-100);
+  color: var(--text-300);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.mdx-shell .eng-trace-summary {
+  margin-top: 8px;
+  color: var(--text-300);
+}
