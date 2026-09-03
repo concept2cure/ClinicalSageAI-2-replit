@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T00:24:11.200Z",
+  "generatedAt": "2026-09-03T00:27:44.534Z",
   "git": {
-    "sha": "af45d0dd87b3892c9e5ca3b13eeb9da62baf3939",
+    "sha": "64b74c7e4081e357428620d4921b4ff7b3274280",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2198,11 +2198,11 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "bytes": 154605
+        "bytes": 154975
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 153124
+        "bytes": 153109
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2348,7 +2348,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "lines": 3605
+        "lines": 3610
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2400,7 +2400,7 @@
       },
       {
         "file": "server/routes/knowledge-base.ts",
-        "lines": 2582
+        "lines": 2584
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
