@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T00:24:11.200Z",
+  "generatedAt": "2026-09-03T00:33:40.958Z",
   "git": {
-    "sha": "af45d0dd87b3892c9e5ca3b13eeb9da62baf3939",
+    "sha": "7c614b3549840ae1773b9a0772b3e62ba7c73e9f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2174,7 +2174,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 318248
+        "bytes": 319058
       },
       {
         "file": "server/statistics-service.ts",
@@ -2182,7 +2182,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 217214
+        "bytes": 219834
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2198,11 +2198,11 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "bytes": 154605
+        "bytes": 154975
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 153124
+        "bytes": 153109
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2320,7 +2320,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7392
+        "lines": 7407
       },
       {
         "file": "server/statistics-service.ts",
@@ -2340,7 +2340,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 4822
+        "lines": 4868
       },
       {
         "file": "server/storage.ts",
@@ -2348,7 +2348,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "lines": 3605
+        "lines": 3610
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2400,7 +2400,7 @@
       },
       {
         "file": "server/routes/knowledge-base.ts",
-        "lines": 2582
+        "lines": 2584
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",

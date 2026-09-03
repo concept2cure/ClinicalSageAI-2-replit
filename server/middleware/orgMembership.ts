@@ -136,6 +136,49 @@ interface OrgMembershipQueryResult {
   enrichmentDegraded: boolean;
 }
 
+/**
+ * A request that ran on the membership-only fallback: sound about MEMBERSHIP,
+ * but with `orgUuid` null, which `tenantSessionVars` turns into an empty
+ * `app.current_org_id` for the whole request.
+ *
+ * Recorded because a degraded run was previously invisible outside a log line.
+ * Ledger L148 found the flagship authoring journey running EVERY request this
+ * way — its `organizations` stub predated the uuid column, the LEFT JOIN threw
+ * 42703 on every call, and the journey proved its tenant-isolation and
+ * honest-failure steps with the org session variable empty. Nothing failed,
+ * because membership itself was decided correctly; and nothing could notice,
+ * because a warning is not something a test can read.
+ *
+ * A counter plus a bounded sample: the count is the fact, the sample is for
+ * diagnosis, and the cap keeps a long-running process from accumulating.
+ */
+export interface DegradedEnrichment {
+  userId: number;
+  organizationId: number;
+  error: string;
+}
+const DEGRADED_SAMPLE_CAP = 20;
+let degradedCount = 0;
+const degradedSample: DegradedEnrichment[] = [];
+
+/** How many requests have answered on the membership-only fallback. */
+export function degradedEnrichmentCount(): number {
+  return degradedCount;
+}
+/** Up to DEGRADED_SAMPLE_CAP of the most recent degraded runs, for diagnosis. */
+export function degradedEnrichmentSample(): readonly DegradedEnrichment[] {
+  return degradedSample;
+}
+/** Tests only: clear the record between runs. */
+export function resetDegradedEnrichments(): void {
+  degradedCount = 0;
+  degradedSample.length = 0;
+}
+function noteDegradedEnrichment(entry: DegradedEnrichment): void {
+  degradedCount += 1;
+  if (degradedSample.length < DEGRADED_SAMPLE_CAP) degradedSample.push(entry);
+}
+
 async function queryOrgMembership(
   userId: number,
   organizationId: number
@@ -209,6 +252,11 @@ async function queryOrgMembership(
             error: joinErr instanceof Error ? joinErr.message : String(joinErr),
           });
           enrichmentDegraded = true;
+          noteDegradedEnrichment({
+            userId,
+            organizationId,
+            error: joinErr instanceof Error ? joinErr.message : String(joinErr),
+          });
           return membershipOnly();
         }
       }
