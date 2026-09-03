@@ -1,10 +1,15 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { promises as fs } from 'fs';
+import fsSync from 'fs';
 import path from 'path';
 import os from 'os';
 import { PDFDocument } from 'pdf-lib';
 import { fillEstarSubmission } from '../estar-fill';
-import type { OfficialPdfFieldMap } from '../../../forms/fill-official-pdf';
+import { ESTAR_FIELD_MAPS } from '../estar-field-map';
+import {
+  readXfaDatasetsValues,
+  type OfficialPdfFieldMap,
+} from '../../../forms/fill-official-pdf';
 
 // Build a synthetic AcroForm PDF standing in for the official eSTAR template.
 async function makeSyntheticEstar(): Promise<Uint8Array> {
@@ -106,3 +111,87 @@ describe('fillEstarSubmission', () => {
     expect(r.skippedFields).toContain('isIvd');
   });
 });
+
+// ---------------------------------------------------------------------------
+// The WO-8 Phase 1 gate, against the real vendored template
+// ---------------------------------------------------------------------------
+//
+// Skipped when the official template is absent (the drop-point may be pointed
+// out of tree — see assets/estar-templates/README.md), so the suite stays green
+// without it rather than failing blind.
+
+const NIVD_TEMPLATE = path.resolve(process.cwd(), 'assets/estar-templates', 'eSTAR-510k-non-ivd.pdf');
+
+describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
+  'fillEstarSubmission against the official nIVD eSTAR v7.0',
+  () => {
+    const DATA = {
+      deviceTradeName: 'AcuSense CGM System',
+      applicantCompanyName: 'Concept2Cure, Inc.',
+      predicateSubmissionNumber: 'K203456',
+      productCodes: 'NBW',
+    };
+
+    // The file-level beforeAll points the drop-point at an EMPTY dir so the
+    // synthetic-template tests above exercise the fail-closed path. This block
+    // needs the real vendored template, so point it back for these tests only.
+    const REAL_DIR = path.dirname(NIVD_TEMPLATE);
+    let dirBefore: string | undefined;
+    beforeAll(() => {
+      dirBefore = process.env.ESTAR_TEMPLATE_DIR;
+      process.env.ESTAR_TEMPLATE_DIR = REAL_DIR;
+    });
+    afterAll(() => {
+      if (dirBefore === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
+      else process.env.ESTAR_TEMPLATE_DIR = dirBefore;
+    });
+
+    it('produces a filled official eSTAR with no blockers, via the XFA layer', async () => {
+      const r = await fillEstarSubmission({ type: '510k', variant: 'device', data: DATA });
+
+      expect(r.descriptorId).toBe('510k-device');
+      expect(r.templateAvailable).toBe(true);
+      expect(r.fieldMapPopulated).toBe(true);
+      // The FDA eSTAR is dynamic XFA; filling its AcroForm layer would write nothing.
+      expect(r.templateKind).toBe('dynamic-xfa');
+      expect(r.blockers).toEqual([]);
+      expect(r.filled).toBe(true);
+      expect(r.pdfBytes).toBeDefined();
+      expect(Buffer.from(r.pdfBytes!.subarray(0, 5)).toString()).toBe('%PDF-');
+
+      // Every supplied key must be reported filled — none silently dropped.
+      for (const key of Object.keys(DATA)) expect(r.filledFields).toContain(key);
+    });
+
+    it('writes each value at the SOM path it was mapped to', async () => {
+      const r = await fillEstarSubmission({ type: '510k', variant: 'device', data: DATA });
+      const map = ESTAR_FIELD_MAPS['510k-device'];
+      const paths = Object.keys(DATA).map((k) => map[k].xfaSomPath!);
+      const back = await readXfaDatasetsValues(r.pdfBytes!, paths);
+      for (const [key, value] of Object.entries(DATA)) {
+        expect(back[map[key].xfaSomPath!]).toBe(value);
+      }
+    });
+
+    it('still fails closed when the template is missing', async () => {
+      const empty = await fs.mkdtemp(path.join(os.tmpdir(), 'estar-none-'));
+      const prev = process.env.ESTAR_TEMPLATE_DIR;
+      process.env.ESTAR_TEMPLATE_DIR = empty;
+      try {
+        const r = await fillEstarSubmission({ type: '510k', variant: 'device', data: DATA });
+        expect(r.filled).toBe(false);
+        expect(r.pdfBytes).toBeUndefined();
+        expect(r.blockers.join(' ')).toMatch(/eSTAR-510k-non-ivd\.pdf.*not vendored/);
+      } finally {
+        if (prev === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
+        else process.env.ESTAR_TEMPLATE_DIR = prev;
+      }
+    });
+
+    it('fails closed for a descriptor with no verified field map', async () => {
+      const r = await fillEstarSubmission({ type: 'de_novo', variant: 'device', data: DATA });
+      expect(r.filled).toBe(false);
+      expect(r.blockers.join(' ')).toMatch(/field map for "de_novo-device" is not populated/);
+    });
+  },
+);

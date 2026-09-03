@@ -8,10 +8,17 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
+import { promises as fs } from 'fs';
+import fsSync from 'fs';
+import path from 'path';
 
 import {
   fillOfficialPdf,
   listAcroFields,
+  isDynamicXfaPdf,
+  listXfaFields,
+  fillXfaDatasets,
+  readXfaDatasetsValues,
   type OfficialPdfFieldMap,
 } from '../fill-official-pdf';
 
@@ -207,5 +214,98 @@ describe('listAcroFields', () => {
     expect(byName[PHASE_FIELD]).toBe('dropdown');
     expect(byName[RADIO_FIELD]).toBe('radio');
     expect(fields).toHaveLength(4);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Dynamic XFA (the official FDA eSTAR templates)
+// ---------------------------------------------------------------------------
+//
+// These run against the vendored official template. They are skipped when it is
+// absent (see assets/estar-templates/README.md — the drop-point may be pointed
+// out of tree), so the suite stays green without it rather than failing blind.
+
+const ESTAR_TEMPLATE = path.resolve(
+  process.env.ESTAR_TEMPLATE_DIR || path.resolve(process.cwd(), 'assets/estar-templates'),
+  'eSTAR-510k-non-ivd.pdf',
+);
+const hasEstarTemplate = fsSync.existsSync(ESTAR_TEMPLATE);
+
+// A path the nIVD eSTAR v7.0 declares, verified by enumeration (see
+// docs/reports/wo8-phase1-estar-unblock-2026-09-03.md).
+const TRADE_NAME_SOM = 'root.AdministrativeDocumentation.PMNSummary.SSTextField220';
+
+describe.skipIf(!hasEstarTemplate)('dynamic XFA templates (official FDA eSTAR)', () => {
+  let template: Buffer;
+  beforeAll(async () => {
+    template = await fs.readFile(ESTAR_TEMPLATE);
+  });
+
+  it('is detected as dynamic XFA, and its AcroForm layer is empty', async () => {
+    expect(isDynamicXfaPdf(template)).toBe(true);
+    // The reason an acroField mapping can never work for this template: there is
+    // nothing in the AcroForm layer to match against.
+    await expect(listAcroFields(template)).resolves.toEqual([]);
+  });
+
+  it('enumerates XFA fields with SOM path, type and the template\'s own caption', async () => {
+    const fields = await listXfaFields(template);
+    expect(fields.length).toBeGreaterThan(1000);
+    const tradeName = fields.find((f) => f.somPath === TRADE_NAME_SOM);
+    expect(tradeName).toBeDefined();
+    expect(tradeName!.type).toBe('text');
+    expect(tradeName!.caption).toBe('Device Trade Name');
+    // Only datasets-backed paths are fillable; the enumeration must say which.
+    expect(tradeName!.inDatasets).toBe(true);
+    expect(fields.some((f) => !f.inDatasets)).toBe(true);
+  });
+
+  it('fills the datasets packet and reads the value back, preserving the template', async () => {
+    const map: OfficialPdfFieldMap = {
+      deviceTradeName: { xfaSomPath: TRADE_NAME_SOM, type: 'text' },
+    };
+    const out = await fillXfaDatasets(template, map, { deviceTradeName: 'AcuSense CGM System' });
+    expect(out.filled).toEqual(['deviceTradeName']);
+    expect(out.skipped).toEqual([]);
+
+    // Written as an incremental update: original bytes preserved, new revision appended.
+    expect(Buffer.from(out.bytes.subarray(0, template.length)).equals(template)).toBe(true);
+    expect(out.bytes.length).toBeGreaterThan(template.length);
+
+    const back = await readXfaDatasetsValues(out.bytes, [TRADE_NAME_SOM]);
+    expect(back[TRADE_NAME_SOM]).toBe('AcuSense CGM System');
+
+    // The form definition itself must be untouched, or the output is not the FDA form.
+    const after = await listXfaFields(out.bytes);
+    expect(after.length).toBe((await listXfaFields(template)).length);
+  });
+
+  it('skips and warns for a SOM path the template does not declare (never invents a node)', async () => {
+    const map: OfficialPdfFieldMap = {
+      real: { xfaSomPath: TRADE_NAME_SOM, type: 'text' },
+      ghost: { xfaSomPath: 'root.Totally.Made.Up', type: 'text' },
+    };
+    const out = await fillXfaDatasets(template, map, { real: 'Yes', ghost: 'No' });
+    expect(out.filled).toEqual(['real']);
+    expect(out.skipped).toEqual(['ghost']);
+    expect(out.warnings.join(' ')).toMatch(/root\.Totally\.Made\.Up/);
+
+    const back = await readXfaDatasetsValues(out.bytes, ['root.Totally.Made.Up']);
+    expect(back['root.Totally.Made.Up']).toBeNull();
+  });
+
+  it('throws for an undeclared path under missingFieldPolicy "error"', async () => {
+    const map: OfficialPdfFieldMap = { ghost: { xfaSomPath: 'root.Nope', type: 'text' } };
+    await expect(
+      fillXfaDatasets(template, map, { ghost: 'x' }, { missingFieldPolicy: 'error' }),
+    ).rejects.toThrow(/root\.Nope/);
+  });
+
+  it('skips an XFA-only mapping on the AcroForm path rather than filling the wrong widget', async () => {
+    const map: OfficialPdfFieldMap = { deviceTradeName: { xfaSomPath: TRADE_NAME_SOM, type: 'text' } };
+    const out = await fillOfficialPdf(template, map, { deviceTradeName: 'X' });
+    expect(out.filled).toEqual([]);
+    expect(out.skipped).toEqual(['deviceTradeName']);
+    expect(out.warnings.join(' ')).toMatch(/no acroField/i);
   });
 });
