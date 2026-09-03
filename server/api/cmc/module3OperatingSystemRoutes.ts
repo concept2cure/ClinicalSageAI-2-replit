@@ -7,7 +7,7 @@ import {
   createSourceHash,
 } from '../../services/cmc-module3-compiler';
 import { composeModule3FromCanonicalSources, impactedSectionsForSourceType } from '../../services/module3Composer';
-import { composeAppendices, composeRegional } from '../../services/module3-extensions';
+import { composeAppendices, composeRegional, emittableAppendices } from '../../services/module3-extensions';
 import { regionCodeForPrimaryRegion, resolveSubmissionSpine } from '../../services/cmc/submission-spine';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
@@ -182,11 +182,7 @@ router.post('/compile/:projectId', async (req, res) => {
        fail-closed branch exists to avoid. A required appendix IS emitted, with
        its honest incompleteness. */
     try {
-      const appendices = composeAppendices(rows as any).filter(
-        (section) =>
-          section.lineage.length > 0 ||
-          (section.structuredPayload as { optional?: boolean } | undefined)?.optional === false,
-      );
+      const appendices = emittableAppendices(composeAppendices(rows as any));
       compiled = compiled.concat(appendices);
     } catch (appendixErr) {
       // Said, not swallowed — the same posture as the regional pass below.

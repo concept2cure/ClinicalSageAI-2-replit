@@ -299,13 +299,16 @@ S3THR=$(echo "$S3" | jq -r '[.tables[]? | select(.title | test("ICH Threshold Ba
 [ "${S3PPM:-0}" -ge 1 ] && [ "${S3PCT:-0}" = "0" ] && [ "${S3THR:-0}" -ge 1 ] \
   && ok "§3.2.S.3.2 renders 300 ppm as ppm (never 300%) and states the ICH threshold basis" \
   || bad "§3.2.S.3.2: ppmRows=$S3PPM percentRows=$S3PCT thresholdTables=$S3THR"
-# The residual solvent is refused BY CLASS and routed to the guideline that does
-# govern it, and the section says which impurities it actually compared.
-S3OUT=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "Q3C")
-S3CMP=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "compared to an ICH threshold")
-[ "${S3OUT:-0}" -ge 1 ] && [ "${S3CMP:-0}" -ge 1 ] \
-  && ok "§3.2.S.3.2 routes the residual solvent to ICH Q3C and claims only what it compared" \
-  || bad "§3.2.S.3.2 out-of-scope routing: Q3C=$S3OUT comparedClaim=$S3CMP"
+# The residual solvent is ASSESSED against the guideline that governs it — it
+# used to be refused by class and merely routed to Q3C, which was true and
+# useless — and each population is counted under its own guideline, never folded
+# into a Q3A/Q3B tally it was not compared against.
+S3OUT=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "assessed against ICH Q3C(R8)")
+S3CMP=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "compared to an ICH Q3A/Q3B threshold")
+S3LIM=$(echo "$S3" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("ICH Q3C Class"))] | length' 2>/dev/null)
+[ "${S3OUT:-0}" -ge 1 ] && [ "${S3CMP:-0}" -ge 1 ] && [ "${S3LIM:-0}" -ge 1 ] \
+  && ok "§3.2.S.3.2 assesses the residual solvent against ICH Q3C and counts each population under its own guideline" \
+  || bad "§3.2.S.3.2 Q3C routing: assessedClaim=$S3OUT q3aClaim=$S3CMP q3cLimitRows=$S3LIM"
 
 P2=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.P.2")][0]' 2>/dev/null)
 P2DEV=$(echo "$P2" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("BX701-DP-2406"))] | length' 2>/dev/null)

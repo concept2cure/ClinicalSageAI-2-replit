@@ -897,21 +897,50 @@ export const REFERENCE_STANDARD_STATUSES = ['draft', 'expired', 'retired'];
 export function parseRowLines(
   value: string | undefined | null,
   keys: string[],
-): Array<Record<string, string>> {
+  /**
+   * The rows as STORED, positionally. Keys the textarea cannot represent —
+   * a step's nested `inProcessControls`, its scale dependencies — are carried
+   * back onto the row at the same index.
+   *
+   * Without this the round trip is lossy in a way no one sees: the manufacturing
+   * register stores in-process controls INSIDE each step, PROCESS_STEP_COLUMNS
+   * has no column for them, and the PUT sends processSteps unconditionally. So
+   * pressing Update with nothing changed deleted every step-level control,
+   * dropped the card's count to "none", and flipped §3.2.S.2's completeness key
+   * to null — a save that reported success and destroyed recorded data. That is
+   * the same failure `rowLinesOf` was written to prevent, one level deeper.
+   *
+   * Positional is the honest match: the textarea's line order IS the row order,
+   * and a line the staffer deleted takes its own hidden fields with it.
+   */
+  preserveFrom?: unknown,
+): Array<Record<string, unknown>> {
   if (!value) return [];
-  const rows: Array<Record<string, string>> = [];
+  const stored = Array.isArray(preserveFrom)
+    ? preserveFrom.filter((r) => r && typeof r === 'object' && !Array.isArray(r))
+    : [];
+  const rows: Array<Record<string, unknown>> = [];
   for (const line of String(value).split('\n')) {
     if (!line.trim()) continue;
     const cells = line.split('|').map((c) => c.trim());
     const overflow = cells.slice(keys.length).filter(Boolean);
-    const row: Record<string, string> = {};
+    const row: Record<string, unknown> = {};
     keys.forEach((k, i) => {
       const cell = i === keys.length - 1 && overflow.length > 0
         ? [cells[i], ...overflow].filter(Boolean).join(' | ')
         : cells[i];
       if (cell) row[k] = cell;
     });
-    if (Object.keys(row).length > 0) rows.push(row);
+    if (Object.keys(row).length === 0) continue;
+    const original = stored[rows.length] as Record<string, unknown> | undefined;
+    if (original) {
+      for (const [k, v] of Object.entries(original)) {
+        /* Only what the drawer could not edit. A declared column the staffer
+           cleared must stay cleared, not be restored from the stored row. */
+        if (!keys.includes(k) && v !== undefined) row[k] = v;
+      }
+    }
+    rows.push(row);
   }
   return rows;
 }
@@ -948,7 +977,7 @@ export interface ExtractablesLeachables {
   conditions?: string;
   analyticalEvaluationThreshold?: string;
   conclusion?: string;
-  results?: Array<Record<string, string>>;
+  results?: Array<Record<string, unknown>>;
 }
 
 export interface IntegrityTesting {
@@ -968,7 +997,7 @@ export interface ContainerClosureBody {
   supplier?: string | null;
   compendialStandards?: string[] | null;
   suitabilityJustification?: string | null;
-  materialsOfConstruction?: Array<Record<string, string>> | null;
+  materialsOfConstruction?: Array<Record<string, unknown>> | null;
   extractablesLeachables?: ExtractablesLeachables | null;
   integrityTesting?: IntegrityTesting | null;
   status: string;
@@ -1116,7 +1145,7 @@ export interface ReferenceStandardBody {
   materialSource?: string | null;
   lotNumber?: string | null;
   assignedValue?: string | null;
-  characterization?: Array<Record<string, string>> | null;
+  characterization?: Array<Record<string, unknown>> | null;
   certificateOfAnalysis?: string | null;
   qualificationProtocol?: string | null;
   storageConditions?: string | null;
@@ -1403,9 +1432,9 @@ export interface DissolutionProfileBody {
   sinker?: string | null;
   specification?: string | null;
   unitsTested?: number | null;
-  results?: Array<Record<string, string>> | null;
+  results?: Array<Record<string, unknown>> | null;
   comparisonBatch?: string | null;
-  comparisonResults?: Array<Record<string, string>> | null;
+  comparisonResults?: Array<Record<string, unknown>> | null;
   testDate?: string | null;
   status: string;
 }
@@ -1524,7 +1553,7 @@ export interface MaterialSpecBody {
   origin?: string | null;
   originDetail?: string | null;
   tseCertificate?: string | null;
-  testParameters?: Array<Record<string, string>> | null;
+  testParameters?: Array<Record<string, unknown>> | null;
   analyticalProcedures?: string | null;
   novelExcipient: boolean;
   novelExcipientJustification?: string | null;
@@ -1620,7 +1649,7 @@ export interface FormulationRecordBody {
   dosageForm?: string | null;
   strength?: string | null;
   batchSize?: string | null;
-  components?: Array<Record<string, string>> | null;
+  components?: Array<Record<string, unknown>> | null;
   theoreticalYield?: string | null;
   overageJustification?: string | null;
   supersedes?: string | null;
@@ -1711,10 +1740,10 @@ export interface ManufacturingProcessBody {
   processName: string;
   processType?: string | null;
   processDescription?: string | null;
-  processSteps?: Array<Record<string, string>> | null;
-  criticalProcessParameters?: Array<Record<string, string>> | null;
-  processControls?: Array<Record<string, string>> | null;
-  equipmentList?: Array<Record<string, string>> | null;
+  processSteps?: Array<Record<string, unknown>> | null;
+  criticalProcessParameters?: Array<Record<string, unknown>> | null;
+  processControls?: Array<Record<string, unknown>> | null;
+  equipmentList?: Array<Record<string, unknown>> | null;
   batchSize?: string | null;
   processDevelopment?: string | null;
   reprocessing?: string | null;
@@ -1767,8 +1796,13 @@ export function manufacturingProcessBody(v: Record<string, string>, projectId?: 
 }
 
 /** The UPDATE body — every editable field, so clearing one clears it. */
-export function manufacturingProcessPatch(v: Record<string, string>): ManufacturingProcessBody {
-  const steps = parseRowLines(v.processSteps, PROCESS_STEP_COLUMNS);
+export function manufacturingProcessPatch(
+  v: Record<string, string>,
+  /* The stored row, so a step's in-process controls — which the drawer cannot
+     show and the mapper, the card and §3.2.S.2 all read — survive the edit. */
+  row?: Partial<ManufacturingProcessBody> | null,
+): ManufacturingProcessBody {
+  const steps = parseRowLines(v.processSteps, PROCESS_STEP_COLUMNS, row?.processSteps);
   const cpps = parseRowLines(v.criticalProcessParameters, PROCESS_CPP_COLUMNS);
   const controls = parseRowLines(v.processControls, PROCESS_CONTROL_COLUMNS);
   const equipment = parseRowLines(v.equipmentList, PROCESS_EQUIPMENT_COLUMNS);
@@ -1810,7 +1844,7 @@ export interface CharacterizationStudyBody {
   studyReference?: string | null;
   performedBy?: string | null;
   performedDate?: string | null;
-  supportingData?: Array<Record<string, string>> | null;
+  supportingData?: Array<Record<string, unknown>> | null;
   status: string;
 }
 
@@ -1833,7 +1867,7 @@ export function characterizationStudyForm(row?: Partial<CharacterizationStudyBod
       { key: 'conclusion', label: 'Conclusion', type: 'textarea', rows: 2, default: row?.conclusion ?? '', placeholder: 'What the study establishes. Without a result or a conclusion it establishes nothing.' },
       { key: 'studyReference', label: 'Report reference', type: 'text', half: true, default: row?.studyReference ?? '', placeholder: 'e.g. RPT-CHAR-001' },
       { key: 'performedBy', label: 'Performed by', type: 'text', half: true, default: row?.performedBy ?? '' },
-      { key: 'performedDate', label: 'Performed on', type: 'date', half: true, default: isoDate(row?.performedDate) ?? '' },
+      { key: 'performedDate', label: 'Performed on', type: 'date', half: true, default: String(row?.performedDate ?? '').slice(0, 10) },
       { key: 'status', label: 'Status', type: 'seg', options: statuses, required: true, half: true, default: statusDefaultFor(CHARACTERIZATION_STATUSES, row?.status) },
       { key: 'supportingData', label: 'Supporting data', type: 'textarea', rows: 4, default: rowLinesOf(row?.supportingData, CHARACTERIZATION_DATA_COLUMNS), placeholder: 'One per line: Parameter or assignment | Value | Unit | Note' },
     ],

@@ -22,7 +22,12 @@ import {
 } from './module3Composer';
 /* The scope rule is shared with the register surfaces, not owned by either
    side: see shared/cmc/material-scope.ts. */
-import { normalizeMaterialScope } from '../../shared/cmc/material-scope';
+import {
+  EXCIPIENT_ROLES,
+  isHumanOrAnimalOrigin,
+  normalizeMaterialRole,
+  normalizeMaterialScope,
+} from '../../shared/cmc/material-scope';
 import {
   DISSOLUTION_DEVELOPMENT_PURPOSES,
   DISSOLUTION_RELEASE_PURPOSE,
@@ -913,25 +918,12 @@ export function mapDissolutionProfilePayload(record: Record<string, any>): Recor
 }
 
 
-/** The material roles that are §3.2.P.4 excipient content. */
-export const EXCIPIENT_ROLES = ['excipient', 'capsule-shell', 'coating', 'processing-aid'];
-
-/** Read a stored material role without inventing one. */
-export function normalizeMaterialRole(raw: unknown): string {
-  const v = String(raw ?? '').trim().toLowerCase().replace(/[\s_]+/g, '-');
-  if (!v) return 'excipient';
-  if (v === 'raw-material' || v === 'raw' || v === 'reagent') return 'raw-material';
-  if (v === 'starting-material' || v === 'starting') return 'starting-material';
-  if (EXCIPIENT_ROLES.includes(v)) return v;
-  return 'excipient';
-}
-
-/** Is a recorded origin one that puts a material under §3.2.A.3? */
-export function isHumanOrAnimalOrigin(raw: unknown): boolean {
-  return /^(animal|human|bovine|porcine|ovine|equine|murine|hamster|fish|egg|milk)$/i.test(
-    String(raw ?? '').trim(),
-  );
-}
+/* The material role and human/animal origin rules live in
+   shared/cmc/material-scope.ts, because the register surface needs the same
+   answers — it resolved the role with a substring test and recognised two
+   origins where §3.2.A.3 recognises twelve. Re-exported here so the existing
+   server callers keep their import path. */
+export { EXCIPIENT_ROLES, normalizeMaterialRole, isHumanOrAnimalOrigin };
 
 /**
  * Map a cmc_material_specs row to a canonical source payload.
@@ -1036,6 +1028,11 @@ export function mapFormulationRecordPayload(record: Record<string, any>): Record
     formulationName,
     version: record.version || '',
     dosageForm: record.dosageForm || record.dosage_form || '',
+    /* The key §3.2.P.1 actually reads, and its own required field. The
+       formulation register captured the dosage form, stored it and mapped it
+       under `dosageForm`, which nothing reads — so the section kept printing
+       "[dosage form not specified]" over a value the staffer had entered. */
+    dosageFormDescription: record.dosageForm || record.dosage_form || '',
     strength: record.strength || '',
     batchSize: record.batchSize || record.batch_size || '',
     components: rows.length > 0 ? rows : null,

@@ -127,6 +127,37 @@ try {
   const residue = rows.map((r) => r.t);
 
   if (writeBaseline) {
+    /* A table that DISAPPEARED from the residue is not automatically a gain.
+       It is a gain only when the purge can now reach it; when it is simply
+       absent from THIS database it was never measured, and dropping it from the
+       baseline silently lowers the ratchet for every other environment.
+       That is not hypothetical: a baseline written from a developer database
+       missing eleven org-keyed tables took the count from 613 to 600, of which
+       only two were earned — and the blank-database CI job, whose schema does
+       have those tables, would then have reported eleven NEW unreachable tables
+       and failed the release gate.
+
+       So: anything the previous baseline listed that this database cannot see
+       is CARRIED FORWARD, and said out loud. */
+    const previous = fs.existsSync(baselinePath)
+      ? JSON.parse(fs.readFileSync(baselinePath, 'utf8'))
+      : { tables: [] };
+    const previousTables = Array.isArray(previous.tables) ? previous.tables : [];
+    const nowInResidue = new Set(residue);
+    const dropped = previousTables.filter((t) => !nowInResidue.has(t));
+
+    let carried = [];
+    if (dropped.length > 0) {
+      const { rows: present } = await client.query(
+        `SELECT table_name AS t FROM information_schema.tables
+          WHERE table_schema='public' AND table_name = ANY($1::text[])`,
+        [dropped],
+      );
+      const visible = new Set(present.map((r) => r.t));
+      carried = dropped.filter((t) => !visible.has(t)).sort();
+    }
+
+    const finalTables = [...residue, ...carried].sort();
     fs.mkdirSync(path.dirname(baselinePath), { recursive: true });
     fs.writeFileSync(
       baselinePath,
@@ -134,15 +165,27 @@ try {
         {
           generatedAt: new Date().toISOString(),
           purgeChildTables: tables,
-          count: residue.length,
-          tables: residue,
+          count: finalTables.length,
+          tables: finalTables,
         },
         null,
         2,
       )}\n`,
       'utf8',
     );
-    console.log(`✅ wrote baseline: ${path.relative(repoRoot, baselinePath)} (${residue.length} tables)`);
+    console.log(`✅ wrote baseline: ${path.relative(repoRoot, baselinePath)} (${finalTables.length} tables)`);
+    const earned = dropped.filter((t) => !carried.includes(t));
+    if (earned.length > 0) {
+      console.log(`   ${earned.length} table(s) genuinely covered and removed from the baseline:`);
+      for (const t of earned.sort()) console.log(`     ${t}`);
+    }
+    if (carried.length > 0) {
+      console.log(
+        `   ${carried.length} table(s) are ABSENT from this database and were KEPT in the baseline —`,
+      );
+      console.log('   a table this database cannot see was not covered, it was not measured:');
+      for (const t of carried) console.log(`     ${t}`);
+    }
     process.exit(0);
   }
 
