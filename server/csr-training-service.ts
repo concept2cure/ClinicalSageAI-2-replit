@@ -11,7 +11,6 @@ import { db } from './db';
 import { csrReports, csrDetails } from '../shared/schema';
 import { sql } from 'drizzle-orm';
 import { queryHuggingFace, trainCustomModel } from './huggingface-service';
-import { huggingFaceService } from './huggingface-service';
 
 // Export service functions as a single object
 export const csrTrainingService = {
@@ -793,7 +792,7 @@ export async function makePrediction(text: string, domain: string): Promise<any>
           return JSON.parse(jsonMatch[0]);
         }
         return JSON.parse(response);
-      } catch (e) {
+      } catch {
         console.warn(
           `Could not parse JSON from custom model response, falling back to default model`
         );
