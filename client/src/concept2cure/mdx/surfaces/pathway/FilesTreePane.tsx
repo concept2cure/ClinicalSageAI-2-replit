@@ -418,7 +418,7 @@ export function FilesTreePane({ pathway, tabs, onOpenSection }: FilesTreePanePro
         <div className="ftp-crumbs">
           {segs.map((s, i) => (
             <React.Fragment key={i}>
-              {i > 0 && <span className="ftp-sep">/</span>}
+              {i > 0 && <span className="ftp-sep" aria-hidden="true">/</span>}
               <span className={`ftp-crumb ${i === segs.length - 1 ? 'last' : ''}`}>{s}</span>
             </React.Fragment>
           ))}

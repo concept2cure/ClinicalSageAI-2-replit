@@ -928,7 +928,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               </button>
               {!searching && folder && (
                 <>
-                  <span className="vd-crumb-sep">&rsaquo;</span>
+                  <span className="vd-crumb-sep" aria-hidden="true">&rsaquo;</span>
                   <span className="vd-crumb cur">
                     {folder.code ? folder.code + ' - ' : ''}
                     {folder.label}
@@ -937,7 +937,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               )}
               {searching && (
                 <>
-                  <span className="vd-crumb-sep">&rsaquo;</span>
+                  <span className="vd-crumb-sep" aria-hidden="true">&rsaquo;</span>
                   <span className="vd-crumb cur">Search &quot;{q}&quot;</span>
                 </>
               )}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState, hasKeys } from '../dataConnect';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -122,6 +123,35 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
   }, [sections, selId]);
 
   const sec = sections.find(s => s.id === selId) || sections[0] || null;
+
+  /* AnA can open any traced section by its id or a phrase from its title/document
+     — the same row click a person makes — so a drive can land on a section's
+     source trail. Resolved against the REAL sections with honest misses; held
+     (retry) while they load, re-attempted on the ready signal below. */
+  useSurfaceActionHandlers('source-tracer', {
+    'source-tracer.select-section': (params) => {
+      const raw = String(params.section ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a section by its id or a phrase from its title.' };
+      if (st.loading) return { ok: false, reason: 'The traced sections are still loading.', retry: true };
+      if (st.error) return { ok: false, reason: 'The sections did not load, so there are none to open.' };
+      if (sections.length === 0) return { ok: false, reason: 'No traced sections are recorded yet.' };
+      const needle = raw.toLowerCase();
+      const byId = sections.filter((s) => s.id.toLowerCase() === needle);
+      const hits = byId.length
+        ? byId
+        : sections.filter((s) => `${s.sectionTitle ?? ''} ${s.doc} ${s.sec}`.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No section matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} sections — name one exactly.` };
+      const s = hits[0];
+      if (selId === s.id) return { ok: true, detail: `Already on ${s.sectionTitle ?? s.sec}` };
+      setSel(s.id);
+      return { ok: true, detail: `Opened ${s.sectionTitle ?? s.sec}` };
+    },
+  });
+  useEffect(() => {
+    if (!st.loading && !st.error) notifySurfaceActionReady('source-tracer');
+  }, [st.loading, st.error]);
+
   const stTone = (s: string) => (s === 'approved' ? 'ok' : s === 'in_review' || s === 'review' ? 'warn' : 'idle');
 
   const allSources = sections.flatMap(s => s.sources);

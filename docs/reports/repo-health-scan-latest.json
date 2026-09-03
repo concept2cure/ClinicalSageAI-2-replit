@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T01:24:33.954Z",
+  "generatedAt": "2026-09-03T01:47:50.033Z",
   "git": {
-    "sha": "5407a9c2462118985b8fe75612b9ebc9d8203784",
+    "sha": "3e50cfe90b4b5af1c973fcfc88070ac38bbee8cd",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2174,7 +2174,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 219834
+        "bytes": 219872
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2238,7 +2238,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "bytes": 121634
+        "bytes": 122111
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2250,7 +2250,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 116496
+        "bytes": 116553
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2281,6 +2281,10 @@
         "bytes": 109447
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
+        "bytes": 109215
+      },
+      {
         "file": "shared/regulatory/project-bootstrap.ts",
         "bytes": 109047
       },
@@ -2291,10 +2295,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "bytes": 107446
       }
     ],
     "largeFilesByLines": [
@@ -2412,7 +2412,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "lines": 2433
+        "lines": 2442
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2515,6 +2515,10 @@
         "lines": 1924
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
+        "lines": 1920
+      },
+      {
         "file": "server/services/ana-ri/orchestrator.ts",
         "lines": 1917
       },
@@ -2523,12 +2527,12 @@
         "lines": 1898
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
-        "lines": 1888
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
+        "lines": 1890
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "lines": 1886
+        "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
+        "lines": 1888
       },
       {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
@@ -2537,10 +2541,6 @@
       {
         "file": "server/services/rare-disease/rare-disease-knowledge.ts",
         "lines": 1866
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
-        "lines": 1865
       },
       {
         "file": "server/services/digital-health/digital-health-knowledge.ts",
@@ -2640,7 +2640,7 @@
       },
       {
         "file": "server/services/cmc-write-through.ts",
-        "lines": 1612
+        "lines": 1609
       },
       {
         "file": "server/services/contradiction-engine-service.ts",
