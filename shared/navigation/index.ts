@@ -165,6 +165,9 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'filing-strategy', label: 'Filing strategy', description: 'The filing-strategy workspace — filing-sequence optimization, agency divergence, and prediction calibration.', scope: 'project', group: 'module' },
   { id: 'safety-narrative', label: 'Safety narratives', description: 'The safety-narrative workbench — the SAE case worklist with the ICH E3 §16 narrative composer and expedited-reporting clocks.', scope: 'project', group: 'module' },
   { id: 'crl-library', label: 'FDA CRL library', description: 'The FDA Complete-Response-Letter evidence library — deficiency findings by discipline and severity across the corpus.', scope: 'global', group: 'module' },
+  { id: 'registrations', label: 'Registrations', description: 'The registrations & lifecycle workspace — marketing authorizations by market, the approvals tracker, renewals & variations, HA commitments, and submission strategy.', scope: 'project', group: 'module' },
+  { id: 'cro-portfolio', label: 'CRO portfolio', description: 'The CRO sponsor portfolio — the org’s sponsor roster and their program engagements.', scope: 'global', group: 'module' },
+  { id: 'agency-meetings', label: 'Agency meetings', description: 'The agency-meetings workspace — Type A/B/C and scientific-advice meetings with briefing books and minutes.', scope: 'global', group: 'module' },
 
   // ── Device & diagnostics workstream (all render via MdxSurfaceHost; program
   // scope comes from the project in context when one is open) ──

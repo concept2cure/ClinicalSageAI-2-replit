@@ -1224,6 +1224,42 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
+  // ── Registrations / lifecycle ──
+  {
+    id: 'registrations.open-tab',
+    surfaceId: 'registrations',
+    label: 'Open a registrations tab',
+    description:
+      'On the registrations workspace, switch between marketing authorizations, the approvals tracker, renewals & variations, HA commitments, and submission strategy.',
+    params: [
+      { name: 'tab', required: true, description: 'The tab to open.', enum: ['reg', 'clock', 'vary', 'commit', 'strategy'] },
+    ],
+  },
+
+  // ── CRO portfolio ──
+  {
+    id: 'cro-portfolio.select-sponsor',
+    surfaceId: 'cro-portfolio',
+    label: 'Select a sponsor',
+    description:
+      'On the CRO portfolio, select a sponsor by name so its engagements show — the same row click a person makes. Resolved against the real roster with honest misses; held while it loads.',
+    params: [
+      { name: 'sponsor', required: true, description: 'The sponsor name as listed (case-insensitive; a distinctive partial resolves when unambiguous).' },
+    ],
+  },
+
+  // ── Agency meetings ──
+  {
+    id: 'agency-meetings.select-meeting',
+    surfaceId: 'agency-meetings',
+    label: 'Open an agency meeting',
+    description:
+      'On the agency-meetings workspace, open a meeting by its id or a distinctive phrase (agency, type, or program) so its briefing book and minutes show — the same row click a person makes. Requesting or scheduling a meeting stays a governed human act. Honest misses; held while the list loads.',
+    params: [
+      { name: 'meeting', required: true, description: 'The meeting id, or a distinctive phrase from its agency / type / program (case-insensitive).' },
+    ],
+  },
+
   // ── Deep research ──
   {
     id: 'deep-research.open-tab',
