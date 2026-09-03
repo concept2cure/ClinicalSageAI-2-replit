@@ -11,7 +11,6 @@
  */
 
 import { governedActor } from '../../part11/governed-actor';
-import { eq, and, sql } from 'drizzle-orm';
 import { concept2cureArtifacts, concept2cureArtifactVersions } from '../../../../shared/schema';
 import { registerActionHandler } from '../action-registry';
 import { fetchContentForProcessing, artifactWhereClause } from '../shared-utils';

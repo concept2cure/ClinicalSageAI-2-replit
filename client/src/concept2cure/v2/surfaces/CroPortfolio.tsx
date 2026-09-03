@@ -235,7 +235,12 @@ export function CroPortfolio({ onAsk, onNav }: SurfaceViewProps) {
         submissionCount: allSubs.length,
         pipelineByState: Object.fromEntries(pipe.map((p) => [p.k, p.n])),
         sponsors: sponsors.slice(0, 12).map((s) => ({
-          id: s.id, name: s.name, type: s.type, lead: s.lead,
+          id: s.id, name: s.name, type: s.type,
+          // `lead` is a CRO staff member's real name (assembled from
+          // users.name via cro_team_assignments) — a person's identity, which
+          // stays OUT of the every-turn prompt channel like `sowNote` below.
+          // Its presence travels; the name stays on screen.
+          hasLead: Boolean(s.lead),
           // `sowNote` is a user-authored free-text note (cro_clients.notes) —
           // out of the every-turn prompt channel, like every other free-text
           // field in this subsystem; its presence travels, the prose stays on
@@ -245,7 +250,7 @@ export function CroPortfolio({ onAsk, onNav }: SurfaceViewProps) {
         })),
         selectedSponsor: sel
           ? {
-              id: sel.id, name: sel.name, type: sel.type, lead: sel.lead,
+              id: sel.id, name: sel.name, type: sel.type, hasLead: Boolean(sel.lead),
               sowState: sel.sow ?? null, hasSowNote: Boolean(sel.sowNote),
               studies: selStudies.map((st) => ({
                 code: st.code, phase: st.phase, ind: st.ind, status: st.status, enrolment: st.n,

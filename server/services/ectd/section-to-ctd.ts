@@ -32,6 +32,18 @@
  */
 
 import { isPlaceableSection } from '../submission-gateways/ectd-packager/ich-headings';
+import { nearestUsRegionalHeading } from './controlled-vocab/fda-regional-sections';
+import type { Region } from '../submission-gateways/types';
+
+/**
+ * Regions whose Module 1 placement this module can vouch for. FDA has a
+ * published regional heading table (fda-regional-sections.ts); every other
+ * regional builder files each `1.*` leaf flat under its Module 1 container, so
+ * a dotted code is "placeable" there only in the structural sense — and the
+ * FDA-numbered headings inferred from keywords (1.2 = cover letter) are NOT
+ * offered for them: EU/JP Module 1 numbering differs (EU 1.0 = cover letter).
+ */
+export type PlacementRegion = Region;
 
 /** A syntactically-shaped CTD code: a module digit optionally followed by dotted
  *  sub-sections. Syntax only — see isPlaceableCtdCode for whether it is REAL. */
@@ -49,15 +61,25 @@ export function normalizeCtdCode(value: string | null | undefined): string | nul
 }
 
 /**
- * Whether a code can be placed at a TERMINAL heading of the ICH tree (or, for
- * Module 1, at a published regional heading). Bare modules are never placeable:
- * '3' would nest directly under <m3-quality> (a container) and '1' under an
- * <m1> element the FDA us-regional DTD does not define.
+ * Whether a code can be placed at a TERMINAL heading of the ICH tree (Modules
+ * 2–5) or, for Module 1, at a PUBLISHED regional heading. Bare modules are never
+ * placeable: '3' would nest directly under <m3-quality> (a container) and '1'
+ * under an <m1> element the FDA us-regional DTD does not define.
+ *
+ * Module 1 is judged per region, not by the module digit: for FDA the code (or
+ * a published ancestor — the forms 1.1.x file under <m1-1-forms>) must exist in
+ * the FDA Module 1 heading table, otherwise the builder invents an element
+ * (`<m1-foo>`) the DTD does not define. '1.foo' and '1.99.99' used to pass on
+ * the digit alone (adversarial review). Other regions file `1.*` flat under
+ * their Module 1 container, so any dotted code is structurally placeable there.
  */
-export function isPlaceableCtdCode(code: string | null | undefined): boolean {
+export function isPlaceableCtdCode(code: string | null | undefined, region: PlacementRegion = 'fda'): boolean {
   const c = normalizeCtdCode(code);
   if (!c) return false;
   if (!c.includes('.')) return false; // bare module — a container, not a leaf-bearing heading
+  if (moduleOf(c) === 1) {
+    return region === 'fda' ? nearestUsRegionalHeading(c) !== null : true;
+  }
   return isPlaceableSection(c);
 }
 
@@ -66,26 +88,40 @@ export function isPlaceableCtdCode(code: string | null | undefined): boolean {
  * the key names one unambiguously. A section keyed 'form-1571' or 'cover-letter'
  * used to resolve to the bare module '1', which the packager nests under an
  * `<m1>` element the us-regional DTD does not define — so a transmit built from
- * those keys failed DTD validation at the gateway. FDA eCTD Module 1
- * Specification v2.3 files every one of these at a specific heading:
+ * those keys failed DTD validation at the gateway.
+ *
+ * Every code returned here is a PUBLISHED leaf heading of the FDA Module 1
+ * table (controlled-vocab/cv-v4-data.ts, us_1.*), pinned by test. An earlier
+ * version returned the CONTAINERS 1.3.5 / 1.13 / 1.14 for 'patent' / 'annual
+ * report' / 'labeling'; the table has no such leaf headings, so the builder
+ * invented `<m1-14>`-style elements the DTD does not define. A key that names
+ * only a container ('labeling' — which of 1.14.1.x / 1.14.4.x?) is therefore
+ * NOT inferred: it returns null and is reported unplaced, so the author assigns
+ * the precise section instead of the platform guessing one.
  *   forms (1571/1572/356h/3674/3397/2253) → 1.1 · cover letters → 1.2 ·
- *   debarment → 1.3.3 · financial (3454/3455) → 1.3.4 · patents → 1.3.5 ·
- *   letters of authorization → 1.4.1 · environmental → 1.12.14 ·
- *   annual report → 1.13 · investigator's brochure → 1.14.4.1 · labeling → 1.14
- * Returns null when the key names none of them.
+ *   debarment → 1.3.3 · financial (3454/3455) → 1.3.4 ·
+ *   patent certification → 1.3.5.2 · exclusivity claim → 1.3.5.3 ·
+ *   patent information → 1.3.5.1 · letter of authorization → 1.4.1 ·
+ *   environmental analysis → 1.12.14 · DSUR → 1.13.15 ·
+ *   investigator's brochure → 1.14.4.1 · investigational drug labeling → 1.14.4.2
  */
 export function module1HeadingForSectionKey(sectionKey: string): string | null {
   const k = (sectionKey || '').toLowerCase();
   if (/(3454|3455|financial[-_ ]?(cert|disclos))/.test(k)) return '1.3.4';
-  if (/(1571|1572|356h|3674|3397|2253|\bform\b)/.test(k)) return '1.1';
+  // FDA forms: a form NUMBER, or 'form(s)' as the key's subject ('forms',
+  // 'fda-form'). NOT any key containing the word — 'dosage-form-description'
+  // is Module 3 content and must never file under 1.1.
+  if (/(1571|1572|356h|3674|3397|2253|\bfda[-_ ]?forms?\b|^forms?(?:[-_ ]|$))/.test(k)) return '1.1';
   if (/cover[-_ ]?letter/.test(k)) return '1.2';
   if (/debarment/.test(k)) return '1.3.3';
-  if (/patent|exclusivity/.test(k)) return '1.3.5';
+  if (/patent[-_ ]?cert/.test(k)) return '1.3.5.2';
+  if (/exclusivity/.test(k)) return '1.3.5.3';
+  if (/patent/.test(k)) return '1.3.5.1';
   if (/letter[-_ ]?of[-_ ]?authori[sz]ation|\bloa\b/.test(k)) return '1.4.1';
   if (/environmental/.test(k)) return '1.12.14';
-  if (/annual[-_ ]?report|\bdsur\b/.test(k)) return '1.13';
+  if (/\bdsur\b|development[-_ ]?safety[-_ ]?update/.test(k)) return '1.13.15';
   if (/investigator[-_' ]*s?[-_ ]?brochure|\bib\b/.test(k)) return '1.14.4.1';
-  if (/(labell?ing|\blabel\b|package[-_ ]?insert|prescribing[-_ ]?information|\bifu\b|\bpi\b|medication[-_ ]?guide)/.test(k)) return '1.14';
+  if (/investigational[-_ ]?(drug[-_ ]?)?labell?ing/.test(k)) return '1.14.4.2';
   return null;
 }
 
@@ -107,7 +143,7 @@ export function moduleForSectionKey(sectionKey: string): 1 | 2 | 3 | 4 | 5 | nul
   if (prefix) return Number(prefix[1]) as 1 | 2 | 3 | 4 | 5;
   const numeric = k.match(/^\s*([1-5])\./);
   if (numeric) return Number(numeric[1]) as 1 | 2 | 3 | 4 | 5;
-  if (/(cover|admin|labell?ing|\blabel\b|user-?fee|1571|1572|3674|\bform\b|regional)/.test(k)) return 1;
+  if (/(cover|admin|labell?ing|\blabel\b|user-?fee|1571|1572|3674|\bfda[-_ ]?forms?\b|^forms?(?:[-_ ]|$)|regional)/.test(k)) return 1;
   if (/(qos|quality-overall|overall-summary|overview|\bsummary\b)/.test(k)) return 2;
   if (/(cmc|quality|drug-substance|drug-product|stability|specification|manufactur)/.test(k)) return 3;
   if (/nonclinical|non-clinical|preclinical/.test(k)) return 4;
@@ -150,17 +186,26 @@ export interface ArtifactPlacement {
 export function resolveArtifactPlacement(
   sectionKey: string,
   artifactCtdSection: string | null | undefined,
+  region: PlacementRegion = 'fda',
 ): ArtifactPlacement {
+  const sectionModule = moduleForSectionKey(sectionKey);
   const candidates: Array<{ raw: string | null | undefined; source: PlacementSource }> = [
     { raw: artifactCtdSection, source: 'artifact' },
     { raw: sectionKey, source: 'section-key' },
-    { raw: module1HeadingForSectionKey(sectionKey), source: 'module1-heading' },
   ];
+  // The Module 1 heading inferred from the key's WORDS is FDA numbering and is
+  // offered only for an FDA package whose key does not name another module.
+  // 'm5-labeling' says Module 5 explicitly; its 'labeling' word must not file it
+  // under 1.14 (adversarial review caught exactly that). Such a key resolves to
+  // nothing and is reported UNPLACED.
+  if (region === 'fda' && (sectionModule === null || sectionModule === 1)) {
+    candidates.push({ raw: module1HeadingForSectionKey(sectionKey), source: 'module1-heading' });
+  }
   let unplaceableCode: string | undefined;
   for (const cand of candidates) {
     const norm = normalizeCtdCode(cand.raw);
     if (!norm) continue;
-    if (!isPlaceableCtdCode(norm)) {
+    if (!isPlaceableCtdCode(norm, region)) {
       // Remember the first rejected code so the finding names it; keep looking
       // for a placeable one from a lower-precedence source.
       unplaceableCode = unplaceableCode ?? norm;
@@ -174,11 +219,11 @@ export function resolveArtifactPlacement(
       source: cand.source,
       ...(unplaceableCode ? { unplaceableCode } : {}),
     };
-    const sectionModule = moduleForSectionKey(sectionKey);
+    // Cross-check EVERY source against the module the section names — a
+    // section-key code cannot disagree with itself, but the check is
+    // source-agnostic so no future candidate can slip past it.
     const placedModule = moduleOf(norm);
-    // Cross-check only when the SECTION names a module and the code came from the
-    // artifact (a section-key-derived code cannot disagree with itself).
-    if (cand.source === 'artifact' && sectionModule && sectionModule !== placedModule) {
+    if (sectionModule && sectionModule !== placedModule) {
       placement.moduleDisagreement = { sectionModule, placedModule };
     }
     return placement;

@@ -801,7 +801,7 @@ router.post('/generate-docx', async (req: Request, res: Response) => {
   try {
     // Try shadow service first
     await proxyBinary('/knowledge/generate-docx', 'POST', req.body, res);
-  } catch (err: any) {
+  } catch {
     console.warn('[knowledge-base] Shadow service unavailable, using Node DOCX fallback');
     try {
       const { title, sections, submissionType, content } = req.body;
@@ -838,7 +838,7 @@ router.post('/generate-docx', async (req: Request, res: Response) => {
 router.post('/generate-ind-package', async (req: Request, res: Response) => {
   try {
     await proxyBinary('/knowledge/generate-ind-package', 'POST', req.body, res);
-  } catch (err: any) {
+  } catch {
     console.warn(
       '[knowledge-base] Shadow service unavailable for IND package, using Node fallback'
     );

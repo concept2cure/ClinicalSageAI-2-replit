@@ -126,7 +126,7 @@ router.get('/', async (req: Request, res: Response) => {
       roles: ['user'],
       organizationId: '2',
     });
-  } catch (error) {
+  } catch {
     res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
   }
 });

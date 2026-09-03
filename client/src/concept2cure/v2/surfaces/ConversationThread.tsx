@@ -47,6 +47,10 @@ function toTurn(m: AnaChatMessage): CtTurn {
     toolCalls: m.toolCalls,
     thinking: m.thinking,
     draftTitle: m.generatedDraft?.title,
+    /* The clock — the same two fields the rail's mapping carries, so the
+       phase line here ticks and the collapsed line names the duration. */
+    startedAt: m.sentAt,
+    completedAt: m.completedAt,
   };
   return {
     role: 'ana',

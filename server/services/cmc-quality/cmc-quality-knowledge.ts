@@ -1407,6 +1407,31 @@ export function classifyImpurity(params: ImpurityClassificationParams): Impurity
       reportingThreshold = { value: refusal, unit: 'not established', basis };
       identificationThreshold = { value: refusal, unit: 'not established', basis };
       qualificationThreshold = { value: refusal, unit: 'not established', basis };
+    } else if (element.pdeMicrogramsPerDay[route as AdministrationRoute] === undefined) {
+      /* REFUSAL for a route Q3D does not tabulate. `route` is a declared enum
+         value (e.g. 'topical'), so it passes the `!route` guard above — but ICH
+         Q3D(R2) tabulates a permitted daily exposure only for oral, parenteral
+         and inhalation. Reading pdeMicrogramsPerDay[route] then gives `undefined`
+         (the `as AdministrationRoute` cast is what let the unsupported key past
+         the type system), and rendering it would ship "undefined ug/day" and a
+         30%-of-undefined "NaN ug/day" cited to Q3D(R2). A topical/other-route PDE
+         must be derived and justified on its own data, not fabricated as null. */
+      const refusal =
+        `ICH Q3D(R2) does not tabulate a permitted daily exposure for the ${route} route, so none is established for ${element.name}: ` +
+        `a route-specific PDE must be derived and justified. Q3D tabulates ` +
+        `${element.pdeMicrogramsPerDay.oral} ug/day oral, ${element.pdeMicrogramsPerDay.parenteral} parenteral, ` +
+        `${element.pdeMicrogramsPerDay.inhalation} by inhalation.`;
+      const basis = 'ICH Q3D(R2) — PDE not tabulated for this route';
+      elementalClassification = {
+        class: element.class,
+        oralPDE_ug_per_day: element.pdeMicrogramsPerDay.oral,
+        parenteralPDE_ug_per_day: element.pdeMicrogramsPerDay.parenteral,
+        inhalationPDE_ug_per_day: element.pdeMicrogramsPerDay.inhalation,
+        rationale: `ICH Q3D(R2) ${element.class}. No PDE is tabulated for the ${route} route; one must be derived and justified.`,
+      };
+      reportingThreshold = { value: refusal, unit: 'not established', basis };
+      identificationThreshold = { value: refusal, unit: 'not established', basis };
+      qualificationThreshold = { value: refusal, unit: 'not established', basis };
     } else {
       const pde = element.pdeMicrogramsPerDay[route as AdministrationRoute];
       elementalClassification = {
@@ -1446,7 +1471,12 @@ export function classifyImpurity(params: ImpurityClassificationParams): Impurity
   }
   // ── Inorganic impurities ──
   else {
-    reportingThreshold = { value: 'Per pharmacopeial specification or 0.1%', unit: '% (w/w)', basis: 'ICH Q3A(R2) / Pharmacopeial monograph' };
+    // Basis is the pharmacopeial monograph, NOT ICH Q3A(R2): Q3A/Q3B set
+    // reporting/ID/qualification thresholds for ORGANIC impurities and do not
+    // govern inorganic ones (the canonical threshold engine routes 'inorganic'
+    // out of Q3A/Q3B scope). The 0.1% is the residue-on-ignition monograph
+    // convention, so it stays — attributed correctly, not to Q3A.
+    reportingThreshold = { value: 'Per pharmacopeial specification (e.g. residue on ignition NMT 0.1%)', unit: '% (w/w)', basis: 'Pharmacopeial monograph' };
     identificationThreshold = { value: 'Per pharmacopeial specification', unit: '% (w/w)', basis: 'Pharmacopeial monograph' };
     qualificationThreshold = { value: 'Per pharmacopeial specification', unit: '% (w/w)', basis: 'Pharmacopeial monograph' };
     qualificationStrategy = [

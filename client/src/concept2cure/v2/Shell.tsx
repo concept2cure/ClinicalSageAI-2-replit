@@ -54,7 +54,6 @@ import {
   getAnaContext,
   getCoauthor,
   getSegment,
-  getSurfaceActions,
   type AnaContext,
 } from './registryModel';
 import { isClinicalRegulatoryGraphEnabled } from './clinicalRegulatoryGraphFlag';
@@ -472,7 +471,7 @@ export function TopBar({
         type="button"
         className="tb-task"
         title="New task — assign & track from this screen"
-        onClick={() => { try { (window as any).C2C?.open?.('task'); } catch (_e) { /* launcher not mounted */ } }}
+        onClick={() => { try { (window as any).C2C?.open?.('task'); } catch { /* launcher not mounted */ } }}
       >
         <span className="ico">{I.checkSquare ?? I.plus}</span>
         <span className="tb-task-lbl">Task</span>
@@ -482,7 +481,7 @@ export function TopBar({
         className="tb-btn"
         title="Collaborate — message a colleague about this screen"
         aria-label="Collaborate"
-        onClick={() => { try { (window as any).C2C?.open?.('collab'); } catch (_e) { /* launcher not mounted */ } }}
+        onClick={() => { try { (window as any).C2C?.open?.('collab'); } catch { /* launcher not mounted */ } }}
       >
         {I.messageSquare}
       </button>

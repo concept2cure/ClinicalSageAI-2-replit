@@ -1720,6 +1720,9 @@
 .c2c-v2 .ana-activity-toggle svg{font-size:12px;}
 .c2c-v2 .ana-activity-body{display:flex;flex-direction:column;gap:3px;margin-top:5px;padding-left:9px;border-left:1px solid var(--border);}
 .c2c-v2 .ana-activity-phase{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-300);}
+/* The running clock beside the live phase: tabular so "57s" → "1m 00s" does
+   not jiggle the line, and the same --text-300 as the phase it qualifies. */
+.c2c-v2 .ana-activity-clock{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--text-300);}
 /* Indented to the same text column as the phase and the step rows, which begin
    after a 12px glyph and a 6px gap. Flush left, it read as a PARENT of the
    line above it rather than a sibling. */
@@ -1810,23 +1813,30 @@
 .c2c-v2 .ana-work-current{grid-column:2 / span 2;display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-300);}
 .c2c-v2 .ana-work-current svg{font-size:11px;}
 /* Steps, queue rows and outputs share one row shape. */
-.c2c-v2 .ana-work-step{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:11.5px;color:var(--text-300);}
-.c2c-v2 .ana-work-glyph{display:inline-flex;color:var(--text-400);}
+/* A grid, not a wrapping flex row: glyph | label | trailing on one line, with
+   the label free to wrap INSIDE its column. The first version wrapped the whole
+   row, so a long label ("Searching the literature for IRB accreditation
+   standards") pushed the check onto a line of its own and "done" onto a third —
+   seen in the Chromium render, not in jsdom. Notes, the inputs link and the
+   inputs block take their own line under the label. */
+.c2c-v2 .ana-work-step{display:grid;grid-template-columns:12px minmax(0,1fr) auto;column-gap:6px;row-gap:3px;align-items:start;font-size:11.5px;line-height:1.45;color:var(--text-300);}
+.c2c-v2 .ana-work-glyph{display:inline-flex;color:var(--text-400);margin-top:2px;}
 .c2c-v2 .ana-work-glyph svg{font-size:12px;}
 .c2c-v2 .ana-work-step.is-success .ana-work-glyph{color:var(--success);}
 .c2c-v2 .ana-work-step.is-error .ana-work-glyph{color:var(--warning);}
 .c2c-v2 .ana-work-step.is-running .ana-work-glyph{color:var(--accent-200);}
-.c2c-v2 .ana-work-step-l{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;}
-.c2c-v2 .ana-work-step-t{font-size:10.5px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
-.c2c-v2 .ana-work-note{color:var(--warning);font-size:10.5px;flex:1 0 100%;box-sizing:border-box;padding-left:18px;}
-.c2c-v2 .ana-work-link{font:inherit;font-size:10.5px;color:var(--text-300);background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;transition:color 200ms ease-out;}
+.c2c-v2 .ana-work-step-l{min-width:0;overflow-wrap:anywhere;}
+.c2c-v2 .ana-work-step-t{font-size:10.5px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;padding-top:1px;}
+.c2c-v2 .ana-work-note{grid-column:2 / -1;color:var(--warning);font-size:10.5px;}
+.c2c-v2 .ana-work-link{grid-column:2;justify-self:start;font:inherit;font-size:10.5px;color:var(--text-300);background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;transition:color 200ms ease-out;}
 .c2c-v2 .ana-work-link:hover{color:var(--text-100);}
 .c2c-v2 .ana-work-link:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:var(--radius-sm);}
-.c2c-v2 .ana-work-pre{flex:1 0 100%;box-sizing:border-box;margin:0;padding:6px 8px;max-height:160px;overflow:auto;font-family:var(--font-mono);font-size:10.5px;line-height:1.5;color:var(--text-200);background:var(--bg-100);border:1px solid var(--border);border-radius:var(--radius-sm);white-space:pre-wrap;overflow-wrap:anywhere;}
+.c2c-v2 .ana-work-pre{grid-column:2 / -1;box-sizing:border-box;margin:0;padding:6px 8px;max-height:160px;overflow:auto;font-family:var(--font-mono);font-size:10.5px;line-height:1.5;color:var(--text-200);background:var(--bg-100);border:1px solid var(--border);border-radius:var(--radius-sm);white-space:pre-wrap;overflow-wrap:anywhere;}
 .c2c-v2 .ana-work-pre:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
 .c2c-v2 .ana-work-sum{font-size:11.5px;color:var(--text-300);line-height:1.5;}
 .c2c-v2 .ana-work-empty{font-size:11px;color:var(--text-300);line-height:1.5;}
 .c2c-v2 .ana-work-err{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:11px;color:var(--warning);}
+.c2c-v2 .ana-work-err .ana-work-link{grid-column:auto;}
 .c2c-v2 .ana-work-err svg{font-size:12px;}
 .c2c-v2 .ana-work-qi{display:flex;flex-direction:column;gap:2px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-050);}
 .c2c-v2 .ana-work-qi-q{font-size:11.5px;color:var(--text-100);overflow-wrap:anywhere;}

@@ -824,7 +824,7 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
         blocked = true;
         blockReasons.push(...result.blockedReasons);
       }
-    } catch (err: any) {
+    } catch {
       // Boundary service unavailable — fail closed for approval
       blocked = true;
       blockReasons.push('Governance boundary service unavailable — cannot approve without boundary check');
@@ -1026,7 +1026,7 @@ router.post('/lock-artifact', async (req: Request, res: Response) => {
       });
       boundaryTransition = result.transition;
       if (!result.allowed) { blocked = true; blockReasons.push(...result.blockedReasons); }
-    } catch (err: any) {
+    } catch {
       blocked = true;
       blockReasons.push('Governance boundary service unavailable — cannot lock without boundary check');
     }
@@ -1210,7 +1210,7 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
       });
       boundaryTransition = result.transition;
       if (!result.allowed) { blocked = true; blockReasons.push(...result.blockedReasons); }
-    } catch (err: any) {
+    } catch {
       blocked = true;
       blockReasons.push('Governance boundary service unavailable — cannot mark submission-ready without boundary check');
     }

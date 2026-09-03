@@ -11,7 +11,7 @@
  * defensible regulatory content.
  */
 import { Router, Request, Response } from 'express';
-import type { Pool, PoolClient } from 'pg';
+import type { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import { getRequestDbClient, type RequestDbClient } from '../../middleware/tenantContext';
 import { serverError } from '../../lib/api-response';
@@ -207,7 +207,7 @@ function formatEvidenceForPrompt(chunks: SearchResult[]): string {
           if (structured.markdown) {
             content = structured.markdown;
           }
-        } catch (e) {
+        } catch {
           // Use raw text
         }
       }
@@ -244,7 +244,7 @@ function parseAIResponse(content: string): {
         })),
       };
     }
-  } catch (e) {
+  } catch {
     console.warn('[Drafting] Failed to parse JSON response, using raw text');
   }
 
@@ -566,7 +566,7 @@ Only extract entities you're confident about.`,
       if (jsonMatch) {
         entities = JSON.parse(jsonMatch[0]);
       }
-    } catch (e) {
+    } catch {
       console.warn('[Drafting] Entity extraction parse failed');
     }
 

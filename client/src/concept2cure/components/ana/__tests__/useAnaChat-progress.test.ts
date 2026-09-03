@@ -16,7 +16,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, cleanup, waitFor } from '@testing-library/react';
 
-import { useAnaChat } from '../useAnaChat';
+import { useAnaChat, hydrateToolTrace } from '../useAnaChat';
 
 const ev = (o: unknown) => new TextEncoder().encode(`data: ${JSON.stringify(o)}\n\n`);
 const drain = () => new Promise((r) => setTimeout(r, 25));
@@ -51,6 +51,16 @@ function abortableStream(ctl: ReadableStreamDefaultController<Uint8Array>, body:
     });
     return Promise.resolve({ ok: true, status: 200, body });
   };
+}
+
+/** The stream for the chat route, an accepting 2xx for the control route. */
+function routed(body: ReadableStream<Uint8Array>) {
+  return (url: unknown) =>
+    Promise.resolve(
+      String(url).includes('/control')
+        ? { ok: true, status: 200, json: async () => ({ success: true }) }
+        : { ok: true, status: 200, body },
+    );
 }
 
 const lastAssistant = (result: { current: ReturnType<typeof useAnaChat> }) =>
@@ -154,10 +164,10 @@ describe('the progress record over a real stream', () => {
 
   it('holds a steer as pending from acceptance until the server confirms it landed', async () => {
     const { ctl, body } = openStream();
-    // First call: the stream. Second: the control endpoint accepting the steer.
-    fetchMock
-      .mockResolvedValueOnce({ ok: true, status: 200, body })
-      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ success: true }) });
+    // Keyed on the URL, not on call order: the stream and the control endpoint
+    // are different routes, and an order-based mock is one stray fetch away
+    // from handing the control answer to the wrong caller.
+    fetchMock.mockImplementation(routed(body));
     const { result } = renderHook(() => useAnaChat({}));
 
     let sent!: Promise<unknown>;
@@ -196,9 +206,7 @@ describe('the progress record over a real stream', () => {
 
   it('drops a steer the run never reached when the run ends', async () => {
     const { ctl, body } = openStream();
-    fetchMock
-      .mockResolvedValueOnce({ ok: true, status: 200, body })
-      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ success: true }) });
+    fetchMock.mockImplementation(routed(body));
     const { result } = renderHook(() => useAnaChat({}));
 
     let sent!: Promise<unknown>;
@@ -215,10 +223,8 @@ describe('the progress record over a real stream', () => {
     await act(async () => {
       ok = await result.current.interject('Shorter');
     });
-    expect({ ok, calls: fetchMock.mock.calls.map((c) => String(c[0])) }).toEqual({
-      ok: true,
-      calls: ['/api/ana-ri/stream', '/api/ana-ri/stream/run_10/control'],
-    });
+    expect(ok).toBe(true);
+    expect(fetchMock.mock.calls.map((c) => String(c[0]))).toContain('/api/ana-ri/stream/run_10/control');
     expect(result.current.pendingSteers).toEqual(['Shorter']);
 
     await act(async () => {
@@ -228,5 +234,58 @@ describe('the progress record over a real stream', () => {
       await sent;
     });
     expect(result.current.pendingSteers).toEqual([]);
+  });
+});
+
+describe('reopening a conversation restores the work record', () => {
+  it('maps the persisted tool trace and steers back onto the turn', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        messages: [
+          { role: 'user', content: 'How many patients?' },
+          {
+            role: 'assistant',
+            content: 'You need 214 patients.',
+            metadata: {
+              reasoning: 'Two-arm superiority…',
+              toolTrace: [
+                { tool: 'compute_sample_size', label: 'Sample size — biostatistics engine', status: 'success', resultSummary: 'n=214' },
+                { tool: 'search_literature', label: 'Searching the literature', status: 'error', resultSummary: 'timeout' },
+                { tool: 'exotic_tool', label: 'Exotic step', status: 'not_found', resultSummary: '' },
+              ],
+              humanControls: [
+                { action: 'pause', round: 2, at: '2026-09-01T00:00:00Z' },
+                { action: 'interject', message: 'Use the FDA guidance', round: 2, at: '2026-09-01T00:00:01Z' },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+    const { result } = renderHook(() => useAnaChat({}));
+    await act(async () => {
+      await result.current.loadThread('thread_7');
+    });
+    const turn = lastAssistant(result);
+    expect(turn.thinking).toBe('Two-arm superiority…');
+    expect(turn.toolCalls?.map((c) => [c.name, c.status])).toEqual([
+      ['compute_sample_size', 'success'],
+      ['search_literature', 'error'],
+      ['exotic_tool', 'error'],
+    ]);
+    expect(turn.toolCalls?.[1].message).toBe(
+      "AnA couldn't finish searching the literature. She'll continue with what she has.",
+    );
+    expect(turn.toolCalls?.[2].message).toBe("This step (exotic step) isn't available here. AnA will work around it.");
+    // No duration is invented for a step whose timing was never persisted.
+    expect(turn.toolCalls?.[0].latencyMs).toBeUndefined();
+    expect(turn.interjections).toEqual(['Use the FDA guidance']);
+  });
+
+  it('hydrates nothing from a turn that has no trace', () => {
+    expect(hydrateToolTrace(undefined)).toEqual([]);
+    expect(hydrateToolTrace([{ status: 'success' }])).toEqual([]);
   });
 });
