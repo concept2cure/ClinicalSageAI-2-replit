@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T19:44:17.216Z",
+  "generatedAt": "2026-09-03T20:21:46.038Z",
   "git": {
-    "sha": "638dc3137136966c090489aa8a096db6f86fd521",
+    "sha": "67b4d44f9f4925c0037a116ad751863cd0466154",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -994,15 +994,6 @@
           "client/src/concept2cure/mdx/data/udi-docs.ts",
           "design-system/ui_kits/mdx/data/udi-docs.js",
           "ui_kits/mdx/data/udi-docs.js"
-        ]
-      },
-      {
-        "basename": "validation",
-        "count": 3,
-        "paths": [
-          "server/middleware/validation.ts",
-          "server/utils/validation.js",
-          "services/proof/validation.ts"
         ]
       },
       {
@@ -2126,6 +2117,14 @@
         ]
       },
       {
+        "basename": "validation",
+        "count": 2,
+        "paths": [
+          "server/middleware/validation.ts",
+          "services/proof/validation.ts"
+        ]
+      },
+      {
         "basename": "vitest.config",
         "count": 2,
         "paths": [
@@ -2170,7 +2169,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 232103
+        "bytes": 233355
       },
       {
         "file": "server/statistics-service.ts",
@@ -2253,6 +2252,10 @@
         "bytes": 116241
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "bytes": 116112
+      },
+      {
         "file": "server/services/intelligent-report-engine.ts",
         "bytes": 115224
       },
@@ -2291,10 +2294,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 107144
       }
     ],
     "largeFilesByLines": [
@@ -2332,7 +2331,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 5075
+        "lines": 5101
       },
       {
         "file": "server/storage.ts",
@@ -2395,6 +2394,10 @@
         "lines": 2609
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 2596
+      },
+      {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2588
       },
@@ -2413,10 +2416,6 @@
       {
         "file": "server/routes/submission-ops.ts",
         "lines": 2460
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2452
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2619,6 +2618,10 @@
         "lines": 1678
       },
       {
+        "file": "server/routes/510k-estar-routes.ts",
+        "lines": 1672
+      },
+      {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "lines": 1668
       },
@@ -2653,10 +2656,6 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
-      },
-      {
-        "file": "server/routes/510k-estar-routes.ts",
-        "lines": 1588
       }
     ]
   },
@@ -2664,7 +2663,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 399,
+      "duplicateGroups": 398,
       "largeByBytes": 28,
       "largeByLines": 74
     },

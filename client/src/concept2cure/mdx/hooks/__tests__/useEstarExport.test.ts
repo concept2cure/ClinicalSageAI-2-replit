@@ -14,9 +14,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import {
   useEstarExport,
+  useEstarEntitlement,
+  entitlementBlocksExport,
+  entitlementRequiredLine,
   exportStatusLine,
   cleanRequestData,
   fieldReportClause,
+  ESTAR_ENTITLEMENT_URL,
   type EstarExportOutcome,
 } from '../useEstarExport';
 
@@ -299,5 +303,52 @@ describe('useEstarExport — reset()', () => {
     expect(result.current.outcome).toBeNull();
     rerender();
     expect(result.current.reset).toBe(firstReset);
+  });
+});
+
+describe('useEstarEntitlement — the lock known before the first click', () => {
+  const VIEW = {
+    capability: 'device_assembly_readiness',
+    mode: 'on' as const,
+    enforced: true,
+    allowed: false,
+    requiredTier: 'standard',
+    tier: 'free',
+    reason: null,
+  };
+
+  it('reads the documented verdict from GET /api/510k/estar/entitlement', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(VIEW));
+    const { result } = renderHook(() => useEstarEntitlement());
+    await waitFor(() => expect(result.current.entitlement).not.toBeNull());
+    expect(String(fetchMock.mock.calls[0][0])).toBe(ESTAR_ENTITLEMENT_URL);
+    expect(result.current.entitlement).toEqual(VIEW);
+    expect(entitlementBlocksExport(result.current.entitlement)).toBe(true);
+  });
+
+  it('a body that is not a verdict is no verdict — nothing locks on it', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
+    const { result } = renderHook(() => useEstarEntitlement());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.entitlement).toBeNull();
+    expect(entitlementBlocksExport(result.current.entitlement)).toBe(false);
+  });
+
+  it('entitlementBlocksExport (pure): only an ENFORCED denial locks', () => {
+    expect(entitlementBlocksExport({ ...VIEW, mode: 'warn', enforced: false })).toBe(false);
+    expect(entitlementBlocksExport({ ...VIEW, mode: 'off', enforced: false, allowed: null })).toBe(false);
+    expect(entitlementBlocksExport({ ...VIEW, allowed: true })).toBe(false);
+    expect(entitlementBlocksExport(null)).toBe(false);
+    expect(entitlementBlocksExport(VIEW)).toBe(true);
+  });
+
+  it('entitlementRequiredLine is the one wording, after a 403 and before a click', () => {
+    expect(entitlementRequiredLine('standard')).toBe('Requires the standard plan — device assembly readiness');
+    expect(entitlementRequiredLine(null)).toBe('Requires a higher plan — device assembly readiness');
+    const outcome: EstarExportOutcome = {
+      ok: false, governed: false, filename: null, formattingErrors: 0, formattingWarnings: 0,
+      blockers: [], blockedByEntitlement: true, requiredTier: 'standard', fieldReport: null, error: 'NOT_ENTITLED',
+    };
+    expect(exportStatusLine(false, outcome)).toBe(entitlementRequiredLine('standard'));
   });
 });

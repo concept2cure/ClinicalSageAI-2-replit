@@ -81,7 +81,12 @@ import {
 } from '../../shared/schema/estar-submission';
 
 import { createScopedLogger } from '../utils/logger.js';
-import { requireEntitlement } from '../services/entitlements/require-entitlement';
+import {
+  requireEntitlement,
+  resolveEntitlementsEnforceMode,
+  evaluateOrgEntitlement,
+  type EntitlementEvaluation,
+} from '../services/entitlements/require-entitlement';
 import { getMarketSpec } from '../services/market-specs/market-submission-specs';
 import { validateLeavesAgainstMarketSpec, type LeafFileDescriptor } from '../services/market-specs/market-formatting-validator';
 
@@ -437,8 +442,11 @@ async function buildZipBuffer(
  */
 // The three producing/assembling actions of the device_assembly_readiness
 // capability are entitlement-gated (ENTITLEMENTS_ENFORCE: off|warn|on — see
-// services/entitlements/require-entitlement). Read paths below stay open.
-const requireAssemblyEntitlement = requireEntitlement('device_assembly_readiness');
+// services/entitlements/require-entitlement). Read paths below stay open;
+// GET /entitlement reports this same gate's verdict so a surface can learn
+// it on mount instead of after the first click.
+const ASSEMBLY_CAPABILITY = 'device_assembly_readiness' as const;
+const requireAssemblyEntitlement = requireEntitlement(ASSEMBLY_CAPABILITY);
 
 router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitlement, async (req, res) => {
   const validation = requestSchema.safeParse(req.body);
@@ -1120,6 +1128,82 @@ router.get('/readiness', authMiddleware, async (req, res) => {
     return res.status(500).json({
       error: 'ESTAR_READINESS_FAILED',
       message: 'Failed to assess eSTAR readiness. The problem has been logged.',
+    });
+  }
+});
+
+/**
+ * The evaluator's reason, forwarded only when it is copy.
+ *
+ * lookupOrgTier folds a failed query's driver text into `reason`
+ * ("tier lookup failed: <err.message>") and, when the tier is unknown,
+ * `detail` embeds that same `reason` — so neither can be forwarded as-is by a
+ * read path the browser calls on mount. An allowlist rather than a denylist:
+ * a reason the evaluator did not compose purely from copy answers null, so a
+ * new reason shape can never leak by default. A resolved-but-below-tier
+ * `detail` is composed of tier names only and passes through.
+ */
+const COPY_ONLY_UNKNOWN_TIER_REASONS: ReadonlySet<string> = new Set([
+  'organization not found',
+  'organization context missing',
+]);
+
+function publicEntitlementReason(evaluation: EntitlementEvaluation): string | null {
+  if (evaluation.allowed) return null;
+  if (evaluation.tier !== null) return evaluation.detail;
+  return evaluation.reason !== null && COPY_ONLY_UNKNOWN_TIER_REASONS.has(evaluation.reason)
+    ? evaluation.reason
+    : null;
+}
+
+/**
+ * GET /api/510k/estar/entitlement
+ *
+ * Read-only pre-check of the org's device_assembly_readiness entitlement, so
+ * the "Generate official eSTAR (PDF)" control can learn on mount whether
+ * POST /official (and /build, /assemble) would refuse it with 403 NOT_ENTITLED
+ * instead of discovering that after the first click. Runs the SAME decision
+ * the gate runs (evaluateOrgEntitlement) under the SAME mode
+ * (resolveEntitlementsEnforceMode), and mirrors the middleware's rule that
+ * mode 'off' evaluates nothing — zero tier queries, `allowed: null`. Only
+ * `enforced` (mode 'on') means the POST would actually refuse; in 'warn' the
+ * verdict is reported but the surface must not lock. Produces and persists
+ * nothing; no editor role is required because this is a read path.
+ */
+router.get('/entitlement', authMiddleware, async (req, res) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(400).json({ error: 'Organization context required' });
+
+  try {
+    const mode = resolveEntitlementsEnforceMode();
+    if (mode === 'off') {
+      return res.status(200).json({
+        capability: ASSEMBLY_CAPABILITY,
+        mode,
+        enforced: false,
+        allowed: null,
+        requiredTier: null,
+        tier: null,
+        reason: null,
+      });
+    }
+    const evaluation = await evaluateOrgEntitlement(ASSEMBLY_CAPABILITY, orgId);
+    return res.status(200).json({
+      capability: ASSEMBLY_CAPABILITY,
+      mode,
+      enforced: mode === 'on',
+      allowed: evaluation.allowed,
+      requiredTier: evaluation.requiredTier,
+      tier: evaluation.tier,
+      reason: publicEntitlementReason(evaluation),
+    });
+  } catch (error) {
+    logger.error('estar entitlement pre-check failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_ENTITLEMENT_FAILED',
+      message: 'Failed to read the export entitlement. The problem has been logged.',
     });
   }
 });

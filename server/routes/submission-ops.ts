@@ -233,7 +233,7 @@ router.get('/packages/:packageId', async (req: Request, res: Response) => {
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -264,7 +264,7 @@ router.get('/packages/:packageId/sections', async (req: Request, res: Response) 
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -424,7 +424,7 @@ router.get('/packages/:packageId/milestones', async (req: Request, res: Response
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -473,7 +473,7 @@ router.post('/packages/:packageId/milestones', async (req: Request, res: Respons
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -689,7 +689,7 @@ router.get('/packages/:packageId/readiness', async (req: Request, res: Response)
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -748,7 +748,7 @@ router.get('/packages/:packageId/readiness-history', async (req: Request, res: R
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -1316,7 +1316,7 @@ router.post('/packages/:packageId/publish', async (req: Request, res: Response) 
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -1416,7 +1416,7 @@ router.post('/packages/:packageId/publish', async (req: Request, res: Response) 
  * Root directory under which assembled submission bundles are persisted.
  * Configurable via SUBMISSION_BUNDLE_DIR. Defaults to a repo-/cwd-local
  * `uploads/submission-bundles` directory, matching the repo's existing
- * `uploads/` file convention (see server/pdf-processor.ts, data-importer.ts).
+ * `uploads/` file convention (see data-importer.ts).
  */
 const BUNDLE_DIR = process.env.SUBMISSION_BUNDLE_DIR
   ? path.resolve(process.env.SUBMISSION_BUNDLE_DIR)

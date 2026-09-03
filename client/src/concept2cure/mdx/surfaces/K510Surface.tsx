@@ -20,7 +20,7 @@ import { AnaDraftBanner } from '../components/AnaDraftBanner';
 import { PathwayPanes } from './pathway/PathwayPanes';
 import { DeviceProfilePanel } from './DeviceProfilePanel';
 import { EstarFilingPanel } from './EstarFilingPanel';
-import { OfficialEstarPanel } from './OfficialEstarPanel';
+import { OfficialEstarPanel, officialEstarVariantFor } from './OfficialEstarPanel';
 import { useSampleRows } from '../lib/useSampleRows';
 import type { EditorSectionRef } from '../../v2/editorTarget';
 import { downloadCsv } from '../../v2/download';
@@ -542,7 +542,10 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
 
       {/* The official FDA eSTAR PDF — readiness gate, the governed field
           preview and the one Generate control. */}
-      <OfficialEstarPanel program={program} variant="device" />
+      {/* The variant follows the program's product type: an IVD program that
+          files a 510(k) lands here (pathway k510) and must be produced on the
+          IVD eSTAR, not the nIVD one. */}
+      <OfficialEstarPanel program={program} variant={officialEstarVariantFor(program)} />
 
       {/* eSTAR filing journey — register → assess → produce-gate → track,
           org-scoped from the session. eSTAR covers 510(k)/De Novo too. */}

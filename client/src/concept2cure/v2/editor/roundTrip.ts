@@ -420,5 +420,24 @@ export function assessPasteFidelity(clipboardHtml: string, keptText: string): Pa
   const expected = wordCount(htmlVisibleText(clipboardHtml));
   const kept = wordCount(keptText);
   const diff = expected - kept;
-  return { expected, kept, lost: diff > 1 ? diff : 0 };
+  // The one-word noise floor is a floor for LONG pastes. On a short paste a
+  // one-word disagreement is not tokeniser noise; in a filing, "not" is a word.
+  const lost = diff > 1 || (diff === 1 && expected <= 40) ? diff : 0;
+  return { expected, kept, lost };
+}
+
+/**
+ * The plain text a parsed document would serialize back to, under the same
+ * contract `plainTextToHtml` encodes: paragraphs separated by one blank line,
+ * hard breaks as single newlines. An exact comparison with the stored string
+ * is the fidelity gate for `format: 'text'` — whitespace the parse collapsed
+ * (runs of spaces, tabs, extra blank lines) shows up as a difference here.
+ */
+export function docToPlainText(root: JSONContent): string {
+  const inline = (n: JSONContent): string => {
+    if (n.type === 'text') return n.text ?? '';
+    if (n.type === 'hardBreak') return '\n';
+    return (n.content ?? []).map(inline).join('');
+  };
+  return (root.content ?? []).map(inline).join('\n\n');
 }
