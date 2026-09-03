@@ -61,8 +61,17 @@ export interface Queryable {
   ) => Promise<{ rows: R[]; rowCount?: number | null }>;
 }
 
-/** Default executor — the pool, i.e. its own transaction per statement. */
-const defaultExec: Queryable = pool as unknown as Queryable;
+/** Default executor — the pool, i.e. its own transaction per statement.
+ *
+ *  Resolved at CALL time, not at import. `pool as Queryable` dereferenced the
+ *  db module's `pool` export while this file loaded, and this file is loaded
+ *  by the lineage gate, which is loaded by every governed writer — so any test
+ *  that mocks `../db` without a `pool` export (the CMC route suites mock only
+ *  `getPool`) died at import with "No pool export is defined on the mock".
+ *  Four suites were red on the trunk for exactly that. */
+const defaultExec: Queryable = {
+  query: (sql, params) => (pool as unknown as Queryable).query(sql, params),
+};
 
 /** How a source was used to produce a span. Mirrors the SQL CHECK constraint. */
 export type SpanUsage =
