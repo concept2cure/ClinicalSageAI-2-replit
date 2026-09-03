@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T02:05:10.521Z",
+  "generatedAt": "2026-09-03T03:00:25.440Z",
   "git": {
-    "sha": "529369cb9b20bb32cf8cff0d71f0a0513f960ee8",
+    "sha": "978959dd9a7631a0dfa96af939b640b85d1fa15e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2166,7 +2166,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 318766
+        "bytes": 319441
       },
       {
         "file": "server/statistics-service.ts",
@@ -2194,7 +2194,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 153109
+        "bytes": 153056
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2249,10 +2249,6 @@
         "bytes": 117471
       },
       {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 116553
-      },
-      {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 116241
       },
@@ -2295,6 +2291,10 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
+      },
+      {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "bytes": 107193
       }
     ],
     "largeFilesByLines": [
@@ -2312,7 +2312,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7356
+        "lines": 7370
       },
       {
         "file": "server/statistics-service.ts",
@@ -2399,10 +2399,6 @@
         "lines": 2588
       },
       {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2532
-      },
-      {
         "file": "server/api/cmc/routes.ts",
         "lines": 2512
       },
@@ -2413,6 +2409,10 @@
       {
         "file": "server/services/ai-gateway/gateway.ts",
         "lines": 2466
+      },
+      {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 2453
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2439,6 +2439,10 @@
         "lines": 2276
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "lines": 2242
+      },
+      {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
         "lines": 2177
       },
@@ -2457,10 +2461,6 @@
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
         "lines": 2135
-      },
-      {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2133
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",

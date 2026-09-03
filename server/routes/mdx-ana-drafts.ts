@@ -171,7 +171,7 @@ router.get('/ana-drafts', async (req: Request, res: Response) => {
    Cross-run rollup of AnA authoring outcomes, replacing BatchDraft's
    per-run-only metrics with a durable figure. Counts are org-scoped and
    accurate: `drafted_at` is stamped when AnA drafts a section and survives
-   acceptance (accept clears draft_source, stamps accepted_at — see
+   acceptance (accept keeps draft_source and stamps accepted_at — see
    POST /api/cerv2-sections/:id/accept-ana-draft), so:
      drafted  = drafted_at IS NOT NULL
      accepted = drafted_at IS NOT NULL AND accepted_at IS NOT NULL

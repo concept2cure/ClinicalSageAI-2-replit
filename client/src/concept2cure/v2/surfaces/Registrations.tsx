@@ -77,7 +77,7 @@ const isGridResponse = (v: unknown): v is GridResponse =>
     (v as GridResponse).registrations,
   );
 
-/* ── The dossier now has a real source ─────────────────────────────────────
+/* ── The dossier now has a real source ─────────────────────────────────────────
    This was `const REG_DOSSIERS: Record<string, RegDossier> = {}` — deliberately
    empty, with a comment saying no fabricated dossiers would be shown until a
    real source existed. Honest, and completely inert: because the lookup always
@@ -377,7 +377,7 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
           <h1 className="reg-title">Registrations</h1>
           <p className="reg-sub">Authorization status across markets, agency review clocks, renewals &amp; variations, and health-authority commitments &mdash; one registration ledger for every market you file in.</p>
         </div>
-        <button className="reg-ask" onClick={() => ask('Build a global registration & sequencing plan across my markets')}>{I.sparkles} Plan markets with AnA</button>
+        <button className="reg-ask" onClick={() => ask('Build a global registration & sequencing plan across my markets')}>{I.sparkles} Ask AnA to plan markets</button>
       </div>
 
       <div className="reg-kpis">

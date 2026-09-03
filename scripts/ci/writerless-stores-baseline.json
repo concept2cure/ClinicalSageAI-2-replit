@@ -1,86 +1,114 @@
 {
-  "$comment": "Stores read by server code that nothing writes. Each needs a REASON \u2014 see scripts/ci/check-writerless-stores.mjs.",
+  "$comment": "Stores read by server code that nothing writes. Each needs a REASON — see scripts/ci/check-writerless-stores.mjs.",
   "$generated": "node scripts/ci/check-writerless-stores.mjs --write-baseline",
   "stores": {
     "anaProjectCapabilities": {
       "readerCount": 2,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
     "auditTrail": {
       "readerCount": 1,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+    },
+    "c2cDigests": {
+      "readerCount": 1,
+      "reason": "NOT ADJUDICATED — surfaced 2026-09-02 when UPDATE-only writers stopped counting as writers: something updates rows here but nothing in server/ or the migrations inserts them, so no row can ever match. Give it a real writer, drop the readers, or say why an empty read is correct."
     },
     "cerSections": {
       "readerCount": 1,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
     "croTeamAssignments": {
       "readerCount": 1,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
     "dataLineageTracking": {
       "readerCount": 1,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+    },
+    "defensePackets": {
+      "readerCount": 3,
+      "reason": "NOT ADJUDICATED — surfaced 2026-09-02 when UPDATE-only writers stopped counting as writers: something updates rows here but nothing in server/ or the migrations inserts them, so no row can ever match. Give it a real writer, drop the readers, or say why an empty read is correct."
     },
     "deviceProfiles": {
       "readerCount": 1,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
     "evidenceClaimLinks": {
       "readerCount": 2,
-      "reason": "L22. Same trio as evidenceSources \u2014 see that entry. Read by findOrphanClaims to decide whether a claim is linked; with no writer, every claim reads as orphaned or the set is empty."
+      "reason": "L22. Same trio as evidenceSources — see that entry. Read by findOrphanClaims to decide whether a claim is linked; with no writer, every claim reads as orphaned or the set is empty."
+    },
+    "evidenceClaims": {
+      "readerCount": 7,
+      "reason": "UPDATE-only (ledger L22): five UPDATE writers — fact-change-orchestrator.ts, reconciliation-engine.ts (three), fact-propagation.ts — can never match a row because nothing inserts one; the live canonical spine is cre_evidence_sources. Whether to converge the readers onto the spine or delete the trio is L22's open decision; this entry records the under-report the gate used to have."
     },
     "evidenceSources": {
       "readerCount": 1,
-      "reason": "L22. Part of the evidence-fabric trio that has never had a writer. Readers exist (regulatory graph, defense-packet staleness) and its migration is now on the apply path, so the tables are provisioned and permanently empty. The harm \u2014 empty counts reported as findings, reaching an approval verdict \u2014 is fixed (L133). The remaining decision is converge onto the live evidence spine (cre_evidence_sources + authoring_citations + document_span_lineage) or delete the subsystem."
+      "reason": "L22. Part of the evidence-fabric trio that has never had a writer. Readers exist (regulatory graph, defense-packet staleness) and its migration is now on the apply path, so the tables are provisioned and permanently empty. The harm — empty counts reported as findings, reaching an approval verdict — is fixed (L133). The remaining decision is converge onto the live evidence spine (cre_evidence_sources + authoring_citations + document_span_lineage) or delete the subsystem."
     },
     "fda510kProjects": {
       "readerCount": 9,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+    },
+    "fda510kStageProgress": {
+      "readerCount": 5,
+      "reason": "NOT ADJUDICATED — surfaced 2026-09-02 when UPDATE-only writers stopped counting as writers: something updates rows here but nothing in server/ or the migrations inserts them, so no row can ever match. Give it a real writer, drop the readers, or say why an empty read is correct."
     },
     "fdaCommunications": {
       "readerCount": 2,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
     "gsprRequirements": {
       "readerCount": 1,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
     "methodRegulatoryOutcomes": {
       "readerCount": 2,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
     "projectDocuments": {
       "readerCount": 1,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+    },
+    "protocols": {
+      "readerCount": 2,
+      "reason": "NOT ADJUDICATED — surfaced 2026-09-02 when UPDATE-only writers stopped counting as writers: something updates rows here but nothing in server/ or the migrations inserts them, so no row can ever match. Give it a real writer, drop the readers, or say why an empty read is correct."
+    },
+    "qSubCommitments": {
+      "readerCount": 4,
+      "reason": "UPDATE-only in product code; the only INSERT INTO q_sub_commitments is scripts/seed-mdx-beta.mjs, a beta seed, which is not a writer. NOT ADJUDICATED — surfaced 2026-09-02 when UPDATE-only writers stopped counting as writers: something updates rows here but nothing in server/ or the migrations inserts them, so no row can ever match. Give it a real writer, drop the readers, or say why an empty read is correct."
     },
     "qSubMeetings": {
       "readerCount": 3,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
     "qSubQuestions": {
       "readerCount": 3,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
     "qSubTimelineEntries": {
       "readerCount": 2,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
     "regulatoryObligations": {
       "readerCount": 1,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
     "regulatorySequences": {
       "readerCount": 1,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
     "reports": {
       "readerCount": 1,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
     "sections": {
       "readerCount": 3,
-      "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+      "reason": "NOT ADJUDICATED — recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+    },
+    "standardsApplicability": {
+      "readerCount": 2,
+      "reason": "NOT ADJUDICATED — surfaced 2026-09-02 when UPDATE-only writers stopped counting as writers: something updates rows here but nothing in server/ or the migrations inserts them, so no row can ever match. Give it a real writer, drop the readers, or say why an empty read is correct."
     }
   }
 }
