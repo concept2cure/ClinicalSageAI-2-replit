@@ -336,9 +336,13 @@
 
 /* UI standards §8: a failure always offers a recovery path. Sized to the 24px
    floor SC 2.5.8 sets on every pointer type, and to 44px where the pointer is
-   coarse. `.tbtn` has no base rule anywhere in client/src and the universal
-   `.c2c-v2 button` reset strips its padding, so the dismiss control is sized
-   here rather than inherited. */
+   coarse. `.tbtn` (below) is the 24px icon button; the dismiss control needs
+   the larger target, so it is sized here rather than inherited. */
+/* Icon-only tool button: clear-search, close-drawer. The universal `.c2c-v2 button`
+   reset strips padding, so the 24px pointer floor (SC 2.5.8) is set here. */
+.c2c-v2 .tbtn{display:inline-flex;align-items:center;justify-content:center;min-width:24px;min-height:24px;padding:2px 6px;border:0;border-radius:var(--radius-md);background:transparent;color:var(--text-400);cursor:pointer;}
+.c2c-v2 .tbtn:hover{color:var(--text-100);background:var(--bg-100);}
+.c2c-v2 .tbtn svg{width:14px;height:14px;}
 .c2c-v2 .c2c-error-retry {
   min-height: 32px; padding: 7px 14px;
   font-size: 12px; font-weight: 500; color: var(--accent-200);
@@ -1088,6 +1092,8 @@
 .c2c-v2 .pj-card{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;}
 .c2c-v2 .pj-card-h{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
 .c2c-v2 .pj-card-h h3{font-size:12.5px;font-weight:600;color:var(--text-100);margin:0;}
+.c2c-v2 .pj-card-h-go{margin-left:auto;display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;color:var(--accent-200);white-space:nowrap;}
+.c2c-v2 .pj-card-h-go:hover{color:var(--accent-100);}.c2c-v2 .pj-card-h-go svg{width:12px;height:12px;}
 .c2c-v2 .pj-card-h .sec-sub{font-size:10.5px;color:var(--text-400);margin-left:auto;}
 .c2c-v2 .pj-vis{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--text-400);margin-left:auto;border:1px solid var(--border);border-radius:20px;padding:2px 8px;}
 .c2c-v2 .pj-vis .ico{font-size:11px;}
@@ -1574,6 +1580,11 @@
 .c2c-v2 .ana-sugg .ico{color:var(--accent-100);font-size:14px;flex-shrink:0;}
 .c2c-v2 .ana-msg{display:flex;flex-direction:column;gap:3px;}
 .c2c-v2 .ana-msg .who{font-size:10px;color:var(--text-400);font-weight:500;}
+/* governed sign-offs AnA asks for inside a message, and the outcome line each one becomes */
+.c2c-v2 .ana-msg-signoffs{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+.c2c-v2 .ana-signoff-done{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--success);}
+.c2c-v2 .ana-signoff-done[data-tone="error"]{color:var(--error);}
+.c2c-v2 .ana-signoff-done svg{width:13px;height:13px;flex-shrink:0;}
 .c2c-v2 .ana-msg .bd{font-size:12.5px;line-height:1.5;}
 .c2c-v2 .ana-msg.user .bd{background:var(--bg-200);padding:8px 11px;border-radius:12px 12px 4px 12px;align-self:flex-end;max-width:88%;}
 .c2c-v2 .ana-msg.ana .bd{font-family:var(--font-serif);}
@@ -2069,6 +2080,10 @@
 .c2c-v2 .tone-ai{background:var(--ai-muted);color:var(--ai);}
 .c2c-v2 .tone-warn{background:var(--warning-muted);color:var(--warning);}
 .c2c-v2 .tone-idle{background:var(--idle-muted);color:var(--text-300);}
+/* `dim` and `err` are emitted by fifteen call sites (`rd-chip tone-` + tone) and had no rule: a
+   "no sources" or "failed" chip rendered as unstyled text. */
+.c2c-v2 .tone-dim{background:var(--bg-100);color:var(--text-400);}
+.c2c-v2 .tone-err{background:var(--error-muted);color:var(--error);}
 
 /* ── Labeling / IFU workbench ── */
 .c2c-v2 .lbl-symgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
@@ -2466,6 +2481,8 @@
 
 /* ════════ NDA / BLA filing cockpit ════════ */
 .c2c-v2 .reg-wrap{height:100%;overflow-y:auto;padding:26px 30px 60px;max-width:1100px;margin:0 auto;}
+/* outer frame of the HAQ and NDA screens: gives the scroll column below a definite height */
+.c2c-v2 .cv-body{height:100%;min-height:0;}
 .c2c-v2 .reg-intro{font-size:13px;line-height:1.6;color:var(--text-400);margin:0;max-width:680px;}
 .c2c-v2 .reg-kpi-v[data-tone="warn"]{color:var(--warning);}
 .c2c-v2 .reg-kpi-v[data-tone="err"]{color:var(--error);}
@@ -2836,6 +2853,7 @@
 .c2c-v2 .ct-art-prov-g{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--text-400);line-height:1.45;}
 .c2c-v2 .ct-art-audit{display:inline-flex;align-items:center;gap:4px;color:var(--text-300);}.c2c-v2 .ct-art-audit svg{width:11px;height:11px;}
 .c2c-v2 .ct-art-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.c2c-v2 .ct-art-edit{flex:0 0 auto;}
 .c2c-v2 .ct-art-actions button{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg-000);color:var(--text-200);cursor:pointer;}
 .c2c-v2 .ct-art-actions button:hover{background:var(--bg-100);}.c2c-v2 .ct-art-actions button svg{width:13px;height:13px;}
 /* A disabled artifact action looked exactly like an enabled one — the artifact

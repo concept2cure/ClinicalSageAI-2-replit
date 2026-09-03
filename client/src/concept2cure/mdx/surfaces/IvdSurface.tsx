@@ -150,22 +150,9 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
       {usingFixture && (
         <div
           className="banner-warn"
-          style={{
-            margin: '12px 0',
-            padding: '10px 14px',
-            background: 'var(--bg-050)',
-            border: '1px solid var(--border-100)',
-            borderLeft: '3px solid var(--accent-100)',
-            borderRadius: 6,
-            fontSize: 12,
-            color: 'var(--text-200)',
-            display: 'flex',
-            gap: 8,
-            alignItems: 'center',
-          }}
           role="status"
         >
-          <span style={{ color: 'var(--accent-100)' }}>{I.alertCircle}</span>
+          <span className="banner-ic">{I.alertCircle}</span>
           <span>
             Showing the canonical IVDR example so you can preview the workflow. Your tenant's
             classifications, validations and clinical evidence appear here once recorded via the IVDR module.

@@ -298,6 +298,7 @@
 .c2c-v2 .bs-doc-kind{ font-size:13px; font-weight:600; color:var(--text-100); }
 .c2c-v2 .bs-doc-prov{ font-size:11px; color:var(--text-300); margin-left:10px; font-family:var(--font-mono,monospace); }
 .c2c-v2 .bs-doc-bar-a{ display:flex; gap:8px; }
+.c2c-v2 .bs-doc-bar-l{ display:flex; align-items:center; min-width:0; }
 .c2c-v2 .bs-da{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; padding:6px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg-000); color:var(--text-200); cursor:pointer; }
 .c2c-v2 .bs-da.primary{ background:var(--accent-strong); color:var(--accent-on-strong); border-color:var(--accent-100); }
 .c2c-v2 .bs-da svg{ width:14px; height:14px; }
@@ -348,6 +349,8 @@
    carries an error tone and a live region this rule's pill never could. */
 .c2c-v2 .sn-eyebrow{ font-size:11px; font-weight:600; letter-spacing:.04em; color:var(--accent-200); }
 .c2c-v2 .sn-title{ font-size:26px; font-weight:600; color:var(--text-100); margin:5px 0 16px; letter-spacing:-.02em; }
+.c2c-v2 .sn-head{ margin-bottom:12px; }
+.c2c-v2 .sn-left, .c2c-v2 .sn-right{ min-width:0; }
 .c2c-v2 .sn-cols{ display:grid; grid-template-columns:400px 1fr; gap:16px; align-items:start; margin-top:16px; }
 .c2c-v2 .sn-sec{ font-size:12px; font-weight:650; color:var(--text-200); text-transform:uppercase; letter-spacing:.04em; margin:6px 0 10px; }
 .c2c-v2 .sn-sec-x{ font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-400); font-size:11.5px; }
@@ -393,6 +396,7 @@
 
 /* Reporting & analytics — protocol analysis document producer */
 .c2c-v2 .ra{ max-width:1200px; }
+.c2c-v2 .ra-input{ min-width:0; }
 .c2c-v2 .ra-layout{ display:grid; grid-template-columns:360px 1fr; gap:14px; align-items:start; }
 .c2c-v2 .ra-ta{ width:100%; min-height:200px; resize:vertical; border:1px solid var(--border); border-radius:9px; padding:11px 12px; font-size:13px; line-height:1.55; color:var(--text-100); background:var(--bg-000); font-family:var(--font-mono,ui-monospace,monospace); }
 .c2c-v2 .ra-actions{ display:flex; flex-direction:column; gap:10px; margin-top:10px; }
@@ -407,6 +411,8 @@
 .c2c-v2 .ra-empty-ic svg{ width:44px; height:44px; }
 .c2c-v2 .ra-empty-t{ font-size:15px; font-weight:600; color:var(--text-200); margin-bottom:5px; }
 .c2c-v2 .ra-empty-s{ font-size:13px; max-width:340px; line-height:1.5; }
+.c2c-v2 .ra-kpi{ min-width:120px; }
+.c2c-v2 .ra-chart{ margin-bottom:18px; }
 .c2c-v2 .ra-kpis{ display:flex; flex-wrap:wrap; gap:26px; margin-bottom:18px; }
 .c2c-v2 .ra-kpi-v{ font-size:28px; font-weight:600; color:var(--accent-200); line-height:1; letter-spacing:-0.02em; }
 .c2c-v2 .ra-kpi-l{ font-size:11px; color:var(--text-400); margin-top:5px; }
@@ -815,6 +821,9 @@
 .c2c-v2 .etmf-scope button.on{ background:var(--accent-strong); color:var(--accent-on-strong); }
 .c2c-v2 .etmf-body{ display:grid; grid-template-columns:352px 1fr; gap:18px; margin-top:18px; align-items:start; }
 .c2c-v2 .etmf-left{ display:flex; flex-direction:column; gap:14px; }
+.c2c-v2 .etmf-right{ min-width:0; }
+.c2c-v2 .etmf-trial-input{ padding:7px 10px; border-radius:8px; border:1px solid var(--border-control); background:var(--bg-000); color:inherit; font:inherit; min-width:200px; }
+.c2c-v2 .etmf-trial-input:focus{ border-color:var(--accent-100); outline:none; }
 .c2c-v2 .etmf-panel{ background:var(--bg-050); border:1px solid var(--border); border-radius:12px; padding:13px 14px; }
 .c2c-v2 .etmf-panel-h{ font-size:12px; font-weight:600; color:var(--text-100); display:flex; align-items:center; gap:7px; margin-bottom:10px; }
 .c2c-v2 .etmf-panel-h svg{ width:14px; height:14px; opacity:.8; }
@@ -846,7 +855,7 @@
 
 .c2c-v2 .etmf-sec{ font-size:12px; font-weight:600; color:var(--text-100); margin-bottom:9px; }
 .c2c-v2 .etmf-sec-x{ font-weight:400; color:var(--text-400); }
-.c2c-v2 .etmf-doc{ }
+.c2c-v2 .etmf-doc{ margin:0; }
 .c2c-v2 .etmf-doc-body{ padding:0; }
 .c2c-v2 .etmf-cover{ padding:26px 30px 20px; border-bottom:1px solid var(--border); background:linear-gradient(180deg,var(--bg-050),transparent); }
 .c2c-v2 .etmf-cover-badge{ display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.06em; padding:4px 10px; border-radius:999px; background:color-mix(in srgb,var(--warning) 15%,transparent); color:var(--warning); margin-bottom:12px; }
@@ -1399,6 +1408,9 @@
 
 /* ════════ Shadow Review (shadow-review.jsx) — simulated reviewer, RTF/CRL gates ════════ */
 .c2c-v2 .sr{ max-width:1080px; margin:0 auto; padding:26px 30px 60px; }
+.c2c-v2 .sr-head{ margin-bottom:14px; }
+.c2c-v2 .sr-body{ display:flex; flex-direction:column; gap:14px; }
+.c2c-v2 .sr-findings{ border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--bg-000); padding:14px 16px; }
 .c2c-v2 .sr-eyebrow{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
 .c2c-v2 .sr-kicker{ font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-200); }
 .c2c-v2 .sr-src{ font-size:10.5px; font-weight:600; padding:2px 8px; border-radius:100px; }
@@ -1472,6 +1484,9 @@
 
 /* ════════ Dispatch Readiness (dispatch-readiness.jsx) — proven pre-transmit gate ════════ */
 .c2c-v2 .dr2{ max-width:1000px; margin:0 auto; padding:26px 30px 60px; }
+.c2c-v2 .dr2-head{ margin-bottom:14px; }
+.c2c-v2 .dr2-verdict-t{ font-size:13px; font-weight:600; color:var(--text-100); }
+.c2c-v2 .dr2-readiness{ border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--bg-000); padding:14px 16px; margin-top:14px; }
 .c2c-v2 .dr2-eyebrow{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
 .c2c-v2 .dr2-kicker{ font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-200); }
 .c2c-v2 .dr2-src{ font-size:10.5px; font-weight:600; padding:2px 8px; border-radius:100px; }
