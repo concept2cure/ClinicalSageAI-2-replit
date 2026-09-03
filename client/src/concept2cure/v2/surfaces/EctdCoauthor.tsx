@@ -50,6 +50,10 @@ import { I } from '../icons';
 import { connected, liveGetOrNull, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
 import { useAnaChat } from '../../components/ana/useAnaChat';
+import { AnaWorkPanel } from '../AnaWorkPanel';
+import { useAgentActivity } from '../useAgentActivity';
+import { useWorkDockVisible } from '../workDock';
+import { shellProgramName } from '../shellProject';
 import { useChatUpload, attachmentReadLabel } from '../../hooks/useChatUpload';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
@@ -294,6 +298,10 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
     onDriveEvent: liveDrive?.onDriveEvent,
     onArtifactSaved: liveDrive?.onWorkSaved,
   });
+  /* The live work dock for this pane (AnaWorkPanel): one shared show/hide
+     memory with the rail, and the background queue read only while shown. */
+  const [workDockOpen, setWorkDockOpen] = useWorkDockVisible();
+  const anaWorkQueue = useAgentActivity(workDockOpen, anaChat.isStreaming);
   const turns = anaChat.messages;
 
   /* Validation + compliance are per-document — clear stale results when the
@@ -676,8 +684,40 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
 
       {/* Intelligence (AnA) */}
       <section className="ec-intel">
-        <div className="ec-intel-head"><b>AnA</b><span className="hint">co-authoring &sect;{activeRef || '—'} -- {live ? 'live' : 'bound to dossier'}</span></div>
+        <div className="ec-intel-head">
+          <b>AnA</b>
+          <span className="hint">co-authoring &sect;{activeRef || '—'} -- {live ? 'live' : 'bound to dossier'}</span>
+          <button
+            type="button"
+            className="ana-work-toggle"
+            aria-pressed={workDockOpen}
+            aria-label={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
+            title={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
+            onClick={() => setWorkDockOpen(!workDockOpen)}
+          >
+            {I.activity} At work
+          </button>
+        </div>
         <div className="ec-intel-scroll" ref={scrollRef}>
+          {/* The live work dock — the same one the shell rail mounts — above
+              the thread, so the person sees the work before the words. */}
+          {workDockOpen && (
+            <div className="ana-work-host" style={{ padding: '0 0 14px' }}>
+              <AnaWorkPanel
+                messages={anaChat.messages}
+                streaming={anaChat.isStreaming}
+                runStatus={anaChat.runStatus}
+                pendingSteers={anaChat.pendingSteers}
+                queue={anaWorkQueue}
+                context={{
+                  project: shellProgramName(),
+                  module: 'eCTD co-author',
+                  surface: activeRef ? `Section ${activeRef}` : null,
+                }}
+                onClose={() => setWorkDockOpen(false)}
+              />
+            </div>
+          )}
           <div className="ec-thread">
             {turns.length === 0 && (
               <div className="ec-empty">

@@ -30,6 +30,7 @@ import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
 import { AnaWorkPanel } from './AnaWorkPanel';
 import { useAgentActivity } from './useAgentActivity';
+import { useWorkDockVisible } from './workDock';
 import { shellProgramName } from './shellProject';
 import { stashNavParamsForTarget } from './navParams';
 import { listDemoScripts } from '@shared/navigation/demo-scripts';
@@ -510,8 +511,6 @@ function RailSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
 }
 
 /* ── Persistent AnA rail ──────────────────────────────────────────────── */
-/** Per-browser memory of whether the work dock is shown. */
-const WORK_DOCK_KEY = 'c2c-v2-ana-work-dock';
 /** The open programme as the dock names it — the shell's one reader, or null. */
 function projectLabel(): string | null {
   try {
@@ -613,24 +612,9 @@ export function AnaRail({
   const [agent, setAgent] = React.useState(false);
   const [plusOpen, setPlusOpen] = React.useState(false);
   const [modeOpen, setModeOpen] = React.useState(false);
-  /* The work dock is open by default — a client who asked AnA to do something
-     should see her doing it without hunting for a switch — and the choice to
-     hide it is remembered per browser, never per turn. */
-  const [workOpen, setWorkOpen] = React.useState<boolean>(() => {
-    try {
-      return localStorage.getItem(WORK_DOCK_KEY) !== 'hidden';
-    } catch {
-      return true;
-    }
-  });
-  const setWorkDock = (v: boolean) => {
-    setWorkOpen(v);
-    try {
-      localStorage.setItem(WORK_DOCK_KEY, v ? 'shown' : 'hidden');
-    } catch {
-      /* session-only */
-    }
-  };
+  /* The work dock: shown by default, hidden by one shared per-browser choice
+     (workDock.ts) that every host of the dock honours. */
+  const [workOpen, setWorkDock] = useWorkDockVisible();
   const workVisible = Boolean(work) && workOpen;
   /* Background investigations: read only while the dock shows them, and
      re-read the moment a turn ends (a turn can start or finish one). */
