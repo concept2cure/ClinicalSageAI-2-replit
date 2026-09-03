@@ -40,10 +40,16 @@ import { drizzle } from 'drizzle-orm/pglite';
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 // `db` is hoisted so the router module and this file share one instance.
-const holder = vi.hoisted(() => ({ db: null as any }));
+const holder = vi.hoisted(() => ({ db: null as any, pool: null as any }));
 vi.mock('../../db', () => ({
   get db() {
     return holder.db;
+  },
+  // The lineage gate the routes now enlist (ledger L157) reads `pool` for its
+  // default executor; the routes pass the transaction client explicitly, so
+  // this only has to exist and point at the same database.
+  get pool() {
+    return holder.pool;
   },
 }));
 
@@ -197,9 +203,26 @@ async function createSection(overrides: Record<string, unknown> = {}): Promise<n
   return res.body.section.id;
 }
 
+function migration(rel: string): string {
+  return fs.readFileSync(path.resolve(__dirname, '../../../', rel), 'utf8');
+}
+const lineageExec = {
+  query: async <R = any>(text: string, params?: unknown[]): Promise<{ rows: R[]; rowCount: number }> => {
+    const r = await pg.query(text, params as unknown[]);
+    return { rows: r.rows as R[], rowCount: (r as { affectedRows?: number }).affectedRows ?? (r.rows as unknown[]).length };
+  },
+};
+
 beforeAll(async () => {
   pg = new PGlite();
   await pg.exec(DDL);
+  // The lineage gate's own tables (ledger L157): a real organizations row for
+  // the FK, the evidence spine, and the span-lineage store.
+  await pg.exec(`CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT);`);
+  await pg.exec(`INSERT INTO organizations (id, name) VALUES (${ORG}, 'kit-org');`);
+  await pg.exec(migration('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
+  await pg.exec(migration('db/migrations/20260803_document_span_lineage.sql'));
+  holder.pool = lineageExec;
   holder.db = drizzle(pg);
 
   app = express();
@@ -455,5 +478,81 @@ describe('SOURCE: one writer per table', () => {
     expect(calls).toHaveLength(3);
     expect(source).toContain('sectionVersionExec(tx)');
     expect(source.match(/db\.transaction\(/g) ?? []).toHaveLength(3);
+  });
+});
+
+// ── Ledger L157: the kit's human paths carry lineage like every other prose write ──
+import { enforceSourceAndAuthorLineage } from '../../services/clinical-regulatory-evidence/lineage-gate';
+import { assertLineageCoversContent } from '../../services/clinical-regulatory-evidence/span-lineage.service';
+
+const QUOTED = 'The primary endpoint was met at week twelve in the intent-to-treat population.';
+const ORIGINAL = 'These findings were consistent across every prespecified subgroup we examined.';
+
+async function spansFor(sectionId: number) {
+  const r = await pg.query<{ provenance_kind: string; reference_id: string | null }>(
+    `SELECT provenance_kind, reference_id FROM document_span_lineage
+      WHERE document_table = 'cerv2_510k_sections' AND document_id = $1 AND deleted_at IS NULL`,
+    [String(sectionId)],
+  );
+  return r.rows;
+}
+async function makeSource(): Promise<number> {
+  const r = await pg.query<{ id: number }>(
+    `INSERT INTO cre_evidence_sources (organization_id, visibility_class, source_type, title, checksum, ingestion_status, extraction_status)
+     VALUES ($1, 'tenant_private', 'client_document', 'csr.pdf', $2, 'ingested', 'extracted') RETURNING id`,
+    [ORG, `sha-${Date.now()}-${Math.random()}`],
+  );
+  return r.rows[0].id;
+}
+
+describe('lineage on the kit section routes (ledger L157)', () => {
+  it('PATCH refuses to write content without an identified author, and writes nothing', async () => {
+    const sectionId = await createSection();
+    actor.userId = null;
+    const res = await api().patch(`/api/cerv2/sections/${sectionId}`).send({ content: 'unattributed prose' });
+    expect(res.status).toBe(401);
+    const row = await pg.query<{ content: string }>(`SELECT content FROM cerv2_510k_sections WHERE id = $1`, [sectionId]);
+    expect(row.rows[0].content).toBe('ORIGINAL body text');
+    expect(await versionsFor(sectionId)).toHaveLength(1);
+  });
+
+  it('PATCH records every clause as the editor\'s assertion, and retires a drafted quote the edit moved', async () => {
+    const sectionId = await createSection({ content: `${QUOTED} ${ORIGINAL}` });
+    const sourceId = await makeSource();
+    // An AnA draft with one verified quote, recorded the way write_kit_section records it.
+    await enforceSourceAndAuthorLineage(
+      lineageExec, ORG,
+      { documentTable: 'cerv2_510k_sections', documentId: String(sectionId) },
+      `${QUOTED} ${ORIGINAL}`, '41',
+      [{ sourceId, content: `Clinical study report. ${QUOTED} More.` }],
+    );
+    expect((await spansFor(sectionId)).filter((s) => s.provenance_kind === 'cre_evidence_source')).toHaveLength(1);
+
+    // The human edit puts a sentence in front: the quote is still present but
+    // its recorded offsets no longer describe it.
+    const edited = `${ORIGINAL} ${QUOTED}`;
+    const res = await api().patch(`/api/cerv2/sections/${sectionId}`).send({ content: edited });
+    expect(res.status).toBe(200);
+    const spans = await spansFor(sectionId);
+    expect(spans.filter((s) => s.provenance_kind === 'cre_evidence_source')).toHaveLength(0);
+    expect(spans.filter((s) => s.provenance_kind === 'author_assertion').length).toBeGreaterThanOrEqual(2);
+    await expect(
+      assertLineageCoversContent(ORG, { documentTable: 'cerv2_510k_sections', documentId: String(sectionId) }, edited, lineageExec),
+    ).resolves.toBeUndefined();
+  });
+
+  it('accept-ana-draft with refined content covers the refined text, and refuses without a person', async () => {
+    const sectionId = await createSection({ content: `${QUOTED} ${ORIGINAL}` });
+    await pg.query(`UPDATE cerv2_510k_sections SET draft_source = 'ana', drafted_at = now() WHERE id = $1`, [sectionId]);
+    actor.userId = null;
+    expect((await api().post(`/api/cerv2/sections/${sectionId}/accept-ana-draft`).send({})).status).toBe(401);
+    actor.userId = 501;
+    const refined = `${QUOTED} ${ORIGINAL} The acceptor added this qualification.`;
+    const res = await api().post(`/api/cerv2/sections/${sectionId}/accept-ana-draft`).send({ refined_content: refined });
+    expect(res.status).toBe(200);
+    await expect(
+      assertLineageCoversContent(ORG, { documentTable: 'cerv2_510k_sections', documentId: String(sectionId) }, refined, lineageExec),
+    ).resolves.toBeUndefined();
+    expect((await spansFor(sectionId)).length).toBeGreaterThanOrEqual(3);
   });
 });

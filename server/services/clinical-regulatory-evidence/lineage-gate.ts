@@ -28,6 +28,7 @@ import {
   replaceSourceSpans,
   assertLineageCoversContent,
   type Queryable,
+  retireStaleSourceSpans,
 } from './span-lineage.service';
 import {
   attributeQuotedSpans,
@@ -64,11 +65,20 @@ export async function enforceAuthorLineage(
     return;
   }
 
-  const spans = detectSpans(content, 'clause').map((s) => ({
-    charStart: s.charStart,
-    charEnd: s.charEnd,
-    spanText: s.text,
-  }));
+  // Source spans recorded by an earlier accept are claims about characters at
+  // fixed offsets. This save has no sources to re-verify against, so each is
+  // kept only if its quoted text is still exactly where it was, and retired
+  // otherwise — the "a citation can never go stale" guarantee holds across a
+  // human edit, not just across an accept.
+  const { kept } = await retireStaleSourceSpans(orgId, ref, content, exec);
+  const keptRanges = new Set(kept.map((k) => `${k.charStart}:${k.charEnd}`));
+  const spans = detectSpans(content, 'clause')
+    .filter((s) => !keptRanges.has(`${s.charStart}:${s.charEnd}`))
+    .map((s) => ({
+      charStart: s.charStart,
+      charEnd: s.charEnd,
+      spanText: s.text,
+    }));
 
   await replaceAuthorSpans(orgId, ref, spans, { assertedBy: actor, createdBy: actor }, exec);
 
