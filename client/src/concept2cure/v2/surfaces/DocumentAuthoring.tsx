@@ -266,7 +266,11 @@ export function describeAuditMetadata(
     /* The quoted text is what makes the row resolvable — accepting a
        suggestion strips its mark, so the document no longer holds it. */
     const quoted = text ? ` — “${text.length > 160 ? text.slice(0, 160) + '…' : text}”` : '';
-    const by = proposedBy ? ` (proposed by ${proposedBy})` : '';
+    /* `proposedBy` is copied by the server from the editing client's own
+       request (the editor's suggestion mark carries the author's display
+       name), not derived from a verified identity. Rendered unqualified it
+       read as the audit trail's finding; the qualifier keeps the two apart. */
+    const by = proposedBy ? ` (proposed by ${proposedBy}, as recorded by the editing client)` : '';
     return `${verb} ${what}${by}${quoted}`;
   }
 
@@ -1991,7 +1995,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         if (!res.ok) {
           fireToast(
             'Couldn’t record the source — ' +
-              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              (serverMessage(json) ?? 'the server refused it') +
               '. Nothing was saved.',
             'error'
           );
@@ -2006,7 +2010,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         void loadSources(activeSectionId);
       } catch (e) {
         fireToast(
-          'Couldn’t record the source — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'Couldn’t record the source — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
         );
       }
@@ -2141,7 +2145,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     } catch (e) {
       fireToast(
         'Couldn’t re-read this document’s sources — ' +
-          (e instanceof Error ? e.message : String(e)) +
+          redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') +
           '. Nothing was changed.',
         'error',
       );
@@ -2333,7 +2337,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       if (!res.ok) {
         fireToast(
           'Couldn’t change track changes — ' +
-            ((json as any)?.error ?? `HTTP ${res.status}`) +
+            (serverMessage(json) ?? 'the server refused it') +
             '. The mode is unchanged.',
           'error'
         );
@@ -2392,7 +2396,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         }
         if (!res.ok) {
           fireToast(
-            'Couldn’t revert — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.',
+            'Couldn’t revert — ' + (serverMessage(json) ?? 'the server refused it') + '.',
             'error'
           );
           return;
@@ -2411,7 +2415,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         void loadHistory(activeSection.id);
       } catch (e) {
         fireToast(
-          'Couldn’t revert — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'Couldn’t revert — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
         );
       }
@@ -2440,7 +2444,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       }
       if (!res.ok) {
         fireToast(
-          'Couldn’t post the comment — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.',
+          'Couldn’t post the comment — ' + (serverMessage(json) ?? 'the server refused it') + '.',
           'error'
         );
         return;
@@ -2458,7 +2462,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       void loadComments(activeDocId);
     } catch (e) {
       fireToast(
-        'Couldn’t post the comment — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'Couldn’t post the comment — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
         'error'
       );
     }
@@ -2496,7 +2500,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         }
         if (!res.ok) {
           fireToast(
-            'Couldn’t post the reply — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.',
+            'Couldn’t post the reply — ' + (serverMessage(json) ?? 'the server refused it') + '.',
             'error'
           );
           return;
@@ -2507,7 +2511,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         void loadComments(activeDocId);
       } catch (e) {
         fireToast(
-          'Couldn’t post the reply — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'Couldn’t post the reply — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
         );
       }
@@ -2544,7 +2548,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         if (!res.ok) {
           fireToast(
             'Couldn’t update the comment — ' +
-              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              (serverMessage(json) ?? 'the server refused it') +
               '. Its status is unchanged.',
             'error'
           );
@@ -2558,7 +2562,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         void loadComments(activeDocId);
       } catch (e) {
         fireToast(
-          'Couldn’t update the comment — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'Couldn’t update the comment — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
         );
       }
@@ -2686,7 +2690,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         if (!res.ok) {
           fireToast(
             'Couldn’t move the section — ' +
-              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              (serverMessage(json) ?? 'the server refused it') +
               ' The order is unchanged.',
             'error'
           );
@@ -2700,7 +2704,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         );
       } catch (e) {
         fireToast(
-          'Couldn’t move the section — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'Couldn’t move the section — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
         );
       } finally {
@@ -2747,7 +2751,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       setCheck(json.scan_results);
     } catch (e) {
       fireToast(
-        'Couldn’t check the section — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'Couldn’t check the section — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
         'error'
       );
     } finally {
@@ -2839,7 +2843,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         fireToast(
           `${batch.length === 1 ? 'That decision was' : `${batch.length} decisions were`} applied ` +
             'to the document but NOT recorded on the audit trail — ' +
-            (e instanceof Error ? e.message : String(e)) +
+            redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') +
             '. The content is still saved on the next save; report the missing record.',
           'error',
         );

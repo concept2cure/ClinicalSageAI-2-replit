@@ -252,4 +252,20 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
       delete (window as any).C2C_PROJECT;
     }
   });
+  it('a thrown error carrying internal text never reaches the user — the fallback sentence does', async () => {
+    wire((m, u) => {
+      if (m === 'POST' && u.endsWith('/comment')) {
+        throw new Error('relation "authoring_comments" does not exist at /home/app/server/routes/authoring.router.ts:4410');
+      }
+      return undefined;
+    });
+    render(<DocumentAuthoring {...props()} />);
+    fireEvent.click(await screen.findByRole('button', { name: /Comments/ }));
+    const box = await screen.findByPlaceholderText(/Comment on 3\.2\.S\.1/);
+    fireEvent.change(box, { target: { value: 'Please cite the batch record.' } });
+    fireEvent.click(screen.getByRole('button', { name: /Add comment/ }));
+    await waitFor(() => expect(text()).toMatch(/Couldn’t post the comment — the server could not be reached/));
+    expect(text()).not.toMatch(/authoring_comments/);
+    expect(text()).not.toMatch(/authoring\.router\.ts/);
+  });
 });
