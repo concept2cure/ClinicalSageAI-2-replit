@@ -1749,6 +1749,34 @@ export const C2C_MIGRATION_FILES = [
   // (scope / purpose) so a drug-substance impurity cannot green a drug-product
   // section and a development profile cannot green the release specification.
   'db/migrations/20260902_cmc_impurity_dissolution_registers.sql',
+  // The Clinical Operations surface's store. Its router used to CREATE SCHEMA
+  // and CREATE TABLE on the first request, which the non-superuser runtime role
+  // must refuse (42501) — so every call 500'd. Ordered after the CMC registers
+  // and before the sweep; it only needs public.organizations, which exists long
+  // before this point.
+  'db/migrations/20260902_clinical_ops_schema.sql',
+  // manufacturing.responses. Its router created the table on the first request
+  // — the comment there said so, naming migration 066's omission as the reason
+  // — which the runtime role may not do, so the finding-response surface 500'd.
+  'db/migrations/20260902_manufacturing_responses.sql',
+
+  // ── CMC material spec + formulation registers ────────────────────────────
+  // The producers for the composer's excipient, raw_material_spec and
+  // formulation_record source types. One table serves the two material types,
+  // keyed on material_role; `origin` is what lets 3.2.A.3 answer the
+  // human/animal-origin question from data instead of a regex over free text.
+  'db/migrations/20260903_cmc_material_formulation_registers.sql',
+
+  // ── CMC manufacturing process + characterisation registers ───────────────
+  // The last two source types the composer demanded with no producer:
+  // 3.2.S.2 reads manufacturing_process, 3.2.S.3 reads characterization.
+  // The manufacturing half ALTERs the existing manufacturing_processes table
+  // rather than adding one: that table already has two live readers
+  // (ich-compliance-checker, qbd-analyzer) and is cmc_process_steps' FK
+  // target, so it must be the table the writer fills. MUST stay after
+  // db/migrations/20260730_manufacturing_processes_reconstruction.sql, which
+  // creates it.
+  'db/migrations/20260903_cmc_manufacturing_characterization_registers.sql',
 
   // ── Drop the audit-shaped tables that survived a from-scratch liveness
   //    re-check (ledger L13; docs/AUDIT_STORE_INVENTORY_2026-08.md §5.1) ─────

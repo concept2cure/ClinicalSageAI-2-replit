@@ -481,4 +481,15 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      per-unit results are the tenant's data. Leaves, like the two above. */
   'cmc_impurity_profiles',
   'cmc_dissolution_profiles',
+  /* The material specifications and the formulation record: supplier names,
+     grades, batch formulae and overages are the tenant's own. Leaves. */
+  'cmc_material_specs',
+  'cmc_formulation_records',
+  /* The characterisation register, same shape and same reason. */
+  'cmc_characterization_studies',
+  /* manufacturing_processes has an FK child (cmc_process_steps, ON DELETE
+     CASCADE) so it is not a leaf, but it is org-keyed and it now holds the
+     tenant's synthetic route, batch sizes and equipment: purged, not left as
+     residue. */
+  'manufacturing_processes',
 ]);

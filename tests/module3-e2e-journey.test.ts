@@ -256,16 +256,32 @@ function makeSeedSources(): CanonicalSource[] {
         conclusion: 'Process demonstrated to be in a state of control',
       },
     },
-    // Raw Material Specification
+    /* Raw Material Specification — §3.2.S.2.3 Control of Materials, not
+       §3.2.P.4 Control of Excipients: the material register keys the two on
+       `materialRole` and a starting material for the drug substance is not an
+       excipient of the drug product.
+
+       `testParameters` is an array of OBJECTS, which is what cmc_material_specs
+       stores and what the form writes (materialSpecForm's Specification field
+       parses Test | Method | Acceptance criteria into rows). The flat string
+       array this fixture used is a shape the product never wrote, so the
+       specification rendered as "—" — the same class of fixture drift commit
+       d659267d corrected for the impurity sources on this file. */
     {
       id: 'src-rm-001',
       sourceType: 'raw_material_spec',
       sourcePayload: {
         materialName: 'PSI-6130 (starting material)',
+        materialRole: 'starting-material',
         grade: 'Pharmaceutical grade',
         supplier: 'Gilead Sciences — internal',
         compendialCompliance: 'In-house specification',
-        testParameters: ['Identity (NMR)', 'Purity (HPLC) ≥ 99.0%', 'Residual solvents (GC)'],
+        testParameters: [
+          { test: 'Identity', method: 'NMR', acceptanceCriteria: 'Conforms to reference spectrum' },
+          { test: 'Purity', method: 'HPLC', acceptanceCriteria: '≥ 99.0%' },
+          { test: 'Residual solvents', method: 'GC', acceptanceCriteria: 'Per ICH Q3C' },
+        ],
+        status: 'specified',
       },
     },
     /* Impurity Profile — ONE canonical source per impurity, which is what the
@@ -348,13 +364,18 @@ function makeSeedSources(): CanonicalSource[] {
         profileType: 'immediate-release',
       },
     },
-    // Formulation Record
+    /* Formulation Record — marked CURRENT, because §3.2.P.1 renders the
+       quantitative composition of the formulation that GOVERNS, and the
+       register enforces exactly one current version per project. A payload with
+       no status is a draft, and a draft composition is correctly not rendered
+       as the governing one. */
     {
       id: 'src-form-001',
       sourceType: 'formulation_record',
       sourcePayload: {
         formulationName: 'Veklury 100 mg lyophilized powder',
         version: 'F-v3.1',
+        status: 'current',
         components: [
           { component: 'Remdesivir', amount: '100 mg', role: 'Active' },
           { component: 'SBECD', amount: '3000 mg', role: 'Solubilizer' },
@@ -552,10 +573,18 @@ describe('Module 3 E2E Journey — Realistic IND Seed', () => {
       expect(lower.includes('dissolution') || lower.includes('apparatus')).toBe(true);
     });
 
-    it('raw_material_spec data appears in 3.2.P.4 tables', () => {
-      const p4 = composed.find(s => s.sectionKey === '3.2.P.4')!;
-      const rmTable = p4.tables.find(t => t.title.includes('Raw Material'));
+    it('raw_material_spec data appears in 3.2.S.2, not in the drug product excipient section', () => {
+      /* §3.2.S.2.3 Control of Materials is where a starting material for the
+         drug substance belongs, and it is what the register grid tells the
+         staffer the row files under. It rendered inside §3.2.P.4 Control of
+         Excipients because that was the only rule naming the source type. */
+      const s2 = composed.find(s => s.sectionKey === '3.2.S.2')!;
+      const rmTable = s2.tables.find(t => t.title.includes('Raw and Starting Material'));
       expect(rmTable).toBeDefined();
+      expect(rmTable!.rows.some(r => r.some(c => String(c).includes('PSI-6130')))).toBe(true);
+
+      const p4 = composed.find(s => s.sectionKey === '3.2.P.4')!;
+      expect(p4.tables.some(t => t.rows.some(r => r.some(c => String(c).includes('PSI-6130'))))).toBe(false);
     });
 
     it('completeness is high for well-sourced sections', () => {
