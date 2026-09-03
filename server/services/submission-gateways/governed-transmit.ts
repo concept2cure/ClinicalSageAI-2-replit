@@ -42,7 +42,7 @@ import { dirname } from 'path';
 
 import { pool } from '../../db';
 import { getGateway } from './index';
-import type { GatewayName, GatewayTransmitResult, Region } from './types';
+import type { GatewayName, GatewayTransmitResult, Region, SubmissionBundle } from './types';
 import { findActiveTransmittal } from './fda-esg';
 import { getBundle } from '../submission-bundle-storage';
 import {
@@ -112,6 +112,13 @@ export interface ResolvedBundle {
   displayName?: string;
   storage?: { provider: 'local' } | { provider: 's3'; bucket: string; key: string };
   validation?: { errorCount: number; warningCount?: number; infoCount?: number; findings?: unknown[] };
+  // Evidence the canonical packager recorded about the bundle at assemble time.
+  // Forwarded to the gateway so evaluatePreTransmit can enforce the operator's
+  // ECTD_REQUIRE_PDFA / _DTD / _REGIONAL_BACKBONE opt-ins against it — without
+  // these the gate could only warn "cannot prove" and never block.
+  submissionGrade?: SubmissionBundle['submissionGrade'];
+  dtdStatus?: SubmissionBundle['dtdStatus'];
+  regionalBackbone?: SubmissionBundle['regionalBackbone'];
 }
 
 /**
@@ -182,6 +189,11 @@ async function loadStoredBundle(
     // Internal eCTD structural validation findings, so the transmit hard-gate
     // can block on error-severity findings.
     validation: stored.validation && typeof stored.validation === 'object' ? stored.validation : undefined,
+    submissionGrade:
+      stored.submissionGrade && typeof stored.submissionGrade === 'object' ? stored.submissionGrade : undefined,
+    dtdStatus: stored.dtdStatus && typeof stored.dtdStatus === 'object' ? stored.dtdStatus : undefined,
+    regionalBackbone:
+      stored.regionalBackbone && typeof stored.regionalBackbone === 'object' ? stored.regionalBackbone : undefined,
   };
 }
 
@@ -417,6 +429,10 @@ export async function executeGovernedTransmit(
       sizeBytes: bundle.sizeBytes,
       format: bundle.format,
       displayName: bundle.displayName,
+      // Packager evidence for the pre-transmit gate (see ResolvedBundle).
+      submissionGrade: bundle.submissionGrade,
+      dtdStatus: bundle.dtdStatus,
+      regionalBackbone: bundle.regionalBackbone,
     },
     environment,
     submissionType: input.submissionType,

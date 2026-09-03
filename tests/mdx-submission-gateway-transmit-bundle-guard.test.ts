@@ -97,6 +97,9 @@ vi.mock('../server/services/submission-gateways', () => {
 });
 
 import gatewayRouter from '../server/routes/mdx-submission-gateway';
+// The pure gate the (here-mocked) gateway registry runs on req.bundle. NOT part
+// of the mocked index module, so this is the real implementation.
+import { evaluatePreTransmit } from '../server/services/submission-gateways/pre-transmit-check';
 
 /** Caller's verified principal. Tenant 99, user 777. */
 const CALLER_ORG = 99;
@@ -476,5 +479,59 @@ describe('POST transmit — legitimate validated package (C2C-SUB-003)', () => {
 
     expect(res.status).toBe(201);
     expect(transmitFn).toHaveBeenCalledTimes(1);
+  });
+});
+
+/* ── Packager evidence reaches the gate ──────────────────────────── */
+
+describe('POST transmit — packager evidence is forwarded to the pre-transmit gate', () => {
+  const evidence = {
+    submissionGrade: { pdfLeaves: 3, pdfaConverted: 1, notConverted: ['m3/x.pdf', 'm3/y.pdf'] },
+    dtdStatus: { selfContained: false, missing: ['ich-ectd-3-2.dtd'] },
+    regionalBackbone: { region: 'fda', file: 'm1/us/us-regional.xml', regionConformant: true },
+  };
+
+  it('forwards submissionGrade / dtdStatus / regionalBackbone from the stored descriptor to gw.transmit', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor(evidence) }];
+    transmitFn.mockResolvedValueOnce({
+      transmittalId: 4244, transmissionId: 'mdn-evidence', status: 'received',
+      transport: 'as2', httpStatus: 200,
+    });
+
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+
+    expect(res.status).toBe(201);
+    const arg = transmitFn.mock.calls[0][0];
+    // Before this was carried through, the registry guard's evaluatePreTransmit
+    // saw a bundle with none of these and could only warn "cannot prove" —
+    // ECTD_REQUIRE_DTD / _PDFA / _REGIONAL_BACKBONE never blocked a transmit.
+    expect(arg.bundle.dtdStatus).toEqual(evidence.dtdStatus);
+    expect(arg.bundle.submissionGrade).toEqual(evidence.submissionGrade);
+    expect(arg.bundle.regionalBackbone).toEqual(evidence.regionalBackbone);
+  });
+
+  it('and the gate REFUSES that exact forwarded shape when the operator opts in (production + ECTD_REQUIRE_DTD / _PDFA)', () => {
+    const forwarded = {
+      path: legitPath, sha256: legitSha, sizeBytes: legitSize, format: 'ectd' as const,
+      displayName: undefined, ...evidence,
+    };
+    const blocked = evaluatePreTransmit({
+      region: 'fda', environment: 'production', enforceExternal: false,
+      env: { ECTD_REQUIRE_DTD: 'true', ECTD_REQUIRE_PDFA: 'true' } as NodeJS.ProcessEnv,
+      bundle: forwarded as any,
+    });
+    expect(blocked.cleared).toBe(false);
+    expect(blocked.blockers.some((b) => /ECTD_REQUIRE_DTD blocks/.test(b))).toBe(true);
+    expect(blocked.blockers.some((b) => /ECTD_REQUIRE_PDFA blocks/.test(b))).toBe(true);
+
+    // Report-only when not opted in — the same evidence is surfaced, not blocking.
+    const reported = evaluatePreTransmit({
+      region: 'fda', environment: 'production', enforceExternal: false,
+      env: {} as NodeJS.ProcessEnv, bundle: forwarded as any,
+    });
+    expect(reported.cleared).toBe(true);
+    expect(reported.checks.find((c) => c.name === 'dtd-self-contained')?.passed).toBe(false);
   });
 });
