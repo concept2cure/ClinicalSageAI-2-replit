@@ -43,7 +43,10 @@ const FIXTURES = path.join(ROOT, 'tests/fixtures/success-before-ok');
 
 /** A message that tells the user the act happened. */
 const SUCCESS =
-  /(fireToast|fire|setNote|setStatus|setMsg|toast|notify)\s*\(\s*(\{[^}]*tone:\s*'ok'[^}]*\}|['"`][^'"`]*\b(saved|recorded|created|updated|applied|signed|sealed|frozen|exported|published|attached|deleted|removed|submitted|sent|filed|promoted|routed|released|archived|approved|dispatched)\b[^'"`]*['"`])/i;
+  /(fireToast|fire|setNote|setStatus|setMsg|toast|notify)\s*\(\s*(\{[^}]*tone:\s*'ok'[^}]*\}|['"`][^'"`]*\b(saved|recorded|created|updated|applied|signed|sealed|frozen|exported|published|attached|deleted|removed|submitted|sent|filed|promoted|routed|released|archived|approved|dispatched|renamed|reverted|resolved|posted|anchored|added|cited|re-read|re-resolved|removed)\b[^'"`]*['"`])/i;
+// renamed … removed were added after DocumentAuthoring's rename handler —
+// which adopted the client's code/title and said "Section renamed" on a 401 —
+// passed the first version of this list.
 
 /** Evidence the response was consulted, or the call went through a checked helper. */
 const CHECKED =
@@ -96,7 +99,8 @@ if (process.argv.includes('--self-test')) {
   }
   for (const f of ['client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx',
                    'client/src/concept2cure/v2/surfaces/Vault.tsx',
-                   'client/src/concept2cure/v2/surfaces/Biostatistics.tsx']) {
+                   'client/src/concept2cure/v2/surfaces/Biostatistics.tsx',
+                   'client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx']) {
     const hits = scan(f, readFileSync(path.join(ROOT, f), 'utf8'));
     if (hits.length > 0) { console.error(`  ✗ ${f}: still flags ${hits.map((h) => h.claim).join(' | ')}`); ok = false; }
     else console.log(`  ✓ ${f}: silent on the repaired source`);

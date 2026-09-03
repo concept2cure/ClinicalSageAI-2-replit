@@ -395,7 +395,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
           }),
         });
         nameSaved = res.ok;
-      } catch (_e) {
+      } catch {
         nameSaved = false;
       }
     }
@@ -412,7 +412,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
         }),
       });
       profileSaved = res.ok;
-    } catch (_e) {
+    } catch {
       profileSaved = false;
     }
 
@@ -437,7 +437,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
         // 201 = member created; 202 = pending cross-org invitation created.
         if (res.ok) invitesSent += 1;
         else invitesFailed.push(email);
-      } catch (_e) {
+      } catch {
         invitesFailed.push(email);
       }
     }
@@ -502,7 +502,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                 : 'the intake did not say why');
             enterpriseNote = `The request was NOT recorded — ${why}. Nothing was sent; retry, or email our team directly.`;
           }
-        } catch (_e) {
+        } catch {
           enterpriseRequest = 'failed';
           enterpriseNote =
             'Could not reach the onboarding intake — the request was NOT recorded. Retry, or email our team directly.';
@@ -545,7 +545,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
           checkoutNote =
             'The billing service did not return a checkout link — no plan was provisioned. Retry from Usage & Billing.';
         }
-      } catch (_e) {
+      } catch {
         checkout = 'failed';
         checkoutNote =
           'Could not reach the billing service — no plan was provisioned. Retry from Usage & Billing.';

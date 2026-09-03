@@ -15,6 +15,17 @@ import {
   createAuditedUnplacedExport,
 } from '../services/export/governedExportConsequence';
 import { fillEstarSubmission } from '../services/pathway-engines/estar/estar-fill';
+import { getEstarFieldMap, isFieldMapPopulated } from '../services/pathway-engines/estar/estar-field-map';
+import {
+  loadEstarAdministrativeInputs,
+  projectEstarAdministrativeData,
+  resolveOfficialEstarFields,
+  reportOfficialEstarFill,
+  type GovernedAdministrativeData,
+  type OfficialEstarFieldReport,
+  type ResolvedOfficialEstarFields,
+} from '../services/pathway-engines/estar/estar-administrative-data';
+import type { OfficialPdfFieldMap } from '../services/forms/fill-official-pdf';
 import { assembleDeviceSubmission } from '../services/pathway-engines/device-assembly/assemble-device-submission';
 import {
   descriptorFor,
@@ -49,7 +60,7 @@ import { and, eq } from 'drizzle-orm';
 import { requestDb } from '../db/requestDb';
 import { fda510kProjects } from '../../shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
-import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
+import { isMissingAnchorColumn, resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import {
   getEstarRegistration,
   upsertEstarRegistration,
@@ -147,7 +158,24 @@ interface ProjectAnchor {
   anchorProjectId: number | null;
   /** The resolved regulatoryPrograms UUID when the ident named a program. */
   programUuid: string | null;
+  /** fda510kProjects.id when the ident was the numeric GA project id; null otherwise. */
+  fda510kProjectId: number | null;
   title: string | null;
+}
+
+/** Postgres `undefined_table`: the relation this lookup reads is not in this database. */
+const UNDEFINED_TABLE = '42P01';
+
+/**
+ * The ONLY failures resolveProjectAnchor may answer with "no row": the schema
+ * the lookup needs is absent — undefined column (42703) or undefined table
+ * (42P01), a database without the migration, which is what the fall-through
+ * always existed for. Anything else (a connection reset, a statement timeout,
+ * a permission refusal) is a FAILED READ, and a failed read is never rendered
+ * as "not found": it propagates, and every caller answers 500.
+ */
+function isSchemaAbsence(err: unknown): boolean {
+  return isMissingAnchorColumn(err) || (err as { code?: unknown } | null)?.code === UNDEFINED_TABLE;
 }
 
 /**
@@ -155,7 +183,9 @@ interface ProjectAnchor {
  * document-preview ident contract: numeric → fda510kProjects.id (GA path,
  * carries the numeric anchor the artifact registry needs), UUID → programs.id,
  * else → programs.code. Returns null when nothing in this org matches — the
- * caller must 404, never export against an unresolved project.
+ * caller must 404, never export against an unresolved project. THROWS when
+ * the read itself failed (see isSchemaAbsence) — the caller must answer 500,
+ * never the 404 that would tell the user their project does not exist.
  *
  * A UUID/code program resolves its numeric anchor through
  * `projects.regulatory_program_id` (Document Identity Contract slice C1), which
@@ -185,21 +215,24 @@ async function resolveProjectAnchor(
 
   if (/^\d+$/.test(ident)) {
     try {
-      const [row] = await requestDb(req)
+      const [row] = await db
         .select({ id: fda510kProjects.id, deviceName: fda510kProjects.deviceName })
         .from(fda510kProjects)
         .where(and(eq(fda510kProjects.id, Number(ident)), eq(fda510kProjects.organizationId, orgId)))
         .limit(1);
-      if (row) return { anchorProjectId: row.id, programUuid: null, title: row.deviceName ?? null };
-    } catch {
-      /* fall through */
+      if (row) {
+        return { anchorProjectId: row.id, programUuid: null, fda510kProjectId: row.id, title: row.deviceName ?? null };
+      }
+    } catch (err) {
+      // Schema absence is "no row"; every other failure is a failed read.
+      if (!isSchemaAbsence(err)) throw err;
     }
     return null;
   }
 
   const byUuid = UUID_RE.test(ident);
   try {
-    const [row] = await requestDb(req)
+    const [row] = await db
       .select({ id: regulatoryPrograms.id, name: regulatoryPrograms.name })
       .from(regulatoryPrograms)
       .where(
@@ -221,15 +254,16 @@ async function resolveProjectAnchor(
       // the migration is not applied here. The unplaced path stays exactly as
       // it was for that case; this only stops it being taken when a real
       // anchor exists.
-      const anchorProjectId = await resolveProgramProjectAnchor(requestDb(req), {
+      const anchorProjectId = await resolveProgramProjectAnchor(db, {
         programId: row.id,
         orgId,
         context: '510k-estar.export',
       });
-      return { anchorProjectId, programUuid: row.id, title: row.name ?? null };
+      return { anchorProjectId, programUuid: row.id, fda510kProjectId: null, title: row.name ?? null };
     }
-  } catch {
-    /* fall through */
+  } catch (err) {
+    // Schema absence is "no row"; every other failure is a failed read.
+    if (!isSchemaAbsence(err)) throw err;
   }
   return null;
 }
@@ -418,7 +452,19 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
   const { meta, useProjectContent, documentId, attachments = [] } = validation.data;
   let { content } = validation.data;
 
-  const anchor = await resolveProjectAnchor(req, getOrganizationId(req), meta);
+  // A failed anchor READ is a 500, never the 404 a genuinely unresolved project
+  // gets: "the lookup broke" and "no such project in your organization" are
+  // different facts, and the caller must be able to tell them apart.
+  let anchor: ProjectAnchor | null;
+  try {
+    anchor = await resolveProjectAnchor(req, getOrganizationId(req), meta);
+  } catch (error) {
+    logger.error('project resolution failure', { err: error instanceof Error ? error.message : String(error) });
+    return res.status(500).json({
+      error: 'PROJECT_RESOLUTION_FAILED',
+      message: 'Could not resolve the project for this export. The problem has been logged.',
+    });
+  }
   if (!anchor) {
     return res.status(404).json({ error: 'Project not found in your organization' });
   }
@@ -751,7 +797,80 @@ const officialSchema = z.object({
   /** Canonical field values to write into the official eSTAR AcroForm. */
   data: z.record(z.unknown()).default({}),
   flatten: z.boolean().optional(),
+  /**
+   * Fill from the org's governed records (estar-administrative-data): governed
+   * values win, `data` fills only the keys they do not hold, and the response
+   * carries a per-field report. Absent/false ⇒ `data` is written verbatim.
+   */
+  useProgramData: z.boolean().optional(),
 });
+
+/**
+ * The descriptor's verified field map plus the governed administrative values
+ * for an anchor, loaded through the request-scoped client. Null when the map
+ * is not populated — there is then nothing to resolve against, and the fill
+ * reports that blocker itself, exactly as it does without program data.
+ */
+async function loadGovernedOfficialFields(
+  req: Request,
+  orgId: number,
+  anchor: ProjectAnchor,
+  descriptorId: string,
+): Promise<{ fieldMap: OfficialPdfFieldMap; governed: GovernedAdministrativeData } | null> {
+  const fieldMap = getEstarFieldMap(descriptorId);
+  if (!fieldMap || !isFieldMapPopulated(descriptorId)) return null;
+  const inputs = await loadEstarAdministrativeInputs(requestDb(req), {
+    organizationId: orgId,
+    programUuid: anchor.programUuid,
+    fda510kProjectId: anchor.fda510kProjectId,
+  });
+  return { fieldMap, governed: projectEstarAdministrativeData(inputs) };
+}
+
+/**
+ * The values POST /official writes. With `useProgramData` and a populated map:
+ * governed ∪ request gaps, with the resolution kept for the field report.
+ * Otherwise `data` verbatim and no resolution — today's contract, unchanged.
+ */
+async function resolveRequestedOfficialFields(
+  req: Request,
+  orgId: number,
+  anchor: ProjectAnchor,
+  opts: {
+    descriptorId: string | undefined;
+    data: Record<string, unknown>;
+    useProgramData: boolean | undefined;
+  },
+): Promise<{ resolved: ResolvedOfficialEstarFields | null; fillData: Record<string, unknown> }> {
+  const verbatim = { resolved: null, fillData: opts.data };
+  if (opts.useProgramData !== true || !opts.descriptorId) return verbatim;
+  const governed = await loadGovernedOfficialFields(req, orgId, anchor, opts.descriptorId);
+  if (!governed) return verbatim;
+  const resolved = resolveOfficialEstarFields({
+    ...governed,
+    requestData: opts.data,
+    honourRequestOverGoverned: false,
+  });
+  return { resolved, fillData: resolved.data };
+}
+
+/**
+ * What the fill wrote, for the response (`fieldReport`) and the artifact
+ * metadata (`fieldSources`). Both absent when no governed resolution ran, so
+ * the verbatim path's response and metadata are byte-for-byte what they were.
+ */
+function describeOfficialFill(
+  resolved: ResolvedOfficialEstarFields | null,
+  filledFields: ReadonlyArray<string>,
+): { fieldReport: OfficialEstarFieldReport | null; metadata: { fieldSources?: Record<string, string> } } {
+  if (!resolved) return { fieldReport: null, metadata: {} };
+  const report = reportOfficialEstarFill(resolved, filledFields);
+  return { fieldReport: report.fieldReport, metadata: { fieldSources: report.fieldSources } };
+}
+
+function withFieldReport<T extends object>(body: T, fieldReport: OfficialEstarFieldReport | null): T {
+  return fieldReport ? { ...body, fieldReport } : body;
+}
 
 /**
  * POST /api/510k/estar/official
@@ -763,6 +882,11 @@ const officialSchema = z.object({
  * `filled:false` with blockers and this responds 422 — never a fabricated PDF.
  * The `officialEstarPdf` flag is wired to `result.filled`, so it flips true on
  * its own the moment the template + verified field map land (no code change).
+ *
+ * With `useProgramData: true` the values come from the org's governed records
+ * (governed wins; `data` fills the gaps) and the 200 body carries a
+ * `fieldReport` saying which mapped fields were written, from where, and which
+ * were left blank — the user is never handed a blank official form unannounced.
  */
 router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEntitlement, async (req, res) => {
   const validation = officialSchema.safeParse(req.body);
@@ -773,7 +897,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
     });
   }
 
-  const { meta, type, variant, data, flatten } = validation.data;
+  const { meta, type, variant, data, flatten, useProgramData } = validation.data;
 
   try {
     const anchor = await resolveProjectAnchor(req, getOrganizationId(req), meta);
@@ -781,10 +905,17 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       return res.status(404).json({ error: 'Project not found in your organization' });
     }
 
+    const templateVariant = templateVariantFor(type, variant);
+    const { resolved, fillData } = await resolveRequestedOfficialFields(req, getOrganizationId(req), anchor, {
+      descriptorId: descriptorFor(type, templateVariant)?.id,
+      data,
+      useProgramData,
+    });
+
     const result = await fillEstarSubmission({
       type,
-      variant: templateVariantFor(type, variant),
-      data,
+      variant: templateVariant,
+      data: fillData,
       flatten,
     });
 
@@ -802,6 +933,8 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
 
     const filename = `${sanitizeFilename(meta.id)}_eSTAR.pdf`;
     const pdfBuffer = Buffer.from(result.pdfBytes);
+    // What was actually written, per field, read off the fill result itself.
+    const { fieldReport, metadata: fieldMetadata } = describeOfficialFill(resolved, result.filledFields);
     // The real submittable artifact was produced — assert it truthfully.
     const officialMetadata = {
       format: 'pdf',
@@ -811,6 +944,8 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       filledFields: result.filledFields,
       skippedFields: result.skippedFields,
       programId: anchor.programUuid ?? undefined,
+      // Governed provenance (fieldSources) travels into the artifact registry / audit row.
+      ...fieldMetadata,
     };
 
     if (anchor.anchorProjectId !== null) {
@@ -819,7 +954,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
         projectId: anchor.anchorProjectId,
         userId: getUserId(req),
         title: meta.title || meta.submissionName || `${meta.id} — official FDA eSTAR`,
-        contentForArtifact: JSON.stringify({ type, variant, descriptorId: result.descriptorId, data }),
+        contentForArtifact: JSON.stringify({ type, variant, descriptorId: result.descriptorId, data: fillData }),
         sourceType: 'export_estar_pdf',
         ctdSection: meta.ctdSection || 'm1.5',
         suggestedPlacement: 'Module 1 / official FDA eSTAR (submittable)',
@@ -830,7 +965,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
         metadata: officialMetadata,
       });
 
-      return res.status(200).json(consequence);
+      return res.status(200).json(withFieldReport(consequence, fieldReport));
     }
 
     // Program-spine project without a registry anchor — same audited-delivery
@@ -850,7 +985,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       metadata: officialMetadata,
     });
 
-    return res.status(200).json(unplaced);
+    return res.status(200).json(withFieldReport(unplaced, fieldReport));
   } catch (error: any) {
     logger.error('official eSTAR export failure', {
       err: error instanceof Error ? error.message : String(error),
@@ -985,6 +1120,73 @@ router.get('/readiness', authMiddleware, async (req, res) => {
     return res.status(500).json({
       error: 'ESTAR_READINESS_FAILED',
       message: 'Failed to assess eSTAR readiness. The problem has been logged.',
+    });
+  }
+});
+
+const officialFieldsSchema = z.object({
+  ident: z.string().min(1),
+  type: z.enum(ESTAR_TYPES).default('510k'),
+  variant: z.enum(ESTAR_VARIANTS).default('device'),
+});
+
+/**
+ * GET /api/510k/estar/official-fields?ident=&type=510k&variant=device
+ *
+ * Read-only preview of what POST /official will write from the org's governed
+ * records for this program: one row per mapped field with its value and
+ * `store.column` source, null for the keys the platform does not hold. No
+ * request data is merged here — it is the "what will be written" truth, not a
+ * what-if. Produces and persists nothing; sourced values are org data and are
+ * never logged.
+ */
+router.get('/official-fields', authMiddleware, async (req, res) => {
+  const validation = officialFieldsSchema.safeParse(req.query);
+  if (!validation.success) {
+    return res.status(400).json({ error: 'Invalid query', details: validation.error.flatten() });
+  }
+  const { ident, type, variant } = validation.data;
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(400).json({ error: 'Organization context required' });
+
+  try {
+    const anchor = await resolveProjectAnchor(req, orgId, { id: ident, ident });
+    if (!anchor) {
+      return res.status(404).json({ error: 'Project not found in your organization' });
+    }
+
+    const descriptor = descriptorFor(type, templateVariantFor(type, variant));
+    if (!descriptor) {
+      return res.status(400).json({ error: `No eSTAR template descriptor for ${type}/${variant}.` });
+    }
+    const governed = await loadGovernedOfficialFields(req, orgId, anchor, descriptor.id);
+    if (!governed) {
+      return res.status(422).json({
+        error: 'ESTAR_FIELD_MAP_NOT_POPULATED',
+        descriptorId: descriptor.id,
+        blockers: [
+          `The canonical→template field map for "${descriptor.id}" is not populated/verified against the ` +
+            `vendored template, so there is nothing to preview. Enumerate the template's fields and fill estar-field-map.ts.`,
+        ],
+      });
+    }
+
+    const resolved = resolveOfficialEstarFields({ ...governed, honourRequestOverGoverned: false });
+    return res.status(200).json({
+      descriptorId: descriptor.id,
+      type,
+      variant,
+      mappedCount: resolved.fields.length,
+      sourcedCount: resolved.fields.filter((f) => f.source !== null).length,
+      fields: resolved.fields,
+    });
+  } catch (error: any) {
+    logger.error('estar official-fields preview failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_OFFICIAL_FIELDS_FAILED',
+      message: 'Failed to resolve the official eSTAR field sources. The problem has been logged.',
     });
   }
 });

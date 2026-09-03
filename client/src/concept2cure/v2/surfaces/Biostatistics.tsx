@@ -516,8 +516,8 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const set = (k: string, v: unknown) => setInput((s) => ({ ...s, [k]: v }));
   const applyPreset = (k: string) => { setPreset(k); setInput(BS_PRESETS[k].input); };
 
-  const res = useMemo(() => { try { return BiostatEngine.compute(input); } catch (_e) { return null; } }, [input]);
-  const jud = useMemo(() => { try { return res && BiostatEngine.judge(input, res); } catch (_e) { return null; } }, [input, res]);
+  const res = useMemo(() => { try { return BiostatEngine.compute(input); } catch { return null; } }, [input]);
+  const jud = useMemo(() => { try { return res && BiostatEngine.judge(input, res); } catch { return null; } }, [input, res]);
   const dom = useMemo(() => domainAdapt(input), [input]);
   const reg = useMemo(() => regCustom(input), [input]);
   const docDef = BiostatDocs.byId(docType);

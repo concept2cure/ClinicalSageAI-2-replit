@@ -4,6 +4,7 @@
  */
 import { Router } from 'express';
 import { z } from 'zod';
+import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/lineage-gate';
 import { and, asc, desc, eq, sql, type SQL } from 'drizzle-orm';
 import { cerv2510kSections, cerv2SectionVersions } from '../../shared/schema';
 import { authMiddleware } from '../auth';
@@ -443,6 +444,15 @@ router.patch('/:sectionId', authMiddleware, async (req, res) => {
     }
 
     const userId = resolveUserId(req);
+    /* Section prose bound for a 510(k)/PMA/CER is attributed or refused —
+       the lineage gate below records every clause as someone's assertion, and
+       a placeholder is not someone. Metadata-only updates carry no prose and
+       need no author. */
+    if (updates.content !== undefined && !userId) {
+      return res.status(401).json({
+        error: 'An identified author is required to write section content (21 CFR Part 11).',
+      });
+    }
 
     /* Content and history on one transaction: the version row is the only
        record of the text this UPDATE overwrites, so it cannot be allowed to
@@ -458,6 +468,21 @@ router.patch('/:sectionId', authMiddleware, async (req, res) => {
           )
         )
         .returning();
+
+      /* The lineage gate, in this transaction: every clause of the new text
+         is recorded as the author's assertion, a verified quote from an earlier
+         AnA draft is kept only where its text still stands, and a gap rolls
+         the content write back with it (ledger L157). */
+      if (updates.content !== undefined) {
+        const client = sectionVersionExec(tx);
+        await enforceAuthorLineage(
+          client,
+          organizationId,
+          { documentTable: 'cerv2_510k_sections', documentId: String(sectionId) },
+          row.content ?? '',
+          String(userId),
+        );
+      }
 
       const version = await recordCerv2SectionVersion(sectionVersionExec(tx), {
         sectionId,
@@ -662,6 +687,11 @@ router.post('/:sectionId/accept-ana-draft', authMiddleware, async (req, res) => 
     }
 
     const userId = resolveUserId(req);
+    if (!userId) {
+      return res.status(401).json({
+        error: 'An identified person must accept an AnA draft — the accept is the moment the text becomes theirs to answer for (21 CFR Part 11).',
+      });
+    }
     const acceptedAt = new Date();
     const nextStatus = parsed.data.status ?? 'ready_for_review';
     const nextContent = parsed.data.refined_content ?? existing.content ?? '';
@@ -690,6 +720,19 @@ router.post('/:sectionId/accept-ana-draft', authMiddleware, async (req, res) => 
         )
         .returning();
 
+      /* Lineage for the accepted text, in this transaction. Unrefined, the
+         draft's own spans are re-verified in place and stand; refined, the
+         clauses that changed become the acceptor's assertions and any quote
+         that moved is retired rather than left pointing at the wrong words
+         (ledger L157). */
+      const client = sectionVersionExec(tx);
+      await enforceAuthorLineage(
+        client,
+        organizationId,
+        { documentTable: 'cerv2_510k_sections', documentId: String(sectionId) },
+        row.content ?? '',
+        String(userId),
+      );
       const version = await recordCerv2SectionVersion(sectionVersionExec(tx), {
         sectionId,
         organizationId,

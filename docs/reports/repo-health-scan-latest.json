@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T03:34:27.006Z",
+  "generatedAt": "2026-09-03T18:36:43.782Z",
   "git": {
-    "sha": "ccd10761bc5161fea3f8d91120a3eb42263e05dc",
+    "sha": "6468ade3adcdfc248c6ada6279db4c79017d12eb",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -18,7 +18,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 38,
-    "largeFilesByLines": 89
+    "largeFilesByLines": 90
   },
   "findings": {
     "duplicateBasenames": [
@@ -2146,7 +2146,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 998953
+        "bytes": 1003062
       },
       {
         "file": "shared/schema.ts",
@@ -2170,7 +2170,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 227795
+        "bytes": 229664
       },
       {
         "file": "server/statistics-service.ts",
@@ -2304,7 +2304,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19408
+        "lines": 19472
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2332,7 +2332,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 4984
+        "lines": 5021
       },
       {
         "file": "server/storage.ts",
@@ -2411,6 +2411,10 @@
         "lines": 2466
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "lines": 2453
+      },
+      {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
         "lines": 2452
       },
@@ -2421,10 +2425,6 @@
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "lines": 2379
-      },
-      {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2357
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2653,6 +2653,10 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
+      },
+      {
+        "file": "server/routes/510k-estar-routes.ts",
+        "lines": 1588
       }
     ]
   },
@@ -2662,7 +2666,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 399,
       "largeByBytes": 28,
-      "largeByLines": 73
+      "largeByLines": 74
     },
     {
       "owner": "Unassigned (TBD)",

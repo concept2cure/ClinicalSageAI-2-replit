@@ -19,6 +19,8 @@
  * @module server/services/ectd/regulatory-identifiers
  */
 
+import { XML_ILLEGAL_CHARS } from '../submission-gateways/ectd-packager/paths';
+
 /** Agency application / applicant identifiers: alphanumeric start, then up to
  *  63 of [A-Za-z0-9._-]. Covers IND/NDA/BLA numbers, EU procedure numbers
  *  (EMEA/H/C/001234 is NOT accepted — slashes are path separators; record the
@@ -54,7 +56,18 @@ const PATTERN_FOR: Record<RegulatoryIdentifierField, RegExp> = {
 export function usableIdentifier(field: RegulatoryIdentifierField, value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const v = value.trim();
-  return PATTERN_FOR[field].test(v) ? v : null;
+  if (!PATTERN_FOR[field].test(v)) return null;
+  if (field === 'applicantName') {
+    // The backbone writes the name through escapeXml, which STRIPS every
+    // character XML cannot carry (C1 controls, U+FFFE/U+FFFF — outside the C0
+    // range the pattern above excludes). A name that changes under that strip,
+    // or strips to nothing, would ship as a silently altered or empty <name>
+    // while the gate reported it usable. Refuse it here, with the packager's
+    // own definition, so the two cannot drift.
+    const stripped = v.replace(XML_ILLEGAL_CHARS, '');
+    if (stripped !== v || stripped.trim().length === 0) return null;
+  }
+  return v;
 }
 
 export interface ReadRegulatoryIdentifiersResult {

@@ -201,6 +201,15 @@ export interface RetrievedDocument {
   sectionTitle?: string | null;
   locator?: string;
   /**
+   * The Data Room artifact this chunk was cut from (`lumen_data_atoms
+   * .source_id`), when the corpus records one. It is what resolves to a
+   * canonical `cre_evidence_sources` row (retrieval-source-link), and so what
+   * lets a passage be CITED rather than merely read — the executor's drafting
+   * tools accept it back as `sources[].artifact_id` (ledger L154). Absent for
+   * corpora with no artifact linkage; never guessed.
+   */
+  sourceArtifactId?: string | null;
+  /**
    * Opaque passthrough of the originating row, set by corpora whose callers
    * need the full record back (the memory corpora carry every column here so
    * the memory shims can reconstruct their rich entry type — confidence,
@@ -583,6 +592,9 @@ export class AdvancedRAGPipeline {
         atomType: 'project_atom',
         initialScore: h.score,
         finalScore: h.score,
+        // Kept so the passage can be cited back to its Data Room source; the
+        // hybrid search already carries it, this map used to drop it.
+        sourceArtifactId: h.sourceId ?? null,
       }));
   }
 

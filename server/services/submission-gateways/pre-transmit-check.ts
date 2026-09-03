@@ -107,7 +107,9 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
   // 2. PDF/A submission grade.
   const grade = input.bundle.submissionGrade;
   const pdfaRequired = pdfaRequiredFromEnv(env);
-  if (grade) {
+  // A grade is evidence only when it carries the list the check reads; `{}`
+  // used to pass as "0 not converted".
+  if (grade && Array.isArray(grade.notConverted)) {
     const notConverted = grade.notConverted?.length ?? 0;
     const pdfaOk = notConverted === 0;
     checks.push({ name: 'pdfa-submission-grade', passed: pdfaOk, detail: `${grade.pdfaConverted}/${grade.pdfLeaves} PDF leaves are PDF/A; ${notConverted} not converted` });
@@ -128,6 +130,39 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
     }
   } else if (isProd && dtdRequired) {
     warnings.push('ECTD_REQUIRE_DTD is set but the bundle carries no DTD status — cannot prove self-containment at transmit time.');
+  }
+
+  // 3a. Region identity — HARD, always. A bundle carries the region it was
+  // BUILT for (the regional backbone it contains, and its format tag). Sending
+  // an FDA-built package to PMDA, or a pmda_ectd bundle through an FDA gateway,
+  // is a fact about the package, like the size limit — not a policy toggle.
+  // This gate used to be region-blind: it read regionConformant without ever
+  // comparing the backbone's region to the transmit target.
+  const built = input.bundle.regionalBackbone;
+  if (built) {
+    const same = built.region === input.region;
+    checks.push({
+      name: 'regional-backbone-region',
+      passed: same,
+      detail: same
+        ? `built for ${built.region.toUpperCase()} (${built.file})`
+        : `built for ${built.region.toUpperCase()} (${built.file}); transmit target is ${input.region.toUpperCase()}`,
+    });
+    if (!same) {
+      blockers.push(
+        `Package was assembled for ${built.region.toUpperCase()} (${built.file}); it cannot be transmitted to ` +
+          `${input.region.toUpperCase()}. Re-assemble the package for ${input.region.toUpperCase()}.`,
+      );
+    }
+  }
+  const fmt = input.bundle.format;
+  const formatRegionOk = fmt === 'pmda_ectd' ? input.region === 'pmda' : fmt === 'ectd' ? input.region !== 'pmda' : true;
+  if (!formatRegionOk) {
+    checks.push({ name: 'bundle-format-region', passed: false, detail: `format ${fmt} vs ${input.region.toUpperCase()} gateway` });
+    blockers.push(
+      `Bundle format '${fmt}' does not match the ${input.region.toUpperCase()} gateway (pmda_ectd is the PMDA format; ` +
+        `ectd is the format for the other regions). Re-assemble the package for ${input.region.toUpperCase()}.`,
+    );
   }
 
   // 3b. Regional Module 1 backbone conformance. The eight widened regions ship an

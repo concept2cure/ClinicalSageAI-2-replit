@@ -31,7 +31,7 @@ const exec = {
 };
 vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => exec.query(s, p) } }));
 
-import { enforceSourceAndAuthorLineage } from '../lineage-gate';
+import { enforceSourceAndAuthorLineage, enforceAuthorLineage } from '../lineage-gate';
 import * as lineage from '../span-lineage.service';
 
 const ORG_A = 711;
@@ -177,5 +177,42 @@ describe('enforceSourceAndAuthorLineage', () => {
     await expect(
       enforceSourceAndAuthorLineage(exec, ORG_A, ref, CONTENT, ACTOR, [{ sourceId: foreign, content: SOURCE_TEXT }]),
     ).rejects.toThrow();
+  });
+});
+
+describe('a later author-only save (ledger L157)', () => {
+  it('keeps a verified quote that is still exactly in place, and covers the rest as the author', async () => {
+    const sourceId = await makeSource(ORG_A, 'sha-l157-1');
+    const ref = { documentTable: 'authoring_sections', documentId: 'sec-l157-1' };
+    await enforceSourceAndAuthorLineage(exec, ORG_A, ref, CONTENT, ACTOR, [{ sourceId, content: SOURCE_TEXT }]);
+
+    // A human appends a clause AFTER the quote: its offsets are untouched.
+    const edited = `${CONTENT} A closing remark the editor added.`;
+    await enforceAuthorLineage(exec, ORG_A, ref, edited, ACTOR);
+
+    const spans = await spansOf(ref.documentId);
+    const source = spans.filter((s) => s.provenanceKind === 'cre_evidence_source');
+    expect(source).toHaveLength(1);
+    expect(source[0].referenceId).toBe(String(sourceId));
+    // Coverage over the new text holds with the surviving quote plus author spans.
+    await expect(lineage.assertLineageCoversContent(ORG_A, ref, edited, exec)).resolves.toBeUndefined();
+  });
+
+  it('retires a verified quote whose text moved, rather than leaving it to answer for the wrong words', async () => {
+    const sourceId = await makeSource(ORG_A, 'sha-l157-2');
+    const ref = { documentTable: 'authoring_sections', documentId: 'sec-l157-2' };
+    await enforceSourceAndAuthorLineage(exec, ORG_A, ref, CONTENT, ACTOR, [{ sourceId, content: SOURCE_TEXT }]);
+    const before = (await spansOf(ref.documentId)).filter((s) => s.provenanceKind === 'cre_evidence_source');
+    expect(before).toHaveLength(1);
+
+    // A human prepends a sentence: the quoted text is still present but its
+    // offsets no longer point at it — and nothing here can re-verify it.
+    const edited = `${ORIGINAL} ${QUOTED}`;
+    await enforceAuthorLineage(exec, ORG_A, ref, edited, ACTOR);
+
+    const spans = await spansOf(ref.documentId);
+    expect(spans.filter((s) => s.provenanceKind === 'cre_evidence_source')).toHaveLength(0);
+    expect(spans.filter((s) => s.provenanceKind === 'author_assertion').length).toBeGreaterThanOrEqual(2);
+    await expect(lineage.assertLineageCoversContent(ORG_A, ref, edited, exec)).resolves.toBeUndefined();
   });
 });

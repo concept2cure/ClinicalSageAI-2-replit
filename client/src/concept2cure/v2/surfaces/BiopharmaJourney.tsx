@@ -251,7 +251,7 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
     onNav(id);
   };
   const setSeg = (v: string) => {
-    try { (window as any).__C2C_SEGMENT = v; } catch (_e) { /* noop */ }
+    try { (window as any).__C2C_SEGMENT = v; } catch { /* noop */ }
     setSegState(v);
     setSel(null);
   };

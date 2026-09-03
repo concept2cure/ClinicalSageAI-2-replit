@@ -13,7 +13,10 @@
  * So the shape is asserted structurally. For every guarded write path this
  * requires, in the same file:
  *
- *   1. a transaction (pool.connect + BEGIN/COMMIT/ROLLBACK)
+ *   1. a transaction — either pool.connect + BEGIN/COMMIT/ROLLBACK, or a
+ *      Drizzle `db.transaction(async tx => …)` whose gate client is derived
+ *      from `tx` (`const client = <adapter>(tx)`), so the gate cannot be
+ *      enlisted on a connection outside the write's transaction
  *   2. the lineage gate enlisted in it, in EITHER form:
  *        (a) direct — replaceAuthorSpans + assertLineageCoversContent, each
  *            passed the transaction `client` as its final argument; OR
@@ -71,6 +74,10 @@ const GUARDED = [
       'server/routes/biosketch.ts', // governed() opens the transaction
       'server/services/ana/AnaToolExecutor.ts', // update_biosketch_section tool opens the transaction
     ],
+  },
+  {
+    file: 'server/routes/cerv2-sections.ts',
+    why: 'PATCH /:sectionId and POST /:sectionId/accept-ana-draft write device kit section prose (cerv2_510k_sections.content) — the surfaces a 510(k)/PMA/CER is assembled from',
   },
   {
     file: 'server/routes/q-sub.ts',
@@ -175,10 +182,14 @@ const TRANSACTION = {
     // `.connect()` matches both `pool.connect()` and `getPool().connect()`; the
     // BEGIN/COMMIT/ROLLBACK trio confirms it is an actual transaction, not just
     // a checked-out connection.
-    src.includes('.connect()') &&
-    src.includes("client.query('BEGIN')") &&
-    src.includes("client.query('COMMIT')") &&
-    src.includes("client.query('ROLLBACK')"),
+    (src.includes('.connect()') &&
+      src.includes("client.query('BEGIN')") &&
+      src.includes("client.query('COMMIT')") &&
+      src.includes("client.query('ROLLBACK')")) ||
+    // Drizzle form: the callback's `tx` is the transaction, and the gate's
+    // `client` must be derived from it — a `client` that comes from anywhere
+    // else would let content and lineage commit separately.
+    (/\.transaction\(\s*async\s*\(?\s*tx\b/.test(src) && /const client = \w+\(tx\)/.test(src)),
   message:
     'no transaction around the content write — content and lineage must commit together, ' +
     'or a failed lineage write leaves saved text with no provenance',

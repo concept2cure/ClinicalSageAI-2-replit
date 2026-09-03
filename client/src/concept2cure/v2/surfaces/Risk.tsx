@@ -179,7 +179,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
       const r = rows.find(x => x.id === sel);
       const c2c = (window as any).C2C;
       if (c2c && r) c2c.setContext({ entityType: 'risk', entityId: r.id, entityLabel: r.id + ' -- ' + (r.hazard || 'risk') });
-    } catch (_e) { /* swallow */ }
+    } catch { /* swallow */ }
   }, [sel, rows]);
 
   const EN = RISK_ENUMS;

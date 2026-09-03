@@ -3,7 +3,7 @@
 **Commit to `docs/handoff/HANDOFF_DEVICE.md`.**
 
 **Scope:** 510(k), De Novo, PMA, IVD. FDA eSTAR pathway.
-**Last verified:** 2026-09-03 against commit `499f096` on `concept2cure-v2`.
+**Last verified:** 2026-09-03 against the Phase 2 commit on `concept2cure-v2` (base `499f096`).
 
 This file is self-contained. An agent working this stream needs no other handoff.
 
@@ -63,8 +63,9 @@ Do not edit it. Two streams are running.
 
 | Source | Use it for |
 |---|---|
-| `docs/reports/wo8-phase1-estar-unblock-2026-09-03.md` | **The authoritative state of this stream** |
-| `docs/handoff/WO-08_MDX_510K_ESTAR_DEMO.md` | Phase 2 click sequence |
+| `docs/reports/wo8-phase2-estar-demo-2026-09-03.md` | **The authoritative state of this stream** (Phase 2) |
+| `docs/reports/wo8-phase1-estar-unblock-2026-09-03.md` | Phase 1 — the fill engine, the XFA finding, the field map |
+| `docs/handoff/WO-08_MDX_510K_ESTAR_DEMO.md` | Phase 2 click sequence — **this file does not exist in the repository**; the clicks as shipped are §6 of the Phase 2 report |
 | `assets/estar-templates/README.md` + `checksums.txt` | Vendored template provenance |
 | `CLAUDE.md` | Repo law. Current and clean. |
 
@@ -79,7 +80,7 @@ an instruction.
 
 ---
 
-## 4. Current state — Phase 1 COMPLETE and verified
+## 4. Current state — Phase 1 COMPLETE and verified; Phase 2 BUILT and proven structurally
 
 `estar-fill` returns `filled: true` with an empty `blockers` array for `510k-device`,
 and the output PDF was read back field by field: **20 of 20 pass.**
@@ -144,6 +145,25 @@ filled the real field, skipped the bogus one, warned, invented nothing.
 
 **Tests:** `server/services/pathway-engines/estar` — 10 files, 91 tests, all passing.
 
+### 4b. Phase 2 (2026-09-03, session B) — the official eSTAR is filled from governed records
+
+Before this session the only caller of `POST /api/510k/estar/official` sent `data: {}`: every mapped field
+was skipped and the user downloaded a blank official form under a plain "Downloaded" line. Now:
+
+- `estar-administrative-data.ts` declares, per canonical key, the ONE governed source a value may come from
+  (11 of 20 keys have one; 9 are user-supplied only), projects the org's records onto the keys with
+  `store.column` provenance, and merges typed values underneath (governed wins; collisions reported).
+- `POST /official` with `useProgramData: true` fills from those records and returns `fieldReport`
+  (filled / blank / ignored); `fieldSources` travels into the artifact metadata. Without the flag it behaves
+  exactly as before.
+- `GET /official-fields` previews what will be written, per field, with its source.
+- `OfficialEstarPanel` is the one Generate control on both the 510(k) and the IVD surfaces: readiness gate,
+  governed values read-only with their source in words, inputs for unsourced keys ("entered for this export
+  only · not stored"), and the filled/blank/ignored report after the run.
+- The device golden journey, red on `499f096` since W1-5, is green and asserts the success path.
+
+Proof: `docs/reports/wo8-phase2-estar-demo-2026-09-03.md`. 61 test files / 882 tests green across the eSTAR engine, forms, routes, MDX kit and the device golden journey.
+
 ---
 
 ## 5. The single open item on Phase 1 — JM only
@@ -165,19 +185,17 @@ not start.
 
 ## 6. Next authorized action
 
-**WO-08 Phase 2, click 1. Only click 1.** And only after JM confirms the Acrobat render.
+**None until JM names one.** Phase 2 is built and proven structurally (the report, §5). Two things only JM
+can settle stand in front of any further click:
 
-Read `docs/handoff/WO-08_MDX_510K_ESTAR_DEMO.md` for the click sequence.
+1. The Acrobat render check (§5) — still open, unchanged by Phase 2.
+2. The reading of `client_workspaces` as the applicant (Phase 2 report §3 and §7): confirm it, or name the
+   rule you want, before a customer files on it.
 
-Largest known risk in Phase 2: `client/src/concept2cure/v2/surfaces/DeviceSurfaces.tsx`
-is 67 lines. That is the gap between a working engine and a clickable demo. The 14
-eSTAR endpoints are already mounted at `server/bootstrap/register-regulatory-routes.ts:22`.
-
-If JM has not confirmed the Acrobat step, **the correct action is to stop and say so.**
-Idle is the correct state for a stream whose gate has not cleared. Do not substitute
-other work, do not audit anything, do not write a plan.
-
----
+Candidates JM may name, in no order: persist the user-typed administrative values (a schema decision — a
+column or a table — so a migration); De Novo / PMA descriptors (templates not vendored; §8 still applies);
+the entitlement state before the first click (no read endpoint exposes it today; the control locks only after
+a 403). Idle is the correct state for a stream whose gate has not cleared. Do not substitute other work.
 
 ## 7. Other JM-only tasks on this stream
 
@@ -205,6 +223,10 @@ other work, do not audit anything, do not write a plan.
 - Re-download or mirror an egress-blocked host. A 403 is an organisation policy denial;
   report it.
 - Write a new architecture document. There are already 939 markdown files in this repo.
+- Add a governed source to `ESTAR_ADMINISTRATIVE_SOURCES` that is an inference (the session user as a
+  contact, a portal e-mail as an applicant e-mail, a guessed address). A source is a column the platform
+  holds for that fact, or `null`.
+- Let a request value override a governed one. The precedence flag is typed as the literal `false` on purpose.
 
 ---
 
@@ -213,6 +235,7 @@ other work, do not audit anything, do not write a plan.
 | Date | Account | Authorized click | What was proven | Report |
 |---|---|---|---|---|
 | 2026-09-03 | A | WO-8 Phase 1 — unblock eSTAR fill | `filled: true`, 20/20 read-back, 91 tests pass | `docs/reports/wo8-phase1-estar-unblock-2026-09-03.md` |
+| 2026-09-03 | B | WO-8 Phase 2 — device + diagnostic, whole stream (JM: "get medical device and diagnostic fully done now") | official eSTAR filled from governed records with per-field provenance on the 510(k) and IVD surfaces; device golden journey green; 61 test files / 882 tests green across the eSTAR engine, forms, routes, MDX kit and the device golden journey | `docs/reports/wo8-phase2-estar-demo-2026-09-03.md` |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work. A session

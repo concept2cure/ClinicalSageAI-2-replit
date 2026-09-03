@@ -411,13 +411,35 @@ registerToolHandler('project_knowledge_search', async (input, ctx) => {
     }
     const locatorOf = (d: (typeof docs)[number]): string | null =>
       d.locator || d.sectionTitle || (typeof d.pageNumber === 'number' ? `p.${d.pageNumber}` : null);
+    // Which passages can be CITED, not just read: a passage cut from a Data
+    // Room artifact resolves to a canonical evidence source (the same resolver
+    // the human draft route uses); the ids travel back on the passage so the
+    // model can hand them to write_q_sub_section / write_kit_section as
+    // `sources` and the quoted clauses are recorded against the source
+    // (ledger L154). A passage with no resolvable source says so — null,
+    // never a guessed id.
+    let evidenceIds = new Map<string, number>();
+    if (ctx?.organizationId) {
+      try {
+        const { evidenceSourceIdsForRetrieval } = await import('./drafting-source-lineage.js');
+        evidenceIds = await evidenceSourceIdsForRetrieval(
+          ctx.organizationId,
+          docs.map((d) => d.sourceArtifactId ?? null),
+        );
+      } catch {
+        evidenceIds = new Map();
+      }
+    }
     const passages = docs.map((d, i) => ({
       rank: i + 1,
       title: d.title || 'Untitled',
       relevance: typeof d.finalScore === 'number' ? Number(d.finalScore.toFixed(3)) : null,
       locator: locatorOf(d),
       text: (d.compressedContent || d.content || '').slice(0, 800),
+      artifact_id: d.sourceArtifactId ?? null,
+      evidence_source_id: d.sourceArtifactId ? (evidenceIds.get(d.sourceArtifactId) ?? null) : null,
     }));
+    const citable = passages.filter((p) => p.evidence_source_id !== null).length;
     const provenance = docs.map(d => {
       const locator = locatorOf(d);
       return buildProvenance({
@@ -437,9 +459,13 @@ registerToolHandler('project_knowledge_search', async (input, ctx) => {
       resultCount: passages.length,
       passages,
       provenance,
+      citable,
       citation_hint:
         "Ground statements in these passages and cite each by its document title and locator (page/section); " +
-        "these are the organization's own project documents.",
+        "these are the organization's own project documents. " +
+        (citable > 0
+          ? `${citable} passage(s) carry an evidence_source_id: when you write a section with write_q_sub_section or write_kit_section, pass those passages as sources (evidence_source_id + the passage text as excerpt) so every clause you quote verbatim is recorded against its Data Room source.`
+          : 'None of these passages resolves to a Data Room source, so none can be recorded as a citation by the drafting tools; text drafted from them is recorded as your own assertion.'),
     });
   } catch (err: any) {
     return `Project knowledge search failed: ${err?.message ?? 'unknown error'}.`;
@@ -7914,6 +7940,7 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
   const sectionKey = typeof input.section_key === 'string' ? input.section_key : '';
   const content    = typeof input.content === 'string' ? input.content : '';
   const note       = typeof input.summary_note === 'string' ? input.summary_note : '';
+  const rawSources = input.sources;
   if (!UUID_RE.test(qSubId)) {
     return JSON.stringify({ error: 'q_sub_id must be a UUID.' });
   }
@@ -7944,10 +7971,16 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
     if (own.rows.length === 0) {
       return JSON.stringify({ error: 'Q-Sub not found in this organization.' });
     }
-    // Authored regulatory prose: content and its author lineage commit together
-    // in one transaction (same gate as the human PUT route), so an AnA-drafted
-    // section body is never persisted without provenance.
-    const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
+    // Authored regulatory prose: content and its lineage commit together in one
+    // transaction (same gate as the human accept route), so an AnA-drafted
+    // section body is never persisted without provenance. With `sources`, the
+    // clauses the text quotes verbatim are recorded against those Data Room
+    // sources and the rest against the author (ledger L154); without, every
+    // clause is the author's assertion.
+    const { enforceAuthorLineage, enforceSourceAndAuthorLineage } = await import(
+      '../clinical-regulatory-evidence/lineage-gate.js'
+    );
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -7967,16 +8000,18 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
          RETURNING id, section_key, draft_source, drafted_at`,
         [qSubId, ctx.organizationId, sectionKey, content, note],
       );
-      await enforceAuthorLineage(
-        client,
-        ctx.organizationId,
-        { documentTable: 'q_sub_section_bodies', documentId: String(rows[0].id) },
-        content,
-        String(ctx.userId),
-      );
+      const ref = { documentTable: 'q_sub_section_bodies', documentId: String(rows[0].id) };
+      const { sources, dropped } = await resolveDraftSources(ctx.organizationId, rawSources, client);
+      let gate = null;
+      if (sources.length > 0) {
+        gate = await enforceSourceAndAuthorLineage(client, ctx.organizationId, ref, content, String(ctx.userId), sources);
+      } else {
+        await enforceAuthorLineage(client, ctx.organizationId, ref, content, String(ctx.userId));
+      }
       await client.query('COMMIT');
       return JSON.stringify({
         ok: true, ...rows[0],
+        lineage: describeDraftLineage(gate, sources, dropped),
         message: `Wrote ${sectionKey} into Q-Sub ${qSubId}. Awaiting human accept.`,
       });
     } catch (txErr) {
@@ -14391,6 +14426,14 @@ registerToolHandler('write_kit_section', async (input, ctx) => {
       error: 'write_kit_section requires tenant context (organizationId) — nothing was written.',
     });
   }
+  // Same rule as write_q_sub_section: kit sections become a 510(k)/PMA/CER, and
+  // prose bound for a regulator cannot be attributed to a placeholder.
+  if (!ctx.userId) {
+    return JSON.stringify({
+      error: 'write_kit_section requires user context — section prose cannot be attributed without an identified author (21 CFR Part 11).',
+    });
+  }
+  const rawSources = input.sources;
   const allowedStatus = new Set(['drafting', 'ready_for_review', 'in_review']);
   if (!allowedStatus.has(status)) {
     return JSON.stringify({
@@ -14432,8 +14475,13 @@ registerToolHandler('write_kit_section', async (input, ctx) => {
        many, and re-pointing untested route paths is its own change. Tracked as
        ledger L39. */
     const { recordCerv2SectionVersion } = await import('../cerv2/section-version.js');
+    const { enforceAuthorLineage, enforceSourceAndAuthorLineage } = await import(
+      '../clinical-regulatory-evidence/lineage-gate.js'
+    );
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
     const client = await pool.connect();
     let row: any;
+    let lineageReport: import('./drafting-source-lineage.js').DraftLineageReport | null = null;
     try {
       await client.query('BEGIN');
 
@@ -14494,6 +14542,21 @@ registerToolHandler('write_kit_section', async (input, ctx) => {
         changedBy: ctx.userId ?? null,
       });
 
+      /* Lineage in the same transaction as the content (ledger L154): this
+         path used to write kit prose with no provenance at all — neither the
+         author-assertion gate write_q_sub_section already had, nor any source
+         citation. Quoted clauses go to the cited Data Room sources, the rest
+         to the author; a lineage failure rolls the content back with it. */
+      const ref = { documentTable: 'cerv2_510k_sections', documentId: String(before.id) };
+      const { sources, dropped } = await resolveDraftSources(ctx.organizationId, rawSources, client);
+      let gate = null;
+      if (sources.length > 0) {
+        gate = await enforceSourceAndAuthorLineage(client, ctx.organizationId, ref, content, String(ctx.userId), sources);
+      } else {
+        await enforceAuthorLineage(client, ctx.organizationId, ref, content, String(ctx.userId));
+      }
+      lineageReport = describeDraftLineage(gate, sources, dropped);
+
       await client.query('COMMIT');
       row = updated.rows[0];
     } catch (txErr) {
@@ -14530,6 +14593,7 @@ registerToolHandler('write_kit_section', async (input, ctx) => {
     return JSON.stringify({
       ok:                  true,
       id:                  row.id,
+      lineage:             lineageReport,
       sectionNumber:       row.section_number,
       sectionTitle:        row.section_title,
       sectionKey:          row.section_key,
