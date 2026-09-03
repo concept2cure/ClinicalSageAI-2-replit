@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T18:36:43.782Z",
+  "generatedAt": "2026-09-03T18:41:19.874Z",
   "git": {
-    "sha": "6468ade3adcdfc248c6ada6279db4c79017d12eb",
+    "sha": "e3d7453a630782ff8f7ce7680b0ba21571fe8b4a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2412,7 +2412,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "lines": 2453
+        "lines": 2460
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",

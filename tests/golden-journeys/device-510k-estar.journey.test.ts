@@ -186,6 +186,10 @@ beforeAll(async () => {
       // and the section INSERT names. Loaded as a REAL migration, not granted as
       // test-only sql, so this journey proves the deploy path provides it.
       'migrations/20260817_reconcile_declared_updated_at_columns.sql',
+      // The lineage gate on the kit's PATCH (ledger L157) writes the section's
+      // span lineage in the same transaction as its content; without this
+      // store the route fails closed and the journey's authoring step 500s.
+      'db/migrations/20260803_document_span_lineage.sql',
     ],
     // The REAL referential rule for the governed artifact registry. The drizzle
     // baseline applies it as a separate ALTER (extractTableDdl deliberately does
