@@ -34,10 +34,11 @@
  * is handed the shell's `onAsk` and the shell draws the rail that answers it.
  * The point of looking at a letter is being able to ask about it.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AnswerLead } from '../AnswerLead';
 import {
@@ -296,6 +297,36 @@ export function CrlLibrary({ onAsk }: SurfaceViewProps) {
   const insufficient = res.data?.insufficientEvidence;
   const sel = findings.find((f) => f.findingId === selId) ?? findings[0] ?? null;
 
+  /* AnA can open any deficiency finding by its id — the same row click a person
+     makes — so a drive can land on a specific finding's detail. Resolved against
+     the REAL search results with honest misses; held (retry) while the search
+     loads, re-attempted on the ready signal below. */
+  useSurfaceActionHandlers('crl-library', {
+    'crl-library.select-finding': (params) => {
+      const raw = String(params.finding ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a finding by its id.' };
+      if (res.loading && !res.data) {
+        return { ok: false, reason: 'The CRL findings are still loading.', retry: true };
+      }
+      if (res.error && !res.data) {
+        return { ok: false, reason: 'The CRL search did not respond, so there are no findings to open.' };
+      }
+      if (findings.length === 0) return { ok: false, reason: 'No findings in these results to open.' };
+      const needle = raw.toLowerCase();
+      const exact = findings.filter((f) => f.findingId.toLowerCase() === needle);
+      const hits = exact.length ? exact : findings.filter((f) => f.findingId.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No finding matching "${raw}" in these results.` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} findings — name one exactly.` };
+      const f = hits[0];
+      if (selId === f.findingId) return { ok: true, detail: `Already on ${f.findingId}` };
+      setSelId(f.findingId);
+      return { ok: true, detail: `Opened ${f.findingId}` };
+    },
+  });
+  useEffect(() => {
+    if (!res.loading && !res.error) notifySurfaceActionReady('crl-library');
+  }, [res.loading, res.error]);
+
   const set = <K extends keyof CrlQuery>(k: K, v: CrlQuery[K]) => setQ({ ...q, [k]: v });
 
   /* What AnA can see of this screen.
@@ -528,23 +559,23 @@ export function CrlLibrary({ onAsk }: SurfaceViewProps) {
           <div className="pj-card-b crl-coverage-b">
             <span className="crl-coverage-k">Coverage</span>
             <span>{coverage.scanned} letters scanned</span>
-            <span className="crl-sep">·</span>
+            <span className="crl-sep" aria-hidden="true">·</span>
             <span>{withDenominator(coverage.eligible, coverage.scanned)} eligible on these filters</span>
-            <span className="crl-sep">·</span>
+            <span className="crl-sep" aria-hidden="true">·</span>
             <span>
               {withDenominator(coverage.structured, coverage.eligible)} with structured findings
             </span>
-            <span className="crl-sep">·</span>
+            <span className="crl-sep" aria-hidden="true">·</span>
             <span className="crl-verified">
               {withDenominator(coverage.verified, coverage.structured)} verified
             </span>
-            <span className="crl-sep">·</span>
+            <span className="crl-sep" aria-hidden="true">·</span>
             <span className="crl-note">
               Public FDA evidence only — no tenant-private source is in this result.
             </span>
             {coverage.freshness && (
               <>
-                <span className="crl-sep">·</span>
+                <span className="crl-sep" aria-hidden="true">·</span>
                 <span className="crl-note">Corpus snapshot {coverage.freshness}</span>
               </>
             )}

@@ -18,8 +18,12 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { createFeatureStore } from '../utils/feature-persistence';
 import { MODALITIES, normalizeModality, frameFor } from '../../shared/regulatory/modality';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('mission-control');
 const store = createFeatureStore('mission_control');
 
 function getOrgId(req: Request): number {
@@ -153,7 +157,7 @@ router.get('/programs', async (req: Request, res: Response) => {
     programs.sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
     res.json({ data: programs });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'loading programs', err);
   }
 });
 
@@ -164,7 +168,7 @@ router.get('/programs/:id', async (req: Request, res: Response) => {
     if (!program) return res.status(404).json({ error: 'Program not found' });
     res.json({ data: program });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'loading programs', err);
   }
 });
 
@@ -195,7 +199,7 @@ router.post('/programs', async (req: Request, res: Response) => {
     await logProvenance(orgId, program.id, 'program', program.id, 'created', userId);
     res.status(201).json({ data: program });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'saving programs', err);
   }
 });
 
@@ -226,7 +230,7 @@ router.put('/programs/:id', async (req: Request, res: Response) => {
     await logProvenance(orgId, id, 'program', id, 'updated', getUserId(req), { prev, next: updated });
     res.json({ data: result });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'updating programs', err);
   }
 });
 
@@ -241,7 +245,7 @@ router.get('/programs/:programId/destinations', async (req: Request, res: Respon
     const dests = await store.query(orgId, 'destination', (d: any) => d.programId === programId);
     res.json({ data: dests });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'loading destinations', err);
   }
 });
 
@@ -269,7 +273,7 @@ router.post('/programs/:programId/destinations', async (req: Request, res: Respo
     await logProvenance(orgId, programId, 'destination', dest.id, 'created', getUserId(req));
     res.status(201).json({ data: dest });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'saving destinations', err);
   }
 });
 
@@ -284,7 +288,7 @@ router.get('/destinations/:destId/routes', async (req: Request, res: Response) =
     const routes = await store.query(orgId, 'route_plan', (r: any) => r.destinationId === destId);
     res.json({ data: routes });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'loading routes', err);
   }
 });
 
@@ -307,7 +311,7 @@ router.post('/destinations/:destId/routes', async (req: Request, res: Response) 
     await logProvenance(orgId, dest?.programId, 'route-plan', route.id, 'created', getUserId(req));
     res.status(201).json({ data: route });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'saving routes', err);
   }
 });
 
@@ -327,7 +331,7 @@ router.get('/programs/:programId/artifacts', async (req: Request, res: Response)
     if (dossierModule) arts = arts.filter((a: any) => a.dossierModule === dossierModule);
     res.json({ data: arts });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'loading artifacts', err);
   }
 });
 
@@ -355,7 +359,7 @@ router.get('/artifacts/:id', async (req: Request, res: Response) => {
 
     res.json({ data: { ...art, evidenceLinks, reviews, dependencies: deps, comments } });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'loading artifacts', err);
   }
 });
 
@@ -381,7 +385,7 @@ router.post('/programs/:programId/artifacts', async (req: Request, res: Response
     await logProvenance(orgId, programId, 'artifact', artifact.id, 'created', getUserId(req));
     res.status(201).json({ data: artifact });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'saving artifacts', err);
   }
 });
 
@@ -412,7 +416,7 @@ router.put('/artifacts/:id', async (req: Request, res: Response) => {
 
     res.json({ data: result });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'updating artifacts', err);
   }
 });
 
@@ -466,7 +470,7 @@ router.post('/artifacts/:id/transition', async (req: Request, res: Response) => 
 
     res.json({ data: result });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'transitioning artifacts', err);
   }
 });
 
@@ -481,7 +485,7 @@ router.get('/programs/:programId/evidence', async (req: Request, res: Response) 
     const evidence = await store.query(orgId, 'evidence', (e: any) => e.programId === programId);
     res.json({ data: evidence });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'loading evidence', err);
   }
 });
 
@@ -500,7 +504,7 @@ router.post('/programs/:programId/evidence', async (req: Request, res: Response)
     await logProvenance(orgId, programId, 'evidence', evidence.id, 'created', getUserId(req));
     res.status(201).json({ data: evidence });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'saving evidence', err);
   }
 });
 
@@ -519,7 +523,7 @@ router.post('/artifacts/:artifactId/evidence', async (req: Request, res: Respons
     const link = await store.insert(orgId, 'artifact_evidence', 'Evidence Link', data);
     res.status(201).json({ data: link });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'saving evidence', err);
   }
 });
 
@@ -534,7 +538,7 @@ router.get('/programs/:programId/dependencies', async (req: Request, res: Respon
     const deps = await store.query(orgId, 'dependency', (d: any) => d.programId === programId);
     res.json({ data: deps });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'loading dependencies', err);
   }
 });
 
@@ -552,7 +556,7 @@ router.post('/programs/:programId/dependencies', async (req: Request, res: Respo
     const dep = await store.insert(orgId, 'dependency', 'Dependency', data);
     res.status(201).json({ data: dep });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'saving dependencies', err);
   }
 });
 
@@ -567,7 +571,7 @@ router.get('/programs/:programId/dependencies/stale', async (req: Request, res: 
     );
     res.json({ data: stale });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'loading stale', err);
   }
 });
 
@@ -582,7 +586,7 @@ router.get('/programs/:programId/decisions', async (req: Request, res: Response)
     const decisions = await store.query(orgId, 'decision', (d: any) => d.programId === programId);
     res.json({ data: decisions });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'loading decisions', err);
   }
 });
 
@@ -603,7 +607,7 @@ router.post('/programs/:programId/decisions', async (req: Request, res: Response
     await logProvenance(orgId, programId, 'decision', decision.id, 'created', userId);
     res.status(201).json({ data: decision });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'saving decisions', err);
   }
 });
 
@@ -618,7 +622,7 @@ router.get('/artifacts/:artifactId/reviews', async (req: Request, res: Response)
     const reviews = await store.query(orgId, 'review', (r: any) => r.artifactId === artifactId);
     res.json({ data: reviews });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'loading reviews', err);
   }
 });
 
@@ -653,7 +657,7 @@ router.post('/artifacts/:artifactId/reviews', async (req: Request, res: Response
     await logProvenance(orgId, art?.programId, 'review-cycle', review.id, 'created', getUserId(req));
     res.status(201).json({ data: review });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'saving reviews', err);
   }
 });
 
@@ -690,7 +694,7 @@ router.put('/reviews/:id', async (req: Request, res: Response) => {
     });
     res.json({ data: result });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'updating reviews', err);
   }
 });
 
@@ -708,7 +712,7 @@ router.get('/programs/:programId/risks', async (req: Request, res: Response) => 
     if (severity) risks = risks.filter((r: any) => r.severity === severity);
     res.json({ data: risks });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'loading risks', err);
   }
 });
 
@@ -728,7 +732,7 @@ router.post('/programs/:programId/risks', async (req: Request, res: Response) =>
     await logProvenance(orgId, programId, 'risk-signal', risk.id, 'created', getUserId(req));
     res.status(201).json({ data: risk });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'saving risks', err);
   }
 });
 
@@ -750,7 +754,7 @@ router.get('/collaboration', async (req: Request, res: Response) => {
     }
     res.json({ data: items });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'loading collaboration', err);
   }
 });
 
@@ -773,7 +777,7 @@ router.post('/collaboration', async (req: Request, res: Response) => {
     const item = await store.insert(orgId, 'collaboration', req.body.body?.slice(0, 80) || 'Comment', data);
     res.status(201).json({ data: item });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'saving collaboration', err);
   }
 });
 
@@ -794,7 +798,7 @@ router.put('/collaboration/:id', async (req: Request, res: Response) => {
     const result = await store.update(id, orgId, updated);
     res.json({ data: result });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'updating collaboration', err);
   }
 });
 
@@ -820,7 +824,7 @@ router.get('/approval-requests', async (req: Request, res: Response) => {
 
     res.json({ data: items });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'loading approval requests', err);
   }
 });
 
@@ -839,7 +843,7 @@ router.post('/approval-requests', async (req: Request, res: Response) => {
     await logProvenance(orgId, item.programId, 'approval', item.id, 'requested', userId);
     res.status(201).json({ data: item });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'saving approval requests', err);
   }
 });
 
@@ -887,7 +891,7 @@ router.post('/approval-requests/:id/decide', async (req: Request, res: Response)
 
     res.json({ data: result });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'saving decide', err);
   }
 });
 
@@ -923,7 +927,7 @@ router.post('/approval-requests/:id/delegate', async (req: Request, res: Respons
 
     res.json({ data: result });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'saving delegate', err);
   }
 });
 
@@ -942,7 +946,7 @@ router.get('/programs/:programId/authority-interactions', async (req: Request, r
     );
     res.json({ data: interactions });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'loading authority interactions', err);
   }
 });
 
@@ -966,7 +970,7 @@ router.post('/programs/:programId/authority-interactions', async (req: Request, 
     await logProvenance(orgId, programId, 'authority-interaction', interaction.id, 'created', getUserId(req));
     res.status(201).json({ data: interaction });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'saving authority interactions', err);
   }
 });
 
@@ -987,7 +991,7 @@ router.get('/programs/:programId/provenance', async (req: Request, res: Response
     if (limit) logs = logs.slice(0, parseInt(limit as string));
     res.json({ data: logs });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'loading provenance', err);
   }
 });
 
@@ -1130,7 +1134,7 @@ router.get('/programs/:programId/readiness', async (req: Request, res: Response)
       },
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'loading readiness', err);
   }
 });
 
@@ -1223,7 +1227,7 @@ router.post('/programs/:programId/scaffold', async (req: Request, res: Response)
       data: { artifactsCreated: created.length, artifacts: created, destinationType },
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, logger, 'scaffolding programs', err);
   }
 });
 

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import { I } from '../icons';
 import { useLiveData, useLiveRows, isRowsWith, hasKeys, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -261,7 +262,7 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
      error panel is on screen at all, so those zeros stood alone. */
   const kv = (n: number | string) => (grid.loading || grid.error ? '—' : String(n));
   /* The chips used to render `(standards.data || REG_STANDARDS_FALLBACK).map`.
-     `useLive` hands back the parsed body cast to DataStandard[] without looking
+     the retired `useLive` handed back the parsed body cast to DataStandard[] without looking
      at it, and `||` only fires on null/undefined — so a 200 carrying `{}`,
      `{ data: … }`, an error body or a JSON string was truthy, walked past the
      fallback, and `.map` threw inside render on six of seven skewed bodies.
@@ -353,6 +354,20 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
 
   const ask = (q: string) => onAsk && onAsk(q);
   const tabs: [string, string][] = [['reg', 'Registrations'], ['clock', 'Approvals tracker'], ['vary', 'Renewals & variations'], ['commit', 'HA commitments'], ['strategy', 'Submission strategy']];
+
+  /* AnA can open any registrations tab — the same view-state switch a person
+     makes. The registry enum has validated `tab`; the defensive lookup keeps the
+     handler honest if it drifts. */
+  useSurfaceActionHandlers('registrations', {
+    'registrations.open-tab': (params) => {
+      const target = params.tab;
+      const hit = tabs.find((t) => t[0] === target);
+      if (!hit) return { ok: false, reason: `"${target}" is not a registrations tab.` };
+      if (tab === target) return { ok: true, detail: `Already on the ${hit[1]} tab` };
+      setTab(target);
+      return { ok: true, detail: `Opened the ${hit[1]} tab` };
+    },
+  });
 
   return (
     <div className="page-host reg">

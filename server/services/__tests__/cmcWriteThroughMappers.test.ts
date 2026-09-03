@@ -30,6 +30,10 @@ import {
   mapReferenceStandardPayload,
   mapImpurityProfilePayload,
   mapDissolutionProfilePayload,
+  mapMaterialSpecPayload,
+  mapFormulationRecordPayload,
+  mapManufacturingProcessPayload,
+  mapCharacterizationStudyPayload,
 } from '../cmc-write-through';
 import { MODULE3_SECTION_RULES, composeModule3FromCanonicalSources, tablesToMarkdown } from '../module3Composer';
 
@@ -103,7 +107,15 @@ describe('mapDrugProductPayload — the §3.2.P register row (nested packaging/p
   const p = mapDrugProductPayload(row);
 
   it("3.2.P.1's required fields survive — composition as TEXT, because every consumer reads it with val()", () => {
-    expect(required('3.2.P.1')).toEqual(['dosageFormDescription', 'composition', 'strength']);
+    /* §3.2.P.1 also requires ONE formulation record carrying its own
+       composition: the quantitative composition table is the section's
+       substance, and it read a first-match components array. */
+    expect(required('3.2.P.1')).toEqual([
+      'dosageFormDescription',
+      'composition',
+      'strength',
+      'formulationCompositionComplete',
+    ]);
     expect(p.dosageFormDescription).toBe('Solution for injection');
     expect(p.strength).toBe('50 mg/mL');
     // An object here rendered "[object Object]" into 3.2.P.1/3.2.R.1 and hid
@@ -354,7 +366,11 @@ describe('register row → payload → composed section: the whole chain, no "[o
     const p1 = sections.find((s) => s.sectionKey === '3.2.P.1')!;
     expect(p1.narrativeDraft).toMatch(/Gelatin capsule shell/);
     expect(p1.narrativeDraft).not.toMatch(/object Object/);
-    expect(p1.missingInputs).toEqual([]);
+    /* The composition text alone no longer completes the section: §3.2.P.1's
+       substance is the quantitative composition, which comes from the
+       formulation register. */
+    expect(p1.missingInputs).toEqual(['formulationCompositionComplete']);
+    expect(p1.narrativeDraft).toContain('No formulation record is on file');
   });
 
   it('an EMPTY composition {} leaves 3.2.P.1 honestly incomplete', () => {
@@ -482,7 +498,11 @@ describe('§3.2.P.5.4 / §3.2.S.4.4 — the recorded QC results are RENDERED, no
     expect(table!.rows[0]).toEqual([
       'S-2407-118', 'finished-product', 'AM-011 RP-HPLC assay', '95.0–105.0%', '99.2 %', 'pass', 'reviewed',
     ]);
-    expect(p5.narrativeDraft).toMatch(/1 recorded QC result\(s\).*1 conforming, 0 out of specification/);
+    /* The disposition is COMPUTED from the result against its criterion, not
+       read off passFailStatus — a declared "pass" over a failing number used to
+       compose as "1 conforming, 0 out of specification". Here the record and
+       the numbers agree. */
+    expect(p5.narrativeDraft).toMatch(/1 recorded QC result\(s\).*1 within criterion, 0 out of specification/s);
   });
 
   it('an out-of-specification result is reported as recorded — never smoothed into a pass', () => {
@@ -1240,7 +1260,7 @@ describe('mapImpurityProfilePayload — one row per impurity, assessed against I
        threshold, and says so: asserted over a register whose impurities were
        all refused, "none is above the reporting threshold" stated the opposite
        of the truth — nothing had been compared to anything. */
-    expect(s3.narrativeDraft).toContain('None of the 1 compared to an ICH threshold is above it');
+    expect(s3.narrativeDraft).toContain('None of the 1 compared to an ICH Q3A/Q3B threshold is above it');
     expect(s3.narrativeDraft).toContain('1 are below the reporting threshold');
     expect(tablesToMarkdown(s3.tables)).toContain('not above the reporting threshold');
   });
@@ -1265,12 +1285,35 @@ describe('mapImpurityProfilePayload — one row per impurity, assessed against I
   });
 
   it('refuses to apply a Q3A threshold to a class the guideline does not cover', () => {
+    /* Inorganic. A residual solvent and an elemental impurity USED to land here
+       too; they are governed by Q3C and Q3D, those tables are modelled, and
+       they are now assessed under them rather than refused. */
     const composed = composeModule3FromCanonicalSources([
-      src('impurity_profile', impurity({ impurityName: 'Lead', impurityType: 'elemental', observedLevel: '3', levelUnit: 'ppm' })),
+      src('impurity_profile', impurity({ impurityName: 'Chloride', impurityType: 'inorganic', observedLevel: '3', levelUnit: 'ppm' })),
     ]);
     const s3 = composed.find((c) => c.sectionKey === '3.2.S.3')!;
     expect(s3.narrativeDraft).toContain('cannot be compared to a threshold');
     expect(tablesToMarkdown(s3.tables)).toContain('does not set thresholds for this impurity class');
+  });
+
+  it('assesses an elemental impurity under Q3D once its route is recorded', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('impurity_profile', impurity({
+        impurityName: 'Pb', impurityType: 'elemental',
+        observedLevel: '3', levelUnit: 'µg/day', routeOfAdministration: 'oral',
+      })),
+    ]);
+    const s3 = composed.find((c) => c.sectionKey === '3.2.S.3')!;
+    expect(s3.narrativeDraft).toContain('assessed against ICH Q3D(R2)');
+    expect(tablesToMarkdown(s3.tables)).toContain('within the ICH Q3D');
+  });
+
+  it('refuses an elemental impurity whose route was never recorded', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('impurity_profile', impurity({ impurityName: 'Pb', impurityType: 'elemental', observedLevel: '3', levelUnit: 'µg/day' })),
+    ]);
+    expect(composed.find((c) => c.sectionKey === '3.2.S.3')!.narrativeDraft)
+      .toContain('route of administration is not recorded');
   });
 
   it('never states a total impurity figure from whatever rows are on file', () => {
@@ -1405,7 +1448,11 @@ describe('review: the impurity section claims only what it compared', () => {
        out-of-scope class. It stated the opposite of the truth. */
     const composed = composeModule3FromCanonicalSources([
       src('impurity_profile', impurity({ impurityName: 'Impurity A', maximumDailyDose: '' })),
-      src('impurity_profile', impurity({ impurityName: 'Methanol', impurityType: 'residual-solvent', levelUnit: 'ppm', observedLevel: '300' })),
+      /* A solvent OUTSIDE the Q3C catalog: still refused, and refused by name.
+         Methanol was the original example here and is now assessed under Q3C,
+         which is the point of that change — the refusal case had to move to a
+         record that genuinely cannot be assessed. */
+      src('impurity_profile', impurity({ impurityName: 'Chlorobutanol', impurityType: 'residual-solvent', levelUnit: 'ppm', observedLevel: '300' })),
     ]);
     const s3 = composed.find((c) => c.sectionKey === '3.2.S.3')!;
     expect(s3.narrativeDraft).toContain('None has been compared to an ICH threshold');
@@ -1413,6 +1460,8 @@ describe('review: the impurity section claims only what it compared', () => {
     expect(s3.narrativeDraft).toContain('cannot be compared to a threshold');
     // …and names the guideline that does govern the refused one.
     expect(s3.narrativeDraft).toContain('Q3C');
+    // …and never invents the Class 3 limit for a solvent it does not recognise.
+    expect(s3.narrativeDraft).not.toContain('5000');
   });
 
   it('does not report a section complete over impurities it cannot assess', () => {
@@ -1450,9 +1499,23 @@ describe('review: the impurity section claims only what it compared', () => {
   it('leaves a retired impurity out of the current profile', () => {
     const composed = composeModule3FromCanonicalSources([
       src('impurity_profile', impurity({ impurityName: 'Superseded', status: 'retired' })),
+      /* An active source keeps the section composing, so this pins that the
+         RETIRED impurity is excluded rather than that the section is empty. */
+      src('drug_substance', { name: 'BX-204' }),
     ]);
-    expect(composed.find((c) => c.sectionKey === '3.2.S.3')!.narrativeDraft)
-      .toContain('No impurity is recorded for the drug substance');
+    const s3 = composed.find((c) => c.sectionKey === '3.2.S.3')!;
+    expect(s3.narrativeDraft).toContain('No impurity is recorded for the drug substance');
+    /* And it does not satisfy the impurity requirement from the grave. */
+    expect(s3.missingInputs).toContain('drugSubstanceImpurityProfileComplete');
+  });
+
+  it('a section whose only sources are retired says so, rather than "no data"', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('impurity_profile', impurity({ impurityName: 'Superseded', status: 'retired' })),
+    ]);
+    const s3 = composed.find((c) => c.sectionKey === '3.2.S.3')!;
+    expect(s3.narrativeDraft).toContain('are retired and do not compose');
+    expect(s3.lineage).toHaveLength(0);
   });
 
   it('states a recorded threshold that contradicts the guideline instead of replacing it silently', () => {
@@ -1500,11 +1563,572 @@ describe('review: the dissolution section', () => {
       .toContain('record no standard deviation or %RSD');
   });
 
-  it('leaves a retired profile out of the section', () => {
+  it('leaves a retired profile out of the section, and says why it is empty', () => {
+    /* A retired record feeds no section at all — not its tables, not its
+       completeness. The section distinguishes "nothing recorded" from "the only
+       record is retired" so a reviewer does not go hunting for data that is
+       there and superseded. */
     const composed = composeModule3FromCanonicalSources([
       src('dissolution_profile', profile({ status: 'retired' })),
     ]);
-    expect(composed.find((c) => c.sectionKey === '3.2.P.2')!.narrativeDraft)
-      .toContain('No development dissolution profile is recorded');
+    const p2 = composed.find((c) => c.sectionKey === '3.2.P.2')!;
+    expect(p2.narrativeDraft).toContain('are retired and do not compose');
+    expect(tablesToMarkdown(p2.tables)).not.toContain('Dissolution');
+    expect(p2.lineage).toHaveLength(0);
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §3.2.P.4 materials and §3.2.P.1 formulation — the last three source types
+   the composer demanded with a first-match read standing in for a register.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const material = (over: Record<string, unknown> = {}) =>
+  mapMaterialSpecPayload({
+    materialRole: 'excipient',
+    materialName: 'Microcrystalline cellulose',
+    functionInFormulation: 'Diluent',
+    grade: 'PH-102',
+    compendialMonograph: 'USP-NF',
+    supplier: 'DuPont',
+    origin: 'plant',
+    status: 'specified',
+    ...over,
+  });
+
+const formulation = (over: Record<string, unknown> = {}) =>
+  mapFormulationRecordPayload({
+    formulationName: 'BX-701 5 mg film-coated tablet',
+    version: 'F-v2.0',
+    batchSize: '250,000 tablets',
+    components: [
+      { component: 'BX-701', role: 'Active', amountPerUnit: '5', unit: 'mg', percentWeight: '4.0' },
+      { component: 'Microcrystalline cellulose', role: 'Diluent', amountPerUnit: '80', unit: 'mg', percentWeight: '64.0' },
+    ],
+    status: 'current',
+    ...over,
+  });
+
+describe('mapMaterialSpecPayload — one register, two source types', () => {
+  it('renders EVERY excipient, not the first one', () => {
+    /* §3.2.P.4 read a single first-match materialName/grade pair out of a
+       register holding one row per material, so a product using twelve
+       excipients rendered one — and which one depended on arrival order. */
+    const composed = composeModule3FromCanonicalSources([
+      src('excipient', material({ materialName: 'Microcrystalline cellulose' })),
+      src('excipient', material({ materialName: 'Croscarmellose sodium', functionInFormulation: 'Disintegrant' })),
+      src('excipient', material({ materialName: 'Magnesium stearate', functionInFormulation: 'Lubricant' })),
+    ]);
+    const md = tablesToMarkdown(composed.find((c) => c.sectionKey === '3.2.P.4')!.tables);
+    for (const name of ['Microcrystalline cellulose', 'Croscarmellose sodium', 'Magnesium stearate']) {
+      expect(md).toContain(name);
+    }
+  });
+
+  it('a raw material files under §3.2.S.2.3, not the drug product excipient section', () => {
+    /* §3.2.P.4 is Control of EXCIPIENTS. A starting material for the drug
+       substance rendered inside it because that was the only section rule
+       naming `raw_material_spec` — so a reviewer opening the drug product's
+       excipient section found a synthetic intermediate, while the register grid
+       told the staffer the same row filed under §3.2.S.2.3. */
+    const composed = composeModule3FromCanonicalSources([
+      src('raw_material_spec', material({ materialRole: 'starting-material', materialName: 'Intermediate INT-2' })),
+      src('drug_substance', { manufacturingRoute: 'Four-step convergent synthesis' }),
+    ]);
+    const p4 = composed.find((c) => c.sectionKey === '3.2.P.4')!;
+    expect(p4.missingInputs).toContain('excipientControlComplete');
+    expect(tablesToMarkdown(p4.tables)).not.toContain('Intermediate INT-2');
+
+    const s2 = composed.find((c) => c.sectionKey === '3.2.S.2')!;
+    expect(tablesToMarkdown(s2.tables)).toContain('Intermediate INT-2');
+    expect(s2.narrativeDraft).toContain('raw or starting material specification(s) are recorded');
+  });
+
+  it('says when an excipient records neither a specification nor a monograph', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('excipient', material({ compendialMonograph: '', testParameters: null })),
+    ]);
+    const p4 = composed.find((c) => c.sectionKey === '3.2.P.4')!;
+    expect(p4.narrativeDraft).toContain('record neither a specification nor a compendial monograph');
+    expect(p4.missingInputs).toContain('excipientControlComplete');
+  });
+
+  it('names a novel excipient recorded without a justification', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('excipient', material({ novelExcipient: true })),
+    ]);
+    expect(composed.find((c) => c.sectionKey === '3.2.P.4')!.narrativeDraft)
+      .toContain('record no justification');
+  });
+
+  it('carries the recorded origin without inferring one', () => {
+    const p = material({ origin: '' });
+    expect(p.origin).toBe('');
+    expect(p.humanOrAnimalOrigin).toBeNull();
+    const gelatin = material({ materialName: 'Gelatin capsule shell', origin: 'bovine', tseCertificate: 'CEP R1-CEP 2019-123' });
+    expect(gelatin.humanOrAnimalOrigin).toBe(true);
+  });
+});
+
+describe('mapFormulationRecordPayload — one current version, rendered', () => {
+  it('renders the CURRENT formulation, not whichever arrived first', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('formulation_record', formulation({ formulationName: 'Old tablet', version: 'F-v1.0', status: 'superseded', components: [{ component: 'Lactose', role: 'Diluent' }] })),
+      src('formulation_record', formulation()),
+      src('drug_product', { dosageFormDescription: 'Film-coated tablet', strength: '5 mg', composition: 'BX-701 5 mg' }),
+    ]);
+    const p1 = composed.find((c) => c.sectionKey === '3.2.P.1')!;
+    expect(p1.narrativeDraft).toContain('The current formulation is BX-701 5 mg film-coated tablet');
+    const md = tablesToMarkdown(p1.tables);
+    expect(md).toContain('Microcrystalline cellulose');
+    // The superseded version is retained in the record, as a version row.
+    expect(md).toContain('F-v1.0');
+    expect(p1.narrativeDraft).toContain('1 superseded version(s) are retained');
+  });
+
+  it('refuses to elect a current formulation when none is marked current', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('formulation_record', formulation({ status: 'draft' })),
+      src('drug_product', { dosageFormDescription: 'Tablet', strength: '5 mg', composition: 'x' }),
+    ]);
+    const p1 = composed.find((c) => c.sectionKey === '3.2.P.1')!;
+    expect(p1.narrativeDraft).toContain('none is marked current');
+    expect(p1.narrativeDraft).toContain('not established by this section');
+  });
+
+  it('says which composition governs is not established when two claim to be current', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('formulation_record', formulation({ version: 'F-v2.0' })),
+      src('formulation_record', formulation({ version: 'F-v3.0' })),
+    ]);
+    expect(composed.find((c) => c.sectionKey === '3.2.P.1')!.narrativeDraft)
+      .toContain('are marked current, so which composition governs is not established');
+  });
+
+  it('names an overage recorded without a justification', () => {
+    /* An overage is a regulatory question in its own right (ICH Q8 §2.3). */
+    const composed = composeModule3FromCanonicalSources([
+      src('formulation_record', formulation({
+        components: [{ component: 'BX-701', role: 'Active', amountPerUnit: '5', unit: 'mg', overage: '2%' }],
+      })),
+    ]);
+    expect(composed.find((c) => c.sectionKey === '3.2.P.1')!.narrativeDraft)
+      .toContain('component overage(s) are recorded without a justification');
+  });
+});
+
+
+describe('mapManufacturingProcessPayload — the process, not one sentence about it', () => {
+  /* The row shape manufacturing_processes hands back through Drizzle. */
+  const process = (over: Record<string, unknown> = {}) => ({
+    id: '8f14e45f-ceea-467a-9c8d-1a2b3c4d5e6f',
+    organizationId: 42,
+    projectId: 'aa11bb22-cc33-dd44-ee55-ff6677889900',
+    processName: 'BX-204 drug substance synthesis',
+    processType: 'Drug Substance',
+    processDescription: '',
+    processSteps: [
+      {
+        stepNumber: 2,
+        unitOperation: 'Crystallisation',
+        description: 'Crystallise from ethanol/water 3:1',
+        inProcessControls: [{ test: 'Crystal form', acceptanceCriteria: 'Form I by XRPD' }],
+        holdTime: '24 h',
+      },
+      {
+        stepNumber: 1,
+        unitOperation: 'Coupling',
+        description: 'Couple INT-2 with the amine',
+        inProcessControls: [{ test: 'Reaction completion', acceptanceCriteria: 'NLT 98% by HPLC' }],
+      },
+    ],
+    criticalProcessParameters: [
+      { parameter: 'Crystallisation temperature', step: 'Crystallisation', target: '5', rangeLow: '2', rangeHigh: '8', unit: '°C', criticality: 'critical', linkedCqa: 'Polymorphic form' },
+    ],
+    processControls: [{ test: 'Residual solvent', acceptanceCriteria: 'Ethanol NMT 5000 ppm' }],
+    equipmentList: [{ equipment: 'RX-200 reactor', type: 'Glass-lined reactor', model: 'GL-2000', qualificationStatus: 'IQ/OQ/PQ complete' }],
+    batchSize: '25 kg',
+    validationStatus: 'validated',
+    ...over,
+  });
+
+  it('orders the steps by their recorded number, not by array position', () => {
+    const p = mapManufacturingProcessPayload(process());
+    expect((p.processSteps as any[]).map((st) => st.unitOperation)).toEqual(['Coupling', 'Crystallisation']);
+    /* And the derived description follows that order. */
+    expect(p.processDescription).toBe('Coupling; Crystallisation');
+  });
+
+  it('keeps the recorded order when no step carries a number', () => {
+    /* Reordering an unnumbered list would assert a sequence the register does
+       not hold. */
+    const p = mapManufacturingProcessPayload(process({
+      processSteps: [{ unitOperation: 'Blend' }, { unitOperation: 'Compress' }, { unitOperation: 'Coat' }],
+    }));
+    expect((p.processSteps as any[]).map((st) => st.unitOperation)).toEqual(['Blend', 'Compress', 'Coat']);
+  });
+
+  it('collects in-process controls from the steps as well as the process level', () => {
+    /* A section reading only the process-level list would report "no in-process
+       controls" over a process that records one on every step. */
+    const p = mapManufacturingProcessPayload(process({ processControls: [] }));
+    expect(p.processControls).toContain('Reaction completion');
+    expect(p.processControls).toContain('Crystal form');
+  });
+
+  it('scopes to the recorded side: a drug substance process cannot complete §3.2.P.3', () => {
+    const p = mapManufacturingProcessPayload(process());
+    expect(p.manufacturingProcessComplete).toBe('BX-204 drug substance synthesis');
+    expect(p.drugProductProcessComplete).toBeNull();
+
+    const dp = mapManufacturingProcessPayload(process({ processType: 'Drug Product' }));
+    expect(dp.drugProductProcessComplete).toBe('BX-204 drug substance synthesis');
+    expect(dp.manufacturingProcessComplete).toBeNull();
+  });
+
+  it('does not report a process complete when it records no in-process control', () => {
+    const p = mapManufacturingProcessPayload(process({
+      processControls: [],
+      processSteps: [{ stepNumber: 1, unitOperation: 'Coupling' }],
+    }));
+    expect(p.manufacturingProcessComplete).toBeNull();
+  });
+
+  it('§3.2.S.2 is not complete on a name and steps split across two records', () => {
+    /* The composer unions availableFields across matched sources, so without a
+       single-record key two half-filled processes would add up to a complete
+       manufacturing section. */
+    const composed = composeModule3FromCanonicalSources([
+      src('manufacturing_process', mapManufacturingProcessPayload(process({ processControls: [], processSteps: [] }))),
+      src('manufacturing_process', mapManufacturingProcessPayload(process({ processName: '', processControls: [] }))),
+      src('drug_substance', { manufacturingRoute: 'Four-step convergent synthesis' }),
+    ]);
+    const s2 = composed.find((c) => c.sectionKey === '3.2.S.2')!;
+    expect(s2.missingInputs).toContain('manufacturingProcessComplete');
+    expect(s2.completeness).toBeLessThan(100);
+  });
+
+  it('renders the steps, the CPPs and the equipment into §3.2.S.2', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('manufacturing_process', mapManufacturingProcessPayload(process())),
+    ]);
+    const md = tablesToMarkdown(composed.find((c) => c.sectionKey === '3.2.S.2')!.tables);
+    expect(md).toContain('Manufacturing Process Steps');
+    expect(md).toContain('Crystallisation');
+    expect(md).toContain('Form I by XRPD');
+    expect(md).toContain('Critical Process Parameters');
+    expect(md).toContain('2 – 8');
+    expect(md).toContain('RX-200 reactor');
+  });
+
+  it('names a critical parameter recorded without a proven range instead of dropping it', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('manufacturing_process', mapManufacturingProcessPayload(process({
+        criticalProcessParameters: [{ parameter: 'Agitation rate', target: '150', unit: 'rpm' }],
+      }))),
+    ]);
+    const s2 = composed.find((c) => c.sectionKey === '3.2.S.2')!;
+    expect(tablesToMarkdown(s2.tables)).toContain('not recorded');
+    expect(s2.narrativeDraft).toContain('carry no proven acceptable range');
+  });
+
+  it('a drug-product process does not appear in §3.2.S.2', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('manufacturing_process', mapManufacturingProcessPayload(process({ processType: 'Drug Product' }))),
+    ]);
+    expect(tablesToMarkdown(composed.find((c) => c.sectionKey === '3.2.S.2')!.tables))
+      .not.toContain('Crystallisation');
+    expect(tablesToMarkdown(composed.find((c) => c.sectionKey === '3.2.P.3')!.tables))
+      .toContain('Crystallisation');
+  });
+
+  it('leaves a retired process out of the section', () => {
+    /* Through the register's OWN lifecycle column. This table predates the
+       register family and its column is validation_status, so the mapper has to
+       carry that to the composer as `status` — the key the retirement filter
+       reads. Emitting it only as processValidationStatus made the filter, and
+       processRendering's own, dead code: a superseded synthetic route composed
+       as the process the filing describes and scored §3.2.S.2 100% complete. */
+    const composed = composeModule3FromCanonicalSources([
+      src('manufacturing_process', mapManufacturingProcessPayload(process({ validationStatus: 'retired' }))),
+      /* An active source keeps the section composing, so this pins that the
+         RETIRED process is excluded rather than that the whole section is. */
+      src('drug_substance', { manufacturingRoute: 'Four-step convergent synthesis' }),
+    ]);
+    const s2 = composed.find((c) => c.sectionKey === '3.2.S.2')!;
+    expect(tablesToMarkdown(s2.tables)).not.toContain('Crystallisation');
+    expect(s2.missingInputs).toContain('manufacturingProcessComplete');
+  });
+
+  it('§3.2.P.3 renders the register rather than the drug product form when both exist', () => {
+    /* The section read `processSteps` through a first-match array helper, so
+       once the register began emitting rows the two shapes competed for one
+       column mapping. The register wins; the form's list is the fallback. */
+    const composed = composeModule3FromCanonicalSources([
+      src('manufacturing_process', mapManufacturingProcessPayload(process({ processType: 'Drug Product' }))),
+      src('drug_product', { processSteps: [{ operation: 'Typed on the drug product form' }] }),
+    ]);
+    const md = tablesToMarkdown(composed.find((c) => c.sectionKey === '3.2.P.3')!.tables);
+    expect(md).toContain('Crystallisation');
+    expect(md).not.toContain('Typed on the drug product form');
+  });
+
+  it('still renders the drug product form list when no process is recorded', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('drug_product', { processSteps: [{ operation: 'Blending', ipc: 'Blend uniformity' }] }),
+    ]);
+    const md = tablesToMarkdown(composed.find((c) => c.sectionKey === '3.2.P.3')!.tables);
+    expect(md).toContain('Blending');
+  });
+});
+
+describe('mapCharacterizationStudyPayload — one study answers ONE of the three questions', () => {
+  const study = (over: Record<string, unknown> = {}) => ({
+    id: 7,
+    organizationId: 42,
+    projectId: 'p-1',
+    scope: 'drug_substance',
+    studyType: 'structural',
+    studyTitle: 'Structure confirmation of BX-204',
+    technique: '1H/13C NMR, HRMS, FT-IR, elemental analysis',
+    attribute: 'Molecular structure',
+    result: 'Consistent with the proposed structure',
+    resultUnit: '',
+    conclusion: 'The structure of BX-204 is confirmed',
+    studyReference: 'RPT-CHAR-001',
+    status: 'qualified',
+    ...over,
+  });
+
+  it('a structural study answers structuralElucidation and nothing else', () => {
+    const p = mapCharacterizationStudyPayload(study());
+    expect(p.structuralElucidation).toBeTruthy();
+    expect(p.physicochemicalProperties).toBeUndefined();
+    expect(p.biologicalActivity).toBeUndefined();
+  });
+
+  it('three studies of one type do not complete the section', () => {
+    /* This is what storing the type is FOR. Without it, three NMR studies would
+       have greened physicochemical properties and biological activity too. */
+    const composed = composeModule3FromCanonicalSources([
+      src('characterization', mapCharacterizationStudyPayload(study({ studyTitle: 'NMR 1' }))),
+      src('characterization', mapCharacterizationStudyPayload(study({ studyTitle: 'NMR 2' }))),
+      src('characterization', mapCharacterizationStudyPayload(study({ studyTitle: 'NMR 3' }))),
+    ]);
+    const s3 = composed.find((c) => c.sectionKey === '3.2.S.3')!;
+    expect(s3.missingInputs).toContain('physicochemicalProperties');
+    expect(s3.missingInputs).toContain('biologicalActivity');
+    expect(s3.narrativeDraft).toContain('physicochemical properties');
+    expect(s3.narrativeDraft).toContain('not established by this section');
+  });
+
+  it('three studies of three types answer all three', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('characterization', mapCharacterizationStudyPayload(study())),
+      src('characterization', mapCharacterizationStudyPayload(study({
+        studyType: 'physicochemical', studyTitle: 'Aqueous solubility', technique: 'Shake-flask',
+        attribute: 'Solubility at pH 6.8', result: '0.42', resultUnit: 'mg/mL', conclusion: 'Low solubility, BCS class II',
+      }))),
+      src('characterization', mapCharacterizationStudyPayload(study({
+        studyType: 'biological', studyTitle: 'Target inhibition', technique: 'Enzymatic assay',
+        attribute: 'IC50', result: '12', resultUnit: 'nM', conclusion: 'Potency confirmed',
+      }))),
+    ]);
+    const s3 = composed.find((c) => c.sectionKey === '3.2.S.3')!;
+    expect(s3.missingInputs).not.toContain('structuralElucidation');
+    expect(s3.missingInputs).not.toContain('physicochemicalProperties');
+    expect(s3.missingInputs).not.toContain('biologicalActivity');
+    expect(s3.narrativeDraft).toContain('are each established by at least one recorded study');
+  });
+
+  it('a study with no result and no conclusion establishes nothing', () => {
+    const p = mapCharacterizationStudyPayload(study({ result: '', conclusion: '' }));
+    expect(p.structuralElucidation).toBeNull();
+    const composed = composeModule3FromCanonicalSources([src('characterization', p)]);
+    const s3 = composed.find((c) => c.sectionKey === '3.2.S.3')!;
+    /* It still RENDERS — a reviewer must be able to see the study was run and
+       that its result is missing. */
+    expect(tablesToMarkdown(s3.tables)).toContain('Structure confirmation of BX-204');
+    expect(s3.narrativeDraft).toContain('with neither a result nor a conclusion recorded');
+    expect(s3.missingInputs).toContain('structuralElucidation');
+  });
+
+  it('reports a number whose unit was never recorded as such', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('characterization', mapCharacterizationStudyPayload(study({
+        studyType: 'physicochemical', technique: 'Shake-flask', result: '0.42', resultUnit: '',
+      }))),
+    ]);
+    expect(tablesToMarkdown(composed.find((c) => c.sectionKey === '3.2.S.3')!.tables))
+      .toContain('0.42 (unit not recorded)');
+  });
+
+  it('a drug-product study does not answer the drug substance section', () => {
+    const p = mapCharacterizationStudyPayload(study({ scope: 'drug_product' }));
+    expect(p.structuralElucidation).toBeNull();
+    const composed = composeModule3FromCanonicalSources([src('characterization', p)]);
+    expect(composed.find((c) => c.sectionKey === '3.2.S.3')!.missingInputs)
+      .toContain('structuralElucidation');
+  });
+
+  it('leaves a retired study out of the section', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('characterization', { ...mapCharacterizationStudyPayload(study()), status: 'retired' }),
+      src('drug_substance', { name: 'BX-204' }),
+    ]);
+    const s3 = composed.find((c) => c.sectionKey === '3.2.S.3')!;
+    expect(tablesToMarkdown(s3.tables)).not.toContain('Structure confirmation of BX-204');
+    expect(s3.missingInputs).toContain('structuralElucidation');
+  });
+
+  it('renders the supporting data attributed to its own study', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('characterization', mapCharacterizationStudyPayload(study({
+        supportingData: [{ label: 'δ 7.82 (d, 2H)', value: 'Aromatic H-3/H-5', note: '1H NMR, DMSO-d6' }],
+      }))),
+    ]);
+    const md = tablesToMarkdown(composed.find((c) => c.sectionKey === '3.2.S.3')!.tables);
+    expect(md).toContain('Characterisation Supporting Data');
+    expect(md).toContain('Aromatic H-3/H-5');
+  });
+});
+
+
+describe('review: what the register data is allowed to CLAIM', () => {
+  const process = (over: Record<string, unknown> = {}) => ({
+    processName: 'Tablet compression', processType: 'drug_product',
+    processSteps: [{ stepNumber: 1, unitOperation: 'Blending', inProcessControls: [{ test: 'Blend uniformity', acceptanceCriteria: 'RSD <= 5%' }] }],
+    processControls: [{ test: 'Weight variation', acceptanceCriteria: '+/- 5%' }],
+    ...over,
+  });
+
+  it('§3.2.P.3 does not deny the in-process controls it prints', () => {
+    /* processControls is side-scoped to the drug substance (it is §3.2.S.2's
+       required field) and the drug-product text travels under its own key, so
+       reading only the first made this clause unconditionally true for
+       §3.2.P.3 — the section stated "No in-process control is recorded"
+       directly beneath a table printing the controls it denied. */
+    const composed = composeModule3FromCanonicalSources([
+      src('drug_product', { formulation: 'F' }),
+      src('batch', { batchNumber: 'B1' }),
+      src('manufacturing_process', mapManufacturingProcessPayload(process())),
+    ]);
+    const p3 = composed.find((c) => c.sectionKey === '3.2.P.3')!;
+    expect(p3.narrativeDraft).not.toContain('No in-process control is recorded');
+    expect(tablesToMarkdown(p3.tables)).toContain('Blend uniformity');
+  });
+
+  it('every recorded in-process control reaches a table, not just the first process', () => {
+    /* Both sections read the flattened control TEXT with a first-match helper
+       over a register that is one row per process, so with two processes on a
+       side the second one's controls appeared in no table and no sentence
+       anywhere in Module 3. */
+    const composed = composeModule3FromCanonicalSources([
+      src('drug_substance', { manufacturingRoute: 'r' }),
+      src('manufacturing_process', mapManufacturingProcessPayload({
+        processName: 'Fermentation', processType: 'drug_substance',
+        processSteps: [{ stepNumber: 1, unitOperation: 'Fermentation' }],
+        processControls: [{ test: 'Viable count', acceptanceCriteria: 'NLT 1e6 CFU/mL' }],
+      })),
+      src('manufacturing_process', mapManufacturingProcessPayload({
+        processName: 'Purification', processType: 'drug_substance',
+        processSteps: [{ stepNumber: 1, unitOperation: 'Chromatography' }],
+        processControls: [{ test: 'Endotoxin', acceptanceCriteria: 'NMT 0.5 EU/mg' }],
+      })),
+    ]);
+    const md = tablesToMarkdown(composed.find((c) => c.sectionKey === '3.2.S.2')!.tables);
+    expect(md).toContain('Viable count');
+    expect(md).toContain('Endotoxin');
+  });
+
+  it('a signed process validation reaches the composed section', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('drug_substance', { manufacturingRoute: 'r' }),
+      src('manufacturing_process', mapManufacturingProcessPayload({
+        processName: 'BX-204 synthesis', processType: 'drug_substance', validationStatus: 'validated',
+        processSteps: [{ stepNumber: 1, unitOperation: 'Coupling' }],
+        processControls: [{ test: 'Completion', acceptanceCriteria: 'NLT 98%' }],
+      })),
+    ]);
+    expect(composed.find((c) => c.sectionKey === '3.2.S.2')!.narrativeDraft)
+      .toContain('recorded as validated in the process register');
+  });
+
+  it('a drug-product characterisation study reaches §3.2.P.2 rather than nothing', () => {
+    /* The form and the register grid both tell the staffer a drug-product study
+       files under §3.2.P.2; `characterization` appeared in §3.2.S.3's rule only,
+       so the study was written through to cmc_source_objects and reached no
+       composed section at all. */
+    const composed = composeModule3FromCanonicalSources([
+      src('drug_product', { dosageFormDescription: 'Tablet' }),
+      src('characterization', mapCharacterizationStudyPayload({
+        scope: 'drug_product', studyType: 'physicochemical', studyTitle: 'Polymorph screen on compressed tablets',
+        technique: 'XRPD', attribute: 'Solid form', result: 'Form I only', conclusion: 'No form change on compression',
+      })),
+    ]);
+    const p2 = composed.find((c) => c.sectionKey === '3.2.P.2')!;
+    expect(tablesToMarkdown(p2.tables)).toContain('Polymorph screen on compressed tablets');
+    /* And §3.2.P.2 does not invent §3.2.S.3.1's three-question requirement. */
+    expect(p2.narrativeDraft).not.toContain('No recorded study establishes');
+  });
+
+  it('§3.2.P.1 is not complete over a formulation the section says does not govern', () => {
+    /* formulationCompositionComplete was emitted from a name and components
+       alone, while the section renders the composition only for the record
+       marked current — so the dashboard called the composition section finished
+       in the same breath as the section text said the governing composition was
+       not established. */
+    const draft = mapFormulationRecordPayload({
+      formulationName: 'BX-701 tablet', status: 'draft',
+      components: [{ component: 'BX-701' }, { component: 'MCC' }],
+    });
+    const composed = composeModule3FromCanonicalSources([
+      src('drug_product', { dosageFormDescription: 'Tablet', strength: '5 mg', composition: 'x' }),
+      src('formulation_record', draft),
+    ]);
+    const p1 = composed.find((c) => c.sectionKey === '3.2.P.1')!;
+    expect(p1.missingInputs).toContain('formulationCompositionComplete');
+    expect(p1.completeness).toBeLessThan(100);
+    expect(mapFormulationRecordPayload({
+      formulationName: 'BX-701 tablet', status: 'current',
+      components: [{ component: 'BX-701' }],
+    }).formulationCompositionComplete).toBe('BX-701 tablet');
+  });
+
+  it('§3.2.P.4 is not complete over an excipient with no recorded way of being tested', () => {
+    /* The union hole the *Complete key exists to close was open on exactly the
+       field the key did not check: one excipient carried the key while a
+       DIFFERENT one supplied excipientAnalyticalProcedures. */
+    // A carries a specification and no way of testing it.
+    const a = mapMaterialSpecPayload({
+      materialName: 'Excipient A',
+      testParameters: [{ test: 'Assay', acceptanceCriteria: '>= 99%' }],
+    });
+    // B carries the analytical procedure and no specification.
+    const b = mapMaterialSpecPayload({ materialName: 'Excipient B', analyticalProcedures: 'Per in-house SOP AP-14' });
+    expect(a.excipientSpecifications).toBeTruthy();
+    expect(a.excipientControlComplete).toBeNull();
+    expect(b.excipientAnalyticalProcedures).toBeTruthy();
+    expect(b.excipientControlComplete).toBeNull();
+
+    const composed = composeModule3FromCanonicalSources([src('excipient', a), src('excipient', b)]);
+    const p4 = composed.find((c) => c.sectionKey === '3.2.P.4')!;
+    // The two other required fields ARE satisfied — by different excipients.
+    expect(p4.missingInputs).not.toContain('excipientSpecifications');
+    expect(p4.missingInputs).not.toContain('excipientAnalyticalProcedures');
+    expect(p4.missingInputs).toContain('excipientControlComplete');
+  });
+
+  it('§3.2.P.4 does not claim every excipient is controlled when one is not', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('excipient', mapMaterialSpecPayload({
+        materialName: 'Excipient A', analyticalProcedures: 'In-house',
+        testParameters: [{ test: 'Assay', acceptanceCriteria: '>= 99%' }],
+      })),
+      src('excipient', mapMaterialSpecPayload({ materialName: 'Excipient C' })),
+    ]);
+    const narrative = composed.find((c) => c.sectionKey === '3.2.P.4')!.narrativeDraft;
+    expect(narrative).not.toContain('each controlled to the specification');
+    expect(narrative).toContain('record neither a specification nor a compendial monograph');
   });
 });

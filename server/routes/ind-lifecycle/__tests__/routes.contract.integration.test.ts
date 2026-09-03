@@ -13,6 +13,43 @@ import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness'
 
 const holder = vi.hoisted(() => ({ db: null as any }));
 vi.mock('../../../db', () => ({ get db() { return holder.db; } }));
+// The storage provider is the tenant boundary for rendered filing bytes; it is
+// mocked in-memory so the suite exercises the real store→leaf→resolve path
+// without writing real objects under the repo working directory.
+const vault = vi.hoisted(() => ({ objects: new Map<string, { bytes: Buffer; orgId: number }>(), seq: 0 }));
+vi.mock('../../../services/storage', () => ({
+  getStorageProvider: () => ({
+    name: 'test',
+    async put(opts: { orgId: number; bytes: Buffer; filename: string; mime: string }) {
+      const { createHash } = await import('crypto');
+      vault.seq += 1;
+      const vaultVersionId = `vv-test-${vault.seq}`;
+      vault.objects.set(vaultVersionId, { bytes: opts.bytes, orgId: opts.orgId });
+      return {
+        vaultFileId: `vault://${opts.orgId}/${opts.filename}`,
+        vaultVersionId,
+        sizeBytes: opts.bytes.length,
+        sha256: createHash('sha256').update(opts.bytes).digest('hex'),
+        provider: 'test',
+      };
+    },
+    async get(vaultVersionId: string, orgId: number) {
+      const hit = vault.objects.get(vaultVersionId);
+      if (!hit || hit.orgId !== orgId) return null;
+      const { createHash } = await import('crypto');
+      return {
+        bytes: hit.bytes,
+        sizeBytes: hit.bytes.length,
+        sha256: createHash('sha256').update(hit.bytes).digest('hex'),
+        mime: 'application/pdf',
+        filename: 'f.pdf',
+      };
+    },
+    async delete(vaultVersionId: string) {
+      return vault.objects.delete(vaultVersionId);
+    },
+  }),
+}));
 vi.mock('../../../services/auditService', () => ({ default: { logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) } }));
 // Contract tests exercise route logic, not rate limiting; pass-through the limiter
 // so the volume of requests in this suite doesn't trip a 429.
@@ -85,7 +122,9 @@ beforeAll(async () => {
     { organizationId: 1, userId: 9 },
   );
   seededSubmissionId = sub.id;
-  await persistAnnualReport(sub.id, '0000', { organizationId: 1, userId: 9 }, 'cs');
+  // No retained render for this fixture: the leaf files as metadata, which is
+  // the honest 'nothing was stored' path.
+  await persistAnnualReport(sub.id, '0000', { organizationId: 1, userId: 9 });
 });
 afterAll(async () => {
   await harness.close();

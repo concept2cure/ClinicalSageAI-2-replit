@@ -28,8 +28,12 @@ import {
   recommendApplicability,
   type ProgramProfile,
 } from '../services/regulatory-graph/standards-applicability.service';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('standards');
 router.use(authenticateToken);
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -113,7 +117,7 @@ router.get('/', async (req: Request, res: Response) => {
     const rows = await q.orderBy(deviceTestStandards.standardCode).limit(500);
     res.json({ standards: rows, count: rows.length });
   } catch (err: any) {
-    res.status(500).json({ error: 'List failed', detail: err?.message });
+    return serverError(res, logger, 'loading standards', err);
   }
 });
 
@@ -129,7 +133,7 @@ router.get('/:standardId', async (req: Request, res: Response) => {
     if (!row) return res.status(404).json({ error: 'Not found' });
     res.json(row);
   } catch (err: any) {
-    res.status(500).json({ error: 'Fetch failed', detail: err?.message });
+    return serverError(res, logger, 'loading the standard', err);
   }
 });
 
@@ -145,7 +149,7 @@ router.get(
       const rows = await listProgramApplicability(String(req.params.programId));
       res.json({ programId: req.params.programId, applicability: rows, count: rows.length });
     } catch (err: any) {
-      res.status(500).json({ error: 'Applicability fetch failed', detail: err?.message });
+      return serverError(res, logger, 'loading applicability', err);
     }
   }
 );
@@ -168,7 +172,7 @@ router.get(
         applicableCount: recs.filter(r => r.applicability === 'applies').length,
       });
     } catch (err: any) {
-      res.status(500).json({ error: 'Recommendation failed', detail: err?.message });
+      return serverError(res, logger, 'loading recommendations', err);
     }
   }
 );
@@ -186,7 +190,7 @@ router.get(
       const report = await applicabilityGapReport(String(req.params.programId), profile);
       res.json(report);
     } catch (err: any) {
-      res.status(500).json({ error: 'Gap report failed', detail: err?.message });
+      return serverError(res, logger, 'loading gap report', err);
     }
   }
 );
@@ -199,7 +203,7 @@ router.get(
       if (!result) return res.status(404).json({ error: 'Applicability row not found' });
       res.json(result);
     } catch (err: any) {
-      res.status(500).json({ error: 'Freshness check failed', detail: err?.message });
+      return serverError(res, logger, 'loading freshness', err);
     }
   }
 );

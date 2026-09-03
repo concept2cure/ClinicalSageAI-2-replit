@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { I } from '../icons';
 import { useLiveRows, useLiveData, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   // Canonical reference config (kept — not fixture DATA): the node-type display
@@ -60,6 +61,36 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
 
   const [sel, setSel] = useState(0);
   const g: LineageGraph | undefined = graphs[sel] || graphs[0];
+
+  /* AnA can open the lineage graph for an artifact by its label — the same row
+     click a person makes — so a drive can land on a specific artifact's
+     derivation. Resolved against the REAL graphs with honest misses; held
+     (retry) while they load, re-attempted on the ready signal below. */
+  useSurfaceActionHandlers('decision-lineage', {
+    'decision-lineage.select-graph': (params) => {
+      const raw = String(params.artifact ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name an artifact by its label.' };
+      if (loading) return { ok: false, reason: 'The lineage graphs are still loading.', retry: true };
+      if (error) return { ok: false, reason: 'The lineage graphs did not load, so there are none to open.' };
+      if (graphs.length === 0) return { ok: false, reason: 'No decision-lineage graphs are recorded yet.' };
+      const needle = raw.toLowerCase();
+      let idx = graphs.findIndex((x) => x.artifactLabel.toLowerCase() === needle);
+      if (idx < 0) {
+        const partial = graphs
+          .map((x, i) => ({ label: x.artifactLabel.toLowerCase(), i }))
+          .filter((p) => p.label.includes(needle));
+        if (partial.length === 0) return { ok: false, reason: `No artifact labelled "${raw}".` };
+        if (partial.length > 1) return { ok: false, reason: `"${raw}" matches ${partial.length} artifacts — name one exactly.` };
+        idx = partial[0].i;
+      }
+      if (sel === idx) return { ok: true, detail: `Already on ${graphs[idx].artifactLabel}` };
+      setSel(idx);
+      return { ok: true, detail: `Opened ${graphs[idx].artifactLabel}` };
+    },
+  });
+  useEffect(() => {
+    if (!loading && !error) notifySurfaceActionReady('decision-lineage');
+  }, [loading, error]);
 
   // Export runner state — which format is in flight, and the last error (shown
   // inline by the export controls). The surface has no toast; keep it contained.

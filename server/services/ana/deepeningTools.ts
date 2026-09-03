@@ -148,14 +148,14 @@ export const ASSESS_BENEFIT_RISK: AnaTool = {
 export const LIST_CMC_REGISTERS: AnaTool = {
   name: 'list_cmc_registers',
   description:
-    'List what the CMC registers actually hold for this organization — stability studies, analytical methods, specifications, batch records, QC results, container closure systems, reference standards, impurities, dissolution profiles — with the ids the recorded-data tools need. Call this FIRST whenever the user names a product, a batch or a study by name rather than by id, and whenever you are about to run a recorded assessment. Returns identity and status per row (never the full result series), so it is safe to call broadly. Reads only; writes nothing. Say honestly when a register is empty rather than implying data exists.',
+    'List what the CMC registers actually hold for this organization — stability studies, analytical methods, specifications, batch records, QC results, container closure systems, reference standards, impurities, dissolution profiles, materials, formulations, manufacturing processes, characterisation studies — with the ids the recorded-data tools need. Call this FIRST whenever the user names a product, a batch or a study by name rather than by id, and whenever you are about to run a recorded assessment. Returns identity and status per row (never the full result series), so it is safe to call broadly. Reads only; writes nothing. Say honestly when a register is empty rather than implying data exists.',
   input_schema: {
     type: 'object',
     properties: {
       register: {
         type: 'string',
         description: 'Which register to list. Omit for a summary count of every register.',
-        enum: ['stability', 'method', 'specification', 'batch', 'qc_result', 'container_closure', 'reference_standard', 'impurity_profile', 'dissolution_profile'],
+        enum: ['stability', 'method', 'specification', 'batch', 'qc_result', 'container_closure', 'reference_standard', 'impurity_profile', 'dissolution_profile', 'material_spec', 'formulation_record', 'manufacturing_process', 'characterization'],
       },
       search: {
         type: 'string',

@@ -21,8 +21,12 @@ import {
   type RecommendationType,
 } from '../services/decision-record-service';
 import { GovernanceBoundaryService } from '../services/governance-boundary-service';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('operating-system');
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS
@@ -90,7 +94,7 @@ router.get('/assumptions', async (req: Request, res: Response) => {
 
     res.json({ success: true, data: records, count: records.length });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading assumptions', error);
   }
 });
 
@@ -110,7 +114,7 @@ router.get('/assumptions/:id', async (req: Request, res: Response) => {
 
     res.json({ success: true, data: record });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading assumptions', error);
   }
 });
 
@@ -259,7 +263,7 @@ router.get('/assumptions/:id/history', async (req: Request, res: Response) => {
     const history = [record];
     res.json({ success: true, data: history });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading history', error);
   }
 });
 
@@ -335,7 +339,7 @@ router.get('/decisions', async (req: Request, res: Response) => {
 
     res.json({ success: true, data: records, count: records.length });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading decisions', error);
   }
 });
 
@@ -355,7 +359,7 @@ router.get('/decisions/:id', async (req: Request, res: Response) => {
 
     res.json({ success: true, data: record });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading decisions', error);
   }
 });
 
@@ -560,7 +564,7 @@ router.post('/decisions/:id/validate-governance', async (req: Request, res: Resp
     };
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving validate governance', error);
   }
 });
 
@@ -604,7 +608,7 @@ router.get('/governance/rules', async (req: Request, res: Response) => {
 
     res.json({ success: true, data: rules, count: rules.length });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading rules', error);
   }
 });
 
@@ -649,7 +653,7 @@ router.get('/governance/transitions', async (req: Request, res: Response) => {
 
     res.json({ success: true, data: transitions, count: transitions.length });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading transitions', error);
   }
 });
 
@@ -732,7 +736,7 @@ router.get('/contradiction-links', async (req: Request, res: Response) => {
     const links: unknown[] = [];
     res.json({ success: true, data: links, count: links.length });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading contradiction links', error);
   }
 });
 

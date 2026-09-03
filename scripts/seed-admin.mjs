@@ -28,8 +28,22 @@ const pool = new Pool({
   ssl: isNeon ? { rejectUnauthorized: false } : false,
 });
 
-const ADMIN_EMAIL = 'jm.smith@concept2cure.pro';
-const ADMIN_PASSWORD = 'pass-word';
+/* Credentials come from the environment so this script can seed a real local
+   account instead of only ever minting one shared, committed password. The
+   historical defaults are kept so existing local setups keep working, but a
+   weak default is refused outside development — a script that resets an admin
+   password to 'pass-word' must never be runnable against production. */
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'jm.smith@concept2cure.pro';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'pass-word';
+const ADMIN_NAME = process.env.ADMIN_NAME || 'JM Smith';
+
+if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_PASSWORD) {
+  console.error(
+    'seed-admin: refusing to run in production without an explicit ADMIN_PASSWORD. ' +
+      'The built-in default is a development convenience, not a credential.',
+  );
+  process.exit(1);
+}
 
 async function run() {
   const hash = await bcrypt.hash(ADMIN_PASSWORD, 12);
@@ -48,7 +62,7 @@ async function run() {
   const res = await pool.query(
     `INSERT INTO users (email, name, password_hash, title, department, status,
        default_organization_id, failed_login_attempts, password_changed_at)
-     VALUES ($1, 'JM Smith', $2, 'Chief Science Officer', 'Executive Leadership',
+     VALUES ($1, $4, $2, 'Chief Science Officer', 'Executive Leadership',
        'active', $3, 0, NOW())
      ON CONFLICT (email) DO UPDATE SET
        password_hash = $2,
@@ -57,7 +71,7 @@ async function run() {
        must_change_password = FALSE,
        status = 'active'
      RETURNING id, email, name`,
-    [ADMIN_EMAIL, hash, orgId]
+    [ADMIN_EMAIL, hash, orgId, ADMIN_NAME]
   );
   console.log('User upserted:', res.rows[0].email, '(id:', res.rows[0].id + ')');
 

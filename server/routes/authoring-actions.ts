@@ -771,10 +771,15 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
       // machine-readable reason is preserved in the body; only the status
       // changes, so a caller that already branches on `promoted` still works.
       console.error('[authoring-actions] promote-to-review failed:', promoteErr?.message);
+      // `message` carried promoteErr.message — on this path routinely a
+      // Postgres error naming a relation or a constraint. The envelope shape is
+      // unchanged (`promoted` and `reason` are what callers branch on); only
+      // the detail moves to the log.
+      console.error('[authoring-actions] promote-to-review failed:', promoteErr?.message);
       return res.status(500).json({
         promoted: false,
         reason: 'error',
-        message: promoteErr?.message || 'Failed to promote artifact',
+        message: 'Failed to promote artifact. The problem has been logged.',
       });
     }
   } catch (err: any) {
@@ -1828,6 +1833,11 @@ router.post('/cross-section-consistency', async (req: Request, res: Response) =>
 
     // 4. Fetch contradictions for the section
     let contradictions: any[] = [];
+    // Mirror harmonizeAvailable: a failed contradiction scan must be
+    // distinguishable from a genuine zero. Without this flag the summary below
+    // reported contradictionCount:0 / criticalIssues clear on a READ failure —
+    // "section consistent" indistinguishable from a real clean result.
+    let contradictionsAvailable = true;
     try {
       const { contradictionEngineService } = await import(
         '../services/contradiction-engine-service.js'
@@ -1858,7 +1868,8 @@ router.post('/cross-section-consistency', async (req: Request, res: Response) =>
           }));
       }
     } catch {
-      // Contradiction engine unavailable
+      // Contradiction engine unavailable — a failed READ, not a clean scan.
+      contradictionsAvailable = false;
     }
 
     // 5. Return combined consistency report
@@ -1892,10 +1903,17 @@ router.post('/cross-section-consistency', async (req: Request, res: Response) =>
       summary: {
         harmonizeAvailable: !!harmonizeResult,
         harmonizeIssues: harmonizeResult?.totalIssues ?? 0,
-        contradictionCount: contradictions.length,
+        // When the contradiction scan failed to run, report its counts as null
+        // (unknown) — never fold a failed read in as 0. criticalIssues likewise
+        // stays null unless BOTH inputs are known, so it is never read as a
+        // clean total that silently omits the contradictions side.
+        contradictionsAvailable,
+        contradictionCount: contradictionsAvailable ? contradictions.length : null,
         criticalIssues:
-          (harmonizeResult?.criticalCount ?? 0) +
-          contradictions.filter((c: any) => c.severity === 'critical').length,
+          contradictionsAvailable
+            ? (harmonizeResult?.criticalCount ?? 0) +
+              contradictions.filter((c: any) => c.severity === 'critical').length
+            : null,
       },
     });
   } catch (err: any) {
@@ -2706,29 +2724,34 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
       ? bodyResult.value : { status: 'unknown' };
     checks.crossSectionConsistency = (consistencyResult.status === 'fulfilled' && consistencyResult.value)
       ? consistencyResult.value : { status: 'unknown' };
-    checks.approvedBaselineCompare = { status: 'unknown' };
+    // A never-implemented placeholder must be EXCLUDED from the verdict, not
+    // fed in as 'unknown' — 'unknown' means "a check that should run did not,"
+    // which forces needs-review, whereas this check does not exist yet.
+    checks.approvedBaselineCompare = { status: 'not-implemented' };
 
     // ── Compute overall verdict ─────────────────────────────────────
-    const statuses = Object.values(checks).map((c: any) => c.status);
-    const hasFail = statuses.includes('fail');
-    const hasWarn = statuses.includes('warn');
-    const allUnknown = statuses.every((s: string) => s === 'unknown');
-
-    let overall: string;
+    // Use the shared sectionPreflightVerdict helper — the SAME logic
+    // /module-preflight uses. The previous inline logic only avoided 'ready'
+    // when EVERY check was 'unknown', so a section where one governed gate's
+    // READ failed ('unknown') while another passed fell through to 'ready' /
+    // "All preflight checks pass" — a false all-clear written into a GxP
+    // promotion decision (recordPreflightDecision below). The helper treats ANY
+    // 'unknown' (a check that did not run) as needs-review and requires at least
+    // one check to have actually run.
+    const verdict = sectionPreflightVerdict(checks);
+    const overall: string = verdict.overall;
     let summary: string;
-    if (hasFail) {
+    if (overall === 'blocked') {
       const failChecks = Object.entries(checks).filter(([, v]: any) => v.status === 'fail').map(([k]) => k);
-      overall = 'blocked';
       summary = `Section is blocked by ${failChecks.length} failed check(s): ${failChecks.join(', ')}. Resolve before promotion.`;
-    } else if (hasWarn) {
-      overall = 'provisional';
+    } else if (overall === 'provisional') {
       summary = 'Section has warnings. Review before promotion.';
-    } else if (allUnknown) {
-      overall = 'needs-review';
-      summary = 'Preflight checks could not run — manual review recommended.';
+    } else if (overall === 'needs-review') {
+      summary = verdict.checksDidNotRun.length > 0
+        ? `Preflight is incomplete — ${verdict.checksDidNotRun.length} check(s) did not run (${verdict.checksDidNotRun.join(', ')}). Manual review recommended before promotion.`
+        : 'Preflight checks could not run — manual review recommended.';
     } else {
-      overall = 'ready';
-      summary = 'All preflight checks pass. Section is ready for promotion.';
+      summary = `All preflight checks pass (${verdict.checksRan} ran). Section is ready for promotion.`;
     }
 
     // ── Build recommended actions ───────────────────────────────────

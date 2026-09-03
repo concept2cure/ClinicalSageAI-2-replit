@@ -457,9 +457,10 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
    * The scope root. Not optional, and not decoration.
    *
    * Every rule in app.css, pathway-tabs.css, files-tree.css and drafter.css is
-   * scoped under `.mdx-shell` — 845 of app.css's 846 rules, and 100% of the
-   * other three. The class is what makes any of the kit's styling apply, and it
-   * also carries the custom-property block those rules read. Without an element
+   * scoped under `.mdx-shell` — 1,067/1,067, 247/247, 73/73 and 188/188 as of
+   * the surfaces.css port, measured with a CSS parser rather than counted by
+   * hand. The class is what makes any of the kit's styling apply, and it also
+   * carries the custom-property block those rules read. Without an element
    * carrying it, the surfaces render as unstyled markup with no tokens.
    *
    * `data-surface` drops the shell LAYOUT the same class used to carry — a

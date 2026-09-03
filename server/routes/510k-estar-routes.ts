@@ -21,7 +21,7 @@ import {
   listVendoredTemplates,
   type EstarTemplateVariant,
 } from '../services/pathway-engines/estar/estar-template-registry';
-import { listAcroFields } from '../services/forms/fill-official-pdf';
+import { listAcroFields, listXfaFields, isDynamicXfaPdf } from '../services/forms/fill-official-pdf';
 import {
   ESTAR_VERSIONS,
   ESTAR_FAMILY_LABELS,
@@ -577,7 +577,7 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
     logger.error('governed export failure', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({
       error: 'GOVERNED_EXPORT_FAILED',
-      message: error.message || 'Governed content package draft (not an eSTAR) export failed before consequence persistence',
+      message: 'Governed content package draft (not an eSTAR) export failed before consequence persistence. The problem has been logged.',
     });
   }
 });
@@ -601,7 +601,14 @@ function templateVariantFor(
 
 /** Turn an AcroForm field name into a stable, readable canonical-key placeholder. */
 function slugifyAcroFieldName(name: string): string {
-  const tail = name.split(/[.\\/[\]]/).filter(Boolean).pop() ?? name;
+  const segments = name.split(/[.\\/[\]]/).filter(Boolean);
+  // Adobe-authored (XFA/LiveCycle) field names carry a trailing occurrence index —
+  // `form1[0].#subform[0].DeviceTradeName[0]` — so the LAST segment is usually the
+  // number `0`, not the field name. Taking it collapsed every such field to the
+  // key "0" (then 02, 03 … on collision), which made the scaffold unusable against
+  // any real FDA form. Take the last segment that is not a bare index.
+  const tail =
+    [...segments].reverse().find((s) => !/^\d+$/.test(s)) ?? segments[segments.length - 1] ?? name;
   const camel = tail
     // Split camelCase / number boundaries so "DeviceName" → "Device Name".
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
@@ -667,34 +674,64 @@ router.post('/scaffold-field-map', authMiddleware, requireEditorAccess, async (r
       });
     }
 
-    const fields = await listAcroFields(templateBytes);
+    // The official FDA eSTAR templates are Adobe LiveCycle DYNAMIC XFA forms: their
+    // AcroForm `/Fields` array is empty, so listAcroFields returns nothing and a
+    // skeleton built from it would be silently blank. Enumerate whichever layer the
+    // template actually carries.
+    const dynamicXfa = isDynamicXfaPdf(templateBytes);
     const fillableTypes = new Set(['text', 'checkbox', 'dropdown', 'radio']);
-    const skeleton: Record<string, { acroField: string; type: string }> = {};
+    const skeleton: Record<string, { acroField?: string; xfaSomPath?: string; type: string; caption?: string }> = {};
     const nonFillable: { name: string; type: string }[] = [];
     const usedKeys = new Set<string>();
-    for (const f of fields) {
-      if (!fillableTypes.has(f.type)) {
-        nonFillable.push(f);
-        continue;
-      }
-      let key = slugifyAcroFieldName(f.name);
+    let fieldCount = 0;
+    const takeKey = (raw: string) => {
+      let key = slugifyAcroFieldName(raw);
       let suffix = 2;
-      while (usedKeys.has(key)) key = `${slugifyAcroFieldName(f.name)}${suffix++}`;
+      while (usedKeys.has(key)) key = `${slugifyAcroFieldName(raw)}${suffix++}`;
       usedKeys.add(key);
-      skeleton[key] = { acroField: f.name, type: f.type };
+      return key;
+    };
+
+    if (dynamicXfa) {
+      const fields = await listXfaFields(templateBytes);
+      fieldCount = fields.length;
+      for (const f of fields) {
+        // Only a path present in the datasets skeleton can actually be filled.
+        if (!fillableTypes.has(f.type) || !f.inDatasets) {
+          nonFillable.push({ name: f.somPath, type: f.inDatasets ? f.type : `${f.type} (not in datasets)` });
+          continue;
+        }
+        skeleton[takeKey(f.somPath)] = { xfaSomPath: f.somPath, type: f.type, caption: f.caption };
+      }
+    } else {
+      const fields = await listAcroFields(templateBytes);
+      fieldCount = fields.length;
+      for (const f of fields) {
+        if (!fillableTypes.has(f.type)) {
+          nonFillable.push(f);
+          continue;
+        }
+        skeleton[takeKey(f.name)] = { acroField: f.name, type: f.type };
+      }
     }
 
     return res.status(200).json({
       descriptorId: descriptor.id,
       expectedFileName: descriptor.expectedFileName,
-      fieldCount: fields.length,
+      templateKind: dynamicXfa ? 'dynamic-xfa' : 'acroform',
+      fieldCount,
       fillableCount: Object.keys(skeleton).length,
       // Paste into ESTAR_FIELD_MAPS[descriptorId] after renaming/verifying keys.
       skeleton,
-      nonFillable,
-      note:
-        'Canonical keys are slugified placeholders from the real AcroField names — rename them to ' +
-        'your canonical keys and verify each acroField before committing to estar-field-map.ts.',
+      nonFillable: nonFillable.slice(0, 500),
+      nonFillableCount: nonFillable.length,
+      note: dynamicXfa
+        ? 'Dynamic XFA template: fields are addressed by xfaSomPath, not by AcroForm name, and only ' +
+          'paths present in the datasets skeleton are fillable. Canonical keys are slugified ' +
+          'placeholders — rename them and confirm each against the caption before committing to ' +
+          'estar-field-map.ts.'
+        : 'Canonical keys are slugified placeholders from the real AcroField names — rename them to ' +
+          'your canonical keys and verify each acroField before committing to estar-field-map.ts.',
     });
   } catch (error: any) {
     logger.error('scaffold-field-map failure', {
@@ -702,7 +739,7 @@ router.post('/scaffold-field-map', authMiddleware, requireEditorAccess, async (r
     });
     return res.status(500).json({
       error: 'ESTAR_SCAFFOLD_FAILED',
-      message: error.message || 'Failed to enumerate eSTAR template fields',
+      message: 'Failed to enumerate eSTAR template fields. The problem has been logged.',
     });
   }
 });
@@ -820,7 +857,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
     });
     return res.status(500).json({
       error: 'GOVERNED_EXPORT_FAILED',
-      message: error.message || 'Official eSTAR export failed before consequence persistence',
+      message: 'Official eSTAR export failed before consequence persistence. The problem has been logged.',
     });
   }
 });
@@ -894,7 +931,7 @@ router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEnt
     });
     return res.status(500).json({
       error: 'DEVICE_ASSEMBLY_FAILED',
-      message: error.message || 'Failed to compute device assembly state',
+      message: 'Failed to compute device assembly state. The problem has been logged.',
     });
   }
 });
@@ -947,7 +984,7 @@ router.get('/readiness', authMiddleware, async (req, res) => {
     });
     return res.status(500).json({
       error: 'ESTAR_READINESS_FAILED',
-      message: error.message || 'Failed to assess eSTAR readiness',
+      message: 'Failed to assess eSTAR readiness. The problem has been logged.',
     });
   }
 });
@@ -976,7 +1013,7 @@ router.get('/catalog', authMiddleware, async (_req, res) => {
     });
     return res.status(500).json({
       error: 'ESTAR_CATALOG_FAILED',
-      message: error.message || 'Failed to build the eSTAR catalog',
+      message: 'Failed to build the eSTAR catalog. The problem has been logged.',
     });
   }
 });
@@ -1037,7 +1074,7 @@ router.get('/registration', authMiddleware, async (req, res) => {
     });
     return res.status(500).json({
       error: 'ESTAR_REGISTRATION_READ_FAILED',
-      message: error.message || 'Failed to read eSTAR registration',
+      message: 'Failed to read eSTAR registration. The problem has been logged.',
     });
   }
 });
@@ -1068,7 +1105,7 @@ router.put('/registration', authMiddleware, requireEditorAccess, async (req, res
     });
     return res.status(500).json({
       error: 'ESTAR_REGISTRATION_WRITE_FAILED',
-      message: error.message || 'Failed to save eSTAR registration',
+      message: 'Failed to save eSTAR registration. The problem has been logged.',
     });
   }
 });
@@ -1110,7 +1147,7 @@ router.post('/registration/assess', authMiddleware, async (req, res) => {
     });
     return res.status(500).json({
       error: 'ESTAR_REGISTRATION_FAILED',
-      message: error.message || 'Failed to assess eSTAR registration eligibility',
+      message: 'Failed to assess eSTAR registration eligibility. The problem has been logged.',
     });
   }
 });
@@ -1233,7 +1270,7 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
     });
     return res.status(500).json({
       error: 'ESTAR_FILING_READINESS_FAILED',
-      message: error.message || 'Failed to assess eSTAR filing readiness',
+      message: 'Failed to assess eSTAR filing readiness. The problem has been logged.',
     });
   }
 });
@@ -1245,7 +1282,7 @@ function submissionFail(res: any, error: any) {
     return res.status(error.code === 'NOT_FOUND' ? 404 : 400).json({ error: error.code, message: error.message });
   }
   logger.error('estar submission route error', { err: error instanceof Error ? error.message : String(error) });
-  return res.status(500).json({ error: 'ESTAR_SUBMISSION_FAILED', message: error.message || 'eSTAR submission tracking failed' });
+  return res.status(500).json({ error: 'ESTAR_SUBMISSION_FAILED', message: 'eSTAR submission tracking failed. The problem has been logged.' });
 }
 
 const createSubmissionSchema = z.object({

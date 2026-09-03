@@ -1,8 +1,10 @@
 # FDA eSTAR templates (drop-point)
 
-This directory is the drop-point for the **official FDA eSTAR interactive PDF
-templates**. They are distributed by FDA and are **not committed to this repo**
-(licensing/distribution + size). The code in
+This directory holds the **official FDA eSTAR interactive PDF templates**. They
+are distributed by FDA and, following the same vendoring policy as
+`assets/ectd-dtd/`, are **committed here verbatim** and pinned by
+`checksums.txt` — a template swap without re-verification would silently change
+what gets written into a submission. The code in
 `server/services/pathway-engines/estar/estar-template-registry.ts` reads the
 templates from here (or from `ESTAR_TEMPLATE_DIR`) and fails closed — when a
 required template is missing and `ESTAR_REQUIRE_TEMPLATE=true` in production —
@@ -56,14 +58,36 @@ resolve to the **same** physical FDA PDF — the one nIVD eSTAR PDF carries
 
 FDA eSTAR program page: <https://www.fda.gov/medical-devices/premarket-submissions-selecting-and-preparing-correct-submission/estar-program>
 
+## Currently vendored
+
+| File | Family | Version | FDA effective date | SHA-256 |
+|---|---|---|---|---|
+| `eSTAR-510k-non-ivd.pdf` | nIVD | **7.0** | 2026-06-01 | `73de2f1e…0edb92` |
+| `eSTAR-510k-ivd.pdf` | IVD | **7.0** | 2026-06-01 | `90d93649…c1594f` |
+
+Both are pinned in `ESTAR_TEMPLATE_MANIFEST` (`version: '7.0'`) and their versions
+are read from the templates' own XFA `template` packet, not from the FDA page.
+
+**These are Adobe LiveCycle DYNAMIC XFA forms.** Their AcroForm `/Fields` array is
+EMPTY and `/NeedsRendering true` is set — `listAcroFields` returns 0 fields, and no
+`acroField` name can ever match. They are filled by writing the XFA `datasets`
+packet through a PDF incremental update (`fillXfaDatasets`), which preserves the
+original bytes so the output stays the real FDA form. See
+`server/services/forms/fill-official-pdf.ts`.
+
 ## Versioning
 
-FDA revises eSTAR periodically. A version bump is a tracked asset update:
+FDA revises eSTAR roughly twice a year. A version bump is a tracked **data** change,
+never a code change:
 1. Replace the PDF(s) here.
 2. Update the matching `version` in `ESTAR_TEMPLATE_MANIFEST` and, for a new FDA
    program version/retirement/OMB change, `ESTAR_VERSIONS` in `estar-versions.ts`.
-3. Re-validate the field map (`canonical field → AcroForm field name`) against
-   the new template before enabling it for production fills.
+3. Re-enumerate with `listXfaFields` and re-validate the field map
+   (`canonical key → XFA SOM path`) in `estar-field-map.ts` against the new
+   template before enabling it for production fills. Every mapped path must be
+   declared by the template AND present in its `datasets` skeleton; the fill
+   engine skips+warns on anything else rather than inventing a data node.
+4. Update `checksums.txt` with the new SHA-256s.
 
 ## Environment flags
 

@@ -1176,6 +1176,114 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
+  // ── Biostatistics workbench ──
+  {
+    id: 'biostat-workbench.select-calculator',
+    surfaceId: 'biostat-workbench',
+    label: 'Open a design engine',
+    description:
+      'On the biostatistics workbench, open one of the design engines (assurance, group-sequential, sample size, multiplicity, and the rest) by its name so its inputs show — the same tile click a person makes. Computing a result stays a deliberate act; this only opens the engine. Honest misses.',
+    params: [
+      { name: 'calculator', required: true, description: 'The design engine\'s title or a distinctive phrase from it (case-insensitive; partial names resolve when unambiguous).' },
+    ],
+  },
+
+  // ── Filing strategy ──
+  {
+    id: 'filing-strategy.open-tab',
+    surfaceId: 'filing-strategy',
+    label: 'Open a filing-strategy tab',
+    description:
+      'On the filing-strategy workspace, switch between the filing-sequence, agency-divergence, and prediction-calibration tabs.',
+    params: [
+      { name: 'tab', required: true, description: 'The tab to open.', enum: ['sequence', 'divergence', 'calibration'] },
+    ],
+  },
+
+  // ── Safety narratives ──
+  {
+    id: 'safety-narrative.select-case',
+    surfaceId: 'safety-narrative',
+    label: 'Open an SAE case',
+    description:
+      'On the safety-narrative workbench, open an SAE case from the worklist by its id or study id so its composed ICH E3 §16 narrative and reporting clock show — the same row click a person makes. Editing the narrative stays a human act. Resolved against the real worklist with honest misses; held while it loads.',
+    params: [
+      { name: 'case', required: true, description: 'The case id or its study id, as listed (case-insensitive; a distinctive partial resolves when unambiguous).' },
+    ],
+  },
+
+  // ── FDA CRL library ──
+  {
+    id: 'crl-library.select-finding',
+    surfaceId: 'crl-library',
+    label: 'Open a CRL finding',
+    description:
+      'On the FDA CRL library, open a deficiency finding by its id so its detail shows — the same row click a person makes. Resolved against the real search results with honest misses; held while the search loads.',
+    params: [
+      { name: 'finding', required: true, description: 'The finding id as listed (case-insensitive).' },
+    ],
+  },
+
+  // ── Registrations / lifecycle ──
+  {
+    id: 'registrations.open-tab',
+    surfaceId: 'registrations',
+    label: 'Open a registrations tab',
+    description:
+      'On the registrations workspace, switch between marketing authorizations, the approvals tracker, renewals & variations, HA commitments, and submission strategy.',
+    params: [
+      { name: 'tab', required: true, description: 'The tab to open.', enum: ['reg', 'clock', 'vary', 'commit', 'strategy'] },
+    ],
+  },
+
+  // ── CRO portfolio ──
+  {
+    id: 'cro-portfolio.select-sponsor',
+    surfaceId: 'cro-portfolio',
+    label: 'Select a sponsor',
+    description:
+      'On the CRO portfolio, select a sponsor by name so its engagements show — the same row click a person makes. Resolved against the real roster with honest misses; held while it loads.',
+    params: [
+      { name: 'sponsor', required: true, description: 'The sponsor name as listed (case-insensitive; a distinctive partial resolves when unambiguous).' },
+    ],
+  },
+
+  // ── Agency meetings ──
+  {
+    id: 'agency-meetings.select-meeting',
+    surfaceId: 'agency-meetings',
+    label: 'Open an agency meeting',
+    description:
+      'On the agency-meetings workspace, open a meeting by its id or a distinctive phrase (agency, type, or program) so its briefing book and minutes show — the same row click a person makes. Requesting or scheduling a meeting stays a governed human act. Honest misses; held while the list loads.',
+    params: [
+      { name: 'meeting', required: true, description: 'The meeting id, or a distinctive phrase from its agency / type / program (case-insensitive).' },
+    ],
+  },
+
+  // ── Source tracer ──
+  {
+    id: 'source-tracer.select-section',
+    surfaceId: 'source-tracer',
+    label: 'Open a traced section',
+    description:
+      'On the source tracer, open an authored section by its id or a distinctive phrase from its title/document so its cited sources and their verification state show — the same row click a person makes. Resolved against the real sections with honest misses; held while they load.',
+    params: [
+      { name: 'section', required: true, description: 'The section id, or a distinctive phrase from its title or document (case-insensitive).' },
+    ],
+  },
+
+  // ── Decision lineage ──
+  {
+    id: 'decision-lineage.select-graph',
+    surfaceId: 'decision-lineage',
+    label: 'Open a decision-lineage graph',
+    description:
+      'On the decision-lineage surface, open the lineage graph for a governed artifact by its label so its node-by-node derivation shows — the same row click a person makes. Resolved against the real graphs with honest misses; held while they load.',
+    params: [
+      { name: 'artifact', required: true, description: 'The artifact label as listed (case-insensitive; a distinctive partial resolves when unambiguous).' },
+    ],
+  },
+
   // ── Deep research ──
   {
     id: 'deep-research.open-tab',

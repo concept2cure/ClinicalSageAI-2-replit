@@ -160,6 +160,61 @@ DISLINK=$(cat "$OUT/dis1.json" | JQ '.module3Linked // empty')
 CODE=$(req dis2 POST /api/cmc/dissolution-profiles "{\"projectId\":\"$PROGRAM\",\"purpose\":\"release-specification\",\"productName\":\"BX-701 film-coated tablet\",\"batchNumber\":\"BX701-DP-2407\",\"apparatus\":\"USP II (paddle)\",\"rotationSpeed\":\"50 rpm\",\"medium\":\"pH 6.8 phosphate buffer\",\"mediumVolume\":\"900 mL\",\"unitsTested\":12,\"specification\":\"Q = 80% at 30 min\",\"results\":[{\"timepoint\":\"30\",\"meanPercent\":\"96\",\"sd\":\"1.4\",\"rsd\":\"1.5\",\"n\":\"12\"}]}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "release-specification dissolution profile recorded ($CODE)" || bad "release profile failed ($CODE)"
 
+step "8g. Formulation development records the composition and the excipients (feeds 3.2.P.1 / 3.2.P.4 / 3.2.A.3)"
+CODE=$(req form1 POST /api/cmc/formulation-records "{\"projectId\":\"$PROGRAM\",\"formulationName\":\"BX-701 5 mg film-coated tablet\",\"version\":\"F-v2.0\",\"dosageForm\":\"Film-coated tablet\",\"strength\":\"5 mg\",\"batchSize\":\"250,000 tablets\",\"status\":\"current\",\"components\":[{\"component\":\"BX-701\",\"role\":\"Active\",\"amountPerUnit\":\"5\",\"unit\":\"mg\",\"percentWeight\":\"4.0\",\"origin\":\"synthetic\"},{\"component\":\"Microcrystalline cellulose\",\"role\":\"Diluent\",\"amountPerUnit\":\"80\",\"unit\":\"mg\",\"percentWeight\":\"64.0\",\"origin\":\"plant\"},{\"component\":\"Gelatin\",\"role\":\"Binder\",\"amountPerUnit\":\"3\",\"unit\":\"mg\",\"origin\":\"bovine\"}]}")
+FORMLINK=$(cat "$OUT/form1.json" | JQ '.module3Linked // empty')
+[ "$CODE" = 200 -o "$CODE" = 201 ] && [ "$FORMLINK" = "true" ] \
+  && ok "formulation recorded as the current version and linked ($CODE)" \
+  || bad "formulation failed ($CODE, module3Linked=$FORMLINK): $(head -c250 "$OUT/form1.json")"
+# Exactly one version may be current: §3.2.P.1 renders one governing composition.
+CODE=$(req form2 POST /api/cmc/formulation-records "{\"projectId\":\"$PROGRAM\",\"formulationName\":\"BX-701 5 mg film-coated tablet\",\"version\":\"F-v3.0\",\"status\":\"current\",\"components\":[{\"component\":\"BX-701\",\"role\":\"Active\"}]}")
+[ "$CODE" = 409 ] && ok "a second current formulation is refused (409)" || bad "two formulations claim to be current ($CODE)"
+CODE=$(req mat1 POST /api/cmc/material-specs "{\"projectId\":\"$PROGRAM\",\"materialRole\":\"excipient\",\"materialName\":\"Microcrystalline cellulose\",\"functionInFormulation\":\"Diluent\",\"grade\":\"PH-102\",\"compendialMonograph\":\"USP-NF\",\"supplier\":\"DuPont\",\"origin\":\"plant\",\"analyticalProcedures\":\"Per USP-NF monograph\",\"testParameters\":[{\"test\":\"Identification\",\"method\":\"IR\",\"acceptanceCriteria\":\"Conforms\"},{\"test\":\"Loss on drying\",\"method\":\"USP <731>\",\"acceptanceCriteria\":\"NMT 7.0%\"}],\"status\":\"specified\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "excipient specification recorded ($CODE)" || bad "excipient failed ($CODE)"
+# An animal-origin excipient with its TSE certificate — what 3.2.A.3 exists for.
+CODE=$(req mat2 POST /api/cmc/material-specs "{\"projectId\":\"$PROGRAM\",\"materialRole\":\"excipient\",\"materialName\":\"Gelatin\",\"functionInFormulation\":\"Binder\",\"compendialMonograph\":\"Ph. Eur. 0330\",\"origin\":\"bovine\",\"originDetail\":\"EU-sourced, ruminant-free feed\",\"tseCertificate\":\"R1-CEP 2019-123\",\"analyticalProcedures\":\"Per Ph. Eur. 0330\",\"testParameters\":[{\"test\":\"Identification\",\"method\":\"Ph. Eur.\",\"acceptanceCriteria\":\"Conforms\"}],\"status\":\"specified\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "animal-origin excipient recorded with its TSE certificate ($CODE)" || bad "gelatin failed ($CODE)"
+# A starting material is §3.2.S.2.3 content, not §3.2.P.4 content.
+CODE=$(req mat3 POST /api/cmc/material-specs "{\"projectId\":\"$PROGRAM\",\"materialRole\":\"starting-material\",\"materialName\":\"Intermediate INT-2\",\"grade\":\"In-house\",\"supplier\":\"Lonza AG\",\"origin\":\"synthetic\",\"testParameters\":[{\"test\":\"Assay\",\"method\":\"HPLC\",\"acceptanceCriteria\":\"NLT 98.0%\"}],\"status\":\"specified\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "starting material recorded ($CODE)" || bad "starting material failed ($CODE)"
+
+step "8h. Process development records the manufacturing process (feeds 3.2.S.2.2), and characterisation records what the substance IS (3.2.S.3.1)"
+CODE=$(req proc1 POST /api/cmc/manufacturing-processes "{\"projectId\":\"$PROGRAM\",\"processName\":\"BX-701 drug substance synthesis\",\"processType\":\"drug_substance\",\"batchSize\":\"25 kg\",\"processSteps\":[{\"stepNumber\":2,\"unitOperation\":\"Crystallisation\",\"description\":\"Crystallise from ethanol/water 3:1\",\"holdTime\":\"24 h\",\"inProcessControls\":[{\"test\":\"Crystal form\",\"acceptanceCriteria\":\"Form I by XRPD\"}]},{\"stepNumber\":1,\"unitOperation\":\"Coupling\",\"description\":\"Couple INT-2 with the amine\",\"inProcessControls\":[{\"test\":\"Reaction completion\",\"acceptanceCriteria\":\"NLT 98% by HPLC\"}]}],\"criticalProcessParameters\":[{\"parameter\":\"Crystallisation temperature\",\"step\":\"Crystallisation\",\"target\":\"5\",\"rangeLow\":\"2\",\"rangeHigh\":\"8\",\"unit\":\"C\",\"criticality\":\"critical\",\"linkedCqa\":\"Polymorphic form\"}],\"processControls\":[{\"test\":\"Residual ethanol\",\"acceptanceCriteria\":\"NMT 5000 ppm\"}],\"equipmentList\":[{\"equipment\":\"RX-200 reactor\",\"type\":\"Glass-lined reactor\",\"qualificationStatus\":\"IQ/OQ/PQ complete\"}]}")
+PROCID=$(cat "$OUT/proc1.json" | JQ '.data.id // empty')
+PROCLINK=$(cat "$OUT/proc1.json" | JQ '.module3Linked // empty')
+[ "$CODE" = 200 -o "$CODE" = 201 ] && [ -n "$PROCID" ] && [ "$PROCLINK" = "true" ] \
+  && ok "drug substance process recorded and linked ($CODE)" \
+  || bad "manufacturing process failed ($CODE, module3Linked=$PROCLINK): $(head -c250 "$OUT/proc1.json")"
+# Validated is a signature, not a word anyone may type.
+CODE=$(req procself PUT "/api/cmc/manufacturing-processes/$PROCID" '{"processName":"BX-701 drug substance synthesis","validationStatus":"validated"}')
+[ "$CODE" = 409 ] && ok "a self-declared process validation is refused (409)" || bad "ungoverned validation accepted ($CODE)"
+# A process with no steps cannot be signed as validated: the signature would attest to nothing.
+CODE=$(req proc2 POST /api/cmc/manufacturing-processes "{\"projectId\":\"$PROGRAM\",\"processName\":\"Placeholder tablet process\",\"processType\":\"drug_product\"}")
+EMPTYPROC=$(cat "$OUT/proc2.json" | JQ '.data.id // empty')
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "an undescribed process may be recorded ($CODE)" || bad "second process failed ($CODE)"
+CODE=$(req procv0 POST "/api/cmc/manufacturing-processes/$EMPTYPROC/validate" '{"reason":"Attempting to validate a process with no recorded steps.","meaning":"approval","reauth":{"password":"pass-word"}}')
+[ "$CODE" = 409 ] && ok "validating a process with no steps is refused (409)" || bad "signed a process describing nothing ($CODE)"
+CODE=$(req procv1 POST "/api/cmc/manufacturing-processes/$PROCID/validate" '{"reason":"PPQ batches 2401-2403 met every acceptance criterion.","meaning":"approval","reauth":{"password":"pass-word"}}')
+PROCSIG=$(cat "$OUT/procv1.json" | JQ '.governance.actionId // empty')
+[ "$CODE" = 200 ] && [ -n "$PROCSIG" ] && ok "process validated under signature $PROCSIG" || bad "process validate failed ($CODE): $(head -c250 "$OUT/procv1.json")"
+
+CODE=$(req char1 POST /api/cmc/characterization-studies "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_substance\",\"studyType\":\"structural\",\"studyTitle\":\"Structure confirmation of BX-701\",\"technique\":\"1H/13C NMR, HRMS, FT-IR, elemental analysis\",\"attribute\":\"Molecular structure\",\"result\":\"Consistent with the proposed structure\",\"conclusion\":\"The structure of BX-701 is confirmed\",\"studyReference\":\"RPT-CHAR-001\",\"supportingData\":[{\"label\":\"d 7.82 (d, 2H)\",\"value\":\"Aromatic H-3/H-5\",\"note\":\"1H NMR, DMSO-d6\"}]}")
+CHARID=$(cat "$OUT/char1.json" | JQ '.data.id // empty')
+CHARLINK=$(cat "$OUT/char1.json" | JQ '.module3Linked // empty')
+[ "$CODE" = 200 -o "$CODE" = 201 ] && [ "$CHARLINK" = "true" ] \
+  && ok "structural characterisation recorded and linked ($CODE)" \
+  || bad "characterisation failed ($CODE, module3Linked=$CHARLINK): $(head -c250 "$OUT/char1.json")"
+CODE=$(req char2 POST /api/cmc/characterization-studies "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_substance\",\"studyType\":\"physicochemical\",\"studyTitle\":\"Aqueous solubility across the physiological range\",\"technique\":\"Shake-flask\",\"attribute\":\"Solubility at pH 6.8\",\"result\":\"0.42\",\"resultUnit\":\"mg/mL\",\"conclusion\":\"Low solubility; BCS class II behaviour\",\"studyReference\":\"RPT-CHAR-002\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "physicochemical characterisation recorded ($CODE)" || bad "physchem study failed ($CODE)"
+# Deliberately left without a result: the section must show it and NOT count it.
+CODE=$(req char3 POST /api/cmc/characterization-studies "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_substance\",\"studyType\":\"biological\",\"studyTitle\":\"Target inhibition assay\",\"technique\":\"Enzymatic assay\",\"attribute\":\"IC50\"}")
+EMPTYCHAR=$(cat "$OUT/char3.json" | JQ '.data.id // empty')
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "a study still in flight may be recorded without a result ($CODE)" || bad "in-flight study failed ($CODE)"
+CODE=$(req charq0 POST "/api/cmc/characterization-studies/$EMPTYCHAR/qualify" '{"reason":"Attempting to sign a study with no recorded result.","meaning":"approval","reauth":{"password":"pass-word"}}')
+[ "$CODE" = 409 ] && ok "signing a study with no result is refused (409)" || bad "signed a study establishing nothing ($CODE)"
+CODE=$(req charq1 POST "/api/cmc/characterization-studies/$CHARID/qualify" '{"reason":"Spectra reviewed against the proposed structure; assignment complete.","meaning":"approval","reauth":{"password":"pass-word"}}')
+[ "$CODE" = 200 ] && ok "characterisation study qualified under signature" || bad "characterisation qualify failed ($CODE)"
+
 step "9. Change manager proposes a governed change WITH project (marks 3.2 stale)"
 CODE=$(req change POST /api/cmc-changes "{\"title\":\"Bioreactor scale-up 500L→2000L\",\"dosageFormFamily\":\"biologic\",\"changeCategory\":\"scale_up\",\"scaleChangeFactor\":\"within_10x\",\"touchesCriticalStep\":true,\"affects\":\"drug_substance\",\"cmcProjectId\":\"$PROGRAM\"}")
 WT=$(cat "$OUT/change.json" | JQ '.meta.module3WriteThrough // empty')
@@ -244,13 +299,16 @@ S3THR=$(echo "$S3" | jq -r '[.tables[]? | select(.title | test("ICH Threshold Ba
 [ "${S3PPM:-0}" -ge 1 ] && [ "${S3PCT:-0}" = "0" ] && [ "${S3THR:-0}" -ge 1 ] \
   && ok "§3.2.S.3.2 renders 300 ppm as ppm (never 300%) and states the ICH threshold basis" \
   || bad "§3.2.S.3.2: ppmRows=$S3PPM percentRows=$S3PCT thresholdTables=$S3THR"
-# The residual solvent is refused BY CLASS and routed to the guideline that does
-# govern it, and the section says which impurities it actually compared.
-S3OUT=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "Q3C")
-S3CMP=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "compared to an ICH threshold")
-[ "${S3OUT:-0}" -ge 1 ] && [ "${S3CMP:-0}" -ge 1 ] \
-  && ok "§3.2.S.3.2 routes the residual solvent to ICH Q3C and claims only what it compared" \
-  || bad "§3.2.S.3.2 out-of-scope routing: Q3C=$S3OUT comparedClaim=$S3CMP"
+# The residual solvent is ASSESSED against the guideline that governs it — it
+# used to be refused by class and merely routed to Q3C, which was true and
+# useless — and each population is counted under its own guideline, never folded
+# into a Q3A/Q3B tally it was not compared against.
+S3OUT=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "assessed against ICH Q3C(R8)")
+S3CMP=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "compared to an ICH Q3A/Q3B threshold")
+S3LIM=$(echo "$S3" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("ICH Q3C Class"))] | length' 2>/dev/null)
+[ "${S3OUT:-0}" -ge 1 ] && [ "${S3CMP:-0}" -ge 1 ] && [ "${S3LIM:-0}" -ge 1 ] \
+  && ok "§3.2.S.3.2 assesses the residual solvent against ICH Q3C and counts each population under its own guideline" \
+  || bad "§3.2.S.3.2 Q3C routing: assessedClaim=$S3OUT q3aClaim=$S3CMP q3cLimitRows=$S3LIM"
 
 P2=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.P.2")][0]' 2>/dev/null)
 P2DEV=$(echo "$P2" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("BX701-DP-2406"))] | length' 2>/dev/null)
@@ -264,6 +322,61 @@ P5DEV=$(echo "$P5" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | tes
 [ "${P5REL:-0}" -ge 1 ] && [ "${P5DEV:-0}" = "0" ] \
   && ok "§3.2.P.5 carries the release-specification batch and NOT the development batch" \
   || bad "§3.2.P.5 purpose bleed: releaseRows=$P5REL developmentRows=$P5DEV"
+
+step "11f. §3.2.P.1, §3.2.P.4 and §3.2.A.3 compose from the formulation and material registers"
+P1=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.P.1")][0]' 2>/dev/null)
+P1CUR=$(echo "$P1" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "The current formulation is")
+P1COMP=$(echo "$P1" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("Microcrystalline cellulose"))] | length' 2>/dev/null)
+[ "${P1CUR:-0}" -ge 1 ] && [ "${P1COMP:-0}" -ge 1 ] \
+  && ok "§3.2.P.1 names the current formulation and renders its quantitative composition" \
+  || bad "§3.2.P.1: currentClaim=$P1CUR componentRows=$P1COMP"
+
+P4=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.P.4")][0]' 2>/dev/null)
+P4EXC=$(echo "$P4" | jq -r '[.tables[]? | select(.title | test("Control of Excipients")) | .rows[]?] | length' 2>/dev/null)
+# The starting material belongs to §3.2.S.2.3 Control of Materials, which is what
+# the register grid tells the staffer. It rendered inside §3.2.P.4 Control of
+# EXCIPIENTS because that was the only section rule naming raw_material_spec.
+S2RAW=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.S.2") | .tables[]? | select(.title | test("Raw and Starting")) | .rows[]? | select(.[] | tostring | test("Intermediate INT-2"))] | length' 2>/dev/null)
+P4XRAW=$(echo "$P4" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("Intermediate INT-2"))] | length' 2>/dev/null)
+[ "${P4EXC:-0}" -ge 2 ] && [ "${S2RAW:-0}" -ge 1 ] && [ "${P4XRAW:-0}" = "0" ] \
+  && ok "§3.2.P.4 lists both excipients; the starting material files under §3.2.S.2.3" \
+  || bad "§3.2.P.4: excipientRows=$P4EXC rawRowsInS2=$S2RAW leakedIntoP4=$P4XRAW"
+
+# The animal-origin question, answered from the recorded origin rather than a
+# regex over free text — and never answered at all over an empty register.
+A3=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.A.3")][0]' 2>/dev/null)
+A3GEL=$(echo "$A3" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("Gelatin"))] | length' 2>/dev/null)
+A3FREE=$(echo "$A3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "No excipients of human or animal origin are used")
+[ "${A3GEL:-0}" -ge 1 ] && [ "${A3FREE:-0}" = "0" ] \
+  && ok "§3.2.A.3 names the animal-origin excipient and never calls the product animal-free" \
+  || bad "§3.2.A.3: gelatinRows=$A3GEL animalFreeClaim=$A3FREE"
+
+step "11g. §3.2.S.2 and §3.2.S.3 compose from the process and characterisation registers"
+S2=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.S.2")][0]' 2>/dev/null)
+# Steps ordered by their RECORDED number, not by the order they were posted:
+# Coupling was sent second and is step 1.
+S2ORDER=$(echo "$S2" | jq -r '[.tables[]? | select(.title | test("Manufacturing Process Steps")) | .rows[]? | .[2]] | join(">")' 2>/dev/null)
+S2CPP=$(echo "$S2" | jq -r '[.tables[]? | select(.title | test("Critical Process Parameters")) | .rows[]? | select(.[] | tostring | test("Crystallisation temperature"))] | length' 2>/dev/null)
+S2RANGE=$(echo "$S2" | jq -r '[.tables[]? | select(.title | test("Critical Process Parameters")) | .rows[]? | select(.[] | tostring | test("2 . 8"))] | length' 2>/dev/null)
+S2IPC=$(echo "$S2" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("Form I by XRPD"))] | length' 2>/dev/null)
+[ "$S2ORDER" = "Coupling>Crystallisation" ] && [ "${S2CPP:-0}" -ge 1 ] && [ "${S2RANGE:-0}" -ge 1 ] && [ "${S2IPC:-0}" -ge 1 ] \
+  && ok "§3.2.S.2 renders the steps in recorded order with their CPP range and in-process controls" \
+  || bad "§3.2.S.2: order=$S2ORDER cppRows=$S2CPP rangeRows=$S2RANGE ipcRows=$S2IPC"
+# The drug-PRODUCT process must not appear in the drug substance's section.
+S2LEAK=$(echo "$S2" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("Placeholder tablet process"))] | length' 2>/dev/null)
+[ "${S2LEAK:-0}" = "0" ] && ok "the drug product process does not leak into §3.2.S.2" || bad "drug product process appears in §3.2.S.2 ($S2LEAK rows)"
+
+S3=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.S.3")][0]' 2>/dev/null)
+S3STUDY=$(echo "$S3" | jq -r '[.tables[]? | select(.title | test("Characterisation Studies")) | .rows[]? | select(.[] | tostring | test("Structure confirmation"))] | length' 2>/dev/null)
+S3DETAIL=$(echo "$S3" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("Aromatic H-3/H-5"))] | length' 2>/dev/null)
+# Two of the three questions are answered; the biological study has no result,
+# so the section must say bioactivity is NOT established rather than counting it.
+S3BIO=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "biological activity")
+S3EMPTY=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "neither a result nor a conclusion")
+S3MISS=$(echo "$S3" | jq -r '[.missingInputs[]? | select(. == "biologicalActivity")] | length' 2>/dev/null)
+[ "${S3STUDY:-0}" -ge 1 ] && [ "${S3DETAIL:-0}" -ge 1 ] && [ "${S3BIO:-0}" -ge 1 ] && [ "${S3EMPTY:-0}" -ge 1 ] && [ "${S3MISS:-0}" -ge 1 ] \
+  && ok "§3.2.S.3 renders the studies and refuses to count the one with no result" \
+  || bad "§3.2.S.3: studyRows=$S3STUDY detailRows=$S3DETAIL bioClause=$S3BIO emptyClause=$S3EMPTY missing=$S3MISS"
 
 step "12. Contradiction sweep"
 CODE=$(req sweep POST "/api/cmc/module3-os/contradictions/$PROGRAM" '{}')
@@ -338,7 +451,10 @@ M3REQ=$(cat "$OUT/ectd.json" | jq '[.validationResults[]? | select(.rule=="REQUI
 
 step "20. The IND checklist sees the M3 leaves"
 CODE=$(req checklist GET /api/ind-checklist)
-M3=$(cat "$OUT/checklist.json" | jq '[.data[0].sections[]? | select(.code | tostring | startswith("m3"))] | length' 2>/dev/null)
+# Across every submission the checklist returns, not data[0]: an org that has
+# run this simulation before carries more than one submission, and which one
+# sorts first is not this step's subject.
+M3=$(cat "$OUT/checklist.json" | jq '[.data[]?.sections[]? | select(.code | tostring | startswith("m3"))] | length' 2>/dev/null)
 [ "$CODE" = 200 ] && [ "${M3:-0}" -ge 17 ] && ok "checklist shows $M3 Module 3 sections" || bad "checklist m3 sections=$M3 ($CODE)"
 
 step "21. The data room lists the Module 3 branch + an upload"

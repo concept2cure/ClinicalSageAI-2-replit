@@ -29,6 +29,8 @@ export interface ReviewItem {
   conf: number | null;
   prov: string | null;
   passage: string;
+  // Caller owns the current step (server-decided). Absent → not known to be yours.
+  mine?: boolean;
 }
 
 export interface WorkflowStep {

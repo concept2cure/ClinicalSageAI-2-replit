@@ -195,7 +195,13 @@ describe('SubmissionCenter — the lead action over an unread sequence list', ()
     expect(/0 eCTD sequences tracked yet/i.test(body())).toBe(true);
 
     fireEvent.click(plan);
-    expect(await screen.findByText(/AnA builds the sequence plan from the region profile/i)).toBeTruthy();
+    // The Planner view rendered. Assert on its stable card subtitle, not the
+    // intro blurb: that prose was (correctly) reworded upstream from "AnA builds
+    // the sequence plan…" — an over-claim, since the button only opens the chat
+    // rail — to "AnA can draft… as a proposal in conversation." Reaching the
+    // Planner is the behaviour under test; the wording of its blurb is not, and
+    // this suite's own contract is to not assert on source prose.
+    expect(await screen.findByText(/planning · region profiles/i)).toBeTruthy();
   });
 
   it('offers the sequences when this submission has them', async () => {

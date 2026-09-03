@@ -22,7 +22,12 @@ import {
 } from './module3Composer';
 /* The scope rule is shared with the register surfaces, not owned by either
    side: see shared/cmc/material-scope.ts. */
-import { normalizeMaterialScope } from '../../shared/cmc/material-scope';
+import {
+  EXCIPIENT_ROLES,
+  isHumanOrAnimalOrigin,
+  normalizeMaterialRole,
+  normalizeMaterialScope,
+} from '../../shared/cmc/material-scope';
 import {
   DISSOLUTION_DEVELOPMENT_PURPOSES,
   DISSOLUTION_RELEASE_PURPOSE,
@@ -30,6 +35,10 @@ import {
 } from '../../shared/cmc/dissolution-purpose';
 /* The ICH impurity classes are the assessment engine's vocabulary, not this
    module's: one definition, in services/cmc/impurity-assessment. */
+import {
+  CHARACTERIZATION_TYPE_FIELD,
+  normalizeCharacterizationType,
+} from '../../shared/cmc/characterization-type';
 import { isAssessableImpurity } from './cmc/impurity-assessment';
 import unifiedTaskService from './unifiedTaskService';
 
@@ -76,6 +85,7 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
   excipient: 'Excipient',
   impurity_profile: 'Impurity Profile',
   dissolution_profile: 'Dissolution Profile',
+  material_spec: 'Material Specification',
   qc_result: 'QC Result',
   raw_material_spec: 'Raw Material Specification',
   formulation_record: 'Formulation Record',
@@ -110,6 +120,24 @@ function textOf(v: unknown): string {
   return '';
 }
 
+
+/**
+ * First truthy value among a record's aliases for one field, '' when none has
+ * one — exactly what `alias(record, 'camelCase', 'snake_case')` did at 118
+ * sites across these mappers.
+ *
+ * The registers write camelCase and the tables store snake_case, so every
+ * mapper read both. Spelled out inline, each read cost two branch points and
+ * the coalescing alone pushed these functions past the complexity ceiling —
+ * the aliasing is noise, not logic, and it should not read as either.
+ */
+function alias(record: Record<string, any>, ...keys: string[]): any {
+  for (const key of keys) {
+    const value = record[key];
+    if (value) return value;
+  }
+  return '';
+}
 
 /**
  * Does this recorded result carry an actual measurement?
@@ -152,14 +180,14 @@ export function mapDrugSubstancePayload(record: Record<string, any>): Record<str
   const mp = (record.manufacturingProcess ?? record.manufacturing_process ?? {}) as Record<string, any>;
   const route = record.manufacturingRoute || record.manufacturing_route || mp.route || '';
   return {
-    name: record.substanceName || record.substance_name || '',
+    name: alias(record, 'substanceName', 'substance_name'),
     inn: record.inn || '',
     manufacturer: record.manufacturer || mp.manufacturer || '',
     manufacturingSite: record.manufacturingSite || record.manufacturing_site || mp.site || '',
-    cas: record.casNumber || record.cas || record.cas_number || '',
-    molecularFormula: record.molecularFormula || record.molecular_formula || '',
-    molecularWeight: record.molecularWeight || record.molecular_weight || '',
-    structure: record.structure || record.structuralFormula || record.structural_formula || '',
+    cas: alias(record, 'casNumber', 'cas', 'cas_number'),
+    molecularFormula: alias(record, 'molecularFormula', 'molecular_formula'),
+    molecularWeight: alias(record, 'molecularWeight', 'molecular_weight'),
+    structure: alias(record, 'structure', 'structuralFormula', 'structural_formula'),
     manufacturingRoute: route,
     /* The form labels the route field as "the §3.2.S.2.2 description"; at this
        register's granularity the recorded route IS the process description
@@ -179,7 +207,7 @@ export function mapDrugSubstancePayload(record: Record<string, any>): Record<str
        evaluation, build item 4) is that field's honest producer. */
     structuralElucidation: record.structuralElucidation || record.structural_elucidation || null,
     qualificationBasis: record.qualificationBasis || record.qualification_basis || null,
-    developmentPhase: record.developmentPhase || record.development_phase || '',
+    developmentPhase: alias(record, 'developmentPhase', 'development_phase'),
     status: record.status || '',
   };
 }
@@ -217,15 +245,15 @@ export function mapDrugProductPayload(record: Record<string, any>): Record<strin
   const objOrNull = (v: unknown) =>
     v != null && typeof v === 'object' && Object.keys(v as object).length > 0 ? v : null;
   return {
-    name: record.productName || record.product_name || '',
-    dosageForm: record.dosageForm || record.dosage_form || '',
-    dosageFormDescription: record.dosageForm || record.dosage_form || '',
+    name: alias(record, 'productName', 'product_name'),
+    dosageForm: alias(record, 'dosageForm', 'dosage_form'),
+    dosageFormDescription: alias(record, 'dosageForm', 'dosage_form'),
     strength: record.strength || '',
-    routeOfAdministration: record.routeOfAdministration || record.route_of_administration || '',
+    routeOfAdministration: alias(record, 'routeOfAdministration', 'route_of_administration'),
     containerClosure:
       record.containerClosure || record.container_closure ||
       pkg.containerClosure || pkg.container_closure || '',
-    batchSize: record.batchSize || record.batch_size || '',
+    batchSize: alias(record, 'batchSize', 'batch_size'),
     /* 3.2.P.3's `formulation` is the BATCH formula — mapped from the row's
        batch_formula json only. The per-unit composition (a P.1 fact) is
        deliberately not aliased in: rendering it as the batch formula would
@@ -259,17 +287,17 @@ export function mapDrugProductPayload(record: Record<string, any>): Record<strin
  */
 export function mapAnalyticalMethodPayload(record: Record<string, any>): Record<string, any> {
   return {
-    methodName: record.methodName || record.method_name || record.title || '',
-    methodCode: record.methodCode || record.method_code || '',
-    methodType: record.methodType || record.method_type || record.technique || '',
+    methodName: alias(record, 'methodName', 'method_name', 'title'),
+    methodCode: alias(record, 'methodCode', 'method_code'),
+    methodType: alias(record, 'methodType', 'method_type', 'technique'),
     technique: record.technique || '',
     analyte: record.analyte || '',
     matrix: record.matrix || '',
     purpose: record.purpose || '',
     principle: record.principle || '',
     procedure: record.procedure || '',
-    validationStatus: record.validationStatus || record.validation_status || record.status || '',
-    acceptanceCriteria: record.acceptanceCriteria || record.acceptance_criteria || '',
+    validationStatus: alias(record, 'validationStatus', 'validation_status', 'status'),
+    acceptanceCriteria: alias(record, 'acceptanceCriteria', 'acceptance_criteria'),
     /* The Q2(R2) validation record, whole: which characteristics were
        validated and when. */
     ichQ2Parameters: record.ichQ2Parameters || record.ich_q2_parameters || null,
@@ -305,14 +333,14 @@ export function mapStabilityPayload(record: Record<string, any>): Record<string,
     asArr(record.storageCondition ?? record.storage_condition) ??
     asArr(record.storageConditions ?? record.storage_conditions);
   return {
-    studyName: record.studyName || record.study_name || record.studyTitle || record.study_title || '',
-    studyType: record.studyType || record.study_type || '',
+    studyName: alias(record, 'studyName', 'study_name', 'studyTitle', 'study_title'),
+    studyType: alias(record, 'studyType', 'study_type'),
     storageCondition: storageArr ? storageArr.join(', ') : '',
     duration: record.duration || '',
-    timePoints: record.timePoints || record.time_points || '',
-    containerClosure: record.containerClosure || record.container_closure || '',
-    testParameters: record.testParameters || record.test_parameters || '',
-    stabilityParameters: record.testParameters || record.test_parameters || '',
+    timePoints: alias(record, 'timePoints', 'time_points'),
+    containerClosure: alias(record, 'containerClosure', 'container_closure'),
+    testParameters: alias(record, 'testParameters', 'test_parameters'),
+    stabilityParameters: alias(record, 'testParameters', 'test_parameters'),
     status: record.status || '',
     startedDate: record.startedDate || record.started_date || record.startDate || record.start_date || null,
     completedDate: record.completedDate || record.completed_date || null,
@@ -340,7 +368,7 @@ export function mapStabilityPayload(record: Record<string, any>): Record<string,
  */
 export function mapSpecificationPayload(record: Record<string, any>): Record<string, any> {
   const criteria = record.acceptanceCriteria ?? record.acceptance_criteria ?? null;
-  const materialType = record.materialType || record.material_type || '';
+  const materialType = alias(record, 'materialType', 'material_type');
   /* 3.2.P.5 is the DRUG PRODUCT specification. The composer matches sources
      by TYPE only, so if every spec emitted releaseCriteria, a drug-substance
      or excipient spec's limits would render under the drug product's release
@@ -363,7 +391,7 @@ export function mapSpecificationPayload(record: Record<string, any>): Record<str
     ('release' in (criteria as object) || 'shelf' in (criteria as object));
   return {
     materialType,
-    materialName: record.materialName || record.material_name || '',
+    materialName: alias(record, 'materialName', 'material_name'),
     acceptanceCriteria: criteria,
     /* 3.2.P.5's required field: the release limits ARE this register's
        acceptance criteria — the composer read `releaseCriteria` and nothing
@@ -382,8 +410,8 @@ export function mapSpecificationPayload(record: Record<string, any>): Record<str
     testMethods: record.testMethods || record.test_methods || null,
     justification: record.justification || '',
     regulatoryBasis: record.regulatoryBasis || record.regulatory_basis || null,
-    approvalStatus: record.approvalStatus || record.approval_status || '',
-    validationStatus: record.validationStatus || record.validation_status || '',
+    approvalStatus: alias(record, 'approvalStatus', 'approval_status'),
+    validationStatus: alias(record, 'validationStatus', 'validation_status'),
     impurityLimits: record.impurityLimits || record.impurity_limits || null,
   };
 }
@@ -401,17 +429,17 @@ export function mapSpecificationPayload(record: Record<string, any>): Record<str
  */
 export function mapBatchRecordPayload(record: Record<string, any>): Record<string, any> {
   return {
-    batchNumber: record.batchNumber || record.batch_number || '',
-    productName: record.productName || record.product_name || '',
-    batchType: record.batchType || record.batch_type || '',
-    materialType: record.materialType || record.material_type || '',
+    batchNumber: alias(record, 'batchNumber', 'batch_number'),
+    productName: alias(record, 'productName', 'product_name'),
+    batchType: alias(record, 'batchType', 'batch_type'),
+    materialType: alias(record, 'materialType', 'material_type'),
     scale: record.scale || '',
-    batchSize: record.batchSize || record.batch_size || '',
-    batchSizeUnit: record.batchSizeUnit || record.batch_size_unit || '',
+    batchSize: alias(record, 'batchSize', 'batch_size'),
+    batchSizeUnit: alias(record, 'batchSizeUnit', 'batch_size_unit'),
     manufacturingDate: record.manufacturingDate || record.manufacturing_date || null,
     expiryDate: record.expiryDate || record.expiry_date || null,
-    manufacturingSite: record.manufacturingSite || record.manufacturing_site || record.site || '',
-    processVersion: record.processVersion || record.process_version || '',
+    manufacturingSite: alias(record, 'manufacturingSite', 'manufacturing_site', 'site'),
+    processVersion: alias(record, 'processVersion', 'process_version'),
     status: record.status || '',
     processParameters: record.processParameters || record.process_parameters || null,
     inProcessControls: record.inProcessControls || record.in_process_controls || null,
@@ -421,8 +449,8 @@ export function mapBatchRecordPayload(record: Record<string, any>): Record<strin
     specificationCompliance: record.specificationCompliance || record.specification_compliance || null,
     oosEvents: record.oosEvents || record.oos_events || null,
     disposition: record.disposition || '',
-    releaseStatus: record.releaseStatus || record.release_status || '',
-    releasedBy: record.releasedBy || record.released_by || '',
+    releaseStatus: alias(record, 'releaseStatus', 'release_status'),
+    releasedBy: alias(record, 'releasedBy', 'released_by'),
     releasedAt: record.releasedAt || record.released_at || null,
     formulation: record.formulation || null,
   };
@@ -440,13 +468,13 @@ export function mapBatchRecordPayload(record: Record<string, any>): Record<strin
  */
 export function mapChangeControlPayload(record: Record<string, any>): Record<string, any> {
   const risk = (record.riskAssessment ?? record.risk_assessment ?? null) as Record<string, any> | null;
-  const changeNumber = record.changeNumber || record.change_number || '';
+  const changeNumber = alias(record, 'changeNumber', 'change_number');
   return {
     changeNumber,
     changeTitle: record.changeTitle || record.change_title || record.title || changeNumber,
-    changeType: record.changeType || record.change_type || '',
-    changeDescription: record.changeDescription || record.change_description || record.description || '',
-    impactAssessment: record.impactAssessment || record.impact_assessment || '',
+    changeType: alias(record, 'changeType', 'change_type'),
+    changeDescription: alias(record, 'changeDescription', 'change_description', 'description'),
+    impactAssessment: alias(record, 'impactAssessment', 'impact_assessment'),
     justification: record.justification || '',
     status: record.status || '',
     priority: record.priority || '',
@@ -465,14 +493,14 @@ export function mapChangeControlPayload(record: Record<string, any>): Record<str
  */
 export function mapComparabilityPayload(record: Record<string, any>): Record<string, any> {
   return {
-    assessmentName: record.assessmentName || record.assessment_name || record.title || '',
-    changedElement: record.changedElement || record.changed_element || record.product || '',
-    changeType: record.changeType || record.change_type || record.type || '',
+    assessmentName: alias(record, 'assessmentName', 'assessment_name', 'title'),
+    changedElement: alias(record, 'changedElement', 'changed_element', 'product'),
+    changeType: alias(record, 'changeType', 'change_type', 'type'),
     status: record.status || '',
     comparabilityStatus: record.status || '',
     affectedProcessParameters: record.affectedProcessParameters || record.affected_process_parameters || record.methods || null,
-    justification: record.justification || record.outcome || '',
-    reviewedBy: record.reviewedBy || record.reviewed_by || record.owner || '',
+    justification: alias(record, 'justification', 'outcome'),
+    reviewedBy: alias(record, 'reviewedBy', 'reviewed_by', 'owner'),
   };
 }
 
@@ -492,8 +520,8 @@ export function mapProcessValidationPayload(record: Record<string, any>): Record
   const controlStrategy = record.controlStrategy ?? record.control_strategy ?? null;
   const batches = record.consecutiveBatches ?? record.batchNumbers ?? record.batch_numbers ?? null;
   return {
-    validationType: record.validationType || record.validation_type || record.stage || '',
-    processName: record.processName || record.process_name || '',
+    validationType: alias(record, 'validationType', 'validation_type', 'stage'),
+    processName: alias(record, 'processName', 'process_name'),
     stage: record.stage || '',
     batchNumbers: record.batchNumbers || record.batch_numbers || null,
     /* The composer's process-validation slots read `protocol`,
@@ -501,15 +529,15 @@ export function mapProcessValidationPayload(record: Record<string, any>): Record
        nothing produced, so the PV summary table could never render. The PV
        record's lifecycle status IS its validation status; the batches in
        scope render as text. */
-    protocol: record.protocol || record.validationProtocol || record.validation_protocol || '',
-    validationStatus: record.validationStatus || record.validation_status || record.status || '',
+    protocol: alias(record, 'protocol', 'validationProtocol', 'validation_protocol'),
+    validationStatus: alias(record, 'validationStatus', 'validation_status', 'status'),
     consecutiveBatches: Array.isArray(batches)
       ? batches.filter(Boolean).join(', ')
       : typeof batches === 'string'
         ? batches
         : '',
-    batchSize: record.batchSize || record.batch_size || '',
-    processDescription: record.processDescription || record.process_description || '',
+    batchSize: alias(record, 'batchSize', 'batch_size'),
+    processDescription: alias(record, 'processDescription', 'process_description'),
     /* Text, because the 3.2.S.2 narrative reads processControls with val();
        the control strategy's own summary sentence is the honest statement,
        with a keyed projection as the fallback for other recorded shapes. The
@@ -524,8 +552,8 @@ export function mapProcessValidationPayload(record: Record<string, any>): Record
     criticalQualityAttributes:
       record.criticalQualityAttributes || record.critical_quality_attributes || null,
     controlStrategy,
-    validationProtocol: record.validationProtocol || record.validation_protocol || '',
-    validationReport: record.validationReport || record.validation_report || '',
+    validationProtocol: alias(record, 'validationProtocol', 'validation_protocol'),
+    validationReport: alias(record, 'validationReport', 'validation_report'),
     acceptanceCriteria: record.acceptanceCriteria || record.acceptance_criteria || null,
     results: record.results || null,
     approvalDate: record.approvalDate || record.approval_date || null,
@@ -551,8 +579,8 @@ export function mapProcessValidationPayload(record: Record<string, any>): Record
 export function mapQcTestingPayload(record: Record<string, any>): Record<string, any> {
   const results = record.testResults ?? record.test_results ?? null;
   const specifications = record.specifications ?? null;
-  const status = record.passFailStatus || record.pass_fail_status || '';
-  const sampleType = String(record.sampleType || record.sample_type || '').toLowerCase();
+  const status = alias(record, 'passFailStatus', 'pass_fail_status');
+  const sampleType = String(alias(record, 'sampleType', 'sample_type')).toLowerCase();
   /* A batch analysis is a test OF THE MATERIAL. A cleaning-verification swab
      and a reference-standard qualification are neither: they belong to GMP
      cleaning records and §3.2.S.5/§3.2.P.6 respectively, and letting them
@@ -563,13 +591,13 @@ export function mapQcTestingPayload(record: Record<string, any>): Record<string,
   const isBatchAnalysis = !NON_BATCH_SAMPLE_TYPES.includes(sampleType);
   const hasResult = isBatchAnalysis && hasQuantitativeResult(results);
   return {
-    sampleId: record.sampleId || record.sample_id || '',
-    sampleType: record.sampleType || record.sample_type || '',
-    testMethod: record.testMethod || record.test_method || '',
+    sampleId: alias(record, 'sampleId', 'sample_id'),
+    sampleType: alias(record, 'sampleType', 'sample_type'),
+    testMethod: alias(record, 'testMethod', 'test_method'),
     testResults: results,
     specifications,
     passFailStatus: status,
-    certificateOfAnalysis: record.certificateOfAnalysis || record.certificate_of_analysis || '',
+    certificateOfAnalysis: alias(record, 'certificateOfAnalysis', 'certificate_of_analysis'),
     /* §3.2.S.4.4 / §3.2.P.5.4 require quantitative results per test, not
        "conforms" statements — so the presence of a recorded result is what
        counts here, not the presence of a row. */
@@ -635,15 +663,15 @@ export function mapContainerClosurePayload(record: Record<string, any>): Record<
   const forDs = scope === 'drug_substance' || scope === 'both';
   const forDp = scope === 'drug_product' || scope === 'both';
 
-  const systemName = record.systemName || record.system_name || '';
-  const componentType = String(record.componentType || record.component_type || '').trim().toLowerCase();
+  const systemName = alias(record, 'systemName', 'system_name');
+  const componentType = String(alias(record, 'componentType', 'component_type')).trim().toLowerCase();
   /* Unstated means primary: the column defaults to 'primary', and a system
      recorded without a component type is the one holding the material far more
      often than not. */
   const isPrimary = componentType === '' || componentType === 'primary';
-  const container = record.containerDescription || record.container_description || '';
-  const closure = record.closureDescription || record.closure_description || '';
-  const justification = record.suitabilityJustification || record.suitability_justification || '';
+  const container = alias(record, 'containerDescription', 'container_description');
+  const closure = alias(record, 'closureDescription', 'closure_description');
+  const justification = alias(record, 'suitabilityJustification', 'suitability_justification');
   const materials = record.materialsOfConstruction ?? record.materials_of_construction ?? null;
   const compendial = record.compendialStandards ?? record.compendial_standards ?? null;
   const el = record.extractablesLeachables ?? record.extractables_leachables ?? null;
@@ -665,7 +693,7 @@ export function mapContainerClosurePayload(record: Record<string, any>): Record<
   return {
     scope,
     systemName,
-    componentType: record.componentType || record.component_type || '',
+    componentType: alias(record, 'componentType', 'component_type'),
     isPrimaryPackaging: isPrimary,
     containerDescription: container,
     closureDescription: closure,
@@ -720,12 +748,12 @@ export function mapReferenceStandardPayload(record: Record<string, any>): Record
   const forDs = scope === 'drug_substance' || scope === 'both';
   const forDp = scope === 'drug_product' || scope === 'both';
 
-  const code = String(record.standardCode || record.standard_code || '').trim();
-  const name = String(record.standardName || record.standard_name || '').trim();
-  const type = String(record.standardType || record.standard_type || '').trim();
-  const lot = String(record.lotNumber || record.lot_number || '').trim();
-  const assigned = String(record.assignedValue || record.assigned_value || '').trim();
-  const coa = String(record.certificateOfAnalysis || record.certificate_of_analysis || '').trim();
+  const code = String(alias(record, 'standardCode', 'standard_code')).trim();
+  const name = String(alias(record, 'standardName', 'standard_name')).trim();
+  const type = String(alias(record, 'standardType', 'standard_type')).trim();
+  const lot = String(alias(record, 'lotNumber', 'lot_number')).trim();
+  const assigned = String(alias(record, 'assignedValue', 'assigned_value')).trim();
+  const coa = String(alias(record, 'certificateOfAnalysis', 'certificate_of_analysis')).trim();
 
   const head = [name, code ? `(${code})` : ''].filter(Boolean).join(' ');
   const detail = [
@@ -742,11 +770,11 @@ export function mapReferenceStandardPayload(record: Record<string, any>): Record
     standardType: type,
     lotNumber: lot,
     assignedValue: assigned,
-    materialSource: record.materialSource || record.material_source || '',
+    materialSource: alias(record, 'materialSource', 'material_source'),
     characterization: hasRecordedValue(record.characterization) ? record.characterization : null,
     certificateOfAnalysis: coa,
-    qualificationProtocol: record.qualificationProtocol || record.qualification_protocol || '',
-    storageConditions: record.storageConditions || record.storage_conditions || '',
+    qualificationProtocol: alias(record, 'qualificationProtocol', 'qualification_protocol'),
+    storageConditions: alias(record, 'storageConditions', 'storage_conditions'),
     expiryDate: record.expiryDate || record.expiry_date || null,
     retestDate: record.retestDate || record.retest_date || null,
     status: record.status || 'draft',
@@ -783,12 +811,12 @@ export function mapImpurityProfilePayload(record: Record<string, any>): Record<s
   const forDs = scope === 'drug_substance' || scope === 'both';
   const forDp = scope === 'drug_product' || scope === 'both';
 
-  const impurityName = String(record.impurityName || record.impurity_name || '').trim();
+  const impurityName = String(alias(record, 'impurityName', 'impurity_name')).trim();
   const observedLevel = record.observedLevel ?? record.observed_level ?? '';
   const levelUnit = String(record.levelUnit ?? record.level_unit ?? '').trim();
   const maximumDailyDose = String(record.maximumDailyDose ?? record.maximum_daily_dose ?? '').trim();
-  const impurityType = String(record.impurityType || record.impurity_type || '').trim();
-  const qualificationBasis = String(record.qualificationBasis || record.qualification_basis || '').trim();
+  const impurityType = String(alias(record, 'impurityType', 'impurity_type')).trim();
+  const qualificationBasis = String(alias(record, 'qualificationBasis', 'qualification_basis')).trim();
 
   /* Assessable means the ICH comparison can actually be made — and that question
      is ASKED OF THE ENGINE, not approximated here. A field-presence proxy (a
@@ -802,27 +830,32 @@ export function mapImpurityProfilePayload(record: Record<string, any>): Record<s
 
   return {
     scope,
-    materialName: record.materialName || record.material_name || '',
+    materialName: alias(record, 'materialName', 'material_name'),
     impurityName,
     impurityType,
     origin: record.origin || '',
-    casNumber: record.casNumber || record.cas_number || '',
-    molecularFormula: record.molecularFormula || record.molecular_formula || '',
+    casNumber: alias(record, 'casNumber', 'cas_number'),
+    molecularFormula: alias(record, 'molecularFormula', 'molecular_formula'),
     structure: record.structure || '',
-    relativeRetentionTime: record.relativeRetentionTime || record.relative_retention_time || '',
-    analyticalMethod: record.analyticalMethod || record.analytical_method || '',
+    relativeRetentionTime: alias(record, 'relativeRetentionTime', 'relative_retention_time'),
+    analyticalMethod: alias(record, 'analyticalMethod', 'analytical_method'),
     observedLevel: String(observedLevel),
     levelUnit,
-    specificationLimit: record.specificationLimit || record.specification_limit || '',
-    reportingThreshold: record.reportingThreshold || record.reporting_threshold || '',
-    identificationThreshold: record.identificationThreshold || record.identification_threshold || '',
-    qualificationThreshold: record.qualificationThreshold || record.qualification_threshold || '',
+    /* Carried so an elemental impurity can be assessed against the ICH Q3D
+       permitted daily exposure for the route it is actually given by. Without
+       it the assessment refuses, which is correct — Q3D's oral PDE is the most
+       permissive of the three for most elements and may not be assumed. */
+    routeOfAdministration: alias(record, 'routeOfAdministration', 'route_of_administration'),
+    specificationLimit: alias(record, 'specificationLimit', 'specification_limit'),
+    reportingThreshold: alias(record, 'reportingThreshold', 'reporting_threshold'),
+    identificationThreshold: alias(record, 'identificationThreshold', 'identification_threshold'),
+    qualificationThreshold: alias(record, 'qualificationThreshold', 'qualification_threshold'),
     maximumDailyDose,
     /* Qualification is the PRESENCE of a recorded basis, never a boolean a save
        can set. §3.2.S.3.2 reports an impurity as qualified only where this
        carries the study or comparator that qualifies it. */
     qualificationBasis,
-    controlStrategy: record.controlStrategy || record.control_strategy || '',
+    controlStrategy: alias(record, 'controlStrategy', 'control_strategy'),
     batchesObserved: record.batchesObserved || record.batches_observed || null,
     status: record.status || 'draft',
     qualifiedAt: record.qualificationDate || record.qualification_date || null,
@@ -872,19 +905,19 @@ export function mapDissolutionProfilePayload(record: Record<string, any>): Recor
 
   return {
     purpose,
-    productName: record.productName || record.product_name || '',
-    batchNumber: record.batchNumber || record.batch_number || '',
+    productName: alias(record, 'productName', 'product_name'),
+    batchNumber: alias(record, 'batchNumber', 'batch_number'),
     strength: record.strength || '',
     apparatus,
-    rotationSpeed: record.rotationSpeed || record.rotation_speed || '',
+    rotationSpeed: alias(record, 'rotationSpeed', 'rotation_speed'),
     medium,
-    mediumVolume: record.mediumVolume || record.medium_volume || '',
+    mediumVolume: alias(record, 'mediumVolume', 'medium_volume'),
     temperature: record.temperature || '',
     sinker: record.sinker || '',
     dissolutionSpecification: specification,
     unitsTested: hasUnits ? unitsTested : null,
     dissolutionResults: points.length > 0 ? points : null,
-    comparisonBatch: record.comparisonBatch || record.comparison_batch || '',
+    comparisonBatch: alias(record, 'comparisonBatch', 'comparison_batch'),
     comparisonResults: hasRecordedValue(record.comparisonResults ?? record.comparison_results)
       ? (record.comparisonResults ?? record.comparison_results)
       : null,
@@ -900,6 +933,345 @@ export function mapDissolutionProfilePayload(record: Record<string, any>): Recor
        nobody has measured against. */
     releaseDissolutionProfileComplete: forRelease && profileUsable && specification ? (record.batchNumber || record.batch_number || 'profile') : null,
   };
+}
+
+
+/* The material role and human/animal origin rules live in
+   shared/cmc/material-scope.ts, because the register surface needs the same
+   answers — it resolved the role with a substring test and recognised two
+   origins where §3.2.A.3 recognises twelve. Re-exported here so the existing
+   server callers keep their import path. */
+export { EXCIPIENT_ROLES, normalizeMaterialRole, isHumanOrAnimalOrigin };
+
+/**
+ * Map a cmc_material_specs row to a canonical source payload.
+ *
+ * The role decides the source TYPE — see writeThroughMaterialSpec below — and
+ * the payload carries the same fields either way, because §3.2.P.4 and
+ * §3.2.S.2.3 ask the same questions of a material.
+ *
+ * `origin` is emitted exactly as recorded and never inferred. §3.2.A.3 reads
+ * it: an excipient with no recorded origin is a question that section must ask,
+ * not one it may answer.
+ */
+export function mapMaterialSpecPayload(record: Record<string, any>): Record<string, any> {
+  const role = normalizeMaterialRole(record.materialRole ?? record.material_role);
+  const isExcipient = EXCIPIENT_ROLES.includes(role);
+  const materialName = String(alias(record, 'materialName', 'material_name')).trim();
+  const analyticalProcedures = String(alias(record, 'analyticalProcedures', 'analytical_procedures')).trim();
+  const testParameters = record.testParameters ?? record.test_parameters ?? null;
+  const origin = String(record.origin || '').trim();
+  const monograph = String(alias(record, 'compendialMonograph', 'compendial_monograph')).trim();
+
+  /* The specification, projected to the text §3.2.P.4 renders. A json array of
+     {test, method, acceptanceCriteria} rows is what the register stores; the
+     section's required field is a description of the specification. */
+  const specRows = Array.isArray(testParameters)
+    ? testParameters.filter((r) => r && typeof r === 'object')
+    : [];
+  const specText = specRows.length > 0
+    ? specRows
+        .map((r: any) => [r.test, r.acceptanceCriteria].filter(Boolean).join(' '))
+        .filter(Boolean)
+        .join('; ')
+    : (monograph ? `Complies with ${monograph}` : '');
+
+  /* A material the section can actually describe: named, with a specification
+     (its own tests or a monograph it complies with) AND a way of testing it.
+     The analytical procedure was named in this comment and not tested, which
+     left open exactly the union the key exists to close: one excipient could
+     carry the completeness key while a DIFFERENT one supplied
+     excipientAnalyticalProcedures, and §3.2.P.4 scored complete over an
+     excipient with no recorded way of being tested. */
+  const testable = Boolean(analyticalProcedures) || Boolean(monograph);
+  const describable = Boolean(materialName) && Boolean(specText) && testable;
+
+  return {
+    materialRole: role,
+    materialName,
+    functionInFormulation: alias(record, 'functionInFormulation', 'function_in_formulation'),
+    grade: record.grade || '',
+    compendialMonograph: monograph,
+    compendialCompliance: alias(record, 'compendialCompliance', 'compendial_compliance'),
+    supplier: record.supplier || '',
+    manufacturerSite: alias(record, 'manufacturerSite', 'manufacturer_site'),
+    /* Never normalised and never guessed: §3.2.A.3 distinguishes "recorded as
+       plant" from "not recorded", and a blank is the second. */
+    origin,
+    originDetail: alias(record, 'originDetail', 'origin_detail'),
+    humanOrAnimalOrigin: origin ? isHumanOrAnimalOrigin(origin) : null,
+    tseCertificate: alias(record, 'tseCertificate', 'tse_certificate'),
+    testParameters: hasRecordedValue(testParameters) ? testParameters : null,
+    analyticalProcedures,
+    novelExcipient: Boolean(record.novelExcipient ?? record.novel_excipient),
+    novelExcipientJustification: alias(record, 'novelExcipientJustification', 'novel_excipient_justification'),
+    status: record.status || 'draft',
+    /* §3.2.P.4's required fields, emitted from the EXCIPIENT side only: a
+       starting material for the drug substance is §3.2.S.2.3 content and must
+       not complete the drug product's excipient control section. */
+    excipientSpecifications: isExcipient && specText ? specText : null,
+    excipientAnalyticalProcedures:
+      isExcipient && (analyticalProcedures || monograph)
+        ? analyticalProcedures || `Per ${monograph}`
+        : null,
+    excipientControlComplete: isExcipient && describable ? materialName : null,
+    /* And the raw-material side, for §3.2.S.2.3. */
+    rawMaterialSpecification: !isExcipient && specText ? specText : null,
+  };
+}
+
+/**
+ * Map a cmc_formulation_records row to a canonical source payload.
+ *
+ * §3.2.P.1's composition table read a first-match `components` array, so a
+ * project with several formulation versions rendered whichever arrived first
+ * and dropped the others. The payload carries the version and its status so the
+ * section can render the CURRENT formulation and say what it superseded.
+ */
+export function mapFormulationRecordPayload(record: Record<string, any>): Record<string, any> {
+  const components = record.components ?? null;
+  const rows = Array.isArray(components) ? components.filter((c) => c && typeof c === 'object') : [];
+  const formulationName = String(alias(record, 'formulationName', 'formulation_name')).trim();
+  const status = String(record.status || 'draft');
+
+  /* An overage is a regulatory question in its own right (ICH Q8): a component
+     carrying one without a recorded justification is something §3.2.P.1 must
+     state rather than pass over. */
+  const overaged = rows.filter((c: any) => String(c.overage ?? '').trim());
+  const unjustifiedOverages = overaged.filter(
+    (c: any) => !String(c.overageJustification ?? '').trim() && !String(alias(record, 'overageJustification', 'overage_justification')).trim(),
+  );
+
+  return {
+    formulationName,
+    version: record.version || '',
+    dosageForm: alias(record, 'dosageForm', 'dosage_form'),
+    /* The key §3.2.P.1 actually reads, and its own required field. The
+       formulation register captured the dosage form, stored it and mapped it
+       under `dosageForm`, which nothing reads — so the section kept printing
+       "[dosage form not specified]" over a value the staffer had entered. */
+    dosageFormDescription: alias(record, 'dosageForm', 'dosage_form'),
+    strength: record.strength || '',
+    batchSize: alias(record, 'batchSize', 'batch_size'),
+    components: rows.length > 0 ? rows : null,
+    theoreticalYield: alias(record, 'theoreticalYield', 'theoretical_yield'),
+    overageJustification: alias(record, 'overageJustification', 'overage_justification'),
+    unjustifiedOverageCount: unjustifiedOverages.length,
+    supersedes: record.supersedes || '',
+    status,
+    /* §3.2.P.1 is complete when ONE formulation carries a named composition
+       with its components — not when a name and a component list arrive on two
+       different records — and only when that formulation is the CURRENT one.
+       The section renders the quantitative composition only for a record marked
+       current, so scoring it complete on a draft said the composition section
+       was finished in the same breath as the section text said the governing
+       composition was not established. */
+    formulationComposition: formulationName && rows.length > 0 ? formulationName : null,
+    formulationCompositionComplete:
+      status.toLowerCase() === 'current' &&
+      formulationName && rows.length > 0 && rows.every((c: any) => String(c.component || c.name || '').trim())
+        ? formulationName
+        : null,
+  };
+}
+
+
+/** Rows of a jsonb column that is meant to hold an array of objects. */
+function jsonObjectRows(value: unknown): Record<string, any>[] {
+  return Array.isArray(value) ? value.filter((r) => r && typeof r === 'object') : [];
+}
+
+/**
+ * Map a manufacturing_processes row to a canonical source payload.
+ *
+ * §3.2.S.2.2 and §3.2.P.3.3 want the same three things of a process: what the
+ * steps are, what the critical parameters are and what is controlled in-process.
+ * The register holds each as structured rows, so the payload carries both the
+ * rows (for the tables) and the text the section narrative reads.
+ *
+ * The side is the stored `processType`, resolved through the shared material
+ * scope so a drug-substance process cannot complete §3.2.P.3 and a drug-product
+ * one cannot complete §3.2.S.2 — the same rule as the container closure and
+ * reference standard registers.
+ */
+export function mapManufacturingProcessPayload(record: Record<string, any>): Record<string, any> {
+  const side = normalizeMaterialScope(record.processType ?? record.process_type, 'drug_substance');
+  const forSubstance = side === 'drug_substance' || side === 'both';
+  const forProduct = side === 'drug_product' || side === 'both';
+
+  const processName = String(alias(record, 'processName', 'process_name')).trim();
+  const description = String(alias(record, 'processDescription', 'process_description')).trim();
+  const steps = jsonObjectRows(record.processSteps ?? record.process_steps);
+  const cpps = jsonObjectRows(record.criticalProcessParameters ?? record.critical_process_parameters);
+  const controls = jsonObjectRows(record.processControls ?? record.process_controls);
+  const equipment = jsonObjectRows(record.equipmentList ?? record.equipment_list);
+  const validationStatus = String(alias(record, 'validationStatus', 'validation_status')).trim();
+
+  /* The ordered unit operations ARE the process description when no prose one
+     was written: "the process consists of X, then Y, then Z" is sourced from
+     the recorded steps, not invented. Steps are rendered in the order they were
+     recorded when none carries a number — reordering an unnumbered list would
+     assert a sequence the register does not hold. */
+  const ordered = steps
+    .map((st, i) => ({ st, i, n: Number(st.stepNumber ?? st.step_number ?? st.order) }))
+    .sort((a, b) => {
+      const an = Number.isFinite(a.n) ? a.n : Number.POSITIVE_INFINITY;
+      const bn = Number.isFinite(b.n) ? b.n : Number.POSITIVE_INFINITY;
+      return an === bn ? a.i - b.i : an - bn;
+    })
+    .map(({ st }) => st);
+
+  const stepText = ordered
+    .map((st: any) => String(st.unitOperation || st.unit_operation || st.stepName || st.step_name || '').trim())
+    .filter(Boolean)
+    .join('; ');
+
+  /* In-process controls come from two places the register offers — a
+     process-level control list and per-step controls — and a section that read
+     only one of them would report "no in-process controls" over a process that
+     records them on every step. */
+  const stepControls = ordered.flatMap((st: any) => jsonObjectRows(st.inProcessControls ?? st.in_process_controls));
+  const allControls = [...controls, ...stepControls];
+  const controlText = allControls
+    .map((c: any) =>
+      [c.test || c.control || c.parameter, c.acceptanceCriteria || c.acceptance_criteria || c.limit]
+        .filter(Boolean)
+        .join(' ')
+    )
+    .filter(Boolean)
+    .join('; ');
+
+  /* A process the section can actually describe: named, with an ordered set of
+     steps and at least one in-process control. Emitted as ONE key from ONE
+     record, because the composer's completeness is a union across matched
+     sources — without it, a record carrying only a name and a second carrying
+     only steps would add up to a complete manufacturing section. */
+  const describable = Boolean(processName) && ordered.length > 0 && allControls.length > 0;
+
+  return {
+    processScope: side,
+    processName,
+    processType: alias(record, 'processType', 'process_type'),
+    /* This register's lifecycle column is validation_status, not status -- the
+       table predates the register family and its two readers already use that
+       name. The composer drops a RETIRED source by reading `status`, so the
+       lifecycle has to reach it under that key or a superseded synthetic route
+       composes as the process the filing describes. It was emitted only as
+       processValidationStatus, which the retirement filter cannot see and
+       nothing rendered. */
+    status: validationStatus,
+    processSteps: ordered.length > 0 ? ordered : null,
+    criticalProcessParameters: cpps.length > 0 ? cpps : null,
+    processControlRows: allControls.length > 0 ? allControls : null,
+    /* §3.2.S.2's two required fields are emitted from the DRUG SUBSTANCE side
+       only. The composer's completeness is a union across every matched source,
+       and `manufacturing_process` matches §3.2.S.2 whatever side it is on — so
+       an unscoped `processDescription` would have let a tablet compression
+       process complete the drug substance's manufacturing section. The
+       drug-product side carries the same two facts under its own names; §3.2.P.3
+       renders them from the side-scoped tables. */
+    processDescription: forSubstance ? (description || stepText || '') : null,
+    /* Text, because the §3.2.S.2 narrative reads processControls with a
+       first-match string helper; the rows travel alongside for the table. */
+    processControls: forSubstance ? (controlText || null) : null,
+    drugProductProcessDescription: forProduct ? (description || stepText || '') : null,
+    drugProductProcessControls: forProduct ? (controlText || null) : null,
+    equipmentList: equipment.length > 0 ? equipment : null,
+    facilityInfo: hasRecordedValue(record.facilityInfo ?? record.facility_info)
+      ? (record.facilityInfo ?? record.facility_info)
+      : null,
+    processBatchSize: alias(record, 'batchSize', 'batch_size'),
+    yieldData: hasRecordedValue(record.yieldData ?? record.yield_data)
+      ? (record.yieldData ?? record.yield_data)
+      : null,
+    scaleUpData: hasRecordedValue(record.scaleUpData ?? record.scale_up_data)
+      ? (record.scaleUpData ?? record.scale_up_data)
+      : null,
+    processDevelopment: alias(record, 'processDevelopment', 'process_development'),
+    reprocessing: record.reprocessing || '',
+    processValidationStatus: validationStatus,
+    /* §3.2.S.2's completeness key, drug-substance side only. */
+    manufacturingProcessComplete: forSubstance && describable ? processName : null,
+    /* §3.2.P.3's, drug-product side only. */
+    drugProductProcessComplete: forProduct && describable ? processName : null,
+  };
+}
+
+/**
+ * Map a cmc_characterization_studies row to a canonical source payload.
+ *
+ * A study answers ONE of §3.2.S.3.1's three questions — the one its stored
+ * `studyType` names — and the payload emits only that field. This is the whole
+ * point of storing the type: the composer's completeness is a union across
+ * matched sources, so three NMR studies emitting all three fields would have
+ * reported the characterisation section complete over no physicochemical data
+ * and no bioactivity data at all.
+ *
+ * Unlike the registers where a *Complete key had to close that union, the union
+ * IS correct across types here: an NMR study and a solubility study together do
+ * establish two of the three.
+ */
+export function mapCharacterizationStudyPayload(record: Record<string, any>): Record<string, any> {
+  const type = normalizeCharacterizationType(record.studyType ?? record.study_type);
+  const side = normalizeMaterialScope(record.scope, 'drug_substance');
+  const forSubstance = side === 'drug_substance' || side === 'both';
+
+  const studyTitle = String(alias(record, 'studyTitle', 'study_title')).trim();
+  const technique = String(record.technique || '').trim();
+  const attribute = String(record.attribute || '').trim();
+  const result = String(record.result ?? '').trim();
+  /* No unit is invented. A recorded number whose unit was never captured is
+     reported as unrecorded, the same refusal the impurity register makes. */
+  const resultUnit = String(alias(record, 'resultUnit', 'result_unit')).trim();
+  const conclusion = String(record.conclusion || '').trim();
+
+  /* The sentence the section can stand behind: a technique and what it showed.
+     A study with a title and nothing else establishes nothing, so it answers no
+     required field — it still renders in the table, where a reviewer can see
+     that it was run and that its result is missing. */
+  const statement = [
+    [technique, attribute].filter(Boolean).join(' — '),
+    result ? `${result}${resultUnit ? ` ${resultUnit}` : ''}` : '',
+    conclusion,
+  ]
+    .filter(Boolean)
+    .join(': ');
+  const establishes = Boolean(technique) && Boolean(result || conclusion);
+
+  const payload: Record<string, any> = {
+    characterizationScope: side,
+    characterizationType: type,
+    studyTitle,
+    technique,
+    attribute,
+    characterizationResult: result,
+    /* Emitted as recorded, so the section can say "unit not recorded" instead
+       of printing a bare number that reads as whatever unit the reader assumes. */
+    characterizationResultUnit: resultUnit,
+    acceptanceReference: alias(record, 'acceptanceReference', 'acceptance_reference'),
+    conclusion,
+    studyReference: alias(record, 'studyReference', 'study_reference'),
+    performedBy: alias(record, 'performedBy', 'performed_by'),
+    performedDate: record.performedDate || record.performed_date || null,
+    supportingData: hasRecordedValue(record.supportingData ?? record.supporting_data)
+      ? (record.supportingData ?? record.supporting_data)
+      : null,
+    status: record.status || 'draft',
+    characterizationStatement: statement || null,
+    /* Whether the study established anything — a technique AND a readout. The
+       statement alone is not that test: a study with a technique and no result
+       still produces a statement naming the technique, and a section counting
+       statements would have reported it as a finding. */
+    characterizationEstablishes: establishes,
+  };
+
+  /* The one field this study type can answer — and only when the study
+     actually established something, and only on the drug-substance side,
+     because §3.2.S.3 is the drug substance's characterisation section. */
+  payload[CHARACTERIZATION_TYPE_FIELD[type]] =
+    forSubstance && establishes ? (statement || studyTitle) : null;
+
+  return payload;
 }
 
 // ── Core write-through function ────────────────────────────────────────────
@@ -1168,6 +1540,58 @@ export async function writeThroughDissolutionProfile(
     orgId, projectId, sourceType: 'dissolution_profile',
     sourceKey: `dissolution_profile:${recordId}`,
     sourcePayload: mapDissolutionProfilePayload(record),
+    createdBy,
+  });
+}
+
+/**
+ * The material register writes one of TWO canonical source types, decided by
+ * the role: an excipient is §3.2.P.4 content, a raw or starting material is
+ * §3.2.S.2.3 content. One register, one mapper, the section chosen by what the
+ * material IS.
+ */
+export async function writeThroughMaterialSpec(
+  orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
+): Promise<WriteThroughResult | null> {
+  const role = normalizeMaterialRole(record.materialRole ?? record.material_role);
+  const sourceType: CmcSourceType = EXCIPIENT_ROLES.includes(role) ? 'excipient' : 'raw_material_spec';
+  return writeThroughToCanonicalSource({
+    orgId, projectId, sourceType,
+    sourceKey: `${sourceType}:${recordId}`,
+    sourcePayload: mapMaterialSpecPayload(record),
+    createdBy,
+  });
+}
+
+export async function writeThroughFormulationRecord(
+  orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
+): Promise<WriteThroughResult | null> {
+  return writeThroughToCanonicalSource({
+    orgId, projectId, sourceType: 'formulation_record',
+    sourceKey: `formulation_record:${recordId}`,
+    sourcePayload: mapFormulationRecordPayload(record),
+    createdBy,
+  });
+}
+
+export async function writeThroughManufacturingProcess(
+  orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
+): Promise<WriteThroughResult | null> {
+  return writeThroughToCanonicalSource({
+    orgId, projectId, sourceType: 'manufacturing_process',
+    sourceKey: `manufacturing_process:${recordId}`,
+    sourcePayload: mapManufacturingProcessPayload(record),
+    createdBy,
+  });
+}
+
+export async function writeThroughCharacterizationStudy(
+  orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
+): Promise<WriteThroughResult | null> {
+  return writeThroughToCanonicalSource({
+    orgId, projectId, sourceType: 'characterization',
+    sourceKey: `characterization:${recordId}`,
+    sourcePayload: mapCharacterizationStudyPayload(record),
     createdBy,
   });
 }

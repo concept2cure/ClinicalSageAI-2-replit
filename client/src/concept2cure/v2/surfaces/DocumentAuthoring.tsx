@@ -128,6 +128,20 @@ interface AuthDoc {
   section_count: number | string | null;
 }
 
+/**
+ * Document-level structural findings (server: shared/regulatory/section-code).
+ *
+ * Neither is visible from any one section, which is why they travel with the
+ * list rather than with a row: a code filed twice puts two 3.2.S in the
+ * assembled dossier, and a stored order that disagrees with the codes means it
+ * assembles in the wrong order.
+ */
+interface SectionStructure {
+  duplicateCodes: string[];
+  outOfOrder: boolean;
+  suggestedOrder: string[];
+}
+
 interface AuthSection {
   id: string;
   doc_id: string;
@@ -1326,21 +1340,28 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      STALE response land last — the header named the linked document while
      the outline and canvas held the other one's sections, and a save from
      there would have written the wrong governed document. */
+  /** Document-level structural findings from GET …/sections. */
+  const [structure, setStructure] = useState<SectionStructure | null>(null);
   const sectionsDocRef = useRef<string | null>(null);
   const loadSections = useCallback(async (docId: string) => {
     sectionsDocRef.current = docId;
     setSectionsState('loading');
-    const { ok, body } = await readJson<{ sections?: AuthSection[] }>(
+    const { ok, body } = await readJson<{ sections?: AuthSection[]; structure?: SectionStructure }>(
       `/api/authoring/docs/${encodeURIComponent(docId)}/sections`
     );
     if (sectionsDocRef.current !== docId) return;
     if (!ok || !body) {
       setSectionsState('error');
       setSections([]);
+      setStructure(null);
       return;
     }
     const list = Array.isArray(body.sections) ? body.sections : [];
     setSections(list);
+    /* Two document-level facts no single section can show: a code filed twice,
+       and a stored order that disagrees with the codes. Null when the server
+       did not send them, so an older server renders no claim either way. */
+    setStructure(body.structure ?? null);
     setSectionsState('ready');
     // A deep-link resolution may have named the section this load should land
     // on. Selected HERE, after setSections, so the buffer-sync effect below
@@ -3004,7 +3025,31 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                         No sections yet in this document.
                       </div>
                     ) : (
-                      sections.map(s => (
+                      <>
+                        {/* Document-level structure. Stated where the order is
+                            actually read, because that is where it misleads:
+                            the tree looks authoritative, and nothing in it
+                            shows that two sections share a code or that the
+                            order is not the one the dossier assembles in. */}
+                        {structure?.duplicateCodes.length ? (
+                          <div
+                            className="scaf-note"
+                            style={{ padding: '6px 12px', color: 'var(--c2c-err,#b42318)' }}
+                          >
+                            {structure.duplicateCodes.length === 1
+                              ? `Section code ${structure.duplicateCodes[0]} is used by more than one section.`
+                              : `${structure.duplicateCodes.length} section codes are each used by more than one section: ${structure.duplicateCodes.join(', ')}.`}{' '}
+                            A filed dossier cannot say which one a reference means.
+                          </div>
+                        ) : null}
+                        {structure?.outOfOrder ? (
+                          <div className="scaf-note" style={{ padding: '6px 12px' }}>
+                            These sections are stored in an order that differs from their
+                            section codes, and they assemble and export in the stored order.
+                            Reorder them if the stored order is not deliberate.
+                          </div>
+                        ) : null}
+                        {sections.map(s => (
                         <button
                           key={s.id}
                           className="ed-tree-row"
@@ -3022,7 +3067,8 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                             />
                           )}
                         </button>
-                      ))
+                        ))}
+                      </>
                     ))}
                 </div>
               );
@@ -3036,13 +3082,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         <header className="ed-doc-h">
           <div className="ed-crumbs">
             <span className="sep-first">{activeDoc?.module ?? 'eCTD'}</span>
-            <span className="sep">›</span>
+            <span className="sep" aria-hidden="true">›</span>
             <span className="doc-title" title={activeDoc?.title ?? undefined}>
               {activeDoc?.title ?? 'No document'}
             </span>
             {activeSection && (
               <>
-                <span className="sep">›</span>
+                <span className="sep" aria-hidden="true">›</span>
                 <span className="here">{activeSection.code}</span>
               </>
             )}
