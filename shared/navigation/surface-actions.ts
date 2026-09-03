@@ -1224,6 +1224,66 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
+  // ── Registrations / lifecycle ──
+  {
+    id: 'registrations.open-tab',
+    surfaceId: 'registrations',
+    label: 'Open a registrations tab',
+    description:
+      'On the registrations workspace, switch between marketing authorizations, the approvals tracker, renewals & variations, HA commitments, and submission strategy.',
+    params: [
+      { name: 'tab', required: true, description: 'The tab to open.', enum: ['reg', 'clock', 'vary', 'commit', 'strategy'] },
+    ],
+  },
+
+  // ── CRO portfolio ──
+  {
+    id: 'cro-portfolio.select-sponsor',
+    surfaceId: 'cro-portfolio',
+    label: 'Select a sponsor',
+    description:
+      'On the CRO portfolio, select a sponsor by name so its engagements show — the same row click a person makes. Resolved against the real roster with honest misses; held while it loads.',
+    params: [
+      { name: 'sponsor', required: true, description: 'The sponsor name as listed (case-insensitive; a distinctive partial resolves when unambiguous).' },
+    ],
+  },
+
+  // ── Agency meetings ──
+  {
+    id: 'agency-meetings.select-meeting',
+    surfaceId: 'agency-meetings',
+    label: 'Open an agency meeting',
+    description:
+      'On the agency-meetings workspace, open a meeting by its id or a distinctive phrase (agency, type, or program) so its briefing book and minutes show — the same row click a person makes. Requesting or scheduling a meeting stays a governed human act. Honest misses; held while the list loads.',
+    params: [
+      { name: 'meeting', required: true, description: 'The meeting id, or a distinctive phrase from its agency / type / program (case-insensitive).' },
+    ],
+  },
+
+  // ── Source tracer ──
+  {
+    id: 'source-tracer.select-section',
+    surfaceId: 'source-tracer',
+    label: 'Open a traced section',
+    description:
+      'On the source tracer, open an authored section by its id or a distinctive phrase from its title/document so its cited sources and their verification state show — the same row click a person makes. Resolved against the real sections with honest misses; held while they load.',
+    params: [
+      { name: 'section', required: true, description: 'The section id, or a distinctive phrase from its title or document (case-insensitive).' },
+    ],
+  },
+
+  // ── Decision lineage ──
+  {
+    id: 'decision-lineage.select-graph',
+    surfaceId: 'decision-lineage',
+    label: 'Open a decision-lineage graph',
+    description:
+      'On the decision-lineage surface, open the lineage graph for a governed artifact by its label so its node-by-node derivation shows — the same row click a person makes. Resolved against the real graphs with honest misses; held while they load.',
+    params: [
+      { name: 'artifact', required: true, description: 'The artifact label as listed (case-insensitive; a distinctive partial resolves when unambiguous).' },
+    ],
+  },
+
   // ── Deep research ──
   {
     id: 'deep-research.open-tab',

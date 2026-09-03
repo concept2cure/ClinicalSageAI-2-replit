@@ -559,23 +559,23 @@ export function CrlLibrary({ onAsk }: SurfaceViewProps) {
           <div className="pj-card-b crl-coverage-b">
             <span className="crl-coverage-k">Coverage</span>
             <span>{coverage.scanned} letters scanned</span>
-            <span className="crl-sep">·</span>
+            <span className="crl-sep" aria-hidden="true">·</span>
             <span>{withDenominator(coverage.eligible, coverage.scanned)} eligible on these filters</span>
-            <span className="crl-sep">·</span>
+            <span className="crl-sep" aria-hidden="true">·</span>
             <span>
               {withDenominator(coverage.structured, coverage.eligible)} with structured findings
             </span>
-            <span className="crl-sep">·</span>
+            <span className="crl-sep" aria-hidden="true">·</span>
             <span className="crl-verified">
               {withDenominator(coverage.verified, coverage.structured)} verified
             </span>
-            <span className="crl-sep">·</span>
+            <span className="crl-sep" aria-hidden="true">·</span>
             <span className="crl-note">
               Public FDA evidence only — no tenant-private source is in this result.
             </span>
             {coverage.freshness && (
               <>
-                <span className="crl-sep">·</span>
+                <span className="crl-sep" aria-hidden="true">·</span>
                 <span className="crl-note">Corpus snapshot {coverage.freshness}</span>
               </>
             )}

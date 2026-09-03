@@ -297,7 +297,7 @@ export function PdevWorkstreamSurface({
                   <div className="pdev-activity-title">{a.registry.title}</div>
                   <div className="pdev-activity-meta">
                     <span>{a.state?.documentCount ?? 0} doc</span>
-                    <span className="dot-sep">·</span>
+                    <span className="dot-sep" aria-hidden="true">·</span>
                     <span>{a.state?.evidenceLinkCount ?? 0} evidence</span>
                   </div>
                   <div className="pdev-activity-foot">

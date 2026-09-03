@@ -5,8 +5,12 @@
  */
 import { Router, Request, Response } from 'express';
 import { getPool } from '../../db';
+import { serverError } from '../../lib/api-response';
+import { createScopedLogger } from '../../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('site-intel');
 const pool = getPool();
 
 /**
@@ -91,7 +95,7 @@ router.get('/sites', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error fetching sites:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading sites', error);
   }
 });
 
@@ -160,7 +164,7 @@ router.post('/sites', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error creating site:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving sites', error);
   }
 });
 
@@ -231,7 +235,7 @@ router.get('/sites/:id', async (req: Request, res: Response) => {
     res.json({ success: true, site });
   } catch (error: any) {
     console.error('Error fetching site:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading sites', error);
   }
 });
 
@@ -294,7 +298,7 @@ router.post('/sites/:id/metrics', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error recording metrics:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving metrics', error);
   }
 });
 
@@ -353,7 +357,7 @@ router.post('/sites/:id/risks', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error recording risk:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving risks', error);
   }
 });
 
@@ -409,7 +413,7 @@ router.patch('/sites/:id/risks/:riskId', async (req: Request, res: Response) => 
     });
   } catch (error: any) {
     console.error('Error updating risk:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'updating risks', error);
   }
 });
 
@@ -447,7 +451,7 @@ router.post('/sites/:id/predictions', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error recording prediction:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving predictions', error);
   }
 });
 
@@ -465,7 +469,7 @@ router.post('/recalculate-scores', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error recalculating scores:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving recalculate scores', error);
   }
 });
 
@@ -494,7 +498,7 @@ router.get('/scorecard/:id', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error fetching scorecard:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading scorecard', error);
   }
 });
 
@@ -536,7 +540,7 @@ router.get('/stats', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error fetching stats:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading stats', error);
   }
 });
 

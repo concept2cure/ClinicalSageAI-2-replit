@@ -40,7 +40,13 @@ import { dissolutionPurposeSection } from '@shared/cmc/dissolution-purpose';
    canonical strings exactly showed "--" for a row the composer was at that
    moment filing into §3.2.S.6 — the screen disagreeing with the dossier about
    one record. */
-import { materialScopeSections } from '@shared/cmc/material-scope';
+import {
+  HUMAN_OR_ANIMAL_ORIGINS,
+  isExcipientRole,
+  isReviewRequiredOrigin,
+  materialRoleSection,
+  materialScopeSections,
+} from '@shared/cmc/material-scope';
 import { CHARACTERIZATION_TYPE_LABEL, characterizationTypeSection, normalizeCharacterizationType } from '@shared/cmc/characterization-type';
 import { useAuth } from '@/services/portal/authService';
 
@@ -1229,6 +1235,7 @@ export interface ImpurityProfileApiRow {
   levelUnit?: string | null;
   specificationLimit?: string | null;
   maximumDailyDose?: string | null;
+  routeOfAdministration?: string | null;
   qualificationBasis?: string | null;
   controlStrategy?: string | null;
   batchesObserved?: string[] | null;
@@ -1316,6 +1323,20 @@ export function CmImpurityProfiles() {
         { header: 'Level', render: impurityLevel },
         { header: 'Spec limit', render: (r) => text(r.specificationLimit) },
         { header: 'Daily dose', render: (r) => (r.maximumDailyDose ? r.maximumDailyDose : <span className="rd-chip tone-warn">not recorded</span>) },
+        {
+          /* Only an elemental impurity needs it — ICH Q3D keys its permitted
+             daily exposure to the route — so the gap is flagged only where it
+             actually blocks an assessment. */
+          header: 'Route',
+          render: (r) => {
+            const route = String(r.routeOfAdministration || '').trim();
+            if (route) return route;
+            const isElemental = /elemental|metal/i.test(String(r.impurityType || ''));
+            return isElemental
+              ? <span className="rd-chip tone-warn">required for Q3D</span>
+              : '--';
+          },
+        },
         { header: 'Structure', render: (r) => (r.structure || r.molecularFormula ? 'recorded' : <span className="rd-chip tone-warn">none</span>) },
         { header: 'Qualification basis', render: (r) => (r.qualificationBasis ? <span className="rd-chip tone-ok">recorded</span> : <span className="rd-chip tone-warn">none</span>) },
         { header: 'Status', render: (r) => chip(r.status, 'draft') },
@@ -1436,7 +1457,10 @@ export interface MaterialSpecApiRow {
   status: string;
 }
 
-const ANIMAL_ORIGINS = ['animal', 'human'];
+/* The origin list §3.2.A.3 actually uses. The card carried two of its twelve
+   tokens, so an excipient recorded as `bovine` rendered as ordinary grey text
+   beside a section that treats it as animal-derived. */
+const ANIMAL_ORIGINS = HUMAN_OR_ANIMAL_ORIGINS;
 
 /**
  * The origin as RECORDED — and "not recorded" as its own state.
@@ -1455,6 +1479,12 @@ function originChip(r: MaterialSpecApiRow): React.ReactNode {
       </span>
     );
   }
+  /* Fermentation is neither an animal origin nor an exclusion: §3.2.A.3 treats
+     it as a question, because the culture media can carry animal-derived
+     components. The card says the same thing the section does. */
+  if (isReviewRequiredOrigin(v)) {
+    return <span className="rd-chip tone-warn">{v} — media components?</span>;
+  }
   return v;
 }
 
@@ -1470,7 +1500,10 @@ export function CmMaterialSpecs() {
       path={`/api/cmc/material-specs${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`}
       title="Materials"
       meta={(rows) => {
-        const excipients = rows.filter((r) => !String(r.materialRole || '').includes('material')).length;
+        /* The SAME rule the write-through files the row under. A substring
+           test on 'material' read 'reagent' as an excipient where the dossier
+           files it as a raw material. */
+        const excipients = rows.filter((r) => isExcipientRole(r.materialRole)).length;
         const noOrigin = rows.filter((r) => !String(r.origin || '').trim()).length;
         const novel = rows.filter((r) => r.novelExcipient).length;
         return `${rows.length} materials -- ${excipients} excipients -- ${novel} novel -- ${noOrigin} with no origin recorded`;
@@ -1503,7 +1536,7 @@ export function CmMaterialSpecs() {
       columns={[
         { header: 'Material', render: (r) => r.materialName, bold: true },
         { header: 'Role', render: (r) => r.materialRole },
-        { header: 'Files under', render: (r) => (String(r.materialRole || '').includes('material') ? '3.2.S.2.3' : '3.2.P.4') },
+        { header: 'Files under', render: (r) => materialRoleSection(r.materialRole) },
         { header: 'Function', render: (r) => text(r.functionInFormulation) },
         { header: 'Grade', render: (r) => text(r.grade) },
         { header: 'Monograph', render: (r) => text(r.compendialMonograph) },
@@ -1675,7 +1708,9 @@ export function CmManufacturingProcesses() {
           subject: 'manufacturing process',
           form: (r) => manufacturingProcessForm(r as Partial<ManufacturingProcessBody>),
           path: (r) => `/api/cmc/manufacturing-processes/${r.id}`,
-          toBody: (v) => manufacturingProcessPatch(v),
+          /* The stored row travels with the form values: a step's in-process
+             controls have no column in the drawer and must survive the edit. */
+          toBody: (v, r) => manufacturingProcessPatch(v, r as Partial<ManufacturingProcessBody>),
         },
         {
           label: 'Validate',
@@ -1776,9 +1811,14 @@ export function CmCharacterizationStudies() {
            studies would say "3 recorded" over three NMR runs and leave the
            reader thinking the section was covered. */
         const live = rows.filter((r) => String(r.status || '').toLowerCase() !== 'retired');
+        /* The SAME rule mapCharacterizationStudyPayload uses to decide whether
+           a study establishes anything: a technique AND a readout. Counting a
+           study with a result but no technique made the card say a question was
+           answered while §3.2.S.3 listed it as missing. */
         const answers = (t: string) => live.some(
           (r) => normalizeCharacterizationType(r.studyType) === t
             && String(r.scope || 'drug_substance') !== 'drug_product'
+            && String(r.technique || '').trim()
             && (String(r.result || '').trim() || String(r.conclusion || '').trim()),
         );
         const answered = ['structural', 'physicochemical', 'biological'].filter(answers).length;

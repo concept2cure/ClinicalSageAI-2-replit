@@ -94,7 +94,7 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
     next();
   } catch (err: any) {
     console.error('[defense-packet] program access check failed:', err.message);
-    return res.status(500).json({ error: 'Program access check failed', detail: err.message });
+    return res.status(500).json({ error: 'Program access check failed' });
   }
 }
 
@@ -368,7 +368,6 @@ router.post(
       console.error('[defense-packet] creation failed:', err.message);
       return res.status(502).json({
         error: 'Shadow service unavailable',
-        detail: err.message,
       });
     }
   }
@@ -404,7 +403,7 @@ router.get(
       return res.status(200).json(result.data);
     } catch (err: any) {
       console.error('[defense-packet] get failed:', err.message);
-      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   }
 );
@@ -436,7 +435,7 @@ router.get(
       return res.status(200).json(result.data);
     } catch (err: any) {
       console.error('[defense-packet] list failed:', err.message);
-      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   }
 );
@@ -505,7 +504,7 @@ router.post(
       return res.status(200).json(result.data);
     } catch (err: any) {
       console.error('[defense-packet] staleness check failed:', err.message);
-      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   }
 );
@@ -577,7 +576,7 @@ router.patch(
       return res.status(200).json(result.data);
     } catch (err: any) {
       console.error('[defense-packet] status update failed:', err.message);
-      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   }
 );
@@ -683,7 +682,7 @@ router.post(
       return res.status(200).json(shadowResult.data);
     } catch (err: any) {
       console.error('[defense-packet] build failed:', err.message);
-      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   }
 );
@@ -719,7 +718,7 @@ router.get(
       return res.status(200).json(result.data);
     } catch (err: any) {
       console.error('[defense-packet] json export failed:', err.message);
-      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   }
 );
@@ -759,7 +758,7 @@ router.get(
       return res.status(200).send(result.raw);
     } catch (err: any) {
       console.error('[defense-packet] csv export failed:', err.message);
-      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   }
 );
@@ -831,7 +830,7 @@ router.post(
       return res.status(200).json(result.data);
     } catch (err: any) {
       console.error('[defense-packet] submission gate failed:', err.message);
-      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   }
 );
@@ -941,7 +940,7 @@ router.get(
       return res.status(200).json(result.data);
     } catch (err: any) {
       console.error('[defense-packet] proof-pack failed:', err.message);
-      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   }
 );
@@ -995,7 +994,7 @@ router.post(
       return res.status(200).json(result.data);
     } catch (err: any) {
       console.error('[defense-packet] replay-determinism failed:', err.message);
-      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   }
 );
@@ -1032,7 +1031,7 @@ router.post(
       return res.status(200).json(result.data);
     } catch (err: any) {
       console.error('[defense-packet] proof-pack persist failed:', err.message);
-      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   }
 );
@@ -1106,7 +1105,7 @@ router.get(
       return res.status(200).send(Buffer.from(result.data as any));
     } catch (err: any) {
       console.error('[defense-packet] proof-pack download failed:', err.message);
-      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   }
 );
@@ -1136,7 +1135,7 @@ router.get(
       return res.status(200).json(result.data);
     } catch (err: any) {
       console.error('[defense-packet] proof-pack verify failed:', err.message);
-      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   }
 );
@@ -1183,7 +1182,7 @@ router.post(
       return res.status(200).json(result.data);
     } catch (err: any) {
       console.error('[defense-packet] safety-signals ingest failed:', err.message);
-      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   }
 );
@@ -1212,7 +1211,7 @@ router.get(
       return res.status(200).json(result.data);
     } catch (err: any) {
       console.error('[defense-packet] toxicity profile failed:', err.message);
-      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   }
 );
@@ -1242,7 +1241,7 @@ router.get(
       return res.status(200).json(result.data);
     } catch (err: any) {
       console.error('[defense-packet] lineage graph failed:', err.message);
-      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   }
 );

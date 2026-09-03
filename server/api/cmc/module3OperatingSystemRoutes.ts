@@ -7,7 +7,7 @@ import {
   createSourceHash,
 } from '../../services/cmc-module3-compiler';
 import { composeModule3FromCanonicalSources, impactedSectionsForSourceType } from '../../services/module3Composer';
-import { composeAppendices, composeRegional } from '../../services/module3-extensions';
+import { composeAppendices, composeRegional, emittableAppendices } from '../../services/module3-extensions';
 import { regionCodeForPrimaryRegion, resolveSubmissionSpine } from '../../services/cmc/submission-spine';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
@@ -22,11 +22,15 @@ import {
   BINDING_BASIS,
 } from '../../services/part11/signature-persistence';
 import { SIGNATURE_MEANINGS, resolveActorUserId } from './governance';
+import { serverError } from '../../lib/api-response';
+import { createScopedLogger } from '../../utils/logger';
 
 /** The §11.50(a)(3) meanings a signature may carry. */
 type SignatureMeaning = (typeof SIGNATURE_MEANINGS)[number];
 
 const router = express.Router();
+
+const logger = createScopedLogger('cmc-module3-os');
 
 const upsertSourceObjectSchema = z.object({
   sourceType: z.enum([
@@ -102,7 +106,7 @@ router.post('/source-objects/:projectId', async (req, res) => {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to upsert source object' });
+    return serverError(res, logger, 'saving source objects', error);
   }
 });
 
@@ -124,7 +128,7 @@ router.get('/sections/:projectId', async (req, res) => {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to fetch section map' });
+    return serverError(res, logger, 'loading sections', error);
   }
 });
 
@@ -182,11 +186,7 @@ router.post('/compile/:projectId', async (req, res) => {
        fail-closed branch exists to avoid. A required appendix IS emitted, with
        its honest incompleteness. */
     try {
-      const appendices = composeAppendices(rows as any).filter(
-        (section) =>
-          section.lineage.length > 0 ||
-          (section.structuredPayload as { optional?: boolean } | undefined)?.optional === false,
-      );
+      const appendices = emittableAppendices(composeAppendices(rows as any));
       compiled = compiled.concat(appendices);
     } catch (appendixErr) {
       // Said, not swallowed — the same posture as the regional pass below.
@@ -339,7 +339,7 @@ router.post('/compile/:projectId', async (req, res) => {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Compilation failed' });
+    return serverError(res, logger, 'compiling', error);
   } finally {
     client.release();
   }
@@ -373,7 +373,7 @@ router.post('/source-changed/:projectId', async (req, res) => {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Stale update failed' });
+    return serverError(res, logger, 'saving source changed', error);
   }
 });
 
@@ -499,7 +499,7 @@ router.post('/contradictions/:projectId', async (req, res) => {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Contradiction detection failed' });
+    return serverError(res, logger, 'saving contradictions', error);
   }
 });
 
@@ -522,7 +522,7 @@ router.get('/contradictions/:projectId', async (req, res) => {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to fetch contradictions' });
+    return serverError(res, logger, 'loading contradictions', error);
   }
 });
 
@@ -562,7 +562,7 @@ router.patch('/contradictions/:id/resolve', async (req, res) => {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to resolve contradiction' });
+    return serverError(res, logger, 'resolving contradictions', error);
   }
 });
 
@@ -640,7 +640,7 @@ router.get('/readiness/:projectId', async (req, res) => {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to compute readiness' });
+    return serverError(res, logger, 'loading readiness', error);
   }
 });
 
@@ -670,7 +670,7 @@ router.get('/provenance/:projectId/:sectionKey', async (req, res) => {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to fetch provenance' });
+    return serverError(res, logger, 'loading provenance', error);
   }
 });
 
@@ -886,7 +886,7 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Approval failed' });
+    return serverError(res, logger, 'approving sections', error);
   }
 });
 
@@ -927,7 +927,7 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Refresh failed' });
+    return serverError(res, logger, 'refreshing sections', error);
   }
 });
 
@@ -954,7 +954,7 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed final export guard check' });
+    return serverError(res, logger, 'saving final export', error);
   }
 });
 

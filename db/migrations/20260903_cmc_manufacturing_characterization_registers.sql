@@ -124,3 +124,16 @@ BEGIN
     ALTER TABLE manufacturing_processes ALTER COLUMN organization_id SET NOT NULL;
   END IF;
 END $$;
+
+-- validation_status: the model has declared DEFAULT 'not-started' since it was
+-- written and no migration ever gave the column one, so every process this
+-- register creates without an explicit status was stored NULL. The model must
+-- not claim what the database does not enforce -- that is the principle the
+-- model's own doc block states -- so the database gets the default rather than
+-- the model losing it. Existing NULLs are backfilled: a process with no
+-- recorded validation state IS not-started, and NULL is how the column said so
+-- before it could say it properly.
+ALTER TABLE manufacturing_processes
+  ALTER COLUMN validation_status SET DEFAULT 'not-started';
+UPDATE manufacturing_processes SET validation_status = 'not-started'
+  WHERE validation_status IS NULL;

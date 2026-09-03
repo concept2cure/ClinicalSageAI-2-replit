@@ -577,7 +577,7 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
     logger.error('governed export failure', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({
       error: 'GOVERNED_EXPORT_FAILED',
-      message: error.message || 'Governed content package draft (not an eSTAR) export failed before consequence persistence',
+      message: 'Governed content package draft (not an eSTAR) export failed before consequence persistence. The problem has been logged.',
     });
   }
 });
@@ -739,7 +739,7 @@ router.post('/scaffold-field-map', authMiddleware, requireEditorAccess, async (r
     });
     return res.status(500).json({
       error: 'ESTAR_SCAFFOLD_FAILED',
-      message: error.message || 'Failed to enumerate eSTAR template fields',
+      message: 'Failed to enumerate eSTAR template fields. The problem has been logged.',
     });
   }
 });
@@ -857,7 +857,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
     });
     return res.status(500).json({
       error: 'GOVERNED_EXPORT_FAILED',
-      message: error.message || 'Official eSTAR export failed before consequence persistence',
+      message: 'Official eSTAR export failed before consequence persistence. The problem has been logged.',
     });
   }
 });
@@ -931,7 +931,7 @@ router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEnt
     });
     return res.status(500).json({
       error: 'DEVICE_ASSEMBLY_FAILED',
-      message: error.message || 'Failed to compute device assembly state',
+      message: 'Failed to compute device assembly state. The problem has been logged.',
     });
   }
 });
@@ -984,7 +984,7 @@ router.get('/readiness', authMiddleware, async (req, res) => {
     });
     return res.status(500).json({
       error: 'ESTAR_READINESS_FAILED',
-      message: error.message || 'Failed to assess eSTAR readiness',
+      message: 'Failed to assess eSTAR readiness. The problem has been logged.',
     });
   }
 });
@@ -1013,7 +1013,7 @@ router.get('/catalog', authMiddleware, async (_req, res) => {
     });
     return res.status(500).json({
       error: 'ESTAR_CATALOG_FAILED',
-      message: error.message || 'Failed to build the eSTAR catalog',
+      message: 'Failed to build the eSTAR catalog. The problem has been logged.',
     });
   }
 });
@@ -1074,7 +1074,7 @@ router.get('/registration', authMiddleware, async (req, res) => {
     });
     return res.status(500).json({
       error: 'ESTAR_REGISTRATION_READ_FAILED',
-      message: error.message || 'Failed to read eSTAR registration',
+      message: 'Failed to read eSTAR registration. The problem has been logged.',
     });
   }
 });
@@ -1105,7 +1105,7 @@ router.put('/registration', authMiddleware, requireEditorAccess, async (req, res
     });
     return res.status(500).json({
       error: 'ESTAR_REGISTRATION_WRITE_FAILED',
-      message: error.message || 'Failed to save eSTAR registration',
+      message: 'Failed to save eSTAR registration. The problem has been logged.',
     });
   }
 });
@@ -1147,7 +1147,7 @@ router.post('/registration/assess', authMiddleware, async (req, res) => {
     });
     return res.status(500).json({
       error: 'ESTAR_REGISTRATION_FAILED',
-      message: error.message || 'Failed to assess eSTAR registration eligibility',
+      message: 'Failed to assess eSTAR registration eligibility. The problem has been logged.',
     });
   }
 });
@@ -1270,7 +1270,7 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
     });
     return res.status(500).json({
       error: 'ESTAR_FILING_READINESS_FAILED',
-      message: error.message || 'Failed to assess eSTAR filing readiness',
+      message: 'Failed to assess eSTAR filing readiness. The problem has been logged.',
     });
   }
 });
@@ -1282,7 +1282,7 @@ function submissionFail(res: any, error: any) {
     return res.status(error.code === 'NOT_FOUND' ? 404 : 400).json({ error: error.code, message: error.message });
   }
   logger.error('estar submission route error', { err: error instanceof Error ? error.message : String(error) });
-  return res.status(500).json({ error: 'ESTAR_SUBMISSION_FAILED', message: error.message || 'eSTAR submission tracking failed' });
+  return res.status(500).json({ error: 'ESTAR_SUBMISSION_FAILED', message: 'eSTAR submission tracking failed. The problem has been logged.' });
 }
 
 const createSubmissionSchema = z.object({
