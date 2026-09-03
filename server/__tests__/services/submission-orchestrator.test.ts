@@ -181,10 +181,24 @@ describe('module3-extensions', () => {
       expect(keys).toContain('3.2.A.3');
     });
 
-    it('marks 3.2.A.2 as not applicable for small molecules', () => {
-      const sections = composeAppendices([drugSubstanceSource]);
+    it('marks 3.2.A.2 as not applicable when the substance is RECORDED as a chemical synthesis', () => {
+      const chemical: CanonicalSource = {
+        ...drugSubstanceSource,
+        sourcePayload: { ...drugSubstanceSource.sourcePayload, modality: 'small_molecule' },
+      };
+      const sections = composeAppendices([chemical]);
       const a2 = sections.find(s => s.sectionKey === '3.2.A.2');
       expect(a2?.narrativeDraft).toContain('not applicable');
+    });
+
+    it('does NOT declare 3.2.A.2 not applicable from a row that records no origin either way', () => {
+      // A drug-substance row carrying only a name is not evidence of a chemical
+      // synthesis. The section says applicability is not established rather
+      // than issuing an adventitious-agent all-clear nobody recorded.
+      const sections = composeAppendices([drugSubstanceSource]);
+      const a2 = sections.find(s => s.sectionKey === '3.2.A.2');
+      expect(a2?.narrativeDraft).toContain('NOT ESTABLISHED');
+      expect(a2?.narrativeDraft?.toLowerCase()).not.toContain('not applicable for chemical');
     });
 
     it('lists novel excipients in 3.2.A.3', () => {
