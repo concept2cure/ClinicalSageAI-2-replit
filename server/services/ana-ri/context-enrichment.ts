@@ -15,7 +15,7 @@
 
 import { pool } from '../../db.js';
 import { computeReadinessScore, type ReadinessContext } from '../intelligence/readiness-scoring-engine.js';
-import { generateRecommendations, type RecommendationContext } from '../intelligence/recommendation-engine.js';
+import { type RecommendationContext } from '../intelligence/recommendation-engine.js';
 import { generateNextActions } from '../intelligence/next-best-action-engine.js';
 import { getProjectSignals } from '../intelligence/rim.js';
 import { querySignals, getRecurringPatterns, type IntelligenceSignal } from '../intelligence/signal-capture.js';
@@ -23,7 +23,7 @@ import { patternRegistry } from '../intelligence/pattern-registry.js';
 import { getProjectIntelligence } from '../intelligence/project-intelligence-service.js';
 import { analyzeCrossModuleRelationships } from '../intelligence/cross-module-intelligence.js';
 import { buildEvidenceChain, computeConfidence, analyzeFactors, type EvidenceSource } from '../intelligence/evidence-confidence-model.js';
-import { getDeficienciesBySubmissionType, getCriticalDeficiencies, type SubmissionType } from './deficiency-taxonomy.js';
+import { getDeficienciesBySubmissionType, getCriticalDeficiencies } from './deficiency-taxonomy.js';
 import { resolveToDeficiencyType, getSubmissionTypeContext } from '../../../shared/regulatory/submission-type-bridge.js';
 import { buildIndustryWisdomBlock, inferSegmentFromSubmissionType, inferSegmentFromMessage } from './industry-wisdom-pack.js';
 import { buildTourGuideBlock } from './use-case-playbooks.js';
@@ -435,7 +435,7 @@ async function enrichWithRecommendations(projectId: string | number, orgId?: num
         ).join('\n');
         feedbackNote = `\n\nNote: The user has previously dismissed the following recommendation types. Consider alternative approaches or provide stronger justification.\n${dismissalLines}`;
       }
-    } catch (e: unknown) {
+    } catch {
       // Non-blocking — feedback query is optional enrichment
     }
   }

@@ -37,10 +37,8 @@ import {
   c2cAutomationActions,
   c2cDigests,
   concept2cureArtifacts,
-  concept2cureReviewThreads,
   concept2cureReviewTasks,
   concept2cureReviewAssignments,
-  concept2cureNotifications,
 } from '../../shared/schema';
 import { eq, and, desc, sql, count, inArray, isNull, asc } from 'drizzle-orm';
 import { randomUUID } from 'crypto';

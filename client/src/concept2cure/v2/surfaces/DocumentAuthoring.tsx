@@ -618,7 +618,7 @@ async function readJson<T = any>(
     const res = await apiRequest('GET', path);
     const body = (await res.json().catch(() => null)) as T | null;
     return { ok: res.ok, status: res.status, body };
-  } catch (e) {
+  } catch {
     return { ok: false, status: 0, body: null };
   }
 }
