@@ -1,0 +1,12 @@
+/**
+ * Redline rendering (RedlineText.tsx) and the revision diff wrapper
+ * (surfaces/AuthoringRevisionDiff.tsx). Moved out of inline <style> blocks
+ * so the stylesheet gates can see them and the hex fallbacks beside every
+ * token are gone (ledger L139).
+ */
+
+.rdl-note { font-size: 11px; color: var(--text-400); margin: 6px 0 0; }
+.rdl-body { font-size: 12px; line-height: 1.7; margin: 6px 0 0; max-height: 260px; overflow-y: auto; white-space: pre-wrap; }
+.rdl-ins { background: color-mix(in srgb, var(--success) 14%, transparent); text-decoration: underline; color: var(--success); }
+.rdl-del { background: color-mix(in srgb, var(--error) 12%, transparent); text-decoration: line-through; color: var(--error); }
+.rvd { margin-top: 4px; }
