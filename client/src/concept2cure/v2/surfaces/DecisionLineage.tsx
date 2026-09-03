@@ -224,18 +224,26 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
      three-valued on purpose — verified, broken, and not-yet-answered are three
      different facts, and collapsing the third into "broken" would have AnA
      report tampering on a slow endpoint. */
-  const anaContext = useMemo(
-    () => ({
-      summary: loading
-        ? 'Decision lineage, still loading the org\'s governed decision trails.'
-        : error
-          ? 'Decision lineage could not be loaded — the trails are unavailable, not empty.'
-          : empty
-            ? 'Decision lineage: no governed decision trails recorded for this org yet.'
-            : `Decision lineage: ${graphs.length} governed trail(s)` +
-              (g ? `, "${g.artifactLabel}" selected with ${g.nodes?.length ?? 0} node(s)` : '') + '.',
+  const anaContext = useMemo(() => {
+    // Publish NO counts while loading or on a failed read — a zeroed trailCount
+    // beside an 'error' flag reads as a false "0 governed trails" on a Part-11
+    // audit-trail surface. Only the success branch carries facts.
+    if (loading) {
+      return { summary: 'Decision lineage, still loading the org\'s governed decision trails.' };
+    }
+    if (error) {
+      return {
+        summary: 'Decision lineage could not be loaded — the trails are unavailable, not empty.',
+        availableActions: ['Retry the decision-lineage read'],
+      };
+    }
+    return {
+      summary: empty
+        ? 'Decision lineage: no governed decision trails recorded for this org yet.'
+        : `Decision lineage: ${graphs.length} governed trail(s)` +
+          (g ? `, "${g.artifactLabel}" selected with ${g.nodes?.length ?? 0} node(s)` : '') + '.',
       facts: {
-        trailsState: loading ? 'loading' : error ? 'error' : empty ? 'empty' : 'ready',
+        trailsState: empty ? 'empty' : 'ready',
         trailCount: graphs.length,
         ...(g
           ? {
@@ -258,9 +266,8 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
         'Explain what the hash-chain verification result means',
         'Export this lineage trail',
       ],
-    }),
-    [loading, error, empty, graphs.length, g, chainState.loading, chain],
-  );
+    };
+  }, [loading, error, empty, graphs.length, g, chainState.loading, chain]);
   usePublishSurfaceContext('decision-lineage', anaContext);
 
   return (
