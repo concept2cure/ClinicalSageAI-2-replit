@@ -172,7 +172,7 @@ export function DocumentsPanel({
                 <div className="docs-title">{d.title}</div>
                 <div className="docs-meta">
                   <span className="mono small docs-ver">{d.ver}</span>
-                  <span className="dot-sep">·</span>
+                  <span className="dot-sep" aria-hidden="true">·</span>
                   <span>
                     {d.sectionsComplete}/{d.sections} sections
                   </span>
@@ -183,7 +183,7 @@ export function DocumentsPanel({
                     />
                   </span>
                   <span className="mono small docs-pct">{d.completion}%</span>
-                  <span className="dot-sep">·</span>
+                  <span className="dot-sep" aria-hidden="true">·</span>
                   <span className="docs-owner">{d.owner}</span>
                   {d.reviewers && d.reviewers.length > 0 && (
                     <>

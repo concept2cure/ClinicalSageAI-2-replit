@@ -50,7 +50,11 @@ import { indexGovernedDocument } from '../services/search/opensearchClient';
 import { searchConnectedRepositories } from '../services/integrations/connector-search.js';
 
 import { toBinaryBody } from '../utils/binary-body.js';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 const router = Router();
+
+const logger = createScopedLogger('knowledge-base');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 
 router.use(authenticateToken);
@@ -1301,7 +1305,7 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
     res.send(buffer);
   } catch (err: any) {
     console.error('[knowledge-base] Module 3 DOCX generation failed:', err.message);
-    res.status(500).json({ error: 'Module 3 DOCX generation failed', detail: err.message });
+    return serverError(res, logger, 'saving generate module3 DOCX', err);
   }
 });
 
@@ -1598,7 +1602,7 @@ router.post('/extract-pdf', upload.single('file'), async (req: Request, res: Res
     });
   } catch (err: any) {
     console.error('[knowledge-base] PDF extraction failed:', err.message);
-    res.status(500).json({ error: 'PDF extraction failed', detail: err.message });
+    return serverError(res, logger, 'saving extract PDF', err);
   }
 });
 
@@ -1669,7 +1673,7 @@ router.post('/ocr', upload.single('file'), async (req: Request, res: Response) =
     });
   } catch (err: any) {
     console.error('[knowledge-base] OCR failed:', err.message);
-    res.status(500).json({ error: 'OCR failed', detail: err.message });
+    return serverError(res, logger, 'saving ocr', err);
   }
 });
 
@@ -1989,7 +1993,7 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
     res.json(result);
   } catch (err: any) {
     console.error('[knowledge-base] Save to connector failed:', err.message);
-    res.status(500).json({ error: 'Save to connector failed', detail: err.message });
+    return serverError(res, logger, 'saving save to connector', err);
   }
 });
 
@@ -2329,7 +2333,7 @@ ${extractedText}`;
       });
     } catch (err: any) {
       console.error('[ind-autodraft] Upload failed:', err.message);
-      res.status(500).json({ error: 'Upload processing failed', detail: err.message });
+      return serverError(res, logger, 'uploading IND autodraft', err);
     }
   }
 );
@@ -2576,7 +2580,7 @@ router.post('/ind-autodraft/generate', async (req: Request, res: Response) => {
     res.json({ sections: generatedSections });
   } catch (err: any) {
     console.error('[ind-autodraft] Generate failed:', err.message);
-    res.status(500).json({ error: 'IND generation failed', detail: err.message });
+    return serverError(res, logger, 'generating IND autodraft', err);
   }
 });
 

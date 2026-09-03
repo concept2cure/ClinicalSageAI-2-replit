@@ -1211,10 +1211,7 @@ router.post('/sections/:sectionId/tokens', async (req: Request, res: Response) =
     });
   } catch (error) {
     console.error('Error saving token:', error);
-    res.status(500).json({
-      error: 'Failed to save token',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving tokens', error);
   }
 });
 
@@ -1239,10 +1236,7 @@ router.delete('/sections/:sectionId/tokens/:citeId', async (req: Request, res: R
     });
   } catch (error) {
     console.error('Error deleting token:', error);
-    res.status(500).json({
-      error: 'Failed to delete token',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'deleting tokens', error);
   }
 });
 
@@ -1411,10 +1405,7 @@ router.get('/templates', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error listing templates:', error);
-    res.status(500).json({
-      error: 'Failed to list templates',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading templates', error);
   }
 });
 
@@ -1445,10 +1436,7 @@ router.get('/templates/:id', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error fetching template:', error);
-    res.status(500).json({
-      error: 'Failed to fetch template',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading templates', error);
   }
 });
 
@@ -1497,10 +1485,7 @@ router.post(
       });
     } catch (error) {
       console.error('Error creating template:', error);
-      res.status(500).json({
-        error: 'Failed to create template',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
+      return serverError(res, logger, 'saving templates', error);
     }
   }
 );
@@ -1544,10 +1529,7 @@ router.get('/guidance/:sectionId', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error fetching guidance:', error);
-    res.status(500).json({
-      error: 'Failed to fetch guidance',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading guidance', error);
   }
 });
 
@@ -1580,10 +1562,7 @@ router.post(
       });
     } catch (error) {
       console.error('Error saving guidance:', error);
-      res.status(500).json({
-        error: 'Failed to save guidance',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
+      return serverError(res, logger, 'saving guidance', error);
     }
   }
 );
@@ -1714,11 +1693,7 @@ router.get('/docs', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error listing documents:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to list documents',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading docs', error);
   }
 });
 
@@ -2058,11 +2033,7 @@ router.post('/docs', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error creating document:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create document',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving docs', error);
   }
 });
 
@@ -2103,11 +2074,7 @@ router.get('/docs/:docId', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error getting document:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get document details',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading docs', error);
   }
 });
 
@@ -2169,11 +2136,7 @@ router.get('/docs/:docId/sections', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error getting sections:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get document sections',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading sections', error);
   }
 });
 
@@ -2318,11 +2281,7 @@ router.post('/sections', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error creating section:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create section',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving sections', error);
   }
 });
 
@@ -2684,11 +2643,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error updating section:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update section',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'updating sections', error);
   }
 });
 
@@ -2733,11 +2688,7 @@ router.get('/sections/:sectionId/history', async (req: Request, res: Response) =
     });
   } catch (error) {
     console.error('Error getting revision history:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get revision history',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading history', error);
   }
 });
 
@@ -2899,11 +2850,7 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
     });
   } catch (error) {
     console.error('Error reverting section:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to revert section',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving revert', error);
   }
 });
 
@@ -2992,11 +2939,7 @@ router.post('/sections/:sectionId/comment', async (req: Request, res: Response) 
     });
   } catch (error) {
     console.error('Error adding comment:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to add comment',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving comment', error);
   }
 });
 
@@ -3119,11 +3062,7 @@ router.patch('/comments/:commentId', async (req: Request, res: Response) => {
     }
   } catch (error) {
     console.error('Error updating comment:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update comment',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'updating comments', error);
   }
 });
 
@@ -3163,11 +3102,7 @@ router.post('/sections/:sectionId/cite', async (req: Request, res: Response) => 
     });
   } catch (error) {
     console.error('Error adding citation:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to add citation',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving cite', error);
   }
 });
 
@@ -3274,11 +3209,7 @@ router.get('/sections/:sectionId/citations', async (req: Request, res: Response)
     });
   } catch (error) {
     console.error('Error getting citations:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get citations',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading citations', error);
   }
 });
 
@@ -3358,11 +3289,7 @@ router.get('/documents/:id/comments', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error fetching comments:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch comments',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading comments', error);
   }
 });
 
@@ -3408,11 +3335,7 @@ router.get('/documents/:id/reviews', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error fetching reviews:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch reviews',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading reviews', error);
   }
 });
 
@@ -3486,11 +3409,7 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error submitting review:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to submit review',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving review', error);
   }
 });
 
@@ -3535,11 +3454,7 @@ router.post('/documents/:id/request-review', async (req: Request, res: Response)
     });
   } catch (error) {
     console.error('Error requesting review:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to request review',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving request review', error);
   }
 });
 
@@ -3885,11 +3800,7 @@ Study Design:
     });
   } catch (error) {
     console.error('Error generating AI draft:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to generate AI draft',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'drafting AI', error);
   }
 });
 
@@ -4106,11 +4017,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
     });
   } catch (error) {
     console.error('Error accepting AI draft:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to accept AI draft',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving accept', error);
   }
 });
 
@@ -4321,11 +4228,7 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
     });
   } catch (error) {
     console.error('Error scanning for deficiencies:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to scan for deficiencies',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving deficiency scan', error);
   }
 });
 
@@ -4370,11 +4273,7 @@ router.get('/stats', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error getting statistics:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get authoring statistics',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading stats', error);
   }
 });
 
@@ -5035,11 +4934,7 @@ router.get('/sections/:sectionId/tokens', async (req: Request, res: Response) =>
     res.json(result.rows);
   } catch (error) {
     console.error('Error getting section tokens:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get section tokens',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading tokens', error);
   }
 });
 
@@ -5096,11 +4991,7 @@ router.post('/sections/:sectionId/refresh-token', async (req: Request, res: Resp
     });
   } catch (error) {
     console.error('Error refreshing token:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to refresh token',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving refresh token', error);
   }
 });
 
@@ -6392,10 +6283,7 @@ router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Submit error:', error);
-    res.status(500).json({
-      error: 'Submit failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'submitting docs', error);
   }
 });
 
@@ -6678,10 +6566,7 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Sign error:', error);
-    res.status(500).json({
-      error: 'Sign failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'signing docs', error);
   }
 });
 
@@ -7020,11 +6905,7 @@ router.post('/documents/:id/tracked-change-decisions', async (req: Request, res:
     res.json({ success: true, decision: result.rows[0] });
   } catch (error) {
     console.error('Error persisting tracked change decision:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to persist tracked change decision',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving tracked change decisions', error);
   }
 });
 
@@ -7115,11 +6996,7 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
     res.json({ success: true, decisions: results, count: results.length });
   } catch (error) {
     console.error('Error persisting bulk tracked change decisions:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to persist bulk tracked change decisions',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving bulk', error);
   }
 });
 

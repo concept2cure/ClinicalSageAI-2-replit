@@ -39,6 +39,7 @@ import { loadNonclinicalStudiesForProject } from '../services/preclinical/load-n
 import { pool } from '../db.js';
 import auditService from '../services/auditService.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { serverError } from '../lib/api-response';
 
 const log = createScopedLogger('submission-orchestrator');
 
@@ -437,7 +438,7 @@ router.post('/runs', async (req: Request, res: Response) => {
     }
   } catch (err) {
     log.error('Input assembly failed', { err: err instanceof Error ? err.message : String(err), organizationId });
-    return res.status(500).json({ error: 'input_assembly_failed', message: err instanceof Error ? err.message : 'unknown' });
+    return serverError(res, log, 'saving runs', err);
   }
 
   try {
@@ -480,10 +481,7 @@ router.post('/runs', async (req: Request, res: Response) => {
       },
     });
   } catch (err) {
-    return res.status(500).json({
-      error: 'orchestrator_failed',
-      message: err instanceof Error ? err.message : String(err),
-    });
+    return serverError(res, log, 'saving runs', err);
   }
 });
 
@@ -567,10 +565,7 @@ router.post('/runs/:runId/regenerate', async (req: Request, res: Response) => {
       steps: result.run.steps.map(s => ({ key: s.key, status: s.status })),
     });
   } catch (err) {
-    return res.status(500).json({
-      error: 'regenerate_failed',
-      message: err instanceof Error ? err.message : String(err),
-    });
+    return serverError(res, log, 'regenerating the run', err);
   }
 });
 
@@ -603,7 +598,7 @@ router.post('/m2/qos', async (req: Request, res: Response) => {
     });
     return res.json(summary);
   } catch (err) {
-    return res.status(500).json({ error: 'm23_failed', message: err instanceof Error ? err.message : String(err) });
+    return serverError(res, log, 'saving qos', err);
   }
 });
 
@@ -628,7 +623,7 @@ router.post('/m2/nonclinical', async (req: Request, res: Response) => {
     });
     return res.json(summary);
   } catch (err) {
-    return res.status(500).json({ error: 'm24_failed', message: err instanceof Error ? err.message : String(err) });
+    return serverError(res, log, 'saving nonclinical', err);
   }
 });
 
@@ -653,7 +648,7 @@ router.post('/m2/clinical', async (req: Request, res: Response) => {
     });
     return res.json(summary);
   } catch (err) {
-    return res.status(500).json({ error: 'm27_failed', message: err instanceof Error ? err.message : String(err) });
+    return serverError(res, log, 'saving clinical', err);
   }
 });
 
@@ -683,7 +678,7 @@ router.post('/m2/clinical-overview', async (req: Request, res: Response) => {
     });
     return res.json(summary);
   } catch (err) {
-    return res.status(500).json({ error: 'm25_failed', message: err instanceof Error ? err.message : String(err) });
+    return serverError(res, log, 'saving clinical overview', err);
   }
 });
 
@@ -707,7 +702,7 @@ router.post('/csr/tabulate', async (req: Request, res: Response) => {
     });
     return res.json(tables);
   } catch (err) {
-    return res.status(500).json({ error: 'csr_tabulate_failed', message: err instanceof Error ? err.message : String(err) });
+    return serverError(res, log, 'tabulating the CSR', err);
   }
 });
 
@@ -769,7 +764,7 @@ router.post('/validate/hardened', async (req: Request, res: Response) => {
       findings: flattenFindings(result),
     });
   } catch (err) {
-    return res.status(500).json({ error: 'validation_failed', message: err instanceof Error ? err.message : String(err) });
+    return serverError(res, log, 'saving hardened', err);
   }
 });
 

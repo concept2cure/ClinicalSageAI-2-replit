@@ -420,9 +420,9 @@ export function TopBar({
     <header className="topbar">
       <div className="crumbs">
         <span>Concept2Cure.RI</span>
-        <span className="sep">›</span>
+        <span className="sep" aria-hidden="true">›</span>
         <span>{tier ? tier.label : ''}</span>
-        <span className="sep">›</span>
+        <span className="sep" aria-hidden="true">›</span>
         <span className="here">{surface.label}</span>
       </div>
       <div className="tb-spacer" />

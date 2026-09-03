@@ -13,8 +13,12 @@
 import { Router, Request, Response } from 'express';
 import { statisticalDefensibilityService } from '../services/statistical-defensibility-service';
 import { OperatingSystemIntegration } from '../services/operating-system-integration';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('statistical-defensibility');
 
 // ── Full Defensibility Assessment ────────────────────────────
 
@@ -84,7 +88,7 @@ router.post('/assess', async (req: Request, res: Response) => {
     res.json({ success: true, data: report, decisionRecord });
   } catch (error: any) {
     console.error('Defensibility assessment error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'assessing', error);
   }
 });
 
@@ -118,7 +122,7 @@ router.post('/consistency', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Consistency check error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving consistency', error);
   }
 });
 
@@ -144,7 +148,7 @@ router.post('/endpoint-quality', async (req: Request, res: Response) => {
     res.json({ success: true, data: result });
   } catch (error: any) {
     console.error('Endpoint quality error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving endpoint quality', error);
   }
 });
 
@@ -182,7 +186,7 @@ router.post('/sample-size', async (req: Request, res: Response) => {
     res.json({ success: true, data: result });
   } catch (error: any) {
     console.error('Sample size evaluation error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving sample size', error);
   }
 });
 
@@ -211,7 +215,7 @@ router.post('/multiplicity', async (req: Request, res: Response) => {
     res.json({ success: true, data: result });
   } catch (error: any) {
     console.error('Multiplicity assessment error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving multiplicity', error);
   }
 });
 
@@ -256,7 +260,7 @@ router.post('/reviewer-risks', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Reviewer risk annotations error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving reviewer risks', error);
   }
 });
 
