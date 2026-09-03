@@ -70,6 +70,10 @@ import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
+import { AnaWorkPanel } from '../AnaWorkPanel';
+import { useAgentActivity } from '../useAgentActivity';
+import { useWorkDockVisible } from '../workDock';
+import { shellProgramName } from '../shellProject';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
@@ -1231,6 +1235,17 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     onDriveEvent: liveDrive?.onDriveEvent,
     onArtifactSaved: liveDrive?.onWorkSaved,
   });
+  /* The live work dock for this pane (AnaWorkPanel): one shared show/hide
+     memory with the rail, and the background queue read only while shown. */
+  const [workDockOpen, setWorkDockOpen] = useWorkDockVisible();
+  const anaWorkQueue = useAgentActivity(workDockOpen, ana.isStreaming);
+  /* Focus goes to the header toggle before the dock (and its close button)
+     unmounts, so a keyboard user is not dropped onto <body>. */
+  const workToggleRef = useRef<HTMLButtonElement>(null);
+  const hideWorkDock = () => {
+    workToggleRef.current?.focus();
+    setWorkDockOpen(false);
+  };
   const anaComposerRef = useRef<HTMLTextAreaElement>(null);
   const anaReturnFocusRef = useRef<HTMLElement | null>(null);
   const anaWasOpenRef = useRef(false);
@@ -2468,11 +2483,22 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         ...(pending ? { anchor: pending.anchor } : {}),
       });
       const json = await res.json().catch(() => null);
+      /* On every failure the editor's anchor request must be answered: it
+         used to be left pending forever, and the Comment button then silently
+         did nothing for the rest of the mount. */
+      const abandonAnchor = () => {
+        if (!pending) return;
+        pending.resolve(null);
+        pendingAnchorRef.current = null;
+        setPendingAnchor(null);
+      };
       if (res.status === 401) {
+        abandonAnchor();
         fireToast('Comment not posted — your session isn’t authenticated. Sign in and retry.', 'error');
         return;
       }
       if (!res.ok) {
+        abandonAnchor();
         fireToast(
           'Couldn’t post the comment — ' + (serverMessage(json) ?? 'the server refused it') + '.',
           'error'
@@ -2485,7 +2511,10 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         pending.resolve(typeof created?.id === 'string' ? created.id : null);
         pendingAnchorRef.current = null;
         setPendingAnchor(null);
-        fireToast('Comment anchored to the selected text.');
+        /* "Comment anchored" was toasted here — before the save that carries
+           the anchor mark had been attempted. The thread exists; whether the
+           highlight is in the record is the editor's onAnchored report. */
+        fireToast('Comment created — anchoring it to the selected text…');
       } else {
         fireToast('Comment added.');
       }
@@ -2497,6 +2526,11 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       );
       void loadComments(activeDocId);
     } catch (e) {
+      if (pending) {
+        pending.resolve(null);
+        pendingAnchorRef.current = null;
+        setPendingAnchor(null);
+      }
       fireToast(
         'Couldn’t post the comment — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
         'error'
@@ -3235,6 +3269,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             <AuthoringCreateExport
               docId={activeDoc?.id ?? null}
               docTitle={activeDoc?.title ?? null}
+              docStatus={activeDoc?.status ?? null}
               module={module}
               fireToast={fireToast}
               onDocCreated={d => {
@@ -3913,6 +3948,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     commentsApi={{
                       onCreate: requestAnchoredComment,
                       onOpen: openCommentFromAnchor,
+                      onAnchored: (_id, saved) =>
+                        fireToast(
+                          saved
+                            ? 'Comment anchored to the selected text.'
+                            : 'Comment created, but its anchor could not be saved with the section — save the section to make the highlight visible to others.',
+                          saved ? undefined : 'error',
+                        ),
                     }}
                     imagesApi={{ upload: uploadSectionImage }}
                     /* The document's own sections, as they stand right now.
@@ -3996,16 +4038,54 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                 ? ` · ${activeDoc.title}`
                 : ''}
             </span>
-            <button
-              type="button"
-              className="ed-comments-close"
-              aria-label="Close AnA panel"
-              title="Close AnA panel"
-              onClick={closeAna}
-            >
-              {I.close}
-            </button>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <button
+                type="button"
+                ref={workToggleRef}
+                className="ana-work-toggle"
+                aria-pressed={workDockOpen}
+                aria-label={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
+                title={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
+                onClick={() => setWorkDockOpen(!workDockOpen)}
+              >
+                {I.activity} At work
+              </button>
+              <button
+                type="button"
+                className="ed-comments-close"
+                aria-label="Close AnA panel"
+                title="Close AnA panel"
+                onClick={closeAna}
+              >
+                {I.close}
+              </button>
+            </span>
           </div>
+          {/* The live work dock — the same one the shell rail mounts. ABOVE
+              the log below, deliberately: that region is aria-live, and a
+              clock ticking inside a live region would be read out every
+              second. */}
+          {workDockOpen && (
+            <div className="ana-work-host">
+              <AnaWorkPanel
+                messages={ana.messages}
+                streaming={ana.isStreaming}
+                runStatus={ana.runStatus}
+                pendingSteers={ana.pendingSteers}
+                queue={anaWorkQueue}
+                context={{
+                  project: shellProgramName(),
+                  module: 'Document authoring',
+                  surface: activeSection
+                    ? `Section ${activeSection.code}`
+                    : activeDoc
+                      ? activeDoc.title
+                      : null,
+                }}
+                onClose={hideWorkDock}
+              />
+            </div>
+          )}
           <div
             ref={anaScrollRef}
             role="log"

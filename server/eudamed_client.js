@@ -59,7 +59,7 @@ function makeRequest(url, queryParams = {}) {
             reject(
               new Error(errorData.error ? errorData.error.message : `HTTP Error: ${res.statusCode}`)
             );
-          } catch (e) {
+          } catch {
             reject(new Error(`HTTP Error: ${res.statusCode} ${res.statusMessage || ''}`));
           }
         }

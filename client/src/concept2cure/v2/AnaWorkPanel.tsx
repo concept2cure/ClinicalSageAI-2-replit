@@ -134,7 +134,7 @@ function useWorkModel(messages: AnaChatMessage[], streaming: boolean, runStatus:
     calls,
     tally: tallyTools(calls),
     outputs: collectOutputs(messages),
-    spoken: spokenLine(phases, live, stateLine),
+    spoken: spokenLine(phases, live, stateLine, turn?.statusPhase),
   };
 }
 

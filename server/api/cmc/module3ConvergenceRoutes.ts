@@ -16,7 +16,7 @@ import {
   classifyAndMapArtifactToSource,
   bridgeCompileToArtifact,
 } from '../../services/module3-convergence-service';
-import { composeModule3FromCanonicalSources, impactedSectionsForSourceType, CmcSourceType } from '../../services/module3Composer';
+import { composeModule3FromCanonicalSources, CmcSourceType } from '../../services/module3Composer';
 import { createSourceHash } from '../../services/cmc-module3-compiler';
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
 

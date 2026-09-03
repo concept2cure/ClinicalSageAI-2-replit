@@ -480,6 +480,65 @@ export async function replaceAuthorSpans(
  * and the content write commit together; a partial write here reintroduces the
  * best-effort-lineage failure the save gate exists to close.
  */
+/**
+ * Retire every current source span whose recorded quote is no longer the text
+ * at its own offsets, and return the ranges that still verify.
+ *
+ * A source span is a claim that characters [charStart, charEnd) are a verbatim
+ * quote of a source, sealed by `span_text_sha256` at record time. An edit that
+ * moves or changes that text — a human refining an accepted AI draft — leaves
+ * the row pointing at characters it no longer describes. Re-hashing the slice
+ * is a check the row itself makes possible; a quote that stayed in place keeps
+ * its citation, one that moved is retired rather than left to answer for the
+ * wrong words. Nothing here can RE-verify a moved quote (the source text is not
+ * stored), so a moved quote is a retired quote, and the author gate then
+ * covers it as the author's assertion.
+ */
+export async function retireStaleSourceSpans(
+  orgId: number,
+  ref: { documentTable: string; documentId: string },
+  content: string,
+  exec: Queryable = pool as unknown as Queryable,
+): Promise<{ kept: Array<{ charStart: number; charEnd: number }>; retired: number }> {
+  const { rows } = await exec.query<{
+    id: string;
+    char_start: number;
+    char_end: number;
+    span_text_sha256: string | null;
+  }>(
+    `SELECT id, char_start, char_end, span_text_sha256
+       FROM document_span_lineage
+      WHERE organization_id = $1
+        AND document_table = $2
+        AND document_id = $3
+        AND provenance_kind = 'cre_evidence_source'
+        AND deleted_at IS NULL`,
+    [orgId, ref.documentTable, ref.documentId],
+  );
+  const kept: Array<{ charStart: number; charEnd: number }> = [];
+  const stale: string[] = [];
+  for (const r of rows) {
+    const start = Number(r.char_start);
+    const end = Number(r.char_end);
+    const inPlace =
+      start >= 0 &&
+      end <= content.length &&
+      r.span_text_sha256 != null &&
+      hashSpanText(content.slice(start, end)) === r.span_text_sha256;
+    if (inPlace) kept.push({ charStart: start, charEnd: end });
+    else stale.push(String(r.id));
+  }
+  if (stale.length > 0) {
+    await exec.query(
+      `UPDATE document_span_lineage
+          SET deleted_at = NOW(), updated_at = NOW()
+        WHERE id = ANY($1::uuid[])`,
+      [stale],
+    );
+  }
+  return { kept, retired: stale.length };
+}
+
 export async function replaceSourceSpans(
   orgId: number,
   ref: DocumentRef,

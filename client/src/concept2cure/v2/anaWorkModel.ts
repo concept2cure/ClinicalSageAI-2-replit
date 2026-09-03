@@ -60,10 +60,23 @@ export function elapsedFor(turn: AnaChatMessage | null, now: number): string {
   return formatElapsed((turn?.completedAt ?? now) - startedAt);
 }
 
-/** What the polite live region says: the active phase, then the outcome once settled. */
-export function spokenLine(phases: AnaProgressPhase[], live: boolean, stateLine: string): string {
+/** The line the progress list shows before the first phase event arrives. */
+export const SENDING_PLACEHOLDER = 'Sending to AnA…';
+
+/**
+ * What the polite live region says: the active phase, then the outcome once
+ * settled. Before the first phase arrives on a live turn it says what the
+ * sighted user sees — the placeholder — so the two do not diverge.
+ */
+export function spokenLine(
+  phases: AnaProgressPhase[],
+  live: boolean,
+  stateLine: string,
+  placeholder?: string,
+): string {
   const active = phases.find((p) => p.status === 'active');
-  return [active?.label ?? null, live ? null : stateLine].filter(Boolean).join('. ');
+  const phase = active?.label ?? (live && phases.length === 0 ? placeholder || SENDING_PLACEHOLDER : null);
+  return [phase, live ? null : stateLine].filter(Boolean).join('. ');
 }
 
 /** A step's duration: the server's own measurement when it sent one, else the client clocks. */

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T18:30:09.535Z",
+  "generatedAt": "2026-09-03T20:03:56.176Z",
   "git": {
-    "sha": "797181e472839bfe581133e4826fb278e805926d",
+    "sha": "c378f919f2858fb9d01106e47b202caad1d61f5e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -18,7 +18,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 38,
-    "largeFilesByLines": 89
+    "largeFilesByLines": 90
   },
   "findings": {
     "duplicateBasenames": [
@@ -2146,7 +2146,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1003062
+        "bytes": 1004247
       },
       {
         "file": "shared/schema.ts",
@@ -2170,7 +2170,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 229664
+        "bytes": 233355
       },
       {
         "file": "server/statistics-service.ts",
@@ -2253,6 +2253,10 @@
         "bytes": 116241
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "bytes": 116112
+      },
+      {
         "file": "server/services/intelligent-report-engine.ts",
         "bytes": 115224
       },
@@ -2291,10 +2295,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 107144
       }
     ],
     "largeFilesByLines": [
@@ -2304,7 +2304,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19472
+        "lines": 19481
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2332,7 +2332,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 5021
+        "lines": 5101
       },
       {
         "file": "server/storage.ts",
@@ -2395,6 +2395,10 @@
         "lines": 2609
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 2596
+      },
+      {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2588
       },
@@ -2412,11 +2416,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "lines": 2453
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2452
+        "lines": 2460
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2567,16 +2567,16 @@
         "lines": 1824
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1816
-      },
-      {
         "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",
         "lines": 1815
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
         "lines": 1813
+      },
+      {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1809
       },
       {
         "file": "design-system/ui_kits/home/Projects.jsx",
@@ -2653,6 +2653,10 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
+      },
+      {
+        "file": "server/routes/510k-estar-routes.ts",
+        "lines": 1588
       }
     ]
   },
@@ -2662,7 +2666,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 399,
       "largeByBytes": 28,
-      "largeByLines": 73
+      "largeByLines": 74
     },
     {
       "owner": "Unassigned (TBD)",

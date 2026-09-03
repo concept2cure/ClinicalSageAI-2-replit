@@ -233,7 +233,7 @@ router.get('/packages/:packageId', async (req: Request, res: Response) => {
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -264,7 +264,7 @@ router.get('/packages/:packageId/sections', async (req: Request, res: Response) 
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -424,7 +424,7 @@ router.get('/packages/:packageId/milestones', async (req: Request, res: Response
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -473,7 +473,7 @@ router.post('/packages/:packageId/milestones', async (req: Request, res: Respons
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -689,7 +689,7 @@ router.get('/packages/:packageId/readiness', async (req: Request, res: Response)
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -748,7 +748,7 @@ router.get('/packages/:packageId/readiness-history', async (req: Request, res: R
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -1316,7 +1316,7 @@ router.post('/packages/:packageId/publish', async (req: Request, res: Response) 
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -1453,6 +1453,18 @@ function leafSlug(value: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 80) || 'section';
+}
+
+/**
+ * Package lookup key for the transmit-path routes: either the package's text id
+ * (pkg_…) or its numeric row id. The dispatch surface identifies a package by
+ * the numeric id the transmit route takes, and an operator working the
+ * record-identifiers → assemble → transmit loop should not need to know both.
+ */
+function packageKeyClause(key: string) {
+  return /^\d+$/.test(key)
+    ? eq(c2cSubmissionPackages.id, Number(key))
+    : eq(c2cSubmissionPackages.packageId, key);
 }
 
 /**
@@ -1596,12 +1608,7 @@ router.put('/packages/:packageId/regulatory-identifiers', async (req: Request, r
     const [pkg] = await db
       .select()
       .from(c2cSubmissionPackages)
-      .where(
-        and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
-          eq(c2cSubmissionPackages.orgId, orgId),
-        ),
-      );
+      .where(and(packageKeyClause(String(req.params.packageId)), eq(c2cSubmissionPackages.orgId, orgId)));
     if (!pkg) return res.status(404).json({ error: 'Package not found' });
 
     const existingMetadata =
@@ -1695,7 +1702,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId),
         ),
       );
@@ -2241,7 +2248,7 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId),
         ),
       );

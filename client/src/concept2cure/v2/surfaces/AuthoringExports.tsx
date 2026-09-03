@@ -162,7 +162,13 @@ export function AuthoringExports({ docId, refreshKey = 0 }: AuthoringExportsProp
       const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
       if (!res.ok || json?.success !== true) {
         setStatus('error');
-        setError(serverMessage(json) ?? `HTTP ${res.status}`);
+        // "HTTP 401" reached the screen: this rail renders directly, not
+        // through ErrorState, so no redaction applied to the bare status.
+        setError(
+          res.status === 401
+            ? 'your session isn’t authenticated'
+            : (serverMessage(json) ?? 'the export service did not answer'),
+        );
         return;
       }
       setState({
@@ -297,7 +303,11 @@ export function AuthoringExports({ docId, refreshKey = 0 }: AuthoringExportsProp
       {/* ── The history itself ── */}
       {exports.length === 0 ? (
         <div style={{ fontSize: 12, opacity: 0.75 }} data-testid="exports-empty">
-          No exports recorded for this document.
+          {/* The server's own count is the fact; an empty page against a
+              non-zero total is a paging skew, not an empty history. */}
+          {(state?.total ?? 0) > 0
+            ? `${state!.total} export${state!.total === 1 ? '' : 's'} recorded; none were returned in this page.`
+            : 'No exports recorded for this document.'}
         </div>
       ) : (
         <div style={{ display: 'grid', gap: 8 }}>
