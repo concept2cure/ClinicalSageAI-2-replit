@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T18:28:12.930Z",
+  "generatedAt": "2026-09-03T18:30:09.535Z",
   "git": {
-    "sha": "fecfa836a343154344ba8c54cde400e68c510447",
+    "sha": "797181e472839bfe581133e4826fb278e805926d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2411,16 +2411,16 @@
         "lines": 2466
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "lines": 2453
+      },
+      {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
         "lines": 2452
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "lines": 2419
-      },
-      {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2406
       },
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
