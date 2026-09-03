@@ -153,6 +153,8 @@ All numbers below were read from the runners on the final tree, after the review
 | `useEstarExport.test.ts` | 14 tests (4 → 14) |
 | eslint on all 14 changed/new files | 0 errors; the warnings are the pre-existing max-lines / complexity / test-file `no-undef` classes, none new |
 | `sha256sum -c assets/estar-templates/checksums.txt` | both OK |
+| `tsc --noEmit -p tsconfig.check.json` on the final tree | exit 0, no diagnostics |
+| ESLint warning ratchet (`ci:eslint-ratchet`) on the merged tree | **2 over the baseline (6701 > 6699)** — not from this change: every MDX file is outside `eslint .`'s scope by the repo's ignore pattern, and the changed server and test files carry the same per-rule counts as before (one `no-unused-vars` removed). The four new warnings are in `client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx`, `server/services/ana/AnaToolExecutor.ts` and `server/services/ectd/leaf-pdf-renderer.ts`, landed upstream after the 18:15 baseline commit; those files are outside this stream's territory and were not edited |
 | CI gates run locally on the final tree | client-api-calls, route-collisions, orphaned-endpoints (strict), unrun-tests, test-imports, compliance-claims, ana-surface-context, surface-discoverability, client-reachability, bundle-reachability, internals-in-copy, empty-state-honesty, action-overclaim, server-error-leaks, error-envelope, microcopy, ectd-stubs, risk-codes, migration-set-order, session-scoped-rls-bypass, catalog-copy, fabricated-identity, ledger, requestdb-coverage — all pass |
 
 **Verified by making each check fail.** Every guard added in this phase was broken by a scripted edit, its test
