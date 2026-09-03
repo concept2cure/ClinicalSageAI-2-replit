@@ -97,21 +97,8 @@ interface AnaTurnProps {
   onNav?: (id: string) => void;
 }
 
-/** The one state in which <AnaActivity /> renders nothing for an in-flight
- *  turn: no phase and no reportable work yet, with no text either. By the
- *  hook's contract it does not occur — the placeholder carries a phase from the
- *  moment it is appended, and the phase is only cleared once text has landed —
- *  so the dots this gates are a guard against a blank body, not a renderer:
- *  three dots claim nothing about the work. */
-function waitingWithNothingToShow(turn: CtTurn): boolean {
-  const a = turn.activity;
-  if (!a || !a.streaming || a.phase || turn.answer) return false;
-  return !hasReportableWork(a);
-}
-
 function AnaTurn({ turn, onRefine, onNav }: AnaTurnProps) {
   const a = turn.activity;
-  const waiting = waitingWithNothingToShow(turn);
   return (
     <div className="ct-turn ct-ana">
       <div className="ct-ana-av">{'✻'}</div>
@@ -122,9 +109,9 @@ function AnaTurn({ turn, onRefine, onNav }: AnaTurnProps) {
         {turn.doc && (turn.doc.confidence || 1) < 0.4 && (
           <DocumentContextCard doc={turn.doc} defaultOpen={false} />
         )}
-        {/* The progress before the words — the same order as the shell rail
-            and the component's own docblock. While the turn streams this is
-            the phase line and each tool row as it lands; once the answer has
+        {/* The progress before the words, as the component's own docblock
+            puts it and WO-11 A2 asks. While the turn streams this is the
+            phase line and each tool row as it lands; once the answer has
             landed it collapses to its summary and the record stays with the
             turn. `AnaActivity` is the one tool-transparency renderer. Two
             things used to sit here instead: a `.ct-think` "Thought for a
@@ -132,9 +119,15 @@ function AnaTurn({ turn, onRefine, onNav }: AnaTurnProps) {
             reasoning beside this one, and a `.ct-tool` row for `turn.tools`,
             which `toTurn` never set and so never rendered once — the dead
             renderer class this file's comments have caught twice before.
-            Both deleted rather than kept beside the authority. */}
+            Both deleted rather than kept beside the authority.
+
+            There is no dots fallback either. The in-flight message carries a
+            phase from the moment `useAnaChat` appends it, and the phase is
+            only cleared by a text or thinking chunk (which makes the turn
+            reportable) or together with `streaming: false` — so the state
+            "streaming with nothing to show" cannot occur, and a renderer for
+            it would be the fifth dead one on this surface. */}
         {a && <AnaActivity {...a} />}
-        {waiting && <div className="ct-typing" aria-hidden="true"><span /><span /><span /></div>}
         {/* ── The proposal block was unreachable, and it advertised a
             workflow this surface does not have ───────────────────────────────
             It rendered a diff with Accept / Refine / Discard, and a chip for a
@@ -669,14 +662,29 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
       return false;
     }
   });
+  /* The column's close button lives INSIDE the column, so hiding it unmounts
+     the control that had focus and the browser drops focus to <body>. When a
+     hide was asked for, focus moves to the header toggle — the control that
+     brings the column back — once the column is gone. Not on mount: a
+     remembered 'hidden' must not steal focus on page load. */
+  const sideToggleRef = useRef<HTMLButtonElement>(null);
+  const refocusToggle = useRef(false);
+  const sideId = React.useId();
   const setSideDock = (collapsed: boolean) => {
     setPanelCollapsed(collapsed);
+    if (collapsed) refocusToggle.current = true;
     try {
       localStorage.setItem(SIDE_DOCK_KEY, collapsed ? 'hidden' : 'shown');
     } catch {
       /* session-only */
     }
   };
+  useEffect(() => {
+    if (panelCollapsed && refocusToggle.current) {
+      refocusToggle.current = false;
+      sideToggleRef.current?.focus();
+    }
+  }, [panelCollapsed]);
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   /* The background queue the work dock shows — read only while the side
@@ -819,9 +827,11 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
               width. `.ct-head-open` is this header's existing button style,
               which had no remaining user. */}
           <button
+            ref={sideToggleRef}
             type="button"
             className="ct-head-open"
             aria-expanded={!panelCollapsed}
+            aria-controls={panelCollapsed ? undefined : sideId}
             onClick={() => setSideDock(!panelCollapsed)}
           >
             {I.panelRight} {panelCollapsed ? 'Show side panel' : 'Hide side panel'}
@@ -942,7 +952,7 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
             minus a stub. `data-artifacts` lets the stylesheet cap the dock's
             height only when there is something below it to make room for. */}
         {!panelCollapsed && (
-          <div className="ct-side" data-artifacts={artifacts.length > 0 ? 'true' : 'false'}>
+          <div className="ct-side" id={sideId} data-artifacts={artifacts.length > 0 ? 'true' : 'false'}>
             <div className="ct-side-work">
               <AnaWorkPanel
                 messages={anaChat.messages}
@@ -950,7 +960,12 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
                 runStatus={anaChat.runStatus}
                 pendingSteers={anaChat.pendingSteers}
                 queue={agentActivity}
-                announce
+                /* Not `announce`. This surface passed it because it mounted no
+                   other announcer; every AnA turn above now carries its own
+                   <AnaActivity />, whose polite region speaks the phase, so a
+                   second region here would say the same thing twice, back to
+                   back, for every status event — the case AnaWorkPanel's own
+                   docblock warns against and the rail already avoids. */
                 context={{
                   project: shellProgramName(),
                   surface: 'Conversation',

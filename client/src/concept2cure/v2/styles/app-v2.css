@@ -2568,17 +2568,18 @@
 .c2c-v2 .ct-head-r{display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .c2c-v2 .ct-head-model{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-400);}
 .c2c-v2 .ct-head-model svg{width:12px;height:12px;}
-.c2c-v2 .ct-head-open{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;color:var(--accent-100);background:none;border:1px solid var(--border);border-radius:7px;padding:6px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+/* --accent-200, not --accent-100: the identity orange is the colour the brand
+   is SEEN in, and this is 11.5px text — at that size --accent-100 measures
+   2.96:1 on --bg-000 (same reason as .ph-eyebrow). */
+.c2c-v2 .ct-head-open{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;color:var(--accent-200);background:none;border:1px solid var(--border);border-radius:7px;padding:6px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
 .c2c-v2 .ct-head-open:hover{background:var(--bg-050);}
 .c2c-v2 .ct-head-open svg{width:13px;height:13px;}
 
 .c2c-v2 .ct-scroll{flex:1;min-height:0;overflow-y:auto;}
 .c2c-v2 .ct-col{max-width:768px;margin:0 auto;padding:26px 24px 40px;display:flex;flex-direction:column;gap:22px;}
-/* A reading measure, widened in steps rather than removed: long-form
-   regulatory prose is unreadable at a 1400px line, and 768px beside a 384px
-   dock read as a strip with dead margin on a wide display. */
-@media (min-width:1600px){.c2c-v2 .ct-col{max-width:860px;}}
-@media (min-width:1920px){.c2c-v2 .ct-col{max-width:940px;}}
+/* The reading measure is widened in steps below the composer rules — see
+   the @media block after .ct-comp-foot, which must follow every rule it
+   overrides. */
 
 .c2c-v2 .ct-turn{display:flex;}
 .c2c-v2 .ct-user{justify-content:flex-end;}
@@ -2586,6 +2587,9 @@
 .c2c-v2 .ct-ana{gap:13px;align-items:flex-start;}
 .c2c-v2 .ct-ana-av{width:28px;height:28px;border-radius:8px;background:var(--accent-100);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:2px;}
 .c2c-v2 .ct-ana-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;}
+/* .ana-activity carries margin-top:8px for the rail's 3px message gap; this
+   body already spaces its children by 10px. */
+.c2c-v2 .ct-ana-body .ana-activity{margin-top:0;}
 
 /* `.ct-think*` (the thread's own "Thought for a moment" disclosure) and
    `.ct-tool*` (a tool row `toTurn` never populated, so it never rendered)
@@ -2655,10 +2659,8 @@
 .c2c-v2 .ct-empty-chip{background:var(--bg-050);border:1px solid var(--border);border-radius:20px;padding:8px 14px;font-size:12px;color:var(--text-200);cursor:pointer;}
 .c2c-v2 .ct-empty-chip:hover{background:var(--bg-100);border-color:var(--accent-100);}
 
-.c2c-v2 .ct-typing{display:flex;gap:4px;padding:6px 0;}
-.c2c-v2 .ct-typing span{width:7px;height:7px;border-radius:50%;background:var(--text-500);animation:ctblink 1.2s infinite;}
-.c2c-v2 .ct-typing span:nth-child(2){animation-delay:.2s;}.c2c-v2 .ct-typing span:nth-child(3){animation-delay:.4s;}
-@keyframes ctblink{0%,60%,100%{opacity:.25;}30%{opacity:1;}}
+/* `.ct-typing` — the three animated dots — is gone with its renderer: the
+   in-flight turn's own activity record is the waiting state. */
 
 .c2c-v2 .ct-composer-wrap{flex-shrink:0;border-top:1px solid var(--border);padding:14px 24px 16px;background:var(--bg-000);}
 .c2c-v2 .ct-composer{max-width:768px;margin:0 auto;display:flex;align-items:flex-end;gap:8px;border:1px solid var(--border);border-radius:14px;padding:8px 10px;background:var(--bg-000);box-shadow:var(--v2-shadow-sm);}
@@ -2682,6 +2684,14 @@
 .c2c-v2 .ct-att-x{border:none;background:none;color:var(--text-400);cursor:pointer;font-size:14px;line-height:1;padding:0 2px;}
 .c2c-v2 .ct-att-x:hover{color:var(--text-100);}
 .c2c-v2 .ct-comp-foot{max-width:768px;margin:8px auto 0;font-size:10.5px;color:var(--text-300);display:flex;align-items:center;gap:5px;justify-content:center;text-align:center;}
+/* A reading measure, widened in steps rather than removed: long-form
+   regulatory prose is unreadable at a 1400px line, and 768px beside a 384px
+   dock read as a strip with dead margin on a wide display. The composer, its
+   attachment row and its footer track the column so the reply box stays
+   aligned with the transcript above it. Placed after all four base rules,
+   which an @media override must be to win. */
+@media (min-width:1600px){.c2c-v2 .ct-col,.c2c-v2 .ct-composer,.c2c-v2 .ct-comp-atts,.c2c-v2 .ct-comp-foot{max-width:860px;}}
+@media (min-width:1920px){.c2c-v2 .ct-col,.c2c-v2 .ct-composer,.c2c-v2 .ct-comp-atts,.c2c-v2 .ct-comp-foot{max-width:940px;}}
 .c2c-v2 .ct-comp-foot svg{width:11px;height:11px;flex-shrink:0;}
 
 /* ── conversation + live artifact panel split ── */
