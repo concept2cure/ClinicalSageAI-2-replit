@@ -771,10 +771,15 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
       // machine-readable reason is preserved in the body; only the status
       // changes, so a caller that already branches on `promoted` still works.
       console.error('[authoring-actions] promote-to-review failed:', promoteErr?.message);
+      // `message` carried promoteErr.message — on this path routinely a
+      // Postgres error naming a relation or a constraint. The envelope shape is
+      // unchanged (`promoted` and `reason` are what callers branch on); only
+      // the detail moves to the log.
+      console.error('[authoring-actions] promote-to-review failed:', promoteErr?.message);
       return res.status(500).json({
         promoted: false,
         reason: 'error',
-        message: promoteErr?.message || 'Failed to promote artifact',
+        message: 'Failed to promote artifact. The problem has been logged.',
       });
     }
   } catch (err: any) {
