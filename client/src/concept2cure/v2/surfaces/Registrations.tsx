@@ -261,7 +261,7 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
      error panel is on screen at all, so those zeros stood alone. */
   const kv = (n: number | string) => (grid.loading || grid.error ? '—' : String(n));
   /* The chips used to render `(standards.data || REG_STANDARDS_FALLBACK).map`.
-     `useLive` hands back the parsed body cast to DataStandard[] without looking
+     the retired `useLive` handed back the parsed body cast to DataStandard[] without looking
      at it, and `||` only fires on null/undefined — so a 200 carrying `{}`,
      `{ data: … }`, an error body or a JSON string was truthy, walked past the
      fallback, and `.map` threw inside render on six of seven skewed bodies.

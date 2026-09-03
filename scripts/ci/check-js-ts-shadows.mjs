@@ -59,7 +59,6 @@ const ALLOWED_SHADOWS = new Set([
   //    CHANGES PRODUCTION BEHAVIOR — do not touch without an owner decision.
   'server/db.js', // why: compat wrapper (dbStatus/pool proxy/retrying query); prod bundles it for 312 explicit '.js' imports.
   'server/utils/logger.js', // why: hand-synced console mirror of pino logger.ts; prod bundles it for 178 explicit '.js' imports.
-  'server/config/docushareConfig.js', // why: diverged config actually used in prod via docushareHealthCheck.js; .ts twin only reachable from orphaned config/index.ts barrel.
 ]);
 
 function walkJsWithTsTwin(rel) {

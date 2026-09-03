@@ -92,18 +92,43 @@ describe('persistAnnualReport', () => {
     expect(result.leaves).toHaveLength(1);
   });
 
-  it('attaches the checksum to the m1.13 leaf when supplied', async () => {
-    await persistAnnualReport(7, '0004', ctx, 'abc123md5');
-    expect(upsertLeaf.mock.calls[0][0]).toMatchObject({ sectionCode: 'm1.13', checksum: 'abc123md5' });
+  it('points the m1.13 leaf at the retained rendered document when one was stored', async () => {
+    // The contract is a leaf SOURCE, not a bare md5: a checksum alone left the
+    // leaf unresolvable and the sequence permanently dispatch-blocked (LIFE-01).
+    await persistAnnualReport(7, '0004', ctx, {
+      documentTable: 'rendered_leaf_files',
+      documentId: 91,
+      checksum: 'abc123md5',
+    });
+    expect(upsertLeaf.mock.calls[0][0]).toMatchObject({
+      sectionCode: 'm1.13',
+      documentTable: 'rendered_leaf_files',
+      documentId: 91,
+      checksum: 'abc123md5',
+    });
+  });
+
+  it('files the leaf as metadata when nothing was retained — never a checksum with no referent', async () => {
+    await persistAnnualReport(7, '0006', ctx);
+    const leaf = upsertLeaf.mock.calls[0][0];
+    expect(leaf.sectionCode).toBe('m1.13');
+    expect(leaf.documentTable).toBeUndefined();
+    expect(leaf.checksum).toBeUndefined();
   });
 });
 
-describe('persistSafetyReportIntent — checksum pass-through', () => {
-  it('attaches a checksum to the matching section leaf', async () => {
+describe('persistSafetyReportIntent — leaf-source pass-through', () => {
+  it('points the matching section leaf at the retained rendered document', async () => {
     const { amendmentIntent } = assembleIndSafetyReport(reportableEvent(), { icsr: null, now: D });
-    await persistSafetyReportIntent(7, amendmentIntent!, '0005', ctx, { 'm1.12.4': 'deadbeef' });
+    await persistSafetyReportIntent(7, amendmentIntent!, '0005', ctx, {
+      'm1.12.4': { documentTable: 'rendered_leaf_files', documentId: 77, checksum: 'deadbeef' },
+    });
     const m1Leaf = upsertLeaf.mock.calls.map((c) => c[0]).find((l) => l.sectionCode === 'm1.12.4');
-    expect(m1Leaf).toMatchObject({ checksum: 'deadbeef' });
+    expect(m1Leaf).toMatchObject({
+      documentTable: 'rendered_leaf_files',
+      documentId: 77,
+      checksum: 'deadbeef',
+    });
   });
 });
 

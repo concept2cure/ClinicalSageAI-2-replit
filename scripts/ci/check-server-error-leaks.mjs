@@ -78,8 +78,19 @@ const STATUS_5XX = /\.status\(\s*(5\d\d)\s*\)/g;
  * is what keeps the gate precise: `.message` alone cannot be judged — a job
  * record, a validation result and a Zod issue all have one — but `err.message`
  * inside a 5xx body is the failure text by construction.
+ *
+ * The list used to be literal — err|error|e|ex|cause|reason|dbErr|dbError|pgErr
+ * — which meant a catch NAMED for what it was doing was invisible to the gate.
+ * `catch (promoteErr)`, `catch (renderErr)`, `catch (fallbackErr)`,
+ * `catch (artErr)` are all ordinary in this tree, and six 5xx bodies were
+ * shipping `<thing>Err.message` to the client while this gate reported green.
+ * A gate that is silent on a naming convention the codebase actually uses is
+ * not measuring what its name says. The trailing alternative matches any
+ * identifier ending in `Err`/`Error`; the fixed names stay for `e`, `ex`,
+ * `cause` and `reason`, which that pattern cannot cover.
  */
-const ERR_BINDING = '(?:err|error|e|ex|cause|reason|dbErr|dbError|pgErr)';
+const ERR_BINDING =
+  '(?:err|error|e|ex|cause|reason|[A-Za-z_$][\\w$]*(?:Err|Error))';
 
 /** `.message` read off a caught error, in any of the observed spellings. */
 const LEAK_PATTERNS = [

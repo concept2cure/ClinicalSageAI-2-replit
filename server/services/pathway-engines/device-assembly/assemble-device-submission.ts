@@ -23,7 +23,7 @@
  * @module server/services/pathway-engines/device-assembly/assemble-device-submission
  */
 
-import { mapToEstar, type EstarType, type EstarInputLeaf, type EstarResult } from '../estar/estar-mapper';
+import { mapToEstar, type EstarType, type EstarInputLeaf, type EstarResult, type DeviceFlags } from '../estar/estar-mapper';
 import { mapToPma, type PmaResult, type PmaSubmissionType } from '../pma/pma-mapper';
 import {
   assessEstarTemplateReadiness,
@@ -71,6 +71,13 @@ export interface AssembleDeviceSubmissionInput {
   environment?: 'staging' | 'production';
   /** Override the ESTAR_REQUIRE_TEMPLATE flag (defaults to the env reader). */
   requireTemplate?: boolean;
+  /**
+   * The device's answers to the seven intake flags. Sections that are required
+   * only for some devices (sterilization, software, cybersecurity) cannot be
+   * judged without them, and an unjudged section blocks readiness rather than
+   * being scored as satisfied (W1-5).
+   */
+  deviceFlags?: DeviceFlags;
 }
 
 export interface AssembleDeviceSubmissionResult {
@@ -110,7 +117,7 @@ export function assembleDeviceSubmission(
   const estar: DeviceSectionReadiness =
     input.pathway === 'pma'
       ? mapToPma({ leaves: input.leaves, submissionType: input.pmaSubmissionType })
-      : mapToEstar({ leaves: input.leaves, type: input.pathway });
+      : mapToEstar({ leaves: input.leaves, type: input.pathway, flags: input.deviceFlags });
 
   const template = assessEstarTemplateReadiness({
     type: input.pathway,

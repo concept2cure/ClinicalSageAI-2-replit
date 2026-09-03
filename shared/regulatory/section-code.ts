@@ -118,6 +118,52 @@ export function sectionInsertIndex(orderedCodes: readonly string[], code: string
 }
 
 /**
+ * Structural problems with a document's section codes.
+ *
+ * ── What is reported, and what deliberately is not ───────────────────────────
+ * Two things are unambiguously wrong and are reported:
+ *
+ *   duplicateCodes  two sections filed under one code. The assembled dossier
+ *                   then has two 3.2.S and a reviewer cannot tell which is
+ *                   meant, or which one a cross-reference points at.
+ *   outOfOrder      the stored order disagrees with the order the codes belong
+ *                   in. New documents converge on code order as sections are
+ *                   created, but every document created before that did so has
+ *                   its sections at one index, so they render in whatever order
+ *                   the database returns.
+ *
+ * MISSING codes are NOT reported, and the omission is deliberate. W1-2 asks for
+ * "gaps", but a gap in a numeric sequence is not a defect here: CTD section
+ * codes are not contiguous — a dossier legitimately holds 1.1, 1.2, 1.5 with no
+ * 1.3 or 1.4 — so flagging every skipped integer would bury the two real
+ * problems under noise a reader must dismiss every time. The useful sense of
+ * "missing section" is a REQUIRED section with no content, which the readiness
+ * engines already answer against each pathway's own requirements; duplicating
+ * that judgement here from the codes alone would be a second, worse answer to a
+ * question that already has one.
+ */
+export interface SectionStructureIssues {
+  duplicateCodes: string[];
+  /** True when the given order is not the order the codes belong in. */
+  outOfOrder: boolean;
+  /** The codes in the order they belong in — what a repair would apply. */
+  suggestedOrder: string[];
+}
+
+/**
+ * Inspect a document's section codes IN THEIR STORED ORDER.
+ *
+ * Order matters to the caller: pass the codes as the document currently renders
+ * them, not sorted, or `outOfOrder` can only ever be false.
+ */
+export function sectionStructureIssues(orderedCodes: readonly string[]): SectionStructureIssues {
+  const codes = orderedCodes.map((c) => String(c ?? '').trim()).filter((c) => c.length > 0);
+  const suggestedOrder = [...codes].sort(compareSectionCode);
+  const outOfOrder = codes.some((c, i) => c !== suggestedOrder[i]);
+  return { duplicateCodes: duplicateSectionCodes(codes), outOfOrder, suggestedOrder };
+}
+
+/**
  * Duplicate codes in a document, in first-seen order.
  *
  * Two sections filed under one code is not a display problem: the assembled

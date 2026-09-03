@@ -446,67 +446,263 @@ export function resolveImpurityThresholds(input: {
 
 export type ResidualSolventClass = 1 | 2 | 3;
 
-/** A residual solvent with its ICH Q3C class and limit. */
+/** A residual solvent with its ICH Q3C class and limits. */
 export interface ResidualSolvent {
-  /** Solvent name (display form). */
+  /** Solvent name (display form, as Q3C prints it). */
   name: string;
   /** ICH Q3C class: 1 (avoid), 2 (limit by PDE), 3 (low toxic). */
   class: ResidualSolventClass;
-  /** The concentration limit (or PDE/concentration) for the solvent. */
-  limit: string;
+  /**
+   * Permitted daily exposure in mg/day. Q3C gives this for Class 2; Class 1
+   * solvents are limited by concentration alone and Class 3 share the 50 mg/day
+   * default, both recorded here so a caller never has to supply a number the
+   * table already holds.
+   */
+  pdeMgPerDay: number | null;
+  /**
+   * The Option 1 concentration limit in ppm — the number a recorded ppm result
+   * is compared against. Held as a NUMBER: a limit that exists only as prose
+   * cannot be compared to a measurement, which is why the earlier catalog's
+   * `limit: 'PDE 4.1 mg/day (410 ppm)'` string could not assess anything.
+   */
+  concentrationLimitPpm: number;
   /** Governing citation. */
   citation: string;
 }
 
 /**
- * ICH Q3C(R8) residual-solvent catalog. Class 1 solvents should be avoided;
- * Class 2 are limited by their permitted daily exposure (PDE); Class 3 are of
- * low toxic potential (limit ≤ 50 mg/day / 5000 ppm by the option-1 default).
+ * ICH Q3C(R8) residual-solvent catalog.
+ *
+ * Class 1 solvents should be AVOIDED and carry concentration limits in ppm.
+ * Class 2 are limited by their permitted daily exposure; the ppm figure is the
+ * Q3C Option 1 concentration limit, computed by the guideline itself as
+ * PDE x 1000 / 10 g daily dose. Class 3 are of low toxic potential and share
+ * the 50 mg/day (5000 ppm) default.
+ *
+ * This is the ONE copy. A private second catalog lived in
+ * server/services/cmc-quality/cmc-quality-knowledge.ts, disagreed with this one
+ * on membership, and — the reason it mattered — answered "5000 ppm (Class 3
+ * default)" for anything it did not recognise. A partial catalog with a
+ * permissive default is worse than no catalog: benzene misspelt returned a
+ * limit 2500x too high with an ICH citation attached.
  */
 export const RESIDUAL_SOLVENTS: ResidualSolvent[] = [
-  // Class 1 — solvents to be avoided.
-  { name: 'Benzene', class: 1, limit: '2 ppm', citation: ICH_Q3C },
-  { name: 'Carbon tetrachloride', class: 1, limit: '4 ppm', citation: ICH_Q3C },
-  { name: '1,2-Dichloroethane', class: 1, limit: '5 ppm', citation: ICH_Q3C },
-  { name: '1,1-Dichloroethene', class: 1, limit: '8 ppm', citation: ICH_Q3C },
-  { name: '1,1,1-Trichloroethane', class: 1, limit: '1500 ppm', citation: ICH_Q3C },
-  // Class 2 — solvents to be limited (PDE / concentration limit, option 1).
-  { name: 'Acetonitrile', class: 2, limit: 'PDE 4.1 mg/day (410 ppm)', citation: ICH_Q3C },
-  { name: 'Methanol', class: 2, limit: 'PDE 30 mg/day (3000 ppm)', citation: ICH_Q3C },
-  { name: 'Methylene chloride', class: 2, limit: 'PDE 6.0 mg/day (600 ppm)', citation: ICH_Q3C },
-  { name: 'Toluene', class: 2, limit: 'PDE 8.9 mg/day (890 ppm)', citation: ICH_Q3C },
-  { name: 'n-Hexane', class: 2, limit: 'PDE 2.9 mg/day (290 ppm)', citation: ICH_Q3C },
-  // Class 3 — solvents of low toxic potential (≤ 50 mg/day / 5000 ppm).
-  { name: 'Ethanol', class: 3, limit: '≤ 50 mg/day (5000 ppm)', citation: ICH_Q3C },
-  { name: 'Acetone', class: 3, limit: '≤ 50 mg/day (5000 ppm)', citation: ICH_Q3C },
-  { name: 'Ethyl acetate', class: 3, limit: '≤ 50 mg/day (5000 ppm)', citation: ICH_Q3C },
-  { name: '2-Propanol (isopropanol)', class: 3, limit: '≤ 50 mg/day (5000 ppm)', citation: ICH_Q3C },
-  { name: '1-Butanol', class: 3, limit: '≤ 50 mg/day (5000 ppm)', citation: ICH_Q3C },
+  // ── Class 1 — solvents to be avoided (Q3C Table 1) ──
+  { name: 'Benzene', class: 1, pdeMgPerDay: null, concentrationLimitPpm: 2, citation: ICH_Q3C },
+  { name: 'Carbon tetrachloride', class: 1, pdeMgPerDay: null, concentrationLimitPpm: 4, citation: ICH_Q3C },
+  { name: '1,2-Dichloroethane', class: 1, pdeMgPerDay: null, concentrationLimitPpm: 5, citation: ICH_Q3C },
+  { name: '1,1-Dichloroethene', class: 1, pdeMgPerDay: null, concentrationLimitPpm: 8, citation: ICH_Q3C },
+  { name: '1,1,1-Trichloroethane', class: 1, pdeMgPerDay: null, concentrationLimitPpm: 1500, citation: ICH_Q3C },
+
+  // ── Class 2 — solvents to be limited (Q3C Table 2) ──
+  { name: 'Acetonitrile', class: 2, pdeMgPerDay: 4.1, concentrationLimitPpm: 410, citation: ICH_Q3C },
+  { name: 'Anisole', class: 2, pdeMgPerDay: 10, concentrationLimitPpm: 1000, citation: ICH_Q3C },
+  { name: 'Chlorobenzene', class: 2, pdeMgPerDay: 3.6, concentrationLimitPpm: 360, citation: ICH_Q3C },
+  { name: 'Chloroform', class: 2, pdeMgPerDay: 0.6, concentrationLimitPpm: 60, citation: ICH_Q3C },
+  { name: 'Cumene', class: 2, pdeMgPerDay: 0.7, concentrationLimitPpm: 70, citation: ICH_Q3C },
+  { name: 'Cyclohexane', class: 2, pdeMgPerDay: 38.8, concentrationLimitPpm: 3880, citation: ICH_Q3C },
+  { name: 'Cyclopentyl methyl ether', class: 2, pdeMgPerDay: 15, concentrationLimitPpm: 1500, citation: ICH_Q3C },
+  { name: '1,2-Dichloroethene', class: 2, pdeMgPerDay: 18.7, concentrationLimitPpm: 1870, citation: ICH_Q3C },
+  { name: '1,2-Dimethoxyethane', class: 2, pdeMgPerDay: 1.0, concentrationLimitPpm: 100, citation: ICH_Q3C },
+  { name: 'N,N-Dimethylacetamide', class: 2, pdeMgPerDay: 10.9, concentrationLimitPpm: 1090, citation: ICH_Q3C },
+  { name: 'N,N-Dimethylformamide', class: 2, pdeMgPerDay: 8.8, concentrationLimitPpm: 880, citation: ICH_Q3C },
+  { name: '1,4-Dioxane', class: 2, pdeMgPerDay: 3.8, concentrationLimitPpm: 380, citation: ICH_Q3C },
+  { name: '2-Ethoxyethanol', class: 2, pdeMgPerDay: 1.6, concentrationLimitPpm: 160, citation: ICH_Q3C },
+  { name: 'Ethyleneglycol', class: 2, pdeMgPerDay: 6.2, concentrationLimitPpm: 620, citation: ICH_Q3C },
+  { name: 'Formamide', class: 2, pdeMgPerDay: 2.2, concentrationLimitPpm: 220, citation: ICH_Q3C },
+  { name: 'Hexane', class: 2, pdeMgPerDay: 2.9, concentrationLimitPpm: 290, citation: ICH_Q3C },
+  { name: 'Methanol', class: 2, pdeMgPerDay: 30, concentrationLimitPpm: 3000, citation: ICH_Q3C },
+  { name: '2-Methoxyethanol', class: 2, pdeMgPerDay: 0.5, concentrationLimitPpm: 50, citation: ICH_Q3C },
+  { name: 'Methylbutyl ketone', class: 2, pdeMgPerDay: 0.5, concentrationLimitPpm: 50, citation: ICH_Q3C },
+  { name: 'Methylcyclohexane', class: 2, pdeMgPerDay: 11.8, concentrationLimitPpm: 1180, citation: ICH_Q3C },
+  { name: 'Methyl isobutyl ketone', class: 2, pdeMgPerDay: 45, concentrationLimitPpm: 4500, citation: ICH_Q3C },
+  { name: 'Methylene chloride', class: 2, pdeMgPerDay: 6.0, concentrationLimitPpm: 600, citation: ICH_Q3C },
+  { name: '2-Methyltetrahydrofuran', class: 2, pdeMgPerDay: 5.0, concentrationLimitPpm: 500, citation: ICH_Q3C },
+  { name: 'N-Methylpyrrolidone', class: 2, pdeMgPerDay: 5.3, concentrationLimitPpm: 530, citation: ICH_Q3C },
+  { name: 'Nitromethane', class: 2, pdeMgPerDay: 0.5, concentrationLimitPpm: 50, citation: ICH_Q3C },
+  { name: 'Pyridine', class: 2, pdeMgPerDay: 2.0, concentrationLimitPpm: 200, citation: ICH_Q3C },
+  { name: 'Sulfolane', class: 2, pdeMgPerDay: 1.6, concentrationLimitPpm: 160, citation: ICH_Q3C },
+  { name: 'Tetrahydrofuran', class: 2, pdeMgPerDay: 7.2, concentrationLimitPpm: 720, citation: ICH_Q3C },
+  { name: 'Tetralin', class: 2, pdeMgPerDay: 1.0, concentrationLimitPpm: 100, citation: ICH_Q3C },
+  { name: 'Toluene', class: 2, pdeMgPerDay: 8.9, concentrationLimitPpm: 890, citation: ICH_Q3C },
+  { name: 'Trichloroethylene', class: 2, pdeMgPerDay: 0.8, concentrationLimitPpm: 80, citation: ICH_Q3C },
+  { name: 'Xylene', class: 2, pdeMgPerDay: 21.7, concentrationLimitPpm: 2170, citation: ICH_Q3C },
+
+  // ── Class 3 — low toxic potential; 50 mg/day (5000 ppm) unless justified higher (Q3C Table 3) ──
+  { name: 'Acetic acid', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Acetone', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Anisole (Class 3 listing)', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: '1-Butanol', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: '2-Butanol', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Butyl acetate', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'tert-Butylmethyl ether', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Dimethyl sulfoxide', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Ethanol', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Ethyl acetate', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Ethyl ether', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Ethyl formate', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Formic acid', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Heptane', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Isobutyl acetate', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Isopropyl acetate', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Methyl acetate', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: '3-Methyl-1-butanol', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Methyl ethyl ketone', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Methylisopropyl ketone', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: '2-Methyl-1-propanol', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Pentane', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: '1-Pentanol', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: '1-Propanol', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: '2-Propanol', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Propyl acetate', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
+  { name: 'Triethylamine', class: 3, pdeMgPerDay: 50, concentrationLimitPpm: 5000, citation: ICH_Q3C },
 ];
 
-// Case-insensitive lookup keyed on the lower-cased display name plus a few aliases.
+/**
+ * The names a staffer actually types, mapped to the guideline's own spelling.
+ * Trade abbreviations (IPA, DMSO, THF) and the two names Q3C gives the same
+ * solvent (dichloromethane / methylene chloride) resolve to one entry each.
+ */
+const RESIDUAL_SOLVENT_ALIASES: Record<string, string> = {
+  'isopropanol': '2-Propanol',
+  'iso-propanol': '2-Propanol',
+  'isopropyl alcohol': '2-Propanol',
+  'ipa': '2-Propanol',
+  'n-hexane': 'Hexane',
+  'n-heptane': 'Heptane',
+  'n-pentane': 'Pentane',
+  'n-butanol': '1-Butanol',
+  'n-propanol': '1-Propanol',
+  'dmso': 'Dimethyl sulfoxide',
+  'dmf': 'N,N-Dimethylformamide',
+  'dma': 'N,N-Dimethylacetamide',
+  'nmp': 'N-Methylpyrrolidone',
+  'thf': 'Tetrahydrofuran',
+  '2-metthf': '2-Methyltetrahydrofuran',
+  '2-methf': '2-Methyltetrahydrofuran',
+  'me-thf': '2-Methyltetrahydrofuran',
+  'mek': 'Methyl ethyl ketone',
+  'mibk': 'Methyl isobutyl ketone',
+  'mtbe': 'tert-Butylmethyl ether',
+  'tbme': 'tert-Butylmethyl ether',
+  'methyl tert-butyl ether': 'tert-Butylmethyl ether',
+  'dcm': 'Methylene chloride',
+  'dichloromethane': 'Methylene chloride',
+  'cpme': 'Cyclopentyl methyl ether',
+  'dme': '1,2-Dimethoxyethane',
+  'etoac': 'Ethyl acetate',
+  'etoh': 'Ethanol',
+  'meoh': 'Methanol',
+  'acn': 'Acetonitrile',
+  'mecn': 'Acetonitrile',
+  'tea': 'Triethylamine',
+  'diethyl ether': 'Ethyl ether',
+};
+
 const RESIDUAL_SOLVENT_BY_NAME: Record<string, ResidualSolvent> = (() => {
   const map: Record<string, ResidualSolvent> = {};
   for (const solvent of RESIDUAL_SOLVENTS) {
     map[solvent.name.toLowerCase()] = solvent;
   }
-  // Common aliases.
-  map['isopropanol'] = map['2-propanol (isopropanol)'];
-  map['2-propanol'] = map['2-propanol (isopropanol)'];
-  map['isopropyl alcohol'] = map['2-propanol (isopropanol)'];
-  map['dichloromethane'] = map['methylene chloride'];
-  map['hexane'] = map['n-hexane'];
+  /* Anisole appears in Q3C's Class 2 table and again in its Class 3 list; the
+     Class 2 limit is the binding one, so the bare name resolves there and the
+     Class 3 listing is carried under its own explicit key. */
+  for (const [alias, canonical] of Object.entries(RESIDUAL_SOLVENT_ALIASES)) {
+    const target = map[canonical.toLowerCase()];
+    if (target) map[alias] = target;
+  }
   return map;
 })();
 
 /**
- * Look up an ICH Q3C(R8) residual solvent by name (case-insensitive; a few
- * common aliases are supported). Pure / deterministic. Returns null when the
- * solvent is not in the modeled catalog.
+ * Look up an ICH Q3C(R8) residual solvent by name or common abbreviation.
+ * Case-insensitive, whitespace-tolerant, deterministic.
+ *
+ * Returns NULL when the solvent is not in the catalog. It does not guess: the
+ * previous private copy answered Class 3 / 5000 ppm for an unknown name, which
+ * is the most permissive band in the guideline, so an unrecognised Class 1
+ * solvent was reported as one of the safest.
  */
 export function getResidualSolvent(name: string): ResidualSolvent | null {
   if (typeof name !== 'string') return null;
-  return RESIDUAL_SOLVENT_BY_NAME[name.trim().toLowerCase()] ?? null;
+  const key = name.trim().toLowerCase().replace(/\s+/g, ' ');
+  return RESIDUAL_SOLVENT_BY_NAME[key] ?? null;
+}
+
+export type ResidualSolventDisposition = 'within-limit' | 'above-limit' | 'class-1-avoid';
+
+export type ResidualSolventAssessment =
+  | {
+      ok: true;
+      solventName: string;
+      solventClass: ResidualSolventClass;
+      /** The Option 1 concentration limit the result was compared against. */
+      limitPpm: number;
+      pdeMgPerDay: number | null;
+      observedPpm: number;
+      withinLimit: boolean;
+      disposition: ResidualSolventDisposition;
+      citation: string;
+    }
+  | {
+      ok: false;
+      code: 'SOLVENT_NOT_RECORDED' | 'SOLVENT_NOT_IN_CATALOG' | 'LEVEL_NOT_RECORDED';
+      message: string;
+    };
+
+/**
+ * Compare a recorded residual-solvent level (ppm) against ICH Q3C(R8).
+ *
+ * Refuses rather than guessing in all three ways a record can be short: no
+ * solvent named, a solvent outside the catalog, or no numeric level. A refusal
+ * names what is missing, so the section can say why the impurity is not
+ * assessed instead of printing a threshold nobody derived.
+ */
+export function assessResidualSolvent(input: {
+  solventName: string | null | undefined;
+  observedPpm: number;
+}): ResidualSolventAssessment {
+  const name = String(input.solventName ?? '').trim();
+  if (!name) {
+    return {
+      ok: false,
+      code: 'SOLVENT_NOT_RECORDED',
+      message: 'No solvent is named, so no ICH Q3C class or limit applies to this record.',
+    };
+  }
+  const solvent = getResidualSolvent(name);
+  if (!solvent) {
+    return {
+      ok: false,
+      code: 'SOLVENT_NOT_IN_CATALOG',
+      message:
+        `"${name}" is not in the ICH Q3C(R8) catalog, so its class and limit are not established. ` +
+        `Q3C requires a solvent outside its tables to be justified on its own toxicological data — ` +
+        `record the solvent under its guideline name, or supply the justified limit.`,
+    };
+  }
+  if (!Number.isFinite(input.observedPpm)) {
+    return {
+      ok: false,
+      code: 'LEVEL_NOT_RECORDED',
+      message: `A level in ppm is not recorded for ${solvent.name}, so it cannot be compared to its ${solvent.concentrationLimitPpm} ppm limit.`,
+    };
+  }
+  const withinLimit = input.observedPpm <= solvent.concentrationLimitPpm;
+  return {
+    ok: true,
+    solventName: solvent.name,
+    solventClass: solvent.class,
+    limitPpm: solvent.concentrationLimitPpm,
+    pdeMgPerDay: solvent.pdeMgPerDay,
+    observedPpm: input.observedPpm,
+    withinLimit,
+    /* A Class 1 solvent is not "within limit" in the sense the other classes
+       are: Q3C says it should not be used, and a level below the concentration
+       limit still requires justification for its presence at all. */
+    disposition: solvent.class === 1 ? 'class-1-avoid' : withinLimit ? 'within-limit' : 'above-limit',
+    citation: solvent.citation,
+  };
 }
 
 /* ------------------------------------------------------------------------- *
@@ -535,10 +731,41 @@ export interface ElementalImpurity {
  * their presence must be evaluated for all routes. PDEs are in µg/day.
  */
 export const ELEMENTAL_IMPURITIES: ElementalImpurity[] = [
+  // ── Class 1 — human toxicants, evaluate for all routes (Q3D Table A.2.1) ──
   { symbol: 'Pb', name: 'Lead', class: 'Class 1', pdeMicrogramsPerDay: { oral: 5, parenteral: 5, inhalation: 5 }, citation: ICH_Q3D },
   { symbol: 'As', name: 'Arsenic', class: 'Class 1', pdeMicrogramsPerDay: { oral: 15, parenteral: 15, inhalation: 2 }, citation: ICH_Q3D },
   { symbol: 'Cd', name: 'Cadmium', class: 'Class 1', pdeMicrogramsPerDay: { oral: 5, parenteral: 2, inhalation: 3 }, citation: ICH_Q3D },
   { symbol: 'Hg', name: 'Mercury', class: 'Class 1', pdeMicrogramsPerDay: { oral: 30, parenteral: 3, inhalation: 1 }, citation: ICH_Q3D },
+
+  // ── Class 2A — route-independent human toxicants, high probability of
+  //    occurrence; evaluate for all routes (Q3D Table A.2.1) ──
+  { symbol: 'Co', name: 'Cobalt', class: 'Class 2A', pdeMicrogramsPerDay: { oral: 50, parenteral: 5, inhalation: 3 }, citation: ICH_Q3D },
+  { symbol: 'V', name: 'Vanadium', class: 'Class 2A', pdeMicrogramsPerDay: { oral: 100, parenteral: 10, inhalation: 1 }, citation: ICH_Q3D },
+  { symbol: 'Ni', name: 'Nickel', class: 'Class 2A', pdeMicrogramsPerDay: { oral: 200, parenteral: 20, inhalation: 5 }, citation: ICH_Q3D },
+
+  // ── Class 2B — lower probability of occurrence; evaluated only when
+  //    intentionally added (Q3D §4.2), so a record naming one is exactly the
+  //    case that must be assessed ──
+  { symbol: 'Tl', name: 'Thallium', class: 'Class 2B', pdeMicrogramsPerDay: { oral: 8, parenteral: 8, inhalation: 8 }, citation: ICH_Q3D },
+  { symbol: 'Au', name: 'Gold', class: 'Class 2B', pdeMicrogramsPerDay: { oral: 100, parenteral: 100, inhalation: 1 }, citation: ICH_Q3D },
+  { symbol: 'Pd', name: 'Palladium', class: 'Class 2B', pdeMicrogramsPerDay: { oral: 100, parenteral: 10, inhalation: 1 }, citation: ICH_Q3D },
+  { symbol: 'Ir', name: 'Iridium', class: 'Class 2B', pdeMicrogramsPerDay: { oral: 100, parenteral: 10, inhalation: 1 }, citation: ICH_Q3D },
+  { symbol: 'Os', name: 'Osmium', class: 'Class 2B', pdeMicrogramsPerDay: { oral: 100, parenteral: 10, inhalation: 1 }, citation: ICH_Q3D },
+  { symbol: 'Rh', name: 'Rhodium', class: 'Class 2B', pdeMicrogramsPerDay: { oral: 100, parenteral: 10, inhalation: 1 }, citation: ICH_Q3D },
+  { symbol: 'Ru', name: 'Ruthenium', class: 'Class 2B', pdeMicrogramsPerDay: { oral: 100, parenteral: 10, inhalation: 1 }, citation: ICH_Q3D },
+  { symbol: 'Se', name: 'Selenium', class: 'Class 2B', pdeMicrogramsPerDay: { oral: 150, parenteral: 80, inhalation: 130 }, citation: ICH_Q3D },
+  { symbol: 'Ag', name: 'Silver', class: 'Class 2B', pdeMicrogramsPerDay: { oral: 150, parenteral: 15, inhalation: 7 }, citation: ICH_Q3D },
+  { symbol: 'Pt', name: 'Platinum', class: 'Class 2B', pdeMicrogramsPerDay: { oral: 100, parenteral: 10, inhalation: 1 }, citation: ICH_Q3D },
+
+  // ── Class 3 — relatively low oral toxicity; evaluated for parenteral and
+  //    inhalation routes when the PDE is below 500 µg/day (Q3D §4.3) ──
+  { symbol: 'Li', name: 'Lithium', class: 'Class 3', pdeMicrogramsPerDay: { oral: 550, parenteral: 250, inhalation: 25 }, citation: ICH_Q3D },
+  { symbol: 'Sb', name: 'Antimony', class: 'Class 3', pdeMicrogramsPerDay: { oral: 1200, parenteral: 90, inhalation: 20 }, citation: ICH_Q3D },
+  { symbol: 'Ba', name: 'Barium', class: 'Class 3', pdeMicrogramsPerDay: { oral: 1400, parenteral: 700, inhalation: 300 }, citation: ICH_Q3D },
+  { symbol: 'Mo', name: 'Molybdenum', class: 'Class 3', pdeMicrogramsPerDay: { oral: 3000, parenteral: 1500, inhalation: 10 }, citation: ICH_Q3D },
+  { symbol: 'Cu', name: 'Copper', class: 'Class 3', pdeMicrogramsPerDay: { oral: 3000, parenteral: 300, inhalation: 30 }, citation: ICH_Q3D },
+  { symbol: 'Sn', name: 'Tin', class: 'Class 3', pdeMicrogramsPerDay: { oral: 6000, parenteral: 600, inhalation: 60 }, citation: ICH_Q3D },
+  { symbol: 'Cr', name: 'Chromium', class: 'Class 3', pdeMicrogramsPerDay: { oral: 11000, parenteral: 1100, inhalation: 3 }, citation: ICH_Q3D },
 ];
 
 // Case-insensitive lookup keyed on symbol and name.
@@ -592,5 +819,88 @@ export function getElementalImpurityPDE(
     class: match.class,
     caveat: GUIDELINE_CAVEAT,
     citation: match.citation,
+  };
+}
+
+export type ElementalImpurityAssessment =
+  | {
+      ok: true;
+      element: string;
+      elementName: string;
+      elementClass: string;
+      route: AdministrationRoute;
+      pdeMicrogramsPerDay: number;
+      observedMicrogramsPerDay: number;
+      withinLimit: boolean;
+      citation: string;
+    }
+  | {
+      ok: false;
+      code: 'ELEMENT_NOT_RECORDED' | 'ELEMENT_NOT_IN_CATALOG' | 'ROUTE_NOT_RECORDED' | 'LEVEL_NOT_RECORDED';
+      message: string;
+    };
+
+/**
+ * Compare a recorded elemental-impurity exposure (µg/day) against ICH Q3D(R2).
+ *
+ * The route of administration is REQUIRED and is never defaulted. Q3D sets a
+ * different PDE per route and the differences are large — cadmium is 5 µg/day
+ * oral against 2 parenteral, cobalt 50 against 5, vanadium 100 against 1 by
+ * inhalation. Assuming oral, as the private copy of this table did, is assuming
+ * the most permissive answer for most elements, which is the wrong direction to
+ * guess in and not a guess the record supports.
+ */
+export function assessElementalImpurity(input: {
+  element: string | null | undefined;
+  observedMicrogramsPerDay: number;
+  route: AdministrationRoute | null | undefined;
+}): ElementalImpurityAssessment {
+  const symbol = String(input.element ?? '').trim();
+  if (!symbol) {
+    return {
+      ok: false,
+      code: 'ELEMENT_NOT_RECORDED',
+      message: 'No element is named, so no ICH Q3D permitted daily exposure applies to this record.',
+    };
+  }
+  const element = ELEMENTAL_IMPURITY_BY_KEY[symbol.toLowerCase()];
+  if (!element) {
+    return {
+      ok: false,
+      code: 'ELEMENT_NOT_IN_CATALOG',
+      message:
+        `"${symbol}" is not in the ICH Q3D(R2) catalog, so its permitted daily exposure is not established. ` +
+        `Q3D covers the elements in its Table A.2.1; anything outside it needs a PDE derived and justified on its own data.`,
+    };
+  }
+  if (!input.route || !ROUTES.includes(input.route)) {
+    return {
+      ok: false,
+      code: 'ROUTE_NOT_RECORDED',
+      message:
+        `The route of administration is not recorded, so no ICH Q3D permitted daily exposure can be selected for ${element.name}. ` +
+        `Q3D sets a different limit per route — ${element.name} is ${element.pdeMicrogramsPerDay.oral} µg/day oral, ` +
+        `${element.pdeMicrogramsPerDay.parenteral} parenteral and ${element.pdeMicrogramsPerDay.inhalation} by inhalation — ` +
+        `and defaulting to oral would take the most permissive of the three.`,
+    };
+  }
+  if (!Number.isFinite(input.observedMicrogramsPerDay)) {
+    return {
+      ok: false,
+      code: 'LEVEL_NOT_RECORDED',
+      message: `A daily exposure in µg/day is not recorded for ${element.name}, so it cannot be compared to its PDE.`,
+    };
+  }
+  const pde = element.pdeMicrogramsPerDay[input.route];
+  return {
+    ok: true,
+    element: element.symbol,
+    elementName: element.name,
+    elementClass: element.class,
+    route: input.route,
+    pdeMicrogramsPerDay: pde,
+    observedMicrogramsPerDay: input.observedMicrogramsPerDay,
+    withinLimit: input.observedMicrogramsPerDay <= pde,
+    citation: element.citation,
   };
 }

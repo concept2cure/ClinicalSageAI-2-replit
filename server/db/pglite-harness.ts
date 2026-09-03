@@ -279,6 +279,26 @@ CREATE TABLE IF NOT EXISTS submission_leaves (
   updated_at      TIMESTAMPTZ DEFAULT now(),
   deleted_at      TIMESTAMPTZ
 );
+
+-- rendered_leaf_files: the retained bytes of a server-rendered filing document
+-- (the IND safety report, annual report, LOA). Part of the CORE because the
+-- lifecycle filing path writes it and submission_leaves points at it; the leaf
+-- resolver reads it back through the storage provider. Migration
+-- migrations/20260903_rendered_leaf_files.sql.
+CREATE TABLE IF NOT EXISTS rendered_leaf_files (
+  id                SERIAL PRIMARY KEY,
+  organization_id   INTEGER NOT NULL,
+  vault_version_id  TEXT NOT NULL,
+  sha256            TEXT NOT NULL,
+  md5               TEXT NOT NULL,
+  mime              TEXT NOT NULL,
+  byte_size         INTEGER NOT NULL,
+  file_name         TEXT NOT NULL,
+  rendered_from     TEXT NOT NULL,
+  section_code      TEXT,
+  created_by        INTEGER,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 /**
