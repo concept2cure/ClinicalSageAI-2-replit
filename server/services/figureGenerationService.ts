@@ -76,7 +76,16 @@ export interface FigureMetadata {
   footnotes?: string[];
   sourceReference?: string; // "Source: Study XYZ-001, Table 14.2.1"
   generatedAt: string;
-  generatedBy: string;
+  /**
+   * WHO generated it, as an id — not as a name.
+   *
+   * Was `generatedBy: string`, filled with `user-${request.userId}`: a
+   * person-shaped string in metadata that can reach a document, where a reader
+   * cannot tell it from a name someone actually has (ledger L142). The id is
+   * the fact the caller has; a name is not, and inventing one to fill a
+   * string-typed field is how that column stops meaning anything.
+   */
+  generatedByUserId: number;
   modelUsed: string;
   tokensUsed?: number;
 }
@@ -314,7 +323,12 @@ export async function generateFigure(
         footnotes: [],
         sourceReference: sourceData.map(s => s.name).join('; '),
         generatedAt: new Date().toISOString(),
-        generatedBy: `user-${request.userId}`,
+        // The id, recorded AS an id. This was `user-${request.userId}`, a
+        // person-shaped string in figure metadata that can reach a document,
+        // where a reader cannot tell it from a name someone actually has
+        // (ledger L142). Nothing consumes this key, so it is renamed rather
+        // than dressed up.
+        generatedByUserId: request.userId,
         modelUsed: model,
         tokensUsed,
       },
@@ -711,7 +725,12 @@ function buildPlaceholderFigure(
       generatedFormat: format as FigureSpec['generatedFormat'],
       metadata: {
         generatedAt: new Date().toISOString(),
-        generatedBy: `user-${request.userId}`,
+        // The id, recorded AS an id. This was `user-${request.userId}`, a
+        // person-shaped string in figure metadata that can reach a document,
+        // where a reader cannot tell it from a name someone actually has
+        // (ledger L142). Nothing consumes this key, so it is renamed rather
+        // than dressed up.
+        generatedByUserId: request.userId,
         modelUsed: 'placeholder',
       },
       confidence: 0,

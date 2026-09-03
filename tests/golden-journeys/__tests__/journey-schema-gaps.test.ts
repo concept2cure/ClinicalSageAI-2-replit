@@ -44,5 +44,23 @@ describe('golden journeys — the schema-gap check is not optional', () => {
       `${file} builds its database on an instrumented harness but never calls assertNoSchemaGaps — ` +
         `it can run against a database missing tables its subject writes to and still pass`,
     ).toMatch(/assertNoSchemaGaps\(/);
+
+    // Ledger L148: a journey can also run every request on the org-membership
+    // DEGRADED fallback, proving its tenant claims with app.current_org_id
+    // empty. The flagship authoring journey did — 27 requests in one run — and
+    // the only trace was a warning no test could read.
+    expect(
+      src,
+      `${file} never calls assertNoDegradedTenantEnrichment — it can prove its ` +
+        `tenant-scoping with no org context at all and still pass`,
+    ).toMatch(/assertNoDegradedTenantEnrichment\(/);
+
+    // Order matters: the degraded check names the CAUSE, the gap check names a
+    // SYMPTOM of it, and whichever throws first hides the other.
+    expect(
+      src.indexOf('assertNoDegradedTenantEnrichment('),
+      `${file} calls assertNoSchemaGaps first — the gap check throws on the missing ` +
+        `column and hides which claims were proven without an org context`,
+    ).toBeLessThan(src.indexOf('assertNoSchemaGaps('));
   });
 });

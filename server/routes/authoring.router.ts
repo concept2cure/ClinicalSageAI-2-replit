@@ -35,7 +35,8 @@ import {
   grantAuthoringPermission,
   resolveAuthoringSectionScope,
 } from '../services/authoring/authoring-permissions';
-import { sectionInsertIndex } from '../../shared/regulatory/section-code';
+import { sectionInsertIndex, sectionStructureIssues } from '../../shared/regulatory/section-code';
+import { serverError } from '../lib/api-response';
 import {
   computeChainHash,
   sha256Hex,
@@ -2146,10 +2147,25 @@ router.get('/docs/:docId/sections', async (req: Request, res: Response) => {
       [docId, tenantId]
     );
 
+    /* Two structural facts about the document as a whole, computed from the
+       rows just read — no second query, and every client that already reads
+       this endpoint gets them.
+
+       They are worth stating because neither is visible from any one section:
+       a code filed twice puts two 3.2.S in the assembled dossier with nothing
+       to say which is meant, and a stored order that disagrees with the codes
+       means the dossier assembles in the wrong order. Documents created before
+       the section-create path assigned a real position have every section at
+       index 0, so this is how one is recognised. */
+    const structure = sectionStructureIssues(
+      result.rows.map((r: { code?: string | null }) => String(r.code ?? '')),
+    );
+
     res.json({
       success: true,
       sections: result.rows,
       count: result.rowCount,
+      structure,
     });
   } catch (error) {
     console.error('Error getting sections:', error);
@@ -7389,3 +7405,74 @@ router.get('/images/:id', async (req: Request, res: Response) => {
 });
 
 export default router;
+
+/* ════ Word import ═══════════════════════════════════════════════════════════
+ *
+ * Four services in this repo already read .docx, and all four call mammoth's
+ * `extractRawText` — a flat string, which is correct for the search and
+ * retrieval they do and wrong for authoring. A regulatory author importing a
+ * technical file needs the TABLES: a predicate comparison, a GSPR matrix, a
+ * stability table IS the content, and raw text throws every one away while
+ * leaving enough words on screen to look like a successful import
+ * (MDX_WORK_ORDER W3-5).
+ *
+ * This route PARSES ONLY. It writes nothing: it returns the sections it found
+ * so the author can see what arrived — how many sections, how many tables, and
+ * every warning the conversion produced — and then create them deliberately
+ * through POST /sections, which is the governed write with its lineage gate.
+ * Importing straight into a document would put un-reviewed content into the
+ * governed record on the strength of a drag-and-drop.
+ */
+const docxImport = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    const isDocx =
+      file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      /\.docx$/i.test(file.originalname ?? '');
+    if (isDocx) return cb(null, true);
+    cb(new Error('Only .docx files can be imported. A .doc (Word 97-2003) must be saved as .docx first.'));
+  },
+});
+
+const docxImportErrors = (err: unknown, _req: Request, res: Response, next: (e?: unknown) => void) => {
+  if (!err) return next();
+  const message =
+    (err as { code?: string })?.code === 'LIMIT_FILE_SIZE'
+      ? 'The document is larger than 25 MB. Nothing was imported.'
+      : err instanceof Error
+        ? err.message
+        : 'Upload refused';
+  return res.status(400).json({ success: false, error: message });
+};
+
+router.post(
+  '/import/docx',
+  docxImport.single('file'),
+  docxImportErrors,
+  async (req: Request, res: Response) => {
+    try {
+      if (!getActorId(req)) {
+        return res.status(401).json({ success: false, error: 'Authentication required' });
+      }
+      const file = (req as Request & { file?: { buffer?: Buffer } }).file;
+      if (!file?.buffer?.length) {
+        return res.status(400).json({ success: false, error: 'No document was uploaded.' });
+      }
+
+      const { importDocx } = await import('../import/docx-to-authoring.js');
+      const result = await importDocx(file.buffer);
+
+      return res.json({
+        success: true,
+        sections: result.sections,
+        /* Surfaced, never swallowed: an author who is not told a style was
+           dropped will file the document believing it arrived intact. */
+        warnings: result.warnings,
+        counts: result.counts,
+      });
+    } catch (error) {
+      return serverError(res, logger, 'importing the Word document', error);
+    }
+  },
+);

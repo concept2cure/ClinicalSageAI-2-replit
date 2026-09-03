@@ -14,8 +14,12 @@
 import { Router, Request, Response } from 'express';
 import { intelligentReportEngine } from '../services/intelligent-report-engine';
 import { authedOrgId } from '../utils/authedOrgId';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('intelligent-reports');
 
 /**
  * Resolve the caller's organization from the verified JWT only.
@@ -62,7 +66,7 @@ router.get('/catalog/domains', (_req: Request, res: Response) => {
     const catalog = intelligentReportEngine.getDomainCatalog();
     res.json({ success: true, data: catalog });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading domains', error);
   }
 });
 
@@ -75,7 +79,7 @@ router.get('/catalog/regulatory-bodies', (_req: Request, res: Response) => {
     const bodies = intelligentReportEngine.getRegulatoryBodies();
     res.json({ success: true, data: bodies });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading regulatory bodies', error);
   }
 });
 
@@ -93,7 +97,7 @@ router.get('/catalog/regulations/:domain', (req: Request, res: Response) => {
     );
     res.json({ success: true, data: regulations });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading regulations', error);
   }
 });
 
@@ -167,7 +171,7 @@ router.post('/generate', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Report generation error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'generating', error);
   }
 });
 
@@ -201,7 +205,7 @@ router.get('/list/:organizationId', async (req: Request, res: Response) => {
       count: reports.length,
     });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading the report list', error);
   }
 });
 
@@ -219,7 +223,7 @@ router.get('/:reportId', async (req: Request, res: Response) => {
 
     res.json({ success: true, data: report });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading the report', error);
   }
 });
 
@@ -236,7 +240,7 @@ router.get('/:reportId/provenance', async (req: Request, res: Response) => {
     const provenance = await intelligentReportEngine.getReportProvenance(reportId);
     res.json({ success: true, data: provenance, count: provenance.length });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading provenance', error);
   }
 });
 
@@ -253,7 +257,7 @@ router.get('/:reportId/seal-events', async (req: Request, res: Response) => {
     const events = await intelligentReportEngine.getReportSealEvents(reportId);
     res.json({ success: true, data: events, count: events.length });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading seal events', error);
   }
 });
 
@@ -270,7 +274,7 @@ router.get('/:reportId/attestations', async (req: Request, res: Response) => {
     const attestations = await intelligentReportEngine.getReportAttestations(reportId);
     res.json({ success: true, data: attestations, count: attestations.length });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading attestations', error);
   }
 });
 
@@ -305,7 +309,7 @@ router.post('/:reportId/seal', async (req: Request, res: Response) => {
 
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving seal', error);
   }
 });
 
@@ -322,7 +326,7 @@ router.get('/:reportId/verify', async (req: Request, res: Response) => {
     const result = await intelligentReportEngine.verifyReportIntegrity(reportId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'verifying', error);
   }
 });
 
@@ -384,7 +388,7 @@ router.post('/:reportId/supersede', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Supersede error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving supersede', error);
   }
 });
 
@@ -417,7 +421,7 @@ router.post('/:reportId/revoke', async (req: Request, res: Response) => {
 
     res.json({ success: true, data: { reportId, status: 'revoked', justification } });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving revoke', error);
   }
 });
 
@@ -452,7 +456,7 @@ router.get('/:reportId/export/:format', async (req: Request, res: Response) => {
       res.json(result.data);
     }
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'exporting', error);
   }
 });
 
@@ -472,7 +476,7 @@ router.get('/:reportId/drift-check', async (req: Request, res: Response) => {
       driftDetected: result.drifted > 0,
     });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading drift check', error);
   }
 });
 
@@ -492,7 +496,7 @@ router.get('/:reportId/compliance-validation', async (req: Request, res: Respons
 
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading compliance validation', error);
   }
 });
 

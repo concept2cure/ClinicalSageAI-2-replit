@@ -527,7 +527,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
         eyebrow="Admin — organization"
         title={
           <React.Fragment>
-            Setup {!loadError && !loading && <SampleTag sample={false} />}
+            Setup {!loadError && !loading && <SampleTag />}
           </React.Fragment>
         }
         sub="Organization profile and module configuration, saved to the organization record and written to the audit trail. Controls the platform enforces rather than exposes are marked as enforced."
