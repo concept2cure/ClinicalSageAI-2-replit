@@ -29,6 +29,16 @@
  * A path that legitimately does not write prose can be removed from GUARDED,
  * which is a visible, reviewable change rather than a silent one.
  *
+ * DISCOVERY (ledger L159). The list above is an allowlist, and an allowlist
+ * only guards what someone remembered to add. L157 and L158 were both found
+ * by grepping for content writes the list did not know about — the device
+ * kit, the DMS plan, the consent form — each of which had shipped prose with
+ * no lineage for as long as it existed. So the script now finds writers
+ * itself: every server file that UPDATEs a `content` column (raw SQL or a
+ * Drizzle `.set({ content })`) must be either GUARDED or declared in
+ * NOT_PROSE with the reason it is not regulated prose. A new writer that is
+ * neither fails here, by name, before it can ship unguarded.
+ *
  * Usage: node scripts/ci/check-lineage-save-gate.mjs
  */
 
@@ -52,6 +62,62 @@ const ROOT = process.cwd();
  *     must still be enlisted on that `client`; the transaction itself is
  *     verified in each `txOwners` file instead.
  */
+/**
+ * Content writers the discovery pass finds that are NOT regulated prose, each
+ * with the reason. Shrink-only by convention: an entry here says a reader
+ * looked and decided, never that nobody looked.
+ */
+const NOT_PROSE = [
+  {
+    file: 'server/services/AssemblyLine.ts',
+    why: 'assembly_docs is a scratch pipeline reached only through routes/test-assembly.ts, which nothing mounts; its content never reaches a governed document',
+  },
+  {
+    file: 'server/routes/fda-forms.routes.ts',
+    why: 'fda_510k_documents.content is the JSON of form FIELD VALUES (structured data with its own field-level linking), not narrative prose',
+  },
+  {
+    file: 'server/services/SmartFieldLinking.ts',
+    why: 'writes one linked field value into fda_510k_documents.content JSON; the value carries its own smart-field provenance',
+  },
+  {
+    file: 'server/routes/global-compliance.ts',
+    why: 'GDPR Art. 17 erasure — overwrites content with a redaction marker; nothing is authored',
+  },
+  {
+    file: 'server/services/ana-ri/command-executor.ts',
+    why: 'GDPR Art. 17 erasure of concept2cure_artifacts — overwrites content with a redaction marker; nothing is authored',
+  },
+  {
+    file: 'server/services/atomVersionService.ts',
+    why: 'lumen_data_atoms are Data Room SOURCE chunks (what documents cite), not authored claims; lineage points AT them',
+  },
+  {
+    file: 'server/services/ana-wisdom-engine.ts',
+    why: 'client_memory_entries is AnA working memory, never a document',
+  },
+];
+
+/**
+ * Prose writers the discovery pass found that are NOT yet gated. Recorded
+ * here so they are visible, not hidden — each names the ledger row that owns
+ * closing it. Shrink-only: an entry whose file stops writing content (or
+ * joins GUARDED) must be removed, and the guard fails until it is, so this
+ * list can never quietly outgrow the truth. A NEW unguarded writer is never
+ * added here to get green; it is gated, or declared NOT_PROSE with a reason.
+ */
+const KNOWN_UNGUARDED = [
+  { file: 'server/routes/batch-draft-routes.ts', row: 'L160', what: 'coauthor_documents.content from AnA batch drafts' },
+  { file: 'server/routes/concept2cure.ts', row: 'L160', what: 'concept2cure_artifacts.content on edit and on rollback-to-version' },
+  { file: 'server/services/ana/AnaToolExecutor.ts', row: 'L160', what: 'concept2cure_artifacts.content from the AnA document-content tool (the kit-section tool in the same file IS gated)' },
+  { file: 'server/services/ana/artifactVersionStore.ts', row: 'L160', what: 'concept2cure_artifacts.content — the shared artifact version writer' },
+  { file: 'server/services/ana/submission-chat-apply-rewrite.ts', row: 'L160', what: 'concept2cure_artifacts.content when an AnA rewrite is applied' },
+  { file: 'server/services/ai-actions/handlers/refine-with-validation.ts', row: 'L160', what: 'concept2cure_artifacts.content from the refine AI action' },
+  { file: 'server/services/module3-convergence-service.ts', row: 'L160', what: 'concept2cure_artifacts.content for composed Module 3 sections' },
+  { file: 'server/services/artifact-tagger.ts', row: 'L160', what: 'concept2cure_artifacts.content when a tagged upload is placed as an artifact' },
+  { file: 'server/services/ana-ri/mdx-command-handlers.ts', row: 'L160', what: 'cerv2_510k_sections.content from AnA-RI commands — a fourth writer of the kit sections, outside any transaction' },
+];
+
 const GUARDED = [
   {
     file: 'server/routes/authoring.router.ts',
@@ -296,6 +362,71 @@ for (const target of GUARDED) {
   console.error(`  ${target.why}`);
   for (const m of missing) {
     console.error(`  ✗ ${m.id}: ${m.message}`);
+  }
+}
+
+// ── Discovery: writers the allowlist does not know about ─────────────────────
+const CONTENT_WRITE = [
+  // raw SQL: UPDATE <table> SET … content = …
+  /UPDATE\s+[\w.]+\s+SET[\s\S]{0,400}?\bcontent\s*=/,
+  // Drizzle: .set({ … content: … })
+  // (same object literal only — a nested `{ content: … }` inside another
+  // field, or an unrelated `.set({ headers })`, is not a content write)
+  /\.set\(\{[^{}]*\bcontent\s*:/,
+];
+function* sourceFiles(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === '__tests__' || entry.name === 'node_modules') continue;
+      yield* sourceFiles(full);
+    } else if (/\.ts$/.test(entry.name) && !/\.test\.ts$/.test(entry.name)) {
+      yield full;
+    }
+  }
+}
+/** Comments are not writes: a note about an old statement must not count as one. */
+function stripComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
+}
+const known = new Set([...GUARDED.map((g) => g.file), ...NOT_PROSE.map((n) => n.file)]);
+const knownGaps = new Map(KNOWN_UNGUARDED.map((k) => [k.file, k]));
+const unknownWriters = [];
+const stillWriting = new Set();
+for (const abs of sourceFiles(path.join(ROOT, 'server'))) {
+  const rel = path.relative(ROOT, abs).split(path.sep).join('/');
+  const src = stripComments(fs.readFileSync(abs, 'utf8'));
+  const writes = CONTENT_WRITE.some((re) => re.test(src));
+  if (writes) stillWriting.add(rel);
+  if (known.has(rel) || knownGaps.has(rel)) continue;
+  if (writes) unknownWriters.push(rel);
+}
+for (const gap of KNOWN_UNGUARDED) {
+  if (!stillWriting.has(gap.file) || known.has(gap.file)) {
+    failures++;
+    console.error(
+      `\n[ci:lineage-save-gate] FAIL ${gap.file}\n  ✗ KNOWN_UNGUARDED lists it, but it no longer writes content unguarded — remove the entry ` +
+        `(and close or update ledger ${gap.row}). The list may only shrink.`,
+    );
+  }
+}
+if (KNOWN_UNGUARDED.length > 0) {
+  console.warn(`[ci:lineage-save-gate] ${KNOWN_UNGUARDED.length} known unguarded prose writer(s), recorded, not hidden:`);
+  for (const gap of KNOWN_UNGUARDED) console.warn(`    ${gap.file} — ${gap.what} (ledger ${gap.row})`);
+}
+for (const rel of unknownWriters) {
+  failures++;
+  console.error(`\n[ci:lineage-save-gate] FAIL ${rel}`);
+  console.error(
+    '  ✗ unguarded-writer: this file UPDATEs a `content` column and is neither GUARDED nor declared in ' +
+      'NOT_PROSE. If it writes regulated prose, enlist the lineage gate in its transaction and add it to ' +
+      'GUARDED; if the column is not prose, add it to NOT_PROSE with the reason.',
+  );
+}
+for (const n of NOT_PROSE) {
+  if (!fs.existsSync(path.join(ROOT, n.file))) {
+    failures++;
+    console.error(`\n[ci:lineage-save-gate] FAIL ${n.file}\n  ✗ NOT_PROSE names a file that no longer exists — remove the entry.`);
   }
 }
 
