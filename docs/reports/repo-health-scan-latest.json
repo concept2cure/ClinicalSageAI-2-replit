@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T20:03:56.176Z",
+  "generatedAt": "2026-09-03T20:20:48.893Z",
   "git": {
-    "sha": "c378f919f2858fb9d01106e47b202caad1d61f5e",
+    "sha": "aaac54f0a9a67e127bb6a5d0012cd45ab80cd767",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -994,15 +994,6 @@
           "client/src/concept2cure/mdx/data/udi-docs.ts",
           "design-system/ui_kits/mdx/data/udi-docs.js",
           "ui_kits/mdx/data/udi-docs.js"
-        ]
-      },
-      {
-        "basename": "validation",
-        "count": 3,
-        "paths": [
-          "server/middleware/validation.ts",
-          "server/utils/validation.js",
-          "services/proof/validation.ts"
         ]
       },
       {
@@ -2126,6 +2117,14 @@
         ]
       },
       {
+        "basename": "validation",
+        "count": 2,
+        "paths": [
+          "server/middleware/validation.ts",
+          "services/proof/validation.ts"
+        ]
+      },
+      {
         "basename": "vitest.config",
         "count": 2,
         "paths": [
@@ -2664,7 +2663,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 399,
+      "duplicateGroups": 398,
       "largeByBytes": 28,
       "largeByLines": 74
     },
