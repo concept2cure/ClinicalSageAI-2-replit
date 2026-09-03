@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T19:44:17.216Z",
+  "generatedAt": "2026-09-03T20:03:56.176Z",
   "git": {
-    "sha": "638dc3137136966c090489aa8a096db6f86fd521",
+    "sha": "c378f919f2858fb9d01106e47b202caad1d61f5e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2170,7 +2170,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 232103
+        "bytes": 233355
       },
       {
         "file": "server/statistics-service.ts",
@@ -2253,6 +2253,10 @@
         "bytes": 116241
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "bytes": 116112
+      },
+      {
         "file": "server/services/intelligent-report-engine.ts",
         "bytes": 115224
       },
@@ -2291,10 +2295,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 107144
       }
     ],
     "largeFilesByLines": [
@@ -2332,7 +2332,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 5075
+        "lines": 5101
       },
       {
         "file": "server/storage.ts",
@@ -2395,6 +2395,10 @@
         "lines": 2609
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 2596
+      },
+      {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2588
       },
@@ -2413,10 +2417,6 @@
       {
         "file": "server/routes/submission-ops.ts",
         "lines": 2460
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2452
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
