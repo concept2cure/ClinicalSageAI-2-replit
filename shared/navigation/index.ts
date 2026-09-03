@@ -161,6 +161,10 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'maa-cockpit', label: 'MAA cockpit', description: 'The EU MAA marketing-application cockpit.', scope: 'project', group: 'module' },
   { id: 'haq-manager', label: 'Health-authority questions', description: 'The HAQ manager — agency questions grouped by round, with analysis, drafts and commitments.', scope: 'project', group: 'module' },
   { id: 'mission-control', label: 'Mission control', description: 'The portfolio mission-control board — every program and its cross-program status.', scope: 'global', group: 'global' },
+  { id: 'biostat-workbench', label: 'Biostatistics workbench', description: 'The biostatistics workbench — reviewer-risk assessment plus the deterministic design engines (assurance, group-sequential, sample size, multiplicity, and more).', scope: 'global', group: 'module' },
+  { id: 'filing-strategy', label: 'Filing strategy', description: 'The filing-strategy workspace — filing-sequence optimization, agency divergence, and prediction calibration.', scope: 'project', group: 'module' },
+  { id: 'safety-narrative', label: 'Safety narratives', description: 'The safety-narrative workbench — the SAE case worklist with the ICH E3 §16 narrative composer and expedited-reporting clocks.', scope: 'project', group: 'module' },
+  { id: 'crl-library', label: 'FDA CRL library', description: 'The FDA Complete-Response-Letter evidence library — deficiency findings by discipline and severity across the corpus.', scope: 'global', group: 'module' },
 
   // ── Device & diagnostics workstream (all render via MdxSurfaceHost; program
   // scope comes from the project in context when one is open) ──

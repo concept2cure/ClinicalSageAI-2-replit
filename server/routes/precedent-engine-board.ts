@@ -366,7 +366,15 @@ export default function createPrecedentEngineBoardRoutes(): Router {
         }
       }
 
-      const records = resultsR.status === 'fulfilled' ? resultsR.value.records : [];
+      // Fail closed on the precedent SEARCH read. searchWithSources already
+      // swallows per-query table-missing errors and returns [] internally, so a
+      // rejection here is a genuine failure — coercing it to [] published
+      // "0 precedents" to the assistant, indistinguishable from an empty corpus
+      // and defeating the surface's own "a failed read, not an empty corpus"
+      // branch (which only fires on a non-200). Surface it (→ the 500 → the
+      // surface's board.error).
+      if (resultsR.status === 'rejected') throw resultsR.reason;
+      const records = resultsR.value.records;
       const patterns: Record<string, PatternAnalysisDTO> = device
         ? buildDeviceLenses({ submissionType: q.submissionType, productCode: q.productCode }, records)
         : {

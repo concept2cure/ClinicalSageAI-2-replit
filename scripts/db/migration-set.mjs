@@ -874,6 +874,12 @@ export const C2C_MIGRATION_FILES = [
   // receipt that alone justifies status = 'transmitted'. Additive, nullable,
   // guarded on the table existing (a fresh install gets it via drizzle push).
   'migrations/20260902_ind_icsr_transmissions_transport_receipt.sql',
+  // LIFE-01: rendered_leaf_files — the retained bytes of a server-rendered
+  // filing document. The lifecycle routes rendered the safety/annual report,
+  // kept an md5 and discarded the bytes, so every filed lifecycle sequence
+  // assembled with zero leaf files and was permanently dispatch-blocked. New
+  // table only; no backfill (nothing records what pre-existing rows contained).
+  'migrations/20260903_rendered_leaf_files.sql',
   //   • 068_regulatory_schema_alignment — creates only regulatory.information_
   //     requests, which C-35's schema-qualification fix showed is not referenced
   //     by server code at all. It is dead schema, not a live gap; the "missing

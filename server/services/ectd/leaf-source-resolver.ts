@@ -9,6 +9,11 @@
  *   - ctd_onboarding_documents — an UPLOADED binary file (storage_path/mime);
  *                                staged directly AS A LEAF when it is already a
  *                                PDF (org-scoped, %PDF-verified), else unresolved
+ *   - rendered_leaf_files       — bytes this server RENDERED for a filing (the
+ *                                IND safety report, annual report, ICSR
+ *                                projection); fetched back through the storage
+ *                                provider's tenant boundary and re-verified
+ *                                against the digest recorded at render time
  *   - c2c_document_sections    — the GOVERNED authoring store (the rows the MDx
  *                                editor and the eu-mdr / eu-ivdr rule packs
  *                                write); plain text rendered via renderLeafPdf,
@@ -42,6 +47,8 @@ import { db } from '../../db';
 import { coauthorDocuments } from '../../../shared/schema';
 import { unifiedDocuments, workflowDocumentVersions } from '../../../shared/schema/unified_workflow';
 import { ctdOnboardingDocuments } from '../../../shared/schema/ctd-projects';
+import { renderedLeafFiles } from '../../../shared/schema/submissions';
+import { getStorageProvider } from '../storage';
 import { readLocalUploadBuffer } from '../anthropic-files';
 import { sectionPlainText, C2C_SECTION_COMPLETE_STATUSES } from '../c2c/section-content';
 import { renderLeafPdf } from './leaf-pdf-renderer';
@@ -344,6 +351,71 @@ export async function materializeLeafSources(
         md5: createHash('md5').update(buf).digest('hex'),
         sha256: createHash('sha256').update(buf).digest('hex'),
       });
+      materialized++;
+      continue;
+    }
+
+    if (documentTable === 'rendered_leaf_files') {
+      // Bytes this server rendered for a filing, retained at render time. Two
+      // gates, both fail-closed: the row read is org-scoped, and the byte fetch
+      // goes through the storage provider's own orgId boundary (object storage
+      // sits outside RLS, so that call is the only tenant gate for the bytes).
+      const [row] = await db
+        .select({
+          vaultVersionId: renderedLeafFiles.vaultVersionId,
+          sha256: renderedLeafFiles.sha256,
+          md5: renderedLeafFiles.md5,
+          mime: renderedLeafFiles.mime,
+          fileName: renderedLeafFiles.fileName,
+        })
+        .from(renderedLeafFiles)
+        .where(and(eq(renderedLeafFiles.id, documentId), eq(renderedLeafFiles.organizationId, organizationId)))
+        .limit(1);
+      if (!row) {
+        unresolved.push({ documentTable, documentId, reason: 'rendered_leaf_files row not found in this organization' });
+        continue;
+      }
+      if ((row.mime || '').toLowerCase() !== 'application/pdf') {
+        // The ICSR projection is stored as XML and transmitted through the
+        // gateway, not shipped as an eCTD leaf; say so rather than staging a
+        // non-conformant leaf.
+        unresolved.push({
+          documentTable,
+          documentId,
+          reason: `rendered file mime "${row.mime || 'unknown'}" is not application/pdf — an eCTD leaf must be a PDF`,
+        });
+        continue;
+      }
+      let bytes: Buffer | null = null;
+      try {
+        const got = await getStorageProvider().get(row.vaultVersionId, organizationId);
+        bytes = got?.bytes ?? null;
+      } catch {
+        bytes = null;
+      }
+      if (!bytes || bytes.length === 0) {
+        unresolved.push({ documentTable, documentId, reason: 'rendered file bytes are not retrievable from storage — cannot materialize leaf' });
+        continue;
+      }
+      // The digest recorded at render time is the claim; bytes that no longer
+      // match it are NOT the filed document, whatever the store returned.
+      const actual = createHash('sha256').update(bytes).digest('hex');
+      if (actual !== row.sha256) {
+        unresolved.push({
+          documentTable,
+          documentId,
+          reason: 'rendered file bytes do not match the sha256 recorded at render time — refusing to stage an altered document',
+        });
+        continue;
+      }
+      if (!looksLikePdf(bytes)) {
+        unresolved.push({ documentTable, documentId, reason: 'rendered file is not a valid PDF (missing %PDF- header) — refusing to stage a non-conformant leaf' });
+        continue;
+      }
+      const fileName = `${safeName(row.fileName || 'rendered')}-${key.replace(/[^a-z0-9]+/gi, '-')}.pdf`;
+      const sourcePath = path.join(stageDir, fileName);
+      await fs.writeFile(sourcePath, bytes);
+      byKey.set(key, { fileName, sourcePath, md5: row.md5, sha256: row.sha256 });
       materialized++;
       continue;
     }

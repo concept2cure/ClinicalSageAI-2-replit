@@ -139,6 +139,38 @@ export interface JourneyDb {
  * Call this in an `afterAll` in every journey. `__tests__/journey-schema-gaps.test.ts`
  * enforces that every journey does.
  */
+/**
+ * A journey that ran every request on the org-membership degraded fallback
+ * proved its tenant claims with `app.current_org_id` empty.
+ *
+ * Ledger L148: `ind-authoring` did exactly that — its `organizations` stub
+ * predated `20260129_add_org_uuid_alignment`, the enrichment LEFT JOIN threw
+ * 42703 on every request, and the membership-only fallback answered with
+ * `orgUuid = null`. Membership was still decided correctly, which is why
+ * nothing failed, and the only trace was a warning a test cannot read. That
+ * residual was carried on L148 rather than closed; this closes it.
+ *
+ * Call it in the same `afterAll` as `assertNoSchemaGaps`. A journey that WANTS
+ * to exercise the fallback asserts the count itself instead.
+ */
+export async function assertNoDegradedTenantEnrichment(): Promise<void> {
+  const { degradedEnrichmentCount, degradedEnrichmentSample } = await import(
+    '../../server/middleware/orgMembership'
+  );
+  const n = degradedEnrichmentCount();
+  if (n === 0) return;
+  const seen = degradedEnrichmentSample()
+    .map((d) => `  user ${d.userId} / org ${d.organizationId}: ${d.error}`)
+    .join('\n');
+  throw new Error(
+    `${n} request(s) in this journey answered on the org-membership DEGRADED fallback, ` +
+      `so app.current_org_id was empty for them and any tenant-scoping this journey ` +
+      `asserts was proven without it:\n\n${seen}\n\n` +
+      `Usually the journey's own \`organizations\` stub is missing a column the real ` +
+      `schema has (the uuid alignment migration adds one). Fix the stub, not this check.`,
+  );
+}
+
 export function assertNoSchemaGaps(
   jdb: Pick<JourneyDb, 'schemaGaps'>,
   /**
