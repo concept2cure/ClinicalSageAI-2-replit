@@ -36,6 +36,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import {
   CALCULATORS,
   buildRequestBody,
@@ -395,6 +396,29 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
 
   const [activeId, setActiveId] = useState<string>(CALCULATORS[0].id);
   const active = useMemo(() => CALCULATORS.find(c => c.id === activeId) ?? CALCULATORS[0], [activeId]);
+
+  /* AnA can open any design engine by its name — the same tile click a person
+     makes — so a drive can land on the right calculator before its inputs are
+     discussed. The registry (CALCULATORS) is static, so no not-ready state;
+     opening an engine is view-state only — computing a result stays deliberate. */
+  useSurfaceActionHandlers('biostat-workbench', {
+    'biostat-workbench.select-calculator': (params) => {
+      const raw = String(params.calculator ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a design engine to open.' };
+      const needle = raw.toLowerCase();
+      const byId = CALCULATORS.filter((c) => c.id.toLowerCase() === needle);
+      const byTitle = CALCULATORS.filter((c) => c.title.toLowerCase() === needle);
+      const hits = byId.length ? byId
+        : byTitle.length ? byTitle
+        : CALCULATORS.filter((c) => c.title.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No design engine matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} engines — name one exactly.` };
+      const c = hits[0];
+      if (activeId === c.id) return { ok: true, detail: `Already on ${c.title}` };
+      setActiveId(c.id);
+      return { ok: true, detail: `Opened ${c.title}` };
+    },
+  });
 
   /* What AnA can see of this screen: which engine is selected, what it computes
      and what it needs. Without it, "is this the right design?" on the
