@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
-import type { SurfaceViewProps, OwnedSurfaceViewProps } from '../surfaceViews';
+import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { RBM_NAV, RBM_LINKS } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmProgram } from './rbmBoard';

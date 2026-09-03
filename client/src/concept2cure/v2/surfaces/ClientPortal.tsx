@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState, hasKeys } from '../dataConnect';
-import type { SurfaceViewProps, OwnedSurfaceViewProps } from '../surfaceViews';
+import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/auth-entry.css';
 
 /* ════ ClientPortal — the read-only view a CRO's client sees ════
