@@ -14,7 +14,7 @@
 import { describe, expect, it } from 'vitest';
 import { generateJSON } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
-import { assessPasteFidelity, docToPlainText, plainTextToHtml } from '../editor/roundTrip';
+import { assessPasteFidelity, docToPlainText, plainTextToHtml, signatureDrift, structuralSignatureFromDoc, structuralSignatureFromDom } from '../editor/roundTrip';
 
 const roundTrip = (text: string) => docToPlainText(generateJSON(plainTextToHtml(text), [StarterKit]));
 
@@ -47,5 +47,30 @@ describe('assessPasteFidelity — the one-word floor is for long pastes only', (
     const html = '<p>' + words.join(' ') + '</p>';
     const kept = words.slice(1).join(' ');
     expect(assessPasteFidelity(html, kept).lost).toBe(0);
+  });
+});
+
+describe('structural drift between clipboard HTML and the parsed slice — the paste gate\'s comparison', () => {
+  const drift = (html: string) =>
+    signatureDrift(
+      structuralSignatureFromDom(new DOMParser().parseFromString(html, 'text/html')),
+      structuralSignatureFromDoc(generateJSON(html, [StarterKit])),
+    );
+
+  it('names a definition list the schema flattened, though every word survived', () => {
+    const html = '<dl><dt>AE</dt><dd>Adverse event</dd><dt>SAE</dt><dd>Serious adverse event</dd></dl>';
+    const kept = generateJSON(html, [StarterKit]);
+    // Words intact — the old word-count gate would have said clean.
+    expect(assessPasteFidelity(html, docToPlainText(kept)).lost).toBe(0);
+    expect(drift(html)).toContain('defItems');
+  });
+
+  it('names a table the schema (without the table extension) flattened into paragraphs', () => {
+    const html = '<table><tr><th>Dose</th><th>n</th></tr><tr><td>10 mg</td><td>12</td></tr></table>';
+    expect(drift(html)).toContain('tables');
+  });
+
+  it('is silent on ordinary paragraphs and headings the schema keeps', () => {
+    expect(drift('<h2>Results</h2><p>The primary endpoint was met.</p>')).toEqual([]);
   });
 });
