@@ -1416,7 +1416,7 @@ router.post('/packages/:packageId/publish', async (req: Request, res: Response) 
  * Root directory under which assembled submission bundles are persisted.
  * Configurable via SUBMISSION_BUNDLE_DIR. Defaults to a repo-/cwd-local
  * `uploads/submission-bundles` directory, matching the repo's existing
- * `uploads/` file convention (see server/pdf-processor.ts, data-importer.ts).
+ * `uploads/` file convention (see data-importer.ts).
  */
 const BUNDLE_DIR = process.env.SUBMISSION_BUNDLE_DIR
   ? path.resolve(process.env.SUBMISSION_BUNDLE_DIR)
