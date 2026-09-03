@@ -243,8 +243,21 @@ export async function validateEctdPackageHardened(
 export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]): DtdFinding[] {
   const findings: DtdFinding[] = [];
 
+  // Strip XML comments before anything else: every check below scans the
+  // backbone with regexes, and a comment's contents are prose, not markup.
+  // Leaving them in cut both ways against the vendored fixtures —
+  //   false positive: the `<leaf>` written in index-valid.xml's own header
+  //     comment was scanned as leaf #0, raising three phantom
+  //     DTD_LEAF_MISSING_ATTR findings (and shifting `leaves[leafIdx]`, so
+  //     every later finding was attributed to the wrong file);
+  //   false negative: index-invalid.xml omits <?xml?> deliberately, but the
+  //     literal "<?xml ... ?>" in its comment satisfied the presence check, so
+  //     a backbone genuinely missing its declaration passed.
+  // Replace with a space, never '', so stripping cannot fuse adjacent tokens.
+  const xml = backboneXml.replace(/<!--[\s\S]*?-->/g, ' ');
+
   // Well-formedness — quick brace check before structural rules
-  if (!/<\?xml/i.test(backboneXml)) {
+  if (!/<\?xml/i.test(xml)) {
     findings.push({
       severity: 'error',
       code: 'DTD_NO_DECLARATION',
@@ -256,7 +269,7 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
   // Accept both a bare filename and a package-relative path (the packager emits
   // SYSTEM "util/dtd/ich-ectd-3-2.dtd"); what matters is that the referenced
   // DTD is ich-ectd-3-2.dtd.
-  if (!/<!DOCTYPE\s+ectd:ectd\s+SYSTEM\s+["'][^"']*ich-ectd-3-2\.dtd["']/i.test(backboneXml)) {
+  if (!/<!DOCTYPE\s+ectd:ectd\s+SYSTEM\s+["'][^"']*ich-ectd-3-2\.dtd["']/i.test(xml)) {
     findings.push({
       severity: 'error',
       code: 'DTD_NO_DOCTYPE',
@@ -266,7 +279,7 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
   }
 
   // Root element check
-  if (!/<ectd:ectd[\s>]/.test(backboneXml)) {
+  if (!/<ectd:ectd[\s>]/.test(xml)) {
     findings.push({
       severity: 'error',
       code: 'DTD_BAD_ROOT',
@@ -276,7 +289,7 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
   }
 
   // Namespace declarations
-  if (!/xmlns:ectd="http:\/\/www\.ich\.org\/ectd"/.test(backboneXml)) {
+  if (!/xmlns:ectd="http:\/\/www\.ich\.org\/ectd"/.test(xml)) {
     findings.push({
       severity: 'error',
       code: 'DTD_MISSING_ECTD_NS',
@@ -284,7 +297,7 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
       fix: 'Add xmlns:ectd="http://www.ich.org/ectd" to the root element',
     });
   }
-  if (!/xmlns:xlink="http:\/\/www\.w3\.org\/1999\/xlink"/.test(backboneXml)) {
+  if (!/xmlns:xlink="http:\/\/www\.w3\.org\/1999\/xlink"/.test(xml)) {
     findings.push({
       severity: 'error',
       code: 'DTD_MISSING_XLINK_NS',
@@ -294,7 +307,7 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
   }
 
   // Per-leaf attribute requirements
-  const leafMatches = backboneXml.matchAll(/<leaf\b([^>]*)\/?>/g);
+  const leafMatches = xml.matchAll(/<leaf\b([^>]*)\/?>/g);
   let leafIdx = 0;
   for (const match of leafMatches) {
     const attrs = match[1] || '';
@@ -330,7 +343,7 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
   // emit). This is what retires the legacy conventions: a flat <m3> block or an
   // abbreviated <m2-summaries> heading is flagged here, with the authoritative
   // fix named.
-  const elementMatches = backboneXml.matchAll(/<([a-zA-Z0-9:_-]+)[\s>/]/g);
+  const elementMatches = xml.matchAll(/<([a-zA-Z0-9:_-]+)[\s>/]/g);
   const seenElements = new Set<string>();
   for (const match of elementMatches) {
     seenElements.add(match[1]);

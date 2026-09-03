@@ -1260,6 +1260,30 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
+  // ── Source tracer ──
+  {
+    id: 'source-tracer.select-section',
+    surfaceId: 'source-tracer',
+    label: 'Open a traced section',
+    description:
+      'On the source tracer, open an authored section by its id or a distinctive phrase from its title/document so its cited sources and their verification state show — the same row click a person makes. Resolved against the real sections with honest misses; held while they load.',
+    params: [
+      { name: 'section', required: true, description: 'The section id, or a distinctive phrase from its title or document (case-insensitive).' },
+    ],
+  },
+
+  // ── Decision lineage ──
+  {
+    id: 'decision-lineage.select-graph',
+    surfaceId: 'decision-lineage',
+    label: 'Open a decision-lineage graph',
+    description:
+      'On the decision-lineage surface, open the lineage graph for a governed artifact by its label so its node-by-node derivation shows — the same row click a person makes. Resolved against the real graphs with honest misses; held while they load.',
+    params: [
+      { name: 'artifact', required: true, description: 'The artifact label as listed (case-insensitive; a distinctive partial resolves when unambiguous).' },
+    ],
+  },
+
   // ── Deep research ──
   {
     id: 'deep-research.open-tab',

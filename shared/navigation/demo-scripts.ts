@@ -73,7 +73,11 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         say: 'Welcome them to their workspace and set the frame: this is a working tour of their own tenant, on their real data, and they can interrupt with a question at any moment.',
       },
       {
-        say: 'The Projects portfolio is the front door: every regulatory program with its workstream, stage, readiness, and blockers in one place.',
+        say: 'Open on the whole picture: mission control is the command board — every program and its cross-program readiness at a glance, the view a head of regulatory opens each morning.',
+        navigate: { target: 'mission-control' },
+      },
+      {
+        say: 'The Projects portfolio is the front door to a single program: every regulatory program with its workstream, stage, readiness, and blockers, and where you enter one to work.',
         navigate: { target: 'projects' },
       },
       {
@@ -119,6 +123,10 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       {
         say: 'The catalog spans the whole operation — switch to the quality & CMC group to show its breadth without leaving the screen.',
         act: { actionId: 'intelligence.open-group', params: { group: 'quality_cmc' } },
+      },
+      {
+        say: 'And the analytical engines are hands-on, not slideware — the biostatistics workbench runs assurance, group-sequential design, sample size and multiplicity as deterministic calculators AnA can open and drive with the team.',
+        navigate: { target: 'biostat-workbench' },
       },
       {
         say: 'Review is where governed judgments happen: readiness, approvals, and the Part 11 e-signature gates — AnA prepares everything, and a person always signs.',
@@ -192,6 +200,14 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       {
         say: 'Open the queue at the next undecided document.',
         act: { actionId: 'review.open-queue' },
+      },
+      {
+        say: 'Before dispatch, read filing risk on a marketing application: the NDA/BLA cockpit scores CTD readiness, the PDUFA review clock, and Refuse-to-File risk against the program’s real state.',
+        navigate: { target: 'nda-cockpit' },
+      },
+      {
+        say: 'Open the Refuse-to-File view — the specific deficiencies that bounce a submission on receipt, so the team clears them before anyone signs.',
+        act: { actionId: 'nda-cockpit.open-tab', params: { tab: 'rtf' } },
       },
       {
         say: 'And the gateway: the transmittal chain and acknowledgments once a person has frozen and dispatched — the two acts that stay theirs, under a Part 11 signature.',
@@ -295,6 +311,10 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       {
         say: 'The device task workbench is where the day starts: every open item across their programs with its owner, so nothing waits on a shared drive or an email thread.',
         navigate: { target: 'device-tasks' },
+      },
+      {
+        say: 'Pre-Submissions shape the pathway before you build it — the agency-meetings workspace tracks each Q-Sub / Pre-Sub with its briefing book and the FDA feedback, so the team designs to the agency’s answer instead of guessing it.',
+        navigate: { target: 'agency-meetings' },
       },
       {
         say: 'The 510(k) pathway workspace: predicate intelligence, the substantial-equivalence matrix, and the eSTAR sections built as they go — this is where a submission takes shape, not a folder they assemble at the end.',
