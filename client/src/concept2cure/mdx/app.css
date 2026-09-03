@@ -2931,3 +2931,448 @@
 /* Wide tables (GSPR matrix, literature results) scroll inside their own
    container — the page body never scrolls horizontally. */
 .mdx-shell .tbl-scroll { overflow-x: auto; }
+
+/* ═════════════════════════════════════════════════════════════════
+   MDX surfaces — Analytics, Postmarket, UDI, Engineering.
+
+   Ported VERBATIM from design-system/ui_kits/mdx/surfaces.css, adding only the
+   `.mdx-shell` scope prefix each rule needs here. Same port L100 performed for
+   DocumentsPanel and for the same reason: these components shipped rendering
+   these class names while every rule that styles them lived in a kit file
+   nothing imports, so they rendered unstyled and no gate could see it
+   (ledger L139).
+
+   109 class names across 174 rule blocks. Nothing here is invented — every
+   selector and declaration is the kit's, and all 22 design tokens these rules
+   reference were verified to resolve in the built CSS chunks before the port.
+
+   Two class names these four surfaces render are deliberately NOT here:
+   `eng-trace-summary` and `scope-note`, which no kit defines. Writing rules for
+   those would be designing rather than porting, and inventing them is worse
+   than the honest gap; they stay on the L139 baseline.
+
+   The kit copy remains the design reference. design-system/ is a read-only
+   mirror synced by .github/workflows/sync-design-system.yml, so deleting rules
+   there is undone by the next sync; this file is what the build consumes.
+   ═════════════════════════════════════════════════════════════════ */
+
+.mdx-shell /**
+ * Phase 4 surfaces · additive CSS — sits on top of app.css.
+ *
+ * When Claude Code ports this kit into client/src/concept2cure/mdx/, .mdx-shell merge
+ * the contents of this file into app.css under the existing section banners
+ * (one banner per surface below). Selectors, .mdx-shell values, .mdx-shell and order match the
+ * kit's existing conventions (warm-stone neutrals, .mdx-shell 13px body, .mdx-shell single
+ * --accent-100 highlight per active state, .mdx-shell 200ms ease-out).
+ *
+ * Tokens consumed (all defined in colors_and_type.css + the tokens-shim):
+ *   --bg-000 / --bg-050 / --bg-100 / --bg-200 / --bg-300
+ *   --text-100 / --text-200 / --text-300 / --text-400 / --text-500
+ *   --accent-000 / --accent-100 / --accent-200
+ *   --success / --warning / --error / --error-text
+ *   --border-100 / --border / --border-strong
+ *   --radius-md / --radius-lg / --shadow-xs / --shadow-sm
+ *   --font-mono / --ease / --dur
+ */
+
+/* ─── Shared utilities ─── */
+.small-mono { font-family: var(--font-mono); font-size: 11px; color: var(--text-300); }
+.mdx-shell .ll { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-300); }
+.mdx-shell .ll .dot { width: 8px; height: 8px; border-radius: 999px; background: currentColor; }
+.mdx-shell /* ════════════════════════════════════════════════════════════
+   ENGINEERING SURFACE
+   ════════════════════════════════════════════════════════════ */
+
+.eng-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(360px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.mdx-shell /* DHF strip — 9 cells in a row */
+.eng-dhf-strip {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 8px;
+}
+.mdx-shell .eng-dhf-cell {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 10px 12px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  text-align: left;
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .eng-dhf-cell:hover { border-color: var(--border); box-shadow: var(--shadow-xs); }
+.mdx-shell .eng-dhf-cell[data-on="true"] { border-color: var(--accent-100); box-shadow: 0 0 0 1px var(--accent-100); }
+.mdx-shell .eng-dhf-cell[data-status="ready"] { background: var(--canvas-elevated); }
+.mdx-shell .eng-dhf-cell[data-status="review"] { background: var(--canvas-elevated); border-left: 3px solid var(--warning); padding-left: 9px; }
+.mdx-shell .eng-dhf-cell[data-status="draft"] { background: var(--bg-050); }
+.mdx-shell .eng-dhf-cell[data-status="blocked"] { background: var(--canvas-elevated); border-left: 3px solid var(--error); padding-left: 9px; }
+.mdx-shell .eng-dhf-num { font-family: var(--font-mono); font-size: 10px; color: var(--text-400); letter-spacing: 0.04em; }
+.mdx-shell .eng-dhf-label { font-size: 12px; font-weight: 600; color: var(--text-100); line-height: 1.25; }
+.mdx-shell .eng-dhf-meta { display: flex; gap: 4px; align-items: center; font-size: 10px; color: var(--text-400); }
+.mdx-shell .eng-dhf-meta .dot-sep { color: var(--text-500); }
+.mdx-shell .eng-dhf-cell .status-pill { align-self: flex-start; margin-top: 4px; }
+.mdx-shell /* ISO 14971 5×5 heatmap */
+.eng-heat {
+  display: grid;
+  grid-template-columns: 100px repeat(5, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.mdx-shell .eng-heat-corner { background: transparent; }
+.mdx-shell .eng-heat-col-lbl, .mdx-shell .eng-heat-row-lbl {
+  display: flex; flex-direction: column; align-items: center;
+  font-size: 10px; color: var(--text-300); padding: 6px 4px;
+}
+.mdx-shell .eng-heat-row-lbl { align-items: flex-start; padding-left: 8px; justify-content: center; }
+.mdx-shell .eng-heat-col-lbl .mono.tiny { color: var(--text-400); margin-bottom: 2px; }
+.mdx-shell .eng-heat-cell {
+  height: 56px;
+  background: var(--bg-050);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 14px; font-weight: 600;
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .eng-heat-cell.empty { color: var(--text-500); cursor: default; }
+.mdx-shell .eng-heat-cell.tone-ok { background: #ecf1e4; border-color: #cfd9bd; color: #4d6235; }
+.mdx-shell .eng-heat-cell.tone-alarp { background: #f6e9cf; border-color: #e2c98c; color: #7e5510; }
+.mdx-shell .eng-heat-cell.tone-unacceptable { background: #f3d6d2; border-color: #dca5a0; color: #7c1f1f; }
+.mdx-shell .eng-heat-cell.empty.tone-ok { background: #f5f6ef; border-color: #e6e9d8; color: #b9c39c; }
+.mdx-shell .eng-heat-cell.empty.tone-alarp { background: #f8efde; border-color: #e9d6a8; color: #c8a560; }
+.mdx-shell .eng-heat-cell.empty.tone-unacceptable { background: #f6e6e3; border-color: #ecbeb6; color: #c98079; }
+.mdx-shell .eng-heat-cell:hover:not(.empty) { transform: translateY(-1px); box-shadow: var(--shadow-xs); }
+.mdx-shell .eng-heat-cell.on { box-shadow: 0 0 0 2px var(--accent-100); }
+.mdx-shell /* Risk records */
+.eng-risks { display: flex; flex-direction: column; gap: 6px; }
+.mdx-shell .eng-risk-row {
+  text-align: left; padding: 10px 12px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .eng-risk-row:hover { box-shadow: var(--shadow-xs); border-color: var(--border); }
+.mdx-shell .eng-risk-row[data-state="open"] { border-left: 3px solid var(--warning); padding-left: 11px; }
+.mdx-shell .eng-risk-row[data-state="in-progress"] { border-left: 3px solid var(--accent-100); padding-left: 11px; }
+.mdx-shell .eng-risk-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.mdx-shell .eng-risk-id { color: var(--text-300); }
+.mdx-shell .eng-risk-hazard { font-weight: 600; font-size: 13px; color: var(--text-100); }
+.mdx-shell .eng-risk-resid { margin-left: auto; padding: 1px 6px; background: var(--bg-100); border-radius: 4px; color: var(--text-200); }
+.mdx-shell .eng-risk-harm { font-size: 12px; color: var(--text-200); margin-bottom: 6px; }
+.mdx-shell /* UDI / EUDAMED status pills (richer than the kit's status-pill set) */
+.udi-status-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 500;
+}
+.mdx-shell .udi-status-pill::before { content: ''; width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
+.mdx-shell .udi-status-pill.published { background: #ecf1e4; color: #4d6235; }
+.mdx-shell .udi-status-pill.in-review { background: #f6e9cf; color: #7e5510; }
+.mdx-shell .udi-status-pill.draft { background: var(--bg-100); color: var(--text-300); }
+.mdx-shell .udi-status-pill.not-started { background: var(--bg-100); color: var(--text-400); }
+.mdx-shell .udi-status-pill.pending { background: var(--bg-100); color: var(--text-300); }
+.mdx-shell .udi-mri {
+  display: inline-block; padding: 1px 6px; border-radius: 4px;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
+}
+.mdx-shell /* Symbol glossary */
+.udi-symbols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.mdx-shell .udi-symbol {
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+}
+.mdx-shell .udi-symbol[data-on="false"] { border-left: 3px solid var(--warning); padding-left: 9px; }
+.mdx-shell .udi-symbol-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.mdx-shell .udi-symbol-head .mono.tiny { color: var(--text-400); }
+.mdx-shell .udi-symbol-ok { color: var(--success); }
+.mdx-shell .udi-symbol-warn { color: var(--warning); }
+.mdx-shell .udi-symbol-name { font-weight: 600; font-size: 12px; color: var(--text-100); line-height: 1.3; margin-bottom: 2px; }
+.mdx-shell .udi-symbol-req { font-size: 10px; color: var(--text-400); }
+.mdx-shell .pv-signal-vs.up { color: var(--error); font-weight: 600; }
+.mdx-shell /* CAPA workflow board */
+.pv-capa-board {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+.mdx-shell .pv-capa-col {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px;
+  background: var(--bg-050);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  min-height: 200px;
+}
+.mdx-shell .pv-capa-head { display: flex; gap: 6px; align-items: center; }
+.mdx-shell .pv-capa-label { font-weight: 600; font-size: 12px; color: var(--text-200); text-transform: uppercase; letter-spacing: 0.04em; }
+.mdx-shell .pv-capa-n { margin-left: auto; font-family: var(--font-mono); font-size: 11px; padding: 1px 6px; background: var(--canvas-elevated); border-radius: 999px; color: var(--text-300); }
+.mdx-shell .pv-capa-body { display: flex; flex-direction: column; gap: 6px; }
+.mdx-shell .pv-capa-card {
+  text-align: left; padding: 10px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .pv-capa-card:hover { box-shadow: var(--shadow-xs); border-color: var(--border); }
+.mdx-shell .pv-capa-card[data-critical="true"] { border-left: 3px solid var(--error); padding-left: 9px; }
+.mdx-shell .pv-capa-card-head { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
+.mdx-shell .pv-capa-card-title { font-weight: 600; font-size: 12px; color: var(--text-100); line-height: 1.35; margin-bottom: 6px; }
+.mdx-shell .pv-capa-card-foot { display: flex; gap: 4px; align-items: center; font-size: 11px; color: var(--text-400); }
+.mdx-shell /* Trending sparklines */
+.pv-trends { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.mdx-shell .pv-trend {
+  text-align: left; padding: 12px 14px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .pv-trend:hover { box-shadow: var(--shadow-xs); }
+.mdx-shell .pv-trend-head { display: flex; align-items: center; margin-bottom: 4px; }
+.mdx-shell .pv-trend-total { margin-left: auto; color: var(--text-300); }
+.mdx-shell .pv-trend-spark { width: 100%; height: 40px; display: block; margin-bottom: 6px; }
+.mdx-shell .pv-trend-arrow.up { color: var(--error); }
+.mdx-shell .pv-trend-arrow.down { color: var(--success); }
+.mdx-shell /* ════════════════════════════════════════════════════════════
+   ANALYTICS SURFACE
+   ════════════════════════════════════════════════════════════ */
+
+.anl-delta {
+  margin-top: 8px;
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; color: var(--text-400);
+}
+.mdx-shell .anl-delta.up { color: var(--warning); }
+.mdx-shell .anl-delta.down { color: var(--success); }
+.mdx-shell /* 24-month pace chart */
+.anl-pace {
+  display: flex; align-items: flex-end; gap: 6px;
+  height: 100px; padding: 12px 4px 4px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+}
+.mdx-shell .anl-pace-col {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.mdx-shell .anl-pace-bar {
+  position: relative;
+  width: 14px;
+  background: var(--bg-200);
+  border-radius: 3px 3px 0 0;
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .anl-pace-col[data-thisyear="true"] .anl-pace-bar { background: var(--accent-100); }
+.mdx-shell .anl-pace-col:hover .anl-pace-bar { background: var(--text-200); }
+.mdx-shell .anl-pace-col[data-thisyear="true"]:hover .anl-pace-bar { background: var(--accent-200); }
+.mdx-shell .anl-pace-n {
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+  font-family: var(--font-mono); font-size: 10px; color: var(--text-300); font-weight: 600;
+}
+.mdx-shell .anl-pace-x { font-family: var(--font-mono); font-size: 9px; color: var(--text-400); min-height: 12px; }
+.mdx-shell /* Phase cycle time diverging bars */
+.anl-phase {
+  display: flex; flex-direction: column; gap: 4px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+}
+.mdx-shell .anl-phase-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 6px 0;
+}
+.mdx-shell .anl-phase-label { font-size: 12px; color: var(--text-200); font-weight: 500; }
+.mdx-shell .anl-phase-bars { display: flex; flex-direction: column; gap: 6px; }
+.mdx-shell .anl-phase-track {
+  position: relative; height: 22px;
+  background: linear-gradient(to right, transparent 49.5%, var(--border-200) 49.5%, var(--border-200) 50.5%, transparent 50.5%);
+}
+.mdx-shell .anl-phase-axis {
+  position: absolute; left: 50%; top: 0; bottom: 0; width: 1px;
+  background: var(--text-400);
+}
+.mdx-shell .anl-phase-bar {
+  position: absolute; top: 4px; height: 14px;
+  border-radius: 2px;
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .anl-phase-bar.fast { background: var(--success); }
+.mdx-shell .anl-phase-bar.slow { background: var(--warning); }
+.mdx-shell .anl-phase-lbl {
+  position: absolute; right: 4px; top: 4px;
+  font-family: var(--font-mono); font-size: 10px; color: var(--text-200); font-weight: 600;
+  padding: 0 4px; background: var(--canvas-elevated);
+  height: 14px; line-height: 14px;
+}
+.mdx-shell .anl-phase-lbl.pma { right: auto; left: 4px; }
+.mdx-shell .anl-phase-peer {
+  position: absolute; left: 50%; top: 22px; transform: translateX(-50%);
+  font-size: 9px; color: var(--text-400); white-space: nowrap; font-family: var(--font-mono);
+}
+.mdx-shell .anl-phase-legend { display: flex; gap: 14px; margin-top: 24px; }
+.mdx-shell .anl-phase-swatch { display: inline-block; width: 14px; height: 6px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+.mdx-shell .anl-phase-swatch.fast { background: var(--success); }
+.mdx-shell .anl-phase-swatch.slow { background: var(--warning); }
+.mdx-shell /* Blockers + reviewer side by side */
+.anl-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 20px;
+  align-items: start;
+}
+.mdx-shell .anl-blockers { display: flex; flex-direction: column; gap: 6px; }
+.mdx-shell .anl-blocker {
+  text-align: left; padding: 12px 14px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .anl-blocker:hover { box-shadow: var(--shadow-xs); border-color: var(--border); }
+.mdx-shell .anl-blocker-head { display: flex; gap: 10px; align-items: center; margin-bottom: 4px; }
+.mdx-shell .anl-blocker-count { font-size: 18px; font-weight: 600; color: var(--text-100); min-width: 28px; }
+.mdx-shell .anl-blocker-cause { font-weight: 500; font-size: 13px; color: var(--text-100); flex: 1; }
+.mdx-shell .anl-blocker-trend { color: var(--text-400); }
+.mdx-shell .anl-blocker-trend.trend-up { color: var(--error); }
+.mdx-shell .anl-blocker-trend.trend-down { color: var(--success); }
+.mdx-shell .anl-blocker-foot { font-size: 11px; color: var(--text-400); padding-left: 38px; display: flex; gap: 6px; align-items: center; }
+.mdx-shell /* Reviewer velocity number-line */
+.anl-reviewers { display: flex; flex-direction: column; gap: 6px; }
+.mdx-shell .anl-reviewer {
+  text-align: left; padding: 14px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .anl-reviewer:hover { box-shadow: var(--shadow-xs); }
+.mdx-shell .anl-reviewer-head { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; }
+.mdx-shell .anl-reviewer-head .mono.small { color: var(--text-300); }
+.mdx-shell .anl-reviewer-line { display: flex; gap: 8px; align-items: center; padding: 12px 0; }
+.mdx-shell .anl-line-fast, .mdx-shell .anl-line-slow { font-family: var(--font-mono); font-size: 10px; color: var(--text-400); white-space: nowrap; }
+.mdx-shell .anl-line-track { position: relative; flex: 1; height: 24px; }
+.mdx-shell .anl-line-bar { position: absolute; left: 0; right: 0; top: 11px; height: 2px; background: var(--border-200); border-radius: 1px; }
+.mdx-shell .anl-line-tick { position: absolute; top: 0; bottom: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
+.mdx-shell .anl-line-tick::before { content: ''; position: absolute; top: 6px; width: 2px; height: 12px; background: currentColor; }
+.mdx-shell .anl-line-median { color: var(--text-400); }
+.mdx-shell .anl-line-org { color: var(--accent-100); }
+.mdx-shell .anl-line-org::before { width: 3px; height: 14px; top: 5px; border-radius: 1px; }
+.mdx-shell .anl-line-tick-lbl { position: absolute; top: 20px; white-space: nowrap; font-family: var(--font-mono); font-size: 9px; color: currentColor; font-weight: 600; }
+.mdx-shell .anl-line-org .anl-line-tick-lbl { top: 20px; }
+.mdx-shell .anl-line-median .anl-line-tick-lbl { top: -4px; }
+.mdx-shell .anl-reviewer-foot { font-size: 11px; color: var(--text-400); padding-top: 18px; }
+.mdx-shell /* AnA tool usage */
+.anl-ana { display: flex; flex-direction: column; gap: 6px; }
+.mdx-shell .anl-ana-row {
+  display: grid; grid-template-columns: 240px 1fr; gap: 16px; align-items: center;
+  padding: 10px 14px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+}
+.mdx-shell .anl-ana-tool { display: flex; gap: 6px; align-items: center; }
+.mdx-shell .anl-ana-bar { position: relative; height: 16px; background: var(--bg-050); border-radius: var(--radius-md); overflow: hidden; }
+.mdx-shell .anl-ana-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent-100); opacity: 0.4; border-radius: var(--radius-md); transition: width var(--dur) var(--ease); }
+.mdx-shell .anl-ana-bar-lbl { position: absolute; left: 10px; top: 0; height: 16px; line-height: 16px; font-size: 10px; color: var(--text-200); font-weight: 600; z-index: 1; }
+.mdx-shell /* ════════════════════════════════════════════════════════════
+   DOC-FIRST ENGINEERING ADDITIONS
+   ════════════════════════════════════════════════════════════ */
+
+.metrics-compact { gap: 8px; }
+.mdx-shell .metrics-compact .metric-card { padding: 12px 14px; }
+.mdx-shell .metrics-compact .metric-val { font-size: 22px; }
+.mdx-shell /* Consolidated blocker feed */
+.eng-blockers-feed { display: flex; flex-direction: column; gap: 2px; }
+.mdx-shell .eng-blocker-row {
+  display: grid;
+  grid-template-columns: 14px 50px 90px minmax(160px, 1fr) minmax(0, 1.4fr) 60px 80px;
+  gap: 10px; align-items: center;
+  padding: 10px 12px; text-align: left;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  transition: all var(--dur) var(--ease);
+  font-size: 12px;
+}
+.mdx-shell .eng-blocker-row:hover { box-shadow: var(--shadow-xs); border-color: var(--border); }
+.mdx-shell .eng-blocker-row[data-sev="err"] { border-left: 3px solid var(--error); padding-left: 11px; }
+.mdx-shell .eng-blocker-row[data-sev="warn"] { border-left: 3px solid var(--warning); padding-left: 11px; }
+.mdx-shell .eng-blocker-dot { width: 8px; height: 8px; border-radius: 999px; background: currentColor; }
+.mdx-shell .eng-blocker-kind {
+  padding: 1px 6px; background: var(--bg-100); border-radius: 4px;
+  color: var(--text-400); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
+  width: fit-content;
+}
+.mdx-shell .eng-blocker-row[data-kind="dhf"]  .eng-blocker-kind { background: #e2e8f5; color: #355270; }
+.mdx-shell .eng-blocker-row[data-kind="risk"] .eng-blocker-kind { background: #f6e9cf; color: #7e5510; }
+.mdx-shell .eng-blocker-row[data-kind="ecr"]  .eng-blocker-kind { background: #ece9f7; color: #544698; }
+.mdx-shell .eng-blocker-row[data-kind="nc"]   .eng-blocker-kind { background: #f3d6d2; color: #7c1f1f; }
+.mdx-shell .eng-blocker-ref { color: var(--text-300); }
+.mdx-shell .eng-blocker-title { font-weight: 600; color: var(--text-100); }
+.mdx-shell .eng-blocker-note { color: var(--text-400); font-size: 11px; }
+.mdx-shell .eng-blocker-owner { color: var(--text-300); font-family: var(--font-mono); font-size: 11px; }
+.mdx-shell .eng-blocker-age { color: var(--text-400); font-size: 11px; }
+.mdx-shell .eng-blocker-more {
+  padding: 8px 12px;
+  text-align: center; font-size: 12px; color: var(--text-300);
+  background: var(--bg-050); border: 1px dashed var(--border-100);
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.mdx-shell .eng-blocker-more:hover { background: var(--bg-100); color: var(--text-200); }
+.mdx-shell /* Awareness accordion */
+.eng-awareness { padding: 0; }
+.mdx-shell .eng-awareness-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 18px;
+  width: 100%; text-align: left;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+}
+.mdx-shell .eng-awareness[data-open="true"] .eng-awareness-head {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  border-bottom: 0;
+}
+.mdx-shell .eng-awareness-chev { color: var(--text-400); }
+.mdx-shell .eng-awareness-chev svg { width: 14px; height: 14px; }
+.mdx-shell .eng-awareness-head h2 {
+  font-size: 14px; font-weight: 600; margin: 0; color: var(--text-100);
+}
+.mdx-shell .eng-awareness-head .section-sub { margin-left: 12px; }
+.mdx-shell .eng-awareness-body {
+  padding: 18px;
+  background: var(--bg-050);
+  border: 1px solid var(--border-100);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  display: flex; flex-direction: column; gap: 16px;
+}
+.mdx-shell .eng-grid-awareness {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+.mdx-shell .eng-grid-awareness section {
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+.mdx-shell .eng-heat-n { font-family: var(--font-mono); }
