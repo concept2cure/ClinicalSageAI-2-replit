@@ -1744,6 +1744,8 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     // `leafs` is ALWAYS the set that ships — validation, counts and the ledger
     // are computed over it, never over a parallel list that can diverge.
     const isEctdFormat = format === 'ectd' || format === 'pmda_ectd';
+    // Placement is region-aware: Module 1 headings are published per agency.
+    const packagerRegion = region === 'EMA' ? 'ema' : region === 'PMDA' ? 'pmda' : 'fda';
     const seenPaths = new Set<string>();
     const leafs: { path: string; mediaType: string; content: Buffer }[] = [];
     const emptyLeafPaths: string[] = [];
@@ -1809,8 +1811,8 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       // unit becomes a blocking LEAF-UNPLACED finding so transmit refuses it.
       const units =
         mapped.length === 0
-          ? [{ artifact: null, placement: resolveArtifactPlacement(section.sectionKey, null) }]
-          : mapped.map((a) => ({ artifact: a, placement: resolveArtifactPlacement(section.sectionKey, a.ctdSection) }));
+          ? [{ artifact: null, placement: resolveArtifactPlacement(section.sectionKey, null, packagerRegion) }]
+          : mapped.map((a) => ({ artifact: a, placement: resolveArtifactPlacement(section.sectionKey, a.ctdSection, packagerRegion) }));
 
       for (const { artifact, placement } of units) {
         const unitLabel = artifact
@@ -1927,7 +1929,6 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         validation.errorCount += 1;
       }
 
-      const packagerRegion = region === 'EMA' ? 'ema' : region === 'PMDA' ? 'pmda' : 'fda';
       const work = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'c2c-assemble-'));
       try {
         const canonical = await packageLeafBytes({

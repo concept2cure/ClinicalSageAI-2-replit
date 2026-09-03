@@ -17,6 +17,7 @@ import JSZip from 'jszip';
 import {
   normalizeCtdCode,
   isPlaceableCtdCode,
+  module1HeadingForSectionKey,
   moduleForSectionKey,
   resolveArtifactPlacement,
 } from '../section-to-ctd';
@@ -38,8 +39,8 @@ describe('normalizeCtdCode (syntax only)', () => {
 });
 
 describe('isPlaceableCtdCode — only terminal ICH headings are placeable', () => {
-  it('accepts real terminal headings and dotted Module 1 headings', () => {
-    for (const c of ['3.2.S.1', '3.2.P.1', '2.5', '5.3.5', '1.2', '1.14']) {
+  it('accepts real terminal headings and published Module 1 headings', () => {
+    for (const c of ['3.2.S.1', '3.2.P.1', '2.5', '5.3.5', '1.2', '1.14.4.1']) {
       expect(isPlaceableCtdCode(c)).toBe(true);
     }
   });
@@ -48,6 +49,52 @@ describe('isPlaceableCtdCode — only terminal ICH headings are placeable', () =
   });
   it('REJECTS code-shaped but non-existent headings', () => {
     for (const c of ['3.14', '3.foo', '3.2.X', '5.99']) expect(isPlaceableCtdCode(c)).toBe(false);
+  });
+  it('FDA Module 1 is judged by the PUBLISHED heading table, not the module digit', () => {
+    // These passed on the digit alone and the builder invented <m1-foo> elements
+    // the us-regional DTD does not define (adversarial review).
+    for (const c of ['1.foo', '1.99.99', '1.42']) expect(isPlaceableCtdCode(c, 'fda'), c).toBe(false);
+    // CONTAINERS are not headings either: 1.14 (labeling) and 1.3.5 (patents)
+    // only exist through their children in the FDA table.
+    for (const c of ['1.14', '1.3.5', '1.13']) expect(isPlaceableCtdCode(c, 'fda'), c).toBe(false);
+    // Published headings, and descendants of one (the forms 1.1.x file under <m1-1-forms>).
+    for (const c of ['1.1', '1.2', '1.3.4', '1.14.4.1', '1.1.1']) expect(isPlaceableCtdCode(c, 'fda'), c).toBe(true);
+  });
+  it('every FDA heading the keyword inference can emit is itself a published leaf heading', () => {
+    const expected: Record<string, string> = {
+      'cover-letter': '1.2', 'form-1571': '1.1', 'financial-disclosure': '1.3.4', 'debarment': '1.3.3',
+      'patent': '1.3.5.1', 'patent-certification': '1.3.5.2', 'exclusivity-claim': '1.3.5.3',
+      'letter-of-authorization': '1.4.1', 'environmental': '1.12.14', 'dsur': '1.13.15',
+      'investigators-brochure': '1.14.4.1', 'investigational-drug-labeling': '1.14.4.2',
+    };
+    for (const [key, code] of Object.entries(expected)) {
+      expect(module1HeadingForSectionKey(key), key).toBe(code);
+      expect(isPlaceableCtdCode(code, 'fda'), `${key} -> ${code}`).toBe(true);
+    }
+  });
+  it('a key that names only a CONTAINER (generic labeling, annual report) is not guessed into a child heading', () => {
+    for (const key of ['labeling', 'package-insert', 'annual-report', 'patents-and-exclusivity-cover']) {
+      const code = module1HeadingForSectionKey(key);
+      if (code !== null) expect(isPlaceableCtdCode(code, 'fda'), `${key} -> ${code}`).toBe(true);
+    }
+    expect(module1HeadingForSectionKey('labeling')).toBeNull();
+    expect(module1HeadingForSectionKey('annual-report')).toBeNull();
+  });
+  it('other regions file 1.* flat under their Module 1 container, so a dotted code is structurally placeable there', () => {
+    expect(isPlaceableCtdCode('1.0', 'ema')).toBe(true);
+    expect(isPlaceableCtdCode('1', 'ema')).toBe(false);
+  });
+});
+
+describe('placement is region-aware', () => {
+  it('FDA-numbered keyword headings are NOT offered for an EMA / PMDA package (EU 1.0 is the cover letter, not 1.2)', () => {
+    expect(resolveArtifactPlacement('cover-letter', null, 'fda').code).toBe('1.2');
+    expect(resolveArtifactPlacement('cover-letter', null, 'ema').code).toBeNull();
+    expect(resolveArtifactPlacement('cover-letter', null, 'pmda').code).toBeNull();
+  });
+  it("an artifact's explicit Module 1 code is honoured per region", () => {
+    expect(resolveArtifactPlacement('cover-letter', '1.0', 'ema')).toMatchObject({ code: '1.0', source: 'artifact' });
+    expect(resolveArtifactPlacement('cover-letter', '1.foo', 'fda')).toMatchObject({ code: '1.2', source: 'module1-heading', unplaceableCode: '1.foo' });
   });
 });
 
@@ -96,6 +143,22 @@ describe('resolveArtifactPlacement — per ARTIFACT, honest, placeable-only', ()
     for (const key of ['module3_cmc', 'module1_admin', 'stability-data', 'nonclinical-tox', 'misc-attachment']) {
       expect(resolveArtifactPlacement(key, null).code).toBeNull();
     }
+  });
+  it('a key that names ANOTHER module is never filed under a Module 1 heading by its words (m5-labeling ≠ 1.14)', () => {
+    // Each of these used to resolve to a Module 1 heading from a keyword while
+    // the key explicitly (prefix) or by its subject named Module 3/4/5.
+    for (const key of ['m5-labeling', 'module3-labeling', 'm4-tox-form', 'ib-study-reports', 'clinical-study-reports-pi', 'environmental-stability']) {
+      const p = resolveArtifactPlacement(key, null);
+      expect(p.code, key).toBeNull();
+    }
+    // …while genuine Module 1 keys still resolve.
+    expect(resolveArtifactPlacement('investigators-brochure', null).code).toBe('1.14.4.1');
+    expect(resolveArtifactPlacement('fda-form-1571', null).code).toBe('1.1');
+    expect(resolveArtifactPlacement('forms', null).code).toBe('1.1');
+  });
+  it("'form' inside a CMC key is not an FDA form (dosage-form-description is Module 3 content)", () => {
+    expect(resolveArtifactPlacement('dosage-form-description', null).code).toBeNull();
+    expect(moduleForSectionKey('dosage-form-description')).not.toBe(1);
   });
   it('a bare-module declaration is unplaceable and reported', () => {
     const p = resolveArtifactPlacement('module3_cmc', '3');
