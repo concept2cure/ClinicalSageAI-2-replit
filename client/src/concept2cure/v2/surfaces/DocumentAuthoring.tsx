@@ -994,7 +994,11 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   // 'error' is a distinct state on purpose: an empty list because the read
   // failed and an empty list because there are no revisions are the same value
   // and opposite facts.
-  const [revisionsState, setRevisionsState] = useState<'ready' | 'error'>('ready');
+  /* 'loading' was missing: the rail rendered "No prior revisions" for the whole
+     of every GET, and kept the PREVIOUS section's revisions — with a live Revert
+     button — under the next section's header until its response landed. */
+  const [revisionsState, setRevisionsState] = useState<'loading' | 'ready' | 'error'>('ready');
+  const historySectionRef = useRef<string | null>(null);
   const [comments, setComments] = useState<AuthComment[]>([]);
   const [commentsState, setCommentsState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [newComment, setNewComment] = useState('');
@@ -1721,6 +1725,9 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
   /* ── Load the right-rail data for the active section on demand ── */
   const loadHistory = useCallback(async (sectionId: string) => {
+    historySectionRef.current = sectionId;
+    setRevisionsState('loading');
+    setRevisions([]);
     // `ok` is honoured because a read FAILURE must never be rendered as an
     // assertion about the record. This destructured only `body`, so a 500 —
     // which this endpoint returned on every single call while its join was
@@ -1731,6 +1738,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     const { ok, body } = await readJson<{ revisions?: AuthRevision[] }>(
       `/api/authoring/sections/${encodeURIComponent(sectionId)}/history`
     );
+    if (historySectionRef.current !== sectionId) return; // a later section is on screen
     if (!ok) {
       setRevisionsState('error');
       setRevisions([]);
@@ -2550,9 +2558,21 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         title,
       });
       const json = await res.json().catch(() => null);
-      /* No `if (!res.ok)` branch: apiRequest THROWS on any non-2xx except 401,
-         so a refused rename lands in the catch below with the server's own
-         sentence and code, not this dead check. */
+      /* apiRequest THROWS on any non-2xx EXCEPT 401 — which it returns. This
+         handler's comment used to say so and then forgot it: a 401 landed here,
+         `adopted` was undefined, the CLIENT's code/title were written into the
+         section list, and the toast said "Section renamed" over a rename the
+         server refused. Section code drives eCTD placement, so the tree and
+         the cross-reference resolvers then ran against a code the record did
+         not hold. The 401 is handled here, before anything is adopted. */
+      if (res.status === 401) {
+        fireToast('Not renamed — your session isn’t authenticated. Nothing was changed.', 'error');
+        return;
+      }
+      if (!res.ok) {
+        fireToast('Couldn’t rename the section — ' + (serverMessage(json) ?? 'the server refused it') + '. Nothing was changed.', 'error');
+        return;
+      }
       const adopted = (json as { section?: AuthSection })?.section;
       setSections(ss =>
         ss.map(s => (s.id === activeSection.id ? { ...s, ...(adopted ?? { code, title }) } : s))
@@ -2834,10 +2854,12 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               ? `${filing.document.doc_type.toUpperCase()} · ${filing.document.agency.toUpperCase()} · ${
                   filing.flat.length
                 } sections`
-              : `${docs.length} document${docs.length === 1 ? '' : 's'} · ${status.replace(
-                  '_',
-                  ' '
-                )}`}
+              : docsState === 'ready'
+                ? `${docs.length} document${docs.length === 1 ? '' : 's'} · ${status.replace('_', ' ')}`
+                : docsState === 'error'
+                  ? /* was "0 documents · all", directly above "Couldn't load documents" */
+                    `documents not read · ${status.replace('_', ' ')}`
+                  : `reading documents… · ${status.replace('_', ' ')}`}
           </div>
           <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
             {/* The Module select is gone. It defaulted every filing type to
@@ -3369,7 +3391,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                   <div className="ed-mast-num">{activeDoc.module}</div>
                   <h1 className="ed-mast-t">{activeDoc.title}</h1>
                   <div className="ed-mast-meta">
-                    {sections.length} section{sections.length === 1 ? '' : 's'}
+                    {/* "0 sections" printed over a failed or in-flight read,
+                        directly above a body that said the read failed. */}
+                    {sectionsState === 'ready'
+                      ? `${sections.length} section${sections.length === 1 ? '' : 's'}`
+                      : sectionsState === 'error'
+                        ? 'sections not read'
+                        : 'reading sections…'}
                     {docSealed ? ' · frozen' : ''}
                   </div>
                 </div>
@@ -3380,6 +3408,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     title="Couldn’t read this document’s sections"
                     hint="The document is not empty — the read failed. Retry from the tree."
                   />
+                ) : sectionsState !== 'ready' ? (
+                  /* Every document open, and every reorder, passes through
+                     'loading' — and this pane said "This document has no
+                     sections yet" for the whole of it. The tree pane had the
+                     loading branch; the assembled document, the thing a
+                     reviewer receives, did not. */
+                  <EmptyState icon={I.fileText} title="Reading this document’s sections…" busy />
                 ) : sections.length === 0 ? (
                   <EmptyState
                     icon={I.fileText}
@@ -4066,6 +4101,8 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               title="Revision history unavailable"
               hint="The history could not be loaded. This is a failure to read the record — it does not mean the section has no revisions."
             />
+          ) : revisionsState === 'loading' ? (
+            <EmptyState icon={I.clock} title="Reading revision history…" busy />
           ) : revisions.length === 0 ? (
             <EmptyState
               icon={I.clock}
