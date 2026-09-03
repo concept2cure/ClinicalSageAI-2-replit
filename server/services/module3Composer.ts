@@ -1304,7 +1304,16 @@ function formulationRendering(
       rows: componentsOf(chosen).map((c: any) => [
         String(c.component || c.name || 'Unknown'),
         String(c.role || c.function || '—'),
-        [c.amountPerUnit ?? c.amount, c.unit].filter(Boolean).join(' ') || '—',
+        /* A number whose unit was never recorded is reported as such — the
+           rule this file already applies to a characterisation result. Joining
+           and dropping the empty unit printed the figure bare, and a reader
+           supplies whatever unit they expect. */
+        (() => {
+          const amount = String(c.amountPerUnit ?? c.amount ?? '').trim();
+          if (!amount) return '—';
+          const unit = String(c.unit ?? '').trim();
+          return unit ? `${amount} ${unit}` : `${amount} (unit not recorded)`;
+        })(),
         String(c.percentWeight ?? '—'),
         String(c.amountPerBatch ?? '—'),
         String(c.overage ?? '—'),

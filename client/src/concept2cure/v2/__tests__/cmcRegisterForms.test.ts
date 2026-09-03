@@ -18,6 +18,8 @@ import {
   rowLinesOf,
   MATERIAL_COLUMNS,
   CHARACTERISATION_COLUMNS,
+  manufacturingProcessForm,
+  manufacturingProcessPatch,
 } from '../surfaces/cmcRegisterForms';
 import type { ContainerClosureRow } from '../surfaces/cmcRegisterForms';
 import {
@@ -832,5 +834,100 @@ describe('parseRowLines keeps what was typed', () => {
   it('rowLinesOf is empty for a column that holds nothing', () => {
     expect(rowLinesOf(null, MATERIAL_COLUMNS)).toBe('');
     expect(rowLinesOf([{}], MATERIAL_COLUMNS)).toBe('');
+  });
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * The edit round trip must not delete what the drawer cannot show.
+ *
+ * rowLinesOf/parseRowLines project a jsonb row to the columns the textarea
+ * declares. PROCESS_STEP_COLUMNS has no `inProcessControls`, so per-step
+ * controls — which the mapper reads, the card counts, and §3.2.S.2 renders —
+ * were silently dropped on every Update. The PUT sends processSteps
+ * unconditionally, so the truncated array overwrote the stored column: pressing
+ * Update with no changes at all deleted every step-level control, dropped the
+ * card's count to "none", and flipped §3.2.S.2's completeness key to null.
+ *
+ * This is the exact failure rowLinesOf's own doc comment says it was added to
+ * prevent, one level deeper.
+ * ────────────────────────────────────────────────────────────────────────── */
+describe('manufacturingProcessPatch — the round trip preserves what it cannot render', () => {
+  const storedSteps = [
+    {
+      stepNumber: '1',
+      unitOperation: 'Blending',
+      description: 'Blend for 10 minutes',
+      inProcessControls: [{ test: 'Blend uniformity', acceptanceCriteria: 'RSD <= 5%' }],
+      scaleDependencies: { orderOfAddition: 'API last' },
+    },
+    {
+      stepNumber: '2',
+      unitOperation: 'Compression',
+      inProcessControls: [{ test: 'Hardness', acceptanceCriteria: '8-12 kp' }],
+    },
+  ];
+  const row = {
+    processName: 'Tablet manufacture',
+    processType: 'drug_product',
+    batchSize: '250,000 tablets',
+    processSteps: storedSteps,
+  };
+
+  it('an Update that changes nothing keeps every step-level in-process control', () => {
+    const form = manufacturingProcessForm(row as never);
+    const values: Record<string, string> = {};
+    for (const f of form.fields) values[f.key] = String((f as { default?: unknown }).default ?? '');
+
+    const body = manufacturingProcessPatch(values, row as never) as {
+      processSteps: Array<Record<string, unknown>> | null;
+    };
+    expect(body.processSteps).toHaveLength(2);
+    expect(body.processSteps![0].inProcessControls).toEqual([
+      { test: 'Blend uniformity', acceptanceCriteria: 'RSD <= 5%' },
+    ]);
+    expect(body.processSteps![1].inProcessControls).toEqual([
+      { test: 'Hardness', acceptanceCriteria: '8-12 kp' },
+    ]);
+    /* Anything else the drawer cannot show survives too — the fix is the class,
+       not the one key. */
+    expect(body.processSteps![0].scaleDependencies).toEqual({ orderOfAddition: 'API last' });
+    // …and the fields the drawer DOES show still round-trip.
+    expect(body.processSteps![0].unitOperation).toBe('Blending');
+    expect(body.processSteps![1].stepNumber).toBe('2');
+  });
+
+  it('an edited step keeps its own controls, and a new step simply has none', () => {
+    const values: Record<string, string> = {
+      processName: 'Tablet manufacture',
+      processType: 'drug_product',
+      validationStatus: 'not-started',
+      processSteps: '1 | Blending | Blend for 12 minutes\n2 | Compression\n3 | Coating',
+    };
+    const body = manufacturingProcessPatch(values, row as never) as {
+      processSteps: Array<Record<string, unknown>>;
+    };
+    expect(body.processSteps).toHaveLength(3);
+    expect(body.processSteps[0].description).toBe('Blend for 12 minutes');
+    expect(body.processSteps[0].inProcessControls).toEqual([
+      { test: 'Blend uniformity', acceptanceCriteria: 'RSD <= 5%' },
+    ]);
+    expect(body.processSteps[2].unitOperation).toBe('Coating');
+    expect(body.processSteps[2].inProcessControls).toBeUndefined();
+  });
+
+  it('a deleted step takes its own controls with it', () => {
+    const values: Record<string, string> = {
+      processName: 'Tablet manufacture',
+      processType: 'drug_product',
+      validationStatus: 'not-started',
+      processSteps: '1 | Blending',
+    };
+    const body = manufacturingProcessPatch(values, row as never) as {
+      processSteps: Array<Record<string, unknown>>;
+    };
+    expect(body.processSteps).toHaveLength(1);
+    expect(body.processSteps[0].inProcessControls).toEqual([
+      { test: 'Blend uniformity', acceptanceCriteria: 'RSD <= 5%' },
+    ]);
   });
 });
