@@ -1,5 +1,15 @@
 # Honest-state audit — 43 confirmed over-claims across 14 surfaces
 
+> **Status 2026-09-02 — all 43 findings closed.** Re-triaged against the current
+> code by quoted copy (line numbers below are historical): 39 were already fixed
+> by earlier sessions (16 of those by removing the offending copy outright), and
+> the last four were closed together in one change — Review.tsx ownership of
+> "your sign-off step" (server now sends `mine` per board item), TaskBoard.tsx
+> "Workload is balanced" over no open assigned work, and Labeling.tsx's coverage
+> CTA and "0/0 approved" caption over an unsettled translations read. Each fix
+> carries a revert-proven test. The write-up below is kept as the record of what
+> was found, not as a to-do list.
+
 **Method.** Every AnswerLead surface that did NOT import `assessmentState` (19 of 22) was
 audited by a purpose-built `honest-state-auditor`, and every finding was then put through an
 adversarial refutation pass instructed to default to *refuted* when uncertain. The 43 below

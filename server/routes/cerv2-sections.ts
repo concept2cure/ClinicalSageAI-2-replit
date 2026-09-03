@@ -607,7 +607,8 @@ router.get('/:sectionId/versions', authMiddleware, async (req, res) => {
  * POST /:sectionId/accept-ana-draft — accept an AnA-drafted section.
  *
  * Used by the K510Surface / PmaSurface / CerSurface "accept" affordance.
- * Clears draft_source, stamps accepted_by + accepted_at, optionally accepts
+ * Keeps draft_source — the origin is a fact about the text, not a pending
+ * flag — and stamps accepted_by + accepted_at; optionally accepts
  * a refined content body. Writes a section-version row + audit_log entry so
  * the 21 CFR Part 11 trail captures who took the AI draft into review.
  */
@@ -619,11 +620,11 @@ const acceptAnaDraftSchema = z.object({
 });
 
 router.post('/:sectionId/accept-ana-draft', authMiddleware, async (req, res) => {
-  // Canonical endpoint is now POST /api/c2c/actions/accept-ai-suggestion.
-  // We keep this handler alive for one release cycle (Sunset: 2026-08-01).
-  res.set('Deprecation', 'true');
-  res.set('Sunset', '2026-08-01');
-  res.set('Link', '</api/c2c/actions/accept-ai-suggestion>; rel="canonical"');
+  // This is the one path that flips the section row and the only one the
+  // surfaces call; the governance ledger row is written from here
+  // (`writeMutation('accept-ai-suggestion')` below). It used to advertise
+  // itself as deprecated in favour of the ledger action, which never touched
+  // the section (ledger L155).
 
   const organizationId = resolveOrganizationId(req);
   if (!organizationId) {
@@ -652,10 +653,11 @@ router.post('/:sectionId/accept-ana-draft', authMiddleware, async (req, res) => 
     if (!existing) {
       return res.status(404).json({ error: 'Section not found' });
     }
-    if (!existing.draftSource) {
+    if (existing.draftSource !== 'ana' || existing.acceptedAt) {
       return res.status(409).json({
-        error:
-          'No AnA draft to accept on this section. The draft has already been accepted, or the section was authored by a human.',
+        error: existing.acceptedAt
+          ? 'This AnA draft has already been accepted.'
+          : 'No AnA draft to accept on this section: it was not drafted by AnA.',
       });
     }
 
@@ -673,7 +675,9 @@ router.post('/:sectionId/accept-ana-draft', authMiddleware, async (req, res) => 
         .set({
           content:                nextContent,
           status:                 nextStatus,
-          draftSource:            null,
+          /* draft_source stays 'ana'. Clearing it made the live row read as a
+             section with no stated origin that a person accepted — the fact
+             survived only in the version history (ledger L155). */
           acceptedAt,
           acceptedBy:             userId ?? null,
           updatedAt:              acceptedAt,
@@ -696,18 +700,24 @@ router.post('/:sectionId/accept-ana-draft', authMiddleware, async (req, res) => 
         completionPercentage: row.completionPercentage ?? null,
         fieldData:     (row.sources as any)?.fieldData ?? null,
         fieldsChanged: parsed.data.refined_content
-          ? ['content', 'status', 'draft_source']
-          : ['status', 'draft_source'],
+          ? ['content', 'status', 'accepted_at', 'accepted_by']
+          : ['status', 'accepted_at', 'accepted_by'],
         previousValues: {
           content:      existing.content ?? '',
           status:       existing.status ?? 'todo',
           draft_source: existing.draftSource,
+          accepted_at:  existing.acceptedAt ?? null,
           /* The inline insert recorded the field values only in the
              `field_data` column, which holds the state AFTER the change. The
              pre-acceptance values were not recoverable from it; they are now. */
           field_data:   (existing.sources as any)?.fieldData ?? null,
         },
-        newValues: { ...parsed.data, draft_source: null, accepted_by: userId ?? null },
+        newValues: {
+          ...parsed.data,
+          draft_source: existing.draftSource,
+          accepted_at:  acceptedAt.toISOString(),
+          accepted_by:  userId ?? null,
+        },
         ...versionActor(req),
       });
 

@@ -73,6 +73,22 @@ describe('AuthoringFilingBar — real filing actions', () => {
     expect(onChanged).toHaveBeenCalled();
   });
 
+  it('a 401 on freeze is reported as not sealed — never as "frozen and sealed"', async () => {
+    // apiRequest RETURNS a 401 rather than throwing it, so a handler that leans
+    // on the throw alone falls through to its success branch. This is the case
+    // that used to paint a seal claim over a refused freeze.
+    apiRequest.mockResolvedValue(ok({ message: 'expired' }, 401));
+    const { onChanged, fireToast } = renderBar('draft');
+
+    fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+
+    await waitFor(() => expect(fireToast).toHaveBeenCalled());
+    expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/Not frozen/), 'error');
+    expect(fireToast).not.toHaveBeenCalledWith(expect.stringMatching(/frozen and sealed/));
+    expect(onChanged).not.toHaveBeenCalled();
+  });
+
   describe('when the server refuses because the document is not settled', () => {
     /* The server now refuses to seal a document that still has open reviewer
        comments or undecided tracked changes. A 409 the UI does not understand

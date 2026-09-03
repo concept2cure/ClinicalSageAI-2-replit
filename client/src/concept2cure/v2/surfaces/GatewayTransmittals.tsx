@@ -56,6 +56,18 @@ interface Transmittal {
   submitted_at?: string | null; ack_received_at?: string | null; completed_at?: string | null;
 }
 
+interface RefusalFinding { ruleId?: string; severity?: string; message?: string }
+const SEVERITY_RANK: Record<string, number> = { error: 0, warning: 1, info: 2 };
+/** Findings from a 422 refusal body, errors first; tolerant of a partial shape. */
+function refusalFindings(raw: any): RefusalFinding[] {
+  const list = raw?.details?.findings;
+  if (!Array.isArray(list)) return [];
+  return list
+    .filter((f: unknown): f is RefusalFinding => !!f && typeof f === 'object')
+    .slice()
+    .sort((a: RefusalFinding, b: RefusalFinding) => (SEVERITY_RANK[a.severity ?? ''] ?? 3) - (SEVERITY_RANK[b.severity ?? ''] ?? 3));
+}
+
 const REGIONS = ['fda', 'ema', 'pmda', 'ca'];
 const GATEWAYS = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'];
 
@@ -113,6 +125,13 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [dialog, setDialog] = useState<'transmit' | { rollback: number } | null>(null);
   const [statusView, setStatusView] = useState<{ id: number; body: Record<string, unknown> } | null>(null);
+  /* A 422 from the structural gate carries the findings recorded on the stored
+     bundle at assembly (details.findings). The toast used to show only the
+     summary line ("N errors; re-assemble after fixing"), so the operator never
+     saw WHICH rule refused — e.g. the finding that names the regulatory
+     identifiers still to be recorded. The findings are rendered in a card so
+     the refusal is actionable; it clears on the next attempt or a success. */
+  const [refusal, setRefusal] = useState<{ message: string; findings: RefusalFinding[] } | null>(null);
   const [toast, fireToast] = useToast();
 
   const load = useCallback(async () => {
@@ -143,6 +162,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     };
     if (v.packageId) body.packageId = Number(v.packageId);
     if (v.submissionType) body.submissionType = v.submissionType;
+    setRefusal(null);
     const { ok, status, raw } = await readData('POST', `/api/mdx/gateways/${region}/${gateway}/transmit`, body);
     if (status === 401) { fireToast('Not transmitted — re-authentication failed (§11). Nothing left the platform.', 'error'); return; }
     if (status === 409) {
@@ -151,7 +171,12 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
       return;
     }
     if (status === 412) { fireToast('Not transmitted — gateway credentials are not configured for this environment.', 'error'); return; }
-    if (status === 422) { fireToast('Not transmitted — the structural gate rejected the bundle: ' + ((raw as any)?.error ?? 'validation failed') + '.', 'error'); return; }
+    if (status === 422) {
+      const message = String((raw as any)?.error ?? 'validation failed');
+      setRefusal({ message, findings: refusalFindings(raw) });
+      fireToast('Not transmitted — the structural gate rejected the bundle: ' + message + '.', 'error');
+      return;
+    }
     if (!ok) { fireToast(`Transmit failed (HTTP ${status}) — ` + ((raw as any)?.error ?? 'nothing was sent') + '.', 'error'); return; }
     setDialog(null);
     const txId = (raw as any)?.data?.result?.transactionId ?? (raw as any)?.data?.transactionId;
@@ -311,6 +336,30 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
                 <tr key={k}><td>{k}</td><td style={{ textAlign: 'right' }} className="mono">{String(v)}</td></tr>
               ))}
             </tbody></table>
+          </div>
+        </div>
+      )}
+
+      {refusal && (
+        <div className="pj-card" role="region" aria-label="Structural gate refusal">
+          <div className="pj-card-h">
+            <span className="t">Structural gate refused the transmit</span>
+            <span className="s">{refusal.findings.length} finding{refusal.findings.length === 1 ? '' : 's'}</span>
+          </div>
+          <div className="pj-card-b" style={{ padding: 0 }}>
+            <div style={{ padding: '10px 16px', fontSize: 12 }}>
+              {refusal.message} These findings were recorded on the stored bundle when it was assembled. Resolve them, re-assemble the package, then transmit again.
+            </div>
+            {refusal.findings.length > 0 && (
+              <table className="reg-tbl"><thead><tr><th>Rule</th><th>Finding</th></tr></thead>
+                <tbody>{refusal.findings.map((f, i) => (
+                  <tr key={i}>
+                    <td style={{ whiteSpace: 'nowrap', verticalAlign: 'top' }}>
+                      <span className={'rd-chip tone-' + (f.severity === 'error' ? 'err' : f.severity === 'warning' ? 'warn' : 'ok')}>{f.ruleId ?? f.severity ?? 'finding'}</span>
+                    </td>
+                    <td>{f.message ?? '—'}</td>
+                  </tr>))}</tbody></table>
+            )}
           </div>
         </div>
       )}

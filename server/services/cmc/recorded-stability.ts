@@ -381,11 +381,10 @@ export async function assessRecordedPoolability(
   const assessed = assessments.filter(a => a.assessable) as Array<{
     parameter: string;
     shelfLife: number;
+    statisticalCrossing?: number;
     decision: string;
   }>;
-  const limiting = assessed.length
-    ? assessed.reduce((min, a) => (a.shelfLife < min.shelfLife ? a : min))
-    : null;
+  const limiting = assessed.length ? assessed.reduce(moreConstraining) : null;
 
   return {
     ok: true,
@@ -406,6 +405,18 @@ export async function assessRecordedPoolability(
       assessments,
     },
   };
+}
+
+
+/* The attribute a shelf-life claim is limited by. The proposable shelf life is
+   the ICH Q1E-capped number, so two attributes that both exceed the
+   extrapolation limit tie on it; the tie is broken by the statistical
+   crossing, which is where each attribute's data actually run out. Without
+   the tie-break the first attribute in recorded order was reported as
+   limiting, which is an artefact of ordering, not of the data. */
+function moreConstraining<T extends { shelfLife: number; statisticalCrossing?: number }>(min: T, a: T): T {
+  if (a.shelfLife !== min.shelfLife) return a.shelfLife < min.shelfLife ? a : min;
+  return (a.statisticalCrossing ?? Infinity) < (min.statisticalCrossing ?? Infinity) ? a : min;
 }
 
 /* ── Single-study ICH Q1E estimate over a RECORDED study ────────────────────
@@ -532,10 +543,12 @@ export async function estimateRecordedShelfLife(
 
   // The programme-level answer is the most constraining attribute, which is
   // what a shelf-life claim is actually limited by.
-  const estimable = estimates.filter((e) => e.estimable) as Array<{ parameter: string; shelfLife: number }>;
-  const limiting = estimable.length
-    ? estimable.reduce((min, e) => (e.shelfLife < min.shelfLife ? e : min))
-    : null;
+  const estimable = estimates.filter((e) => e.estimable) as Array<{
+    parameter: string;
+    shelfLife: number;
+    statisticalCrossing?: number;
+  }>;
+  const limiting = estimable.length ? estimable.reduce(moreConstraining) : null;
 
   return {
     ok: true,

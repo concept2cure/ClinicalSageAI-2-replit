@@ -17,8 +17,6 @@ import { Router, Request, Response } from 'express';
 import { createHash } from 'crypto';
 import {
   getAnaDraftingService,
-  type DocumentDraftRequest,
-  type RegulatoryFramework,
 } from '../services/ana/AnaDocumentDraftingService';
 import { getGateway } from '../services/ai-gateway/gateway';
 import {

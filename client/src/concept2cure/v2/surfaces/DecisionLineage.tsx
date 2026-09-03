@@ -24,7 +24,7 @@ function dlTime(iso: string): string {
   try {
     const d = new Date(iso);
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-  } catch (_e) {
+  } catch {
     return iso;
   }
 }

@@ -171,6 +171,15 @@ jobs:
         # is proven on the code that actually shipped the defect.
         run: npm run ci:action-overclaim
 
+      - name: No success message before the response is checked
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # apiRequest returns a 401 instead of throwing it. Three handlers, months
+        # apart, leaned on the throw alone and painted "recorded" / "attached" /
+        # "frozen and sealed" over a refused request on an expired session. The
+        # self-test runs against the recovered pre-fix freeze handler and proves
+        # the three repaired surfaces silent.
+        run: npm run ci:success-before-ok
+
       - name: No hand-rolled error-envelope reads
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # A surface that reads `json.error` / `typeof error === 'string'` by hand

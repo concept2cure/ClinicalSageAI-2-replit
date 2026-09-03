@@ -448,7 +448,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
           entityLabel: (r.prog ? r.prog + ' · ' : '') + r.doc,
         });
       }
-    } catch (_e) { /* noop */ }
+    } catch { /* noop */ }
   }, [sel, queue]);
 
   // ── The three honest states, before any row is dereferenced. No fixture ──

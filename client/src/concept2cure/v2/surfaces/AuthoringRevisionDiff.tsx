@@ -14,6 +14,7 @@
 
 import React, { useState } from 'react';
 import { RedlineText } from '../RedlineText';
+import '../styles/redline.css';
 
 export function AuthoringRevisionDiff({
   current,
@@ -39,7 +40,6 @@ export function AuthoringRevisionDiff({
           label="Changes against the previous revision"
         />
       )}
-      <style>{`.rvd { margin-top: 4px; }`}</style>
     </div>
   );
 }

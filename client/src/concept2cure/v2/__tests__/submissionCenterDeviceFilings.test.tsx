@@ -113,7 +113,7 @@ describe('SubmissionCenter — device filings render from the real API', () => {
       `Decision due ${new Date(FILINGS[0].decisionDueAt as string).toLocaleDateString()}`,
     );
     // PM-spine attachment shown when present.
-    expect(body).toContain('project #42');
+    expect(body).toContain('programme not resolved');
     // The untitled filing falls back to its catalog key, unfiled clock is honest.
     expect(body).toContain('de_novo_request');
     expect(body).toContain('Not filed yet');
@@ -128,7 +128,7 @@ describe('SubmissionCenter — device filings render from the real API', () => {
     render(<SubmissionCenter {...props()} />);
     await waitFor(() =>
       expect(document.body.textContent).toContain(
-        'Assembly readiness: draft content package only — not submittable · 2 blockers',
+        '510(k) device assembly readiness: draft content package only — not submittable · 2 blockers',
       ),
     );
   });
@@ -195,7 +195,7 @@ describe('SubmissionCenter — device filings honest error state', () => {
     render(<SubmissionCenter {...props()} />);
     expect(await screen.findByText("Couldn't load the device filings")).toBeTruthy();
     await waitFor(() =>
-      expect(document.body.textContent).toContain('Assembly readiness unavailable right now'),
+      expect(document.body.textContent).toContain('510(k) device assembly readiness unavailable right now'),
     );
     expect(document.body.textContent).not.toContain('Assembly readiness:');
     expect(document.body.textContent).not.toContain('ZX-9 Glucose Sensor');

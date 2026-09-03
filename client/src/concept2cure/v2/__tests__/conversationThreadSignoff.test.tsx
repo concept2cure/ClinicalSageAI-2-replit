@@ -37,10 +37,8 @@ import type { AnaChatMessage } from '../../components/ana/useAnaChat';
 /* The surface's live data reads — held offline so the render under test is the
    turn adaptation and nothing else. */
 vi.mock('../dataConnect', () => ({
-  useLive: () => ({ data: null, sample: true, loading: false }),
   connected: () => false,
   EmptyState: ({ title }: { title: string }) => <div>{title}</div>,
-  SampleTag: () => null,
 }));
 
 /* useAnaChat is the real streaming client (POST /api/ana-ri/stream). The

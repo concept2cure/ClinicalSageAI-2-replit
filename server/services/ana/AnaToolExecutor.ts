@@ -146,7 +146,6 @@ import type {
   GatewayMessage,
   AnaGatewayResponse,
   AnaToolUse,
-  AnaTool,
   StreamCallback,
 } from '../ai-gateway/types';
 import { ragRouter } from '../ragRouter';
@@ -4146,7 +4145,7 @@ registerToolHandler('analyze_predicate_device', async (input) => {
         });
       }
     }
-  } catch (e) {
+  } catch {
     // Fall through
   }
 
