@@ -215,7 +215,11 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         say: 'Open with the thesis: one platform where the regulatory work is done, not tracked — AnA works the screens with the team, and everything governed stays governed.',
       },
       {
-        say: 'Start at portfolio command: every program, its readiness and its blockers, visible in one place instead of a spreadsheet.',
+        say: 'Start at mission control: the entire portfolio and its cross-program readiness and blockers on one board — the view a head of regulatory opens instead of a status spreadsheet.',
+        navigate: { target: 'mission-control' },
+      },
+      {
+        say: 'From the portfolio, drop into one program — the project list, where picking a program scopes everything downstream to it automatically.',
         navigate: { target: 'projects' },
       },
       {
@@ -253,6 +257,14 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       {
         say: 'Review readiness: the platform scores whether the submission would survive review, before the agency sees it.',
         navigate: { target: 'review-readiness' },
+      },
+      {
+        say: 'For a marketing application, the NDA/BLA cockpit reads filing risk before you file: CTD readiness, the PDUFA review clock, and Refuse-to-File risk — the deficiencies that bounce a submission at the door, caught while they are still fixable.',
+        navigate: { target: 'nda-cockpit' },
+      },
+      {
+        say: 'Open the Refuse-to-File view — the specific gaps that get a submission rejected on receipt, scored against this program’s real state.',
+        act: { actionId: 'nda-cockpit.open-tab', params: { tab: 'rtf' } },
       },
       {
         say: 'The Submission Gateway: pre-flight validation and the transmittal chain — the last mile lives here too, not in a vendor hand-off.',
