@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T00:20:42.301Z",
+  "generatedAt": "2026-09-03T00:24:11.200Z",
   "git": {
-    "sha": "af2ea52565baf711e3864e7a9e3967ced5375d3e",
+    "sha": "af45d0dd87b3892c9e5ca3b13eeb9da62baf3939",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2197,12 +2197,12 @@
         "bytes": 167548
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 153124
+        "file": "server/routes/authoring-actions.ts",
+        "bytes": 154605
       },
       {
-        "file": "server/routes/authoring-actions.ts",
-        "bytes": 152903
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 153124
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2348,7 +2348,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "lines": 3587
+        "lines": 3605
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2627,6 +2627,10 @@
         "lines": 1678
       },
       {
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "lines": 1668
+      },
+      {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
         "lines": 1650
       },
@@ -2639,20 +2643,16 @@
         "lines": 1628
       },
       {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1624
-      },
-      {
         "file": "services/regulatory/globalPyramids.ts",
         "lines": 1623
       },
       {
-        "file": "server/services/pediatric/pediatric-knowledge.ts",
-        "lines": 1606
+        "file": "server/services/contradiction-engine-service.ts",
+        "lines": 1608
       },
       {
-        "file": "server/services/contradiction-engine-service.ts",
-        "lines": 1602
+        "file": "server/services/pediatric/pediatric-knowledge.ts",
+        "lines": 1606
       },
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
