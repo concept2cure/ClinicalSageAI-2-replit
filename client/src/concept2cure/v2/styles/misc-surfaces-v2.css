@@ -476,7 +476,20 @@
 /* ── Tab strip ─────────────────────────────────────────────────────────────
    aria-current="page" is the selected state the markup already sets, so it is
    also the selector — no parallel data attribute that could disagree with it. */
-.c2c-v2 .ml-tabs{ display:flex; gap:4px; border-bottom:1px solid var(--border); }
+/* The strip is nine tabs wide and the surface pane is 796px, so at every real
+   width the row measured 783 in 732 of usable space and pushed `.ml-lic` — and
+   with it the whole page — sideways. Scrolling the strip is the fix, not
+   letting the tabs compress: a tab that shrinks to fit stops being readable and
+   the row still spills once there are enough of them.
+   `overflow-y:hidden` is explicit. With only overflow-x set the y axis computes
+   to `auto`, and `.ml-tab`'s `margin-bottom:-1px` — which lays the active
+   indicator over the strip's own border — raises a stray vertical scrollbar.
+   Same reasoning, same two lines, as `.mdx-shell .cer-tabbar`. */
+.c2c-v2 .ml-tabs{
+  display:flex; gap:4px; border-bottom:1px solid var(--border);
+  overflow-x:auto; overflow-y:hidden; scrollbar-width:thin;
+}
+.c2c-v2 .ml-tabs > .ml-tab{ flex:0 0 auto; }
 .c2c-v2 .ml-tab{
   display:inline-flex; align-items:center; gap:7px;
   padding:9px 14px; margin-bottom:-1px;
