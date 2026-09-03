@@ -452,6 +452,13 @@ interface RegionalSubsection {
   sectionKey: string;
   title: string;
   region: RegionCode;
+  /**
+   * The source-payload fields this subsection's generator reads. Completeness is
+   * the fraction of these actually present, so a pointer section with nothing
+   * recorded cannot present itself as finished. Keep in step with the generator:
+   * a field read but not declared would be invisible to the score.
+   */
+  requiredFields: string[];
   generator: (matched: CanonicalSource[]) => { narrative: string; tables: GeneratedTable[] };
 }
 
@@ -460,6 +467,7 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
     sectionKey: '3.2.R.1.US',
     title: 'Regional Information — United States (FDA)',
     region: 'US',
+    requiredFields: ['dosageFormDescription', 'strength', 'composition', 'manufacturingSite', 'batchNumber', 'batchSize'],
     generator: (m) => {
       const form = val(m, 'dosageFormDescription');
       const strength = val(m, 'strength');
@@ -514,6 +522,7 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
   },
   {
     sectionKey: '3.2.R.1.EU',
+    requiredFields: ['dosageFormDescription', 'strength', 'composition'],
     title: 'Regional Information — European Union (EMA)',
     region: 'EU',
     generator: (m) => {
@@ -558,6 +567,7 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
   },
   {
     sectionKey: '3.2.R.1.JP',
+    requiredFields: ['dosageFormDescription', 'strength', 'composition'],
     title: 'Regional Information — Japan (PMDA / MHLW)',
     region: 'JP',
     generator: (m) => {
@@ -603,6 +613,7 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
   },
   {
     sectionKey: '3.2.R.1.CA',
+    requiredFields: ['dosageFormDescription', 'strength'],
     title: 'Regional Information — Canada (Health Canada)',
     region: 'CA',
     generator: (m) => {
@@ -734,6 +745,7 @@ export function composeRegional(sourceObjects: CanonicalSource[], region: Region
   const applicable = REGIONAL_SUBSECTIONS.filter(rs => rs.region === region);
   return applicable.map(rs => {
     const generated = rs.generator(sourceObjects);
+    const present = rs.requiredFields.filter(f => val(sourceObjects, f));
     return {
       sectionKey: rs.sectionKey,
       sectionPath: rs.sectionKey,
@@ -744,12 +756,25 @@ export function composeRegional(sourceObjects: CanonicalSource[], region: Region
       },
       narrativeDraft: generated.narrative,
       tables: generated.tables,
-      completeness: 100,
-      missingInputs: [],
-      lineage: sourceObjects.map(s => ({
-        sourceObjectId: s.id,
-        sourceHashAtCompile: s.sourceHash || '',
-      })),
+      // Scored from the inputs actually present, not asserted. This was a flat
+      // `100` with no missing inputs, so a regional pointer section rendering
+      // "[site]" still read as complete — and a section that reads complete is
+      // the one that gets signed and placed without a second look.
+      completeness: present.length === 0 && rs.requiredFields.length > 0
+        ? 0
+        : Math.round((present.length / Math.max(rs.requiredFields.length, 1)) * 100),
+      missingInputs: rs.requiredFields.filter(f => !val(sourceObjects, f)),
+      // Only the sources that supplied one of those fields. Citing every object
+      // in the project claimed a provenance the compile did not have.
+      lineage: sourceObjects
+        .filter(s => rs.requiredFields.some(f => {
+          const v = s.sourcePayload?.[f];
+          return v !== undefined && v !== null && v !== '';
+        }))
+        .map(s => ({
+          sourceObjectId: s.id,
+          sourceHashAtCompile: s.sourceHash || '',
+        })),
     };
   });
 }

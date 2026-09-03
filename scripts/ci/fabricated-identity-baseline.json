@@ -1,12 +1,3 @@
 {
-  "occurrences": [
-    "server/routes/ai-actions.ts::161",
-    "server/routes/orchestration.ts::79",
-    "server/services/artifact-tagger.ts::212",
-    "server/services/autoExtractionPipeline.ts::607",
-    "server/services/autoExtractionPipeline.ts::722",
-    "server/services/autoExtractionPipeline.ts::827",
-    "server/services/figureGenerationService.ts::317",
-    "server/services/figureGenerationService.ts::714"
-  ]
+  "occurrences": []
 }

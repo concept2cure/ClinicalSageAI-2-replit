@@ -1,3 +1,24 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Give Module 3 the manufacturing-process and characterisation-study sources it composes from, and give the existing manufacturing_processes table the writer it never had.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 3 — 3.2.S.2 (manufacture of the drug substance), 3.2.S.3 (characterisation)
+--   - Integrity Risk Addressed: a composer demanding canonical sources nothing produced, and a reconstructed table with two live readers and no writer — so 3.2.S.2 and 3.2.S.3 had nothing to render from
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - manufacturing_processes is ALTERed, not duplicated: it is the FK target of
+--     cmc_process_steps and is read by ich-compliance-checker and qbd-analyzer.
+--     A second table would leave those readers pointed at an empty one.
+--   - Additive and idempotent (ADD COLUMN / CREATE TABLE IF NOT EXISTS).
+-- =============================================================================
+
 -- CMC registers for the manufacturing process and characterisation studies.
 --
 -- ── What was missing ─────────────────────────────────────────────────────────

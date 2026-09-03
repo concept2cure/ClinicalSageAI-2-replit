@@ -152,7 +152,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
       userId: subject,
       email: decoded.email,
       role: decoded.role || 'user',
-      roles: decoded.roles || [decoded.role || 'user'],
+      roles: expandRoleClaims(decoded.role, decoded.roles),
       organizationId: decoded.organizationId || decoded.orgId,
       permissions: decoded.permissions || [],
     };
@@ -225,6 +225,61 @@ export const PLATFORM_SCOPED_ROLES = new Set([
 ]);
 
 /**
+ * The functional roles an ORG role carries.
+ *
+ * The product grants exactly four org roles — admin, manager, member, viewer
+ * (createUserSchema in server/routes/tenant-users.ts) — and stamps the chosen
+ * one into the token as `role`. The guards on the regulatory surface ask for
+ * something else entirely: `regulatory-author`, on 289 call sites across
+ * submissions, the whole IND lifecycle, global-RI, authoring PDF and master
+ * data. Nothing ever granted it.
+ *
+ * Those routes therefore passed for one caller only — the org admin, through
+ * the stand-in below — and 403'd for everyone else. Verified live: an invited
+ * colleague (role `member`, which is what every invitation mints) got
+ * `403 AUTH_004` from GET /api/submissions while the founder got 200. A
+ * platform whose regulatory associates cannot open the Submission Center is
+ * not one a regulatory team can use.
+ *
+ * So the role the guards name is now actually GRANTED, by a stated mapping,
+ * instead of resting on an admin stand-in that was never meant to carry it:
+ *
+ *   admin, owner, manager, member, editor → regulatory-author
+ *   viewer                                → nothing (read-only is the point)
+ *
+ * This grants only the functional role. `admin` is still `admin`: a guard that
+ * asks for it, or for any PLATFORM_SCOPED_ROLE, is unaffected, and a member
+ * gains nothing an admin-guarded route would check.
+ */
+const ORG_ROLE_FUNCTIONAL_GRANTS: ReadonlyMap<string, readonly string[]> = new Map([
+  ['admin', ['regulatory-author']],
+  ['owner', ['regulatory-author']],
+  ['manager', ['regulatory-author']],
+  ['member', ['regulatory-author']],
+  // Legacy org role, still present on older memberships.
+  ['editor', ['regulatory-author']],
+  ['viewer', []],
+]);
+
+/**
+ * Expand a token's role claims with the functional roles its org role carries.
+ *
+ * Applied where req.user is built, so it covers every token this platform
+ * mints — password login, dev login, MFA completion, refresh, SSO and SCIM —
+ * and tokens issued before this change, without editing ten sign sites.
+ * Deduplicated and order-preserving; a token that already names a functional
+ * role keeps it.
+ */
+export function expandRoleClaims(
+  role: string | undefined,
+  roles: readonly string[] | undefined,
+): string[] {
+  const declared = roles?.length ? [...roles] : [role || 'user'];
+  const granted = declared.flatMap(r => ORG_ROLE_FUNCTIONAL_GRANTS.get(String(r).toLowerCase()) ?? []);
+  return [...new Set([...declared, ...granted])];
+}
+
+/**
  * Require specific role(s) for access
  */
 export const requireRole = (...allowedRoles: string[]) => {
@@ -238,12 +293,16 @@ export const requireRole = (...allowedRoles: string[]) => {
     }
 
     // Org-scoped RBAC: an org "admin" is a superset of the org's operational
-    // roles, so it satisfies an org-scoped role guard. This convenience is
-    // load-bearing and cannot simply be deleted: `regulatory-author` — the role
-    // 284 of this file's ~297 requireRole call sites ask for — is never granted
-    // to anybody. It exists only in these guards and in the API docs, which say
-    // plainly that those routes "require a regulatory-author (or admin) role".
-    // Strip the stand-in and every authoring endpoint 403s for every customer.
+    // roles, so it satisfies an org-scoped role guard.
+    //
+    // It is no longer load-bearing for the regulatory surface. It used to be:
+    // `regulatory-author` — the role 289 of this file's requireRole call sites
+    // ask for — was granted to nobody, so the stand-in was the only thing
+    // letting anyone through, and only an admin. Every other member of a
+    // customer organization got 403 from the Submission Center and the whole
+    // IND lifecycle. ORG_ROLE_FUNCTIONAL_GRANTS above now grants that role to
+    // the org roles that do the work, so the guards pass on their own terms
+    // and the stand-in covers only what it was written for.
     //
     // What it must never do is satisfy a PLATFORM-scoped role, and that is now
     // enforced here rather than asked for in a comment. Platform-operator
@@ -390,7 +449,7 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
         userId: subject,
         email: decoded.email,
         role: decoded.role || 'user',
-        roles: decoded.roles || [decoded.role || 'user'],
+        roles: expandRoleClaims(decoded.role, decoded.roles),
         organizationId: decoded.organizationId || decoded.orgId,
         permissions: decoded.permissions || [],
       };

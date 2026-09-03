@@ -15,8 +15,8 @@
  * component existed, was registered, and was imported. It just drew nothing.
  *
  * The second half of the same bug: with no element carrying `.mdx-shell`, none
- * of the kit's CSS applied. 845 of app.css's 846 rules are scoped under that
- * class, as is 100% of pathway-tabs.css, files-tree.css and drafter.css, and
+ * of the kit's CSS applied. Every rule in app.css is scoped under that class,
+ * as is 100% of pathway-tabs.css, files-tree.css and drafter.css, and
  * the class also carries the custom-property block those rules read. A wrapper
  * that renders but drops the class is the same outage wearing different
  * clothes, so both halves are asserted here.

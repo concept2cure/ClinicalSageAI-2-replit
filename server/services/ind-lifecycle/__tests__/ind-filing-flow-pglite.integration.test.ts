@@ -3,7 +3,7 @@
  *
  * Exercises the full chain through the REAL submission-service + persistence
  * adapters: create a submission → file an annual report / safety report as an
- * eCTD sequence + leaves (with the rendered-PDF md5 as the leaf checksum) →
+ * eCTD sequence + leaves pointing at the RETAINED rendered PDF →
  * read the leaves back → snapshot the dispatch verdict. This proves
  * createSequence / upsertLeaf (incl. the additive checksum column) actually
  * execute their SQL correctly.
@@ -30,6 +30,11 @@ import { buildIndPortfolio, buildIndPortfolioEntry, isIndSubmission } from '../i
 
 let harness: IndPgliteDb;
 const ctx = { organizationId: 1, userId: 9 };
+/* Retained rendered documents the leaves point at. upsertLeaf refuses a
+   rendered_leaf_files id that does not resolve in the caller's organization, so
+   these are real rows, seeded below. */
+let RENDERED_ANNUAL_ID = 0;
+let RENDERED_SAFETY_ID = 0;
 const D = new Date('2026-01-01T00:00:00.000Z');
 
 function reportableEvent(): AdverseEvent {
@@ -58,6 +63,17 @@ function reportableEvent(): AdverseEvent {
 beforeAll(async () => {
   harness = await createIndPgliteDb({ submissionCore: true });
   holder.db = harness.db;
+  const seedRendered = async (renderedFrom: string, sectionCode: string, md5: string) => {
+    const r = await harness.pglite.query<{ id: number | string }>(
+      `INSERT INTO rendered_leaf_files
+         (organization_id, vault_version_id, sha256, md5, mime, byte_size, file_name, rendered_from, section_code)
+       VALUES ($1,$2,$3,$4,'application/pdf',1024,$5,$6,$7) RETURNING id`,
+      [ctx.organizationId, `vv-${renderedFrom}`, `sha-${renderedFrom}`, md5, `${renderedFrom}.pdf`, renderedFrom, sectionCode],
+    );
+    return Number(r.rows[0].id);
+  };
+  RENDERED_ANNUAL_ID = await seedRendered('ind_annual_report', 'm1.13', 'md5-annual-abc');
+  RENDERED_SAFETY_ID = await seedRendered('ind_safety_report', 'm1.12.4', 'md5-safety-xyz');
 });
 afterAll(async () => {
   await harness.close();
@@ -71,16 +87,24 @@ describe('annual-report filing flow against PGlite', () => {
     );
     expect(submission.id).toBeGreaterThan(0);
 
-    const { sequence, leaves } = await persistAnnualReport(submission.id, '0001', ctx, 'md5-annual-abc');
+    const { sequence, leaves } = await persistAnnualReport(submission.id, '0001', ctx, {
+      documentTable: 'rendered_leaf_files',
+      documentId: RENDERED_ANNUAL_ID,
+      checksum: 'md5-annual-abc',
+    });
     expect(sequence.type).toBe('annual');
     expect(sequence.submissionId).toBe(submission.id);
     expect(leaves).toHaveLength(1);
 
-    // Read back from the DB and confirm the checksum was persisted on the leaf.
+    // Read back from the DB: the leaf must carry the RESOLVABLE reference, not
+    // just a digest — a checksum with no referent is what left every filed
+    // lifecycle sequence assembling with zero leaf files (LIFE-01).
     const persisted = await listLeaves(sequence.id, ctx);
     expect(persisted).toHaveLength(1);
     expect(persisted[0].sectionCode).toBe('m1.13');
     expect(persisted[0].checksum).toBe('md5-annual-abc');
+    expect(persisted[0].documentTable).toBe('rendered_leaf_files');
+    expect(persisted[0].documentId).toBe(RENDERED_ANNUAL_ID);
 
     const seqs = await listSequences(submission.id, ctx);
     expect(seqs.map((s) => s.sequenceNumber)).toContain('0001');
@@ -104,7 +128,7 @@ describe('safety-report filing flow against PGlite', () => {
       amendmentIntent!,
       '0002',
       ctx,
-      { 'm1.12.4': 'md5-safety-xyz' },
+      { 'm1.12.4': { documentTable: 'rendered_leaf_files', documentId: RENDERED_SAFETY_ID, checksum: 'md5-safety-xyz' } },
     );
     expect(sequence.type).toBe('amendment');
     expect(leaves.length).toBeGreaterThanOrEqual(1);
@@ -123,7 +147,7 @@ describe('IND portfolio against PGlite', () => {
     const ind1 = await createSubmission({ title: 'IND One', applicationType: 'ind', clientType: 'biotech', primaryRegion: 'fda' }, portfolioCtx);
     await createSubmission({ title: 'IND Two', applicationType: 'ind', clientType: 'pharma', primaryRegion: 'fda' }, portfolioCtx);
     await createSubmission({ title: 'An NDA', applicationType: 'nda', clientType: 'pharma', primaryRegion: 'fda' }, portfolioCtx);
-    await persistAnnualReport(ind1.id, '0001', portfolioCtx, 'cs');
+    await persistAnnualReport(ind1.id, '0001', portfolioCtx);
 
     // Replicate the portfolio route's service-level logic against the real DB.
     const all = await listSubmissions(portfolioCtx);

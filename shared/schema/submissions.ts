@@ -234,6 +234,48 @@ export const submissionOrchestratorSteps = pgTable('submission_orchestrator_step
   occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * rendered_leaf_files — the retained bytes of a server-rendered filing document.
+ *
+ * The IND lifecycle routes used to render a safety report or annual report to
+ * PDF, keep an md5, and discard the bytes; the leaf carried no document
+ * reference at all, so every filed lifecycle sequence assembled with zero leaf
+ * files and was permanently dispatch-blocked. A row here is what a leaf points
+ * at instead: the storage handle plus the digests of the bytes as filed.
+ *
+ * The bytes live behind the storage provider — `get(vaultVersionId, orgId)` is
+ * the only tenant boundary for object bytes, since object storage sits outside
+ * RLS — so this table holds the pointer, never the content.
+ *
+ * Migration migrations/20260903_rendered_leaf_files.sql.
+ */
+export const renderedLeafFiles = pgTable(
+  'rendered_leaf_files',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull(),
+    /** Storage-provider handle; fetched with get(vaultVersionId, organizationId). */
+    vaultVersionId: text('vault_version_id').notNull(),
+    /** Digest of the bytes as rendered; re-verified when the leaf is materialized. */
+    sha256: text('sha256').notNull(),
+    /** The digest the eCTD index carries — stored as filed, never recomputed. */
+    md5: text('md5').notNull(),
+    mime: text('mime').notNull(),
+    byteSize: integer('byte_size').notNull(),
+    fileName: text('file_name').notNull(),
+    /** ind_safety_report | e2b_r3_icsr | ind_annual_report | ind_letter_of_authorization. */
+    renderedFrom: text('rendered_from').notNull(),
+    /** The CTD section the bytes were rendered for, when known. */
+    sectionCode: text('section_code'),
+    createdBy: integer('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    orgVersionUq: unique('rendered_leaf_files_org_version_idx').on(t.organizationId, t.vaultVersionId),
+    orgIdx: index('rendered_leaf_files_org_idx').on(t.organizationId),
+  }),
+);
+
 // ============================================================================
 // INFERRED TYPES
 // ============================================================================
@@ -250,3 +292,5 @@ export type SubmissionOrchestratorRun = typeof submissionOrchestratorRuns.$infer
 export type NewSubmissionOrchestratorRun = typeof submissionOrchestratorRuns.$inferInsert;
 export type SubmissionOrchestratorStep = typeof submissionOrchestratorSteps.$inferSelect;
 export type NewSubmissionOrchestratorStep = typeof submissionOrchestratorSteps.$inferInsert;
+export type RenderedLeafFile = typeof renderedLeafFiles.$inferSelect;
+export type NewRenderedLeafFile = typeof renderedLeafFiles.$inferInsert;

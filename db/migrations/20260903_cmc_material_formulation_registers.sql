@@ -1,3 +1,24 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Create the material-specification and formulation registers that 3.2.P.1, 3.2.P.2 and 3.2.P.4 compose from.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 3 — 3.2.P.1 (composition), 3.2.P.2 (pharmaceutical development), 3.2.P.4 (control of excipients)
+--   - Integrity Risk Addressed: first-match rendering over absent stores — 3.2.P.4 showed one raw material out of however many a project uses, and the 3.2.P.1 quantitative composition table showed whichever formulation version arrived first
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - One table serves both material source types; `material_role` STORES which
+--     section a record files into rather than guessing it — the rule the
+--     impurity (`scope`) and dissolution (`purpose`) registers already follow.
+--   - Tenant-scoped with the canonical policy; idempotent (IF NOT EXISTS).
+-- =============================================================================
+
 -- CMC registers for material specifications and the formulation record.
 --
 -- ── What was missing ─────────────────────────────────────────────────────────

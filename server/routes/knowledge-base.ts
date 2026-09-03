@@ -821,7 +821,8 @@ router.post('/generate-docx', async (req: Request, res: Response) => {
       res.send(buffer);
     } catch (fallbackErr: any) {
       console.error('[knowledge-base] Node DOCX fallback also failed:', fallbackErr.message);
-      res.status(500).json({ error: 'DOCX generation failed', detail: fallbackErr.message });
+      console.error('[knowledge-base] DOCX generation failed:', fallbackErr?.message);
+      res.status(500).json({ error: 'DOCX generation failed' });
     }
   }
 });
@@ -885,7 +886,8 @@ router.post('/generate-ind-package', async (req: Request, res: Response) => {
       res.send(buffer);
     } catch (fallbackErr: any) {
       console.error('[knowledge-base] Node IND fallback failed:', fallbackErr.message);
-      res.status(500).json({ error: 'IND package generation failed', detail: fallbackErr.message });
+      console.error('[knowledge-base] IND package generation failed:', fallbackErr?.message);
+      res.status(500).json({ error: 'IND package generation failed' });
     }
   }
 });
@@ -1284,9 +1286,9 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
         console.error(
           `[knowledge-base] Module 3 artifact persistence failed (fail-closed): ${artErr.message}`
         );
+        console.error('[knowledge-base] Module 3 artifact persistence failed:', artErr?.message);
         return res.status(500).json({
           error: 'Module 3 generation blocked: governed artifact persistence failed',
-          detail: artErr?.message || 'Artifact persistence error',
         });
       }
     }

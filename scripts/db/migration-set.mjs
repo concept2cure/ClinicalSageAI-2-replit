@@ -874,6 +874,12 @@ export const C2C_MIGRATION_FILES = [
   // receipt that alone justifies status = 'transmitted'. Additive, nullable,
   // guarded on the table existing (a fresh install gets it via drizzle push).
   'migrations/20260902_ind_icsr_transmissions_transport_receipt.sql',
+  // LIFE-01: rendered_leaf_files — the retained bytes of a server-rendered
+  // filing document. The lifecycle routes rendered the safety/annual report,
+  // kept an md5 and discarded the bytes, so every filed lifecycle sequence
+  // assembled with zero leaf files and was permanently dispatch-blocked. New
+  // table only; no backfill (nothing records what pre-existing rows contained).
+  'migrations/20260903_rendered_leaf_files.sql',
   //   • 068_regulatory_schema_alignment — creates only regulatory.information_
   //     requests, which C-35's schema-qualification fix showed is not referenced
   //     by server code at all. It is dead schema, not a live gap; the "missing
@@ -1749,6 +1755,16 @@ export const C2C_MIGRATION_FILES = [
   // (scope / purpose) so a drug-substance impurity cannot green a drug-product
   // section and a development profile cannot green the release specification.
   'db/migrations/20260902_cmc_impurity_dissolution_registers.sql',
+  // The Clinical Operations surface's store. Its router used to CREATE SCHEMA
+  // and CREATE TABLE on the first request, which the non-superuser runtime role
+  // must refuse (42501) — so every call 500'd. Ordered after the CMC registers
+  // and before the sweep; it only needs public.organizations, which exists long
+  // before this point.
+  'db/migrations/20260902_clinical_ops_schema.sql',
+  // manufacturing.responses. Its router created the table on the first request
+  // — the comment there said so, naming migration 066's omission as the reason
+  // — which the runtime role may not do, so the finding-response surface 500'd.
+  'db/migrations/20260902_manufacturing_responses.sql',
 
   // ── CMC material spec + formulation registers ────────────────────────────
   // The producers for the composer's excipient, raw_material_spec and
