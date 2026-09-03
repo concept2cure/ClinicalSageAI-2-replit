@@ -2988,6 +2988,20 @@
         Single-valued today: this sheet has no `[data-theme="dark"]` rules and
         these pills already ship their light values in dark mode. Giving them
         a dark variant is a measurement, not a rename, and is not done here.
+
+   Two class names these four surfaces render are deliberately NOT here:
+   `eng-trace-summary` and `scope-note`, which no kit defines. Writing rules
+   for those is designing rather than porting, and inventing them is worse
+   than the honest gap — they stay on the L139 baseline with ten others in
+   the same position.
+
+   The kit copy stays the design reference and is not edited to match this.
+   `design-system/` is a read-only mirror synced by
+   `.github/workflows/sync-design-system.yml`, so a change made there is
+   undone by the next sync; this file is what the build consumes. For this
+   file the two kit copies (`ui_kits/mdx/surfaces.css` and
+   `design-system/ui_kits/mdx/surfaces.css`) are byte-identical, so the L141
+   divergence forced no choice here.
    ═════════════════════════════════════════════════════════════ */
 
 .mdx-shell {
