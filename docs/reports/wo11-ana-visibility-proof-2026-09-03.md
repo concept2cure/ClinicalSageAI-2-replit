@@ -209,6 +209,25 @@ Run with the carriage cut (`activity: undefined`): 1 and 2 fail, the Part 11 cas
 Restored: 4/4. The same assertions were also run as a throwaway file against the base tree before
 the test was added, and failed there at each defect.
 
+### Live browser check (agent-observed, not JM's verification)
+
+The session container turned out to hold a provisioned database with JM's own user and the
+pre-installed Chromium, so the app was booted (`NODE_ENV=development`, `ALLOW_DEV_AUTH=1`,
+`.env` sourced) and the surface driven headlessly via the repo's own dev-login flow, viewport
+1920×1080. Measured from the live DOM:
+
+| Observation | Measured |
+|---|---|
+| Row 7 — column at 1920px | `.ct-col` 940px, `.ct-composer` 940px (aligned), `.ct-conv` 1480px beside a 384px column; at 1440px `.ct-col` 768px |
+| Row 5 — hide the side panel | `.ct-side` removed from the DOM, no `.ct-art-rail` stub, `.ct-conv` = `.ct-main` = 1864px; focus lands on the header toggle; toggle reads "Show side panel", `aria-expanded="false"` |
+| Row 6 — persistence | `localStorage['c2c-v2-ct-side-dock'] = 'hidden'`; after navigating to Projects and back the column is still absent; showing it again writes `'shown'` |
+| Row 4 — idle dock | with no artifacts, `.ct-side-work` is 745px of the 969px column, scrollHeight = clientHeight (nothing clipped), the artifacts panel takes the remainder below; `data-artifacts="false"` |
+| Rows 1–3 — a real turn | **not observed.** `POST /api/ana-ri/stream` answered `503 GATEWAY_UNAVAILABLE — No AI providers available`; the gateway initialised with zero providers because the `ANTHROPIC_API_KEY` in this container's `.env` is refused by Anthropic (`401`, both direct and via the session proxy). The thread rendered the failure honestly — "AnA is unreachable — the network or the AI gateway did not respond. Prior turns are preserved." — with no phase, no rows and no dots. The gateway's demo mode was deliberately not enabled: a canned reply would not be a turn. |
+
+Screenshots (kept outside the repo, handed to JM in the session): the idle thread at 1920px with
+the panel shown, the same with the panel hidden, 1440px, and the failed turn. These observations
+do not fill §6; the seven rows remain JM's to fill on a live turn.
+
 ### Review
 
 An adversarial review workflow ran over the diff: eight independent lenses (correctness, honest
@@ -276,6 +295,9 @@ On one real question that invokes at least one tool:
 | 6 | Collapsed state survives navigating away and back | |
 | 7 | At 1920px the conversation no longer reads as a narrow strip | |
 
+(Rows 4–7 were observed by the agent in a headless browser — see §5 "Live browser check" — and
+are still JM's to confirm and fill. Rows 1–3 could not be exercised in the session container.)
+
 Note for row 3: once the answer lands, `AnaActivity` collapses the record to its summary line
 (`N steps completed · …`) with a chevron, exactly as it does in the shell rail. The rows are one
 click away, not gone. If JM wants the rows left open on this surface, that is an `AnaActivity`
@@ -323,9 +345,11 @@ change and a separate decision.
 
 ## 8. Still open, named plainly
 
-- Rows 1–7 are unverified. The change has been exercised only in jsdom, not on a live turn.
-- Row 4 depends on the real `AnaWorkPanel` content height inside the new `flex:1 1 auto` dock; the
-  CSS is as specified but has not been seen on a display.
+- Rows 1–7 are unverified by JM. Rows 4–7 were observed mechanically in a headless browser
+  (§5); rows 1–3 have been exercised only in jsdom, because no AI provider was available in the
+  session container.
+- Row 4 has been seen only idle (no tool rows to scroll to): the dock fills the column above the
+  artifacts panel with nothing clipped. A long multi-tool run has not been seen in it.
 - The `ci:check-css-selector-shadowing` gate is red on `concept2cure-v2` independently of this
   change (`mdx/app.css` `.mdx-shell`). Not this stream's file; not touched.
 - The next instances of the dead-renderer class and the orphan CSS listed under §5 "Review" are
