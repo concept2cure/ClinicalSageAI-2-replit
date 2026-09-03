@@ -1455,6 +1455,24 @@ function leafSlug(value: string): string {
 }
 
 /**
+ * Compose `<base>-<disc>.pdf` within the eCTD file-name limit (FILENAME_PATTERN:
+ * 64 characters including the extension), trimming the base — never the
+ * discriminator — and appending a numeric tiebreaker only when the name is
+ * already taken. The result always satisfies FILENAME_PATTERN.
+ */
+function ectdLeafFileName(base: string, disc: string, taken: Set<string>): string {
+  const MAX = 64;
+  const compose = (suffix: string): string => {
+    const tail = `-${disc}${suffix}.pdf`;
+    const head = base.slice(0, Math.max(1, MAX - tail.length)).replace(/-+$/, '') || 'leaf';
+    return `${head}${tail}`;
+  };
+  let name = compose('');
+  for (let n = 2; taken.has(name); n += 1) name = compose(`-${n}`);
+  return name;
+}
+
+/**
  * Best-effort ICH module (1–5) for a c2c_package_sections sectionKey. These
  * keys are semantic (e.g. `module3_cmc`, `labeling`, `cer`), not ICH-numeric,
  * so we derive the module from, in order: an explicit module-N prefix, an
@@ -1713,12 +1731,21 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       }
       return { region: resolvedRegion, format: resolvedFormat };
     })();
-    if (
-      (format === 'ectd' || format === 'pmda_ectd') &&
-      (format === 'pmda_ectd') !== (region === 'PMDA')
-    ) {
+    // Every format pins its region: pmda_ectd ⇔ PMDA; ectd ⇔ FDA or EMA;
+    // estar ⇔ FDA (an eSTAR is a CDRH form); eudamed_register ⇔ EMA. A body
+    // override that contradicts the format is a 400 for device families too —
+    // the check used to guard only the two eCTD formats, so {region:'PMDA'} on
+    // a 510(k) built an 'estar' bundle with Japanese Module 1 paths.
+    const requiredRegion =
+      format === 'pmda_ectd' ? 'PMDA' : format === 'estar' ? 'FDA' : format === 'eudamed_register' ? 'EMA' : null;
+    const regionFormatConsistent = requiredRegion
+      ? region === requiredRegion
+      : !(format === 'ectd' && region === 'PMDA');
+    if (!regionFormatConsistent) {
       return res.status(400).json({
-        error: `format '${format}' is inconsistent with region '${region}': pmda_ectd is the PMDA format and ectd is the FDA/EMA format.`,
+        error:
+          `format '${format}' is inconsistent with region '${region}': ` +
+          (requiredRegion ? `${format} is the ${requiredRegion} format.` : 'ectd is the FDA/EMA format; PMDA uses pmda_ectd.'),
         code: 'REGION_FORMAT_MISMATCH',
       });
     }
@@ -1754,6 +1781,11 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     // Placement findings (unplaced / disagreement), merged into the validation
     // result below so the governed transmit gate sees them.
     const placementFindings: Array<{ severity: 'error' | 'warning'; ruleId: string; message: string }> = [];
+    // An artifact ships as ONE leaf. The section map has no uniqueness on
+    // (artifact, section), so a duplicate row — or the same artifact mapped
+    // into two sections — used to ship a second copy under a suffixed name with
+    // no finding. artifactDbId → the section label it shipped from.
+    const shippedArtifacts = new Map<number, string>();
 
     for (const section of sections) {
       const mapped = await db
@@ -1818,6 +1850,14 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         const unitLabel = artifact
           ? `${artifact.title} (${artifact.artifactId} v${artifact.version}) in ${sectionLabel}`
           : sectionLabel;
+        if (artifact && shippedArtifacts.has(artifact.artifactDbId)) {
+          placementFindings.push({
+            severity: 'warning',
+            ruleId: 'LEAF-DUPLICATE-MAPPING',
+            message: `${unitLabel}: this artifact already ships as a leaf from ${shippedArtifacts.get(artifact.artifactDbId)}; an artifact is one leaf, so this mapping was skipped. Remove the duplicate mapping.`,
+          });
+          continue;
+        }
         if (!placement.code) {
           const sectionModule = moduleForSectionKey(section.sectionKey);
           placementFindings.push({
@@ -1846,11 +1886,16 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           });
         }
 
-        const slug = leafSlug(artifact ? `${section.sectionKey}-${artifact.artifactId}` : section.sectionKey);
-        let fileName = `${slug}.pdf`;
-        if (seenPaths.has(fileName)) {
-          fileName = `${slug}-${artifact ? artifact.artifactDbId : section.id}.pdf`;
-        }
+        // eCTD file names are lowercase [a-z0-9.-] and at most 64 characters
+        // INCLUDING the extension (FILENAME_PATTERN). The section slug is cut to
+        // the budget left after a discriminator — the artifact id's random
+        // suffix, or the section id for a placeholder — so two artifacts in one
+        // section never collide and a long section key cannot overflow the rule
+        // (it used to reach 84 characters with no finding).
+        const disc = artifact
+          ? artifact.artifactId.replace(/^artifact_/, '').slice(-12).toLowerCase().replace(/[^a-z0-9]/g, '') || `a${artifact.artifactDbId}`
+          : `s${section.id}`;
+        const fileName = ectdLeafFileName(leafSlug(section.sectionKey), disc, seenPaths);
         seenPaths.add(fileName);
         // Module-level path for the internal structural validator (which checks
         // media type, %PDF magic, empty markers and Module 1 presence). The
@@ -1869,13 +1914,14 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         const bytes = await buildLeafPdf(title, markdown);
         ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title });
         leafs.push({ path: modulePath, mediaType: 'application/pdf', content: bytes });
+        if (artifact) shippedArtifacts.set(artifact.artifactDbId, sectionLabel);
       }
     }
 
     // Internal eCTD structural validation (pre-flight). Findings are stored on
     // the descriptor and surfaced to the UI; transmit hard-blocks on errors.
     // This is INTERNAL structural validation only — NOT an agency validator.
-    const validation = validateEctdLeafs(leafs, { region, emptyLeafPaths });
+    const validation = validateEctdLeafs(leafs, { region, emptyLeafPaths, enforceFileNames: isEctdFormat });
 
     // Assemble the real zip buffer.
     //
@@ -2001,6 +2047,9 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       // The format the package was actually BUILT as (the packager's own), so a
       // PMDA build can never be persisted labelled as FDA/EMA eCTD.
       format: canonicalEvidence?.format ?? format,
+      // The region the bundle was BUILT for, so a downstream reader can detect a
+      // contradiction without inferring it from the backbone.
+      region,
       leafCount: leafs.length,
       emptyLeafCount,
       storage,

@@ -61,6 +61,39 @@ describe('evaluatePreTransmit', () => {
     expect(r.warnings.length).toBe(2);
   });
 
+  it('HARD-blocks a bundle built for another region (backbone region ≠ transmit target), in every environment', () => {
+    // The gate used to be region-blind: a pmda-built bundle passed the FDA gate
+    // because regionConformant was true — for PMDA.
+    const built = bundle({ format: 'pmda_ectd', regionalBackbone: { region: 'pmda', file: 'm1/jp/jp-regional.xml', regionConformant: true } });
+    for (const environment of ['staging', 'production'] as const) {
+      const r = evaluatePreTransmit({ region: 'fda', bundle: built, environment, enforceExternal: false, env: {} as NodeJS.ProcessEnv });
+      expect(r.cleared).toBe(false);
+      expect(r.checks.find((c) => c.name === 'regional-backbone-region')?.passed).toBe(false);
+      expect(r.blockers.some((b) => /assembled for PMDA .* cannot be transmitted to FDA/.test(b))).toBe(true);
+      expect(r.blockers.some((b) => /format 'pmda_ectd' does not match the FDA gateway/.test(b))).toBe(true);
+    }
+  });
+
+  it('a bundle built for the target region passes the region-identity checks', () => {
+    const built = bundle({ format: 'pmda_ectd', regionalBackbone: { region: 'pmda', file: 'm1/jp/jp-regional.xml', regionConformant: true } });
+    const r = evaluatePreTransmit({ region: 'pmda', bundle: built, environment: 'production', enforceExternal: false, env: {} as NodeJS.ProcessEnv });
+    expect(r.cleared).toBe(true);
+    expect(r.checks.find((c) => c.name === 'regional-backbone-region')?.passed).toBe(true);
+    // And an 'ectd' bundle is refused by the PMDA gateway on format alone.
+    const wrongFormat = evaluatePreTransmit({ region: 'pmda', bundle: bundle({ format: 'ectd' }), environment: 'production', enforceExternal: false, env: {} as NodeJS.ProcessEnv });
+    expect(wrongFormat.cleared).toBe(false);
+    expect(wrongFormat.blockers.some((b) => /format 'ectd' does not match the PMDA gateway/.test(b))).toBe(true);
+  });
+
+  it('a PDF/A grade with no fields is NOT evidence: under ECTD_REQUIRE_PDFA in production it warns "cannot prove", never passes', () => {
+    const r = evaluatePreTransmit({
+      region: 'fda', bundle: bundle({ submissionGrade: {} as any }), environment: 'production',
+      enforceExternal: false, env: { ECTD_REQUIRE_PDFA: 'true' } as NodeJS.ProcessEnv,
+    });
+    expect(r.checks.find((c) => c.name === 'pdfa-submission-grade')).toBeUndefined();
+    expect(r.warnings.some((w) => /cannot prove PDF\/A/.test(w))).toBe(true);
+  });
+
   it('folds the external gate when enforceExternal is on (route layer)', () => {
     const r = evaluatePreTransmit({
       region: 'fda', bundle: bundle(), environment: 'production',
