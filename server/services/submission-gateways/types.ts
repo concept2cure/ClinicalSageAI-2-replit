@@ -156,7 +156,10 @@ export interface SubmissionBundle {
     region: Region;
     file: string;
     regionConformant: boolean;
+    /** Not conformant because another region's structure is reused. */
     placeholderOf?: Region;
+    /** Not conformant for the region's own builder: the specific gap. */
+    conformanceGap?: string;
   };
   /**
    * Optional Study Tagging File (STF) roll-up: how many per-study stf.xml files

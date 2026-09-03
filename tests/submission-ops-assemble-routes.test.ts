@@ -119,6 +119,7 @@ vi.mock('../server/services/intelligence/index.js', () => ({ getProjectSignals: 
 vi.mock('../server/services/regulatory-correspondence/operating-layer', () => ({ readCanonicalDueSoonAndWorkload: vi.fn() }));
 
 import submissionOpsRouter from '../server/routes/submission-ops';
+import { ValidationError as PackagerValidationError } from '../server/services/submission-gateways/types';
 
 function makeApp() {
   const app = express();
@@ -398,6 +399,32 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('REGION_FORMAT_MISMATCH');
     expect(packageLeafBytesFn).not.toHaveBeenCalled();
+  });
+
+  it('a packager REFUSAL answers 422 with its findings persisted and clears the stale bundle — never a bare 500 with an old zip left transmittable', async () => {
+    dbState.pkg = lockedPkg({
+      regulatory: REGULATORY,
+      bundle: { path: '/bundles/old.zip', sha256: 'e'.repeat(64), sizeBytes: 9, format: 'ectd' },
+    });
+    dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('cover', null)]];
+    packageLeafBytesFn.mockRejectedValueOnce(
+      new PackagerValidationError('Refusing to package: 1 leaf could not be placed', [{ ruleId: 'LEAF-DROPPED', message: 'cover.pdf has no heading' }]),
+    );
+
+    const res = await post();
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('PACKAGER_REFUSED');
+    expect(res.body.staleBundleCleared).toBe(true);
+    const refused = res.body.validation.findings.filter((f: any) => f.ruleId === 'PACKAGER-REFUSED');
+    expect(refused).toHaveLength(1);
+    expect(refused[0]).toMatchObject({ severity: 'error', message: 'cover.pdf has no heading' });
+    expect(res.body.validation.errorCount).toBeGreaterThanOrEqual(1);
+    // Nothing was written as a bundle, the OLD descriptor is gone, and the refusal is on the package.
+    expect(writeFileFn).not.toHaveBeenCalled();
+    expect(dbState.updateSet.metadata.bundle).toBeUndefined();
+    expect(dbState.updateSet.metadata.assemblyRefusal.validation.findings.some((f: any) => f.ruleId === 'PACKAGER-REFUSED')).toBe(true);
+    expect(dbState.updateSet.metadata.regulatory).toEqual(REGULATORY); // unrelated metadata kept
   });
 
   it('400s a region override that contradicts a DEVICE family (510k is an FDA eSTAR; PMDA cannot be its region)', async () => {
