@@ -2,7 +2,7 @@
 /**
  * CI Guard: a control that promises a governed action and only sends a message.
  *
- * ── The defect, found twice independently ─────────────────────────────────────
+ * ── The defect, found twice independently ─────────────────────────────────────────────
  * Biostatistics had an "Attach to dossier" button whose handler was:
  *
  *     const attach = () => {
@@ -73,7 +73,11 @@ const FIXTURES = path.join(ROOT, 'tests/fixtures/action-overclaim');
  * has told the truth.
  */
 const GOVERNED_VERB =
-  /^(attach|cite|route|promote|submit|sign|approve|reject|file|publish|transmit|freeze|lock|unlock|release|assign|accept|archive|delete|remove|send|dispatch|seal|lodge|register|certify|validate|verify|apply|commit|save|store|record|log|upload|export|download)\b/i;
+  /^(attach|cite|route|promote|submit|sign|approve|reject|file|publish|transmit|freeze|lock|unlock|release|assign|accept|archive|delete|remove|send|dispatch|seal|lodge|register|certify|validate|verify|apply|commit|save|store|record|log|upload|export|download|generate|plan|compile|assemble)\b/i;
+// generate / plan / compile / assemble were added after SubmissionCenter's
+// "Generate plan (plan_submission)" button — a persisted-artifact promise over a
+// chat message — passed this gate. A plan, a compiled sequence, an assembled
+// package are filing artifacts; a label opening with one of these is a promise.
 
 /** A label already framed as a request is honest however it continues. */
 const REQUEST_FRAMED = /^(ask|request|draft|propose|suggest|explain|review|summari[sz]e|show|open|find|check with)\b/i;
@@ -212,7 +216,10 @@ if (process.argv.includes('--self-test')) {
                    // RbmSurfacesA is the fixture that exercises the icon-prefix,
                    // optional-chaining (onAsk?.) and export-verb coverage added
                    // after those first two — its repaired form must stay silent.
-                   'client/src/concept2cure/v2/surfaces/RbmSurfacesA.tsx']) {
+                   'client/src/concept2cure/v2/surfaces/RbmSurfacesA.tsx',
+                   // SubmissionCenter is the fixture behind the generate/plan/
+                   // compile/assemble verbs; its repaired Planner must stay silent.
+                   'client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx']) {
     const hits = scan(f, readFileSync(path.join(ROOT, f), 'utf8'));
     if (hits.length > 0) { console.error(`  ✗ ${f}: still flags ${hits.map((h) => h.label).join(', ')}`); ok = false; }
     else console.log(`  ✓ ${f}: silent on the repaired source`);
