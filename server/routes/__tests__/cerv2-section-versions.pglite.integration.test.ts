@@ -387,7 +387,7 @@ describe('POST /:sectionId/accept-ana-draft', () => {
       `SELECT draft_source, accepted_at, accepted_by FROM cerv2_510k_sections WHERE id = $1`,
       [sectionId],
     );
-    // Before L153 this read draft_source = NULL: a section with no stated
+    // Before L155 this read draft_source = NULL: a section with no stated
     // origin that a person accepted, indistinguishable from human-authored.
     expect(rows[0].draft_source).toBe('ana');
     expect(rows[0].accepted_at).not.toBeNull();

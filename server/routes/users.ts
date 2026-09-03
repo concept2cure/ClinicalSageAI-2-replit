@@ -861,7 +861,7 @@ router.post('/register', registerLimiter, async (req: Request, res: Response) =>
   const { username, password, email, firstName, lastName } = req.body;
   // An account is attributed by its email for the rest of its life. Inventing
   // `${username}@trialsage.ai` when none was given created identities nobody
-  // owns; a registration without an email is refused instead (ledger L151).
+  // owns; a registration without an email is refused instead (ledger L153).
   const registrationEmail = typeof email === 'string' && email.trim() ? email.trim() : null;
 
   if (!registrationEmail || !password) {

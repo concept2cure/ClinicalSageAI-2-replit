@@ -624,7 +624,7 @@ router.post('/:sectionId/accept-ana-draft', authMiddleware, async (req, res) => 
   // surfaces call; the governance ledger row is written from here
   // (`writeMutation('accept-ai-suggestion')` below). It used to advertise
   // itself as deprecated in favour of the ledger action, which never touched
-  // the section (ledger L153).
+  // the section (ledger L155).
 
   const organizationId = resolveOrganizationId(req);
   if (!organizationId) {
@@ -677,7 +677,7 @@ router.post('/:sectionId/accept-ana-draft', authMiddleware, async (req, res) => 
           status:                 nextStatus,
           /* draft_source stays 'ana'. Clearing it made the live row read as a
              section with no stated origin that a person accepted — the fact
-             survived only in the version history (ledger L153). */
+             survived only in the version history (ledger L155). */
           acceptedAt,
           acceptedBy:             userId ?? null,
           updatedAt:              acceptedAt,

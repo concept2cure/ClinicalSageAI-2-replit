@@ -63,7 +63,7 @@ interface SectionRow {
   draftSource: string | null;
   draftedAt: Date | null;
   draftedSummary: string | null;
-  /** Stamped on accept; draftSource is kept, so this is what says "pending" (ledger L153). */
+  /** Stamped on accept; draftSource is kept, so this is what says "pending" (ledger L155). */
   acceptedAt: Date | null;
 }
 

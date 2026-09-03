@@ -90,7 +90,7 @@ function adaptSection(s: ServerSection): EstarRow {
     : Number.parseInt(String(s.sectionNumber), 10) || s.id;
   /* Surface AnA's draft when present + not yet accepted. Acceptance stamps
      acceptedAt and KEEPS draftSource — the origin is a fact about the text,
-     not a pending flag (ledger L153). */
+     not a pending flag (ledger L155). */
   const draft =
     s.draftSource === 'ana' && s.draftedAt && !s.acceptedAt
       ? {
