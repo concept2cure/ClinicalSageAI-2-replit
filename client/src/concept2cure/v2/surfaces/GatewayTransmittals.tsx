@@ -302,6 +302,11 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     const b = d.bundle ?? {};
     const errors = Number(b.validation?.errorCount ?? 0);
     const warnings = Number(b.validation?.warningCount ?? 0);
+    // The bundle is real even when its governed-action ledger entry could not
+    // be written; the server says so and the operator must hear it.
+    const ledger = (raw as any)?.ledgerWriteFailed
+      ? ' ' + String((raw as any)?.ledgerWarning ?? 'The governed-action ledger entry could not be written; record this assembly manually.')
+      : '';
     setDialog(null);
     if (errors > 0) {
       // The bundle exists, but transmit will refuse it. The findings live on the
@@ -313,10 +318,13 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
         message: `Bundle assembled for ${d.packageId ?? v.packageId} with ${errors} error-severity finding${errors === 1 ? '' : 's'}; transmit will refuse it until they are resolved.`,
         findings,
       });
-      fireToast(`Bundle assembled with ${errors} error-severity finding${errors === 1 ? '' : 's'} — transmit will refuse it. See the findings below.`, 'error');
+      fireToast(`Bundle assembled with ${errors} error-severity finding${errors === 1 ? '' : 's'} — transmit will refuse it. See the findings below.${ledger}`, 'error');
       return;
     }
-    fireToast(`Bundle assembled for ${d.packageId ?? v.packageId} · ${b.leafCount ?? '?'} leaves · ${warnings} warning${warnings === 1 ? '' : 's'} · sha256 ${String(b.sha256 ?? '').slice(0, 12)}. Ready to transmit.`);
+    // No error-severity findings is not "ready": the transmit gate still checks
+    // region identity, the gateway size limit and the operator's conformance
+    // opt-ins before bytes leave. Say what was proven, not more.
+    fireToast(`Bundle assembled for ${d.packageId ?? v.packageId} · ${b.leafCount ?? '?'} leaves · ${warnings} warning${warnings === 1 ? '' : 's'} · sha256 ${String(b.sha256 ?? '').slice(0, 12)}. No error-severity findings; the transmit gate still checks region, size and conformance opt-ins.${ledger}`, ledger ? 'error' : undefined);
   }, [fireToast]);
 
   const rollback = useCallback(async (v: Record<string, string>) => {
@@ -465,13 +473,16 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
                 ? 'These findings were recorded on the stored bundle when it was assembled. Resolve them, assemble the package again, then transmit.'
                 : 'Resolve the findings, then assemble the package again.'}
             </div>
+            {/* Severity is stated as text in its own column — the chip's tone
+                alone must not be the only carrier of meaning. */}
             {refusal.findings.length > 0 && (
-              <table className="reg-tbl"><thead><tr><th>Rule</th><th>Finding</th></tr></thead>
+              <table className="reg-tbl"><thead><tr><th>Rule</th><th>Severity</th><th>Finding</th></tr></thead>
                 <tbody>{refusal.findings.map((f, i) => (
                   <tr key={i}>
                     <td style={{ whiteSpace: 'nowrap', verticalAlign: 'top' }}>
-                      <span className={'rd-chip tone-' + (f.severity === 'error' ? 'err' : f.severity === 'warning' ? 'warn' : 'ok')}>{f.ruleId ?? f.severity ?? 'finding'}</span>
+                      <span className={'rd-chip tone-' + (f.severity === 'error' ? 'err' : f.severity === 'warning' ? 'warn' : 'ok')}>{f.ruleId ?? 'finding'}</span>
                     </td>
+                    <td style={{ whiteSpace: 'nowrap', verticalAlign: 'top' }}>{f.severity ?? '—'}</td>
                     <td>{f.message ?? '—'}</td>
                   </tr>))}</tbody></table>
             )}

@@ -227,7 +227,29 @@ describe('GatewayTransmittals — real dispatch layer', () => {
       expect(call).toBeTruthy();
       expect(call![2]).toEqual({ reason: 'Assemble sequence 0001 for FDA', region: 'FDA', sequence: '0001' });
     });
-    expect(await screen.findByText(/Bundle assembled for pkg_77 · 4 leaves · 1 warning · sha256 abcdef012345\. Ready to transmit\./)).toBeTruthy();
+    // "Ready to transmit" would overclaim: the gate still checks region, size and opt-ins.
+    expect(await screen.findByText(/Bundle assembled for pkg_77 · 4 leaves · 1 warning · sha256 abcdef012345\. No error-severity findings; the transmit gate still checks/)).toBeTruthy();
+    expect(screen.queryByText(/Ready to transmit/)).toBeNull();
+  });
+
+  it('says so when the assembly’s governed-action ledger entry could not be written', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/assemble')) {
+        return { ok: true, status: 200, json: async () => ({
+          success: true, ledgerWriteFailed: true,
+          ledgerWarning: 'The bundle was assembled, but its governed-action ledger entry could not be written. Record this assembly manually and raise it with your administrator before relying on the audit trail.',
+          data: { packageId: 'pkg_77', bundle: { sha256: 'f'.repeat(64), leafCount: 3, validation: { errorCount: 0, warningCount: 0, infoCount: 1 } } },
+        }) } as Response;
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    expect(await screen.findByText(/ledger entry could not be written\. Record this assembly manually/)).toBeTruthy();
   });
 
   it('shows a bundle assembled WITH error findings in the findings card, fetched from preflight, and offers to record identifiers when that is the finding', async () => {
