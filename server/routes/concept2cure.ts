@@ -31,6 +31,8 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { eq, ne, desc, and, isNull, inArray, or, sql } from 'drizzle-orm';
 import { db, pool } from '../db';
+import { queryableFromDrizzle } from '../db/drizzle-queryable';
+import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/lineage-gate';
 import { createScopedLogger } from '../utils/logger';
 import * as metricsModule from '../metrics.js';
 import { authMiddleware } from '../auth';
@@ -7581,15 +7583,8 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       newContent = sanitizedContent;
       newContentHash = calculateContentHash(sanitizedContent);
 
-      // Insert new version record (immutable history)
-      await db.insert(concept2cureArtifactVersions).values({
-        organizationId,
-        artifactId: dbArtifact.id,
-        version: newVersion,
-        content: sanitizedContent,
-        contentHash: newContentHash,
-        createdById: userId,
-      });
+      // The version row is written inside the transaction below, beside the
+      // content it records and the lineage that attributes it (ledger L160).
     }
 
     if (sanitizedTitle) {
@@ -7637,9 +7632,26 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
         ? (existingMetadata.harness as Record<string, unknown>)
         : {};
 
-    // Update artifact record
-    const [updatedArtifact] = await db
-      .update(concept2cureArtifacts)
+    /* Version row, content and lineage commit together or not at all (ledger
+       L160). The version row used to be inserted before the governed-contract
+       validation, so a rejected edit left an orphan version behind; and the
+       edited text carried no lineage at all. */
+    const contentChanged = newVersion > dbArtifact.version;
+    const updatedArtifact = await db.transaction(async (tx) => {
+      if (contentChanged) {
+        await tx.insert(concept2cureArtifactVersions).values({
+          organizationId,
+          artifactId: dbArtifact.id,
+          version: newVersion,
+          content: newContent ?? '',
+          // Recomputed rather than trusted: the hash column is NOT NULL and
+          // the running value is typed nullable outside the branch that set it.
+          contentHash: newContentHash ?? calculateContentHash(newContent ?? ''),
+          createdById: userId,
+        });
+      }
+      const [row] = await tx
+        .update(concept2cureArtifacts)
       .set({
         title: newTitle,
         content: newContent,
@@ -7669,6 +7681,20 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       })
       .where(eq(concept2cureArtifacts.id, dbArtifact.id))
       .returning();
+      if (contentChanged) {
+        /* Every clause of the edited text is the editing person's assertion;
+           a gap rolls the edit back. A title-only edit touches no prose. */
+        const client = queryableFromDrizzle(tx);
+        await enforceAuthorLineage(
+          client,
+          organizationId,
+          { documentTable: 'concept2cure_artifacts', documentId: String(dbArtifact.id) },
+          newContent ?? '',
+          String(userId),
+        );
+      }
+      return row;
+    });
 
     // Get all versions for response
     const versions = await db
@@ -10118,16 +10144,6 @@ router.post(
       const newVersion = artifact.version + 1;
       const newContentHash = calculateContentHash(targetVer.content);
 
-      await db.insert(concept2cureArtifactVersions).values({
-        organizationId,
-        artifactId: artifact.id,
-        version: newVersion,
-        content: targetVer.content,
-        contentHash: newContentHash,
-        changeDescription: `Rolled back to version ${targetVersion}`,
-        createdById: userId,
-      });
-
       const rollbackGovernedResolution = resolveGovernedContext({
         req,
         projectId: artifact.projectId,
@@ -10165,9 +10181,23 @@ router.post(
           ? (existingMetadata.harness as Record<string, unknown>)
           : {};
 
+      /* The version row, the content and its lineage commit together or not at
+         all (ledger L160). The version row used to be inserted BEFORE the
+         governed-contract validation, so a rejected rollback left an orphan
+         version behind; and the restored text carried no lineage at all. */
+      const updated = await db.transaction(async (tx) => {
+        await tx.insert(concept2cureArtifactVersions).values({
+          organizationId,
+          artifactId: artifact.id,
+          version: newVersion,
+          content: targetVer.content,
+          contentHash: newContentHash,
+          changeDescription: `Rolled back to version ${targetVersion}`,
+          createdById: userId,
+        });
       // Update the artifact to the rolled-back content
-      const [updated] = await db
-        .update(concept2cureArtifacts)
+        const [row] = await tx
+          .update(concept2cureArtifacts)
         .set({
           content: targetVer.content,
           contentHash: newContentHash,
@@ -10197,6 +10227,18 @@ router.post(
         })
         .where(eq(concept2cureArtifacts.id, artifact.id))
         .returning();
+        /* Every clause of the restored text is recorded as the assertion of the
+           person who chose to restore it; a gap rolls the rollback back. */
+        const client = queryableFromDrizzle(tx);
+        await enforceAuthorLineage(
+          client,
+          organizationId,
+          { documentTable: 'concept2cure_artifacts', documentId: String(artifact.id) },
+          targetVer.content ?? '',
+          String(userId),
+        );
+        return row;
+      });
 
       // Log provenance
       await db.insert(concept2cureProvenanceEvents).values({
