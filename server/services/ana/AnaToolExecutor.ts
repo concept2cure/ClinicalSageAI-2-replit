@@ -10938,8 +10938,10 @@ registerToolHandler('update_biosketch_section', async (input, ctx) => {
   if (!Number.isInteger(sectionId)) return JSON.stringify({ error: 'section_id is required.' });
   const { updateSectionTx } = await import('../biosketch/biosketch-service.js');
   return governedPdev(ctx, 'update', `biosketch-section:${sectionId}`, 'Biosketch section updated via AnA', input, async (client) => {
-    await updateSectionTx(client, ctx.organizationId!, sectionId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined }, ctx.userId!);
-    return { sectionId };
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
+    const { sources, dropped } = await resolveDraftSources(ctx.organizationId!, input.sources, client);
+    const gate = await updateSectionTx(client, ctx.organizationId!, sectionId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined, sources }, ctx.userId!);
+    return { sectionId, lineage: describeDraftLineage(gate, sources, dropped) };
   });
 });
 
@@ -11284,10 +11286,13 @@ registerToolHandler('update_protocol_section', async (input, ctx) => {
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
-    await updateSectionTx(client, ctx.organizationId, sectionId, { content: typeof input.content === 'string' ? input.content : null, status: typeof input.status === 'string' ? input.status : undefined }, ctx.userId);
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
+    const { sources, dropped } = await resolveDraftSources(ctx.organizationId, input.sources, client);
+    const gate = await updateSectionTx(client, ctx.organizationId, sectionId, { content: typeof input.content === 'string' ? input.content : null, status: typeof input.status === 'string' ? input.status : undefined, sources }, ctx.userId);
+    const lineage = describeDraftLineage(gate, sources, dropped);
     await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-section:${sectionId}`, reason: fcoiReason(input, 'Protocol section edited via AnA'), payload: { status: input.status }, domain: 'protocol_development', surface: 'ana' });
     await client.query('COMMIT');
-    return JSON.stringify({ ok: true, sectionId, message: `Updated protocol section ${sectionId}.` });
+    return JSON.stringify({ ok: true, sectionId, lineage, message: `Updated protocol section ${sectionId}.` });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({ error: `update_protocol_section failed: ${err instanceof Error ? err.message : String(err)}` });
