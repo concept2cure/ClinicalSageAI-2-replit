@@ -38,7 +38,7 @@ import {
   type ApprovalSignature,
   type DocumentStage,
 } from '../../shared/regulatory/document-lifecycle';
-import { randomUUID, createHash } from 'crypto';
+import { randomUUID } from 'crypto';
 
 export interface DocumentLifecycleRouterOptions {
   /** Drizzle handle. Defaults to the runtime db. */
@@ -164,18 +164,24 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       return res.status(409).json({ ok: false, from: result.from, to: result.to, blockedBy: result.blockedBy });
     }
 
-    // On packaging, seal the canonical export representation (md5 + sha256, as the
-    // eCTD index requires md5 and governance requires sha256). The heavy eCTD
-    // package is delegated via the assemble binding; this is the record the
-    // canonical model requires for a valid packaged/submitted version.
+    // On packaging, seal the canonical export representation from the digest the
+    // assemble binding actually produced.
+    //
+    // This used to hash the STRING `"${document.id}:${contentHash}"` and store
+    // the result as the package md5/sha256 — a seal over bytes no file ever
+    // had, persisted and attested in the audit trail. A seal is only written
+    // when a real assembly returned one; with no assembler wired the transition
+    // is refused upstream, so there is nothing to seal.
     let exportFacet: ProjectionInput['exportFacet'];
-    if (to === 'packaged') {
-      const material = `${projected.document.id}:${ctx.contentHash ?? ''}`;
+    if (to === 'packaged' && result.packageSha256) {
       exportFacet = {
         format: 'pdf_a',
         leafId: result.state.placement?.leafId,
-        md5: createHash('md5').update(material).digest('hex'),
-        sha256: createHash('sha256').update(material).digest('hex'),
+        sha256: result.packageSha256,
+        // Absent when the assembler did not report one: the canonical validator
+        // then raises EXPORTED_WITHOUT_HASHES, which is the truthful outcome —
+        // better than satisfying the check with a digest of something else.
+        ...(result.packageMd5 ? { md5: result.packageMd5 } : {}),
       };
     }
 
