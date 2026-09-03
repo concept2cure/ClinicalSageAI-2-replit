@@ -2193,6 +2193,55 @@
   font-size: 10px; font-weight: 500;
 }
 
+/* ── Buttons ──────────────────────────────────────────────────
+   `.btn` had no base rule in this shell — only the `svg` sizing line below —
+   and the result was not an unstyled button but a WRONGLY styled one.
+
+   Two rules were doing the work. `.mdx-shell button` (top of this file) is a
+   reset: `background:none; border:0; padding:0; font:inherit`, written on the
+   assumption that a class would put the chrome back. And in the entry chunk
+   there is an unscoped `.meta, small, .small { font-size: 0.625rem;
+   letter-spacing: var(--tracking-wider); text-transform: uppercase }` — a
+   typography utility for the `<small>` ELEMENT, which also matches the
+   `small` CLASS that every `btn ghost small` in this tree carries.
+
+   So `Export package` computed to a transparent, borderless, padding-less,
+   16px UPPERCASE block. Measured in Chromium against the built chunks:
+   `background-color: rgba(0,0,0,0)`, `border: 0px none`, `padding: 0px`,
+   `text-transform: uppercase`, `letter-spacing: 0.8px`. Every primary and
+   ghost action across 19 components in this shell — 26 buttons, including
+   the primary action on the Pre-Sub, Engineering, UDI, Post-market and
+   Analytics surfaces — rendered as plain uppercase text with no affordance
+   and no difference between primary and ghost.
+
+   `ci:check-shell-css-collisions` already carries `small` in its baseline as
+   a class a stylesheet can apply outside its own shell. That baseline is a
+   record of the hazard; this is one of the places it landed.
+
+   Deliberately the same shape and the same tokens as `.c2c-v2 .btn`, so the
+   two shells do not drift into two button languages. The one difference is
+   that the transition names its properties rather than `all`: `all` includes
+   layout, and this sheet's motion rule is one 200ms ease-out on the things
+   that actually change. */
+.mdx-shell .btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 32px; padding: 0 14px;
+  border-radius: var(--radius-lg);
+  font-size: 12.5px; font-weight: 500;
+  /* Both undo the unscoped `.small`; `.mdx-shell .btn` (0,2,0) outranks it. */
+  text-transform: none; letter-spacing: normal;
+  white-space: nowrap; cursor: pointer;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+              color var(--dur) var(--ease);
+}
+.mdx-shell .btn.small { height: 28px; padding: 0 11px; font-size: 12px; gap: 6px; }
+.mdx-shell .btn.primary { background: var(--accent-strong); color: var(--accent-on-strong); }
+.mdx-shell .btn.primary:hover { background: var(--accent-200); }
+.mdx-shell .btn.ghost { border: 1px solid var(--border); color: var(--text-200); }
+.mdx-shell .btn.ghost:hover { background: var(--bg-100); }
+.mdx-shell .btn .ico { display: inline-flex; align-items: center; }
+.mdx-shell .btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+
 /* small utilities used in workbench */
 .mdx-shell .btn.small svg { width: 13px; height: 13px; }
 
@@ -4015,4 +4064,391 @@
 .mdx-shell .eng-trace-summary {
   margin-top: 8px;
   color: var(--text-300);
+}
+
+/* ═════════════════════════════════════════════════════════════
+   PRE-SUB MANAGER — the FDA Q-Submission surface
+
+   `PreSubManager` is mounted at MdxSurfaceHost.tsx:402 for `device-presub`,
+   is 514 lines, and every one of its 70 `ps-*` class names matched NOTHING
+   in any built chunk. Its chrome came from house primitives it borrows —
+   .page-header, .metrics-row, .metric-card, .section, .seg, .btn — so the
+   surface looked half-built rather than broken, which is why it survived:
+   the page had a title, a KPI strip and filter buttons, and everything below
+   them was unstyled divs.
+
+   ── This is design, not a port, and the difference is checked ─────────────
+   The component's own docblock says "Ported from
+   design-system/ui_kits/mdx/PreSub.jsx", so the first question was whether a
+   stylesheet had been left behind the way surfaces.css was. It had not.
+   `PreSub.jsx` lives in `design-system/ui_kits/mdx_phase2/` (one of the 39
+   files that exist only in the mirror — L141), it carries 85 `ps-*` class
+   references, its kit `index.html` loads `app.css` alone, and that file
+   contains zero `.ps-` rules. Neither kit copy has ever had a stylesheet for
+   this surface. There is nothing to port; the markup was designed and the CSS
+   was never written, in the kit or here.
+
+   So this is written, not copied, and it follows the conventions this sheet
+   already sets rather than inventing a second dialect: 13px body, 10-11px
+   micro-labels in uppercase with 0.04-0.06em tracking, one --accent-100
+   highlight per active state, `var(--dur) var(--ease)` transitions and no
+   spring, `[data-on="true"]` for selection (the convention .seg-btn sets).
+
+   ── Two things it does NOT do, deliberately ───────────────────────────────
+   No `--text-400` on any text. That token measures 3.37:1 and every muted
+   string here is 10-12px, so it is `--text-400`'s companion `--text-300`
+   throughout; --text-400 appears only where it colours a glyph, which needs
+   3:1. The surfaces.css port in this same file had to correct 19 rules for
+   exactly this and there is no reason to write the twentieth.
+
+   No fixed track widths that cannot fit. `.ps-layout` is
+   `minmax(0, 300px) minmax(0, 1fr)`: BOTH tracks can shrink to zero, so the
+   grid can never be wider than its container whatever the content. Same
+   reasoning for `.ps-commit-row`, which wraps rather than declaring five
+   columns that add up to more than the 732px this pane actually gets. The
+   editor's `220px minmax(420px, 1fr) clamp(300px, …)` — a 940px floor in a
+   pane that is often narrower — is the mistake being avoided here.
+   ═════════════════════════════════════════════════════════════ */
+
+/* ── Filter row ─────────────────────────────────────────────── */
+.mdx-shell .ps-filter-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.mdx-shell .ps-filter-spacer { flex: 1 1 auto; min-width: 0; }
+
+/* ── Two-pane layout ────────────────────────────────────────── */
+.mdx-shell .ps-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.mdx-shell .ps-list { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+/* ── Q-Sub type chip ────────────────────────────────────────── */
+.mdx-shell .ps-type {
+  padding: 1px 6px; border-radius: 4px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase; white-space: nowrap;
+  background: var(--bg-100); color: var(--text-300);
+}
+/* The five Q-Sub types, coloured by what they commit you to rather than
+   arbitrarily: Agreement is binding (ok), Submission Issue is a problem in an
+   open review (warn), Study Risk Determination is a ruling (alt), Pre-Sub is
+   the ordinary path (info), Informational asks nothing of FDA (neutral). */
+.mdx-shell .ps-type-presub { background: var(--mdx-tone-info-bg); color: var(--mdx-tone-info-fg); }
+.mdx-shell .ps-type-sir    { background: var(--mdx-tone-warn-bg); color: var(--mdx-tone-warn-fg); }
+.mdx-shell .ps-type-srd    { background: var(--mdx-tone-alt-bg);  color: var(--mdx-tone-alt-fg); }
+.mdx-shell .ps-type-agree  { background: var(--mdx-tone-ok-bg);   color: var(--mdx-tone-ok-fg); }
+
+/* ── List row ───────────────────────────────────────────────── */
+.mdx-shell .ps-row {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  width: 100%; min-width: 0;
+  padding: 10px 12px;
+  text-align: left;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-left: 3px solid var(--border-200);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.mdx-shell .ps-row:hover { border-color: var(--border-strong); }
+/* Selection is the left edge plus the border, not a fill: the row carries a
+   stage dot and a commitment count that must stay readable, and a tinted
+   background would put two colour signals on one control. */
+.mdx-shell .ps-row[data-on] {
+  border-color: var(--border-strong);
+  border-left-color: var(--accent-100);
+  box-shadow: var(--shadow-xs);
+}
+.mdx-shell .ps-row-l { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 1 auto; }
+.mdx-shell .ps-row-r { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; flex: 0 0 auto; }
+.mdx-shell .ps-row-id { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mdx-shell .ps-row-title {
+  font-size: 12.5px; font-weight: 500; color: var(--text-100); line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.mdx-shell .ps-row-prog { font-size: 11px; color: var(--text-300); }
+.mdx-shell .ps-row-stage {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; color: var(--text-200); white-space: nowrap;
+}
+.mdx-shell .ps-row-stage-dot {
+  width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0;
+  background: var(--text-400);
+}
+.mdx-shell .ps-row-stage[data-tone="ok"]   .ps-row-stage-dot { background: var(--success); }
+.mdx-shell .ps-row-stage[data-tone="warn"] .ps-row-stage-dot { background: var(--warning); }
+.mdx-shell .ps-row-stage[data-tone="err"]  .ps-row-stage-dot { background: var(--error); }
+.mdx-shell .ps-row-stage-days { color: var(--text-300); }
+.mdx-shell .ps-row-meta {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+  font-size: 10.5px; color: var(--text-300); text-align: right;
+}
+/* Every commitment rolled into the dossier is the state this whole surface
+   exists to reach, so it is the one place in the row that goes green. */
+.mdx-shell .ps-row-commit[data-on="true"] { color: var(--mdx-tone-ok-fg); font-weight: 500; }
+
+/* ── Detail pane ────────────────────────────────────────────── */
+.mdx-shell .ps-detail {
+  min-width: 0;
+  padding: 14px 16px;
+  background: var(--bg-000);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+}
+/* Wraps, and the title block can shrink. Measured with real fixture data at
+   796px — the width this pane gets when the surface column is narrow — the
+   head was 361 in 334: `.ps-detail-actions` is two buttons that must not
+   shrink, and the title block beside them had no `min-width: 0`, so its
+   min-content width plus the buttons exceeded the pane and pushed
+   `.ps-detail` and `.ps-layout` out with it. visual-qa:overflow could not see
+   this: the captured fragment mocks the list to empty, so the detail pane it
+   measures is the empty state and never renders a head at all. */
+.mdx-shell .ps-detail-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 10px 12px; flex-wrap: wrap;
+  padding-bottom: 12px; border-bottom: 1px solid var(--border-100);
+}
+.mdx-shell .ps-detail-head > div:first-child { flex: 1 1 240px; min-width: 0; }
+.mdx-shell .ps-detail-eyebrow {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--text-300);
+}
+.mdx-shell .ps-detail-title {
+  font-size: 15px; font-weight: 600; color: var(--text-100);
+  margin: 5px 0 3px; line-height: 1.3; overflow-wrap: anywhere;
+}
+.mdx-shell .ps-detail-target { font-size: 11.5px; color: var(--text-300); }
+.mdx-shell .ps-detail-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.mdx-shell .ps-summary {
+  font-size: 12.5px; line-height: 1.6; color: var(--text-200);
+  padding: 12px 0;
+}
+
+/* ── Stage strip + meeting card ─────────────────────────────── */
+.mdx-shell .ps-strip-wrap { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
+.mdx-shell .ps-strip { display: flex; gap: 4px; flex: 1 1 320px; min-width: 0; }
+.mdx-shell .ps-strip-cell {
+  flex: 1 1 0; min-width: 0;
+  padding: 7px 8px;
+  background: var(--bg-050);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-sm);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+/* Three states, three treatments — and never colour alone: `done` also loses
+   its number's emphasis and `active` also gains a weight, so the strip reads
+   the same to someone who cannot separate the greens from the creams. */
+.mdx-shell .ps-strip-cell[data-state="done"] {
+  background: var(--mdx-tone-ok-bg); border-color: var(--mdx-tone-ok-line);
+}
+.mdx-shell .ps-strip-cell[data-state="done"] .ps-strip-num,
+.mdx-shell .ps-strip-cell[data-state="done"] .ps-strip-lbl { color: var(--mdx-tone-ok-fg); }
+.mdx-shell .ps-strip-cell[data-state="active"] {
+  background: var(--accent-000); border-color: var(--accent-100);
+}
+.mdx-shell .ps-strip-cell[data-state="active"] .ps-strip-lbl { color: var(--text-100); font-weight: 600; }
+.mdx-shell .ps-strip-cell[data-state="active"] .ps-strip-num { color: var(--accent-200); }
+.mdx-shell .ps-strip-num {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.06em;
+  color: var(--text-300);
+}
+.mdx-shell .ps-strip-lbl {
+  font-size: 10.5px; color: var(--text-200); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mdx-shell .ps-meeting {
+  display: flex; align-items: center; gap: 8px;
+  flex: 0 1 260px; min-width: 0;
+  padding: 8px 10px;
+  background: var(--bg-050);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+}
+.mdx-shell .ps-meeting > .ico { color: var(--text-400); flex-shrink: 0; }
+.mdx-shell .ps-meeting > div { min-width: 0; flex: 1 1 auto; }
+.mdx-shell .ps-meeting-when { font-size: 11.5px; font-weight: 500; color: var(--text-100); }
+.mdx-shell .ps-meeting-meta { font-size: 10.5px; color: var(--text-300); margin-top: 1px; }
+.mdx-shell .ps-meeting-state {
+  padding: 1px 6px; border-radius: 4px; flex-shrink: 0;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.mdx-shell .ps-meeting-state.ok   { background: var(--mdx-tone-ok-bg);   color: var(--mdx-tone-ok-fg); }
+.mdx-shell .ps-meeting-state.warn { background: var(--mdx-tone-warn-bg); color: var(--mdx-tone-warn-fg); }
+
+/* ── Detail tabs ────────────────────────────────────────────── */
+.mdx-shell .ps-tabs {
+  display: flex; gap: 2px;
+  margin: 14px 0 12px;
+  border-bottom: 1px solid var(--border-100);
+  /* Three tabs each carrying a count; contained here so a long label can
+     never widen the pane. overflow-y is explicit because .ps-tab's
+     margin-bottom:-1px would otherwise raise a stray vertical scrollbar. */
+  overflow-x: auto; overflow-y: hidden; scrollbar-width: thin;
+}
+.mdx-shell .ps-tab {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 11px; margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  font-size: 12.5px; color: var(--text-300); white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.mdx-shell .ps-tab:hover { color: var(--text-100); }
+.mdx-shell .ps-tab[data-on="true"] {
+  color: var(--text-100); font-weight: 600; border-bottom-color: var(--accent-100);
+}
+.mdx-shell .ps-tab-n {
+  font-family: var(--font-mono); font-size: 10.5px;
+  padding: 0 5px; border-radius: 999px;
+  background: var(--bg-100); color: var(--text-300);
+}
+.mdx-shell .ps-tab[data-on="true"] .ps-tab-n { color: var(--text-200); }
+
+/* ── Questions ──────────────────────────────────────────────── */
+.mdx-shell .ps-q-list { display: flex; flex-direction: column; gap: 10px; }
+.mdx-shell .ps-q {
+  padding: 12px 14px; min-width: 0;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-left: 3px solid var(--border-200);
+  border-radius: var(--radius-md);
+}
+.mdx-shell .ps-q[data-status="answered"] { border-left-color: var(--success); }
+.mdx-shell .ps-q[data-status="awaiting"] { border-left-color: var(--warning); }
+.mdx-shell .ps-q-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mdx-shell .ps-q-n {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--text-100);
+}
+.mdx-shell .ps-q-status {
+  padding: 1px 6px; border-radius: 4px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  background: var(--bg-100); color: var(--text-300);
+}
+.mdx-shell .ps-q-status-answered { background: var(--mdx-tone-ok-bg);   color: var(--mdx-tone-ok-fg); }
+.mdx-shell .ps-q-status-awaiting { background: var(--mdx-tone-warn-bg); color: var(--mdx-tone-warn-fg); }
+.mdx-shell .ps-q-text {
+  font-size: 12.5px; font-weight: 500; color: var(--text-100); line-height: 1.5;
+  margin: 7px 0 10px; overflow-wrap: anywhere;
+}
+.mdx-shell .ps-q-pos, .mdx-shell .ps-q-fda { margin-bottom: 10px; }
+/* FDA's words are set apart from ours. On a Q-Sub record the difference
+   between what the sponsor asserted and what the agency answered is the
+   whole document, and two identically-styled paragraphs do not carry it. */
+.mdx-shell .ps-q-fda {
+  padding: 9px 11px;
+  background: var(--bg-050);
+  border-left: 2px solid var(--border-strong);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.mdx-shell .ps-q-pos-lbl, .mdx-shell .ps-q-fda-lbl {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-300); margin-bottom: 4px;
+}
+.mdx-shell .ps-q-pos-body, .mdx-shell .ps-q-fda-body {
+  font-size: 12px; line-height: 1.6; color: var(--text-200); overflow-wrap: anywhere;
+}
+
+/* ── Commitment block inside a question ─────────────────────── */
+.mdx-shell .ps-q-commit {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+  flex-wrap: wrap;
+  padding: 9px 11px;
+  background: var(--bg-050);
+  border: 1px solid var(--border-100);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--radius-md);
+}
+.mdx-shell .ps-q-commit[data-rolled]  { border-left-color: var(--success); }
+.mdx-shell .ps-q-commit[data-blocker] { border-left-color: var(--error); }
+.mdx-shell .ps-q-commit-l { display: flex; align-items: flex-start; gap: 8px; min-width: 0; flex: 1 1 220px; }
+.mdx-shell .ps-q-commit-ico { display: inline-flex; flex-shrink: 0; color: var(--text-400); margin-top: 1px; }
+.mdx-shell .ps-q-commit-ico svg { width: 14px; height: 14px; }
+.mdx-shell .ps-q-commit[data-rolled]  .ps-q-commit-ico { color: var(--success); }
+.mdx-shell .ps-q-commit[data-blocker] .ps-q-commit-ico { color: var(--error); }
+.mdx-shell .ps-q-commit-lbl {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-300);
+}
+.mdx-shell .ps-q-commit-body {
+  font-size: 12px; line-height: 1.55; color: var(--text-200); margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+.mdx-shell .ps-q-commit-r { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
+.mdx-shell .ps-q-commit-link {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11.5px; color: var(--accent-200); cursor: pointer;
+  transition: color var(--dur) var(--ease);
+}
+.mdx-shell .ps-q-commit-link:hover { color: var(--accent-100); text-decoration: underline; }
+.mdx-shell .ps-q-commit-link .ico svg { width: 12px; height: 12px; }
+.mdx-shell .ps-q-commit-state,
+.mdx-shell .ps-commit-state {
+  padding: 1px 6px; border-radius: 4px; white-space: nowrap;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  background: var(--bg-100); color: var(--text-300);
+}
+.mdx-shell .ps-q-commit-state.ok,   .mdx-shell .ps-commit-state.ok   { background: var(--mdx-tone-ok-bg);   color: var(--mdx-tone-ok-fg); }
+.mdx-shell .ps-q-commit-state.warn, .mdx-shell .ps-commit-state.warn { background: var(--mdx-tone-warn-bg); color: var(--mdx-tone-warn-fg); }
+.mdx-shell .ps-q-commit-state.err,  .mdx-shell .ps-commit-state.err  { background: var(--mdx-tone-err-bg);  color: var(--mdx-tone-err-fg); }
+
+/* ── Timeline ───────────────────────────────────────────────── */
+.mdx-shell .ps-timeline { display: flex; flex-direction: column; }
+.mdx-shell .ps-timeline-row {
+  display: grid; grid-template-columns: minmax(0, 104px) minmax(0, 112px) minmax(0, 1fr);
+  gap: 10px; align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-100);
+}
+.mdx-shell .ps-timeline-row:last-child { border-bottom: 0; }
+.mdx-shell .ps-timeline-when { font-family: var(--font-mono); font-size: 11px; color: var(--text-300); }
+.mdx-shell .ps-timeline-who  { font-size: 11.5px; color: var(--text-200); overflow-wrap: anywhere; }
+.mdx-shell .ps-timeline-what { font-size: 12px; color: var(--text-100); line-height: 1.5; overflow-wrap: anywhere; }
+
+/* ── Commitments table ──────────────────────────────────────── */
+.mdx-shell .ps-commit-table { display: flex; flex-direction: column; gap: 6px; }
+/* Wraps rather than declaring columns. Five fixed tracks that fit at 1,200px
+   are five tracks that spill at 732, which is what this pane usually gets. */
+.mdx-shell .ps-commit-row {
+  display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap;
+  padding: 9px 11px; min-width: 0;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--radius-md);
+}
+.mdx-shell .ps-commit-row[data-rolled]  { border-left-color: var(--success); }
+.mdx-shell .ps-commit-row[data-blocker] { border-left-color: var(--error); }
+.mdx-shell .ps-commit-id   { font-size: 10.5px; color: var(--text-300); flex: 0 0 auto; }
+.mdx-shell .ps-commit-text { font-size: 12px; color: var(--text-100); line-height: 1.5; flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
+.mdx-shell .ps-commit-from { font-size: 10.5px; color: var(--text-300); flex: 0 0 auto; white-space: nowrap; }
+.mdx-shell .ps-commit-jump {
+  display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto;
+  font-size: 11.5px; color: var(--accent-200); cursor: pointer; white-space: nowrap;
+  transition: color var(--dur) var(--ease);
+}
+.mdx-shell .ps-commit-jump:hover { color: var(--accent-100); text-decoration: underline; }
+.mdx-shell .ps-commit-jump svg { width: 12px; height: 12px; }
+
+/* ── Empty states ───────────────────────────────────────────── */
+.mdx-shell .ps-empty {
+  padding: 22px 18px; text-align: center;
+  background: var(--bg-050);
+  border: 1px dashed var(--border-200);
+  border-radius: var(--radius-md);
+}
+.mdx-shell .ps-empty-t { font-size: 12.5px; font-weight: 500; color: var(--text-100); }
+.mdx-shell .ps-empty-s { font-size: 11.5px; color: var(--text-300); margin-top: 3px; line-height: 1.5; }
+
+/* Below the width at which a 300px list and a detail pane both stay usable,
+   the two panes stack. 300 + 16 + 300 = 616px is the point where the detail
+   column stops being wider than the list beside it. */
+@media (max-width: 640px) {
+  .mdx-shell .ps-layout { grid-template-columns: minmax(0, 1fr); }
 }
