@@ -161,6 +161,10 @@ was skipped and the user downloaded a blank official form under a plain "Downloa
   governed values read-only with their source in words, inputs for unsourced keys ("entered for this export
   only · not stored"), and the filled/blank/ignored report after the run.
 - The device golden journey, red on `499f096` since W1-5, is green and asserts the success path.
+- Second pass: an IVD program filing a 510(k) is produced on the IVD eSTAR (the 510(k) surface had a
+  literal nIVD variant); the Generate control locks BEFORE the first click on an enforced entitlement
+  denial (`GET /api/510k/estar/entitlement`); the 510(k) surface no longer crashes on an unreadable
+  section-list body.
 
 Proof: `docs/reports/wo8-phase2-estar-demo-2026-09-03.md`. 61 test files / 882 tests green across the eSTAR engine, forms, routes, MDX kit and the device golden journey.
 
@@ -194,8 +198,7 @@ can settle stand in front of any further click:
 
 Candidates JM may name, in no order: persist the user-typed administrative values (a schema decision — a
 column or a table — so a migration); De Novo / PMA descriptors (templates not vendored; §8 still applies);
-the entitlement state before the first click (no read endpoint exposes it today; the control locks only after
-a 403). Idle is the correct state for a stream whose gate has not cleared. Do not substitute other work.
+the Q-Sub / IDE / 513(g) PreSTAR descriptors (template not vendored; §8 still applies). Idle is the correct state for a stream whose gate has not cleared. Do not substitute other work.
 
 ## 7. Other JM-only tasks on this stream
 
@@ -235,7 +238,7 @@ a 403). Idle is the correct state for a stream whose gate has not cleared. Do no
 | Date | Account | Authorized click | What was proven | Report |
 |---|---|---|---|---|
 | 2026-09-03 | A | WO-8 Phase 1 — unblock eSTAR fill | `filled: true`, 20/20 read-back, 91 tests pass | `docs/reports/wo8-phase1-estar-unblock-2026-09-03.md` |
-| 2026-09-03 | B | WO-8 Phase 2 — device + diagnostic, whole stream (JM: "get medical device and diagnostic fully done now") | official eSTAR filled from governed records with per-field provenance on the 510(k) and IVD surfaces; device golden journey green; 61 test files / 882 tests green across the eSTAR engine, forms, routes, MDX kit and the device golden journey | `docs/reports/wo8-phase2-estar-demo-2026-09-03.md` |
+| 2026-09-03 | B | WO-8 Phase 2 — device + diagnostic, whole stream (JM: "get medical device and diagnostic fully done now") | official eSTAR filled from governed records with per-field provenance on the 510(k) and IVD surfaces; device golden journey green; second pass: IVD 510(k) on the IVD eSTAR, entitlement lock before the first click, no crash on an unreadable section list; 62 test files / 898 tests green across the eSTAR engine, forms, routes, MDX kit and the device golden journey | `docs/reports/wo8-phase2-estar-demo-2026-09-03.md` |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work. A session
