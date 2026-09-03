@@ -9,21 +9,27 @@
    for by mistake. The file keeps its path so no import moves; it is no longer
    a fixture in anything but directory name. */
 
-/* Type-only, so this module still has no runtime dependency on the chat hook or
-   the governed-action hook — both imports are erased at compile time. They are
-   the REAL types rather than structural mirrors on purpose: a mirror of
-   `PendingSignoff` is a second definition of what a Part 11 signature carries,
-   free to drift from the one `GovernedActionSignoff` actually consumes. */
+/* Type-only, so this module still has no runtime dependency on the chat hook,
+   the governed-action hook or the activity component — all three imports are
+   erased at compile time. They are the REAL types rather than structural
+   mirrors on purpose: a mirror of `PendingSignoff` is a second definition of
+   what a Part 11 signature carries, free to drift from the one
+   `GovernedActionSignoff` actually consumes; a mirror of `AnaActivityProps`
+   would be a second shape for the work record, free to drift from the one
+   <AnaActivity /> renders. */
 import type { AnaChatAction } from '../../components/ana/useAnaChat';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
+import type { AnaActivityProps } from '../AnaActivity';
 
 /* ---- Types ---- */
 
-export interface CtToolCall {
-  name: string;
-  arg: string;
-  result: string;
-}
+/* `CtToolCall` ({ name, arg, result }) was declared here and rendered by
+   `AnaTurn` as a `.ct-tool` row. `toTurn` never set `tools`, so the row never
+   appeared once — the same dead-renderer class this surface has already had
+   twice (the proposal block, the dropped sign-offs). The turn's real tool
+   calls are `AnaToolCall`s, carried on `activity` below and rendered by
+   <AnaActivity />, the one tool-transparency renderer. Deleted rather than
+   wired, so a second shape for the same record is not left within reach. */
 
 export interface CtLink {
   label: string;
@@ -38,8 +44,6 @@ export interface CtGrounding {
 export interface CtTurn {
   role: string;
   text?: string;
-  thinking?: string;
-  tools?: CtToolCall[];
   answer?: string;
   links?: CtLink[];
   grounding?: CtGrounding[];
@@ -58,6 +62,19 @@ export interface CtTurn {
    */
   executedActions?: AnaChatAction[];
   pendingSignoffs?: PendingSignoff[];
+  /**
+   * The turn's real activity record, rendered by <AnaActivity />.
+   *
+   * The same mapping the shell rail uses (`adaptChatMessage` in V2App.tsx):
+   * the phase AnA is in, the lens she read the question through, the document
+   * type she detected, every deterministic tool she called with its round and
+   * status, her extended reasoning, and the deliverable's title. `toTurn`
+   * used to carry `thinking` alone and drop the rest, so a multi-tool,
+   * multi-round run rendered on this surface as three animated dots. Omitted
+   * entirely for a settled turn that did nothing reportable — never an empty
+   * or decorated record.
+   */
+  activity?: AnaActivityProps;
 }
 
 export interface CtArtRow {
