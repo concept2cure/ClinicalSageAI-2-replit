@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T01:47:50.033Z",
+  "generatedAt": "2026-09-03T02:05:10.521Z",
   "git": {
-    "sha": "3e50cfe90b4b5af1c973fcfc88070ac38bbee8cd",
+    "sha": "529369cb9b20bb32cf8cff0d71f0a0513f960ee8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2229,16 +2229,16 @@
         "bytes": 131820
       },
       {
+        "file": "server/services/module3Composer.ts",
+        "bytes": 130739
+      },
+      {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "bytes": 130466
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "bytes": 127662
-      },
-      {
-        "file": "server/services/module3Composer.ts",
-        "bytes": 122111
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2274,7 +2274,7 @@
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
-        "bytes": 110696
+        "bytes": 110971
       },
       {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
@@ -2387,6 +2387,10 @@
         "lines": 2685
       },
       {
+        "file": "server/services/module3Composer.ts",
+        "lines": 2624
+      },
+      {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
         "lines": 2609
       },
@@ -2409,10 +2413,6 @@
       {
         "file": "server/services/ai-gateway/gateway.ts",
         "lines": 2466
-      },
-      {
-        "file": "server/services/module3Composer.ts",
-        "lines": 2442
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2455,12 +2455,12 @@
         "lines": 2155
       },
       {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2133
+        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+        "lines": 2135
       },
       {
-        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
-        "lines": 2131
+        "file": "server/routes/submission-ops.ts",
+        "lines": 2133
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
