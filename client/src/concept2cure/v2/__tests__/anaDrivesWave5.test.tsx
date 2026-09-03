@@ -100,7 +100,7 @@ describe('EctdCoauthor — open-tab views, never runs', () => {
   beforeEach(() => {
     apiRequest.mockReset();
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/coauthor/documents') return ok(ECTD_DOCS);
+      if (method === 'GET' && String(url).split('?')[0] === '/api/coauthor/documents') return ok(ECTD_DOCS);
       return ok({});
     });
   });

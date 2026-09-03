@@ -47,7 +47,8 @@
  */
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { I } from '../icons';
-import { connected, liveGetOrNull, liveMutateOrNull, EmptyState } from '../dataConnect';
+import { liveGetOrNull, liveMutateOrNull, EmptyState } from '../dataConnect';
+import { redactInternals } from '@/lib/queryClient';
 import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
 import { useAnaChat } from '../../components/ana/useAnaChat';
 import { AnaWorkPanel } from '../AnaWorkPanel';
@@ -163,20 +164,24 @@ function statusToken(s: string | null | undefined): string {
    convention (liveMutateOrNull / liveGetOrNull, dataConnect's "real-data
    standard"). The UI renders an explicit unavailable state on null. */
 
-function runValidateAction(docId: number): Promise<ValidationResult | null> {
+/* Both used to map to `result || null` and drop `r.error` — a 403 refusal, a
+   404 and a 500 all rendered as "the service did not return a result". The
+   reason now travels with the null so the panel can say REFUSED, not merely
+   unavailable. */
+function runValidateAction(docId: number): Promise<{ result: ValidationResult | null; error: string | null }> {
   return liveMutateOrNull<{ validation?: ValidationResult }>(
     'POST', '/api/coauthor/documents/' + docId + '/validate', {},
   )
-    .then((r) => r.data?.validation || null)
-    .catch(() => null);
+    .then((r) => ({ result: r.data?.validation || null, error: r.data?.validation ? null : (r.error ?? null) }))
+    .catch(() => ({ result: null, error: 'the validation service could not be reached' }));
 }
 
-function runComplianceAction(docId: number): Promise<ComplianceResult | null> {
+function runComplianceAction(docId: number): Promise<{ result: ComplianceResult | null; error: string | null }> {
   return liveGetOrNull<{ compliance?: ComplianceResult }>(
     '/api/coauthor/documents/' + docId + '/compliance',
   )
-    .then((r) => r.data?.compliance || null)
-    .catch(() => null);
+    .then((r) => ({ result: r.data?.compliance || null, error: r.data?.compliance ? null : (r.error ?? null) }))
+    .catch(() => ({ result: null, error: 'the compliance service could not be reached' }));
 }
 
 /** The REAL Part 11 sign-off prompts AnA returned for governed commands issued
@@ -209,12 +214,13 @@ function readProjectId(): string | undefined {
 /* ---- Component ---- */
 
 export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
-  const live = connected();
 
   const [docs, setDocs] = useState<CoauthorDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<number | null>(null);
+  const activeIdRef = useRef<number | null>(null);
+  activeIdRef.current = activeId;
   // The mounted editor's unsaved-buffer flag (its onDirtyChange). The canvas is
   // keyed by document id, so any switch is an unmount that destroys the buffer
   // — this flag is what lets an AnA-driven switch refuse instead of discard.
@@ -227,7 +233,18 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
   const [focus, setFocus] = useState(false);
   const [tab, setTab] = useState<'document' | 'validation' | 'compliance'>('document');
   const [draft, setDraft] = useState('');
-  const [busy, setBusy] = useState('');
+  /* One `busy` slot served two independent checks: whichever resolved first
+     cleared it, and the other panel fell back to its idle prompt mid-run. */
+  const [validating, setValidating] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [complianceError, setComplianceError] = useState<string | null>(null);
+  /* A refused save was rendered only by the editor's fixed "Save failed —
+     kept on this device"; this host never said WHY. */
+  const [saveError, setSaveError] = useState<string | null>(null);
+  /* The server's own count. The list is one page (limit 200); counts and the
+     roll-up below are only claimed over the whole set. */
+  const [serverTotal, setServerTotal] = useState<number | null>(null);
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [compliance, setCompliance] = useState<ComplianceResult | null>(null);
   // Distinguishes "ran and the endpoint gave us nothing" from "not run yet".
@@ -246,7 +263,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    liveGetOrNull<{ documents: CoauthorDoc[] }>('/api/coauthor/documents').then((res) => {
+    liveGetOrNull<{ documents: CoauthorDoc[]; total?: number }>('/api/coauthor/documents?limit=200').then((res) => {
       if (cancelled) return;
       if (res.error) {
         setError(res.error);
@@ -255,6 +272,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
       }
       const list = Array.isArray(res.data?.documents) ? res.data!.documents : [];
       setDocs(list);
+      setServerTotal(typeof res.data?.total === 'number' ? res.data.total : null);
       // Open every module that actually holds a document.
       const open: Record<string, boolean> = {};
       for (const d of list) open[moduleOf(d)] = true;
@@ -318,6 +336,13 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
     setCompliance(null);
     setValidationUnavailable(false);
     setComplianceUnavailable(false);
+    setValidationError(null);
+    setComplianceError(null);
+    setSaveError(null);
+    // An in-flight check belongs to the document that is going away; its
+    // result is dropped by the activeIdRef check where it lands.
+    setValidating(false);
+    setChecking(false);
     // The dirty flag belongs to the editor mount that is going away; the new
     // mount re-reports its own state through onDirtyChange.
     setEditorDirty(false);
@@ -341,8 +366,10 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
       );
       const saved = r.data?.document;
       if (!saved) {
+        setSaveError(redactInternals(r.error, 'the server did not confirm the write'));
         throw new Error(r.error || 'The server did not confirm the write.');
       }
+      setSaveError(null);
       setDocs((ds) => ds.map((d) => (d.id === activeDoc.id ? { ...d, ...saved } : d)));
       setValidation(null);
       setCompliance(null);
@@ -451,10 +478,10 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
             "save them first (Cmd/Ctrl-S or the editor's Save).",
         };
       }
-      if (busy !== '') {
+      if (validating || checking) {
         return {
           ok: false,
-          reason: `A ${busy} check is running against the open document — let it finish first.`,
+          reason: `A ${validating ? 'validation' : 'compliance'} check is running against the open document — let it finish first.`,
         };
       }
       if (loading) return { ok: false, reason: 'The eCTD documents are still loading.', retry: true };
@@ -500,7 +527,15 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
   const total = docs.length;
   const approvedCount = docs.filter((d) => statusToken(d.status) === 'approved').length;
   const reviewCount = docs.filter((d) => statusToken(d.status) === 'review').length;
+  /* A status roll-up of the documents READ — approved fully, in review at
+     half. It was labelled "eCTD readiness", which a reader takes as a filing
+     assessment; the server's structural validation and ICH M4 checks do not
+     feed it. Named for what it measures below. */
   const readiness = total ? Math.round(((approvedCount + reviewCount * 0.5) / total) * 100) : 0;
+  /* The list is one page. When the server's total exceeds it, every count
+     here is over a truncated set; the footer and headline say so and withhold
+     the roll-up rather than present a page statistic as the dossier's. */
+  const partialRead = serverTotal != null && serverTotal > total;
 
   /* ── What the backbone footer is entitled to say ───────────────────────────
      `total`, `approvedCount` and `readiness` are only measurements once the
@@ -529,22 +564,39 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
 
   const runValidate = () => {
     if (!activeDoc) return;
-    setBusy('validate');
+    const docId = activeDoc.id;
+    setValidating(true);
+    // The previous verdict described the previous run; it does not stand
+    // beside the progress line as if it were current.
+    setValidation(null);
+    setValidationUnavailable(false);
+    setValidationError(null);
     setTab('validation');
-    runValidateAction(activeDoc.id).then((v) => {
-      setValidation(v);
-      setValidationUnavailable(v === null);
-      setBusy('');
+    runValidateAction(docId).then(({ result, error }) => {
+      /* No scoping before: a human click during a run let document A's
+         "Valid" badge, counts and findings land under document B — and,
+         `validation` being non-null, B's auto-run then never fired. */
+      if (activeIdRef.current !== docId) return;
+      setValidation(result);
+      setValidationUnavailable(result === null);
+      setValidationError(result === null ? redactInternals(error, 'the validation service did not return a result') : null);
+      setValidating(false);
     });
   };
   const runCompliance = () => {
     if (!activeDoc) return;
-    setBusy('compliance');
+    const docId = activeDoc.id;
+    setChecking(true);
+    setCompliance(null);
+    setComplianceUnavailable(false);
+    setComplianceError(null);
     setTab('compliance');
-    runComplianceAction(activeDoc.id).then((c) => {
-      setCompliance(c);
-      setComplianceUnavailable(c === null);
-      setBusy('');
+    runComplianceAction(docId).then(({ result, error }) => {
+      if (activeIdRef.current !== docId) return;
+      setCompliance(result);
+      setComplianceUnavailable(result === null);
+      setComplianceError(result === null ? redactInternals(error, 'the compliance service did not return a result') : null);
+      setChecking(false);
     });
   };
 
@@ -616,7 +668,14 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
           )}
         </div>
         <div className="ec-spacer"></div>
-        {activeDoc && <span className="ec-autosave">{I.check} {activeDoc.status}</span>}
+        {/* A green tick next to `draft`, `review` and `approved` alike, blind to
+            unsaved edits. The tick is for approved only; unsaved work is said. */}
+        {activeDoc && (
+          <span className={'ec-autosave' + (editorDirty ? ' sp-tone-warn' : '')} title={editorDirty ? 'This document has unsaved edits' : 'Document status'}>
+            {editorDirty ? 'unsaved edits · ' : statusToken(activeDoc.status) === 'approved' ? <>{I.check} </> : null}
+            {activeDoc.status}
+          </span>
+        )}
         <button className="ec-topbtn" onClick={() => setFocus((v) => !v)} title="Focus mode">{focus ? (I.minimize || I.x) : (I.maximize || I.expand || I.layers)}</button>
         <button className="ec-topbtn primary" onClick={runValidate} disabled={!activeDoc}>{I.shieldCheck || I.shield} Validate</button>
       </div>
@@ -678,10 +737,10 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
               {/* A settled read that returned nothing DOES establish these two:
                   the org has no co-author documents. Readiness does not follow
                   from them — it was measured against nothing. */}
-              <div className="ec-tree-foot-row"><span>Documents</span><b>{total}</b></div>
-              <div className="ec-tree-foot-row"><span>Approved</span><b>{approvedCount}</b></div>
-              <div className="ec-tree-foot-row"><span>eCTD readiness</span><b>{backboneState === 'not-assessed' ? 'Not assessed' : readiness + '%'}</b></div>
-              {mayReassure(backboneState, readiness) && (
+              <div className="ec-tree-foot-row"><span>Documents</span><b>{partialRead ? `${total} of ${serverTotal} read` : total}</b></div>
+              <div className="ec-tree-foot-row"><span>Approved</span><b>{partialRead ? `${approvedCount} of the ${total} read` : approvedCount}</b></div>
+              <div className="ec-tree-foot-row"><span>Status roll-up</span><b>{backboneState === 'not-assessed' ? 'Not assessed' : partialRead ? 'Partial read — not computed' : readiness + '%'}</b></div>
+              {!partialRead && mayReassure(backboneState, readiness) && (
                 <div className="ec-tree-foot-row"><span>eCTD backbone</span><b>All documents approved</b></div>
               )}
             </>
@@ -693,7 +752,9 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
       <section className="ec-intel">
         <div className="ec-intel-head">
           <b>AnA</b>
-          <span className="hint">co-authoring &sect;{activeRef || '—'} -- {live ? 'live' : 'bound to dossier'}</span>
+          {/* "live" was asserted from token presence alone, including when every
+    read on the surface had failed. */}
+          <span className="hint">co-authoring &sect;{activeRef || '—'} -- bound to the dossier</span>
           <button
             type="button"
             ref={workToggleRef}
@@ -852,9 +913,12 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
                   <AnswerLead
                     tone="calm"
                     eyebrow={'What §' + (activeDoc.moduleNumber || '—') + ' needs before it can promote'}
-                    headline={<><b>&sect;{activeDoc.moduleNumber || '—'} {activeDoc.title}</b> is <b>{activeDoc.status}</b>. The dossier is <b>{readiness}%</b> eCTD-ready across {total} document{total === 1 ? '' : 's'}.</>}
+                    headline={<><b>&sect;{activeDoc.moduleNumber || '—'} {activeDoc.title}</b> is <b>{activeDoc.status}</b>.{' '}
+                      {partialRead
+                        ? <>Only {total} of the {serverTotal} documents were read, so no dossier-wide figure is claimed.</>
+                        : <><b>{readiness}%</b> of the {total} document{total === 1 ? '' : 's'} are approved or in review — a status roll-up, not a filing-readiness check.</>}</>}
                     body={<>Run eCTD structural validation and ICH M4 compliance against the live backbone as you write — both are computed on the server from this document and its sections.</>}
-                    reassure="I keep each check traced to the persisted document and re-run eCTD structure and ICH M4 as it changes."
+                    reassure="Each check is traced to the persisted document. Saving clears the last results, because they described the previous text — re-run them after editing."
                     action={{ label: 'Run eCTD validation', onClick: runValidate }}
                     secondary="Or keep drafting — the artifact reflects the saved document."
                   />
@@ -874,6 +938,11 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
                       flexDirection: 'column',
                     }}
                   >
+                    {saveError && (
+                      <div className="ec-empty sp-tone-warn" role="alert" style={{ padding: '6px 10px' }}>
+                        Not saved — {saveError}. Your text is kept on this device; the record is unchanged.
+                      </div>
+                    )}
                     <RichSectionEditor
                       key={activeDoc.id}
                       ref={editorRef}
@@ -904,20 +973,20 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
           <div className="ec-art-panel">
             <div className="ec-doc-inner">
               <div className="ec-panel-head">
-                <div><div className="ec-panel-t">eCTD structural validation</div><div className="ec-panel-s">ICH M4 eCTD structural rules {live ? '-- live' : ''}</div></div>
-                <button className="ec-topbtn primary" onClick={runValidate} disabled={!activeDoc}>{busy === 'validate' ? 'Validating...' : <>{I.refresh || I.check} Re-validate</>}</button>
+                <div><div className="ec-panel-t">eCTD structural validation</div><div className="ec-panel-s">ICH M4 eCTD structural rules</div></div>
+                <button className="ec-topbtn primary" onClick={runValidate} disabled={!activeDoc}>{validating ? 'Validating...' : <>{I.refresh || I.check} Re-validate</>}</button>
               </div>
               {!activeDoc ? (
                 <div className="ec-empty">Select an eCTD document to validate its structure against the backbone.</div>
               ) : (
                 <>
-                  {!validation && !validationUnavailable && busy !== 'validate' && <div className="ec-empty">Run validation to check module structure, cross-references and section status against the eCTD backbone.</div>}
-                  {validationUnavailable && busy !== 'validate' && (
+                  {!validation && !validationUnavailable && !validating && <div className="ec-empty">Run validation to check module structure, cross-references and section status against the eCTD backbone.</div>}
+                  {validationUnavailable && !validating && (
                     <div className="ec-empty sp-tone-warn">
-                      The validation service did not return a result. No findings are shown because none were produced — this is not a clean result.
+                      The validation did not produce a result{validationError ? ` — ${validationError}` : ''}. No findings are shown because none were produced — this is not a clean result.
                     </div>
                   )}
-                  {busy === 'validate' && <div className="ec-empty">Validating {activeDoc.title} against ICH M4 structure...</div>}
+                  {validating && <div className="ec-empty">Validating {activeDoc.title} against ICH M4 structure...</div>}
                   {validation && (
                     <>
                       <div className="ec-vstat" data-valid={validation.isValid}>
@@ -944,20 +1013,20 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
           <div className="ec-art-panel">
             <div className="ec-doc-inner">
               <div className="ec-panel-head">
-                <div><div className="ec-panel-t">ICH M4 compliance</div><div className="ec-panel-s">Checked against ICH M4 {live ? '-- live' : ''}</div></div>
-                <button className="ec-topbtn primary" onClick={runCompliance} disabled={!activeDoc}>{busy === 'compliance' ? 'Checking...' : <>{I.refresh || I.check} Re-check</>}</button>
+                <div><div className="ec-panel-t">ICH M4 compliance</div><div className="ec-panel-s">Checked against ICH M4</div></div>
+                <button className="ec-topbtn primary" onClick={runCompliance} disabled={!activeDoc}>{checking ? 'Checking...' : <>{I.refresh || I.check} Re-check</>}</button>
               </div>
               {!activeDoc ? (
                 <div className="ec-empty">Select an eCTD document to check its ICH M4 compliance.</div>
               ) : (
                 <>
-                  {!compliance && !complianceUnavailable && busy !== 'compliance' && <div className="ec-empty">Run the ICH M4 compliance check across the organisation of the CTD.</div>}
-                  {complianceUnavailable && busy !== 'compliance' && (
+                  {!compliance && !complianceUnavailable && !checking && <div className="ec-empty">Run the ICH M4 compliance check across the organisation of the CTD.</div>}
+                  {complianceUnavailable && !checking && (
                     <div className="ec-empty sp-tone-warn">
-                      The compliance service did not return a result. No score is shown because none was computed — this is not a passing score.
+                      The compliance check did not produce a result{complianceError ? ` — ${complianceError}` : ''}. No score is shown because none was computed — this is not a passing score.
                     </div>
                   )}
-                  {busy === 'compliance' && <div className="ec-empty">Checking ICH M4 organisation...</div>}
+                  {checking && <div className="ec-empty">Checking ICH M4 organisation...</div>}
                   {compliance && (
                     <>
                       <div className="ec-cscore">
