@@ -1255,6 +1255,9 @@ export const IMPURITY_TYPES = [
  *  guess one from the column default. */
 export const IMPURITY_LEVEL_UNITS = ['%', 'ppm', 'ppb', 'mg/day', 'µg/day'];
 
+/** ICH Q3D sets a different permitted daily exposure for each of these. */
+export const ROUTES_OF_ADMINISTRATION = ['oral', 'parenteral', 'inhalation'];
+
 export const IMPURITY_STATUSES = ['draft', 'specified', 'retired'];
 
 export interface ImpurityProfileBody {
@@ -1271,6 +1274,7 @@ export interface ImpurityProfileBody {
   analyticalMethod?: string | null;
   observedLevel?: string | null;
   levelUnit: string;
+  routeOfAdministration?: string | null;
   specificationLimit?: string | null;
   reportingThreshold?: string | null;
   identificationThreshold?: string | null;
@@ -1296,6 +1300,7 @@ export function impurityProfileForm(row?: Partial<ImpurityProfileBody> | null): 
       { key: 'origin', label: 'Origin', type: 'text', default: row?.origin ?? '', placeholder: 'Where it comes from — a step, a reagent, a degradation route' },
       { key: 'observedLevel', label: 'Observed level', type: 'text', half: true, default: row?.observedLevel ?? '', placeholder: 'e.g. 0.08' },
       { key: 'levelUnit', label: 'Unit', type: 'select', options: IMPURITY_LEVEL_UNITS, required: true, half: true, default: row?.levelUnit ?? '%', desc: 'A level with no unit cannot be compared to a threshold' },
+      { key: 'routeOfAdministration', label: 'Route of administration', type: 'select', options: ROUTES_OF_ADMINISTRATION, half: true, default: row?.routeOfAdministration ?? '', desc: 'Required for an elemental impurity: ICH Q3D sets a different permitted daily exposure per route, and oral is the most permissive for most elements' },
       { key: 'maximumDailyDose', label: 'Maximum daily dose', type: 'text', half: true, default: row?.maximumDailyDose ?? '', placeholder: 'e.g. 500 mg — every ICH threshold is keyed to it' },
       { key: 'specificationLimit', label: 'Specification limit', type: 'text', half: true, default: row?.specificationLimit ?? '', placeholder: 'e.g. NMT 0.15%' },
       { key: 'analyticalMethod', label: 'Analytical method', type: 'text', half: true, default: row?.analyticalMethod ?? '', placeholder: 'e.g. AM-014 RP-HPLC' },
@@ -1325,6 +1330,7 @@ export function impurityProfileBody(v: Record<string, string>, projectId?: strin
     impurityName: req(v.impurityName),
     impurityType: req(v.impurityType) || 'process-related',
     levelUnit: req(v.levelUnit) || '%',
+    routeOfAdministration: opt(v.routeOfAdministration) ?? null,
     status: req(v.status) || 'draft',
   };
   const optionalText: Array<keyof ImpurityProfileBody> = [
@@ -1352,6 +1358,7 @@ export function impurityProfilePatch(v: Record<string, string>): ImpurityProfile
     impurityName: req(v.impurityName),
     impurityType: req(v.impurityType) || 'process-related',
     levelUnit: req(v.levelUnit) || '%',
+    routeOfAdministration: opt(v.routeOfAdministration) ?? null,
     status: req(v.status) || 'draft',
     origin: opt(v.origin) ?? null,
     casNumber: opt(v.casNumber) ?? null,

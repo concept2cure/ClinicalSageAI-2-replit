@@ -66,8 +66,12 @@ import {
   reconcileProgramClaims,
   runDriftSentinel,
 } from '../services/living-record/reconciliation-engine';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('regulatory-graph');
 router.use(authenticateToken);
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -154,7 +158,7 @@ router.get(
       const report = await programClaimsReport(programId);
       res.json(report);
     } catch (err: any) {
-      res.status(500).json({ error: 'Claims report failed', detail: err?.message });
+      return serverError(res, logger, 'loading claims report', err);
     }
   }
 );
@@ -168,7 +172,7 @@ router.get(
       const orphans = await findOrphanClaims(programId);
       res.json({ programId, orphans, count: orphans.length });
     } catch (err: any) {
-      res.status(500).json({ error: 'Orphan-claim query failed', detail: err?.message });
+      return serverError(res, logger, 'loading orphan claims', err);
     }
   }
 );
@@ -182,7 +186,7 @@ router.get(
       const contradicted = await findContradictedClaims(programId);
       res.json({ programId, contradicted, count: contradicted.length });
     } catch (err: any) {
-      res.status(500).json({ error: 'Contradicted-claim query failed', detail: err?.message });
+      return serverError(res, logger, 'loading contradicted claims', err);
     }
   }
 );
@@ -197,7 +201,7 @@ router.get(
       if (!trace) return res.status(404).json({ error: 'Claim not found' });
       res.json(trace);
     } catch (err: any) {
-      res.status(500).json({ error: 'Trace failed', detail: err?.message });
+      return serverError(res, logger, 'loading evidence', err);
     }
   }
 );
@@ -214,7 +218,7 @@ router.get('/documents/:documentId/claims', async (req: Request, res: Response) 
     const safe = traces.filter(t => t.claim.organizationId === orgId);
     res.json({ documentId, claims: safe, count: safe.length });
   } catch (err: any) {
-    res.status(500).json({ error: 'Reverse trace failed', detail: err?.message });
+    return serverError(res, logger, 'loading claims', err);
   }
 });
 
@@ -279,7 +283,7 @@ router.post(
       if (!result) return res.status(404).json({ error: 'Packet not found' });
       res.json(result);
     } catch (err: any) {
-      res.status(500).json({ error: 'Register failed', detail: err?.message });
+      return serverError(res, logger, 'saving register dependencies', err);
     }
   }
 );
@@ -294,7 +298,7 @@ router.get(
       const view = await getPacketDependencies(orgId, packetId);
       res.json({ packetId, ...view });
     } catch (err: any) {
-      res.status(500).json({ error: 'Dependency fetch failed', detail: err?.message });
+      return serverError(res, logger, 'loading dependencies', err);
     }
   }
 );
@@ -317,7 +321,7 @@ router.post('/propagate/evidence', async (req: Request, res: Response) => {
     );
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: 'Propagation failed', detail: err?.message });
+    return serverError(res, logger, 'saving evidence', err);
   }
 });
 
@@ -338,7 +342,7 @@ router.post('/propagate/claim', async (req: Request, res: Response) => {
     );
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: 'Propagation failed', detail: err?.message });
+    return serverError(res, logger, 'saving claim', err);
   }
 });
 
@@ -362,7 +366,7 @@ router.post('/propagate/predicate', async (req: Request, res: Response) => {
     );
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: 'Propagation failed', detail: err?.message });
+    return serverError(res, logger, 'saving predicate', err);
   }
 });
 
@@ -463,7 +467,7 @@ router.post(
 
       res.json(result);
     } catch (err: any) {
-      res.status(500).json({ error: 'Simulation failed', detail: err?.message });
+      return serverError(res, logger, 'saving reviewer simulation', err);
     }
   }
 );
@@ -479,7 +483,7 @@ router.get(
       const rows = await listProgramSimulations(orgId, programId, limit);
       res.json({ programId, runs: rows, count: rows.length });
     } catch (err: any) {
-      res.status(500).json({ error: 'List failed', detail: err?.message });
+      return serverError(res, logger, 'loading reviewer simulations', err);
     }
   }
 );
@@ -492,7 +496,7 @@ router.get('/reviewer-simulations/:runId', async (req: Request, res: Response) =
     if (!row) return res.status(404).json({ error: 'Run not found' });
     res.json(row);
   } catch (err: any) {
-    res.status(500).json({ error: 'Fetch failed', detail: err?.message });
+    return serverError(res, logger, 'loading reviewer simulations', err);
   }
 });
 
@@ -550,7 +554,7 @@ router.post(
       });
       res.json(result);
     } catch (err: any) {
-      res.status(500).json({ error: 'Propagation failed', detail: err?.message });
+      return serverError(res, logger, 'saving propagate regulatory change', err);
     }
   }
 );
@@ -564,7 +568,7 @@ router.get(
       const report = await programFreshnessReport(orgId, String(req.params.programId));
       res.json(report);
     } catch (err: any) {
-      res.status(500).json({ error: 'Freshness report failed', detail: err?.message });
+      return serverError(res, logger, 'loading freshness', err);
     }
   }
 );
@@ -616,7 +620,7 @@ router.get(
       const facts = await listProgramFacts(String(req.params.programId));
       res.json({ programId: String(req.params.programId), facts, count: facts.length });
     } catch (err: any) {
-      res.status(500).json({ error: 'Facts query failed', detail: err?.message });
+      return serverError(res, logger, 'loading facts', err);
     }
   }
 );
@@ -628,7 +632,7 @@ router.get(
     try {
       res.json(await programFactDriftReport(String(req.params.programId)));
     } catch (err: any) {
-      res.status(500).json({ error: 'Drift report failed', detail: err?.message });
+      return serverError(res, logger, 'loading drift', err);
     }
   }
 );
@@ -641,7 +645,7 @@ router.get(
       const sequences = await listProgramSequences(String(req.params.programId));
       res.json({ programId: String(req.params.programId), sequences, count: sequences.length });
     } catch (err: any) {
-      res.status(500).json({ error: 'Sequences query failed', detail: err?.message });
+      return serverError(res, logger, 'loading sequences', err);
     }
   }
 );
@@ -655,7 +659,7 @@ router.get('/facts/:factId/bindings', requireFactAccess, async (req: Request, re
     ]);
     res.json({ fact: (req as any).fact, bindings, openDrift, bindingCount: bindings.length });
   } catch (err: any) {
-    res.status(500).json({ error: 'Bindings query failed', detail: err?.message });
+    return serverError(res, logger, 'loading bindings', err);
   }
 });
 
@@ -680,7 +684,7 @@ router.post(
       });
       res.json(result);
     } catch (err: any) {
-      res.status(500).json({ error: 'Reconcile failed', detail: err?.message });
+      return serverError(res, logger, 'reconciling programs', err);
     }
   }
 );
@@ -711,7 +715,7 @@ router.post(
       });
       res.json(result);
     } catch (err: any) {
-      res.status(500).json({ error: 'Reconcile failed', detail: err?.message });
+      return serverError(res, logger, 'reconciling claims', err);
     }
   }
 );
@@ -723,7 +727,7 @@ router.post(
     try {
       res.json(await runDriftSentinel(String(req.params.programId)));
     } catch (err: any) {
-      res.status(500).json({ error: 'Drift scan failed', detail: err?.message });
+      return serverError(res, logger, 'saving scan', err);
     }
   }
 );
@@ -749,7 +753,7 @@ router.post(
       });
       res.json({ linked: true, programId: String(req.params.programId), legacyProgramId });
     } catch (err: any) {
-      res.status(500).json({ error: 'Link failed', detail: err?.message });
+      return serverError(res, logger, 'linking programs', err);
     }
   }
 );
@@ -762,7 +766,7 @@ router.post('/claims/:claimId/reconcile', requireClaimAccess, async (req: Reques
     const result = await reconcileClaimById(claimId, { actor: actorId(req) });
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: 'Reconcile failed', detail: err?.message });
+    return serverError(res, logger, 'reconciling claims', err);
   }
 });
 
@@ -782,7 +786,7 @@ router.post('/propagate/risk-vocab', async (req: Request, res: Response) => {
     );
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: 'Propagation failed', detail: err?.message });
+    return serverError(res, logger, 'saving risk vocab', err);
   }
 });
 
