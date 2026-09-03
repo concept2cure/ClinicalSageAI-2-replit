@@ -1763,6 +1763,14 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const loadComments = useCallback(async (docId: string) => {
     commentsDocRef.current = docId;
     setCommentsState('loading');
+    /* The ref above stops a stale RESPONSE landing; nothing stopped the stale
+       DISPLAY. On a document switch the previous document's threads stayed on
+       screen — with live Resolve / Reply controls that write by comment id —
+       until the new read returned. Cleared here, with the thread focus. */
+    setComments([]);
+    setFocusedCommentId(null);
+    setReplyTo(null);
+    setResolveFor(null);
     const { ok, body } = await readJson<{ comments?: AuthComment[] }>(
       `/api/authoring/documents/${encodeURIComponent(docId)}/comments`
     );
@@ -1995,19 +2003,33 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const uncite = useCallback(
     async (sourceId: number) => {
       if (!activeSectionId) return;
-      const res = await apiRequest(
-        'DELETE',
-        `/api/authoring/sections/${activeSectionId}/cite-source/${sourceId}`
-      );
-      if (!res.ok) {
+      /* apiRequest THROWS on the server's actual refusal (404 "a frozen
+         citation is immutable") and RETURNS a 401. The old shape had no catch,
+         so the real refusal was an unhandled rejection with no toast and a row
+         that just sat there — while the only reachable message, on 401, blamed
+         freeze-immutability for an expired session. */
+      try {
+        const res = await apiRequest(
+          'DELETE',
+          `/api/authoring/sections/${activeSectionId}/cite-source/${sourceId}`
+        );
+        if (res.status === 401) {
+          fireToast('Not removed — your session isn’t authenticated. Nothing was changed.', 'error');
+          return;
+        }
+        if (!res.ok) {
+          const json = await res.json().catch(() => null);
+          fireToast('Couldn’t remove the citation — ' + (serverMessage(json) ?? 'the server refused it') + '. Nothing was changed.', 'error');
+          return;
+        }
+        fireToast('Citation removed.');
+        void loadSources(activeSectionId);
+      } catch (e) {
         fireToast(
-          'Couldn’t remove the citation — a frozen citation is immutable. Nothing was changed.',
+          'Couldn’t remove the citation — ' + redactInternals(e instanceof Error ? e.message : '', 'the server refused it') + '. Nothing was changed.',
           'error'
         );
-        return;
       }
-      fireToast('Citation removed.');
-      void loadSources(activeSectionId);
     },
     [activeSectionId, fireToast, loadSources]
   );
@@ -2018,23 +2040,35 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const reresolve = useCallback(
     async (citationId: string) => {
       if (!activeSectionId) return;
-      const res = await apiRequest(
-        'POST',
-        `/api/authoring/sections/${activeSectionId}/refresh-token`,
-        {
-          cite_id: citationId,
+      /* The route refuses with a phrased reason (frozen citation, source no
+         longer resolves) as a 404/409 — which apiRequest THROWS, and this
+         handler had no catch: "Re-read source" was a silent no-op on exactly
+         the cases the comment above promises a reason for. */
+      try {
+        const res = await apiRequest(
+          'POST',
+          `/api/authoring/sections/${activeSectionId}/refresh-token`,
+          {
+            cite_id: citationId,
+          }
+        );
+        const json = await res.json().catch(() => null);
+        if (res.status === 401) {
+          fireToast('Not re-read — your session isn’t authenticated. Nothing was changed.', 'error');
+          return;
         }
-      );
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
+        if (!res.ok) {
+          fireToast('Couldn’t re-read the source — ' + (serverMessage(json) ?? 'the server refused it') + '. Nothing was changed.', 'error');
+          return;
+        }
+        fireToast(serverMessage(json) ?? 'Source re-read.');
+        void loadSources(activeSectionId);
+      } catch (e) {
         fireToast(
-          (json as any)?.message ?? 'Couldn’t re-read the source. Nothing was changed.',
+          'Couldn’t re-read the source — ' + redactInternals(e instanceof Error ? e.message : '', 'the server refused it') + '. Nothing was changed.',
           'error'
         );
-        return;
       }
-      fireToast((json as any)?.message ?? 'Source re-read.');
-      void loadSources(activeSectionId);
     },
     [activeSectionId, fireToast, loadSources]
   );
@@ -2909,21 +2943,36 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             style={{ flex: '0 0 auto', maxHeight: '46%', borderBottom: '1px solid var(--border)' }}
           >
             {filing.flat.map(node => {
-              const bound = findSectionForNode(sections, node.key);
+              /* `sections` is [] while the read is in flight and after it
+                 failed, so every node rendered dimmed, "not started in this
+                 document yet", with its "required" chip and a "no draft yet"
+                 toast on click — drafting-status claims produced by a read that
+                 had not happened. Unread is now its own state. */
+              const sectionsUnread = sectionsState !== 'ready';
+              const bound = sectionsUnread ? null : findSectionForNode(sections, node.key);
               const isActive = bound != null && bound.id === activeSectionId;
               return (
                 <button
                   key={node.key}
                   className="ed-tree-row"
                   data-active={isActive || undefined}
-                  style={{ paddingLeft: 10 + node.depth * 12, opacity: bound ? 1 : 0.62 }}
+                  style={{ paddingLeft: 10 + node.depth * 12, opacity: bound || sectionsUnread ? 1 : 0.62 }}
                   title={
-                    bound
-                      ? `${node.label} — open`
-                      : `${node.label} — not started in this document yet`
+                    sectionsUnread
+                      ? `${node.label} — this document’s sections have not been read yet`
+                      : bound
+                        ? `${node.label} — open`
+                        : `${node.label} — not started in this document yet`
                   }
                   onClick={() => {
-                    if (bound) {
+                    if (sectionsUnread) {
+                      fireToast(
+                        sectionsState === 'error'
+                          ? 'This document’s sections could not be read, so nothing is known about whether this part is drafted. Retry from the tree.'
+                          : 'This document’s sections are still being read.',
+                        'error'
+                      );
+                    } else if (bound) {
                       // The module rides with the navigation: a nav the guard
                       // holds must not move the create/export default to a
                       // section the author never opened.
@@ -2945,7 +2994,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                   <span className="ed-lbl" style={{ fontWeight: node.depth === 0 ? 600 : 400 }}>
                     {node.label}
                   </span>
-                  {node.mandatory && !bound && (
+                  {node.mandatory && !bound && !sectionsUnread && (
                     <span
                       className="rd-chip tone-idle"
                       style={{ marginLeft: 'auto' }}

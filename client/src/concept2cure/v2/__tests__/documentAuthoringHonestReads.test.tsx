@@ -130,4 +130,82 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
     expect(text()).not.toMatch(/Section renamed/);
     expect(text()).not.toMatch(/3\.2\.S\.9/);
   });
+  it('the filing outline does not call every part "not started" while the sections read has failed', async () => {
+    (window as any).C2C_PROJECT = { id: 'P-1' };
+    try {
+      wire((m, u) => {
+        if (m === 'GET' && u.startsWith('/api/c2c/documents?projectId=')) {
+          return ok({ documents: [{ id: 'F1', doc_type: 'nda', agency: 'fda', title: 'NDA 2026', rule_pack_version: '1', status: 'draft', readiness: 0 }] });
+        }
+        if (m === 'GET' && u === '/api/c2c/documents/F1/outline') {
+          return ok({
+            document: { id: 'F1', title: 'NDA 2026', doc_type: 'nda', agency: 'fda', status: 'draft', readiness: 0 },
+            outline: [{ key: '2.7', parent_key: null, label: 'Clinical Summary', mandatory: true, path_order: 1, status: 'todo', draft_source: null, has_content: false, version: 1 }],
+          });
+        }
+        if (m === 'GET' && u === '/api/authoring/docs/D1/sections') return fail(500);
+        return undefined;
+      });
+      render(<DocumentAuthoring {...props()} />);
+      const node = await screen.findByTitle(/Clinical Summary — this document’s sections have not been read yet/);
+      expect(screen.queryByTitle(/not started in this document yet/)).toBeNull();
+      expect(screen.queryByTitle('Required by the rule pack')).toBeNull();
+      fireEvent.click(node);
+      await waitFor(() => expect(text()).toMatch(/could not be read, so nothing is known about whether this part is drafted/));
+      expect(text()).not.toMatch(/no draft yet in this document/);
+    } finally {
+      delete (window as any).C2C_PROJECT;
+    }
+  });
+
+  it('switching documents clears the previous document’s comment threads instead of leaving them live', async () => {
+    const DOCS2 = { success: true, documents: [
+      DOCS.documents[0],
+      { id: 'D2', title: 'Second Document', module: 'M2', product_code: 'ABC', status: 'draft', updated_at: null, section_count: 1 },
+    ] };
+    const THREAD = { success: true, comments: [{
+      id: 'C1', doc_id: 'D1', section_id: 'S1', body: 'Justify the aggregation limit against batch history.',
+      status: 'open', author_name: 'R. Reviewer', section_code: '3.2.S.1', section_title: 'General Information',
+      created_at: '2026-08-23T10:00:00Z', anchor: null, replies: [],
+    }] };
+    wire((m, u) => {
+      if (m === 'GET' && u.startsWith('/api/authoring/docs?')) return ok(DOCS2);
+      if (m === 'GET' && u === '/api/authoring/docs/D2/sections') return ok({ success: true, sections: [{ ...SECTIONS.sections[0], id: 'S2', doc_id: 'D2', code: '2.5', title: 'Clinical Overview' }] });
+      if (m === 'GET' && u === '/api/authoring/documents/D1/comments') return ok(THREAD);
+      if (m === 'GET' && u === '/api/authoring/documents/D2/comments') return never();
+      return undefined;
+    });
+    render(<DocumentAuthoring {...props()} />);
+    fireEvent.click(await screen.findByRole('button', { name: /Comments/ }));
+    await waitFor(() => expect(text()).toMatch(/Justify the aggregation limit/));
+    fireEvent.click(screen.getByRole('button', { name: /Second Document/ }));
+    await waitFor(() => expect(text()).toMatch(/Loading comments…/));
+    expect(text()).not.toMatch(/Justify the aggregation limit/);
+  });
+
+  it('a citation removal the server refuses is reported with the server’s reason, not silently dropped', async () => {
+    (window as any).C2C_PROJECT = { id: 'P-1' };
+    try {
+      const citation = {
+        citationId: 'cite-1', citedAt: '2026-07-01T00:00:00Z', citationText: null, citedChecksum: 'sha-1', state: 'current',
+        source: { id: 5, title: 'protocol-v2.pdf', checksum: 'sha-1', extractionStatus: 'extracted', mimeType: 'application/pdf' },
+      };
+      apiRequest.mockImplementation(async (method: string, url: string) => {
+        if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+        if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok({ ...SECTIONS, sections: [{ ...SECTIONS.sections[0], citation_count: 1 }] });
+        if (method === 'GET' && url === '/api/authoring/sections/S1/sources') return ok({ sources: [citation] });
+        if (method === 'DELETE') {
+          // apiRequest THROWS the server's 404 refusal — the old handler had no catch.
+          throw Object.assign(new Error('No removable citation of that source on this section (a frozen citation is immutable)'), { name: 'ApiRequestError', status: 404 });
+        }
+        return ok({ success: true, revisions: [], comments: [], sources: [] });
+      });
+      render(<DocumentAuthoring {...props()} />);
+      fireEvent.click(await screen.findByRole('button', { name: /Sources/ }));
+      fireEvent.click(await screen.findByText('Remove'));
+      await waitFor(() => expect(text()).toMatch(/a frozen citation is immutable/));
+    } finally {
+      delete (window as any).C2C_PROJECT;
+    }
+  });
 });
