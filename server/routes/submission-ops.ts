@@ -54,6 +54,11 @@ import { buildECTDZip } from '../src/services/ectd';
 // conformant one (see server/services/ectd/package-leaf-bytes.ts).
 import { packageLeafBytes } from '../services/ectd/package-leaf-bytes';
 import { moduleForSectionKey, resolveArtifactPlacement } from '../services/ectd/section-to-ctd';
+import {
+  readRegulatoryIdentifiers,
+  usableIdentifier,
+  REGULATORY_IDENTIFIER_FIELDS,
+} from '../services/ectd/regulatory-identifiers';
 import { recordGovernedAction } from './c2c/actions';
 import PDFDocument from 'pdfkit';
 import { PassThrough } from 'stream';
@@ -1526,6 +1531,133 @@ const assembleBody = z.object({
  * the bundle hash bound to a frozen package. Re-assembling overwrites (idempotent
  * per content); no confirmation header is required.
  */
+/**
+ * PUT /packages/:packageId/regulatory-identifiers
+ *
+ * Record the agency application number and applicant identity the regional
+ * Module 1 backbone must carry. The assemble route REFUSES to fabricate them
+ * (REGULATORY-IDENTIFIER-MISSING blocks transmit), and the package model has no
+ * columns for them, so this is the governed way to supply them:
+ *   - the same charset contract as the assemble gate (shared module) — a value
+ *     that cannot be carried safely in a filename / XML text is refused, never
+ *     silently normalized;
+ *   - allowed on a locked package (assembly requires the lock), but a bundle
+ *     assembled under different identifiers is STALE (its backbone carries the
+ *     old ones) and is cleared so the transmit gate cannot ship it;
+ *   - recorded as a governed action with the caller's reason.
+ */
+const regulatoryIdentifiersBody = z.object({
+  applicationNumber: z.string().min(1).max(64),
+  applicantId: z.string().min(1).max(64),
+  applicantName: z.string().min(1).max(200),
+  reason: z.string().min(8, 'reason must be at least 8 characters'),
+});
+
+router.put('/packages/:packageId/regulatory-identifiers', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+
+    const parsed = regulatoryIdentifiersBody.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
+    const invalid = REGULATORY_IDENTIFIER_FIELDS.filter((f) => usableIdentifier(f, parsed.data[f]) === null);
+    if (invalid.length > 0) {
+      return res.status(400).json({
+        error:
+          `Identifier(s) do not meet the agency-identifier contract: ${invalid.join(', ')}. ` +
+          'Application number and applicant id: letters, digits, ".", "_" or "-" (start alphanumeric, max 64). ' +
+          'Applicant name: no control characters, max 200.',
+        code: 'REGULATORY_IDENTIFIER_INVALID',
+        fields: invalid,
+      });
+    }
+
+    const [pkg] = await db
+      .select()
+      .from(c2cSubmissionPackages)
+      .where(
+        and(
+          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          eq(c2cSubmissionPackages.orgId, orgId),
+        ),
+      );
+    if (!pkg) return res.status(404).json({ error: 'Package not found' });
+
+    const existingMetadata =
+      pkg.metadata && typeof pkg.metadata === 'object' ? (pkg.metadata as Record<string, unknown>) : {};
+    const previous = readRegulatoryIdentifiers(existingMetadata).values;
+    const next = {
+      applicationNumber: usableIdentifier('applicationNumber', parsed.data.applicationNumber)!,
+      applicantId: usableIdentifier('applicantId', parsed.data.applicantId)!,
+      applicantName: usableIdentifier('applicantName', parsed.data.applicantName)!,
+    };
+    const changed = REGULATORY_IDENTIFIER_FIELDS.some((f) => previous[f] !== next[f]);
+    const regulatory = { ...next, recordedAt: new Date().toISOString(), recordedBy: userId };
+
+    // A bundle assembled under different identifiers carries the OLD ones in its
+    // backbone. Clear it so the transmit gate cannot ship it; re-assemble.
+    const { bundle: existingBundle, ...metadataWithoutBundle } = existingMetadata;
+    const staleBundleCleared = changed && existingBundle !== undefined;
+    const metadata = staleBundleCleared
+      ? { ...metadataWithoutBundle, regulatory }
+      : { ...existingMetadata, regulatory };
+
+    await db
+      .update(c2cSubmissionPackages)
+      .set({ metadata, updatedAt: new Date() })
+      .where(eq(c2cSubmissionPackages.id, pkg.id));
+
+    // Governed action, same posture as assemble: the write is real and must not
+    // be lost over an audit outage, but the caller is told when the ledger row
+    // could not be written.
+    let ledgerWriteFailed = false;
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await recordGovernedAction(client as any, {
+          orgId,
+          userId,
+          command: 'transition',
+          target: `submission:${pkg.id}`,
+          reason: parsed.data.reason,
+          payload: {
+            change: 'regulatory-identifiers',
+            applicationNumber: next.applicationNumber,
+            applicantId: next.applicantId,
+            applicantName: next.applicantName,
+            changed,
+            staleBundleCleared,
+          },
+          domain: 'mdx',
+          surface: 'submission-gateway',
+        });
+        await client.query('COMMIT');
+      } catch (ledgerErr) {
+        try { await client.query('ROLLBACK'); } catch { /* noop */ }
+        throw ledgerErr;
+      } finally {
+        client.release();
+      }
+    } catch (ledgerErr) {
+      ledgerWriteFailed = true;
+      console.error(
+        '[submission-ops] regulatory-identifiers-ledger-write-failed',
+        ledgerErr instanceof Error ? ledgerErr.message : ledgerErr,
+      );
+    }
+
+    return res.json({
+      success: true,
+      data: { packageId: pkg.packageId, regulatory, changed, staleBundleCleared, ledgerWriteFailed },
+    });
+  } catch (e) {
+    return serverError(res, logger, 'recording regulatory identifiers', e);
+  }
+});
+
 router.post('/packages/:packageId/assemble', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
@@ -1783,25 +1915,9 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       // values that say UNASSIGNED, and a blocking finding is recorded — never
       // an internal id dressed up as an agency identifier. Both also become
       // filename components in the packager, so the charset is enforced.
-      const IDENT = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
-      const regulatory =
-        existingMetadata.regulatory && typeof existingMetadata.regulatory === 'object'
-          ? (existingMetadata.regulatory as Record<string, unknown>)
-          : {};
-      const ident = (key: string, pattern: RegExp = IDENT): string | null => {
-        const v = regulatory[key];
-        return typeof v === 'string' && pattern.test(v.trim()) ? v.trim() : null;
-      };
-      const applicationNumber = ident('applicationNumber');
-      const applicantId = ident('applicantId');
-      // Names may contain spaces/punctuation; only control characters (which
-      // would break the XML backbone) are refused.
-      const applicantName = ident('applicantName', /^[^\x00-\x1f\x7f]{1,200}$/);
-      const missingIdentifiers = [
-        !applicationNumber && 'regulatory.applicationNumber',
-        !applicantId && 'regulatory.applicantId',
-        !applicantName && 'regulatory.applicantName',
-      ].filter((x): x is string => typeof x === 'string');
+      const identifiers = readRegulatoryIdentifiers(existingMetadata);
+      const { applicationNumber, applicantId, applicantName } = identifiers.values;
+      const missingIdentifiers = identifiers.missing;
       if (missingIdentifiers.length > 0) {
         validation.findings.push({
           severity: 'error',

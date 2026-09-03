@@ -11,6 +11,7 @@ import { downloadBlob, safeFileName } from '../download';
 import { readShellProject, shellProgramName } from '../shellProject';
 import { AnaWorkPanel } from '../AnaWorkPanel';
 import { useAgentActivity } from '../useAgentActivity';
+import { AnaActivity, type AnaActivityProps } from '../AnaActivity';
 import { C2CToast, useToast, type FireToast } from '../toast';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -19,18 +20,47 @@ import {
 } from '../fixtures/conversation-thread-data';
 import type { CtTurn, CtArtifact } from '../fixtures/conversation-thread-data';
 
+/* Where the side column's shown/hidden choice is remembered. Same convention
+   as the shell rail's work dock (`WORK_DOCK_KEY` in Shell.tsx): a `c2c-v2-`
+   key holding 'shown' | 'hidden', per browser, never per turn. */
+const SIDE_DOCK_KEY = 'c2c-v2-ct-side-dock';
+
 /* Adapt one real AnA turn (useAnaChat → /api/ana-ri/stream) into the CtTurn
-   shape this surface renders — the model's answer, its extended-thinking, and
-   the grounding sources it actually used. Never a fabricated tool trace or a
-   Math.random()-"audited" artifact; unpopulated fields are simply omitted. */
+   shape this surface renders — the model's answer, the record of how she got
+   there, and the grounding sources she actually used. Never a fabricated tool
+   trace or a Math.random()-"audited" artifact; unpopulated fields are simply
+   omitted. */
 function toTurn(m: AnaChatMessage): CtTurn {
   if (m.role === 'user') return { role: 'user', text: m.text };
   const grounding = (m.groundingSources || []).map((s) => ({ src: s, ok: true }));
+  /* Everything the turn reported about how it was answered — the SAME mapping
+     `adaptChatMessage` in V2App.tsx hands the shell rail. It was dropped here:
+     `toTurn` carried `thinking` and discarded the phase, the tools, the rounds,
+     the lens and the draft, so AnA could run several deterministic engines
+     across two rounds and this surface showed three animated dots. The rail
+     was fixed; this surface was not. */
+  const activity: AnaActivityProps = {
+    streaming: m.streaming,
+    phase: m.statusPhase,
+    lens: m.detectedLens,
+    documentType: m.detectedDocumentType,
+    toolCalls: m.toolCalls,
+    thinking: m.thinking,
+    draftTitle: m.generatedDraft?.title,
+    /* The clock — the same two fields the rail's mapping carries, so the
+       phase line here ticks and the collapsed line names the duration. */
+    startedAt: m.sentAt,
+    completedAt: m.completedAt,
+  };
   return {
     role: 'ana',
     answer: m.text || undefined,
-    thinking: m.thinking || undefined,
     grounding: grounding.length ? grounding : undefined,
+    /* Present while the turn is in flight — the phase line IS the waiting
+       state — and, once settled, only when there is real work to show for it.
+       A settled turn that ran nothing carries no record rather than an empty
+       one: the house rule on this surface. */
+    activity: m.streaming || hasReportableWork(activity) ? activity : undefined,
     /*
      * These two were dropped, and dropping them lost a 21 CFR 11.50 gate.
      *
@@ -49,7 +79,21 @@ function toTurn(m: AnaChatMessage): CtTurn {
   };
 }
 
-/* ---- AnA turn (thinking + tools + answer + grounding) ---- */
+/** True when the activity record has something real to show for this turn.
+ *  The same three-line condition as `hasReportableWork` in V2App.tsx, on the
+ *  mapped shape rather than the message. Not imported from there: V2App is the
+ *  shell root and this surface is one of its lazy chunks. */
+function hasReportableWork(a: AnaActivityProps): boolean {
+  return Boolean(
+    (a.toolCalls && a.toolCalls.length > 0) ||
+      a.lens ||
+      a.documentType ||
+      a.thinking ||
+      a.draftTitle,
+  );
+}
+
+/* ---- AnA turn (activity + answer + grounding) ---- */
 
 interface AnaTurnProps {
   turn: CtTurn;
@@ -57,8 +101,21 @@ interface AnaTurnProps {
   onNav?: (id: string) => void;
 }
 
+/** The one state in which <AnaActivity /> renders nothing for an in-flight
+ *  turn: no phase and no reportable work yet, with no text either. By the
+ *  hook's contract it does not occur — the placeholder carries a phase from the
+ *  moment it is appended, and the phase is only cleared once text has landed —
+ *  so the dots this gates are a guard against a blank body, not a renderer:
+ *  three dots claim nothing about the work. */
+function waitingWithNothingToShow(turn: CtTurn): boolean {
+  const a = turn.activity;
+  if (!a || !a.streaming || a.phase || turn.answer) return false;
+  return !hasReportableWork(a);
+}
+
 function AnaTurn({ turn, onRefine, onNav }: AnaTurnProps) {
-  const [openThink, setOpenThink] = useState(false);
+  const a = turn.activity;
+  const waiting = waitingWithNothingToShow(turn);
   return (
     <div className="ct-turn ct-ana">
       <div className="ct-ana-av">{'✻'}</div>
@@ -69,25 +126,24 @@ function AnaTurn({ turn, onRefine, onNav }: AnaTurnProps) {
         {turn.doc && (turn.doc.confidence || 1) < 0.4 && (
           <DocumentContextCard doc={turn.doc} defaultOpen={false} />
         )}
-        {turn.thinking && (
-          <button className={'ct-think' + (openThink ? ' on' : '')} onClick={() => setOpenThink(o => !o)}>
-            <span className="ct-think-h">{I.sparkles} Thought for a moment {I.chevDown}</span>
-            {openThink && <span className="ct-think-b">{turn.thinking}</span>}
-          </button>
-        )}
-        {(turn.tools || []).map((tl, i) => (
-          <div key={i} className="ct-tool">
-            <span className="ct-tool-ic">{I.tool || I.sliders}</span>
-            <span className="ct-tool-n">{tl.name}</span>
-            <span className="ct-tool-a">{tl.arg}</span>
-            <span className="ct-tool-r">{I.check} {tl.result}</span>
-          </div>
-        ))}
+        {/* The progress before the words — the same order as the shell rail
+            and the component's own docblock. While the turn streams this is
+            the phase line and each tool row as it lands; once the answer has
+            landed it collapses to its summary and the record stays with the
+            turn. `AnaActivity` is the one tool-transparency renderer. Two
+            things used to sit here instead: a `.ct-think` "Thought for a
+            moment" disclosure, which would now be a second renderer for her
+            reasoning beside this one, and a `.ct-tool` row for `turn.tools`,
+            which `toTurn` never set and so never rendered once — the dead
+            renderer class this file's comments have caught twice before.
+            Both deleted rather than kept beside the authority. */}
+        {a && <AnaActivity {...a} />}
+        {waiting && <div className="ct-typing" aria-hidden="true"><span /><span /><span /></div>}
         {/* ── The proposal block was unreachable, and it advertised a
             workflow this surface does not have ───────────────────────────────
             It rendered a diff with Accept / Refine / Discard, and a chip for a
             "generated artifact". None of it could ever appear: `toTurn` above
-            maps an AnaChatMessage to answer / thinking / grounding /
+            maps an AnaChatMessage to answer / activity / grounding /
             executedActions / pendingSignoffs and NEVER sets `proposal` or
             `artifactRef`, so both guards were permanently false.
 
@@ -508,7 +564,7 @@ interface ArtifactPanelProps {
   openId: string | null;
   setOpenId: (id: string | null) => void;
   onNav?: (id: string) => void;
-  collapsed: boolean;
+  /** Hides the whole side column; the thread header is where it comes back. */
   setCollapsed: (v: boolean) => void;
   projectId: string | number | null;
   /** Card ids whose producing turn has not finished — see {@link unstoredDraftReason}. */
@@ -516,21 +572,26 @@ interface ArtifactPanelProps {
   fireToast: FireToast;
 }
 
-function ArtifactPanel({ artifacts, openId, setOpenId, onNav, collapsed, setCollapsed, projectId, pendingDraftIds, fireToast }: ArtifactPanelProps) {
-  if (collapsed) {
-    return (
-      <button className="ct-art-rail" onClick={() => setCollapsed(false)} title="Show artifacts">
-        <span className="ct-art-rail-ic">{I.layers}</span>
-        <span className="ct-art-rail-n">{artifacts.length}</span>
-        <span className="ct-art-rail-l">Artifacts</span>
-      </button>
-    );
-  }
+/* The collapsed branch — a 48px `.ct-art-rail` stub reading "Artifacts" with
+   a count — is gone. It was the only way back once the column was hidden, so
+   hiding the column never gave the conversation the full width, only the
+   width minus a stub, and the control that hid it was an unlabelled chevron
+   inside this panel's own header. The thread header now owns show/hide with a
+   labelled toggle; this panel keeps a close button for convenience. */
+function ArtifactPanel({ artifacts, openId, setOpenId, onNav, setCollapsed, projectId, pendingDraftIds, fireToast }: ArtifactPanelProps) {
   return (
     <aside className="ct-artifacts">
       <div className="ct-art-panel-h">
         <span className="ct-art-panel-t">{I.layers} Artifacts <span className="ct-art-panel-n">{artifacts.length}</span></span>
-        <button className="ct-art-panel-x" onClick={() => setCollapsed(true)} title="Collapse">{I.chevronRight || I.right}</button>
+        <button
+          type="button"
+          className="ct-art-panel-x"
+          onClick={() => setCollapsed(true)}
+          aria-label="Hide side panel"
+          title="Hide side panel"
+        >
+          {I.chevronRight || I.right}
+        </button>
       </div>
       {/* Was "AnA builds, you approve and e-sign". Approving and e-signing do
           not happen here — the panel drafts, exports and routes for review, and
@@ -602,7 +663,24 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
   const [toast, fireToast] = useToast();
   const [loadErr, setLoadErr] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [panelCollapsed, setPanelCollapsed] = useState(false);
+  /* Whether the side column — AnA's work dock over the governed outputs — is
+     hidden. Read once on mount so the choice survives navigating away and
+     back; see SIDE_DOCK_KEY for the convention. */
+  const [panelCollapsed, setPanelCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(SIDE_DOCK_KEY) === 'hidden';
+    } catch {
+      return false;
+    }
+  });
+  const setSideDock = (collapsed: boolean) => {
+    setPanelCollapsed(collapsed);
+    try {
+      localStorage.setItem(SIDE_DOCK_KEY, collapsed ? 'hidden' : 'shown');
+    } catch {
+      /* session-only */
+    }
+  };
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   /* The background queue the work dock shows — read only while the side
@@ -684,6 +762,28 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [turns.length, busy]);
+  /* Follow the work. The effect above fires on turn count and busy only, and
+     a run's phase line and tool rows land on the LAST turn — below the fold
+     once a few have arrived — so what the activity record makes visible could
+     grow out of view. Keyed on the in-flight turn's progress, and only while
+     the reader was at the bottom BEFORE the content grew: `atBottomRef` is
+     kept by the scroll handler, so it is measured on the reader's own scroll
+     rather than after the DOM has already pushed the bottom away. Scrolling up
+     to reread an earlier turn is therefore not fought. */
+  const atBottomRef = useRef(true);
+  const onScroll = () => {
+    const el = scrollRef.current;
+    if (el) atBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+  };
+  const inflight = anaChat.messages[anaChat.messages.length - 1];
+  const inflightKey = inflight?.streaming
+    ? `${inflight.toolCalls?.length ?? 0}:${inflight.text.length}:${inflight.statusPhase ?? ''}:${inflight.thinking?.length ?? 0}`
+    : '';
+  useEffect(() => {
+    if (!inflightKey) return;
+    const el = scrollRef.current;
+    if (el && atBottomRef.current) el.scrollTop = el.scrollHeight;
+  }, [inflightKey]);
 
   const send = () => {
     const t = draft.trim();
@@ -716,12 +816,26 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
         </div>
         <div className="ct-head-r">
           <span className="ct-head-model">{I.zap} AnA</span>
+          {/* The one place the side column is shown and hidden from. It used
+              to be a chevron in the artifact panel's own header, with a 48px
+              stub left behind when collapsed — a control that had to be hunted
+              for, and a collapse that never gave the conversation the full
+              width. `.ct-head-open` is this header's existing button style,
+              which had no remaining user. */}
+          <button
+            type="button"
+            className="ct-head-open"
+            aria-expanded={!panelCollapsed}
+            onClick={() => setSideDock(!panelCollapsed)}
+          >
+            {I.panelRight} {panelCollapsed ? 'Show side panel' : 'Hide side panel'}
+          </button>
         </div>
       </div>
 
       <div className="ct-main">
         <div className="ct-conv">
-          <div className="ct-scroll" ref={scrollRef}>
+          <div className="ct-scroll" ref={scrollRef} onScroll={onScroll}>
             <div className="ct-col">
               {loadingHistory && (
                 <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading conversation…</div>
@@ -750,9 +864,12 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
                 ? (<div key={i} className="ct-turn ct-user"><div className="ct-user-b">{t.text}</div></div>)
                 : (<AnaTurn key={i} turn={t} onRefine={() => { void anaChat.send('Refine that — keep it tighter and more declarative.'); }} onNav={onNav} />)
               )}
-              {busy && (
-                <div className="ct-turn ct-ana"><div className="ct-ana-av">{'✻'}</div><div className="ct-ana-body"><div className="ct-typing"><span /><span /><span /></div></div></div>
-              )}
+              {/* No trailing "typing" turn. The in-flight message is already
+                  the last turn above — `useAnaChat` appends it, streaming and
+                  with a phase, in the same render that sets `isStreaming` —
+                  and its own <AnaActivity /> is the waiting state. A second
+                  block here drew a second avatar with three dots beside the
+                  real record, for the whole of every run. */}
             </div>
           </div>
 
@@ -824,10 +941,12 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
 
         {/* The side column: AnA's live work above the governed outputs. The
             dock is the same component the shell rail mounts — progress, queue,
-            tools, outputs, context — and collapses with the artifacts so the
-            conversation can take the full width. */}
-        <div className="ct-side" data-collapsed={panelCollapsed ? 'true' : 'false'}>
-          {!panelCollapsed && (
+            tools, outputs, context. Hidden, the column is not rendered at all,
+            so the conversation takes the full width rather than the width
+            minus a stub. `data-artifacts` lets the stylesheet cap the dock's
+            height only when there is something below it to make room for. */}
+        {!panelCollapsed && (
+          <div className="ct-side" data-artifacts={artifacts.length > 0 ? 'true' : 'false'}>
             <div className="ct-side-work">
               <AnaWorkPanel
                 messages={anaChat.messages}
@@ -842,11 +961,11 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
                 }}
               />
             </div>
-          )}
-          <ArtifactPanel artifacts={artifacts} openId={openId} setOpenId={setOpenId} onNav={onNav}
-            collapsed={panelCollapsed} setCollapsed={setPanelCollapsed}
-            projectId={shellProjectId} pendingDraftIds={pendingDraftIds} fireToast={fireToast} />
-        </div>
+            <ArtifactPanel artifacts={artifacts} openId={openId} setOpenId={setOpenId} onNav={onNav}
+              setCollapsed={setSideDock}
+              projectId={shellProjectId} pendingDraftIds={pendingDraftIds} fireToast={fireToast} />
+          </div>
+        )}
       </div>
       <C2CToast msg={toast} />
     </div>

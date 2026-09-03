@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, render, screen, within } from '@testing-library/react';
 
 import { AnaActivity } from '../AnaActivity';
@@ -287,5 +287,41 @@ describe('AnaActivity — it never claims work that did not happen', () => {
     );
 
     expect(screen.getByRole('button').textContent).toContain('1 step completed');
+  });
+});
+
+describe('AnaActivity — the clock', () => {
+  it('runs a clock beside the live phase and freezes the recorded duration once settled', () => {
+    vi.useFakeTimers();
+    const t0 = 1_700_000_000_000;
+    vi.setSystemTime(t0 + 57_000);
+    const { container, rerender } = render(
+      <AnaActivity streaming phase="Running 2 steps…" startedAt={t0} toolCalls={[call({ status: 'running' })]} />,
+    );
+    const phaseRow = () => container.querySelector('.ana-activity-phase') as HTMLElement;
+    expect(phaseRow().textContent).toContain('Running 2 steps…');
+    expect(phaseRow().textContent).toContain('57s');
+
+    act(() => {
+      vi.advanceTimersByTime(3_000);
+    });
+    expect(phaseRow().textContent).toContain('1m 00s');
+
+    // Settled with a recorded end: the collapsed line names the duration, and
+    // it does not move with the clock afterwards.
+    rerender(<AnaActivity phase="" startedAt={t0} completedAt={t0 + 72_000} toolCalls={[call()]} />);
+    const toggle = () => container.querySelector('.ana-activity-toggle') as HTMLElement;
+    expect(toggle().textContent).toContain('in 1m 12s');
+    act(() => {
+      vi.advanceTimersByTime(30_000);
+    });
+    expect(toggle().textContent).toContain('in 1m 12s');
+    vi.useRealTimers();
+  });
+
+  it('claims no duration for a settled turn with no recorded end', () => {
+    const { container } = render(<AnaActivity startedAt={1_700_000_000_000} toolCalls={[call()]} />);
+    const toggle = container.querySelector('.ana-activity-toggle') as HTMLElement;
+    expect(toggle.textContent).not.toMatch(/ in \d/);
   });
 });
