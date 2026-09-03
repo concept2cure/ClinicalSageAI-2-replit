@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T01:08:47.648Z",
+  "generatedAt": "2026-09-03T01:09:31.906Z",
   "git": {
-    "sha": "2b005b94568d1633a65a1fca433b08b5b178160c",
+    "sha": "fd558352af4ea48bdaae3a0b09fa06923ebd8494",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2174,7 +2174,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 322179
+        "bytes": 318766
       },
       {
         "file": "server/statistics-service.ts",
@@ -2320,7 +2320,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7479
+        "lines": 7356
       },
       {
         "file": "server/statistics-service.ts",
@@ -2528,7 +2528,7 @@
       },
       {
         "file": "server/routes/regulatory-digital-twin.ts",
-        "lines": 1894
+        "lines": 1898
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
