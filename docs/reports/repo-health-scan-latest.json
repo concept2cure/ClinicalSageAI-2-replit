@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T03:00:25.440Z",
+  "generatedAt": "2026-09-03T03:07:49.743Z",
   "git": {
-    "sha": "978959dd9a7631a0dfa96af939b640b85d1fa15e",
+    "sha": "95425d30989d4bdb6e7db1e9283199bda5c81a4c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2423,6 +2423,10 @@
         "lines": 2379
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "lines": 2358
+      },
+      {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "lines": 2340
       },
@@ -2437,10 +2441,6 @@
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
         "lines": 2276
-      },
-      {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2242
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
