@@ -22,6 +22,7 @@ import {
   auditTrail,
 } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger';
+import { serverError } from '../lib/api-response';
 
 const logger = createScopedLogger('ana-features');
 
@@ -334,10 +335,7 @@ router.get(
         },
       });
     } catch (error) {
-      res.status(500).json({
-        error: 'Failed to retrieve intelligence feed',
-        details: error instanceof Error ? error.message : String(error),
-      });
+      return serverError(res, logger, 'loading intelligence feed', error);
     }
   }
 );
@@ -1542,11 +1540,7 @@ router.post(
           details: error.errors,
         });
       }
-      res.status(500).json({
-        success: false,
-        error: 'Failed to perform gap analysis',
-        details: error instanceof Error ? error.message : String(error),
-      });
+      return serverError(res, logger, 'saving gap analysis', error);
     }
   }
 );
@@ -1905,10 +1899,7 @@ router.post(
         recommendations: guidance.recommendations,
       });
     } catch (error) {
-      res.status(500).json({
-        error: 'Failed to analyze change impact',
-        details: error instanceof Error ? error.message : String(error),
-      });
+      return serverError(res, logger, 'saving change impact', error);
     }
   }
 );
@@ -1949,10 +1940,7 @@ router.get(
         projectContext: store.projectContext,
       });
     } catch (error) {
-      res.status(500).json({
-        error: 'Failed to retrieve memories',
-        details: error instanceof Error ? error.message : String(error),
-      });
+      return serverError(res, logger, 'loading memory', error);
     }
   }
 );
@@ -2020,10 +2008,7 @@ router.post(
         memory,
       });
     } catch (error) {
-      res.status(500).json({
-        error: 'Failed to save memory',
-        details: error instanceof Error ? error.message : String(error),
-      });
+      return serverError(res, logger, 'saving memory', error);
     }
   }
 );
@@ -2052,10 +2037,7 @@ router.delete(
         deleted,
       });
     } catch (error) {
-      res.status(500).json({
-        error: 'Failed to delete memory',
-        details: error instanceof Error ? error.message : String(error),
-      });
+      return serverError(res, logger, 'deleting memory', error);
     }
   }
 );
