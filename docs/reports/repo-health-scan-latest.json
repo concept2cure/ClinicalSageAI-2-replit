@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T01:09:31.906Z",
+  "generatedAt": "2026-09-03T01:15:14.091Z",
   "git": {
-    "sha": "fd558352af4ea48bdaae3a0b09fa06923ebd8494",
+    "sha": "1963835ba37f66f616ee5e6e75f4a9a77fbf7843",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2190,7 +2190,7 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "bytes": 179961
+        "bytes": 179440
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2332,7 +2332,7 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "lines": 5433
+        "lines": 5415
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2400,7 +2400,7 @@
       },
       {
         "file": "server/routes/knowledge-base.ts",
-        "lines": 2584
+        "lines": 2588
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
