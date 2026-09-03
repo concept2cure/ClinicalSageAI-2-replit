@@ -30,6 +30,10 @@ import {
 } from '../../shared/cmc/dissolution-purpose';
 /* The ICH impurity classes are the assessment engine's vocabulary, not this
    module's: one definition, in services/cmc/impurity-assessment. */
+import {
+  CHARACTERIZATION_TYPE_FIELD,
+  normalizeCharacterizationType,
+} from '../../shared/cmc/characterization-type';
 import { isAssessableImpurity } from './cmc/impurity-assessment';
 import unifiedTaskService from './unifiedTaskService';
 
@@ -76,6 +80,7 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
   excipient: 'Excipient',
   impurity_profile: 'Impurity Profile',
   dissolution_profile: 'Dissolution Profile',
+  material_spec: 'Material Specification',
   qc_result: 'QC Result',
   raw_material_spec: 'Raw Material Specification',
   formulation_record: 'Formulation Record',
@@ -902,6 +907,353 @@ export function mapDissolutionProfilePayload(record: Record<string, any>): Recor
   };
 }
 
+
+/** The material roles that are §3.2.P.4 excipient content. */
+export const EXCIPIENT_ROLES = ['excipient', 'capsule-shell', 'coating', 'processing-aid'];
+
+/** Read a stored material role without inventing one. */
+export function normalizeMaterialRole(raw: unknown): string {
+  const v = String(raw ?? '').trim().toLowerCase().replace(/[\s_]+/g, '-');
+  if (!v) return 'excipient';
+  if (v === 'raw-material' || v === 'raw' || v === 'reagent') return 'raw-material';
+  if (v === 'starting-material' || v === 'starting') return 'starting-material';
+  if (EXCIPIENT_ROLES.includes(v)) return v;
+  return 'excipient';
+}
+
+/** Is a recorded origin one that puts a material under §3.2.A.3? */
+export function isHumanOrAnimalOrigin(raw: unknown): boolean {
+  return /^(animal|human|bovine|porcine|ovine|equine|murine|hamster|fish|egg|milk)$/i.test(
+    String(raw ?? '').trim(),
+  );
+}
+
+/**
+ * Map a cmc_material_specs row to a canonical source payload.
+ *
+ * The role decides the source TYPE — see writeThroughMaterialSpec below — and
+ * the payload carries the same fields either way, because §3.2.P.4 and
+ * §3.2.S.2.3 ask the same questions of a material.
+ *
+ * `origin` is emitted exactly as recorded and never inferred. §3.2.A.3 reads
+ * it: an excipient with no recorded origin is a question that section must ask,
+ * not one it may answer.
+ */
+export function mapMaterialSpecPayload(record: Record<string, any>): Record<string, any> {
+  const role = normalizeMaterialRole(record.materialRole ?? record.material_role);
+  const isExcipient = EXCIPIENT_ROLES.includes(role);
+  const materialName = String(record.materialName || record.material_name || '').trim();
+  const analyticalProcedures = String(record.analyticalProcedures || record.analytical_procedures || '').trim();
+  const testParameters = record.testParameters ?? record.test_parameters ?? null;
+  const origin = String(record.origin || '').trim();
+  const monograph = String(record.compendialMonograph || record.compendial_monograph || '').trim();
+
+  /* The specification, projected to the text §3.2.P.4 renders. A json array of
+     {test, method, acceptanceCriteria} rows is what the register stores; the
+     section's required field is a description of the specification. */
+  const specRows = Array.isArray(testParameters)
+    ? testParameters.filter((r) => r && typeof r === 'object')
+    : [];
+  const specText = specRows.length > 0
+    ? specRows
+        .map((r: any) => [r.test, r.acceptanceCriteria].filter(Boolean).join(' '))
+        .filter(Boolean)
+        .join('; ')
+    : (monograph ? `Complies with ${monograph}` : '');
+
+  /* A material the section can actually describe: named, with a specification
+     (its own tests or a monograph it complies with) AND a way of testing it.
+     The analytical procedure was named in this comment and not tested, which
+     left open exactly the union the key exists to close: one excipient could
+     carry the completeness key while a DIFFERENT one supplied
+     excipientAnalyticalProcedures, and §3.2.P.4 scored complete over an
+     excipient with no recorded way of being tested. */
+  const testable = Boolean(analyticalProcedures) || Boolean(monograph);
+  const describable = Boolean(materialName) && Boolean(specText) && testable;
+
+  return {
+    materialRole: role,
+    materialName,
+    functionInFormulation: record.functionInFormulation || record.function_in_formulation || '',
+    grade: record.grade || '',
+    compendialMonograph: monograph,
+    compendialCompliance: record.compendialCompliance || record.compendial_compliance || '',
+    supplier: record.supplier || '',
+    manufacturerSite: record.manufacturerSite || record.manufacturer_site || '',
+    /* Never normalised and never guessed: §3.2.A.3 distinguishes "recorded as
+       plant" from "not recorded", and a blank is the second. */
+    origin,
+    originDetail: record.originDetail || record.origin_detail || '',
+    humanOrAnimalOrigin: origin ? isHumanOrAnimalOrigin(origin) : null,
+    tseCertificate: record.tseCertificate || record.tse_certificate || '',
+    testParameters: hasRecordedValue(testParameters) ? testParameters : null,
+    analyticalProcedures,
+    novelExcipient: Boolean(record.novelExcipient ?? record.novel_excipient),
+    novelExcipientJustification: record.novelExcipientJustification || record.novel_excipient_justification || '',
+    status: record.status || 'draft',
+    /* §3.2.P.4's required fields, emitted from the EXCIPIENT side only: a
+       starting material for the drug substance is §3.2.S.2.3 content and must
+       not complete the drug product's excipient control section. */
+    excipientSpecifications: isExcipient && specText ? specText : null,
+    excipientAnalyticalProcedures:
+      isExcipient && (analyticalProcedures || monograph)
+        ? analyticalProcedures || `Per ${monograph}`
+        : null,
+    excipientControlComplete: isExcipient && describable ? materialName : null,
+    /* And the raw-material side, for §3.2.S.2.3. */
+    rawMaterialSpecification: !isExcipient && specText ? specText : null,
+  };
+}
+
+/**
+ * Map a cmc_formulation_records row to a canonical source payload.
+ *
+ * §3.2.P.1's composition table read a first-match `components` array, so a
+ * project with several formulation versions rendered whichever arrived first
+ * and dropped the others. The payload carries the version and its status so the
+ * section can render the CURRENT formulation and say what it superseded.
+ */
+export function mapFormulationRecordPayload(record: Record<string, any>): Record<string, any> {
+  const components = record.components ?? null;
+  const rows = Array.isArray(components) ? components.filter((c) => c && typeof c === 'object') : [];
+  const formulationName = String(record.formulationName || record.formulation_name || '').trim();
+  const status = String(record.status || 'draft');
+
+  /* An overage is a regulatory question in its own right (ICH Q8): a component
+     carrying one without a recorded justification is something §3.2.P.1 must
+     state rather than pass over. */
+  const overaged = rows.filter((c: any) => String(c.overage ?? '').trim());
+  const unjustifiedOverages = overaged.filter(
+    (c: any) => !String(c.overageJustification ?? '').trim() && !String(record.overageJustification || record.overage_justification || '').trim(),
+  );
+
+  return {
+    formulationName,
+    version: record.version || '',
+    dosageForm: record.dosageForm || record.dosage_form || '',
+    strength: record.strength || '',
+    batchSize: record.batchSize || record.batch_size || '',
+    components: rows.length > 0 ? rows : null,
+    theoreticalYield: record.theoreticalYield || record.theoretical_yield || '',
+    overageJustification: record.overageJustification || record.overage_justification || '',
+    unjustifiedOverageCount: unjustifiedOverages.length,
+    supersedes: record.supersedes || '',
+    status,
+    /* §3.2.P.1 is complete when ONE formulation carries a named composition
+       with its components — not when a name and a component list arrive on two
+       different records — and only when that formulation is the CURRENT one.
+       The section renders the quantitative composition only for a record marked
+       current, so scoring it complete on a draft said the composition section
+       was finished in the same breath as the section text said the governing
+       composition was not established. */
+    formulationComposition: formulationName && rows.length > 0 ? formulationName : null,
+    formulationCompositionComplete:
+      status.toLowerCase() === 'current' &&
+      formulationName && rows.length > 0 && rows.every((c: any) => String(c.component || c.name || '').trim())
+        ? formulationName
+        : null,
+  };
+}
+
+
+/** Rows of a jsonb column that is meant to hold an array of objects. */
+function jsonObjectRows(value: unknown): Record<string, any>[] {
+  return Array.isArray(value) ? value.filter((r) => r && typeof r === 'object') : [];
+}
+
+/**
+ * Map a manufacturing_processes row to a canonical source payload.
+ *
+ * §3.2.S.2.2 and §3.2.P.3.3 want the same three things of a process: what the
+ * steps are, what the critical parameters are and what is controlled in-process.
+ * The register holds each as structured rows, so the payload carries both the
+ * rows (for the tables) and the text the section narrative reads.
+ *
+ * The side is the stored `processType`, resolved through the shared material
+ * scope so a drug-substance process cannot complete §3.2.P.3 and a drug-product
+ * one cannot complete §3.2.S.2 — the same rule as the container closure and
+ * reference standard registers.
+ */
+export function mapManufacturingProcessPayload(record: Record<string, any>): Record<string, any> {
+  const side = normalizeMaterialScope(record.processType ?? record.process_type, 'drug_substance');
+  const forSubstance = side === 'drug_substance' || side === 'both';
+  const forProduct = side === 'drug_product' || side === 'both';
+
+  const processName = String(record.processName || record.process_name || '').trim();
+  const description = String(record.processDescription || record.process_description || '').trim();
+  const steps = jsonObjectRows(record.processSteps ?? record.process_steps);
+  const cpps = jsonObjectRows(record.criticalProcessParameters ?? record.critical_process_parameters);
+  const controls = jsonObjectRows(record.processControls ?? record.process_controls);
+  const equipment = jsonObjectRows(record.equipmentList ?? record.equipment_list);
+  const validationStatus = String(record.validationStatus || record.validation_status || '').trim();
+
+  /* The ordered unit operations ARE the process description when no prose one
+     was written: "the process consists of X, then Y, then Z" is sourced from
+     the recorded steps, not invented. Steps are rendered in the order they were
+     recorded when none carries a number — reordering an unnumbered list would
+     assert a sequence the register does not hold. */
+  const ordered = steps
+    .map((st, i) => ({ st, i, n: Number(st.stepNumber ?? st.step_number ?? st.order) }))
+    .sort((a, b) => {
+      const an = Number.isFinite(a.n) ? a.n : Number.POSITIVE_INFINITY;
+      const bn = Number.isFinite(b.n) ? b.n : Number.POSITIVE_INFINITY;
+      return an === bn ? a.i - b.i : an - bn;
+    })
+    .map(({ st }) => st);
+
+  const stepText = ordered
+    .map((st: any) => String(st.unitOperation || st.unit_operation || st.stepName || st.step_name || '').trim())
+    .filter(Boolean)
+    .join('; ');
+
+  /* In-process controls come from two places the register offers — a
+     process-level control list and per-step controls — and a section that read
+     only one of them would report "no in-process controls" over a process that
+     records them on every step. */
+  const stepControls = ordered.flatMap((st: any) => jsonObjectRows(st.inProcessControls ?? st.in_process_controls));
+  const allControls = [...controls, ...stepControls];
+  const controlText = allControls
+    .map((c: any) =>
+      [c.test || c.control || c.parameter, c.acceptanceCriteria || c.acceptance_criteria || c.limit]
+        .filter(Boolean)
+        .join(' ')
+    )
+    .filter(Boolean)
+    .join('; ');
+
+  /* A process the section can actually describe: named, with an ordered set of
+     steps and at least one in-process control. Emitted as ONE key from ONE
+     record, because the composer's completeness is a union across matched
+     sources — without it, a record carrying only a name and a second carrying
+     only steps would add up to a complete manufacturing section. */
+  const describable = Boolean(processName) && ordered.length > 0 && allControls.length > 0;
+
+  return {
+    processScope: side,
+    processName,
+    processType: record.processType || record.process_type || '',
+    /* This register's lifecycle column is validation_status, not status -- the
+       table predates the register family and its two readers already use that
+       name. The composer drops a RETIRED source by reading `status`, so the
+       lifecycle has to reach it under that key or a superseded synthetic route
+       composes as the process the filing describes. It was emitted only as
+       processValidationStatus, which the retirement filter cannot see and
+       nothing rendered. */
+    status: validationStatus,
+    processSteps: ordered.length > 0 ? ordered : null,
+    criticalProcessParameters: cpps.length > 0 ? cpps : null,
+    processControlRows: allControls.length > 0 ? allControls : null,
+    /* §3.2.S.2's two required fields are emitted from the DRUG SUBSTANCE side
+       only. The composer's completeness is a union across every matched source,
+       and `manufacturing_process` matches §3.2.S.2 whatever side it is on — so
+       an unscoped `processDescription` would have let a tablet compression
+       process complete the drug substance's manufacturing section. The
+       drug-product side carries the same two facts under its own names; §3.2.P.3
+       renders them from the side-scoped tables. */
+    processDescription: forSubstance ? (description || stepText || '') : null,
+    /* Text, because the §3.2.S.2 narrative reads processControls with a
+       first-match string helper; the rows travel alongside for the table. */
+    processControls: forSubstance ? (controlText || null) : null,
+    drugProductProcessDescription: forProduct ? (description || stepText || '') : null,
+    drugProductProcessControls: forProduct ? (controlText || null) : null,
+    equipmentList: equipment.length > 0 ? equipment : null,
+    facilityInfo: hasRecordedValue(record.facilityInfo ?? record.facility_info)
+      ? (record.facilityInfo ?? record.facility_info)
+      : null,
+    processBatchSize: record.batchSize || record.batch_size || '',
+    yieldData: hasRecordedValue(record.yieldData ?? record.yield_data)
+      ? (record.yieldData ?? record.yield_data)
+      : null,
+    scaleUpData: hasRecordedValue(record.scaleUpData ?? record.scale_up_data)
+      ? (record.scaleUpData ?? record.scale_up_data)
+      : null,
+    processDevelopment: record.processDevelopment || record.process_development || '',
+    reprocessing: record.reprocessing || '',
+    processValidationStatus: validationStatus,
+    /* §3.2.S.2's completeness key, drug-substance side only. */
+    manufacturingProcessComplete: forSubstance && describable ? processName : null,
+    /* §3.2.P.3's, drug-product side only. */
+    drugProductProcessComplete: forProduct && describable ? processName : null,
+  };
+}
+
+/**
+ * Map a cmc_characterization_studies row to a canonical source payload.
+ *
+ * A study answers ONE of §3.2.S.3.1's three questions — the one its stored
+ * `studyType` names — and the payload emits only that field. This is the whole
+ * point of storing the type: the composer's completeness is a union across
+ * matched sources, so three NMR studies emitting all three fields would have
+ * reported the characterisation section complete over no physicochemical data
+ * and no bioactivity data at all.
+ *
+ * Unlike the registers where a *Complete key had to close that union, the union
+ * IS correct across types here: an NMR study and a solubility study together do
+ * establish two of the three.
+ */
+export function mapCharacterizationStudyPayload(record: Record<string, any>): Record<string, any> {
+  const type = normalizeCharacterizationType(record.studyType ?? record.study_type);
+  const side = normalizeMaterialScope(record.scope, 'drug_substance');
+  const forSubstance = side === 'drug_substance' || side === 'both';
+
+  const studyTitle = String(record.studyTitle || record.study_title || '').trim();
+  const technique = String(record.technique || '').trim();
+  const attribute = String(record.attribute || '').trim();
+  const result = String(record.result ?? '').trim();
+  /* No unit is invented. A recorded number whose unit was never captured is
+     reported as unrecorded, the same refusal the impurity register makes. */
+  const resultUnit = String(record.resultUnit || record.result_unit || '').trim();
+  const conclusion = String(record.conclusion || '').trim();
+
+  /* The sentence the section can stand behind: a technique and what it showed.
+     A study with a title and nothing else establishes nothing, so it answers no
+     required field — it still renders in the table, where a reviewer can see
+     that it was run and that its result is missing. */
+  const statement = [
+    [technique, attribute].filter(Boolean).join(' — '),
+    result ? `${result}${resultUnit ? ` ${resultUnit}` : ''}` : '',
+    conclusion,
+  ]
+    .filter(Boolean)
+    .join(': ');
+  const establishes = Boolean(technique) && Boolean(result || conclusion);
+
+  const payload: Record<string, any> = {
+    characterizationScope: side,
+    characterizationType: type,
+    studyTitle,
+    technique,
+    attribute,
+    characterizationResult: result,
+    /* Emitted as recorded, so the section can say "unit not recorded" instead
+       of printing a bare number that reads as whatever unit the reader assumes. */
+    characterizationResultUnit: resultUnit,
+    acceptanceReference: record.acceptanceReference || record.acceptance_reference || '',
+    conclusion,
+    studyReference: record.studyReference || record.study_reference || '',
+    performedBy: record.performedBy || record.performed_by || '',
+    performedDate: record.performedDate || record.performed_date || null,
+    supportingData: hasRecordedValue(record.supportingData ?? record.supporting_data)
+      ? (record.supportingData ?? record.supporting_data)
+      : null,
+    status: record.status || 'draft',
+    characterizationStatement: statement || null,
+    /* Whether the study established anything — a technique AND a readout. The
+       statement alone is not that test: a study with a technique and no result
+       still produces a statement naming the technique, and a section counting
+       statements would have reported it as a finding. */
+    characterizationEstablishes: establishes,
+  };
+
+  /* The one field this study type can answer — and only when the study
+     actually established something, and only on the drug-substance side,
+     because §3.2.S.3 is the drug substance's characterisation section. */
+  payload[CHARACTERIZATION_TYPE_FIELD[type]] =
+    forSubstance && establishes ? (statement || studyTitle) : null;
+
+  return payload;
+}
+
 // ── Core write-through function ────────────────────────────────────────────
 
 /**
@@ -1168,6 +1520,58 @@ export async function writeThroughDissolutionProfile(
     orgId, projectId, sourceType: 'dissolution_profile',
     sourceKey: `dissolution_profile:${recordId}`,
     sourcePayload: mapDissolutionProfilePayload(record),
+    createdBy,
+  });
+}
+
+/**
+ * The material register writes one of TWO canonical source types, decided by
+ * the role: an excipient is §3.2.P.4 content, a raw or starting material is
+ * §3.2.S.2.3 content. One register, one mapper, the section chosen by what the
+ * material IS.
+ */
+export async function writeThroughMaterialSpec(
+  orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
+): Promise<WriteThroughResult | null> {
+  const role = normalizeMaterialRole(record.materialRole ?? record.material_role);
+  const sourceType: CmcSourceType = EXCIPIENT_ROLES.includes(role) ? 'excipient' : 'raw_material_spec';
+  return writeThroughToCanonicalSource({
+    orgId, projectId, sourceType,
+    sourceKey: `${sourceType}:${recordId}`,
+    sourcePayload: mapMaterialSpecPayload(record),
+    createdBy,
+  });
+}
+
+export async function writeThroughFormulationRecord(
+  orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
+): Promise<WriteThroughResult | null> {
+  return writeThroughToCanonicalSource({
+    orgId, projectId, sourceType: 'formulation_record',
+    sourceKey: `formulation_record:${recordId}`,
+    sourcePayload: mapFormulationRecordPayload(record),
+    createdBy,
+  });
+}
+
+export async function writeThroughManufacturingProcess(
+  orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
+): Promise<WriteThroughResult | null> {
+  return writeThroughToCanonicalSource({
+    orgId, projectId, sourceType: 'manufacturing_process',
+    sourceKey: `manufacturing_process:${recordId}`,
+    sourcePayload: mapManufacturingProcessPayload(record),
+    createdBy,
+  });
+}
+
+export async function writeThroughCharacterizationStudy(
+  orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
+): Promise<WriteThroughResult | null> {
+  return writeThroughToCanonicalSource({
+    orgId, projectId, sourceType: 'characterization',
+    sourceKey: `characterization:${recordId}`,
+    sourcePayload: mapCharacterizationStudyPayload(record),
     createdBy,
   });
 }
