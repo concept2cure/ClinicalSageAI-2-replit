@@ -63,6 +63,8 @@ interface SectionRow {
   draftSource: string | null;
   draftedAt: Date | null;
   draftedSummary: string | null;
+  /** Stamped on accept; draftSource is kept, so this is what says "pending" (ledger L155). */
+  acceptedAt: Date | null;
 }
 
 router.get('/:projectIdent/document-preview', async (req: Request, res: Response) => {
@@ -194,6 +196,7 @@ router.get('/:projectIdent/document-preview', async (req: Request, res: Response
         draftSource: cerv2510kSections.draftSource,
         draftedAt: cerv2510kSections.draftedAt,
         draftedSummary: cerv2510kSections.draftedSummary,
+        acceptedAt: cerv2510kSections.acceptedAt,
       })
       .from(cerv2510kSections)
       .where(eq(cerv2510kSections.organizationId, orgId))
@@ -297,6 +300,7 @@ router.get('/:projectIdent/document-preview', async (req: Request, res: Response
       draftSource: s.draftSource ?? null,
       draftedAt: s.draftedAt?.toISOString?.() ?? null,
       draftedSummary: s.draftedSummary ?? null,
+      acceptedAt: s.acceptedAt?.toISOString?.() ?? null,
     })),
     assembledMarkdown,
   });

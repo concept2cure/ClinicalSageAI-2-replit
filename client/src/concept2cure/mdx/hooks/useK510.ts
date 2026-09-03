@@ -57,6 +57,7 @@ interface ServerSection {
      via write_kit_section and the user hasn't accepted. */
   draftSource?: string | null;
   draftedAt?: string | null;
+  acceptedAt?: string | null;
   draftedSummary?: string | null;
 }
 
@@ -87,10 +88,11 @@ function adaptSection(s: ServerSection): EstarRow {
   const id = typeof s.sectionNumber === 'number'
     ? s.sectionNumber
     : Number.parseInt(String(s.sectionNumber), 10) || s.id;
-  /* Surface AnA's draft when present + not yet accepted. The server clears
-     draftSource on accept, so the affordance disappears automatically. */
+  /* Surface AnA's draft when present + not yet accepted. Acceptance stamps
+     acceptedAt and KEEPS draftSource — the origin is a fact about the text,
+     not a pending flag (ledger L155). */
   const draft =
-    s.draftSource === 'ana' && s.draftedAt
+    s.draftSource === 'ana' && s.draftedAt && !s.acceptedAt
       ? {
           source: 'ana' as const,
           at: s.draftedAt,

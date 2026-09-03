@@ -1,45 +1,15 @@
 // @vitest-environment jsdom
 /**
- * dataConnect — the `live ?? fixture` primitive every wired surface depends on.
+ * dataConnect — envelope handling shared by the fixture-free read hooks.
  *
- * These lock the fail-closed contract: live data is adopted only when it
- * structurally matches what the surface renders; anything else (wrong shape,
- * empty, non-OK, network error) keeps the honest fixture with `sample:true`.
- * If this ever regresses, a surface could render degraded/partial data as
- * "Live" — the exact failure the guard exists to prevent.
+ * The `live ?? fixture` primitives (liveGet / useLive / useLiveList /
+ * matchesShape) and their fail-closed matrix were deleted with their last
+ * consumers (ledger L72); what remains here is the envelope unwrapping every
+ * list read still depends on.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
 
-vi.mock('@/lib/queryClient', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
-  apiRequest: vi.fn(),
-}));
-vi.mock('@/utils/authToken', () => ({ getAuthToken: () => 'test-token' }));
-
-import { apiRequest } from '@/lib/queryClient';
 import { unwrapList } from '../dataConnect';
-
-const mockApi = apiRequest as unknown as ReturnType<typeof vi.fn>;
-
-function httpRes(status: number, json: unknown): Response {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    json: async () => json,
-  } as Response;
-}
-
-interface Row {
-  id: string;
-  name: string;
-  _new?: boolean;
-}
-const FIXTURE: Row[] = [{ id: 'fx', name: 'fixture' }];
-
-beforeEach(() => {
-  mockApi.mockReset();
-});
 
 describe('unwrapList', () => {
   it('returns a bare array unchanged', () => {
@@ -55,4 +25,3 @@ describe('unwrapList', () => {
     expect(unwrapList(payload)).toBe(payload);
   });
 });
-

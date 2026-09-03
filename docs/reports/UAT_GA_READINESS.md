@@ -126,11 +126,12 @@ SourceTracer are helper/static modules, not instance-data surfaces.
 
 - Every v2 SURFACE_VIEWS surface mounts with 0 console errors (automated
   render audit, re-run after every wave/slice)
-- First-use render gates, both provenance states: every surface renders
-  crash-free in its offline (fixture, "Sample data") branch AND in its
-  live-adopted ("Live", sample:false) branch — the seeded first-user view
-  (`surfaceRender` + `liveBranchRender`, the latter with a vacuity guard so it
-  can't pass trivially)
+- First-use render gate: every surface renders crash-free with no backend
+  reachable (`surfaceRender`). The former `liveBranchRender` gate forced the
+  legacy `live ?? fixture` hooks into their "Live" branch; those hooks and the
+  fixture fallback were deleted (ledger L72), so there is no second provenance
+  branch left to render — a surface shows real data, an honest empty state, or
+  an honest error state.
 - Navigation-integrity gate: every literal in-app nav target
   (onNav/open/C2C.open/setSurface) resolves to a real SURFACE_VIEWS surface, a
   deep-link alias, the home hub, or a modal mode — no dead buttons

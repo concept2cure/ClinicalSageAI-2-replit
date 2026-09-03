@@ -365,13 +365,36 @@ describe('POST /:sectionId/accept-ana-draft', () => {
     expect(v.change_summary).toBe('Accepted AnA draft');
     expect(v.status).toBe('in_review');
     expect(v.content).toBe('AI DRAFTED body');
-    expect(v.fields_changed).toEqual(['status', 'draft_source']);
-    // Who accepted an AI draft, and what it looked like when they did.
+    expect(v.fields_changed).toEqual(['status', 'accepted_at', 'accepted_by']);
+    // Who accepted an AI draft, and what it looked like when they did — and the
+    // origin stays stated afterwards; acceptance is a fact added, not one erased.
     expect(v.previous_values.draft_source).toBe('ana');
     expect(v.previous_values.content).toBe('AI DRAFTED body');
-    expect(v.new_values.draft_source).toBeNull();
+    expect(v.new_values.draft_source).toBe('ana');
+    expect(typeof v.new_values.accepted_at).toBe('string');
     expect(v.new_values.accepted_by).toBe(501);
     expect(v.changed_by).toBe(501);
+  });
+
+  it('keeps the machine origin on the live row and refuses a second acceptance', async () => {
+    const sectionId = await seedAnaDraft();
+    expect((await api().post(`/api/cerv2/sections/${sectionId}/accept-ana-draft`).send({})).status).toBe(200);
+    const { rows } = await pg.query<{
+      draft_source: string | null;
+      accepted_at: string | null;
+      accepted_by: number | null;
+    }>(
+      `SELECT draft_source, accepted_at, accepted_by FROM cerv2_510k_sections WHERE id = $1`,
+      [sectionId],
+    );
+    // Before L155 this read draft_source = NULL: a section with no stated
+    // origin that a person accepted, indistinguishable from human-authored.
+    expect(rows[0].draft_source).toBe('ana');
+    expect(rows[0].accepted_at).not.toBeNull();
+    expect(rows[0].accepted_by).toBe(501);
+    const again = await api().post(`/api/cerv2/sections/${sectionId}/accept-ana-draft`).send({});
+    expect(again.status).toBe(409);
+    expect(again.body.error).toMatch(/already been accepted/);
   });
 
   it('records the field values both as the state now and as the state before', async () => {
@@ -392,7 +415,7 @@ describe('POST /:sectionId/accept-ana-draft', () => {
       .send({ refined_content: 'HUMAN REWRITTEN body' });
     expect(res.status).toBe(200);
     const rows = await versionsFor(sectionId);
-    expect(rows[1].fields_changed).toEqual(['content', 'status', 'draft_source']);
+    expect(rows[1].fields_changed).toEqual(['content', 'status', 'accepted_at', 'accepted_by']);
     expect(rows[1].content).toBe('HUMAN REWRITTEN body');
     expect(rows[1].previous_values.content).toBe('AI DRAFTED body');
   });

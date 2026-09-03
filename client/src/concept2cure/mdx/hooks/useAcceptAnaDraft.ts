@@ -3,7 +3,8 @@
  * accept (or refine + accept) a draft AnA wrote into a kit section via the
  * write_kit_section tool.
  *
- * The server clears draft_source on success, stamps accepted_at + accepted_by,
+ * The server keeps draft_source (the origin is a fact about the text) and
+ * stamps accepted_at + accepted_by,
  * writes a section-version row + an audit_log entry. The caller is expected
  * to refresh the section list after a successful accept so the affordance
  * disappears from the UI.

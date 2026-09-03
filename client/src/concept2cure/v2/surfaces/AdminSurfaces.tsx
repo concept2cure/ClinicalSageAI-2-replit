@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { downloadBlob, downloadText, safeFileName } from '../download';
-import { SampleTag, useLiveData, useLiveRows, EmptyState, liveMutateOrNull } from '../dataConnect';
+import { useLiveData, useLiveRows, EmptyState, liveMutateOrNull } from '../dataConnect';
 import { ApiRequestError, apiRequest, serverMessage } from '@/lib/queryClient';
 import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -527,7 +527,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
         eyebrow="Admin — organization"
         title={
           <React.Fragment>
-            Setup {!loadError && !loading && <SampleTag />}
+            Setup
           </React.Fragment>
         }
         sub="Organization profile and module configuration, saved to the organization record and written to the audit trail. Controls the platform enforces rather than exposes are marked as enforced."

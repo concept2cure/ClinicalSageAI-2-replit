@@ -6195,6 +6195,20 @@ router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Document must be in DRAFT status to submit' });
     }
 
+    // Every step needs the approver it will be matched against on approval
+    // (`approver_email = $3` in the approve route). Inventing
+    // `qa@company.com` from the role produced a step nobody could approve —
+    // or someone unintended could (ledger L152).
+    const steps = workflow_steps as Array<{ role?: string; approver_email?: unknown }>;
+    const stepWithoutApprover = steps.findIndex(
+      (s) => typeof s?.approver_email !== 'string' || !s.approver_email.trim()
+    );
+    if (stepWithoutApprover >= 0) {
+      return res.status(400).json({
+        error: `Workflow step ${stepWithoutApprover + 1} has no approver_email; every step needs the approver it will be matched against`,
+      });
+    }
+
     // Create workflow
     const workflowId = crypto.randomUUID();
 
@@ -6210,7 +6224,7 @@ router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
           docId,
           i + 1,
           step.role,
-          step.approver_email || `${step.role.toLowerCase()}@company.com`,
+          step.approver_email,
           tenantId,
         ]
       );

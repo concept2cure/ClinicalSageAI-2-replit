@@ -14,6 +14,7 @@
  * @compliance FDA 21 CFR Part 11 — immutable audit trail
  */
 
+import { governedActor } from './part11/governed-actor';
 import { createHash, randomUUID } from 'node:crypto';
 
 import { getPool } from '../db/runtime.js';
@@ -208,11 +209,7 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
                 sourceRefs: [`section:${sectionCode}`],
               },
             },
-            userId: userId || 0,
-            // No userEmail. resolveGovernedContext resolves the actor as
-            // `userId || userEmail || 'unknown'`, so a synthesised address only ever
-            // displaced that honest 'unknown' — and did it with a person-shaped
-            // string an inspector cannot tell from a real one (ledger L142).
+            ...governedActor(userId, 'artifact-tagger'),
             userRole: 'regulatory',
           } as any,
           projectId,

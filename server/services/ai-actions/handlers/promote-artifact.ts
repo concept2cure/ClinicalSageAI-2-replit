@@ -12,6 +12,7 @@
  * Phase 2: Add approval gates, multi-section promotion, dossier placement.
  */
 
+import { governedActor } from '../../part11/governed-actor';
 import { eq, and } from 'drizzle-orm';
 import * as crypto from 'crypto';
 import {
@@ -136,8 +137,7 @@ const promoteArtifactHandler: AIActionHandler = {
           sourceRefs: [`artifact:${artifact.artifactId}`],
         },
       },
-      userId: ctx.user.userId,
-      userEmail: `${ctx.user.userName || 'ai-action'}@concept2cure.local`,
+      ...governedActor(ctx.user.userId, 'ai-action-promote-artifact'),
       userRole: ctx.user.userRole || 'regulatory',
     } as any;
     const governedResolution = resolveGovernedContext({
