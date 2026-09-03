@@ -408,9 +408,16 @@ describe('golden journey — drug NDA / eCTD', () => {
       // A probe blocked for any other reason proves nothing about the audit
       // write, so "the hidden store was reached" is part of the verdict, not a
       // throw — inside expectBlocked a throw reads as the block itself.
-      const auditStoreReached = jdb.schemaGaps
-        .splice(gapsBefore)
-        .some((g) => g.code === '42P01' && g.message.includes('"audit_logs"'));
+      //
+      // Only the gap this probe CAUSED leaves the journey's list. Any other
+      // relation the request found missing inside the window is a real gap,
+      // and is put back for afterAll to report — taking the whole window out
+      // would have let the probe hide it.
+      const isHiddenAuditStore = (g: { code: string; message: string }) =>
+        g.code === '42P01' && g.message.includes('"audit_logs"');
+      const inWindow = jdb.schemaGaps.splice(gapsBefore);
+      jdb.schemaGaps.push(...inWindow.filter((g) => !isHiddenAuditStore(g)));
+      const auditStoreReached = inWindow.some(isHiddenAuditStore);
       const after = await jdb.pool.query(
         `SELECT (SELECT count(*)::int FROM regulatory_programs) AS g,
                 (SELECT count(*)::int FROM submissions) AS s,
