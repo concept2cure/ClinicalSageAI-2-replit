@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T01:15:14.091Z",
+  "generatedAt": "2026-09-03T01:19:36.936Z",
   "git": {
-    "sha": "1963835ba37f66f616ee5e6e75f4a9a77fbf7843",
+    "sha": "f4da56ce5ff06f42df6fca4de4cbd75f36661dc3",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -14,7 +14,7 @@
     "design-system/"
   ],
   "summary": {
-    "duplicateBasenames": 222,
+    "duplicateBasenames": 221,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 38,
@@ -1358,14 +1358,6 @@
         ]
       },
       {
-        "basename": "docushareconfig",
-        "count": 2,
-        "paths": [
-          "server/config/docushareConfig.js",
-          "server/config/docushareConfig.ts"
-        ]
-      },
-      {
         "basename": "effort-certification",
         "count": 2,
         "paths": [
@@ -2668,7 +2660,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 401,
+      "duplicateGroups": 399,
       "largeByBytes": 28,
       "largeByLines": 73
     },
