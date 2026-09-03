@@ -1749,6 +1749,16 @@ export const C2C_MIGRATION_FILES = [
   // (scope / purpose) so a drug-substance impurity cannot green a drug-product
   // section and a development profile cannot green the release specification.
   'db/migrations/20260902_cmc_impurity_dissolution_registers.sql',
+  // The Clinical Operations surface's store. Its router used to CREATE SCHEMA
+  // and CREATE TABLE on the first request, which the non-superuser runtime role
+  // must refuse (42501) — so every call 500'd. Ordered after the CMC registers
+  // and before the sweep; it only needs public.organizations, which exists long
+  // before this point.
+  'db/migrations/20260902_clinical_ops_schema.sql',
+  // manufacturing.responses. Its router created the table on the first request
+  // — the comment there said so, naming migration 066's omission as the reason
+  // — which the runtime role may not do, so the finding-response surface 500'd.
+  'db/migrations/20260902_manufacturing_responses.sql',
 
   // ── CMC material spec + formulation registers ────────────────────────────
   // The producers for the composer's excipient, raw_material_spec and
