@@ -107,7 +107,6 @@ const NOT_PROSE = [
  * added here to get green; it is gated, or declared NOT_PROSE with a reason.
  */
 const KNOWN_UNGUARDED = [
-  { file: 'server/routes/batch-draft-routes.ts', row: 'L160', what: 'coauthor_documents.content from AnA batch drafts' },
   { file: 'server/routes/concept2cure.ts', row: 'L160', what: 'concept2cure_artifacts.content on edit and on rollback-to-version' },
   { file: 'server/services/ana/AnaToolExecutor.ts', row: 'L160', what: 'concept2cure_artifacts.content from the AnA document-content tool (the kit-section tool in the same file IS gated)' },
   { file: 'server/services/ana/submission-chat-apply-rewrite.ts', row: 'L160', what: 'concept2cure_artifacts.content when an AnA rewrite is applied' },
@@ -165,6 +164,10 @@ const GUARDED = [
   {
     file: 'server/services/ana/artifactVersionStore.ts',
     why: 'upsertDocumentArtifactVersion(Tx) writes concept2cure_artifacts.content + its version row — the shared writer behind AnA Document Studio drafts and the canonical-revision spine',
+  },
+  {
+    file: 'server/routes/batch-draft-routes.ts',
+    why: 'POST accept writes coauthor_documents.content from an accepted AnA batch draft',
   },
   {
     file: 'server/routes/q-sub.ts',
@@ -276,7 +279,14 @@ const TRANSACTION = {
     // Drizzle form: the callback's `tx` is the transaction, and the gate's
     // `client` must be derived from it — a `client` that comes from anywhere
     // else would let content and lineage commit separately.
-    (/\.transaction\(\s*async\s*\(?\s*tx\b/.test(src) && /const client = \w+\(tx\)/.test(src)),
+    (/\.transaction\(\s*async\s*\(?\s*tx\b/.test(src) && /const client = \w+\(tx\)/.test(src)) ||
+    // Raw-statement form on a request-scoped Drizzle db: BEGIN/COMMIT/ROLLBACK
+    // issued as statements on `rdb`, and the gate's `client` adapted from that
+    // same `rdb` — never from the pool.
+    (src.includes('execute(sql`BEGIN`)') &&
+      src.includes('execute(sql`COMMIT`)') &&
+      src.includes('execute(sql`ROLLBACK`)') &&
+      /const client = \w+\(rdb\)/.test(src)),
   message:
     'no transaction around the content write — content and lineage must commit together, ' +
     'or a failed lineage write leaves saved text with no provenance',

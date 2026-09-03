@@ -4,8 +4,9 @@
  */
 import { Router } from 'express';
 import { z } from 'zod';
+import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/lineage-gate';
-import { and, asc, desc, eq, sql, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { cerv2510kSections, cerv2SectionVersions } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import { db } from '../db';
@@ -55,37 +56,9 @@ const logger = createScopedLogger('cerv2-sections');
  * content rolls back attests to a change that never happened, and content that
  * commits without history is the loss the writer exists to prevent.
  */
-type DrizzleRunner = { execute: (query: SQL) => Promise<unknown> };
-
-/**
- * Adapt a Drizzle runner (the db, or a transaction) to the pg-style
- * `query(text, params)` the shared writer takes, so these handlers keep their
- * Drizzle statements while their history goes through the one writer.
- *
- * The writer's `$n` placeholders are re-bound as Drizzle parameters; the
- * statement text is passed through raw and no value is ever interpolated into
- * it.
- */
-function sectionVersionExec(runner: DrizzleRunner): SectionVersionExec {
-  return {
-    query: async (text: string, params: unknown[] = []) => {
-      const parts = text.split(/\$(\d+)/g);
-      const chunks: SQL[] = [];
-      for (let i = 0; i < parts.length; i += 1) {
-        // `sql.param` rather than a bare interpolation: Drizzle expands a bare
-        // array value into a `(a, b, c)` tuple of separate placeholders, which
-        // turns the writer's `fields_changed` text[] into a row expression the
-        // column will not take.
-        chunks.push(
-          i % 2 === 0 ? sql.raw(parts[i]) : sql`${sql.param(params[Number(parts[i]) - 1])}`,
-        );
-      }
-      const result = (await runner.execute(sql.join(chunks))) as { rows?: unknown[] } | unknown[];
-      const rows = Array.isArray(result) ? result : (result?.rows ?? []);
-      return { rows: rows as any[] };
-    },
-  };
-}
+// The Drizzle-transaction → pg-style client adapter the shared writers need
+// (section-version writer, lineage gate) lives in server/db/drizzle-queryable.
+const sectionVersionExec = queryableFromDrizzle;
 
 const resolveOrganizationId = (req: any) => {
   const tenantOrg = req.tenantContext?.organizationId;
