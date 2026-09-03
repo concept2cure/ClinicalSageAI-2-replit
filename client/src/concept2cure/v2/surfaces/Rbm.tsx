@@ -181,7 +181,7 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
   return (
     <div className="rbm" data-screen-label={`RBM -- ${nav.label}`}>
-      <div className="reg-h">
+      <div className="reg-head">
         <div>
           <div className="ph-eyebrow">Clinical — risk-based quality management</div>
           <h1 className="reg-title">Risk-based monitoring</h1>

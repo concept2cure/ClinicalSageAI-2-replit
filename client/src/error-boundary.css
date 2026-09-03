@@ -1,0 +1,12 @@
+/* App-level error boundary fallback (ErrorBoundary.jsx), mounted in main.tsx
+   outside every shell. It rendered `error-boundary-fallback` and
+   `error-message` with no rule anywhere (ledger L139), so a crashed screen
+   showed an unstyled heading, paragraph, stack trace and two bare buttons.
+   Tokens are the global design-system set main.tsx loads before this file. */
+.error-boundary-fallback{ max-width:560px; margin:48px auto; padding:24px 28px; border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--bg-000); color:var(--text-100); display:grid; gap:12px; }
+.error-boundary-fallback h2{ font-size:18px; font-weight:600; margin:0; }
+.error-boundary-fallback p{ font-size:13.5px; line-height:1.55; color:var(--text-200); margin:0; }
+.error-boundary-fallback .error-message{ margin:0; padding:10px 12px; border-radius:var(--radius-md); background:var(--error-muted); color:var(--error); font-family:var(--font-mono, ui-monospace, monospace); font-size:12px; white-space:pre-wrap; overflow:auto; max-height:40vh; }
+.error-boundary-fallback button{ justify-self:start; padding:6px 14px; border-radius:var(--radius-md); border:1px solid var(--border); background:var(--bg-050); color:var(--text-100); font-size:13px; cursor:pointer; }
+.error-boundary-fallback button:hover{ background:var(--bg-100); }
+.error-boundary-fallback button:focus-visible{ outline:2px solid var(--border-focus); outline-offset:1px; }
