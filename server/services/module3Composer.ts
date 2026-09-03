@@ -2,7 +2,7 @@ import { createSourceHash } from './cmc-module3-compiler';
 /* The ICH Q3A/Q3B comparison lives in services/cmc/impurity-assessment, which
    consumes the threshold tables in services/global-ri/impurities-thresholds.
    This composer renders the verdict; it does not restate the guideline. */
-import { assessRecordedImpurity, parseDoseMg, type ImpurityAssessmentResult } from './cmc/impurity-assessment';
+import { assessRecordedImpurity, isThresholdAssessment, parseDoseMg, type ImpurityAssessmentResult } from './cmc/impurity-assessment';
 /* The dissolution purposes live in shared/, not in the write-through module:
    that module already imports FROM this composer, and importing back would make
    a cycle. One definition, reachable by both, and by the register surface. */
@@ -836,8 +836,16 @@ function impurityRendering(
   }
 
   const assessed = rows.map((p) => ({ p, a: assessRecordedImpurity(p, side) }));
-  const reported = assessed.filter((x) => x.a.ok && x.a.disposition !== 'below-reporting');
-  const belowReporting = assessed.filter((x) => x.a.ok && x.a.disposition === 'below-reporting');
+  /* The Q3A/Q3B population: only these carry the reporting/identification/
+     qualification vocabulary. A solvent and an elemental impurity ARE assessed,
+     against their own guideline's single limit, and are counted separately —
+     folding them into `reported` would state them as above a Q3A reporting
+     threshold that was never applied to them. */
+  const thresholdAssessed = assessed.filter((x) => isThresholdAssessment(x.a));
+  const reported = thresholdAssessed.filter((x) => isThresholdAssessment(x.a) && x.a.disposition !== 'below-reporting');
+  const belowReporting = thresholdAssessed.filter((x) => isThresholdAssessment(x.a) && x.a.disposition === 'below-reporting');
+  const solventAssessed = assessed.filter((x) => x.a.ok && x.a.basis === 'ICH Q3C(R8)');
+  const elementalAssessed = assessed.filter((x) => x.a.ok && x.a.basis === 'ICH Q3D(R2)');
   /* Refusals are carried with their reason: an impurity the product cannot
      compare to a threshold is stated as such, never dropped and never reported
      as if it had cleared one. */
@@ -857,15 +865,27 @@ function impurityRendering(
       String(p.analyticalMethod || '—'),
       impurityLevelText(p),
       String(p.specificationLimit || '—'),
-      a.ok
-        ? a.disposition === 'below-reporting'
-          ? `not above the reporting threshold (${thresholdText(a.thresholds.reporting)})`
-          : a.disposition === 'reportable'
-            ? `reportable (above ${thresholdText(a.thresholds.reporting)})`
-            : a.disposition === 'above-identification'
-              ? `above the identification threshold (${thresholdText(a.thresholds.identification)})`
-              : `above the qualification threshold (${thresholdText(a.thresholds.qualification)})`
-        : `not assessable — ${(a as { message: string }).message}`,
+      /* A solvent and an elemental impurity are judged against ONE limit from
+         their own guideline; the three-threshold vocabulary is Q3A/Q3B's. */
+      !a.ok
+        ? `not assessable — ${a.message}`
+        : a.basis === 'ICH Q3C(R8)'
+          ? a.disposition === 'class-1-avoid'
+            ? `ICH Q3C Class 1 — to be avoided (limit ${a.limitPpm} ppm)`
+            : a.withinLimit
+              ? `within the ICH Q3C Class ${a.solventClass} limit (${a.limitPpm} ppm)`
+              : `above the ICH Q3C Class ${a.solventClass} limit (${a.limitPpm} ppm)`
+          : a.basis === 'ICH Q3D(R2)'
+            ? a.withinLimit
+              ? `within the ICH Q3D ${a.elementClass} PDE (${a.pdeMicrogramsPerDay} µg/day, ${a.route})`
+              : `above the ICH Q3D ${a.elementClass} PDE (${a.pdeMicrogramsPerDay} µg/day, ${a.route})`
+            : a.disposition === 'below-reporting'
+              ? `not above the reporting threshold (${thresholdText(a.thresholds.reporting)})`
+              : a.disposition === 'reportable'
+                ? `reportable (above ${thresholdText(a.thresholds.reporting)})`
+                : a.disposition === 'above-identification'
+                  ? `above the identification threshold (${thresholdText(a.thresholds.identification)})`
+                  : `above the qualification threshold (${thresholdText(a.thresholds.qualification)})`,
       String(p.structure || p.molecularFormula || '—'),
       String(p.qualificationBasis || '—'),
     ]),
@@ -886,8 +906,11 @@ function impurityRendering(
     doseKeys.set(parsed.ok ? `mg:${parsed.mg}` : `raw:${text.toLowerCase()}`, text);
   }
   const doses = Array.from(doseKeys.values());
-  const firstOk = assessed.find((x) => x.a.ok);
-  if (firstOk && firstOk.a.ok && doses.length === 1) {
+  /* The Q3A/Q3B threshold basis, which only a Q3A/Q3B assessment has: a
+     solvent and an elemental impurity are judged against one limit from their
+     own guideline and carry no dose-keyed threshold triple. */
+  const firstOk = assessed.find((x) => isThresholdAssessment(x.a));
+  if (firstOk && isThresholdAssessment(firstOk.a) && doses.length === 1) {
     tables.push(
       kvTable(`ICH Threshold Basis — ${suffix}`, {
         'Maximum Daily Dose': doses[0],
@@ -910,17 +933,41 @@ function impurityRendering(
      truth: nothing had been compared to anything. It is made only over the
      assessed set, and only when there is one. */
   const assessedCount = reported.length + belowReporting.length;
+  const guidelineAssessedCount = assessedCount + solventAssessed.length + elementalAssessed.length;
   let narrative =
     `${rows.length} impurity/ies are recorded for the ${material}. ` +
-    (assessedCount === 0
+    (guidelineAssessedCount === 0
       ? `None has been compared to an ICH threshold, so their disposition is not established by this section. `
-      : reported.length > 0
-        ? `Of the ${assessedCount} compared to an ICH threshold, ${reported.length} are above the reporting threshold and are reported above. `
-        : `None of the ${assessedCount} compared to an ICH threshold is above it. `) +
+      : assessedCount === 0
+        ? ''
+        : reported.length > 0
+          ? `Of the ${assessedCount} compared to an ICH Q3A/Q3B threshold, ${reported.length} are above the reporting threshold and are reported above. `
+          : `None of the ${assessedCount} compared to an ICH Q3A/Q3B threshold is above it. `) +
     (belowReporting.length > 0
       ? `${belowReporting.length} are below the reporting threshold and are not reported as impurities of the ${material}. `
+      : '') +
+    /* Solvents and elemental impurities, counted under the guideline that
+       actually governs them rather than folded into the Q3A/Q3B tally. */
+    (solventAssessed.length > 0
+      ? `${solventAssessed.length} residual solvent(s) are assessed against ICH Q3C(R8)` +
+        (() => {
+          const over = solventAssessed.filter((x) => x.a.ok && x.a.basis === 'ICH Q3C(R8)' && !x.a.withinLimit).length;
+          const class1 = solventAssessed.filter((x) => x.a.ok && x.a.basis === 'ICH Q3C(R8)' && x.a.solventClass === 1).length;
+          const clauses: string[] = [];
+          if (over > 0) clauses.push(`${over} above its concentration limit`);
+          if (class1 > 0) clauses.push(`${class1} of Class 1, which the guideline says should not be used`);
+          return clauses.length > 0 ? `: ${clauses.join('; ')}. ` : `, each within its concentration limit. `;
+        })()
+      : '') +
+    (elementalAssessed.length > 0
+      ? `${elementalAssessed.length} elemental impurity/ies are assessed against ICH Q3D(R2)` +
+        (() => {
+          const over = elementalAssessed.filter((x) => x.a.ok && x.a.basis === 'ICH Q3D(R2)' && !x.a.withinLimit).length;
+          return over > 0 ? `: ${over} above the permitted daily exposure for the recorded route. ` : `, each within the permitted daily exposure for its recorded route. `;
+        })()
       : '');
-  if (doses.length === 0) {
+  const needsDose = rows.length > solventAssessed.length + elementalAssessed.length;
+  if (doses.length === 0 && needsDose) {
     narrative +=
       `No maximum daily dose is recorded, so no ICH Q3A/Q3B threshold can be keyed to these levels and their disposition is not established by this section. `;
   } else if (doses.length > 1) {
@@ -938,7 +985,7 @@ function impurityRendering(
      guideline's, the disagreement is stated. The register captured them, the
      mapper carried them, and nothing rendered them — so a record contradicting
      ICH was silently replaced by ICH in the composed section. */
-  const contradicting = assessed.filter((x) => x.a.ok && x.a.recordedThresholdDiffers);
+  const contradicting = assessed.filter((x) => isThresholdAssessment(x.a) && x.a.recordedThresholdDiffers);
   if (contradicting.length > 0) {
     narrative +=
       `${contradicting.length} record(s) state thresholds that differ from the ICH values applied above ` +
