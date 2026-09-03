@@ -313,6 +313,10 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'device-tasks' },
       },
       {
+        say: 'Pre-Submissions shape the pathway before you build it — the agency-meetings workspace tracks each Q-Sub / Pre-Sub with its briefing book and the FDA feedback, so the team designs to the agency’s answer instead of guessing it.',
+        navigate: { target: 'agency-meetings' },
+      },
+      {
         say: 'The 510(k) pathway workspace: predicate intelligence, the substantial-equivalence matrix, and the eSTAR sections built as they go — this is where a submission takes shape, not a folder they assemble at the end.',
         navigate: { target: 'device-510k' },
       },
