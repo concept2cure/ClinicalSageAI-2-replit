@@ -24,9 +24,18 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 vi.mock('../C2CForm', () => ({
-  C2CForm: ({ config, onSubmit }: any) => (
-    <button data-testid="form-submit" onClick={() => onSubmit({ region: 'fda', gateway: 'esg', packageId: '77', submissionType: 'original', reason: 'Dispatch sequence 0003 to FDA', password: 'pw', totp: '123456' })}>{config.submitLabel}</button>
-  ),
+  // One submit button per dialog; the values it submits depend on which form
+  // was mounted, so the record-identifiers / assemble / transmit wiring can each
+  // be driven end to end.
+  C2CForm: ({ config, onSubmit }: any) => {
+    const values =
+      config.title === 'Record regulatory identifiers'
+        ? { packageId: '77', applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc', reason: 'Recording the IND number assigned by CDER' }
+        : config.title === 'Assemble bundle'
+          ? { packageId: '77', region: 'FDA', sequence: '0001', reason: 'Assemble sequence 0001 for FDA' }
+          : { region: 'fda', gateway: 'esg', packageId: '77', submissionType: 'original', reason: 'Dispatch sequence 0003 to FDA', password: 'pw', totp: '123456' };
+    return <button data-testid="form-submit" onClick={() => onSubmit(values)}>{config.submitLabel}</button>;
+  },
 }));
 
 import { GatewayTransmittals } from '../surfaces/GatewayTransmittals';
@@ -148,7 +157,7 @@ describe('GatewayTransmittals — real dispatch layer', () => {
 
     expect(await screen.findByText(/structural gate rejected the bundle/)).toBeTruthy();
     const card = await screen.findByRole('region', { name: 'Structural gate refusal' });
-    expect(card.textContent).toMatch(/re-assemble the package, then transmit again/);
+    expect(card.textContent).toMatch(/assemble the package again, then transmit/);
     expect(screen.getByText(/regulatory\.applicationNumber/)).toBeTruthy();
     // Errors are listed before informational findings.
     const chips = Array.from(card.querySelectorAll('.rd-chip')).map((c) => c.textContent);
@@ -162,6 +171,112 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     fireEvent.click(screen.getByTestId('form-submit'));
     expect(await screen.findByText(/gateway ref ESG-NEW-2/)).toBeTruthy();
     expect(screen.queryByRole('region', { name: 'Structural gate refusal' })).toBeNull();
+  });
+
+  it('records regulatory identifiers through the governed PUT route and says the cleared bundle must be assembled again', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'PUT' && url === '/api/submission-ops/packages/77/regulatory-identifiers') {
+        return env({ packageId: 'pkg_77', changed: true, staleBundleCleared: true, ledgerWriteFailed: false });
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Record identifiers/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    await waitFor(() => {
+      const call = apiRequest.mock.calls.find((c) => c[0] === 'PUT');
+      expect(call).toBeTruthy();
+      expect(call![1]).toBe('/api/submission-ops/packages/77/regulatory-identifiers');
+      expect(call![2]).toMatchObject({ applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc', reason: 'Recording the IND number assigned by CDER' });
+    });
+    expect(await screen.findByText(/Identifiers recorded on package pkg_77.*cleared — assemble again before transmitting/)).toBeTruthy();
+  });
+
+  it('surfaces a refused identifier (400) with the server’s own reason, and records nothing', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'PUT') return { ok: false, status: 400, json: async () => ({ error: 'Identifier(s) do not meet the agency-identifier contract: applicationNumber.', code: 'REGULATORY_IDENTIFIER_INVALID', fields: ['applicationNumber'] }) } as Response;
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Record identifiers/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    expect(await screen.findByText(/Not recorded — Identifier\(s\) do not meet the agency-identifier contract: applicationNumber\./)).toBeTruthy();
+  });
+
+  it('assembles through the canonical packager and reports the bundle as ready to transmit', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url === '/api/submission-ops/packages/77/assemble') {
+        return env({ packageId: 'pkg_77', bundle: { sha256: 'abcdef0123456789' + 'a'.repeat(48), leafCount: 4, validation: { errorCount: 0, warningCount: 1, infoCount: 1 } } });
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    await waitFor(() => {
+      const call = apiRequest.mock.calls.find((c) => c[0] === 'POST' && c[1] === '/api/submission-ops/packages/77/assemble');
+      expect(call).toBeTruthy();
+      expect(call![2]).toEqual({ reason: 'Assemble sequence 0001 for FDA', region: 'FDA', sequence: '0001' });
+    });
+    expect(await screen.findByText(/Bundle assembled for pkg_77 · 4 leaves · 1 warning · sha256 abcdef012345\. Ready to transmit\./)).toBeTruthy();
+  });
+
+  it('shows a bundle assembled WITH error findings in the findings card, fetched from preflight, and offers to record identifiers when that is the finding', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url === '/api/submission-ops/packages/77/assemble') {
+        return env({ packageId: 'pkg_77', bundle: { sha256: 'f'.repeat(64), leafCount: 2, validation: { errorCount: 1, warningCount: 0, infoCount: 1 } } });
+      }
+      if (method === 'POST' && url === '/api/submission-ops/packages/77/preflight') {
+        return env({ findings: [
+          { severity: 'info', ruleId: 'SUMMARY', message: '2 leaf(s)' },
+          { severity: 'error', ruleId: 'REGULATORY-IDENTIFIER-MISSING', message: 'missing package metadata: regulatory.applicationNumber' },
+        ] });
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    const card = await screen.findByRole('region', { name: 'Packager refusal' });
+    expect(card.textContent).toMatch(/1 error-severity finding; transmit will refuse it/);
+    const chips = Array.from(card.querySelectorAll('.rd-chip')).map((c) => c.textContent);
+    expect(chips).toEqual(['REGULATORY-IDENTIFIER-MISSING', 'SUMMARY']);
+    // The card offers the fix for exactly this finding, prefilled for the same package.
+    const fix = card.querySelector('button')!;
+    expect(fix.textContent).toMatch(/Record identifiers/);
+    fireEvent.click(fix);
+    expect(screen.getByTestId('form-submit').textContent).toBe('Record');
+  });
+
+  it('renders a packager REFUSAL (422) with its findings', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/assemble')) {
+        return { ok: false, status: 422, json: async () => ({ error: 'Refusing to package: 1 leaf could not be placed', code: 'PACKAGER_REFUSED', validation: { findings: [{ severity: 'error', ruleId: 'PACKAGER-REFUSED', message: 'cover.pdf has no heading' }] } }) } as Response;
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    expect(await screen.findByText(/Not assembled — Refusing to package: 1 leaf could not be placed\./)).toBeTruthy();
+    const card = await screen.findByRole('region', { name: 'Packager refusal' });
+    expect(card.textContent).toMatch(/cover\.pdf has no heading/);
+    expect(card.textContent).toMatch(/Resolve the findings, then assemble the package again/);
   });
 
   it('polls the live gateway status for a transmittal', async () => {
