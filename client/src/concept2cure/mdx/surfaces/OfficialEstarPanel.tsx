@@ -44,7 +44,38 @@ import {
   type OfficialEstarVariant,
   type OfficialFieldView,
 } from '../hooks/useEstarOfficialFields';
-import { exportStatusLine, useEstarExport } from '../hooks/useEstarExport';
+import {
+  entitlementBlocksExport,
+  entitlementRequiredLine,
+  exportStatusLine,
+  useEstarEntitlement,
+  useEstarExport,
+} from '../hooks/useEstarExport';
+
+/** The FDA template family a variant is produced on, in FDA's own words. */
+export const ESTAR_FAMILY_WORDS: Record<OfficialEstarVariant, string> = {
+  device: 'nIVD eSTAR',
+  ivd: 'IVD eSTAR',
+};
+
+/**
+ * Which official template a program files on. An IVD program that files a
+ * 510(k) reaches the 510(k) surface (its pathway is k510), so the variant is
+ * decided by the program's product type, never by the surface it is on.
+ * Absent product type (the kit's sample rows) reads as a device.
+ */
+export function officialEstarVariantFor(
+  program: Pick<Program, 'productType'> | null | undefined,
+): OfficialEstarVariant {
+  return (program?.productType ?? '').toLowerCase() === 'ivd' ? 'ivd' : 'device';
+}
+
+/** The disabled-control title for a plan that does not unlock the export. */
+export function entitlementLockTitle(requiredTier: string | null | undefined): string {
+  return requiredTier
+    ? `Locked — requires the ${requiredTier} plan (device assembly readiness)`
+    : 'Locked — requires a higher plan (device assembly readiness)';
+}
 
 export interface OfficialEstarPanelProps {
   program: Program | null;
@@ -104,6 +135,7 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
   const readiness = useEstarReadiness(type, variant);
   const official = useEstarOfficialFields(ident, type, variant);
   const estarExport = useEstarExport();
+  const entitlement = useEstarEntitlement();
 
   /* Values typed for THIS export only. Re-seeded empty on a program or variant
      switch so nothing typed under one device travels to the next — and the last
@@ -134,12 +166,18 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
   /* Locked-never-dead (entitlements contract §4) — the same shape K510Surface
      uses for the draft package: only the entitlement gate's exact 403 sets
      blockedByEntitlement, so a role 403 never reads as a plan limitation. */
-  const entitlementLocked = estarExport.outcome?.blockedByEntitlement === true;
-  const lockedTitle = entitlementLocked
-    ? estarExport.outcome?.requiredTier
-      ? `Locked — requires the ${estarExport.outcome.requiredTier} plan (device assembly readiness)`
-      : 'Locked — requires a higher plan (device assembly readiness)'
-    : null;
+  /* …and the lock is known BEFORE the first click: the entitlement read says
+     whether the producing route would refuse today. Only an ENFORCED denial
+     locks — in warn/off mode the POST goes through, so locking on it would be
+     a claim the server does not make. A failed read locks nothing; the 403
+     path still guards the write. */
+  const refusedAfterClick = estarExport.outcome?.blockedByEntitlement === true;
+  const lockedBeforeClick = entitlementBlocksExport(entitlement.entitlement);
+  const entitlementLocked = refusedAfterClick || lockedBeforeClick;
+  const lockedTier = refusedAfterClick
+    ? estarExport.outcome?.requiredTier ?? null
+    : entitlement.entitlement?.requiredTier ?? null;
+  const lockedTitle = entitlementLocked ? entitlementLockTitle(lockedTier) : null;
 
   const disabledReason = generateDisabledReason({
     lockedTitle,
@@ -178,7 +216,9 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
     <>
       <div className="section-hdr">
         <div>
-          <div className="section-title">Official eSTAR · administrative data</div>
+          <div className="section-title">
+            Official eSTAR · administrative data · {ESTAR_FAMILY_WORDS[variant]}
+          </div>
           <div className="section-sub">{headerLine}</div>
         </div>
         <button
@@ -208,6 +248,15 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
             : readiness.error
               ? 'Official eSTAR availability could not be checked'
               : 'The official template or its field map is not available'}
+        </div>
+      ) : null}
+
+      {lockedBeforeClick && !exportStatus ? (
+        <div className="section-sub" role="status" style={{ marginTop: 4 }} data-testid="official-estar-locked">
+          <span className="status-pill review" style={{ marginRight: 6 }}>
+            Locked
+          </span>
+          {entitlementRequiredLine(lockedTier)}
         </div>
       ) : null}
 

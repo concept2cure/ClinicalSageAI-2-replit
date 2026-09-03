@@ -141,6 +141,19 @@ export function useK510EstarSections(projectIdent: string | null): UseK510EstarR
     : null;
   const { data, loading, error, refresh } = useFetchJson<DocumentPreviewPayload>(url);
   if (!data) return { rows: null, blockerCount: 0, loading, error, refresh };
+  /* A 200 whose body is not `{ sections: [...] }` used to throw here — inside
+     render — and take the whole 510(k) surface down with it. That is the same
+     class of failure useMdxPrograms closed for the portfolio: an unreadable
+     body is a load failure to report, never a crash and never an empty list. */
+  if (!Array.isArray(data.sections)) {
+    return {
+      rows: null,
+      blockerCount: 0,
+      loading,
+      error: error ?? 'The eSTAR section list returned a response this screen could not read.',
+      refresh,
+    };
+  }
   const rows = data.sections.map(adaptSection).sort((a, b) => a.id - b.id);
   return {
     rows,

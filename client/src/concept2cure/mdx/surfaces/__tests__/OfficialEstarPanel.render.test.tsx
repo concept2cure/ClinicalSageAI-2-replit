@@ -2,7 +2,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, cleanup, act, within } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { OfficialEstarPanel, generateDisabledReason } from '../OfficialEstarPanel';
+import {
+  OfficialEstarPanel,
+  generateDisabledReason,
+  officialEstarVariantFor,
+  entitlementLockTitle,
+} from '../OfficialEstarPanel';
 import type { Program } from '../../data/programs';
 
 /**
@@ -181,7 +186,7 @@ describe('OfficialEstarPanel — survives first paint', () => {
   it('renders while every request is still pending — checking is a visible status, not only a title', () => {
     mockFetch(pending);
     render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
-    expect(screen.getByText('Official eSTAR · administrative data')).toBeTruthy();
+    expect(screen.getByText(/Official eSTAR · administrative data/)).toBeTruthy();
     expect(generateButton().disabled).toBe(true);
     expect(generateButton().title).toBe(CHECKING);
     const line = screen.getByText(CHECKING);
@@ -204,7 +209,7 @@ describe('OfficialEstarPanel — survives first paint', () => {
     mockFetch(() => Promise.reject(new Error('network down')));
     render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
     await waitFor(() => expect(screen.getByTestId('official-estar-error')).toBeTruthy());
-    expect(screen.getByText('Official eSTAR · administrative data')).toBeTruthy();
+    expect(screen.getByText(/Official eSTAR · administrative data/)).toBeTruthy();
     const error = within(screen.getByTestId('official-estar-error'));
     expect(error.getByText('The field list could not be loaded')).toBeTruthy();
     expect(error.getByRole('button', { name: 'Try again' })).toBeTruthy();
@@ -554,5 +559,96 @@ describe('OfficialEstarPanel — Generate', () => {
     fireEvent.click(generateButton());
     await waitFor(() => expect(screen.getByText('Export failed — content incomplete')).toBeTruthy());
     expect(screen.queryByText('Locked')).toBeNull();
+  });
+});
+
+/** Answer the entitlement read with `view`; everything else to `inner`. */
+function withEntitlement(view: unknown, inner: Handler): Handler {
+  return (url, init) => (url.includes('/estar/entitlement') ? okJson(view) : inner(url, init));
+}
+
+const ENTITLEMENT_DENIED = {
+  capability: 'device_assembly_readiness',
+  mode: 'on',
+  enforced: true,
+  allowed: false,
+  requiredTier: 'standard',
+  tier: 'free',
+  reason: null,
+};
+
+describe('OfficialEstarPanel — the entitlement lock is known before the first click', () => {
+  it('an enforced denial locks Generate on mount, names the tier, and never posts', async () => {
+    let posted = 0;
+    mockFetch(
+      withEntitlement(
+        ENTITLEMENT_DENIED,
+        readsThen(READY, FIELDS, () => {
+          posted += 1;
+          return okJson({ governed: true });
+        }),
+      ),
+    );
+    render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
+    await waitFor(() => expect(screen.getByTestId('official-estar-locked')).toBeTruthy());
+    const btn = generateButton();
+    expect(btn.disabled).toBe(true);
+    expect(btn.title).toBe(entitlementLockTitle('standard'));
+    expect(screen.getByText('Requires the standard plan — device assembly readiness')).toBeTruthy();
+    expect(screen.getByText('Locked')).toBeTruthy();
+    fireEvent.click(btn);
+    expect(posted).toBe(0);
+  });
+
+  it('a denial in warn mode does not lock — the POST would go through', async () => {
+    mockFetch(
+      withEntitlement(
+        { ...ENTITLEMENT_DENIED, mode: 'warn', enforced: false },
+        readsThen(READY, FIELDS, () => okJson({ governed: true })),
+      ),
+    );
+    render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
+    await waitFor(() => expect(generateButton().disabled).toBe(false));
+    expect(screen.queryByTestId('official-estar-locked')).toBeNull();
+  });
+
+  it('a failed entitlement read locks nothing', async () => {
+    mockFetch((url, init) =>
+      url.includes('/estar/entitlement')
+        ? failText('<html>bad gateway</html>', 502)
+        : readsThen(READY, FIELDS, () => okJson({ governed: true }))(url, init),
+    );
+    render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
+    await waitFor(() => expect(generateButton().disabled).toBe(false));
+    expect(screen.queryByTestId('official-estar-locked')).toBeNull();
+  });
+});
+
+describe('OfficialEstarPanel — which template family', () => {
+  it('officialEstarVariantFor (pure): the product type decides, never the surface', () => {
+    expect(officialEstarVariantFor({ productType: 'ivd' })).toBe('ivd');
+    expect(officialEstarVariantFor({ productType: 'IVD' })).toBe('ivd');
+    expect(officialEstarVariantFor({ productType: 'device' })).toBe('device');
+    expect(officialEstarVariantFor({ productType: undefined })).toBe('device');
+    expect(officialEstarVariantFor(null)).toBe('device');
+  });
+
+  it('the header names the family, and the reads carry the variant', async () => {
+    const urls: string[] = [];
+    mockFetch((url, init) => {
+      urls.push(url);
+      return readsThen(READY, { ...FIELDS, variant: 'ivd' }, () => okJson({}))(url, init);
+    });
+    render(<OfficialEstarPanel program={{ ...PROGRAM, productType: 'ivd' }} variant="ivd" />);
+    expect(screen.getByText(/Official eSTAR · administrative data · IVD eSTAR/)).toBeTruthy();
+    await waitFor(() => expect(urls.some((u) => u.includes('/estar/official-fields'))).toBe(true));
+    expect(urls.filter((u) => u.includes('/estar/readiness')).every((u) => u.includes('variant=ivd'))).toBe(true);
+    expect(urls.filter((u) => u.includes('/estar/official-fields')).every((u) => u.includes('variant=ivd'))).toBe(true);
+  });
+
+  it('a device program reads as the nIVD eSTAR', () => {
+    mockFetch(() => pending());
+    render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
+    expect(screen.getByText(/Official eSTAR · administrative data · nIVD eSTAR/)).toBeTruthy();
   });
 });

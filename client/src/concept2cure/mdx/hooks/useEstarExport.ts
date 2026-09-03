@@ -22,7 +22,7 @@
 
 import { useCallback, useState } from 'react';
 import { serverMessage } from '@/lib/queryClient';
-import { buildAuthHeaders } from './useFetchJson';
+import { buildAuthHeaders, useFetchJson } from './useFetchJson';
 import { downloadBase64 } from '../../v2/download';
 
 interface DownloadRef {
@@ -145,14 +145,65 @@ export function exportStatusLine(busy: boolean, outcome: EstarExportOutcome | nu
     const registry = outcome.governed ? '' : ' · audit-logged; artifact registry placement pending';
     return `Downloaded ${outcome.filename ?? 'package'}${fieldReportClause(outcome.fieldReport)}${formatting}${registry}`;
   }
-  if (outcome.blockedByEntitlement) {
-    return outcome.requiredTier
-      ? `Requires the ${outcome.requiredTier} plan — device assembly readiness`
-      : 'Requires a higher plan — device assembly readiness';
-  }
+  if (outcome.blockedByEntitlement) return entitlementRequiredLine(outcome.requiredTier);
   return `Export failed — ${
     outcome.blockers.length ? outcome.blockers.join(' · ') : outcome.error ?? 'unknown error'
   }`;
+}
+
+/**
+ * The one sentence for "this plan does not unlock the export" — used after a
+ * 403 NOT_ENTITLED and, through useEstarEntitlement, BEFORE the first click.
+ * Names the real minimum tier when the server named one; never invents a tier.
+ */
+export function entitlementRequiredLine(requiredTier: string | null | undefined): string {
+  return requiredTier
+    ? `Requires the ${requiredTier} plan — device assembly readiness`
+    : 'Requires a higher plan — device assembly readiness';
+}
+
+/**
+ * GET /api/510k/estar/entitlement — the export gate's verdict for this org,
+ * read before anyone clicks. `enforced` is true only when the operator has
+ * turned enforcement on (ENTITLEMENTS_ENFORCE=on); in 'warn' or 'off' mode the
+ * POST would go through, so a surface must NOT lock on `allowed:false` unless
+ * `enforced` is also true. `allowed` is null when nothing was evaluated.
+ */
+export interface EstarEntitlementView {
+  capability: string;
+  mode: 'off' | 'warn' | 'on';
+  enforced: boolean;
+  allowed: boolean | null;
+  requiredTier: string | null;
+  tier: string | null;
+  reason: string | null;
+}
+
+export const ESTAR_ENTITLEMENT_URL = '/api/510k/estar/entitlement';
+
+/** Pure: would the producing routes refuse this org today? */
+export function entitlementBlocksExport(view: EstarEntitlementView | null | undefined): boolean {
+  return view?.enforced === true && view.allowed === false;
+}
+
+function isEntitlementView(data: unknown): data is EstarEntitlementView {
+  if (!data || typeof data !== 'object') return false;
+  const d = data as Partial<EstarEntitlementView>;
+  return typeof d.enforced === 'boolean' && (d.mode === 'off' || d.mode === 'warn' || d.mode === 'on');
+}
+
+export interface UseEstarEntitlementResult {
+  entitlement: EstarEntitlementView | null;
+  loading: boolean;
+  error: string | null;
+}
+
+export function useEstarEntitlement(): UseEstarEntitlementResult {
+  const { data, loading, error } = useFetchJson<unknown>(ESTAR_ENTITLEMENT_URL);
+  /* A body that is not the documented verdict is no verdict: the control
+     stays live (the 403 path still guards the write) rather than locking on
+     a shape nobody read. */
+  return { entitlement: isEntitlementView(data) ? data : null, loading, error };
 }
 
 const IDLE: EstarExportOutcome | null = null;
