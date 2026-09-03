@@ -25,8 +25,12 @@ import {
   generateDeviationReport,
   generateEnrollmentReport,
 } from '../services/biotech-artifact-generator';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('biotech-artifacts');
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -106,7 +110,7 @@ router.post('/ectd/cover-letter', async (req: Request, res: Response) => {
     });
     sendDocx(res, buffer, `eCTD_Cover_Letter_${sequence || '0001'}_${new Date().toISOString().split('T')[0]}.docx`);
   } catch (err: unknown) {
-    res.status(500).json({ success: false, error: 'Failed to generate cover letter', detail: String(err) });
+    return serverError(res, logger, 'saving cover letter', err);
   }
 });
 
@@ -123,7 +127,7 @@ router.post('/ectd/validation-report', async (req: Request, res: Response) => {
     });
     sendDocx(res, buffer, `eCTD_Validation_Report_${sequence || '0001'}_${new Date().toISOString().split('T')[0]}.docx`);
   } catch (err: unknown) {
-    res.status(500).json({ success: false, error: 'Failed to generate validation report', detail: String(err) });
+    return serverError(res, logger, 'saving validation report', err);
   }
 });
 
@@ -149,7 +153,7 @@ router.post('/pv/icsr', (req: Request, res: Response) => {
     });
     sendXml(res, xml, `ICSR_E2B_R3_${data.safetyReportId || Date.now()}.xml`);
   } catch (err: unknown) {
-    res.status(500).json({ success: false, error: 'Failed to generate ICSR', detail: String(err) });
+    return serverError(res, logger, 'saving icsr', err);
   }
 });
 
@@ -169,7 +173,7 @@ router.post('/pv/psur', async (req: Request, res: Response) => {
     });
     sendDocx(res, buffer, `PSUR_PBRER_${data.product || 'Product'}_${new Date().toISOString().split('T')[0]}.docx`);
   } catch (err: unknown) {
-    res.status(500).json({ success: false, error: 'Failed to generate PSUR', detail: String(err) });
+    return serverError(res, logger, 'saving PSUR', err);
   }
 });
 
@@ -188,7 +192,7 @@ router.post('/pv/cioms', async (req: Request, res: Response) => {
     });
     sendDocx(res, buffer, `CIOMS_I_${data.product || 'Product'}_${new Date().toISOString().split('T')[0]}.docx`);
   } catch (err: unknown) {
-    res.status(500).json({ success: false, error: 'Failed to generate CIOMS form', detail: String(err) });
+    return serverError(res, logger, 'saving cioms', err);
   }
 });
 
@@ -207,7 +211,7 @@ router.post('/pv/expedited-report', async (req: Request, res: Response) => {
     });
     sendDocx(res, buffer, `Expedited_Safety_Report_${new Date().toISOString().split('T')[0]}.docx`);
   } catch (err: unknown) {
-    res.status(500).json({ success: false, error: 'Failed to generate expedited report', detail: String(err) });
+    return serverError(res, logger, 'saving expedited report', err);
   }
 });
 
@@ -236,7 +240,7 @@ router.post('/clinical/protocol-synopsis', async (req: Request, res: Response) =
     });
     sendDocx(res, buffer, `Protocol_Synopsis_${data.protocolId || 'PROTOCOL-001'}_${new Date().toISOString().split('T')[0]}.docx`);
   } catch (err: unknown) {
-    res.status(500).json({ success: false, error: 'Failed to generate protocol synopsis', detail: String(err) });
+    return serverError(res, logger, 'saving protocol synopsis', err);
   }
 });
 
@@ -257,7 +261,7 @@ router.post('/clinical/monitoring-report', async (req: Request, res: Response) =
     });
     sendDocx(res, buffer, `Monitoring_Visit_Report_${data.siteId || 'SITE'}_${new Date().toISOString().split('T')[0]}.docx`);
   } catch (err: unknown) {
-    res.status(500).json({ success: false, error: 'Failed to generate monitoring report', detail: String(err) });
+    return serverError(res, logger, 'saving monitoring report', err);
   }
 });
 
@@ -280,7 +284,7 @@ router.post('/clinical/deviation-report', async (req: Request, res: Response) =>
     });
     sendDocx(res, buffer, `Deviation_Report_${data.deviationId || 'DEV'}_${new Date().toISOString().split('T')[0]}.docx`);
   } catch (err: unknown) {
-    res.status(500).json({ success: false, error: 'Failed to generate deviation report', detail: String(err) });
+    return serverError(res, logger, 'saving deviation report', err);
   }
 });
 
@@ -299,7 +303,7 @@ router.post('/clinical/enrollment-report', async (req: Request, res: Response) =
     });
     sendDocx(res, buffer, `Enrollment_Report_${data.protocolId || 'PROTOCOL'}_${new Date().toISOString().split('T')[0]}.docx`);
   } catch (err: unknown) {
-    res.status(500).json({ success: false, error: 'Failed to generate enrollment report', detail: String(err) });
+    return serverError(res, logger, 'saving enrollment report', err);
   }
 });
 

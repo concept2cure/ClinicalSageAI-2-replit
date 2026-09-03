@@ -22,8 +22,12 @@ import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
 import { getSecureOrgId } from '../utils/tenantContext';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('regulatory-digital-twin');
 
 /**
  * Honesty disclosure attached to every prediction-bearing response from this router.
@@ -1628,7 +1632,7 @@ router.post('/simulations', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('[regulatory-digital-twin] Simulation error:', error);
-    res.status(500).json({ error: 'Simulation failed', details: error.message });
+    return serverError(res, logger, 'saving simulations', error);
   }
 });
 
@@ -1654,7 +1658,7 @@ router.get('/simulations/:id', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('[DigitalTwin] Failed to retrieve simulation:', error);
-    res.status(500).json({ error: 'Failed to retrieve simulation', details: error.message });
+    return serverError(res, logger, 'loading simulations', error);
   }
 });
 
@@ -1670,7 +1674,7 @@ router.get('/simulations', async (req: Request, res: Response) => {
     res.json({ simulations, total: simulations.length, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
     console.error('[DigitalTwin] Failed to list simulations:', error);
-    res.status(500).json({ error: 'Failed to list simulations', details: error.message });
+    return serverError(res, logger, 'loading simulations', error);
   }
 });
 
@@ -1695,7 +1699,7 @@ router.post('/predict-questions', async (req: Request, res: Response) => {
       _disclosure: SIMULATION_DISCLOSURE,
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving predict questions', error);
   }
 });
 
@@ -1709,7 +1713,7 @@ router.post('/rtf-assessment', (req: Request, res: Response) => {
     const assessment = twin.assessRTFRisk(submission);
     res.json({ ...assessment, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving rtf assessment', error);
   }
 });
 
@@ -1724,7 +1728,7 @@ router.post('/deficiency-prediction', (req: Request, res: Response) => {
     const prediction = twin.predictDeficiencyLetter(submission, rtfRisk);
     res.json({ ...prediction, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving deficiency prediction', error);
   }
 });
 
@@ -1738,7 +1742,7 @@ router.post('/advisory-committee', (req: Request, res: Response) => {
     const simulation = twin.simulateAdvisoryCommittee(submission, committeeType);
     res.json({ ...simulation, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving advisory committee', error);
   }
 });
 
@@ -1756,7 +1760,7 @@ router.post('/monte-carlo-timing', (req: Request, res: Response) => {
     );
     res.json({ ...result, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving monte carlo timing', error);
   }
 });
 
@@ -1776,7 +1780,7 @@ router.post('/cross-agency', async (req: Request, res: Response) => {
       _disclosure: SIMULATION_DISCLOSURE,
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving cross agency', error);
   }
 });
 

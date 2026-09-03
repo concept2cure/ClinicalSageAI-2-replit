@@ -42,13 +42,50 @@ export interface ShelfLifeInput {
 }
 
 export interface ShelfLifeResult {
-  /** Estimated shelf life / retest period in the input time units. */
+  /**
+   * The shelf life / retest period that may be PROPOSED — the statistical
+   * crossing, limited by what ICH Q1E allows to be extrapolated from the
+   * observed period. Never longer than `extrapolationLimit`.
+   */
   shelfLife: number;
+  /**
+   * Where the confidence limit actually crosses the specification. This is the
+   * statistical result and is reported separately BECAUSE it is often longer
+   * than what may be proposed: a reviewer needs to see both, and a section that
+   * printed only the crossing was stating an unsupportable shelf life.
+   */
+  statisticalCrossing: number;
+  /** Longest time on stability in the data — the period actually covered. */
+  observedPeriod: number;
+  /**
+   * ICH Q1E §2.5 / Appendix A: up to twice, but not more than twelve months
+   * beyond, the period covered by long-term data. min(2 x observed, observed + 12).
+   */
+  extrapolationLimit: number;
+  /** True when the allowance, not the data, decided the reported shelf life. */
+  cappedByExtrapolationLimit: boolean;
   /** True when the confidence limit stays within spec across the whole search range. */
   exceedsEvaluatedRange: boolean;
   regression: { slope: number; intercept: number; r2: number; residualSd: number; n: number; df: number };
   confidence: { alpha: number; tQuantile: number; bound: 'lower' | 'upper' };
   notes: string[];
+}
+
+/**
+ * The longest retest period / shelf life ICH Q1E permits to be PROPOSED from a
+ * study of the given length.
+ *
+ * Q1E §2.5 and Appendix A: where the long-term data show little change and
+ * little variability, a period up to twice — but not more than twelve months
+ * beyond — the period covered by long-term data may be proposed. Both halves
+ * bind, so it is the smaller of the two.
+ *
+ * Exported because the register-facing caller reports it alongside the estimate
+ * and the composed §3.2.S.7 / §3.2.P.8 narrative states it: one rule, one place.
+ */
+export function q1eExtrapolationLimit(observedPeriod: number): number {
+  if (!Number.isFinite(observedPeriod) || observedPeriod <= 0) return 0;
+  return Math.min(2 * observedPeriod, observedPeriod + 12);
 }
 
 function mean(a: number[]): number {
@@ -115,13 +152,49 @@ export function estimateShelfLife(input: ShelfLifeInput): ShelfLifeResult {
   // g(t) > 0 ⇒ still within spec. decreasing: cl(t) − L; increasing: U − cl(t).
   const g = (t: number) => (input.direction === 'decreasing' ? cl(t) - input.specLimit : input.specLimit - cl(t));
 
+  const observedPeriod = Math.max(...x);
+  const extrapolationLimit = q1eExtrapolationLimit(observedPeriod);
+
   const notes: string[] = [
     'ICH Q1E single-batch/attribute estimate using the 95% one-sided mean confidence limit. No multi-batch poolability (ANCOVA) performed.',
   ];
 
+  /* The reported shelf life is what may be PROPOSED, not where the line crosses.
+     ICH Q1E limits extrapolation to twice — and not more than twelve months
+     beyond — the observed period, so a 6-month study whose confidence limit
+     crosses at 22 months supports 12, not 22. The crossing is returned
+     alongside rather than discarded: a reviewer needs to see both numbers, and
+     a caller that shows only one must show the smaller. */
+  const capped = (crossing: number, exceeds: boolean) => {
+    const proposed = Math.min(crossing, extrapolationLimit);
+    const wasCapped = proposed < crossing;
+    return {
+      shelfLife: round(proposed, 2),
+      statisticalCrossing: round(crossing, 2),
+      observedPeriod: round(observedPeriod, 2),
+      extrapolationLimit: round(extrapolationLimit, 2),
+      cappedByExtrapolationLimit: wasCapped,
+      exceedsEvaluatedRange: exceeds,
+      regression: { slope: round(slope), intercept: round(intercept), r2: round(r2), residualSd: round(residualSd), n, df },
+      confidence: { alpha, tQuantile: round(tq), bound },
+      notes: wasCapped
+        ? [
+            ...notes,
+            `The 95% confidence limit crosses the specification at ${round(crossing, 2)}, beyond what ICH Q1E permits to be extrapolated from ${round(observedPeriod, 2)} months of data — up to twice, and not more than twelve months beyond, the observed period. The supportable period is ${round(extrapolationLimit, 2)}; extending it requires longer-term data, not a longer regression.`,
+          ]
+        : notes,
+    };
+  };
+
   if (g(0) <= 0) {
+    /* The allowance is a CEILING, never a floor: a study already out of spec at
+       t=0 supports nothing, and min() must not lift it off zero. */
     return {
       shelfLife: 0,
+      statisticalCrossing: 0,
+      observedPeriod: round(observedPeriod, 2),
+      extrapolationLimit: round(extrapolationLimit, 2),
+      cappedByExtrapolationLimit: false,
       exceedsEvaluatedRange: false,
       regression: { slope: round(slope), intercept: round(intercept), r2: round(r2), residualSd: round(residualSd), n, df },
       confidence: { alpha, tQuantile: round(tq), bound },
@@ -129,12 +202,15 @@ export function estimateShelfLife(input: ShelfLifeInput): ShelfLifeResult {
     };
   }
   if (g(maxTime) > 0) {
+    /* Nothing crosses inside the search horizon. The horizon is a numerical
+       bound on the search, not a regulatory one, and returning it as the shelf
+       life reported 120 months for a flat attribute. */
     return {
-      shelfLife: maxTime,
-      exceedsEvaluatedRange: true,
-      regression: { slope: round(slope), intercept: round(intercept), r2: round(r2), residualSd: round(residualSd), n, df },
-      confidence: { alpha, tQuantile: round(tq), bound },
-      notes: [...notes, `The confidence limit stays within spec through the search horizon (${maxTime}); the estimate exceeds the evaluated range — do not extrapolate beyond justified limits.`],
+      ...capped(maxTime, true),
+      notes: [
+        ...capped(maxTime, true).notes,
+        `The confidence limit stays within spec through the search horizon (${maxTime}); the crossing is beyond the evaluated range entirely.`,
+      ],
     };
   }
 
@@ -146,13 +222,7 @@ export function estimateShelfLife(input: ShelfLifeInput): ShelfLifeResult {
     if (g(mid) > 0) lo = mid;
     else hi = mid;
   }
-  const shelfLife = (lo + hi) / 2;
+  const crossing = (lo + hi) / 2;
 
-  return {
-    shelfLife: round(shelfLife, 2),
-    exceedsEvaluatedRange: false,
-    regression: { slope: round(slope), intercept: round(intercept), r2: round(r2), residualSd: round(residualSd), n, df },
-    confidence: { alpha, tQuantile: round(tq), bound },
-    notes,
-  };
+  return capped(crossing, false);
 }
