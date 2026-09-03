@@ -298,7 +298,8 @@
     "ci:dead-audit-catch:self-test": "node scripts/ci/check-dead-audit-catch.mjs --self-test",
     "ci:dead-audit-catch:list": "node scripts/ci/check-dead-audit-catch.mjs --list",
     "ci:dead-audit-catch:write-baseline": "node scripts/ci/check-dead-audit-catch.mjs --write-baseline",
-    "ci:writerless-stores": "node scripts/ci/check-writerless-stores.mjs"
+    "ci:writerless-stores": "node scripts/ci/check-writerless-stores.mjs",
+    "up": "node scripts/dev/up.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
