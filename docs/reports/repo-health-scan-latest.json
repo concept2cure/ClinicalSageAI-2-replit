@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T18:30:09.535Z",
+  "generatedAt": "2026-09-03T18:36:43.782Z",
   "git": {
-    "sha": "797181e472839bfe581133e4826fb278e805926d",
+    "sha": "6468ade3adcdfc248c6ada6279db4c79017d12eb",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -18,7 +18,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 38,
-    "largeFilesByLines": 89
+    "largeFilesByLines": 90
   },
   "findings": {
     "duplicateBasenames": [
@@ -2653,6 +2653,10 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
+      },
+      {
+        "file": "server/routes/510k-estar-routes.ts",
+        "lines": 1588
       }
     ]
   },
@@ -2662,7 +2666,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 399,
       "largeByBytes": 28,
-      "largeByLines": 73
+      "largeByLines": 74
     },
     {
       "owner": "Unassigned (TBD)",
