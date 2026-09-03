@@ -487,6 +487,43 @@
 .c2c-v2 .reg-pill.neutral{background:var(--bg-200);color:var(--text-300);}
 .c2c-v2 .reg-pill.idle{background:var(--bg-100);color:var(--text-400);}
 .c2c-v2 .reg-pill.review{background:var(--ai-muted);color:var(--ai);}
+/* Regulatory-change worklist — one card per tracked change (RegChange.tsx).
+   The card is a disclosure: the top row is the button, the body opens under
+   it. Severity is carried by .reg-pill (shared), kind by .rci-kind. */
+.c2c-v2 .rci-feed{display:flex;flex-direction:column;gap:10px;}
+.c2c-v2 .rci-card{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:border-color var(--dur) ease-out;}
+.c2c-v2 .rci-card[data-open]{border-color:var(--accent-muted);}
+.c2c-v2 .rci-top{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:none;border:0;text-align:left;cursor:pointer;color:inherit;font:inherit;}
+.c2c-v2 .rci-top:hover{background:var(--bg-050);}
+.c2c-v2 .rci-top:focus-visible{outline:2px solid var(--accent-100);outline-offset:-2px;}
+.c2c-v2 .rci-kind{flex-shrink:0;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:4px;background:var(--bg-100);color:var(--text-300);}
+.c2c-v2 .rci-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.c2c-v2 .rci-title{font-size:13px;font-weight:600;color:var(--text-100);line-height:1.4;}
+.c2c-v2 .rci-meta{font-size:11px;color:var(--text-400);display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.c2c-v2 .rci-meta svg{width:10px;height:10px;}
+.c2c-v2 .rci-chev{flex-shrink:0;color:var(--text-400);display:inline-flex;}
+.c2c-v2 .rci-chev svg{width:14px;height:14px;}
+.c2c-v2 .rci-body{padding:4px 14px 14px;border-top:1px solid var(--border);}
+.c2c-v2 .rci-summary{font-size:12.5px;line-height:1.6;color:var(--text-200);margin:10px 0 12px;}
+.c2c-v2 .rci-impact-h{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-bottom:6px;}
+.c2c-v2 .rci-impact-h svg{width:12px;height:12px;}
+.c2c-v2 .rci-impact{display:grid;grid-template-columns:minmax(160px,1fr) 2fr;gap:12px;padding:8px 0;border-top:1px solid var(--border);font-size:12.5px;}
+.c2c-v2 .rci-impact:last-of-type{border-bottom:1px solid var(--border);}
+.c2c-v2 .rci-imp-dev{font-weight:600;color:var(--text-100);display:flex;flex-direction:column;gap:2px;}
+.c2c-v2 .rci-imp-sub{font-size:11px;font-weight:400;color:var(--text-400);}
+.c2c-v2 .rci-imp-what{color:var(--text-200);line-height:1.5;}
+.c2c-v2 .rci-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;}
+.c2c-v2 .rci-doc{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--text-300);}
+.c2c-v2 .rci-doc b{font-weight:600;color:var(--text-100);}
+.c2c-v2 .rci-doc svg{width:13px;height:13px;color:var(--text-400);}
+.c2c-v2 .rci-acts{display:flex;gap:8px;}
+.c2c-v2 .rci-act{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:5px 11px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-000);color:var(--text-200);cursor:pointer;transition:background var(--dur) ease-out;}
+.c2c-v2 .rci-act:hover{background:var(--bg-050);}
+.c2c-v2 .rci-act.pri{border-color:var(--accent-muted);background:var(--accent-000);color:var(--accent-200);}
+.c2c-v2 .rci-act.pri:hover{background:var(--accent-muted);}
+.c2c-v2 .rci-act svg{width:12px;height:12px;}
+/* "Action required" severity — the one tone the worklist uses that the pill family lacked */
+.c2c-v2 .reg-pill.err{background:color-mix(in srgb,var(--error) 12%,transparent);color:var(--error);}
 /* Market access extras */
 .c2c-v2 .reg-row-act{text-align:right;white-space:nowrap;}
 .c2c-v2 .reg-ask{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--accent-200);border:1px solid var(--accent-muted);border-radius:var(--radius-md);background:var(--accent-000);padding:4px 9px;}

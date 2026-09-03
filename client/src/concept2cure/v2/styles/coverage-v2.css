@@ -804,7 +804,6 @@
 .c2c-v2 .rv-mit{ font-size:12px; color:var(--text-200); line-height:1.5; margin-top:7px; }
 
 /* ════════ eTMF Inspection Readiness — AnA-generated package ════════ */
-.c2c-v2 .etmf .surface-head-actions{ display:flex; align-items:center; gap:10px; }
 .c2c-v2 .etmf-scope{ display:inline-flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
 .c2c-v2 .etmf-scope button{ font-size:11.5px; padding:6px 11px; background:var(--bg-000); color:var(--text-300); border:none; cursor:pointer; }
 .c2c-v2 .etmf-scope button.on{ background:var(--accent-strong); color:var(--accent-on-strong); }
@@ -868,6 +867,23 @@
 .c2c-v2 .etmf-readme.sample{ color:var(--text-400) !important; font-style:italic; }
 .c2c-v2 .etmf-doc-body{ padding-bottom:20px; }
 .c2c-v2 .cm-doc-bar-r{ display:flex; align-items:center; gap:10px; margin-left:auto; }
+/* ════════ Surface header + document frame — shared by eTMF and IND lifecycle ════════
+   .surface-head is the title block every long-form surface opens with:
+   kicker (where you are), h1 (what this is), sub (scope), actions on the right. */
+/* The two document-bearing surfaces (eTMF package, IND readiness report) carry a
+   rendered document beside a 340px rail, so they take a wider measure than the
+   default page-inner column. */
+.c2c-v2 .page-inner.etmf, .c2c-v2 .page-inner.indl{ max-width:1280px; }
+.c2c-v2 .surface-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:18px; }
+.c2c-v2 .surface-head h1{ font-size:20px; font-weight:600; color:var(--text-100); margin:2px 0 4px; line-height:1.3; }
+.c2c-v2 .surface-head-actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.c2c-v2 .surface-kicker{ display:inline-flex; align-items:center; gap:6px; font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--text-400); }
+.c2c-v2 .surface-kicker svg{ width:12px; height:12px; }
+.c2c-v2 .surface-sub{ font-size:12.5px; line-height:1.55; color:var(--text-300); margin:0; max-width:72ch; }
+.c2c-v2 .surface-sub + .surface-sub{ margin-top:4px; }
+/* document frame: the file name in the bar, the rendered body below it */
+.c2c-v2 .cm-doc-name{ font-family:var(--font-mono,monospace); font-size:12px; font-weight:500; color:var(--text-100); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+.c2c-v2 .cm-doc-body{ padding:24px 28px; background:var(--bg-000); color:var(--text-100); }
 .c2c-v2 .etmf-dl{ font-size:11px; color:var(--text-400); display:inline-flex; align-items:center; gap:4px; }
 .c2c-v2 .etmf-dl.ok{ color:var(--success); }
 .c2c-v2 .etmf-dl svg{ width:12px; height:12px; }
