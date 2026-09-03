@@ -204,6 +204,49 @@ describe('510(k) eSTAR governed export', () => {
     expect(mockGovernedConsequence).not.toHaveBeenCalled();
   });
 
+  it('answers 500 PROJECT_RESOLUTION_FAILED — never 404 — when the anchor READ fails', async () => {
+    // query_canceled: a real database failure. "The lookup broke" and "no such
+    // project in your organization" are different facts; the first used to be
+    // swallowed into the second.
+    mockResolveRows.mockImplementationOnce(() => {
+      throw Object.assign(new Error('boom: canceling statement due to statement timeout'), { code: '57014' });
+    });
+
+    const req = makeReq();
+    const res = createMockResponse() as any;
+
+    await getHandler('/build')(req, res);
+
+    expect(res.status).not.toHaveBeenCalledWith(404);
+    expect(res.status).toHaveBeenCalledWith(500);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload).toEqual({
+      error: 'PROJECT_RESOLUTION_FAILED',
+      message: 'Could not resolve the project for this export. The problem has been logged.',
+    });
+    // The failure text never reaches the body.
+    expect(JSON.stringify(payload)).not.toMatch(/boom|statement timeout|57014/);
+    expect(mockRender510k).not.toHaveBeenCalled();
+    expect(mockGovernedConsequence).not.toHaveBeenCalled();
+    expect(mockLogAction).not.toHaveBeenCalled();
+  });
+
+  it('still 404s on schema absence (42P01): a database without the table has no row to find', async () => {
+    mockResolveRows.mockImplementationOnce(() => {
+      throw Object.assign(new Error('relation "fda_510k_projects" does not exist'), { code: '42P01' });
+    });
+
+    const req = makeReq();
+    const res = createMockResponse() as any;
+
+    await getHandler('/build')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Project not found in your organization' });
+    expect(mockRender510k).not.toHaveBeenCalled();
+    expect(mockGovernedConsequence).not.toHaveBeenCalled();
+  });
+
   it('delivers an audited (registry-unplaced) export for a program-spine UUID project', async () => {
     mockResolveRows.mockReturnValue([{ id: PROGRAM_UUID, name: 'BX-204 CGM' }]);
 

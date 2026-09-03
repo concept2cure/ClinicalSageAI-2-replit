@@ -1,6 +1,7 @@
 /**
  * Golden journey — DEVICE 510(k): program intake → authored sections → eSTAR
- * assembly → draft content package → the official eSTAR, produced or refused.
+ * assembly → draft content package → the official FDA eSTAR, filled from the
+ * program's own governed records.
  *
  * Replaces the browser-level `tests/e2e/510k-founder-path.e2e.spec.ts` deleted in
  * Phase 0 (it drove a UI that no longer exists) at the API/service level: the
@@ -22,36 +23,47 @@
  *      section missing, /assemble names it as a missing required eSTAR section;
  *      authoring it clears exactly that gap. Nothing is invented from an empty
  *      section (only content-bearing sections become leaves).
- *   4. /assemble reports artifactKind 'official-estar' — content exists AND the
- *      vendored FDA eSTAR template (v7.0, pinned by checksums.txt) is present,
- *      so the official form is producible. canProduceOfficialEstar is true.
- *   5. In PRODUCTION with ESTAR_REQUIRE_TEMPLATE the same input carries a hard
- *      blocker naming the missing template file (the fail-closed posture the
- *      staging default reports without blocking).
+ *   4. /assemble reports artifactKind 'official-estar' — content is complete
+ *      AND the official nIVD eSTAR v7.0 template is vendored with a verified
+ *      field map, so canProduceOfficialEstar is true.
+ *   5. In PRODUCTION with ESTAR_REQUIRE_TEMPLATE, the same content with NO
+ *      template present carries a hard blocker naming the template file (the
+ *      fail-closed posture the staging default reports without blocking).
  *   6. /build produces the draft ZIP (six FDA-named section PDFs, rendered from
  *      the authored sections) and a governed export consequence whose persisted
  *      metadata is labelled officialEstarPdf:false.
- *   7. The same /build against the program's UUID is delivered AUDITED-UNPLACED
- *      with a SHA-256 — even though the C1 anchor for that program EXISTS (see
- *      the observations: the route resolves its anchor from fda_510k_projects
- *      only and never calls resolveProgramProjectAnchor).
- *   8. /official PRODUCES the filled official eSTAR as a governed, placed
- *      artifact. With the template drop-point pointed at an empty directory the
- *      same call REFUSES 422 ESTAR_NOT_PRODUCIBLE naming the template file, and
- *      writes NO artifact and NO export audit row.
- *   9. Tenant isolation: another org cannot export this org's program.
+ *   7. The same /build against the program's UUID is delivered AND registry-
+ *      placed through the C1 anchor (see the observations for the history:
+ *      this step used to assert audited-unplaced delivery).
+ *   8. /official-fields previews, per mapped field, the governed value and its
+ *      store.column source — the program's product_name, the anchor's client
+ *      workspace — and null for what the platform does not hold. Then
+ *      /official with useProgramData writes exactly those values into the
+ *      REAL FDA eSTAR (read back at their XFA SOM paths), governed winning over
+ *      a colliding request value, and answers with a fieldReport that says what
+ *      was filled, from where, what was left blank, and which request keys were
+ *      ignored. The provenance is persisted on the registry artifact.
+ *   8b. With the template drop-point EMPTY the same request REFUSES 422
+ *      ESTAR_NOT_PRODUCIBLE naming the template file, and writes NO artifact
+ *      and NO EXPORT_GENERATED row in either audit sink: regulatory_audit_logs
+ *      (where the governed registry writeback logs an anchored program's
+ *      export — step 8 proves that counter moves by exactly one on the 200)
+ *      and audit_logs (where the audited-unplaced path logs).
+ *   9. Tenant isolation: another org cannot export, or preview, this org's program.
  *
  * Output: tests/golden-journeys/__reports__/device-510k-estar.{manifest.json,report.md}
  */
 
-import path from 'node:path';
-import os from 'node:os';
-import fs from 'node:fs';
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import JSZip from 'jszip';
 import { createHash } from 'node:crypto';
+import { promises as fs } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { readXfaDatasetsValues } from '../../server/services/forms/fill-official-pdf';
+import { ESTAR_FIELD_MAPS } from '../../server/services/pathway-engines/estar/estar-field-map';
 import {
   createJourneyDb,
   extractTableDdl,
@@ -109,8 +121,8 @@ let jdb: JourneyDb;
 let app: express.Express;
 
 const R = new JourneyRecorder(
-  'Device 510(k) — program intake to the official-eSTAR refusal',
-  'The device path over HTTP against real canonical DDL: intake writes the program and its C1 PM-spine anchor in one transaction (and refuses to guess an ambiguous workspace), authored cerv2_510k_sections drive eSTAR readiness, /assemble reports the honest artifactKind, /build emits a draft ZIP labelled officialEstarPdf:false with a governed export consequence, the UUID-program export is delivered audited-unplaced, and /official refuses 422 ESTAR_NOT_PRODUCIBLE naming the missing FDA template and field map.',
+  'Device 510(k) — program intake to the official FDA eSTAR',
+  'The device path over HTTP against real canonical DDL: intake writes the program and its C1 PM-spine anchor in one transaction (and refuses to guess an ambiguous workspace), authored cerv2_510k_sections drive eSTAR readiness, /assemble reports the honest artifactKind, /build emits a draft ZIP labelled officialEstarPdf:false with a governed export consequence, the UUID-program export is registry-placed, /official-fields previews each mapped field with its governed source, /official fills the REAL vendored FDA eSTAR from the program\'s own governed records (governed wins, request fills gaps, blanks reported) and persists the provenance, and the same request refuses 422 ESTAR_NOT_PRODUCIBLE the moment the template is not vendored.',
   [
     'migrations/0000_sweet_joseph.sql (extractTableDdl)',
     'migrations/20260527_mutation_primitives.sql',
@@ -437,14 +449,18 @@ describe('golden journey — device 510(k) eSTAR path', () => {
         { number: 'E', title: 'Proposed Labeling', key: 'labeling', category: 'labeling', content: 'Instructions for use, warnings and precautions.' },
         { number: 'D3', title: 'Biocompatibility', key: 'biocompatibility', category: 'biocompatibility', content: 'ISO 10993-1 evaluation of the patient-contacting adhesive.' },
         { number: 'D1', title: 'Performance Testing', key: 'performance_testing', category: 'performance_testing', content: 'Bench accuracy testing against the reference method.' },
-        // Always-required since W1-5 (estar-mapper baseSlots): the statutory
-        // administrative forms, the ISO 14971 risk file and the 510(k) summary
-        // are part of every 510(k), so a submittable package drafts them too.
-        { number: 'A1', title: 'CDRH Premarket Review Submission Cover Sheet (FDA 3514)', key: 'cdrh_cover_sheet', category: 'cdrh_cover_sheet', content: 'Form FDA 3514 completed for the GlucoTrack CGM: submission type Traditional 510(k), product code NBW, review panel Clinical Chemistry, applicant and correspondent details, and the device classification regulation 21 CFR 862.1345 as declared on the cover sheet.' },
-        { number: 'A1a', title: 'MDUFA User Fee Cover Sheet (FDA 3601)', key: 'user_fee', category: 'user_fee', content: 'Form FDA 3601 user fee cover sheet: MDUFA fee for a Traditional 510(k) at the small-business rate, payment identification number recorded, and the fee paid before submission so acceptance review can begin.' },
-        { number: 'A4', title: 'Truthful and Accurate Statement', key: 'truthful_accurate', category: 'truthful_accurate', content: 'Truthful and Accurate Statement per 21 CFR 807.87(k): the undersigned certifies that all data and information submitted in this premarket notification are truthful and accurate and that no material fact has been omitted, signed by the responsible official.' },
-        { number: 'D2', title: 'Risk Management File', key: 'risk_management', category: 'risk_management', content: 'ISO 14971 risk management file summary: hazard identification for sensor inaccuracy, adhesive skin reaction, loss of wireless alerting and battery thermal events; risk estimation, risk controls implemented and verified, and residual-risk acceptability conclusion with the benefit-risk rationale.' },
-        { number: 'A5', title: '510(k) Summary', key: '510k_summary', category: '510k_summary', content: '510(k) Summary per 21 CFR 807.92: submitter, device name and classification, predicate device K181496, device description, indications for use, technological characteristics comparison, and the non-clinical and clinical performance data supporting substantial equivalence.' },
+        // The five statutory administrative / technical slots W1-5 made
+        // always-required (estar-mapper.ts): each category is a documentType
+        // its slot's `match` rule names (dt()), so readiness counts it from the
+        // content. The titles are deliberately NEUTRAL — none satisfies any
+        // slot's title alternate (ti()) — so only the documentType rule can
+        // satisfy the slot: a regression in that path surfaces here as a
+        // missing required section instead of being masked by a title match.
+        { number: 'A1', title: 'Section A1', key: 'cdrh_cover_sheet', category: 'cdrh_cover_sheet', content: 'Form FDA 3514 completed for the GlucoTrack CGM traditional 510(k).' },
+        { number: 'A1a', title: 'Section A2', key: 'user_fee_cover_sheet', category: 'user_fee', content: 'Form FDA 3601 with the MDUFA payment identification number for this submission.' },
+        { number: 'A4', title: 'Section A3', key: 'truthful_accurate_statement', category: 'truthful_accurate', content: 'Truthful and Accurate Statement per 21 CFR 807.87(k), signed by the responsible official.' },
+        { number: 'A5', title: 'Section A4', key: 'k510_summary', category: '510k_summary', content: '510(k) Summary per 21 CFR 807.92 describing the device, its indications and the predicate comparison.' },
+        { number: 'D4', title: 'Section A5', key: 'risk_management', category: 'risk_management', content: 'ISO 14971 risk management file: hazard analysis, risk controls and residual risk acceptability.' },
       ];
       for (const s of authored) await authorSection(s);
       const n = await jdb.pool.query(
@@ -520,16 +536,17 @@ describe('golden journey — device 510(k) eSTAR path', () => {
     });
 
     // ── 5. The honest artifactKind with a complete content set ──────────────
-    const assembled = await R.step('assemble-reports-official-estar-producible-from-the-vendored-template', async () => {
+    const assembled = await R.step('assemble-reports-official-estar-producible-from-real-content', async () => {
       const res = await asPrincipal(ORG, USER)(request(app).post('/api/510k/estar/assemble')).send({
         pathway: '510k',
         variant: 'device',
         market: 'us',
       });
       expect(res.status).toBe(200);
-      // Content exists AND the vendored FDA template is present, so the official
-      // form is producible — reported with the template's pinned revision, not a
-      // placeholder.
+      // The decisive honesty output: every required section is authored AND the
+      // official nIVD eSTAR v7.0 is vendored with a verified field map, so the
+      // real official eSTAR is producible — asserted from the same deterministic
+      // engine that used to (rightly) report 'content-package-draft'.
       expect(res.body.artifactKind).toBe('official-estar');
       expect(res.body.canProduceOfficialEstar).toBe(true);
       expect(res.body.template.available).toBe(true);
@@ -541,6 +558,7 @@ describe('golden journey — device 510(k) eSTAR path', () => {
         canProduceOfficialEstar: res.body.canProduceOfficialEstar,
         requiredTemplate: res.body.template.requiredFileName,
         templateAvailable: res.body.template.available,
+        templateVersion: res.body.template.descriptor.version,
         blockers: res.body.blockers,
       };
     });
@@ -626,10 +644,29 @@ describe('golden journey — device 510(k) eSTAR path', () => {
       expect(a.a).toBe(b.a + 1);
       expect(a.v).toBe(b.v + 1);
       expect(a.p).toBe(b.p + 1);
+
+      // The persisted metadata on the placed artifact says what this is: a
+      // draft ZIP, NOT the official eSTAR (officialEstarPdf:false, ESTAR-06) —
+      // read back from the registry row the response names, so no downstream
+      // surface can present the draft package as a submittable eSTAR.
+      const stored = await jdb.pool.query(
+        `SELECT metadata FROM concept2cure_artifacts WHERE organization_id = $1 AND artifact_id = $2`,
+        [ORG, res.body.artifact_id],
+      );
+      expect(stored.rows).toHaveLength(1);
+      const raw = (stored.rows[0] as { metadata: unknown }).metadata;
+      const metadata = (typeof raw === 'string' ? JSON.parse(raw) : raw) as {
+        officialEstarPdf: boolean;
+        package: string;
+      };
+      expect(metadata.officialEstarPdf).toBe(false);
+      expect(metadata.package).toBe('content package draft (not an eSTAR)');
       return {
         status: res.status,
         artifactId: res.body?.artifact_id ?? null,
         placementState: res.body?.placement_state ?? null,
+        persistedOfficialEstarPdf: metadata.officialEstarPdf,
+        persistedPackage: metadata.package,
         artifactsBefore: b.a,
         artifactsAfter: a.a,
         versionsAfter: a.v,
@@ -717,94 +754,215 @@ describe('golden journey — device 510(k) eSTAR path', () => {
       };
     });
 
-    // ── 8. The official eSTAR is PRODUCED — the point of the journey ─────────
-    // The vendored FDA template is a dynamic XFA form; the fill writes its
-    // datasets packet as an incremental update, so what is delivered is the
-    // real form carrying the values, placed as a governed artifact.
-    await R.step('official-estar-is-produced-and-registry-placed', async () => {
-      const artifactsBefore = await jdb.pool.query(
-        `SELECT count(*)::int AS n FROM concept2cure_artifacts`,
+    // ── 8. The official eSTAR — the point of the journey ────────────────────
+    // What the form WILL say, before anything is produced: one row per mapped
+    // field, its governed value and the store.column it came from. The
+    // program's own product_name and the anchor project's client workspace are
+    // the sources; the keys the platform does not hold are null, not guessed.
+    const preview = await R.step('official-fields-previews-each-mapped-field-with-its-governed-source', async () => {
+      const res = await asPrincipal(ORG, USER)(
+        request(app).get(`/api/510k/estar/official-fields?ident=${programId}&type=510k&variant=device`),
+      );
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      const byKey = Object.fromEntries(
+        (res.body.fields as Array<{ key: string; value: string | null; source: string | null }>).map((f) => [f.key, f]),
+      );
+      expect(res.body.mappedCount).toBe(Object.keys(ESTAR_FIELD_MAPS['510k-device']).length);
+      expect(byKey.deviceTradeName).toMatchObject({ value: 'GlucoTrack CGM', source: 'regulatory_programs.product_name' });
+      expect(byKey.declarationDeviceTradeName).toMatchObject({ value: 'GlucoTrack CGM', source: 'regulatory_programs.product_name' });
+      expect(byKey.applicantCompanyName).toMatchObject({ value: 'Journey Workspace', source: 'client_workspaces.name' });
+      expect(byKey.declarationCompanyName).toMatchObject({ value: 'Journey Workspace', source: 'client_workspaces.name' });
+      // No contact on the workspace, no regulation number on the GA row, no
+      // predicate on the program: absent, never invented.
+      for (const k of ['applicantContactEmail', 'regulationNumber', 'predicateSubmissionNumber', 'deviceCommonName']) {
+        expect(byKey[k], k).toMatchObject({ value: null, source: null });
+      }
+      expect(res.body.sourcedCount).toBe(4);
+      return {
+        mappedCount: res.body.mappedCount,
+        sourcedCount: res.body.sourcedCount,
+        sources: Object.fromEntries(
+          Object.values(byKey).filter((f) => f.source).map((f) => [f.key, f.source]),
+        ),
+      };
+    });
+    void preview;
+
+    const official = await R.step('official-estar-is-filled-from-governed-records-with-a-field-report', async () => {
+      const artifactsBefore = await jdb.pool.query(`SELECT count(*)::int AS n FROM concept2cure_artifacts`);
+      // The governed registry writeback logs EXPORT_GENERATED in
+      // regulatory_audit_logs (server/services/compute/artifactWriteback.ts) —
+      // NOT in audit_logs, which is the audited-unplaced path's sink. This
+      // counter is the one step 8b's "no audit row" guard reads, so its moving
+      // by exactly one here is what makes that guard live rather than vacuous.
+      const exportAuditBefore = await jdb.pool.query(
+        `SELECT count(*)::int AS n FROM regulatory_audit_logs
+          WHERE organization_id = $1 AND action = 'EXPORT_GENERATED'`,
+        [ORG],
       );
       const res = await asPrincipal(ORG, USER)(request(app).post('/api/510k/estar/official')).send({
-        meta: { id: 'K-JOURNEY-001', projectId: deviceProjectId },
+        meta: { id: 'K-JOURNEY-001', projectId: deviceProjectId, title: 'GlucoTrack CGM — official eSTAR' },
         type: '510k',
         variant: 'device',
-        data: { deviceName: 'GlucoTrack CGM', applicantName: 'Journey Devices Inc.' },
+        useProgramData: true,
+        // deviceCommonName fills a gap the platform does not hold; the
+        // deviceTradeName the client typed collides with the governed value
+        // and must NOT be written.
+        data: { deviceCommonName: 'Continuous glucose monitoring system', deviceTradeName: 'Name the client typed' },
       });
-      const artifactsAfter = await jdb.pool.query(
-        `SELECT count(*)::int AS n FROM concept2cure_artifacts`,
+      const artifactsAfter = await jdb.pool.query(`SELECT count(*)::int AS n FROM concept2cure_artifacts`);
+      const exportAuditAfter = await jdb.pool.query(
+        `SELECT count(*)::int AS n FROM regulatory_audit_logs
+          WHERE organization_id = $1 AND action = 'EXPORT_GENERATED'`,
+        [ORG],
       );
+
       expect(res.status, JSON.stringify(res.body)).toBe(200);
       expect(res.body.governed).toBe(true);
       expect(res.body.artifact_id).toBeTruthy();
-      expect((artifactsAfter.rows[0] as { n: number }).n).toBe(
-        (artifactsBefore.rows[0] as { n: number }).n + 1,
+      expect((artifactsAfter.rows[0] as { n: number }).n).toBe((artifactsBefore.rows[0] as { n: number }).n + 1);
+      // Exactly one EXPORT_GENERATED row landed in the governed sink.
+      expect((exportAuditAfter.rows[0] as { n: number }).n).toBe((exportAuditBefore.rows[0] as { n: number }).n + 1);
+
+      const report = res.body.fieldReport;
+      expect(report.mappedCount).toBe(Object.keys(ESTAR_FIELD_MAPS['510k-device']).length);
+      expect(report.filledCount).toBe(5);
+      expect(report.blankCount).toBe(report.mappedCount - 5);
+      const fieldByKey = Object.fromEntries(
+        (report.fields as Array<{ key: string; filled: boolean; source: string | null }>).map((f) => [f.key, f]),
       );
+      expect(fieldByKey.deviceTradeName).toMatchObject({ filled: true, source: 'regulatory_programs.product_name' });
+      expect(fieldByKey.applicantCompanyName).toMatchObject({ filled: true, source: 'client_workspaces.name' });
+      expect(fieldByKey.deviceCommonName).toMatchObject({ filled: true, source: 'request' });
+      expect(fieldByKey.regulationNumber).toMatchObject({ filled: false, source: null });
+      expect(report.blankKeys).toContain('regulationNumber');
+      expect(report.ignoredRequestKeys).toEqual(['deviceTradeName']);
+
+      // The delivered file is the REAL FDA form with the values at their XFA
+      // SOM paths — the governed product name, not what the client typed.
+      const pdf = Buffer.from(res.body.downloadable_output_ref?.data ?? '', 'base64');
+      expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+      const map = ESTAR_FIELD_MAPS['510k-device'];
+      const back = await readXfaDatasetsValues(pdf, [
+        map.deviceTradeName.xfaSomPath!,
+        map.deviceCommonName.xfaSomPath!,
+        map.applicantCompanyName.xfaSomPath!,
+        map.regulationNumber.xfaSomPath!,
+      ]);
+      expect(back[map.deviceTradeName.xfaSomPath!]).toBe('GlucoTrack CGM');
+      expect(back[map.deviceCommonName.xfaSomPath!]).toBe('Continuous glucose monitoring system');
+      expect(back[map.applicantCompanyName.xfaSomPath!]).toBe('Journey Workspace');
+      expect(back[map.regulationNumber.xfaSomPath!] ?? '').toBe('');
+
+      // The provenance travelled into the governed registry row.
+      const stored = await jdb.pool.query(
+        `SELECT metadata FROM concept2cure_artifacts WHERE organization_id = $1 ORDER BY id DESC LIMIT 1`,
+        [ORG],
+      );
+      const raw = (stored.rows[0] as { metadata: unknown }).metadata;
+      const metadata = (typeof raw === 'string' ? JSON.parse(raw) : raw) as {
+        officialEstarPdf: boolean;
+        fieldSources: Record<string, string>;
+      };
+      expect(metadata.officialEstarPdf).toBe(true);
+      expect(metadata.fieldSources.deviceTradeName).toBe('regulatory_programs.product_name');
+      expect(metadata.fieldSources.deviceCommonName).toBe('request');
       return {
+        status: res.status,
         artifactId: res.body.artifact_id,
-        placementState: res.body.placement_state ?? null,
+        filledCount: report.filledCount,
+        blankCount: report.blankCount,
+        blankKeys: report.blankKeys,
+        ignoredRequestKeys: report.ignoredRequestKeys,
+        fieldSources: metadata.fieldSources,
+        exportAuditRowsAdded:
+          (exportAuditAfter.rows[0] as { n: number }).n - (exportAuditBefore.rows[0] as { n: number }).n,
+        exportAuditSink: 'regulatory_audit_logs',
+        pdfSha256: createHash('sha256').update(pdf).digest('hex'),
       };
     });
+    void official;
 
-    // ── 8b. KNOWN-BAD: with no template at the drop-point, /official refuses ─
-    // The drop-point is resolved per request from ESTAR_TEMPLATE_DIR, so an
-    // empty directory for exactly one request is the honest way to remove the
-    // template without touching the vendored files.
-    await R.expectBlocked('official-estar-refuses-422-when-the-template-is-absent', async () => {
-      const artifactsBefore = await jdb.pool.query(
-        `SELECT count(*)::int AS n FROM concept2cure_artifacts`,
-      );
-      const auditBefore = await jdb.pool.query(
-        `SELECT count(*)::int AS n FROM audit_logs WHERE table_name = 'estar_official_pdf'`,
-      );
-      const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'estar-no-template-'));
+    // ── 8b. KNOWN-BAD: the same request with NO template vendored ──────────
+    // The drop-point is pointed at an empty directory for this one call and
+    // restored after, so the refusal is asserted on the same real route.
+    await R.expectBlocked('official-estar-refuses-422-when-the-template-is-not-vendored', async () => {
+      const emptyDir = await fs.mkdtemp(path.join(os.tmpdir(), 'journey-estar-empty-'));
       const priorDir = process.env.ESTAR_TEMPLATE_DIR;
       process.env.ESTAR_TEMPLATE_DIR = emptyDir;
-      let res;
+      // BOTH export audit sinks. This program has a numeric anchor, so a
+      // successful /official takes the governed branch, whose writeback logs
+      // EXPORT_GENERATED in regulatory_audit_logs (step 8 proves that counter
+      // moves on the 200); audit_logs is where the audited-unplaced branch
+      // logs. Counting only audit_logs here was vacuous for this program.
+      const exportAuditRows = async () => {
+        const [governed, unplaced] = await Promise.all([
+          jdb.pool.query(
+            `SELECT count(*)::int AS n FROM regulatory_audit_logs
+              WHERE organization_id = $1 AND action = 'EXPORT_GENERATED'`,
+            [ORG],
+          ),
+          jdb.pool.query(`SELECT count(*)::int AS n FROM audit_logs WHERE action = 'EXPORT_GENERATED'`),
+        ]);
+        return {
+          regulatory_audit_logs: (governed.rows[0] as { n: number }).n,
+          audit_logs: (unplaced.rows[0] as { n: number }).n,
+        };
+      };
       try {
-        res = await asPrincipal(ORG, USER)(request(app).post('/api/510k/estar/official')).send({
+        const artifactsBefore = await jdb.pool.query(`SELECT count(*)::int AS n FROM concept2cure_artifacts`);
+        const auditBefore = await exportAuditRows();
+        const res = await asPrincipal(ORG, USER)(request(app).post('/api/510k/estar/official')).send({
           meta: { id: 'K-JOURNEY-001', projectId: deviceProjectId },
           type: '510k',
           variant: 'device',
-          data: { deviceName: 'GlucoTrack CGM', applicantName: 'Journey Devices Inc.' },
+          useProgramData: true,
+          data: {},
         });
+        const artifactsAfter = await jdb.pool.query(`SELECT count(*)::int AS n FROM concept2cure_artifacts`);
+        const auditAfter = await exportAuditRows();
+        const blockers: string[] = res.body?.blockers ?? [];
+        return {
+          blocked:
+            res.status === 422 &&
+            res.body.error === 'ESTAR_NOT_PRODUCIBLE' &&
+            res.body.officialEstarPdf === false &&
+            res.body.templateAvailable === false &&
+            // The map IS populated now — only the template is missing here.
+            res.body.fieldMapPopulated === true &&
+            blockers.some((b) => b.includes('eSTAR-510k-non-ivd.pdf')) &&
+            // Nothing was produced, placed or audited as an official eSTAR —
+            // in either sink.
+            (artifactsBefore.rows[0] as { n: number }).n === (artifactsAfter.rows[0] as { n: number }).n &&
+            auditBefore.regulatory_audit_logs === auditAfter.regulatory_audit_logs &&
+            auditBefore.audit_logs === auditAfter.audit_logs,
+          status: res.status,
+          error: res.body?.error,
+          descriptorId: res.body?.descriptorId,
+          blockers,
+          exportAuditRowsBefore: auditBefore,
+          exportAuditRowsAfter: auditAfter,
+        };
       } finally {
         if (priorDir === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
         else process.env.ESTAR_TEMPLATE_DIR = priorDir;
+        await fs.rm(emptyDir, { recursive: true, force: true });
       }
-      const artifactsAfter = await jdb.pool.query(
-        `SELECT count(*)::int AS n FROM concept2cure_artifacts`,
-      );
-      const auditAfter = await jdb.pool.query(
-        `SELECT count(*)::int AS n FROM audit_logs WHERE table_name = 'estar_official_pdf'`,
-      );
-      const blockers: string[] = res.body?.blockers ?? [];
-      return {
-        blocked:
-          res.status === 422 &&
-          res.body.error === 'ESTAR_NOT_PRODUCIBLE' &&
-          res.body.officialEstarPdf === false &&
-          res.body.templateAvailable === false &&
-          blockers.some((b) => b.includes('eSTAR-510k-non-ivd.pdf')) &&
-          // Nothing was produced, placed or audited as an official eSTAR.
-          (artifactsBefore.rows[0] as { n: number }).n ===
-            (artifactsAfter.rows[0] as { n: number }).n &&
-          (auditBefore.rows[0] as { n: number }).n === (auditAfter.rows[0] as { n: number }).n,
-        status: res.status,
-        error: res.body?.error,
-        descriptorId: res.body?.descriptorId,
-        blockers,
-      };
     });
 
     await R.step('the-readiness-probe-tells-the-ui-the-same-thing-without-producing-anything', async () => {
+      const artifactsBefore = await jdb.pool.query(`SELECT count(*)::int AS n FROM concept2cure_artifacts`);
       const res = await asPrincipal(ORG, USER)(
         request(app).get('/api/510k/estar/readiness?type=510k&variant=device'),
       );
+      const artifactsAfter = await jdb.pool.query(`SELECT count(*)::int AS n FROM concept2cure_artifacts`);
       expect(res.status).toBe(200);
       expect(res.body.ready).toBe(true);
       expect(res.body.officialEstarPdf).toBe(true);
+      expect(res.body.templateAvailable).toBe(true);
+      expect(res.body.fieldMapPopulated).toBe(true);
       expect(res.body.blockers).toEqual([]);
+      expect((artifactsAfter.rows[0] as { n: number }).n).toBe((artifactsBefore.rows[0] as { n: number }).n);
       return { ready: res.body.ready, blockers: res.body.blockers.length };
     });
 
@@ -814,6 +972,18 @@ describe('golden journey — device 510(k) eSTAR path', () => {
         request(app).post('/api/510k/estar/build'),
       ).send({ meta: { id: 'K-JOURNEY-001', ident: programId }, useProjectContent: true });
       return { blocked: res.status === 404, status: res.status, error: res.body?.error };
+    });
+
+    await R.expectBlocked('another-tenant-cannot-preview-this-programs-official-fields', async () => {
+      const res = await asPrincipal(OTHER_ORG, OTHER_USER)(
+        request(app).get(`/api/510k/estar/official-fields?ident=${programId}&type=510k&variant=device`),
+      );
+      // 404, and no field row of another tenant's program leaks in the body.
+      return {
+        blocked: res.status === 404 && res.body?.fields === undefined,
+        status: res.status,
+        error: res.body?.error,
+      };
     });
 
     await R.expectBlocked('another-tenant-cannot-export-this-ga-device-project', async () => {
@@ -881,11 +1051,12 @@ describe('golden journey — device 510(k) eSTAR path', () => {
         'instead of a fabricated eCTD filing identity. Asserted as an honest absence in step 1.',
     );
     R.limitations.push(
-      'The official FDA eSTAR templates (v7.0, nIVD and IVD) are vendored under assets/estar-templates and ' +
-        'pinned by checksums.txt, and the fill writes the XFA datasets packet as an incremental update. What this ' +
-        'journey proves is that the real template is filled and delivered as a governed, placed artifact, and ' +
-        'that the same call refuses when the template is absent. How Acrobat renders the filled form is ' +
-        'unverified here — there is no Acrobat in this environment — and remains a human check.',
+      'The official nIVD eSTAR v7.0 template IS vendored (assets/estar-templates/eSTAR-510k-non-ivd.pdf) and ' +
+        'its canonical→XFA field map is verified, so the official-eSTAR production path is exercised end-to-end ' +
+        'here. What is asserted is the datasets packet read back at the mapped SOM paths — that Acrobat/LiveCycle ' +
+        'RENDERS those values in the form is not verifiable without the viewer. 20 canonical keys are mapped; ' +
+        'the governed sources cover 11 of them (estar-administrative-data.ts) and this journey\'s fixture holds ' +
+        '4 (product name, workspace name) — the rest are honestly reported blank, which is the point.',
       'Section PDFs are the PDFKit text fallback: puppeteer is not installed in this environment, so ' +
         'renderHtmlToPdf takes its documented fallback path. Layout fidelity (and PDF/A conformance) is a ' +
         'separate gate and is not asserted here — only that real authored content is rendered into real PDF bytes.',
