@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T01:19:36.936Z",
+  "generatedAt": "2026-09-03T01:24:33.954Z",
   "git": {
-    "sha": "f4da56ce5ff06f42df6fca4de4cbd75f36661dc3",
+    "sha": "5407a9c2462118985b8fe75612b9ebc9d8203784",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2639,6 +2639,10 @@
         "lines": 1623
       },
       {
+        "file": "server/services/cmc-write-through.ts",
+        "lines": 1612
+      },
+      {
         "file": "server/services/contradiction-engine-service.ts",
         "lines": 1608
       },
@@ -2649,10 +2653,6 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
-      },
-      {
-        "file": "server/services/cmc-write-through.ts",
-        "lines": 1594
       }
     ]
   },
