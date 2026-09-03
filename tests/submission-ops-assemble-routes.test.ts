@@ -181,6 +181,21 @@ beforeEach(() => {
   });
 });
 
+describe('package identity: one id contract across the package API', () => {
+  it('GET /packages/:packageId resolves the numeric row id as well as the pkg_ text id (tenant-scoped either way)', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
+    const byNumber = await request(makeApp()).get('/api/submission-ops/packages/5');
+    expect(byNumber.status).toBe(200);
+    expect(byNumber.body.data.packageId).toBe('pkg_locked');
+    expect(byNumber.body.data.sections).toHaveLength(1);
+    (dbState as any)._pkgResolved = false;
+    const byText = await request(makeApp()).get('/api/submission-ops/packages/pkg_locked');
+    expect(byText.status).toBe(200);
+    expect(byText.body.data.packageId).toBe('pkg_locked');
+  });
+});
+
 describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
   it('404s when the package is not in the tenant', async () => {
     dbState.pkg = null;
