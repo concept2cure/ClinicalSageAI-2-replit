@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
 // Mock the DB before importing modules that use it
 vi.mock('../../db', () => ({
@@ -397,6 +399,45 @@ describe('ectd-validator-hardening', () => {
         </ectd:ectd>`;
       const findings = validateDtdConformance(xml, []);
       expect(findings.some(f => f.code === 'DTD_LEAF_MISSING_ATTR')).toBe(true);
+    });
+
+    // The vendored fixtures are the gate's own acceptance case. Nothing loaded
+    // them before, so the gate had never actually been exercised end to end:
+    // index-valid.xml failed on three phantom DTD_LEAF_MISSING_ATTR findings
+    // raised against the `<leaf>` written inside its own documentation comment.
+    // Assert both directions here so a regression in comment handling — in
+    // either direction — fails the suite rather than the demo.
+    const fixture = (name: string): string =>
+      readFileSync(path.resolve(process.cwd(), 'assets/ectd-dtd/fixtures', name), 'utf8');
+
+    it('passes the vendored conformant backbone fixture with zero findings', () => {
+      const findings = validateDtdConformance(fixture('index-valid.xml'), []);
+      expect(findings).toEqual([]);
+    });
+
+    it('does not read <leaf> inside an XML comment as a leaf', () => {
+      // index-valid.xml documents DTD_LEAF_MISSING_ATTR using a literal <leaf>
+      // in its header comment; only the four real leaves may be scanned.
+      const findings = validateDtdConformance(fixture('index-valid.xml'), []);
+      expect(findings.filter(f => f.code === 'DTD_LEAF_MISSING_ATTR')).toEqual([]);
+    });
+
+    it('fails the vendored non-conformant backbone fixture on every seeded violation', () => {
+      const findings = validateDtdConformance(fixture('index-invalid.xml'), []);
+      const codes = new Set(findings.map(f => f.code));
+      for (const expected of [
+        'DTD_NO_DECLARATION',
+        'DTD_NO_DOCTYPE',
+        'DTD_BAD_ROOT',
+        'DTD_MISSING_ECTD_NS',
+        'DTD_MISSING_XLINK_NS',
+        'DTD_LEAF_MISSING_ATTR',
+        'DTD_CHECKSUM_TYPE',
+        'DTD_UNKNOWN_ELEMENT',
+      ]) {
+        expect(codes, `expected ${expected} from index-invalid.xml`).toContain(expected);
+      }
+      expect(findings.some(f => f.severity === 'error')).toBe(true);
     });
   });
 
