@@ -238,6 +238,31 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: node scripts/ci/check-i18n-integrity.mjs
 
+      # ── Honest-state gates ──────────────────────────────────────────────────
+      # These five lived only in pr-checks.yml, which runs on pull_request — and
+      # under CLAUDE.md Rule 0 there are no pull requests, so they had never
+      # once run in CI on the trunk. Every catch they made was someone running
+      # them by hand. They run here, on every push, like the rest.
+      - name: Guardrails — surfaces are discoverable, or declared not to be
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:surface-discoverability
+
+      - name: Guardrails — no API route or table name in user-visible copy
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:internals-in-copy
+
+      - name: Guardrails — no clearance copy chosen by an empty collection
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:empty-state-honesty
+
+      - name: Guardrails — no control promising an action it only asks about
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:action-overclaim
+
+      - name: Guardrails — no success message before the response is checked
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:success-before-ok
+
       - name: Guardrails — audit_logs fixtures accept the audit writer's columns
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The chained audit write is fail-closed: the §11.10(e) row and the
