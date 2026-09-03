@@ -3250,6 +3250,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             <AuthoringCreateExport
               docId={activeDoc?.id ?? null}
               docTitle={activeDoc?.title ?? null}
+              docStatus={activeDoc?.status ?? null}
               module={module}
               fireToast={fireToast}
               onDocCreated={d => {
