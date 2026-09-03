@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T03:28:34.892Z",
+  "generatedAt": "2026-09-03T03:31:09.067Z",
   "git": {
-    "sha": "e216a18802acc5ac014c39bc0a999de3ce92a38f",
+    "sha": "7cb9590190467c32bdb278263377dfebc786ffec",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2424,7 +2424,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "lines": 2356
+        "lines": 2357
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
