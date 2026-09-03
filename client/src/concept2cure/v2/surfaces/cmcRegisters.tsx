@@ -1229,6 +1229,7 @@ export interface ImpurityProfileApiRow {
   levelUnit?: string | null;
   specificationLimit?: string | null;
   maximumDailyDose?: string | null;
+  routeOfAdministration?: string | null;
   qualificationBasis?: string | null;
   controlStrategy?: string | null;
   batchesObserved?: string[] | null;
@@ -1316,6 +1317,20 @@ export function CmImpurityProfiles() {
         { header: 'Level', render: impurityLevel },
         { header: 'Spec limit', render: (r) => text(r.specificationLimit) },
         { header: 'Daily dose', render: (r) => (r.maximumDailyDose ? r.maximumDailyDose : <span className="rd-chip tone-warn">not recorded</span>) },
+        {
+          /* Only an elemental impurity needs it — ICH Q3D keys its permitted
+             daily exposure to the route — so the gap is flagged only where it
+             actually blocks an assessment. */
+          header: 'Route',
+          render: (r) => {
+            const route = String(r.routeOfAdministration || '').trim();
+            if (route) return route;
+            const isElemental = /elemental|metal/i.test(String(r.impurityType || ''));
+            return isElemental
+              ? <span className="rd-chip tone-warn">required for Q3D</span>
+              : '--';
+          },
+        },
         { header: 'Structure', render: (r) => (r.structure || r.molecularFormula ? 'recorded' : <span className="rd-chip tone-warn">none</span>) },
         { header: 'Qualification basis', render: (r) => (r.qualificationBasis ? <span className="rd-chip tone-ok">recorded</span> : <span className="rd-chip tone-warn">none</span>) },
         { header: 'Status', render: (r) => chip(r.status, 'draft') },

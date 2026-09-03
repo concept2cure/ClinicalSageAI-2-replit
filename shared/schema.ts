@@ -3994,6 +3994,12 @@ export const cmcImpurityProfiles = pgTable(
        a ppm figure into a percentage — the exact defect the refusal exists to
        prevent. The form requires a unit; the column does not invent one. */
     levelUnit: text('level_unit'),
+    /* ICH Q3D sets a different permitted daily exposure per route — cadmium is
+       5 µg/day oral against 2 parenteral — so an elemental impurity cannot be
+       assessed without it. Nullable: an organic impurity does not need it, and
+       the assessment refuses honestly when it is absent rather than defaulting
+       to oral, which is the most permissive route for most elements. */
+    routeOfAdministration: text('route_of_administration'),
     specificationLimit: text('specification_limit'),
     /* The thresholds AS RECORDED. The Q3A/Q3B engine derives them from the
        maximum daily dose; where an applicant has recorded its own, the record

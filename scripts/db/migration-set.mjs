@@ -1768,6 +1768,13 @@ export const C2C_MIGRATION_FILES = [
   // creates it.
   'db/migrations/20260903_cmc_manufacturing_characterization_registers.sql',
 
+  // ── The route of administration on the impurity register ─────────────────
+  // ICH Q3D sets a different permitted daily exposure per route, so an
+  // elemental impurity cannot be assessed without it. MUST stay after
+  // db/migrations/20260902_cmc_impurity_dissolution_registers.sql, which
+  // creates the table.
+  'db/migrations/20260903_cmc_impurity_route_of_administration.sql',
+
   // ── Drop the audit-shaped tables that survived a from-scratch liveness
   //    re-check (ledger L13; docs/AUDIT_STORE_INVENTORY_2026-08.md §5.1) ─────
   // MUST stay near the end, and specifically AFTER every entry above that
