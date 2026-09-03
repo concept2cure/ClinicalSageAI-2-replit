@@ -2007,6 +2007,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             : 'Source re-resolved against its current content.'
         );
         setPicking(false);
+        if ((json as any)?.created) {
+          // Same staleness as the comment count: the section row is the only
+          // source of the rail button's number.
+          setSections(ss =>
+            ss.map(s => (s.id === activeSectionId ? { ...s, citation_count: num(s.citation_count) + 1 } : s))
+          );
+        }
         void loadSources(activeSectionId);
       } catch (e) {
         fireToast(
@@ -2239,7 +2246,15 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content: persisted } : s
           )
         );
-        fireToast('Section saved — a revision was recorded (' + activeSection.code + ').');
+        /* "a revision was recorded" was asserted from the 2xx alone. The
+           server mints the revision in the same transaction and returns the
+           row's counter; the sentence now names what came back, and defers to
+           the History rail when nothing did. */
+        fireToast(
+          adopted && adopted.revision_count != null
+            ? `Section saved — revision ${num(adopted.revision_count)} recorded (${activeSection.code}).`
+            : `Section saved (${activeSection.code}) — open History to confirm the revision.`
+        );
         // Keep the history and audit rails fresh if open — a save writes both.
         if (rail === 'history') void loadHistory(activeSection.id);
         if (rail === 'audit' && activeDocId) void loadAudit(activeDocId);
@@ -2330,9 +2345,24 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const toggleTrackChanges = useCallback(
     async (on: boolean) => {
       if (!activeSection) throw new Error('No section open');
-      const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
-        track_changes: on,
-      });
+      /* apiRequest THROWS the server's real refusal (a frozen document), and the
+         editor's toggleTrack swallows the rethrow to keep its state truthful —
+         so the author got no reason at all. The reason is said here, then the
+         throw still reverts the toggle. */
+      let res: Response;
+      try {
+        res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
+          track_changes: on,
+        });
+      } catch (e) {
+        fireToast(
+          'Couldn’t change track changes — ' +
+            redactInternals(e instanceof Error ? e.message : '', 'the server refused it') +
+            '. The mode is unchanged.',
+          'error'
+        );
+        throw new Error('track toggle refused');
+      }
       const json = await res.json().catch(() => null);
       if (!res.ok) {
         fireToast(
@@ -2459,6 +2489,12 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       } else {
         fireToast('Comment added.');
       }
+      /* The rail button's count comes from the section row, refreshed only by
+         loadSections — so it kept reading "Comments 3" when four existed.
+         Bumped here from the confirmed write. */
+      setSections(ss =>
+        ss.map(s => (s.id === activeSection.id ? { ...s, comment_count: num(s.comment_count) + 1 } : s))
+      );
       void loadComments(activeDocId);
     } catch (e) {
       fireToast(
@@ -3106,7 +3142,8 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     <span className="ed-num">{d.module ?? '—'}</span>
                     <span className="ed-lbl">{d.title}</span>
                     <span className="rd-chip tone-idle" style={{ marginLeft: 'auto' }}>
-                      {num(d.section_count)}
+                      {/* null is "not counted", not zero */}
+                      {d.section_count == null ? '—' : num(d.section_count)}
                     </span>
                   </button>
                   {open &&

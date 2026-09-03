@@ -1,0 +1,16 @@
+// Pre-fix DocumentAuthoring.saveRename (recovered). The comment says apiRequest
+// throws on non-2xx "except 401" — and then the 401 lands on the success path.
+export function saveRenameFixture({ activeSection, code, title, setSections, setRenaming, fireToast }: any) {
+  return async () => {
+    try {
+      const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, { code, title });
+      const json = await res.json().catch(() => null);
+      const adopted = (json as { section?: unknown })?.section;
+      setSections((ss: any[]) => ss.map(s => (s.id === activeSection.id ? { ...s, ...(adopted ?? { code, title }) } : s)));
+      setRenaming(false);
+      fireToast(`Section renamed — ${code} · ${title}. Its content and history are unchanged.`);
+    } catch (e) {
+      fireToast('Not renamed.', 'error');
+    }
+  };
+}

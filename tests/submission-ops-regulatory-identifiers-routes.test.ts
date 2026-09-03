@@ -110,6 +110,17 @@ describe('PUT /api/submission-ops/packages/:packageId/regulatory-identifiers', (
     expect(res.body.fields).toEqual(['applicationNumber', 'applicantName']);
   });
 
+  it('REFUSES an applicant name the XML layer would strip or empty (C1 controls, noncharacters)', async () => {
+    // These pass a C0-only control-char check but escapeXml strips them, so the
+    // backbone would carry an altered or EMPTY <name> while the gate said usable.
+    dbState.pkg = pkgWith({});
+    for (const name of [ch(0x85), ch(0xfffe) + ch(0xffff), `Acme${ch(0x9f)}Bio`]) {
+      const res = await put({ ...GOOD, applicantName: name });
+      expect(res.status, JSON.stringify(name)).toBe(400);
+      expect(res.body.fields).toEqual(['applicantName']);
+    }
+  });
+
   it('REFUSES a missing reason (governed change)', async () => {
     dbState.pkg = pkgWith({});
     const { reason: _r, ...noReason } = GOOD;

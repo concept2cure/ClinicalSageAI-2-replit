@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T03:34:27.006Z",
+  "generatedAt": "2026-09-03T18:19:02.367Z",
   "git": {
-    "sha": "ccd10761bc5161fea3f8d91120a3eb42263e05dc",
+    "sha": "0c98f32ea5581c7757738975633e11a4fba17e8d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2170,7 +2170,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 227795
+        "bytes": 229664
       },
       {
         "file": "server/statistics-service.ts",
@@ -2332,7 +2332,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 4984
+        "lines": 5021
       },
       {
         "file": "server/storage.ts",
@@ -2419,12 +2419,12 @@
         "lines": 2419
       },
       {
-        "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
-        "lines": 2379
+        "file": "server/routes/submission-ops.ts",
+        "lines": 2406
       },
       {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2357
+        "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
+        "lines": 2379
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
