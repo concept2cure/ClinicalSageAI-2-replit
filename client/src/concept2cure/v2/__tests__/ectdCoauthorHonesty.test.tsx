@@ -36,7 +36,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, act, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, act, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -89,7 +89,7 @@ const footText = () => document.querySelector('.ec-tree-foot')?.textContent || '
 
 function serve(documentsResponse: () => Promise<Response>) {
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (method === 'GET' && url === '/api/coauthor/documents') return documentsResponse();
+    if (method === 'GET' && String(url).split('?')[0] === '/api/coauthor/documents') return documentsResponse();
     return ok({});
   });
 }
@@ -111,7 +111,7 @@ describe('EctdCoauthor — the backbone footer while the documents read is in fl
 
     // … and the footer no longer contradicts it two panes away. The untrue
     // claims first, so a regression names the defect rather than the new copy.
-    expect(footRow('eCTD readiness'), 'no readiness may be scored mid-read').toBe('');
+    expect(footRow('Status roll-up'), 'no readiness may be scored mid-read').toBe('');
     expect(footRow('Documents'), 'the document count is unknown, not zero').toBe('');
     expect(footRow('Approved'), 'the approved count is unknown, not zero').toBe('');
     expect(/\d/.test(footText()), 'no figure may be asserted before the read settles').toBe(false);
@@ -134,7 +134,7 @@ describe('EctdCoauthor — the backbone footer after a failed documents read', (
     expect(await screen.findByText("Couldn't load eCTD documents")).toBeTruthy();
 
     // A failed read establishes no count. Zero is not the answer to "how many".
-    expect(footRow('eCTD readiness'), 'a failed read is not a 0% readiness').toBe('');
+    expect(footRow('Status roll-up'), 'a failed read is not a 0% readiness').toBe('');
     expect(footRow('Documents'), 'a failed read is not a zero-document dossier').toBe('');
     expect(footRow('Approved'), 'a failed read is not zero approved documents').toBe('');
     expect(/\d/.test(footText()), 'a failed read may not be rendered as a measurement').toBe(false);
@@ -157,7 +157,7 @@ describe('EctdCoauthor — the backbone footer when the read succeeds with no do
     expect(footRow('Approved')).toBe('0');
     // Readiness is not. It was measured against nothing — `readiness`'s `: 0`
     // fallback is a placeholder, not a finding of "0% ready to file".
-    expect(footRow('eCTD readiness')).toBe('Not assessed');
+    expect(footRow('Status roll-up')).toBe('Not assessed');
     expect(document.body.textContent).not.toMatch(/0\s*%/);
   });
 });
@@ -172,7 +172,7 @@ describe('EctdCoauthor — the backbone footer over a real backbone', () => {
     expect(footRow('Documents')).toBe('3');
     expect(footRow('Approved')).toBe('1');
     // (1 approved + 1 review × 0.5) / 3 = 50%.
-    expect(footRow('eCTD readiness')).toBe('50%');
+    expect(footRow('Status roll-up')).toBe('50%');
     // One document approved out of three is not clearance.
     expect(footText()).not.toMatch(/All documents approved/);
   });
@@ -193,7 +193,57 @@ describe('EctdCoauthor — the backbone footer over a real backbone', () => {
 
     expect(footRow('Documents')).toBe('2');
     expect(footRow('Approved')).toBe('2');
-    expect(footRow('eCTD readiness')).toBe('100%');
+    expect(footRow('Status roll-up')).toBe('100%');
     expect(footRow('eCTD backbone')).toBe('All documents approved');
+  });
+});
+
+describe('EctdCoauthor — what a partial page, a document switch and a refusal may claim', () => {
+  it('a page shorter than the server total withholds the roll-up and says how much was read', async () => {
+    serve(async () => ok({ documents: MIXED_DOCS.documents, total: 120 }));
+    render(<EctdCoauthor {...props()} />);
+    await screen.findByText('Drug Product — QX-4');
+    expect(footRow('Documents')).toBe('3 of 120 read');
+    expect(footRow('Status roll-up')).toBe('Partial read — not computed');
+    expect(footText()).not.toMatch(/All documents approved/);
+  });
+
+  it('a validation verdict for document A never lands under document B', async () => {
+    let releaseA: (r: Response) => void = () => {};
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      const u = String(url);
+      if (method === 'GET' && u.split('?')[0] === '/api/coauthor/documents') return ok(MIXED_DOCS);
+      if (method === 'POST' && u === '/api/coauthor/documents/8001/validate') {
+        return new Promise<Response>((resolve) => { releaseA = resolve; });
+      }
+      return ok({});
+    });
+    render(<EctdCoauthor {...props()} />);
+    await screen.findByText('Drug Product — QX-4');
+    // Open A (the first document) and start its validation.
+    fireEvent.click(screen.getAllByText('Clinical Overview — QX-4')[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: /Validate/ })[0]);
+    // Switch to B while A's run is in flight, then let A's verdict land.
+    fireEvent.click(screen.getAllByText('Drug Product — QX-4')[0]);
+    releaseA(ok({ validation: { isValid: true, errorCount: 0, warningCount: 0, totalSections: 9, findings: [] } }));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(document.querySelector('.ec-vbadge')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Validating Clinical Overview/);
+  });
+
+  it('a refused validation says it was refused, with the reason, not merely "no result"', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      const u = String(url);
+      if (method === 'GET' && u.split('?')[0] === '/api/coauthor/documents') return ok(MIXED_DOCS);
+      if (method === 'POST' && u.endsWith('/validate')) {
+        throw Object.assign(new Error('You do not have permission for this action'), { name: 'ApiRequestError', status: 403 });
+      }
+      return ok({});
+    });
+    render(<EctdCoauthor {...props()} />);
+    await screen.findByText('Drug Product — QX-4');
+    fireEvent.click(screen.getAllByRole('button', { name: /Validate/ })[0]);
+    await waitFor(() => expect(document.body.textContent).toMatch(/did not produce a result — You do not have permission for this action/));
+    expect(document.body.textContent).not.toMatch(/Valid\b/);
   });
 });
