@@ -96,6 +96,10 @@ const NOT_PROSE = [
     file: 'server/services/ana-wisdom-engine.ts',
     why: 'client_memory_entries is AnA working memory, never a document',
   },
+  {
+    file: 'server/services/artifact-tagger.ts',
+    why: "places a tagged UPLOAD as an artifact: content is the uploaded file's extracted text, whose provenance is the upload record (file hash) — nobody authored clauses here",
+  },
 ];
 
 /**
@@ -107,13 +111,6 @@ const NOT_PROSE = [
  * added here to get green; it is gated, or declared NOT_PROSE with a reason.
  */
 const KNOWN_UNGUARDED = [
-  { file: 'server/routes/concept2cure.ts', row: 'L160', what: 'concept2cure_artifacts.content on edit and on rollback-to-version' },
-  { file: 'server/services/ana/AnaToolExecutor.ts', row: 'L160', what: 'concept2cure_artifacts.content from the AnA document-content tool (the kit-section tool in the same file IS gated)' },
-  { file: 'server/services/ana/submission-chat-apply-rewrite.ts', row: 'L160', what: 'concept2cure_artifacts.content when an AnA rewrite is applied' },
-  { file: 'server/services/ai-actions/handlers/refine-with-validation.ts', row: 'L160', what: 'concept2cure_artifacts.content from the refine AI action' },
-  { file: 'server/services/module3-convergence-service.ts', row: 'L160', what: 'concept2cure_artifacts.content for composed Module 3 sections' },
-  { file: 'server/services/artifact-tagger.ts', row: 'L160', what: 'concept2cure_artifacts.content when a tagged upload is placed as an artifact' },
-  { file: 'server/services/ana-ri/mdx-command-handlers.ts', row: 'L160', what: 'cerv2_510k_sections.content from AnA-RI commands — a fourth writer of the kit sections, outside any transaction' },
 ];
 
 const GUARDED = [
@@ -168,6 +165,35 @@ const GUARDED = [
   {
     file: 'server/routes/batch-draft-routes.ts',
     why: 'POST accept writes coauthor_documents.content from an accepted AnA batch draft',
+  },
+  {
+    file: 'server/services/cerv2/kit-section-write.ts',
+    why: 'writeKitSectionTx is the one AnA writer of cerv2_510k_sections.content (write_kit_section tool + AnA-RI section.update command)',
+    transaction: 'caller',
+    txOwners: [
+      'server/services/ana/AnaToolExecutor.ts', // write_kit_section opens the transaction
+      'server/services/ana-ri/mdx-command-handlers.ts', // section.update opens the transaction
+    ],
+  },
+  {
+    file: 'server/routes/concept2cure.ts',
+    why: 'PUT …/artifacts/:artifactId (edit) and POST …/rollback write concept2cure_artifacts.content — the c2c artifact registry a filing is assembled from',
+  },
+  {
+    file: 'server/services/ana/AnaToolExecutor.ts',
+    why: 'write_q_sub_section, write_kit_section (via kit-section-write) and update_vault_document write regulated prose from AnA tools',
+  },
+  {
+    file: 'server/services/ana/submission-chat-apply-rewrite.ts',
+    why: 'applyRewrite overwrites concept2cure_artifacts.content with an accepted AnA rewrite',
+  },
+  {
+    file: 'server/services/ai-actions/handlers/refine-with-validation.ts',
+    why: 'the refine AI action writes the refined concept2cure_artifacts.content',
+  },
+  {
+    file: 'server/services/module3-convergence-service.ts',
+    why: 'bridgeCompileToArtifact writes composed Module 3 prose into concept2cure_artifacts.content',
   },
   {
     file: 'server/routes/q-sub.ts',
