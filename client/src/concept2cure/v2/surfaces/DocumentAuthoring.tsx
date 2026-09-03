@@ -2483,11 +2483,22 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         ...(pending ? { anchor: pending.anchor } : {}),
       });
       const json = await res.json().catch(() => null);
+      /* On every failure the editor's anchor request must be answered: it
+         used to be left pending forever, and the Comment button then silently
+         did nothing for the rest of the mount. */
+      const abandonAnchor = () => {
+        if (!pending) return;
+        pending.resolve(null);
+        pendingAnchorRef.current = null;
+        setPendingAnchor(null);
+      };
       if (res.status === 401) {
+        abandonAnchor();
         fireToast('Comment not posted — your session isn’t authenticated. Sign in and retry.', 'error');
         return;
       }
       if (!res.ok) {
+        abandonAnchor();
         fireToast(
           'Couldn’t post the comment — ' + (serverMessage(json) ?? 'the server refused it') + '.',
           'error'
@@ -2500,7 +2511,10 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         pending.resolve(typeof created?.id === 'string' ? created.id : null);
         pendingAnchorRef.current = null;
         setPendingAnchor(null);
-        fireToast('Comment anchored to the selected text.');
+        /* "Comment anchored" was toasted here — before the save that carries
+           the anchor mark had been attempted. The thread exists; whether the
+           highlight is in the record is the editor's onAnchored report. */
+        fireToast('Comment created — anchoring it to the selected text…');
       } else {
         fireToast('Comment added.');
       }
@@ -2512,6 +2526,11 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       );
       void loadComments(activeDocId);
     } catch (e) {
+      if (pending) {
+        pending.resolve(null);
+        pendingAnchorRef.current = null;
+        setPendingAnchor(null);
+      }
       fireToast(
         'Couldn’t post the comment — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
         'error'
@@ -3929,6 +3948,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     commentsApi={{
                       onCreate: requestAnchoredComment,
                       onOpen: openCommentFromAnchor,
+                      onAnchored: (_id, saved) =>
+                        fireToast(
+                          saved
+                            ? 'Comment anchored to the selected text.'
+                            : 'Comment created, but its anchor could not be saved with the section — save the section to make the highlight visible to others.',
+                          saved ? undefined : 'error',
+                        ),
                     }}
                     imagesApi={{ upload: uploadSectionImage }}
                     /* The document's own sections, as they stand right now.
