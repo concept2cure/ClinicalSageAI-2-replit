@@ -1772,6 +1772,16 @@
    one 1.6s opacity pulse reused from the activity dot, and it stops under
    prefers-reduced-motion. Sections stack; each header is a real button. */
 .c2c-v2 .ana-work{display:flex;flex-direction:column;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+/* An owned pane (authoring, eCTD co-author) mounts the dock at the top of its
+   own scroll region; this is the gutter it sits in there. */
+.c2c-v2 .ana-work-host{padding:10px 12px 0;}
+/* The dock toggle in a pane header — the rail uses .tb-btn; owned panes
+   carry no top bar, so they get a small pressed-state button of their own. */
+.c2c-v2 .ana-work-toggle{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:11px;color:var(--text-300);background:none;border:1px solid var(--border);border-radius:999px;padding:2px 9px;cursor:pointer;transition:color 200ms ease-out,border-color 200ms ease-out,background 200ms ease-out;}
+.c2c-v2 .ana-work-toggle svg{font-size:12px;}
+.c2c-v2 .ana-work-toggle:hover{color:var(--text-100);border-color:var(--text-300);}
+.c2c-v2 .ana-work-toggle[aria-pressed="true"]{color:var(--accent-200);border-color:var(--accent-100);background:var(--accent-000);}
+.c2c-v2 .ana-work-toggle:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
 .c2c-v2 .ana-work-hdr{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);background:var(--bg-050);}
 .c2c-v2 .ana-work-title{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text-100);}
 .c2c-v2 .ana-work-mark{display:inline-flex;color:var(--accent-200);}
@@ -1793,7 +1803,12 @@
 .c2c-v2 .ana-work-sec-m{font-size:10.5px;font-weight:500;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
 .c2c-v2 .ana-work-sec-chev{display:inline-flex;color:var(--text-400);}
 .c2c-v2 .ana-work-sec-chev svg{font-size:12px;}
+.c2c-v2 .ana-work-sec-hh{margin:0;font:inherit;font-size:inherit;font-weight:inherit;line-height:inherit;}
 .c2c-v2 .ana-work-sec-b{display:flex;flex-direction:column;gap:8px;padding:2px 12px 10px;}
+/* `display:flex` above would otherwise beat the user-agent's [hidden] rule and
+   a collapsed section would stay visible. The body stays in the DOM collapsed
+   (aria-controls needs its target to exist); this is what hides it. */
+.c2c-v2 .ana-work-sec-b[hidden],.c2c-v2 .ana-work-pre[hidden]{display:none;}
 .c2c-v2 .ana-work-group{display:flex;flex-direction:column;gap:4px;}
 .c2c-v2 .ana-work-group-h{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-300);margin-top:4px;}
 .c2c-v2 .ana-work-round{display:flex;flex-direction:column;gap:3px;}
@@ -1850,7 +1865,7 @@
 .c2c-v2 .ana-work-v{color:var(--text-100);min-width:0;overflow-wrap:anywhere;}
 @media (prefers-reduced-motion:reduce){
   .c2c-v2 .ana-work-pulse{animation:none;opacity:1;}
-  .c2c-v2 .ana-work-x,.c2c-v2 .ana-work-sec-h,.c2c-v2 .ana-work-link{transition:none;}
+  .c2c-v2 .ana-work-x,.c2c-v2 .ana-work-sec-h,.c2c-v2 .ana-work-link,.c2c-v2 .ana-work-toggle{transition:none;}
 }
 
 /* ── Page header ── */

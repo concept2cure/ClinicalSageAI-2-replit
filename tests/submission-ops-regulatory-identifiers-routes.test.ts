@@ -177,6 +177,13 @@ describe('PUT /api/submission-ops/packages/:packageId/regulatory-identifiers', (
     expect(dbState.updateSet.metadata.bundle).toEqual(bundle);
   });
 
+  it('accepts the numeric row id as well as the pkg_ text id (the dispatch surface uses the numeric one)', async () => {
+    dbState.pkg = pkgWith({});
+    const res = await put(GOOD, '5');
+    expect(res.status).toBe(200);
+    expect(res.body.data.packageId).toBe('pkg_locked');
+  });
+
   it('trims surrounding whitespace but never rewrites a value', async () => {
     dbState.pkg = pkgWith({});
     const res = await put({ ...GOOD, applicationNumber: '  IND123456  ' });

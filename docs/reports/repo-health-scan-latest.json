@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T18:36:43.782Z",
+  "generatedAt": "2026-09-03T18:50:51.640Z",
   "git": {
-    "sha": "6468ade3adcdfc248c6ada6279db4c79017d12eb",
+    "sha": "73794eeadb30a2d8ae39a12bd6aeb0d58b3941fe",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2170,7 +2170,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 229664
+        "bytes": 232103
       },
       {
         "file": "server/statistics-service.ts",
@@ -2332,7 +2332,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 5021
+        "lines": 5075
       },
       {
         "file": "server/storage.ts",
@@ -2412,7 +2412,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "lines": 2453
+        "lines": 2460
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2567,16 +2567,16 @@
         "lines": 1824
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1816
-      },
-      {
         "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",
         "lines": 1815
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
         "lines": 1813
+      },
+      {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1809
       },
       {
         "file": "design-system/ui_kits/home/Projects.jsx",
