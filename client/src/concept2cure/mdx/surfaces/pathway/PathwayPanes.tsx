@@ -341,9 +341,9 @@ function CorrespondencePane({ pathway, items, onOpenSection, onAskAna, onDraftRe
         <div className="corr-bar-l">
           <span className="corr-stat">
             <span className="cs-num err">{counts.open}</span> open
-            <span className="cs-sep">·</span>
+            <span className="cs-sep" aria-hidden="true">·</span>
             <span className="cs-num warn">{counts.review}</span> in review
-            <span className="cs-sep">·</span>
+            <span className="cs-sep" aria-hidden="true">·</span>
             <span className="cs-num">{counts.closed}</span> closed
           </span>
         </div>

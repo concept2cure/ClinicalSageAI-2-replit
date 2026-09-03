@@ -250,7 +250,7 @@
     flex-shrink: 0;
   }
   .ed-crumbs .sep {
-    color: var(--text-500);
+    color: var(--text-400);
     flex-shrink: 0;
   }
   .ed-doc-actions {

@@ -116,8 +116,19 @@ const MEASURE = () => {
     // silently dropped, so the exclusion is auditable.
     const decorative = window.__wcag.decorativeText(own);
 
+    // SC 1.4.3 also exempts "text that is part of an inactive user interface
+    // component". The `option` inside `<select disabled>` on v2__rbm is the
+    // whole of that category today: the UA paints it in its own disabled grey
+    // (#808080, 3.75:1) which no stylesheet in this repo chooses, and no
+    // token change can move. Counting it made the product's floor a permanent
+    // 1 that no fix could clear — a number that cannot reach zero stops being
+    // read. `closest` covers the ancestor case, which is the one that matters:
+    // an `option` is not itself `:disabled` when its `select` is.
+    const inactive = !!el.closest(':disabled, [aria-disabled="true"], fieldset[disabled]');
+
     out.push({
       decorative,
+      inactive,
       text: own.slice(0, 48),
       selector: el.tagName.toLowerCase() + (el.className && typeof el.className === 'string'
         ? '.' + el.className.trim().split(/\s+/).slice(0, 2).join('.') : ''),
@@ -170,6 +181,7 @@ const bySurface = [];
 let totalChecked = 0;
 let totalFailed = 0;
 let decorativeFailures = 0;
+let inactiveFailures = 0;
 const byPair = new Map();
 const worst = [];
 
@@ -181,9 +193,10 @@ for (const file of files) {
   const rows = await p.evaluate(MEASURE);
   await p.close();
 
-  const meaningful = rows.filter((r) => !r.decorative);
+  const meaningful = rows.filter((r) => !r.decorative && !r.inactive);
   const failed = meaningful.filter((r) => !r.pass);
   decorativeFailures += rows.filter((r) => r.decorative && !r.pass).length;
+  inactiveFailures += rows.filter((r) => !r.decorative && r.inactive && !r.pass).length;
   totalChecked += meaningful.length;
   totalFailed += failed.length;
   for (const r of failed) {
@@ -207,7 +220,9 @@ console.log(
 
 console.log(
   `  (${decorativeFailures} additional low-contrast elements were lone separator glyphs — ` +
-    `excluded as decorative per WCAG 1.4.3.)\n`,
+    `excluded as decorative per WCAG 1.4.3.\n` +
+    `   ${inactiveFailures} were text inside a disabled control — excluded as an inactive ` +
+    `user interface component, same clause.)\n`,
 );
 
 if (byPair.size) {

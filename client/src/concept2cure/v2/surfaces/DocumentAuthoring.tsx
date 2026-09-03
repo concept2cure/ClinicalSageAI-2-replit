@@ -3082,13 +3082,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         <header className="ed-doc-h">
           <div className="ed-crumbs">
             <span className="sep-first">{activeDoc?.module ?? 'eCTD'}</span>
-            <span className="sep">›</span>
+            <span className="sep" aria-hidden="true">›</span>
             <span className="doc-title" title={activeDoc?.title ?? undefined}>
               {activeDoc?.title ?? 'No document'}
             </span>
             {activeSection && (
               <>
-                <span className="sep">›</span>
+                <span className="sep" aria-hidden="true">›</span>
                 <span className="here">{activeSection.code}</span>
               </>
             )}
