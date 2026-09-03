@@ -26,8 +26,9 @@
  * selector carries more than one surface.
  */
 
-/* ── --bg-050 · 56 selector(s) ── */
+/* ── --bg-050 · 67 selector(s) ── */
 .mdx-shell .ana-drafter,
+.mdx-shell .anl-ana-bar,
 .mdx-shell .audit-detail,
 .mdx-shell .audit-row:hover,
 .mdx-shell .chip,
@@ -56,6 +57,10 @@
 .mdx-shell .ed-comment-suggest,
 .mdx-shell .ed-table th,
 .mdx-shell .ed-workbench,
+.mdx-shell .eng-awareness-body,
+.mdx-shell .eng-blocker-more,
+.mdx-shell .eng-dhf-cell[data-status="draft"],
+.mdx-shell .eng-heat-cell,
 .mdx-shell .estar-row:hover,
 .mdx-shell .ftp-dir-head,
 .mdx-shell .ftp-dir-row:hover,
@@ -76,6 +81,12 @@
 .mdx-shell .ph-card,
 .mdx-shell .phases,
 .mdx-shell .pma-mod,
+.mdx-shell .ps-empty,
+.mdx-shell .ps-meeting,
+.mdx-shell .ps-q-commit,
+.mdx-shell .ps-q-fda,
+.mdx-shell .ps-strip-cell,
+.mdx-shell .pv-capa-col,
 .mdx-shell .stage-strip,
 .mdx-shell .sub-detail,
 .mdx-shell .vault-drawer,
@@ -86,13 +97,13 @@
   --text-400: #71706a;
   --text-300: #686660;
 }
-[data-theme="dark"] :is(.mdx-shell .ana-drafter, .mdx-shell .audit-detail, .mdx-shell .audit-row:hover, .mdx-shell .chip, .mdx-shell .corr-detail, .mdx-shell .corr-row:hover, .mdx-shell .ctable-head, .mdx-shell .ctable-row:hover, .mdx-shell .data-state, .mdx-shell .dd-foot, .mdx-shell .dd-path, .mdx-shell .dd-prev-mini, .mdx-shell .dl-def:hover, .mdx-shell .dl-deficiencies-rail, .mdx-shell .docs-actions, .mdx-shell .docs-reviewer, .mdx-shell .dr-def-table tr.is-overall td, .mdx-shell .dr-ev, .mdx-shell .dr-reviewers, .mdx-shell .dr-section, .mdx-shell .dr-update, .mdx-shell .drafter-letter, .mdx-shell .drafter-unstarted, .mdx-shell .ed-block[data-active="true"], .mdx-shell .ed-btn.subtle:hover, .mdx-shell .ed-claude, .mdx-shell .ed-comment-suggest, .mdx-shell .ed-table th, .mdx-shell .ed-workbench, .mdx-shell .estar-row:hover, .mdx-shell .ftp-dir-head, .mdx-shell .ftp-dir-row:hover, .mdx-shell .ftp-md-head, .mdx-shell .ftp-ndjson-head, .mdx-shell .ftp-preview-actions, .mdx-shell .ftp-tree, .mdx-shell .gov-action-textarea, .mdx-shell .health-card, .mdx-shell .kanban-col, .mdx-shell .kanban-col[data-tone="err"], .mdx-shell .kanban-col[data-tone="ok"], .mdx-shell .kanban-col[data-tone="warn"], .mdx-shell .panel, .mdx-shell .pg-card, .mdx-shell .pg-list, .mdx-shell .ph-btn:hover, .mdx-shell .ph-card, .mdx-shell .phases, .mdx-shell .pma-mod, .mdx-shell .stage-strip, .mdx-shell .sub-detail, .mdx-shell .vault-drawer, .mdx-shell .vault-rail, .mdx-shell .vault-tree, .mdx-shell .view-toggle, .mdx-shell.editor-mode .main),
-[data-theme="dark"]:is(.mdx-shell .ana-drafter, .mdx-shell .audit-detail, .mdx-shell .audit-row:hover, .mdx-shell .chip, .mdx-shell .corr-detail, .mdx-shell .corr-row:hover, .mdx-shell .ctable-head, .mdx-shell .ctable-row:hover, .mdx-shell .data-state, .mdx-shell .dd-foot, .mdx-shell .dd-path, .mdx-shell .dd-prev-mini, .mdx-shell .dl-def:hover, .mdx-shell .dl-deficiencies-rail, .mdx-shell .docs-actions, .mdx-shell .docs-reviewer, .mdx-shell .dr-def-table tr.is-overall td, .mdx-shell .dr-ev, .mdx-shell .dr-reviewers, .mdx-shell .dr-section, .mdx-shell .dr-update, .mdx-shell .drafter-letter, .mdx-shell .drafter-unstarted, .mdx-shell .ed-block[data-active="true"], .mdx-shell .ed-btn.subtle:hover, .mdx-shell .ed-claude, .mdx-shell .ed-comment-suggest, .mdx-shell .ed-table th, .mdx-shell .ed-workbench, .mdx-shell .estar-row:hover, .mdx-shell .ftp-dir-head, .mdx-shell .ftp-dir-row:hover, .mdx-shell .ftp-md-head, .mdx-shell .ftp-ndjson-head, .mdx-shell .ftp-preview-actions, .mdx-shell .ftp-tree, .mdx-shell .gov-action-textarea, .mdx-shell .health-card, .mdx-shell .kanban-col, .mdx-shell .kanban-col[data-tone="err"], .mdx-shell .kanban-col[data-tone="ok"], .mdx-shell .kanban-col[data-tone="warn"], .mdx-shell .panel, .mdx-shell .pg-card, .mdx-shell .pg-list, .mdx-shell .ph-btn:hover, .mdx-shell .ph-card, .mdx-shell .phases, .mdx-shell .pma-mod, .mdx-shell .stage-strip, .mdx-shell .sub-detail, .mdx-shell .vault-drawer, .mdx-shell .vault-rail, .mdx-shell .vault-tree, .mdx-shell .view-toggle, .mdx-shell.editor-mode .main) {
+[data-theme="dark"] :is(.mdx-shell .ana-drafter, .mdx-shell .anl-ana-bar, .mdx-shell .audit-detail, .mdx-shell .audit-row:hover, .mdx-shell .chip, .mdx-shell .corr-detail, .mdx-shell .corr-row:hover, .mdx-shell .ctable-head, .mdx-shell .ctable-row:hover, .mdx-shell .data-state, .mdx-shell .dd-foot, .mdx-shell .dd-path, .mdx-shell .dd-prev-mini, .mdx-shell .dl-def:hover, .mdx-shell .dl-deficiencies-rail, .mdx-shell .docs-actions, .mdx-shell .docs-reviewer, .mdx-shell .dr-def-table tr.is-overall td, .mdx-shell .dr-ev, .mdx-shell .dr-reviewers, .mdx-shell .dr-section, .mdx-shell .dr-update, .mdx-shell .drafter-letter, .mdx-shell .drafter-unstarted, .mdx-shell .ed-block[data-active="true"], .mdx-shell .ed-btn.subtle:hover, .mdx-shell .ed-claude, .mdx-shell .ed-comment-suggest, .mdx-shell .ed-table th, .mdx-shell .ed-workbench, .mdx-shell .eng-awareness-body, .mdx-shell .eng-blocker-more, .mdx-shell .eng-dhf-cell[data-status="draft"], .mdx-shell .eng-heat-cell, .mdx-shell .estar-row:hover, .mdx-shell .ftp-dir-head, .mdx-shell .ftp-dir-row:hover, .mdx-shell .ftp-md-head, .mdx-shell .ftp-ndjson-head, .mdx-shell .ftp-preview-actions, .mdx-shell .ftp-tree, .mdx-shell .gov-action-textarea, .mdx-shell .health-card, .mdx-shell .kanban-col, .mdx-shell .kanban-col[data-tone="err"], .mdx-shell .kanban-col[data-tone="ok"], .mdx-shell .kanban-col[data-tone="warn"], .mdx-shell .panel, .mdx-shell .pg-card, .mdx-shell .pg-list, .mdx-shell .ph-btn:hover, .mdx-shell .ph-card, .mdx-shell .phases, .mdx-shell .pma-mod, .mdx-shell .ps-empty, .mdx-shell .ps-meeting, .mdx-shell .ps-q-commit, .mdx-shell .ps-q-fda, .mdx-shell .ps-strip-cell, .mdx-shell .pv-capa-col, .mdx-shell .stage-strip, .mdx-shell .sub-detail, .mdx-shell .vault-drawer, .mdx-shell .vault-rail, .mdx-shell .vault-tree, .mdx-shell .view-toggle, .mdx-shell.editor-mode .main),
+[data-theme="dark"]:is(.mdx-shell .ana-drafter, .mdx-shell .anl-ana-bar, .mdx-shell .audit-detail, .mdx-shell .audit-row:hover, .mdx-shell .chip, .mdx-shell .corr-detail, .mdx-shell .corr-row:hover, .mdx-shell .ctable-head, .mdx-shell .ctable-row:hover, .mdx-shell .data-state, .mdx-shell .dd-foot, .mdx-shell .dd-path, .mdx-shell .dd-prev-mini, .mdx-shell .dl-def:hover, .mdx-shell .dl-deficiencies-rail, .mdx-shell .docs-actions, .mdx-shell .docs-reviewer, .mdx-shell .dr-def-table tr.is-overall td, .mdx-shell .dr-ev, .mdx-shell .dr-reviewers, .mdx-shell .dr-section, .mdx-shell .dr-update, .mdx-shell .drafter-letter, .mdx-shell .drafter-unstarted, .mdx-shell .ed-block[data-active="true"], .mdx-shell .ed-btn.subtle:hover, .mdx-shell .ed-claude, .mdx-shell .ed-comment-suggest, .mdx-shell .ed-table th, .mdx-shell .ed-workbench, .mdx-shell .eng-awareness-body, .mdx-shell .eng-blocker-more, .mdx-shell .eng-dhf-cell[data-status="draft"], .mdx-shell .eng-heat-cell, .mdx-shell .estar-row:hover, .mdx-shell .ftp-dir-head, .mdx-shell .ftp-dir-row:hover, .mdx-shell .ftp-md-head, .mdx-shell .ftp-ndjson-head, .mdx-shell .ftp-preview-actions, .mdx-shell .ftp-tree, .mdx-shell .gov-action-textarea, .mdx-shell .health-card, .mdx-shell .kanban-col, .mdx-shell .kanban-col[data-tone="err"], .mdx-shell .kanban-col[data-tone="ok"], .mdx-shell .kanban-col[data-tone="warn"], .mdx-shell .panel, .mdx-shell .pg-card, .mdx-shell .pg-list, .mdx-shell .ph-btn:hover, .mdx-shell .ph-card, .mdx-shell .phases, .mdx-shell .pma-mod, .mdx-shell .ps-empty, .mdx-shell .ps-meeting, .mdx-shell .ps-q-commit, .mdx-shell .ps-q-fda, .mdx-shell .ps-strip-cell, .mdx-shell .pv-capa-col, .mdx-shell .stage-strip, .mdx-shell .sub-detail, .mdx-shell .vault-drawer, .mdx-shell .vault-rail, .mdx-shell .vault-tree, .mdx-shell .view-toggle, .mdx-shell.editor-mode .main) {
   --text-400: #94928a;
   --text-300: #b0aea5;
 }
 
-/* ── --bg-100 · 86 selector(s) ── */
+/* ── --bg-100 · 99 selector(s) ── */
 .mdx-shell .ap-cfr,
 .mdx-shell .ap-decline-btn:hover,
 .mdx-shell .ap-link:hover,
@@ -102,6 +113,7 @@
 .mdx-shell .audit-chip.tone-neutral,
 .mdx-shell .audit-export:hover,
 .mdx-shell .audit-filters,
+.mdx-shell .btn.ghost:hover,
 .mdx-shell .chip[data-on="true"],
 .mdx-shell .corr-bar-r,
 .mdx-shell .corr-due-banner,
@@ -143,6 +155,9 @@
 .mdx-shell .ed-close:hover,
 .mdx-shell .ed-exit:hover,
 .mdx-shell .ed-tree,
+.mdx-shell .eng-blocker-kind,
+.mdx-shell .eng-blocker-more:hover,
+.mdx-shell .eng-risk-resid,
 .mdx-shell .estar-row:hover,
 .mdx-shell .ftp-action:hover,
 .mdx-shell .ftp-attach-icon,
@@ -159,6 +174,12 @@
 .mdx-shell .ph-meta-pill,
 .mdx-shell .phase:hover,
 .mdx-shell .pma-mod:hover,
+.mdx-shell .ps-commit-state,
+.mdx-shell .ps-q-commit-state,
+.mdx-shell .ps-q-status,
+.mdx-shell .ps-tab-n,
+.mdx-shell .ps-type,
+.mdx-shell .scope-note,
 .mdx-shell .se-matrix-multi.header,
 .mdx-shell .se-row.header,
 .mdx-shell .seg-btn,
@@ -173,6 +194,9 @@
 .mdx-shell .tbl thead th,
 .mdx-shell .tpl-tag,
 .mdx-shell .tweaks-title .close:hover,
+.mdx-shell .udi-status-pill.draft,
+.mdx-shell .udi-status-pill.not-started,
+.mdx-shell .udi-status-pill.pending,
 .mdx-shell .val-bar,
 .mdx-shell .vault-tree-row:hover,
 .mdx-shell .vault-type,
@@ -182,13 +206,14 @@
   --text-400: #6e6c66;
   --text-300: #64625c;
 }
-[data-theme="dark"] :is(.mdx-shell .ap-cfr, .mdx-shell .ap-decline-btn:hover, .mdx-shell .ap-link:hover, .mdx-shell .ap-review-btn:hover, .mdx-shell .ap-stage-pill[data-stage="review"], .mdx-shell .audit-act:hover, .mdx-shell .audit-chip.tone-neutral, .mdx-shell .audit-export:hover, .mdx-shell .audit-filters, .mdx-shell .chip[data-on="true"], .mdx-shell .corr-bar-r, .mdx-shell .corr-due-banner, .mdx-shell .corr-status.s-closed, .mdx-shell .crz-group-count, .mdx-shell .crz-row:hover, .mdx-shell .data-gate-sample, .mdx-shell .data-state-btn:hover, .mdx-shell .data-state-error-detail, .mdx-shell .dd-act:hover, .mdx-shell .dd-att-ico, .mdx-shell .dd-close:hover, .mdx-shell .dd-tab-count, .mdx-shell .dl-def-ref, .mdx-shell .dl-inline-def, .mdx-shell .docs-esig-na, .mdx-shell .docs-flag, .mdx-shell .docs-owner, .mdx-shell .docs-progress, .mdx-shell .dr-cit-chip.cit-section, .mdx-shell .dr-def-count, .mdx-shell .dr-def-table th, .mdx-shell .dr-ev-icon, .mdx-shell .dr-ev-rm:hover, .mdx-shell .dr-rev-act:hover, .mdx-shell .dr-section-num, .mdx-shell .dr-update:hover, .mdx-shell .drafter-back:hover, .mdx-shell .drafter-due.tone-ok, .mdx-shell .drafter-empty-act:hover, .mdx-shell .drafter-empty-icon, .mdx-shell .drafter-foot-act:hover, .mdx-shell .drafter-regen:hover, .mdx-shell .drafter-status, .mdx-shell .drafter-status.tone-draft, .mdx-shell .drafter-toggle:hover, .mdx-shell .ed-btn.ghost:hover, .mdx-shell .ed-claude-tab[data-on="true"], .mdx-shell .ed-close:hover, .mdx-shell .ed-exit:hover, .mdx-shell .ed-tree, .mdx-shell .estar-row:hover, .mdx-shell .ftp-action:hover, .mdx-shell .ftp-attach-icon, .mdx-shell .ftp-pill, .mdx-shell .ftp-row:hover, .mdx-shell .gov-action-btn.ghost:hover:not(:disabled), .mdx-shell .health-card:hover, .mdx-shell .indesign-icon, .mdx-shell .indesign-phase, .mdx-shell .pg-blocker, .mdx-shell .pg-list-hdr, .mdx-shell .pg-list-row:hover, .mdx-shell .ph-impact-tag, .mdx-shell .ph-meta-pill, .mdx-shell .phase:hover, .mdx-shell .pma-mod:hover, .mdx-shell .se-matrix-multi.header, .mdx-shell .se-row.header, .mdx-shell .seg-btn, .mdx-shell .status-chip.idle, .mdx-shell .status-pill.empty, .mdx-shell .status-pill.excluded, .mdx-shell .status-pill.na, .mdx-shell .status-pill.rejected, .mdx-shell .sub-stage-n, .mdx-shell .task-label, .mdx-shell .tbl tbody tr:hover, .mdx-shell .tbl thead th, .mdx-shell .tpl-tag, .mdx-shell .tweaks-title .close:hover, .mdx-shell .val-bar, .mdx-shell .vault-tree-row:hover, .mdx-shell .vault-type, .mdx-shell .vault-type.xml, .mdx-shell .version-row[data-status="superseded"] .version-v, .mdx-shell .view-toggle button[aria-pressed="true"]),
-[data-theme="dark"]:is(.mdx-shell .ap-cfr, .mdx-shell .ap-decline-btn:hover, .mdx-shell .ap-link:hover, .mdx-shell .ap-review-btn:hover, .mdx-shell .ap-stage-pill[data-stage="review"], .mdx-shell .audit-act:hover, .mdx-shell .audit-chip.tone-neutral, .mdx-shell .audit-export:hover, .mdx-shell .audit-filters, .mdx-shell .chip[data-on="true"], .mdx-shell .corr-bar-r, .mdx-shell .corr-due-banner, .mdx-shell .corr-status.s-closed, .mdx-shell .crz-group-count, .mdx-shell .crz-row:hover, .mdx-shell .data-gate-sample, .mdx-shell .data-state-btn:hover, .mdx-shell .data-state-error-detail, .mdx-shell .dd-act:hover, .mdx-shell .dd-att-ico, .mdx-shell .dd-close:hover, .mdx-shell .dd-tab-count, .mdx-shell .dl-def-ref, .mdx-shell .dl-inline-def, .mdx-shell .docs-esig-na, .mdx-shell .docs-flag, .mdx-shell .docs-owner, .mdx-shell .docs-progress, .mdx-shell .dr-cit-chip.cit-section, .mdx-shell .dr-def-count, .mdx-shell .dr-def-table th, .mdx-shell .dr-ev-icon, .mdx-shell .dr-ev-rm:hover, .mdx-shell .dr-rev-act:hover, .mdx-shell .dr-section-num, .mdx-shell .dr-update:hover, .mdx-shell .drafter-back:hover, .mdx-shell .drafter-due.tone-ok, .mdx-shell .drafter-empty-act:hover, .mdx-shell .drafter-empty-icon, .mdx-shell .drafter-foot-act:hover, .mdx-shell .drafter-regen:hover, .mdx-shell .drafter-status, .mdx-shell .drafter-status.tone-draft, .mdx-shell .drafter-toggle:hover, .mdx-shell .ed-btn.ghost:hover, .mdx-shell .ed-claude-tab[data-on="true"], .mdx-shell .ed-close:hover, .mdx-shell .ed-exit:hover, .mdx-shell .ed-tree, .mdx-shell .estar-row:hover, .mdx-shell .ftp-action:hover, .mdx-shell .ftp-attach-icon, .mdx-shell .ftp-pill, .mdx-shell .ftp-row:hover, .mdx-shell .gov-action-btn.ghost:hover:not(:disabled), .mdx-shell .health-card:hover, .mdx-shell .indesign-icon, .mdx-shell .indesign-phase, .mdx-shell .pg-blocker, .mdx-shell .pg-list-hdr, .mdx-shell .pg-list-row:hover, .mdx-shell .ph-impact-tag, .mdx-shell .ph-meta-pill, .mdx-shell .phase:hover, .mdx-shell .pma-mod:hover, .mdx-shell .se-matrix-multi.header, .mdx-shell .se-row.header, .mdx-shell .seg-btn, .mdx-shell .status-chip.idle, .mdx-shell .status-pill.empty, .mdx-shell .status-pill.excluded, .mdx-shell .status-pill.na, .mdx-shell .status-pill.rejected, .mdx-shell .sub-stage-n, .mdx-shell .task-label, .mdx-shell .tbl tbody tr:hover, .mdx-shell .tbl thead th, .mdx-shell .tpl-tag, .mdx-shell .tweaks-title .close:hover, .mdx-shell .val-bar, .mdx-shell .vault-tree-row:hover, .mdx-shell .vault-type, .mdx-shell .vault-type.xml, .mdx-shell .version-row[data-status="superseded"] .version-v, .mdx-shell .view-toggle button[aria-pressed="true"]) {
+[data-theme="dark"] :is(.mdx-shell .ap-cfr, .mdx-shell .ap-decline-btn:hover, .mdx-shell .ap-link:hover, .mdx-shell .ap-review-btn:hover, .mdx-shell .ap-stage-pill[data-stage="review"], .mdx-shell .audit-act:hover, .mdx-shell .audit-chip.tone-neutral, .mdx-shell .audit-export:hover, .mdx-shell .audit-filters, .mdx-shell .btn.ghost:hover, .mdx-shell .chip[data-on="true"], .mdx-shell .corr-bar-r, .mdx-shell .corr-due-banner, .mdx-shell .corr-status.s-closed, .mdx-shell .crz-group-count, .mdx-shell .crz-row:hover, .mdx-shell .data-gate-sample, .mdx-shell .data-state-btn:hover, .mdx-shell .data-state-error-detail, .mdx-shell .dd-act:hover, .mdx-shell .dd-att-ico, .mdx-shell .dd-close:hover, .mdx-shell .dd-tab-count, .mdx-shell .dl-def-ref, .mdx-shell .dl-inline-def, .mdx-shell .docs-esig-na, .mdx-shell .docs-flag, .mdx-shell .docs-owner, .mdx-shell .docs-progress, .mdx-shell .dr-cit-chip.cit-section, .mdx-shell .dr-def-count, .mdx-shell .dr-def-table th, .mdx-shell .dr-ev-icon, .mdx-shell .dr-ev-rm:hover, .mdx-shell .dr-rev-act:hover, .mdx-shell .dr-section-num, .mdx-shell .dr-update:hover, .mdx-shell .drafter-back:hover, .mdx-shell .drafter-due.tone-ok, .mdx-shell .drafter-empty-act:hover, .mdx-shell .drafter-empty-icon, .mdx-shell .drafter-foot-act:hover, .mdx-shell .drafter-regen:hover, .mdx-shell .drafter-status, .mdx-shell .drafter-status.tone-draft, .mdx-shell .drafter-toggle:hover, .mdx-shell .ed-btn.ghost:hover, .mdx-shell .ed-claude-tab[data-on="true"], .mdx-shell .ed-close:hover, .mdx-shell .ed-exit:hover, .mdx-shell .ed-tree, .mdx-shell .eng-blocker-kind, .mdx-shell .eng-blocker-more:hover, .mdx-shell .eng-risk-resid, .mdx-shell .estar-row:hover, .mdx-shell .ftp-action:hover, .mdx-shell .ftp-attach-icon, .mdx-shell .ftp-pill, .mdx-shell .ftp-row:hover, .mdx-shell .gov-action-btn.ghost:hover:not(:disabled), .mdx-shell .health-card:hover, .mdx-shell .indesign-icon, .mdx-shell .indesign-phase, .mdx-shell .pg-blocker, .mdx-shell .pg-list-hdr, .mdx-shell .pg-list-row:hover, .mdx-shell .ph-impact-tag, .mdx-shell .ph-meta-pill, .mdx-shell .phase:hover, .mdx-shell .pma-mod:hover, .mdx-shell .ps-commit-state, .mdx-shell .ps-q-commit-state, .mdx-shell .ps-q-status, .mdx-shell .ps-tab-n, .mdx-shell .ps-type, .mdx-shell .scope-note, .mdx-shell .se-matrix-multi.header, .mdx-shell .se-row.header, .mdx-shell .seg-btn, .mdx-shell .status-chip.idle, .mdx-shell .status-pill.empty, .mdx-shell .status-pill.excluded, .mdx-shell .status-pill.na, .mdx-shell .status-pill.rejected, .mdx-shell .sub-stage-n, .mdx-shell .task-label, .mdx-shell .tbl tbody tr:hover, .mdx-shell .tbl thead th, .mdx-shell .tpl-tag, .mdx-shell .tweaks-title .close:hover, .mdx-shell .udi-status-pill.draft, .mdx-shell .udi-status-pill.not-started, .mdx-shell .udi-status-pill.pending, .mdx-shell .val-bar, .mdx-shell .vault-tree-row:hover, .mdx-shell .vault-type, .mdx-shell .vault-type.xml, .mdx-shell .version-row[data-status="superseded"] .version-v, .mdx-shell .view-toggle button[aria-pressed="true"]),
+[data-theme="dark"]:is(.mdx-shell .ap-cfr, .mdx-shell .ap-decline-btn:hover, .mdx-shell .ap-link:hover, .mdx-shell .ap-review-btn:hover, .mdx-shell .ap-stage-pill[data-stage="review"], .mdx-shell .audit-act:hover, .mdx-shell .audit-chip.tone-neutral, .mdx-shell .audit-export:hover, .mdx-shell .audit-filters, .mdx-shell .btn.ghost:hover, .mdx-shell .chip[data-on="true"], .mdx-shell .corr-bar-r, .mdx-shell .corr-due-banner, .mdx-shell .corr-status.s-closed, .mdx-shell .crz-group-count, .mdx-shell .crz-row:hover, .mdx-shell .data-gate-sample, .mdx-shell .data-state-btn:hover, .mdx-shell .data-state-error-detail, .mdx-shell .dd-act:hover, .mdx-shell .dd-att-ico, .mdx-shell .dd-close:hover, .mdx-shell .dd-tab-count, .mdx-shell .dl-def-ref, .mdx-shell .dl-inline-def, .mdx-shell .docs-esig-na, .mdx-shell .docs-flag, .mdx-shell .docs-owner, .mdx-shell .docs-progress, .mdx-shell .dr-cit-chip.cit-section, .mdx-shell .dr-def-count, .mdx-shell .dr-def-table th, .mdx-shell .dr-ev-icon, .mdx-shell .dr-ev-rm:hover, .mdx-shell .dr-rev-act:hover, .mdx-shell .dr-section-num, .mdx-shell .dr-update:hover, .mdx-shell .drafter-back:hover, .mdx-shell .drafter-due.tone-ok, .mdx-shell .drafter-empty-act:hover, .mdx-shell .drafter-empty-icon, .mdx-shell .drafter-foot-act:hover, .mdx-shell .drafter-regen:hover, .mdx-shell .drafter-status, .mdx-shell .drafter-status.tone-draft, .mdx-shell .drafter-toggle:hover, .mdx-shell .ed-btn.ghost:hover, .mdx-shell .ed-claude-tab[data-on="true"], .mdx-shell .ed-close:hover, .mdx-shell .ed-exit:hover, .mdx-shell .ed-tree, .mdx-shell .eng-blocker-kind, .mdx-shell .eng-blocker-more:hover, .mdx-shell .eng-risk-resid, .mdx-shell .estar-row:hover, .mdx-shell .ftp-action:hover, .mdx-shell .ftp-attach-icon, .mdx-shell .ftp-pill, .mdx-shell .ftp-row:hover, .mdx-shell .gov-action-btn.ghost:hover:not(:disabled), .mdx-shell .health-card:hover, .mdx-shell .indesign-icon, .mdx-shell .indesign-phase, .mdx-shell .pg-blocker, .mdx-shell .pg-list-hdr, .mdx-shell .pg-list-row:hover, .mdx-shell .ph-impact-tag, .mdx-shell .ph-meta-pill, .mdx-shell .phase:hover, .mdx-shell .pma-mod:hover, .mdx-shell .ps-commit-state, .mdx-shell .ps-q-commit-state, .mdx-shell .ps-q-status, .mdx-shell .ps-tab-n, .mdx-shell .ps-type, .mdx-shell .scope-note, .mdx-shell .se-matrix-multi.header, .mdx-shell .se-row.header, .mdx-shell .seg-btn, .mdx-shell .status-chip.idle, .mdx-shell .status-pill.empty, .mdx-shell .status-pill.excluded, .mdx-shell .status-pill.na, .mdx-shell .status-pill.rejected, .mdx-shell .sub-stage-n, .mdx-shell .task-label, .mdx-shell .tbl tbody tr:hover, .mdx-shell .tbl thead th, .mdx-shell .tpl-tag, .mdx-shell .tweaks-title .close:hover, .mdx-shell .udi-status-pill.draft, .mdx-shell .udi-status-pill.not-started, .mdx-shell .udi-status-pill.pending, .mdx-shell .val-bar, .mdx-shell .vault-tree-row:hover, .mdx-shell .vault-type, .mdx-shell .vault-type.xml, .mdx-shell .version-row[data-status="superseded"] .version-v, .mdx-shell .view-toggle button[aria-pressed="true"]) {
   --text-400: #999890;
   --text-300: #b0aea5;
 }
 
-/* ── --bg-200 · 28 selector(s) ── */
+/* ── --bg-200 · 29 selector(s) ── */
+.mdx-shell .anl-pace-bar,
 .mdx-shell .corr-kind.k-rta,
 .mdx-shell .dl-def-num,
 .mdx-shell .dr-def-num,
@@ -220,8 +245,8 @@
   --text-400: #686661;
   --text-300: #5f5d58;
 }
-[data-theme="dark"] :is(.mdx-shell .corr-kind.k-rta, .mdx-shell .dl-def-num, .mdx-shell .dr-def-num, .mdx-shell .drafter-foot-act.primary.is-disabled, .mdx-shell .drafter-foot-act.primary[disabled], .mdx-shell .drafter-kind-chip, .mdx-shell .drafter-kind-chip.kind-rta, .mdx-shell .ed-comment-avatar, .mdx-shell .ed-tree-foot-bar, .mdx-shell .ed-tree-row:hover, .mdx-shell .ftp-count, .mdx-shell .litbar .bar, .mdx-shell .match-bar, .mdx-shell .path-chip, .mdx-shell .pg-bar, .mdx-shell .pg-owner, .mdx-shell .ph-gov-sig.sig-reserved, .mdx-shell .ph-secbar-track, .mdx-shell .ph-task-who, .mdx-shell .phase-bar, .mdx-shell .pwt-count, .mdx-shell .readiness, .mdx-shell .stage-dot, .mdx-shell .stage-node.idle .stage-dot, .mdx-shell .status-pill.draft, .mdx-shell .status-pill.locked, .mdx-shell .status-pill.non-serious, .mdx-shell .status-pill.reviewed),
-[data-theme="dark"]:is(.mdx-shell .corr-kind.k-rta, .mdx-shell .dl-def-num, .mdx-shell .dr-def-num, .mdx-shell .drafter-foot-act.primary.is-disabled, .mdx-shell .drafter-foot-act.primary[disabled], .mdx-shell .drafter-kind-chip, .mdx-shell .drafter-kind-chip.kind-rta, .mdx-shell .ed-comment-avatar, .mdx-shell .ed-tree-foot-bar, .mdx-shell .ed-tree-row:hover, .mdx-shell .ftp-count, .mdx-shell .litbar .bar, .mdx-shell .match-bar, .mdx-shell .path-chip, .mdx-shell .pg-bar, .mdx-shell .pg-owner, .mdx-shell .ph-gov-sig.sig-reserved, .mdx-shell .ph-secbar-track, .mdx-shell .ph-task-who, .mdx-shell .phase-bar, .mdx-shell .pwt-count, .mdx-shell .readiness, .mdx-shell .stage-dot, .mdx-shell .stage-node.idle .stage-dot, .mdx-shell .status-pill.draft, .mdx-shell .status-pill.locked, .mdx-shell .status-pill.non-serious, .mdx-shell .status-pill.reviewed) {
+[data-theme="dark"] :is(.mdx-shell .anl-pace-bar, .mdx-shell .corr-kind.k-rta, .mdx-shell .dl-def-num, .mdx-shell .dr-def-num, .mdx-shell .drafter-foot-act.primary.is-disabled, .mdx-shell .drafter-foot-act.primary[disabled], .mdx-shell .drafter-kind-chip, .mdx-shell .drafter-kind-chip.kind-rta, .mdx-shell .ed-comment-avatar, .mdx-shell .ed-tree-foot-bar, .mdx-shell .ed-tree-row:hover, .mdx-shell .ftp-count, .mdx-shell .litbar .bar, .mdx-shell .match-bar, .mdx-shell .path-chip, .mdx-shell .pg-bar, .mdx-shell .pg-owner, .mdx-shell .ph-gov-sig.sig-reserved, .mdx-shell .ph-secbar-track, .mdx-shell .ph-task-who, .mdx-shell .phase-bar, .mdx-shell .pwt-count, .mdx-shell .readiness, .mdx-shell .stage-dot, .mdx-shell .stage-node.idle .stage-dot, .mdx-shell .status-pill.draft, .mdx-shell .status-pill.locked, .mdx-shell .status-pill.non-serious, .mdx-shell .status-pill.reviewed),
+[data-theme="dark"]:is(.mdx-shell .anl-pace-bar, .mdx-shell .corr-kind.k-rta, .mdx-shell .dl-def-num, .mdx-shell .dr-def-num, .mdx-shell .drafter-foot-act.primary.is-disabled, .mdx-shell .drafter-foot-act.primary[disabled], .mdx-shell .drafter-kind-chip, .mdx-shell .drafter-kind-chip.kind-rta, .mdx-shell .ed-comment-avatar, .mdx-shell .ed-tree-foot-bar, .mdx-shell .ed-tree-row:hover, .mdx-shell .ftp-count, .mdx-shell .litbar .bar, .mdx-shell .match-bar, .mdx-shell .path-chip, .mdx-shell .pg-bar, .mdx-shell .pg-owner, .mdx-shell .ph-gov-sig.sig-reserved, .mdx-shell .ph-secbar-track, .mdx-shell .ph-task-who, .mdx-shell .phase-bar, .mdx-shell .pwt-count, .mdx-shell .readiness, .mdx-shell .stage-dot, .mdx-shell .stage-node.idle .stage-dot, .mdx-shell .status-pill.draft, .mdx-shell .status-pill.locked, .mdx-shell .status-pill.non-serious, .mdx-shell .status-pill.reviewed) {
   --text-400: #a9a8a2;
   --text-300: #b6b4ab;
 }

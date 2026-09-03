@@ -27,7 +27,7 @@ import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 import { randomBytes } from 'node:crypto';
-import { createJourneyDb, JourneyRecorder, type JourneyDb, assertNoSchemaGaps } from './harness';
+import { createJourneyDb, JourneyRecorder, type JourneyDb, assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from './harness';
 
 // The authoring router carries its own jose JWT verification (HS256 over
 // JWT_SECRET) — so this journey authenticates with REAL signed tokens, and the
@@ -132,7 +132,10 @@ const PREREQ = `
     ip_address    TEXT,
     user_agent    TEXT
   );
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
+  -- \`uuid\` as db/migrations/20260129_add_org_uuid_alignment.sql adds it; the
+  -- org-membership middleware LEFT JOINs it on every request and, without it,
+  -- degrades to a membership-only decision with orgUuid = null (ledger L148).
+  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid UUID NOT NULL DEFAULT gen_random_uuid());
   -- users.id is INTEGER, standing in for the production serial. It was UUID for
   -- a history join that read u.id = r.created_by::uuid; that join was removed
   -- (Postgres rejects integer = uuid at parse time) and now compares as text,
@@ -251,6 +254,11 @@ beforeAll(async () => {
 afterAll(async () => {
   // A journey that ran against a database missing a table its subject writes
   // to proves less than it claims (ledger L145).
+  // Ordered BEFORE the schema-gap check on purpose: a degraded membership is
+  // usually CAUSED by a missing column, and the gap check would otherwise
+  // throw first and report the symptom while hiding which claims were
+  // proven without an org context (ledger L148).
+  await assertNoDegradedTenantEnrichment();
   assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('ind-authoring');
   // eslint-disable-next-line no-console

@@ -35,6 +35,7 @@ import {
   FHIRValidationEngine,
   LangGraphOrchestrator
 } from '../services/cognitive-ecosystem';
+import { serverError } from '../lib/api-response';
 
 const router = Router();
 
@@ -90,10 +91,7 @@ router.post('/agents', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     logger.error('Agent creation error', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to create agent session'
-    });
+    return serverError(res, logger, 'saving agents', error);
   }
 });
 
@@ -114,10 +112,7 @@ router.get('/agents/:sessionId', async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to get agent status'
-    });
+    return serverError(res, logger, 'loading agents', error);
   }
 });
 
@@ -147,10 +142,7 @@ router.post('/workflows', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     logger.error('Workflow creation error', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to start workflow'
-    });
+    return serverError(res, logger, 'saving workflows', error);
   }
 });
 
@@ -173,10 +165,7 @@ router.get('/workflows/:workflowId', async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to get workflow status'
-    });
+    return serverError(res, logger, 'loading workflows', error);
   }
 });
 
@@ -207,10 +196,7 @@ router.post('/workflows/:workflowId/breakpoints', async (req: Request, res: Resp
       }
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to create breakpoint'
-    });
+    return serverError(res, logger, 'saving breakpoints', error);
   }
 });
 
@@ -236,10 +222,7 @@ router.post('/workflows/:workflowId/breakpoints/:breakpointId/resume', async (re
       }
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to resume workflow'
-    });
+    return serverError(res, logger, 'saving resume', error);
   }
 });
 
@@ -267,10 +250,7 @@ router.post('/fhir/validate', async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message || 'FHIR validation failed'
-    });
+    return serverError(res, logger, 'validating fhir', error);
   }
 });
 
@@ -293,10 +273,7 @@ router.post('/fhir/resources', async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to create FHIR resource'
-    });
+    return serverError(res, logger, 'saving resources', error);
   }
 });
 
@@ -325,10 +302,7 @@ router.post('/dossiers', async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to create dossier'
-    });
+    return serverError(res, logger, 'saving dossiers', error);
   }
 });
 
@@ -351,10 +325,7 @@ router.post('/dossiers/:dossierId/sync', async (req: Request, res: Response) => 
       }
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to sync dossier'
-    });
+    return serverError(res, logger, 'syncing dossiers', error);
   }
 });
 
@@ -383,10 +354,7 @@ router.post('/manufacturing/equipment', async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to register equipment'
-    });
+    return serverError(res, logger, 'saving equipment', error);
   }
 });
 
@@ -408,10 +376,7 @@ router.get('/manufacturing/twins/:twinId', async (req: Request, res: Response) =
       }
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to get digital twin status'
-    });
+    return serverError(res, logger, 'loading twins', error);
   }
 });
 
@@ -439,10 +404,7 @@ router.post('/federated/models', async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to register federated model'
-    });
+    return serverError(res, logger, 'saving models', error);
   }
 });
 
@@ -465,10 +427,7 @@ router.post('/federated/models/:modelId/rounds', async (req: Request, res: Respo
       }
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to start federated round'
-    });
+    return serverError(res, logger, 'saving rounds', error);
   }
 });
 
@@ -694,10 +653,7 @@ router.get('/federated/dashboard', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     logger.error('Federated dashboard error', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to load federated learning dashboard',
-    });
+    return serverError(res, logger, 'loading dashboard', error);
   }
 });
 
@@ -728,10 +684,7 @@ router.get('/health', async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Health check failed'
-    });
+    return serverError(res, logger, 'loading health', error);
   }
 });
 

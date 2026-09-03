@@ -13,6 +13,7 @@ import {
   isAssessableImpurity,
   normaliseLevelToPercent,
   parseDoseMg,
+  isThresholdAssessment,
 } from '../impurity-assessment';
 import { resolveImpurityThresholds } from '../../global-ri/impurities-thresholds';
 
@@ -188,12 +189,27 @@ describe('assessRecordedImpurity — one recorded impurity, one verdict', () => 
     expect(noUnit.ok).toBe(false);
     if (!noUnit.ok) expect(noUnit.code).toBe('LEVEL_UNIT_UNRECORDED');
 
+    /* A class ICH governs NOWHERE — inorganic — is still out of scope. A
+       residual solvent is not: it is governed by Q3C and assessed there. */
     const outOfScope = assessRecordedImpurity(
-      { ...base, impurityType: 'residual-solvent', observedLevel: '300', levelUnit: 'ppm' },
+      { ...base, impurityType: 'inorganic', observedLevel: '300', levelUnit: 'ppm' },
       'drug_substance',
     );
     expect(outOfScope.ok).toBe(false);
     if (!outOfScope.ok) expect(outOfScope.code).toBe('CLASS_OUT_OF_SCOPE');
+
+    /* And a solvent whose NAME is outside the Q3C catalog refuses under Q3C —
+       naming the solvent — rather than being defaulted to the Class 3 limit. */
+    const unknownSolvent = assessRecordedImpurity(
+      { ...base, impurityName: 'Chlorobutanol', impurityType: 'residual-solvent', observedLevel: '300', levelUnit: 'ppm' },
+      'drug_substance',
+    );
+    expect(unknownSolvent.ok).toBe(false);
+    if (!unknownSolvent.ok) {
+      expect(unknownSolvent.code).toBe('SOLVENT_NOT_IN_CATALOG');
+      expect(unknownSolvent.message).toContain('Chlorobutanol');
+      expect(unknownSolvent.message).not.toContain('5000');
+    }
   });
 
   it('compares a ppm level correctly instead of reading it as a percentage', () => {
@@ -204,10 +220,14 @@ describe('assessRecordedImpurity — one recorded impurity, one verdict', () => 
       'drug_substance',
     );
     expect(a.ok).toBe(true);
-    if (a.ok) {
+    /* Narrowed on the guideline: a Q3A/Q3B assessment is the only one that
+       carries a percentage and the three-threshold disposition. */
+    if (isThresholdAssessment(a)) {
       expect(a.observedPercent).toBeCloseTo(0.03, 6);
       expect(a.disposition).toBe('below-reporting');
       expect(a.observedAsRecorded).toBe('300 ppm');
+    } else {
+      throw new Error('expected a Q3A/Q3B threshold assessment');
     }
   });
 });
@@ -234,17 +254,70 @@ describe('review: scope is decided before the dose, and covers every class ICH e
     expect(degradant.ok).toBe(true);
   });
 
-  it('reports an out-of-scope class as out of scope even when the dose is also missing', () => {
-    /* Parsing the dose first sent the reader to fix the dose for a residual
-       solvent, which would not have produced a Q3A threshold either way. */
+  it('assesses a residual solvent under Q3C rather than refusing it as out of Q3A scope', () => {
+    /* This used to refuse with CLASS_OUT_OF_SCOPE and route the reader to
+       Q3C — true, and useless: half the impurities on file are solvents and
+       Q3C is modelled. Class is still decided before the dose, because a
+       solvent's limit is not keyed to a maximum daily dose at all. */
     const a = assessRecordedImpurity(
       { impurityName: 'Methanol', impurityType: 'residual-solvent', observedLevel: '300', levelUnit: 'ppm' },
       'drug_substance',
     );
+    expect(a.ok).toBe(true);
+    if (a.ok && a.basis === 'ICH Q3C(R8)') {
+      expect(a.solventName).toBe('Methanol');
+      expect(a.solventClass).toBe(2);
+      expect(a.limitPpm).toBe(3000);
+      expect(a.observedPpm).toBe(300);
+      expect(a.withinLimit).toBe(true);
+      expect(a.disposition).toBe('within-limit');
+    } else {
+      throw new Error('expected a Q3C assessment');
+    }
+  });
+
+  it('names a Class 1 solvent as one to avoid even when it is under its limit', () => {
+    const a = assessRecordedImpurity(
+      { impurityName: 'Benzene', impurityType: 'residual-solvent', observedLevel: '1', levelUnit: 'ppm' },
+      'drug_substance',
+    );
+    expect(a.ok).toBe(true);
+    if (a.ok && a.basis === 'ICH Q3C(R8)') {
+      expect(a.disposition).toBe('class-1-avoid');
+      expect(a.withinLimit).toBe(true);
+      expect(a.outstanding.join(' ')).toMatch(/should not be used/i);
+    } else {
+      throw new Error('expected a Q3C assessment');
+    }
+  });
+
+  it('refuses an elemental impurity whose route of administration is not recorded', () => {
+    /* Q3D sets a different PDE per route and oral is the most permissive for
+       most elements, so the route may not be assumed. */
+    const a = assessRecordedImpurity(
+      { impurityName: 'Cd', impurityType: 'elemental', observedLevel: '4', levelUnit: 'µg/day' },
+      'drug_product',
+    );
     expect(a.ok).toBe(false);
     if (!a.ok) {
-      expect(a.code).toBe('CLASS_OUT_OF_SCOPE');
-      expect(a.routeTo).toContain('Q3C');
+      expect(a.code).toBe('ROUTE_NOT_RECORDED');
+      expect(a.routeTo).toContain('Q3D');
+    }
+  });
+
+  it('assesses an elemental impurity at its recorded route', () => {
+    const a = assessRecordedImpurity(
+      { impurityName: 'Cd', impurityType: 'elemental', observedLevel: '4', levelUnit: 'µg/day', routeOfAdministration: 'parenteral' },
+      'drug_product',
+    );
+    expect(a.ok).toBe(true);
+    if (a.ok && a.basis === 'ICH Q3D(R2)') {
+      expect(a.route).toBe('parenteral');
+      expect(a.pdeMicrogramsPerDay).toBe(2);
+      expect(a.withinLimit).toBe(false);
+      expect(a.outstanding.join(' ')).toMatch(/above the ICH Q3D/i);
+    } else {
+      throw new Error('expected a Q3D assessment');
     }
   });
 

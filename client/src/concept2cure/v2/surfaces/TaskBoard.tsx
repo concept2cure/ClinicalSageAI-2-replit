@@ -755,7 +755,11 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
               : <>No task on this board is marked critical-path, so there is no path to report on yet.</>}
         body={critBlocked
           ? <>{critBlocked.blockedReason || 'It is blocked'} -- nothing downstream on the path can move until it clears. {heaviest && heaviest.open > 3 ? <>{nameOf(heaviest.k)} is also carrying {heaviest.open} open tasks; auto-assign can rebalance.</> : null}</>
-          : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{heaviest && heaviest.open >= 3 ? <>{nameOf(heaviest.k)} is the busiest at {heaviest.open} open tasks — workload-balanced auto-assign can spread the next batch.</> : <>Workload is balanced across the team.</>} {stats.appr ? <>{stats.appr} approval{stats.appr > 1 ? 's' : ''} pending an e-signature.</> : null}</>}
+          : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{/* "Workload is balanced across the team." used to fire whenever `heaviest`
+    was undefined — i.e. the filter matched zero tasks. Absence of workload
+    data was presented as a measured balance. Balance is claimed only when
+    there is assigned open work to be balanced. */}
+{heaviest && heaviest.open >= 3 ? <>{nameOf(heaviest.k)} is the busiest at {heaviest.open} open tasks — workload-balanced auto-assign can spread the next batch.</> : heaviest && heaviest.open > 0 ? <>Workload is balanced across the team.</> : <>No open work is assigned on this board, so there is no workload to balance.</>} {stats.appr ? <>{stats.appr} approval{stats.appr > 1 ? 's' : ''} pending an e-signature.</> : null}</>}
         reassure={
           critBlocked || overdue.length
             ? 'I will help you unblock the path and rebalance the team, one step at a time.'
@@ -799,7 +803,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           </select>
           <button className={`tb-chip${mine ? ' on' : ''}`} onClick={() => setMine(m => !m)}>{I.user} My tasks</button>
         </div>
-        <div className="seg tb-views">
+        <div className="seg">
           {([['board', 'Board'], ['path', 'Critical path'], ['analytics', 'Analytics'], ['table', 'Table']] as const).map(([v, l]) => (
             <button key={v} className={`seg-b${view === v ? ' on' : ''}`} onClick={() => setView(v)}>{l}</button>
           ))}
@@ -907,7 +911,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       )}
 
       {view === 'analytics' && (
-        <div className="tb-an">
+        <div>
           <div className="metrics">
             {([['Open tasks', stats.open, ''], ['On critical path', stats.crit, 'ai'], ['Regulatory impact', stats.reg, 'warn'], ['Blocked', stats.blocked, stats.blocked ? 'err' : ''], ['Approvals pending', stats.appr, 'warn']] as const).map((m, i) => (
               <div key={i} className="metric" data-tone={m[2]}><div className="metric-l">{m[0]}</div><div className="metric-n">{m[1]}</div></div>

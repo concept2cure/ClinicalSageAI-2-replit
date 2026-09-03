@@ -1,0 +1,20 @@
+# FDA eSTAR template checksum manifest (SHA-256)
+#
+# Format (one entry per line, two-space separator, matches `sha256sum` output):
+#
+#   <64-hex-char-sha256>  <filename>
+#
+# Verify with:  sha256sum -c checksums.txt
+#
+# Vendoring policy: the official FDA eSTAR templates ARE committed here, verbatim,
+# pinned by this manifest and upgraded only via reviewed PR — the same policy as
+# assets/ectd-dtd/. A pinned template is what makes `estar-fill` reproducible: the
+# canonical→XFA field map in
+# server/services/pathway-engines/estar/estar-field-map.ts was enumerated from
+# THESE EXACT BYTES, so a template swap without re-verification would silently
+# change what gets written into a submission.
+#
+# --- Manifest entries ---
+
+73de2f1e89546654cdb5cb4203c86e6368fccfcb975dd6e637f399072f0edb92  eSTAR-510k-non-ivd.pdf
+90d936495e415f6f63f9202c0db15ecffb041df60c5faecc57bc468559c1594f  eSTAR-510k-ivd.pdf

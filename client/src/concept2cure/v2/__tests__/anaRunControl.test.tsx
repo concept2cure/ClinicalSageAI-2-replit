@@ -27,9 +27,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, render, screen, fireEvent } from '@testing-library/react';
 
 vi.mock('../dataConnect', () => ({
-  useLive: () => ({ data: null, sample: true, loading: false }),
   connected: () => false,
-  SampleTag: ({ sample }: { sample: boolean }) => <span>{sample ? 'Sample data' : 'Live'}</span>,
 }));
 vi.mock('../../../utils/authToken', () => ({ getAuthHeaders: () => ({ Authorization: 'Bearer t' }) }));
 

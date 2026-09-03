@@ -59,3 +59,69 @@ export function materialScopeSections(
   if (scope === 'both') return `${substanceSection} + ${productSection}`;
   return scope === 'drug_substance' ? substanceSection : productSection;
 }
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * Material ROLE, and what counts as an origin §3.2.A.3 must ask about.
+ *
+ * Both rules were written twice: once on the server, where the write-through
+ * decides whether a material becomes an `excipient` or a `raw_material_spec`
+ * source and §3.2.A.3 decides whether an origin is animal or human, and once on
+ * the register surface, in weaker form — the card resolved the role with
+ * `String(role).includes('material')` and recognised two origins where the
+ * section recognises twelve. So a material recorded as a "reagent" was filed by
+ * the dossier as a raw material and labelled §3.2.P.4 by the screen, and an
+ * excipient recorded as `bovine` rendered as ordinary grey text next to a
+ * section that treats it as animal-derived.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/** The material roles that are §3.2.P.4 excipient content. */
+export const EXCIPIENT_ROLES = ['excipient', 'capsule-shell', 'coating', 'processing-aid'];
+
+/** Read a stored material role without inventing one. */
+export function normalizeMaterialRole(raw: unknown): string {
+  const v = String(raw ?? '').trim().toLowerCase().replace(/[\s_]+/g, '-');
+  if (!v) return 'excipient';
+  if (v === 'raw-material' || v === 'raw' || v === 'reagent') return 'raw-material';
+  if (v === 'starting-material' || v === 'starting') return 'starting-material';
+  if (EXCIPIENT_ROLES.includes(v)) return v;
+  return 'excipient';
+}
+
+/** Is this role §3.2.P.4 excipient content, rather than §3.2.S.2.3 material? */
+export function isExcipientRole(raw: unknown): boolean {
+  return EXCIPIENT_ROLES.includes(normalizeMaterialRole(raw));
+}
+
+/** The CTD section a material role files under, for display next to a row. */
+export function materialRoleSection(raw: unknown): string {
+  return isExcipientRole(raw) ? '3.2.P.4' : '3.2.S.2.3';
+}
+
+/**
+ * The origins that put a material under §3.2.A.3 — the ONE list, shared by the
+ * mapper, the appendix generator and the register surface.
+ */
+export const HUMAN_OR_ANIMAL_ORIGINS = [
+  'animal', 'human', 'bovine', 'porcine', 'ovine', 'equine',
+  'murine', 'hamster', 'fish', 'egg', 'milk',
+];
+
+const HUMAN_OR_ANIMAL_ORIGIN_RE = new RegExp(`^(${HUMAN_OR_ANIMAL_ORIGINS.join('|')})$`, 'i');
+
+/** Is a recorded origin one that puts a material under §3.2.A.3? */
+export function isHumanOrAnimalOrigin(raw: unknown): boolean {
+  return HUMAN_OR_ANIMAL_ORIGIN_RE.test(String(raw ?? '').trim());
+}
+
+/**
+ * Origins that are neither an animal origin nor an exclusion. A
+ * fermentation-derived excipient is precisely the EMEA/410/01 and ICH Q5A
+ * question, because the culture media can carry animal-derived components.
+ */
+export const REVIEW_REQUIRED_ORIGINS = ['fermentation', 'biotechnological', 'biotech', 'cell-culture'];
+
+export function isReviewRequiredOrigin(raw: unknown): boolean {
+  const v = String(raw ?? '').trim().toLowerCase().replace(/[\s_]+/g, '-');
+  return REVIEW_REQUIRED_ORIGINS.includes(v);
+}

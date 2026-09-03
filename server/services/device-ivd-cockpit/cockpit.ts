@@ -15,7 +15,7 @@
  * @module server/services/device-ivd-cockpit/cockpit
  */
 
-import { mapToEstar, type EstarType } from '../pathway-engines/estar/estar-mapper';
+import { mapToEstar, type EstarType, type DeviceFlags } from '../pathway-engines/estar/estar-mapper';
 import { mapToPma } from '../pathway-engines/pma/pma-mapper';
 import { assembleTechDoc } from '../pathway-engines/mdr-ivdr/tech-doc-assembler';
 import { tryAssessMarketReadiness } from '../global-markets/market-readiness';
@@ -78,11 +78,12 @@ function completenessFrom(sections: Array<{ required: boolean; present: boolean 
   return Math.round((present / required.length) * 100);
 }
 
-function assessPathway(pathway: DevicePathwayId, leaves: CockpitInputLeaf[]): PathwayReadiness {
+function assessPathway(pathway: DevicePathwayId, leaves: CockpitInputLeaf[], deviceFlags?: DeviceFlags): PathwayReadiness {
   const label = PATHWAY_LABEL[pathway];
   if (pathway === '510k' || pathway === 'de_novo') {
-    const r = mapToEstar({ leaves, type: pathway as EstarType });
-    return { pathway, label, ready: r.summary.ready, completeness: completenessFrom(r.sections), missingRequired: r.summary.missingRequired };
+    const r = mapToEstar({ leaves, type: pathway as EstarType, flags: deviceFlags });
+    // An unanswered device question reads as a gap, not as a satisfied section.
+    return { pathway, label, ready: r.summary.ready, completeness: completenessFrom(r.sections), missingRequired: [...r.summary.missingRequired, ...r.summary.undetermined] };
   }
   if (pathway === 'pma') {
     const r = mapToPma({ leaves });
@@ -96,6 +97,12 @@ function assessPathway(pathway: DevicePathwayId, leaves: CockpitInputLeaf[]): Pa
 export interface AssessDeviceProgramInput {
   leaves: CockpitInputLeaf[];
   variant: 'device' | 'ivd';
+  /**
+   * The device's answers to the seven intake flags. Sections required only for
+   * some devices cannot be judged without them, and an unjudged section counts
+   * as a gap rather than as satisfied (W1-5).
+   */
+  deviceFlags?: DeviceFlags;
   /** Restrict to specific pathways; defaults to the variant's standard set. */
   pathways?: DevicePathwayId[];
   /** Optional target market for a readiness overlay. */
@@ -112,7 +119,7 @@ export function assessDeviceProgram(input: AssessDeviceProgramInput): DeviceProg
   const leaves = Array.isArray(input.leaves) ? input.leaves : [];
   const wanted = input.pathways && input.pathways.length > 0 ? input.pathways : defaultPathways(input.variant);
 
-  const pathways = wanted.map((p) => assessPathway(p, leaves));
+  const pathways = wanted.map((p) => assessPathway(p, leaves, input.deviceFlags));
 
   // Recommend the most-complete pathway (prefer a ready one; ties → first listed).
   let recommendedPathway: DevicePathwayId | undefined;

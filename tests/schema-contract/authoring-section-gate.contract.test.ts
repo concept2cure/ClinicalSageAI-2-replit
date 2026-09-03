@@ -332,6 +332,46 @@ describe('record immutability is UNCONDITIONAL (flag OFF — the deployed defaul
     expect(comment.status).toBe(403);
   }, T);
 
+  /* The AI drafting routes are the reason the guard is a PREFIX match rather
+     than a list of paths: POST /sections/:sectionId/ai/draft and
+     .../ai/draft/accept are section writes that never touch the content PATCH.
+     The middleware's own comment claims it covers "the AnA draft accept", and
+     until now nothing checked that claim — so remounting either route off the
+     /sections/:sectionId prefix would silently drop the seal on the one write
+     path that puts machine-generated text into a signed record. */
+  it('an AI draft cannot be GENERATED into a frozen section', async () => {
+    const res = await request(app)
+      .post(`/api/authoring/sections/${SEC_FROZEN}/ai/draft`)
+      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
+      .send({ region: 'FDA' });
+    expect(res.status).toBe(403);
+    // The seal is named, not reported as a missing grant: a sealed record and
+    // an unpermitted one have different remedies.
+    expect(res.body.error).toBe('DOCUMENT_FROZEN');
+  }, T);
+
+  it('an AI draft cannot be ACCEPTED into a frozen section', async () => {
+    const res = await request(app)
+      .post(`/api/authoring/sections/${SEC_FROZEN}/ai/draft/accept`)
+      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
+      .send({ draftId: 'any-draft-id', body: 'Machine-generated text.' });
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('DOCUMENT_FROZEN');
+    // Refused by the gate, before the handler could touch the record.
+    expect(await contentOf(SEC_FROZEN)).toBe('ORIGINAL');
+  }, T);
+
+  it('the same AI routes are reachable on a DRAFT section (the gate is the seal, not a blanket deny)', async () => {
+    const res = await request(app)
+      .post(`/api/authoring/sections/${SEC_DRAFT}/ai/draft`)
+      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
+      .send({ region: 'FDA' });
+    // Whatever the generator does with an unconfigured model, it is NOT the
+    // frozen refusal — otherwise the two tests above would pass on a route that
+    // rejects everything.
+    expect(res.body?.error).not.toBe('DOCUMENT_FROZEN');
+  }, T);
+
   it('a section in ANOTHER tenant is REFUSED by the gate, not merely missed by the handler', async () => {
     const res = await patchAs(MEMBER, SEC_B, 'CROSS-TENANT');
     expect(res.status).toBe(403);

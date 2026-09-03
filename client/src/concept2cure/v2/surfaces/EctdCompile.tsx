@@ -166,6 +166,11 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
   const [validationFailed, setValidationFailed] = useState(false);
   const [compileResult, setCompileResult] = useState<CompileResult | null>(null);
   const [history, setHistory] = useState<CompilationRow[]>([]);
+  // The history read used to discard `ok` and collapse a 401/500/empty body into
+  // [] — rendering "No compilations yet" over a failed read, a false negative
+  // for a publisher asking whether this sequence was ever compiled. Now the read
+  // outcome is kept, exactly like statusState.
+  const [historyState, setHistoryState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [busy, setBusy] = useState<'validate' | 'compile' | 'export' | null>(null);
   const [toast, fireToast] = useToast();
 
@@ -179,8 +184,10 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
 
   const loadHistory = useCallback(async () => {
     if (identPath == null) return;
-    const { body } = await readJson<{ compilations?: CompilationRow[] }>('GET', `/api/ectd-compile/${identPath}/history`);
-    setHistory(Array.isArray(body?.compilations) ? body!.compilations! : []);
+    setHistoryState('loading');
+    const { ok, body } = await readJson<{ compilations?: CompilationRow[] }>('GET', `/api/ectd-compile/${identPath}/history`);
+    if (!ok || !body || !Array.isArray(body.compilations)) { setHistoryState('error'); setHistory([]); return; }
+    setHistory(body.compilations); setHistoryState('ready');
   }, [identPath]);
 
   useEffect(() => { void loadStatus(); void loadHistory(); }, [loadStatus, loadHistory]);
@@ -521,9 +528,13 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
 
       {/* ── History ── */}
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Compilation history</span><span className="s">{history.length}</span></div>
+        <div className="pj-card-h"><span className="t">Compilation history</span><span className="s">{historyState === 'ready' ? history.length : historyState === 'error' ? 'not loaded' : '…'}</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
-          {history.length === 0 ? (
+          {historyState === 'loading' || historyState === 'idle' ? (
+            <div style={{ padding: 16 }}><EmptyState icon={I.clock} title="Loading compilation history…" busy /></div>
+          ) : historyState === 'error' ? (
+            <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Compilation history didn’t respond." hint="Whether this sequence has been compiled before is not known until it loads." retry={loadHistory} /></div>
+          ) : history.length === 0 ? (
             <div style={{ padding: 16 }}><EmptyState icon={I.clock} title="No compilations yet" hint="Each Compile run is recorded here with its status and version." /></div>
           ) : (
             <table className="reg-tbl"><thead><tr><th>Name</th><th>Type</th><th>Version</th><th>Status</th><th style={{ textAlign: 'right' }}>Compiled</th></tr></thead>

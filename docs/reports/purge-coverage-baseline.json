@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-01T23:53:17.632Z",
+  "generatedAt": "2026-09-03T01:10:39.512Z",
   "purgeChildTables": [
     "module_access_requests",
     "project_workflows",
@@ -13,9 +13,15 @@
     "file_uploads",
     "regulatory_twin_simulations",
     "cmc_container_closures",
-    "cmc_reference_standards"
+    "cmc_reference_standards",
+    "cmc_impurity_profiles",
+    "cmc_dissolution_profiles",
+    "cmc_material_specs",
+    "cmc_formulation_records",
+    "cmc_characterization_studies",
+    "manufacturing_processes"
   ],
-  "count": 613,
+  "count": 611,
   "tables": [
     "account_canon_items",
     "account_canon_resolution_log",
@@ -131,7 +137,6 @@
     "cmc_documents",
     "cmc_module3_section_versions",
     "cmc_module3_sections",
-    "cmc_process_steps",
     "cmc_projects",
     "cmc_provenance_events",
     "cmc_section_lineage",
@@ -385,7 +390,6 @@
     "lumen_knowledge_graph_edges",
     "lumen_observation_terms",
     "lumen_query_analytics",
-    "manufacturing_processes",
     "market_access_positions",
     "maud_validation_requests",
     "maud_validations",

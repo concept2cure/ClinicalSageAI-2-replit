@@ -14,6 +14,7 @@ import {
   sortBySectionCode,
   sectionInsertIndex,
   duplicateSectionCodes,
+  sectionStructureIssues,
 } from '../section-code';
 
 const sorted = (codes: string[]) => [...codes].sort(compareSectionCode);
@@ -126,5 +127,37 @@ describe('duplicateSectionCodes', () => {
   it('ignores case and surrounding space, and reports nothing when clean', () => {
     expect(duplicateSectionCodes(['3.2.S', ' 3.2.s '])).toEqual(['3.2.S']);
     expect(duplicateSectionCodes(['1.1', '1.2'])).toEqual([]);
+  });
+});
+
+describe('sectionStructureIssues', () => {
+  it('reports a document whose stored order disagrees with its codes', () => {
+    const r = sectionStructureIssues(['5.6', '5.1', '5.10']);
+    expect(r.outOfOrder).toBe(true);
+    expect(r.suggestedOrder).toEqual(['5.1', '5.6', '5.10']);
+  });
+
+  it('reports nothing for a document already in order', () => {
+    const r = sectionStructureIssues(['3.2.S', '3.2.P', '3.2.A']);
+    expect(r.outOfOrder).toBe(false);
+    expect(r.duplicateCodes).toEqual([]);
+  });
+
+  it('reports a code filed twice', () => {
+    expect(sectionStructureIssues(['3.2.S', '3.2.P', '3.2.S']).duplicateCodes).toEqual(['3.2.S']);
+  });
+
+  it('does NOT report a skipped number as a gap', () => {
+    /* CTD codes are not contiguous — 1.1, 1.2, 1.5 is a legitimate dossier, and
+       flagging the absent 1.3/1.4 would bury the real problems in noise. */
+    const r = sectionStructureIssues(['1.1', '1.2', '1.5']);
+    expect(r.outOfOrder).toBe(false);
+    expect(r.duplicateCodes).toEqual([]);
+  });
+
+  it('reads the order it is given, not a sorted copy of it', () => {
+    // Passing pre-sorted codes would make outOfOrder unable to be true.
+    expect(sectionStructureIssues(['5.1', '5.6']).outOfOrder).toBe(false);
+    expect(sectionStructureIssues(['5.6', '5.1']).outOfOrder).toBe(true);
   });
 });

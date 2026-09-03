@@ -58,17 +58,41 @@ const SKIP_DIRS = new Set([
   'node_modules', '.git', 'dist', 'build', 'coverage', '.next', '.cache',
   'attached_assets', '.venv', 'venv', '__pycache__',
 ]);
-/** Files that mention every candidate by construction; counting them is circular. */
+/**
+ * Files that mention every candidate by construction; counting them is circular.
+ *
+ * The verdict report is on this list because writing it moved the clean count
+ * from 23 to 0 in one run: a document whose subject IS the candidate set names
+ * every module in it, so counting it as documentation-that-holds-a-module makes
+ * the act of reporting the result destroy the result.
+ */
 const SELF_REFERENTIAL = new Set([
   'scripts/ci/unreferenced-modules-baseline.json',
   'scripts/ci/check-unreferenced-modules.mjs',
   'scripts/ci/prove-module-unused.mjs',
+  'docs/reports/L54_UNREFERENCED_MODULE_VERDICTS_2026-09-03.md',
 ]);
 
+/*
+ * Every extension here is a surface a module can be reached FROM. The first
+ * version of this list omitted `.mts`, `.py`, `.tf`, `.tmpl` and every
+ * extensionless file, which meant a module invoked only from `.husky/pre-push`
+ * or a Python entry point would have been reported as having no reference of
+ * any kind. Nothing in the current candidate set turned out to be reachable
+ * that way, but the list was short by exactly the surfaces this repo has been
+ * bitten by before (npm scripts, hooks, migrations), so it is widened here
+ * rather than left to be discovered by a wrong deletion.
+ */
 const TEXT_EXT = new Set([
-  '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json', '.md', '.mdx', '.txt',
+  '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.mts', '.cts',
+  '.json', '.jsonl', '.md', '.mdx', '.txt',
   '.yml', '.yaml', '.sql', '.sh', '.html', '.css', '.toml', '.env', '.example',
+  '.py', '.rb', '.tf', '.tfvars', '.tmpl', '.tpl', '.j2', '.xml', '.csv', '.http',
 ]);
+
+/** Extensionless files that are still executable/config surfaces. */
+const NO_EXT_DIRS = new Set(['.husky', 'bin']);
+const NO_EXT_NAMES = /^(Dockerfile|Procfile|Makefile|CODEOWNERS)$/i;
 
 const MAX_BYTES = 4 * 1024 * 1024;
 
@@ -81,7 +105,8 @@ function walk(dir, out = []) {
       walk(path.join(dir, e.name), out);
     } else {
       const ext = path.extname(e.name);
-      const noExtConfig = !ext && /^(Dockerfile|Procfile|Makefile)$/i.test(e.name);
+      const noExtConfig = !ext
+        && (NO_EXT_NAMES.test(e.name) || NO_EXT_DIRS.has(path.basename(dir)));
       if (TEXT_EXT.has(ext) || noExtConfig) out.push(path.join(dir, e.name));
     }
   }
@@ -122,6 +147,46 @@ function kindOf(rel) {
 }
 
 /**
+ * Is the needle's occurrence on this line inside a comment?
+ *
+ * This is the difference between "something reaches this module" and "somebody
+ * wrote its name down". `server/utils/pdfParse.ts` line 8 says
+ * `* same pattern as server/middleware/authAdapter.ts. Import from here instead`
+ * — prose, in a JSDoc block. Counted as a filesystem-path reference it made
+ * authAdapter look held by code, and it was the ONLY thing satisfying that
+ * module's fspath control, so the control passed on a sentence.
+ *
+ * Five modules in the `held` bucket were held by nothing but a comment.
+ */
+function isCommentedOccurrence(line, idx) {
+  const trimmed = line.trimStart();
+  if (/^(\/\/|\/\*|\*\/|\*|--|#)/.test(trimmed)) return true;
+  const slash = line.indexOf('//');
+  if (slash !== -1 && slash < idx && line[slash - 1] !== ':') return true;
+  const dash = line.indexOf('--');
+  if (dash !== -1 && dash < idx) return true;
+  const hash = line.indexOf('#');
+  if (hash !== -1 && hash < idx) return true;
+  return false;
+}
+
+/** Lines of `text` where any needle appears, split by whether it is a comment. */
+function occurrences(text, needles) {
+  let real = false;
+  let commented = false;
+  for (const line of text.split('\n')) {
+    for (const n of needles) {
+      const i = line.indexOf(n);
+      if (i === -1) continue;
+      if (isCommentedOccurrence(line, i)) commented = true;
+      else real = true;
+    }
+    if (real) break;
+  }
+  return { real, commented };
+}
+
+/**
  * Evidence that `mod` is depended on, split by how.
  *
  * The distinction between `import` and `fspath` is the whole point: a module
@@ -129,6 +194,9 @@ function kindOf(rel) {
  * `readFileSync(...)` or a route manifest is a dependency that no import graph
  * can see. They are counted apart so a reader can tell which kind they are
  * looking at rather than being handed one merged number to trust.
+ *
+ * `mention` is the third thing, and it is the one this file got wrong: a name
+ * written into a comment is neither. It is counted separately and never held.
  */
 function evidenceFor(mod, corpus) {
   const noExt = mod.replace(/\.(ts|tsx|js|jsx|mjs|cjs)$/, '');
@@ -144,7 +212,7 @@ function evidenceFor(mod, corpus) {
   const importPats = [noExt, tail];
   if (isIndex) importPats.push(dir, dir.replace(/^(server|client\/src|shared)\//, ''));
 
-  const out = { import: [], fspath: [], config: [], doc: [] };
+  const out = { import: [], fspath: [], config: [], doc: [], mention: [] };
 
   for (const { rel, text } of corpus) {
     if (rel === mod) continue;
@@ -173,6 +241,13 @@ function evidenceFor(mod, corpus) {
       const spec = raw[1];
       if (!spec.startsWith('.') && !spec.startsWith('@/') && !spec.startsWith('@shared/')
           && !spec.startsWith('server/') && !spec.startsWith('client/') && !spec.startsWith('shared/')) continue;
+      // A literal ending in `.ts`/`.tsx` is a FILESYSTEM PATH, never an import
+      // specifier — TypeScript rejects those extensions in module specifiers.
+      // Without this the security test's
+      // `path.join(repoRoot, 'server/middleware/authAdapter.ts')` was scored as
+      // an import-graph edge, which is precisely the kind of reference that
+      // control exists to prove the import graph CANNOT see.
+      if (/\.(ts|tsx)$/.test(spec)) continue;
       let resolved;
       if (spec.startsWith('@/')) resolved = path.posix.join('client/src', spec.slice(2));
       else if (spec.startsWith('@shared/')) resolved = path.posix.join('shared', spec.slice(8));
@@ -184,14 +259,13 @@ function evidenceFor(mod, corpus) {
     }
 
     // The path as data: readFileSync, path.join segments, manifests, argv.
-    const asPath = text.includes(mod) || text.includes(noExt);
+    // Prose in a comment is NOT that, and is bucketed as `mention` instead.
+    const hit = occurrences(text, [mod, noExt]);
 
     if (isImport && kind === 'code') out.import.push(rel);
-    else if (asPath) {
-      if (kind === 'doc') out.doc.push(rel);
-      else if (kind === 'config') out.config.push(rel);
-      else out.fspath.push(rel);
-    }
+    else if (kind === 'doc') { if (hit.real || hit.commented) out.doc.push(rel); }
+    else if (hit.real) { if (kind === 'config') out.config.push(rel); else out.fspath.push(rel); }
+    else if (hit.commented) out.mention.push(rel);
   }
   return out;
 }
@@ -222,7 +296,24 @@ const CONTROLS = [
     mod: 'server/middleware/authAdapter.ts',
     expect: 'referenced',
     minFspath: 1,
+    // `maxImport: 0` is the control on the `.ts`-literal fix. Nothing imports
+    // this module — that is the entire reason it is the flagship example in
+    // this file's header. Before the fix the checker reported import 2, taking
+    // the security test's `path.join(repoRoot, '...authAdapter.ts')` for an
+    // import edge, so the header and the output contradicted each other and
+    // the fspath floor was being met by an unrelated comment elsewhere.
+    maxImport: 0,
     why: 'read via fs.readFileSync by server/__tests__/security/auth-db-contract-smoke.test.ts, which asserts its export shape — invisible to every import graph',
+  },
+  {
+    mod: 'server/middleware/apiValidation.ts',
+    expect: 'referenced',
+    // The control on the comment fix. Its only appearance outside docs/ is one
+    // sentence of JSDoc prose in server/utils/expressQuery.ts. Counting that as
+    // a filesystem-path dependency put this and three other modules in the
+    // `held by code` bucket on the strength of somebody writing their name down.
+    maxFspath: 0,
+    why: 'named ONLY in a JSDoc sentence in server/utils/expressQuery.ts — a mention, not a dependency',
   },
   {
     mod: 'server/routes/chat-actions.ts',
@@ -255,7 +346,8 @@ if (CONTROLS_MODE) {
       continue;
     }
     const ev = evidenceFor(c.mod, corpus);
-    const total = ev.import.length + ev.fspath.length + ev.config.length + ev.doc.length;
+    const total = ev.import.length + ev.fspath.length + ev.config.length + ev.doc.length
+      + ev.mention.length;
     const got = total > 0 ? 'referenced' : 'clean';
     const reasons = [];
     if (got !== c.expect) reasons.push(`expected ${c.expect}, got ${got}`);
@@ -263,11 +355,17 @@ if (CONTROLS_MODE) {
       reasons.push(`import ${ev.import.length} < floor ${c.minImport} — UNDERCOUNTING`);
     if (c.minFspath && ev.fspath.length < c.minFspath)
       reasons.push(`fspath ${ev.fspath.length} < floor ${c.minFspath} — missing path references`);
+    // Ceilings catch OVERCOUNTING — a comment or a non-specifier literal being
+    // scored as a dependency. A checker with only floors can only fail one way.
+    if (c.maxImport !== undefined && ev.import.length > c.maxImport)
+      reasons.push(`import ${ev.import.length} > ceiling ${c.maxImport} — OVERCOUNTING, a non-import literal is being scored as an import edge`);
+    if (c.maxFspath !== undefined && ev.fspath.length > c.maxFspath)
+      reasons.push(`fspath ${ev.fspath.length} > ceiling ${c.maxFspath} — OVERCOUNTING, prose is being scored as a path dependency`);
     const ok = reasons.length === 0;
     if (!ok) failed++;
     console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${c.mod}`);
     if (!ok) for (const r of reasons) console.log(`        ${r}`);
-    console.log(`        import ${ev.import.length} · fspath ${ev.fspath.length} · config ${ev.config.length} · doc ${ev.doc.length}`);
+    console.log(`        import ${ev.import.length} · fspath ${ev.fspath.length} · config ${ev.config.length} · doc ${ev.doc.length} · mention ${ev.mention.length}`);
     console.log(`        why: ${c.why}`);
     if (ev.fspath.length) console.log(`        fspath e.g.: ${ev.fspath.slice(0, 2).join(', ')}`);
     console.log('');
@@ -281,25 +379,25 @@ if (CONTROLS_MODE) {
 const candidates = loadCandidates().filter((m) => fs.existsSync(path.join(repoRoot, m)));
 const results = candidates.map((mod) => ({ mod, evidence: evidenceFor(mod, corpus) }));
 
+const isHeld = (e) => e.import.length || e.fspath.length || e.config.length;
 const clean = results.filter((r) =>
-  !r.evidence.import.length && !r.evidence.fspath.length && !r.evidence.config.length && !r.evidence.doc.length);
+  !isHeld(r.evidence) && !r.evidence.doc.length && !r.evidence.mention.length);
 const docOnly = results.filter((r) =>
-  !r.evidence.import.length && !r.evidence.fspath.length && !r.evidence.config.length && r.evidence.doc.length);
-const held = results.filter((r) =>
-  r.evidence.import.length || r.evidence.fspath.length || r.evidence.config.length);
+  !isHeld(r.evidence) && (r.evidence.doc.length || r.evidence.mention.length));
+const held = results.filter((r) => isHeld(r.evidence));
 
 if (JSON_MODE) {
   console.log(JSON.stringify({
     corpusFiles: corpus.length,
     candidates: candidates.length,
     proposedForDeletion: clean.map((r) => r.mod),
-    docOnly: docOnly.map((r) => ({ mod: r.mod, docs: r.evidence.doc })),
+    docOnly: docOnly.map((r) => ({ mod: r.mod, docs: r.evidence.doc, mentions: r.evidence.mention })),
     held: held.map((r) => ({ mod: r.mod, ...r.evidence })),
   }, null, 2));
 } else {
   console.log(`\n[prove-module-unused] corpus ${corpus.length} files · ${candidates.length} candidates\n`);
-  console.log(`  no reference of ANY kind        : ${clean.length}`);
-  console.log(`  named only in documentation     : ${docOnly.length}`);
-  console.log(`  held by code / fs-path / config : ${held.length}`);
+  console.log(`  no reference of ANY kind          : ${clean.length}`);
+  console.log(`  named only in docs or comments    : ${docOnly.length}`);
+  console.log(`  held by code / fs-path / config   : ${held.length}`);
   console.log(`\nRun --controls first. Run --json for the per-module evidence.\n`);
 }

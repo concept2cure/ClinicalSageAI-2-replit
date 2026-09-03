@@ -93,6 +93,16 @@ async function baseSchemaFixture(): Promise<PGlite> {
   // fixture has to present the same starting state or it fails the set for a
   // gap of its own making.
   await safe(readMig('db/migrations/20260730_ectd_compilations_sequence_columns.sql'));
+  // Same class again, for the same reason. manufacturing_processes is created at
+  // index 54 of the set — before BATCH_START — by the reconstruction that
+  // derived it from its two readers when it turned out to have no writer.
+  // db/migrations/20260903_cmc_manufacturing_characterization_registers.sql, in
+  // the batch, ALTERs that table to add the columns its own model has always
+  // declared, and ALTER TABLE ... ADD COLUMN IF NOT EXISTS does not guard the
+  // TABLE's existence. A real deploy runs the creator first and is unaffected;
+  // the fixture has to present the same starting state or it fails the set for
+  // a gap of its own making.
+  await safe(readMig('db/migrations/20260730_manufacturing_processes_reconstruction.sql'));
   return pg;
 }
 

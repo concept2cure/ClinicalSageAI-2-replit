@@ -215,8 +215,11 @@ registerGenerator(async (ctx) => {
         createdAt: new Date().toISOString(),
       });
     }
-  } catch {
-    // Table may not exist or query may fail — non-fatal
+  } catch (e) {
+    // Only a missing table is a genuine empty. A real read failure rejects so
+    // generateRecommendations logs it (a swallowed [] was indistinguishable from
+    // "nothing to recommend" on the advisory Next-Best-Actions surface).
+    if ((e as { code?: string })?.code !== '42P01') throw e;
   }
 
   return recs;
@@ -272,8 +275,11 @@ registerGenerator(async (ctx) => {
         createdAt: new Date().toISOString(),
       });
     }
-  } catch {
-    // Non-fatal
+  } catch (e) {
+    // Only a missing table is a genuine empty; a real failure rejects and is
+    // logged by generateRecommendations rather than silently dropping the
+    // overdue/upcoming milestone recommendations to [].
+    if ((e as { code?: string })?.code !== '42P01') throw e;
   }
 
   return recs;

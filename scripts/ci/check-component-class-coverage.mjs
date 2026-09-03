@@ -226,6 +226,34 @@ function tokensOf(chunk, openAdj, closeAdj) {
  * not qualify — its only literal is empty, the value is dynamic, and the token
  * before it stays a fragment.
  */
+/**
+ * Adjacency runs OUTWARD TOO, and for a while it only ran inward.
+ *
+ * `classPieces` told the surrounding chunk whether an interpolation could
+ * extend it, but never told the interpolation's own literals whether the
+ * surrounding chunk extends THEM. So
+ *
+ *     `dd-att-ico kind-${f.kind || 'file'}`
+ *
+ * reported a class named `file`. The element renders `kind-file`; nothing in
+ * the product ever renders `file`. The gate was reporting, and the baseline was
+ * carrying, a name that does not exist — while `kind-file`, the real fallback
+ * kind and the one with no rule of its own, went unnamed.
+ *
+ * Which pieces are glued: a piece whose `openAdj` is already true is glued to
+ * something INSIDE the interpolation (it follows a `+`), so it cannot be the
+ * first thing the interpolation emits and the outer text cannot reach it. A
+ * piece whose `openAdj` is false can begin the interpolation's output — true of
+ * every arm of a `||` or a `?:`, and of the first operand of a `+` — so if the
+ * text before the interpolation does not end in whitespace, that piece's first
+ * token is a fragment. `closeAdj` is the mirror, and is resolved a step later
+ * because the text after the interpolation has not been read yet.
+ */
+function glue(pieces, gluedLeft) {
+  if (!gluedLeft) return;
+  for (const p of pieces) if (!p.openAdj) p.openAdj = true;
+}
+
 function classPieces(expr) {
   const out = [];
   let i = 0;
@@ -258,6 +286,15 @@ function classPieces(expr) {
       let j = i + 1;
       let chunk = '';
       let openAdj = false;
+      /* Pieces from the interpolation just read, still waiting to learn whether
+         the literal text that FOLLOWS them is glued on. See `glue` below. */
+      let pendingRight = [];
+      const flushRight = (nextChunk) => {
+        if (pendingRight.length > 0 && nextChunk !== '' && !/^\s/.test(nextChunk)) {
+          for (const p of pendingRight) p.closeAdj = true;
+        }
+        pendingRight = [];
+      };
       while (j < expr.length && expr[j] !== '`') {
         if (expr[j] === '\\') { chunk += expr[j + 1] ?? ''; j += 2; continue; }
         if (expr[j] === '$' && expr[j + 1] === '{') {
@@ -266,8 +303,11 @@ function classPieces(expr) {
           const raws = inner.map((p) => p.raw);
           const leads = raws.length > 0 && raws.some((r) => /^\s/.test(r)) && raws.every((r) => r === '' || /^\s/.test(r));
           const ends = raws.length > 0 && raws.some((r) => /\s$/.test(r)) && raws.every((r) => r === '' || /\s$/.test(r));
+          flushRight(chunk);
           out.push({ raw: chunk, openAdj, closeAdj: !leads });
+          glue(inner, chunk === '' ? openAdj : !/\s$/.test(chunk));
           out.push(...inner);
+          pendingRight = inner;
           chunk = '';
           openAdj = !ends;
           j = end;
@@ -276,6 +316,7 @@ function classPieces(expr) {
         chunk += expr[j];
         j += 1;
       }
+      flushRight(chunk);
       out.push({ raw: chunk, openAdj, closeAdj: false });
       i = j + 1;
       continue;

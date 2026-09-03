@@ -291,6 +291,28 @@ This unit is a well-instrumented perimeter wrapped around a soft core. The perim
 
 `server/middleware/auth.ts:197` · blocks **G1** · ~weeks · authorization
 
+> **RESOLVED 2026-09-02.** Reproduced first, against a provisioned database with
+> RLS enforcing: an invited colleague (role `member` — what every invitation
+> mints) got `403 AUTH_004` from `GET /api/submissions` while the founder got
+> 200. The count is 289 guards now, not 281.
+>
+> Fixed by the first option below, as a derived grant rather than a fifth
+> assignable role: `ORG_ROLE_FUNCTIONAL_GRANTS` in `server/middleware/auth.ts`
+> maps the org role a customer actually assigns onto the functional role the
+> guards name — admin, owner, manager, member and the legacy editor carry
+> `regulatory-author`; `viewer` does not. It is applied where `req.user.roles`
+> is built, so it covers every token this platform mints (password login, dev
+> login, MFA completion, refresh, SSO, SCIM) and tokens issued before the
+> change, without editing ten sign sites and without asking existing customers
+> to re-role their users.
+>
+> The blanket admin override is deliberately KEPT, but it is no longer
+> load-bearing: it now covers only what it was written for, and the comment at
+> its site says so. Verified after the change on the same three callers:
+> member 200, admin 200, viewer 403 — and a member still fails a guard that
+> asks for `admin` or any PLATFORM_SCOPED_ROLE.
+> Proof: `server/middleware/__tests__/role-claims.test.ts`.
+
 **Evidence.** requireRole: `if (!hasRole && !userRoles?.includes('admin')) { return 403 }` (:197). ~28 mounted route files gate on `requireRole('regulatory-author')` — server/routes/submission-readiness.ts:16, server/routes/authoring-pdf.routes.ts:29, server/routes/cybersecurity-524b.ts:16, server/routes/human-factors.ts:17, server/routes/spl-fhir.ts:17, server/routes/ind-forms.routes.ts:50, server/routes/etmf.routes.ts:26, server/routes/cdisc-validation.routes.ts:30, server/routes/submissions.ts:129, server/routes/global-ri/_shared.ts:19, server/routes/ind-lifecycle/shared.ts:19, server/routes/ind-master-data.routes.ts:37 and others (281 requireRole call sites in server/routes). No code path assigns that role: the user-management API enum is `z.enum(['admin','manager','member','viewer'])` (server/routes/tenant-users.ts:16 and :30), SCIM's VALID_ROLES is the same four (server/routes/scim.ts:60), SAML JIT provisions `role: 'member'` (server/routes/sso.ts:669), signup writes `role: 'admin'` (server/routes/auth.ts:875), and server/auth/README.md documents exactly admin|manager|member|viewer. The blanket admin override at :197 is therefore the only way any request ever passes these gates.
 
 **Failure scenario.** A pilot customer's regulatory writer is invited as `manager` (the natural role for a non-admin author). Their JWT carries role='manager', so roles=['manager']. They open the IND authoring workspace and POST /api/submission-readiness/assess: requireRole('regulatory-author') → allowedRoles.some(...) is false and userRoles does not include 'admin' → 403 {code:'AUTH_004', message:'Insufficient permissions'}. The same 403 blocks eTMF, CDISC validation, IND forms, SPL/FHIR, human factors, 524B cybersecurity, submission PDF generation and global-RI. The only workaround is to promote every author to org admin, which simultaneously grants them the requireOrgAccess and requirePermission admin bypasses (AUTH-14) and the audit/SIEM router (server/routes/admin/audit-siem.ts:42).

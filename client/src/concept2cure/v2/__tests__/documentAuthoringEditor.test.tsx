@@ -240,3 +240,59 @@ describe('DocumentAuthoring — real editable canvas', () => {
     expect(document.querySelector('.ed-mast-num')?.textContent).toBe('3.2.S.1');
   });
 });
+
+/* ── Document-level structure ────────────────────────────────────────────────
+ *
+ * Two facts no single section can show, and which the section tree looked
+ * authoritative while hiding: a code filed under two sections, and a stored
+ * order that disagrees with the codes. The tree renders in the stored order and
+ * the export assembles from it, so an order nobody chose is an order nobody
+ * sees is wrong (MDX_WORK_ORDER W1-2).
+ */
+describe('DocumentAuthoring — document-level section structure', () => {
+  const withStructure = (structure: unknown, sections = SECTIONS.sections) => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') {
+        return ok({ success: true, sections, structure });
+      }
+      if (method === 'GET' && url.startsWith('/api/authoring/sections/S1/history')) {
+        return ok({ success: true, revisions: [] });
+      }
+      if (method === 'GET' && url.startsWith('/api/authoring/documents/D1/comments')) {
+        return ok({ success: true, comments: [] });
+      }
+      return ok({ success: true });
+    });
+    render(<DocumentAuthoring {...props()} />);
+  };
+  const text = () => document.body.textContent ?? '';
+
+  it('names a section code that is used twice', async () => {
+    withStructure({ duplicateCodes: ['3.2.S.1'], outOfOrder: false, suggestedOrder: [] });
+    await waitFor(() => expect(text()).toContain('3.2.S.1 is used by more than one section'));
+    expect(text()).toContain('cannot say which one a reference means');
+  });
+
+  it('says when the stored order differs from the section codes', async () => {
+    withStructure({ duplicateCodes: [], outOfOrder: true, suggestedOrder: ['3.2.S.1'] });
+    await waitFor(() => expect(text()).toContain('stored in an order that differs from their'));
+    // And it says why that matters rather than only that it is so.
+    expect(text()).toContain('assemble and export in the stored order');
+  });
+
+  it('says nothing when the document is structurally clean', async () => {
+    withStructure({ duplicateCodes: [], outOfOrder: false, suggestedOrder: ['3.2.S.1'] });
+    await waitFor(() => expect(screen.getAllByText('General Information').length).toBeGreaterThan(0));
+    expect(text()).not.toContain('used by more than one section');
+    expect(text()).not.toContain('stored in an order that differs');
+  });
+
+  it('claims nothing when the server sent no structure at all', async () => {
+    // An older server. Absent evidence is not evidence of a clean document.
+    withStructure(undefined);
+    await waitFor(() => expect(screen.getAllByText('General Information').length).toBeGreaterThan(0));
+    expect(text()).not.toContain('used by more than one section');
+    expect(text()).not.toContain('stored in an order that differs');
+  });
+});

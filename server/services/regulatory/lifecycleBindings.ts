@@ -20,7 +20,7 @@
  *
  * @module server/services/regulatory/lifecycleBindings
  */
-import { randomUUID, createHash } from 'crypto';
+import { randomUUID } from 'crypto';
 import auditService from '../auditService';
 import type {
   AdvanceContext,
@@ -114,22 +114,20 @@ export function buildLifecycleBindings(deps: LifecycleBindingDeps): LifecycleBin
         };
       }),
 
-    upsertLeaf:
-      deps.upsertLeaf ??
-      (async (_doc: CanonicalDocument, _placement: DossierPlacement, _ctx: AdvanceContext) => {
-        // Canonical leaf id; the real submission_leaf write is delegated via
-        // deps.upsertLeaf → submission-service.upsertLeaf.
-        return { leafId: `leaf:${randomUUID()}` };
-      }),
-
-    assemble:
-      deps.assemble ??
-      (async (doc: CanonicalDocument, ctx: AdvanceContext) => {
-        // Canonical package seal over the current content hash; the real eCTD
-        // assembly is delegated via deps.assemble → assembleSequence.
-        const material = `${doc.id}:${ctx.contentHash ?? ''}`;
-        const packageSha256 = createHash('sha256').update(material).digest('hex');
-        return { packageSha256 };
-      }),
+    /* No fallbacks for the two filing-side bindings, deliberately.
+     *
+     * These previously defaulted to a `leaf:${randomUUID()}` that wrote no
+     * submission_leaves row, and to a sha256 over the STRING `id:contentHash`
+     * — a package seal for bytes no file ever had. Because the live route
+     * constructs its bindings without either dependency, those fallbacks were
+     * what actually ran: documents reached `placed` citing a leaf that did not
+     * exist and `packaged` carrying a digest of nothing, both persisted and
+     * attested in the hash-chained audit trail.
+     *
+     * Passing them through undefined makes the orchestrator REFUSE those
+     * transitions (blockedBy: *_BINDING_NOT_WIRED) until the real services are
+     * injected, which is the fail-closed behaviour this codebase requires. */
+    ...(deps.upsertLeaf ? { upsertLeaf: deps.upsertLeaf } : {}),
+    ...(deps.assemble ? { assemble: deps.assemble } : {}),
   };
 }

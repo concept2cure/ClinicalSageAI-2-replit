@@ -194,11 +194,26 @@ interface CanvasOverview {
   portfolio: CanvasPortfolio;
 }
 
+/** The name to call a program in prose.
+ *
+ * A program with no `code` was named by `String(projectId)`, which put a raw
+ * database primary key into user-facing sentences: the Reporting surface read
+ * "1 is 25% ready" and "How ready is 1 to file?". A reader cannot tell that
+ * from a corrupted program name. The label is what the user actually called
+ * the program, so it is the fallback; the id is never shown. */
+export function programName(p: { code: string | null; label?: string | null }): string {
+  const code = p.code?.trim();
+  if (code) return code;
+  const label = p.label?.trim();
+  if (label) return label;
+  return 'This program';
+}
+
 /** Map the live flagship program into the surface's ProgramCtx. filing/agency/
     pdufa are unsourced on the readiness model (explicit null) — never faked. */
 function leadToProgramCtx(lp: CanvasLeadProgram): ProgramCtx {
   return {
-    code: lp.code ?? String(lp.projectId),
+    code: programName(lp),
     label: lp.label,
     filing: lp.filing,
     indication: lp.indication,
@@ -245,13 +260,20 @@ interface Preset {
   why: string;
 }
 
+/* A preset describes what the PACK contains — never what the reader's filing is
+   doing. Two of these opened by asserting a state nobody had checked ("Your NDA
+   is in agency review", "Your BLA is mid-assembly"), printed verbatim to an org
+   whose own home surface correctly reported no programs at all. The live facts
+   are stated separately by roSuggestForClient, from the readiness model; a
+   static string is not entitled to claim any of them. Guarded by
+   Insights.presetCopy.test.ts. */
 const RO_PRESETS: Record<string, Preset[]> = {
   pharma: [
-    { id: 'preapproval', label: 'Pre-approval command pack', types: ['readiness.executive_digest', 'prediction.crl_rtf_premortem', 'ema.rmp_psur_signal_alignment', 'compliance.audit_assurance_pack'], why: 'Your NDA is in agency review — this pack pairs the readiness digest with a CRL/RTF pre-mortem, safety-signal alignment and the audit assurance you will need at the action date.' },
+    { id: 'preapproval', label: 'Pre-approval command pack', types: ['readiness.executive_digest', 'prediction.crl_rtf_premortem', 'ema.rmp_psur_signal_alignment', 'compliance.audit_assurance_pack'], why: 'Pairs the readiness digest with a CRL/RTF pre-mortem, safety-signal alignment and the audit assurance an action date calls for.' },
     { id: 'globalfile', label: 'Global filing harmonization', types: ['ema.maa_readiness_assessment', 'china_nmpa.ctd_module_gap_analysis', 'provenance.evidence_trace_report'], why: 'Reuse the US dossier across EMA and NMPA — the gap analyses show what each region still needs.' },
   ],
   biotech: [
-    { id: 'blaassembly', label: 'BLA assembly pack', types: ['readiness.executive_digest', 'prediction.regulatory_forecast', 'provenance.evidence_trace_report', 'fcoi.disclosure_register'], why: 'Your BLA is mid-assembly — this pack tracks readiness, forecasts the review trajectory, and closes the evidence and financial-disclosure gaps before filing.' },
+    { id: 'blaassembly', label: 'BLA assembly pack', types: ['readiness.executive_digest', 'prediction.regulatory_forecast', 'provenance.evidence_trace_report', 'fcoi.disclosure_register'], why: 'Tracks readiness, forecasts the review trajectory, and closes the evidence and financial-disclosure gaps before filing.' },
     { id: 'nonclin', label: 'Nonclinical & CMC readiness', types: ['nonclinical.study_send_register', 'compliance.audit_assurance_pack'], why: 'Confirm Module 4 / SEND datasets and the audit trail are submission-grade.' },
   ],
   medtech: [
@@ -341,7 +363,7 @@ function roMarketsIn(utterance: string): string[] {
 /* ── Portfolio rollup (live, from overview.portfolio.programs) ── */
 interface PortfolioRow { code: string; indication: string | null; readiness: number }
 function roPortfolioFrom(programs: CanvasPortfolioProgram[]): PortfolioRow[] {
-  return programs.map(p => ({ code: p.code ?? String(p.projectId), indication: p.indication, readiness: p.readiness }));
+  return programs.map(p => ({ code: programName(p), indication: p.indication, readiness: p.readiness }));
 }
 
 /* ── Suggest for client (seeded by the live flagship program) ──

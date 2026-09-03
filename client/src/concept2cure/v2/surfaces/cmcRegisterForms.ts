@@ -850,16 +850,31 @@ export const CONTAINER_COMPONENT_TYPES = ['primary', 'secondary', 'administratio
  * ungoverned statuses sent 'draft' on every Update, which reverted the
  * signature while leaving qualified_by and qualification_date populated.
  */
-export function statusOptionsFor(statuses: string[], current?: string | null): string[] {
+export function statusOptionsFor(
+  statuses: string[],
+  current?: string | null,
+  /* The signed value differs by register: a reference standard is `qualified`,
+     a manufacturing process is `validated`. The server generalised its guard on
+     the same axis; hard-coding the word here meant a VALIDATED process opened
+     its drawer on a status the server then refused, so the record was
+     permanently uneditable through the product — no step could ever be added to
+     a validated process. */
+  signedValue = 'qualified',
+): string[] {
   const v = String(current ?? '').trim().toLowerCase();
-  return v === 'qualified' ? ['qualified', ...statuses.filter((s) => s !== 'draft')] : statuses;
+  const base = statuses[0] ?? 'draft';
+  return v === signedValue ? [signedValue, ...statuses.filter((s) => s !== base)] : statuses;
 }
 
 /** The status an edit drawer opens on: the stored one where it is offerable. */
-export function statusDefaultFor(statuses: string[], current?: string | null): string {
+export function statusDefaultFor(
+  statuses: string[],
+  current?: string | null,
+  signedValue = 'qualified',
+): string {
   const v = String(current ?? '').trim().toLowerCase();
-  if (v === 'qualified') return 'qualified';
-  return current && statuses.includes(current) ? current : 'draft';
+  if (v === signedValue) return signedValue;
+  return current && statuses.includes(current) ? current : (statuses[0] ?? 'draft');
 }
 
 export const CONTAINER_CLOSURE_STATUSES = ['draft', 'retired'];
@@ -882,21 +897,50 @@ export const REFERENCE_STANDARD_STATUSES = ['draft', 'expired', 'retired'];
 export function parseRowLines(
   value: string | undefined | null,
   keys: string[],
-): Array<Record<string, string>> {
+  /**
+   * The rows as STORED, positionally. Keys the textarea cannot represent —
+   * a step's nested `inProcessControls`, its scale dependencies — are carried
+   * back onto the row at the same index.
+   *
+   * Without this the round trip is lossy in a way no one sees: the manufacturing
+   * register stores in-process controls INSIDE each step, PROCESS_STEP_COLUMNS
+   * has no column for them, and the PUT sends processSteps unconditionally. So
+   * pressing Update with nothing changed deleted every step-level control,
+   * dropped the card's count to "none", and flipped §3.2.S.2's completeness key
+   * to null — a save that reported success and destroyed recorded data. That is
+   * the same failure `rowLinesOf` was written to prevent, one level deeper.
+   *
+   * Positional is the honest match: the textarea's line order IS the row order,
+   * and a line the staffer deleted takes its own hidden fields with it.
+   */
+  preserveFrom?: unknown,
+): Array<Record<string, unknown>> {
   if (!value) return [];
-  const rows: Array<Record<string, string>> = [];
+  const stored = Array.isArray(preserveFrom)
+    ? preserveFrom.filter((r) => r && typeof r === 'object' && !Array.isArray(r))
+    : [];
+  const rows: Array<Record<string, unknown>> = [];
   for (const line of String(value).split('\n')) {
     if (!line.trim()) continue;
     const cells = line.split('|').map((c) => c.trim());
     const overflow = cells.slice(keys.length).filter(Boolean);
-    const row: Record<string, string> = {};
+    const row: Record<string, unknown> = {};
     keys.forEach((k, i) => {
       const cell = i === keys.length - 1 && overflow.length > 0
         ? [cells[i], ...overflow].filter(Boolean).join(' | ')
         : cells[i];
       if (cell) row[k] = cell;
     });
-    if (Object.keys(row).length > 0) rows.push(row);
+    if (Object.keys(row).length === 0) continue;
+    const original = stored[rows.length] as Record<string, unknown> | undefined;
+    if (original) {
+      for (const [k, v] of Object.entries(original)) {
+        /* Only what the drawer could not edit. A declared column the staffer
+           cleared must stay cleared, not be restored from the stored row. */
+        if (!keys.includes(k) && v !== undefined) row[k] = v;
+      }
+    }
+    rows.push(row);
   }
   return rows;
 }
@@ -933,7 +977,7 @@ export interface ExtractablesLeachables {
   conditions?: string;
   analyticalEvaluationThreshold?: string;
   conclusion?: string;
-  results?: Array<Record<string, string>>;
+  results?: Array<Record<string, unknown>>;
 }
 
 export interface IntegrityTesting {
@@ -953,7 +997,7 @@ export interface ContainerClosureBody {
   supplier?: string | null;
   compendialStandards?: string[] | null;
   suitabilityJustification?: string | null;
-  materialsOfConstruction?: Array<Record<string, string>> | null;
+  materialsOfConstruction?: Array<Record<string, unknown>> | null;
   extractablesLeachables?: ExtractablesLeachables | null;
   integrityTesting?: IntegrityTesting | null;
   status: string;
@@ -1101,7 +1145,7 @@ export interface ReferenceStandardBody {
   materialSource?: string | null;
   lotNumber?: string | null;
   assignedValue?: string | null;
-  characterization?: Array<Record<string, string>> | null;
+  characterization?: Array<Record<string, unknown>> | null;
   certificateOfAnalysis?: string | null;
   qualificationProtocol?: string | null;
   storageConditions?: string | null;
@@ -1240,6 +1284,9 @@ export const IMPURITY_TYPES = [
  *  guess one from the column default. */
 export const IMPURITY_LEVEL_UNITS = ['%', 'ppm', 'ppb', 'mg/day', 'µg/day'];
 
+/** ICH Q3D sets a different permitted daily exposure for each of these. */
+export const ROUTES_OF_ADMINISTRATION = ['oral', 'parenteral', 'inhalation'];
+
 export const IMPURITY_STATUSES = ['draft', 'specified', 'retired'];
 
 export interface ImpurityProfileBody {
@@ -1256,6 +1303,7 @@ export interface ImpurityProfileBody {
   analyticalMethod?: string | null;
   observedLevel?: string | null;
   levelUnit: string;
+  routeOfAdministration?: string | null;
   specificationLimit?: string | null;
   reportingThreshold?: string | null;
   identificationThreshold?: string | null;
@@ -1281,6 +1329,7 @@ export function impurityProfileForm(row?: Partial<ImpurityProfileBody> | null): 
       { key: 'origin', label: 'Origin', type: 'text', default: row?.origin ?? '', placeholder: 'Where it comes from — a step, a reagent, a degradation route' },
       { key: 'observedLevel', label: 'Observed level', type: 'text', half: true, default: row?.observedLevel ?? '', placeholder: 'e.g. 0.08' },
       { key: 'levelUnit', label: 'Unit', type: 'select', options: IMPURITY_LEVEL_UNITS, required: true, half: true, default: row?.levelUnit ?? '%', desc: 'A level with no unit cannot be compared to a threshold' },
+      { key: 'routeOfAdministration', label: 'Route of administration', type: 'select', options: ROUTES_OF_ADMINISTRATION, half: true, default: row?.routeOfAdministration ?? '', desc: 'Required for an elemental impurity: ICH Q3D sets a different permitted daily exposure per route, and oral is the most permissive for most elements' },
       { key: 'maximumDailyDose', label: 'Maximum daily dose', type: 'text', half: true, default: row?.maximumDailyDose ?? '', placeholder: 'e.g. 500 mg — every ICH threshold is keyed to it' },
       { key: 'specificationLimit', label: 'Specification limit', type: 'text', half: true, default: row?.specificationLimit ?? '', placeholder: 'e.g. NMT 0.15%' },
       { key: 'analyticalMethod', label: 'Analytical method', type: 'text', half: true, default: row?.analyticalMethod ?? '', placeholder: 'e.g. AM-014 RP-HPLC' },
@@ -1310,6 +1359,7 @@ export function impurityProfileBody(v: Record<string, string>, projectId?: strin
     impurityName: req(v.impurityName),
     impurityType: req(v.impurityType) || 'process-related',
     levelUnit: req(v.levelUnit) || '%',
+    routeOfAdministration: opt(v.routeOfAdministration) ?? null,
     status: req(v.status) || 'draft',
   };
   const optionalText: Array<keyof ImpurityProfileBody> = [
@@ -1337,6 +1387,7 @@ export function impurityProfilePatch(v: Record<string, string>): ImpurityProfile
     impurityName: req(v.impurityName),
     impurityType: req(v.impurityType) || 'process-related',
     levelUnit: req(v.levelUnit) || '%',
+    routeOfAdministration: opt(v.routeOfAdministration) ?? null,
     status: req(v.status) || 'draft',
     origin: opt(v.origin) ?? null,
     casNumber: opt(v.casNumber) ?? null,
@@ -1381,9 +1432,9 @@ export interface DissolutionProfileBody {
   sinker?: string | null;
   specification?: string | null;
   unitsTested?: number | null;
-  results?: Array<Record<string, string>> | null;
+  results?: Array<Record<string, unknown>> | null;
   comparisonBatch?: string | null;
-  comparisonResults?: Array<Record<string, string>> | null;
+  comparisonResults?: Array<Record<string, unknown>> | null;
   testDate?: string | null;
   status: string;
 }
@@ -1472,5 +1523,397 @@ export function dissolutionProfilePatch(v: Record<string, string>): DissolutionP
     results: results.length > 0 ? results : null,
     comparisonResults: comparison.length > 0 ? comparison : null,
     testDate: isoDate(v.testDate) ?? null,
+  };
+}
+
+/* ═══════════ Material specifications — /api/cmc/material-specs ═══════════════
+   The excipients and the raw materials, in one register keyed on the role. */
+
+export const MATERIAL_ROLES = [
+  'excipient', 'capsule-shell', 'coating', 'processing-aid', 'raw-material', 'starting-material',
+];
+
+/** Recorded, never inferred: §3.2.A.3 reads this to answer the TSE/BSE question. */
+export const MATERIAL_ORIGINS = ['plant', 'mineral', 'synthetic', 'fermentation', 'animal', 'human'];
+
+export const MATERIAL_SPEC_STATUSES = ['draft', 'specified', 'retired'];
+
+export const MATERIAL_TEST_COLUMNS = ['test', 'method', 'acceptanceCriteria'];
+
+export interface MaterialSpecBody {
+  projectId?: string;
+  materialRole: string;
+  materialName: string;
+  functionInFormulation?: string | null;
+  grade?: string | null;
+  compendialMonograph?: string | null;
+  compendialCompliance?: string | null;
+  supplier?: string | null;
+  manufacturerSite?: string | null;
+  origin?: string | null;
+  originDetail?: string | null;
+  tseCertificate?: string | null;
+  testParameters?: Array<Record<string, unknown>> | null;
+  analyticalProcedures?: string | null;
+  novelExcipient: boolean;
+  novelExcipientJustification?: string | null;
+  status: string;
+}
+
+export function materialSpecForm(row?: Partial<MaterialSpecBody> | null): C2CFormConfig {
+  return {
+    eyebrow: 'Materials — §3.2.P.4 / §3.2.S.2.3',
+    title: row ? 'Edit material specification' : 'Record a material specification',
+    sub: 'An excipient or a raw material, and what it is controlled to',
+    submitLabel: row ? 'Save material' : 'Record material',
+    fields: [
+      { key: 'materialName', label: 'Material', type: 'text', required: true, half: true, default: row?.materialName ?? '', placeholder: 'e.g. Microcrystalline cellulose' },
+      { key: 'materialRole', label: 'Role', type: 'select', options: MATERIAL_ROLES, required: true, half: true, default: row?.materialRole ?? 'excipient', desc: 'An excipient files under §3.2.P.4; a raw or starting material under §3.2.S.2.3' },
+      { key: 'functionInFormulation', label: 'Function', type: 'text', half: true, default: row?.functionInFormulation ?? '', placeholder: 'e.g. Diluent, disintegrant, lubricant' },
+      { key: 'grade', label: 'Grade', type: 'text', half: true, default: row?.grade ?? '', placeholder: 'e.g. PH-102' },
+      { key: 'compendialMonograph', label: 'Compendial monograph', type: 'text', half: true, default: row?.compendialMonograph ?? '', placeholder: 'e.g. USP-NF, Ph. Eur. 2.9.40' },
+      { key: 'compendialCompliance', label: 'Compliance', type: 'text', half: true, default: row?.compendialCompliance ?? '', placeholder: 'e.g. Complies; supplier CoA per lot' },
+      { key: 'origin', label: 'Origin', type: 'select', options: MATERIAL_ORIGINS, half: true, default: row?.origin ?? '', desc: 'Section 3.2.A.3 answers the TSE/BSE question from this. Left blank, the origin is not established.' },
+      { key: 'originDetail', label: 'Origin detail', type: 'text', half: true, default: row?.originDetail ?? '', placeholder: 'e.g. Bovine, EU-sourced, ruminant-free feed' },
+      { key: 'tseCertificate', label: 'TSE/BSE certificate', type: 'text', half: true, default: row?.tseCertificate ?? '', placeholder: 'e.g. CEP R1-CEP 2019-123' },
+      { key: 'supplier', label: 'Supplier', type: 'text', half: true, default: row?.supplier ?? '' },
+      { key: 'manufacturerSite', label: 'Manufacturing site', type: 'text', default: row?.manufacturerSite ?? '' },
+      { key: 'testParameters', label: 'Specification', type: 'textarea', rows: 3, default: rowLinesOf(row?.testParameters, MATERIAL_TEST_COLUMNS), placeholder: 'One per line: Test | Method | Acceptance criteria' },
+      { key: 'analyticalProcedures', label: 'Analytical procedures', type: 'textarea', rows: 2, default: row?.analyticalProcedures ?? '', placeholder: 'How it is tested, or the monograph the procedures come from' },
+      { key: 'novelExcipient', label: 'Novel excipient', type: 'seg', options: ['no', 'yes'], half: true, default: row?.novelExcipient ? 'yes' : 'no', desc: 'A novel excipient needs the safety documentation of §3.2.P.4.6' },
+      { key: 'status', label: 'Status', type: 'seg', options: MATERIAL_SPEC_STATUSES, required: true, half: true, default: row?.status && MATERIAL_SPEC_STATUSES.includes(row.status) ? row.status : 'draft' },
+      { key: 'novelExcipientJustification', label: 'Novel excipient justification', type: 'textarea', rows: 2, default: row?.novelExcipientJustification ?? '', placeholder: 'The safety data supporting its use at this level and route' },
+    ],
+  };
+}
+
+export function materialSpecBody(v: Record<string, string>, projectId?: string): MaterialSpecBody {
+  const body: MaterialSpecBody = {
+    materialRole: req(v.materialRole) || 'excipient',
+    materialName: req(v.materialName),
+    novelExcipient: req(v.novelExcipient) === 'yes',
+    status: req(v.status) || 'draft',
+  };
+  const optionalText: Array<keyof MaterialSpecBody> = [
+    'functionInFormulation', 'grade', 'compendialMonograph', 'compendialCompliance',
+    'supplier', 'manufacturerSite', 'origin', 'originDetail', 'tseCertificate',
+    'analyticalProcedures', 'novelExcipientJustification',
+  ];
+  for (const key of optionalText) {
+    const value = opt(v[key as string]);
+    if (value) (body as unknown as Record<string, unknown>)[key as string] = value;
+  }
+  const tests = parseRowLines(v.testParameters, MATERIAL_TEST_COLUMNS);
+  if (tests.length > 0) body.testParameters = tests;
+  if (projectId) body.projectId = projectId;
+  return body;
+}
+
+/** The UPDATE body — see the note on `containerClosurePatch`. */
+export function materialSpecPatch(v: Record<string, string>): MaterialSpecBody {
+  const tests = parseRowLines(v.testParameters, MATERIAL_TEST_COLUMNS);
+  return {
+    materialRole: req(v.materialRole) || 'excipient',
+    materialName: req(v.materialName),
+    novelExcipient: req(v.novelExcipient) === 'yes',
+    status: req(v.status) || 'draft',
+    functionInFormulation: opt(v.functionInFormulation) ?? null,
+    grade: opt(v.grade) ?? null,
+    compendialMonograph: opt(v.compendialMonograph) ?? null,
+    compendialCompliance: opt(v.compendialCompliance) ?? null,
+    supplier: opt(v.supplier) ?? null,
+    manufacturerSite: opt(v.manufacturerSite) ?? null,
+    origin: opt(v.origin) ?? null,
+    originDetail: opt(v.originDetail) ?? null,
+    tseCertificate: opt(v.tseCertificate) ?? null,
+    analyticalProcedures: opt(v.analyticalProcedures) ?? null,
+    novelExcipientJustification: opt(v.novelExcipientJustification) ?? null,
+    testParameters: tests.length > 0 ? tests : null,
+  };
+}
+
+/* ═══════════ Formulation records — /api/cmc/formulation-records ══════════════
+   The batch formula §3.2.P.1's quantitative composition is built from. */
+
+export const FORMULATION_STATUSES = ['draft', 'current', 'superseded'];
+
+export const FORMULATION_COMPONENT_COLUMNS = [
+  'component', 'role', 'amountPerUnit', 'unit', 'percentWeight', 'amountPerBatch',
+  'overage', 'overageJustification', 'compendialReference', 'origin',
+];
+
+export interface FormulationRecordBody {
+  projectId?: string;
+  formulationName: string;
+  version?: string | null;
+  dosageForm?: string | null;
+  strength?: string | null;
+  batchSize?: string | null;
+  components?: Array<Record<string, unknown>> | null;
+  theoreticalYield?: string | null;
+  overageJustification?: string | null;
+  supersedes?: string | null;
+  status: string;
+}
+
+export function formulationRecordForm(row?: Partial<FormulationRecordBody> | null): C2CFormConfig {
+  return {
+    eyebrow: 'Formulation — §3.2.P.1 / §3.2.P.3.2',
+    title: row ? 'Edit formulation record' : 'Record a formulation',
+    sub: 'The batch formula: what goes in, how much, and what it scales to per unit',
+    submitLabel: row ? 'Save formulation' : 'Record formulation',
+    fields: [
+      { key: 'formulationName', label: 'Formulation', type: 'text', required: true, half: true, default: row?.formulationName ?? '', placeholder: 'e.g. BX-701 5 mg film-coated tablet' },
+      { key: 'version', label: 'Version', type: 'text', half: true, default: row?.version ?? '', placeholder: 'e.g. F-v2.0' },
+      { key: 'dosageForm', label: 'Dosage form', type: 'text', half: true, default: row?.dosageForm ?? '', placeholder: 'e.g. Film-coated tablet' },
+      { key: 'strength', label: 'Strength', type: 'text', half: true, default: row?.strength ?? '', placeholder: 'e.g. 5 mg' },
+      { key: 'batchSize', label: 'Batch size', type: 'text', half: true, default: row?.batchSize ?? '', placeholder: 'e.g. 250,000 tablets' },
+      { key: 'theoreticalYield', label: 'Theoretical yield', type: 'text', half: true, default: row?.theoreticalYield ?? '' },
+      { key: 'components', label: 'Components', type: 'textarea', rows: 6, default: rowLinesOf(row?.components, FORMULATION_COMPONENT_COLUMNS), placeholder: 'One per line: Component | Role | Amount per unit | Unit | % w/w | Amount per batch | Overage | Overage justification | Compendial reference | Origin' },
+      { key: 'overageJustification', label: 'Overage justification', type: 'textarea', rows: 2, default: row?.overageJustification ?? '', placeholder: 'Applies to the formulation as a whole where a component does not carry its own' },
+      { key: 'supersedes', label: 'Supersedes', type: 'text', half: true, default: row?.supersedes ?? '', placeholder: 'The version this one replaces' },
+      { key: 'status', label: 'Status', type: 'seg', options: FORMULATION_STATUSES, required: true, half: true, default: row?.status && FORMULATION_STATUSES.includes(row.status) ? row.status : 'draft', desc: 'Exactly one version may be current; §3.2.P.1 renders that one' },
+    ],
+  };
+}
+
+export function formulationRecordBody(v: Record<string, string>, projectId?: string): FormulationRecordBody {
+  const body: FormulationRecordBody = {
+    formulationName: req(v.formulationName),
+    status: req(v.status) || 'draft',
+  };
+  const optionalText: Array<keyof FormulationRecordBody> = [
+    'version', 'dosageForm', 'strength', 'batchSize', 'theoreticalYield',
+    'overageJustification', 'supersedes',
+  ];
+  for (const key of optionalText) {
+    const value = opt(v[key as string]);
+    if (value) (body as unknown as Record<string, unknown>)[key as string] = value;
+  }
+  const components = parseRowLines(v.components, FORMULATION_COMPONENT_COLUMNS);
+  if (components.length > 0) body.components = components;
+  if (projectId) body.projectId = projectId;
+  return body;
+}
+
+/** The UPDATE body — see the note on `containerClosurePatch`. */
+export function formulationRecordPatch(v: Record<string, string>): FormulationRecordBody {
+  const components = parseRowLines(v.components, FORMULATION_COMPONENT_COLUMNS);
+  return {
+    formulationName: req(v.formulationName),
+    status: req(v.status) || 'draft',
+    version: opt(v.version) ?? null,
+    dosageForm: opt(v.dosageForm) ?? null,
+    strength: opt(v.strength) ?? null,
+    batchSize: opt(v.batchSize) ?? null,
+    theoreticalYield: opt(v.theoreticalYield) ?? null,
+    overageJustification: opt(v.overageJustification) ?? null,
+    supersedes: opt(v.supersedes) ?? null,
+    components: components.length > 0 ? components : null,
+  };
+}
+
+
+/* ═══════════ Manufacturing processes — /api/cmc/manufacturing-processes ══════
+   The ordered unit operations, their critical parameters and their controls —
+   §3.2.S.2.2 for the drug substance, §3.2.P.3.3 for the drug product.
+
+   The register writes `manufacturing_processes`, the table that already backed
+   the ICH compliance checker and the QbD analyzer and had never had a writer. */
+
+export const PROCESS_SIDES = ['drug_substance', 'drug_product'];
+
+/** `validated` is reached only through the Part 11 signature endpoint. */
+export const PROCESS_VALIDATION_STATUSES = ['not-started', 'in-progress', 'retired'];
+
+export const PROCESS_STEP_COLUMNS = [
+  'stepNumber', 'unitOperation', 'description', 'equipment', 'holdTime',
+];
+export const PROCESS_CPP_COLUMNS = [
+  'parameter', 'step', 'target', 'rangeLow', 'rangeHigh', 'unit', 'criticality', 'linkedCqa',
+];
+export const PROCESS_CONTROL_COLUMNS = ['test', 'acceptanceCriteria', 'samplingPoint', 'frequency'];
+export const PROCESS_EQUIPMENT_COLUMNS = ['equipment', 'type', 'model', 'qualificationStatus'];
+
+export interface ManufacturingProcessBody {
+  projectId?: string;
+  processName: string;
+  processType?: string | null;
+  processDescription?: string | null;
+  processSteps?: Array<Record<string, unknown>> | null;
+  criticalProcessParameters?: Array<Record<string, unknown>> | null;
+  processControls?: Array<Record<string, unknown>> | null;
+  equipmentList?: Array<Record<string, unknown>> | null;
+  batchSize?: string | null;
+  processDevelopment?: string | null;
+  reprocessing?: string | null;
+  validationStatus: string;
+}
+
+export function manufacturingProcessForm(row?: Partial<ManufacturingProcessBody> | null): C2CFormConfig {
+  const statuses = statusOptionsFor(PROCESS_VALIDATION_STATUSES, row?.validationStatus, 'validated');
+  return {
+    eyebrow: 'Manufacturing — §3.2.S.2.2 / §3.2.P.3.3',
+    title: row ? 'Edit manufacturing process' : 'Record a manufacturing process',
+    sub: 'The unit operations, what is critical in each, and what is controlled in-process',
+    submitLabel: row ? 'Save process' : 'Record process',
+    fields: [
+      { key: 'processName', label: 'Process', type: 'text', required: true, half: true, default: row?.processName ?? '', placeholder: 'e.g. BX-204 drug substance synthesis' },
+      { key: 'processType', label: 'Side', type: 'select', options: PROCESS_SIDES, required: true, half: true, default: row?.processType ?? 'drug_substance', desc: 'A drug substance process files under §3.2.S.2; a drug product process under §3.2.P.3' },
+      { key: 'batchSize', label: 'Batch size', type: 'text', half: true, default: row?.batchSize ?? '', placeholder: 'e.g. 25 kg' },
+      { key: 'validationStatus', label: 'Validation', type: 'seg', options: statuses, required: true, half: true, default: statusDefaultFor(PROCESS_VALIDATION_STATUSES, row?.validationStatus, 'validated'), desc: 'Validated is recorded with a signature, on the Validate action' },
+      { key: 'processDescription', label: 'Process description', type: 'textarea', rows: 3, default: row?.processDescription ?? '', placeholder: 'Left blank, the section describes the process from the recorded steps' },
+      { key: 'processSteps', label: 'Steps', type: 'textarea', rows: 5, default: rowLinesOf(row?.processSteps, PROCESS_STEP_COLUMNS), placeholder: 'One per line: Step no. | Unit operation | Description | Equipment | Hold time' },
+      { key: 'criticalProcessParameters', label: 'Critical process parameters', type: 'textarea', rows: 4, default: rowLinesOf(row?.criticalProcessParameters, PROCESS_CPP_COLUMNS), placeholder: 'One per line: Parameter | Step | Target | Range low | Range high | Unit | Criticality | Linked CQA' },
+      { key: 'processControls', label: 'In-process controls', type: 'textarea', rows: 3, default: rowLinesOf(row?.processControls, PROCESS_CONTROL_COLUMNS), placeholder: 'One per line: Test | Acceptance criteria | Sampling point | Frequency' },
+      { key: 'equipmentList', label: 'Equipment', type: 'textarea', rows: 3, default: rowLinesOf(row?.equipmentList, PROCESS_EQUIPMENT_COLUMNS), placeholder: 'One per line: Equipment | Type | Model | Qualification status' },
+      { key: 'processDevelopment', label: 'Process development', type: 'textarea', rows: 2, default: row?.processDevelopment ?? '', placeholder: '§3.2.S.2.6 — how the process reached its current form' },
+      { key: 'reprocessing', label: 'Reprocessing', type: 'textarea', rows: 2, default: row?.reprocessing ?? '', placeholder: 'The reprocessing operations that are permitted, and on what basis' },
+    ],
+  };
+}
+
+export function manufacturingProcessBody(v: Record<string, string>, projectId?: string): ManufacturingProcessBody {
+  const body: ManufacturingProcessBody = {
+    processName: req(v.processName),
+    processType: req(v.processType) || 'drug_substance',
+    validationStatus: req(v.validationStatus) || 'not-started',
+  };
+  for (const key of ['processDescription', 'batchSize', 'processDevelopment', 'reprocessing'] as const) {
+    const value = opt(v[key]);
+    if (value) (body as unknown as Record<string, unknown>)[key] = value;
+  }
+  const steps = parseRowLines(v.processSteps, PROCESS_STEP_COLUMNS);
+  if (steps.length > 0) body.processSteps = steps;
+  const cpps = parseRowLines(v.criticalProcessParameters, PROCESS_CPP_COLUMNS);
+  if (cpps.length > 0) body.criticalProcessParameters = cpps;
+  const controls = parseRowLines(v.processControls, PROCESS_CONTROL_COLUMNS);
+  if (controls.length > 0) body.processControls = controls;
+  const equipment = parseRowLines(v.equipmentList, PROCESS_EQUIPMENT_COLUMNS);
+  if (equipment.length > 0) body.equipmentList = equipment;
+  if (projectId) body.projectId = projectId;
+  return body;
+}
+
+/** The UPDATE body — every editable field, so clearing one clears it. */
+export function manufacturingProcessPatch(
+  v: Record<string, string>,
+  /* The stored row, so a step's in-process controls — which the drawer cannot
+     show and the mapper, the card and §3.2.S.2 all read — survive the edit. */
+  row?: Partial<ManufacturingProcessBody> | null,
+): ManufacturingProcessBody {
+  const steps = parseRowLines(v.processSteps, PROCESS_STEP_COLUMNS, row?.processSteps);
+  const cpps = parseRowLines(v.criticalProcessParameters, PROCESS_CPP_COLUMNS);
+  const controls = parseRowLines(v.processControls, PROCESS_CONTROL_COLUMNS);
+  const equipment = parseRowLines(v.equipmentList, PROCESS_EQUIPMENT_COLUMNS);
+  return {
+    processName: req(v.processName),
+    processType: req(v.processType) || 'drug_substance',
+    validationStatus: req(v.validationStatus) || 'not-started',
+    processDescription: opt(v.processDescription) ?? null,
+    batchSize: opt(v.batchSize) ?? null,
+    processDevelopment: opt(v.processDevelopment) ?? null,
+    reprocessing: opt(v.reprocessing) ?? null,
+    processSteps: steps.length > 0 ? steps : null,
+    criticalProcessParameters: cpps.length > 0 ? cpps : null,
+    processControls: controls.length > 0 ? controls : null,
+    equipmentList: equipment.length > 0 ? equipment : null,
+  };
+}
+
+/* ═══════════ Characterisation — /api/cmc/characterization-studies ════════════
+   §3.2.S.3.1 asks three questions and each study answers one of them. The type
+   is stored so three studies of one kind cannot green all three. */
+
+export const CHARACTERIZATION_SCOPES = ['drug_substance', 'drug_product'];
+export const CHARACTERIZATION_STUDY_TYPES = ['structural', 'physicochemical', 'biological'];
+export const CHARACTERIZATION_STATUSES = ['draft', 'in-review', 'retired'];
+export const CHARACTERIZATION_DATA_COLUMNS = ['label', 'value', 'unit', 'note'];
+
+export interface CharacterizationStudyBody {
+  projectId?: string;
+  scope: string;
+  studyType: string;
+  studyTitle: string;
+  technique?: string | null;
+  attribute?: string | null;
+  result?: string | null;
+  resultUnit?: string | null;
+  acceptanceReference?: string | null;
+  conclusion?: string | null;
+  studyReference?: string | null;
+  performedBy?: string | null;
+  performedDate?: string | null;
+  supportingData?: Array<Record<string, unknown>> | null;
+  status: string;
+}
+
+export function characterizationStudyForm(row?: Partial<CharacterizationStudyBody> | null): C2CFormConfig {
+  const statuses = statusOptionsFor(CHARACTERIZATION_STATUSES, row?.status);
+  return {
+    eyebrow: 'Characterisation — §3.2.S.3.1',
+    title: row ? 'Edit characterisation study' : 'Record a characterisation study',
+    sub: 'What the study established: the structure, a physicochemical property, or the biological activity',
+    submitLabel: row ? 'Save study' : 'Record study',
+    fields: [
+      { key: 'studyTitle', label: 'Study', type: 'text', required: true, half: true, default: row?.studyTitle ?? '', placeholder: 'e.g. Structure confirmation of BX-204' },
+      { key: 'studyType', label: 'Establishes', type: 'select', options: CHARACTERIZATION_STUDY_TYPES, required: true, half: true, default: row?.studyType ?? 'structural', desc: '§3.2.S.3.1 asks all three; a study answers the one it is typed as' },
+      { key: 'scope', label: 'Material', type: 'select', options: CHARACTERIZATION_SCOPES, required: true, half: true, default: row?.scope ?? 'drug_substance', desc: '§3.2.S.3 is the drug substance; a drug product study is §3.2.P.2 development evidence' },
+      { key: 'technique', label: 'Technique', type: 'text', half: true, default: row?.technique ?? '', placeholder: 'e.g. 1H/13C NMR, HRMS, FT-IR' },
+      { key: 'attribute', label: 'Attribute', type: 'text', half: true, default: row?.attribute ?? '', placeholder: 'e.g. Solubility at pH 6.8' },
+      { key: 'result', label: 'Result', type: 'text', half: true, default: row?.result ?? '', placeholder: 'e.g. 0.42' },
+      { key: 'resultUnit', label: 'Unit', type: 'text', half: true, default: row?.resultUnit ?? '', placeholder: 'e.g. mg/mL — a result with no unit is reported as such' },
+      { key: 'acceptanceReference', label: 'Acceptance reference', type: 'text', half: true, default: row?.acceptanceReference ?? '', placeholder: 'The specification or method the result is judged against' },
+      { key: 'conclusion', label: 'Conclusion', type: 'textarea', rows: 2, default: row?.conclusion ?? '', placeholder: 'What the study establishes. Without a result or a conclusion it establishes nothing.' },
+      { key: 'studyReference', label: 'Report reference', type: 'text', half: true, default: row?.studyReference ?? '', placeholder: 'e.g. RPT-CHAR-001' },
+      { key: 'performedBy', label: 'Performed by', type: 'text', half: true, default: row?.performedBy ?? '' },
+      { key: 'performedDate', label: 'Performed on', type: 'date', half: true, default: String(row?.performedDate ?? '').slice(0, 10) },
+      { key: 'status', label: 'Status', type: 'seg', options: statuses, required: true, half: true, default: statusDefaultFor(CHARACTERIZATION_STATUSES, row?.status) },
+      { key: 'supportingData', label: 'Supporting data', type: 'textarea', rows: 4, default: rowLinesOf(row?.supportingData, CHARACTERIZATION_DATA_COLUMNS), placeholder: 'One per line: Parameter or assignment | Value | Unit | Note' },
+    ],
+  };
+}
+
+export function characterizationStudyBody(v: Record<string, string>, projectId?: string): CharacterizationStudyBody {
+  const body: CharacterizationStudyBody = {
+    scope: req(v.scope) || 'drug_substance',
+    studyType: req(v.studyType) || 'structural',
+    studyTitle: req(v.studyTitle),
+    status: req(v.status) || 'draft',
+  };
+  const optionalText: Array<keyof CharacterizationStudyBody> = [
+    'technique', 'attribute', 'result', 'resultUnit', 'acceptanceReference',
+    'conclusion', 'studyReference', 'performedBy',
+  ];
+  for (const key of optionalText) {
+    const value = opt(v[key as string]);
+    if (value) (body as unknown as Record<string, unknown>)[key as string] = value;
+  }
+  const performedDate = isoDate(v.performedDate);
+  if (performedDate) body.performedDate = performedDate;
+  const supporting = parseRowLines(v.supportingData, CHARACTERIZATION_DATA_COLUMNS);
+  if (supporting.length > 0) body.supportingData = supporting;
+  if (projectId) body.projectId = projectId;
+  return body;
+}
+
+/** The UPDATE body — see the note on `containerClosurePatch`. */
+export function characterizationStudyPatch(v: Record<string, string>): CharacterizationStudyBody {
+  const supporting = parseRowLines(v.supportingData, CHARACTERIZATION_DATA_COLUMNS);
+  return {
+    scope: req(v.scope) || 'drug_substance',
+    studyType: req(v.studyType) || 'structural',
+    studyTitle: req(v.studyTitle),
+    status: req(v.status) || 'draft',
+    technique: opt(v.technique) ?? null,
+    attribute: opt(v.attribute) ?? null,
+    result: opt(v.result) ?? null,
+    resultUnit: opt(v.resultUnit) ?? null,
+    acceptanceReference: opt(v.acceptanceReference) ?? null,
+    conclusion: opt(v.conclusion) ?? null,
+    studyReference: opt(v.studyReference) ?? null,
+    performedBy: opt(v.performedBy) ?? null,
+    performedDate: isoDate(v.performedDate) ?? null,
+    supportingData: supporting.length > 0 ? supporting : null,
   };
 }

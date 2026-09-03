@@ -34,7 +34,7 @@ import {
   type EstarRegistrationRequirement,
 } from './estar-registration';
 import type { EstarProgramSubmissionType, EstarTemplateFamily } from './estar-versions';
-import { mapToEstar, type EstarType } from './estar-mapper';
+import { mapToEstar, type EstarType, type DeviceFlags } from './estar-mapper';
 import { mapToPma, type PmaSubmissionType } from '../pma/pma-mapper';
 import { mapToPreStar, type QSubType } from '../prestar/prestar-mapper';
 
@@ -96,12 +96,20 @@ function assessContent(
   catalogKey: EstarCatalogKey,
   leaves: FilingLeaf[],
   qSubTypeOverride?: QSubType,
+  deviceFlags?: DeviceFlags,
 ): NormalizedContent {
   switch (programType) {
     case '510k':
     case 'de_novo': {
-      const r = mapToEstar({ leaves, type: programType as EstarType });
-      return normalize(r.sections, r.summary.missingRequired, r.summary.ready);
+      const r = mapToEstar({ leaves, type: programType as EstarType, flags: deviceFlags });
+      /* An undetermined section is reported alongside the missing ones: the
+         reader needs to know that "not ready" here means a question is
+         unanswered, not that a document is absent. */
+      return normalize(
+        r.sections,
+        [...r.summary.missingRequired, ...r.summary.undetermined],
+        r.summary.ready,
+      );
     }
     case 'pma': {
       const submissionType = PMA_KEY_TO_TYPE[catalogKey] ?? 'original';
@@ -139,6 +147,17 @@ export interface EstarFilingReadinessInput {
   leaves: FilingLeaf[];
   /** Override the Q-Sub sub-type (else derived from the catalog key). */
   qSubType?: QSubType;
+  /**
+   * The device's answers to the seven intake flags (DEVICE_FLAGS, W1-6).
+   *
+   * Several eSTAR sections are required only for some devices — sterilization
+   * for a sterile one, software documentation for one containing software,
+   * cybersecurity for a cyber device. Without these answers the model cannot
+   * say whether those sections are needed, and `contentReady` fails closed
+   * rather than reporting a submission complete on questions nobody asked
+   * (W1-5).
+   */
+  deviceFlags?: DeviceFlags;
   /**
    * Platform-side producibility of the official FDA template (from the template
    * registry / fill orchestration). Both default to false so the verdict fails
@@ -197,7 +216,7 @@ export function assessEstarFilingReadiness(
   const registrationMissing = eligibility?.missing ?? [];
 
   // 2. Content readiness (dispatched to the right mapper).
-  const content = assessContent(entry.programType, input.catalogKey, leaves, input.qSubType);
+  const content = assessContent(entry.programType, input.catalogKey, leaves, input.qSubType, input.deviceFlags);
 
   // 3. Official-template producibility (passed in; fails closed).
   const templateAvailable = input.templateAvailable ?? false;

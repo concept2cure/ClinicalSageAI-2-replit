@@ -279,6 +279,26 @@ CREATE TABLE IF NOT EXISTS submission_leaves (
   updated_at      TIMESTAMPTZ DEFAULT now(),
   deleted_at      TIMESTAMPTZ
 );
+
+-- rendered_leaf_files: the retained bytes of a server-rendered filing document
+-- (the IND safety report, annual report, LOA). Part of the CORE because the
+-- lifecycle filing path writes it and submission_leaves points at it; the leaf
+-- resolver reads it back through the storage provider. Migration
+-- migrations/20260903_rendered_leaf_files.sql.
+CREATE TABLE IF NOT EXISTS rendered_leaf_files (
+  id                SERIAL PRIMARY KEY,
+  organization_id   INTEGER NOT NULL,
+  vault_version_id  TEXT NOT NULL,
+  sha256            TEXT NOT NULL,
+  md5               TEXT NOT NULL,
+  mime              TEXT NOT NULL,
+  byte_size         INTEGER NOT NULL,
+  file_name         TEXT NOT NULL,
+  rendered_from     TEXT NOT NULL,
+  section_code      TEXT,
+  created_by        INTEGER,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 /**
@@ -494,10 +514,87 @@ CREATE TABLE IF NOT EXISTS c2c_document_sections (
 );
 `;
 
+/** A statement that failed because the database lacked a relation or column. */
+export interface SchemaGap {
+  /** Postgres SQLSTATE: 42P01 undefined_table, 42703 undefined_column. */
+  code: string;
+  message: string;
+  /** The statement, trimmed — enough to identify the caller. */
+  sql: string;
+}
+
+const SCHEMA_GAP_CODES = new Set(['42P01', '42703']); // undefined_table, undefined_column
+
+type StatementRunner = {
+  query: (sql: string, params?: unknown[], options?: unknown) => Promise<unknown>;
+  exec: (sql: string, options?: unknown) => Promise<unknown>;
+};
+
+/**
+ * Record every statement this PGlite instance rejects for a missing relation or
+ * column, at the one seam every caller shares: `pglite.query`, `pglite.exec`,
+ * and the client `pglite.transaction` hands its callback. Drizzle, a pool shim,
+ * a request-scoped client and a raw `pglite.exec` from the test all land here,
+ * so a write the code under test swallows (audit and telemetry writers are
+ * deliberately non-fatal) is still observed. A shim layered above PGlite cannot
+ * promise that — Drizzle talks to PGlite directly and never sees the shim.
+ *
+ * Recorded, then rethrown unchanged — the code under test must see exactly what
+ * it would see in production. Consumed by `assertNoSchemaGaps` in
+ * tests/golden-journeys/harness.ts.
+ */
+export function recordSchemaGaps(pglite: PGlite): SchemaGap[] {
+  const gaps: SchemaGap[] = [];
+  const noteAndRethrow = (sql: string, err: unknown): never => {
+    const code = (err as { code?: string })?.code ?? '';
+    if (SCHEMA_GAP_CODES.has(code)) {
+      gaps.push({
+        code,
+        message: (err as Error).message,
+        sql: sql.replace(/\s+/g, ' ').trim().slice(0, 160),
+      });
+    }
+    throw err;
+  };
+  const instrument = (runner: StatementRunner) => {
+    const query = runner.query.bind(runner);
+    const exec = runner.exec.bind(runner);
+    runner.query = async (sql, params, options) => {
+      try {
+        return await query(sql, params, options);
+      } catch (err) {
+        return noteAndRethrow(sql, err);
+      }
+    };
+    runner.exec = async (sql, options) => {
+      try {
+        return await exec(sql, options);
+      } catch (err) {
+        return noteAndRethrow(sql, err);
+      }
+    };
+  };
+  instrument(pglite as unknown as StatementRunner);
+  const transaction = pglite.transaction.bind(pglite) as PGlite['transaction'];
+  pglite.transaction = ((callback: (tx: unknown) => Promise<unknown>) =>
+    transaction(tx => {
+      instrument(tx as unknown as StatementRunner);
+      return callback(tx);
+    })) as PGlite['transaction'];
+  return gaps;
+}
+
 export interface IndPgliteDb {
   pglite: PGlite;
   /** Drizzle instance over PGlite (insert/select against the pg-core schema). */
   db: ReturnType<typeof drizzle>;
+  /**
+   * Every statement this harness rejected for a missing relation or column —
+   * see `recordSchemaGaps`. Pass the harness to `assertNoSchemaGaps` in
+   * `afterAll` so a journey cannot pass against a database smaller than the
+   * code it exercises.
+   */
+  schemaGaps: SchemaGap[];
   close: () => Promise<void>;
 }
 
@@ -507,14 +604,20 @@ export interface IndPgliteDb {
  * submission_leaves (for the full filing → sequence → leaf flow).
  */
 export async function createIndPgliteDb(
-  opts: { submissionCore?: boolean; leafSources?: boolean; formArtifacts?: boolean; governedSections?: boolean } = {}
+  opts: {
+    submissionCore?: boolean;
+    leafSources?: boolean;
+    formArtifacts?: boolean;
+    governedSections?: boolean;
+  } = {}
 ): Promise<IndPgliteDb> {
   const pglite = new PGlite();
+  const schemaGaps = recordSchemaGaps(pglite);
   await pglite.exec(IND_PGLITE_DDL);
   if (opts.submissionCore) await pglite.exec(SUBMISSION_CORE_PGLITE_DDL);
   if (opts.leafSources) await pglite.exec(LEAF_SOURCE_PGLITE_DDL);
   if (opts.formArtifacts) await pglite.exec(FORM_ARTIFACT_PGLITE_DDL);
   if (opts.governedSections) await pglite.exec(GOVERNED_SECTIONS_PGLITE_DDL);
   const db = drizzle(pglite);
-  return { pglite, db, close: () => pglite.close() };
+  return { pglite, db, schemaGaps, close: () => pglite.close() };
 }

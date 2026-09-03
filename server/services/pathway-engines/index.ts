@@ -12,7 +12,7 @@
 
 import { mapToCtis, type CtisInputLeaf } from './ctis/ctis-mapper';
 import { assembleTechDoc, type TechDocInputLeaf } from './mdr-ivdr/tech-doc-assembler';
-import { mapToEstar, type EstarInputLeaf } from './estar/estar-mapper';
+import { mapToEstar, type EstarInputLeaf, type DeviceFlags } from './estar/estar-mapper';
 import { assessPmdaShonin, type PmdaInputLeaf } from './pmda/pmda-shonin';
 import { mapToPma, type PmaInputLeaf, type PmaSubmissionType } from './pma/pma-mapper';
 import { mapToPreStar, type PreStarInputLeaf, type QSubType } from './prestar/prestar-mapper';
@@ -74,6 +74,11 @@ export interface AssessPathwayInput {
   pmaSubmissionType?: PmaSubmissionType;
   /** PreSTAR Q-Sub only: sub-type (defaults to 'pre_submission'). */
   qSubType?: QSubType;
+  /**
+   * eSTAR only: the device's answers to the seven intake flags. Sections
+   * required only for some devices cannot be judged without them (W1-5).
+   */
+  deviceFlags?: DeviceFlags;
 }
 
 /** Run the right pathway engine and return a normalized readiness verdict. */
@@ -95,8 +100,19 @@ export function assessPathwayReadiness(input: AssessPathwayInput): PathwayReadin
     }
     case 'estar_510k':
     case 'estar_de_novo': {
-      const r = mapToEstar({ leaves: leaves as EstarInputLeaf[], type: input.pathway === 'estar_de_novo' ? 'de_novo' : '510k' });
-      return { pathway: input.pathway, ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+      const r = mapToEstar({
+        leaves: leaves as EstarInputLeaf[],
+        type: input.pathway === 'estar_de_novo' ? 'de_novo' : '510k',
+        flags: input.deviceFlags,
+      });
+      // Undetermined sections are gaps: a question nobody answered is not a
+      // section nobody needs (W1-5).
+      return {
+        pathway: input.pathway,
+        ready: r.summary.ready,
+        missingRequired: [...r.summary.missingRequired, ...r.summary.undetermined],
+        detail: r,
+      };
     }
     case 'pmda_shonin': {
       const r = assessPmdaShonin({ leaves: leaves as PmdaInputLeaf[] });

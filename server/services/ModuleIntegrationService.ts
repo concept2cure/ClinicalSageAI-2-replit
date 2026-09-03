@@ -6,26 +6,30 @@
  * managing documents across different modules.
  */
 
-import { eq, and, inArray, desc } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import type { RequestDb } from '../db/requestDb';
 import { WorkflowService } from './WorkflowService';
-import {
-  assertAttachmentRecordable,
-  requireOrgId,
-  AttachmentNotFoundException,
-} from './module-integration/attachment-input';
+import { DocumentAttachmentService } from './module-integration/attachment-service';
+import { DocumentNotFoundException } from './module-integration/errors';
+
+// The attachment family is its own three modules under module-integration/.
+// Re-exported here so the names this service's callers already import keep
+// resolving from one place, and so a route can catch what it throws without
+// knowing which file it came from.
+export { DocumentAttachmentService } from './module-integration/attachment-service';
 export {
+  DocumentNotFoundException,
   AttachmentNotFoundException,
   AttachmentRejectedException,
-  type DocumentAttachmentInput,
-} from './module-integration/attachment-input';
+} from './module-integration/errors';
+export { type DocumentAttachmentInput } from './module-integration/attachment-input';
+
 import {
   unifiedDocuments,
   moduleDocuments,
   moduleTypeEnum,
   workflowDocumentVersions,
   documentAuditLogs,
-  documentAttachments,
   documentWorkflows,
 } from '../../shared/schema/unified_workflow';
 
@@ -62,21 +66,20 @@ export interface RegisterDocumentInput {
   metadata?: Record<string, unknown>;
 }
 
-/**
- * Exception for document not found errors
- */
-export class DocumentNotFoundException extends Error {
-  constructor(documentId: number | string) {
-    super(`Document with ID ${documentId} not found`);
-    this.name = 'DocumentNotFoundException';
-  }
-}
-
 export class ModuleIntegrationService {
   private workflowService: WorkflowService;
 
+  /**
+   * Attachments are their own service now; this holds one so getDocument can
+   * carry `attachments`. Routes that act on attachments use it directly rather
+   * than reaching through here — a facade that only forwards is a second name
+   * for the same capability.
+   */
+  readonly attachments: DocumentAttachmentService;
+
   constructor(private db: RequestDb) {
     this.workflowService = new WorkflowService(db);
+    this.attachments = new DocumentAttachmentService(db);
   }
 
   /**
@@ -352,11 +355,11 @@ export class ModuleIntegrationService {
     // Attachments ride on the existing document read rather than a new
     // endpoint. GET /api/module-integration/document/:id is already mounted,
     // already org-scoped, and is where a caller looking at a document would
-    // expect to see what is attached to it. listDocumentAttachments re-runs
-    // the ownership check this method has just done; one indexed PK lookup is
-    // a cheap price for a single implementation of the tenant walk, and it
+    // expect to see what is attached to it. The attachment service re-runs the
+    // ownership check this method has just done; one indexed PK lookup is a
+    // cheap price for a single implementation of the tenant walk, and it
     // matches the defence-in-depth this file already practises.
-    const attachments = await this.listDocumentAttachments(documentId, organizationId);
+    const attachments = await this.attachments.list(documentId, organizationId);
 
     return {
       ...document[0],
@@ -512,258 +515,6 @@ export class ModuleIntegrationService {
         action: 'update',
         value: `Updated from version ${previousVersionId} to ${currentVersionId}`,
       },
-    });
-  }
-
-  /**
-   * Resolve a document the caller's organization owns, or throw.
-   *
-   * `document_attachments` carries no organization_id of its own — it reaches a
-   * tenant only through `document_id -> unified_documents.organizationId` — and
-   * neither table is RLS-protected, so this walk IS the tenant boundary for
-   * both attachment methods below.
-   */
-  private async requireOwnedDocument(tx: any, documentId: number, orgId: number) {
-    const rows = await tx
-      .select()
-      .from(unifiedDocuments)
-      .where(
-        and(
-          eq(unifiedDocuments.id, documentId),
-          eq(unifiedDocuments.organizationId, orgId)
-        )
-      )
-      .limit(1);
-    // A document in another tenancy reports the same "not found" as one that
-    // does not exist, so the error cannot be used to probe for document ids.
-    if (!rows.length) throw new DocumentNotFoundException(documentId);
-    return rows[0];
-  }
-
-  /**
-   * Prove the caller's organization owns a document, and nothing more.
-   *
-   * The upload route calls this BEFORE it hands bytes to the storage provider:
-   * a document the caller cannot see must fail here, cheaply, rather than
-   * after a file has been written into the vault with nothing to reference
-   * it. DocumentNotFoundException, indistinguishable from a missing document.
-   *
-   * @param documentId Document ID
-   * @param organizationId The caller's organization ID (required)
-   */
-  async assertDocumentOwned(documentId: number, organizationId: unknown): Promise<void> {
-    const orgId = requireOrgId(organizationId, 'assertDocumentOwned');
-    await this.requireOwnedDocument(this.db, documentId, orgId);
-  }
-
-  /**
-   * List the attachments on a document, scoped to one organization.
-   *
-   * This is the reader half. addDocumentAttachment gave document_attachments
-   * its first writer; until this method existed the table still had no reader
-   * anywhere in the codebase — a row could be stored, audited and removed
-   * without any surface ever being able to show it. That is the "writerless
-   * store" defect (918c9e801) seen from the other side, and it is the same
-   * dishonesty: an audit trail that says "attachment_added" is only as good as
-   * the caller's ability to go and look.
-   *
-   * Ownership is established through the document, exactly as the writers do,
-   * so an attachment on another organization's document is not listable —
-   * DocumentNotFoundException, indistinguishable from a document that does not
-   * exist. The predicate on document_id is the only one the table offers; it
-   * is bound to a document that has just been proven to be the caller's.
-   *
-   * Newest first: `uploaded_at DESC, id DESC`. The id tiebreak keeps the order
-   * total when two uploads share a timestamp, which `now()` at transaction
-   * granularity makes routine.
-   *
-   * @param documentId Document ID
-   * @param organizationId The caller's organization ID (required)
-   * @returns Attachment rows, newest first
-   */
-  async listDocumentAttachments(documentId: number, organizationId: unknown) {
-    const orgId = requireOrgId(organizationId, 'listDocumentAttachments');
-    await this.requireOwnedDocument(this.db, documentId, orgId);
-
-    return this.db
-      .select()
-      .from(documentAttachments)
-      .where(eq(documentAttachments.documentId, documentId))
-      .orderBy(desc(documentAttachments.uploadedAt), desc(documentAttachments.id));
-  }
-
-  /**
-   * One attachment on a document, scoped to one organization — the record a
-   * download route needs before it may ask the storage provider for bytes.
-   *
-   * Ownership through the document first, then the attachment keyed by BOTH
-   * its id and the document id, so an attachment cannot be reached through a
-   * document it does not belong to. A foreign or missing attachment is the
-   * same AttachmentNotFoundException — never "forbidden", which would confirm
-   * the id exists.
-   *
-   * @param documentId Document ID
-   * @param attachmentId Attachment ID
-   * @param organizationId The caller's organization ID (required)
-   * @returns The attachment row
-   */
-  async getDocumentAttachment(documentId: number, attachmentId: number, organizationId: unknown) {
-    const orgId = requireOrgId(organizationId, 'getDocumentAttachment');
-    await this.requireOwnedDocument(this.db, documentId, orgId);
-
-    const rows = await this.db
-      .select()
-      .from(documentAttachments)
-      .where(
-        and(
-          eq(documentAttachments.id, attachmentId),
-          eq(documentAttachments.documentId, documentId)
-        )
-      )
-      .limit(1);
-    if (!rows.length) throw new AttachmentNotFoundException(attachmentId);
-    return rows[0];
-  }
-
-  /**
-   * Add an attachment to a document.
-   *
-   * ── What this method used to do ──────────────────────────────────────────
-   * It wrote `action: 'attachment_added'` into document_audit_logs and never
-   * touched document_attachments. The insert was a comment. Every part of the
-   * system that reads that trail — a reviewer, an inspector, an export — would
-   * have been told a file was attached to a regulated document when no row had
-   * been written and no attachment existed. The whole table had, and still has
-   * as of this change, no other writer anywhere in the codebase.
-   *
-   * That is the failure this repo names as "never fabricate", and it is the
-   * server-side twin of the UI defect check-action-overclaim.mjs was built for:
-   * a control that promises a governed act and only emits a message. Here the
-   * message went somewhere worse than a toast — into the audit trail itself.
-   *
-   * The act and its audit now happen in ONE transaction, so a failure of either
-   * rolls back both: the ledger never records an attachment that was not made,
-   * and no attachment is recorded without its audit entry (§ 11.10(e)) — the
-   * same contract the c2c evidence-delete path is held to.
-   *
-   * @param documentId Document ID
-   * @param attachmentData Attachment record (see DocumentAttachmentInput)
-   * @param userId User adding the attachment
-   * @param organizationId The caller's organization ID (required)
-   * @returns The stored attachment row
-   */
-  async addDocumentAttachment(
-    documentId: number,
-    attachmentData: unknown,
-    userId: string,
-    organizationId: unknown
-  ) {
-    const orgId = requireOrgId(organizationId, 'addDocumentAttachment');
-    // Validate before opening the transaction: a rejected payload should cost
-    // nothing and should say which field is wrong.
-    assertAttachmentRecordable(attachmentData);
-    const attachment = attachmentData;
-
-    return this.db.transaction(async (tx: any) => {
-      await this.requireOwnedDocument(tx, documentId, orgId);
-
-      const [stored] = await tx
-        .insert(documentAttachments)
-        .values({
-          documentId,
-          fileName: attachment.fileName,
-          fileType: attachment.fileType,
-          fileSize: attachment.fileSize,
-          filePath: attachment.filePath,
-          uploadedBy: userId,
-          description: attachment.description ?? null,
-          metadata: attachment.metadata ?? {},
-        })
-        .returning();
-
-      // Audited only now that the row exists, and with the identifiers the
-      // insert actually produced rather than the ones that were requested.
-      await tx.insert(documentAuditLogs).values({
-        documentId,
-        action: 'attachment_added',
-        performedBy: userId,
-        details: {
-          field: 'attachments',
-          action: 'add',
-          attachmentId: stored.id,
-          fileName: stored.fileName,
-          fileType: stored.fileType,
-          fileSize: stored.fileSize,
-        },
-      });
-
-      return stored;
-    });
-  }
-
-  /**
-   * Remove an attachment from a document.
-   *
-   * Same defect and same repair as addDocumentAttachment: this wrote
-   * `attachment_removed` without deleting anything.
-   *
-   * The delete is scoped by BOTH the attachment id and the document id, so an
-   * attachment cannot be removed via a document the caller does not own, and
-   * the audit row is written only when a row was actually removed — deleting
-   * nothing and recording a removal is the same fabrication in miniature.
-   *
-   * The removal is a hard delete. document_attachments has no lifecycle column
-   * to mark instead, and its parent is ON DELETE CASCADE, so there is no
-   * soft-delete affordance in this schema to use; the audit row carries the id,
-   * name and type of what was removed, which is the same delete-with-atomic-
-   * audit shape the c2c evidence path uses. Introducing a REPLACED/SUSPENDED
-   * lifecycle here, as ectd_v4 has, would be a schema change and a product
-   * decision, not part of making this method tell the truth.
-   *
-   * @param documentId Document ID
-   * @param attachmentId Attachment ID
-   * @param userId User removing the attachment
-   * @param organizationId The caller's organization ID (required)
-   * @returns The removed attachment row
-   */
-  async removeDocumentAttachment(
-    documentId: number,
-    attachmentId: number,
-    userId: string,
-    organizationId: unknown
-  ) {
-    const orgId = requireOrgId(organizationId, 'removeDocumentAttachment');
-
-    return this.db.transaction(async (tx: any) => {
-      await this.requireOwnedDocument(tx, documentId, orgId);
-
-      const [removed] = await tx
-        .delete(documentAttachments)
-        .where(
-          and(
-            eq(documentAttachments.id, attachmentId),
-            eq(documentAttachments.documentId, documentId)
-          )
-        )
-        .returning();
-
-      // Nothing was removed — do not record a removal.
-      if (!removed) throw new AttachmentNotFoundException(attachmentId);
-
-      await tx.insert(documentAuditLogs).values({
-        documentId,
-        action: 'attachment_removed',
-        performedBy: userId,
-        details: {
-          field: 'attachments',
-          action: 'remove',
-          attachmentId: removed.id,
-          fileName: removed.fileName,
-          fileType: removed.fileType,
-        },
-      });
-
-      return removed;
     });
   }
 }

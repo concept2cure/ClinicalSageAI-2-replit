@@ -51,7 +51,7 @@ import { createIndPgliteDb, type IndPgliteDb } from '../../server/db/pglite-harn
 import { assembleSubmissionEctd } from '../../server/services/ectd/assemble-from-core';
 import { validateEctdPackage } from '../../server/services/submission-gateways/ectd-structural-validator';
 import { EctdCompletenessError } from '../../server/services/ectd/completeness';
-import { JourneyRecorder } from './harness';
+import { JourneyRecorder, assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from './harness';
 
 const T = 180_000;
 
@@ -118,12 +118,15 @@ beforeAll(async () => {
 }, T);
 
 afterAll(async () => {
-  // NOT schema-gap checked. This journey runs on `createIndPgliteDb`
-  // (server/db/pglite-harness), which hands the services a Drizzle instance
-  // directly and has no single query chokepoint to observe a failed statement
-  // at — unlike `createJourneyDb`, whose pool shim records every 42P01/42703
-  // for `assertNoSchemaGaps`. So the check the other seven journeys now carry
-  // does not cover this one. Ledger L147.
+  // A journey that ran against a database missing a table its subject writes
+  // to proves less than it claims (ledger L145/L147). `createIndPgliteDb`
+  // records the gaps at the PGlite seam, where Drizzle's statements land too.
+  // Ordered BEFORE the schema-gap check on purpose: a degraded membership is
+  // usually CAUSED by a missing column, and the gap check would otherwise
+  // throw first and report the symptom while hiding which claims were
+  // proven without an org context (ledger L148).
+  await assertNoDegradedTenantEnrichment();
+  assertNoSchemaGaps(harness);
   try {
     R.write('submission-export-package');
   } finally {

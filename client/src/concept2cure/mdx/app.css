@@ -772,7 +772,7 @@
   color: var(--text-200); font-size: 12px;
 }
 .mdx-shell .ed-exit:hover { background: var(--bg-100); color: var(--text-100); }
-.mdx-shell .ed-crumb-sep { color: var(--text-500); display: inline-flex; }
+.mdx-shell .ed-crumb-sep { color: var(--text-400); display: inline-flex; }
 .mdx-shell .ed-crumb { color: var(--text-300); }
 .mdx-shell .ed-crumb.here { color: var(--text-100); font-weight: 500; }
 
@@ -907,7 +907,7 @@
   flex: 1; min-width: 0;
   overflow: hidden;
 }
-.mdx-shell .ed-doc-crumbs .sep { color: var(--text-500); display: inline-flex; }
+.mdx-shell .ed-doc-crumbs .sep { color: var(--text-400); display: inline-flex; }
 .mdx-shell .ed-doc-crumbs .here { color: var(--text-100); font-weight: 500; }
 .mdx-shell .ed-doc-actions {
   display: flex; align-items: center; gap: 6px;
@@ -1619,10 +1619,10 @@
   padding: 1px 6px; border-radius: 4px; font-size: 10px;
   text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
 }
-.mdx-shell .docs-fw-820   { background: #e2e8f5; color: #355270; }
-.mdx-shell .docs-fw-14971 { background: #f6e9cf; color: #7e5510; }
-.mdx-shell .docs-fw-62304 { background: #ece9f7; color: #544698; }
-.mdx-shell .docs-fw-cyber { background: #f3d6d2; color: #7c1f1f; }
+.mdx-shell .docs-fw-820   { background: var(--mdx-tone-info-bg); color: var(--mdx-tone-info-fg); }
+.mdx-shell .docs-fw-14971 { background: var(--mdx-tone-warn-bg); color: var(--mdx-tone-warn-fg); }
+.mdx-shell .docs-fw-62304 { background: var(--mdx-tone-alt-bg); color: var(--mdx-tone-alt-fg); }
+.mdx-shell .docs-fw-cyber { background: var(--mdx-tone-err-bg); color: var(--mdx-tone-err-fg); }
 .mdx-shell .docs-dhf { color: var(--text-400); }
 .mdx-shell .docs-title {
   font-size: 14px; font-weight: 600; color: var(--text-100); line-height: 1.4;
@@ -1664,8 +1664,8 @@
   margin-left: auto;
 }
 .mdx-shell .docs-esig svg { width: 11px; height: 11px; }
-.mdx-shell .docs-esig-signed  { background: #ecf1e4; color: #4d6235; }
-.mdx-shell .docs-esig-pending { background: #f6e9cf; color: #7e5510; }
+.mdx-shell .docs-esig-signed  { background: var(--mdx-tone-ok-bg); color: var(--mdx-tone-ok-fg); }
+.mdx-shell .docs-esig-pending { background: var(--mdx-tone-warn-bg); color: var(--mdx-tone-warn-fg); }
 .mdx-shell .docs-esig-na      { background: var(--bg-100); color: var(--text-300); }
 .mdx-shell .docs-blocker-note {
   display: flex; gap: 6px; align-items: center;
@@ -2075,7 +2075,7 @@
   display: flex; align-items: center; gap: 6px;
   font-size: 11px; color: var(--text-400);
 }
-.mdx-shell .dot-sep { color: var(--text-500); }
+.mdx-shell .dot-sep { color: var(--text-400); }
 .mdx-shell .sub-row-foot {
   display: flex; align-items: center; gap: 10px;
   margin-top: 4px;
@@ -2193,6 +2193,55 @@
   font-size: 10px; font-weight: 500;
 }
 
+/* ── Buttons ──────────────────────────────────────────────────
+   `.btn` had no base rule in this shell — only the `svg` sizing line below —
+   and the result was not an unstyled button but a WRONGLY styled one.
+
+   Two rules were doing the work. `.mdx-shell button` (top of this file) is a
+   reset: `background:none; border:0; padding:0; font:inherit`, written on the
+   assumption that a class would put the chrome back. And in the entry chunk
+   there is an unscoped `.meta, small, .small { font-size: 0.625rem;
+   letter-spacing: var(--tracking-wider); text-transform: uppercase }` — a
+   typography utility for the `<small>` ELEMENT, which also matches the
+   `small` CLASS that every `btn ghost small` in this tree carries.
+
+   So `Export package` computed to a transparent, borderless, padding-less,
+   16px UPPERCASE block. Measured in Chromium against the built chunks:
+   `background-color: rgba(0,0,0,0)`, `border: 0px none`, `padding: 0px`,
+   `text-transform: uppercase`, `letter-spacing: 0.8px`. Every primary and
+   ghost action across 19 components in this shell — 26 buttons, including
+   the primary action on the Pre-Sub, Engineering, UDI, Post-market and
+   Analytics surfaces — rendered as plain uppercase text with no affordance
+   and no difference between primary and ghost.
+
+   `ci:check-shell-css-collisions` already carries `small` in its baseline as
+   a class a stylesheet can apply outside its own shell. That baseline is a
+   record of the hazard; this is one of the places it landed.
+
+   Deliberately the same shape and the same tokens as `.c2c-v2 .btn`, so the
+   two shells do not drift into two button languages. The one difference is
+   that the transition names its properties rather than `all`: `all` includes
+   layout, and this sheet's motion rule is one 200ms ease-out on the things
+   that actually change. */
+.mdx-shell .btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 32px; padding: 0 14px;
+  border-radius: var(--radius-lg);
+  font-size: 12.5px; font-weight: 500;
+  /* Both undo the unscoped `.small`; `.mdx-shell .btn` (0,2,0) outranks it. */
+  text-transform: none; letter-spacing: normal;
+  white-space: nowrap; cursor: pointer;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+              color var(--dur) var(--ease);
+}
+.mdx-shell .btn.small { height: 28px; padding: 0 11px; font-size: 12px; gap: 6px; }
+.mdx-shell .btn.primary { background: var(--accent-strong); color: var(--accent-on-strong); }
+.mdx-shell .btn.primary:hover { background: var(--accent-200); }
+.mdx-shell .btn.ghost { border: 1px solid var(--border); color: var(--text-200); }
+.mdx-shell .btn.ghost:hover { background: var(--bg-100); }
+.mdx-shell .btn .ico { display: inline-flex; align-items: center; }
+.mdx-shell .btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+
 /* small utilities used in workbench */
 .mdx-shell .btn.small svg { width: 13px; height: 13px; }
 
@@ -2214,7 +2263,7 @@
   font-size: 11px; color: var(--text-400);
   margin-bottom: 6px;
 }
-.mdx-shell .ph-crumb-sep { color: var(--text-500); display: inline-flex; }
+.mdx-shell .ph-crumb-sep { color: var(--text-400); display: inline-flex; }
 .mdx-shell .ph-crumb-sep svg { width: 11px; height: 11px; }
 .mdx-shell .ph-crumb-here { color: var(--text-200); font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.02em; }
 .mdx-shell .ph-title {
@@ -2233,7 +2282,7 @@
   background: var(--bg-100); color: var(--text-200);
   font-size: 11px;
 }
-.mdx-shell .ph-meta-sep { color: var(--text-500); }
+.mdx-shell .ph-meta-sep { color: var(--text-400); }
 .mdx-shell .ph-due { font-variant-numeric: tabular-nums; }
 .mdx-shell .ph-due.tone-ok    { color: var(--success); }
 .mdx-shell .ph-due.tone-warn  { color: var(--warning); }
@@ -2931,3 +2980,1475 @@
 /* Wide tables (GSPR matrix, literature results) scroll inside their own
    container — the page body never scrolls horizontally. */
 .mdx-shell .tbl-scroll { overflow-x: auto; }
+
+/* ═════════════════════════════════════════════════════════════
+   ENGINEERING · UDI · POST-MARKET · ANALYTICS — the surfaces' own CSS
+
+   The same defect as the DOCUMENTS PANEL section above, four surfaces wider.
+
+   The MDX kit is two stylesheets: `ui_kits/mdx/app.css` (the shell) and
+   `ui_kits/mdx/surfaces.css` (what the surfaces draw inside it). Its own
+   index.html loads both. The port brought the first across as this file and
+   left the second behind entirely — 1,978 lines, 648 class names, never
+   ported, never imported, no equivalent written. So the markup of
+   EngineeringSurface, UdiSurface, PostmarketSurface and AnalyticsSurface
+   shipped naming rules that exist in no bundle: the ISO 14971 heat map, the
+   DHF strip, the CAPA board, the phase-duration and reviewer-pace charts, the
+   UDI symbol table, the blocker feeds. 109 class names across 174 rules,
+   laying out as bare stacked divs on four surfaces a customer opens daily.
+
+   `ci:component-class-coverage` is what found it, and only after that gate
+   existed: a class with no rule renders as nothing, so there is no error, no
+   warning, and no visual difference between "this element is unstyled" and
+   "this element was designed to look like that".
+
+   Ported from `ui_kits/mdx/surfaces.css` under the `.mdx-shell` scope prefix
+   this file uses throughout — the kit is a standalone page and writes global
+   selectors (`.section`, `.empty`, `.mono`, `.status-pill`, `.metric-card`),
+   which unscoped would reach every other surface in the product. Selector
+   text, cascade and values are otherwise the kit's. Four deviations, each
+   marked at the rule it applies to; every one is stated here because a port
+   that silently edits its source is not a port:
+
+     1. `--text-400` → `--text-300` on 19 text rules. The kit paints 9–11px
+        text in `--text-400`, which measures 3.37:1 — below the 4.5:1 SC 1.4.3
+        needs at that size. `ci:token-contrast` would not have caught it: it
+        carries `--text-400` as an exception scoped to LARGE text, so the gate
+        is structurally unable to see small text using it. The kit itself
+        already picks `--text-300` for `.udi-status-pill.pending` on the same
+        `--bg-100` that `.not-started` uses `--text-400` on, so this is the
+        kit's own value, applied consistently. `.eng-awareness-chev` keeps
+        `--text-400` — it colors an icon, where the threshold is 3:1.
+     2. `.eng-dhf-meta .dot-sep` dropped. `.mdx-shell .dot-sep` above already
+        sets exactly `color: var(--text-500)`; the kit's rule is a more
+        specific restatement of it and changes nothing.
+     3. The three `.eng-heat-cell.empty.tone-*` `color` declarations dropped.
+        The cell renders `{count || ''}`, and `.empty` is applied only when
+        `count === 0` — so those colors can only ever paint the empty string,
+        and at ~1.9:1 they would be illegible if that ever changed.
+        `.eng-heat-cell.empty` keeps a color, moved to `--text-300`.
+     4. The tone palette is tokenised rather than repeated. The kit hardcodes
+        the same five bg/fg hex pairs across `.eng-heat-cell.tone-*`,
+        `.eng-blocker-row[data-kind]`, `.udi-status-pill` and (already shipped
+        above) `.docs-fw-*` and `.docs-esig-*`. Porting verbatim would have put
+        30 more hex literals in this file. They are declared once below, and
+        the six rules that already shipped with the literals are migrated onto
+        them in this same change — so the palette has one definition, not two.
+        Single-valued today: this sheet has no `[data-theme="dark"]` rules and
+        these pills already ship their light values in dark mode. Giving them
+        a dark variant is a measurement, not a rename, and is not done here.
+
+   Two class names these four surfaces render are deliberately NOT here:
+   `eng-trace-summary` and `scope-note`, which no kit defines. Writing rules
+   for those is designing rather than porting, and inventing them is worse
+   than the honest gap — they stay on the L139 baseline with ten others in
+   the same position.
+
+   The kit copy stays the design reference and is not edited to match this.
+   `design-system/` is a read-only mirror synced by
+   `.github/workflows/sync-design-system.yml`, so a change made there is
+   undone by the next sync; this file is what the build consumes. For this
+   file the two kit copies (`ui_kits/mdx/surfaces.css` and
+   `design-system/ui_kits/mdx/surfaces.css`) are byte-identical, so the L141
+   divergence forced no choice here.
+   ═════════════════════════════════════════════════════════════ */
+
+.mdx-shell {
+  /* Status/severity tone pairs — see deviation 4 above. */
+  --mdx-tone-ok-bg:   #ecf1e4;  --mdx-tone-ok-fg:   #4d6235;  --mdx-tone-ok-line:   #cfd9bd;
+  --mdx-tone-warn-bg: #f6e9cf;  --mdx-tone-warn-fg: #7e5510;  --mdx-tone-warn-line: #e2c98c;
+  --mdx-tone-err-bg:  #f3d6d2;  --mdx-tone-err-fg:  #7c1f1f;  --mdx-tone-err-line:  #dca5a0;
+  --mdx-tone-info-bg: #e2e8f5;  --mdx-tone-info-fg: #355270;
+  --mdx-tone-alt-bg:  #ece9f7;  --mdx-tone-alt-fg:  #544698;
+  /* Muted variants — the ISO 14971 heat map's zero-count cells, which carry a
+     tone (the cell's risk band) with no count to print. */
+  --mdx-tone-ok-bg-muted:   #f5f6ef;  --mdx-tone-ok-line-muted:   #e6e9d8;
+  --mdx-tone-warn-bg-muted: #f8efde;  --mdx-tone-warn-line-muted: #e9d6a8;
+  --mdx-tone-err-bg-muted:  #f6e6e3;  --mdx-tone-err-line-muted:  #ecbeb6;
+}
+
+.mdx-shell .small-mono {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-300);
+}
+.mdx-shell .ll {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-300);
+}
+.mdx-shell .ll .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+}
+.mdx-shell .eng-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(360px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.mdx-shell .eng-dhf-strip {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 8px;
+}
+.mdx-shell .eng-dhf-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  text-align: left;
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .eng-dhf-cell:hover {
+  border-color: var(--border);
+  box-shadow: var(--shadow-xs);
+}
+.mdx-shell .eng-dhf-cell[data-on="true"] {
+  border-color: var(--accent-100);
+  box-shadow: 0 0 0 1px var(--accent-100);
+}
+.mdx-shell .eng-dhf-cell[data-status="ready"] {
+  background: var(--canvas-elevated);
+}
+.mdx-shell .eng-dhf-cell[data-status="review"] {
+  background: var(--canvas-elevated);
+  border-left: 3px solid var(--warning);
+  padding-left: 9px;
+}
+.mdx-shell .eng-dhf-cell[data-status="draft"] {
+  background: var(--bg-050);
+}
+.mdx-shell .eng-dhf-cell[data-status="blocked"] {
+  background: var(--canvas-elevated);
+  border-left: 3px solid var(--error);
+  padding-left: 9px;
+}
+.mdx-shell .eng-dhf-num {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-300);
+  letter-spacing: 0.04em;
+}
+.mdx-shell .eng-dhf-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-100);
+  line-height: 1.25;
+}
+.mdx-shell .eng-dhf-meta {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 10px;
+  color: var(--text-300);
+}
+.mdx-shell .eng-dhf-cell .status-pill {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+.mdx-shell .eng-heat {
+  display: grid;
+  grid-template-columns: 100px repeat(5, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.mdx-shell .eng-heat-corner {
+  background: transparent;
+}
+.mdx-shell .eng-heat-col-lbl,
+.mdx-shell .eng-heat-row-lbl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 10px;
+  color: var(--text-300);
+  padding: 6px 4px;
+}
+.mdx-shell .eng-heat-row-lbl {
+  align-items: flex-start;
+  padding-left: 8px;
+  justify-content: center;
+}
+.mdx-shell .eng-heat-col-lbl .mono.tiny {
+  color: var(--text-300);
+  margin-bottom: 2px;
+}
+.mdx-shell .eng-heat-cell {
+  height: 56px;
+  background: var(--bg-050);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .eng-heat-cell.empty {
+  color: var(--text-300);
+  cursor: default;
+}
+.mdx-shell .eng-heat-cell.tone-ok {
+  background: var(--mdx-tone-ok-bg);
+  border-color: var(--mdx-tone-ok-line);
+  color: var(--mdx-tone-ok-fg);
+}
+.mdx-shell .eng-heat-cell.tone-alarp {
+  background: var(--mdx-tone-warn-bg);
+  border-color: var(--mdx-tone-warn-line);
+  color: var(--mdx-tone-warn-fg);
+}
+.mdx-shell .eng-heat-cell.tone-unacceptable {
+  background: var(--mdx-tone-err-bg);
+  border-color: var(--mdx-tone-err-line);
+  color: var(--mdx-tone-err-fg);
+}
+.mdx-shell .eng-heat-cell.empty.tone-ok {
+  background: var(--mdx-tone-ok-bg-muted);
+  border-color: var(--mdx-tone-ok-line-muted);
+}
+.mdx-shell .eng-heat-cell.empty.tone-alarp {
+  background: var(--mdx-tone-warn-bg-muted);
+  border-color: var(--mdx-tone-warn-line-muted);
+}
+.mdx-shell .eng-heat-cell.empty.tone-unacceptable {
+  background: var(--mdx-tone-err-bg-muted);
+  border-color: var(--mdx-tone-err-line-muted);
+}
+.mdx-shell .eng-heat-cell:hover:not(.empty) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-xs);
+}
+.mdx-shell .eng-heat-cell.on {
+  box-shadow: 0 0 0 2px var(--accent-100);
+}
+.mdx-shell .eng-risks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mdx-shell .eng-risk-row {
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .eng-risk-row:hover {
+  box-shadow: var(--shadow-xs);
+  border-color: var(--border);
+}
+.mdx-shell .eng-risk-row[data-state="open"] {
+  border-left: 3px solid var(--warning);
+  padding-left: 11px;
+}
+.mdx-shell .eng-risk-row[data-state="in-progress"] {
+  border-left: 3px solid var(--accent-100);
+  padding-left: 11px;
+}
+.mdx-shell .eng-risk-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.mdx-shell .eng-risk-id {
+  color: var(--text-300);
+}
+.mdx-shell .eng-risk-hazard {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-100);
+}
+.mdx-shell .eng-risk-resid {
+  margin-left: auto;
+  padding: 1px 6px;
+  background: var(--bg-100);
+  border-radius: 4px;
+  color: var(--text-200);
+}
+.mdx-shell .eng-risk-harm {
+  font-size: 12px;
+  color: var(--text-200);
+  margin-bottom: 6px;
+}
+.mdx-shell .udi-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.mdx-shell .udi-status-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
+.mdx-shell .udi-status-pill.published {
+  background: var(--mdx-tone-ok-bg);
+  color: var(--mdx-tone-ok-fg);
+}
+.mdx-shell .udi-status-pill.in-review {
+  background: var(--mdx-tone-warn-bg);
+  color: var(--mdx-tone-warn-fg);
+}
+.mdx-shell .udi-status-pill.draft {
+  background: var(--bg-100);
+  color: var(--text-300);
+}
+.mdx-shell .udi-status-pill.not-started {
+  background: var(--bg-100);
+  color: var(--text-300);
+}
+.mdx-shell .udi-status-pill.pending {
+  background: var(--bg-100);
+  color: var(--text-300);
+}
+.mdx-shell .udi-mri {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+.mdx-shell .udi-symbols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.mdx-shell .udi-symbol {
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+}
+.mdx-shell .udi-symbol[data-on="false"] {
+  border-left: 3px solid var(--warning);
+  padding-left: 9px;
+}
+.mdx-shell .udi-symbol-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.mdx-shell .udi-symbol-head .mono.tiny {
+  color: var(--text-300);
+}
+.mdx-shell .udi-symbol-ok {
+  color: var(--success);
+}
+.mdx-shell .udi-symbol-warn {
+  color: var(--warning);
+}
+.mdx-shell .udi-symbol-name {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-100);
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+.mdx-shell .udi-symbol-req {
+  font-size: 10px;
+  color: var(--text-300);
+}
+.mdx-shell .pv-signal-vs.up {
+  color: var(--error);
+  font-weight: 600;
+}
+.mdx-shell .pv-capa-board {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+.mdx-shell .pv-capa-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--bg-050);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  min-height: 200px;
+}
+.mdx-shell .pv-capa-head {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.mdx-shell .pv-capa-label {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-200);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.mdx-shell .pv-capa-n {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 1px 6px;
+  background: var(--canvas-elevated);
+  border-radius: 999px;
+  color: var(--text-300);
+}
+.mdx-shell .pv-capa-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mdx-shell .pv-capa-card {
+  text-align: left;
+  padding: 10px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .pv-capa-card:hover {
+  box-shadow: var(--shadow-xs);
+  border-color: var(--border);
+}
+.mdx-shell .pv-capa-card[data-critical="true"] {
+  border-left: 3px solid var(--error);
+  padding-left: 9px;
+}
+.mdx-shell .pv-capa-card-head {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.mdx-shell .pv-capa-card-title {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-100);
+  line-height: 1.35;
+  margin-bottom: 6px;
+}
+.mdx-shell .pv-capa-card-foot {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-300);
+}
+.mdx-shell .pv-trends {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.mdx-shell .pv-trend {
+  text-align: left;
+  padding: 12px 14px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .pv-trend:hover {
+  box-shadow: var(--shadow-xs);
+}
+.mdx-shell .pv-trend-head {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.mdx-shell .pv-trend-total {
+  margin-left: auto;
+  color: var(--text-300);
+}
+.mdx-shell .pv-trend-spark {
+  width: 100%;
+  height: 40px;
+  display: block;
+  margin-bottom: 6px;
+}
+.mdx-shell .pv-trend-arrow.up {
+  color: var(--error);
+}
+.mdx-shell .pv-trend-arrow.down {
+  color: var(--success);
+}
+.mdx-shell .anl-delta {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-300);
+}
+.mdx-shell .anl-delta.up {
+  color: var(--warning);
+}
+.mdx-shell .anl-delta.down {
+  color: var(--success);
+}
+.mdx-shell .anl-pace {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 100px;
+  padding: 12px 4px 4px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+}
+.mdx-shell .anl-pace-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.mdx-shell .anl-pace-bar {
+  position: relative;
+  width: 14px;
+  background: var(--bg-200);
+  border-radius: 3px 3px 0 0;
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .anl-pace-col[data-thisyear="true"] .anl-pace-bar {
+  background: var(--accent-100);
+}
+.mdx-shell .anl-pace-col:hover .anl-pace-bar {
+  background: var(--text-200);
+}
+.mdx-shell .anl-pace-col[data-thisyear="true"]:hover .anl-pace-bar {
+  background: var(--accent-200);
+}
+.mdx-shell .anl-pace-n {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-300);
+  font-weight: 600;
+}
+.mdx-shell .anl-pace-x {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-300);
+  min-height: 12px;
+}
+.mdx-shell .anl-phase {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+}
+.mdx-shell .anl-phase-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 6px 0;
+}
+.mdx-shell .anl-phase-label {
+  font-size: 12px;
+  color: var(--text-200);
+  font-weight: 500;
+}
+.mdx-shell .anl-phase-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mdx-shell .anl-phase-track {
+  position: relative;
+  height: 22px;
+  background: linear-gradient(to right, transparent 49.5%, var(--border-200) 49.5%, var(--border-200) 50.5%, transparent 50.5%);
+}
+.mdx-shell .anl-phase-axis {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--text-400);
+}
+.mdx-shell .anl-phase-bar {
+  position: absolute;
+  top: 4px;
+  height: 14px;
+  border-radius: 2px;
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .anl-phase-bar.fast {
+  background: var(--success);
+}
+.mdx-shell .anl-phase-bar.slow {
+  background: var(--warning);
+}
+.mdx-shell .anl-phase-lbl {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-200);
+  font-weight: 600;
+  padding: 0 4px;
+  background: var(--canvas-elevated);
+  height: 14px;
+  line-height: 14px;
+}
+.mdx-shell .anl-phase-lbl.pma {
+  right: auto;
+  left: 4px;
+}
+.mdx-shell .anl-phase-peer {
+  position: absolute;
+  left: 50%;
+  top: 22px;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: var(--text-300);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+}
+.mdx-shell .anl-phase-legend {
+  display: flex;
+  gap: 14px;
+  margin-top: 24px;
+}
+.mdx-shell .anl-phase-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 6px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.mdx-shell .anl-phase-swatch.fast {
+  background: var(--success);
+}
+.mdx-shell .anl-phase-swatch.slow {
+  background: var(--warning);
+}
+.mdx-shell .anl-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 20px;
+  align-items: start;
+}
+.mdx-shell .anl-blockers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mdx-shell .anl-blocker {
+  text-align: left;
+  padding: 12px 14px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .anl-blocker:hover {
+  box-shadow: var(--shadow-xs);
+  border-color: var(--border);
+}
+.mdx-shell .anl-blocker-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.mdx-shell .anl-blocker-count {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-100);
+  min-width: 28px;
+}
+.mdx-shell .anl-blocker-cause {
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--text-100);
+  flex: 1;
+}
+.mdx-shell .anl-blocker-trend {
+  color: var(--text-300);
+}
+.mdx-shell .anl-blocker-trend.trend-up {
+  color: var(--error);
+}
+.mdx-shell .anl-blocker-trend.trend-down {
+  color: var(--success);
+}
+.mdx-shell .anl-blocker-foot {
+  font-size: 11px;
+  color: var(--text-300);
+  padding-left: 38px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.mdx-shell .anl-reviewers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mdx-shell .anl-reviewer {
+  text-align: left;
+  padding: 14px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  transition: all var(--dur) var(--ease);
+}
+.mdx-shell .anl-reviewer:hover {
+  box-shadow: var(--shadow-xs);
+}
+.mdx-shell .anl-reviewer-head {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.mdx-shell .anl-reviewer-head .mono.small {
+  color: var(--text-300);
+}
+.mdx-shell .anl-reviewer-line {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 0;
+}
+.mdx-shell .anl-line-fast,
+.mdx-shell .anl-line-slow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-300);
+  white-space: nowrap;
+}
+.mdx-shell .anl-line-track {
+  position: relative;
+  flex: 1;
+  height: 24px;
+}
+.mdx-shell .anl-line-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 11px;
+  height: 2px;
+  background: var(--border-200);
+  border-radius: 1px;
+}
+.mdx-shell .anl-line-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.mdx-shell .anl-line-tick::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  width: 2px;
+  height: 12px;
+  background: currentColor;
+}
+.mdx-shell .anl-line-median {
+  color: var(--text-300);
+}
+.mdx-shell .anl-line-org {
+  color: var(--accent-100);
+}
+.mdx-shell .anl-line-org::before {
+  width: 3px;
+  height: 14px;
+  top: 5px;
+  border-radius: 1px;
+}
+.mdx-shell .anl-line-tick-lbl {
+  position: absolute;
+  top: 20px;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: currentColor;
+  font-weight: 600;
+}
+.mdx-shell .anl-line-org .anl-line-tick-lbl {
+  top: 20px;
+}
+.mdx-shell .anl-line-median .anl-line-tick-lbl {
+  top: -4px;
+}
+.mdx-shell .anl-reviewer-foot {
+  font-size: 11px;
+  color: var(--text-300);
+  padding-top: 18px;
+}
+.mdx-shell .anl-ana {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mdx-shell .anl-ana-row {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+}
+.mdx-shell .anl-ana-tool {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.mdx-shell .anl-ana-bar {
+  position: relative;
+  height: 16px;
+  background: var(--bg-050);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.mdx-shell .anl-ana-bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--accent-100);
+  opacity: 0.4;
+  border-radius: var(--radius-md);
+  transition: width var(--dur) var(--ease);
+}
+.mdx-shell .anl-ana-bar-lbl {
+  position: absolute;
+  left: 10px;
+  top: 0;
+  height: 16px;
+  line-height: 16px;
+  font-size: 10px;
+  color: var(--text-200);
+  font-weight: 600;
+  z-index: 1;
+}
+.mdx-shell .metrics-compact {
+  gap: 8px;
+}
+.mdx-shell .metrics-compact .metric-card {
+  padding: 12px 14px;
+}
+.mdx-shell .metrics-compact .metric-val {
+  font-size: 22px;
+}
+.mdx-shell .eng-blockers-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.mdx-shell .eng-blocker-row {
+  display: grid;
+  grid-template-columns: 14px 50px 90px minmax(160px, 1fr) minmax(0, 1.4fr) 60px 80px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  text-align: left;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  transition: all var(--dur) var(--ease);
+  font-size: 12px;
+}
+.mdx-shell .eng-blocker-row:hover {
+  box-shadow: var(--shadow-xs);
+  border-color: var(--border);
+}
+.mdx-shell .eng-blocker-row[data-sev="err"] {
+  border-left: 3px solid var(--error);
+  padding-left: 11px;
+}
+.mdx-shell .eng-blocker-row[data-sev="warn"] {
+  border-left: 3px solid var(--warning);
+  padding-left: 11px;
+}
+.mdx-shell .eng-blocker-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+}
+.mdx-shell .eng-blocker-kind {
+  padding: 1px 6px;
+  background: var(--bg-100);
+  border-radius: 4px;
+  color: var(--text-300);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  width: fit-content;
+}
+.mdx-shell .eng-blocker-row[data-kind="dhf"]  .eng-blocker-kind {
+  background: var(--mdx-tone-info-bg);
+  color: var(--mdx-tone-info-fg);
+}
+.mdx-shell .eng-blocker-row[data-kind="risk"] .eng-blocker-kind {
+  background: var(--mdx-tone-warn-bg);
+  color: var(--mdx-tone-warn-fg);
+}
+.mdx-shell .eng-blocker-row[data-kind="ecr"]  .eng-blocker-kind {
+  background: var(--mdx-tone-alt-bg);
+  color: var(--mdx-tone-alt-fg);
+}
+.mdx-shell .eng-blocker-row[data-kind="nc"]   .eng-blocker-kind {
+  background: var(--mdx-tone-err-bg);
+  color: var(--mdx-tone-err-fg);
+}
+.mdx-shell .eng-blocker-ref {
+  color: var(--text-300);
+}
+.mdx-shell .eng-blocker-title {
+  font-weight: 600;
+  color: var(--text-100);
+}
+.mdx-shell .eng-blocker-note {
+  color: var(--text-300);
+  font-size: 11px;
+}
+.mdx-shell .eng-blocker-owner {
+  color: var(--text-300);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.mdx-shell .eng-blocker-age {
+  color: var(--text-300);
+  font-size: 11px;
+}
+.mdx-shell .eng-blocker-more {
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-300);
+  background: var(--bg-050);
+  border: 1px dashed var(--border-100);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.mdx-shell .eng-blocker-more:hover {
+  background: var(--bg-100);
+  color: var(--text-200);
+}
+.mdx-shell .eng-awareness {
+  padding: 0;
+}
+.mdx-shell .eng-awareness-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  width: 100%;
+  text-align: left;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+}
+.mdx-shell .eng-awareness[data-open="true"] .eng-awareness-head {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  border-bottom: 0;
+}
+.mdx-shell .eng-awareness-chev {
+  color: var(--text-400);
+}
+.mdx-shell .eng-awareness-chev svg {
+  width: 14px;
+  height: 14px;
+}
+.mdx-shell .eng-awareness-head h2 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-100);
+}
+.mdx-shell .eng-awareness-head .section-sub {
+  margin-left: 12px;
+}
+.mdx-shell .eng-awareness-body {
+  padding: 18px;
+  background: var(--bg-050);
+  border: 1px solid var(--border-100);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.mdx-shell .eng-grid-awareness {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+.mdx-shell .eng-grid-awareness section {
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+.mdx-shell .eng-heat-n {
+  font-family: var(--font-mono);
+}
+
+/* ═════════════════════════════════════════════════════════════
+   Two classes these surfaces render that no kit defines.
+
+   The surfaces.css port above deliberately stopped at the kit's edge, and
+   `eng-trace-summary` and `scope-note` fell outside it: EngineeringSurface
+   invented both, so there is nothing to port and they stayed on the L139
+   baseline as an honest gap rather than an invented rule.
+
+   They are still two elements the product renders with no rule behind them,
+   on a surface a customer opens daily, and closing that is design work rather
+   than porting work. Done here as design, stated as design:
+
+   `.scope-note` is the "Organization-wide" marker `ScopeNote` renders beside
+   four panel headings, for panels whose source has no program column yet. With
+   no rule it was 13px body text sitting against a 14px semibold h2 — it read
+   as part of the heading, which is the one thing it must not do, because it
+   qualifies the SCOPE of the numbers below it. A quiet pill separates it. The
+   `--text-300` on `--bg-100` pairing is not chosen here; it is the pairing the
+   kit already uses for `.udi-status-pill.pending`, and it clears 4.5:1 where
+   `.section-sub`'s `--text-400` (3.37:1) would not have.
+
+   `.eng-trace-summary` is the "n traceability rows tracked · n verified" line
+   under the design-controls table. `mono tiny` already give it 10px mono type;
+   what it had no rule for was the gap above it and its own colour, so it sat
+   flush against the table it summarises in full body colour.
+   ═════════════════════════════════════════════════════════════ */
+
+.mdx-shell .scope-note {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--bg-100);
+  color: var(--text-300);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.mdx-shell .eng-trace-summary {
+  margin-top: 8px;
+  color: var(--text-300);
+}
+
+/* ═════════════════════════════════════════════════════════════
+   PRE-SUB MANAGER — the FDA Q-Submission surface
+
+   `PreSubManager` is mounted at MdxSurfaceHost.tsx:402 for `device-presub`,
+   is 514 lines, and every one of its 70 `ps-*` class names matched NOTHING
+   in any built chunk. Its chrome came from house primitives it borrows —
+   .page-header, .metrics-row, .metric-card, .section, .seg, .btn — so the
+   surface looked half-built rather than broken, which is why it survived:
+   the page had a title, a KPI strip and filter buttons, and everything below
+   them was unstyled divs.
+
+   ── This is design, not a port, and the difference is checked ─────────────
+   The component's own docblock says "Ported from
+   design-system/ui_kits/mdx/PreSub.jsx", so the first question was whether a
+   stylesheet had been left behind the way surfaces.css was. It had not.
+   `PreSub.jsx` lives in `design-system/ui_kits/mdx_phase2/` (one of the 39
+   files that exist only in the mirror — L141), it carries 85 `ps-*` class
+   references, its kit `index.html` loads `app.css` alone, and that file
+   contains zero `.ps-` rules. Neither kit copy has ever had a stylesheet for
+   this surface. There is nothing to port; the markup was designed and the CSS
+   was never written, in the kit or here.
+
+   So this is written, not copied, and it follows the conventions this sheet
+   already sets rather than inventing a second dialect: 13px body, 10-11px
+   micro-labels in uppercase with 0.04-0.06em tracking, one --accent-100
+   highlight per active state, `var(--dur) var(--ease)` transitions and no
+   spring, `[data-on="true"]` for selection (the convention .seg-btn sets).
+
+   ── Two things it does NOT do, deliberately ───────────────────────────────
+   No `--text-400` on any text. That token measures 3.37:1 and every muted
+   string here is 10-12px, so it is `--text-400`'s companion `--text-300`
+   throughout; --text-400 appears only where it colours a glyph, which needs
+   3:1. The surfaces.css port in this same file had to correct 19 rules for
+   exactly this and there is no reason to write the twentieth.
+
+   No fixed track widths that cannot fit. `.ps-layout` is
+   `minmax(0, 300px) minmax(0, 1fr)`: BOTH tracks can shrink to zero, so the
+   grid can never be wider than its container whatever the content. Same
+   reasoning for `.ps-commit-row`, which wraps rather than declaring five
+   columns that add up to more than the 732px this pane actually gets. The
+   editor's `220px minmax(420px, 1fr) clamp(300px, …)` — a 940px floor in a
+   pane that is often narrower — is the mistake being avoided here.
+   ═════════════════════════════════════════════════════════════ */
+
+/* ── Filter row ─────────────────────────────────────────────── */
+.mdx-shell .ps-filter-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.mdx-shell .ps-filter-spacer { flex: 1 1 auto; min-width: 0; }
+
+/* ── Two-pane layout ────────────────────────────────────────── */
+.mdx-shell .ps-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.mdx-shell .ps-list { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+/* ── Q-Sub type chip ────────────────────────────────────────── */
+.mdx-shell .ps-type {
+  padding: 1px 6px; border-radius: 4px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase; white-space: nowrap;
+  background: var(--bg-100); color: var(--text-300);
+}
+/* The five Q-Sub types, coloured by what they commit you to rather than
+   arbitrarily: Agreement is binding (ok), Submission Issue is a problem in an
+   open review (warn), Study Risk Determination is a ruling (alt), Pre-Sub is
+   the ordinary path (info), Informational asks nothing of FDA (neutral). */
+.mdx-shell .ps-type-presub { background: var(--mdx-tone-info-bg); color: var(--mdx-tone-info-fg); }
+.mdx-shell .ps-type-sir    { background: var(--mdx-tone-warn-bg); color: var(--mdx-tone-warn-fg); }
+.mdx-shell .ps-type-srd    { background: var(--mdx-tone-alt-bg);  color: var(--mdx-tone-alt-fg); }
+.mdx-shell .ps-type-agree  { background: var(--mdx-tone-ok-bg);   color: var(--mdx-tone-ok-fg); }
+
+/* ── List row ───────────────────────────────────────────────── */
+.mdx-shell .ps-row {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  width: 100%; min-width: 0;
+  padding: 10px 12px;
+  text-align: left;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-left: 3px solid var(--border-200);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.mdx-shell .ps-row:hover { border-color: var(--border-strong); }
+/* Selection is the left edge plus the border, not a fill: the row carries a
+   stage dot and a commitment count that must stay readable, and a tinted
+   background would put two colour signals on one control. */
+.mdx-shell .ps-row[data-on] {
+  border-color: var(--border-strong);
+  border-left-color: var(--accent-100);
+  box-shadow: var(--shadow-xs);
+}
+.mdx-shell .ps-row-l { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 1 auto; }
+.mdx-shell .ps-row-r { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; flex: 0 0 auto; }
+.mdx-shell .ps-row-id { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mdx-shell .ps-row-title {
+  font-size: 12.5px; font-weight: 500; color: var(--text-100); line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.mdx-shell .ps-row-prog { font-size: 11px; color: var(--text-300); }
+.mdx-shell .ps-row-stage {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; color: var(--text-200); white-space: nowrap;
+}
+.mdx-shell .ps-row-stage-dot {
+  width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0;
+  background: var(--text-400);
+}
+.mdx-shell .ps-row-stage[data-tone="ok"]   .ps-row-stage-dot { background: var(--success); }
+.mdx-shell .ps-row-stage[data-tone="warn"] .ps-row-stage-dot { background: var(--warning); }
+.mdx-shell .ps-row-stage[data-tone="err"]  .ps-row-stage-dot { background: var(--error); }
+.mdx-shell .ps-row-stage-days { color: var(--text-300); }
+.mdx-shell .ps-row-meta {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+  font-size: 10.5px; color: var(--text-300); text-align: right;
+}
+/* Every commitment rolled into the dossier is the state this whole surface
+   exists to reach, so it is the one place in the row that goes green. */
+.mdx-shell .ps-row-commit[data-on="true"] { color: var(--mdx-tone-ok-fg); font-weight: 500; }
+
+/* ── Detail pane ────────────────────────────────────────────── */
+.mdx-shell .ps-detail {
+  min-width: 0;
+  padding: 14px 16px;
+  background: var(--bg-000);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+}
+/* Wraps, and the title block can shrink. Measured with real fixture data at
+   796px — the width this pane gets when the surface column is narrow — the
+   head was 361 in 334: `.ps-detail-actions` is two buttons that must not
+   shrink, and the title block beside them had no `min-width: 0`, so its
+   min-content width plus the buttons exceeded the pane and pushed
+   `.ps-detail` and `.ps-layout` out with it. visual-qa:overflow could not see
+   this: the captured fragment mocks the list to empty, so the detail pane it
+   measures is the empty state and never renders a head at all. */
+.mdx-shell .ps-detail-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 10px 12px; flex-wrap: wrap;
+  padding-bottom: 12px; border-bottom: 1px solid var(--border-100);
+}
+.mdx-shell .ps-detail-head > div:first-child { flex: 1 1 240px; min-width: 0; }
+.mdx-shell .ps-detail-eyebrow {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--text-300);
+}
+.mdx-shell .ps-detail-title {
+  font-size: 15px; font-weight: 600; color: var(--text-100);
+  margin: 5px 0 3px; line-height: 1.3; overflow-wrap: anywhere;
+}
+.mdx-shell .ps-detail-target { font-size: 11.5px; color: var(--text-300); }
+.mdx-shell .ps-detail-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.mdx-shell .ps-summary {
+  font-size: 12.5px; line-height: 1.6; color: var(--text-200);
+  padding: 12px 0;
+}
+
+/* ── Stage strip + meeting card ─────────────────────────────── */
+.mdx-shell .ps-strip-wrap { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
+.mdx-shell .ps-strip { display: flex; gap: 4px; flex: 1 1 320px; min-width: 0; }
+.mdx-shell .ps-strip-cell {
+  flex: 1 1 0; min-width: 0;
+  padding: 7px 8px;
+  background: var(--bg-050);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-sm);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+/* Three states, three treatments — and never colour alone: `done` also loses
+   its number's emphasis and `active` also gains a weight, so the strip reads
+   the same to someone who cannot separate the greens from the creams. */
+.mdx-shell .ps-strip-cell[data-state="done"] {
+  background: var(--mdx-tone-ok-bg); border-color: var(--mdx-tone-ok-line);
+}
+.mdx-shell .ps-strip-cell[data-state="done"] .ps-strip-num,
+.mdx-shell .ps-strip-cell[data-state="done"] .ps-strip-lbl { color: var(--mdx-tone-ok-fg); }
+.mdx-shell .ps-strip-cell[data-state="active"] {
+  background: var(--accent-000); border-color: var(--accent-100);
+}
+.mdx-shell .ps-strip-cell[data-state="active"] .ps-strip-lbl { color: var(--text-100); font-weight: 600; }
+.mdx-shell .ps-strip-cell[data-state="active"] .ps-strip-num { color: var(--accent-200); }
+.mdx-shell .ps-strip-num {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.06em;
+  color: var(--text-300);
+}
+.mdx-shell .ps-strip-lbl {
+  font-size: 10.5px; color: var(--text-200); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mdx-shell .ps-meeting {
+  display: flex; align-items: center; gap: 8px;
+  flex: 0 1 260px; min-width: 0;
+  padding: 8px 10px;
+  background: var(--bg-050);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+}
+.mdx-shell .ps-meeting > .ico { color: var(--text-400); flex-shrink: 0; }
+.mdx-shell .ps-meeting > div { min-width: 0; flex: 1 1 auto; }
+.mdx-shell .ps-meeting-when { font-size: 11.5px; font-weight: 500; color: var(--text-100); }
+.mdx-shell .ps-meeting-meta { font-size: 10.5px; color: var(--text-300); margin-top: 1px; }
+.mdx-shell .ps-meeting-state {
+  padding: 1px 6px; border-radius: 4px; flex-shrink: 0;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.mdx-shell .ps-meeting-state.ok   { background: var(--mdx-tone-ok-bg);   color: var(--mdx-tone-ok-fg); }
+.mdx-shell .ps-meeting-state.warn { background: var(--mdx-tone-warn-bg); color: var(--mdx-tone-warn-fg); }
+
+/* ── Detail tabs ────────────────────────────────────────────── */
+.mdx-shell .ps-tabs {
+  display: flex; gap: 2px;
+  margin: 14px 0 12px;
+  border-bottom: 1px solid var(--border-100);
+  /* Three tabs each carrying a count; contained here so a long label can
+     never widen the pane. overflow-y is explicit because .ps-tab's
+     margin-bottom:-1px would otherwise raise a stray vertical scrollbar. */
+  overflow-x: auto; overflow-y: hidden; scrollbar-width: thin;
+}
+.mdx-shell .ps-tab {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 11px; margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  font-size: 12.5px; color: var(--text-300); white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.mdx-shell .ps-tab:hover { color: var(--text-100); }
+.mdx-shell .ps-tab[data-on="true"] {
+  color: var(--text-100); font-weight: 600; border-bottom-color: var(--accent-100);
+}
+.mdx-shell .ps-tab-n {
+  font-family: var(--font-mono); font-size: 10.5px;
+  padding: 0 5px; border-radius: 999px;
+  background: var(--bg-100); color: var(--text-300);
+}
+.mdx-shell .ps-tab[data-on="true"] .ps-tab-n { color: var(--text-200); }
+
+/* ── Questions ──────────────────────────────────────────────── */
+.mdx-shell .ps-q-list { display: flex; flex-direction: column; gap: 10px; }
+.mdx-shell .ps-q {
+  padding: 12px 14px; min-width: 0;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-left: 3px solid var(--border-200);
+  border-radius: var(--radius-md);
+}
+.mdx-shell .ps-q[data-status="answered"] { border-left-color: var(--success); }
+.mdx-shell .ps-q[data-status="awaiting"] { border-left-color: var(--warning); }
+.mdx-shell .ps-q-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mdx-shell .ps-q-n {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--text-100);
+}
+.mdx-shell .ps-q-status {
+  padding: 1px 6px; border-radius: 4px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  background: var(--bg-100); color: var(--text-300);
+}
+.mdx-shell .ps-q-status-answered { background: var(--mdx-tone-ok-bg);   color: var(--mdx-tone-ok-fg); }
+.mdx-shell .ps-q-status-awaiting { background: var(--mdx-tone-warn-bg); color: var(--mdx-tone-warn-fg); }
+.mdx-shell .ps-q-text {
+  font-size: 12.5px; font-weight: 500; color: var(--text-100); line-height: 1.5;
+  margin: 7px 0 10px; overflow-wrap: anywhere;
+}
+.mdx-shell .ps-q-pos, .mdx-shell .ps-q-fda { margin-bottom: 10px; }
+/* FDA's words are set apart from ours. On a Q-Sub record the difference
+   between what the sponsor asserted and what the agency answered is the
+   whole document, and two identically-styled paragraphs do not carry it. */
+.mdx-shell .ps-q-fda {
+  padding: 9px 11px;
+  background: var(--bg-050);
+  border-left: 2px solid var(--border-strong);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.mdx-shell .ps-q-pos-lbl, .mdx-shell .ps-q-fda-lbl {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-300); margin-bottom: 4px;
+}
+.mdx-shell .ps-q-pos-body, .mdx-shell .ps-q-fda-body {
+  font-size: 12px; line-height: 1.6; color: var(--text-200); overflow-wrap: anywhere;
+}
+
+/* ── Commitment block inside a question ─────────────────────── */
+.mdx-shell .ps-q-commit {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+  flex-wrap: wrap;
+  padding: 9px 11px;
+  background: var(--bg-050);
+  border: 1px solid var(--border-100);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--radius-md);
+}
+.mdx-shell .ps-q-commit[data-rolled]  { border-left-color: var(--success); }
+.mdx-shell .ps-q-commit[data-blocker] { border-left-color: var(--error); }
+.mdx-shell .ps-q-commit-l { display: flex; align-items: flex-start; gap: 8px; min-width: 0; flex: 1 1 220px; }
+.mdx-shell .ps-q-commit-ico { display: inline-flex; flex-shrink: 0; color: var(--text-400); margin-top: 1px; }
+.mdx-shell .ps-q-commit-ico svg { width: 14px; height: 14px; }
+.mdx-shell .ps-q-commit[data-rolled]  .ps-q-commit-ico { color: var(--success); }
+.mdx-shell .ps-q-commit[data-blocker] .ps-q-commit-ico { color: var(--error); }
+.mdx-shell .ps-q-commit-lbl {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-300);
+}
+.mdx-shell .ps-q-commit-body {
+  font-size: 12px; line-height: 1.55; color: var(--text-200); margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+.mdx-shell .ps-q-commit-r { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
+.mdx-shell .ps-q-commit-link {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11.5px; color: var(--accent-200); cursor: pointer;
+  transition: color var(--dur) var(--ease);
+}
+.mdx-shell .ps-q-commit-link:hover { color: var(--accent-100); text-decoration: underline; }
+.mdx-shell .ps-q-commit-link .ico svg { width: 12px; height: 12px; }
+.mdx-shell .ps-q-commit-state,
+.mdx-shell .ps-commit-state {
+  padding: 1px 6px; border-radius: 4px; white-space: nowrap;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  background: var(--bg-100); color: var(--text-300);
+}
+.mdx-shell .ps-q-commit-state.ok,   .mdx-shell .ps-commit-state.ok   { background: var(--mdx-tone-ok-bg);   color: var(--mdx-tone-ok-fg); }
+.mdx-shell .ps-q-commit-state.warn, .mdx-shell .ps-commit-state.warn { background: var(--mdx-tone-warn-bg); color: var(--mdx-tone-warn-fg); }
+.mdx-shell .ps-q-commit-state.err,  .mdx-shell .ps-commit-state.err  { background: var(--mdx-tone-err-bg);  color: var(--mdx-tone-err-fg); }
+
+/* ── Timeline ───────────────────────────────────────────────── */
+.mdx-shell .ps-timeline { display: flex; flex-direction: column; }
+.mdx-shell .ps-timeline-row {
+  display: grid; grid-template-columns: minmax(0, 104px) minmax(0, 112px) minmax(0, 1fr);
+  gap: 10px; align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-100);
+}
+.mdx-shell .ps-timeline-row:last-child { border-bottom: 0; }
+.mdx-shell .ps-timeline-when { font-family: var(--font-mono); font-size: 11px; color: var(--text-300); }
+.mdx-shell .ps-timeline-who  { font-size: 11.5px; color: var(--text-200); overflow-wrap: anywhere; }
+.mdx-shell .ps-timeline-what { font-size: 12px; color: var(--text-100); line-height: 1.5; overflow-wrap: anywhere; }
+
+/* ── Commitments table ──────────────────────────────────────── */
+.mdx-shell .ps-commit-table { display: flex; flex-direction: column; gap: 6px; }
+/* Wraps rather than declaring columns. Five fixed tracks that fit at 1,200px
+   are five tracks that spill at 732, which is what this pane usually gets. */
+.mdx-shell .ps-commit-row {
+  display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap;
+  padding: 9px 11px; min-width: 0;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--radius-md);
+}
+.mdx-shell .ps-commit-row[data-rolled]  { border-left-color: var(--success); }
+.mdx-shell .ps-commit-row[data-blocker] { border-left-color: var(--error); }
+.mdx-shell .ps-commit-id   { font-size: 10.5px; color: var(--text-300); flex: 0 0 auto; }
+.mdx-shell .ps-commit-text { font-size: 12px; color: var(--text-100); line-height: 1.5; flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
+.mdx-shell .ps-commit-from { font-size: 10.5px; color: var(--text-300); flex: 0 0 auto; white-space: nowrap; }
+.mdx-shell .ps-commit-jump {
+  display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto;
+  font-size: 11.5px; color: var(--accent-200); cursor: pointer; white-space: nowrap;
+  transition: color var(--dur) var(--ease);
+}
+.mdx-shell .ps-commit-jump:hover { color: var(--accent-100); text-decoration: underline; }
+.mdx-shell .ps-commit-jump svg { width: 12px; height: 12px; }
+
+/* ── Empty states ───────────────────────────────────────────── */
+.mdx-shell .ps-empty {
+  padding: 22px 18px; text-align: center;
+  background: var(--bg-050);
+  border: 1px dashed var(--border-200);
+  border-radius: var(--radius-md);
+}
+.mdx-shell .ps-empty-t { font-size: 12.5px; font-weight: 500; color: var(--text-100); }
+.mdx-shell .ps-empty-s { font-size: 11.5px; color: var(--text-300); margin-top: 3px; line-height: 1.5; }
+
+/* Below the width at which a 300px list and a detail pane both stay usable,
+   the two panes stack. 300 + 16 + 300 = 616px is the point where the detail
+   column stops being wider than the list beside it. */
+@media (max-width: 640px) {
+  .mdx-shell .ps-layout { grid-template-columns: minmax(0, 1fr); }
+}

@@ -241,7 +241,8 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE, 'motion-discipline'],
-    notes: 'See HANDOFF_TO_DESIGN_document_authoring.md — editor + Yjs co-author + track-changes + comments + versions + approval + e-sign all have working backends, no UI.',
+    notes: 'Section editor with tracked changes, threaded comments, version history and diff, approval routing, and e-signature manifestation (21 CFR §11.50).',
+    engineering: 'HANDOFF_TO_DESIGN_document_authoring.md is RETRACTED AS EVIDENCE (24 July 2026) and names its own section 2 as materially wrong about a live subsystem. It said this surface had backends but no UI; the surface is DocumentAuthoring.tsx, registered in surfaceViews and rendering every capability above. Do not re-cite that brief.',
   },
   {
     id: 'regulatory-workspace',
@@ -305,7 +306,8 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: 'SUBMISSION_WORKSPACES (shared/types/submission-ui.ts)',
     readiness: 'contract-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Framework-agnostic workspace map + error catalog already in shared. Package preview, eValidator pass, ESG send vs eSTAR export picker. See SUBMISSION_CENTER_API.md.',
+    notes: 'Package preview, eValidator pass, and the choice between an ESG submission and an eSTAR export.',
+    engineering: 'Workspace map and error catalog live in shared, framework-agnostic. See SUBMISSION_CENTER_API.md.',
   },
   {
     id: 'submission-twin',
@@ -580,7 +582,8 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: 'GET /api/global-ri/catalog',
     readiness: 'contract-ready',
     compliance: [A11Y, TONE],
-    notes: 'Gold-standard pattern: ~41 deterministic capabilities, 9 groups, one-call catalog drives nav + dynamic forms. See HANDOFF_TO_DESIGN_global_ri.md.',
+    notes: 'Deterministic regulatory capabilities, grouped by topic. The catalog drives both the navigation and the forms behind it.',
+    engineering: 'One catalog call serves nav and dynamic forms. Capability and group counts are computed, never written down. See HANDOFF_TO_DESIGN_global_ri.md.',
   },
   {
     id: 'precedent-intelligence',
@@ -683,7 +686,8 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Immutable report records, cryptographic seal, provenance atoms. See INSIGHTS_REPORTING_IMPLEMENTATION_SPEC.md.',
+    notes: 'Immutable report records, cryptographic seal, and the provenance behind every figure.',
+    engineering: 'See INSIGHTS_REPORTING_IMPLEMENTATION_SPEC.md.',
   },
   {
     id: 'safety-narrative',

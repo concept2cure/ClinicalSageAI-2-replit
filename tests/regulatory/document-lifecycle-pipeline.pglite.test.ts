@@ -64,7 +64,7 @@ afterAll(async () => {
 const PLACEMENT = { registryId: 'US_IND', ctdModule: 'M2', sectionCode: '2.5' };
 
 describe('governed document pipeline (HTTP → PGlite)', () => {
-  it('runs the full spine authoring → submitted with gates, signatures, and a verified audit chain', async () => {
+  it('runs the spine authoring → approved with gates, signatures and a verified audit chain, and refuses to place while the filing bindings are unwired', async () => {
     // 1. Create — starts at authoring, with content present.
     const create = await request(app)
       .post('/api/regulatory/documents')
@@ -94,29 +94,42 @@ describe('governed document pipeline (HTTP → PGlite)', () => {
     const noPlacement = await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'placed' });
     expect(noPlacement.status).toBe(409);
     expect(noPlacement.body.blockedBy).toContain('PLACEMENT_REQUIRED');
-    expect((await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'placed', placement: PLACEMENT })).status).toBe(200);
+    // 7. placed is REFUSED while the filing bindings are not wired.
+    //
+    // This step used to return 200. It did so because buildLifecycleBindings
+    // supplied fallbacks the route never overrode: a `leaf:<uuid>` that wrote no
+    // submission_leaves row, and a package sha256 taken over the string
+    // "<docId>:<contentHash>". The pipeline therefore recorded a placement
+    // against a leaf that did not exist and a package seal for bytes no file
+    // ever had — durably, and attested in this very audit chain.
+    //
+    // The fallbacks are gone. Until this route injects the real upsertLeaf and
+    // assemble services (documented in LIVE_BINDING_TARGETS), the transition is
+    // refused, which is the truthful answer. This assertion is what makes that
+    // gap visible instead of hiding it behind a green pipeline.
+    const placedAttempt = await request(app)
+      .post(`/api/regulatory/documents/${id}/advance`)
+      .send({ to: 'placed', placement: PLACEMENT });
+    expect(placedAttempt.status).toBe(409);
+    expect(String(placedAttempt.body.blockedBy?.join(' '))).toMatch(/PLACEMENT_BINDING_NOT_WIRED/);
 
-    // 7. placed → packaged → submitted.
-    expect((await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'packaged' })).status).toBe(200);
-    expect((await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'submitted' })).status).toBe(200);
-
-    // 8. Final projection: submitted, and the persisted audit chain verifies.
+    // 8. Final projection: the document rests at `approved`, and the chain over
+    //    the transitions that DID happen verifies. A refused transition appends
+    //    no audit event.
     const view = await request(app).get(`/api/regulatory/documents/${id}`);
     expect(view.status).toBe(200);
-    expect(view.body.stage).toBe('submitted');
+    expect(view.body.stage).toBe('approved');
     expect(view.body.chainValid).toBe(true);
-    // One event per successful transition: in_review, approved, placed, packaged, submitted.
-    expect(view.body.audit).toHaveLength(5);
-    expect(view.body.audit.map((e: DocumentAuditEvent) => e.to)).toEqual([
-      'in_review', 'approved', 'placed', 'packaged', 'submitted',
-    ]);
+    expect(view.body.audit).toHaveLength(2);
+    expect(view.body.audit.map((e: DocumentAuditEvent) => e.to)).toEqual(['in_review', 'approved']);
     // Every persisted event is sealed and linked (append-only, tamper-evident).
     for (let i = 0; i < view.body.audit.length; i++) {
       expect(view.body.audit[i].eventHash).toBeTruthy();
       expect(view.body.audit[i].prevEventHash ?? '').toBe(i === 0 ? '' : view.body.audit[i - 1].eventHash);
     }
-    // The org-wide trail saw the same five transitions.
-    expect(captured.map((e) => e.to)).toEqual(['in_review', 'approved', 'placed', 'packaged', 'submitted']);
+    // The org-wide trail saw the same two transitions — and nothing for the
+    // refused one.
+    expect(captured.map((e) => e.to)).toEqual(['in_review', 'approved']);
   });
 
   it('scopes reads to the tenant — another org cannot see the document', async () => {

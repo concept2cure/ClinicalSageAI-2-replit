@@ -12,7 +12,25 @@ const complete510kLeaves: EstarInputLeaf[] = [
   { sectionCode: '5', title: 'Biocompatibility evaluation', substantive: true },
   { sectionCode: '6', title: 'Performance testing — bench', substantive: true },
   { sectionCode: '7', title: 'Substantial equivalence comparison to predicate', substantive: true },
+  { sectionCode: '1b', title: 'CDRH cover sheet 3514', substantive: true },
+  { sectionCode: '1c', title: 'MDUFA user fee cover sheet 3601', substantive: true },
+  { sectionCode: '2b', title: 'Truthful and accurate statement', substantive: true },
+  { sectionCode: '4b', title: 'Risk management file', substantive: true },
+  { sectionCode: '8', title: '510(k) Summary', substantive: true },
 ];
+
+/* A device that is none of the seven conditional things. Without these the
+   conditional sections are undetermined, and an undetermined section blocks a
+   claim that the submission is assemblable (W1-5). */
+const PLAIN_DEVICE = {
+  combinationProduct: false,
+  softwareAiMl: false,
+  cyberDevice: false,
+  sterile: false,
+  implantable: false,
+  cliaWaived: false,
+  clinicalData: false,
+} as const;
 
 const TEMPLATE_510K_DEVICE = 'eSTAR-510k-non-ivd.pdf';
 
@@ -22,6 +40,7 @@ describe('assembleDeviceSubmission (B5)', () => {
       pathway: '510k',
       variant: 'device',
       leaves: complete510kLeaves,
+      deviceFlags: PLAIN_DEVICE,
       presentTemplates: [TEMPLATE_510K_DEVICE],
       environment: 'production',
       requireTemplate: true,
@@ -38,6 +57,7 @@ describe('assembleDeviceSubmission (B5)', () => {
       pathway: '510k',
       variant: 'device',
       leaves: complete510kLeaves,
+      deviceFlags: PLAIN_DEVICE,
       presentTemplates: [],
       environment: 'production',
       requireTemplate: true,
@@ -84,6 +104,7 @@ describe('assembleDeviceSubmission (B5)', () => {
       pathway: '510k',
       variant: 'device',
       leaves: complete510kLeaves,
+      deviceFlags: PLAIN_DEVICE,
       presentTemplates: [],
       environment: 'staging',
       requireTemplate: true,
@@ -100,6 +121,7 @@ describe('assembleDeviceSubmission (B5)', () => {
       pathway: '510k',
       variant: 'device',
       leaves: complete510kLeaves,
+      deviceFlags: PLAIN_DEVICE,
       presentTemplates: [TEMPLATE_510K_DEVICE],
       market: 'us-fda',
       availableArtifacts: [],

@@ -36,7 +36,7 @@
 }
 .qms-crumbs { display: flex; align-items: center; gap: 6px; color: var(--text-300); font-weight: 500; }
 .qms-crumbs .here { color: var(--text-100); font-weight: 600; }
-.qms-crumbs .sep { color: var(--text-500); }
+.qms-crumbs .sep { color: var(--text-400); }
 .qms-spacer { flex: 1; }
 .qms-tb-btn {
   display: inline-flex; align-items: center; gap: 5px;

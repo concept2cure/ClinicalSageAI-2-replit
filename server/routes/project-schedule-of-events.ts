@@ -27,8 +27,12 @@ import {
   reviewScheduleHealth,
   type GeneratorGoal,
 } from '../services/projects/schedule-of-events';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('project-schedule-of-events');
 
 // ── tenant / param helpers (mirror server/routes/concept2cure.ts) ────────────
 function getOrganizationId(req: Request): number {
@@ -165,7 +169,7 @@ router.get('/projects/:id/unified-work', async (req: Request, res: Response) => 
     const view = await loadUnifiedWork({ organizationId: orgId, projectId });
     return res.json(view);
   } catch (err: any) {
-    return res.status(500).json({ error: err?.message || 'Failed to load unified work view' });
+    return serverError(res, logger, 'loading unified work', err);
   }
 });
 
@@ -177,7 +181,7 @@ router.get('/projects/:id/schedule-of-events', async (req: Request, res: Respons
     const view = await getScheduleOfEvents(orgId, projectId);
     return res.json(view);
   } catch (err: any) {
-    return res.status(500).json({ error: err?.message || 'Failed to load schedule of events' });
+    return serverError(res, logger, 'loading schedule of events', err);
   }
 });
 
@@ -203,7 +207,7 @@ router.post('/projects/:id/schedule-of-events/generate', async (req: Request, re
     });
     return res.json(view);
   } catch (err: any) {
-    return res.status(500).json({ error: err?.message || 'Failed to generate schedule' });
+    return serverError(res, logger, 'generating schedule of events', err);
   }
 });
 
@@ -229,7 +233,7 @@ router.post('/projects/:id/schedule-of-events/amend', async (req: Request, res: 
     const view = await getScheduleOfEvents(orgId, projectId);
     return res.json({ result, schedule: view });
   } catch (err: any) {
-    return res.status(500).json({ error: err?.message || 'Failed to amend milestone' });
+    return serverError(res, logger, 'saving amend', err);
   }
 });
 
@@ -243,7 +247,7 @@ router.post('/projects/:id/schedule-of-events/review', async (req: Request, res:
     const view = await getScheduleOfEvents(orgId, projectId);
     return res.json({ result, schedule: view });
   } catch (err: any) {
-    return res.status(500).json({ error: err?.message || 'Failed to review schedule' });
+    return serverError(res, logger, 'saving review', err);
   }
 });
 
@@ -262,7 +266,7 @@ router.post('/projects/:id/schedule-of-events/goals/reset', async (req: Request,
     const view = await getScheduleOfEvents(orgId, projectId);
     return res.json({ result, schedule: view });
   } catch (err: any) {
-    return res.status(500).json({ error: err?.message || 'Failed to reset goals' });
+    return serverError(res, logger, 'saving reset', err);
   }
 });
 

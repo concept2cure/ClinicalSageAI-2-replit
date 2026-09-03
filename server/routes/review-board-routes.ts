@@ -73,6 +73,10 @@ interface ReviewItem {
   conf: number | null;
   prov: string | null;
   passage: string;
+  // True when the caller owns the workflow's current step. The client used to
+  // count every org-wide sign-off step as "at YOUR sign-off step" because
+  // ownership was only ever decided here, under scope=mine, and never sent.
+  mine: boolean;
 }
 
 interface ReviewWorkflowStep {
@@ -115,7 +119,7 @@ interface ReviewBoard {
   };
 }
 
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
+// ─── Pure helpers ────────────────────────────────────────────────────────────────
 
 const MS_DAY = 86_400_000;
 
@@ -212,7 +216,7 @@ function excerpt(text: string, max = 600): string {
   return clean.length > max ? `${clean.slice(0, max).trimEnd()}…` : clean;
 }
 
-// ─── Router Factory ───────────────────────────────────────────────────────────
+// ─── Router Factory ─────────────────────────────────────────────────────────────
 
 export default function createReviewBoardRoutes(): Router {
   const router = Router();
@@ -419,13 +423,13 @@ export default function createReviewBoardRoutes(): Router {
           steps.find(s => s.status === 'pending') ??
           null;
 
+        // Ownership of the current step, sent on every item so the client can
+        // say "your sign-off" only about steps that are actually the caller's.
+        const mine =
+          !!currentApproval &&
+          (currentApproval.assignedTo.includes(userId) || currentApproval.assignedTo.includes('*'));
         // scope=mine → keep only items the caller currently owns
-        if (scope === 'mine') {
-          const mine =
-            !!currentApproval &&
-            (currentApproval.assignedTo.includes(userId) || currentApproval.assignedTo.includes('*'));
-          if (!mine) continue;
-        }
+        if (scope === 'mine' && !mine) continue;
 
         const lastCompleted = [...steps].reverse().find(s => s.completedBy);
 
@@ -485,6 +489,7 @@ export default function createReviewBoardRoutes(): Router {
           conf: null, // no server source for AnA confidence — see caveats
           prov: provBits.length ? provBits.join(' · ') : null,
           passage: excerpt(passageSource),
+          mine,
         });
 
         const template = templateById.get(wf.templateId);

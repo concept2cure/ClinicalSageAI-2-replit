@@ -24,6 +24,7 @@ import {
   submissionLeaves,
   coauthorDocuments,
 } from '../../../shared/schema';
+import { renderedLeafFiles } from '../../../shared/schema/submissions';
 import type {
   Submission,
   EctdSequence,
@@ -726,6 +727,23 @@ export async function upsertLeaf(
       typeof doc.content === 'string' && doc.content.length > 0
         ? createHash('sha256').update(doc.content, 'utf8').digest('hex')
         : null;
+  }
+
+  /* A rendered filing document (rendered_leaf_files) is the other pointer the
+     resolver can materialize. Same tenancy rule as above — an id that does not
+     resolve in this organization is refused, not silently stored — and the pin
+     is the sha256 recorded when the bytes were rendered, which is exactly what
+     the resolver re-verifies before staging them. */
+  if (input.documentTable === 'rendered_leaf_files' && input.documentId) {
+    const [rendered] = await db
+      .select({ sha256: renderedLeafFiles.sha256 })
+      .from(renderedLeafFiles)
+      .where(and(eq(renderedLeafFiles.id, input.documentId), eq(renderedLeafFiles.organizationId, ctx.organizationId)))
+      .limit(1);
+    if (!rendered) {
+      throw new SubmissionError('FORBIDDEN', 'Referenced document not found for this organization.');
+    }
+    documentContentSha256 = rendered.sha256;
   }
 
   // A lifecycle op that supersedes a prior leaf (replace|append|delete) carries a

@@ -34,17 +34,31 @@
 
 ---
 
-## Remaining Duplicates (7 — ALIVE, server-side)
+## Remaining Duplicates (3 — ALIVE, server-side)
+
+Re-verified 2026-09-03 against the working tree. Four of the seven rows this
+section used to carry no longer exist: `server/middleware/tenantContext.js`,
+`server/middleware/validation.js` and `client/src/lib/queryClient.js` were
+deleted by earlier consolidation, and `server/config/docushareConfig.js` was
+deleted with its sole importer (see below). The remaining three are the ones
+`scripts/ci/check-js-ts-shadows.mjs` allowlists as content-diverged.
 
 | # | JS File | TS File | Why ALIVE |
 |---|---------|---------|-----------|
 | 1 | `server/db.js` | `server/db.ts` | 20+ explicit `from '../db.js'` imports in .ts and .js files |
 | 2 | `server/middleware/auth.js` | `server/middleware/auth.ts` | Exports `hasPermission`/`verifyJwt` not in .ts version; many explicit .js imports |
-| 3 | `server/middleware/tenantContext.js` | `server/middleware/tenantContext.ts` | Explicit .js import from `billing-dashboard.ts` |
-| 4 | `server/middleware/validation.js` | `server/middleware/validation.ts` | 6+ CMC .js route files import explicitly |
-| 5 | `server/utils/logger.js` | `server/utils/logger.ts` | Many .ts and .js files import with explicit .js |
-| 6 | `server/config/docushareConfig.js` | `server/config/docushareConfig.ts` | Imported by `docushareHealthCheck.js` |
-| 7 | `client/src/lib/queryClient.js` | `client/src/lib/queryClient.ts` | Referenced by `ClientLicenseTab.jsx` (legacy JS chain) |
+| 3 | `server/utils/logger.js` | `server/utils/logger.ts` | Many .ts and .js files import with explicit .js |
+
+### Removed: `server/config/docushareConfig.js`
+
+This row previously read "ALIVE — imported by `docushareHealthCheck.js`". That
+was true as a fact about the import graph and false as a conclusion about
+liveness: `server/utils/docushareHealthCheck.js` was itself imported by
+nothing, so the `.js` config was reachable only from an unreferenced module.
+Both files are deleted; `server/config/docushareConfig.ts` remains and is what
+`server/config/index.ts` resolves. The matching `check-js-ts-shadows.mjs`
+allowlist entry, which carried the same wrong justification, is removed with
+them.
 
 **Action for Wave 2:** Merge JS→TS for each, update all importers to use .ts paths, then delete .js.
 

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
@@ -6,6 +6,7 @@ import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import '../styles/project-home-v2.css';
 
 /* ── Display metadata — 5-state Submission Center lifecycle + chip vocabularies ── */
@@ -156,6 +157,32 @@ export function CroPortfolio({ onAsk, onNav }: SurfaceViewProps) {
   const [selId, setSel] = useState<string | null>(null);
 
   const sel = sponsors.find((s) => s.id === selId) ?? sponsors[0];
+
+  /* AnA can select a sponsor by name — the same row click a person makes — so a
+     drive can land on a specific sponsor before its engagements are discussed.
+     Resolved against the REAL roster with honest misses; held (retry) while it
+     loads, re-attempted on the ready signal below. Selecting is view-state only. */
+  useSurfaceActionHandlers('cro-portfolio', {
+    'cro-portfolio.select-sponsor': (params) => {
+      const raw = String(params.sponsor ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a sponsor.' };
+      if (live.loading) return { ok: false, reason: 'The sponsor roster is still loading.', retry: true };
+      if (live.error) return { ok: false, reason: 'The sponsor roster did not load, so there are no sponsors to select from.' };
+      if (sponsors.length === 0) return { ok: false, reason: 'No sponsors are recorded in this organization yet.' };
+      const needle = raw.toLowerCase();
+      const exact = sponsors.filter((s) => s.name.toLowerCase() === needle);
+      const hits = exact.length ? exact : sponsors.filter((s) => s.name.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No sponsor named "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} sponsors — name one exactly.` };
+      const s = hits[0];
+      if (selId === s.id) return { ok: true, detail: `Already on ${s.name}` };
+      setSel(s.id);
+      return { ok: true, detail: `Selected ${s.name}` };
+    },
+  });
+  useEffect(() => {
+    if (!live.loading && !live.error) notifySurfaceActionReady('cro-portfolio');
+  }, [live.loading, live.error]);
 
   /* A sponsor with no `subs` / `studies` at all used to flatMap to a list of
      undefined rows, and the very next filter read `.state` off one of them. */

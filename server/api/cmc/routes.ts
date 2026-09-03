@@ -15,6 +15,10 @@ import {
   writeThroughReferenceStandard,
   writeThroughImpurityProfile,
   writeThroughDissolutionProfile,
+  writeThroughMaterialSpec,
+  writeThroughFormulationRecord,
+  writeThroughManufacturingProcess,
+  writeThroughCharacterizationStudy,
 } from '../../services/cmc-write-through';
 import {
   analyticalMethods,
@@ -28,6 +32,9 @@ import {
   cmcReferenceStandards,
   cmcImpurityProfiles,
   cmcDissolutionProfiles,
+  cmcMaterialSpecs,
+  cmcFormulationRecords,
+  cmcCharacterizationStudies,
   insertAnalyticalMethodSchema,
   insertProcessValidationSchema,
   insertStabilityStudySchema,
@@ -39,7 +46,14 @@ import {
   insertCmcReferenceStandardSchema,
   insertCmcImpurityProfileSchema,
   insertCmcDissolutionProfileSchema,
+  insertCmcMaterialSpecSchema,
+  insertCmcFormulationRecordSchema,
+  insertCmcCharacterizationStudySchema,
 } from '../../../shared/schema';
+/* manufacturing_processes is modelled in shared/cmc-schema.ts, where it has
+   lived since before this register family existed. It is the same table
+   ich-compliance-checker and qbd-analyzer read. */
+import { manufacturingProcesses } from '../../../shared/cmc-schema';
 import { eq, and, inArray, or, isNull, type SQL } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 /* Reading a stability programme's recorded series, and the ICH Q1E poolability
@@ -264,6 +278,32 @@ const impurityProfileBody = withoutTenantKey(insertCmcImpurityProfileSchema).ext
 });
 const dissolutionProfileBody = withoutTenantKey(insertCmcDissolutionProfileSchema).extend({
   testDate: optionalDate,
+});
+const materialSpecBody = withoutTenantKey(insertCmcMaterialSpecSchema);
+const formulationRecordBody = withoutTenantKey(insertCmcFormulationRecordSchema);
+const characterizationStudyBody = withoutTenantKey(insertCmcCharacterizationStudySchema).extend({
+  performedDate: optionalDate,
+  qualificationDate: optionalDate,
+});
+/* manufacturing_processes predates this register family and is modelled in
+   shared/cmc-schema.ts, not shared/schema.ts. Its projectId is a uuid column,
+   so the body takes it as a uuid string; organizationId is set by the route. */
+const manufacturingProcessBody = z.object({
+  projectId: z.string().uuid().optional().nullable(),
+  processName: z.string().min(1),
+  processType: z.string().optional().nullable(),
+  processDescription: z.string().optional().nullable(),
+  processSteps: z.array(z.record(z.any())).optional().nullable(),
+  criticalProcessParameters: z.array(z.record(z.any())).optional().nullable(),
+  processControls: z.array(z.record(z.any())).optional().nullable(),
+  equipmentList: z.array(z.record(z.any())).optional().nullable(),
+  facilityInfo: z.record(z.any()).optional().nullable(),
+  batchSize: z.string().optional().nullable(),
+  yieldData: z.record(z.any()).optional().nullable(),
+  scaleUpData: z.record(z.any()).optional().nullable(),
+  processDevelopment: z.string().optional().nullable(),
+  reprocessing: z.string().optional().nullable(),
+  validationStatus: z.string().optional().nullable(),
 });
 
 router.post('/analytical-methods', async (req, res) => {
@@ -831,7 +871,9 @@ function writeThroughProjectId(row: { projectId?: string | null }, req: express.
 async function linkToModule3(
   propagation: string,
   orgId: number,
-  row: { id: number; projectId?: string | null },
+  /* manufacturing_processes is keyed by uuid; every other register by serial.
+     The id is only ever stringified into the source key, so both are fine. */
+  row: { id: number | string; projectId?: string | null },
   req: express.Request,
   writeThrough: (
     orgId: number,
@@ -899,19 +941,29 @@ function refusesUngovernedQualification(
   status: unknown,
   registerPath: string,
   storedStatus?: unknown,
+  /* The vocabulary differs by register: a reference standard is `qualified`
+     and signed at /qualify; a manufacturing process is `validated` and signed
+     at /validate. The RULE is one rule, so it is parameterised rather than
+     copied — the second copy is where the two drift. */
+  vocab: { signedValue: string; verb: string; path: string } = {
+    signedValue: 'qualified',
+    verb: 'Qualification',
+    path: 'qualify',
+  },
 ): boolean {
+  const signed = vocab.signedValue;
   const incoming = String(status ?? '').trim().toLowerCase();
   const stored = String(storedStatus ?? '').trim().toLowerCase();
   /* Refuse the TRANSITION into qualified, not the word. A record that is
      already qualified must be able to round-trip its own status through an
      ordinary edit — otherwise correcting a typo in a qualified record is
      impossible without a second signature. */
-  if (incoming === 'qualified' && stored !== 'qualified') {
+  if (incoming === signed && stored !== signed) {
     res.status(409).json({
       success: false,
       error:
-        `Qualification is a governed action and is recorded with a signature. ` +
-        `POST /api/cmc/${registerPath}/:id/qualify with a reason and re-authentication.`,
+        `${vocab.verb} is a governed action and is recorded with a signature. ` +
+        `POST /api/cmc/${registerPath}/:id/${vocab.path} with a reason and re-authentication.`,
     });
     return true;
   }
@@ -921,11 +973,11 @@ function refusesUngovernedQualification(
      signature stranded on a record that no longer claimed to be qualified.
      Retiring a qualified record is still allowed: that is a lifecycle end, not
      a reversal of the conclusion. */
-  if (stored === 'qualified' && incoming && incoming !== 'qualified' && incoming !== 'retired') {
+  if (stored === signed && incoming && incoming !== signed && incoming !== 'retired') {
     res.status(409).json({
       success: false,
       error:
-        `This record is qualified under a recorded signature and cannot be returned to "${incoming}" by an ordinary edit. ` +
+        `This record is ${signed} under a recorded signature and cannot be returned to "${incoming}" by an ordinary edit. ` +
         `Retire it, or record a new assessment.`,
     });
     return true;
@@ -944,12 +996,32 @@ async function qualifyRegisterRecord(
   req: express.Request,
   res: express.Response,
   spec: {
-    table: 'cmc_container_closures' | 'cmc_reference_standards' | 'cmc_impurity_profiles';
+    table:
+      | 'cmc_container_closures'
+      | 'cmc_reference_standards'
+      | 'cmc_impurity_profiles'
+      | 'cmc_characterization_studies'
+      | 'manufacturing_processes';
     target: string;
     surface: string;
     subject: string;
     propagation: string;
-    reselect: (id: number, orgId: number) => Promise<Record<string, any> | undefined>;
+    /**
+     * The register's own signing vocabulary and column names. A manufacturing
+     * process is `validated` and records it on validation_status /
+     * validated_by / validation_date; every other register is `qualified` on
+     * status / qualified_by / qualification_date. Defaults are the common case,
+     * so only the process register states them.
+     */
+    signing?: {
+      statusColumn: string;
+      signedValue: string;
+      signedByColumn: string;
+      signedAtColumn: string;
+    };
+    /** manufacturing_processes has a uuid primary key; the rest are serial. */
+    idKind?: 'int' | 'uuid';
+    reselect: (id: string, orgId: number) => Promise<Record<string, any> | undefined>;
     writeThrough: (
       orgId: number,
       projectId: string,
@@ -970,10 +1042,21 @@ async function qualifyRegisterRecord(
   }
   const { reason, meaning, reauth, idempotencyKey } = parsed.data;
 
-  const id = parseInt(String(req.params.id));
-  if (!Number.isInteger(id) || id <= 0) {
+  const signing = spec.signing ?? {
+    statusColumn: 'status',
+    signedValue: 'qualified',
+    signedByColumn: 'qualified_by',
+    signedAtColumn: 'qualification_date',
+  };
+  const rawId = String(req.params.id ?? '').trim();
+  if ((spec.idKind ?? 'int') === 'uuid') {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawId)) {
+      return res.status(400).json({ success: false, error: `A ${spec.subject} id is required` });
+    }
+  } else if (!Number.isInteger(Number(rawId)) || Number(rawId) <= 0) {
     return res.status(400).json({ success: false, error: `A ${spec.subject} id is required` });
   }
+  const id: string | number = (spec.idKind ?? 'int') === 'uuid' ? rawId : parseInt(rawId, 10);
   let orgId: number;
   try {
     orgId = getOrgId(req);
@@ -1004,12 +1087,12 @@ async function qualifyRegisterRecord(
     /* Already signed. Re-signing would stamp a second person over the first and
        lose who actually qualified it, so it is refused with the record's own
        facts rather than overwritten. */
-    if (String(current.rows[0].status || '').toLowerCase() === 'qualified') {
+    if (String(current.rows[0][signing.statusColumn] || '').toLowerCase() === signing.signedValue) {
       await client.query('ROLLBACK');
       return res.status(409).json({
         success: false,
-        error: `This ${spec.subject} is already qualified`,
-        qualifiedAt: current.rows[0].qualification_date ?? null,
+        error: `This ${spec.subject} is already ${signing.signedValue}`,
+        qualifiedAt: current.rows[0][signing.signedAtColumn] ?? null,
       });
     }
     const unmet = spec.precondition ? spec.precondition(current.rows[0]) : null;
@@ -1017,9 +1100,15 @@ async function qualifyRegisterRecord(
       await client.query('ROLLBACK');
       return res.status(409).json({ success: false, error: unmet });
     }
+    /* Every interpolated name here is a literal from this file's own closed
+       set — the table union above and the `signing` defaults — never caller
+       input; the values still travel as parameters. */
     await client.query(
       `UPDATE ${spec.table}
-          SET status = 'qualified', qualified_by = $3, qualification_date = NOW(), updated_at = NOW()
+          SET ${signing.statusColumn} = '${signing.signedValue}',
+              ${signing.signedByColumn} = $3,
+              ${signing.signedAtColumn} = NOW(),
+              updated_at = NOW()
         WHERE id = $1 AND organization_id = $2`,
       [id, orgId, userId],
     );
@@ -1040,10 +1129,10 @@ async function qualifyRegisterRecord(
        shape every other endpoint of this register returns — the register table
        adopts the server row after a write, and a snake_case body would blank
        every column it just filled in. */
-    const row = await spec.reselect(id, orgId);
+    const row = await spec.reselect(String(id), orgId);
     const linkage = row
-      ? await linkToModule3(spec.propagation, orgId, row as { id: number; projectId?: string | null }, req, spec.writeThrough)
-      : { module3Linked: false, module3Warning: 'Qualified. The record could not be re-read to link it into Module 3.' };
+      ? await linkToModule3(spec.propagation, orgId, row as { id: number | string; projectId?: string | null }, req, spec.writeThrough)
+      : { module3Linked: false, module3Warning: `Signed. The record could not be re-read to link it into Module 3.` };
     return res.json({
       success: true,
       data: row,
@@ -1052,7 +1141,7 @@ async function qualifyRegisterRecord(
     });
   } catch (error) {
     await client.query('ROLLBACK').catch(() => {});
-    return respondWriteError(res, error, `Failed to qualify ${spec.subject}`);
+    return respondWriteError(res, error, `Failed to ${signing.signedValue === 'validated' ? 'validate' : 'qualify'} ${spec.subject}`);
   } finally {
     client.release();
   }
@@ -1071,11 +1160,11 @@ router.get('/container-closures', async (req, res) => {
   }
 });
 
-const reselectContainerClosure = async (id: number, orgId: number) => {
+const reselectContainerClosure = async (id: string, orgId: number) => {
   const [row] = await db
     .select()
     .from(cmcContainerClosures)
-    .where(and(eq(cmcContainerClosures.id, id), eq(cmcContainerClosures.organizationId, orgId)));
+    .where(and(eq(cmcContainerClosures.id, parseInt(id, 10)), eq(cmcContainerClosures.organizationId, orgId)));
   return row as Record<string, any> | undefined;
 };
 
@@ -1111,7 +1200,7 @@ router.put('/container-closures/:id', async (req, res) => {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = containerClosureBody.partial().parse(req.body);
-    const stored = await reselectContainerClosure(id, orgId);
+    const stored = await reselectContainerClosure(String(id), orgId);
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'container-closures', stored?.status)) return;
     const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
       validatedData as Record<string, unknown>,
@@ -1161,11 +1250,11 @@ router.get('/reference-standards', async (req, res) => {
   }
 });
 
-const reselectReferenceStandard = async (id: number, orgId: number) => {
+const reselectReferenceStandard = async (id: string, orgId: number) => {
   const [row] = await db
     .select()
     .from(cmcReferenceStandards)
-    .where(and(eq(cmcReferenceStandards.id, id), eq(cmcReferenceStandards.organizationId, orgId)));
+    .where(and(eq(cmcReferenceStandards.id, parseInt(id, 10)), eq(cmcReferenceStandards.organizationId, orgId)));
   return row as Record<string, any> | undefined;
 };
 
@@ -1191,7 +1280,7 @@ router.put('/reference-standards/:id', async (req, res) => {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = referenceStandardBody.partial().parse(req.body);
-    const stored = await reselectReferenceStandard(id, orgId);
+    const stored = await reselectReferenceStandard(String(id), orgId);
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'reference-standards', stored?.status)) return;
     const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
       validatedData as Record<string, unknown>,
@@ -1244,11 +1333,11 @@ router.get('/impurity-profiles', async (req, res) => {
   }
 });
 
-const reselectImpurityProfile = async (id: number, orgId: number) => {
+const reselectImpurityProfile = async (id: string, orgId: number) => {
   const [row] = await db
     .select()
     .from(cmcImpurityProfiles)
-    .where(and(eq(cmcImpurityProfiles.id, id), eq(cmcImpurityProfiles.organizationId, orgId)));
+    .where(and(eq(cmcImpurityProfiles.id, parseInt(id, 10)), eq(cmcImpurityProfiles.organizationId, orgId)));
   return row as Record<string, any> | undefined;
 };
 
@@ -1278,7 +1367,7 @@ router.put('/impurity-profiles/:id', async (req, res) => {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = impurityProfileBody.partial().parse(req.body);
-    const stored = await reselectImpurityProfile(id, orgId);
+    const stored = await reselectImpurityProfile(String(id), orgId);
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'impurity-profiles', stored?.status)) return;
     const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
       validatedData as Record<string, unknown>,
@@ -1384,6 +1473,442 @@ router.put('/dissolution-profiles/:id', async (req, res) => {
   } catch (error) {
     return respondWriteError(res, error, 'Failed to update dissolution profile');
   }
+});
+
+/**
+ * Exactly one formulation version may claim to be the current one.
+ *
+ * §3.2.P.1 renders the CURRENT composition; two records claiming it means the
+ * governing composition is not established, and the section says so. Refusing
+ * the second write is better than composing the ambiguity: the staffer marking
+ * a new version current is told to supersede the old one first.
+ */
+async function currentFormulationConflict(
+  orgId: number,
+  incoming: Record<string, unknown>,
+  excludeId: number | null,
+  /* The project the record ACTUALLY belongs to. On an update the body does not
+     carry it — projectId is fixed at creation and the client's patch never
+     sends it — so scoping the check to the body meant every edit that promoted
+     a version to current was compared against unfiled records instead of the
+     project's own, and the guard was dead on the exact action it governs. */
+  storedProjectId?: string | null,
+): Promise<string | null> {
+  if (String(incoming.status ?? '').trim().toLowerCase() !== 'current') return null;
+  const fromRow = typeof storedProjectId === 'string' ? storedProjectId.trim() : '';
+  const projectId = fromRow || (typeof incoming.projectId === 'string' ? incoming.projectId.trim() : '');
+  const existing = await db
+    .select({ id: cmcFormulationRecords.id, name: cmcFormulationRecords.formulationName, version: cmcFormulationRecords.version })
+    .from(cmcFormulationRecords)
+    .where(
+      and(
+        eq(cmcFormulationRecords.organizationId, orgId),
+        eq(cmcFormulationRecords.status, 'current'),
+        projectId ? eq(cmcFormulationRecords.projectId, projectId) : isNull(cmcFormulationRecords.projectId),
+      ),
+    );
+  const other = existing.filter((r) => r.id !== excludeId);
+  if (other.length === 0) return null;
+  const named = other.map((r) => `${r.name}${r.version ? ` (${r.version})` : ''}`).join(', ');
+  return `${named} is already the current formulation for this project. Mark it superseded before making another version current — §3.2.P.1 renders one governing composition.`;
+}
+
+
+/* ── Material specifications — §3.2.P.4 excipients, §3.2.S.2.3 raw materials ──
+ *
+ * One register, two canonical source types: `materialRole` decides which, so an
+ * excipient files under §3.2.P.4 and a starting material under §3.2.S.2.3
+ * without either completing the other's section.
+ */
+router.get('/material-specs', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const rows = await db
+      .select()
+      .from(cmcMaterialSpecs)
+      .where(and(eq(cmcMaterialSpecs.organizationId, orgId), projectFilter(req, cmcMaterialSpecs.projectId)));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch material specifications');
+  }
+});
+
+router.post('/material-specs', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const validatedData = materialSpecBody.parse(req.body);
+    const [row] = await db
+      .insert(cmcMaterialSpecs)
+      .values({ ...withoutOrgId(validatedData as Record<string, unknown>), organizationId: orgId } as typeof cmcMaterialSpecs.$inferInsert)
+      .returning();
+    const linkage = await linkToModule3('write_through_material_spec', orgId, row, req, writeThroughMaterialSpec);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create material specification');
+  }
+});
+
+/** Record the supplier's origin declaration, attach the TSE certificate, or correct the entry. */
+router.put('/material-specs/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = materialSpecBody.partial().parse(req.body);
+    const { projectId: _fixedAtCreation, ...editable } = withoutOrgId(
+      validatedData as Record<string, unknown>,
+    ) as { projectId?: unknown } & Record<string, unknown>;
+    const [row] = await db
+      .update(cmcMaterialSpecs)
+      .set({ ...editable, updatedAt: new Date() })
+      .where(and(eq(cmcMaterialSpecs.id, id), eq(cmcMaterialSpecs.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Material specification not found' });
+    const linkage = await linkToModule3('write_through_material_spec', orgId, row, req, writeThroughMaterialSpec);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update material specification');
+  }
+});
+
+/* ── Formulation records — §3.2.P.1 composition, §3.2.P.3.2 batch formula ───── */
+router.get('/formulation-records', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const rows = await db
+      .select()
+      .from(cmcFormulationRecords)
+      .where(and(eq(cmcFormulationRecords.organizationId, orgId), projectFilter(req, cmcFormulationRecords.projectId)));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch formulation records');
+  }
+});
+
+/**
+ * Record a formulation version.
+ *
+ * Exactly one version may be `current` at a time: §3.2.P.1 renders the current
+ * composition, and two records claiming it means the governing composition is
+ * not established. The register enforces that in the same transaction as the
+ * write, rather than letting the section discover the ambiguity later.
+ */
+router.post('/formulation-records', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const validatedData = formulationRecordBody.parse(req.body);
+    const conflict = await currentFormulationConflict(orgId, validatedData as Record<string, unknown>, null);
+    if (conflict) return res.status(409).json({ success: false, error: conflict });
+    const [row] = await db
+      .insert(cmcFormulationRecords)
+      .values({ ...withoutOrgId(validatedData as Record<string, unknown>), organizationId: orgId } as typeof cmcFormulationRecords.$inferInsert)
+      .returning();
+    const linkage = await linkToModule3('write_through_formulation_record', orgId, row, req, writeThroughFormulationRecord);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create formulation record');
+  }
+});
+
+/** Revise a formulation, or mark it superseded when a new version takes over. */
+router.put('/formulation-records/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = formulationRecordBody.partial().parse(req.body);
+    const [storedRow] = await db
+      .select({ projectId: cmcFormulationRecords.projectId })
+      .from(cmcFormulationRecords)
+      .where(and(eq(cmcFormulationRecords.id, id), eq(cmcFormulationRecords.organizationId, orgId)));
+    if (!storedRow) return res.status(404).json({ success: false, error: 'Formulation record not found' });
+    const conflict = await currentFormulationConflict(
+      orgId, validatedData as Record<string, unknown>, id, storedRow.projectId,
+    );
+    if (conflict) return res.status(409).json({ success: false, error: conflict });
+    const { projectId: _fixedAtCreation, ...editable } = withoutOrgId(
+      validatedData as Record<string, unknown>,
+    ) as { projectId?: unknown } & Record<string, unknown>;
+    const [row] = await db
+      .update(cmcFormulationRecords)
+      .set({ ...editable, updatedAt: new Date() })
+      .where(and(eq(cmcFormulationRecords.id, id), eq(cmcFormulationRecords.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Formulation record not found' });
+    const linkage = await linkToModule3('write_through_formulation_record', orgId, row, req, writeThroughFormulationRecord);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update formulation record');
+  }
+});
+
+/* ── Manufacturing processes — §3.2.S.2.2 / §3.2.P.3.3 ───────────────────────
+ *
+ * The register writes `manufacturing_processes`, which already existed: it was
+ * reconstructed from its two readers (server/services/cmc/ich-compliance-
+ * checker.ts and server/services/cmc/qbd-analyzer.ts) because no writer had
+ * ever been built for it, and it is cmc_process_steps' FK target. A second
+ * table would have left those readers pointed at rows nobody writes.
+ *
+ * `processType` is the side: a drug-substance process is §3.2.S.2 content and a
+ * drug-product one is §3.2.P.3, and neither completes the other's section.
+ */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+router.get('/manufacturing-processes', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    /* This register's project_id is a uuid column, unlike its siblings' text.
+       Postgres rejects a malformed uuid with 22P02, which would have surfaced
+       as a 500 on a mistyped query string; a bad filter is a bad request. */
+    const projectQuery = typeof req.query.projectId === 'string' ? req.query.projectId.trim() : '';
+    if (projectQuery && !UUID_RE.test(projectQuery)) {
+      return res.status(400).json({ success: false, error: 'projectId must be a uuid' });
+    }
+    const rows = await db
+      .select()
+      .from(manufacturingProcesses)
+      .where(and(eq(manufacturingProcesses.organizationId, orgId), projectFilter(req, manufacturingProcesses.projectId)));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch manufacturing processes');
+  }
+});
+
+const reselectManufacturingProcess = async (id: string, orgId: number) => {
+  const [row] = await db
+    .select()
+    .from(manufacturingProcesses)
+    .where(and(eq(manufacturingProcesses.id, id), eq(manufacturingProcesses.organizationId, orgId)));
+  return row as Record<string, any> | undefined;
+};
+
+/* A process is `validated` under a signature, not by typing the word. Same rule
+   as qualification on the other registers, different vocabulary because this
+   table's lifecycle column is validation_status and its readers already use it. */
+const PROCESS_SIGNING = {
+  statusColumn: 'validation_status',
+  signedValue: 'validated',
+  signedByColumn: 'validated_by',
+  signedAtColumn: 'validation_date',
+} as const;
+const PROCESS_VOCAB = { signedValue: 'validated', verb: 'Process validation', path: 'validate' };
+
+router.post('/manufacturing-processes', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const validatedData = manufacturingProcessBody.parse(req.body);
+    if (refusesUngovernedQualification(res, validatedData.validationStatus, 'manufacturing-processes', undefined, PROCESS_VOCAB)) return;
+    const [row] = await db
+      .insert(manufacturingProcesses)
+      .values({ ...validatedData, organizationId: orgId } as typeof manufacturingProcesses.$inferInsert)
+      .returning();
+    const linkage = await linkToModule3('write_through_manufacturing_process', orgId, row, req, writeThroughManufacturingProcess);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create manufacturing process');
+  }
+});
+
+/** Add the later steps, attach the parameters, or correct the record. */
+router.put('/manufacturing-processes/:id', async (req, res) => {
+  try {
+    const id = String(req.params.id ?? '').trim();
+    /* Same guard as the GET on this table: its primary key is a uuid, and
+       Postgres answers a malformed one with 22P02, which respondWriteError
+       turned into a 500 and logged as a CMC write failure. A client-side typo
+       is a bad request, not a server fault. */
+    if (!UUID_RE.test(id)) {
+      return res.status(400).json({ success: false, error: 'A manufacturing process id must be a uuid' });
+    }
+    const orgId = getOrgId(req);
+    const validatedData = manufacturingProcessBody.partial().parse(req.body);
+    const stored = await reselectManufacturingProcess(id, orgId);
+    if (!stored) return res.status(404).json({ success: false, error: 'Manufacturing process not found' });
+    const sentStatus = Object.prototype.hasOwnProperty.call(req.body ?? {}, 'validationStatus');
+    const clearedStatus = sentStatus && !String(validatedData.validationStatus ?? '').trim();
+    /* An EXPLICIT clear is a de-signing. refusesUngovernedQualification's
+       out-of-signed-state branch is guarded on a truthy incoming value, so a
+       null or empty string slipped past both branches and wrote SQL NULL over
+       validation_status — stranding validated_by and validation_date on a
+       record that no longer claimed to be validated, and re-opening the
+       governed route for a second person to sign over the first. */
+    if (clearedStatus) {
+      if (String(stored.validationStatus ?? '').toLowerCase() === PROCESS_SIGNING.signedValue) {
+        return res.status(409).json({
+          success: false,
+          error:
+            'This process is validated under a recorded signature and its validation status cannot be cleared by an ordinary edit. ' +
+            'Retire it, or record a new assessment.',
+        });
+      }
+    } else if (refusesUngovernedQualification(res, validatedData.validationStatus, 'manufacturing-processes', stored.validationStatus, PROCESS_VOCAB)) {
+      return;
+    }
+    /* The state a validation signature was refused over must not be reachable
+       one PUT after signing. The /validate precondition refuses to sign a
+       process that records no steps; clearing the steps afterwards would leave
+       the signature attached to a process the register does not describe. */
+    if (String(stored.validationStatus ?? '').toLowerCase() === PROCESS_SIGNING.signedValue
+        && Object.prototype.hasOwnProperty.call(req.body ?? {}, 'processSteps')
+        && (validatedData.processSteps ?? []).length === 0) {
+      return res.status(409).json({
+        success: false,
+        error:
+          'This process is validated under a recorded signature. Removing its steps would leave that signature ' +
+          'attached to a process the register does not describe — retire it, or record a new process.',
+      });
+    }
+    /* The signature columns are written by the governed route only, and the
+       project a process belongs to is fixed at creation. */
+    const {
+      projectId: _fixedAtCreation,
+      validatedBy: _signedBy,
+      validationDate: _signedAt,
+      ...editable
+    } = validatedData as Record<string, unknown>;
+    /* Never write an empty lifecycle: an omitted or cleared status leaves the
+       stored one alone rather than nulling the column. */
+    if (clearedStatus) delete (editable as Record<string, unknown>).validationStatus;
+    const [row] = await db
+      .update(manufacturingProcesses)
+      .set({ ...editable, updatedAt: new Date() })
+      .where(and(eq(manufacturingProcesses.id, id), eq(manufacturingProcesses.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Manufacturing process not found' });
+    const linkage = await linkToModule3('write_through_manufacturing_process', orgId, row, req, writeThroughManufacturingProcess);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update manufacturing process');
+  }
+});
+
+/** The governed validation of a manufacturing process (21 CFR Part 11). */
+router.post('/manufacturing-processes/:id/validate', async (req, res) => {
+  return qualifyRegisterRecord(req, res, {
+    table: 'manufacturing_processes',
+    target: 'manufacturing_process',
+    surface: 'cmc-manufacturing-processes',
+    subject: 'manufacturing process',
+    propagation: 'write_through_manufacturing_process',
+    signing: PROCESS_SIGNING,
+    idKind: 'uuid',
+    reselect: reselectManufacturingProcess,
+    writeThrough: writeThroughManufacturingProcess,
+    /* A process nobody has described cannot be signed as validated. The
+       signature would attest to a sequence of unit operations the register does
+       not hold. */
+    precondition: (row) => {
+      const steps = Array.isArray(row.process_steps) ? row.process_steps : [];
+      if (steps.length === 0) {
+        return 'This process records no steps. A validation signature would attest to a process the register does not describe — record the unit operations first.';
+      }
+      return null;
+    },
+  });
+});
+
+/* ── Characterisation studies — §3.2.S.3.1 ───────────────────────────────────
+ *
+ * The composer has demanded a `characterization` source since it was written
+ * and nothing produced one. Each study is typed by which of the section's three
+ * questions it answers, so three studies of one kind cannot green all three.
+ */
+router.get('/characterization-studies', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const rows = await db
+      .select()
+      .from(cmcCharacterizationStudies)
+      .where(and(eq(cmcCharacterizationStudies.organizationId, orgId), projectFilter(req, cmcCharacterizationStudies.projectId)));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch characterisation studies');
+  }
+});
+
+const reselectCharacterizationStudy = async (id: string, orgId: number) => {
+  const [row] = await db
+    .select()
+    .from(cmcCharacterizationStudies)
+    .where(and(eq(cmcCharacterizationStudies.id, parseInt(id, 10)), eq(cmcCharacterizationStudies.organizationId, orgId)));
+  return row as Record<string, any> | undefined;
+};
+
+router.post('/characterization-studies', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const validatedData = characterizationStudyBody.parse(req.body);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'characterization-studies')) return;
+    const [row] = await db
+      .insert(cmcCharacterizationStudies)
+      .values({ ...withoutGovernedFields(validatedData as Record<string, unknown>), organizationId: orgId } as typeof cmcCharacterizationStudies.$inferInsert)
+      .returning();
+    const linkage = await linkToModule3('write_through_characterization_study', orgId, row, req, writeThroughCharacterizationStudy);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create characterisation study');
+  }
+});
+
+/** Record the result when the study reads out, or correct the entry. */
+router.put('/characterization-studies/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = characterizationStudyBody.partial().parse(req.body);
+    const stored = await reselectCharacterizationStudy(String(id), orgId);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'characterization-studies', stored?.status)) return;
+    /* The /qualify precondition refuses to sign a study that establishes
+       nothing; clearing the result afterwards would leave the signature
+       attached to exactly that. What the incoming edit leaves behind is what
+       matters, so the check runs over the merged state, not the patch. */
+    if (stored && String(stored.status ?? '').toLowerCase() === 'qualified') {
+      const body = req.body as Record<string, unknown>;
+      const merged = (key: 'result' | 'conclusion') =>
+        Object.prototype.hasOwnProperty.call(body ?? {}, key)
+          ? String((validatedData as Record<string, unknown>)[key] ?? '').trim()
+          : String(stored[key] ?? '').trim();
+      if (!merged('result') && !merged('conclusion')) {
+        return res.status(409).json({
+          success: false,
+          error:
+            'This study is qualified under a recorded signature. Clearing what it established would leave that ' +
+            'signature attesting to nothing — retire it, or record a new study.',
+        });
+      }
+    }
+    const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
+      validatedData as Record<string, unknown>,
+    ) as { projectId?: unknown } & Record<string, unknown>;
+    const [row] = await db
+      .update(cmcCharacterizationStudies)
+      .set({ ...editable, updatedAt: new Date() })
+      .where(and(eq(cmcCharacterizationStudies.id, id), eq(cmcCharacterizationStudies.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Characterisation study not found' });
+    const linkage = await linkToModule3('write_through_characterization_study', orgId, row, req, writeThroughCharacterizationStudy);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update characterisation study');
+  }
+});
+
+/** The governed qualification of a characterisation study (21 CFR Part 11). */
+router.post('/characterization-studies/:id/qualify', async (req, res) => {
+  return qualifyRegisterRecord(req, res, {
+    table: 'cmc_characterization_studies',
+    target: 'characterization_study',
+    surface: 'cmc-characterization-studies',
+    subject: 'characterisation study',
+    propagation: 'write_through_characterization_study',
+    reselect: reselectCharacterizationStudy,
+    writeThrough: writeThroughCharacterizationStudy,
+    /* A study with neither a result nor a conclusion establishes nothing; a
+       signature on it would attest to a finding the register does not hold. */
+    precondition: (row) =>
+      String(row.result ?? '').trim() || String(row.conclusion ?? '').trim()
+        ? null
+        : 'This study records neither a result nor a conclusion. Record what it established before signing it.',
+  });
 });
 
 // POST /api/cmc/insights/take-action - Take action on AI insights (DB-backed)

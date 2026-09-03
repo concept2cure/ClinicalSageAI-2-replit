@@ -46,8 +46,12 @@ import { buildPackageManifest } from '../services/regulatory/submissionPackageBu
 import { resolveRegistryId } from '../services/regulatory/registry/legacySubmissionTypeMapper.js';
 import { authMiddleware } from '../auth';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('report-os');
 router.use(authMiddleware);
 const canSeedTaxonomy = () =>
   process.env.NODE_ENV !== 'production' ||
@@ -766,7 +770,7 @@ router.post('/taxonomy/seed', async (_req: Request, res: Response) => {
     }
     return res.json({ success: true, seeded: allSeed.length });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'seeding taxonomy', error);
   }
 });
 
@@ -804,7 +808,7 @@ router.get('/taxonomy', async (req: Request, res: Response) => {
     });
     return res.json({ data: annotated, meta: { segments, tier } });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'loading taxonomy', error);
   }
 });
 
@@ -834,7 +838,7 @@ router.get('/portfolio/org', async (req: Request, res: Response) => {
     }
     return res.json({ data: summary });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'loading org', error);
   }
 });
 
@@ -869,7 +873,7 @@ router.get('/portfolio', async (req: Request, res: Response) => {
     }
     return res.json({ data: report });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'loading portfolio', error);
   }
 });
 
@@ -925,7 +929,7 @@ router.get('/program-groups', async (req: Request, res: Response) => {
       })),
     });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'loading program groups', error);
   }
 });
 
@@ -974,7 +978,7 @@ router.post('/program-groups', async (req: Request, res: Response) => {
 
     return res.status(201).json({ data: group });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving program groups', error);
   }
 });
 
@@ -1019,7 +1023,7 @@ router.patch('/program-groups/:id', async (req: Request, res: Response) => {
 
     return res.json({ data: updated });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'updating program groups', error);
   }
 });
 
@@ -1048,7 +1052,7 @@ router.get('/program-groups/:id/snapshots', async (req: Request, res: Response) 
 
     return res.json({ data: rows });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'loading snapshots', error);
   }
 });
 
@@ -1093,7 +1097,7 @@ router.post('/program-groups/:id/snapshots', async (req: Request, res: Response)
 
     return res.status(201).json({ data: snapshot });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving snapshots', error);
   }
 });
 
@@ -1287,7 +1291,7 @@ router.post('/runs', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving runs', error);
   }
 });
 
@@ -1316,7 +1320,7 @@ router.get('/runs/:id/dependencies', async (req: Request, res: Response) => {
 
     return res.json({ data: rows });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'loading dependencies', error);
   }
 });
 
@@ -1380,7 +1384,7 @@ router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
     res.setHeader('Content-Disposition', `attachment; filename="report-run-${runId}.pdf"`);
     return res.send(buffer);
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'loading export.pdf', error);
   }
 });
 
@@ -1484,7 +1488,7 @@ router.get('/runs/:id/rendered', async (req: Request, res: Response) => {
     const { rendered } = buildRenderedFromRun(run, reportType);
     return res.json({ data: rendered });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'loading rendered', error);
   }
 });
 
@@ -1564,7 +1568,7 @@ router.post('/runs/:id/finalize', async (req: Request, res: Response) => {
 
     return res.json({ data: { runId, status: 'final', seal } });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving finalize', error);
   }
 });
 
@@ -1655,7 +1659,7 @@ router.get('/runs', async (req: Request, res: Response) => {
 
     return res.json({ data: enriched });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'loading runs', error);
   }
 });
 
@@ -1715,7 +1719,7 @@ router.post('/bundles', async (req: Request, res: Response) => {
     await persistBundleRecord(bundle);
     return res.status(201).json({ data: bundle });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving bundles', error);
   }
 });
 
@@ -1733,7 +1737,7 @@ router.get('/bundles', async (req: Request, res: Response) => {
     const rows = await loadBundlesForOrg(organizationId);
     return res.json({ data: rows });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'loading bundles', error);
   }
 });
 
@@ -1762,7 +1766,7 @@ router.get('/bundles/:bundleId/export.pdf', async (req: Request, res: Response) 
     );
     return res.send(buffer);
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'loading export.pdf', error);
   }
 });
 
@@ -1780,7 +1784,7 @@ router.get('/deliveries', async (req: Request, res: Response) => {
     const rows = await loadDeliveriesForOrg(organizationId);
     return res.json({ data: rows });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'loading deliveries', error);
   }
 });
 
@@ -1886,7 +1890,7 @@ router.post('/deliveries', async (req: Request, res: Response) => {
 
     return res.status(201).json({ data: delivery });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving deliveries', error);
   }
 });
 
@@ -1943,7 +1947,7 @@ router.post('/correspondence/capture', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving capture', error);
   }
 });
 
@@ -1997,7 +2001,7 @@ router.get('/health', async (_req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'loading health', error);
   }
 });
 

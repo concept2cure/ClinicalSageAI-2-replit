@@ -892,7 +892,7 @@
 .c2c-v2 .vd-crumb:hover{ background:var(--bg-200); color:var(--text-100); }
 .c2c-v2 .vd-crumb.cur{ color:var(--text-100); font-weight:600; cursor:default; }
 .c2c-v2 .vd-crumb svg{ width:13px; height:13px; }
-.c2c-v2 .vd-crumb-sep{ color:var(--text-500); }
+.c2c-v2 .vd-crumb-sep{ color:var(--text-400); }
 .c2c-v2 .vd-cols, .c2c-v2 .vd-row{ display:grid !important; grid-template-columns:minmax(0,1fr) 126px 128px 92px 110px; align-items:center; gap:10px; }
 .c2c-v2 .vd-cols{ padding:7px 12px; border-bottom:1px solid var(--border); font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-500); font-weight:600; }
 .c2c-v2 .vd-row{ width:100%; text-align:left; padding:8px 12px; background:none; border:none; border-bottom:1px solid var(--border); cursor:pointer; font-size:12px; }

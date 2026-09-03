@@ -35,7 +35,8 @@ import {
   grantAuthoringPermission,
   resolveAuthoringSectionScope,
 } from '../services/authoring/authoring-permissions';
-import { sectionInsertIndex } from '../../shared/regulatory/section-code';
+import { sectionInsertIndex, sectionStructureIssues } from '../../shared/regulatory/section-code';
+import { serverError } from '../lib/api-response';
 import {
   computeChainHash,
   sha256Hex,
@@ -1210,10 +1211,7 @@ router.post('/sections/:sectionId/tokens', async (req: Request, res: Response) =
     });
   } catch (error) {
     console.error('Error saving token:', error);
-    res.status(500).json({
-      error: 'Failed to save token',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving tokens', error);
   }
 });
 
@@ -1238,10 +1236,7 @@ router.delete('/sections/:sectionId/tokens/:citeId', async (req: Request, res: R
     });
   } catch (error) {
     console.error('Error deleting token:', error);
-    res.status(500).json({
-      error: 'Failed to delete token',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'deleting tokens', error);
   }
 });
 
@@ -1410,10 +1405,7 @@ router.get('/templates', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error listing templates:', error);
-    res.status(500).json({
-      error: 'Failed to list templates',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading templates', error);
   }
 });
 
@@ -1444,10 +1436,7 @@ router.get('/templates/:id', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error fetching template:', error);
-    res.status(500).json({
-      error: 'Failed to fetch template',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading templates', error);
   }
 });
 
@@ -1496,10 +1485,7 @@ router.post(
       });
     } catch (error) {
       console.error('Error creating template:', error);
-      res.status(500).json({
-        error: 'Failed to create template',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
+      return serverError(res, logger, 'saving templates', error);
     }
   }
 );
@@ -1543,10 +1529,7 @@ router.get('/guidance/:sectionId', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error fetching guidance:', error);
-    res.status(500).json({
-      error: 'Failed to fetch guidance',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading guidance', error);
   }
 });
 
@@ -1579,10 +1562,7 @@ router.post(
       });
     } catch (error) {
       console.error('Error saving guidance:', error);
-      res.status(500).json({
-        error: 'Failed to save guidance',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
+      return serverError(res, logger, 'saving guidance', error);
     }
   }
 );
@@ -1713,11 +1693,7 @@ router.get('/docs', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error listing documents:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to list documents',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading docs', error);
   }
 });
 
@@ -2057,11 +2033,7 @@ router.post('/docs', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error creating document:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create document',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving docs', error);
   }
 });
 
@@ -2102,11 +2074,7 @@ router.get('/docs/:docId', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error getting document:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get document details',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading docs', error);
   }
 });
 
@@ -2146,18 +2114,29 @@ router.get('/docs/:docId/sections', async (req: Request, res: Response) => {
       [docId, tenantId]
     );
 
+    /* Two structural facts about the document as a whole, computed from the
+       rows just read — no second query, and every client that already reads
+       this endpoint gets them.
+
+       They are worth stating because neither is visible from any one section:
+       a code filed twice puts two 3.2.S in the assembled dossier with nothing
+       to say which is meant, and a stored order that disagrees with the codes
+       means the dossier assembles in the wrong order. Documents created before
+       the section-create path assigned a real position have every section at
+       index 0, so this is how one is recognised. */
+    const structure = sectionStructureIssues(
+      result.rows.map((r: { code?: string | null }) => String(r.code ?? '')),
+    );
+
     res.json({
       success: true,
       sections: result.rows,
       count: result.rowCount,
+      structure,
     });
   } catch (error) {
     console.error('Error getting sections:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get document sections',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading sections', error);
   }
 });
 
@@ -2302,11 +2281,7 @@ router.post('/sections', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error creating section:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create section',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving sections', error);
   }
 });
 
@@ -2668,11 +2643,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error updating section:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update section',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'updating sections', error);
   }
 });
 
@@ -2717,11 +2688,7 @@ router.get('/sections/:sectionId/history', async (req: Request, res: Response) =
     });
   } catch (error) {
     console.error('Error getting revision history:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get revision history',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading history', error);
   }
 });
 
@@ -2883,11 +2850,7 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
     });
   } catch (error) {
     console.error('Error reverting section:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to revert section',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving revert', error);
   }
 });
 
@@ -2976,11 +2939,7 @@ router.post('/sections/:sectionId/comment', async (req: Request, res: Response) 
     });
   } catch (error) {
     console.error('Error adding comment:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to add comment',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving comment', error);
   }
 });
 
@@ -3103,11 +3062,7 @@ router.patch('/comments/:commentId', async (req: Request, res: Response) => {
     }
   } catch (error) {
     console.error('Error updating comment:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update comment',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'updating comments', error);
   }
 });
 
@@ -3147,11 +3102,7 @@ router.post('/sections/:sectionId/cite', async (req: Request, res: Response) => 
     });
   } catch (error) {
     console.error('Error adding citation:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to add citation',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving cite', error);
   }
 });
 
@@ -3258,11 +3209,7 @@ router.get('/sections/:sectionId/citations', async (req: Request, res: Response)
     });
   } catch (error) {
     console.error('Error getting citations:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get citations',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading citations', error);
   }
 });
 
@@ -3342,11 +3289,7 @@ router.get('/documents/:id/comments', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error fetching comments:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch comments',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading comments', error);
   }
 });
 
@@ -3392,11 +3335,7 @@ router.get('/documents/:id/reviews', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error fetching reviews:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch reviews',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading reviews', error);
   }
 });
 
@@ -3470,11 +3409,7 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error submitting review:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to submit review',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving review', error);
   }
 });
 
@@ -3519,11 +3454,7 @@ router.post('/documents/:id/request-review', async (req: Request, res: Response)
     });
   } catch (error) {
     console.error('Error requesting review:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to request review',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving request review', error);
   }
 });
 
@@ -3869,11 +3800,7 @@ Study Design:
     });
   } catch (error) {
     console.error('Error generating AI draft:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to generate AI draft',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'drafting AI', error);
   }
 });
 
@@ -4090,11 +4017,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
     });
   } catch (error) {
     console.error('Error accepting AI draft:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to accept AI draft',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving accept', error);
   }
 });
 
@@ -4305,11 +4228,7 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
     });
   } catch (error) {
     console.error('Error scanning for deficiencies:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to scan for deficiencies',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving deficiency scan', error);
   }
 });
 
@@ -4354,11 +4273,7 @@ router.get('/stats', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error getting statistics:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get authoring statistics',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading stats', error);
   }
 });
 
@@ -5019,11 +4934,7 @@ router.get('/sections/:sectionId/tokens', async (req: Request, res: Response) =>
     res.json(result.rows);
   } catch (error) {
     console.error('Error getting section tokens:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get section tokens',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'loading tokens', error);
   }
 });
 
@@ -5080,11 +4991,7 @@ router.post('/sections/:sectionId/refresh-token', async (req: Request, res: Resp
     });
   } catch (error) {
     console.error('Error refreshing token:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to refresh token',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving refresh token', error);
   }
 });
 
@@ -6288,6 +6195,20 @@ router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Document must be in DRAFT status to submit' });
     }
 
+    // Every step needs the approver it will be matched against on approval
+    // (`approver_email = $3` in the approve route). Inventing
+    // `qa@company.com` from the role produced a step nobody could approve —
+    // or someone unintended could (ledger L152).
+    const steps = workflow_steps as Array<{ role?: string; approver_email?: unknown }>;
+    const stepWithoutApprover = steps.findIndex(
+      (s) => typeof s?.approver_email !== 'string' || !s.approver_email.trim()
+    );
+    if (stepWithoutApprover >= 0) {
+      return res.status(400).json({
+        error: `Workflow step ${stepWithoutApprover + 1} has no approver_email; every step needs the approver it will be matched against`,
+      });
+    }
+
     // Create workflow
     const workflowId = crypto.randomUUID();
 
@@ -6303,7 +6224,7 @@ router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
           docId,
           i + 1,
           step.role,
-          step.approver_email || `${step.role.toLowerCase()}@company.com`,
+          step.approver_email,
           tenantId,
         ]
       );
@@ -6376,10 +6297,7 @@ router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Submit error:', error);
-    res.status(500).json({
-      error: 'Submit failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'submitting docs', error);
   }
 });
 
@@ -6662,10 +6580,7 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Sign error:', error);
-    res.status(500).json({
-      error: 'Sign failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'signing docs', error);
   }
 });
 
@@ -6846,80 +6761,47 @@ router.post('/users/pin', async (req: Request, res: Response) => {
 
 // ============= AI ANALYSIS & SUGGESTIONS =============
 
-// POST /api/authoring/ai/suggestions - Get real-time suggestions
-router.post('/ai/suggestions', async (req: Request, res: Response) => {
-  try {
-    const { text, context, suggestion_type = 'all' } = req.body;
-    const tenantId = getTenantId(req);
-
-    if (!text) {
-      return res.status(400).json({ error: 'Text is required' });
-    }
-
-    const suggestions: any[] = [];
-
-    // Quick grammar checks
-    const grammarIssues = [
-      { pattern: /\s{2,}/g, type: 'spacing', message: 'Multiple spaces detected' },
-      { pattern: /[.!?]{2,}/g, type: 'punctuation', message: 'Duplicate punctuation' },
-      { pattern: /\b(\w+)\s+\1\b/gi, type: 'duplicate', message: 'Duplicate word' },
-    ];
-
-    grammarIssues.forEach(issue => {
-      const matches = text.matchAll(issue.pattern);
-      for (const match of matches) {
-        suggestions.push({
-          type: 'grammar',
-          severity: 'style',
-          position: { start: match.index, end: match.index + match[0].length },
-          original: match[0],
-          suggested: match[0].replace(issue.pattern, ' '),
-          explanation: issue.message,
-          confidence: 0.95,
-        });
-      }
-    });
-
-    // Regulatory terminology checks
-    const termChecks = [
-      { incorrect: /adverse event/gi, correct: 'adverse event (AE)', type: 'terminology' },
-      {
-        incorrect: /serious adverse event/gi,
-        correct: 'serious adverse event (SAE)',
-        type: 'terminology',
-      },
-      {
-        incorrect: /Good Manufacturing Practice/gi,
-        correct: 'Good Manufacturing Practice (GMP)',
-        type: 'terminology',
-      },
-    ];
-
-    termChecks.forEach(check => {
-      const matches = text.matchAll(check.incorrect);
-      for (const match of matches) {
-        suggestions.push({
-          type: check.type,
-          severity: 'enhancement',
-          position: { start: match.index, end: match.index + match[0].length },
-          original: match[0],
-          suggested: check.correct,
-          explanation: 'Use standard regulatory abbreviation',
-          confidence: 0.9,
-        });
-      }
-    });
-
-    res.json({
-      success: true,
-      suggestions,
-      count: suggestions.length,
-    });
-  } catch (error) {
-    console.error('Suggestion generation error:', error);
-    res.status(500).json({ error: 'Failed to generate suggestions' });
-  }
-});
+/* POST /api/authoring/ai/suggestions has been DELETED.
+ *
+ * It had no caller. The route was mounted — register-inline-routes.ts mounts
+ * this router on '/api/authoring' — so the full path was
+ * /api/authoring/ai/suggestions, and the only occurrence of that path anywhere
+ * in the repository was the comment that used to sit on this line. The nearby
+ * "suggestions" matches in the client are all the editor's own
+ * `editor/suggestions` module, the tracked-change marks, which is a different
+ * thing entirely and is why a fragment search reports this endpoint as live.
+ *
+ * There was no AI in it. It was six hardcoded regexes — three grammar, three
+ * regulatory-terminology — each returning a `confidence` of 0.95 or 0.9.
+ * Nothing scored anything, so those numbers had nothing behind them, and a
+ * fabricated confidence on a governed document surface is the defect this
+ * repository keeps deleting.
+ *
+ * Two of the three grammar rules emitted DESTRUCTIVE replacements, because the
+ * suggestion was built as `match[0].replace(issue.pattern, ' ')` — replacing the
+ * whole match with one space instead of repairing it:
+ *
+ *     "the the"  ->  " "     (deletes the word, at confidence 0.95)
+ *     "Done..."  ->  " "     (an ellipsis becomes a space)
+ *     "Stop!!"   ->  " "     (the punctuation is deleted)
+ *
+ * Only the multiple-spaces rule was right. Accepting a suggestion from this
+ * endpoint would have removed the author's text from a regulated document.
+ *
+ * The terminology rules also overlapped: /adverse event/ and
+ * /serious adverse event/ both match "A serious adverse event occurred.", at
+ * offsets 10 and 2, so one phrase drew two contradictory edits over overlapping
+ * ranges — and both fired unconditionally, so text already reading
+ * "adverse event (AE)" was told to become "adverse event (AE)" again.
+ *
+ * The capability it claimed is served by the canonical paths: real drafting by
+ * AuthoringAiDraft (surfaces/AuthoringAiDraft.tsx, mounted inside
+ * DocumentAuthoring), and heuristic section checks by
+ * POST /sections/:sectionId/ai/deficiency-scan. This was a third parallel path,
+ * which the zero-duplication rule does not allow.
+ *
+ * Pinned by tests/routes/aiSuggestionsDeleted.test.ts.
+ */
 
 /* POST /api/authoring/ai/validate-compliance has been DELETED.
  *
@@ -7037,11 +6919,7 @@ router.post('/documents/:id/tracked-change-decisions', async (req: Request, res:
     res.json({ success: true, decision: result.rows[0] });
   } catch (error) {
     console.error('Error persisting tracked change decision:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to persist tracked change decision',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving tracked change decisions', error);
   }
 });
 
@@ -7132,11 +7010,7 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
     res.json({ success: true, decisions: results, count: results.length });
   } catch (error) {
     console.error('Error persisting bulk tracked change decisions:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to persist bulk tracked change decisions',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving bulk', error);
   }
 });
 
@@ -7422,3 +7296,74 @@ router.get('/images/:id', async (req: Request, res: Response) => {
 });
 
 export default router;
+
+/* ════ Word import ═══════════════════════════════════════════════════════════
+ *
+ * Four services in this repo already read .docx, and all four call mammoth's
+ * `extractRawText` — a flat string, which is correct for the search and
+ * retrieval they do and wrong for authoring. A regulatory author importing a
+ * technical file needs the TABLES: a predicate comparison, a GSPR matrix, a
+ * stability table IS the content, and raw text throws every one away while
+ * leaving enough words on screen to look like a successful import
+ * (MDX_WORK_ORDER W3-5).
+ *
+ * This route PARSES ONLY. It writes nothing: it returns the sections it found
+ * so the author can see what arrived — how many sections, how many tables, and
+ * every warning the conversion produced — and then create them deliberately
+ * through POST /sections, which is the governed write with its lineage gate.
+ * Importing straight into a document would put un-reviewed content into the
+ * governed record on the strength of a drag-and-drop.
+ */
+const docxImport = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    const isDocx =
+      file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      /\.docx$/i.test(file.originalname ?? '');
+    if (isDocx) return cb(null, true);
+    cb(new Error('Only .docx files can be imported. A .doc (Word 97-2003) must be saved as .docx first.'));
+  },
+});
+
+const docxImportErrors = (err: unknown, _req: Request, res: Response, next: (e?: unknown) => void) => {
+  if (!err) return next();
+  const message =
+    (err as { code?: string })?.code === 'LIMIT_FILE_SIZE'
+      ? 'The document is larger than 25 MB. Nothing was imported.'
+      : err instanceof Error
+        ? err.message
+        : 'Upload refused';
+  return res.status(400).json({ success: false, error: message });
+};
+
+router.post(
+  '/import/docx',
+  docxImport.single('file'),
+  docxImportErrors,
+  async (req: Request, res: Response) => {
+    try {
+      if (!getActorId(req)) {
+        return res.status(401).json({ success: false, error: 'Authentication required' });
+      }
+      const file = (req as Request & { file?: { buffer?: Buffer } }).file;
+      if (!file?.buffer?.length) {
+        return res.status(400).json({ success: false, error: 'No document was uploaded.' });
+      }
+
+      const { importDocx } = await import('../import/docx-to-authoring.js');
+      const result = await importDocx(file.buffer);
+
+      return res.json({
+        success: true,
+        sections: result.sections,
+        /* Surfaced, never swallowed: an author who is not told a style was
+           dropped will file the document believing it arrived intact. */
+        warnings: result.warnings,
+        counts: result.counts,
+      });
+    } catch (error) {
+      return serverError(res, logger, 'importing the Word document', error);
+    }
+  },
+);

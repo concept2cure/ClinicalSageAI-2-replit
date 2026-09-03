@@ -14,6 +14,7 @@ import {
   generateSuggestions,
   enrichCsrsWithDetailedInsights,
 } from './protocol_csr_insights.js';
+import { serverError } from '../lib/api-response';
 
 // The CSR matching and insight-enrichment helpers were extracted verbatim to
 // ./protocol_csr_insights.ts. Re-export the public names so the import surface
@@ -399,10 +400,7 @@ router.post('/analyze-file', upload.single('file'), async (req, res) => {
     });
   } catch (error: any) {
     log.error('Error processing protocol file:', error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Failed to process protocol file',
-    });
+    return serverError(res, log, 'saving analyze file', error);
   }
 });
 
@@ -489,11 +487,7 @@ router.post('/parse-file', upload.single('file'), async (req, res) => {
     res.json(protocolData);
   } catch (error) {
     log.error('Error parsing protocol file:', error);
-    res.status(500).json({
-      success: false,
-      message: error instanceof Error ? error.message : 'Failed to parse protocol file',
-      error: process.env.NODE_ENV === 'development' ? String(error) : undefined,
-    });
+    return serverError(res, log, 'saving parse file', error);
   }
 });
 
@@ -516,11 +510,7 @@ router.post('/parse-text', express.json(), async (req, res) => {
     res.json(protocolData);
   } catch (error) {
     log.error('Error analyzing protocol text:', error);
-    res.status(500).json({
-      success: false,
-      message: error instanceof Error ? error.message : 'Failed to analyze protocol text',
-      error: process.env.NODE_ENV === 'development' ? String(error) : undefined,
-    });
+    return serverError(res, log, 'saving parse text', error);
   }
 });
 
@@ -561,11 +551,7 @@ router.post('/deep-analyze', express.json(), async (req, res) => {
     }
   } catch (error) {
     log.error('Error performing deep analysis:', error);
-    res.status(500).json({
-      success: false,
-      message: error instanceof Error ? error.message : 'Failed to perform deep analysis',
-      error: process.env.NODE_ENV === 'development' ? String(error) : undefined,
-    });
+    return serverError(res, log, 'saving deep analyze', error);
   }
 });
 
@@ -645,10 +631,7 @@ router.post('/optimize', express.json(), async (req, res) => {
     });
   } catch (error: any) {
     log.error('Error optimizing protocol:', error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Failed to optimize protocol',
-    });
+    return serverError(res, log, 'optimising', error);
   }
 });
 
@@ -797,10 +780,7 @@ router.post('/upload-and-optimize', upload.single('file'), async (req, res) => {
     });
   } catch (error: any) {
     log.error('Error processing and optimizing protocol file:', error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Failed to process and optimize protocol file',
-    });
+    return serverError(res, log, 'saving upload and optimize', error);
   }
 });
 
@@ -862,10 +842,7 @@ router.post('/optimize-deep', express.json(), async (req, res) => {
     });
   } catch (error: any) {
     log.error('Error in deep optimization:', error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Failed to optimize protocol',
-    });
+    return serverError(res, log, 'saving optimize deep', error);
   }
 });
 

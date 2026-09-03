@@ -10,6 +10,7 @@
  * Phase 2: Multi-pass refinement, diff preview, interactive acceptance.
  */
 
+import { governedActor } from '../../part11/governed-actor';
 import { eq, and, sql } from 'drizzle-orm';
 import { concept2cureArtifacts, concept2cureArtifactVersions } from '../../../../shared/schema';
 import { registerActionHandler } from '../action-registry';
@@ -141,8 +142,7 @@ const handler: AIActionHandler = {
               sourceRefs: [`artifact:${artifact.artifactId}`],
             },
           },
-          userId: ctx.user.userId,
-          userEmail: `${ctx.user.userName || 'user'}@ai-actions.local`,
+          ...governedActor(ctx.user.userId, 'ai-action-refine-with-validation'),
           userRole: ctx.user.userRole || 'medical_writer',
         } as any,
         projectId: request.projectId,

@@ -5,7 +5,6 @@
  */
 
 import { Router } from 'express';
-import { createHash } from 'crypto';
 import { requireRole } from '../../middleware/auth';
 import { assembleIndSafetyReport } from '../../services/ind-lifecycle/ind-safety-report-service';
 import { composeE2bR3Icsr } from '../../services/ind-lifecycle/e2b-icsr-composer';
@@ -22,7 +21,9 @@ import {
   persistSafetyReportIntent,
   persistAmendmentPlan,
   persistAnnualReport,
+  type LeafSourceBySection,
 } from '../../services/ind-lifecycle/ind-lifecycle-persistence';
+import { storeRenderedLeafFile, leafSourceFor, type RenderedLeafSource } from '../../services/ectd/rendered-leaf-files';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, coerceEventDates } from './shared';
 
 const router = Router();
@@ -57,21 +58,48 @@ router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res
     if (!amendmentIntent) {
       return res.status(422).json({ error: { code: 'NOT_REPORTABLE', message: 'Event is not an expedited IND safety report; nothing to file.' } });
     }
-    // Render the safety-report PDF and attach its md5 to the m1.12.4 leaf so the
-    // eCTD index-md5 matches the filed bytes.
+    // Render the safety-report PDF and RETAIN the bytes, so the leaf points at
+    // the document that was filed. Keeping only an md5 (what this did before)
+    // left every filed lifecycle sequence assembling with zero leaf files and
+    // permanently dispatch-blocked.
     const pdf = await renderIndSafetyReportPdf(document);
-    const checksums: Record<string, string> = { 'm1.12.4': createHash('md5').update(pdf).digest('hex') };
-    // When an ICSR backs the case, the intent also carries an m5.3.5 leaf; file
-    // the deterministic E2B(R3) XML projection and checksum it likewise.
+    const sources: LeafSourceBySection = {
+      'm1.12.4': leafSourceFor(
+        await storeRenderedLeafFile({
+          organizationId: ctx.organizationId,
+          userId: ctx.userId,
+          bytes: pdf,
+          mime: 'application/pdf',
+          fileName: 'ind-safety-report.pdf',
+          renderedFrom: 'ind_safety_report',
+          sectionCode: 'm1.12.4',
+        }),
+      ),
+    };
+    // When an ICSR backs the case the intent also carries an m5.3.5 leaf. The
+    // E2B(R3) projection is XML and is transmitted through the ICSR gateway, so
+    // it is retained as the filed record but NOT claimed as an eCTD leaf: the
+    // resolver refuses a non-PDF, and the leaf reads unresolved with that
+    // reason rather than shipping a non-conformant file.
     if (b.icsr) {
       const { xml } = composeE2bR3Icsr(event, {
         icsr: b.icsr,
         expedited: true,
         now: b.now ? new Date(b.now) : undefined,
       });
-      checksums['m5.3.5'] = createHash('md5').update(xml).digest('hex');
+      sources['m5.3.5'] = leafSourceFor(
+        await storeRenderedLeafFile({
+          organizationId: ctx.organizationId,
+          userId: ctx.userId,
+          bytes: Buffer.from(xml, 'utf8'),
+          mime: 'application/xml',
+          fileName: 'e2b-r3-icsr.xml',
+          renderedFrom: 'e2b_r3_icsr',
+          sectionCode: 'm5.3.5',
+        }),
+      );
     }
-    const filed = await persistSafetyReportIntent(Number(b.submissionId), amendmentIntent, String(b.sequenceNumber), ctx, checksums);
+    const filed = await persistSafetyReportIntent(Number(b.submissionId), amendmentIntent, String(b.sequenceNumber), ctx, sources);
     // When filing a tracked draft, mark it filed + link the sequence.
     let draft;
     if (b.draftId) {
@@ -90,7 +118,7 @@ router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res
 /**
  * File a 312.33 IND Annual Report as an `annual` eCTD sequence + m1.13 leaf.
  * Body: { submissionId, sequenceNumber }. When the report content is supplied,
- * the PDF is rendered and its md5 attached to the leaf.
+ * the PDF is rendered, retained, and referenced by the leaf.
  */
 router.post('/annual-report/file', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
@@ -100,12 +128,22 @@ router.post('/annual-report/file', limiter, requireRole(AUTHOR), async (req, res
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'submissionId (int) and 4-digit sequenceNumber are required.' } });
   }
   try {
-    let checksum: string | undefined;
+    let source: RenderedLeafSource | undefined;
     if (b.productName && b.indNumber) {
       const pdf = await renderIndAnnualReportPdf(assembleIndAnnualReport(b));
-      checksum = createHash('md5').update(pdf).digest('hex');
+      source = leafSourceFor(
+        await storeRenderedLeafFile({
+          organizationId: ctx.organizationId,
+          userId: ctx.userId,
+          bytes: pdf,
+          mime: 'application/pdf',
+          fileName: 'ind-annual-report.pdf',
+          renderedFrom: 'ind_annual_report',
+          sectionCode: 'm1.13',
+        }),
+      );
     }
-    const filed = await persistAnnualReport(Number(b.submissionId), String(b.sequenceNumber), ctx, checksum);
+    const filed = await persistAnnualReport(Number(b.submissionId), String(b.sequenceNumber), ctx, source);
     // When filing a tracked draft, mark it filed + link the sequence.
     let draft;
     if (b.draftId) {

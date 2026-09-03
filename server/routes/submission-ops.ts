@@ -55,7 +55,7 @@ import { buildECTDZip } from '../src/services/ectd';
 // builder the compile/export/sign path uses, so the transmitted artifact is the
 // conformant one (see server/services/ectd/package-leaf-bytes.ts).
 import { packageLeafBytes } from '../services/ectd/package-leaf-bytes';
-import { resolveCtdSection } from '../services/ectd/section-to-ctd';
+import { moduleForSectionKey, resolveArtifactPlacement } from '../services/ectd/section-to-ctd';
 import { recordGovernedAction } from './c2c/actions';
 import PDFDocument from 'pdfkit';
 import { PassThrough } from 'stream';
@@ -76,8 +76,12 @@ import {
   VALIDATOR_REGISTRY,
   runHttpValidator,
 } from '../services/submission-gateways/validator-registry';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('submission-ops');
 
 // Middleware: extract orgId from auth context
 function getOrgId(req: Request): number {
@@ -166,7 +170,7 @@ router.get('/packages', async (req: Request, res: Response) => {
 
     res.json({ data: packages });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading packages', e);
   }
 });
 
@@ -213,7 +217,7 @@ router.post('/packages', async (req: Request, res: Response) => {
 
     res.status(201).json({ data: pkg });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'saving packages', e);
   }
 });
 
@@ -240,7 +244,7 @@ router.get('/packages/:packageId', async (req: Request, res: Response) => {
 
     res.json({ data: { ...pkg, sections } });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading packages', e);
   }
 });
 
@@ -271,7 +275,7 @@ router.get('/packages/:packageId/sections', async (req: Request, res: Response) 
 
     res.json({ data: sections });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading sections', e);
   }
 });
 
@@ -360,7 +364,7 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
 
     res.status(201).json({ data: mapping });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'saving artifact section map', e);
   }
 });
 
@@ -400,7 +404,7 @@ router.get('/sections/:sectionDbId/artifacts', async (req: Request, res: Respons
       })),
     });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading artifacts', e);
   }
 });
 
@@ -452,7 +456,7 @@ router.get('/packages/:packageId/milestones', async (req: Request, res: Response
 
     res.json({ data: result });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading milestones', e);
   }
 });
 
@@ -512,7 +516,7 @@ router.post('/packages/:packageId/milestones', async (req: Request, res: Respons
 
     res.status(201).json({ data: milestone });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'saving milestones', e);
   }
 });
 
@@ -531,7 +535,7 @@ router.get('/policies', async (req: Request, res: Response) => {
 
     res.json({ data: policies });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading policies', e);
   }
 });
 
@@ -594,7 +598,7 @@ router.post('/policies', async (req: Request, res: Response) => {
 
     res.status(201).json({ data: policy });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'saving policies', e);
   }
 });
 
@@ -633,7 +637,7 @@ router.put('/policies/:policyId', async (req: Request, res: Response) => {
     if (!updated) return res.status(404).json({ error: 'Policy not found' });
     res.json({ data: updated });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'updating policies', e);
   }
 });
 
@@ -653,7 +657,7 @@ router.delete('/policies/:policyId', async (req: Request, res: Response) => {
     if (!deleted) return res.status(404).json({ error: 'Policy not found' });
     res.json({ data: { deleted: true } });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'deleting policies', e);
   }
 });
 
@@ -665,7 +669,7 @@ router.post('/policies/resolve', async (req: Request, res: Response) => {
     const all = await resolveAllPolicies(ctx);
     res.json({ data: { resolved, allMatching: all } });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'resolving policies', e);
   }
 });
 
@@ -728,7 +732,7 @@ router.get('/packages/:packageId/readiness', async (req: Request, res: Response)
       rimCrossArtifact,
     });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading readiness', e);
   }
 });
 
@@ -759,7 +763,7 @@ router.get('/packages/:packageId/readiness-history', async (req: Request, res: R
 
     res.json({ data: snapshots });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading readiness history', e);
   }
 });
 
@@ -810,7 +814,7 @@ router.get('/blockers', async (req: Request, res: Response) => {
 
     res.json({ data: blockers });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading blockers', e);
   }
 });
 
@@ -835,7 +839,7 @@ router.patch('/blockers/:blockerId', async (req: Request, res: Response) => {
     if (!updated) return res.status(404).json({ error: 'Blocker not found' });
     res.json({ data: updated });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'updating blockers', e);
   }
 });
 
@@ -891,7 +895,7 @@ router.get('/approval-bottlenecks', async (req: Request, res: Response) => {
 
     res.json({ data: bottlenecks });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading approval bottlenecks', e);
   }
 });
 
@@ -906,7 +910,7 @@ router.get('/workload', async (req: Request, res: Response) => {
     const canonical = await readCanonicalDueSoonAndWorkload({ orgId, projectId });
     res.json({ data: canonical.workload, source: 'c2c_project_work_items' });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading workload', e);
   }
 });
 
@@ -932,7 +936,7 @@ router.get('/unified-work', async (req: Request, res: Response) => {
     const view = await loadUnifiedWork({ organizationId: orgId, projectId });
     res.json({ ...view, sources: ['project_tasks', 'c2c_project_work_items', 'estar_submissions'] });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading unified work', e);
   }
 });
 
@@ -1008,7 +1012,7 @@ router.get('/hotspots', async (req: Request, res: Response) => {
 
     res.json({ data: hotspots });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading hotspots', e);
   }
 });
 
@@ -1028,7 +1032,7 @@ router.post('/automation/run', async (req: Request, res: Response) => {
     const result = await runAutomationSweep(orgId, projectId, packageDbId);
     res.json({ data: result });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'running automation', e);
   }
 });
 
@@ -1049,7 +1053,7 @@ router.get('/automation/runs', async (req: Request, res: Response) => {
 
     res.json({ data: runs });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading runs', e);
   }
 });
 
@@ -1073,7 +1077,7 @@ router.get('/automation/runs/:runId/actions', async (req: Request, res: Response
 
     res.json({ data: actions });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading actions', e);
   }
 });
 
@@ -1094,7 +1098,7 @@ router.get('/due-soon', async (req: Request, res: Response) => {
       source: 'c2c_project_work_items',
     });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading due soon', e);
   }
 });
 
@@ -1122,7 +1126,7 @@ router.get('/digests', async (req: Request, res: Response) => {
 
     res.json({ data: digests });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading digests', e);
   }
 });
 
@@ -1138,7 +1142,7 @@ router.post('/digests/:digestId/read', async (req: Request, res: Response) => {
     if (!updated) return res.status(404).json({ error: 'Digest not found' });
     res.json({ data: updated });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'marking read digests', e);
   }
 });
 
@@ -1269,7 +1273,7 @@ router.get('/command-center', async (req: Request, res: Response) => {
       },
     });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'loading command center', e);
   }
 });
 
@@ -1396,7 +1400,7 @@ router.post('/packages/:packageId/publish', async (req: Request, res: Response) 
       readiness,
     });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'publishing packages', e);
   }
 });
 
@@ -1454,21 +1458,9 @@ function leafSlug(value: string): string {
  * ICH-numeric leading digit, or well-known content keywords. Returns null when
  * nothing matches (caller defaults to module 1 / regional).
  */
-function moduleForSectionKey(sectionKey: string): 1 | 2 | 3 | 4 | 5 | null {
-  const k = (sectionKey || '').toLowerCase();
-  const prefix = k.match(/(?:^|[^a-z0-9])(?:module|mod|m)[\s_-]?([1-5])(?:[^0-9]|$)/);
-  if (prefix) return Number(prefix[1]) as 1 | 2 | 3 | 4 | 5;
-  const numeric = k.match(/^\s*([1-5])\./);
-  if (numeric) return Number(numeric[1]) as 1 | 2 | 3 | 4 | 5;
-  // Order matters: module-2 "overview/summary" before the broad clinical
-  // keywords; "nonclinical" (m4) is matched before "clinical" (m5).
-  if (/(cover|admin|labeling|label|user-?fee|1571|1572|3674|\bform\b|regional)/.test(k)) return 1;
-  if (/(qos|quality-overall|overall-summary|overview|\bsummary\b)/.test(k)) return 2;
-  if (/(cmc|quality|drug-substance|drug-product|stability|specification|manufactur)/.test(k)) return 3;
-  if (/(nonclinical|pharmacolog|toxicolog|pharmacokinetic|\bpk\b|\badme\b)/.test(k)) return 4;
-  if (/(clinical|efficacy|safety|\bcsr\b|\bcer\b|study-report)/.test(k)) return 5;
-  return null;
-}
+// moduleForSectionKey is the SINGLE keyword table, imported from
+// services/ectd/section-to-ctd — a verbatim copy used to live here and the two
+// drifted (the copy filed clinical pharmacology under Module 4).
 
 /**
  * Map a sectionKey to an eCTD leaf path. ICH-numeric keys keep the canonical
@@ -1517,7 +1509,10 @@ const assembleBody = z.object({
   // Optional explicit overrides; otherwise derived from packageFamily.
   region: z.enum(['FDA', 'EMA', 'PMDA']).optional(),
   format: z.enum(SUBMISSION_FORMATS).optional(),
-  sequence: z.string().max(20).optional(),
+  // An eCTD sequence number is exactly four digits (ICH eCTD v3.2.2 §3.2). The
+  // value becomes a filesystem path component in the canonical packager, so the
+  // charset is enforced here — a free-form string was a path-traversal vector.
+  sequence: z.string().regex(/^\d{4}$/, 'sequence must be exactly four digits (e.g. 0000)').optional(),
   reason: z.string().min(8).optional(),
 });
 
@@ -1578,12 +1573,28 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     // ICH module region directory.
     const { region, format } = (() => {
       const derived = deriveRegionAndFormat(pkg.packageFamily);
-      return {
-        region: parsed.data.region ?? derived.region,
-        format: parsed.data.format ?? derived.format,
-      };
+      const resolvedRegion = parsed.data.region ?? derived.region;
+      let resolvedFormat = parsed.data.format ?? derived.format;
+      // A region override re-derives the eCTD format (PMDA ⇔ pmda_ectd) unless
+      // the body pinned one explicitly — otherwise a PMDA package was persisted
+      // labelled 'ectd' and downstream never cross-checked.
+      if (!parsed.data.format && (resolvedFormat === 'ectd' || resolvedFormat === 'pmda_ectd')) {
+        resolvedFormat = resolvedRegion === 'PMDA' ? 'pmda_ectd' : 'ectd';
+      }
+      return { region: resolvedRegion, format: resolvedFormat };
     })();
+    if (
+      (format === 'ectd' || format === 'pmda_ectd') &&
+      (format === 'pmda_ectd') !== (region === 'PMDA')
+    ) {
+      return res.status(400).json({
+        error: `format '${format}' is inconsistent with region '${region}': pmda_ectd is the PMDA format and ectd is the FDA/EMA format.`,
+        code: 'REGION_FORMAT_MISMATCH',
+      });
+    }
     const sequence = parsed.data.sequence ?? '0000';
+    const existingMetadata =
+      pkg.metadata && typeof pkg.metadata === 'object' ? (pkg.metadata as Record<string, unknown>) : {};
 
     // Region code used in m1/<region>/.. leaf paths (per ICH M4 / regional M1).
     const regionCode = region === 'EMA' ? 'eu' : region === 'PMDA' ? 'jp' : 'us';
@@ -1592,15 +1603,25 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     // artifacts mapped to each section (c2c_artifact_section_map -> concept2cure
     // artifacts.content). Each leaf is a real PDF placed at an ICH module path.
     // An empty section produces an explicitly-empty PDF leaf.
+    // eCTD formats go through the CANONICAL packager (placement by CTD section);
+    // non-eCTD device families (eSTAR / EUDAMED register) keep the path-keyed
+    // builder. Decided up front because the LEAF MODEL differs:
+    //   eCTD  — one leaf per ARTIFACT, at that artifact's own placeable CTD
+    //           section. Placement is a property of the artifact, never of the
+    //           section: merging a section's artifacts into one leaf at one code
+    //           silently misfiled content placed at different sections.
+    //   other — one leaf per section at a module path (unchanged).
+    // `leafs` is ALWAYS the set that ships — validation, counts and the ledger
+    // are computed over it, never over a parallel list that can diverge.
+    const isEctdFormat = format === 'ectd' || format === 'pmda_ectd';
     const seenPaths = new Set<string>();
     const leafs: { path: string; mediaType: string; content: Buffer }[] = [];
     const emptyLeafPaths: string[] = [];
     let emptyLeafCount = 0;
-    // Parallel CTD-keyed view of the same leaves, for the CANONICAL packager
-    // (which places by CTD section, not by a precomputed path). Sections whose
-    // CTD section cannot be honestly resolved are recorded, never guessed.
     const ctdLeaves: Array<{ ctdSection: string; fileName: string; bytes: Buffer; title: string }> = [];
-    const unplacedSections: string[] = [];
+    // Placement findings (unplaced / disagreement), merged into the validation
+    // result below so the governed transmit gate sees them.
+    const placementFindings: Array<{ severity: 'error' | 'warning'; ruleId: string; message: string }> = [];
 
     for (const section of sections) {
       const mapped = await db
@@ -1627,55 +1648,95 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         )
         .orderBy(asc(concept2cureArtifacts.id));
 
-      // Deterministic leaf path at an ICH module path; de-dupe collisions by
-      // inserting the section db id BEFORE the .pdf extension.
-      let leafPath = sectionKeyToEctdPath(section.sectionKey, regionCode);
-      if (seenPaths.has(leafPath)) {
-        leafPath = leafPath.replace(/\.pdf$/, `-${section.id}.pdf`);
+      const sectionLabel = `${section.sectionLabel} (${section.sectionKey})`;
+
+      if (!isEctdFormat) {
+        // Non-eCTD: one path-keyed leaf per section; de-dupe collisions by
+        // inserting the section db id BEFORE the .pdf extension.
+        let leafPath = sectionKeyToEctdPath(section.sectionKey, regionCode);
+        if (seenPaths.has(leafPath)) {
+          leafPath = leafPath.replace(/\.pdf$/, `-${section.id}.pdf`);
+        }
+        seenPaths.add(leafPath);
+        let markdown: string;
+        if (mapped.length === 0) {
+          markdown = `[EMPTY SECTION] ${sectionLabel}\n`;
+          emptyLeafCount += 1;
+          emptyLeafPaths.push(leafPath);
+        } else {
+          // Real content only — no fabrication.
+          markdown = mapped
+            .map((a) => `### ${a.title} (${a.artifactId} v${a.version})\n\n${a.content ?? ''}\n`)
+            .join('\n');
+        }
+        leafs.push({ path: leafPath, mediaType: 'application/pdf', content: await buildLeafPdf(sectionLabel, markdown) });
+        continue;
       }
-      seenPaths.add(leafPath);
 
-      let markdown: string;
-      if (mapped.length === 0) {
-        // No artifact content mapped — emit an explicitly empty placeholder leaf.
-        markdown = `[EMPTY SECTION] ${section.sectionLabel} (${section.sectionKey})\n`;
-        emptyLeafCount += 1;
-        emptyLeafPaths.push(leafPath);
-      } else {
-        // Serialize mapped artifact content deterministically. Real content only —
-        // no fabrication.
-        markdown = mapped
-          .map(
-            (a) =>
-              `### ${a.title} (${a.artifactId} v${a.version})\n\n${a.content ?? ''}\n`,
-          )
-          .join('\n');
-      }
+      // eCTD: place each ARTIFACT at its own CTD section. An empty section is a
+      // single placeholder unit placed from the section key alone. Every code is
+      // gated to a placeable terminal heading; nothing is guessed — an unplaceable
+      // unit becomes a blocking LEAF-UNPLACED finding so transmit refuses it.
+      const units =
+        mapped.length === 0
+          ? [{ artifact: null, placement: resolveArtifactPlacement(section.sectionKey, null) }]
+          : mapped.map((a) => ({ artifact: a, placement: resolveArtifactPlacement(section.sectionKey, a.ctdSection) }));
 
-      const leafTitle = `${section.sectionLabel} (${section.sectionKey})`;
-      const leafBytes = await buildLeafPdf(leafTitle, markdown);
-      leafs.push({
-        path: leafPath,
-        mediaType: 'application/pdf',
-        content: leafBytes,
-      });
+      for (const { artifact, placement } of units) {
+        const unitLabel = artifact
+          ? `${artifact.title} (${artifact.artifactId} v${artifact.version}) in ${sectionLabel}`
+          : sectionLabel;
+        if (!placement.code) {
+          const sectionModule = moduleForSectionKey(section.sectionKey);
+          placementFindings.push({
+            severity: 'error',
+            ruleId: 'LEAF-UNPLACED',
+            message: placement.unplaceableCode
+              ? `${unitLabel}: declared CTD section '${placement.unplaceableCode}' is not a placeable ICH heading (a bare module or a non-existent code nests under a container element a regional validator rejects). Assign a terminal CTD section before transmitting.`
+              : `${unitLabel}: no placeable CTD section is declared${sectionModule ? ` (its key names Module ${sectionModule}, but a bare module is not a heading a leaf can file under)` : ''}. Assign its CTD section before transmitting.`,
+          });
+          continue;
+        }
+        if (placement.unplaceableCode) {
+          // Placed via a lower-precedence source, but the artifact's OWN declared
+          // code was rejected — a data defect the author should see.
+          placementFindings.push({
+            severity: 'warning',
+            ruleId: 'LEAF-DECLARED-CODE-REJECTED',
+            message: `${unitLabel}: declared CTD section '${placement.unplaceableCode}' is not a placeable ICH heading and was ignored; the leaf is filed at ${placement.code} from its ${placement.source === 'section-key' ? 'section key' : 'section heading'}. Correct the artifact's CTD section.`,
+          });
+        }
+        if (placement.moduleDisagreement) {
+          placementFindings.push({
+            severity: 'warning',
+            ruleId: 'LEAF-MODULE-DISAGREEMENT',
+            message: `${unitLabel}: filed at ${placement.code} (Module ${placement.moduleDisagreement.placedModule}) but its section names Module ${placement.moduleDisagreement.sectionModule}. Confirm the artifact's CTD section is intended — it is kept as declared, not overridden.`,
+          });
+        }
 
-      // CTD-keyed view for the canonical packager. Unresolvable sections are
-      // reported (and block transmit via an error finding below) rather than
-      // being assigned a guessed section inside an agency submission.
-      const ctdSection = resolveCtdSection(
-        section.sectionKey,
-        mapped.map((a) => a.ctdSection),
-      );
-      if (ctdSection) {
-        ctdLeaves.push({
-          ctdSection,
-          fileName: leafPath.slice(leafPath.lastIndexOf('/') + 1),
-          bytes: leafBytes,
-          title: leafTitle,
-        });
-      } else {
-        unplacedSections.push(`${section.sectionLabel} (${section.sectionKey})`);
+        const slug = leafSlug(artifact ? `${section.sectionKey}-${artifact.artifactId}` : section.sectionKey);
+        let fileName = `${slug}.pdf`;
+        if (seenPaths.has(fileName)) {
+          fileName = `${slug}-${artifact ? artifact.artifactDbId : section.id}.pdf`;
+        }
+        seenPaths.add(fileName);
+        // Module-level path for the internal structural validator (which checks
+        // media type, %PDF magic, empty markers and Module 1 presence). The
+        // packager derives the real in-package path from the CTD section.
+        const modulePath = `m${placement.code.split('.')[0]}/${fileName}`;
+
+        let markdown: string;
+        if (!artifact) {
+          markdown = `[EMPTY SECTION] ${sectionLabel}\n`;
+          emptyLeafCount += 1;
+          emptyLeafPaths.push(modulePath);
+        } else {
+          markdown = `### ${artifact.title} (${artifact.artifactId} v${artifact.version})\n\n${artifact.content ?? ''}\n`;
+        }
+        const title = artifact ? `${artifact.title} — ${sectionLabel}` : sectionLabel;
+        const bytes = await buildLeafPdf(title, markdown);
+        ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title });
+        leafs.push({ path: modulePath, mediaType: 'application/pdf', content: bytes });
       }
     }
 
@@ -1693,39 +1754,87 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     // builder produced none of that and would be rejected by a real validator.
     // Non-eCTD families (eSTAR / EUDAMED register) are NOT eCTD submissions and
     // keep their existing builder.
-    const isEctdFormat = format === 'ectd' || format === 'pmda_ectd';
+    // Evidence the canonical packager produces about its own output (PDF/A
+    // grade, DTD self-containment, regional-backbone conformance, real format).
+    // Persisted on the descriptor so the pre-transmit gate — which runs with the
+    // TRANSMIT-time environment and the operator's ECTD_REQUIRE_* opt-ins — can
+    // enforce against it. Assembly itself runs the packager in 'staging' so it
+    // produces evidence instead of refusing; enforcement is the gate's job.
+    let canonicalEvidence:
+      | {
+          format: typeof format;
+          submissionGrade?: unknown;
+          dtdStatus?: unknown;
+          regionalBackbone?: unknown;
+        }
+      | undefined;
     let zip: Buffer;
     if (isEctdFormat) {
-      // A section whose CTD placement could not be resolved is NOT guessed into
-      // the package — it is reported as a blocking finding, so the governed
+      // Placement findings: LEAF-UNPLACED is error-severity so the governed
       // transmit gate (which hard-blocks on errors) refuses until it is placed.
-      for (const label of unplacedSections) {
+      for (const f of placementFindings) {
+        validation.findings.push(f);
+        if (f.severity === 'error') validation.errorCount += 1;
+        else validation.warningCount += 1;
+      }
+
+      // Regulatory identifiers. The regional Module 1 backbone carries the
+      // agency application number and applicant identity; the package model has
+      // no columns for them, so they are read from package metadata. When absent
+      // the package is STILL assembled (so the structure can be inspected) with
+      // values that say UNASSIGNED, and a blocking finding is recorded — never
+      // an internal id dressed up as an agency identifier. Both also become
+      // filename components in the packager, so the charset is enforced.
+      const IDENT = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+      const regulatory =
+        existingMetadata.regulatory && typeof existingMetadata.regulatory === 'object'
+          ? (existingMetadata.regulatory as Record<string, unknown>)
+          : {};
+      const ident = (key: string, pattern: RegExp = IDENT): string | null => {
+        const v = regulatory[key];
+        return typeof v === 'string' && pattern.test(v.trim()) ? v.trim() : null;
+      };
+      const applicationNumber = ident('applicationNumber');
+      const applicantId = ident('applicantId');
+      // Names may contain spaces/punctuation; only control characters (which
+      // would break the XML backbone) are refused.
+      const applicantName = ident('applicantName', /^[^\x00-\x1f\x7f]{1,200}$/);
+      const missingIdentifiers = [
+        !applicationNumber && 'regulatory.applicationNumber',
+        !applicantId && 'regulatory.applicantId',
+        !applicantName && 'regulatory.applicantName',
+      ].filter((x): x is string => typeof x === 'string');
+      if (missingIdentifiers.length > 0) {
         validation.findings.push({
           severity: 'error',
-          ruleId: 'LEAF-UNPLACED',
-          message: `Section has no resolvable eCTD section, so it cannot be placed in the backbone: ${label}. Assign its CTD section before transmitting.`,
+          ruleId: 'REGULATORY-IDENTIFIER-MISSING',
+          message: `The regional Module 1 backbone must carry the agency application number and applicant identity, and this package records none that are usable (missing or malformed package metadata: ${missingIdentifiers.join(', ')}). The assembled backbone carries UNASSIGNED placeholders for inspection only — record the real identifiers before transmitting.`,
         });
         validation.errorCount += 1;
       }
+
       const packagerRegion = region === 'EMA' ? 'ema' : region === 'PMDA' ? 'pmda' : 'fda';
       const work = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'c2c-assemble-'));
       try {
         const canonical = await packageLeafBytes({
           region: packagerRegion,
-          applicationId: pkg.packageId,
+          applicationId: applicationNumber ?? `UNASSIGNED-${leafSlug(pkg.packageId)}`,
           sequence,
           submissionType: 'original',
-          sponsorId: `ORG-${orgId}`,
-          sponsorName: `Organization ${orgId}`,
+          sponsorId: applicantId ?? `UNASSIGNED-ORG-${orgId}`,
+          sponsorName: applicantName ?? `UNASSIGNED (organization ${orgId})`,
           productName: pkg.title,
           outputDir: work,
-          // Structural conformance is produced either way; 'staging' keeps the
-          // opt-in PDF/A / DTD gates from blocking assembly. Submittability is
-          // decided by the validation findings + the governed transmit gate.
           environment: 'staging',
           leaves: ctdLeaves,
         });
         zip = await fs.promises.readFile(canonical.path);
+        canonicalEvidence = {
+          format: canonical.format as typeof format,
+          submissionGrade: canonical.submissionGrade,
+          dtdStatus: canonical.dtdStatus,
+          regionalBackbone: canonical.regionalBackbone,
+        };
       } finally {
         await fs.promises.rm(work, { recursive: true, force: true }).catch(() => {});
       }
@@ -1774,10 +1883,16 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       path: bundlePath,
       sha256,
       sizeBytes,
-      format,
+      // The format the package was actually BUILT as (the packager's own), so a
+      // PMDA build can never be persisted labelled as FDA/EMA eCTD.
+      format: canonicalEvidence?.format ?? format,
       leafCount: leafs.length,
       emptyLeafCount,
       storage,
+      // Packager evidence for the pre-transmit gate (undefined for non-eCTD).
+      submissionGrade: canonicalEvidence?.submissionGrade,
+      dtdStatus: canonicalEvidence?.dtdStatus,
+      regionalBackbone: canonicalEvidence?.regionalBackbone,
       validation: {
         errorCount: validation.errorCount,
         warningCount: validation.warningCount,
@@ -1789,8 +1904,6 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     };
 
     // Store the descriptor under metadata.bundle (JSONB) and bump updated_at.
-    const existingMetadata =
-      pkg.metadata && typeof pkg.metadata === 'object' ? (pkg.metadata as Record<string, unknown>) : {};
     await db
       .update(c2cSubmissionPackages)
       .set({
@@ -1873,7 +1986,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       },
     });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'saving assemble', e);
   }
 });
 
@@ -2121,7 +2234,7 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
       },
     });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, logger, 'saving preflight', e);
   }
 });
 

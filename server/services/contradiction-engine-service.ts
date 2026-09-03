@@ -1425,9 +1425,15 @@ class ContradictionEngineService {
     const results = await Promise.allSettled(allPromises);
     const allFindings: ContradictionFinding[] = [];
     for (const result of results) {
-      if (result.status === 'fulfilled') {
-        allFindings.push(...result.value);
-      }
+      // Fail closed on a rejected detector. A dropped detector undercounts
+      // findings — summary.total and, via buildPreflightContradictionContext,
+      // blockingCount/unresolvedCount fall below the truth (potentially to 0),
+      // which the preflight verdict reads as "0 blocking contradictions / ready
+      // to promote." A contradiction scan that could not run its full detector
+      // set is unknown, not clean: surface the failure (callers turn it into a
+      // needs-review preflight or a 500) rather than a fabricated low count.
+      if (result.status === 'rejected') throw result.reason;
+      allFindings.push(...result.value);
     }
 
     const bySeverity: Record<string, number> = {};

@@ -1,7 +1,7 @@
 /**
  * Part 11 + tenant contract test — document attachments.
  *
- * ── The defect ────────────────────────────────────────────────────────────────
+ * ── The defect ───────────────────────────────────────────────────────────
  * ModuleIntegrationService.addDocumentAttachment and removeDocumentAttachment
  * wrote `attachment_added` / `attachment_removed` into document_audit_logs and
  * never touched document_attachments. The insert and the delete were comments:
@@ -24,7 +24,7 @@
  * document_id -> unified_documents.organizationId — and neither table is
  * RLS-protected, so that walk is the only tenant boundary available.
  *
- * ── What is asserted ──────────────────────────────────────────────────────────
+ * ── What is asserted ───────────────────────────────────────────────────
  * That the audit trail and the world agree. Every case below either proves an
  * audit row is accompanied by the act it claims, or proves that when the act
  * does not happen, no audit row is written.
@@ -265,19 +265,23 @@ function makeFakeDb() {
 }
 
 let ModuleIntegrationService: any;
+let DocumentAttachmentService: any;
 
 beforeEach(async () => {
-  ModuleIntegrationService = (await import('../../services/ModuleIntegrationService'))
-    .ModuleIntegrationService;
+  const mod = await import('../../services/ModuleIntegrationService');
+  ModuleIntegrationService = mod.ModuleIntegrationService;
+  DocumentAttachmentService = (
+    await import('../../services/module-integration/attachment-service')
+  ).DocumentAttachmentService;
 });
 
 describe('Attachments — the audit trail matches what happened', () => {
   it('actually stores the attachment it audits', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const service = new DocumentAttachmentService(fake.db);
 
     const before = fake.attachments().length;
-    const stored = await service.addDocumentAttachment(DOC_A, validAttachment(), 'user-a', ORG_A);
+    const stored = await service.add(DOC_A, validAttachment(), 'user-a', ORG_A);
 
     // The decisive assertion: a row exists, not merely an audit entry saying so.
     expect(fake.attachments().length).toBe(before + 1);
@@ -292,9 +296,9 @@ describe('Attachments — the audit trail matches what happened', () => {
 
   it('actually removes the attachment it audits', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const service = new DocumentAttachmentService(fake.db);
 
-    const removed = await service.removeDocumentAttachment(
+    const removed = await service.remove(
       DOC_A, ATTACHMENT_ID, 'user-a', ORG_A,
     );
 
@@ -305,10 +309,10 @@ describe('Attachments — the audit trail matches what happened', () => {
 
   it('does not record a removal when nothing was removed', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const service = new DocumentAttachmentService(fake.db);
 
     await expect(
-      service.removeDocumentAttachment(DOC_A, 123456, 'user-a', ORG_A),
+      service.remove(DOC_A, 123456, 'user-a', ORG_A),
     ).rejects.toThrow(/not found/i);
 
     expect(fake.auditActions()).toEqual([]);
@@ -316,12 +320,12 @@ describe('Attachments — the audit trail matches what happened', () => {
 
   it('will not remove an attachment through a document it does not belong to', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const service = new DocumentAttachmentService(fake.db);
 
     // ATTACHMENT_ID hangs off DOC_A. Ask for it via DOC_B — which ORG_B owns,
     // so the ownership check passes and only the id/document pairing stops it.
     await expect(
-      service.removeDocumentAttachment(DOC_B, ATTACHMENT_ID, 'user-b', ORG_B),
+      service.remove(DOC_B, ATTACHMENT_ID, 'user-b', ORG_B),
     ).rejects.toThrow(/not found/i);
 
     expect(fake.attachments().find((a: any) => a.id === ATTACHMENT_ID)).toBeDefined();
@@ -332,10 +336,10 @@ describe('Attachments — the audit trail matches what happened', () => {
 describe('Attachments — tenant scoping', () => {
   it('refuses to attach to another organization\'s document, and writes nothing', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const service = new DocumentAttachmentService(fake.db);
 
     await expect(
-      service.addDocumentAttachment(DOC_A, validAttachment(), 'user-b', ORG_B),
+      service.add(DOC_A, validAttachment(), 'user-b', ORG_B),
     ).rejects.toThrow(/not found/i);
 
     expect(fake.attachments().map((a: any) => a.id).sort()).toEqual(
@@ -346,10 +350,10 @@ describe('Attachments — tenant scoping', () => {
 
   it('refuses to remove from another organization\'s document, and writes nothing', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const service = new DocumentAttachmentService(fake.db);
 
     await expect(
-      service.removeDocumentAttachment(DOC_A, ATTACHMENT_ID, 'user-b', ORG_B),
+      service.remove(DOC_A, ATTACHMENT_ID, 'user-b', ORG_B),
     ).rejects.toThrow(/not found/i);
 
     expect(fake.attachments().find((a: any) => a.id === ATTACHMENT_ID)).toBeDefined();
@@ -358,14 +362,14 @@ describe('Attachments — tenant scoping', () => {
 
   it('fails closed when the caller has no organization', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const service = new DocumentAttachmentService(fake.db);
 
     for (const org of [null, undefined, '', 'not-a-number', 0, -1]) {
       await expect(
-        service.addDocumentAttachment(DOC_A, validAttachment(), 'user-a', org),
+        service.add(DOC_A, validAttachment(), 'user-a', org),
       ).rejects.toThrow(/organization context/i);
       await expect(
-        service.removeDocumentAttachment(DOC_A, ATTACHMENT_ID, 'user-a', org),
+        service.remove(DOC_A, ATTACHMENT_ID, 'user-a', org),
       ).rejects.toThrow(/organization context/i);
     }
     expect(fake.auditActions()).toEqual([]);
@@ -390,10 +394,10 @@ describe('Attachments — the record is validated at the boundary', () => {
   for (const [label, override, expected] of cases) {
     it(`rejects ${label} without writing anything`, async () => {
       const fake = makeFakeDb();
-      const service = new ModuleIntegrationService(fake.db);
+      const service = new DocumentAttachmentService(fake.db);
 
       await expect(
-        service.addDocumentAttachment(DOC_A, { ...validAttachment(), ...override }, 'user-a', ORG_A),
+        service.add(DOC_A, { ...validAttachment(), ...override }, 'user-a', ORG_A),
       ).rejects.toThrow(expected);
 
       expect(fake.attachments()).toHaveLength(3); // fixture untouched
@@ -403,19 +407,19 @@ describe('Attachments — the record is validated at the boundary', () => {
 
   it('rejects a missing payload entirely', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const service = new DocumentAttachmentService(fake.db);
 
     await expect(
-      service.addDocumentAttachment(DOC_A, null, 'user-a', ORG_A),
+      service.add(DOC_A, null, 'user-a', ORG_A),
     ).rejects.toThrow(/attachment data is required/i);
     expect(fake.auditActions()).toEqual([]);
   });
 
   it('accepts an allowed non-PDF and defaults the optional columns', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const service = new DocumentAttachmentService(fake.db);
 
-    const stored = await service.addDocumentAttachment(
+    const stored = await service.add(
       DOC_A,
       { fileName: 'dataset.csv', fileType: 'text/csv', fileSize: 12, filePath: VERSION_NEW },
       'user-a',
@@ -431,9 +435,9 @@ describe('Attachments — the record is validated at the boundary', () => {
 describe('Attachments — the reader', () => {
   it('lists an owned document\'s attachments, newest first', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const service = new DocumentAttachmentService(fake.db);
 
-    const listed = await service.listDocumentAttachments(DOC_A, ORG_A);
+    const listed = await service.list(DOC_A, ORG_A);
 
     expect(listed.map((a: any) => a.id)).toEqual([ATTACHMENT_ID, OLDER_ATTACHMENT_ID]);
     // Nothing from DOC_B, which belongs to ORG_B.
@@ -442,11 +446,11 @@ describe('Attachments — the reader', () => {
 
   it('surfaces attachments on the existing document read', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const documents = new ModuleIntegrationService(fake.db);
 
     // GET /api/module-integration/document/:id already exists and is already
     // org-scoped; this is how a caller actually reaches the reader.
-    const doc = await service.getDocument(DOC_A, ORG_A);
+    const doc = await documents.getDocument(DOC_A, ORG_A);
 
     expect(doc.id).toBe(DOC_A);
     expect(doc.attachments.map((a: any) => a.id)).toEqual([ATTACHMENT_ID, OLDER_ATTACHMENT_ID]);
@@ -454,20 +458,22 @@ describe('Attachments — the reader', () => {
 
   it('does not list another organization\'s attachments', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const service = new DocumentAttachmentService(fake.db);
 
     // DOC_B is ORG_B's. Asking as ORG_A must not reveal that it has an
     // attachment — same "not found" as a document that does not exist.
-    await expect(service.listDocumentAttachments(DOC_B, ORG_A)).rejects.toThrow(/not found/i);
-    await expect(service.getDocument(DOC_B, ORG_A)).rejects.toThrow(/not found/i);
+    await expect(service.list(DOC_B, ORG_A)).rejects.toThrow(/not found/i);
+    await expect(
+      new ModuleIntegrationService(fake.db).getDocument(DOC_B, ORG_A),
+    ).rejects.toThrow(/not found/i);
   });
 
   it('fails closed when the caller has no organization', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const service = new DocumentAttachmentService(fake.db);
 
     for (const org of [null, undefined, '', 'x', 0]) {
-      await expect(service.listDocumentAttachments(DOC_A, org)).rejects.toThrow(
+      await expect(service.list(DOC_A, org)).rejects.toThrow(
         /organization context/i,
       );
     }
@@ -475,19 +481,19 @@ describe('Attachments — the reader', () => {
 
   it('agrees with the writers: an added attachment appears, a removed one disappears', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const service = new DocumentAttachmentService(fake.db);
 
-    const stored = await service.addDocumentAttachment(
+    const stored = await service.add(
       DOC_A,
       { ...validAttachment(), fileName: 'newest.pdf' },
       'user-a',
       ORG_A,
     );
-    let listed = await service.listDocumentAttachments(DOC_A, ORG_A);
+    let listed = await service.list(DOC_A, ORG_A);
     expect(listed.map((a: any) => a.id)).toContain(stored.id);
 
-    await service.removeDocumentAttachment(DOC_A, ATTACHMENT_ID, 'user-a', ORG_A);
-    listed = await service.listDocumentAttachments(DOC_A, ORG_A);
+    await service.remove(DOC_A, ATTACHMENT_ID, 'user-a', ORG_A);
+    listed = await service.list(DOC_A, ORG_A);
     expect(listed.map((a: any) => a.id)).not.toContain(ATTACHMENT_ID);
     expect(listed.map((a: any) => a.id)).toContain(stored.id);
   });
@@ -496,42 +502,42 @@ describe('Attachments — the reader', () => {
 describe('Attachments — the single-row reader a download needs', () => {
   it('returns an owned attachment by document and id', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const service = new DocumentAttachmentService(fake.db);
 
-    const row = await service.getDocumentAttachment(DOC_A, ATTACHMENT_ID, ORG_A);
+    const row = await service.get(DOC_A, ATTACHMENT_ID, ORG_A);
     expect(row.id).toBe(ATTACHMENT_ID);
     expect(row.filePath).toBe(VERSION_EXISTING);
   });
 
   it('cannot reach an attachment through a document it does not belong to', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const service = new DocumentAttachmentService(fake.db);
 
     // ATTACHMENT_ID hangs off DOC_A. ORG_B owns DOC_B, so the ownership check
     // passes and only the id/document pairing stands between B and A's bytes.
     await expect(
-      service.getDocumentAttachment(DOC_B, ATTACHMENT_ID, ORG_B),
+      service.get(DOC_B, ATTACHMENT_ID, ORG_B),
     ).rejects.toThrow(/not found/i);
   });
 
   it('reports another organization\'s attachment as not found, never forbidden', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const service = new DocumentAttachmentService(fake.db);
 
     await expect(
-      service.getDocumentAttachment(DOC_B, FOREIGN_ATTACHMENT_ID, ORG_A),
+      service.get(DOC_B, FOREIGN_ATTACHMENT_ID, ORG_A),
     ).rejects.toThrow(/not found/i);
     await expect(
-      service.getDocumentAttachment(DOC_A, 424242, ORG_A),
+      service.get(DOC_A, 424242, ORG_A),
     ).rejects.toThrow(/not found/i);
   });
 
   it('fails closed when the caller has no organization', async () => {
     const fake = makeFakeDb();
-    const service = new ModuleIntegrationService(fake.db);
+    const service = new DocumentAttachmentService(fake.db);
 
     await expect(
-      service.getDocumentAttachment(DOC_A, ATTACHMENT_ID, null),
+      service.get(DOC_A, ATTACHMENT_ID, null),
     ).rejects.toThrow(/organization context/i);
   });
 });

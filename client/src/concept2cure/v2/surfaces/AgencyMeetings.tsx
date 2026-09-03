@@ -11,6 +11,7 @@ import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
 import { shellProgramName } from '../shellProject';
 import { useLiveRows } from '../dataConnect';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 
 /* ════ AgencyMeetings — regulator-interaction worklist ════
 
@@ -152,6 +153,36 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
   const m = meetings.find((x) => x.id === sel) || meetings[0];
+
+  /* AnA can open a meeting by id or a distinctive phrase (agency / type /
+     program) — the same row click a person makes — so a drive can land on a
+     specific meeting's briefing book and minutes. Resolved against the REAL
+     meetings with honest misses; held (retry) while the list loads, re-attempted
+     on the ready signal below. Requesting or scheduling a meeting stays governed;
+     this only opens one. */
+  useSurfaceActionHandlers('agency-meetings', {
+    'agency-meetings.select-meeting': (params) => {
+      const raw = String(params.meeting ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a meeting by its id or a distinctive phrase.' };
+      if (loading) return { ok: false, reason: 'The agency meetings are still loading.', retry: true };
+      if (error) return { ok: false, reason: 'The agency meetings did not load, so there are none to open.' };
+      if (meetings.length === 0) return { ok: false, reason: 'No agency meetings are recorded in this organization yet.' };
+      const needle = raw.toLowerCase();
+      const exact = meetings.filter((x) => x.id.toLowerCase() === needle);
+      const hits = exact.length
+        ? exact
+        : meetings.filter((x) => `${x.agency} ${x.type} ${x.program} ${x.cat}`.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No agency meeting matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} meetings — use the exact id.` };
+      const x = hits[0];
+      if (sel === x.id) return { ok: true, detail: `Already on ${x.agency} ${x.type}` };
+      setSel(x.id);
+      return { ok: true, detail: `Opened ${x.agency} ${x.type} — ${x.program}` };
+    },
+  });
+  useEffect(() => {
+    if (!loading && !error) notifySurfaceActionReady('agency-meetings');
+  }, [loading, error]);
 
   const addMeeting = (r: Meeting) => {
     const row = { ...r, _new: true };

@@ -52,6 +52,7 @@ import {
   JourneyRecorder,
   type JourneyDb,
   assertNoSchemaGaps,
+  assertNoDegradedTenantEnrichment,
 } from './harness';
 
 const T = 180_000;
@@ -224,7 +225,7 @@ beforeAll(async () => {
       r.userRole = role;
       r.tenantId = orgId;
       r.tenantContext = { organizationId: orgId };
-      r.dbClient = makeRequestDbClient(jdb.pglite, jdb.schemaGaps);
+      r.dbClient = makeRequestDbClient(jdb.pglite);
     }
     next();
   });
@@ -238,6 +239,11 @@ beforeAll(async () => {
 afterAll(async () => {
   // A journey that ran against a database missing a table its subject writes
   // to proves less than it claims (ledger L145).
+  // Ordered BEFORE the schema-gap check on purpose: a degraded membership is
+  // usually CAUSED by a missing column, and the gap check would otherwise
+  // throw first and report the symptom while hiding which claims were
+  // proven without an org context (ledger L148).
+  await assertNoDegradedTenantEnrichment();
   assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('cer-eu-mdr');
   // eslint-disable-next-line no-console

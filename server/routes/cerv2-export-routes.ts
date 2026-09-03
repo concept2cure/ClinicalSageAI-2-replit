@@ -533,9 +533,14 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
       pdfBuffer = await renderCombinedPdf(docType, content);
     } catch (renderErr: any) {
       logger.error('PDF render failed', { err: renderErr instanceof Error ? renderErr.message : String(renderErr) });
+      // renderErr.message is the renderer's own text — font paths, temp-file
+      // locations, spawn errors. The stable code stays; the detail goes to the log.
+      logger.error('PDF rendering failed', {
+        err: renderErr instanceof Error ? renderErr.message : String(renderErr),
+      });
       return res.status(500).json({
         error: 'PDF rendering failed',
-        message: renderErr.message || 'The document could not be converted to PDF',
+        message: 'The document could not be converted to PDF. The problem has been logged.',
       });
     }
 
@@ -614,9 +619,12 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
       docxBuffer = await renderCombinedDocx(docType, content);
     } catch (renderErr: any) {
       logger.error('DOCX render failed', { err: renderErr instanceof Error ? renderErr.message : String(renderErr) });
+      logger.error('DOCX rendering failed', {
+        err: renderErr instanceof Error ? renderErr.message : String(renderErr),
+      });
       return res.status(500).json({
         error: 'DOCX rendering failed',
-        message: renderErr.message || 'The document could not be converted to DOCX',
+        message: 'The document could not be converted to DOCX. The problem has been logged.',
       });
     }
 

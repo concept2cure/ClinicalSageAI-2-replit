@@ -20,8 +20,12 @@ import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
 
 // AI generation is routed through the unified AI client (gateway-backed).
 import { ai } from '../lib/unified-ai-client';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('cerv2-ai');
 
 // ── Rate limiting for AI endpoints (prevents runaway OpenAI costs) ──────────
 const aiRateLimiter = rateLimit({
@@ -346,7 +350,7 @@ router.post(
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Suggest error:', err);
-      res.status(500).json({ error: 'Suggestion failed', message: err.message });
+      return serverError(res, logger, 'saving suggest', err);
     }
   }
 );
@@ -449,7 +453,7 @@ Write a complete SE analysis comparing the subject device to the predicate. Addr
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Equivalence error:', err);
-      res.status(500).json({ error: 'Equivalence generation failed', message: err.message });
+      return serverError(res, logger, 'saving equivalence', err);
     }
   }
 );
@@ -548,7 +552,7 @@ Provide a thorough analysis with quantified assessments where possible.`;
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Benefit-risk error:', err);
-      res.status(500).json({ error: 'Benefit-risk generation failed', message: err.message });
+      return serverError(res, logger, 'saving benefit risk', err);
     }
   }
 );
@@ -575,7 +579,7 @@ router.get(
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Templates error:', err);
-      res.status(500).json({ error: 'Failed to retrieve templates', message: err.message });
+      return serverError(res, logger, 'loading templates', err);
     }
   }
 );
@@ -803,7 +807,7 @@ router.post(
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Analyze-section error:', err);
-      res.status(500).json({ error: 'Section analysis failed', message: err.message });
+      return serverError(res, logger, 'saving analyze section', err);
     }
   }
 );
@@ -980,7 +984,7 @@ router.post(
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Validate error:', err);
-      res.status(500).json({ error: 'Validation failed', message: err.message });
+      return serverError(res, logger, 'validating', err);
     }
   }
 );

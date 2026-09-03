@@ -188,6 +188,12 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
                  actually stored, hash and all. */
               if (outcome.succeeded.length) live.refresh();
             }}
+            /* Same reason as the v2 Vault's picker: WCAG 3.3.2 applies to the
+               control, not to whether it is painted, and a script can focus a
+               display:none file input. This copy was missed when that one was
+               labelled, which is why the a11y sweep still reported one 3.3.2
+               finding with the defect recorded as fixed. */
+            aria-label="Choose documents to upload to the vault"
           />
           <button
             className="btn primary small"

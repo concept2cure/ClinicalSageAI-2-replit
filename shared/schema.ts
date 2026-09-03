@@ -3994,6 +3994,12 @@ export const cmcImpurityProfiles = pgTable(
        a ppm figure into a percentage — the exact defect the refusal exists to
        prevent. The form requires a unit; the column does not invent one. */
     levelUnit: text('level_unit'),
+    /* ICH Q3D sets a different permitted daily exposure per route — cadmium is
+       5 µg/day oral against 2 parenteral — so an elemental impurity cannot be
+       assessed without it. Nullable: an organic impurity does not need it, and
+       the assessment refuses honestly when it is absent rather than defaulting
+       to oral, which is the most permissive route for most elements. */
+    routeOfAdministration: text('route_of_administration'),
     specificationLimit: text('specification_limit'),
     /* The thresholds AS RECORDED. The Q3A/Q3B engine derives them from the
        maximum daily dose; where an applicant has recorded its own, the record
@@ -4076,6 +4082,166 @@ export const cmcDissolutionProfiles = pgTable(
   table => ({
     idx_cmc_dissolution_profiles_org: index('idx_cmc_dissolution_profiles_org').on(table.organizationId),
     idx_cmc_dissolution_profiles_project: index('idx_cmc_dissolution_profiles_project').on(table.projectId),
+  })
+);
+
+/* ── Material specifications — §3.2.P.4 excipients, and the raw materials ─────
+ *
+ * ONE table for two of the composer's source types, because they are one shape:
+ * a material with a role, a grade, a monograph it complies with, a supplier and
+ * a specification. `materialRole` decides which source type the write-through
+ * emits — an excipient is §3.2.P.4 content, a raw or starting material is
+ * §3.2.S.2.3 content — so the section a record files into is stored, on the
+ * same rule as `scope` and `purpose` in the registers above.
+ *
+ * `origin` is the load-bearing column. §3.2.A.3 has to answer whether any
+ * excipient is of human or animal origin, and it was answering from a regex
+ * over free text: a formulation naming gelatin was caught only by the word
+ * "gelatin" appearing. Recorded origin is the honest source, and an excipient
+ * with NO recorded origin is a question the section must ask rather than
+ * answer.
+ */
+export const cmcMaterialSpecs = pgTable(
+  'cmc_material_specs',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: text('project_id'),
+    // excipient | raw-material | starting-material | reagent | processing-aid
+    materialRole: text('material_role').default('excipient').notNull(),
+    materialName: text('material_name').notNull(),
+    /* What it does in the formulation — diluent, disintegrant, lubricant,
+       coating, capsule shell. §3.2.P.1's composition table is built on it. */
+    functionInFormulation: text('function_in_formulation'),
+    grade: text('grade'),
+    /* The monograph it is claimed to comply with (USP/NF, Ph. Eur., JP), and
+       whether that compliance is claimed or an in-house specification governs. */
+    compendialMonograph: text('compendial_monograph'),
+    compendialCompliance: text('compendial_compliance'),
+    supplier: text('supplier'),
+    manufacturerSite: text('manufacturer_site'),
+    /* plant | mineral | synthetic | animal | human | fermentation | unrecorded.
+       Never inferred from the name: §3.2.A.3 reads this. */
+    origin: text('origin'),
+    originDetail: text('origin_detail'),
+    /* The TSE/BSE certificate reference for a material of animal origin. */
+    tseCertificate: text('tse_certificate'),
+    /* [{ test, method, acceptanceCriteria }] — the specification itself. */
+    testParameters: jsonb('test_parameters'),
+    analyticalProcedures: text('analytical_procedures'),
+    /* An excipient not described in a pharmacopoeia needs its own safety
+       package (ICH M4Q 3.2.P.4.6), and the section must say so. */
+    novelExcipient: boolean('novel_excipient').default(false).notNull(),
+    novelExcipientJustification: text('novel_excipient_justification'),
+    status: text('status').default('draft').notNull(), // draft | specified | retired
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_cmc_material_specs_org: index('idx_cmc_material_specs_org').on(table.organizationId),
+    idx_cmc_material_specs_project: index('idx_cmc_material_specs_project').on(table.projectId),
+  })
+);
+
+/* ── Formulation records — §3.2.P.1 composition, §3.2.P.3.2 batch formula ─────
+ *
+ * The batch formula: what goes into the product, how much of each, and what
+ * that scales to for one unit. §3.2.P.1's quantitative composition table read a
+ * first-match `components` array off whatever source carried one, so a project
+ * with several formulation versions rendered one of them and dropped the rest —
+ * and the version that rendered was whichever arrived first.
+ */
+export const cmcFormulationRecords = pgTable(
+  'cmc_formulation_records',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: text('project_id'),
+    formulationName: text('formulation_name').notNull(),
+    version: text('version'),
+    dosageForm: text('dosage_form'),
+    strength: text('strength'),
+    batchSize: text('batch_size'),
+    /* [{ component, role, amountPerUnit, unit, amountPerBatch, percentWeight,
+          overage, overageJustification, compendialReference, origin }] */
+    components: jsonb('components'),
+    theoreticalYield: text('theoretical_yield'),
+    /* An overage is a regulatory question in its own right (ICH Q8): it must be
+       justified, and the section states when one is recorded without a reason. */
+    overageJustification: text('overage_justification'),
+    /* Which formulation this one supersedes, so a version history is readable. */
+    supersedes: text('supersedes'),
+    status: text('status').default('draft').notNull(), // draft | current | superseded
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_cmc_formulation_records_org: index('idx_cmc_formulation_records_org').on(table.organizationId),
+    idx_cmc_formulation_records_project: index('idx_cmc_formulation_records_project').on(table.projectId),
+  })
+);
+
+/* ── Characterisation studies — §3.2.S.3.1 ────────────────────────────────────
+ *
+ * The composer has demanded a `characterization` source type since it was
+ * written and nothing produced one, so §3.2.S.3 could never be complete: its
+ * three required fields were answered, if at all, out of three free-text
+ * columns on the drug substance register.
+ *
+ * One row is one study, typed by what the study establishes. §3.2.S.3.1 asks
+ * for structure, physicochemical properties and biological activity, and those
+ * come from different experiments run at different times -- so unlike the
+ * registers where a *Complete key had to close the composer's union across
+ * sources, the union is the correct reading here: an NMR study and a solubility
+ * study together do establish two of the three, and neither establishes the
+ * third.
+ */
+export const cmcCharacterizationStudies = pgTable(
+  'cmc_characterization_studies',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: text('project_id'),
+    /* Which side of the dossier the study files into. Stored, not guessed:
+       the same rule as `materialRole` on the material register and `purpose`
+       on the dissolution register. */
+    scope: text('scope').default('drug_substance').notNull(),
+    /* structural | physicochemical | biological — decides which of §3.2.S.3.1's
+       three required fields this study can answer. A solubility measurement
+       does not elucidate a structure, and the composer must not read it as if
+       it did. */
+    studyType: text('study_type').default('structural').notNull(),
+    studyTitle: text('study_title').notNull(),
+    technique: text('technique'),
+    attribute: text('attribute'),
+    result: text('result'),
+    /* No default. A number whose unit is assumed is a number that means
+       nothing; the section says the unit is not recorded rather than
+       inventing one. */
+    resultUnit: text('result_unit'),
+    acceptanceReference: text('acceptance_reference'),
+    conclusion: text('conclusion'),
+    studyReference: text('study_reference'),
+    performedBy: text('performed_by'),
+    performedDate: timestamp('performed_date'),
+    /* [{ label, value, unit, note }] — spectra assignments, peak tables, the
+       per-parameter detail behind a single headline result. */
+    supportingData: jsonb('supporting_data'),
+    status: text('status').default('draft').notNull(), // draft | in-review | qualified | retired
+    qualifiedBy: text('qualified_by'),
+    qualificationDate: timestamp('qualification_date'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_cmc_characterization_studies_org: index('idx_cmc_characterization_studies_org').on(table.organizationId),
+    idx_cmc_characterization_studies_project: index('idx_cmc_characterization_studies_project').on(table.projectId),
   })
 );
 
@@ -4172,6 +4338,24 @@ export const insertCmcDissolutionProfileSchema = createInsertSchemaOmit(cmcDisso
   updatedAt: true,
 });
 
+export const insertCmcMaterialSpecSchema = createInsertSchemaOmit(cmcMaterialSpecs, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCmcFormulationRecordSchema = createInsertSchemaOmit(cmcFormulationRecords, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCmcCharacterizationStudySchema = createInsertSchemaOmit(cmcCharacterizationStudies, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // CMC Types
 export type AnalyticalMethod = InferSelectModel<typeof analyticalMethods>;
 export type InsertAnalyticalMethod = z.infer<typeof insertAnalyticalMethodSchema>;
@@ -4195,6 +4379,12 @@ export type CmcImpurityProfile = InferSelectModel<typeof cmcImpurityProfiles>;
 export type InsertCmcImpurityProfile = z.infer<typeof insertCmcImpurityProfileSchema>;
 export type CmcDissolutionProfile = InferSelectModel<typeof cmcDissolutionProfiles>;
 export type InsertCmcDissolutionProfile = z.infer<typeof insertCmcDissolutionProfileSchema>;
+export type CmcMaterialSpec = InferSelectModel<typeof cmcMaterialSpecs>;
+export type InsertCmcMaterialSpec = z.infer<typeof insertCmcMaterialSpecSchema>;
+export type CmcFormulationRecord = InferSelectModel<typeof cmcFormulationRecords>;
+export type InsertCmcFormulationRecord = z.infer<typeof insertCmcFormulationRecordSchema>;
+export type CmcCharacterizationStudy = InferSelectModel<typeof cmcCharacterizationStudies>;
+export type InsertCmcCharacterizationStudy = z.infer<typeof insertCmcCharacterizationStudySchema>;
 
 // Regulatory Document Insert Schema
 export const insertRegulatoryDocumentSchema = createInsertSchemaOmit(regulatoryDocuments, {

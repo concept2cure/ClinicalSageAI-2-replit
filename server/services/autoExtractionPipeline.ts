@@ -19,6 +19,7 @@
  * @compliance FDA 21 CFR Part 11 data integrity
  */
 
+import { governedActor } from './part11/governed-actor';
 import { pool } from '../db.js';
 import auditService from './auditService';
 import { recordArtifactProvenance } from './provenance/artifact-provenance';
@@ -603,8 +604,7 @@ async function storeExtractedArtifacts(
           traceId: job.id,
         },
       },
-      userId: job.userId,
-      userEmail: `user-${job.userId}@system.local`,
+      ...governedActor(job.userId, 'auto-extraction'),
       userRole: 'regulatory',
     } as any,
     projectId: job.projectId,
@@ -718,8 +718,7 @@ async function storeExtractedArtifacts(
             traceId: `${job.id}:table:${table.id}`,
           },
         },
-        userId: job.userId,
-        userEmail: `user-${job.userId}@system.local`,
+        ...governedActor(job.userId, 'auto-extraction'),
         userRole: 'regulatory',
       } as any,
       projectId: job.projectId,
@@ -823,8 +822,7 @@ async function storeExtractedArtifacts(
               traceId: `${job.id}:section:${section.code}`,
             },
           },
-          userId: job.userId,
-          userEmail: `user-${job.userId}@system.local`,
+          ...governedActor(job.userId, 'auto-extraction'),
           userRole: 'regulatory',
         } as any,
         projectId: job.projectId,

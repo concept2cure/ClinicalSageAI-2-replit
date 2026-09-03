@@ -426,7 +426,15 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
               : cov.approved < cov.total
                 ? <>The label content is controlled; <b>{cov.total - cov.approved}</b> of {cov.total} translation{cov.total === 1 ? '' : 's'} {cov.total - cov.approved === 1 ? 'is' : 'are'} still short of approved.</>
                 : <>All {cov.total} translation{cov.total === 1 ? '' : 's'} are approved.</>}
-            body={cov.total === 0
+            body={transState.loading
+              /* The body was gated only on `cov.total === 0`, so during a
+                 pending or failed read it printed the "add translations to
+                 start tracking" call to action directly under a headline that
+                 said "Reading…" / "Couldn't read". It now follows the headline. */
+              ? <>Coverage figures appear once the translations have been read.</>
+              : transState.error
+              ? <>No coverage figure is claimed until the translations can be read.</>
+              : cov.total === 0
               ? <>Add the target-language IFU/label translations to start tracking back-translation QC and approval coverage.</>
               : <>Translation coverage is <b>{cov.approved}/{cov.total}</b> approved ({cov.pct}%), <b>{cov.btv}</b> back-translation verified. Each warning should trace to the ISO 14971 hazard it controls.</>}
             reassure="I will draft the missing-language IFU and run the back-translation check, and flag any language that stalls in QC — you approve each one."
@@ -531,10 +539,13 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
           <div className="sec">
             <div className="sec-hdr">
               <div className="sec-title">Translations and coverage</div>
-              <div className="sec-sub">{cov.approved}/{cov.total} approved / {cov.btv} back-translation verified</div>
+              {/* "0/0 approved / 0 back-translation verified" printed over a
+                  pending or failed read, directly above a table that said
+                  "Loading…" / "Couldn't load". Figures only from a settled read. */}
+              <div className="sec-sub">{transState.loading ? 'Reading translations…' : transState.error ? 'Coverage not read' : `${cov.approved}/${cov.total} approved / ${cov.btv} back-translation verified`}</div>
               <button className="btn ghost" style={{ marginLeft: 'auto' }} onClick={() => setTForm(true)}>{I.plus} Add translation</button>
             </div>
-            <div className="lbl-cov-bar"><div className="lbl-cov-fill" style={{ width: cov.pct + '%' }} /></div>
+            <div className="lbl-cov-bar"><div className="lbl-cov-fill" style={{ width: (transState.loading || transState.error ? 0 : cov.pct) + '%' }} /></div>
             <div className="ctable" style={{ marginTop: 10 }}>
               {transState.loading && trans.length === 0 ? (
                 <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading translations…</div>

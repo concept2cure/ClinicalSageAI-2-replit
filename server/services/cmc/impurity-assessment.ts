@@ -21,7 +21,10 @@
  * to relay it rather than reporting an impurity as unassessed-and-therefore-fine.
  */
 import {
+  assessElementalImpurity,
+  assessResidualSolvent,
   resolveImpurityThresholds,
+  type AdministrationRoute,
   type ImpurityClass,
   type ResolvedThreshold,
 } from '../global-ri/impurities-thresholds';
@@ -39,6 +42,8 @@ export type ImpurityDisposition =
 
 export interface ImpurityAssessment {
   ok: true;
+  /** The guideline this assessment was made under — the union's discriminator. */
+  basis: 'ICH Q3A(R2)/Q3B(R2)';
   impurityName: string;
   disposition: ImpurityDisposition;
   /** The observed level normalised to a percentage of the drug substance/product. */
@@ -73,12 +78,64 @@ export interface ImpurityAssessmentRefusal {
     | 'MDD_UNPARSEABLE'
     | 'MDD_NON_POSITIVE'
     | 'CLASS_OUT_OF_SCOPE'
-    | 'CLASS_UNRESOLVED';
+    | 'CLASS_UNRESOLVED'
+    | 'SOLVENT_NOT_RECORDED'
+    | 'SOLVENT_NOT_IN_CATALOG'
+    | 'ELEMENT_NOT_RECORDED'
+    | 'ELEMENT_NOT_IN_CATALOG'
+    | 'ROUTE_NOT_RECORDED';
   message: string;
   routeTo?: string;
 }
 
-export type ImpurityAssessmentResult = ImpurityAssessment | ImpurityAssessmentRefusal;
+/**
+ * A residual solvent assessed under ICH Q3C(R8).
+ *
+ * Q3A/Q3B do not govern solvents, so these records were REFUSED with
+ * CLASS_OUT_OF_SCOPE and rendered as "cannot be compared to a threshold …
+ * governed instead by ICH Q3C(R8)" — true, and useless: half the impurities on
+ * file are solvents, the guideline that governs them is modelled, and the
+ * section said so without applying it.
+ */
+export interface ResidualSolventAssessed {
+  ok: true;
+  basis: 'ICH Q3C(R8)';
+  impurityName: string;
+  solventName: string;
+  solventClass: 1 | 2 | 3;
+  limitPpm: number;
+  pdeMgPerDay: number | null;
+  observedPpm: number;
+  observedAsRecorded: string;
+  withinLimit: boolean;
+  disposition: 'within-limit' | 'above-limit' | 'class-1-avoid';
+  citation: string;
+  outstanding: string[];
+}
+
+/** An elemental impurity assessed under ICH Q3D(R2), at its recorded route. */
+export interface ElementalImpurityAssessed {
+  ok: true;
+  basis: 'ICH Q3D(R2)';
+  impurityName: string;
+  element: string;
+  elementName: string;
+  elementClass: string;
+  route: 'oral' | 'parenteral' | 'inhalation';
+  pdeMicrogramsPerDay: number;
+  observedMicrogramsPerDay: number;
+  observedAsRecorded: string;
+  withinLimit: boolean;
+  disposition: 'within-limit' | 'above-limit';
+  citation: string;
+  outstanding: string[];
+}
+
+export type ImpurityAssessmentResult =
+  | ImpurityAssessment
+  | ResidualSolventAssessed
+  | ElementalImpurityAssessed
+  | ImpurityAssessmentRefusal;
 
 /**
  * Can this record actually be compared to a threshold?
@@ -249,6 +306,12 @@ export function assessRecordedImpurity(
      whatever its dose, and reporting "no maximum daily dose is recorded" for a
      residual solvent sends the reader to fix the wrong thing — the dose would
      not have produced a threshold for it either way. */
+  /* A solvent and an elemental impurity ARE governed — by Q3C and Q3D — and
+     those tables are modelled. Route them to their own guideline before the
+     Q3A/Q3B out-of-scope refusal, which is what used to catch them. */
+  if (impurityClass === 'residual-solvent') return assessAsResidualSolvent(record, impurityName);
+  if (impurityClass === 'elemental') return assessAsElementalImpurity(record, impurityName);
+
   const scoped = resolveImpurityThresholds({ matrix, maxDailyDoseMg: 1, impurityClass });
   if (!scoped.ok && (scoped.code === 'CLASS_OUT_OF_SCOPE' || scoped.code === 'CLASS_UNRESOLVED')) {
     return { ok: false, impurityName, code: scoped.code, message: scoped.message, routeTo: scoped.routeTo };
@@ -329,6 +392,7 @@ export function assessRecordedImpurity(
 
   return {
     ok: true,
+    basis: 'ICH Q3A(R2)/Q3B(R2)',
     impurityName,
     disposition,
     observedPercent: level.percent,
@@ -343,4 +407,175 @@ export function assessRecordedImpurity(
     recordedThresholdDiffers,
     outstanding,
   };
+}
+
+
+/** A recorded route of administration, or null when none is on the record. */
+function recordedRoute(record: Record<string, any>): AdministrationRoute | null {
+  const raw = String(
+    record.routeOfAdministration ?? record.route_of_administration ?? record.route ?? '',
+  ).trim().toLowerCase();
+  if (!raw) return null;
+  if (raw.startsWith('oral') || raw === 'po') return 'oral';
+  if (raw.startsWith('parenteral') || raw === 'iv' || raw === 'im' || raw === 'sc' || raw.startsWith('inject')) return 'parenteral';
+  if (raw.startsWith('inhal') || raw === 'respiratory' || raw === 'nasal') return 'inhalation';
+  return null;
+}
+
+/** The level in ppm, from the register's level + unit, or null. */
+function levelAsPpm(record: Record<string, any>): number | null {
+  const value = Number(String(record.observedLevel ?? record.observed_level ?? '').trim());
+  if (!Number.isFinite(value)) return null;
+  const unit = String(record.levelUnit ?? record.level_unit ?? '').trim().toLowerCase();
+  if (unit === 'ppm') return value;
+  /* A percentage IS a ppm figure scaled by 10,000; anything else — a bare
+     number, mg, µg/day — states no concentration and is not converted. */
+  if (unit === '%' || unit === 'percent' || unit === 'w/w' || unit === '% w/w') return value * 10_000;
+  return null;
+}
+
+/** ICH Q3C(R8) over a recorded residual-solvent row. */
+function assessAsResidualSolvent(
+  record: Record<string, any>,
+  impurityName: string,
+): ImpurityAssessmentResult {
+  /* The solvent's own name is the impurity name on this register — a row for a
+     residual solvent records the solvent, not a code. */
+  const solventName = String(
+    record.solventName ?? record.solvent_name ?? record.impurityName ?? record.impurity_name ?? '',
+  ).trim();
+  const ppm = levelAsPpm(record);
+  const observedAsRecorded = [
+    String(record.observedLevel ?? record.observed_level ?? '').trim(),
+    String(record.levelUnit ?? record.level_unit ?? '').trim(),
+  ].filter(Boolean).join(' ');
+
+  const verdict = assessResidualSolvent({
+    solventName,
+    observedPpm: ppm === null ? Number.NaN : ppm,
+  });
+  if (!verdict.ok) {
+    return {
+      ok: false,
+      impurityName,
+      code:
+        verdict.code === 'LEVEL_NOT_RECORDED'
+          ? (String(record.levelUnit ?? record.level_unit ?? '').trim()
+              ? 'LEVEL_UNIT_NOT_CONVERTIBLE'
+              : 'LEVEL_UNIT_UNRECORDED')
+          : verdict.code,
+      message: verdict.message,
+      routeTo: 'ICH Q3C(R8)',
+    };
+  }
+
+  const outstanding: string[] = [];
+  if (verdict.disposition === 'class-1-avoid') {
+    outstanding.push(
+      `${verdict.solventName} is an ICH Q3C(R8) Class 1 solvent, which should not be used. Its presence requires justification regardless of level` +
+        (verdict.withinLimit ? `, and the recorded level is within the ${verdict.limitPpm} ppm concentration limit.` : `, and the recorded level exceeds the ${verdict.limitPpm} ppm concentration limit.`),
+    );
+  } else if (verdict.disposition === 'above-limit') {
+    outstanding.push(
+      `${verdict.solventName} is recorded at ${verdict.observedPpm} ppm, above its ICH Q3C(R8) Class ${verdict.solventClass} limit of ${verdict.limitPpm} ppm. Either the level is reduced or the higher level is justified against the permitted daily exposure at the product's own daily dose.`,
+    );
+  }
+
+  return {
+    ok: true,
+    basis: 'ICH Q3C(R8)',
+    impurityName,
+    solventName: verdict.solventName,
+    solventClass: verdict.solventClass,
+    limitPpm: verdict.limitPpm,
+    pdeMgPerDay: verdict.pdeMgPerDay,
+    observedPpm: verdict.observedPpm,
+    observedAsRecorded: observedAsRecorded || `${verdict.observedPpm} ppm`,
+    withinLimit: verdict.withinLimit,
+    disposition: verdict.disposition,
+    citation: verdict.citation,
+    outstanding,
+  };
+}
+
+/** ICH Q3D(R2) over a recorded elemental-impurity row. */
+function assessAsElementalImpurity(
+  record: Record<string, any>,
+  impurityName: string,
+): ImpurityAssessmentResult {
+  const element = String(
+    record.elementName ?? record.element_name ?? record.impurityName ?? record.impurity_name ?? '',
+  ).trim();
+  const route = recordedRoute(record);
+  const raw = Number(String(record.observedLevel ?? record.observed_level ?? '').trim());
+  const unit = String(record.levelUnit ?? record.level_unit ?? '').trim().toLowerCase();
+  /* Q3D limits are a daily EXPOSURE, so a concentration cannot be compared to
+     one without the daily dose; only a µg/day figure is taken. */
+  const perDay =
+    Number.isFinite(raw) && (unit === 'µg/day' || unit === 'ug/day' || unit === 'mcg/day') ? raw
+    : Number.isFinite(raw) && (unit === 'mg/day') ? raw * 1000
+    : null;
+  const observedAsRecorded = [String(record.observedLevel ?? record.observed_level ?? '').trim(), unit]
+    .filter(Boolean).join(' ');
+
+  const verdict = assessElementalImpurity({
+    element,
+    observedMicrogramsPerDay: perDay === null ? Number.NaN : perDay,
+    route,
+  });
+  if (!verdict.ok) {
+    return {
+      ok: false,
+      impurityName,
+      code:
+        verdict.code === 'LEVEL_NOT_RECORDED'
+          ? (unit ? 'LEVEL_UNIT_NOT_CONVERTIBLE' : 'LEVEL_UNIT_UNRECORDED')
+          : verdict.code,
+      message:
+        verdict.code === 'LEVEL_NOT_RECORDED' && unit
+          ? `${verdict.message} A Q3D permitted daily exposure is a daily amount, so a level recorded in "${unit}" cannot be compared to it without the product's daily dose.`
+          : verdict.message,
+      routeTo: 'ICH Q3D(R2)',
+    };
+  }
+
+  const outstanding: string[] = [];
+  if (!verdict.withinLimit) {
+    outstanding.push(
+      `${verdict.elementName} is recorded at ${verdict.observedMicrogramsPerDay} µg/day, above the ICH Q3D(R2) ${verdict.elementClass} permitted daily exposure of ${verdict.pdeMicrogramsPerDay} µg/day for the ${verdict.route} route.`,
+    );
+  }
+
+  return {
+    ok: true,
+    basis: 'ICH Q3D(R2)',
+    impurityName,
+    element: verdict.element,
+    elementName: verdict.elementName,
+    elementClass: verdict.elementClass,
+    route: verdict.route,
+    pdeMicrogramsPerDay: verdict.pdeMicrogramsPerDay,
+    observedMicrogramsPerDay: verdict.observedMicrogramsPerDay,
+    observedAsRecorded: observedAsRecorded || `${verdict.observedMicrogramsPerDay} µg/day`,
+    withinLimit: verdict.withinLimit,
+    disposition: verdict.withinLimit ? 'within-limit' : 'above-limit',
+    citation: verdict.citation,
+    outstanding,
+  };
+}
+
+
+/**
+ * Is this a Q3A/Q3B threshold assessment — the kind that carries reporting,
+ * identification and qualification thresholds?
+ *
+ * A residual solvent and an elemental impurity are assessed against ONE limit
+ * from their own guideline, not against three thresholds keyed to a daily dose,
+ * so the three-threshold shape does not apply to them and a caller must narrow
+ * before reaching for it.
+ */
+export function isThresholdAssessment(
+  result: ImpurityAssessmentResult,
+): result is ImpurityAssessment {
+  return result.ok === true && result.basis === 'ICH Q3A(R2)/Q3B(R2)';
 }

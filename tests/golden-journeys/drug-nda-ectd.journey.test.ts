@@ -54,6 +54,7 @@ import {
   JourneyRecorder,
   type JourneyDb,
   assertNoSchemaGaps,
+  assertNoDegradedTenantEnrichment,
 } from './harness';
 import {
   SUBMISSION_CORE_PGLITE_DDL,
@@ -255,7 +256,7 @@ beforeAll(async () => {
       r.userRole = role;
       r.tenantId = orgId;
       r.tenantContext = { organizationId: orgId };
-      r.dbClient = makeRequestDbClient(jdb.pglite, jdb.schemaGaps);
+      r.dbClient = makeRequestDbClient(jdb.pglite);
     }
     next();
   });
@@ -266,17 +267,15 @@ beforeAll(async () => {
 
 afterAll(async () => {
   // A journey that ran against a database missing a table its subject writes
-  // to proves less than it claims (ledger L145).
-  assertNoSchemaGaps(jdb, [
-    // `audit_logs` IS in this journey's extractTableDdl list above and the
-    // migrations that add its chain columns ARE applied, yet the
-    // /api/c2c/projects step still reports `[c2c-projects] Store not
-    // provisioned — request failed closed` with 42P01 on it. The route is
-    // behaving correctly; the provisioning is not, and why is not yet known.
-    // Recorded rather than papered over: this journey currently proves the NDA
-    // path with its project-creation step failing closed. See ledger L146.
-    { relation: 'audit_logs', row: 'L146' },
-  ]);
+  // to proves less than it claims (ledger L145). The one 42P01 this journey
+  // provokes on purpose — the rollback probe hides audit_logs for a single
+  // request — is captured and asserted inside that step, so no allowlist here.
+  // Ordered BEFORE the schema-gap check on purpose: a degraded membership is
+  // usually CAUSED by a missing column, and the gap check would otherwise
+  // throw first and report the symptom while hiding which claims were
+  // proven without an org context (ledger L148).
+  await assertNoDegradedTenantEnrichment();
+  assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('drug-nda-ectd');
   // eslint-disable-next-line no-console
   console.info(`[journey] manifest: ${jsonPath}\n[journey] report:   ${mdPath}`);
@@ -390,6 +389,11 @@ describe('golden journey — drug NDA / eCTD', () => {
       // is written LAST, after the programme, the scaffold, the spine and the
       // anchor — so anything that survives proves the transaction was not one.
       await jdb.pool.query(`ALTER TABLE audit_logs RENAME TO audit_logs_journey_hidden`);
+      // The recorder (L145) sees the audit write fail with 42P01 inside this
+      // window. That is the step working, not a schema gap: capture it here,
+      // prove the hidden store was actually written to, and take it out of the
+      // journey's gap list so afterAll needs no allowlist (ledger L146).
+      const gapsBefore = jdb.schemaGaps.length;
       let res;
       try {
         res = await asPrincipal(ORG, USER)(request(app).post('/api/c2c/projects')).send({
@@ -401,6 +405,19 @@ describe('golden journey — drug NDA / eCTD', () => {
       } finally {
         await jdb.pool.query(`ALTER TABLE audit_logs_journey_hidden RENAME TO audit_logs`);
       }
+      // A probe blocked for any other reason proves nothing about the audit
+      // write, so "the hidden store was reached" is part of the verdict, not a
+      // throw — inside expectBlocked a throw reads as the block itself.
+      //
+      // Only the gap this probe CAUSED leaves the journey's list. Any other
+      // relation the request found missing inside the window is a real gap,
+      // and is put back for afterAll to report — taking the whole window out
+      // would have let the probe hide it.
+      const isHiddenAuditStore = (g: { code: string; message: string }) =>
+        g.code === '42P01' && g.message.includes('"audit_logs"');
+      const inWindow = jdb.schemaGaps.splice(gapsBefore);
+      jdb.schemaGaps.push(...inWindow.filter((g) => !isHiddenAuditStore(g)));
+      const auditStoreReached = inWindow.some(isHiddenAuditStore);
       const after = await jdb.pool.query(
         `SELECT (SELECT count(*)::int FROM regulatory_programs) AS g,
                 (SELECT count(*)::int FROM submissions) AS s,
@@ -410,11 +427,13 @@ describe('golden journey — drug NDA / eCTD', () => {
       const a = after.rows[0] as { g: number; s: number; p: number };
       return {
         blocked:
+          auditStoreReached &&
           res.status === 503 &&
           res.body.error === 'PENDING_STORE' &&
           b.g === a.g &&
           b.s === a.s &&
           b.p === a.p,
+        auditStoreReached,
         status: res.status,
         error: res.body?.error,
         programsBefore: b.g,

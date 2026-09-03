@@ -30,6 +30,32 @@
   .ed[data-comments='true'] {
     grid-template-columns: 220px minmax(420px, 1fr) clamp(300px, 24vw, 460px);
   }
+  /* Those three tracks have a hard floor: 220 + 420 + 300 = 940px. The editor
+     pane is the window minus the rail (`.shell[data-editor='true']` is
+     `var(--rail) 1fr 0`, and --rail is 264px expanded), so the pane drops under
+     940 as soon as the window is narrower than 1204 — and the page then
+     scrolled SIDEWAYS rather than anything scrolling inside itself, because
+     .ed is `overflow: visible`. visual-qa:overflow measured it at 940 > 796.
+     Below that width the comments pane floats over the document column instead
+     of claiming a track of its own. It stays open, keeps its own close button,
+     and the document keeps the 420px measure it needs to be edited in — the
+     alternative, letting the middle column shrink, leaves 276px for the
+     document, which is not an editor. */
+  @media (max-width: 1204px) {
+    .ed[data-comments='true'] {
+      position: relative;
+      grid-template-columns: 220px minmax(0, 1fr);
+    }
+    .ed[data-comments='true'] > .ed-comments {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: min(360px, 100%);
+      z-index: 5;
+      box-shadow: -8px 0 24px color-mix(in oklab, var(--black) 10%, transparent);
+    }
+  }
   .ed[data-no-comments] {
     grid-template-columns: 260px 1fr;
   }
@@ -224,7 +250,7 @@
     flex-shrink: 0;
   }
   .ed-crumbs .sep {
-    color: var(--text-500);
+    color: var(--text-400);
     flex-shrink: 0;
   }
   .ed-doc-actions {

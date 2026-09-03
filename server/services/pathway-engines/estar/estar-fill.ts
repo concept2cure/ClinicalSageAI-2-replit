@@ -3,8 +3,8 @@
  *
  * Composes the three B-track pieces into the capstone:
  *   1. estar-template-registry — locate the official, version-pinned eSTAR template
- *   2. estar-field-map         — the canonical → AcroForm field mapping
- *   3. forms/fill-official-pdf — fill the official AcroForm PDF (the proven IND machinery)
+ *   2. estar-field-map         — the canonical → template field mapping
+ *   3. forms/fill-official-pdf — fill the official PDF (AcroForm or dynamic XFA)
  *
  * HONEST-BY-CONSTRUCTION: this returns a filled official eSTAR ONLY when BOTH the
  * official template is vendored AND a verified field map exists for it. Otherwise
@@ -13,8 +13,16 @@
  * PDF; a loose ZIP of section PDFs is not a substitute (see 510k-estar-routes).
  *
  * Both the template and the field map are procurement/verification artifacts (the
- * licensed FDA PDF + its real AcroForm field names), so until they are dropped in
- * this orchestration is wired and tested but reports "not yet producible".
+ * licensed FDA PDF + its real, enumerated field locators), so until they are
+ * dropped in this orchestration reports "not yet producible".
+ *
+ * TEMPLATE KIND: FDA's eSTAR is an Adobe LiveCycle *dynamic XFA* PDF — its
+ * AcroForm `/Fields` array is empty and Acrobat renders the `/XFA` packets. So
+ * this routes on what the vendored file actually is: dynamic XFA is filled by
+ * writing the `datasets` packet through a PDF incremental update (the original
+ * bytes are preserved, which is what keeps the output the real FDA form); a
+ * static AcroForm is filled by field name. Assuming AcroForm would have silently
+ * filled nothing.
  *
  * @module server/services/pathway-engines/estar/estar-fill
  */
@@ -27,13 +35,18 @@ import {
   type EstarTemplateType,
 } from './estar-template-registry';
 import { getEstarFieldMap, isFieldMapPopulated } from './estar-field-map';
-import { fillOfficialPdf, type OfficialPdfFieldMap } from '../../forms/fill-official-pdf';
+import {
+  fillOfficialPdf,
+  fillXfaDatasets,
+  isDynamicXfaPdf,
+  type OfficialPdfFieldMap,
+} from '../../forms/fill-official-pdf';
 
 export interface FillEstarInput {
   /** Any eSTAR program submission type (510(k)/De Novo/PMA, or Q-Sub/IDE/513(g)). */
   type: EstarTemplateType;
   variant: EstarTemplateVariant;
-  /** Canonical field values to write into the official eSTAR AcroForm. */
+  /** Canonical field values to write into the official eSTAR template. */
   data: Record<string, unknown>;
   /** Inject template bytes directly (tests / explicit); else loaded from the drop-point. */
   templateBytes?: Uint8Array | Buffer;
@@ -58,6 +71,12 @@ export interface FillEstarResult {
   warnings: string[];
   /** Why a submittable eSTAR could not be produced (empty when filled). */
   blockers: string[];
+  /**
+   * Which layer of the official template was filled. The FDA eSTAR templates are
+   * `dynamic-xfa` (their AcroForm layer is empty), so their values are written
+   * into the XFA `datasets` packet via a PDF incremental update.
+   */
+  templateKind?: 'acroform' | 'dynamic-xfa';
 }
 
 async function resolveTemplateBytes(
@@ -112,19 +131,31 @@ export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEs
   }
   if (!fieldMap || !mapPopulated) {
     base.blockers.push(
-      `Cannot produce a submittable eSTAR: the canonical→AcroForm field map for "${descriptor.id}" is not populated/verified ` +
-        `against the vendored template. Enumerate the template's fields (listAcroFields) and fill estar-field-map.ts.`,
+      `Cannot produce a submittable eSTAR: the canonical→template field map for "${descriptor.id}" is not populated/verified ` +
+        `against the vendored template. Enumerate the template's fields (listXfaFields for a dynamic XFA form such as ` +
+        `the FDA eSTAR, listAcroFields for a static AcroForm) and fill estar-field-map.ts.`,
     );
   }
 
   if (base.blockers.length > 0) return base;
 
-  // Both present → fill the official AcroForm. Never throws on a missing field
-  // (skip+warn), so the output is honest about what was and wasn't populated.
-  const result = await fillOfficialPdf(templateBytes!, fieldMap!, input.data, {
-    flatten: input.flatten ?? false,
-    missingFieldPolicy: 'skip',
-  });
+  // Both present → fill the official template. Which layer depends on the file:
+  // FDA's eSTAR is a dynamic Adobe LiveCycle XFA form whose AcroForm `/Fields`
+  // array is EMPTY, so an AcroForm fill would silently populate nothing. Route on
+  // what the template actually is rather than assuming. Neither path throws on a
+  // missing field (skip+warn), so the output stays honest about what was and
+  // wasn't populated.
+  const dynamicXfa = isDynamicXfaPdf(templateBytes!);
+  base.templateKind = dynamicXfa ? 'dynamic-xfa' : 'acroform';
+  const result = dynamicXfa
+    ? await fillXfaDatasets(templateBytes!, fieldMap!, input.data, {
+        flatten: input.flatten ?? false,
+        missingFieldPolicy: 'skip',
+      })
+    : await fillOfficialPdf(templateBytes!, fieldMap!, input.data, {
+        flatten: input.flatten ?? false,
+        missingFieldPolicy: 'skip',
+      });
 
   base.filled = true;
   base.pdfBytes = result.bytes;

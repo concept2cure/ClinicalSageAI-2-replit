@@ -401,10 +401,24 @@ does not mistake it for a failed drop.
 These are not safe deletes: several are the *evidence of record* for a governed action. The
 right fix for most is a reader, not a `DROP`.
 
+> **Re-verified 2026-09-02 under the corrected method (§8, ledger L144).** The
+> "reader evidence" column below was gathered by grepping the application
+> languages only — the method that produced §5.1's 24 false "dead" verdicts. The
+> same eleven were re-checked over `db/migrations/` and `migrations/` for
+> `FROM|JOIN|REFERENCES|ON <name>` (creator, index, policy and comment lines
+> excluded). All eleven hold. Three have database-side hits, none of them a
+> reader: `charter_audit_events` has `BEFORE UPDATE`/`BEFORE DELETE` triggers
+> (immutability guards); `document_audit_trail` is counted once in a `DO` block
+> of `emergency_security_migration.sql` (`RAISE NOTICE`, one-off);
+> `ai_provider_audit_log` is read by the view `ai_provider_cost_summary` and the
+> functions `get_org_ai_usage` / `get_provider_health_metrics`, and nothing in
+> the application references any of the three — the reader chain ends inside
+> the database. Recorded per row.
+
 | Table | Writers | Reader evidence | Note |
 |---|---|---|---|
-| `charter_audit_events` | `routes/charters.ts:717` | `grep -rniE "FROM charter_audit_events\|from\(charterAuditEvents\)" server client` → nothing | **The sharpest case.** `charters.ts:745` states the row "IS the §11.10(e) coverage of record for the" charter domain. Written in-transaction with an `event_hash` — and unreadable through the application. Add a reader |
-| `document_audit_trail` | `DocumentOrchestrationService.ts:437` (Drizzle), `unifiedDocumentIngestion.js:1316` (raw, broken — §6.1) | none | Also has a DDL collision — §6.2 |
+| `charter_audit_events` | `routes/charters.ts:717` | `grep -rniE "FROM charter_audit_events\|from\(charterAuditEvents\)" server client` → nothing; migrations: only `BEFORE UPDATE`/`BEFORE DELETE` immutability triggers (`20260629_charter_tables_rebuild.sql:359-364`) | **The sharpest case.** `charters.ts:745` states the row "IS the §11.10(e) coverage of record for the" charter domain. Written in-transaction with an `event_hash` — and unreadable through the application. Add a reader |
+| `document_audit_trail` | `DocumentOrchestrationService.ts:437` (Drizzle), `unifiedDocumentIngestion.js:1316` (raw, broken — §6.1) | none in the application; migrations: one `COUNT(*)` into a `RAISE NOTICE` in `emergency_security_migration.sql:78` — a one-off diagnostic, not a reader | Also has a DDL collision — §6.2 |
 | `contradiction_consequence_log` | 9 sites: `contradiction-consequence-service.ts:451,499,553,696`, `contradiction-engine-service.ts:606`, `contradiction-resolution-orchestrator.ts:460,547,592,617` | none | Most-written dead table in the repo |
 | `ai.gateway_audit_log` | `ai-gateway/audit.ts:321` | `grep -rniE "FROM ai\.gateway_audit_log" server scripts` → nothing | The AI provenance ledger is **fail-closed on write** (`server/startup/…/aiProvenanceLedgerInvariant.test.ts:25`, `audit.ts:143-152`) and never read back. `scripts/ai-governance/generate-evidence-pack.ts:86` only *describes* it in prose |
 | `innovation.guardrail_api_audit` | `compliance-guardrails-sdk-service.ts:1027` | only `tests/integration/innovation-platform.test.ts:842,935` | |
@@ -413,7 +427,7 @@ right fix for most is a reader, not a `DROP`.
 | `embedding_audit_log` | `enhancedEmbeddingService.ts:685` | none | |
 | `sharepoint_audit_log` | `ESGSubmissionService.ts:513` | none | Has a `signature` column |
 | `cer_version_history` | `cerGenerationService.ts:342` | none | CER version snapshots written and never surfaced |
-| `ai_provider_audit_log` | `aiProviderRouter.ts:498` | none | |
+| `ai_provider_audit_log` | `aiProviderRouter.ts:498` | none in the application; migrations: view `ai_provider_cost_summary` and functions `get_org_ai_usage`, `get_provider_health_metrics` (`20260125_ai_provider_audit_log.sql`) read it, and nothing references any of the three | The reader chain ends inside the database — a reader exists, unreachable |
 
 ---
 

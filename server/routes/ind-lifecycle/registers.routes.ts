@@ -13,7 +13,6 @@
  */
 
 import { Router } from 'express';
-import { createHash } from 'crypto';
 import { requireRole } from '../../middleware/auth';
 import {
   createCrossReference,
@@ -26,6 +25,7 @@ import {
 import { assembleLetterOfAuthorization, buildLoaLeafIntent } from '../../services/ind-lifecycle/ind-loa-service';
 import { renderLetterOfAuthorizationPdf } from '../../services/ind-lifecycle/ind-document-renderer';
 import { persistCrossReferenceFiling } from '../../services/ind-lifecycle/ind-lifecycle-persistence';
+import { storeRenderedLeafFile, leafSourceFor } from '../../services/ectd/rendered-leaf-files';
 import {
   createSafetyReportDraft,
   listSafetyReports,
@@ -158,14 +158,25 @@ router.post('/submission/:id/cross-references/:crossRefId/file-loa', limiter, re
       signatoryTitle: b.signatoryTitle,
       signatureDate: b.signatureDate,
     });
+    // Retain the rendered LOA so the m1.4.1 leaf points at the filed document.
+    // Keeping only its md5 left the leaf unresolvable and the sequence
+    // permanently dispatch-blocked (LIFE-01).
     const pdf = await renderLetterOfAuthorizationPdf(model);
-    const md5 = createHash('md5').update(pdf).digest('hex');
+    const stored = await storeRenderedLeafFile({
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      bytes: pdf,
+      mime: 'application/pdf',
+      fileName: 'letter-of-authorization.pdf',
+      renderedFrom: 'ind_letter_of_authorization',
+      sectionCode: 'm1.4.1',
+    });
     const filed = await persistCrossReferenceFiling(
       submissionId,
       [buildLoaLeafIntent(model)],
       String(b.sequenceNumber),
       ctx,
-      { 'm1.4.1': md5 },
+      { 'm1.4.1': leafSourceFor(stored) },
     );
     const crossReference = await updateCrossReference(crossRefId, { loaOnFile: true, loaLeafSection: 'm1.4.1' }, ctx);
     res.status(201).json({ sequence: filed.sequence, leaves: filed.leaves, crossReference });

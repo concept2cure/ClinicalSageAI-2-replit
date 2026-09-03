@@ -267,7 +267,7 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
       <div className="qms-topbar">
         <div className="qms-crumbs">
           <span>Quality &amp; Assurance</span>
-          <span className="sep">/</span>
+          <span className="sep" aria-hidden="true">/</span>
           <span className="here">{HERE[tab]}</span>
         </div>
         <div className="qms-spacer" />

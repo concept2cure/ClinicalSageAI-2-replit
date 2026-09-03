@@ -15,6 +15,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { recordSchemaGaps, type SchemaGap } from '../../server/db/pglite-harness';
+
+export type { SchemaGap };
 
 export const REPO_ROOT = path.resolve(__dirname, '..', '..');
 
@@ -41,7 +44,12 @@ export const CANONICAL_JOURNEY_MIGRATIONS = [
 
 /** FK prerequisites + two tenants for isolation assertions. */
 export const JOURNEY_PREREQUISITES = `
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
+  -- \`uuid\` as db/migrations/20260129_add_org_uuid_alignment.sql adds it. The
+  -- org-membership middleware LEFT JOINs it on every request and, when the
+  -- column is missing, falls back to a membership-only decision with
+  -- orgUuid = null — so without it the authoring journey exercised the degraded
+  -- path on every request and never the enriched one (ledger L148).
+  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid UUID NOT NULL DEFAULT gen_random_uuid());
   CREATE TABLE users (id SERIAL PRIMARY KEY, email TEXT);
   CREATE TABLE projects (id SERIAL PRIMARY KEY, organization_id INTEGER, name TEXT);
   CREATE TABLE concept2cure_artifacts (id SERIAL PRIMARY KEY, artifact_id UUID DEFAULT gen_random_uuid(), organization_id INTEGER, status TEXT, updated_at TIMESTAMPTZ DEFAULT NOW());
@@ -111,15 +119,6 @@ export interface JourneyDb {
   close: () => Promise<void>;
 }
 
-/** A query that failed because the journey's database lacked a relation or column. */
-export interface SchemaGap {
-  /** Postgres SQLSTATE: 42P01 undefined_table, 42703 undefined_column. */
-  code: string;
-  message: string;
-  /** The statement, trimmed — enough to identify the caller. */
-  sql: string;
-}
-
 /**
  * A journey that provoked a missing table or column and still passed is proving
  * less than it claims.
@@ -137,9 +136,41 @@ export interface SchemaGap {
  * `audit_logs` table in the database at all. Nothing failed, because the write
  * that needed it was outside the transaction and swallowed its own error.
  *
- * Call this in an `afterAll` in every journey. `check-journey-schema-gaps.mjs`
+ * Call this in an `afterAll` in every journey. `__tests__/journey-schema-gaps.test.ts`
  * enforces that every journey does.
  */
+/**
+ * A journey that ran every request on the org-membership degraded fallback
+ * proved its tenant claims with `app.current_org_id` empty.
+ *
+ * Ledger L148: `ind-authoring` did exactly that — its `organizations` stub
+ * predated `20260129_add_org_uuid_alignment`, the enrichment LEFT JOIN threw
+ * 42703 on every request, and the membership-only fallback answered with
+ * `orgUuid = null`. Membership was still decided correctly, which is why
+ * nothing failed, and the only trace was a warning a test cannot read. That
+ * residual was carried on L148 rather than closed; this closes it.
+ *
+ * Call it in the same `afterAll` as `assertNoSchemaGaps`. A journey that WANTS
+ * to exercise the fallback asserts the count itself instead.
+ */
+export async function assertNoDegradedTenantEnrichment(): Promise<void> {
+  const { degradedEnrichmentCount, degradedEnrichmentSample } = await import(
+    '../../server/middleware/orgMembership'
+  );
+  const n = degradedEnrichmentCount();
+  if (n === 0) return;
+  const seen = degradedEnrichmentSample()
+    .map((d) => `  user ${d.userId} / org ${d.organizationId}: ${d.error}`)
+    .join('\n');
+  throw new Error(
+    `${n} request(s) in this journey answered on the org-membership DEGRADED fallback, ` +
+      `so app.current_org_id was empty for them and any tenant-scoping this journey ` +
+      `asserts was proven without it:\n\n${seen}\n\n` +
+      `Usually the journey's own \`organizations\` stub is missing a column the real ` +
+      `schema has (the uuid alignment migration adds one). Fix the stub, not this check.`,
+  );
+}
+
 export function assertNoSchemaGaps(
   jdb: Pick<JourneyDb, 'schemaGaps'>,
   /**
@@ -188,18 +219,12 @@ export function assertNoSchemaGaps(
  * Single connection (PGlite), which is what the request-scoped client is: one
  * connection carrying the tenant session variables. Ported from the proven shim
  * in server/routes/__tests__/saved-precedent-queries.rls.test.ts.
+ *
+ * Missing relations on this client are recorded at the PGlite seam by
+ * `recordSchemaGaps` (attached in `createJourneyDb`), so it carries no
+ * instrumentation of its own.
  */
-export function makeRequestDbClient(
-  pglite: import('@electric-sql/pglite').PGlite,
-  /**
-   * Pass `jdb.schemaGaps` so a missing relation on the REQUEST-SCOPED client is
-   * recorded too. Three journeys put their real request traffic through this
-   * client rather than the pool, so leaving it uninstrumented would have made
-   * `assertNoSchemaGaps` quietly weaker on exactly the paths that matter most.
-   */
-  schemaGaps?: SchemaGap[],
-) {
-  const SCHEMA_GAP_CODES = new Set(['42P01', '42703']);
+export function makeRequestDbClient(pglite: import('@electric-sql/pglite').PGlite) {
   return {
     query: async (textOrConfig: unknown, values?: unknown[]) => {
       const text =
@@ -208,24 +233,11 @@ export function makeRequestDbClient(
         typeof textOrConfig === 'string'
           ? undefined
           : (textOrConfig as { rowMode?: string }).rowMode;
-      let r;
-      try {
-        r = await pglite.query(
-          text,
-          (values ?? []) as unknown[],
-          rowMode === 'array' ? { rowMode: 'array' } : undefined,
-        );
-      } catch (err) {
-        const code = (err as { code?: string })?.code ?? '';
-        if (schemaGaps && SCHEMA_GAP_CODES.has(code)) {
-          schemaGaps.push({
-            code,
-            message: (err as Error).message,
-            sql: text.replace(/\s+/g, ' ').trim().slice(0, 160),
-          });
-        }
-        throw err;
-      }
+      const r = await pglite.query(
+        text,
+        (values ?? []) as unknown[],
+        rowMode === 'array' ? { rowMode: 'array' } : undefined,
+      );
       const rows = r.rows as unknown[];
       const affected = (r as { affectedRows?: number }).affectedRows ?? 0;
       return {
@@ -251,6 +263,9 @@ export async function createJourneyDb(options?: {
   const { drizzle } = await import('drizzle-orm/pglite');
 
   const pglite = new PGlite();
+  // Attached before any statement runs, so DDL gaps in the journey's own
+  // extractTableDdl list are observed too.
+  const schemaGaps = recordSchemaGaps(pglite);
   await pglite.exec(options?.prereqSql ?? JOURNEY_PREREQUISITES);
   for (const f of options?.migrations ?? CANONICAL_JOURNEY_MIGRATIONS) {
     await pglite.exec(fs.readFileSync(path.join(REPO_ROOT, f), 'utf8'));
@@ -268,36 +283,21 @@ export async function createJourneyDb(options?: {
   // second form (e.g. createSubmissionTx inside the C2C intake transaction);
   // without it PGlite is handed an object where it expects a string and the
   // route reports an opaque INTERNAL_ERROR.
-  // Every statement a journey issues passes through here, which makes it the one
-  // place a missing relation is observable regardless of whether the caller
-  // swallows the error. Recorded, then rethrown unchanged — the code under test
-  // must see exactly what it would see in production.
-  const schemaGaps: SchemaGap[] = [];
-  const SCHEMA_GAP_CODES = new Set(['42P01', '42703']); // undefined_table, undefined_column
+  // Missing relations are NOT recorded here. Drizzle (`db` below) talks to
+  // PGlite directly and never passes through this shim, so a shim-level
+  // recorder missed every statement the ORM issued — `recordSchemaGaps`
+  // (above) sits at the PGlite seam instead and sees both.
 
   const runQuery = async (textOrConfig: unknown, params?: unknown[]) => {
     const text =
       typeof textOrConfig === 'string' ? textOrConfig : (textOrConfig as { text: string }).text;
     const rowMode =
       typeof textOrConfig === 'string' ? undefined : (textOrConfig as { rowMode?: string }).rowMode;
-    let r;
-    try {
-      r = await pglite.query(
-        text,
-        params as unknown[],
-        rowMode === 'array' ? { rowMode: 'array' } : undefined,
-      );
-    } catch (err) {
-      const code = (err as { code?: string })?.code ?? '';
-      if (SCHEMA_GAP_CODES.has(code)) {
-        schemaGaps.push({
-          code,
-          message: (err as Error).message,
-          sql: text.replace(/\s+/g, ' ').trim().slice(0, 160),
-        });
-      }
-      throw err;
-    }
+    const r = await pglite.query(
+      text,
+      params as unknown[],
+      rowMode === 'array' ? { rowMode: 'array' } : undefined,
+    );
     const rows = r.rows as unknown[];
     // PGlite reports affectedRows: 0 for SELECTs, so prefer rows.length and fall
     // back to affectedRows only for row-less commands (UPDATE without
@@ -417,6 +417,19 @@ export class JourneyRecorder {
       return evidence;
     } catch (err) {
       if (err instanceof Error && /expected a block/.test(err.message)) throw err;
+      // A thrown error is how a service-level block manifests — but a failed
+      // assertion inside the step is the TEST failing, not the subject
+      // blocking, and must not be filed as the block the step exists to prove.
+      if (err instanceof Error && err.name === 'AssertionError') {
+        this.steps.push({
+          seq: this.seq,
+          name,
+          kind: 'known-bad',
+          status: 'failed',
+          evidence: { error: err.message },
+        });
+        throw err;
+      }
       const evidence = { thrown: err instanceof Error ? err.message : String(err) };
       this.steps.push({ seq: this.seq, name, kind: 'known-bad', status: 'blocked-as-expected', evidence });
       return evidence;
