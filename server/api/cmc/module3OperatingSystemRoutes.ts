@@ -7,7 +7,7 @@ import {
   createSourceHash,
 } from '../../services/cmc-module3-compiler';
 import { composeModule3FromCanonicalSources, impactedSectionsForSourceType } from '../../services/module3Composer';
-import { composeRegional } from '../../services/module3-extensions';
+import { composeAppendices, composeRegional } from '../../services/module3-extensions';
 import { regionCodeForPrimaryRegion, resolveSubmissionSpine } from '../../services/cmc/submission-spine';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
@@ -167,6 +167,34 @@ router.post('/compile/:projectId', async (req, res) => {
     }
 
     let compiled = composeModule3FromCanonicalSources(rows as any);
+
+    /* ── Appendices (3.2.A) ──
+       module3-extensions has carried generators for 3.2.A.1 Facilities,
+       3.2.A.2 Adventitious Agents and 3.2.A.3 Excipients since it was written,
+       and nothing in the product's own compile path ever called them: a product
+       using an animal-derived excipient could not produce the CTD section that
+       exists to declare it.
+
+       An OPTIONAL appendix with no matched source is not emitted at all.
+       composeAppendices scores an unmatched optional rule 100% complete, so
+       emitting it would put a fully-complete section into the dossier asserting
+       things about data nobody recorded — the precise hazard 3.2.A.3's own
+       fail-closed branch exists to avoid. A required appendix IS emitted, with
+       its honest incompleteness. */
+    try {
+      const appendices = composeAppendices(rows as any).filter(
+        (section) =>
+          section.lineage.length > 0 ||
+          (section.structuredPayload as { optional?: boolean } | undefined)?.optional === false,
+      );
+      compiled = compiled.concat(appendices);
+    } catch (appendixErr) {
+      // Said, not swallowed — the same posture as the regional pass below.
+      console.warn(
+        '[module3-os] appendix (3.2.A) composition skipped:',
+        appendixErr instanceof Error ? appendixErr.message : String(appendixErr),
+      );
+    }
 
     /* ── Regional Information (3.2.R) ──
        The core composer deliberately owns only S/P/3.1/3.3 (defining R rules

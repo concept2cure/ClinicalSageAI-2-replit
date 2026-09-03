@@ -1176,6 +1176,54 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
+  // ── Biostatistics workbench ──
+  {
+    id: 'biostat-workbench.select-calculator',
+    surfaceId: 'biostat-workbench',
+    label: 'Open a design engine',
+    description:
+      'On the biostatistics workbench, open one of the design engines (assurance, group-sequential, sample size, multiplicity, and the rest) by its name so its inputs show — the same tile click a person makes. Computing a result stays a deliberate act; this only opens the engine. Honest misses.',
+    params: [
+      { name: 'calculator', required: true, description: 'The design engine\'s title or a distinctive phrase from it (case-insensitive; partial names resolve when unambiguous).' },
+    ],
+  },
+
+  // ── Filing strategy ──
+  {
+    id: 'filing-strategy.open-tab',
+    surfaceId: 'filing-strategy',
+    label: 'Open a filing-strategy tab',
+    description:
+      'On the filing-strategy workspace, switch between the filing-sequence, agency-divergence, and prediction-calibration tabs.',
+    params: [
+      { name: 'tab', required: true, description: 'The tab to open.', enum: ['sequence', 'divergence', 'calibration'] },
+    ],
+  },
+
+  // ── Safety narratives ──
+  {
+    id: 'safety-narrative.select-case',
+    surfaceId: 'safety-narrative',
+    label: 'Open an SAE case',
+    description:
+      'On the safety-narrative workbench, open an SAE case from the worklist by its id or study id so its composed ICH E3 §16 narrative and reporting clock show — the same row click a person makes. Editing the narrative stays a human act. Resolved against the real worklist with honest misses; held while it loads.',
+    params: [
+      { name: 'case', required: true, description: 'The case id or its study id, as listed (case-insensitive; a distinctive partial resolves when unambiguous).' },
+    ],
+  },
+
+  // ── FDA CRL library ──
+  {
+    id: 'crl-library.select-finding',
+    surfaceId: 'crl-library',
+    label: 'Open a CRL finding',
+    description:
+      'On the FDA CRL library, open a deficiency finding by its id so its detail shows — the same row click a person makes. Resolved against the real search results with honest misses; held while the search loads.',
+    params: [
+      { name: 'finding', required: true, description: 'The finding id as listed (case-insensitive).' },
+    ],
+  },
+
   // ── Deep research ──
   {
     id: 'deep-research.open-tab',
