@@ -50,9 +50,16 @@ function makeSources(): CanonicalSource[] {
        project, so both records declare `both`. */
     { id: 'rs-1', sourceType: 'reference_standard', sourcePayload: { scope: 'both', standardCode: 'RS-2026-01', standardName: 'USP Amlodipine Besylate RS', standardType: 'compendial', certificateOfAnalysis: 'Lot RS-2026-01', status: 'qualified', referenceStandardDescription: 'USP Amlodipine Besylate RS (RS-2026-01) — compendial standard', drugSubstanceReferenceStandard: 'USP Amlodipine Besylate RS (RS-2026-01) — compendial standard', drugSubstanceReferenceStandardCoA: 'Lot RS-2026-01', drugProductReferenceStandard: 'USP Amlodipine Besylate RS (RS-2026-01) — compendial standard', drugProductReferenceStandardCoA: 'Lot RS-2026-01' } },
     { id: 'cl-1', sourceType: 'container_closure', sourcePayload: { scope: 'both', systemName: 'HDPE bottle / child-resistant cap', containerDescription: 'HDPE bottle', closureDescription: 'Child-resistant cap', suitabilityJustification: 'Moisture barrier demonstrated', status: 'qualified', drugSubstanceContainerDescription: 'HDPE bottle', drugSubstanceClosureDescription: 'Child-resistant cap', drugSubstanceSuitabilityJustification: 'Moisture barrier demonstrated', drugProductContainerDescription: 'HDPE bottle', drugProductClosureDescription: 'Child-resistant cap', drugProductSuitabilityJustification: 'Moisture barrier demonstrated' } },
-    { id: 'ex-1', sourceType: 'excipient', sourcePayload: { excipientSpecifications: 'Microcrystalline cellulose NF', excipientAnalyticalProcedures: 'Per USP monograph' } },
+    /* The shape mapMaterialSpecPayload actually emits: the register stores a
+       named material with its specification rows, and the two derived keys are
+       computed FROM those. A payload carrying only the derived keys is a shape
+       the product never writes, and §3.2.P.4's excipient table — which renders
+       per material — had nothing to render from it. */
+    { id: 'ex-1', sourceType: 'excipient', sourcePayload: { materialRole: 'excipient', materialName: 'Microcrystalline cellulose', functionInFormulation: 'Diluent', grade: 'PH-102', compendialMonograph: 'USP-NF', analyticalProcedures: 'Per USP monograph', testParameters: [{ test: 'Identification', method: 'IR', acceptanceCriteria: 'Conforms' }], status: 'specified', excipientSpecifications: 'Microcrystalline cellulose NF', excipientAnalyticalProcedures: 'Per USP monograph', excipientControlComplete: 'Microcrystalline cellulose' } },
     { id: 'pv-1', sourceType: 'process_validation', sourcePayload: { processStep: 'Wet granulation', validationStatus: 'validated', consecutiveBatches: 3 } },
-    { id: 'rm-1', sourceType: 'raw_material_spec', sourcePayload: { materialName: 'Amlodipine Besylate (starting material)', grade: 'Pharmaceutical grade', testParameters: ['Identity', 'Purity ≥ 99.0%'] } },
+    /* testParameters is an array of OBJECTS — what cmc_material_specs stores and
+       what the form writes. A flat string array renders no specification. */
+    { id: 'rm-1', sourceType: 'raw_material_spec', sourcePayload: { materialRole: 'starting-material', materialName: 'Amlodipine Besylate (starting material)', grade: 'Pharmaceutical grade', testParameters: [{ test: 'Identity', method: 'IR', acceptanceCriteria: 'Conforms' }, { test: 'Purity', method: 'HPLC', acceptanceCriteria: '≥ 99.0%' }], status: 'specified' } },
     /* The impurity register holds ONE ROW PER IMPURITY, with the level in the
        unit it was recorded in and the maximum daily dose the ICH threshold is
        keyed to — the shape mapImpurityProfilePayload emits. The legacy blob

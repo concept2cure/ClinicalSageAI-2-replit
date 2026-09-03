@@ -15,6 +15,11 @@ import {
   scopeCovers,
   type CmcMaterialScope,
 } from '../../shared/cmc/material-scope';
+import {
+  CHARACTERIZATION_TYPE_FIELD,
+  CHARACTERIZATION_TYPE_LABEL,
+  normalizeCharacterizationType,
+} from '../../shared/cmc/characterization-type';
 
 export type CmcSourceType =
   | 'drug_substance'
@@ -84,7 +89,7 @@ interface SectionRule {
 export const MODULE3_SECTION_RULES: SectionRule[] = [
   // --- Drug Substance (S) subsections ---
   { sectionKey: '3.2.S.1', requiredSourceTypes: ['drug_substance'], requiredFields: ['name', 'manufacturer'] },
-  { sectionKey: '3.2.S.2', requiredSourceTypes: ['drug_substance', 'manufacturing_process', 'process_validation'], requiredFields: ['manufacturingRoute', 'processDescription', 'processControls'] },
+  { sectionKey: '3.2.S.2', requiredSourceTypes: ['drug_substance', 'manufacturing_process', 'process_validation', 'raw_material_spec'], requiredFields: ['manufacturingRoute', 'processDescription', 'processControls', 'manufacturingProcessComplete'] },
   { sectionKey: '3.2.S.3', requiredSourceTypes: ['drug_substance', 'characterization', 'impurity_profile'], requiredFields: ['structuralElucidation', 'physicochemicalProperties', 'biologicalActivity', 'drugSubstanceImpurityProfileComplete'] },
   /* `drugSubstanceBatchAnalyses`, not the generic `batchAnalyses`: the
      renderer files a finished-product result to §3.2.P.5.4 only, so counting
@@ -123,10 +128,20 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
   { sectionKey: '3.2.S.6', requiredSourceTypes: ['container_closure'], requiredFields: ['drugSubstanceContainerDescription', 'drugSubstanceClosureDescription', 'drugSubstanceSuitabilityJustification', 'drugSubstanceContainerClosureComplete'] },
   { sectionKey: '3.2.S.7', requiredSourceTypes: ['stability'], requiredFields: ['timePoints', 'storageCondition'] },
   // --- Drug Product (P) subsections ---
-  { sectionKey: '3.2.P.1', requiredSourceTypes: ['drug_product', 'formulation_record'], requiredFields: ['dosageFormDescription', 'composition', 'strength'] },
-  { sectionKey: '3.2.P.2', requiredSourceTypes: ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile', 'container_closure'], requiredFields: ['formulationDevelopment', 'manufacturingProcessDev', 'containerClosureStudies'] },
-  { sectionKey: '3.2.P.3', requiredSourceTypes: ['drug_product', 'batch', 'change_control', 'process_validation'], requiredFields: ['formulation', 'batchNumber'] },
-  { sectionKey: '3.2.P.4', requiredSourceTypes: ['excipient', 'raw_material_spec'], requiredFields: ['excipientSpecifications', 'excipientAnalyticalProcedures'] },
+  { sectionKey: '3.2.P.1', requiredSourceTypes: ['drug_product', 'formulation_record'], requiredFields: ['dosageFormDescription', 'composition', 'strength', 'formulationCompositionComplete'] },
+  /* `characterization` is here because a drug-product characterisation study —
+     a polymorph screen on the compressed tablet, say — is pharmaceutical
+     development evidence. Without it, the register wrote such a study through to
+     cmc_source_objects, the form and the register grid both told the staffer it
+     filed under §3.2.P.2, and it reached no composed section at all. */
+  { sectionKey: '3.2.P.2', requiredSourceTypes: ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile', 'container_closure', 'characterization'], requiredFields: ['formulationDevelopment', 'manufacturingProcessDev', 'containerClosureStudies'] },
+  { sectionKey: '3.2.P.3', requiredSourceTypes: ['drug_product', 'batch', 'change_control', 'process_validation', 'manufacturing_process'], requiredFields: ['formulation', 'batchNumber', 'drugProductProcessComplete'] },
+  /* §3.2.P.4 is Control of EXCIPIENTS. `raw_material_spec` was listed here
+     because this was the only rule that named it, so a drug-substance starting
+     material rendered inside the drug product's excipient section while the
+     register grid told the staffer it filed under §3.2.S.2.3. It belongs to
+     §3.2.S.2 above. */
+  { sectionKey: '3.2.P.4', requiredSourceTypes: ['excipient'], requiredFields: ['excipientSpecifications', 'excipientAnalyticalProcedures', 'excipientControlComplete'] },
   { sectionKey: '3.2.P.5', requiredSourceTypes: ['specification', 'method', 'dissolution_profile', 'impurity_profile', 'qc_result'], requiredFields: ['releaseCriteria', 'methodName', 'drugProductBatchAnalyses', 'drugProductImpurityProfileComplete'] },
   { sectionKey: '3.2.P.6', requiredSourceTypes: ['drug_product', 'reference_standard'], requiredFields: ['drugProductReferenceStandard', 'drugProductReferenceStandardCoA', 'drugProductReferenceStandardComplete'] },
   { sectionKey: '3.2.P.7', requiredSourceTypes: ['container_closure'], requiredFields: ['drugProductContainerDescription', 'drugProductClosureDescription', 'drugProductSuitabilityJustification', 'drugProductContainerClosureComplete'] },
@@ -427,11 +442,12 @@ function scopedPayloads(
   sourceType: CmcSourceType,
   side: 'drug_substance' | 'drug_product',
   fallback: CmcMaterialScope,
+  scopeKey = 'scope',
 ): Array<Record<string, any>> {
   return sources
     .filter((s) => s.sourceType === sourceType)
     .map((s) => (s.sourcePayload || {}) as Record<string, any>)
-    .filter((p) => scopeCovers(normalizeMaterialScope(p.scope, fallback), side));
+    .filter((p) => scopeCovers(normalizeMaterialScope(p[scopeKey], fallback), side));
 }
 
 /** The rows of a json array field, ignoring anything that is not an object. */
@@ -1086,6 +1102,477 @@ function dissolutionRendering(
   return { tables, narrative };
 }
 
+/* ── Materials (§3.2.P.4 excipients, §3.2.S.2.3 raw materials) ────────────────
+ *
+ * The material register holds ONE ROW PER MATERIAL, and §3.2.P.4 read a single
+ * first-match `materialName` / `grade` pair — so a project using twelve
+ * excipients rendered one of them, and which one depended on arrival order.
+ */
+function materialRows(
+  sources: CanonicalSource[],
+  sourceType: 'excipient' | 'raw_material_spec',
+): Array<Record<string, any>> {
+  return sources
+    .filter((s) => s.sourceType === sourceType)
+    .map((s) => (s.sourcePayload || {}) as Record<string, any>)
+    .filter((p) => String(p.materialName || '').trim())
+    // A retired material is superseded, not current.
+    .filter((p) => String(p.status || '').toLowerCase() !== 'retired');
+}
+
+/** The specification a material is controlled to, as recorded. */
+function materialSpecText(p: Record<string, any>): string {
+  const rows = Array.isArray(p.testParameters) ? p.testParameters.filter((r: any) => r && typeof r === 'object') : [];
+  if (rows.length > 0) {
+    return rows.map((r: any) => [r.test, r.acceptanceCriteria].filter(Boolean).join(' ')).filter(Boolean).join('; ');
+  }
+  return String(p.compendialMonograph || '') ? `Complies with ${p.compendialMonograph}` : '—';
+}
+
+/**
+ * §3.2.S.2.3 — the raw and starting materials the drug substance is made from.
+ *
+ * These rendered inside §3.2.P.4 Control of EXCIPIENTS, because that was the
+ * only rule listing `raw_material_spec` — so a reviewer opening the drug
+ * product's excipient section found a drug-substance synthetic intermediate,
+ * and the register grid told the staffer the same row filed under §3.2.S.2.3.
+ * The screen and the dossier disagreeing about where a record belongs is the
+ * failure shared/cmc/material-scope.ts exists to prevent.
+ */
+function rawMaterialRendering(
+  sources: CanonicalSource[],
+): { tables: GeneratedTable[]; narrative: string } {
+  const rawMaterials = materialRows(sources, 'raw_material_spec');
+  if (rawMaterials.length === 0) return { tables: [], narrative: '' };
+  const unspecified = rawMaterials.filter((p) => materialSpecText(p) === '—');
+  return {
+    tables: [{
+      title: 'Raw and Starting Material Specifications',
+      headers: ['Material', 'Role', 'Grade', 'Compendial Monograph', 'Specification', 'Supplier', 'Site'],
+      rows: rawMaterials.map((p) => [
+        String(p.materialName),
+        String(p.materialRole || '—'),
+        String(p.grade || '—'),
+        String(p.compendialMonograph || '—'),
+        materialSpecText(p),
+        String(p.supplier || '—'),
+        String(p.manufacturerSite || '—'),
+      ]),
+    }],
+    narrative:
+      `${rawMaterials.length} raw or starting material specification(s) are recorded for the drug substance, reported above. ` +
+      (unspecified.length > 0
+        ? `${unspecified.length} of them record neither a specification nor a compendial monograph, so what they are controlled to is not established by this section. `
+        : ''),
+  };
+}
+
+function materialRendering(
+  sources: CanonicalSource[],
+): { tables: GeneratedTable[]; narrative: string } {
+  const excipients = materialRows(sources, 'excipient');
+  const tables: GeneratedTable[] = [];
+
+  if (excipients.length > 0) {
+    tables.push({
+      title: 'Control of Excipients',
+      headers: ['Excipient', 'Function', 'Grade', 'Compendial Monograph', 'Specification', 'Analytical Procedure', 'Supplier', 'Origin'],
+      rows: excipients.map((p) => [
+        String(p.materialName),
+        String(p.functionInFormulation || '—'),
+        String(p.grade || '—'),
+        String(p.compendialMonograph || '—'),
+        materialSpecText(p),
+        String(p.analyticalProcedures || (p.compendialMonograph ? `Per ${p.compendialMonograph}` : '—')),
+        String(p.supplier || '—'),
+        String(p.origin || 'not recorded'),
+      ]),
+    });
+  }
+
+  const novel = excipients.filter((p) => p.novelExcipient);
+  const unjustifiedNovel = novel.filter((p) => !String(p.novelExcipientJustification || '').trim());
+  const unspecified = excipients.filter((p) => materialSpecText(p) === '—');
+
+  /* "each controlled to the specification reported above" was unconditional,
+     and the very next clause named the excipients that record no specification
+     at all — a blanket claim of control the same paragraph disproved, in the
+     sentence a reader takes as the section's statement of control. */
+  const specified = excipients.length - unspecified.length;
+  const narrative =
+    (excipients.length === 0
+      ? `No excipient is recorded for the drug product; the control of excipients is not established by this section. `
+      : unspecified.length === 0
+        ? `${excipients.length} excipient(s) are recorded for the drug product, each controlled to the specification reported above. `
+        : `${excipients.length} excipient(s) are recorded for the drug product. ${specified} of them are controlled to the specification reported above; ` +
+          `${unspecified.length} record neither a specification nor a compendial monograph, so what those are controlled to is not established by this section. `) +
+    /* A novel excipient carries its own safety package (ICH M4Q 3.2.P.4.6).
+       Recording one without a justification is a gap the section states. */
+    (novel.length > 0
+      ? `${novel.length} excipient(s) are recorded as novel and require the safety documentation of §3.2.P.4.6` +
+        (unjustifiedNovel.length > 0
+          ? `; ${unjustifiedNovel.length} of those record no justification, which is not supplied by this section. `
+          : `, whose justification is recorded against each. `)
+      : '') +
+    '';
+
+  return { tables, narrative };
+}
+
+/* ── Formulation (§3.2.P.1 composition) ───────────────────────────────────────
+ *
+ * §3.2.P.1's composition table read a first-match `components` array, so a
+ * project with several formulation versions rendered whichever arrived first.
+ * The register records a version and a status; the section renders the CURRENT
+ * one and says what it superseded.
+ */
+function formulationRecords(sources: CanonicalSource[]): Array<Record<string, any>> {
+  return sources
+    .filter((s) => s.sourceType === 'formulation_record')
+    .map((s) => (s.sourcePayload || {}) as Record<string, any>)
+    .filter((p) => String(p.formulationName || '').trim());
+}
+
+function formulationRendering(
+  sources: CanonicalSource[],
+): { tables: GeneratedTable[]; narrative: string; current: Record<string, any> | null } {
+  const all = formulationRecords(sources);
+  if (all.length === 0) {
+    return { tables: [], narrative: '', current: null };
+  }
+  /* "Current" is a recorded status, never a guess at which arrived last. Where
+     no record claims it, the section says so instead of electing one. */
+  const current = all.filter((p) => String(p.status || '').toLowerCase() === 'current');
+  const superseded = all.filter((p) => String(p.status || '').toLowerCase() === 'superseded');
+  const chosen = current.length === 1 ? current[0] : null;
+
+  const tables: GeneratedTable[] = [];
+  const componentsOf = (p: Record<string, any>) =>
+    Array.isArray(p.components) ? p.components.filter((c: any) => c && typeof c === 'object') : [];
+
+  if (chosen) {
+    tables.push({
+      title: 'Quantitative Composition',
+      headers: ['Component', 'Function / Role', 'Amount per Unit', '% w/w', 'Amount per Batch', 'Overage', 'Compendial Reference', 'Origin'],
+      rows: componentsOf(chosen).map((c: any) => [
+        String(c.component || c.name || 'Unknown'),
+        String(c.role || c.function || '—'),
+        [c.amountPerUnit ?? c.amount, c.unit].filter(Boolean).join(' ') || '—',
+        String(c.percentWeight ?? '—'),
+        String(c.amountPerBatch ?? '—'),
+        String(c.overage ?? '—'),
+        String(c.compendialReference ?? '—'),
+        String(c.origin ?? 'not recorded'),
+      ]),
+    });
+  }
+  if (all.length > 1) {
+    tables.push({
+      title: 'Formulation Versions',
+      headers: ['Formulation', 'Version', 'Status', 'Batch Size', 'Supersedes', 'Components'],
+      rows: all.map((p) => [
+        String(p.formulationName),
+        String(p.version || '—'),
+        String(p.status || 'draft'),
+        String(p.batchSize || '—'),
+        String(p.supersedes || '—'),
+        String(componentsOf(p).length),
+      ]),
+    });
+  }
+
+  const unjustified = all.reduce((n, p) => n + (Number(p.unjustifiedOverageCount) || 0), 0);
+  const narrative =
+    (chosen
+      ? `The current formulation is ${String(chosen.formulationName)}` +
+        (chosen.version ? ` (${String(chosen.version)})` : '') +
+        `, comprising ${componentsOf(chosen).length} component(s) reported above` +
+        (chosen.batchSize ? ` at a batch size of ${String(chosen.batchSize)}` : '') + `. `
+      : current.length > 1
+        ? `${current.length} formulation records are marked current, so which composition governs is not established by this section. `
+        : `${all.length} formulation record(s) are on file and none is marked current, so the governing composition is not established by this section. `) +
+    (superseded.length > 0 ? `${superseded.length} superseded version(s) are retained in the record. ` : '') +
+    /* An overage is a regulatory question in its own right (ICH Q8 §2.3): one
+       recorded without a justification is a gap, not a detail. */
+    (unjustified > 0
+      ? `${unjustified} component overage(s) are recorded without a justification; the reason for the overage is not established by this section. `
+      : '');
+
+  return { tables, narrative, current: chosen };
+}
+
+/**
+ * §3.2.S.2.2 / §3.2.P.3.3 — the manufacturing process, from the register that
+ * now writes it.
+ *
+ * Before this register existed, both sections rendered whatever single sentence
+ * the drug substance or drug product form happened to carry in a "process
+ * description" box. The process is a sequence of unit operations with critical
+ * parameters and controls attached to each; that is what a reviewer reads, and
+ * that is what the register records.
+ *
+ * Retired processes are excluded. A superseded route is history, not the
+ * process the filing describes.
+ */
+function processRendering(
+  sources: CanonicalSource[],
+  side: 'drug_substance' | 'drug_product',
+): { tables: GeneratedTable[]; narrative: string } {
+  const all = scopedPayloads(sources, 'manufacturing_process', side, 'drug_substance', 'processScope')
+    .filter((p) => String(p.status || '').toLowerCase() !== 'retired');
+  if (all.length === 0) return { tables: [], narrative: '' };
+
+  const tables: GeneratedTable[] = [];
+  const named = all.map((p) => String(p.processName || '').trim()).filter(Boolean);
+
+  /* Steps are attributed to the process they belong to — never merged. A
+     project with a drug-substance route and a granulation process would
+     otherwise present one flattened sequence that neither process performs. */
+  const stepRows: string[][] = [];
+  for (const p of all) {
+    for (const st of objectRows(p.processSteps)) {
+      const controls = objectRows(st.inProcessControls ?? st.in_process_controls);
+      stepRows.push([
+        String(p.processName || '—'),
+        String(st.stepNumber ?? st.step_number ?? st.order ?? '—'),
+        String(st.unitOperation || st.unit_operation || st.stepName || st.step_name || '—'),
+        String(st.description || '—'),
+        String(st.equipment || st.equipmentContext || '—'),
+        [st.holdTime ?? st.hold_time, st.holdTimeCondition ?? st.hold_time_condition].filter(Boolean).join(' ') || '—',
+        controls.length > 0
+          ? controls
+              .map((c: any) => [c.test || c.control || c.parameter, c.acceptanceCriteria || c.acceptance_criteria || c.limit].filter(Boolean).join(' '))
+              .filter(Boolean)
+              .join('; ') || '—'
+          : '—',
+      ]);
+    }
+  }
+  if (stepRows.length > 0) {
+    tables.push({
+      title: 'Manufacturing Process Steps',
+      headers: ['Process', 'Step', 'Unit Operation', 'Description', 'Equipment', 'Hold Time', 'In-Process Controls'],
+      rows: stepRows,
+    });
+  }
+
+  /* Critical process parameters with their proven ranges. A CPP with no range
+     is reported as recorded without one rather than dropped: an operating range
+     nobody wrote down is exactly the gap a reviewer is looking for. */
+  const cppRows: string[][] = [];
+  let cppsWithoutRange = 0;
+  for (const p of all) {
+    for (const c of objectRows(p.criticalProcessParameters)) {
+      const low = c.rangeLow ?? c.range_low ?? c.min;
+      const high = c.rangeHigh ?? c.range_high ?? c.max;
+      const hasRange = low !== undefined && low !== null && low !== '' && high !== undefined && high !== null && high !== '';
+      if (!hasRange) cppsWithoutRange += 1;
+      cppRows.push([
+        String(p.processName || '—'),
+        String(c.parameter || c.name || '—'),
+        String(c.step || c.unitOperation || c.unit_operation || '—'),
+        String(c.target ?? '—'),
+        hasRange ? `${low} – ${high}` : 'not recorded',
+        String(c.unit || '—'),
+        String(c.criticality || '—'),
+        String(c.linkedCqa || c.linked_cqa || c.cqa || '—'),
+      ]);
+    }
+  }
+  if (cppRows.length > 0) {
+    tables.push({
+      title: 'Critical Process Parameters',
+      headers: ['Process', 'Parameter', 'Step', 'Target', 'Proven Range', 'Unit', 'Criticality', 'Linked CQA'],
+      rows: cppRows,
+    });
+  }
+
+  /* The register's process-level control list, attributed to its own process.
+     `processControlRows` was written by the mapper and read by nothing: the only
+     path those controls took into a section was the flattened text, which both
+     §3.2.S.2 and §3.2.P.3 read with a FIRST-MATCH helper over a register that is
+     one row per process — so with two processes on a side, the second process's
+     controls appeared in no table and no sentence anywhere in Module 3. */
+  const controlRows: string[][] = [];
+  for (const p of all) {
+    for (const c of objectRows(p.processControlRows)) {
+      controlRows.push([
+        String(p.processName || '—'),
+        String(c.test || c.control || c.parameter || '—'),
+        String(c.acceptanceCriteria || c.acceptance_criteria || c.limit || '—'),
+        String(c.samplingPoint || c.sampling_point || c.step || '—'),
+        String(c.frequency || '—'),
+      ]);
+    }
+  }
+  if (controlRows.length > 0) {
+    tables.push({
+      title: 'In-Process Controls',
+      headers: ['Process', 'Test', 'Acceptance Criteria', 'Sampling Point', 'Frequency'],
+      rows: controlRows,
+    });
+  }
+
+  const equipRows: string[][] = [];
+  for (const p of all) {
+    for (const e of objectRows(p.equipmentList)) {
+      equipRows.push([
+        String(p.processName || '—'),
+        String(e.equipment || e.name || '—'),
+        String(e.type || e.unitOperation || '—'),
+        String(e.model || '—'),
+        String(e.qualificationStatus || e.qualification_status || 'not recorded'),
+      ]);
+    }
+  }
+  if (equipRows.length > 0) {
+    tables.push({
+      title: 'Equipment',
+      headers: ['Process', 'Equipment', 'Type', 'Model / Identifier', 'Qualification Status'],
+      rows: equipRows,
+    });
+  }
+
+  const batchSizes = all.map((p) => String(p.processBatchSize || '').trim()).filter(Boolean);
+  const withSteps = all.filter((p) => objectRows(p.processSteps).length > 0);
+  /* The mapper side-scopes the control text — §3.2.S.2's required field is
+     `processControls` and the drug-product twin is `drugProductProcessControls`
+     — so reading only the first made this clause unconditionally true for
+     §3.2.P.3: the section stated "No in-process control is recorded" directly
+     under a table printing the controls it was denying. */
+  const controlTextOf = (p: Record<string, any>) =>
+    String(p.processControls || p.drugProductProcessControls || '').trim();
+  const withControls = all.filter((p) => controlTextOf(p));
+  const reprocessing = all.map((p) => String(p.reprocessing || '').trim()).filter(Boolean);
+  const validatedNames = all
+    .filter((p) => String(p.processValidationStatus || '').trim().toLowerCase() === 'validated')
+    .map((p) => String(p.processName || 'unnamed process'));
+  const material = side === 'drug_substance' ? 'drug substance' : 'drug product';
+
+  const narrative =
+    `${all.length} manufacturing process(es) are recorded for the ${material}` +
+    (named.length > 0 ? `: ${named.join(', ')}. ` : '. ') +
+    (withSteps.length === all.length
+      ? `Each is recorded as an ordered sequence of unit operations, reported above. `
+      : withSteps.length > 0
+        ? `${withSteps.length} of ${all.length} record an ordered sequence of unit operations; the remainder describe no steps, so their process is not established by this section. `
+        : `None records an ordered sequence of unit operations, so the process is not established by this section. `) +
+    (cppRows.length > 0
+      ? `${cppRows.length} critical process parameter(s) are recorded` +
+        (cppsWithoutRange > 0
+          ? `, of which ${cppsWithoutRange} carry no proven acceptable range — the range those parameters are controlled within is not established by this section. `
+          : `, each with a proven acceptable range. `)
+      : `No critical process parameter is recorded, so what is controlled to keep the process in a state of control is not established by this section. `) +
+    (withControls.length === 0
+      ? `No in-process control is recorded. `
+      : withControls.length < all.length
+        ? `${withControls.length} of ${all.length} record in-process controls. `
+        : '') +
+    (batchSizes.length > 0 ? `Recorded batch size(s): ${batchSizes.join('; ')}. ` : '') +
+    /* The register's own validation state, which is a Part 11 signature on this
+       table and was emitted by the mapper and read by nothing — so a process
+       signed as validated composed a section that said nothing about it. */
+    (validatedNames.length === all.length
+      ? `Each is recorded as validated in the process register. `
+      : validatedNames.length > 0
+        ? `${validatedNames.join(', ')} ${validatedNames.length === 1 ? 'is' : 'are'} recorded as validated in the process register; the remainder are not established as validated by this section. `
+        : `None is recorded as validated in the process register. `) +
+    (reprocessing.length > 0 ? `Reprocessing: ${reprocessing.join(' ')} ` : '');
+
+  return { tables, narrative };
+}
+
+/**
+ * §3.2.S.3.1 — characterisation, from the register that now writes it.
+ *
+ * The section asks three separate questions and the register types each study
+ * by which one it answers, so the narrative can report each question's state
+ * independently. A section that reported "characterised" over three NMR studies
+ * would be asserting physicochemical and biological data it does not hold.
+ */
+function characterizationRendering(
+  sources: CanonicalSource[],
+  side: 'drug_substance' | 'drug_product',
+): { tables: GeneratedTable[]; narrative: string; byType: Record<string, Record<string, any>[]> } {
+  const all = scopedPayloads(sources, 'characterization', side, 'drug_substance', 'characterizationScope')
+    .filter((p) => String(p.status || '').toLowerCase() !== 'retired');
+  const byType: Record<string, Record<string, any>[]> = { structural: [], physicochemical: [], biological: [] };
+  for (const p of all) {
+    const t = normalizeCharacterizationType(p.characterizationType);
+    byType[t].push(p);
+  }
+  if (all.length === 0) return { tables: [], narrative: '', byType };
+
+  const tables: GeneratedTable[] = [{
+    title: 'Characterisation Studies',
+    headers: ['Type', 'Study', 'Technique', 'Attribute', 'Result', 'Conclusion', 'Reference', 'Status'],
+    rows: all.map((p) => {
+      const unit = String(p.characterizationResultUnit || '').trim();
+      const value = String(p.characterizationResult ?? '').trim();
+      return [
+        CHARACTERIZATION_TYPE_LABEL[normalizeCharacterizationType(p.characterizationType)],
+        String(p.studyTitle || '—'),
+        String(p.technique || '—'),
+        String(p.attribute || '—'),
+        /* A number with no recorded unit is reported as such. Printing it bare
+           lets the reader supply a unit the register never held. */
+        value ? (unit ? `${value} ${unit}` : `${value} (unit not recorded)`) : '—',
+        String(p.conclusion || '—'),
+        String(p.studyReference || '—'),
+        String(p.status || 'draft'),
+      ];
+    }),
+  }];
+
+  /* Supporting detail — spectral assignments, per-parameter measurements —
+     attributed to the study it belongs to. */
+  const detailRows: string[][] = [];
+  for (const p of all) {
+    for (const d of objectRows(p.supportingData)) {
+      detailRows.push([
+        String(p.studyTitle || '—'),
+        String(d.label || d.parameter || d.assignment || '—'),
+        [d.value, d.unit].filter((x) => x !== undefined && x !== null && x !== '').join(' ') || '—',
+        String(d.note || '—'),
+      ]);
+    }
+  }
+  if (detailRows.length > 0) {
+    tables.push({
+      title: 'Characterisation Supporting Data',
+      headers: ['Study', 'Parameter / Assignment', 'Value', 'Note'],
+      rows: detailRows,
+    });
+  }
+
+  const answered = (t: 'structural' | 'physicochemical' | 'biological') =>
+    byType[t].some((p) => String(p[CHARACTERIZATION_TYPE_FIELD[t]] || '').trim());
+  const missing = (['structural', 'physicochemical', 'biological'] as const).filter((t) => !answered(t));
+  /* A study that named a technique but recorded no result still produces a
+     statement — the technique's own name — so counting empty statements missed
+     exactly the studies this clause exists to name. */
+  const recordedButEmpty = all.filter((p) => p.characterizationEstablishes === false);
+
+  /* The three-question completeness claim belongs to §3.2.S.3.1, which asks
+     for structure, physicochemical properties AND biological activity. A
+     drug-product study is §3.2.P.2 development evidence and that section asks
+     for none of the three, so reporting them as "not established" there would
+     invent a requirement the CTD does not make of it. */
+  const narrative =
+    `${all.length} characterisation study/ies are recorded${side === 'drug_product' ? ' for the drug product' : ''}, reported above. ` +
+    (side === 'drug_substance'
+      ? missing.length === 0
+        ? `Structure, physicochemical properties and biological activity are each established by at least one recorded study. `
+        : `No recorded study establishes ${missing.map((t) => CHARACTERIZATION_TYPE_LABEL[t].toLowerCase()).join(' or ')}; ` +
+          `that is not established by this section. `
+      : '') +
+    (recordedButEmpty.length > 0
+      ? `${recordedButEmpty.length} study/ies are on file with neither a result nor a conclusion recorded. `
+      : '');
+
+  return { tables, narrative, byType };
+}
+
 // ── Section-specific narrative + table generators ──────────────────────────────
 
 type SectionGenerator = (matched: CanonicalSource[]) => { narrative: string; tables: GeneratedTable[] };
@@ -1116,6 +1603,16 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const pvBatches = val(m, 'consecutiveBatches');
     const tables: GeneratedTable[] = [];
     tables.push(kvTable('Manufacturing Process Summary', { 'Synthetic Route': route, 'Process Description': desc, 'In-Process Controls': controls }));
+    /* §3.2.S.2.2 proper: the ordered unit operations, their critical parameters
+       and the equipment, from the manufacturing process register. Until that
+       register existed this section rendered one free-text sentence typed on
+       the drug substance form and called it the manufacturing process. */
+    const process = processRendering(m, 'drug_substance');
+    tables.push(...process.tables);
+    /* §3.2.S.2.3 Control of Materials — the raw and starting materials the
+       route consumes. */
+    const rawMaterials = rawMaterialRendering(m);
+    tables.push(...rawMaterials.tables);
     if (pvStatus || pvProtocol) {
       tables.push({
         title: 'Process Validation Summary',
@@ -1132,6 +1629,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
       narrative: `The drug substance is manufactured via ${route || '[route not specified]'}. ` +
         (desc ? `The manufacturing process consists of: ${desc}. ` : '') +
         (controls ? `In-process controls include: ${controls}. ` : '') +
+        process.narrative +
+        rawMaterials.narrative +
         (pvStatus ? `Process validation status: ${pvStatus}` + (pvProtocol ? ` (protocol: ${pvProtocol})` : '') + `. ` : '') +
         (pvBatches ? `${pvBatches} consecutive batch(es) validated.` : ''),
       tables,
@@ -1144,6 +1643,12 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const bio = val(m, 'biologicalActivity');
     const tables: GeneratedTable[] = [];
     tables.push(kvTable('Characterisation Summary', { 'Structural Elucidation': struct, 'Physicochemical Properties': phys, 'Biological Activity': bio }));
+    /* §3.2.S.3.1 proper. The summary above is a first-match read over three
+       free-text boxes on the drug substance form; the studies below are the
+       recorded experiments, typed by which of the section's three questions
+       each one answers. */
+    const characterization = characterizationRendering(m, 'drug_substance');
+    tables.push(...characterization.tables);
     /* §3.2.S.3.2 — the impurity register, assessed against the ICH threshold
        that governs each level. The table this replaced appended a percent sign
        to whatever number was in the field (so a ppm figure printed as a
@@ -1156,6 +1661,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
       narrative: `Structural elucidation of the drug substance was confirmed by ${struct || '[methods not specified]'}. ` +
         (phys ? `Physicochemical properties: ${phys}. ` : '') +
         (bio ? `Biological activity: ${bio}. ` : '') +
+        characterization.narrative +
         impurities.narrative,
       tables,
     };
@@ -1314,32 +1820,22 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const form = val(m, 'dosageFormDescription');
     const comp = val(m, 'composition');
     const strength = val(m, 'strength');
-    const formulationName = val(m, 'formulationName');
-    const formulationVersion = val(m, 'version');
-    const components = valArr(m, 'components');
+    /* The formulation register, which records a VERSION and its status. The
+       read this replaced took a first-match `components` array, so a project
+       with several formulation versions rendered whichever arrived first. */
+    const formulation = formulationRendering(m);
     const tables: GeneratedTable[] = [];
     tables.push(kvTable('Drug Product Description and Composition', {
       'Dosage Form': form, 'Strength': strength,
-      ...(formulationName ? { 'Formulation': formulationName } : {}),
-      ...(formulationVersion ? { 'Formulation Version': formulationVersion } : {}),
+      ...(formulation.current ? { 'Formulation': String(formulation.current.formulationName) } : {}),
+      ...(formulation.current?.version ? { 'Formulation Version': String(formulation.current.version) } : {}),
       'Composition': comp,
     }));
-    if (components.length > 0) {
-      tables.push({
-        title: 'Quantitative Composition',
-        headers: ['Component', 'Function / Role', 'Amount per Unit'],
-        rows: components.map((c: any) => [
-          c.component || c.name || 'Unknown',
-          c.role || c.function || '—',
-          c.amount || '—',
-        ]),
-      });
-    }
+    tables.push(...formulation.tables);
     return {
       narrative: `The drug product is a ${form || '[dosage form not specified]'} ` +
         (strength ? `with a strength of ${strength}. ` : '. ') +
-        (formulationName ? `Formulation: ${formulationName}` + (formulationVersion ? ` (${formulationVersion})` : '') + `. ` : '') +
-        (components.length > 0 ? `The formulation comprises ${components.length} component(s). ` : '') +
+        (formulation.narrative || `No formulation record is on file; the composition is not established by this section. `) +
         (comp ? `Composition: ${comp}.` : ''),
       tables,
     };
@@ -1368,13 +1864,20 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
        method-development record and the release control presented as the same
        test. The register stores which one a profile is. */
     tables.push(...developmentDissolution.tables);
+    /* Drug-product characterisation studies. §3.2.S.3 is the drug SUBSTANCE's
+       characterisation section and the CTD has no drug-product twin, so these
+       belong here — which is what the register grid and the form's own field
+       description tell the staffer. */
+    const productCharacterization = characterizationRendering(m, 'drug_product');
+    tables.push(...productCharacterization.tables);
     return {
       narrative: `Pharmaceutical development studies were conducted to support the proposed formulation and manufacturing process. ` +
         (formDev ? `Formulation development: ${formDev}. ` : '') +
         (mfgDev ? `Manufacturing process development: ${mfgDev}. ` : '') +
         (ccStudies ? `Container closure studies: ${ccStudies}. ` : '') +
         (devHistory ? `Development history: ${devHistory}. ` : '') +
-        developmentDissolution.narrative,
+        developmentDissolution.narrative +
+        productCharacterization.narrative,
       tables,
     };
   },
@@ -1400,7 +1903,23 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const releasedBatchNumber = String(releasedBatch?.batchNumber || '');
     const batchSize = val(m, 'batchSize');
     const manufacturingSite = val(m, 'manufacturingSite');
-    const processSteps = valArr(m, 'processSteps');
+    /* §3.2.P.3.3 proper, from the manufacturing process register. */
+    const process = processRendering(m, 'drug_product');
+    /* The drug product form has always had a free-text step list of its own,
+       and this section rendered it through a first-match array read across
+       EVERY matched source — so once the process register began emitting
+       `processSteps` as structured rows, whichever source came first won and
+       the two shapes rendered through one column mapping. The register is the
+       canonical home; the form's list is read from the drug product source
+       only, and only when no process is recorded, so a project that has not
+       reached the register yet does not lose what it typed. */
+    const legacySteps = process.tables.length > 0
+      ? []
+      : (m
+          .filter((so) => so.sourceType === 'drug_product')
+          .map((so) => (so.sourcePayload || {}) as Record<string, any>)
+          .map((pl) => pl.processSteps)
+          .find((v) => Array.isArray(v) && v.length > 0) as any[] | undefined) ?? [];
     const validationStatus = val(m, 'validationStatus');
     const pvProtocol = val(m, 'protocol');
     const pvCriteria = val(m, 'acceptanceCriteria');
@@ -1439,12 +1958,20 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
       ),
     ];
     if (changeTable) tables.push(changeTable);
-    // Manufacturing process flow if steps are provided
-    if (processSteps.length > 0) {
+    tables.push(...process.tables);
+    const dpProcessDescription = val(m, 'drugProductProcessDescription');
+    const dpProcessControls = val(m, 'drugProductProcessControls');
+    if (dpProcessDescription || dpProcessControls) {
+      tables.push(kvTable('Manufacturing Process Summary', {
+        'Process Description': dpProcessDescription,
+        'In-Process Controls': dpProcessControls,
+      }));
+    }
+    if (legacySteps.length > 0) {
       tables.push({
-        title: 'Manufacturing Process Steps',
+        title: 'Manufacturing Process Steps (drug product record)',
         headers: ['Step', 'Unit Operation', 'In-Process Controls', 'Critical Process Parameters'],
-        rows: processSteps.map((step: any, idx: number) => {
+        rows: legacySteps.map((step: any, idx: number) => {
           if (typeof step === 'object' && step !== null) {
             return [
               String(idx + 1),
@@ -1463,7 +1990,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         (batchSize ? ` (batch size: ${batchSize})` : '') +
         `. ` +
         (manufacturingSite ? `Manufactured at: ${manufacturingSite}. ` : '') +
-        (processSteps.length > 0 ? `The process comprises ${processSteps.length} unit operations. ` : '') +
+        process.narrative +
+        (legacySteps.length > 0 ? `The process comprises ${legacySteps.length} unit operations. ` : '') +
         (disposition
           ? `Batch ${releasedBatchNumber || batchNum || '[number not recorded]'} disposition: ${disposition}` +
             (releasedBy ? `, released by ${releasedBy}` : '') +
@@ -1483,36 +2011,12 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
   },
 
   '3.2.P.4': (m) => {
-    const specs = val(m, 'excipientSpecifications');
-    const procs = val(m, 'excipientAnalyticalProcedures');
-    const rmName = val(m, 'materialName');
-    const rmGrade = val(m, 'grade');
-    const rmSupplier = val(m, 'supplier');
-    const rmCompliance = val(m, 'compendialCompliance');
-    const rmTestParams = valArr(m, 'testParameters');
-    const tables: GeneratedTable[] = [];
-    tables.push(kvTable('Control of Excipients', { 'Excipient Specifications': specs, 'Analytical Procedures': procs }));
-    if (rmName || rmGrade) {
-      const rmRows: string[][] = [];
-      if (rmName) rmRows.push(['Material Name', rmName]);
-      if (rmGrade) rmRows.push(['Grade', rmGrade]);
-      if (rmSupplier) rmRows.push(['Supplier', rmSupplier]);
-      if (rmCompliance) rmRows.push(['Compendial Compliance', rmCompliance]);
-      if (rmTestParams.length > 0) rmRows.push(['Test Parameters', rmTestParams.join('; ')]);
-      tables.push({
-        title: 'Raw Material / Starting Material Specifications',
-        headers: ['Property', 'Value'],
-        rows: rmRows,
-      });
-    }
-    return {
-      narrative: `Excipients used in the drug product formulation are controlled to compendial or in-house specifications. ` +
-        (specs ? `Excipient specifications: ${specs}. ` : '') +
-        (procs ? `Analytical procedures: ${procs}. ` : '') +
-        (rmName ? `Raw material specifications are established for ${rmName}` + (rmGrade ? ` (${rmGrade})` : '') + `. ` : '') +
-        (rmCompliance ? `Compendial compliance: ${rmCompliance}.` : ''),
-      tables,
-    };
+    /* Every recorded material, not the first one. The reads this replaced took a
+       single first-match `materialName` / `grade` pair out of a register that
+       holds one row per material, so a product using twelve excipients rendered
+       one of them and the choice depended on arrival order. */
+    const materials = materialRendering(m);
+    return { narrative: materials.narrative, tables: materials.tables };
   },
 
   '3.2.P.5': (m) => {
@@ -1796,7 +2300,18 @@ export function tablesToMarkdown(tables: GeneratedTable[]): string {
 
 export function composeModule3FromCanonicalSources(sourceObjects: CanonicalSource[]): ComposedSection[] {
   return MODULE3_SECTION_RULES.map((rule) => {
-    const matched = sourceObjects.filter((s) => rule.requiredSourceTypes.includes(s.sourceType));
+    /* A retired record feeds nothing — not the tables, not the narrative, not
+       the completeness count. The impurity and dissolution renderers each
+       filtered retirement out of their own tables, and the section around them
+       still counted the retired row's fields as available: a retired impurity
+       could satisfy §3.2.S.3's impurity requirement while appearing nowhere in
+       the section it completed. Retirement is a status no source type uses for
+       anything else, so the rule belongs here, once. */
+    const inScope = sourceObjects.filter((s) => rule.requiredSourceTypes.includes(s.sourceType));
+    const matched = inScope.filter(
+      (s) => String((s.sourcePayload || {}).status ?? '').trim().toLowerCase() !== 'retired',
+    );
+    const retiredCount = inScope.length - matched.length;
     const structuredPayload = {
       sectionKey: rule.sectionKey,
       sourceTypes: rule.requiredSourceTypes,
@@ -1835,7 +2350,13 @@ export function composeModule3FromCanonicalSources(sourceObjects: CanonicalSourc
       narrativeDraft = generated.narrative;
       tables = generated.tables;
     } else if (matched.length === 0) {
+      /* "No data" and "the only data is retired" are different states, and a
+         reviewer who cannot tell them apart will go looking for a record that
+         is right there, superseded. */
       narrativeDraft = `Section ${rule.sectionKey} has no source data available. ` +
+        (retiredCount > 0
+          ? `${retiredCount} recorded source(s) for this section are retired and do not compose. `
+          : '') +
         `Required inputs: ${rule.requiredFields.join(', ')}.`;
       tables = [];
     } else {

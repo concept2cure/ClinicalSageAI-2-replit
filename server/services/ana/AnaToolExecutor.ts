@@ -15916,6 +15916,58 @@ registerToolHandler('list_cmc_registers', async (input, ctx) => {
                 FROM cmc_dissolution_profiles WHERE organization_id = $1`,
         searchCols: ['product_name', 'batch_number', 'medium'],
       },
+      /* The materials, with the origin §3.2.A.3 answers the TSE/BSE question
+         from surfaced directly: a model asked "is any excipient animal-derived"
+         must be able to see which ones have no origin recorded at all. */
+      material_spec: {
+        sql: `SELECT id, material_name AS "materialName", material_role AS "materialRole",
+                     function_in_formulation AS "function", grade,
+                     compendial_monograph AS "compendialMonograph", supplier, origin,
+                     novel_excipient AS "novelExcipient", status,
+                     (tse_certificate IS NOT NULL AND tse_certificate <> '') AS "hasTseCertificate",
+                     (origin IS NULL OR origin = '') AS "originNotRecorded"
+                FROM cmc_material_specs WHERE organization_id = $1`,
+        searchCols: ['material_name', 'grade', 'supplier'],
+      },
+      formulation_record: {
+        sql: `SELECT id, formulation_name AS "formulationName", version, dosage_form AS "dosageForm",
+                     strength, batch_size AS "batchSize", supersedes, status,
+                     CASE WHEN jsonb_typeof(components) = 'array'
+                          THEN jsonb_array_length(components) ELSE 0 END AS "componentCount"
+                FROM cmc_formulation_records WHERE organization_id = $1`,
+        searchCols: ['formulation_name', 'version', 'dosage_form'],
+      },
+      /* The process as a SHAPE, not the process itself: a discovery call must
+         not pull every unit operation and every parameter into the context. The
+         counts are what a model needs to see that a process is recorded but
+         describes no steps, or carries parameters with no proven range. */
+      manufacturing_process: {
+        sql: `SELECT id, process_name AS "processName", process_type AS "processType",
+                     batch_size AS "batchSize", validation_status AS "validationStatus",
+                     CASE WHEN jsonb_typeof(process_steps) = 'array'
+                          THEN jsonb_array_length(process_steps) ELSE 0 END AS "stepCount",
+                     CASE WHEN jsonb_typeof(critical_process_parameters) = 'array'
+                          THEN jsonb_array_length(critical_process_parameters) ELSE 0 END AS "cppCount",
+                     CASE WHEN jsonb_typeof(process_controls) = 'array'
+                          THEN jsonb_array_length(process_controls) ELSE 0 END AS "inProcessControlCount",
+                     (reprocessing IS NOT NULL AND reprocessing <> '') AS "hasReprocessingStatement"
+                FROM manufacturing_processes WHERE organization_id = $1`,
+        searchCols: ['process_name', 'process_type', 'process_description'],
+      },
+      /* §3.2.S.3.1 asks three questions and each study answers one, so the TYPE
+         is the field a model needs: without it, three studies of one kind read
+         as a characterised substance. */
+      characterization: {
+        sql: `SELECT id, study_title AS "studyTitle", study_type AS "studyType", scope,
+                     technique, attribute, result, result_unit AS "resultUnit",
+                     study_reference AS "studyReference", status,
+                     (result IS NULL OR result = '') AND (conclusion IS NULL OR conclusion = '')
+                       AS "establishesNothing",
+                     (result IS NOT NULL AND result <> '' AND (result_unit IS NULL OR result_unit = ''))
+                       AS "unitNotRecorded"
+                FROM cmc_characterization_studies WHERE organization_id = $1`,
+        searchCols: ['study_title', 'technique', 'attribute'],
+      },
       reference_standard: {
         sql: `SELECT id, standard_code AS "standardCode", standard_name AS "standardName",
                      scope, standard_type AS "standardType", lot_number AS "lotNumber",
