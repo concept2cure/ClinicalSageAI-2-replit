@@ -292,6 +292,7 @@
     background: var(--bg-000);
     border-color: var(--border);
   }
+  .ed-full { min-width: 0; }
   .ed-full-mast {
     padding-bottom: 20px;
     margin-bottom: 28px;

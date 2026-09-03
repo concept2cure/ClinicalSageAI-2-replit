@@ -1092,13 +1092,6 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
                 <div>
                   <div
                     className="de-quote"
-                    style={{
-                      padding: '10px 12px',
-                      background: 'var(--bg-050)',
-                      borderLeft: '3px solid var(--accent-100)',
-                      borderRadius: 8,
-                      marginBottom: 10,
-                    }}
                   >
                     {/* Unchanged in the normal case. In the failure case this
                         rendered "Recommended: Insufficient precedent data",

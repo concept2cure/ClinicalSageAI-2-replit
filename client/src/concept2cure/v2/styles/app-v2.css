@@ -567,6 +567,9 @@
 .c2c-v2 .reg-doc-n{font-size:12.5px;font-weight:500;color:var(--text-100);flex:1;min-width:0;}
 .c2c-v2 .reg-doc-sec{font-size:11px;color:var(--text-400);font-family:var(--font-mono);flex-shrink:0;}
 .c2c-v2 .reg-doc-go{display:inline-flex;color:var(--text-500);flex-shrink:0;}.c2c-v2 .reg-doc-go svg{width:14px;height:14px;}
+.c2c-v2 .reg-doc-open{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:5px 11px;border-radius:var(--radius-md);border:1px solid var(--accent-muted);background:var(--accent-000);color:var(--accent-200);cursor:pointer;}
+.c2c-v2 .reg-doc-open:hover{background:var(--accent-muted);}.c2c-v2 .reg-doc-open svg{width:12px;height:12px;}
+.c2c-v2 .reg-st{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:600;text-transform:capitalize;background:var(--bg-100);color:var(--text-300);}
 .c2c-v2 .reg-doc:hover .reg-doc-go{color:var(--accent-100);}
 .c2c-v2 .reg-cert{display:flex;align-items:center;gap:9px;width:100%;text-align:left;margin-top:3px;background:var(--accent-000);border:1px solid var(--accent-muted);border-radius:var(--radius-md);padding:9px 11px;cursor:pointer;font-size:12px;color:var(--text-200);}
 .c2c-v2 .reg-cert:hover{border-color:var(--accent-100);}
@@ -940,6 +943,7 @@
 .c2c-v2 .tb-detail-note[data-warn]{color:#7a4a0f;}.c2c-v2.dark .tb-detail-note[data-warn]{color:var(--warning);}
 .c2c-v2 .tb-dep-row{font-size:11.5px;color:var(--text-200);display:flex;align-items:center;gap:6px;margin-bottom:5px;}
 .c2c-v2 .tb-dep-row .ico{font-size:12px;color:var(--text-400);}
+.c2c-v2 .tb-dep-row.dn svg{color:var(--warning);}
 .c2c-v2 .tb-detail-f{display:flex;align-items:center;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);}
 @media (max-width:1100px){.c2c-v2 .tb-kanban{grid-template-columns:repeat(2,1fr);}}
 /* New-task intake (reuses .tb-detail modal shell) */
@@ -1762,6 +1766,7 @@
    spring — and it stops entirely under prefers-reduced-motion, where the dot
    still reads as present, just still. */
 .c2c-v2 .ana-activity{margin-top:8px;}
+.c2c-v2 .ana-activity-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .c2c-v2 .ana-activity-toggle{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-300);background:none;border:0;padding:2px 0;cursor:pointer;transition:color 200ms ease-out;}
 .c2c-v2 .ana-activity-toggle:hover{color:var(--text-200);}
 .c2c-v2 .ana-activity-toggle:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:var(--radius-md);}
@@ -3080,6 +3085,7 @@
    switched to the gradient, because resolving a contradiction should not
    silently change what a user sees. */
 .c2c-v2 .lp-page.hl{background:#fff;}
+.c2c-v2 .lp-smpc{margin-top:14px;}
 .c2c-v2 .lp-bw{border:2px solid var(--text-100);border-radius:6px;padding:14px 16px;font-size:13px;font-weight:600;color:var(--text-100);font-family:var(--font-serif,Georgia,serif);line-height:1.6;text-transform:uppercase;letter-spacing:.01em;}
 .c2c-v2 .lp-page-h{font-family:var(--font-serif,Georgia,serif);font-size:16px;font-weight:700;color:var(--text-100);margin-bottom:10px;}
 .c2c-v2 .lp-page-p{font-family:var(--font-serif,Georgia,serif);font-size:13.5px;line-height:1.7;color:var(--text-100);margin:0 0 10px;}
@@ -3496,6 +3502,7 @@
 .c2c-v2 .adc-head-main{flex:1;min-width:0;}
 .c2c-v2 .adc-kicker{font-size:10px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--text-400);}
 .c2c-v2 .adc-name{font-size:13.5px;font-weight:600;color:var(--text-100);margin-top:1px;line-height:1.3;}
+.c2c-v2 .adc-conf-n{font-variant-numeric:tabular-nums;}
 .c2c-v2 .adc-conf{flex:none;display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:100px;}
 .c2c-v2 .adc-conf svg{width:11px;height:11px;}
 .c2c-v2 .adc-conf.high{background:color-mix(in srgb,var(--success) 14%,transparent);color:var(--success);}

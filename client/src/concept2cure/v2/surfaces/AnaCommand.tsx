@@ -504,7 +504,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
           })}
         </div>
       )}
-      <div className="ac-port-gap" style={{ margin: '2px 0 6px', padding: '8px 12px', fontSize: 12, lineHeight: 1.5, color: 'var(--text-300)', background: 'var(--bg-050)', border: '1px solid var(--border)', borderRadius: 8, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+      <div className="ac-port-gap">
         {Ico.info || I.alertTriangle}<span>Org-wide rollup over every program in your organization — average readiness, worst risk, and attention-ranked members.</span>
       </div>
 

@@ -401,7 +401,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       <div className="haq">
         <div className="haq-head">
           <div>
-            <div className="sec-kicker">PLATFORM — POST-SUBMISSION</div>
+            <div className="reg-eyebrow">PLATFORM — POST-SUBMISSION</div>
             <h1 className="haq-title">Health authority questions</h1>
             <p className="haq-sub">
               Agency information requests and lists of questions — decomposed,

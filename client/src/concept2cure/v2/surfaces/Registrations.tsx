@@ -370,7 +370,7 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
   });
 
   return (
-    <div className="page-host reg">
+    <div className="reg">
       <div className="reg-head">
         <div>
           <div className="reg-eyebrow">Lifecycle {I.dot} cross-market</div>

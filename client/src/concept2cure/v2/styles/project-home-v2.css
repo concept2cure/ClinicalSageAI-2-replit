@@ -134,6 +134,7 @@
   gap:16px 20px;
 }
 .c2c-v2 .npw-field{display:flex;flex-direction:column;gap:5px;}
+.c2c-v2 .npw-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .c2c-v2 .npw-field-wide{grid-column:1/-1;}
 .c2c-v2 .npw-field-l{font-size:11.5px;font-weight:500;color:var(--text-300);}
 .c2c-v2 .npw-field .c2c-input{min-height:36px;font-size:13px;padding:6px 11px;}
@@ -304,6 +305,7 @@
 .c2c-v2 .pd-main{overflow-y:auto;overflow-x:hidden;padding:24px 28px;min-width:0;}
 .c2c-v2 .pd-aside{border-left:1px solid var(--border);overflow-y:auto;padding:20px 18px;background:var(--bg-050);}
 .c2c-v2 .pd-head{margin-bottom:18px;}
+.c2c-v2 .pd-head-l{flex:1;min-width:0;}
 .c2c-v2 .pd-head-row1{display:flex;align-items:center;gap:12px;}
 .c2c-v2 .pd-head-row1 .pd-code{font-family:var(--font-mono);font-size:12px;color:var(--accent-200);background:var(--accent-000);border:1px solid var(--accent-muted,var(--border));padding:2px 8px;border-radius:6px;}
 .c2c-v2 .pd-head-row1 h1{font-size:24px;font-weight:640;letter-spacing:-.01em;margin:0;}
