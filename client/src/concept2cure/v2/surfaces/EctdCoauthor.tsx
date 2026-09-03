@@ -593,8 +593,8 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
           {activeDoc ? (
             <>
               <b>{activeDoc.moduleName || ('Module ' + moduleOf(activeDoc))}</b>
-              <span className="sep">/</span>{activeDoc.status}
-              <span className="sep">/</span><b>&sect;{activeDoc.moduleNumber || '—'} {activeDoc.title}</b>
+              <span className="sep" aria-hidden="true">/</span>{activeDoc.status}
+              <span className="sep" aria-hidden="true">/</span><b>&sect;{activeDoc.moduleNumber || '—'} {activeDoc.title}</b>
             </>
           ) : (
             <b>eCTD Co-Author</b>

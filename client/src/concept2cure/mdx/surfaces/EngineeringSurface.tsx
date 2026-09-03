@@ -352,7 +352,7 @@ export function EngineeringSurface({
                       <div className="eng-dhf-label">{d.label}</div>
                       <div className="eng-dhf-meta">
                         <span className="mono">{d.ver}</span>
-                        <span className="dot-sep">·</span>
+                        <span className="dot-sep" aria-hidden="true">·</span>
                         <span>{d.updated}</span>
                       </div>
                       <span className={`status-pill ${d.status}`}>{d.status}</span>

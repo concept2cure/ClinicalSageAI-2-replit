@@ -772,7 +772,7 @@
   color: var(--text-200); font-size: 12px;
 }
 .mdx-shell .ed-exit:hover { background: var(--bg-100); color: var(--text-100); }
-.mdx-shell .ed-crumb-sep { color: var(--text-500); display: inline-flex; }
+.mdx-shell .ed-crumb-sep { color: var(--text-400); display: inline-flex; }
 .mdx-shell .ed-crumb { color: var(--text-300); }
 .mdx-shell .ed-crumb.here { color: var(--text-100); font-weight: 500; }
 
@@ -907,7 +907,7 @@
   flex: 1; min-width: 0;
   overflow: hidden;
 }
-.mdx-shell .ed-doc-crumbs .sep { color: var(--text-500); display: inline-flex; }
+.mdx-shell .ed-doc-crumbs .sep { color: var(--text-400); display: inline-flex; }
 .mdx-shell .ed-doc-crumbs .here { color: var(--text-100); font-weight: 500; }
 .mdx-shell .ed-doc-actions {
   display: flex; align-items: center; gap: 6px;
@@ -2075,7 +2075,7 @@
   display: flex; align-items: center; gap: 6px;
   font-size: 11px; color: var(--text-400);
 }
-.mdx-shell .dot-sep { color: var(--text-500); }
+.mdx-shell .dot-sep { color: var(--text-400); }
 .mdx-shell .sub-row-foot {
   display: flex; align-items: center; gap: 10px;
   margin-top: 4px;
@@ -2263,7 +2263,7 @@
   font-size: 11px; color: var(--text-400);
   margin-bottom: 6px;
 }
-.mdx-shell .ph-crumb-sep { color: var(--text-500); display: inline-flex; }
+.mdx-shell .ph-crumb-sep { color: var(--text-400); display: inline-flex; }
 .mdx-shell .ph-crumb-sep svg { width: 11px; height: 11px; }
 .mdx-shell .ph-crumb-here { color: var(--text-200); font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.02em; }
 .mdx-shell .ph-title {
@@ -2282,7 +2282,7 @@
   background: var(--bg-100); color: var(--text-200);
   font-size: 11px;
 }
-.mdx-shell .ph-meta-sep { color: var(--text-500); }
+.mdx-shell .ph-meta-sep { color: var(--text-400); }
 .mdx-shell .ph-due { font-variant-numeric: tabular-nums; }
 .mdx-shell .ph-due.tone-ok    { color: var(--success); }
 .mdx-shell .ph-due.tone-warn  { color: var(--warning); }

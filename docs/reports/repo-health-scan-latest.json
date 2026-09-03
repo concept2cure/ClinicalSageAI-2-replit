@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T01:19:36.936Z",
+  "generatedAt": "2026-09-03T01:39:28.329Z",
   "git": {
-    "sha": "f4da56ce5ff06f42df6fca4de4cbd75f36661dc3",
+    "sha": "fcc03d6e51fc69c6d4e6aa980d711a7317a59ff0",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2174,7 +2174,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 219834
+        "bytes": 219872
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2250,7 +2250,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 116496
+        "bytes": 116553
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2639,6 +2639,10 @@
         "lines": 1623
       },
       {
+        "file": "server/services/cmc-write-through.ts",
+        "lines": 1612
+      },
+      {
         "file": "server/services/contradiction-engine-service.ts",
         "lines": 1608
       },
@@ -2649,10 +2653,6 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
-      },
-      {
-        "file": "server/services/cmc-write-through.ts",
-        "lines": 1594
       }
     ]
   },

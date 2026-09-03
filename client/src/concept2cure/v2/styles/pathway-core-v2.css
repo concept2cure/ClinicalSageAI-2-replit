@@ -163,7 +163,7 @@
   .cs-num { color: var(--text-100); font-weight: 600; }
   .cs-num.err { color: var(--error); }
   .cs-num.warn { color: var(--warning); }
-  .cs-sep { color: var(--text-500); }
+  .cs-sep { color: var(--text-400); }
 
   .corr-grid {
     display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
