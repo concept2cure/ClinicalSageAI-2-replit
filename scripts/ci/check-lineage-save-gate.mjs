@@ -110,7 +110,6 @@ const KNOWN_UNGUARDED = [
   { file: 'server/routes/batch-draft-routes.ts', row: 'L160', what: 'coauthor_documents.content from AnA batch drafts' },
   { file: 'server/routes/concept2cure.ts', row: 'L160', what: 'concept2cure_artifacts.content on edit and on rollback-to-version' },
   { file: 'server/services/ana/AnaToolExecutor.ts', row: 'L160', what: 'concept2cure_artifacts.content from the AnA document-content tool (the kit-section tool in the same file IS gated)' },
-  { file: 'server/services/ana/artifactVersionStore.ts', row: 'L160', what: 'concept2cure_artifacts.content — the shared artifact version writer' },
   { file: 'server/services/ana/submission-chat-apply-rewrite.ts', row: 'L160', what: 'concept2cure_artifacts.content when an AnA rewrite is applied' },
   { file: 'server/services/ai-actions/handlers/refine-with-validation.ts', row: 'L160', what: 'concept2cure_artifacts.content from the refine AI action' },
   { file: 'server/services/module3-convergence-service.ts', row: 'L160', what: 'concept2cure_artifacts.content for composed Module 3 sections' },
@@ -162,6 +161,10 @@ const GUARDED = [
       'server/routes/protocol-consent.ts', // governed() opens the transaction
       'server/services/ana/AnaToolExecutor.ts', // update_consent_element opens the transaction
     ],
+  },
+  {
+    file: 'server/services/ana/artifactVersionStore.ts',
+    why: 'upsertDocumentArtifactVersion(Tx) writes concept2cure_artifacts.content + its version row — the shared writer behind AnA Document Studio drafts and the canonical-revision spine',
   },
   {
     file: 'server/routes/q-sub.ts',
