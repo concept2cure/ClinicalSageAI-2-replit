@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createMockRequest, createMockResponse } from '../setup';
 
-const { mockSelectRows, mockUpdateWhere, mockClassification, mockClearances, mockStandards } = vi.hoisted(() => ({
+const { mockSelectRows, mockUpdateWhere, mockLogAction, mockClassification, mockClearances, mockStandards } = vi.hoisted(() => ({
   mockSelectRows: vi.fn<[], unknown[]>(() => []),
   mockUpdateWhere: vi.fn(async () => undefined),
+  mockLogAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })),
   /* The recognized-standards service is mocked so these tests assert the
      ROUTE's job — org scoping, ident → product-code resolution, and passing the
      service's labelled envelope through untouched. The service's own three
@@ -63,6 +64,11 @@ const { fakeDb } = vi.hoisted(() => ({
 vi.mock('../../server/db', () => ({ db: fakeDb }));
 vi.mock('../../server/db/requestDb', () => ({ requestDb: () => fakeDb }));
 
+vi.mock('../../server/services/auditService', () => ({
+  default: { logAction: mockLogAction },
+  logAction: mockLogAction,
+}));
+
 vi.mock('../../server/services/integrations/openfda-device-client', () => ({
   searchDeviceClassification: mockClassification,
   search510kClearances: mockClearances,
@@ -83,12 +89,36 @@ fakeDb.update = vi.fn(() => ({ set: vi.fn(() => ({ where: mockUpdateWhere })) })
 
 import deviceRoutes from '../../server/routes/510k-device-routes';
 
-function getHandler(path: string, method: 'get' | 'put') {
+function routeLayer(path: string, method: 'get' | 'put') {
   const layer = deviceRoutes.stack.find(
     (l: any) => l.route?.path === path && l.route?.methods?.[method],
   );
   if (!layer) throw new Error(`Missing route ${method.toUpperCase()} ${path}`);
+  return layer;
+}
+
+function getHandler(path: string, method: 'get' | 'put') {
+  const layer = routeLayer(path, method);
   return layer.route.stack[layer.route.stack.length - 1].handle;
+}
+
+/**
+ * The WHOLE middleware chain of a route, in order — the role gate and the
+ * entitlement gate included. `getHandler` above reaches straight for the final
+ * handler, which is right for the handler's own contract and blind to every
+ * gate in front of it; an authorization test has to run the chain.
+ */
+function runChain(path: string, method: 'get' | 'put') {
+  const handlers = routeLayer(path, method).route.stack.map((s: any) => s.handle);
+  return async (req: any, res: any) => {
+    for (const handle of handlers) {
+      let advanced = false;
+      await handle(req, res, () => {
+        advanced = true;
+      });
+      if (!advanced) return;
+    }
+  };
 }
 
 const PROGRAM = {
@@ -105,9 +135,25 @@ const PROGRAM = {
   predicateDevices: [],
 };
 
+/**
+ * An EDITOR principal with a real numeric actor id — what the platform's
+ * authentication middleware attaches. Both matter to the governed profile
+ * WRITE: it is editor+ only, and it is audited against the session's actor
+ * (no actor ⇒ refused rather than audited against an invented id).
+ */
 function makeReq(overrides: Record<string, unknown> = {}) {
   const req = createMockRequest(overrides) as any;
-  req.user = { organizationId: 2 };
+  req.user = { id: 7, organizationId: 2, role: 'editor' };
+  req.userId = 7;
+  req.userRole = 'editor';
+  return req;
+}
+
+/** The same principal with a numeric tenant context, for chain-level tests. */
+function makeChainReq(role: string, overrides: Record<string, unknown> = {}) {
+  const req = makeReq({ tenantContext: { organizationId: 2 }, ...overrides });
+  req.user.role = role;
+  req.userRole = role;
   return req;
 }
 
@@ -188,6 +234,121 @@ describe('510(k) device profile + openFDA lookups', () => {
         results: [expect.objectContaining({ kNumber: 'K250001' })],
       }),
     );
+  });
+});
+
+/**
+ * PUT /profile writes the device trade name, common name, classification name,
+ * regulation number and product codes that get PRINTED ON A FILED FDA
+ * SUBMISSION. It used to carry only `requireEntitlement`, which is a
+ * subscription-TIER check and a no-op unless ENTITLEMENTS_ENFORCE is set — so
+ * any authenticated member of the org, a read-only viewer included, could
+ * rewrite them, and nothing recorded who did. The sibling governed write
+ * (PUT /api/510k/estar/registration) is editor+ and audits every change.
+ */
+describe('PUT /profile — the governed write is role-gated and audited', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSelectRows.mockReturnValue([PROGRAM]);
+  });
+
+  it('runs the role gate BEFORE the entitlement gate', () => {
+    const names = routeLayer('/profile', 'put').route.stack.map((s: any) => s.handle.name);
+    expect(names.slice(0, 2)).toEqual(['requireEditorAccess', 'requireEntitlementMiddleware']);
+  });
+
+  it.each(['viewer', 'member', 'reviewer', ''])(
+    'a %s is refused 403 and NO row is updated and NO audit row is written',
+    async (role) => {
+      const req = makeChainReq(role, {
+        query: { ident: 'BX-204' },
+        body: { productName: 'Rewritten By A Viewer' },
+      });
+      const res = createMockResponse() as any;
+
+      await runChain('/profile', 'put')(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Insufficient permissions' });
+      expect(mockUpdateWhere).not.toHaveBeenCalled();
+      expect(mockLogAction).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['editor', 'admin', 'owner', 'super_admin'])('an %s succeeds', async (role) => {
+    const req = makeChainReq(role, { query: { ident: 'BX-204' }, body: { commonName: 'CGM' } });
+    const res = createMockResponse() as any;
+
+    await runChain('/profile', 'put')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockUpdateWhere).toHaveBeenCalledTimes(1);
+  });
+
+  it('a successful patch writes exactly ONE audit row naming the changed fields', async () => {
+    const req = makeChainReq('editor', {
+      query: { ident: 'BX-204' },
+      body: { commonName: 'Continuous glucose monitor', regulationNumber: '21 CFR 862.1355' },
+    });
+    const res = createMockResponse() as any;
+
+    await runChain('/profile', 'put')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockLogAction).toHaveBeenCalledTimes(1);
+    expect(mockLogAction.mock.calls[0][0]).toEqual({
+      organizationId: 2,
+      userId: 7,
+      action: 'DEVICE_PROFILE_UPDATED',
+      resourceType: 'regulatory_program',
+      resourceId: PROGRAM.id,
+      details: { fields: ['commonName', 'regulationNumber'] },
+    });
+  });
+
+  it('a rejected patch writes NO audit row', async () => {
+    const req = makeChainReq('editor', { query: { ident: 'BX-204' }, body: { deviceClass: 'IV' } });
+    const res = createMockResponse() as any;
+
+    await runChain('/profile', 'put')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockUpdateWhere).not.toHaveBeenCalled();
+    expect(mockLogAction).not.toHaveBeenCalled();
+  });
+
+  it('a program outside the caller org writes no audit row either', async () => {
+    mockSelectRows.mockReturnValue([]);
+    const req = makeChainReq('editor', { query: { ident: 'BX-204' }, body: { commonName: 'CGM' } });
+    const res = createMockResponse() as any;
+
+    await runChain('/profile', 'put')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(mockLogAction).not.toHaveBeenCalled();
+  });
+
+  it('refuses the write when no actor resolves — never audits an invented id', async () => {
+    const req = makeChainReq('editor', { query: { ident: 'BX-204' }, body: { commonName: 'CGM' } });
+    delete req.userId;
+    delete req.user.id;
+    const res = createMockResponse() as any;
+
+    await runChain('/profile', 'put')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Authenticated actor required' });
+    expect(mockUpdateWhere).not.toHaveBeenCalled();
+    expect(mockLogAction).not.toHaveBeenCalled();
+  });
+
+  it('leaves the READS open — a viewer can still read the profile', async () => {
+    const req = makeChainReq('viewer', { query: { ident: PROGRAM.id } });
+    const res = createMockResponse() as any;
+
+    await runChain('/profile', 'get')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
   });
 });
 

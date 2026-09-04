@@ -20,7 +20,9 @@
  *                                               the vendored recognition list
  *
  * Profile reads/writes are org-scoped against regulatory_programs (uuid or
- * program code ident, mirroring the estar-route resolver). openFDA lookups are
+ * program code ident, mirroring the estar-route resolver). The WRITE is editor+
+ * (the same role gate the sibling registration write carries) and audited
+ * DEVICE_PROFILE_UPDATED against the session's actor. openFDA lookups are
  * honest: unavailable upstream → { available:false, unavailableReason } with
  * empty results, never fabricated rows. Fallback predicate results carry
  * source:'openfda' + reduced:true so no surface can present them as the full
@@ -39,6 +41,7 @@ import { and, eq } from 'drizzle-orm';
 
 import { authMiddleware } from '../auth';
 import { requireEntitlement } from '../services/entitlements/require-entitlement';
+import auditService from '../services/auditService';
 import { requestDb } from '../db/requestDb';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import {
@@ -107,6 +110,50 @@ async function findProgram(req: Request, orgId: number, ident: string) {
   return row ?? null;
 }
 
+/**
+ * The role gate every governed eSTAR write already carries — the SAME set and
+ * the same shape as `requireEditorAccess` in server/routes/510k-estar-routes.ts,
+ * which guards the sibling write PUT /api/510k/estar/registration (that file is
+ * where the copy this one mirrors lives; cerv2-export-routes and cerv2-ai-routes
+ * carry the same one, none of them exports it).
+ *
+ * It is a ROLE check, and `requireEntitlement` is not: entitlements are a
+ * subscription-TIER check that is a no-op unless ENTITLEMENTS_ENFORCE is set, so
+ * on its own it let any authenticated member of the org — a read-only viewer
+ * included — rewrite the device facts printed on a filed FDA submission.
+ * Ordered ahead of the entitlement middleware, exactly as the sibling does.
+ */
+const allowedRoles = new Set(['admin', 'owner', 'editor', 'super_admin']);
+const requireEditorAccess = (req: any, res: any, next: () => void) => {
+  const role = String(req.userRole || req.user?.role || '').toLowerCase();
+  if (!role || !allowedRoles.has(role)) {
+    return res.status(403).json({ error: 'Insufficient permissions' });
+  }
+  const tenantOrg = req.tenantContext?.organizationId;
+  const userOrg = req.user?.organizationId || req.tenantId;
+  const orgId = tenantOrg || userOrg;
+  if (!orgId) {
+    return res.status(400).json({ error: 'Organization context required' });
+  }
+  const numericOrgId = Number(orgId);
+  if (!Number.isFinite(numericOrgId) || numericOrgId <= 0) {
+    return res.status(400).json({ error: 'Valid numeric organization context required' });
+  }
+  req.resolvedOrganizationId = numericOrgId;
+  return next();
+};
+
+/**
+ * The acting user, from the SESSION only. Null when nothing numeric resolves —
+ * the write is then refused rather than audited against an invented actor
+ * (scripts/ci/check-fabricated-identity: a column that must be filled is never a
+ * reason to manufacture an identity).
+ */
+function getActorId(req: any): number | null {
+  const n = Number(req.userId ?? req.user?.id);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
 const identSchema = z.object({ ident: z.string().min(1) });
 
 router.get('/profile', async (req, res) => {
@@ -162,11 +209,16 @@ const profilePatchSchema = z
   })
   .refine((p) => Object.values(p).some((v) => v !== undefined), { message: 'At least one field is required' });
 
-// The device-profile WRITE is part of the device_assembly_readiness capability
+// The device-profile WRITE is a governed FDA-submission write: editor+ ROLE
+// first (requireEditorAccess), then the device_assembly_readiness capability
 // (ENTITLEMENTS_ENFORCE: off|warn|on). Reads stay open.
-router.put('/profile', requireEntitlement('device_assembly_readiness'), async (req, res) => {
+router.put('/profile', requireEditorAccess, requireEntitlement('device_assembly_readiness'), async (req, res) => {
   const orgId = getOrgId(req);
   if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+  // Part 11 §11.10(e): an inspector must be able to ask WHO set the device facts
+  // that appear on the filed form, so no actor ⇒ no write.
+  const actorId = getActorId(req);
+  if (actorId === null) return res.status(403).json({ error: 'Authenticated actor required' });
   const identParsed = identSchema.safeParse(req.query);
   if (!identParsed.success) return res.status(400).json({ error: 'ident is required' });
   const patchParsed = profilePatchSchema.safeParse(req.body);
@@ -189,6 +241,19 @@ router.put('/profile', requireEntitlement('device_assembly_readiness'), async (r
       .where(
         and(eq(regulatoryPrograms.id, program.id), eq(regulatoryPrograms.organizationId, orgId)),
       );
+
+    // Audited like the sibling governed write (upsertEstarRegistration): the
+    // real actor and org from the session, the program as the resource, and the
+    // NAMES of the fields this patch changed — the device facts an inspector
+    // reads off the filed form.
+    await auditService.logAction({
+      organizationId: orgId,
+      userId: actorId,
+      action: 'DEVICE_PROFILE_UPDATED',
+      resourceType: 'regulatory_program',
+      resourceId: program.id,
+      details: { fields: Object.keys(patch) },
+    });
 
     const updated = await findProgram(req, orgId, program.id);
     return res.status(200).json({ profile: updated });

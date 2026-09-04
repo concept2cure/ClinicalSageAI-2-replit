@@ -13,11 +13,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createMockRequest, createMockResponse } from '../../../tests/setup';
 
-const { mockSelectRows, mockSelectFields, mockSet, mockUpdateWhere } = vi.hoisted(() => ({
+const { mockSelectRows, mockSelectFields, mockSet, mockUpdateWhere, mockLogAction } = vi.hoisted(() => ({
   mockSelectRows: vi.fn<() => unknown[]>(() => []),
   mockSelectFields: vi.fn<(fields: Record<string, unknown>) => void>(),
   mockSet: vi.fn<(values: Record<string, unknown>) => void>(),
   mockUpdateWhere: vi.fn(async () => undefined),
+  mockLogAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })),
+}));
+
+vi.mock('../../services/auditService', () => ({
+  default: { logAction: mockLogAction },
+  logAction: mockLogAction,
 }));
 
 vi.mock('../../auth', () => ({
@@ -83,9 +89,18 @@ const PROGRAM = {
   indicationsForUseCitation: 'Attachment 4, page 1',
 };
 
+/**
+ * An editor principal WITH a numeric actor id: the write is audited against the
+ * session's actor and refuses rather than inventing one, so a principal with no
+ * id would never reach the UPDATE these tests are about. (The role gate itself
+ * is pinned in tests/routes/510k-device-routes.test.ts, which runs the whole
+ * middleware chain; `getHandler` below reaches the final handler directly.)
+ */
 function makeReq(overrides: Record<string, unknown> = {}) {
   const req = createMockRequest(overrides) as any;
-  req.user = { organizationId: 2 };
+  req.user = { id: 7, organizationId: 2, role: 'editor' };
+  req.userId = 7;
+  req.userRole = 'editor';
   return req;
 }
 

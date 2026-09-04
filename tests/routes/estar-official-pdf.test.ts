@@ -447,18 +447,30 @@ describe('POST /api/510k/estar/official with useProgramData:true', () => {
     expect(out.getForm().getTextField('DeviceName').getText()).toBe('Client Value');
   });
 
-  it('with nothing governed and nothing requested every field is reported blank (never a silent blank form)', async () => {
+  // With nothing governed and nothing requested the fill writes NO field, so
+  // the only PDF it could hand back is the untouched official template. That
+  // used to answer 200 with a field report of three blanks and register the
+  // blank form as a submittable artifact; it now refuses. A report saying
+  // "0 of 3 filled" is still a blank official FDA form the client can file.
+  it('with nothing governed and nothing requested it REFUSES — no blank official form, and nothing is registered', async () => {
     mockLoadInputs.mockResolvedValue({ program: null, organization: null, workspace: null, fda510kProject: null });
     const req = makeReq(body({ useProgramData: true, data: {} }));
     const res = createMockResponse() as any;
 
     await getHandler('/official')(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.status).toHaveBeenCalledWith(422);
     const payload = res.json.mock.calls[0][0];
-    expect(payload.fieldReport.filledCount).toBe(0);
-    expect(payload.fieldReport.blankCount).toBe(3);
-    expect(payload.fieldReport.blankKeys).toEqual(['deviceTradeName', 'deviceCommonName', 'regulationNumber']);
+    expect(payload.error).toBe('ESTAR_NOT_PRODUCIBLE');
+    expect(payload.officialEstarPdf).toBe(false);
+    // The refusal says why: the fill wrote nothing, so the output would be the
+    // blank template. The template and its map are both fine — it is the
+    // VALUES that are missing, and the blocker must not blame the template.
+    expect(payload.templateAvailable).toBe(true);
+    expect(payload.fieldMapPopulated).toBe(true);
+    expect(payload.blockers.join(' ')).toContain('the fill wrote no values');
+    // No artifact, no governed export consequence: nothing was produced.
+    expect(mockGovernedConsequence).not.toHaveBeenCalled();
   });
 });
 

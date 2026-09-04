@@ -86,7 +86,14 @@ const renderPma = () => renderHost('device-pma');
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  delete (window as { C2C_PROJECT?: unknown }).C2C_PROJECT;
 });
+
+/** Open a program the way the shell does — the host reads this selection
+ *  before falling back to the surface's pathway anchor. */
+function selectProgram(id: string) {
+  (window as unknown as { C2C_PROJECT: { id: string } }).C2C_PROJECT = { id };
+}
 
 describe('510(k) surface — the official eSTAR family follows the program', () => {
   it('an IVD program on the 510(k) surface is produced on the IVD eSTAR', async () => {
@@ -168,10 +175,14 @@ describe('the official eSTAR pathway follows the program, not the surface', () =
     const fieldReads = urls().filter((u) => u.includes('/estar/official-fields'));
     const readinessReads = urls().filter((u) => u.includes('/estar/readiness'));
     expect(fieldReads.every((u) => u.includes('type=pma') && u.includes('variant=device'))).toBe(true);
-    // The PMA surface's type is fixed, so every readiness probe — including
-    // the pre-load frame — already says pma.
+    // The pathway now follows the PROGRAM on this surface too, so the
+    // pre-load frame (no program yet ⇒ 510k) probes readiness for a 510(k) and
+    // the probe that matters is the one made once the row resolved. Asserting
+    // every probe said pma only held while the surface hardcoded the pathway,
+    // which is the defect — a De Novo or 510(k) program opened here was
+    // previewed and produced on the PMA field map.
     expect(readinessReads.length).toBeGreaterThan(0);
-    expect(readinessReads.every((u) => u.includes('type=pma'))).toBe(true);
+    expect(readinessReads[readinessReads.length - 1]).toContain('type=pma');
   });
 
   it('an IVD PMA program on the PMA surface is produced as a PMA on the IVD eSTAR', async () => {
@@ -188,6 +199,58 @@ describe('the official eSTAR pathway follows the program, not the surface', () =
     renderPma();
     await waitFor(() =>
       expect(screen.getByText('Official eSTAR · PMA · IVD eSTAR')).toBeTruthy(),
+    );
+  });
+});
+
+/**
+ * The PMA surface hardcoded type="pma" while its two sibling surfaces derived
+ * the pathway with officialEstarTypeFor. A program is opened from the shell,
+ * not from the surface, so a De Novo or 510(k) program can be open when the
+ * user is on the PMA surface — and every one of them was previewed, filled and
+ * produced on the PMA field map. The helper's own rule is that the pathway
+ * comes from the program; the surface now follows it.
+ */
+describe('the PMA surface derives the pathway from the program, never from itself', () => {
+  it('a De Novo program open on the PMA surface is produced as a De Novo', async () => {
+    const id = 'a2b4c6d8-0000-0000-0000-0000000dnov2';
+    stubFetch([
+      {
+        ...IVD_510K_ROW,
+        id,
+        name: 'DN-770 Ablation Catheter',
+        code: 'DN-770',
+        productName: 'DN-770 Ablation Catheter',
+        programType: 'DE_NOVO',
+        regulatoryPath: 'de_novo',
+        productType: 'device',
+      },
+    ]);
+    selectProgram(id);
+    renderPma();
+    await waitFor(() =>
+      expect(screen.getByText('Official eSTAR · De Novo · nIVD eSTAR')).toBeTruthy(),
+    );
+    expect(screen.queryByText(/Official eSTAR · PMA/)).toBeNull();
+    const fetchSpy = globalThis.fetch as unknown as { mock: { calls: unknown[][] } };
+    const urls = () => fetchSpy.mock.calls.map((c) => String(c[0]));
+    await waitFor(() =>
+      expect(urls().filter((u) => u.includes('/estar/official-fields')).length).toBeGreaterThan(0),
+    );
+    const fieldReads = urls().filter((u) => u.includes('/estar/official-fields'));
+    expect(fieldReads.every((u) => u.includes('type=de_novo') && u.includes('variant=device'))).toBe(true);
+    // The readiness probe follows too, once the program has resolved.
+    const readinessReads = urls().filter((u) => u.includes('/estar/readiness'));
+    expect(readinessReads[readinessReads.length - 1]).toContain('type=de_novo');
+  });
+
+  it('a 510(k) program open on the PMA surface is produced as a 510(k)', async () => {
+    const id = 'a2b4c6d8-0000-0000-0000-00000000k510';
+    stubFetch([{ ...IVD_510K_ROW, id, productType: 'device' }]);
+    selectProgram(id);
+    renderPma();
+    await waitFor(() =>
+      expect(screen.getByText('Official eSTAR · 510(k) · nIVD eSTAR')).toBeTruthy(),
     );
   });
 });

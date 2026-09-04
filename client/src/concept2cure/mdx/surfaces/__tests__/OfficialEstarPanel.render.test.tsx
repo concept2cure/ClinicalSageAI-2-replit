@@ -9,6 +9,8 @@ import {
   officialEstarVariantFor,
   entitlementLockTitle,
 } from '../OfficialEstarPanel';
+import { DeviceProfilePanel } from '../DeviceProfilePanel';
+import { EstarFilingPanel } from '../EstarFilingPanel';
 import type { Program } from '../../data/programs';
 
 /**
@@ -855,5 +857,136 @@ describe('OfficialEstarPanel — which marketing pathway', () => {
     await waitFor(() =>
       expect((screen.getByLabelText('Common Name') as HTMLInputElement).value).toBe(''),
     );
+  });
+});
+
+/**
+ * The preview names the durable home of every blank field ("Not set — Device
+ * profile · common name"). A user who went and set it in the sibling panel
+ * came back to the SAME line, because this read had no reason to run again —
+ * which reads as the save having failed on the one field the panel had just
+ * told them to fill.
+ *
+ * These mount the preview beside each sibling that owns one of those homes and
+ * pin the re-read, so the wiring is proved rather than the notify helper alone.
+ */
+/** A loaded profile whose five eSTAR facts are all blank — the preview's
+ *  "Not set — Device profile · common name" row is about this row. */
+const PROFILE_ROW = {
+  id: PROGRAM.id,
+  name: 'BX-204',
+  code: 'BX-204',
+  productName: 'BX-204 CGM',
+  productType: 'device',
+  deviceClass: 'II',
+  regulatoryPath: '510k',
+  productCode: 'MDS',
+  intendedUse: null,
+  indication: null,
+  predicateDevices: null,
+  commonName: null,
+  classificationName: null,
+  regulationNumber: null,
+  associatedProductCodes: null,
+  indicationsForUseCitation: null,
+};
+
+/** How many times the preview has read the field list. */
+const fieldReads = (spy: { mock: { calls: unknown[][] } }) =>
+  spy.mock.calls.map((c) => String(c[0])).filter((u) => u.includes('/estar/official-fields')).length;
+
+/** Readiness + field list answer; the device profile read is handed on. */
+const withProfile = (onProfile: Handler): Handler => (url, init) => {
+  if (url.includes('/estar/readiness')) return okJson(READY);
+  if (url.includes('/estar/official-fields')) return okJson(FIELDS);
+  if (url.includes('/device/profile')) return onProfile(url, init);
+  return okJson({});
+};
+
+describe('OfficialEstarPanel — the preview re-reads after a sibling panel saves', () => {
+  it('a saved device profile makes the preview re-read the governed values', async () => {
+    const spy = mockFetch(
+      withProfile((_url, init) =>
+        okJson({
+          profile:
+            init?.method === 'PUT'
+              ? { ...PROFILE_ROW, commonName: 'Continuous glucose monitor' }
+              : PROFILE_ROW,
+        }),
+      ),
+    );
+    render(
+      <>
+        <DeviceProfilePanel ident={PROGRAM.id} />
+        <OfficialEstarPanel program={PROGRAM} variant="device" />
+      </>,
+    );
+    /* The preview has read once, and says where the blank field lives. */
+    await waitFor(() => expect(screen.getByTestId('official-estar-not-set-deviceCommonName')).toBeTruthy());
+    const before = fieldReads(spy);
+    expect(before).toBe(1);
+
+    fireEvent.click(screen.getByText('Edit'));
+    fireEvent.change(screen.getByLabelText('Common name'), {
+      target: { value: 'Continuous glucose monitor' },
+    });
+    fireEvent.click(screen.getByText('Save'));
+    await waitFor(() => expect(screen.getByText('Saved')).toBeTruthy());
+    await waitFor(() => expect(fieldReads(spy)).toBe(before + 1));
+  });
+
+  it('a rejected device-profile save does NOT re-read — nothing changed to re-read', async () => {
+    const spy = mockFetch(
+      withProfile((_url, init) =>
+        init?.method === 'PUT' ? failJson({ error: 'FORBIDDEN' }, 403) : okJson({ profile: PROFILE_ROW }),
+      ),
+    );
+    render(
+      <>
+        <DeviceProfilePanel ident={PROGRAM.id} />
+        <OfficialEstarPanel program={PROGRAM} variant="device" />
+      </>,
+    );
+    await waitFor(() => expect(screen.getByTestId('official-estar-not-set-deviceCommonName')).toBeTruthy());
+    const before = fieldReads(spy);
+
+    fireEvent.click(screen.getByText('Edit'));
+    fireEvent.change(screen.getByLabelText('Common name'), { target: { value: 'Continuous glucose monitor' } });
+    fireEvent.click(screen.getByText('Save'));
+    await waitFor(() => expect(screen.getByText(/Not saved/)).toBeTruthy());
+    expect(fieldReads(spy)).toBe(before);
+  });
+
+  it('a saved correspondent block makes the preview re-read', async () => {
+    const spy = mockFetch((url) => {
+      if (url.includes('/estar/readiness')) return okJson(READY);
+      if (url.includes('/estar/official-fields')) return okJson(FIELDS);
+      if (url.includes('/estar/registration')) {
+        return okJson({
+          registered: true,
+          registration: { id: 'r1', correspondentTelephone: '+1 555 0100' },
+          clientRegistration: { clientId: 'o1', satisfied: [] },
+        });
+      }
+      if (url.includes('/estar/catalog')) return okJson({ catalog: [] });
+      if (url.includes('/estar/submissions')) return okJson({ submissions: [] });
+      return okJson({});
+    });
+    render(
+      <>
+        <EstarFilingPanel />
+        <OfficialEstarPanel program={PROGRAM} variant="device" />
+      </>,
+    );
+    await waitFor(() =>
+      expect((screen.getByLabelText('Correspondent telephone') as HTMLInputElement).value).toBe('+1 555 0100'),
+    );
+    await waitFor(() => expect(fieldReads(spy)).toBe(1));
+    const before = fieldReads(spy);
+
+    fireEvent.change(screen.getByLabelText('Correspondent telephone'), { target: { value: '+1 555 0199' } });
+    fireEvent.click(screen.getByText('Save'));
+    await waitFor(() => expect(screen.getByText('Saved')).toBeTruthy());
+    await waitFor(() => expect(fieldReads(spy)).toBe(before + 1));
   });
 });

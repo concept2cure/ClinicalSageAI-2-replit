@@ -22,7 +22,12 @@ vi.mock('../../server/auth', () => ({
   authMiddleware: (_req: any, _res: any, next: any) => next(),
 }));
 vi.mock('../../server/db', () => ({ db: {} }));
-vi.mock('../../server/db/requestDb', () => ({ requestDb: () => ({}) }));
+// The request-scoped client is what the service must be handed: it carries
+// app.current_tenant_id, so RLS filters the registration row as a second layer
+// under the explicit organizationId predicate. A recognisable object here lets
+// the tests below assert it actually travelled.
+const REQUEST_SCOPED_DB = { __requestScoped: true };
+vi.mock('../../server/db/requestDb', () => ({ requestDb: () => REQUEST_SCOPED_DB }));
 vi.mock('../../server/services/auditService', () => ({
   default: { logAction: vi.fn(async () => undefined) },
 }));
@@ -102,8 +107,11 @@ describe('PUT /api/510k/estar/registration — correspondent and declaration fac
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(mockUpsert).toHaveBeenCalledTimes(1);
-    expect(mockUpsert.mock.calls[0][0]).toEqual(body);
-    expect(mockUpsert.mock.calls[0][1]).toEqual({ organizationId: 2, userId: 9 });
+    // The org's correspondent contact details are cross-tenant PII, so the
+    // write goes through the request-scoped client, never the shared pool.
+    expect(mockUpsert.mock.calls[0][0]).toBe(REQUEST_SCOPED_DB);
+    expect(mockUpsert.mock.calls[0][1]).toEqual(body);
+    expect(mockUpsert.mock.calls[0][2]).toEqual({ organizationId: 2, userId: 9 });
     const payload = res.json.mock.calls[0][0];
     expect(payload.registered).toBe(true);
     expect(payload.registration).toMatchObject(body);
@@ -118,7 +126,7 @@ describe('PUT /api/510k/estar/registration — correspondent and declaration fac
     );
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(mockUpsert.mock.calls[0][0]).toEqual({
+    expect(mockUpsert.mock.calls[0][1]).toEqual({
       correspondentTelephone: null,
       declarationCompanyName: null,
       declarationCompanyAddress: null,
@@ -135,7 +143,7 @@ describe('PUT /api/510k/estar/registration — correspondent and declaration fac
     await getHandler('/registration', 'put')(makeReq(body), res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(mockUpsert.mock.calls[0][0]).toEqual(body);
+    expect(mockUpsert.mock.calls[0][1]).toEqual(body);
     expect(res.json.mock.calls[0][0].registration).toMatchObject(body);
   });
 
@@ -167,7 +175,7 @@ describe('PUT /api/510k/estar/registration — correspondent and declaration fac
     await getHandler('/registration', 'put')(makeReq(body), res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(mockUpsert.mock.calls[0][0]).toEqual(body);
+    expect(mockUpsert.mock.calls[0][1]).toEqual(body);
   });
 });
 
@@ -183,6 +191,9 @@ describe('GET /api/510k/estar/registration — the stored facts come back', () =
     await getHandler('/registration', 'get')(makeReq(), res);
 
     expect(res.status).toHaveBeenCalledWith(200);
+    // Read through the request-scoped client, same as the write.
+    expect(mockGet.mock.calls[0][0]).toBe(REQUEST_SCOPED_DB);
+    expect(mockGet.mock.calls[0][1]).toEqual({ organizationId: 2 });
     const payload = res.json.mock.calls[0][0];
     expect(payload.registered).toBe(true);
     expect(payload.registration).toMatchObject({

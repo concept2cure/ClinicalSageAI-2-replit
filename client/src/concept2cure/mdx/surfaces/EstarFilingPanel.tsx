@@ -33,6 +33,7 @@ import {
   type FilingReadinessResult,
   type EstarSubmissionView,
 } from '../hooks/useEstarFiling';
+import { notifyOfficialEstarFieldsChanged } from '../hooks/useEstarOfficialFields';
 import { IntakeTextField } from './DeviceProfilePanel';
 
 /** Allowed next statuses (mirrors the server lifecycle) for the advance buttons. */
@@ -170,10 +171,34 @@ function CorrespondentBlock({
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
-  /* Re-seed whenever the stored row changes (first load, refresh after save)
-     — never mid-edit from a stale render. */
+  /* What the form holds, and what it was last seeded from. An EDIT is a
+     difference between the two — not a difference from whatever the row says
+     now — so a row that changed elsewhere still re-seeds a form nobody has
+     typed into. */
+  const live = React.useRef<CorrespondentForm>(form);
+  const seeded = React.useRef<CorrespondentForm>(form);
+
+  function onField(field: EstarCorrespondentField, value: string) {
+    live.current = { ...live.current, [field]: value };
+    setForm(live.current);
+  }
+
+  /* Re-seed when the stored row changes (first load, refresh after a save) —
+     but never over text typed and not yet saved. Every read hands this block a
+     NEW row object, and save() refreshes the registration, so a prerequisite
+     toggled above re-seeded this form: a Declaration of Conformity company name
+     half-typed when the toggle was clicked vanished with no message, and the
+     next official eSTAR filed that field blank. An unsaved edit now stands
+     until its own Save replaces it. */
   useEffect(() => {
-    setForm(correspondentForm(stored));
+    const next = correspondentForm(stored);
+    const edited = ESTAR_CORRESPONDENT_FIELDS.some(
+      (f) => live.current[f.field] !== seeded.current[f.field],
+    );
+    seeded.current = next;
+    if (edited) return;
+    live.current = next;
+    setForm(next);
   }, [stored]);
 
   const base = correspondentForm(stored);
@@ -186,6 +211,10 @@ function CorrespondentBlock({
     const saved = await save(correspondentPatch(satisfied, form));
     setSaving(false);
     setStatus(saved ? 'Saved' : 'Not saved — the server rejected the update');
+    /* The official eSTAR preview reads this block and names it as the home of
+       the correspondent and Declaration of Conformity fields. Only an ACCEPTED
+       save changed anything, so only an accepted save asks it to re-read. */
+    if (saved) notifyOfficialEstarFieldsChanged();
   }
 
   return (
@@ -216,7 +245,7 @@ function CorrespondentBlock({
               label={f.label}
               value={form[f.field]}
               maxLength={f.max}
-              onChange={(v) => setForm((prev) => ({ ...prev, [f.field]: v }))}
+              onChange={(v) => onField(f.field, v)}
             />
           ))}
         </div>
@@ -226,7 +255,7 @@ function CorrespondentBlock({
               label={f.label}
               value={form[f.field]}
               maxLength={f.max}
-              onChange={(v) => setForm((prev) => ({ ...prev, [f.field]: v }))}
+              onChange={(v) => onField(f.field, v)}
             />
           </div>
         ))}
@@ -267,7 +296,14 @@ export function EstarFilingPanel() {
 
   async function onToggle(id: EstarPrerequisiteId) {
     setBusy(`reg:${id}`);
-    await save(registrationPatchToggling(satisfied, id, registration?.registration ?? null));
+    /* `registration?.registration` — deliberately NOT `?? null`. The helper
+       reads undefined as "the registration has not loaded, so leave the text
+       alone" and null as "loaded, and the org holds no row". Coercing the
+       first onto the second sent explicit nulls for all five text columns
+       before the GET landed (or after it failed), so a toggle blanked the
+       correspondent and Declaration of Conformity facts the org already
+       held. Loaded-with-no-row still travels as null, which clears nothing. */
+    await save(registrationPatchToggling(satisfied, id, registration?.registration));
     setBusy(null);
   }
   async function onSelect(key: string) {

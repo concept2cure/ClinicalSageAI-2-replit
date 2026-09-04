@@ -120,6 +120,9 @@ describe('projecting the Phase 3 homes', () => {
   });
 });
 
+const WORKSPACE = { name: 'Client Workspace Ltd' };
+const ORG = { name: 'Concept2Cure, Inc.' };
+
 /**
  * The Declaration of Conformity is a signed statement by ONE legal entity, so
  * its company NAME and company ADDRESS must name the same company. The address
@@ -131,8 +134,6 @@ describe('projecting the Phase 3 homes', () => {
  * that has not filled it in is unchanged.
  */
 describe('declarationCompanyName — the DoC names one legal entity', () => {
-  const WORKSPACE = { name: 'Client Workspace Ltd' };
-  const ORG = { name: 'Concept2Cure, Inc.' };
 
   it('the registration name wins over the workspace and the organization, and pairs with the address on that row', () => {
     const r = projectEstarAdministrativeData({
@@ -155,7 +156,7 @@ describe('declarationCompanyName — the DoC names one legal entity', () => {
   it('a blank or whitespace registration name falls through to the workspace — never an empty string', () => {
     for (const declarationCompanyName of ['', '   ', null, undefined]) {
       const r = projectEstarAdministrativeData({
-        registration: { declarationCompanyName, declarationCompanyAddress: '1 Device Way' },
+        registration: { declarationCompanyName, declarationCompanyAddress: null },
         workspace: WORKSPACE,
         organization: ORG,
       });
@@ -163,6 +164,7 @@ describe('declarationCompanyName — the DoC names one legal entity', () => {
       expect(r.provenance.declarationCompanyName).toBe('client_workspaces.name');
     }
   });
+
 
   it('with no registration name and no workspace it is the organization name — the second fallback is not dropped', () => {
     const r = projectEstarAdministrativeData({ registration: {}, organization: ORG });
@@ -199,6 +201,140 @@ describe('declarationCompanyName — the DoC names one legal entity', () => {
       const row = r.fields.find((f) => f.key === 'declarationCompanyName')!;
       expect(row.declaredSource).toBe('estar_registrations.declaration_company_name');
     }
+  });
+});
+
+/**
+ * The pair, resolved AS A UNIT. The name has fallbacks and the address has
+ * none, so an org that filled in the ADDRESS and left the NAME blank filed a
+ * Declaration of Conformity carrying the client workspace's (or the
+ * organization's) name beside the registration's address — two different
+ * legal entities on one signed statement.
+ *
+ * The NAME's fallbacks are therefore WITHHELD once the address is set on that
+ * row: the platform holds no address for the workspace or the organization,
+ * so neither can be the entity at the registration's address. The name is
+ * blank instead, with `declaredSource` naming the registration column, so the
+ * operator sees the one gap and closes it; a mismatch would be filed as fact.
+ *
+ * The withheld half is always the one the platform has NO home for. A value
+ * the operator saved to the registration row is never dropped — dropping it
+ * would report "not set" for a field they filled in, and leave the signed
+ * declaration missing the half they did supply.
+ */
+describe('the DoC name and address resolve as a unit — all four cases', () => {
+  it('both on the registration: both are used, off the one row', () => {
+    const r = projectEstarAdministrativeData({
+      registration: {
+        declarationCompanyName: 'Declaring Entity GmbH',
+        declarationCompanyAddress: '1 Device Way, Boston, MA 02110',
+      },
+      workspace: WORKSPACE,
+      organization: ORG,
+    });
+    expect(r.values.declarationCompanyName).toBe('Declaring Entity GmbH');
+    expect(r.provenance.declarationCompanyName).toBe('estar_registrations.declaration_company_name');
+    expect(r.values.declarationCompanyAddress).toBe('1 Device Way, Boston, MA 02110');
+    expect(r.provenance.declarationCompanyAddress).toBe('estar_registrations.declaration_company_address');
+  });
+
+  it('name on the registration, no address: the name is used, the address is simply absent', () => {
+    const r = projectEstarAdministrativeData({
+      registration: { declarationCompanyName: 'Declaring Entity GmbH', declarationCompanyAddress: null },
+      workspace: WORKSPACE,
+      organization: ORG,
+    });
+    expect(r.values.declarationCompanyName).toBe('Declaring Entity GmbH');
+    expect(r.provenance.declarationCompanyName).toBe('estar_registrations.declaration_company_name');
+    expect(r.values.declarationCompanyAddress).toBeUndefined();
+    expect(r.provenance.declarationCompanyAddress).toBeUndefined();
+  });
+
+  it('address on the registration but NO name: the address is used and the NAME is blank, never the workspace\u2019s', () => {
+    for (const declarationCompanyName of ['', '   ', null, undefined]) {
+      const viaWorkspace = projectEstarAdministrativeData({
+        registration: { declarationCompanyName, declarationCompanyAddress: '1 Device Way, Boston, MA 02110' },
+        workspace: WORKSPACE,
+        organization: ORG,
+      });
+      // The address is the operator's own saved value: it is written as saved.
+      expect(viaWorkspace.values.declarationCompanyAddress).toBe('1 Device Way, Boston, MA 02110');
+      expect(viaWorkspace.provenance.declarationCompanyAddress).toBe('estar_registrations.declaration_company_address');
+      // The workspace holds no address, so its name cannot be the entity at
+      // that address \u2014 it is withheld rather than printed beside it.
+      expect(viaWorkspace.values.declarationCompanyName).toBeUndefined();
+      expect(viaWorkspace.provenance.declarationCompanyName).toBeUndefined();
+      // The APPLICANT is untouched: that key reads the workspace as it always did.
+      expect(viaWorkspace.values.applicantCompanyName).toBe('Client Workspace Ltd');
+
+      // Same for the organization name, the second link of the chain.
+      const viaOrganization = projectEstarAdministrativeData({
+        registration: { declarationCompanyName, declarationCompanyAddress: '1 Device Way, Boston, MA 02110' },
+        organization: ORG,
+      });
+      expect(viaOrganization.values.declarationCompanyAddress).toBe('1 Device Way, Boston, MA 02110');
+      expect(viaOrganization.values.declarationCompanyName).toBeUndefined();
+      expect(viaOrganization.provenance.declarationCompanyName).toBeUndefined();
+    }
+  });
+
+  it('neither set: no address, and the name falls back exactly as it always did', () => {
+    const r = projectEstarAdministrativeData({
+      registration: { declarationCompanyName: null, declarationCompanyAddress: null },
+      workspace: WORKSPACE,
+      organization: ORG,
+    });
+    expect(r.values.declarationCompanyName).toBe('Client Workspace Ltd');
+    expect(r.provenance.declarationCompanyName).toBe('client_workspaces.name');
+    expect(r.values.declarationCompanyAddress).toBeUndefined();
+
+    const noRegistration = projectEstarAdministrativeData({ organization: ORG });
+    expect(noRegistration.values.declarationCompanyName).toBe('Concept2Cure, Inc.');
+    expect(noRegistration.values.declarationCompanyAddress).toBeUndefined();
+    expect(noRegistration.provenance.declarationCompanyAddress).toBeUndefined();
+  });
+
+  it('the withheld name still names its home \u2014 the operator is told where to set it', () => {
+    const r = resolveOfficialEstarFields({
+      fieldMap: DEVICE_MAP,
+      governed: projectEstarAdministrativeData({
+        registration: { declarationCompanyAddress: '1 Device Way, Boston, MA 02110' },
+        workspace: WORKSPACE,
+      }),
+      honourRequestOverGoverned: false,
+    });
+    const byKey = Object.fromEntries(r.fields.map((f) => [f.key, f]));
+    expect(byKey.declarationCompanyName).toMatchObject({
+      value: null,
+      source: null,
+      declaredSource: 'estar_registrations.declaration_company_name',
+    });
+    // And the half the operator DID save is reported as set, from its row \u2014
+    // never as "not set", which would be untrue of a field they filled in.
+    expect(byKey.declarationCompanyAddress).toMatchObject({
+      value: '1 Device Way, Boston, MA 02110',
+      source: 'estar_registrations.declaration_company_address',
+      declaredSource: 'estar_registrations.declaration_company_address',
+    });
+  });
+
+  it('the operator can still type the missing name for this one export', () => {
+    // The withheld fallback does not lock the field: a request value fills a
+    // key the governed records do not hold, so the declaration can be
+    // completed for this filing while the durable home stays the row.
+    const r = resolveOfficialEstarFields({
+      fieldMap: DEVICE_MAP,
+      governed: projectEstarAdministrativeData({
+        registration: { declarationCompanyAddress: '1 Device Way, Boston, MA 02110' },
+        workspace: WORKSPACE,
+      }),
+      requestData: { declarationCompanyName: 'Declaring Entity GmbH' },
+      honourRequestOverGoverned: false,
+    });
+    const byKey = Object.fromEntries(r.fields.map((f) => [f.key, f]));
+    expect(byKey.declarationCompanyName).toMatchObject({ value: 'Declaring Entity GmbH', source: 'request' });
+    expect(byKey.declarationCompanyAddress).toMatchObject({ value: '1 Device Way, Boston, MA 02110' });
+    expect(r.ignoredRequestKeys).toEqual([]);
   });
 });
 
@@ -297,6 +433,64 @@ function recordingDb() {
 }
 
 describe('loadEstarAdministrativeInputs — the Phase 3 columns', () => {
+  /**
+   * A database whose registration columns the migration has not added yet — the
+   * window between a deploy shipping this code and 20260903/20260904 running,
+   * or a rollback. `throwOn` rejects the estar_registrations read the way
+   * Postgres does (42703 undefined_column) while every other read succeeds.
+   */
+  function dbFailingRegistrationWith(code: string) {
+    return {
+      select: (selection: Record<string, unknown>) => ({
+        from: (table: object) => ({
+          where: () => {
+            const limit = async () => {
+              if (table === estarRegistrations) {
+                throw Object.assign(new Error(`column "declaration_company_name" does not exist`), { code });
+              }
+              return [];
+            };
+            return { limit, orderBy: () => ({ limit }) };
+          },
+        }),
+      }),
+    } as unknown as RequestDb;
+  }
+
+  it('a database without the registration columns yet reports them blank, it does not 500 the export', async () => {
+    // 42703 is "the column is not there", and a column that is not there holds
+    // no data — so blank is exactly what the org has. Throwing would take out
+    // BOTH the preview and Generate for every client on that database.
+    const inputs = await loadEstarAdministrativeInputs(dbFailingRegistrationWith('42703'), {
+      organizationId: 2,
+      programUuid: 'prog-uuid',
+      fda510kProjectId: null,
+    });
+    expect(inputs.registration).toBeNull();
+    const projected = projectEstarAdministrativeData(inputs);
+    for (const key of [
+      'correspondentCompanyName',
+      'correspondentContactEmail',
+      'correspondentTelephone',
+      'declarationCompanyName',
+      'declarationCompanyAddress',
+    ]) {
+      expect(projected.values[key], `${key} is blank, not invented`).toBeUndefined();
+      // …and the surface can still tell the operator where it lives.
+      expect(declaredSourceFor(key)).toMatch(/^estar_registrations\./);
+    }
+  });
+
+  it('any OTHER database error still propagates — an unreadable registration is not an empty one', async () => {
+    await expect(
+      loadEstarAdministrativeInputs(dbFailingRegistrationWith('57014'), {
+        organizationId: 2,
+        programUuid: 'prog-uuid',
+        fda510kProjectId: null,
+      }),
+    ).rejects.toThrow(/does not exist/);
+  });
+
   it('the program read names the five new columns and the registration read the five, org-scoped', async () => {
     const { db, reads } = recordingDb();
     await loadEstarAdministrativeInputs(db, { organizationId: 2, programUuid: 'prog-uuid', fda510kProjectId: null });
@@ -358,7 +552,14 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
       const partial: EstarAdministrativeInputs = {
         program: { productName: 'AcuSense CGM System', productCode: 'NBW', regulationNumber: '21 CFR 862.1355' },
         organization: { name: 'Concept2Cure, Inc.' },
-        registration: { correspondentTelephone: '+1 555 0199', declarationCompanyAddress: '1 Device Way' },
+        // Both halves of the Declaration of Conformity come off this row: the
+        // address is used only when the NAME did too, so a registration that
+        // carried the address alone would put nothing in either field.
+        registration: {
+          correspondentTelephone: '+1 555 0199',
+          declarationCompanyName: 'Declaring Entity GmbH',
+          declarationCompanyAddress: '1 Device Way',
+        },
       };
       const resolved = resolveOfficialEstarFields({
         fieldMap: DEVICE_MAP,
@@ -378,11 +579,13 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
       }
       expect(back[DEVICE_MAP.regulationNumber.xfaSomPath!]).toBe('21 CFR 862.1355');
       expect(back[DEVICE_MAP.correspondentTelephone.xfaSomPath!]).toBe('+1 555 0199');
+      expect(back[DEVICE_MAP.declarationCompanyName.xfaSomPath!]).toBe('Declaring Entity GmbH');
       expect(back[DEVICE_MAP.declarationCompanyAddress.xfaSomPath!]).toBe('1 Device Way');
       expect(back[DEVICE_MAP.correspondentCompanyName.xfaSomPath!] ?? '').toBe('');
 
-      // productName ×2, productCode, regulation number, org name ×2, telephone,
-      // address + the request common name.
+      // productName ×2, productCode, regulation number, the org name (applicant),
+      // the DoC name + address off the registration, telephone + the request
+      // common name.
       const { fieldReport } = reportOfficialEstarFill(resolved, r.filledFields);
       expect(fieldReport.filledCount).toBe(9);
       expect(fieldReport.blankCount).toBe(11);

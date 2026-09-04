@@ -290,3 +290,173 @@ describe('EstarFilingPanel — the Declaration of Conformity company name', () =
     });
   });
 });
+
+/**
+ * A toggle must never blank text the org already holds.
+ *
+ * `registrationPatchToggling` guards that by distinguishing undefined ("the
+ * registration has not loaded — do not touch the text") from a loaded row.
+ * The call site coerced the first onto `null`, so a toggle pressed before GET
+ * /registration landed — or after it failed — sent explicit nulls for all five
+ * text columns and wiped the correspondent and Declaration of Conformity facts
+ * from the org's registration. The four prerequisite buttons are live on the
+ * first painted frame, so that click is one an ordinary user makes.
+ */
+describe('EstarFilingPanel — a toggle before the registration lands', () => {
+  const TEXT_KEYS = [
+    'correspondentCompanyName',
+    'correspondentContactEmail',
+    'correspondentTelephone',
+    'declarationCompanyName',
+    'declarationCompanyAddress',
+  ];
+
+  /** Reads answer as given; the PUT always succeeds. */
+  function mockReads(read: (url: string) => Promise<Response>) {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: string | URL, init?: { method?: string }) => {
+        if (init?.method === 'PUT') return okJson({});
+        return read(String(input));
+      }),
+    );
+  }
+
+  it('omits the five text keys while the registration has not loaded', async () => {
+    mockReads((url) => {
+      if (url.includes('/registration')) return new Promise<Response>(() => {}); // never resolves
+      if (url.includes('/catalog')) return okJson({ catalog: [] });
+      return okJson({ submissions: [] });
+    });
+    render(<EstarFilingPanel />);
+    expect(screen.getAllByText('Mark held').length).toBe(4);
+    fireEvent.click(screen.getAllByText('Mark held')[0]);
+    await waitFor(() => expect(sentPut()).not.toBeNull());
+    const body = sentPut() as Record<string, unknown>;
+    expect(body).toEqual({
+      fdaEsgAccount: true,
+      cdrhPortalAccount: false,
+      organizationIdentity: false,
+      mdufaFeeAccount: false,
+    });
+    for (const key of TEXT_KEYS) expect(Object.hasOwn(body, key)).toBe(false);
+  });
+
+  it('omits them after the registration read FAILED, too — a failure is not "no values"', async () => {
+    mockReads((url) => {
+      if (url.includes('/registration')) {
+        return Promise.resolve({ ok: false, status: 500, text: () => Promise.resolve('boom') } as Response);
+      }
+      if (url.includes('/catalog')) return okJson({ catalog: [] });
+      return okJson({ submissions: [] });
+    });
+    render(<EstarFilingPanel />);
+    await waitFor(() => expect(screen.getAllByText('Mark held').length).toBe(4));
+    fireEvent.click(screen.getAllByText('Mark held')[1]);
+    await waitFor(() => expect(sentPut()).not.toBeNull());
+    const body = sentPut() as Record<string, unknown>;
+    for (const key of TEXT_KEYS) expect(Object.hasOwn(body, key)).toBe(false);
+  });
+
+  it('includes them once the registration HAS loaded, at their stored values', async () => {
+    mockReads((url) => {
+      if (url.includes('/registration')) {
+        return okJson({
+          registered: true,
+          registration: REGISTRATION,
+          clientRegistration: { clientId: 'o1', satisfied: ['fda_esg_account'] },
+        });
+      }
+      if (url.includes('/catalog')) return okJson({ catalog: [] });
+      return okJson({ submissions: [] });
+    });
+    render(<EstarFilingPanel />);
+    await waitFor(() =>
+      expect((screen.getByLabelText('Correspondent company name') as HTMLInputElement).value).toBe(
+        'Acme Regulatory Ltd',
+      ),
+    );
+    fireEvent.click(screen.getAllByText('Mark held')[0]);
+    await waitFor(() => expect(sentPut()).not.toBeNull());
+    const body = sentPut() as Record<string, unknown>;
+    for (const key of TEXT_KEYS) expect(Object.hasOwn(body, key)).toBe(true);
+    expect(body).toMatchObject({
+      correspondentCompanyName: 'Acme Regulatory Ltd',
+      correspondentContactEmail: 'ra@acme.example',
+      correspondentTelephone: '+1 555 0100',
+      declarationCompanyName: 'Declaring Entity GmbH',
+      declarationCompanyAddress: '1 Main St, Springfield',
+    });
+  });
+});
+
+/**
+ * A prerequisite toggle writes and then RE-READS the registration, and every
+ * read hands the correspondent block a new row object. Re-seeding the form from
+ * it threw away whatever the user had typed and not yet saved — with no
+ * message, and on fields the official eSTAR files. An unsaved edit now stands
+ * until its own Save replaces it; a form nobody has typed into still follows
+ * the row.
+ */
+describe('EstarFilingPanel — an unsaved correspondent edit survives a toggle', () => {
+  /** The registration read answers with the stored row; once the toggle's PUT
+   *  has gone out it answers with the toggled prerequisite AND a correspondent
+   *  company name changed elsewhere, so a test can wait for the re-read to LAND
+   *  rather than merely to be issued. */
+  function mockRereadAfterToggle() {
+    let toggled = false;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: string | URL, init?: { method?: string }) => {
+        const url = String(input);
+        if (init?.method === 'PUT') {
+          toggled = true;
+          return okJson({});
+        }
+        if (url.includes('/registration')) {
+          return okJson({
+            registered: true,
+            registration: {
+              ...REGISTRATION,
+              correspondentCompanyName: toggled ? 'Acme Regulatory GmbH' : REGISTRATION.correspondentCompanyName,
+            },
+            clientRegistration: {
+              clientId: 'o1',
+              satisfied: toggled ? ['fda_esg_account', 'cdrh_portal_account'] : ['fda_esg_account'],
+            },
+          });
+        }
+        if (url.includes('/catalog')) return okJson({ catalog: [] });
+        return okJson({ submissions: [] });
+      }),
+    );
+  }
+
+  const field = (label: string) => screen.getByLabelText(label) as HTMLInputElement;
+
+  it('keeps a typed Declaration of Conformity company name when a prerequisite is toggled', async () => {
+    mockRereadAfterToggle();
+    render(<EstarFilingPanel />);
+    await waitFor(() => expect(field('Declaration of Conformity company name').value).toBe('Declaring Entity GmbH'));
+    fireEvent.change(field('Declaration of Conformity company name'), {
+      target: { value: 'Second Entity GmbH' },
+    });
+    fireEvent.click(screen.getAllByText('Mark held')[0]);
+    /* The re-read has LANDED once the panel counts the toggled prerequisite. */
+    await waitFor(() => expect(screen.getByText(/2\/4 FDA prerequisites held/)).toBeTruthy());
+    expect(field('Declaration of Conformity company name').value).toBe('Second Entity GmbH');
+    /* And the way to persist it is still open. */
+    expect((screen.getByText('Save') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('still follows the row when nobody has typed into the form', async () => {
+    mockRereadAfterToggle();
+    render(<EstarFilingPanel />);
+    await waitFor(() => expect(field('Correspondent company name').value).toBe('Acme Regulatory Ltd'));
+    fireEvent.click(screen.getAllByText('Mark held')[0]);
+    await waitFor(() => expect(screen.getByText(/2\/4 FDA prerequisites held/)).toBeTruthy());
+    /* Nothing was being edited, so the re-read's value shows. */
+    await waitFor(() => expect(field('Correspondent company name').value).toBe('Acme Regulatory GmbH'));
+    expect((screen.getByText('Save') as HTMLButtonElement).disabled).toBe(true);
+  });
+});

@@ -41,6 +41,11 @@ function fullInputs(): EstarAdministrativeInputs {
       correspondentCompanyName: 'Regulatory Partners LLC',
       correspondentContactEmail: 'corr@partners.example',
       correspondentTelephone: '+1 555 0199',
+      // The Declaration of Conformity's name and address are ONE entity's, so a
+      // fully populated set holds both on this row — the address alone resolves
+      // to nothing (see the DoC-pair cases in
+      // ./estar-administrative-data.governed-homes.test.ts).
+      declarationCompanyName: 'Declaring Entity GmbH',
       declarationCompanyAddress: '1 Device Way, Boston, MA 02110',
     },
     workspace: { name: 'Acme Devices', contactEmail: 'ra@acme.example', contactPhone: '+1 555 0100' },
@@ -66,7 +71,7 @@ const FULL_PROJECTION: Record<string, [string, string]> = {
   correspondentSummaryEmail: ['corr@partners.example', 'estar_registrations.correspondent_contact_email'],
   predicateSubmissionNumber: ['K203456', 'regulatory_programs.predicate_devices[0].kNumber'],
   predicateDeviceTradeName: ['Predicate One', 'regulatory_programs.predicate_devices[0].name'],
-  declarationCompanyName: ['Acme Devices', 'client_workspaces.name'],
+  declarationCompanyName: ['Declaring Entity GmbH', 'estar_registrations.declaration_company_name'],
   declarationCompanyAddress: ['1 Device Way, Boston, MA 02110', 'estar_registrations.declaration_company_address'],
   declarationDeviceTradeName: ['AcuSense CGM System', 'regulatory_programs.product_name'],
   indicationsForUseCitation: ['Attachment 4, page 1', 'regulatory_programs.indications_for_use_citation'],

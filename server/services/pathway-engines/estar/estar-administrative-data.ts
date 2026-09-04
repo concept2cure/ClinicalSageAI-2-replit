@@ -24,7 +24,12 @@
  *     organization name, behind it as fallbacks — the value it resolved to
  *     before the column existed — so an organization that has not filled it in
  *     is unchanged, and one that has gets a declaration whose name and address
- *     name the same entity.
+ *     name the same entity. The PAIR is resolved as a UNIT: the registration's
+ *     address is used only when the NAME came off that same row. When the name
+ *     falls back to the workspace or the organization the address is BLANK —
+ *     the platform holds no address for either of those entities, and a blank
+ *     field (its `declaredSource` still naming the registration column) is a
+ *     gap the operator closes, where a mismatched one is filed as fact.
  *   - The projection never invents: an empty / whitespace / null column is an
  *     ABSENT key, never ''. No session user, no portal e-mail, no address.
  *   - Governed wins. A request value fills only a key the governed records do
@@ -156,9 +161,19 @@ export const ESTAR_ADMINISTRATIVE_SOURCES: Record<string, GovernedSource | null>
       'declaration_company_address on the SAME registration row — client_workspaces holds no ' +
       'address, so reading the name from there put one entity’s name beside another’s address ' +
       'for an org that files for several clients; the workspace then organization name stay as ' +
-      'fallbacks so a registration without the name resolves exactly what it did before',
+      'fallbacks so a registration that carries neither half resolves exactly what it did ' +
+      'before, but they are SUPPRESSED once the registration holds an address, so the pair can ' +
+      'never name two entities',
   },
-  declarationCompanyAddress: { store: 'estar_registrations', column: 'declaration_company_address' },
+  declarationCompanyAddress: {
+    store: 'estar_registrations',
+    column: 'declaration_company_address',
+    note:
+      'the other half of the Declaration of Conformity’s ONE legal entity. Saving it suppresses ' +
+      'the name’s workspace/organization fallbacks, so the name reports blank until the operator ' +
+      'sets it here too — the address they entered is never discarded, and the two halves can ' +
+      'never name two entities',
+  },
   declarationDeviceTradeName: {
     store: 'regulatory_programs',
     column: 'product_name',
@@ -299,6 +314,35 @@ export function projectEstarAdministrativeData(
       break;
     }
   }
+
+  /*
+   * The Declaration of Conformity is ONE legal entity's signed statement, so its
+   * name and address resolve AS A UNIT: the two halves may never come from
+   * different entities. `client_workspaces` and `organizations` hold no address,
+   * so the pair can only ever be whole on the registration row.
+   *
+   * When the operator has saved a declaration ADDRESS but not yet the NAME, the
+   * name's fallback chain is SUPPRESSED and the name reports blank — it does not
+   * fall back to the workspace or the organization. The address they entered is
+   * kept, and the blank name still carries its declaredSource, so the surface
+   * asks them for exactly the missing half.
+   *
+   * The opposite rule — keeping the fallback name and dropping the address —
+   * was considered and rejected: it discards a value the operator deliberately
+   * typed into a field labelled for this purpose, and the preview would then
+   * tell them to set an address that is already stored. Withholding a value
+   * nobody supplied is a gap; discarding one they did supply, and then denying
+   * it exists, is a lie about their own data.
+   */
+  const declarationAddress = values.declarationCompanyAddress;
+  if (
+    declarationAddress !== undefined &&
+    provenance.declarationCompanyName !== 'estar_registrations.declaration_company_name'
+  ) {
+    delete values.declarationCompanyName;
+    delete provenance.declarationCompanyName;
+  }
+
   return { values, provenance };
 }
 
@@ -607,20 +651,46 @@ export async function loadEstarAdministrativeInputs(
     .where(eq(organizations.id, organizationId))
     .limit(1);
 
-  // The org's single eSTAR registration row (unique organization_id) — an
-  // org-level fact, read regardless of which anchor the ident named. No row ⇒
-  // the correspondent / declaration keys are blank and say so.
-  const [registration] = await db
-    .select({
-      correspondentCompanyName: estarRegistrations.correspondentCompanyName,
-      correspondentContactEmail: estarRegistrations.correspondentContactEmail,
-      correspondentTelephone: estarRegistrations.correspondentTelephone,
-      declarationCompanyName: estarRegistrations.declarationCompanyName,
-      declarationCompanyAddress: estarRegistrations.declarationCompanyAddress,
-    })
-    .from(estarRegistrations)
-    .where(eq(estarRegistrations.organizationId, organizationId))
-    .limit(1);
+  /*
+   * The org's single eSTAR registration row (unique organization_id) — an
+   * org-level fact, read regardless of which anchor the ident named. No row ⇒
+   * the correspondent / declaration keys are blank and say so.
+   *
+   * A database that does not yet HAVE these columns is treated the same way,
+   * for the same reason the anchor read treats a missing
+   * `projects.regulatory_program_id` as "no anchor" (42703 / 42P01 above). The
+   * columns arrived with 20260903/20260904; between a deploy that ships this
+   * code and the migration that adds them — or after a rollback — an
+   * unconditional select throws, and this loader sits under BOTH
+   * GET /official-fields and POST /official, so the client could neither
+   * preview nor produce the official eSTAR at all, for a 500 whose body says
+   * only that the problem has been logged.
+   *
+   * Reporting the facts blank is not a guess and loses nothing: a column that
+   * does not exist holds no data, so blank is exactly what the org has. The
+   * surface still names each field's governed home, so the operator is told
+   * where to set it rather than being blocked. Any OTHER database error still
+   * propagates and 500s — an unreadable registration is not an empty one.
+   */
+  const registration = await (async () => {
+    try {
+      const [row] = await db
+        .select({
+          correspondentCompanyName: estarRegistrations.correspondentCompanyName,
+          correspondentContactEmail: estarRegistrations.correspondentContactEmail,
+          correspondentTelephone: estarRegistrations.correspondentTelephone,
+          declarationCompanyName: estarRegistrations.declarationCompanyName,
+          declarationCompanyAddress: estarRegistrations.declarationCompanyAddress,
+        })
+        .from(estarRegistrations)
+        .where(eq(estarRegistrations.organizationId, organizationId))
+        .limit(1);
+      return row ?? null;
+    } catch (err) {
+      if (isMissingAnchorColumn(err)) return null;
+      throw err;
+    }
+  })();
 
   let workspace: EstarAdministrativeInputs['workspace'] = null;
   if (anchor?.clientWorkspaceId) {
@@ -641,7 +711,7 @@ export async function loadEstarAdministrativeInputs(
   return {
     program,
     organization: organization ?? null,
-    registration: registration ?? null,
+    registration,
     workspace,
     fda510kProject: fda
       ? { deviceName: fda.deviceName, regulationNumber: fda.regulationNumber, productCode: fda.productCode }

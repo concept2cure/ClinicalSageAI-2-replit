@@ -438,3 +438,30 @@ describe('DeviceProfilePanel — recognized standards', () => {
     );
   });
 });
+
+/**
+ * The route caps the five eSTAR device facts (commonName / classificationName /
+ * associatedProductCodes at 500, indicationsForUseCitation at 1000,
+ * regulationNumber at 50) and 400s the WHOLE patch when one value is over. The
+ * patch carries every changed field, so a single over-long paste silently threw
+ * away every other edit the user had made in this form — with only "Not saved"
+ * to explain it. The inputs carry the caps, so the value cannot be typed or
+ * pasted past them in the first place, exactly as the correspondent block does.
+ */
+describe('DeviceProfilePanel — the eSTAR device inputs carry the route’s caps', () => {
+  const CAPS: Array<[string, number]> = [
+    ['Regulation number (21 CFR)', 50],
+    ['Common name', 500],
+    ['Classification name', 500],
+    ['Associated product codes', 500],
+    ['Indications for Use citation (attachment and page)', 1000],
+  ];
+
+  it.each(CAPS)('%s is capped at %i characters', async (label, max) => {
+    mockFetch(() => okJson({ profile: PROFILE }));
+    render(<DeviceProfilePanel ident={PROFILE.id} />);
+    await waitFor(() => expect(screen.getByText(/code MDS/)).toBeTruthy());
+    fireEvent.click(screen.getByText('Edit'));
+    expect((screen.getByLabelText(label) as HTMLInputElement).maxLength).toBe(max);
+  });
+});

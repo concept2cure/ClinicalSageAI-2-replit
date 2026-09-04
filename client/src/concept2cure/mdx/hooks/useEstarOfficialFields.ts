@@ -25,6 +25,7 @@
  * useFetchJson's `data` into the surface shape.
  */
 
+import { useEffect } from 'react';
 import { useFetchJson } from './useFetchJson';
 
 /**
@@ -176,6 +177,47 @@ export function describeOfficialFieldsError(message: string | null | undefined):
   return { error: FAILED_WORDS, errorKind: 'failed' };
 }
 
+/**
+ * The "a governed source changed" channel.
+ *
+ * The preview names the durable home of every blank field ("Not set — Device
+ * profile · common name"). A user who goes and sets it in the sibling panel
+ * came back to the same line, because this read had no reason to run again —
+ * which reads as the save having failed on the one field the panel just told
+ * them to fill.
+ *
+ * It travels as a window event, the shell's established hand-off idiom
+ * (v2/editorTarget.ts, v2/shellProject.ts): the panels are siblings under one
+ * surface with no shared owner, and a signal is not state, so there is nothing
+ * here for a store or a provider to hold. BOTH ENDS LIVE IN THIS MODULE — the
+ * notify a writer calls and the subscription this hook makes — so neither half
+ * can be deleted without the other going dark in the same diff (the rule
+ * tests/ci/no-ghost-globals.contract.test.ts exists to enforce).
+ *
+ * It carries nothing. A refetch of the read the surface already owns is the
+ * whole payload; anything more would be a second copy of the server's answer.
+ */
+export const ESTAR_FIELDS_CHANGED_EVENT = 'c2c:estar-official-fields-changed';
+
+declare global {
+  interface WindowEventMap {
+    'c2c:estar-official-fields-changed': Event;
+  }
+}
+
+/**
+ * Announce that a governed record the official eSTAR reads from has been
+ * written — the device profile's eSTAR facts, or the eSTAR registration's
+ * correspondent and Declaration of Conformity block. Every mounted preview
+ * re-reads. Call it only after a save the server ACCEPTED: a rejected write
+ * changed nothing, and re-reading would restate the old values as though they
+ * were new. No-ops without a window (SSR / test teardown).
+ */
+export function notifyOfficialEstarFieldsChanged(): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(ESTAR_FIELDS_CHANGED_EVENT));
+}
+
 export interface UseEstarOfficialFieldsResult extends OfficialFieldsError {
   fields: OfficialFieldsView | null;
   loading: boolean;
@@ -199,6 +241,16 @@ export function useEstarOfficialFields(
 ): UseEstarOfficialFieldsResult {
   const url = officialFieldsUrl(ident, type, variant);
   const { data, loading, error, refresh } = useFetchJson<unknown>(url);
+
+  /* Re-read when a sibling panel saves a record this preview reads from. The
+     subscription half of the channel declared above. */
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onChanged = () => refresh();
+    window.addEventListener(ESTAR_FIELDS_CHANGED_EVENT, onChanged);
+    return () => window.removeEventListener(ESTAR_FIELDS_CHANGED_EVENT, onChanged);
+  }, [refresh]);
+
   if (data !== null && !isOfficialFieldsView(data)) {
     /* A 200 that is not the documented shape is not a field list. Saying so
        beats rendering an empty table over a body nobody has read. */

@@ -1358,7 +1358,7 @@ router.get('/registration', authMiddleware, async (req, res) => {
   const organizationId = resolveOrgId(req);
   if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
   try {
-    const row = await getEstarRegistration({ organizationId });
+    const row = await getEstarRegistration(requestDb(req), { organizationId });
     return res.status(200).json({
       registered: !!row,
       registration: row,
@@ -1391,7 +1391,10 @@ router.put('/registration', authMiddleware, requireEditorAccess, async (req, res
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
-    const row = await upsertEstarRegistration(validation.data as EstarRegistrationWrite, { organizationId, userId });
+    const row = await upsertEstarRegistration(requestDb(req), validation.data as EstarRegistrationWrite, {
+      organizationId,
+      userId,
+    });
     return res.status(200).json({
       registered: true,
       registration: row,
@@ -1435,7 +1438,7 @@ router.post('/registration/assess', authMiddleware, async (req, res) => {
       // Source of truth: the org's persisted registration.
       const organizationId = resolveOrgId(req);
       if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
-      registration = await resolveClientRegistration({ organizationId });
+      registration = await resolveClientRegistration(requestDb(req), { organizationId });
     }
     const report = assessClientEstarEligibility(registration);
     return res.status(200).json(report);
@@ -1525,7 +1528,7 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
     // Registration: an explicit what-if payload if supplied, else the org's
     // persisted registration record (the "clients must register" source of truth).
     const registration =
-      validation.data.registration ?? (await resolveClientRegistration({ organizationId: organizationId! }));
+      validation.data.registration ?? (await resolveClientRegistration(requestDb(req), { organizationId: organizationId! }));
 
     // Content: explicit body leaves, plus the org's REAL authored device content
     // when requested — so readiness reflects what's actually written, not a

@@ -11,7 +11,7 @@ import { useProgramExtras } from '../hooks/useProgramExtras';
 import { useEstarExport, exportStatusLine } from '../hooks/useEstarExport';
 import { PathwayPanes } from './pathway/PathwayPanes';
 import { EstarFilingPanel } from './EstarFilingPanel';
-import { OfficialEstarPanel, officialEstarVariantFor } from './OfficialEstarPanel';
+import { OfficialEstarPanel, officialEstarTypeFor, officialEstarVariantFor } from './OfficialEstarPanel';
 import type { EditorSectionRef } from '../../v2/editorTarget';
 
 export interface PmaSurfaceProps {
@@ -212,13 +212,15 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
         ))}
       </div>
 
-      {/* The official FDA eSTAR PDF for a PMA — readiness gate, the governed
-          field preview and the one Generate control, produced on the same
-          vendored nIVD / IVD template FDA ships for 510(k), De Novo and PMA.
-          The family follows the program's product type; the pathway is PMA by
-          construction here. The draft package button in the header stays: it
-          is the authored-content ZIP, not the official eSTAR. */}
-      <OfficialEstarPanel program={program} type="pma" variant={officialEstarVariantFor(program)} />
+      {/* The official FDA eSTAR PDF — readiness gate, the governed field
+          preview and the one Generate control, produced on the same vendored
+          nIVD / IVD template FDA ships for 510(k), De Novo and PMA. Both the
+          family and the pathway follow the PROGRAM, never this surface: a
+          literal type="pma" here mapped a De Novo or 510(k) program opened on
+          the PMA surface onto the PMA field map. The draft package button in
+          the header stays: it is the authored-content ZIP, not the official
+          eSTAR. */}
+      <OfficialEstarPanel program={program} type={officialEstarTypeFor(program)} variant={officialEstarVariantFor(program)} />
 
       {/* eSTAR filing journey — live registration prerequisites + tracked
           submissions (register → produce → track), org-scoped from the session. */}

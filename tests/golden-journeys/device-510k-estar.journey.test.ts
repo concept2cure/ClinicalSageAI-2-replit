@@ -56,7 +56,10 @@
  *      (estar_registrations) are previewed with their store.column source,
  *      written into the REAL eSTAR at their SOM paths with NO request data,
  *      and persisted in fieldSources — while a fact still unset is reported
- *      blank with its declaredSource naming where it is set.
+ *      blank with its declaredSource naming where it is set. Both governed
+ *      writes are editor+ (a viewer in the same org is refused and the row is
+ *      untouched) and audited: DEVICE_PROFILE_UPDATED names the real actor, the
+ *      program and the fields changed.
  *   9. Tenant isolation: another org cannot export, or preview, this org's program.
  *
  * Output: tests/golden-journeys/__reports__/device-510k-estar.{manifest.json,report.md}
@@ -928,6 +931,18 @@ describe('golden journey — device 510(k) eSTAR path', () => {
     // request data at all this time. deviceCommonName is deliberately left
     // unset so the "still blank, home named" posture is asserted on a real row.
     const governedHomes = await R.step('device-profile-and-registration-facts-reach-the-official-estar', async () => {
+      // The device profile is a governed FDA-submission write: editor+ only.
+      // A viewer in the SAME org is refused and the row is untouched.
+      const refused = await asPrincipal(ORG, USER, 'viewer')(
+        request(app).put(`/api/510k/device/profile?ident=${programId}`),
+      ).send({ classificationName: 'Set by a read-only viewer' });
+      expect(refused.status, JSON.stringify(refused.body)).toBe(403);
+      const untouched = await jdb.pool.query(
+        `SELECT classification_name FROM regulatory_programs WHERE id = $1`,
+        [programId],
+      );
+      expect((untouched.rows[0] as { classification_name: string | null }).classification_name).toBeNull();
+
       const profile = await asPrincipal(ORG, USER)(
         request(app).put(`/api/510k/device/profile?ident=${programId}`),
       ).send({ classificationName: '  Continuous glucose monitor system ', regulationNumber: '21 CFR 862.1355' });
@@ -936,13 +951,31 @@ describe('golden journey — device 510(k) eSTAR path', () => {
       expect(profile.body.profile.classificationName).toBe('Continuous glucose monitor system');
       expect(profile.body.profile.regulationNumber).toBe('21 CFR 862.1355');
       expect(profile.body.profile.commonName).toBeNull();
+      // ...and it is audited: WHO set the device facts that reach the filed
+      // form, and WHICH ones — one row, no row for the refused viewer write.
+      const profileAudit = await jdb.pool.query(
+        `SELECT user_id, record_id, new_values FROM audit_logs WHERE action = 'DEVICE_PROFILE_UPDATED'`,
+      );
+      expect(profileAudit.rows).toHaveLength(1);
+      const auditRow = profileAudit.rows[0] as { user_id: number; record_id: string; new_values: unknown };
+      expect(Number(auditRow.user_id)).toBe(USER);
+      expect(auditRow.record_id).toBe(programId);
+      const auditDetails =
+        typeof auditRow.new_values === 'string' ? JSON.parse(auditRow.new_values) : auditRow.new_values;
+      expect((auditDetails as { fields: string[] }).fields).toEqual(['classificationName', 'regulationNumber']);
 
+      // Both halves of the Declaration of Conformity are set on the one
+      // registration row: the address is projected only when the NAME came off
+      // that same row (an address alone would otherwise land beside the client
+      // workspace's name — two legal entities on one signed declaration).
       const reg = await asPrincipal(ORG, USER)(request(app).put('/api/510k/estar/registration')).send({
         correspondentCompanyName: 'Journey Regulatory Partners',
+        declarationCompanyName: 'Journey Declaring Entity, Inc.',
         declarationCompanyAddress: '1 Journey Way, Boston, MA 02110',
       });
       expect(reg.status, JSON.stringify(reg.body)).toBe(200);
       expect(reg.body.registration.correspondentCompanyName).toBe('Journey Regulatory Partners');
+      expect(reg.body.registration.declarationCompanyName).toBe('Journey Declaring Entity, Inc.');
       expect(reg.body.registration.declarationCompanyAddress).toBe('1 Journey Way, Boston, MA 02110');
       // The registration write is audited like every other change to the row.
       const regAudit = await jdb.pool.query(
@@ -971,6 +1004,7 @@ describe('golden journey — device 510(k) eSTAR path', () => {
         source: 'estar_registrations.correspondent_company_name',
         declaredSource: 'estar_registrations.correspondent_company_name',
       });
+      expect(previewByKey.declarationCompanyName).toMatchObject({ value: 'Journey Declaring Entity, Inc.', source: 'estar_registrations.declaration_company_name' });
       expect(previewByKey.declarationCompanyAddress).toMatchObject({ value: '1 Journey Way, Boston, MA 02110', source: 'estar_registrations.declaration_company_address' });
       // Still unset: blank, and its home is named.
       expect(previewByKey.deviceCommonName).toMatchObject({ value: null, source: null, declaredSource: 'regulatory_programs.common_name' });
@@ -1002,12 +1036,14 @@ describe('golden journey — device 510(k) eSTAR path', () => {
         map.deviceClassificationName.xfaSomPath!,
         map.regulationNumber.xfaSomPath!,
         map.correspondentCompanyName.xfaSomPath!,
+        map.declarationCompanyName.xfaSomPath!,
         map.declarationCompanyAddress.xfaSomPath!,
         map.deviceCommonName.xfaSomPath!,
       ]);
       expect(back[map.deviceClassificationName.xfaSomPath!]).toBe('Continuous glucose monitor system');
       expect(back[map.regulationNumber.xfaSomPath!]).toBe('21 CFR 862.1355');
       expect(back[map.correspondentCompanyName.xfaSomPath!]).toBe('Journey Regulatory Partners');
+      expect(back[map.declarationCompanyName.xfaSomPath!]).toBe('Journey Declaring Entity, Inc.');
       expect(back[map.declarationCompanyAddress.xfaSomPath!]).toBe('1 Journey Way, Boston, MA 02110');
       expect(back[map.deviceCommonName.xfaSomPath!] ?? '').toBe('');
 

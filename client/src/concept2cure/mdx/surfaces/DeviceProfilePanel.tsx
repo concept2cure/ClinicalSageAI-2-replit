@@ -41,6 +41,7 @@ import {
   type RegulatoryPath,
   type RecognizedStandardsResult,
 } from '../hooks/useDeviceProfile';
+import { notifyOfficialEstarFieldsChanged } from '../hooks/useEstarOfficialFields';
 
 const DEVICE_CLASSES: DeviceClass[] = ['I', 'II', 'III'];
 const REGULATORY_PATHS: Array<{ value: RegulatoryPath; label: string }> = [
@@ -53,15 +54,23 @@ function pathLabel(path: string | null): string | null {
   return REGULATORY_PATHS.find((p) => p.value === path)?.label ?? path;
 }
 
-/** The five eSTAR device facts as the intake form labels them. */
-const ESTAR_DEVICE_FIELD_LABELS: Record<EstarDeviceField, { label: string; placeholder: string }> = {
-  commonName: { label: 'Common name', placeholder: 'e.g. Continuous glucose monitor' },
-  classificationName: { label: 'Classification name', placeholder: 'The 21 CFR classification name' },
-  regulationNumber: { label: 'Regulation number (21 CFR)', placeholder: 'e.g. 862.1355' },
-  associatedProductCodes: { label: 'Associated product codes', placeholder: 'Secondary codes, separated by ;' },
+/** The five eSTAR device facts as the intake form labels them. `max` mirrors
+ *  the route's write limits (server/routes/510k-device-routes.ts), the same
+ *  contract ESTAR_CORRESPONDENT_FIELDS carries for the correspondent block.
+ *  Without it one over-long value 400s the WHOLE patch, so every other edit
+ *  the user made in this form is discarded with it. */
+const ESTAR_DEVICE_FIELD_LABELS: Record<
+  EstarDeviceField,
+  { label: string; placeholder: string; max: number }
+> = {
+  commonName: { label: 'Common name', placeholder: 'e.g. Continuous glucose monitor', max: 500 },
+  classificationName: { label: 'Classification name', placeholder: 'The 21 CFR classification name', max: 500 },
+  regulationNumber: { label: 'Regulation number (21 CFR)', placeholder: 'e.g. 862.1355', max: 50 },
+  associatedProductCodes: { label: 'Associated product codes', placeholder: 'Secondary codes, separated by ;', max: 500 },
   indicationsForUseCitation: {
     label: 'Indications for Use citation (attachment and page)',
     placeholder: 'e.g. Attachment 4, page 1',
+    max: 1000,
   },
 };
 
@@ -219,6 +228,7 @@ function EstarDeviceFields({
       label={ESTAR_DEVICE_FIELD_LABELS[name].label}
       placeholder={ESTAR_DEVICE_FIELD_LABELS[name].placeholder}
       value={form[name]}
+      maxLength={ESTAR_DEVICE_FIELD_LABELS[name].max}
       onChange={(v) => onChange(name, v)}
     />
   );
@@ -292,6 +302,10 @@ export function DeviceProfilePanel({ ident }: DeviceProfilePanelProps) {
     const saved = await save(patch);
     setSaving(false);
     setStatus(saved ? 'Saved' : 'Not saved — the server rejected the update');
+    /* The official eSTAR preview reads these five facts and names this form as
+       their home ("Not set — Device profile · common name"). Only an ACCEPTED
+       save changed anything, so only an accepted save asks it to re-read. */
+    if (saved) notifyOfficialEstarFieldsChanged();
   }
 
   async function onLookup() {
