@@ -323,7 +323,13 @@ was not modified: no new key needed a governed source.
 | Falsely declared `productCodes` durable (`writtenBy: []`) | 1 failed / 8 passed. `- "productCodes": [] / + "productCodes": [ …` |
 | Disabled the script/exData blanking pass | 6 failed / 3 passed, including `expected [ 'AdministrativeInformation', …(11) ] to deeply equal [ 'PredicateReference' ]` — an unblanked scan finds **no** revealing script for any of the twelve containers, the exact forged-tag error the blanking exists to prevent. |
 
-Both files were restored byte-identical afterwards (`md5sum -c`: OK, OK).
+Both files were restored byte-identical after each break (`md5sum -c`: OK). Breaks 2 and 3
+were run before a lint-driven refactor of the test file that split one `describe` in two
+and extracted a helper — no assertion changed; break 1 was re-run after it and reproduced
+identically (3 failed / 6 passed, same message). After restoring: 15 test files / 218
+tests passed across `server/services/pathway-engines/estar` and `server/services/forms`;
+`npx eslint` on both changed files: 0 errors, 0 warnings; `tsc --noEmit` reports no error
+in either file.
 
 ---
 
