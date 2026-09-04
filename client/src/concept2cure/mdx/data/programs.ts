@@ -34,6 +34,13 @@ export interface Program {
    * Absent only on the kit's sample rows.
    */
   productType?: string;
+  /**
+   * The server's regulatory_path ('510k' | 'de_novo' | 'pma' | …). The kit
+   * pathway folds De Novo into k510 because both share the 510(k) surface, so
+   * the official eSTAR needs the raw path to name and produce the right
+   * pathway on that surface. Absent on the kit's sample rows.
+   */
+  regulatoryPath?: string;
 }
 
 export const MDX_PROGRAMS: Program[] = [

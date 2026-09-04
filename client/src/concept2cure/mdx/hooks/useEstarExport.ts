@@ -23,6 +23,7 @@
 import { useCallback, useState } from 'react';
 import { serverMessage } from '@/lib/queryClient';
 import { buildAuthHeaders, useFetchJson } from './useFetchJson';
+import type { OfficialEstarType, OfficialEstarVariant } from './useEstarOfficialFields';
 import { downloadBase64 } from '../../v2/download';
 
 interface DownloadRef {
@@ -70,6 +71,10 @@ export interface EstarFieldReport {
 }
 
 export interface OfficialEstarOptions {
+  /** The marketing pathway the eSTAR is produced for — selects the field map
+   *  server-side. Defaults to '510k' so callers that predate the pathway
+   *  option keep their behaviour. */
+  type?: OfficialEstarType;
   /** Fill the administrative fields from the program's governed records. */
   useProgramData?: boolean;
   /** Values typed for this export only; empty/whitespace entries are dropped
@@ -231,7 +236,7 @@ export interface UseEstarExportResult {
   exportDraftPackage: (program: ProgramRef) => Promise<EstarExportOutcome>;
   exportOfficialEstar: (
     program: ProgramRef,
-    variant?: 'device' | 'ivd',
+    variant?: OfficialEstarVariant,
     opts?: OfficialEstarOptions,
   ) => Promise<EstarExportOutcome>;
   /** Forget the last outcome. A surface calls this when the program it shows
@@ -343,14 +348,14 @@ export function useEstarExport(): UseEstarExportResult {
   );
 
   const exportOfficialEstar = useCallback(
-    (program: ProgramRef, variant: 'device' | 'ivd' = 'device', opts: OfficialEstarOptions = {}) =>
+    (program: ProgramRef, variant: OfficialEstarVariant = 'device', opts: OfficialEstarOptions = {}) =>
       run('/api/510k/estar/official', {
         meta: {
           id: program.code || program.id,
           ident: program.id,
           title: program.title || undefined,
         },
-        type: '510k',
+        type: opts.type ?? '510k',
         variant,
         /* Governed records win server-side; typed values fill only the gaps.
            Without useProgramData the route fills `data` verbatim, as before. */

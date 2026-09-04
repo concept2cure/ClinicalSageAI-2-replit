@@ -175,7 +175,9 @@ describe('POST /api/510k/estar/scaffold-field-map', () => {
   });
 
   it('fails closed (422) when no template is available to scaffold against', async () => {
-    const req = makeReq({ type: 'de_novo', variant: 'ivd' });
+    // A PreSTAR descriptor: that template is not vendored (version 'unset').
+    // De Novo / PMA resolve to the vendored nIVD / IVD PDFs since Phase 3.
+    const req = makeReq({ type: 'q_sub', variant: 'ivd' });
     const res = createMockResponse() as any;
 
     await getHandler('/scaffold-field-map')(req, res);
@@ -401,10 +403,12 @@ describe('POST /api/510k/estar/official with useProgramData:true', () => {
       filledCount: 2,
       blankCount: 1,
       blankKeys: ['regulationNumber'],
+      // declaredSource: the key's governed home, named whether or not it was
+      // filled and whatever the value came from (the request here).
       fields: [
-        { key: 'deviceTradeName', caption: 'Device Trade Name', filled: true, source: 'regulatory_programs.product_name' },
-        { key: 'deviceCommonName', caption: 'Common Name', filled: true, source: 'request' },
-        { key: 'regulationNumber', caption: 'Regulation Number', filled: false, source: null },
+        { key: 'deviceTradeName', caption: 'Device Trade Name', filled: true, source: 'regulatory_programs.product_name', declaredSource: 'regulatory_programs.product_name' },
+        { key: 'deviceCommonName', caption: 'Common Name', filled: true, source: 'request', declaredSource: 'regulatory_programs.common_name' },
+        { key: 'regulationNumber', caption: 'Regulation Number', filled: false, source: null, declaredSource: 'regulatory_programs.regulation_number' },
       ],
       ignoredRequestKeys: ['deviceTradeName', 'bogus'],
     });
@@ -465,7 +469,7 @@ describe('GET /api/510k/estar/official-fields', () => {
     mockLoadInputs.mockResolvedValue(GOVERNED_RECORDS);
   });
 
-  it('200: one row per mapped field with value + source; unsourced keys are null/null; no request data', async () => {
+  it('200: one row per mapped field with value + source; unsourced keys are null/null but name their declared home; no request data', async () => {
     const req = makeQueryReq({ ident: '33', type: '510k', variant: 'device' });
     req.userRole = 'viewer'; // read-only: no editor role needed
     const res = createMockResponse() as any;
@@ -479,14 +483,35 @@ describe('GET /api/510k/estar/official-fields', () => {
       variant: 'device',
       mappedCount: 3,
       sourcedCount: 1,
+      // A blank row carries declaredSource — the governed store.column where
+      // the value is SET — so the surface can point there instead of
+      // offering a value the platform does not hold.
       fields: [
-        { key: 'deviceTradeName', caption: 'Device Trade Name', xfaSomPath: null, value: 'Governed Monitor', source: 'regulatory_programs.product_name' },
-        { key: 'deviceCommonName', caption: 'Common Name', xfaSomPath: null, value: null, source: null },
-        { key: 'regulationNumber', caption: 'Regulation Number', xfaSomPath: null, value: null, source: null },
+        { key: 'deviceTradeName', caption: 'Device Trade Name', xfaSomPath: null, value: 'Governed Monitor', source: 'regulatory_programs.product_name', declaredSource: 'regulatory_programs.product_name' },
+        { key: 'deviceCommonName', caption: 'Common Name', xfaSomPath: null, value: null, source: null, declaredSource: 'regulatory_programs.common_name' },
+        { key: 'regulationNumber', caption: 'Regulation Number', xfaSomPath: null, value: null, source: null, declaredSource: 'regulatory_programs.regulation_number' },
       ],
     });
     expect(mockLoadInputs.mock.calls[0][1]).toEqual({ organizationId: 2, programUuid: null, fda510kProjectId: 33 });
     expect(mockGovernedConsequence).not.toHaveBeenCalled();
+  });
+
+  it('200: the Phase 3 homes are sourced when the program and registration rows hold them', async () => {
+    mockLoadInputs.mockResolvedValue({
+      ...GOVERNED_RECORDS,
+      program: { ...GOVERNED_RECORDS.program, commonName: 'Continuous glucose monitor', regulationNumber: '21 CFR 862.1355' },
+      registration: { correspondentCompanyName: 'Corr Co' },
+    });
+    const req = makeQueryReq({ ident: '33', type: '510k', variant: 'device' });
+    const res = createMockResponse() as any;
+
+    await getGetHandler('/official-fields')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.sourcedCount).toBe(3);
+    expect(payload.fields[1]).toMatchObject({ key: 'deviceCommonName', value: 'Continuous glucose monitor', source: 'regulatory_programs.common_name' });
+    expect(payload.fields[2]).toMatchObject({ key: 'regulationNumber', value: '21 CFR 862.1355', source: 'regulatory_programs.regulation_number' });
   });
 
   it('404 when the ident resolves to nothing in this organization — and reads no governed data', async () => {
@@ -507,7 +532,9 @@ describe('GET /api/510k/estar/official-fields', () => {
   });
 
   it('422 ESTAR_FIELD_MAP_NOT_POPULATED when the descriptor has no verified map', async () => {
-    const req = makeQueryReq({ ident: '33', type: 'de_novo', variant: 'device' });
+    // A PreSTAR descriptor has no field map (its template is not vendored);
+    // the De Novo / PMA marketing maps are populated since Phase 3.
+    const req = makeQueryReq({ ident: '33', type: 'q_sub', variant: 'device' });
     const res = createMockResponse() as any;
 
     await getGetHandler('/official-fields')(req, res);
@@ -515,7 +542,7 @@ describe('GET /api/510k/estar/official-fields', () => {
     expect(res.status).toHaveBeenCalledWith(422);
     const payload = res.json.mock.calls[0][0];
     expect(payload.error).toBe('ESTAR_FIELD_MAP_NOT_POPULATED');
-    expect(payload.descriptorId).toBe('de_novo-device');
+    expect(payload.descriptorId).toBe('q_sub-prestar');
     expect(payload.blockers.join(' ')).toMatch(/field map .* not populated/i);
     expect(mockLoadInputs).not.toHaveBeenCalled();
   });

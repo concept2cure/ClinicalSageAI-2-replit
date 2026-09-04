@@ -11,14 +11,29 @@
  *
  * HONEST-BY-CONSTRUCTION:
  *   - `ESTAR_ADMINISTRATIVE_SOURCES` is the reviewable table of the ONLY places
- *     a value may come from. A key with `null` is user-supplied only. Every key
- *     of the 510(k) device field map must appear, so a new mapped key cannot
- *     ship without a declared source-or-none (a test pins this).
+ *     a value may come from. Every key of the 510(k) device field map must
+ *     appear, so a new mapped key cannot ship without a declared source (a
+ *     test pins this). Since WO-8 Phase 3 every mapped key HAS a governed home:
+ *     device-level facts on `regulatory_programs` (the device profile writes
+ *     them), org-level correspondent / Declaration of Conformity facts on the
+ *     org's `estar_registrations` row. A key with `null` would be user-supplied
+ *     only; a test asserts none remain for the 510(k) device and IVD maps.
+ *     The Declaration of Conformity is a signed statement by ONE legal entity,
+ *     so its company NAME and company ADDRESS are read from that one
+ *     registration row. The name keeps the applicant's workspace name, then the
+ *     organization name, behind it as fallbacks — the value it resolved to
+ *     before the column existed — so an organization that has not filled it in
+ *     is unchanged, and one that has gets a declaration whose name and address
+ *     name the same entity.
  *   - The projection never invents: an empty / whitespace / null column is an
  *     ABSENT key, never ''. No session user, no portal e-mail, no address.
  *   - Governed wins. A request value fills only a key the governed records do
  *     not hold; a colliding or unknown request key is dropped AND REPORTED, so
  *     the surface can say exactly what was and was not written.
+ *   - Every resolved field carries its `declaredSource` — the PRIMARY governed
+ *     store.column for the key — even when the value is blank, so a surface
+ *     can say "not set; set it in the device profile" instead of offering a
+ *     value it does not hold.
  *   - The loader is org-scoped on every query and reaches `client_workspaces`
  *     only through the program's PM-spine anchor (never a request header). A
  *     database without `projects.regulatory_program_id` (42703) answers "no
@@ -32,6 +47,7 @@
 import { and, asc, eq } from 'drizzle-orm';
 import { clientWorkspaces, fda510kProjects, organizations, projects } from '../../../../shared/schema';
 import { regulatoryPrograms, type PredicateDevice } from '../../../../shared/schema/programs';
+import { estarRegistrations } from '../../../../shared/schema/estar-registration';
 import type { RequestDb } from '../../../db/requestDb';
 import { isMissingAnchorColumn } from '../../c2c/program-project-anchor';
 import type { OfficialPdfFieldMap } from '../../forms/fill-official-pdf';
@@ -43,7 +59,8 @@ export type GovernedStore =
   | 'regulatory_programs'
   | 'organizations'
   | 'client_workspaces'
-  | 'fda_510k_projects';
+  | 'fda_510k_projects'
+  | 'estar_registrations';
 
 export interface GovernedSourceRef {
   store: GovernedStore;
@@ -52,14 +69,26 @@ export interface GovernedSourceRef {
 }
 
 export interface GovernedSource extends GovernedSourceRef {
-  /** Consulted only when the primary source holds no value. */
-  fallback?: GovernedSourceRef;
+  /**
+   * Consulted only while no earlier source holds a value. A list is read in
+   * order, so a key whose old home must survive the arrival of a new primary
+   * one (declarationCompanyName) can name the whole chain instead of dropping
+   * a link.
+   */
+  fallback?: GovernedSourceRef | GovernedSourceRef[];
   note?: string;
 }
 
+/** The fallbacks of a source, in the order they are consulted. */
+function fallbackChain(source: GovernedSource): GovernedSourceRef[] {
+  if (!source.fallback) return [];
+  return Array.isArray(source.fallback) ? source.fallback : [source.fallback];
+}
+
 /**
- * Canonical key → governed source, or `null` for USER-SUPPLIED ONLY keys (the
- * platform holds no such fact; the request body may carry it).
+ * Canonical key → governed source. `null` would mean USER-SUPPLIED ONLY (the
+ * platform holds no such fact; only the request body may carry it); since
+ * WO-8 Phase 3 no key of the 510(k) device or IVD map is null.
  */
 export const ESTAR_ADMINISTRATIVE_SOURCES: Record<string, GovernedSource | null> = {
   deviceTradeName: {
@@ -68,19 +97,20 @@ export const ESTAR_ADMINISTRATIVE_SOURCES: Record<string, GovernedSource | null>
     fallback: { store: 'fda_510k_projects', column: 'device_name' },
     note: 'fallback: fda_510k_projects.device_name when the program row has none',
   },
-  deviceCommonName: null,
-  deviceClassificationName: null,
+  deviceCommonName: { store: 'regulatory_programs', column: 'common_name' },
+  deviceClassificationName: { store: 'regulatory_programs', column: 'classification_name' },
   regulationNumber: {
-    store: 'fda_510k_projects',
+    store: 'regulatory_programs',
     column: 'regulation_number',
-    note: 'only when the anchor row exists',
+    fallback: { store: 'fda_510k_projects', column: 'regulation_number' },
+    note: 'fallback: the GA row’s regulation_number, only when the anchor row exists',
   },
   productCodes: {
     store: 'regulatory_programs',
     column: 'product_code',
     fallback: { store: 'fda_510k_projects', column: 'product_code' },
   },
-  associatedProductCodes: null,
+  associatedProductCodes: { store: 'regulatory_programs', column: 'associated_product_codes' },
   applicantCompanyName: {
     store: 'client_workspaces',
     column: 'name',
@@ -100,10 +130,14 @@ export const ESTAR_ADMINISTRATIVE_SOURCES: Record<string, GovernedSource | null>
     column: 'contact_email',
     note: 'same fact as applicantContactEmail',
   },
-  correspondentCompanyName: null,
-  correspondentContactEmail: null,
-  correspondentTelephone: null,
-  correspondentSummaryEmail: null,
+  correspondentCompanyName: { store: 'estar_registrations', column: 'correspondent_company_name' },
+  correspondentContactEmail: { store: 'estar_registrations', column: 'correspondent_contact_email' },
+  correspondentTelephone: { store: 'estar_registrations', column: 'correspondent_telephone' },
+  correspondentSummaryEmail: {
+    store: 'estar_registrations',
+    column: 'correspondent_contact_email',
+    note: 'same fact as correspondentContactEmail',
+  },
   predicateSubmissionNumber: {
     store: 'regulatory_programs',
     column: 'predicate_devices[0].kNumber',
@@ -111,12 +145,20 @@ export const ESTAR_ADMINISTRATIVE_SOURCES: Record<string, GovernedSource | null>
   },
   predicateDeviceTradeName: { store: 'regulatory_programs', column: 'predicate_devices[0].name' },
   declarationCompanyName: {
-    store: 'client_workspaces',
-    column: 'name',
-    fallback: { store: 'organizations', column: 'name' },
-    note: 'same rule as applicantCompanyName',
+    store: 'estar_registrations',
+    column: 'declaration_company_name',
+    fallback: [
+      { store: 'client_workspaces', column: 'name' },
+      { store: 'organizations', column: 'name' },
+    ],
+    note:
+      'the Declaration of Conformity is signed by ONE legal entity, so the name pairs with ' +
+      'declaration_company_address on the SAME registration row — client_workspaces holds no ' +
+      'address, so reading the name from there put one entity’s name beside another’s address ' +
+      'for an org that files for several clients; the workspace then organization name stay as ' +
+      'fallbacks so a registration without the name resolves exactly what it did before',
   },
-  declarationCompanyAddress: null,
+  declarationCompanyAddress: { store: 'estar_registrations', column: 'declaration_company_address' },
   declarationDeviceTradeName: {
     store: 'regulatory_programs',
     column: 'product_name',
@@ -126,7 +168,7 @@ export const ESTAR_ADMINISTRATIVE_SOURCES: Record<string, GovernedSource | null>
       'fda_510k_projects.device_name fallback the contract lists only against deviceTradeName; ' +
       'the two keys can never resolve to different values',
   },
-  indicationsForUseCitation: null,
+  indicationsForUseCitation: { store: 'regulatory_programs', column: 'indications_for_use_citation' },
 };
 
 // ── Pure projection ───────────────────────────────────────────────────────────
@@ -137,8 +179,21 @@ export interface EstarAdministrativeInputs {
     productName?: string | null;
     productCode?: string | null;
     predicateDevices?: unknown;
+    commonName?: string | null;
+    classificationName?: string | null;
+    regulationNumber?: string | null;
+    associatedProductCodes?: string | null;
+    indicationsForUseCitation?: string | null;
   } | null;
   organization?: { name?: string | null } | null;
+  /** The org's single eSTAR registration row — org-level, independent of the anchor. */
+  registration?: {
+    correspondentCompanyName?: string | null;
+    correspondentContactEmail?: string | null;
+    correspondentTelephone?: string | null;
+    declarationCompanyName?: string | null;
+    declarationCompanyAddress?: string | null;
+  } | null;
   /** The anchor project's client workspace — reached only through the anchor. */
   workspace?: {
     name?: string | null;
@@ -188,6 +243,16 @@ function firstPredicate(raw: unknown): Partial<PredicateDevice> | null {
 const READERS: Record<string, (input: EstarAdministrativeInputs) => string | null> = {
   'regulatory_programs.product_name': (i) => text(i.program?.productName),
   'regulatory_programs.product_code': (i) => text(i.program?.productCode),
+  'regulatory_programs.common_name': (i) => text(i.program?.commonName),
+  'regulatory_programs.classification_name': (i) => text(i.program?.classificationName),
+  'regulatory_programs.regulation_number': (i) => text(i.program?.regulationNumber),
+  'regulatory_programs.associated_product_codes': (i) => text(i.program?.associatedProductCodes),
+  'regulatory_programs.indications_for_use_citation': (i) => text(i.program?.indicationsForUseCitation),
+  'estar_registrations.correspondent_company_name': (i) => text(i.registration?.correspondentCompanyName),
+  'estar_registrations.correspondent_contact_email': (i) => text(i.registration?.correspondentContactEmail),
+  'estar_registrations.correspondent_telephone': (i) => text(i.registration?.correspondentTelephone),
+  'estar_registrations.declaration_company_name': (i) => text(i.registration?.declarationCompanyName),
+  'estar_registrations.declaration_company_address': (i) => text(i.registration?.declarationCompanyAddress),
   'regulatory_programs.predicate_devices[0].kNumber': (i) =>
     text(firstPredicate(i.program?.predicateDevices)?.kNumber),
   'regulatory_programs.predicate_devices[0].name': (i) =>
@@ -226,11 +291,12 @@ export function projectEstarAdministrativeData(
       provenance[key] = `${source.store}.${source.column}`;
       continue;
     }
-    if (!source.fallback) continue;
-    const secondary = readSource(source.fallback, input);
-    if (secondary !== null) {
+    for (const ref of fallbackChain(source)) {
+      const secondary = readSource(ref, input);
+      if (secondary === null) continue;
       values[key] = secondary;
-      provenance[key] = `${source.fallback.store}.${source.fallback.column}`;
+      provenance[key] = `${ref.store}.${ref.column}`;
+      break;
     }
   }
   return { values, provenance };
@@ -245,6 +311,18 @@ export interface ResolvedOfficialField {
   value: string | null;
   /** `store.column` for a governed value, `'request'` for a caller-supplied one, null when blank. */
   source: string | null;
+  /**
+   * The PRIMARY governed `store.column` declared for this key — set even when
+   * `value` is blank, so the surface can name where the durable home is. Null
+   * only when the key has no declared source.
+   */
+  declaredSource: string | null;
+}
+
+/** The primary `store.column` the sources table declares for a key, or null. */
+export function declaredSourceFor(key: string): string | null {
+  const source = ESTAR_ADMINISTRATIVE_SOURCES[key];
+  return source ? `${source.store}.${source.column}` : null;
 }
 
 export interface ResolveOfficialEstarFieldsInput {
@@ -296,7 +374,14 @@ export function resolveOfficialEstarFields(
       }
     }
     if (value !== null) data[key] = value;
-    fields.push({ key, caption: spec.caption ?? key, xfaSomPath: spec.xfaSomPath ?? null, value, source });
+    fields.push({
+      key,
+      caption: spec.caption ?? key,
+      xfaSomPath: spec.xfaSomPath ?? null,
+      value,
+      source,
+      declaredSource: declaredSourceFor(key),
+    });
   }
 
   const ignoredRequestKeys = Object.keys(request).filter((k) => !written.has(k));
@@ -308,7 +393,14 @@ export interface OfficialEstarFieldReport {
   filledCount: number;
   blankCount: number;
   blankKeys: string[];
-  fields: Array<{ key: string; caption: string; filled: boolean; source: string | null }>;
+  fields: Array<{
+    key: string;
+    caption: string;
+    filled: boolean;
+    source: string | null;
+    /** The key's declared governed home, blank or not (see ResolvedOfficialField). */
+    declaredSource: string | null;
+  }>;
   ignoredRequestKeys: string[];
 }
 
@@ -335,6 +427,7 @@ export function reportOfficialEstarFill(
     caption: f.caption,
     filled: filledSet.has(f.key),
     source: filledSet.has(f.key) ? f.source : null,
+    declaredSource: f.declaredSource,
   }));
   const blank = fields.filter((f) => !f.filled);
   const fieldSources: Record<string, string> = {};
@@ -496,6 +589,11 @@ export async function loadEstarAdministrativeInputs(
         productName: regulatoryPrograms.productName,
         productCode: regulatoryPrograms.productCode,
         predicateDevices: regulatoryPrograms.predicateDevices,
+        commonName: regulatoryPrograms.commonName,
+        classificationName: regulatoryPrograms.classificationName,
+        regulationNumber: regulatoryPrograms.regulationNumber,
+        associatedProductCodes: regulatoryPrograms.associatedProductCodes,
+        indicationsForUseCitation: regulatoryPrograms.indicationsForUseCitation,
       })
       .from(regulatoryPrograms)
       .where(and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, organizationId)))
@@ -507,6 +605,21 @@ export async function loadEstarAdministrativeInputs(
     .select({ name: organizations.name })
     .from(organizations)
     .where(eq(organizations.id, organizationId))
+    .limit(1);
+
+  // The org's single eSTAR registration row (unique organization_id) — an
+  // org-level fact, read regardless of which anchor the ident named. No row ⇒
+  // the correspondent / declaration keys are blank and say so.
+  const [registration] = await db
+    .select({
+      correspondentCompanyName: estarRegistrations.correspondentCompanyName,
+      correspondentContactEmail: estarRegistrations.correspondentContactEmail,
+      correspondentTelephone: estarRegistrations.correspondentTelephone,
+      declarationCompanyName: estarRegistrations.declarationCompanyName,
+      declarationCompanyAddress: estarRegistrations.declarationCompanyAddress,
+    })
+    .from(estarRegistrations)
+    .where(eq(estarRegistrations.organizationId, organizationId))
     .limit(1);
 
   let workspace: EstarAdministrativeInputs['workspace'] = null;
@@ -528,6 +641,7 @@ export async function loadEstarAdministrativeInputs(
   return {
     program,
     organization: organization ?? null,
+    registration: registration ?? null,
     workspace,
     fda510kProject: fda
       ? { deviceName: fda.deviceName, regulationNumber: fda.regulationNumber, productCode: fda.productCode }
@@ -537,6 +651,7 @@ export async function loadEstarAdministrativeInputs(
 
 export default {
   ESTAR_ADMINISTRATIVE_SOURCES,
+  declaredSourceFor,
   projectEstarAdministrativeData,
   resolveOfficialEstarFields,
   reportOfficialEstarFill,

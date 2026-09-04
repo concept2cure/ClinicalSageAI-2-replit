@@ -84,9 +84,11 @@ describe('fillEstarSubmission', () => {
 
   it('fails closed when the field map is not populated/verified', async () => {
     const templateBytes = await makeSyntheticEstar();
+    // Every marketing descriptor now carries a verified map; the PreSTAR2
+    // descriptors are the ones that legitimately have none.
     const r = await fillEstarSubmission({
-      type: 'de_novo',
-      variant: 'ivd',
+      type: 'q_sub',
+      variant: 'prestar',
       data: { deviceName: 'Acme Assay' },
       templateBytes,
       // no injected fieldMap → falls back to the (empty) registered map
@@ -189,9 +191,171 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
     });
 
     it('fails closed for a descriptor with no verified field map', async () => {
-      const r = await fillEstarSubmission({ type: 'de_novo', variant: 'device', data: DATA });
+      const r = await fillEstarSubmission({ type: 'q_sub', variant: 'prestar', data: DATA });
       expect(r.filled).toBe(false);
-      expect(r.blockers.join(' ')).toMatch(/field map for "de_novo-device" is not populated/);
+      expect(r.blockers.join(' ')).toMatch(/field map for "q_sub-prestar" is not populated/);
     });
+
+    it('De Novo and PMA are ready on this template: vendored AND mapped (the readiness route\'s gate)', async () => {
+      for (const type of ['de_novo', 'pma'] as const) {
+        const r = await fillEstarSubmission({ type, variant: 'device', data: {} });
+        expect(r.descriptorId).toBe(`${type}-device`);
+        expect(r.templateAvailable).toBe(true);
+        expect(r.fieldMapPopulated).toBe(true);
+        expect(r.blockers).toEqual([]);
+      }
+    });
+  },
+);
+
+// ---------------------------------------------------------------------------
+// WO-8 Phase 3: De Novo and PMA on the SAME vendored templates
+// ---------------------------------------------------------------------------
+
+/** The pathway-neutral administrative values a De Novo or PMA writes. */
+const SHARED_ADMINISTRATIVE_DATA = {
+  applicantCompanyName: 'Concept2Cure, Inc.',
+  applicantContactEmail: 'regulatory@concept2cure.example',
+  correspondentCompanyName: 'Concept2Cure Regulatory Services',
+  correspondentContactEmail: 'correspondent@concept2cure.example',
+  associatedProductCodes: 'NBW, QBJ',
+  declarationCompanyName: 'Concept2Cure, Inc.',
+  declarationCompanyAddress: '1 Example Way, Boston, MA 02110',
+  declarationDeviceTradeName: 'AcuSense CGM System',
+  indicationsForUseCitation: 'Attachment 4, page 2',
+};
+
+/** 510(k)-only values that a De Novo/PMA must NOT write even when supplied. */
+const K510_ONLY_DATA = {
+  deviceTradeName: 'AcuSense CGM System',
+  predicateSubmissionNumber: 'K203456',
+};
+
+const IVD_TEMPLATE = path.resolve(process.cwd(), 'assets/estar-templates', 'eSTAR-510k-ivd.pdf');
+
+describe('De Novo / PMA field maps are the pathway-neutral subset (no template needed)', () => {
+  const DEVICE_KEYS = Object.keys(SHARED_ADMINISTRATIVE_DATA).sort();
+  const IVD_KEYS = DEVICE_KEYS.filter((k) => k !== 'indicationsForUseCitation');
+
+  it.each([
+    { id: 'de_novo-device', family: '510k-device', keys: DEVICE_KEYS },
+    { id: 'pma-device', family: '510k-device', keys: DEVICE_KEYS },
+    { id: 'de_novo-ivd', family: '510k-ivd', keys: IVD_KEYS },
+    { id: 'pma-ivd', family: '510k-ivd', keys: IVD_KEYS },
+  ])('$id maps exactly the shared keys, at the same SOM paths the 510(k) map uses', ({ id, family, keys }) => {
+    const map = ESTAR_FIELD_MAPS[id];
+    expect(Object.keys(map).sort()).toEqual(keys);
+    for (const [key, spec] of Object.entries(map)) {
+      expect(spec.xfaSomPath).toBe(ESTAR_FIELD_MAPS[family][key].xfaSomPath);
+      expect(spec.type).toBe('text');
+      expect(spec.caption).toBeTruthy();
+    }
+  });
+
+  it.each(['de_novo-device', 'pma-device', 'de_novo-ivd', 'pma-ivd'])(
+    '%s never addresses the 510(k) Summary page or the predicate fields',
+    (id) => {
+      const paths = Object.values(ESTAR_FIELD_MAPS[id]).map((s) => s.xfaSomPath ?? '');
+      expect(paths.length).toBeGreaterThan(0);
+      expect(paths.filter((p) => /PMNSummary|PredicatesSE/.test(p))).toEqual([]);
+    },
+  );
+
+  it('the IVD maps omit indicationsForUseCitation (the IVD template does not declare LBTextField130)', () => {
+    expect(ESTAR_FIELD_MAPS['de_novo-ivd']).not.toHaveProperty('indicationsForUseCitation');
+    expect(ESTAR_FIELD_MAPS['pma-ivd']).not.toHaveProperty('indicationsForUseCitation');
+    expect(ESTAR_FIELD_MAPS['de_novo-device']).toHaveProperty('indicationsForUseCitation');
+  });
+
+  it('each descriptor owns its map object (mutating one cannot change another)', () => {
+    expect(ESTAR_FIELD_MAPS['de_novo-device']).not.toBe(ESTAR_FIELD_MAPS['pma-device']);
+    expect(ESTAR_FIELD_MAPS['de_novo-ivd']).not.toBe(ESTAR_FIELD_MAPS['pma-ivd']);
+  });
+});
+
+describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
+  'De Novo and PMA on the official nIVD eSTAR v7.0 (same vendored file as 510(k))',
+  () => {
+    const REAL_DIR = path.dirname(NIVD_TEMPLATE);
+    let dirBefore: string | undefined;
+    beforeAll(() => {
+      dirBefore = process.env.ESTAR_TEMPLATE_DIR;
+      process.env.ESTAR_TEMPLATE_DIR = REAL_DIR;
+    });
+    afterAll(() => {
+      if (dirBefore === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
+      else process.env.ESTAR_TEMPLATE_DIR = dirBefore;
+    });
+
+    it.each(['de_novo', 'pma'] as const)(
+      '%s-device fills the shared administrative fields and reads them back at their SOM paths',
+      async (type) => {
+        const r = await fillEstarSubmission({
+          type,
+          variant: 'device',
+          data: { ...SHARED_ADMINISTRATIVE_DATA, ...K510_ONLY_DATA },
+        });
+
+        expect(r.descriptorId).toBe(`${type}-device`);
+        expect(r.templateAvailable).toBe(true);
+        expect(r.fieldMapPopulated).toBe(true);
+        expect(r.templateKind).toBe('dynamic-xfa');
+        expect(r.blockers).toEqual([]);
+        expect(r.filled).toBe(true);
+        expect(r.skippedFields).toEqual([]);
+        expect(Buffer.from(r.pdfBytes!.subarray(0, 5)).toString()).toBe('%PDF-');
+        // Every shared key written; the 510(k)-only keys are not part of this map at all.
+        expect(r.filledFields.sort()).toEqual(Object.keys(SHARED_ADMINISTRATIVE_DATA).sort());
+        for (const key of Object.keys(K510_ONLY_DATA)) expect(r.filledFields).not.toContain(key);
+
+        const map = ESTAR_FIELD_MAPS[`${type}-device`];
+        const k510 = ESTAR_FIELD_MAPS['510k-device'];
+        const paths = [
+          ...Object.keys(SHARED_ADMINISTRATIVE_DATA).map((k) => map[k].xfaSomPath!),
+          ...Object.keys(K510_ONLY_DATA).map((k) => k510[k].xfaSomPath!),
+        ];
+        const back = await readXfaDatasetsValues(r.pdfBytes!, paths);
+        for (const [key, value] of Object.entries(SHARED_ADMINISTRATIVE_DATA)) {
+          expect(back[map[key].xfaSomPath!]).toBe(value);
+        }
+        // The 510(k) Summary trade name and the predicate number stay empty in a De Novo/PMA.
+        for (const key of Object.keys(K510_ONLY_DATA)) expect(back[k510[key].xfaSomPath!]).toBe('');
+      },
+    );
+  },
+);
+
+describe.skipIf(!fsSync.existsSync(IVD_TEMPLATE))(
+  'De Novo and PMA on the official IVD eSTAR v7.0 (same vendored file as 510(k))',
+  () => {
+    const REAL_DIR = path.dirname(IVD_TEMPLATE);
+    let dirBefore: string | undefined;
+    beforeAll(() => {
+      dirBefore = process.env.ESTAR_TEMPLATE_DIR;
+      process.env.ESTAR_TEMPLATE_DIR = REAL_DIR;
+    });
+    afterAll(() => {
+      if (dirBefore === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
+      else process.env.ESTAR_TEMPLATE_DIR = dirBefore;
+    });
+
+    it.each(['de_novo', 'pma'] as const)(
+      '%s-ivd is ready and fills the shared fields (minus the IFU citation the IVD template lacks)',
+      async (type) => {
+        const r = await fillEstarSubmission({ type, variant: 'ivd', data: SHARED_ADMINISTRATIVE_DATA });
+        expect(r.descriptorId).toBe(`${type}-ivd`);
+        expect(r.templateAvailable).toBe(true);
+        expect(r.fieldMapPopulated).toBe(true);
+        expect(r.blockers).toEqual([]);
+        expect(r.filled).toBe(true);
+        const map = ESTAR_FIELD_MAPS[`${type}-ivd`];
+        expect(r.filledFields.sort()).toEqual(Object.keys(map).sort());
+        expect(r.filledFields).not.toContain('indicationsForUseCitation');
+        const back = await readXfaDatasetsValues(r.pdfBytes!, Object.values(map).map((s) => s.xfaSomPath!));
+        for (const [key, spec] of Object.entries(map)) {
+          expect(back[spec.xfaSomPath!]).toBe((SHARED_ADMINISTRATIVE_DATA as Record<string, string>)[key]);
+        }
+      },
+    );
   },
 );

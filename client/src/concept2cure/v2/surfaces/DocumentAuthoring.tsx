@@ -2376,7 +2376,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             '. The mode is unchanged.',
           'error'
         );
-        throw new Error('track toggle refused');
+        throw new Error('track toggle refused', { cause: e });
       }
       const json = await res.json().catch(() => null);
       if (!res.ok) {

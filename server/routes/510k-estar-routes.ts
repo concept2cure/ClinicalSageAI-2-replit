@@ -1219,10 +1219,12 @@ const officialFieldsSchema = z.object({
  *
  * Read-only preview of what POST /official will write from the org's governed
  * records for this program: one row per mapped field with its value and
- * `store.column` source, null for the keys the platform does not hold. No
- * request data is merged here — it is the "what will be written" truth, not a
- * what-if. Produces and persists nothing; sourced values are org data and are
- * never logged.
+ * `store.column` source, null for the keys the platform does not hold — and,
+ * blank or not, the key's `declaredSource` (its governed home), so the surface
+ * can say where a blank value is set instead of offering one. No request data
+ * is merged here — it is the "what will be written" truth, not a what-if.
+ * Produces and persists nothing; sourced values are org data and are never
+ * logged.
  */
 router.get('/official-fields', authMiddleware, async (req, res) => {
   const validation = officialFieldsSchema.safeParse(req.query);
@@ -1334,6 +1336,16 @@ const registrationWriteSchema = z.object({
   mdufaFeeTier: z.enum(['standard', 'small_business']).nullish(),
   variants: z.array(z.enum(['device', 'ivd'])).optional(),
   notes: z.string().max(2000).nullish(),
+  // The official eSTAR's Correspondent Information and Declaration of
+  // Conformity facts — org-level, so they live on this row and are the
+  // governed sources estar-administrative-data reads (WO-8 Phase 3).
+  correspondentCompanyName: z.string().max(256).nullish(),
+  correspondentContactEmail: z.string().max(256).nullish(),
+  correspondentTelephone: z.string().max(64).nullish(),
+  // The DoC's company name and address name ONE legal entity, so both are read
+  // from this row (migrations/20260904_estar_registration_declaration_company_name.sql).
+  declarationCompanyName: z.string().max(256).nullish(),
+  declarationCompanyAddress: z.string().max(1000).nullish(),
 });
 
 /**

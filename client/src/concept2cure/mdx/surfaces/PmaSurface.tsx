@@ -11,6 +11,7 @@ import { useProgramExtras } from '../hooks/useProgramExtras';
 import { useEstarExport, exportStatusLine } from '../hooks/useEstarExport';
 import { PathwayPanes } from './pathway/PathwayPanes';
 import { EstarFilingPanel } from './EstarFilingPanel';
+import { OfficialEstarPanel, officialEstarVariantFor } from './OfficialEstarPanel';
 import type { EditorSectionRef } from '../../v2/editorTarget';
 
 export interface PmaSurfaceProps {
@@ -210,6 +211,14 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
           </button>
         ))}
       </div>
+
+      {/* The official FDA eSTAR PDF for a PMA — readiness gate, the governed
+          field preview and the one Generate control, produced on the same
+          vendored nIVD / IVD template FDA ships for 510(k), De Novo and PMA.
+          The family follows the program's product type; the pathway is PMA by
+          construction here. The draft package button in the header stays: it
+          is the authored-content ZIP, not the official eSTAR. */}
+      <OfficialEstarPanel program={program} type="pma" variant={officialEstarVariantFor(program)} />
 
       {/* eSTAR filing journey — live registration prerequisites + tracked
           submissions (register → produce → track), org-scoped from the session. */}

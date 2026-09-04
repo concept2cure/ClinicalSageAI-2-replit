@@ -260,7 +260,7 @@ const DROPPED_TAGS = new Set(['script', 'style', 'noscript', 'head', 'template',
  */
 const PRE_SENTINEL = '\u0000';
 
-const DIGITS_AND_SIGN_ONLY = /^[0-9+\-]+$/;
+const DIGITS_AND_SIGN_ONLY = /^[0-9+-]+$/;
 
 interface WalkContext {
   /** Nesting depth of the enclosing list, for indentation. */

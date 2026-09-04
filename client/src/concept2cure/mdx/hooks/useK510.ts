@@ -30,6 +30,7 @@
  */
 
 import type { EstarRow, EstarStatus, Predicate, PredicateStatus, SeRow } from '../data/k510';
+import type { OfficialEstarType, OfficialEstarVariant } from './useEstarOfficialFields';
 import { useFetchJson } from './useFetchJson';
 import {
   ESTAR_STATUS_MAP,
@@ -188,8 +189,8 @@ export interface UseEstarReadinessResult {
  * the official template is vendored AND its field map is populated.
  */
 export function useEstarReadiness(
-  type: '510k' | 'de_novo' = '510k',
-  variant: 'device' | 'ivd' = 'device',
+  type: OfficialEstarType = '510k',
+  variant: OfficialEstarVariant = 'device',
 ): UseEstarReadinessResult {
   const url = `/api/510k/estar/readiness?type=${encodeURIComponent(type)}&variant=${encodeURIComponent(variant)}`;
   const { data, loading, error } = useFetchJson<EstarReadiness>(url);

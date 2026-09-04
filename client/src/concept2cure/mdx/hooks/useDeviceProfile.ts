@@ -47,10 +47,19 @@ export interface DeviceProfileView {
   intendedUse: string | null;
   indication: string | null;
   predicateDevices: unknown;
+  /* The device-level administrative facts the official eSTAR reads from the
+     program. Null = not held; the eSTAR field stays blank and is reported,
+     never guessed. */
+  commonName: string | null;
+  classificationName: string | null;
+  regulationNumber: string | null;
+  associatedProductCodes: string | null;
+  indicationsForUseCitation: string | null;
 }
 
 /** Fields PUT /profile accepts — send only what changed; the server rejects
- *  an empty patch. */
+ *  an empty patch. The five eSTAR facts accept '' to CLEAR the stored value
+ *  (the server stores null); any other string is stored trimmed. */
 export interface DeviceProfilePatch {
   productName?: string;
   deviceClass?: DeviceClass;
@@ -58,7 +67,22 @@ export interface DeviceProfilePatch {
   productCode?: string;
   intendedUse?: string;
   indication?: string;
+  commonName?: string;
+  classificationName?: string;
+  regulationNumber?: string;
+  associatedProductCodes?: string;
+  indicationsForUseCitation?: string;
 }
+
+/** The five eSTAR device facts, in the order the intake form shows them. */
+export const ESTAR_DEVICE_FIELDS = [
+  'commonName',
+  'classificationName',
+  'regulationNumber',
+  'associatedProductCodes',
+  'indicationsForUseCitation',
+] as const;
+export type EstarDeviceField = (typeof ESTAR_DEVICE_FIELDS)[number];
 
 /**
  * Build the /profile URL for a program ident (regulatoryPrograms UUID or

@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { DeviceProfilePanel, standardsStatusLine } from '../DeviceProfilePanel';
+import {
+  DeviceProfilePanel,
+  classificationAutofill,
+  profilePatch,
+  standardsStatusLine,
+} from '../DeviceProfilePanel';
 
 /**
  * Mount tests for the device-profile intake card.
@@ -28,7 +33,28 @@ const PROFILE = {
   intendedUse: null,
   indication: null,
   predicateDevices: null,
+  commonName: 'Continuous glucose monitor',
+  classificationName: 'Glucose Monitor, Continuous',
+  regulationNumber: '862.1355',
+  associatedProductCodes: 'DQA; NBW',
+  indicationsForUseCitation: 'Attachment 4, page 1',
 };
+
+const OPENFDA_HIT = {
+  deviceName: 'Glucose Monitor, Continuous',
+  productCode: 'DQA',
+  deviceClass: '3',
+  regulationNumber: '862.1355',
+  medicalSpecialty: 'Clinical Chemistry',
+  reviewPanel: 'CH',
+};
+
+/** The PUT the panel issued, decoded — null when no write was sent. */
+function sentPut(): Record<string, unknown> | null {
+  const calls = (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+  const put = calls.find(([, init]) => (init as { method?: string } | undefined)?.method === 'PUT');
+  return put ? (JSON.parse((put[1] as { body: string }).body) as Record<string, unknown>) : null;
+}
 
 function mockFetch(handler: (url: string) => Promise<Response>) {
   vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => handler(String(input))));
@@ -130,8 +156,49 @@ describe('DeviceProfilePanel — honest states', () => {
 
     expect((screen.getByLabelText('Product code') as HTMLInputElement).value).toBe('DQA');
     expect((screen.getByLabelText('Device class') as HTMLSelectElement).value).toBe('III');
+    /* The hit's regulation number and its classification "device name" are
+       offered into the two eSTAR fields that hold those facts. */
+    expect((screen.getByLabelText('Regulation number (21 CFR)') as HTMLInputElement).value).toBe(
+      '862.1355',
+    );
+    expect((screen.getByLabelText('Classification name') as HTMLInputElement).value).toBe(
+      'Glucose Monitor, Continuous',
+    );
     /* Autofill never saved anything — Save is now enabled for the user. */
     expect((screen.getByText('Save') as HTMLButtonElement).disabled).toBe(false);
+    expect(sentPut()).toBeNull();
+  });
+
+});
+
+describe('DeviceProfilePanel — the five eSTAR device fields', () => {
+  it('shows the stored eSTAR device fields in the intake form', async () => {
+    mockFetch(() => okJson({ profile: PROFILE }));
+    render(<DeviceProfilePanel ident={PROFILE.id} />);
+    await waitFor(() => expect(screen.getByText(/code MDS/)).toBeTruthy());
+    fireEvent.click(screen.getByText('Edit'));
+    const value = (label: string) => (screen.getByLabelText(label) as HTMLInputElement).value;
+    expect(value('Common name')).toBe('Continuous glucose monitor');
+    expect(value('Classification name')).toBe('Glucose Monitor, Continuous');
+    expect(value('Regulation number (21 CFR)')).toBe('862.1355');
+    expect(value('Associated product codes')).toBe('DQA; NBW');
+    expect(value('Indications for Use citation (attachment and page)')).toBe('Attachment 4, page 1');
+    /* Nothing changed yet — Save stays disabled. */
+    expect((screen.getByText('Save') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('Save PUTs only the edited eSTAR fields — and an emptied one as "" to clear it', async () => {
+    mockFetch(() => okJson({ profile: PROFILE }));
+    render(<DeviceProfilePanel ident={PROFILE.id} />);
+    await waitFor(() => expect(screen.getByText(/code MDS/)).toBeTruthy());
+    fireEvent.click(screen.getByText('Edit'));
+    fireEvent.change(screen.getByLabelText('Common name'), { target: { value: '  CGM system ' } });
+    fireEvent.change(screen.getByLabelText('Indications for Use citation (attachment and page)'), {
+      target: { value: '' },
+    });
+    fireEvent.click(screen.getByText('Save'));
+    await waitFor(() => expect(screen.getByText('Saved')).toBeTruthy());
+    expect(sentPut()).toEqual({ commonName: 'CGM system', indicationsForUseCitation: '' });
   });
 
   it('reports an honest empty when openFDA matches nothing', async () => {
@@ -151,6 +218,78 @@ describe('DeviceProfilePanel — honest states', () => {
     );
   });
 
+});
+
+describe('profilePatch — the five eSTAR device fields', () => {
+  const form = {
+    productName: PROFILE.productName,
+    deviceClass: 'II',
+    regulatoryPath: '510k',
+    productCode: 'MDS',
+    intendedUse: '',
+    commonName: PROFILE.commonName,
+    classificationName: PROFILE.classificationName,
+    regulationNumber: PROFILE.regulationNumber,
+    associatedProductCodes: PROFILE.associatedProductCodes,
+    indicationsForUseCitation: PROFILE.indicationsForUseCitation,
+  };
+
+  it('is empty when the form mirrors the profile', () => {
+    expect(profilePatch(PROFILE, form)).toEqual({});
+  });
+
+  it('sends a changed field trimmed and an emptied field as "" (the clear signal)', () => {
+    expect(
+      profilePatch(PROFILE, {
+        ...form,
+        regulationNumber: ' 862.1345 ',
+        associatedProductCodes: '',
+        indicationsForUseCitation: '   ',
+      }),
+    ).toEqual({ regulationNumber: '862.1345', associatedProductCodes: '', indicationsForUseCitation: '' });
+  });
+
+  it('does not clear a field that was already blank', () => {
+    const blank = { ...PROFILE, commonName: null, classificationName: null };
+    expect(profilePatch(blank, { ...form, commonName: '', classificationName: ' ' })).toEqual({});
+  });
+});
+
+describe('classificationAutofill — openFDA hit → intake fields, offered not saved', () => {
+  const typed = {
+    productName: 'CGM',
+    deviceClass: '',
+    regulatoryPath: '',
+    productCode: '',
+    intendedUse: '',
+    commonName: '',
+    classificationName: '',
+    regulationNumber: '',
+    associatedProductCodes: '',
+    indicationsForUseCitation: '',
+  };
+
+  it('maps regulationNumber → regulationNumber and deviceName → classificationName', () => {
+    const next = classificationAutofill(typed, OPENFDA_HIT);
+    expect(next.productCode).toBe('DQA');
+    expect(next.deviceClass).toBe('III');
+    expect(next.regulationNumber).toBe('862.1355');
+    expect(next.classificationName).toBe('Glucose Monitor, Continuous');
+    /* Facts the hit does not carry are untouched. */
+    expect(next.commonName).toBe('');
+    expect(next.associatedProductCodes).toBe('');
+    expect(next.productName).toBe('CGM');
+  });
+
+  it('leaves a typed value alone when the hit has nothing for it', () => {
+    const next = classificationAutofill(
+      { ...typed, regulationNumber: '870.1', classificationName: 'Typed', deviceClass: 'II' },
+      { ...OPENFDA_HIT, regulationNumber: '', deviceName: '', deviceClass: 'U' },
+    );
+    expect(next.regulationNumber).toBe('870.1');
+    expect(next.classificationName).toBe('Typed');
+    expect(next.deviceClass).toBe('II');
+  });
 });
 
 /**

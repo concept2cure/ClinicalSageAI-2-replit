@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   OfficialEstarPanel,
   generateDisabledReason,
+  officialEstarTypeFor,
   officialEstarVariantFor,
   entitlementLockTitle,
 } from '../OfficialEstarPanel';
@@ -29,7 +30,12 @@ import type { Program } from '../../data/programs';
  *   - a 403 NOT_ENTITLED renders Locked with the tier, never a dead button;
  *   - a failed field read renders ErrorState with a human sentence, never an
  *     empty table — retry only when a retry could succeed (not on 404/422);
- *   - a failed field read also disables Generate with the reason.
+ *   - a failed field read also disables Generate with the reason;
+ *   - a governed key the platform holds no value for names its durable home
+ *     ("Not set — Device profile · common name") AND keeps the export-only
+ *     input, so the user knows where to set it once;
+ *   - the pathway (510(k) / De Novo / PMA) follows the program's regulatory
+ *     path, is named in the header, and travels in every read and the POST.
  */
 
 vi.mock('../../../v2/download', () => ({ downloadBase64: vi.fn() }));
@@ -88,6 +94,7 @@ const FIELDS = {
       xfaSomPath: 'form1.p1.trade',
       value: 'BX-204 CGM',
       source: 'regulatory_programs.product_name',
+      declaredSource: 'regulatory_programs.product_name',
     },
     {
       key: 'predicateSubmissionNumber',
@@ -95,20 +102,25 @@ const FIELDS = {
       xfaSomPath: 'form1.p2.pred',
       value: 'K221847',
       source: 'regulatory_programs.predicate_devices[0].kNumber',
+      declaredSource: 'regulatory_programs.predicate_devices[0].kNumber',
     },
+    /* Blank, with a declared governed home (the device profile). */
     {
       key: 'deviceCommonName',
       caption: 'Common Name',
       xfaSomPath: 'form1.p1.common',
       value: null,
       source: null,
+      declaredSource: 'regulatory_programs.common_name',
     },
+    /* Blank, with no declared home at all — export-only, as before. */
     {
       key: 'correspondentTelephone',
       caption: 'Correspondent Telephone',
       xfaSomPath: null,
       value: null,
       source: null,
+      declaredSource: null,
     },
   ],
 };
@@ -186,7 +198,7 @@ describe('OfficialEstarPanel — survives first paint', () => {
   it('renders while every request is still pending — checking is a visible status, not only a title', () => {
     mockFetch(pending);
     render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
-    expect(screen.getByText(/Official eSTAR · administrative data/)).toBeTruthy();
+    expect(screen.getByText(/Official eSTAR · 510\(k\) · nIVD eSTAR/)).toBeTruthy();
     expect(generateButton().disabled).toBe(true);
     expect(generateButton().title).toBe(CHECKING);
     const line = screen.getByText(CHECKING);
@@ -209,7 +221,7 @@ describe('OfficialEstarPanel — survives first paint', () => {
     mockFetch(() => Promise.reject(new Error('network down')));
     render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
     await waitFor(() => expect(screen.getByTestId('official-estar-error')).toBeTruthy());
-    expect(screen.getByText(/Official eSTAR · administrative data/)).toBeTruthy();
+    expect(screen.getByText(/Official eSTAR · 510\(k\) · nIVD eSTAR/)).toBeTruthy();
     const error = within(screen.getByTestId('official-estar-error'));
     expect(error.getByText('The field list could not be loaded')).toBeTruthy();
     expect(error.getByRole('button', { name: 'Try again' })).toBeTruthy();
@@ -498,6 +510,39 @@ describe('OfficialEstarPanel — Generate', () => {
     expect(screen.queryByText(/Left blank — the platform holds no value/)).toBeNull();
   });
 
+  it('after a run, says how to see the values in Acrobat — the form hides those sections until then', async () => {
+    mockFetch(
+      readsThen(READY, FIELDS, () =>
+        okJson({
+          governed: true,
+          officialEstarPdf: true,
+          downloadable_output_ref: {
+            encoding: 'base64',
+            mime_type: 'application/pdf',
+            filename: 'BX-204_eSTAR.pdf',
+            data: 'AA==',
+          },
+          fieldReport: {
+            mappedCount: 4,
+            filledCount: 4,
+            blankCount: 0,
+            blankKeys: [],
+            ignoredRequestKeys: [],
+          },
+        }),
+      ),
+    );
+    render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
+    await waitFor(() => expect(generateButton().disabled).toBe(false));
+    // Nothing is claimed before a run.
+    expect(screen.queryByTestId('official-estar-open-note')).toBeNull();
+    fireEvent.click(generateButton());
+    await waitFor(() => expect(screen.getByTestId('official-estar-open-note')).toBeTruthy());
+    expect(
+      screen.getByText(/choose the submission type on the first page/i),
+    ).toBeTruthy();
+  });
+
   it('names the typed keys the server dropped', async () => {
     mockFetch(
       readsThen(READY, FIELDS, () =>
@@ -640,7 +685,7 @@ describe('OfficialEstarPanel — which template family', () => {
       return readsThen(READY, { ...FIELDS, variant: 'ivd' }, () => okJson({}))(url, init);
     });
     render(<OfficialEstarPanel program={{ ...PROGRAM, productType: 'ivd' }} variant="ivd" />);
-    expect(screen.getByText(/Official eSTAR · administrative data · IVD eSTAR/)).toBeTruthy();
+    expect(screen.getByText(/Official eSTAR · 510\(k\) · IVD eSTAR/)).toBeTruthy();
     await waitFor(() => expect(urls.some((u) => u.includes('/estar/official-fields'))).toBe(true));
     expect(urls.filter((u) => u.includes('/estar/readiness')).every((u) => u.includes('variant=ivd'))).toBe(true);
     expect(urls.filter((u) => u.includes('/estar/official-fields')).every((u) => u.includes('variant=ivd'))).toBe(true);
@@ -649,6 +694,152 @@ describe('OfficialEstarPanel — which template family', () => {
   it('a device program reads as the nIVD eSTAR', () => {
     mockFetch(() => pending());
     render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
-    expect(screen.getByText(/Official eSTAR · administrative data · nIVD eSTAR/)).toBeTruthy();
+    expect(screen.getByText(/Official eSTAR · 510\(k\) · nIVD eSTAR/)).toBeTruthy();
+  });
+});
+
+describe('OfficialEstarPanel — a blank governed key names its durable home', () => {
+  it('value null + declaredSource set ⇒ the caption, "Not set — <home>", AND the export-only input', async () => {
+    mockFetch(readsThen(READY, FIELDS, () => okJson({})));
+    render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
+    await waitFor(() => expect(screen.getByLabelText('Common Name')).toBeTruthy());
+    // The row is not sourced — it still carries the labelled, empty input.
+    const common = screen.getByLabelText('Common Name') as HTMLInputElement;
+    expect(common.tagName).toBe('INPUT');
+    expect(common.value).toBe('');
+    const row = common.closest('tr')!;
+    expect(row.getAttribute('data-sourced')).toBe('false');
+    expect(row.getAttribute('data-declared-source')).toBe('true');
+    // The durable home is named in plain words, next to the export-only note.
+    const notSet = screen.getByTestId('official-estar-not-set-deviceCommonName');
+    expect(notSet.textContent).toBe('Not set — Device profile · common name');
+    expect(row.textContent).toContain('Entered for this export only · not stored');
+    expect(screen.queryByText(/regulatory_programs/)).toBeNull();
+    // The input's accessible description carries both sentences.
+    const note = document.getElementById(common.getAttribute('aria-describedby') as string);
+    expect(note?.textContent).toContain('Not set — Device profile · common name');
+    expect(note?.textContent).toContain('Entered for this export only · not stored');
+  });
+
+  it('value null + declaredSource null ⇒ export-only, no "Not set" line', async () => {
+    mockFetch(readsThen(READY, FIELDS, () => okJson({})));
+    render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
+    await waitFor(() => expect(screen.getByLabelText('Correspondent Telephone')).toBeTruthy());
+    const row = (screen.getByLabelText('Correspondent Telephone') as HTMLInputElement).closest('tr')!;
+    expect(row.getAttribute('data-sourced')).toBe('false');
+    expect(row.getAttribute('data-declared-source')).toBeNull();
+    expect(screen.queryByTestId('official-estar-not-set-correspondentTelephone')).toBeNull();
+    expect(row.textContent).not.toContain('Not set');
+    expect(screen.getAllByText(/^Not set — /).length).toBe(1);
+  });
+
+  it('a registration-held key names the eSTAR registration as its home', async () => {
+    const fields = {
+      ...FIELDS,
+      fields: [
+        {
+          key: 'correspondentCompanyName',
+          caption: 'Correspondent Company Name',
+          xfaSomPath: 'form1.p1.corr',
+          value: null,
+          source: null,
+          declaredSource: 'estar_registrations.correspondent_company_name',
+        },
+      ],
+      mappedCount: 1,
+      sourcedCount: 0,
+    };
+    mockFetch(readsThen(READY, fields, () => okJson({})));
+    render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
+    await waitFor(() =>
+      expect(screen.getByTestId('official-estar-not-set-correspondentCompanyName')).toBeTruthy(),
+    );
+    expect(screen.getByTestId('official-estar-not-set-correspondentCompanyName').textContent).toBe(
+      'Not set — eSTAR registration · correspondent company name',
+    );
+    expect(screen.queryByText(/estar_registrations/)).toBeNull();
+    expect(screen.getByLabelText('Correspondent Company Name')).toBeTruthy();
+  });
+
+  it('a governed value never shows "Not set" even though its declaredSource is set', async () => {
+    mockFetch(readsThen(READY, FIELDS, () => okJson({})));
+    render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
+    await waitFor(() => expect(screen.getByTestId('official-estar-value-deviceTradeName')).toBeTruthy());
+    expect(screen.queryByTestId('official-estar-not-set-deviceTradeName')).toBeNull();
+    const row = screen.getByTestId('official-estar-value-deviceTradeName').closest('tr')!;
+    expect(row.getAttribute('data-declared-source')).toBeNull();
+    expect(row.textContent).toContain('Device profile · product name');
+  });
+});
+
+describe('OfficialEstarPanel — which marketing pathway', () => {
+  it('officialEstarTypeFor (pure): the regulatory path decides, never the surface', () => {
+    expect(officialEstarTypeFor({ regulatoryPath: 'de_novo' })).toBe('de_novo');
+    expect(officialEstarTypeFor({ regulatoryPath: 'DE_NOVO' })).toBe('de_novo');
+    expect(officialEstarTypeFor({ regulatoryPath: 'pma' })).toBe('pma');
+    expect(officialEstarTypeFor({ regulatoryPath: 'PMA' })).toBe('pma');
+    expect(officialEstarTypeFor({ regulatoryPath: '510k' })).toBe('510k');
+    expect(officialEstarTypeFor({ regulatoryPath: undefined })).toBe('510k');
+    expect(officialEstarTypeFor({ regulatoryPath: '' })).toBe('510k');
+    expect(officialEstarTypeFor(null)).toBe('510k');
+    expect(officialEstarTypeFor(undefined)).toBe('510k');
+  });
+
+  it('the header names the pathway and the family', () => {
+    mockFetch(() => pending());
+    const view = render(<OfficialEstarPanel program={PROGRAM} type="de_novo" variant="device" />);
+    expect(screen.getByText('Official eSTAR · De Novo · nIVD eSTAR')).toBeTruthy();
+    view.rerender(<OfficialEstarPanel program={PROGRAM} type="pma" variant="ivd" />);
+    expect(screen.getByText('Official eSTAR · PMA · IVD eSTAR')).toBeTruthy();
+    view.rerender(<OfficialEstarPanel program={PROGRAM} type="510k" variant="device" />);
+    expect(screen.getByText('Official eSTAR · 510(k) · nIVD eSTAR')).toBeTruthy();
+    expect(screen.queryByText(/administrative data/)).toBeNull();
+  });
+
+  it('the type travels in the readiness and official-fields reads', async () => {
+    const urls: string[] = [];
+    mockFetch((url, init) => {
+      urls.push(url);
+      return readsThen({ ...READY, descriptorId: 'pma-device' }, { ...FIELDS, type: 'pma' }, () => okJson({}))(url, init);
+    });
+    render(<OfficialEstarPanel program={PROGRAM} type="pma" variant="device" />);
+    await waitFor(() => expect(urls.some((u) => u.includes('/estar/official-fields'))).toBe(true));
+    const readiness = urls.filter((u) => u.includes('/estar/readiness'));
+    const fields = urls.filter((u) => u.includes('/estar/official-fields'));
+    expect(readiness.length).toBeGreaterThan(0);
+    expect(readiness.every((u) => u.includes('type=pma'))).toBe(true);
+    expect(fields.every((u) => u.includes('type=pma'))).toBe(true);
+    expect(urls.some((u) => u.includes('type=510k'))).toBe(false);
+  });
+
+  it('the type travels in the POST body', async () => {
+    let posted: Record<string, unknown> | null = null;
+    mockFetch(
+      readsThen({ ...READY, descriptorId: 'de_novo-ivd' }, { ...FIELDS, type: 'de_novo', variant: 'ivd' }, (_url, init) => {
+        posted = JSON.parse(String(init?.body)) as Record<string, unknown>;
+        return okJson({ governed: true });
+      }),
+    );
+    render(<OfficialEstarPanel program={PROGRAM} type="de_novo" variant="ivd" />);
+    await waitFor(() => expect(generateButton().disabled).toBe(false));
+    fireEvent.click(generateButton());
+    await waitFor(() => expect(posted).not.toBeNull());
+    const body = posted as unknown as Record<string, unknown>;
+    expect(body.type).toBe('de_novo');
+    expect(body.variant).toBe('ivd');
+    expect(body.useProgramData).toBe(true);
+  });
+
+  it('switching the pathway forgets what was typed under the previous one', async () => {
+    mockFetch(readsThen(READY, FIELDS, () => okJson({})));
+    const view = render(<OfficialEstarPanel program={PROGRAM} type="510k" variant="device" />);
+    await waitFor(() => expect(screen.getByLabelText('Common Name')).toBeTruthy());
+    fireEvent.change(screen.getByLabelText('Common Name'), { target: { value: 'Glucose monitor' } });
+    expect((screen.getByLabelText('Common Name') as HTMLInputElement).value).toBe('Glucose monitor');
+    view.rerender(<OfficialEstarPanel program={PROGRAM} type="de_novo" variant="device" />);
+    await waitFor(() => expect(screen.getByLabelText('Common Name')).toBeTruthy());
+    await waitFor(() =>
+      expect((screen.getByLabelText('Common Name') as HTMLInputElement).value).toBe(''),
+    );
   });
 });

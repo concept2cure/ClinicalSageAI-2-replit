@@ -66,6 +66,17 @@ export const regulatoryPrograms = pgTable(
     indication: text('indication'),
     intendedUse: text('intended_use'),
 
+    // Device-level eSTAR administrative facts (WO-8 Phase 3;
+    // migrations/20260903_regulatory_programs_estar_device_fields.sql). The
+    // device-profile intake writes them; the eSTAR administrative-data
+    // projection reads them as governed sources. Nullable: blank is reported,
+    // never guessed.
+    commonName: text('common_name'),
+    classificationName: text('classification_name'),
+    regulationNumber: text('regulation_number'),
+    associatedProductCodes: text('associated_product_codes'),
+    indicationsForUseCitation: text('indications_for_use_citation'),
+
     // Predicate/reference (for 510k/CER)
     predicateDevices: json('predicate_devices').$type<PredicateDevice[]>().default([]),
     equivalentDevices: json('equivalent_devices').$type<EquivalentDevice[]>().default([]),

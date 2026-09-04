@@ -226,17 +226,41 @@ export function requireEntitlement(feature: FeatureKey) {
       return next();
     }
 
-    // mode === 'on' — fail closed, with the honest reason. Unknown tier blocks
-    // here (we cannot verify the entitlement) and is allowed in warn above.
+    // mode === 'on' — fail closed. Unknown tier blocks here (we cannot verify
+    // the entitlement) and is allowed in warn above. The raw reason is logged;
+    // only the evaluator's fixed sentences are copy a client may see.
+    if (tier === null) {
+      logger.warn(`Entitlement '${feature}' could not be verified; refused (mode=on).`, {
+        feature,
+        requiredTier,
+        organizationId,
+        reason,
+      });
+    }
     return res.status(403).json({
       error: 'NOT_ENTITLED',
       capability: feature,
       requiredTier,
       message:
         tier === null
-          ? `Entitlement for '${feature}' could not be verified — ${reason}.` +
+          ? `Entitlement for '${feature}' could not be verified${clientSafeReason(reason)}.` +
             (requiredTier ? ` This capability requires the '${requiredTier}' plan or above.` : '')
           : `This capability requires the '${requiredTier}' plan or above (current plan: '${tier}').`,
     });
   };
+}
+
+/**
+ * The evaluator's fixed unknown-tier sentences — the only `reason` values a 403
+ * body may repeat. Every other reason ('tier lookup failed: <driver text>',
+ * 'unrecognized tier ...', 'unknown capability key ...') carries database or
+ * wiring detail and stays in the log.
+ */
+const CLIENT_SAFE_REASONS: ReadonlySet<string> = new Set([
+  'organization not found',
+  'organization context missing',
+]);
+
+function clientSafeReason(reason: string | null): string {
+  return reason !== null && CLIENT_SAFE_REASONS.has(reason) ? ` — ${reason}` : '';
 }

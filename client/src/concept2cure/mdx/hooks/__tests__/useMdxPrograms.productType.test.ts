@@ -9,6 +9,10 @@
  * the nIVD or the IVD template — is decided by product_type, which the kit's
  * Program shape used to drop. Dropping it meant every program on that surface
  * was filled on the nIVD form.
+ *
+ * The regulatory path survives too: the kit folds De Novo into the k510
+ * pathway, so without the raw path a De Novo program on the 510(k) surface
+ * would be produced as a 510(k).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
@@ -66,5 +70,29 @@ describe('useMdxPrograms — productType', () => {
     expect(ivd.pathway).toBe('k510');
     expect(ivd.productType).toBe('ivd');
     expect(device.productType).toBe('device');
+  });
+
+  it('carries the server regulatory_path onto the kit Program — De Novo stays De Novo under the k510 pathway', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: [
+          row({ regulatoryPath: 'de_novo', programType: 'DE_NOVO' }),
+          row({ id: 'a2b4c6d8-0000-0000-0000-000000000011', regulatoryPath: 'pma', programType: 'PMA', productType: 'device' }),
+          row({ id: 'a2b4c6d8-0000-0000-0000-000000000012', regulatoryPath: null }),
+        ],
+      }),
+    });
+    const { result } = renderHook(() => useMdxPrograms());
+    await waitFor(() => expect(result.current.programs).not.toBeNull());
+    const [deNovo, pma, unset] = result.current.programs!;
+    expect(deNovo.pathway).toBe('k510');
+    expect(deNovo.regulatoryPath).toBe('de_novo');
+    expect(pma.pathway).toBe('pma');
+    expect(pma.regulatoryPath).toBe('pma');
+    /* A null path is absent, never a fabricated '510k' — the type derivation
+       decides what an unset path reads as, not the adapter. */
+    expect(unset.regulatoryPath).toBeUndefined();
   });
 });

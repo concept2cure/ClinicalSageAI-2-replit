@@ -225,6 +225,37 @@ describe('useEstarExport.exportOfficialEstar — useProgramData + data', () => {
     });
   });
 
+  it('sends the pathway type from the option — de_novo and pma reach the wire', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ governed: true }));
+    const { result } = renderHook(() => useEstarExport());
+    await act(async () => {
+      await result.current.exportOfficialEstar(PROGRAM, 'device', { type: 'de_novo', useProgramData: true });
+    });
+    await act(async () => {
+      await result.current.exportOfficialEstar(PROGRAM, 'ivd', { type: 'pma', useProgramData: true });
+    });
+    const bodyOf = (i: number) =>
+      JSON.parse(String((fetchMock.mock.calls[i][1] as { body?: unknown }).body)) as Record<string, unknown>;
+    const first = bodyOf(0);
+    const second = bodyOf(1);
+    expect(first.type).toBe('de_novo');
+    expect(first.variant).toBe('device');
+    expect(second.type).toBe('pma');
+    expect(second.variant).toBe('ivd');
+  });
+
+  it('without a type option sends 510k — callers that predate the option keep their behaviour', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ governed: true }));
+    const { result } = renderHook(() => useEstarExport());
+    await act(async () => {
+      await result.current.exportOfficialEstar(PROGRAM, 'device', { useProgramData: true });
+    });
+    const body = JSON.parse(
+      String((fetchMock.mock.calls[0][1] as { body?: unknown }).body),
+    ) as Record<string, unknown>;
+    expect(body.type).toBe('510k');
+  });
+
   it('without opts sends useProgramData:false and an empty data map (today\'s behaviour)', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ governed: true }));
     const { result } = renderHook(() => useEstarExport());
@@ -235,6 +266,7 @@ describe('useEstarExport.exportOfficialEstar — useProgramData + data', () => {
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(String(init.body)) as Record<string, unknown>;
     expect(body.useProgramData).toBe(false);
+    expect(body.type).toBe('510k');
     expect(body.data).toEqual({});
     // No report on the wire ⇒ null, never a fabricated count.
     expect(outcome?.fieldReport).toBeNull();

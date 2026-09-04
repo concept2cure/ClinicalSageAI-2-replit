@@ -27,7 +27,14 @@
 
 import { useFetchJson } from './useFetchJson';
 
-export type OfficialEstarType = '510k';
+/**
+ * The marketing pathways the official eSTAR is produced for. FDA ships one
+ * nIVD PDF and one IVD PDF that each carry 510(k), De Novo and PMA, so the
+ * pathway selects the field map and the submission-type wording, and the
+ * variant selects the physical template family. Mirrors the server's
+ * ESTAR_TYPES minus the PreSTAR request types, which have no vendored template.
+ */
+export type OfficialEstarType = '510k' | 'de_novo' | 'pma';
 export type OfficialEstarVariant = 'device' | 'ivd';
 
 export interface OfficialFieldView {
@@ -41,6 +48,13 @@ export interface OfficialFieldView {
   value: string | null;
   /** 'store.column' provenance, or null for a user-supplied-only key. */
   source: string | null;
+  /**
+   * The PRIMARY governed 'store.column' declared for the key — set even when
+   * `value` is blank, so the surface can say where the durable home is
+   * instead of only offering an export-only input. Null only when the key has
+   * no declared source.
+   */
+  declaredSource: string | null;
 }
 
 export interface OfficialFieldsView {
@@ -76,6 +90,7 @@ const STORE_WORDS: Record<string, string> = {
   organizations: 'Organization',
   fda_510k_projects: '510(k) project',
   client_workspaces: 'Client workspace',
+  estar_registrations: 'eSTAR registration',
 };
 
 /** Column halves that need more than an underscore-to-space rewrite. */
@@ -87,6 +102,17 @@ const COLUMN_WORDS: Record<string, string> = {
 
 export const REQUEST_SOURCE_WORDS = 'Entered for this export · not stored';
 export const NO_SOURCE_WORDS = 'No governed source';
+
+/**
+ * The words for a governed key the platform holds no value for: where the
+ * durable home is, so the user sets it there rather than typing it into every
+ * export. Null when the key declares no source — the row then reads as
+ * export-only, as before. Pure + exported for the unit test.
+ */
+export function notSetWords(declaredSource: string | null | undefined): string | null {
+  if (!declaredSource) return null;
+  return `Not set — ${sourceWords(declaredSource)}`;
+}
 
 /**
  * Render a provenance string as plain words for the surface — the user reads

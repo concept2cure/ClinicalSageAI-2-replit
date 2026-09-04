@@ -15,22 +15,62 @@ import { readXfaDatasetsValues } from '../../../forms/fill-official-pdf';
 import type { RequestDb } from '../../../../db/requestDb';
 import { clientWorkspaces, fda510kProjects, organizations, projects } from '../../../../../shared/schema';
 import { regulatoryPrograms } from '../../../../../shared/schema/programs';
+import { estarRegistrations } from '../../../../../shared/schema/estar-registration';
+
+// The Phase 3 homes (which key lives on which store, declaredSource, the
+// loader's column lists, the new homes reaching their SOM paths) are pinned in
+// ./estar-administrative-data.governed-homes.test.ts.
 
 const DEVICE_MAP = ESTAR_FIELD_MAPS['510k-device'];
 
-/** A fully populated set of governed records. */
+/** A fully populated set of governed records — every one of the 20 mapped keys has a value. */
 function fullInputs(): EstarAdministrativeInputs {
   return {
     program: {
       productName: 'AcuSense CGM System',
       productCode: 'NBW',
       predicateDevices: [{ id: 'p1', name: 'Predicate One', kNumber: 'K203456' }],
+      commonName: 'Continuous glucose monitor',
+      classificationName: 'Glucose test system',
+      regulationNumber: '21 CFR 862.1355',
+      associatedProductCodes: 'QBJ, MDS',
+      indicationsForUseCitation: 'Attachment 4, page 1',
     },
     organization: { name: 'Concept2Cure, Inc.' },
+    registration: {
+      correspondentCompanyName: 'Regulatory Partners LLC',
+      correspondentContactEmail: 'corr@partners.example',
+      correspondentTelephone: '+1 555 0199',
+      declarationCompanyAddress: '1 Device Way, Boston, MA 02110',
+    },
     workspace: { name: 'Acme Devices', contactEmail: 'ra@acme.example', contactPhone: '+1 555 0100' },
     fda510kProject: { deviceName: 'AcuSense (GA row)', regulationNumber: '862.1355', productCode: 'QBJ' },
   };
 }
+
+/** What projecting fullInputs() must yield: key → [value, store.column]. */
+const FULL_PROJECTION: Record<string, [string, string]> = {
+  deviceTradeName: ['AcuSense CGM System', 'regulatory_programs.product_name'],
+  deviceCommonName: ['Continuous glucose monitor', 'regulatory_programs.common_name'],
+  deviceClassificationName: ['Glucose test system', 'regulatory_programs.classification_name'],
+  regulationNumber: ['21 CFR 862.1355', 'regulatory_programs.regulation_number'],
+  productCodes: ['NBW', 'regulatory_programs.product_code'],
+  associatedProductCodes: ['QBJ, MDS', 'regulatory_programs.associated_product_codes'],
+  applicantCompanyName: ['Acme Devices', 'client_workspaces.name'],
+  applicantContactEmail: ['ra@acme.example', 'client_workspaces.contact_email'],
+  applicantContactTelephone: ['+1 555 0100', 'client_workspaces.contact_phone'],
+  applicantSummaryEmail: ['ra@acme.example', 'client_workspaces.contact_email'],
+  correspondentCompanyName: ['Regulatory Partners LLC', 'estar_registrations.correspondent_company_name'],
+  correspondentContactEmail: ['corr@partners.example', 'estar_registrations.correspondent_contact_email'],
+  correspondentTelephone: ['+1 555 0199', 'estar_registrations.correspondent_telephone'],
+  correspondentSummaryEmail: ['corr@partners.example', 'estar_registrations.correspondent_contact_email'],
+  predicateSubmissionNumber: ['K203456', 'regulatory_programs.predicate_devices[0].kNumber'],
+  predicateDeviceTradeName: ['Predicate One', 'regulatory_programs.predicate_devices[0].name'],
+  declarationCompanyName: ['Acme Devices', 'client_workspaces.name'],
+  declarationCompanyAddress: ['1 Device Way, Boston, MA 02110', 'estar_registrations.declaration_company_address'],
+  declarationDeviceTradeName: ['AcuSense CGM System', 'regulatory_programs.product_name'],
+  indicationsForUseCitation: ['Attachment 4, page 1', 'regulatory_programs.indications_for_use_citation'],
+};
 
 describe('ESTAR_ADMINISTRATIVE_SOURCES — the reviewable table', () => {
   it('declares a source-or-none for EVERY key of the 510k-device field map (and the IVD map)', () => {
@@ -52,58 +92,24 @@ describe('ESTAR_ADMINISTRATIVE_SOURCES — the reviewable table', () => {
     expect(() => projectEstarAdministrativeData(fullInputs())).not.toThrow();
   });
 
-  it('holds exactly the user-supplied-only keys the contract names', () => {
-    const none = Object.entries(ESTAR_ADMINISTRATIVE_SOURCES)
-      .filter(([, v]) => v === null)
-      .map(([k]) => k)
-      .sort();
-    expect(none).toEqual(
-      [
-        'associatedProductCodes',
-        'correspondentCompanyName',
-        'correspondentContactEmail',
-        'correspondentSummaryEmail',
-        'correspondentTelephone',
-        'declarationCompanyAddress',
-        'deviceClassificationName',
-        'deviceCommonName',
-        'indicationsForUseCitation',
-      ].sort(),
-    );
+  it('no null (user-supplied-only) source remains for any key of the 510k-device or 510k-ivd map', () => {
+    for (const descriptorId of ['510k-device', '510k-ivd'] as const) {
+      for (const key of Object.keys(ESTAR_FIELD_MAPS[descriptorId])) {
+        expect(ESTAR_ADMINISTRATIVE_SOURCES[key], `${descriptorId}.${key} has no governed home`).not.toBeNull();
+      }
+    }
+    expect(Object.values(ESTAR_ADMINISTRATIVE_SOURCES).filter((v) => v === null)).toEqual([]);
   });
 });
 
 describe('projectEstarAdministrativeData — never invents', () => {
   it('projects every governed value with store.column provenance', () => {
     const { values, provenance } = projectEstarAdministrativeData(fullInputs());
-    expect(values).toEqual({
-      deviceTradeName: 'AcuSense CGM System',
-      regulationNumber: '862.1355',
-      productCodes: 'NBW',
-      applicantCompanyName: 'Acme Devices',
-      applicantContactEmail: 'ra@acme.example',
-      applicantContactTelephone: '+1 555 0100',
-      applicantSummaryEmail: 'ra@acme.example',
-      predicateSubmissionNumber: 'K203456',
-      predicateDeviceTradeName: 'Predicate One',
-      declarationCompanyName: 'Acme Devices',
-      declarationDeviceTradeName: 'AcuSense CGM System',
-    });
-    expect(provenance).toEqual({
-      deviceTradeName: 'regulatory_programs.product_name',
-      regulationNumber: 'fda_510k_projects.regulation_number',
-      productCodes: 'regulatory_programs.product_code',
-      applicantCompanyName: 'client_workspaces.name',
-      applicantContactEmail: 'client_workspaces.contact_email',
-      applicantContactTelephone: 'client_workspaces.contact_phone',
-      applicantSummaryEmail: 'client_workspaces.contact_email',
-      predicateSubmissionNumber: 'regulatory_programs.predicate_devices[0].kNumber',
-      predicateDeviceTradeName: 'regulatory_programs.predicate_devices[0].name',
-      declarationCompanyName: 'client_workspaces.name',
-      declarationDeviceTradeName: 'regulatory_programs.product_name',
-    });
-    // Every value has provenance and vice versa.
+    expect(values).toEqual(Object.fromEntries(Object.entries(FULL_PROJECTION).map(([k, [v]]) => [k, v])));
+    expect(provenance).toEqual(Object.fromEntries(Object.entries(FULL_PROJECTION).map(([k, [, p]]) => [k, p])));
+    // Every value has provenance and vice versa, and every mapped key is covered.
     expect(Object.keys(provenance).sort()).toEqual(Object.keys(values).sort());
+    expect(Object.keys(values).sort()).toEqual(Object.keys(DEVICE_MAP).sort());
   });
 
   it('absent inputs ⇒ absent keys (never "")', () => {
@@ -274,7 +280,7 @@ describe('resolveOfficialEstarFields — governed wins, request fills gaps, the 
     expect(r.ignoredRequestKeys.sort()).toEqual(['deviceCommonName', 'regulationNumber']);
   });
 
-  it('emits one row per mapped key, in field-map order, with caption + SOM path; unsourced keys are null/null', () => {
+  it('emits one row per mapped key, in field-map order, with caption + SOM path; a blank key is null/null but still names its declared home', () => {
     const r = resolveOfficialEstarFields({ fieldMap: DEVICE_MAP, governed, honourRequestOverGoverned: false });
     expect(r.fields.map((f) => f.key)).toEqual(Object.keys(DEVICE_MAP));
     const blank = r.fields.find((f) => f.key === 'indicationsForUseCitation')!;
@@ -284,6 +290,7 @@ describe('resolveOfficialEstarFields — governed wins, request fills gaps, the 
       xfaSomPath: DEVICE_MAP.indicationsForUseCitation.xfaSomPath,
       value: null,
       source: null,
+      declaredSource: 'regulatory_programs.indications_for_use_citation',
     });
     // `data` carries exactly the written keys — nothing blank, nothing extra.
     expect(Object.keys(r.data).sort()).toEqual(
@@ -315,6 +322,8 @@ describe('reportOfficialEstarFill — what was actually written', () => {
       caption: 'Product Code(s)',
       filled: false,
       source: null,
+      // Blank on the form, but the report still says where the durable home is.
+      declaredSource: 'regulatory_programs.product_code',
     });
     expect(fieldReport.ignoredRequestKeys).toEqual(['bogus']);
     expect(fieldSources).toEqual({
@@ -388,18 +397,20 @@ function fakeDb(opts: FakeDbOptions): RequestDb & { queries: FakeQuery[] } {
 }
 
 describe('loadEstarAdministrativeInputs', () => {
-  const programRow = { productName: 'Program Name', productCode: 'NBW', predicateDevices: [] };
+  const programRow = { productName: 'Program Name', productCode: 'NBW', predicateDevices: [], commonName: 'Common', regulationNumber: null };
   const orgRow = { name: 'The Org' };
+  const regRow = { correspondentCompanyName: 'Corr Co', correspondentContactEmail: null, declarationCompanyAddress: '1 Device Way' };
   const wsRow = { name: 'The Workspace', contactEmail: 'ra@ws.example', contactPhone: null };
   const fdaRow = { deviceName: 'GA Device', regulationNumber: '862.1355', productCode: null, projectId: 77 };
 
-  it('numeric ident: fda row → its project (workspace) → the project’s program', async () => {
+  it('numeric ident: fda row → its project (workspace) → the project’s program; plus the org’s registration row', async () => {
     const db = fakeDb({
       rows: new Map<Table, unknown[]>([
         [fda510kProjects, [fdaRow]],
         [projects, [{ id: 77, clientWorkspaceId: 5, regulatoryProgramId: 'prog-uuid' }]],
         [regulatoryPrograms, [programRow]],
         [organizations, [orgRow]],
+        [estarRegistrations, [regRow]],
         [clientWorkspaces, [wsRow]],
       ]),
     });
@@ -407,6 +418,7 @@ describe('loadEstarAdministrativeInputs', () => {
     expect(r).toEqual({
       program: programRow,
       organization: orgRow,
+      registration: regRow,
       workspace: wsRow,
       fda510kProject: { deviceName: 'GA Device', regulationNumber: '862.1355', productCode: null },
     });
@@ -424,11 +436,7 @@ describe('loadEstarAdministrativeInputs', () => {
         [clientWorkspaces, [wsRow]],
       ]),
     });
-    const r = await loadEstarAdministrativeInputs(db, {
-      organizationId: 2,
-      programUuid: 'prog-uuid',
-      fda510kProjectId: null,
-    });
+    const r = await loadEstarAdministrativeInputs(db, { organizationId: 2, programUuid: 'prog-uuid', fda510kProjectId: null });
     expect(r.program).toEqual(programRow);
     expect(r.workspace).toEqual(wsRow);
     expect(r.fda510kProject).toEqual({ deviceName: 'GA Device', regulationNumber: '862.1355', productCode: null });
@@ -446,11 +454,7 @@ describe('loadEstarAdministrativeInputs', () => {
       ]),
       trap: { when: (table) => table === projects, error: undefinedColumn },
     });
-    const r1 = await loadEstarAdministrativeInputs(byUuid, {
-      organizationId: 2,
-      programUuid: 'prog-uuid',
-      fda510kProjectId: null,
-    });
+    const r1 = await loadEstarAdministrativeInputs(byUuid, { organizationId: 2, programUuid: 'prog-uuid', fda510kProjectId: null });
     expect(r1.program).toEqual(programRow);
     expect(r1.organization).toEqual(orgRow);
     expect(r1.workspace).toBeNull();
@@ -471,11 +475,7 @@ describe('loadEstarAdministrativeInputs', () => {
         error: undefinedColumn,
       },
     });
-    const r2 = await loadEstarAdministrativeInputs(byNumber, {
-      organizationId: 2,
-      programUuid: null,
-      fda510kProjectId: 33,
-    });
+    const r2 = await loadEstarAdministrativeInputs(byNumber, { organizationId: 2, programUuid: null, fda510kProjectId: 33 });
     expect(r2.program).toBeNull();
     expect(r2.workspace).toEqual(wsRow);
     expect(r2.fda510kProject?.deviceName).toBe('GA Device');
@@ -491,10 +491,10 @@ describe('loadEstarAdministrativeInputs', () => {
     ).rejects.toThrow('boom');
   });
 
-  it('nothing resolvable ⇒ only the organization row (no workspace, no program, no fda row)', async () => {
+  it('nothing resolvable ⇒ only the organization row (no workspace, no program, no fda row, no registration)', async () => {
     const db = fakeDb({ rows: new Map<Table, unknown[]>([[organizations, [orgRow]]]) });
     const r = await loadEstarAdministrativeInputs(db, { organizationId: 2, programUuid: null, fda510kProjectId: 33 });
-    expect(r).toEqual({ program: null, organization: orgRow, workspace: null, fda510kProject: null });
+    expect(r).toEqual({ program: null, organization: orgRow, registration: null, workspace: null, fda510kProject: null });
   });
 });
 
@@ -534,12 +534,12 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
       else process.env.ESTAR_TEMPLATE_DIR = dirBefore;
     });
 
-    it('writes each governed value at its mapped path and leaves blank keys unwritten', async () => {
+    it('writes every one of the 20 governed values at its mapped path — none is user-supplied-only any more', async () => {
       const governed = projectEstarAdministrativeData(fullInputs());
       const resolved = resolveOfficialEstarFields({
         fieldMap: DEVICE_MAP,
         governed,
-        requestData: { deviceCommonName: 'Continuous glucose monitor', deviceTradeName: 'ignored' },
+        requestData: { deviceCommonName: 'ignored', deviceTradeName: 'ignored' },
         honourRequestOverGoverned: false,
       });
       const r = await fillEstarSubmission({ type: '510k', variant: 'device', data: resolved.data });
@@ -549,19 +549,17 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
 
       const paths = Object.values(DEVICE_MAP).map((s) => s.xfaSomPath!);
       const back = await readXfaDatasetsValues(r.pdfBytes!, paths);
-      for (const f of resolved.fields) {
-        const at = back[f.xfaSomPath!];
-        if (f.value !== null) expect(at, `${f.key} @ ${f.xfaSomPath}`).toBe(f.value);
-        else expect(at ?? '', `${f.key} should be blank`).toBe('');
+      for (const [key, [value]] of Object.entries(FULL_PROJECTION)) {
+        expect(back[DEVICE_MAP[key].xfaSomPath!], `${key} @ ${DEVICE_MAP[key].xfaSomPath}`).toBe(value);
       }
-      // The governed value, not the colliding request value, is in the form.
+      // The governed values, not the colliding request values, are in the form.
       expect(back[DEVICE_MAP.deviceTradeName.xfaSomPath!]).toBe('AcuSense CGM System');
       expect(back[DEVICE_MAP.deviceCommonName.xfaSomPath!]).toBe('Continuous glucose monitor');
 
       const { fieldReport } = reportOfficialEstarFill(resolved, r.filledFields);
-      expect(fieldReport.filledCount).toBe(12);
-      expect(fieldReport.blankCount).toBe(8);
-      expect(fieldReport.ignoredRequestKeys).toEqual(['deviceTradeName']);
+      expect(fieldReport.filledCount).toBe(20);
+      expect(fieldReport.blankCount).toBe(0);
+      expect(fieldReport.ignoredRequestKeys).toEqual(['deviceCommonName', 'deviceTradeName']);
     });
   },
 );

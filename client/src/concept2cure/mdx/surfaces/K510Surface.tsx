@@ -20,7 +20,7 @@ import { AnaDraftBanner } from '../components/AnaDraftBanner';
 import { PathwayPanes } from './pathway/PathwayPanes';
 import { DeviceProfilePanel } from './DeviceProfilePanel';
 import { EstarFilingPanel } from './EstarFilingPanel';
-import { OfficialEstarPanel, officialEstarVariantFor } from './OfficialEstarPanel';
+import { OfficialEstarPanel, officialEstarTypeFor, officialEstarVariantFor } from './OfficialEstarPanel';
 import { useSampleRows } from '../lib/useSampleRows';
 import type { EditorSectionRef } from '../../v2/editorTarget';
 import { downloadCsv } from '../../v2/download';
@@ -544,8 +544,10 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
           preview and the one Generate control. */}
       {/* The variant follows the program's product type: an IVD program that
           files a 510(k) lands here (pathway k510) and must be produced on the
-          IVD eSTAR, not the nIVD one. */}
-      <OfficialEstarPanel program={program} variant={officialEstarVariantFor(program)} />
+          IVD eSTAR, not the nIVD one. The type follows the program's
+          regulatory path: a De Novo program also lands here (the kit folds
+          De Novo into k510) and must be produced as a De Novo, not a 510(k). */}
+      <OfficialEstarPanel program={program} type={officialEstarTypeFor(program)} variant={officialEstarVariantFor(program)} />
 
       {/* eSTAR filing journey — register → assess → produce-gate → track,
           org-scoped from the session. eSTAR covers 510(k)/De Novo too. */}

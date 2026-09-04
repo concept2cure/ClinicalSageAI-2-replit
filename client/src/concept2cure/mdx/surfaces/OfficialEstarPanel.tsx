@@ -38,6 +38,7 @@ import { I } from '../icons';
 import type { Program } from '../data/programs';
 import { useEstarReadiness } from '../hooks/useK510';
 import {
+  notSetWords,
   sourceWords,
   useEstarOfficialFields,
   type OfficialEstarType,
@@ -57,6 +58,30 @@ export const ESTAR_FAMILY_WORDS: Record<OfficialEstarVariant, string> = {
   device: 'nIVD eSTAR',
   ivd: 'IVD eSTAR',
 };
+
+/** The marketing pathway a type is produced for, in FDA's own words. */
+export const ESTAR_PATHWAY_WORDS: Record<OfficialEstarType, string> = {
+  '510k': '510(k)',
+  de_novo: 'De Novo',
+  pma: 'PMA',
+};
+
+/**
+ * Which marketing pathway a program files on. The kit folds De Novo into the
+ * k510 pathway (both share the 510(k) surface), so the raw regulatory path is
+ * what decides: 'de_novo' and 'pma' name themselves; anything else — '510k',
+ * an unset path, the kit's sample rows — reads as a 510(k). Never guessed from
+ * the surface, which is why a PMA row on the PMA surface and a De Novo row on
+ * the 510(k) surface both produce the pathway they hold.
+ */
+export function officialEstarTypeFor(
+  program: Pick<Program, 'regulatoryPath'> | null | undefined,
+): OfficialEstarType {
+  const path = (program?.regulatoryPath ?? '').toLowerCase();
+  if (path === 'de_novo') return 'de_novo';
+  if (path === 'pma') return 'pma';
+  return '510k';
+}
 
 /**
  * Which official template a program files on. An IVD program that files a
@@ -147,7 +172,7 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
   React.useEffect(() => {
     setTyped({});
     resetExport();
-  }, [ident, variant, resetExport]);
+  }, [ident, type, variant, resetExport]);
 
   const ready = readiness.readiness?.ready === true;
   const blockers = readiness.readiness?.blockers ?? [];
@@ -208,7 +233,7 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
     void estarExport.exportOfficialEstar(
       { id: program.id, code: program.code, title: program.title },
       variant,
-      { useProgramData: true, data: typed },
+      { type, useProgramData: true, data: typed },
     );
   }
 
@@ -217,7 +242,7 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
       <div className="section-hdr">
         <div>
           <div className="section-title">
-            Official eSTAR · administrative data · {ESTAR_FAMILY_WORDS[variant]}
+            Official eSTAR · {ESTAR_PATHWAY_WORDS[type]} · {ESTAR_FAMILY_WORDS[variant]}
           </div>
           <div className="section-sub">{headerLine}</div>
         </div>
@@ -273,6 +298,18 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
 
       {report ? (
         <div className="section-sub" role="status" style={{ marginTop: 4 }}>
+          {/* FDA ships the eSTAR with its administrative sections
+              presence="hidden"; the form's own script reveals them once the
+              applicant picks the submission type. The values are written and
+              bound either way (an independent XFA engine renders all of them
+              once those sections are visible), but a reader who opens the file
+              and sees a first page only would otherwise think it came out
+              blank. Stating it is the difference between a filed form and a
+              support ticket. */}
+          <div data-testid="official-estar-open-note">
+            Open the file in Adobe Acrobat and choose the submission type on the first page. The
+            administrative sections stay hidden until the form reveals them.
+          </div>
           {report.blankKeys.length ? (
             <div>
               Left blank — the platform holds no value:{' '}
@@ -336,9 +373,19 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
             <tbody>
               {fields.fields.map((f) => {
                 const sourced = f.source !== null && f.value !== null;
+                /* A governed key the platform holds no value for: name the
+                   durable home so the user sets it there once, and still
+                   offer the export-only input so this export is not blocked
+                   on it. Null when the key has no declared home — the row
+                   then reads as export-only, as before. */
+                const notSet = sourced ? null : notSetWords(f.declaredSource);
                 const inputId = `official-estar-${variant}-${f.key}`;
                 return (
-                  <tr key={f.key} data-sourced={sourced ? 'true' : 'false'}>
+                  <tr
+                    key={f.key}
+                    data-sourced={sourced ? 'true' : 'false'}
+                    data-declared-source={!sourced && notSet ? 'true' : undefined}
+                  >
                     <td>
                       {sourced ? (
                         <span>{f.caption}</span>
@@ -366,7 +413,17 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
                       {sourced ? (
                         sourceWords(f.source)
                       ) : (
-                        <span id={`${inputId}-note`}>Entered for this export only · not stored</span>
+                        <span id={`${inputId}-note`}>
+                          {notSet ? (
+                            <span
+                              data-testid={`official-estar-not-set-${f.key}`}
+                              style={{ display: 'block' }}
+                            >
+                              {notSet}
+                            </span>
+                          ) : null}
+                          Entered for this export only · not stored
+                        </span>
                       )}
                     </td>
                   </tr>

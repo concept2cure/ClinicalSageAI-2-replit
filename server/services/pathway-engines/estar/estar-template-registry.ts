@@ -4,10 +4,9 @@
  * CDRH ingests the *official FDA eSTAR interactive PDF*, not a ZIP of rendered
  * section PDFs. To produce a real 510(k)/De Novo submission the platform must
  * fill that official template — which means the template file has to be present.
- * The official eSTAR PDFs are distributed by FDA and are NOT committed to the
- * repo (see `assets/estar-templates/README.md`); a maintainer drops the current
- * versions into `assets/estar-templates/` or points `ESTAR_TEMPLATE_DIR` at a
- * directory that holds them.
+ * The official eSTAR PDFs are distributed by FDA and vendored verbatim under
+ * `assets/estar-templates/`, pinned by its checksums.txt (see the README there);
+ * `ESTAR_TEMPLATE_DIR` can point at another directory that holds them.
  *
  * This module is the code half of that gap, mirroring `ectd/dtd-bundler.ts`:
  * it knows which official template each pathway needs, lists the vendored
@@ -71,21 +70,30 @@ export interface EstarTemplateDescriptor {
 
 /**
  * The official-template manifest — every FDA eSTAR template the platform fills.
- * Filenames/versions are placeholders pending the procurement drop — keep them in
- * sync with the files in `assets/estar-templates/` and the README. Do NOT
- * regenerate FDA's form. The nIVD/IVD eSTAR (v7.0) carries 510(k)/De Novo/PMA and
- * the PreSTAR2 (v3.0) carries Q-Sub/IDE/513(g); several logical descriptors may
- * resolve to the same physical FDA PDF (a maintainer can point them at one file).
+ * Keep filenames/versions in sync with the files in `assets/estar-templates/`
+ * (pinned in its checksums.txt) and the README. Do NOT regenerate FDA's form.
+ *
+ * FDA distributes the marketing pathways as ONE nIVD eSTAR PDF and ONE IVD eSTAR
+ * PDF (v7.0), each carrying 510(k), De Novo AND PMA — the pathway is chosen inside
+ * the form (`root.ApplicationType.USA.ATRadioButton110`), not by downloading a
+ * different file (see the family table in assets/estar-templates/README.md). So
+ * the six marketing descriptors resolve to two physical files: the three nIVD
+ * descriptors (510k/de_novo/pma × device) share `eSTAR-510k-non-ivd.pdf` and the
+ * three IVD descriptors share `eSTAR-510k-ivd.pdf`. The descriptor ids stay
+ * distinct because each pathway carries its OWN field map (the 510(k) Summary
+ * page and predicate fields are 510(k)-only). The PreSTAR2 (v3.0) descriptors
+ * stay `'unset'`: that template is not vendored.
  */
 export const ESTAR_TEMPLATE_MANIFEST: EstarTemplateDescriptor[] = [
   // nIVD / IVD eSTAR — marketing pathways
   { id: '510k-device', type: '510k', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-510k-non-ivd.pdf', version: '7.0' },
   { id: '510k-ivd', type: '510k', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-510k-ivd.pdf', version: '7.0' },
-  { id: 'de_novo-device', type: 'de_novo', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-denovo-non-ivd.pdf', version: 'unset' },
-  { id: 'de_novo-ivd', type: 'de_novo', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-denovo-ivd.pdf', version: 'unset' },
-  { id: 'pma-device', type: 'pma', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-pma-non-ivd.pdf', version: 'unset' },
-  { id: 'pma-ivd', type: 'pma', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-pma-ivd.pdf', version: 'unset' },
-  // PreSTAR2 — Early Submission Requests (serves both nIVD and IVD)
+  // De Novo and PMA are filed on the SAME vendored nIVD/IVD PDFs as 510(k) (FDA ships one file per family).
+  { id: 'de_novo-device', type: 'de_novo', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-510k-non-ivd.pdf', version: '7.0' },
+  { id: 'de_novo-ivd', type: 'de_novo', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-510k-ivd.pdf', version: '7.0' },
+  { id: 'pma-device', type: 'pma', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-510k-non-ivd.pdf', version: '7.0' },
+  { id: 'pma-ivd', type: 'pma', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-510k-ivd.pdf', version: '7.0' },
+  // PreSTAR2 — Early Submission Requests (serves both nIVD and IVD). Not vendored; stays 'unset'.
   { id: 'q_sub-prestar', type: 'q_sub', variant: 'prestar', family: 'prestar', expectedFileName: 'PreSTAR-q-sub.pdf', version: 'unset' },
   { id: 'ide-prestar', type: 'ide', variant: 'prestar', family: 'prestar', expectedFileName: 'PreSTAR-ide.pdf', version: 'unset' },
   { id: '513g-prestar', type: '513g', variant: 'prestar', family: 'prestar', expectedFileName: 'PreSTAR-513g.pdf', version: 'unset' },
