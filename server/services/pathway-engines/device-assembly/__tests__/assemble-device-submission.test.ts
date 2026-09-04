@@ -156,7 +156,15 @@ describe('assembleDeviceSubmission (B5)', () => {
 // eSTAR slots ("substantial-equivalence missing" on a Class III application).
 // These leaves are shaped exactly like that pack's labels and keys.
 
-const TEMPLATE_PMA_DEVICE = 'eSTAR-pma-non-ivd.pdf';
+/**
+ * The template a PMA device filing is produced on. It is the nIVD eSTAR — the
+ * SAME physical PDF the 510(k) uses — because FDA ships one nIVD form and one
+ * IVD form, each carrying 510(k), De Novo and PMA (assets/estar-templates/README.md).
+ * This read 'eSTAR-pma-non-ivd.pdf' until 2026-09-04, a name FDA does not
+ * publish, which is what let the PMA descriptor sit unvendored and unproducible
+ * while the file it needs had been on disk since Phase 1.
+ */
+const TEMPLATE_PMA_DEVICE = 'eSTAR-510k-non-ivd.pdf';
 
 /** The pack's root sections (one leaf per 814.20 module) plus the G.5 statistics leaf. */
 const pmaRootLeaves: EstarInputLeaf[] = [
