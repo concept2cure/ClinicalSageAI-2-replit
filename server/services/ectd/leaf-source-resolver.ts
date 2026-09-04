@@ -252,7 +252,24 @@ export async function materializeLeafSources(
         unresolved.push({ documentTable, documentId, reason: 'coauthor_documents row not found in this organization' });
         continue;
       }
-      await write(key, doc.moduleNumber || doc.title, doc.content ?? doc.title ?? '', {
+      // The body used to fall back to `doc.title`, so a row with no content
+      // rendered a PDF whose entire text was its own heading — counted in
+      // `materialized`, absent from `unresolved` and `skipped`, and with an
+      // approved status it was not `unfinalized` either. computeEctdCompleteness
+      // then returned complete: true / 100%, and a "submission-complete"
+      // package shipped a module leaf containing one line of title text. An
+      // empty document is a GAP in the package, never a blank leaf — the same
+      // rule the governed-section branch below already applies.
+      const coauthorBody = (doc.content ?? '').trim();
+      if (!coauthorBody) {
+        unresolved.push({
+          documentTable,
+          documentId,
+          reason: `coauthor document "${doc.title ?? documentId}" has no authored content — not materialized`,
+        });
+        continue;
+      }
+      await write(key, doc.moduleNumber || doc.title, coauthorBody, {
         title: doc.title ?? undefined,
         sectionCode: doc.moduleNumber ?? undefined,
       });
@@ -292,8 +309,19 @@ export async function materializeLeafSources(
         )
         .orderBy(desc(workflowDocumentVersions.version))
         .limit(1);
-      const body = version ? unifiedContentToText(version.content) : '';
-      await write(key, doc.title, body || doc.title, { title: doc.title ?? undefined });
+      // Same rule: `body || doc.title` rendered the heading as the whole leaf
+      // when the latest version had no content, or when there was no version
+      // row at all, and that leaf then counted toward a complete package.
+      const body = (version ? unifiedContentToText(version.content) : '').trim();
+      if (!body) {
+        unresolved.push({
+          documentTable,
+          documentId,
+          reason: `document "${doc.title ?? documentId}" has no version content — not materialized`,
+        });
+        continue;
+      }
+      await write(key, doc.title, body, { title: doc.title ?? undefined });
       continue;
     }
 

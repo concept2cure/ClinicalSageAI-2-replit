@@ -151,17 +151,42 @@ describe('materializeLeafSources', () => {
     await readPdf(stageDir, resolved.fileName);
   });
 
-  it('renders a unified_documents leaf with no version rows (title fallback)', async () => {
+  it('reports a coauthor_documents leaf with no content as UNRESOLVED, not a title-only leaf', async () => {
+    // The body fell back to the title here too, so an empty coauthor row
+    // rendered its own heading as the whole leaf and still counted complete.
+    await harness.pglite.exec(`
+      INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status)
+      VALUES (300, ${ORG}, 'Empty Coauthor Leaf', NULL, '2.8', 'approved');
+    `);
+    const stageDir = await stage();
+    const res = await materializeLeafSources({
+      leaves: [{ documentTable: 'coauthor_documents', documentId: 300 }],
+      organizationId: ORG,
+      stageDir,
+    });
+    expect(res.materialized).toBe(0);
+    expect(res.unresolved).toHaveLength(1);
+    expect(res.unresolved[0].reason).toMatch(/no authored content/);
+    expect(res.byKey.get(leafSourceKey('coauthor_documents', 300))).toBeUndefined();
+  });
+
+  it('reports a unified_documents leaf with no version rows as UNRESOLVED, not a title-only leaf', async () => {
+    // This pinned the opposite: the body fell back to `doc.title`, so a
+    // document with no version content rendered a PDF whose entire text was its
+    // own heading. It counted in `materialized`, appeared in neither
+    // `unresolved` nor `skipped`, and with an approved status was not
+    // `unfinalized` either — so computeEctdCompleteness returned 100% and a
+    // "submission-complete" package shipped a module leaf of one title line.
     const stageDir = await stage();
     const res = await materializeLeafSources({
       leaves: [{ documentTable: 'unified_documents', documentId: 11 }],
       organizationId: ORG,
       stageDir,
     });
-    expect(res.materialized).toBe(1);
-    expect(res.unresolved).toHaveLength(0);
-    const resolved = res.byKey.get(leafSourceKey('unified_documents', 11))!;
-    await readPdf(stageDir, resolved.fileName);
+    expect(res.materialized).toBe(0);
+    expect(res.unresolved).toHaveLength(1);
+    expect(res.unresolved[0].reason).toMatch(/no version content/);
+    expect(res.byKey.get(leafSourceKey('unified_documents', 11))).toBeUndefined();
   });
 
   it('reports an external vault_documents leaf as UNRESOLVED, never silently dropped', async () => {
