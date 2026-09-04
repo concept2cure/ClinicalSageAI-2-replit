@@ -10,6 +10,7 @@ import {
   readXfaDatasetsValues,
   type OfficialPdfFieldMap,
 } from '../../../forms/fill-official-pdf';
+import { listVendoredTemplates } from '../estar-template-registry';
 
 // Build a synthetic AcroForm PDF standing in for the official eSTAR template.
 async function makeSyntheticEstar(): Promise<Uint8Array> {
@@ -172,6 +173,45 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
       const back = await readXfaDatasetsValues(r.pdfBytes!, paths);
       for (const [key, value] of Object.entries(DATA)) {
         expect(back[map[key].xfaSomPath!]).toBe(value);
+      }
+    });
+
+    it('refuses a file with the right NAME whose bytes do not match its pin', async () => {
+      // Availability was a filename match and nothing else, so any PDF called
+      // eSTAR-510k-non-ivd.pdf — a retired v6.2 form, an edited copy — made
+      // templateAvailable and officialEstarPdf true, and the field map wrote
+      // our values wherever THAT file's SOM paths pointed. checksums.txt has
+      // pinned these bytes all along; nothing read it.
+      const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'estar-swapped-'));
+      const impostor = await PDFDocument.create();
+      impostor.addPage();
+      await fs.writeFile(
+        path.join(dir, 'eSTAR-510k-non-ivd.pdf'),
+        Buffer.from(await impostor.save()),
+      );
+      await fs.writeFile(
+        path.join(dir, 'checksums.txt'),
+        `${'0'.repeat(64)}  eSTAR-510k-non-ivd.pdf\n`,
+      );
+      const prev = process.env.ESTAR_TEMPLATE_DIR;
+      process.env.ESTAR_TEMPLATE_DIR = dir;
+      try {
+        const r = await fillEstarSubmission({ type: '510k', variant: 'device', data: DATA });
+        expect(r.templateAvailable).toBe(false);
+        expect(r.filled).toBe(false);
+        expect(r.pdfBytes).toBeUndefined();
+        expect(r.blockers.join(' ')).toMatch(/does not match the SHA-256 pinned/);
+      } finally {
+        if (prev === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
+        else process.env.ESTAR_TEMPLATE_DIR = prev;
+      }
+    });
+
+    it('the committed templates match the checksums pinned for them', async () => {
+      const vendored = await listVendoredTemplates();
+      expect(vendored.length).toBeGreaterThan(0);
+      for (const t of vendored) {
+        expect(t.integrity, `${t.fileName} integrity`).toBe('verified');
       }
     });
 
