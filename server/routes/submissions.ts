@@ -1356,7 +1356,7 @@ router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AU
       organizationId: ctx.organizationId,
       userId: ctx.userId,
       regulation: parsed.data.regulation,
-      applicationId: parsed.data.applicationId ?? `SEQ-${seqId}`,
+      applicationId: parsed.data.applicationId ?? `UNASSIGNED-SEQ-${seqId}`,
       productName: parsed.data.productName,
       manufacturer: parsed.data.manufacturer,
     });
@@ -1527,9 +1527,11 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
       sequenceId: seqId,
       organizationId: ctx.organizationId,
       userId: ctx.userId,
-      applicationId: parsed.data.applicationId ?? `SEQ-${seqId}`,
-      sponsorId: parsed.data.sponsorId ?? `ORG-${ctx.organizationId}`,
-      sponsorName: parsed.data.sponsorName ?? `Organization ${ctx.organizationId}`,
+      // Never fabricate an agency identifier — these reach the regional
+      // backbone and the package filename. Unassigned values say so.
+      applicationId: parsed.data.applicationId ?? `UNASSIGNED-SEQ-${seqId}`,
+      sponsorId: parsed.data.sponsorId ?? `UNASSIGNED-ORG-${ctx.organizationId}`,
+      sponsorName: parsed.data.sponsorName ?? `UNASSIGNED (organization ${ctx.organizationId})`,
     });
     // Assemble-only: the response carries metadata, not bytes — the staged
     // temp package is not needed once we've read the descriptor.

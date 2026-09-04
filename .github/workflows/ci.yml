@@ -263,6 +263,10 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:success-before-ok
 
+      - name: Guardrails — no invented signer or applicant identity
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:fabricated-identity
+
       - name: Guardrails — audit_logs fixtures accept the audit writer's columns
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The chained audit write is fail-closed: the §11.10(e) row and the
