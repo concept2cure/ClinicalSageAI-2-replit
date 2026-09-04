@@ -106,11 +106,16 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
         note(`Couldn’t render form ${formId} — ` + detail + '.', 'error');
         return;
       }
-      downloadBlob(`FDA-${formId}.pdf`, await res.blob());
-      // Say honestly WHAT was rendered: the official FDA template, a faithful
-      // reconstruction (dynamic-XFA forms have no official page to fill), or the
-      // labeled draft (no template installed). A tester must never mistake a
-      // reconstruction or draft for the official Adobe-rendered form.
+      // downloadBlob reports whether the anchor click actually reached the
+      // browser. It was called for its side effect and the note below claimed
+      // the PDF had arrived either way — so a blocked download read as a
+      // successful render.
+      const delivered = downloadBlob(`FDA-${formId}.pdf`, await res.blob());
+      // Say honestly WHAT was rendered: the official FDA template (filled
+      // through its AcroForm layer, or through the XFA datasets packet for
+      // 1571/3674), a faithful reconstruction, or the labeled draft when no
+      // template is installed. A tester must never mistake a reconstruction or
+      // a draft for the official form.
       const hdr = (k: string) => res.headers?.get?.(k) ?? null;
       const kind = hdr('X-Form-Used-Official-Template') === 'true'
         ? 'official FDA template'
@@ -120,7 +125,20 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
       const coverage = hdr('X-Form-Field-Coverage');
       const missingHdr = hdr('X-Form-Missing-Required');
       const missingCount = missingHdr ? missingHdr.split(',').filter(Boolean).length : 0;
-      note(`FDA ${formId} PDF: ${kind}${coverage ? ' · coverage ' + coverage : ''}${missingCount ? ' · ' + missingCount + ' required field(s) still missing' : ''}.`);
+      // Boxes the platform did not write. On an official form these are boxes
+      // the sponsor completes in Acrobat before signing, so naming the count is
+      // the difference between "here is your form" and "here is your form, and
+      // here is what is still blank on it".
+      const unmappedHdr = hdr('X-Form-Unmapped');
+      const unmappedCount = unmappedHdr ? unmappedHdr.split(',').filter(Boolean).length : 0;
+      const detail = `${coverage ? ' · coverage ' + coverage : ''}`
+        + `${missingCount ? ' · ' + missingCount + ' required field(s) still missing' : ''}`
+        + `${unmappedCount ? ' · ' + unmappedCount + ' box(es) left for you to complete on the form' : ''}`;
+      if (!delivered) {
+        note(`FDA ${formId} rendered (${kind})${detail}, but the browser blocked the download.`, 'error');
+        return;
+      }
+      note(`FDA ${formId} PDF: ${kind}${detail}.`);
     } finally { setBusy(null); }
   }, [metadataBody, note]);
 
