@@ -336,9 +336,13 @@
 
 /* UI standards §8: a failure always offers a recovery path. Sized to the 24px
    floor SC 2.5.8 sets on every pointer type, and to 44px where the pointer is
-   coarse. `.tbtn` has no base rule anywhere in client/src and the universal
-   `.c2c-v2 button` reset strips its padding, so the dismiss control is sized
-   here rather than inherited. */
+   coarse. `.tbtn` (below) is the 24px icon button; the dismiss control needs
+   the larger target, so it is sized here rather than inherited. */
+/* Icon-only tool button: clear-search, close-drawer. The universal `.c2c-v2 button`
+   reset strips padding, so the 24px pointer floor (SC 2.5.8) is set here. */
+.c2c-v2 .tbtn{display:inline-flex;align-items:center;justify-content:center;min-width:24px;min-height:24px;padding:2px 6px;border:0;border-radius:var(--radius-md);background:transparent;color:var(--text-400);cursor:pointer;}
+.c2c-v2 .tbtn:hover{color:var(--text-100);background:var(--bg-100);}
+.c2c-v2 .tbtn svg{width:14px;height:14px;}
 .c2c-v2 .c2c-error-retry {
   min-height: 32px; padding: 7px 14px;
   font-size: 12px; font-weight: 500; color: var(--accent-200);
@@ -487,6 +491,43 @@
 .c2c-v2 .reg-pill.neutral{background:var(--bg-200);color:var(--text-300);}
 .c2c-v2 .reg-pill.idle{background:var(--bg-100);color:var(--text-400);}
 .c2c-v2 .reg-pill.review{background:var(--ai-muted);color:var(--ai);}
+/* Regulatory-change worklist — one card per tracked change (RegChange.tsx).
+   The card is a disclosure: the top row is the button, the body opens under
+   it. Severity is carried by .reg-pill (shared), kind by .rci-kind. */
+.c2c-v2 .rci-feed{display:flex;flex-direction:column;gap:10px;}
+.c2c-v2 .rci-card{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:border-color var(--dur) ease-out;}
+.c2c-v2 .rci-card[data-open]{border-color:var(--accent-muted);}
+.c2c-v2 .rci-top{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:none;border:0;text-align:left;cursor:pointer;color:inherit;font:inherit;}
+.c2c-v2 .rci-top:hover{background:var(--bg-050);}
+.c2c-v2 .rci-top:focus-visible{outline:2px solid var(--accent-100);outline-offset:-2px;}
+.c2c-v2 .rci-kind{flex-shrink:0;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:4px;background:var(--bg-100);color:var(--text-300);}
+.c2c-v2 .rci-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.c2c-v2 .rci-title{font-size:13px;font-weight:600;color:var(--text-100);line-height:1.4;}
+.c2c-v2 .rci-meta{font-size:11px;color:var(--text-400);display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.c2c-v2 .rci-meta svg{width:10px;height:10px;}
+.c2c-v2 .rci-chev{flex-shrink:0;color:var(--text-400);display:inline-flex;}
+.c2c-v2 .rci-chev svg{width:14px;height:14px;}
+.c2c-v2 .rci-body{padding:4px 14px 14px;border-top:1px solid var(--border);}
+.c2c-v2 .rci-summary{font-size:12.5px;line-height:1.6;color:var(--text-200);margin:10px 0 12px;}
+.c2c-v2 .rci-impact-h{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-bottom:6px;}
+.c2c-v2 .rci-impact-h svg{width:12px;height:12px;}
+.c2c-v2 .rci-impact{display:grid;grid-template-columns:minmax(160px,1fr) 2fr;gap:12px;padding:8px 0;border-top:1px solid var(--border);font-size:12.5px;}
+.c2c-v2 .rci-impact:last-of-type{border-bottom:1px solid var(--border);}
+.c2c-v2 .rci-imp-dev{font-weight:600;color:var(--text-100);display:flex;flex-direction:column;gap:2px;}
+.c2c-v2 .rci-imp-sub{font-size:11px;font-weight:400;color:var(--text-400);}
+.c2c-v2 .rci-imp-what{color:var(--text-200);line-height:1.5;}
+.c2c-v2 .rci-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;}
+.c2c-v2 .rci-doc{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--text-300);}
+.c2c-v2 .rci-doc b{font-weight:600;color:var(--text-100);}
+.c2c-v2 .rci-doc svg{width:13px;height:13px;color:var(--text-400);}
+.c2c-v2 .rci-acts{display:flex;gap:8px;}
+.c2c-v2 .rci-act{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:5px 11px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-000);color:var(--text-200);cursor:pointer;transition:background var(--dur) ease-out;}
+.c2c-v2 .rci-act:hover{background:var(--bg-050);}
+.c2c-v2 .rci-act.pri{border-color:var(--accent-muted);background:var(--accent-000);color:var(--accent-200);}
+.c2c-v2 .rci-act.pri:hover{background:var(--accent-muted);}
+.c2c-v2 .rci-act svg{width:12px;height:12px;}
+/* "Action required" severity — the one tone the worklist uses that the pill family lacked */
+.c2c-v2 .reg-pill.err{background:color-mix(in srgb,var(--error) 12%,transparent);color:var(--error);}
 /* Market access extras */
 .c2c-v2 .reg-row-act{text-align:right;white-space:nowrap;}
 .c2c-v2 .reg-ask{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--accent-200);border:1px solid var(--accent-muted);border-radius:var(--radius-md);background:var(--accent-000);padding:4px 9px;}
@@ -526,6 +567,9 @@
 .c2c-v2 .reg-doc-n{font-size:12.5px;font-weight:500;color:var(--text-100);flex:1;min-width:0;}
 .c2c-v2 .reg-doc-sec{font-size:11px;color:var(--text-400);font-family:var(--font-mono);flex-shrink:0;}
 .c2c-v2 .reg-doc-go{display:inline-flex;color:var(--text-500);flex-shrink:0;}.c2c-v2 .reg-doc-go svg{width:14px;height:14px;}
+.c2c-v2 .reg-doc-open{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:5px 11px;border-radius:var(--radius-md);border:1px solid var(--accent-muted);background:var(--accent-000);color:var(--accent-200);cursor:pointer;}
+.c2c-v2 .reg-doc-open:hover{background:var(--accent-muted);}.c2c-v2 .reg-doc-open svg{width:12px;height:12px;}
+.c2c-v2 .reg-st{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:600;text-transform:capitalize;background:var(--bg-100);color:var(--text-300);}
 .c2c-v2 .reg-doc:hover .reg-doc-go{color:var(--accent-100);}
 .c2c-v2 .reg-cert{display:flex;align-items:center;gap:9px;width:100%;text-align:left;margin-top:3px;background:var(--accent-000);border:1px solid var(--accent-muted);border-radius:var(--radius-md);padding:9px 11px;cursor:pointer;font-size:12px;color:var(--text-200);}
 .c2c-v2 .reg-cert:hover{border-color:var(--accent-100);}
@@ -899,6 +943,7 @@
 .c2c-v2 .tb-detail-note[data-warn]{color:#7a4a0f;}.c2c-v2.dark .tb-detail-note[data-warn]{color:var(--warning);}
 .c2c-v2 .tb-dep-row{font-size:11.5px;color:var(--text-200);display:flex;align-items:center;gap:6px;margin-bottom:5px;}
 .c2c-v2 .tb-dep-row .ico{font-size:12px;color:var(--text-400);}
+.c2c-v2 .tb-dep-row.dn svg{color:var(--warning);}
 .c2c-v2 .tb-detail-f{display:flex;align-items:center;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);}
 @media (max-width:1100px){.c2c-v2 .tb-kanban{grid-template-columns:repeat(2,1fr);}}
 /* New-task intake (reuses .tb-detail modal shell) */
@@ -1051,6 +1096,8 @@
 .c2c-v2 .pj-card{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;}
 .c2c-v2 .pj-card-h{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
 .c2c-v2 .pj-card-h h3{font-size:12.5px;font-weight:600;color:var(--text-100);margin:0;}
+.c2c-v2 .pj-card-h-go{margin-left:auto;display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;color:var(--accent-200);white-space:nowrap;}
+.c2c-v2 .pj-card-h-go:hover{color:var(--accent-100);}.c2c-v2 .pj-card-h-go svg{width:12px;height:12px;}
 .c2c-v2 .pj-card-h .sec-sub{font-size:10.5px;color:var(--text-400);margin-left:auto;}
 .c2c-v2 .pj-vis{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--text-400);margin-left:auto;border:1px solid var(--border);border-radius:20px;padding:2px 8px;}
 .c2c-v2 .pj-vis .ico{font-size:11px;}
@@ -1537,6 +1584,11 @@
 .c2c-v2 .ana-sugg .ico{color:var(--accent-100);font-size:14px;flex-shrink:0;}
 .c2c-v2 .ana-msg{display:flex;flex-direction:column;gap:3px;}
 .c2c-v2 .ana-msg .who{font-size:10px;color:var(--text-400);font-weight:500;}
+/* governed sign-offs AnA asks for inside a message, and the outcome line each one becomes */
+.c2c-v2 .ana-msg-signoffs{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+.c2c-v2 .ana-signoff-done{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--success);}
+.c2c-v2 .ana-signoff-done[data-tone="error"]{color:var(--error);}
+.c2c-v2 .ana-signoff-done svg{width:13px;height:13px;flex-shrink:0;}
 .c2c-v2 .ana-msg .bd{font-size:12.5px;line-height:1.5;}
 .c2c-v2 .ana-msg.user .bd{background:var(--bg-200);padding:8px 11px;border-radius:12px 12px 4px 12px;align-self:flex-end;max-width:88%;}
 .c2c-v2 .ana-msg.ana .bd{font-family:var(--font-serif);}
@@ -1714,6 +1766,7 @@
    spring — and it stops entirely under prefers-reduced-motion, where the dot
    still reads as present, just still. */
 .c2c-v2 .ana-activity{margin-top:8px;}
+.c2c-v2 .ana-activity-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .c2c-v2 .ana-activity-toggle{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-300);background:none;border:0;padding:2px 0;cursor:pointer;transition:color 200ms ease-out;}
 .c2c-v2 .ana-activity-toggle:hover{color:var(--text-200);}
 .c2c-v2 .ana-activity-toggle:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:var(--radius-md);}
@@ -2032,6 +2085,10 @@
 .c2c-v2 .tone-ai{background:var(--ai-muted);color:var(--ai);}
 .c2c-v2 .tone-warn{background:var(--warning-muted);color:var(--warning);}
 .c2c-v2 .tone-idle{background:var(--idle-muted);color:var(--text-300);}
+/* `dim` and `err` are emitted by fifteen call sites (`rd-chip tone-` + tone) and had no rule: a
+   "no sources" or "failed" chip rendered as unstyled text. */
+.c2c-v2 .tone-dim{background:var(--bg-100);color:var(--text-400);}
+.c2c-v2 .tone-err{background:var(--error-muted);color:var(--error);}
 
 /* ── Labeling / IFU workbench ── */
 .c2c-v2 .lbl-symgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
@@ -2118,6 +2175,12 @@
 .c2c-v2 .scaf-row{display:flex;align-items:center;gap:8px;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);}
 .c2c-v2 .scaf-row:last-child{border-bottom:0;}
 .c2c-v2 .scaf-row .mono{font-size:11px;color:var(--text-200);}
+.c2c-v2 .scaf-readiness{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+.c2c-v2 .scaf-readiness-blurb{font-size:12.5px;color:var(--text-300);line-height:1.5;}
+.c2c-v2 .scaf-ok{display:inline-flex;color:var(--success);flex-shrink:0;}.c2c-v2 .scaf-ok svg{width:12px;height:12px;}
+.c2c-v2 .scaf-k{flex:1;color:var(--text-300);}
+.c2c-v2 .scaf-row .scaf-v{color:var(--text-100);text-align:right;}
+.c2c-v2 .scaf-ana{margin-top:14px;}
 .c2c-v2 .scaf-tag{display:inline-block;font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:var(--radius-md);background:var(--bg-200);color:var(--text-200);margin:0 6px 6px 0;}
 .c2c-v2 .scaf-note{margin-top:14px;padding:14px 16px;border:1px solid var(--border);border-left:3px solid var(--accent-100);border-radius:var(--radius-md);background:var(--bg-000);font-size:13px;line-height:1.55;color:var(--text-200);}
 .c2c-v2 .scaf-install{margin-top:18px;border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;}
@@ -2148,6 +2211,9 @@
 .c2c-v2 .gri-det{max-width:720px;}
 .c2c-v2 .gri-back{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-400);margin-bottom:16px;}
 .c2c-v2 .gri-back:hover{color:var(--text-100);}
+/* the chevron icon points right; as a back affordance it points the way back */
+.c2c-v2 .gri-back-ic{display:inline-flex;transform:rotate(180deg);}.c2c-v2 .gri-back-ic svg{width:12px;height:12px;}
+.c2c-v2 .gri-routes{display:flex;flex-wrap:wrap;margin-top:12px;}
 .c2c-v2 .gri-form{border:1px solid var(--border);border-radius:var(--radius-xl);padding:20px;background:var(--bg-050);margin-top:18px;}
 .c2c-v2 .gri-field{margin-bottom:14px;}
 .c2c-v2 .gri-field label{display:block;font-size:12px;font-weight:500;margin-bottom:5px;}
@@ -2157,6 +2223,8 @@
 .c2c-v2 .gri-input:focus{border-color:var(--accent-100);}
 .c2c-v2 select.gri-input{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a8880' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;}
 .c2c-v2 .gri-toggle{display:flex;align-items:center;gap:10px;}
+.c2c-v2 .gri-toggle-l{font-size:12px;color:var(--text-200);}
+.c2c-v2 .gri-run-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:14px;border-top:1px solid var(--border);}
 .c2c-v2 .gri-switch{width:38px;height:22px;border-radius:999px;background:var(--bg-300);position:relative;transition:background var(--dur);flex-shrink:0;}
 .c2c-v2 .gri-switch::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform var(--dur);box-shadow:var(--v2-shadow-sm);}
 .c2c-v2 .gri-switch[data-on="true"]{background:var(--accent-100);}
@@ -2418,6 +2486,8 @@
 
 /* ════════ NDA / BLA filing cockpit ════════ */
 .c2c-v2 .reg-wrap{height:100%;overflow-y:auto;padding:26px 30px 60px;max-width:1100px;margin:0 auto;}
+/* outer frame of the HAQ and NDA screens: gives the scroll column below a definite height */
+.c2c-v2 .cv-body{height:100%;min-height:0;}
 .c2c-v2 .reg-intro{font-size:13px;line-height:1.6;color:var(--text-400);margin:0;max-width:680px;}
 .c2c-v2 .reg-kpi-v[data-tone="warn"]{color:var(--warning);}
 .c2c-v2 .reg-kpi-v[data-tone="err"]{color:var(--error);}
@@ -2788,6 +2858,7 @@
 .c2c-v2 .ct-art-prov-g{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--text-400);line-height:1.45;}
 .c2c-v2 .ct-art-audit{display:inline-flex;align-items:center;gap:4px;color:var(--text-300);}.c2c-v2 .ct-art-audit svg{width:11px;height:11px;}
 .c2c-v2 .ct-art-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.c2c-v2 .ct-art-edit{flex:0 0 auto;}
 .c2c-v2 .ct-art-actions button{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg-000);color:var(--text-200);cursor:pointer;}
 .c2c-v2 .ct-art-actions button:hover{background:var(--bg-100);}.c2c-v2 .ct-art-actions button svg{width:13px;height:13px;}
 /* A disabled artifact action looked exactly like an enabled one — the artifact
@@ -3014,6 +3085,7 @@
    switched to the gradient, because resolving a contradiction should not
    silently change what a user sees. */
 .c2c-v2 .lp-page.hl{background:#fff;}
+.c2c-v2 .lp-smpc{margin-top:14px;}
 .c2c-v2 .lp-bw{border:2px solid var(--text-100);border-radius:6px;padding:14px 16px;font-size:13px;font-weight:600;color:var(--text-100);font-family:var(--font-serif,Georgia,serif);line-height:1.6;text-transform:uppercase;letter-spacing:.01em;}
 .c2c-v2 .lp-page-h{font-family:var(--font-serif,Georgia,serif);font-size:16px;font-weight:700;color:var(--text-100);margin-bottom:10px;}
 .c2c-v2 .lp-page-p{font-family:var(--font-serif,Georgia,serif);font-size:13.5px;line-height:1.7;color:var(--text-100);margin:0 0 10px;}
@@ -3430,6 +3502,7 @@
 .c2c-v2 .adc-head-main{flex:1;min-width:0;}
 .c2c-v2 .adc-kicker{font-size:10px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--text-400);}
 .c2c-v2 .adc-name{font-size:13.5px;font-weight:600;color:var(--text-100);margin-top:1px;line-height:1.3;}
+.c2c-v2 .adc-conf-n{font-variant-numeric:tabular-nums;}
 .c2c-v2 .adc-conf{flex:none;display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:100px;}
 .c2c-v2 .adc-conf svg{width:11px;height:11px;}
 .c2c-v2 .adc-conf.high{background:color-mix(in srgb,var(--success) 14%,transparent);color:var(--success);}

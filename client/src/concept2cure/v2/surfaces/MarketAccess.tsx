@@ -148,10 +148,10 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
   usePublishSurfaceContext('market-access', anaContext);
 
   return (
-    <div className="reg ma">
+    <div className="reg">
       <div className="reg-head">
         <div>
-          <div className="reg-kicker">Platform · commercial</div>
+          <div className="reg-eyebrow">Platform · commercial</div>
           <h1 className="reg-title">Market access &amp; reimbursement</h1>
           <p className="reg-sub">
             Payer coverage, value dossiers and coding strategy — the bridge from
@@ -200,7 +200,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
       </div>
 
       {tab === 'coverage' && (
-        <div className="reg-panel">
+        <div className="reg-card">
           {/* Four-state body: loading -> error -> empty -> real */}
           {live.loading ? (
             <div className="reg-sub2" style={{ padding: '18px 14px' }}>Loading payer positions…</div>
@@ -270,7 +270,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
       )}
 
       {tab === 'dossier' && (
-        <div className="reg-panel">
+        <div className="reg-card">
           <div className="ma-dossier-h">
             <div>
               <b>Global value dossier</b>
@@ -299,7 +299,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
       )}
 
       {tab === 'coding' && (
-        <div className="reg-panel">
+        <div className="reg-card">
           {live.loading ? (
             <div className="reg-sub2" style={{ padding: '18px 14px' }}>Loading payer positions…</div>
           ) : live.error ? (
@@ -363,7 +363,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
       )}
 
       {tab === 'strategy' && (
-        <div className="reg-panel reg-panel-pad">
+        <div className="reg-card reg-pad">
           {/* ── This was four bullets of invented market-access advice ────────
               "AnA's access sequencing for BX-204, positioned against Libre 3 on
               cost-comparability" — with a specific HCPCS code (E2103), a named

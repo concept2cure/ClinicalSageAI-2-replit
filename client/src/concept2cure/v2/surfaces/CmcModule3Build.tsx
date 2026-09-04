@@ -420,7 +420,7 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
                 <div className="cm-meta">No compiled sections yet — compile Module 3 to establish a readiness baseline.</div>
               )}
               {gate && (
-                <div className={'pj-con cm-gate-verdict' + (gate.ok ? ' is-ok' : '')} style={{ marginTop: 10 }}>
+                <div className={'pj-con cm-gate-verdict' + (gate.ok ? ' is-ok' : '')}>
                   <span className="ico">{gate.ok ? I.shieldCheck : I.alertTriangle}</span>
                   <div>
                     <div className="pj-con-t">{gate.ok ? 'Final export gate passed' : 'Final export refused'}</div>

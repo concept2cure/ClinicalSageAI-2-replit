@@ -640,3 +640,7 @@
 .mdx-shell .dd-act-sig { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-300); }
 .mdx-shell .dd-act-file { color: var(--text-300); }
 .mdx-shell .dd-act-sub { font-size: 10.5px; color: var(--text-400); margin-top: 2px; }
+/* audit and correspondence detail panes, the correspondence bar's left group (ledger L139) */
+.audit-det { display: flex; flex-direction: column; gap: 8px; }
+.corr-bar-l { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.corr-det { display: flex; flex-direction: column; gap: 8px; }

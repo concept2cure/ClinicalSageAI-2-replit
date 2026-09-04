@@ -492,4 +492,11 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      tenant's synthetic route, batch sizes and equipment: purged, not left as
      residue. */
   'manufacturing_processes',
+  /* The rendered-leaf register: the per-leaf PDF bytes a sequence was built
+     from, addressed by vault version and pinned by sha256/md5. That is the
+     tenant's own submission content and its integrity record — a tenant that
+     asks to be erased must not keep the fingerprints of its filing here. A
+     leaf (its only FKs are to organizations, which a purge updates rather than
+     deletes, and users), so its position at the end is free. */
+  'rendered_leaf_files',
 ]);

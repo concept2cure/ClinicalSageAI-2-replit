@@ -572,7 +572,7 @@ export function PyramidShell(_props: SurfaceViewProps) {
   if (!type) {
     return (
       <div className="py" data-screen-label="Submission pyramid">
-        <div className="reg-h">
+        <div className="reg-head">
           <div>
             <div className="ph-eyebrow">Submission · planning</div>
             <h1 className="reg-title">Submission pyramid</h1>
@@ -655,7 +655,7 @@ export function PyramidShell(_props: SurfaceViewProps) {
 
   return (
     <div className="py" data-screen-label={`Submission pyramid · ${tab}`}>
-      <div className="reg-h">
+      <div className="reg-head">
         <div>
           <div className="ph-eyebrow">Submission · planning</div>
           <h1 className="reg-title">Submission pyramid</h1>

@@ -205,22 +205,9 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
       {predicates.error && !predicates.rows && (
         <div
           className="banner-warn"
-          style={{
-            margin: '12px 0',
-            padding: '10px 14px',
-            background: 'var(--bg-050)',
-            border: '1px solid var(--border-100)',
-            borderLeft: '3px solid var(--accent-100)',
-            borderRadius: 6,
-            fontSize: 12,
-            color: 'var(--text-200)',
-            display: 'flex',
-            gap: 8,
-            alignItems: 'center',
-          }}
           role="status"
         >
-          <span style={{ color: 'var(--accent-100)' }}>{I.alertCircle}</span>
+          <span className="banner-ic">{I.alertCircle}</span>
           <span>
             Predicate intelligence is configuring for your tenant. The table below shows the canonical
             example data so you can preview the workflow; live K-number candidates appear here once the

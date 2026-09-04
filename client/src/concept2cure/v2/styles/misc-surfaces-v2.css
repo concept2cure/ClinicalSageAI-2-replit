@@ -245,7 +245,7 @@
   /* Risk management -- 5x5 matrix + hazard drawer */
   .risk-split{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:start;margin-top:8px;}
   .riskmx{display:grid;grid-template-columns:96px repeat(5,1fr);gap:4px;margin-top:8px;}
-  .riskmx-corner{}
+  .riskmx-corner{background:var(--bg-050);border-radius:6px;}
   .riskmx-col{font-size:10px;font-weight:600;color:var(--text-400);text-align:center;align-self:end;padding-bottom:4px;line-height:1.2;}
   .riskmx-row{font-size:10px;font-weight:600;color:var(--text-400);display:flex;align-items:center;justify-content:flex-end;padding-right:8px;text-align:right;}
   .riskmx-cell{min-height:52px;border-radius:var(--radius-md);display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;padding:6px;}

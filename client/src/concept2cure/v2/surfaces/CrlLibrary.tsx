@@ -566,7 +566,7 @@ export function CrlLibrary({ onAsk }: SurfaceViewProps) {
 
       {/* ── Coverage row. Every count with its denominator (§8.1). ── */}
       {coverage && (
-        <div className="pj-card crl-coverage" style={{ marginBottom: 14 }}>
+        <div className="pj-card crl-coverage">
           <div className="pj-card-b crl-coverage-b">
             <span className="crl-coverage-k">Coverage</span>
             <span>{coverage.scanned} letters scanned</span>

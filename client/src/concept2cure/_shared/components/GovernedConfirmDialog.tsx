@@ -33,6 +33,7 @@
  */
 import * as React from 'react';
 import { registerCeremonyOpen } from '../../v2/ceremony';
+import './governed-confirm-dialog.css';
 
 // ── Inline Lucide-style icons (stroke, currentColor) ─────────────────────────
 
@@ -211,216 +212,81 @@ export function GovernedConfirmDialog({
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !submitting) onCancel();
       }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'rgba(15, 12, 8, 0.55)',
-        zIndex: 200,
-      }}
     >
-      <div
-        ref={modalRef}
-        className="c2c-confirm"
-        onMouseDown={(e) => e.stopPropagation()}
-        style={{
-          width: 480,
-          maxWidth: 'calc(100% - 32px)',
-          padding: 20,
-          borderRadius: 10,
-          background: 'var(--surface, var(--card, #fff))',
-          color: 'var(--foreground, #1c1c1c)',
-          border: '1px solid var(--border, rgba(0,0,0,0.12))',
-          boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
-          display: 'grid',
-          gap: 14,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              background: 'var(--accent-050, rgba(217, 119, 87, 0.12))',
-              color: 'var(--accent-200, #a54a2a)',
-              flexShrink: 0,
-            }}
-          >
+      <div ref={modalRef} className="c2c-confirm" onMouseDown={(e) => e.stopPropagation()}>
+        <div className="c2c-confirm-head">
+          <span className="c2c-confirm-ic">
             <IconShield />
           </span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div
-              style={{
-                fontSize: 10,
-                letterSpacing: 0.4,
-                textTransform: 'uppercase',
-                color: 'var(--text-300, #7a7266)',
-                marginBottom: 4,
-              }}
-            >
-              Governed action · audit-logged
-            </div>
-            <div id={titleId} style={{ fontSize: 15, fontWeight: 600 }}>
+          <div className="c2c-confirm-heading">
+            <div className="c2c-confirm-kicker">Governed action · audit-logged</div>
+            <div id={titleId} className="c2c-confirm-action">
               {action}
             </div>
-            <div style={{ fontSize: 13, color: 'var(--text-200, #514e46)', marginTop: 2 }}>
-              {target}
-            </div>
+            <div className="c2c-confirm-target">{target}</div>
           </div>
           <button
             type="button"
+            className="c2c-confirm-x"
             onClick={onCancel}
             aria-label="Cancel"
             disabled={submitting}
-            style={{
-              border: 'none',
-              background: 'transparent',
-              padding: 4,
-              cursor: 'pointer',
-              color: 'var(--text-300, #7a7266)',
-            }}
           >
             <IconClose />
           </button>
         </div>
 
         {resource && (
-          <div
-            style={{
-              padding: '8px 10px',
-              background: 'var(--muted, rgba(0,0,0,0.03))',
-              borderRadius: 6,
-              fontSize: 12,
-            }}
-          >
-            <div style={{ color: 'var(--text-300, #7a7266)', fontSize: 10, textTransform: 'uppercase' }}>
-              Resource
-            </div>
-            <div style={{ fontFamily: 'var(--font-mono, ui-monospace, monospace)' }}>
-              {resource}
-            </div>
+          <div className="c2c-confirm-resource">
+            <div className="c2c-confirm-resource-l">Resource</div>
+            <div className="c2c-confirm-mono">{resource}</div>
           </div>
         )}
 
         <div>
-          <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+          <label className="c2c-confirm-label">
             <span>Reason for this action</span>
-            <span
-              style={{
-                fontFamily: 'var(--font-mono, ui-monospace, monospace)',
-                color: reasonOk ? 'var(--success, #4d6b2d)' : 'var(--text-300, #7a7266)',
-              }}
-            >
+            <span className="c2c-confirm-count" data-ok={reasonOk || undefined}>
               {reasonCount} / {minReason} min
             </span>
           </label>
           <textarea
+            className="c2c-confirm-reason"
             rows={3}
             placeholder="Captured verbatim in the audit log. Be specific."
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             autoFocus
             aria-required="true"
-            style={{
-              width: '100%',
-              padding: 8,
-              borderRadius: 6,
-              border: '1px solid var(--border-control, rgba(0,0,0,0.16))',
-              fontFamily: 'inherit',
-              fontSize: 13,
-              resize: 'vertical',
-              minHeight: 60,
-            }}
           />
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 12, marginBottom: 4 }}>
-            Type{' '}
-            <span
-              style={{
-                fontFamily: 'var(--font-mono, ui-monospace, monospace)',
-                padding: '1px 6px',
-                borderRadius: 4,
-                background: 'var(--muted, rgba(0,0,0,0.06))',
-              }}
-            >
-              {confirmWord}
-            </span>{' '}
-            to confirm
+          <label className="c2c-confirm-label" data-block="">
+            Type <span className="c2c-confirm-word">{confirmWord}</span> to confirm
           </label>
           <input
+            className="c2c-confirm-input"
             type="text"
             placeholder={confirmWord}
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             aria-required="true"
             autoComplete="off"
-            style={{
-              width: '100%',
-              padding: '6px 10px',
-              borderRadius: 6,
-              border: '1px solid var(--border-control, rgba(0,0,0,0.16))',
-              fontFamily: 'var(--font-mono, ui-monospace, monospace)',
-              fontSize: 13,
-            }}
           />
         </div>
 
         {submitError && (
-          <div
-            role="alert"
-            style={{
-              padding: '8px 10px',
-              borderRadius: 6,
-              background: 'var(--danger-050, rgba(160, 48, 40, 0.08))',
-              color: 'var(--danger, #a03028)',
-              fontSize: 12,
-            }}
-          >
+          <div role="alert" className="c2c-confirm-error">
             {submitError}
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={submitting}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 6,
-              border: '1px solid var(--border, rgba(0,0,0,0.16))',
-              background: 'transparent',
-              cursor: submitting ? 'not-allowed' : 'pointer',
-              fontSize: 13,
-            }}
-          >
+        <div className="c2c-confirm-acts">
+          <button type="button" className="c2c-confirm-btn" onClick={onCancel} disabled={submitting}>
             Cancel
           </button>
-          <button
-            type="button"
-            onClick={submit}
-            disabled={!canSubmit}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 6,
-              border: '1px solid transparent',
-              background: canSubmit ? 'var(--accent-200, #a54a2a)' : 'var(--muted, rgba(0,0,0,0.12))',
-              color: canSubmit ? '#fff' : 'var(--text-300, #7a7266)',
-              cursor: canSubmit ? 'pointer' : 'not-allowed',
-              fontSize: 13,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
+          <button type="button" className="c2c-confirm-btn pri" onClick={submit} disabled={!canSubmit}>
             {submitting ? 'Logging audit…' : (<><IconShield /> Confirm and log</>)}
           </button>
         </div>

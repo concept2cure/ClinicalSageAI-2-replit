@@ -26,6 +26,7 @@ import {
   markProposalApplied,
 } from './submission-chat-proposal-store.js';
 import { emit as emitMetric } from './submission-chat-metrics.js';
+import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate.js';
 
 const UNSUPPORTED_RATIO_BLOCK_THRESHOLD = parseFloat(
   process.env.ANA_REWRITE_UNSUPPORTED_BLOCK_RATIO ?? '0.3'
@@ -675,6 +676,18 @@ export async function applyRewrite(
           },
         }),
       ]
+    );
+
+    /* Lineage in the same transaction as the overwrite (ledger L160): the
+       rewrite carries no parked Data Room sources, so every clause of the new
+       text is recorded as the acting user's assertion, and a gap rolls the
+       rewrite back with its snapshot. */
+    await enforceAuthorLineage(
+      client,
+      input.organizationId,
+      { documentTable: 'concept2cure_artifacts', documentId: String(row.id) },
+      newContent,
+      String(input.userId),
     );
 
     /* ── 2b. A version row for the NEW content ─────────────────────────────

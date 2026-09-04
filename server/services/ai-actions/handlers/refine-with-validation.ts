@@ -11,6 +11,8 @@
  */
 
 import { governedActor } from '../../part11/governed-actor';
+import { queryableFromDrizzle } from '../../../db/drizzle-queryable';
+import { enforceAuthorLineage } from '../../clinical-regulatory-evidence/lineage-gate';
 import { concept2cureArtifacts, concept2cureArtifactVersions } from '../../../../shared/schema';
 import { registerActionHandler } from '../action-registry';
 import { fetchContentForProcessing, artifactWhereClause } from '../shared-utils';
@@ -229,6 +231,18 @@ const handler: AIActionHandler = {
           changeDescription: `AI refinement via validation findings (${findings.length} findings)`,
           createdById: ctx.user.userId,
         });
+        /* Lineage in the same transaction as the refined content (ledger
+           L160): every clause of the refined text is recorded as the acting
+           user's assertion — the refinement has no parked sources to quote —
+           and a gap rolls the refinement back. */
+        const client = queryableFromDrizzle(tx);
+        await enforceAuthorLineage(
+          client,
+          ctx.user.organizationId,
+          { documentTable: 'concept2cure_artifacts', documentId: String(artifact.id) },
+          refinedContent,
+          String(ctx.user.userId),
+        );
       });
 
       updatedObjects.push({

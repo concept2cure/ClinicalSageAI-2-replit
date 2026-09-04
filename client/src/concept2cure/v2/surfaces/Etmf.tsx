@@ -373,7 +373,6 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
             placeholder="Trial identifier"
             aria-label="Trial identifier"
             spellCheck={false}
-            style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid var(--c2c-border, rgba(120,130,150,0.35))', background: 'var(--c2c-surface-2, rgba(140,150,170,0.08))', color: 'inherit', font: 'inherit', minWidth: 200 }}
           />
           <div className="etmf-scope" role="tablist" aria-label="Completeness scope">
             <button role="tab" className={scope === 'essential' ? 'on' : ''} onClick={() => setScope('essential')}>Essential (ICH E6 §8)</button>
