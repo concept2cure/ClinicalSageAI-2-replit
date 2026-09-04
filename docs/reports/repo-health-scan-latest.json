@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-04T18:41:19.259Z",
+  "generatedAt": "2026-09-04T19:34:32.663Z",
   "git": {
-    "sha": "5ade234b4901f67a13ced897d66c29ff1ff64d1d",
+    "sha": "e9738f979d80fb1209ca244145fb3df7f3d1f24d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2615,7 +2615,7 @@
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
-        "lines": 1684
+        "lines": 1687
       },
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
