@@ -70,6 +70,32 @@ describe('assessEstarFilingReadiness', () => {
     ).toBeUndefined();
   });
 
+  it('does not report 100% complete while listing sections as missing', () => {
+    // Without deviceFlags every conditional section (sterilization, software,
+    // cybersecurity, …) is UNDETERMINED. Those were reported inside
+    // missingSections but excluded from the completeness denominator, so a
+    // submission with every known-required section present rendered
+    // "Content incomplete (100%): missing required sections sterilization,
+    // software, cybersecurity." A number that contradicts the list beside it
+    // tells the reader nothing.
+    const r = assessEstarFilingReadiness({
+      catalogKey: '510k',
+      variant: 'device',
+      registration: ALL_REGISTERED,
+      leaves: complete510kLeaves,
+      templateAvailable: true,
+      fieldMapPopulated: true,
+    })!;
+    expect(r.contentReady).toBe(false);
+    expect(r.missingSections.length).toBeGreaterThan(0);
+    expect(r.completeness).toBeLessThan(100);
+    const line = r.blockers.find((b) => b.startsWith('Content incomplete'))!;
+    expect(line).toBeDefined();
+    expect(line).not.toMatch(/\(100%\)/);
+    // And it says which problem it is: a question to answer, not a document to write.
+    expect(line).toMatch(/await an applicability answer, not a document/);
+  });
+
   it('an unregistered client is not eligible and cannot file', () => {
     const r = assessEstarFilingReadiness({
       catalogKey: '510k',
