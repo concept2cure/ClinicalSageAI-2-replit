@@ -156,7 +156,12 @@ describe('assembleDeviceSubmission (B5)', () => {
 // eSTAR slots ("substantial-equivalence missing" on a Class III application).
 // These leaves are shaped exactly like that pack's labels and keys.
 
-const TEMPLATE_PMA_DEVICE = 'eSTAR-pma-non-ivd.pdf';
+// FDA distributes ONE non-IVD eSTAR PDF, and it carries 510(k), De Novo and
+// PMA alike — so ESTAR_TEMPLATE_MANIFEST points the pma-device descriptor at
+// eSTAR-510k-non-ivd.pdf. This fixture named a per-pathway PMA file that no
+// descriptor expects, so the assembler correctly reported the real template
+// missing and produced a draft package instead of the official eSTAR.
+const TEMPLATE_PMA_DEVICE = 'eSTAR-510k-non-ivd.pdf';
 
 /** The pack's root sections (one leaf per 814.20 module) plus the G.5 statistics leaf. */
 const pmaRootLeaves: EstarInputLeaf[] = [
