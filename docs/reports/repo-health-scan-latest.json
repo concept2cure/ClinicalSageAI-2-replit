@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-03T20:23:59.898Z",
+  "generatedAt": "2026-09-04T17:48:02.978Z",
   "git": {
-    "sha": "7c9e13567a61eb30c23b2248ffb9720125de601f",
+    "sha": "c1e0df4b842d4e47255b5076e4e479d49d7ff51d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2169,7 +2169,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 233355
+        "bytes": 233369
       },
       {
         "file": "server/statistics-service.ts",
@@ -2614,12 +2614,12 @@
         "lines": 1693
       },
       {
-        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
-        "lines": 1678
+        "file": "server/routes/510k-estar-routes.ts",
+        "lines": 1684
       },
       {
-        "file": "server/routes/510k-estar-routes.ts",
-        "lines": 1672
+        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
+        "lines": 1678
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",

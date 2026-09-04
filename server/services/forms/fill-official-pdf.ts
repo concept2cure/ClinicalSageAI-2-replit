@@ -415,8 +415,14 @@ export interface XfaFieldInfo {
   type: string;
   /** The template's own caption text for the field ('' when it has none). */
   caption: string;
-  /** True when the path also exists in the `datasets` skeleton, i.e. it is fillable. */
+  /** True when the field resolves to a node in the `datasets` skeleton, i.e. it is fillable. */
   inDatasets: boolean;
+  /**
+   * The path of the field's node in the `datasets` data DOM, which is NOT always
+   * the template SOM path — see {@link resolveDataSomPath}. Null when the field
+   * does not resolve to a data node (then it is not fillable).
+   */
+  dataSomPath: string | null;
 }
 
 /** One XFA packet of a dynamic template, as the PDF carries it. */
@@ -825,6 +831,47 @@ function datasetsPathSet(datasetsXml: Buffer | undefined): Set<string> {
 }
 
 /**
+ * Resolve a template SOM path onto the path its node actually has in the
+ * `datasets` data DOM.
+ *
+ * These are not always the same string. XFA binds a field to a data node by
+ * NAME, and a subform that does not itself bind a data group is transparent to
+ * that walk — its name appears in the template SOM path but not in the data
+ * path. The two vendored form families in this repo show both shapes:
+ *
+ *   FDA eSTAR      template `root.AdministrativeDocumentation.PMNSummary.SSTextField220`
+ *                  data     `root.AdministrativeDocumentation.PMNSummary.SSTextField220`  (identical)
+ *   FDA Form 1571  template `topmostSubform.Page1.db_sponsor_name`
+ *                  data     `topmostSubform.db_sponsor_name`                              (Page1 is transparent)
+ *
+ * Comparing the template path against the data DOM directly therefore reported
+ * every field of FDA 1571 and 3674 as absent, and the platform concluded those
+ * forms were unfillable and fell back to a drawn reconstruction. They are not:
+ * 1571 has 246 fillable nodes and 3674 has 156.
+ *
+ * The match stays deliberately narrow, because a wrong locator writes a value
+ * into the wrong box of a form a sponsor signs: the exact path wins, and
+ * otherwise a candidate must share BOTH the root data group and the leaf field
+ * name. If more than one candidate does, the field is reported unresolved
+ * rather than guessed.
+ */
+export function resolveDataSomPath(templateSom: string, dataPaths: Set<string>): string | null {
+  if (dataPaths.has(templateSom)) return templateSom;
+  const segs = templateSom.split('.');
+  if (segs.length < 3) return null;
+  const root = segs[0];
+  const leaf = segs[segs.length - 1];
+  let hit: string | null = null;
+  for (const candidate of dataPaths) {
+    const c = candidate.split('.');
+    if (c.length < 2 || c[0] !== root || c[c.length - 1] !== leaf) continue;
+    if (hit) return null; // ambiguous — never guess which box to write
+    hit = candidate;
+  }
+  return hit;
+}
+
+/**
  * Enumerate the fields a dynamic XFA template declares — the XFA counterpart to
  * {@link listAcroFields}, which returns nothing for these templates. Each field
  * carries its SOM path, widget type, the template's OWN caption, and whether the
@@ -880,11 +927,13 @@ export async function listXfaFields(templateBytes: Uint8Array | Buffer): Promise
       if (!frame) return;
       if (frame.tag === 'caption' && captionDepth > 0) captionDepth--;
       if (frame.field) {
+        const dataSomPath = resolveDataSomPath(frame.field.som, datasetPaths);
         out.push({
           somPath: frame.field.som,
           type: frame.field.type,
           caption: frame.field.caption.replace(/\s+/g, ' ').trim(),
-          inDatasets: datasetPaths.has(frame.field.som),
+          inDatasets: dataSomPath !== null,
+          dataSomPath,
         });
       }
       if (frame.pushedName) path.pop();
@@ -1050,6 +1099,10 @@ export async function fillXfaDatasets(
     warnings.push('flatten is not supported for dynamic XFA templates (it would discard the XFA layer); ignored.');
   }
 
+  // The data DOM does not always mirror the template's SOM paths — a subform
+  // that binds no data group is transparent to the binding walk (FDA 1571's
+  // `Page1` is), so each mapped path is resolved onto the node it actually has.
+  const dataPaths = datasetsPathSet(datasets.xml);
   const edits: DatasetsEdit[] = [];
   const keyBySom = new Map<string, string>();
   for (const [canonicalKey, spec] of Object.entries(fieldMap)) {
@@ -1066,9 +1119,17 @@ export async function fillXfaDatasets(
       warnings.push(msg);
       continue;
     }
+    const dataSom = resolveDataSomPath(spec.xfaSomPath, dataPaths);
+    if (!dataSom) {
+      const msg = `XFA path "${spec.xfaSomPath}" (key "${canonicalKey}") does not resolve to a node in the template's datasets skeleton; skipped.`;
+      if (missingFieldPolicy === 'error') throw new Error(msg);
+      skipped.push(canonicalKey);
+      warnings.push(msg);
+      continue;
+    }
     const text = spec.type === 'checkbox' ? (toBoolean(value) ? '1' : '0') : toText(value);
-    edits.push({ somPath: spec.xfaSomPath, value: text });
-    keyBySom.set(spec.xfaSomPath, canonicalKey);
+    edits.push({ somPath: dataSom, value: text });
+    keyBySom.set(dataSom, canonicalKey);
   }
 
   const result = setDatasetsValues(datasets.xml.toString('utf8'), edits);
