@@ -297,6 +297,57 @@ describe.skipIf(!hasEstarTemplate)('dynamic XFA templates (official FDA eSTAR)',
     expect(back['root.Totally.Made.Up']).toBeNull();
   });
 
+  /*
+   * TWO CANONICAL KEYS RESOLVING ONTO ONE DATA NODE. The edits are keyed by
+   * resolved path, so the second key used to overwrite the first: one value was
+   * written, and the losing key was reported in NEITHER `filled` NOR `skipped`.
+   * `filled` is what the governed export records as written onto a form a
+   * sponsor signs, so a key that vanishes between the map and the record is the
+   * exact failure this module exists to prevent.
+   */
+  it('records BOTH keys as filled when two of them name one box with the same value', async () => {
+    const map: OfficialPdfFieldMap = {
+      deviceTradeName: { xfaSomPath: TRADE_NAME_SOM, type: 'text' },
+      summaryTradeName: { xfaSomPath: TRADE_NAME_SOM, type: 'text' },
+    };
+    const out = await fillXfaDatasets(template, map, {
+      deviceTradeName: 'BX-204',
+      summaryTradeName: 'BX-204',
+    });
+    expect(out.filled.sort()).toEqual(['deviceTradeName', 'summaryTradeName']);
+    expect(out.skipped).toEqual([]);
+    const back = await readXfaDatasetsValues(out.bytes, [TRADE_NAME_SOM]);
+    expect(back[TRADE_NAME_SOM]).toBe('BX-204');
+  });
+
+  it('writes NEITHER when two keys name one box with different values, and names both', async () => {
+    const map: OfficialPdfFieldMap = {
+      deviceTradeName: { xfaSomPath: TRADE_NAME_SOM, type: 'text' },
+      summaryTradeName: { xfaSomPath: TRADE_NAME_SOM, type: 'text' },
+    };
+    const out = await fillXfaDatasets(template, map, {
+      deviceTradeName: 'BX-204',
+      summaryTradeName: 'BX-205',
+    });
+    /* No key is silently dropped, and no arbitrary winner is written: the box
+       stays as FDA shipped it and the operator is told which keys disagree. */
+    expect(out.filled).toEqual([]);
+    expect(out.skipped.sort()).toEqual(['deviceTradeName', 'summaryTradeName']);
+    expect(out.warnings.join(' ')).toMatch(/claimed by more than one key/);
+    const back = await readXfaDatasetsValues(out.bytes, [TRADE_NAME_SOM]);
+    expect(back[TRADE_NAME_SOM]).toBe('');
+  });
+
+  it('throws on a conflicting claim under missingFieldPolicy "error"', async () => {
+    const map: OfficialPdfFieldMap = {
+      a: { xfaSomPath: TRADE_NAME_SOM, type: 'text' },
+      b: { xfaSomPath: TRADE_NAME_SOM, type: 'text' },
+    };
+    await expect(
+      fillXfaDatasets(template, map, { a: 'One', b: 'Two' }, { missingFieldPolicy: 'error' }),
+    ).rejects.toThrow(/claimed by more than one key/);
+  });
+
   it('throws for an undeclared path under missingFieldPolicy "error"', async () => {
     const map: OfficialPdfFieldMap = { ghost: { xfaSomPath: 'root.Nope', type: 'text' } };
     await expect(

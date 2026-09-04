@@ -1105,6 +1105,9 @@ export async function fillXfaDatasets(
   const dataPaths = datasetsPathSet(datasets.xml);
   const edits: DatasetsEdit[] = [];
   const keyBySom = new Map<string, string>();
+  /** Every canonical key that resolved onto each data node, and the one text
+   *  they agree on. More than one key per node is legal only when they agree. */
+  const collisions = new Map<string, { keys: string[]; text: string; conflicted: boolean }>();
   for (const [canonicalKey, spec] of Object.entries(fieldMap)) {
     const value = data[canonicalKey];
     if (!hasData(value)) {
@@ -1128,17 +1131,61 @@ export async function fillXfaDatasets(
       continue;
     }
     const text = spec.type === 'checkbox' ? (toBoolean(value) ? '1' : '0') : toText(value);
+    /*
+     * TWO KEYS ON ONE BOX. `setDatasetsValues` keys its edits by resolved path,
+     * so a second key naming a node another key already claimed used to
+     * overwrite it: one value went into the form, and the losing key appeared in
+     * NEITHER `filled` NOR `skipped`. That is the one outcome this module exists
+     * to prevent — `filled` is what the governed export records as written, so a
+     * silent collapse makes the record attest a fill it cannot account for.
+     *
+     * Same value, two names for one box: nothing is lost. Both keys are recorded
+     * as filled, because both were.
+     *
+     * DIFFERENT values: one of them would have to win, and there is no honest
+     * basis for choosing. Neither is written and both are reported, so the box
+     * stays blank and the operator is told which two keys disagree — a gap they
+     * can see beats a value one of them never asked for.
+     */
+    const claimed = collisions.get(dataSom);
+    if (claimed) {
+      if (claimed.text === text) {
+        claimed.keys.push(canonicalKey);
+        continue;
+      }
+      const msg =
+        `XFA path "${dataSom}" is claimed by more than one key with different values ` +
+        `("${claimed.keys.join('", "')}" and "${canonicalKey}"); neither was written.`;
+      if (missingFieldPolicy === 'error') throw new Error(msg);
+      claimed.conflicted = true;
+      skipped.push(canonicalKey);
+      warnings.push(msg);
+      continue;
+    }
+    collisions.set(dataSom, { keys: [canonicalKey], text, conflicted: false });
     edits.push({ somPath: dataSom, value: text });
     keyBySom.set(dataSom, canonicalKey);
   }
 
-  const result = setDatasetsValues(datasets.xml.toString('utf8'), edits);
-  for (const som of result.written) filled.push(keyBySom.get(som)!);
+  /* A conflicted node is not written at all — the edit queued by whichever key
+     reached it first is withdrawn, and that key joins the others in `skipped`. */
+  const conflicted = new Set(
+    [...collisions.entries()].filter(([, c]) => c.conflicted).map(([som]) => som),
+  );
+  const liveEdits = edits.filter((e) => !conflicted.has(e.somPath));
+  for (const som of conflicted) {
+    for (const key of collisions.get(som)!.keys) skipped.push(key);
+  }
+
+  const result = setDatasetsValues(datasets.xml.toString('utf8'), liveEdits);
+  for (const som of result.written) filled.push(...collisions.get(som)!.keys);
   for (const som of result.missing) {
-    const key = keyBySom.get(som)!;
-    const msg = `XFA path "${som}" (key "${key}") is not declared in the template's datasets skeleton; skipped.`;
+    /* Every key that named this node is reported, not just the first: an
+       undeclared path is undeclared for all of them. */
+    const keys = collisions.get(som)?.keys ?? [keyBySom.get(som)!];
+    const msg = `XFA path "${som}" (key "${keys.join('", "')}") is not declared in the template's datasets skeleton; skipped.`;
     if (missingFieldPolicy === 'error') throw new Error(msg);
-    skipped.push(key);
+    for (const key of keys) skipped.push(key);
     warnings.push(msg);
   }
 
