@@ -60,8 +60,26 @@ function isAuthored(s: DeviceSectionInput): boolean {
 
 /** Statuses that represent finalized, non-draft content (legacy + governed vocabularies). */
 const FINALIZED_STATUSES = new Set(['approved', 'finalized', 'final', 'locked']);
-/** Statuses that are explicitly still in progress — never substantive regardless of length. */
-const DRAFT_STATUSES = new Set(['draft', 'drafted', 'todo', 'not_started', 'review', 'in_review', 'in-progress', 'in_progress']);
+/**
+ * Statuses that are explicitly still in progress — never substantive regardless
+ * of length.
+ *
+ * `drafting` and `ready_for_review` were missing, and they are the two the AI
+ * drafter actually writes: write_kit_section defaults `status` to 'drafting'
+ * and accepts only drafting | ready_for_review | in_review, while rejecting
+ * bodies under 40 characters — the same floor as
+ * MIN_SUBSTANTIVE_CONTENT_LENGTH below. So every AI-drafted section fell
+ * through this set to the length-only branch and passed it by construction:
+ * unreviewed machine drafts marked their eSTAR sections present, and
+ * contentReady / canFileNow went true on content no human had read.
+ * `drafting` is also the legacy vocabulary's own in-progress value
+ * (shared/schema.ts: "todo, drafting, validated").
+ */
+const DRAFT_STATUSES = new Set([
+  'draft', 'drafted', 'drafting', 'todo', 'not_started',
+  'review', 'in_review', 'in-review', 'ready_for_review', 'ready-for-review',
+  'in-progress', 'in_progress',
+]);
 
 /** Bare placeholder bodies that must never count as real content, whatever their length. */
 const PLACEHOLDER_BODIES = new Set(['tbd', 'todo', 'tba', 'n/a', 'placeholder', 'coming soon', 'to be determined']);

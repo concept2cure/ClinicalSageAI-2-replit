@@ -23,6 +23,23 @@ describe('sectionsToLeaves (authored content → readiness leaves)', () => {
     expect(leaf.substantive).toBe(false);
   });
 
+  it.each(['drafting', 'ready_for_review', 'ready-for-review', 'in-review'])(
+    'an AI-drafted section with status %s is not substantive',
+    (status) => {
+      // write_kit_section defaults to 'drafting' and accepts only
+      // drafting | ready_for_review | in_review, and rejects bodies under 40
+      // characters — the same floor as MIN_SUBSTANTIVE_CONTENT_LENGTH. Only
+      // 'in_review' was in DRAFT_STATUSES, so every AI draft fell through to
+      // the length branch and passed it by construction: machine-written,
+      // unreviewed content marked its eSTAR sections present and drove
+      // contentReady / canFileNow true.
+      const [leaf] = sectionsToLeaves([
+        { sectionNumber: '4', sectionTitle: 'Performance Testing', category: 'performance_testing', status, content: REAL_CONTENT },
+      ]);
+      expect(leaf.substantive).toBe(false);
+    },
+  );
+
   it('honesty fix: a bare placeholder body ("TBD") is built with substantive:false even when status is approved', () => {
     const [leaf] = sectionsToLeaves([
       { sectionNumber: '5', sectionTitle: 'Performance Testing', category: 'performance_testing', status: 'approved', content: 'TBD' },

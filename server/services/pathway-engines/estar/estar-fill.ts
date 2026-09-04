@@ -157,11 +157,32 @@ export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEs
         missingFieldPolicy: 'skip',
       });
 
-  base.filled = true;
-  base.pdfBytes = result.bytes;
   base.filledFields = result.filled;
   base.skippedFields = result.skipped;
   base.warnings = result.warnings;
+
+  // `filled` is documented as "True only when a real filled official eSTAR PDF
+  // was produced", but it was set unconditionally the moment the fill RAN. A
+  // caller passing `data: {}` — which POST /official accepts, its schema
+  // defaulting `data` to an empty object — got every mapped key skipped, the
+  // untouched template bytes back, `filled: true`, no blockers, and a 200
+  // carrying `officialEstarPdf: true` with the placement "Module 1 / official
+  // FDA eSTAR (submittable)". That is a blank official FDA form registered as a
+  // submittable artifact.
+  //
+  // A fill that wrote nothing produced no filled form. Fail closed and say why,
+  // rather than hand back the blank template dressed as a submission.
+  if (result.filled.length === 0) {
+    base.blockers.push(
+      `Cannot produce a submittable eSTAR: the fill wrote no values into "${descriptor.id}". ` +
+        `The platform held no value for any of the ${Object.keys(fieldMap!).length} mapped administrative fields, ` +
+        `so the output would be the blank official template.`,
+    );
+    return base;
+  }
+
+  base.filled = true;
+  base.pdfBytes = result.bytes;
   return base;
 }
 
