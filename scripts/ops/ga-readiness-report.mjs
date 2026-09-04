@@ -102,10 +102,15 @@ const REQUIRED_DTDS = [
 const ESTAR_DESCRIPTORS = [
   { id: '510k-device', file: 'eSTAR-510k-non-ivd.pdf' },
   { id: '510k-ivd', file: 'eSTAR-510k-ivd.pdf' },
-  { id: 'de_novo-device', file: 'eSTAR-denovo-non-ivd.pdf' },
-  { id: 'de_novo-ivd', file: 'eSTAR-denovo-ivd.pdf' },
-  { id: 'pma-device', file: 'eSTAR-pma-non-ivd.pdf' },
-  { id: 'pma-ivd', file: 'eSTAR-pma-ivd.pdf' },
+  // De Novo and PMA are filed on the SAME two FDA PDFs as the 510(k): FDA ships
+  // one nIVD and one IVD eSTAR, each carrying all three marketing pathways.
+  // These four named eSTAR-denovo-*/eSTAR-pma-* until 2026-09-04, which asked
+  // procurement for files FDA does not publish and reported the two pathways
+  // blocked while they were producing.
+  { id: 'de_novo-device', file: 'eSTAR-510k-non-ivd.pdf' },
+  { id: 'de_novo-ivd', file: 'eSTAR-510k-ivd.pdf' },
+  { id: 'pma-device', file: 'eSTAR-510k-non-ivd.pdf' },
+  { id: 'pma-ivd', file: 'eSTAR-510k-ivd.pdf' },
   { id: 'q_sub-prestar', file: 'PreSTAR-q-sub.pdf' },
   { id: 'ide-prestar', file: 'PreSTAR-ide.pdf' },
   { id: '513g-prestar', file: 'PreSTAR-513g.pdf' },
