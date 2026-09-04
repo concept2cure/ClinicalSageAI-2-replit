@@ -71,9 +71,10 @@ const IVD_SHARED_ADMINISTRATIVE_FIELDS: OfficialPdfFieldMap = {
 };
 
 /*
- * WHY THERE IS NO `submissionType` KEY (investigated 2026-09-03, WO-8 Phase 3).
- * The pathway a filing takes is chosen on the template's first page, but that
- * selector cannot be set honestly through the `datasets` packet:
+ * WHY THERE IS NO `submissionType` KEY (investigated 2026-09-03, WO-8 Phase 3;
+ * the binding claim below CORRECTED 2026-09-04 against the decrypted template).
+ * The pathway a filing takes is chosen on the template's first page. That
+ * selector is writable through the `datasets` packet — and is still not mapped:
  *   - `root.ApplicationType.USA` and `root.ApplicationType.ApplicationSubType`
  *     are SUBFORMS, not dropdowns. The pathway selector is the radio group
  *     (XFA exclGroup) `root.ApplicationType.USA.ATRadioButton110`, whose
@@ -85,16 +86,38 @@ const IVD_SHARED_ADMINISTRATIVE_FIELDS: OfficialPdfFieldMap = {
  *     Additional Information, "4" = Report. The jurisdiction group
  *     `root.ApplicationType.ATRadioButton100` is "1" = US FDA (nIVD also "0" =
  *     IMDRF; both templates "2" = Health Canada). Identical on both templates.
- *   - Every one of those groups (and their members) is declared with
- *     `<bind match="none"/>`: the form does NOT merge the datasets packet into
- *     them on open. The `<ATRadioButton110/>` node in the datasets skeleton is
- *     inert, and the selection is applied only by the form's own change-event
- *     scripts (which show/hide the pathway-specific sections). A value written
- *     there would be reported `filled` by `fillXfaDatasets` and then ignored by
- *     Acrobat — a fabricated success, which the fail-closed rule forbids.
- * Until a mechanism the form actually honours exists, the pathway must be
- * selected by the user in the form; the maps below only write the fields that
- * ARE data-bound.
+ *   - The GROUPS are DATA-BOUND. `ATRadioButton100`, `ATRadioButton110` and
+ *     `ATRadioButton130` have no `<bind>` child at all — default binding — and
+ *     all three are present in the datasets skeleton. Only their MEMBER fields
+ *     carry `<bind match="none"/>` (10 of the 11 members; `ATRadioButton113`
+ *     carries no `<bind>` either), which is the normal LiveCycle shape: the
+ *     exclGroup holds the value, the members are presentation. An earlier
+ *     version of this note said the groups themselves were `match="none"` and
+ *     that a write to them would be inert; a depth-aware scan of the decrypted
+ *     template packet shows that is wrong, and pdf.js — an independent XFA
+ *     engine — binds and renders a value written to `ATRadioButton110`, and a
+ *     value written to `ATRadioButton100` even overrides the default FDA ships
+ *     (see `fill-official-pdf.xfa-render.test`).
+ *   - The key is therefore withheld for the reason that actually holds: THE
+ *     SELECTION IS THE APPLICANT'S DECLARATION. Which pathway a submission is
+ *     filed under is a regulatory assertion the applicant makes to FDA. Ticking
+ *     it from inferred data would put a declaration into a client's submission
+ *     that no one at the client made — and unlike a wrong trade name, nobody
+ *     re-reads a radio button they never chose.
+ *   - The mechanism is also unverified exactly here. Acrobat is not available in
+ *     this environment, and these groups are the one place where the template's
+ *     saved `form` packet DOES keep state: it stores
+ *     `ApplicationType.ATRadioButton100.ATRadioButton101 = "1"` for the
+ *     jurisdiction group's member. Whether Acrobat prefers that saved state over
+ *     a datasets write is unobserved — pdf.js ignores the `form` packet
+ *     entirely, so its rendering cannot answer it. (No mapped administrative
+ *     field is exposed to this: the packet declares no node for any of them —
+ *     see the `form`-packet section of `forms/fill-official-pdf`.) The members
+ *     also carry the `event__change` scripts that reveal the pathway-specific
+ *     sections, and no engine here runs XFA script, so a written selection is
+ *     not known to leave the form in the state a human click produces.
+ * The pathway stays the user's to select in the form; the maps below write
+ * fields that carry data, never a declaration.
  */
 
 /**
