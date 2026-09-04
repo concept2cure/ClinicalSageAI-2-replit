@@ -198,12 +198,41 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
 
     it('De Novo and PMA are ready on this template: vendored AND mapped (the readiness route\'s gate)', async () => {
       for (const type of ['de_novo', 'pma'] as const) {
-        const r = await fillEstarSubmission({ type, variant: 'device', data: {} });
+        // Passed `data: {}` before, which asserted "no blockers" over a fill
+        // that wrote nothing — the very state that now fails closed. Real data
+        // exercises readiness AND the fill, which is what the gate stands for.
+        const r = await fillEstarSubmission({ type, variant: 'device', data: DATA });
         expect(r.descriptorId).toBe(`${type}-device`);
         expect(r.templateAvailable).toBe(true);
         expect(r.fieldMapPopulated).toBe(true);
         expect(r.blockers).toEqual([]);
+        expect(r.filled).toBe(true);
       }
+    });
+
+    it('a fill that writes nothing is not a filled form: no blank official eSTAR', async () => {
+      // POST /official defaults `data` to {}, so this was reachable over HTTP:
+      // every mapped key skipped, the untouched template returned, filled:true,
+      // no blockers — a blank official FDA form registered as submittable.
+      const r = await fillEstarSubmission({ type: '510k', variant: 'device', data: {} });
+      expect(r.templateAvailable).toBe(true);
+      expect(r.fieldMapPopulated).toBe(true);
+      expect(r.filled).toBe(false);
+      expect(r.pdfBytes).toBeUndefined();
+      expect(r.filledFields).toEqual([]);
+      expect(r.blockers.join(' ')).toMatch(/wrote no values/);
+    });
+
+    it('one real value is enough to be a filled form', async () => {
+      const r = await fillEstarSubmission({
+        type: '510k',
+        variant: 'device',
+        data: { deviceTradeName: 'CardioSense CS-100' },
+      });
+      expect(r.filled).toBe(true);
+      expect(r.filledFields).toEqual(['deviceTradeName']);
+      expect(r.pdfBytes).toBeDefined();
+      expect(r.blockers).toEqual([]);
     });
   },
 );

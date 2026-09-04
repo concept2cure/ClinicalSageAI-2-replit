@@ -6308,7 +6308,8 @@ registerToolHandler('generate_document', async (input: Record<string, unknown>) 
   if (documentType === 'ectd_backbone') {
     const xml = await builder.generateEctdXml({
       submissionType: 'original',
-      applicantName: (input.applicant as string) || 'Applicant',
+      // 'Applicant' is not an applicant. An absent identity says so.
+      applicantName: (input.applicant as string) || 'UNASSIGNED (applicant)',
       productName: (input.product as string) || 'Product',
       modules: [],
     });

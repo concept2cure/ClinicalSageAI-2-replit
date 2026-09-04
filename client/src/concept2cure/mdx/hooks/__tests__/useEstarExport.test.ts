@@ -126,7 +126,12 @@ describe('useEstarExport — existing outcomes unchanged', () => {
     });
     expect(outcome?.ok).toBe(true);
     expect(outcome?.blockedByEntitlement).toBe(false);
-    expect(exportStatusLine(false, outcome ?? null)).toBe('Downloaded package');
+    // The response carries no downloadable_output_ref, so nothing was
+    // delivered. This asserted 'Downloaded package' — a success line over a
+    // response that contained no file.
+    expect(exportStatusLine(false, outcome ?? null)).toBe(
+      'Export accepted, but the server returned no file to download',
+    );
   });
 });
 
@@ -139,6 +144,7 @@ describe('exportStatusLine (pure)', () => {
   it('falls back honestly when the server named no tier', () => {
     const outcome: EstarExportOutcome = {
       ok: false,
+      delivered: false,
       governed: false,
       filename: null,
       formattingErrors: 0,
@@ -159,6 +165,7 @@ describe('exportStatusLine (pure)', () => {
 
 const SUCCESS: EstarExportOutcome = {
   ok: true,
+  delivered: true,
   governed: true,
   filename: 'BX-204_eSTAR.pdf',
   formattingErrors: 0,
@@ -378,9 +385,39 @@ describe('useEstarEntitlement — the lock known before the first click', () => 
     expect(entitlementRequiredLine('standard')).toBe('Requires the standard plan — device assembly readiness');
     expect(entitlementRequiredLine(null)).toBe('Requires a higher plan — device assembly readiness');
     const outcome: EstarExportOutcome = {
-      ok: false, governed: false, filename: null, formattingErrors: 0, formattingWarnings: 0,
+      ok: false, delivered: false, governed: false, filename: null, formattingErrors: 0, formattingWarnings: 0,
       blockers: [], blockedByEntitlement: true, requiredTier: 'standard', fieldReport: null, error: 'NOT_ENTITLED',
     };
     expect(exportStatusLine(false, outcome)).toBe(entitlementRequiredLine('standard'));
+  });
+});
+
+describe('exportStatusLine — a produced package is not a delivered one', () => {
+  const BASE = {
+    ok: true, governed: true, filename: 'K250001_eSTAR.pdf', formattingErrors: 0, formattingWarnings: 0,
+    blockers: [], blockedByEntitlement: false, requiredTier: null, fieldReport: null, error: null,
+  };
+
+  it('says Downloaded only when the browser actually took the file', () => {
+    const line = exportStatusLine(false, { ...BASE, delivered: true } as EstarExportOutcome);
+    expect(line).toContain('Downloaded K250001_eSTAR.pdf');
+  });
+
+  it('says the download was blocked instead of claiming it arrived', () => {
+    // The official FDA eSTAR is the one artifact the user must actually
+    // receive; "Downloaded …" over a blocked download sends them to look in a
+    // downloads folder that has nothing in it.
+    const line = exportStatusLine(false, { ...BASE, delivered: false } as EstarExportOutcome);
+    expect(line).toContain('browser blocked the download');
+    expect(line).not.toContain('Downloaded');
+  });
+
+  it('keeps the formatting and registry clauses on the blocked line', () => {
+    const line = exportStatusLine(false, {
+      ...BASE, delivered: false, governed: false, formattingErrors: 2, formattingWarnings: 1,
+    } as EstarExportOutcome);
+    expect(line).toContain('browser blocked the download');
+    expect(line).toContain('2 formatting errors');
+    expect(line).toContain('artifact registry placement pending');
   });
 });

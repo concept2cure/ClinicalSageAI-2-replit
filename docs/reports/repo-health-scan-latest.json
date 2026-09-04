@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-04T17:48:02.978Z",
+  "generatedAt": "2026-09-04T18:41:19.259Z",
   "git": {
-    "sha": "c1e0df4b842d4e47255b5076e4e479d49d7ff51d",
+    "sha": "5ade234b4901f67a13ced897d66c29ff1ff64d1d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2145,7 +2145,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1002394
+        "bytes": 1002477
       },
       {
         "file": "shared/schema.ts",
@@ -2303,7 +2303,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19443
+        "lines": 19444
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2626,12 +2626,12 @@
         "lines": 1668
       },
       {
-        "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
+        "file": "server/routes/submissions.ts",
         "lines": 1650
       },
       {
-        "file": "server/routes/submissions.ts",
-        "lines": 1648
+        "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
+        "lines": 1650
       },
       {
         "file": "server/services/unifiedDocumentIngestion.js",

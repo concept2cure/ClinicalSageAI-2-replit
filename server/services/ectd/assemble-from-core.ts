@@ -289,10 +289,29 @@ export interface AssembleSubmissionParams {
    * exist is an error, never a silent fallback to another sequence.
    */
   sequenceNumber?: string;
-  /** Recorded application number for the backbone envelope. Falls back to the
-   *  neutral `SEQ-<sequenceId>` handle (same convention as the /api/submissions
-   *  assemble route) — never an invented agency number. */
+  /**
+   * Recorded agency application number for the backbone envelope. When absent
+   * the package is built with a value that SAYS it is unassigned — see the
+   * applicant fields below and regulatory-identifiers.ts.
+   */
   applicationNumber?: string;
+  /**
+   * Recorded applicant identity (DUNS / EMA org id / PMDA applicant id, and the
+   * applicant's legal name). These are not internal handles: the packager
+   * writes them into the regional Module 1 backbone as <id> / <company-id> and
+   * <name> / <company-name>, and the application number also becomes part of
+   * the package filename.
+   *
+   * They were previously synthesized as `ORG-<orgId>` and `Organization <orgId>`
+   * with no caller-supplied path at all, so a sequence assembled without
+   * explicit identifiers shipped `<name>Organization 7</name>` to the agency —
+   * a string that reads as a real applicant rather than as a gap. Absent
+   * values now follow the repo's stated rule (regulatory-identifiers.ts: "never
+   * fabricate … build with values that SAY they are unassigned") and the wording
+   * already used on the transmit path in submission-ops.
+   */
+  applicantId?: string;
+  applicantName?: string;
   /**
    * Requested region (accepts core codes fda|eu|jp and agency names FDA|EMA|
    * PMDA). The sequence's RECORDED region is always authoritative for what gets
@@ -406,9 +425,12 @@ export async function assembleSubmissionEctd(
     sequenceId: sequence.id,
     organizationId,
     userId,
-    applicationId: params.applicationNumber ?? `SEQ-${sequence.id}`,
-    sponsorId: `ORG-${organizationId}`,
-    sponsorName: `Organization ${organizationId}`,
+    // Never fabricate an agency identifier. An unassigned value says so, in the
+    // same wording the transmit path already uses (submission-ops), so a
+    // reviewer reading the backbone sees a gap instead of a plausible applicant.
+    applicationId: params.applicationNumber ?? `UNASSIGNED-SEQ-${sequence.id}`,
+    sponsorId: params.applicantId ?? `UNASSIGNED-ORG-${organizationId}`,
+    sponsorName: params.applicantName ?? `UNASSIGNED (organization ${organizationId})`,
   });
 
   try {

@@ -482,7 +482,9 @@ router.post('/assemble', async (req: Request, res: Response) => {
 
     const ectdXml = await builder.generateEctdXml({
       submissionType: 'initial',
-      applicantName: sponsorName || 'Sponsor',
+      // 'Sponsor' reads as the applicant's name in the backbone's
+      // <applicant-name>; an absent applicant must say it is absent.
+      applicantName: sponsorName || 'UNASSIGNED (applicant)',
       productName: productName || 'Investigational Product',
       modules,
     });

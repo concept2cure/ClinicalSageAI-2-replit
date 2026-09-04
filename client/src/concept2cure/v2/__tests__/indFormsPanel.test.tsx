@@ -26,8 +26,9 @@ beforeEach(() => {
       return { ok: true, status: 200, json: async () => ({ formId: '1571', fields: { sponsorName: body.sponsorName }, missingRequired: ['drugName', 'indication'] }) } as Response;
     }
     if (method === 'POST' && url === '/api/ind-forms/1571/pdf') {
-      // 1571 is a dynamic-XFA form → the engine returns a reconstruction, and the
-      // response headers say so honestly (not the official Adobe-rendered form).
+      // The fallback shape: no official edition installed, so the engine
+      // returns a reconstruction and the headers say so honestly. The official
+      // path for this same form is exercised further down.
       const h: Record<string, string> = {
         'X-Form-Field-Coverage': '1.000',
         'X-Form-Used-Official-Template': 'false',
@@ -154,5 +155,46 @@ describe('IndFormsPanel — real FDA forms engine', () => {
     );
     // No artifact call was made — the panel never invents a project id.
     expect(apiRequest.mock.calls.some((c) => c[1] === '/api/ind-forms/1571/artifact')).toBe(false);
+  });
+
+  it('names the official template and the boxes still left blank on it', async () => {
+    // 1571 fills through its XFA datasets packet, so the response is the real
+    // FDA form — with boxes the platform deliberately did not write. Reporting
+    // only "official template" would imply a finished form.
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/ind-forms/') return { ok: true, status: 200, json: async () => ({ forms: ['1571'] }) } as Response;
+      if (method === 'POST' && url === '/api/ind-forms/1571/pdf') {
+        const h: Record<string, string> = {
+          'X-Form-Field-Coverage': '0.500',
+          'X-Form-Used-Official-Template': 'true',
+          'X-Form-Reconstructed': 'false',
+          'X-Form-Unmapped': 'ind_type,phase_of_study,us_agent_name',
+        };
+        return { ok: true, status: 200, blob: async () => new Blob(['%PDF-1.7']), json: async () => null, headers: { get: (k: string) => h[k] ?? null } } as unknown as Response;
+      }
+      return { ok: true, status: 200, json: async () => ({}) } as Response;
+    });
+    const note = vi.fn();
+    render(<IndFormsPanel note={note} />);
+    await screen.findByText(/FDA 1571/);
+    fireEvent.click(screen.getAllByRole('button', { name: /PDF/ })[0]);
+    await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(/official FDA template/)));
+    expect(note).toHaveBeenCalledWith(expect.stringMatching(/3 box\(es\) left for you to complete/));
+    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/reconstruction/));
+  });
+
+  it('does not claim the PDF arrived when the browser blocked the download', async () => {
+    // downloadBlob returns false when the object URL cannot be created. The
+    // note used to be fired regardless, so a blocked download read as a
+    // delivered form.
+    URL.createObjectURL = vi.fn(() => { throw new Error('blocked'); });
+    const note = vi.fn();
+    render(<IndFormsPanel note={note} />);
+    await screen.findByText(/FDA 1571/);
+    fireEvent.click(screen.getAllByRole('button', { name: /PDF/ })[0]);
+    await waitFor(() =>
+      expect(note).toHaveBeenCalledWith(expect.stringMatching(/browser blocked the download/), 'error'),
+    );
+    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/^FDA 1571 PDF:/));
   });
 });

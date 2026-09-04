@@ -784,11 +784,14 @@ async function compileFromSpine(
       sequenceId: seq.id,
       organizationId: orgId,
       userId: resolveUserId(req),
-      // Recorded identity only: the program's real code, else the neutral
-      // sequence handle — never an invented agency number.
-      applicationId: anchor.programCode ?? `SEQ-${seq.id}`,
-      sponsorId: `ORG-${orgId}`,
-      sponsorName: `Organization ${orgId}`,
+      // Recorded identity only: the program's real code, else a handle that
+      // says it is unassigned — never an invented agency number, and never an
+      // applicant name the agency would read as real. The comment here already
+      // claimed "neutral", but `Organization 7` in <name> does not read as a
+      // gap; these follow regulatory-identifiers.ts' stated wording instead.
+      applicationId: anchor.programCode ?? `UNASSIGNED-SEQ-${seq.id}`,
+      sponsorId: `UNASSIGNED-ORG-${orgId}`,
+      sponsorName: `UNASSIGNED (organization ${orgId})`,
     });
     try {
       const buffer = await fs.readFile(assembled.bundle.path);
