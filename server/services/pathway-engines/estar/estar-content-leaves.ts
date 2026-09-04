@@ -183,16 +183,23 @@ export async function resolveDeviceContentScope(
   if (opts.programId) {
     let authored = false;
     let docType: string | undefined;
-    try {
+    {
       const doc = await loadGovernedDeviceDocument(organizationId, opts.programId, opts.client);
       if (doc) {
         docType = doc.docType;
         const rows = await loadGovernedSectionRows(doc.id, opts.client ?? pool);
         authored = governedSectionsToDeviceSections(rows).some(isAuthored);
       }
-    } catch {
-      authored = false;
     }
+    // NOT `catch { authored = false }`. A failed read of the program's governed
+    // document is not "this program has no governed content": the fallback that
+    // followed returned the LEGACY scope with documentId undefined, i.e. every
+    // cerv2_510k_sections row in the organization. A timeout while assembling
+    // program A's package silently assembled it from every device in the org —
+    // the exact ESTAR-01 defect this module's header says was fixed, reachable
+    // again through the error path, and invisible because /build's success
+    // response does not echo deviceContentSource. Let the failure surface; the
+    // route reports it.
     if (authored) {
       // The class travels with the scope so /build can pick a renderer and a
       // package label that match the document (a PMA is not a 510(k) package).
@@ -352,8 +359,13 @@ export async function loadDeviceContentLeaves(
       .orderBy(asc(cerv2510kSections.displayOrder));
 
     return sectionsToLeaves(rows as DeviceSectionInput[]);
-  } catch {
-    return [];
+  } catch (err) {
+    // Returned [] here, so a failed query was indistinguishable from an empty
+    // one: /build answered 422 NO_AUTHORED_CONTENT — "author section content
+    // before exporting" — when the read had failed, and /filing-readiness and
+    // /assemble reported 0% with every section missing. "An error is never
+    // rendered as an empty result" (CLAUDE.md). Let it surface.
+    throw err;
   }
 }
 
@@ -436,8 +448,11 @@ export async function loadAuthoredDeviceSections(
         title: String(r.sectionTitle || r.sectionKey || 'Untitled section'),
         content: String(r.content),
       }));
-  } catch {
-    return [];
+  } catch (err) {
+    // Same rule as the loader above: a failed read is not an absence of
+    // content, and reporting it as one tells the user to write sections they
+    // have already written.
+    throw err;
   }
 }
 

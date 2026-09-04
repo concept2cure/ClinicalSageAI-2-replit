@@ -227,6 +227,22 @@ describe('loadDeviceContentLeaves / loadAuthoredDeviceSections with a programId'
     expect(none).toMatchObject({ source: 'legacy_document', scope: { documentId: 4 } });
   });
 
+  it('a FAILED governed read is not an empty one: it surfaces, never falls back org-wide', async () => {
+    // The catch here set authored=false, and the fallback then returned the
+    // LEGACY scope with documentId undefined — every cerv2_510k_sections row in
+    // the organization. A timeout while assembling program A's package
+    // assembled it from every device in the org instead, and /build's success
+    // response does not echo deviceContentSource, so nothing showed it.
+    const failing = {
+      async query() {
+        throw new Error('connection reset while reading c2c_documents');
+      },
+    } as unknown as DeviceContentClient;
+    await expect(
+      resolveDeviceContentScope(ORG, { programId: PROGRAM, documentId: 4, client: failing }),
+    ).rejects.toThrow(/connection reset/);
+  });
+
   it('names the store that answered', () => {
     expect(deviceContentSource({ programId: PROGRAM })).toBe('governed_program');
     expect(deviceContentSource({ documentId: 4 })).toBe('legacy_document');
