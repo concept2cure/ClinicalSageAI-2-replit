@@ -136,10 +136,17 @@ export function GeneratorTab({
     ? 'Assembling the export from your authored sections…'
     : exportOutcome
       ? exportOutcome.ok
-        ? exportOutcome.governed
-          ? `Exported ${exportOutcome.filename ?? 'document'} — placed in the artifact registry`
-          : `Exported ${exportOutcome.filename ?? 'document'} — delivered and audit-logged; ` +
-            'registry placement is pending the document-identity contract'
+        ? // "Exported" was said whether or not the file reached the browser.
+          // Whether the server placed it in the registry and whether the user
+          // actually received it are two different facts, and both are reported.
+          !exportOutcome.delivered
+          ? exportOutcome.filename
+            ? `${exportOutcome.filename} was produced but the browser blocked the download`
+            : 'Export accepted, but the server returned no file to download'
+          : exportOutcome.governed
+            ? `Exported ${exportOutcome.filename ?? 'document'} — placed in the artifact registry`
+            : `Exported ${exportOutcome.filename ?? 'document'} — delivered and audit-logged; ` +
+              'registry placement is pending the document-identity contract'
         : `Export refused — ${exportOutcome.error}`
       : null;
 

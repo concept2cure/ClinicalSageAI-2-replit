@@ -38,7 +38,10 @@ import type { Program } from '../../data/programs';
  *     path, is named in the header, and travels in every read and the POST.
  */
 
-vi.mock('../../../v2/download', () => ({ downloadBase64: vi.fn() }));
+// downloadBase64 returns whether the browser actually took the file. Mocked as
+// a bare vi.fn() it returned undefined, i.e. "not delivered", so every test
+// here exercised the blocked-download line rather than the success line.
+vi.mock('../../../v2/download', () => ({ downloadBase64: vi.fn(() => true) }));
 
 const PROGRAM: Program = {
   id: 'a2b4c6d8-0000-0000-0000-000000000001',
@@ -176,7 +179,11 @@ const generateButton = () =>
 const CHECKING = 'Checking official eSTAR availability…';
 const NOT_PRODUCIBLE_DEFAULT = 'The official template or its field map is not available';
 
-beforeEach(() => vi.restoreAllMocks());
+beforeEach(async () => {
+  vi.restoreAllMocks();
+  const { downloadBase64 } = await import('../../../v2/download');
+  vi.mocked(downloadBase64).mockReturnValue(true);
+});
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -561,8 +568,15 @@ describe('OfficialEstarPanel — Generate', () => {
     render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
     await waitFor(() => expect(generateButton().disabled).toBe(false));
     fireEvent.click(generateButton());
+    // This response carries no downloadable_output_ref, so no file was
+    // delivered; the line used to read "Downloaded package" regardless. The
+    // field report is still reported — the fill did happen server-side.
     await waitFor(() =>
-      expect(screen.getByText('Downloaded package · 4 of 4 administrative fields filled')).toBeTruthy(),
+      expect(
+        screen.getByText(
+          'Export accepted, but the server returned no file to download · 4 of 4 administrative fields filled',
+        ),
+      ).toBeTruthy(),
     );
     const line = screen.getByText(/Entered values not written/);
     expect(line.textContent).toContain('Device Trade Name');

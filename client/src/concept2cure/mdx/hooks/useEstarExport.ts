@@ -35,6 +35,12 @@ interface DownloadRef {
 
 export interface EstarExportOutcome {
   ok: boolean;
+  /**
+   * The browser actually took the file. `downloadBase64` reports this and it was
+   * being discarded, so a blocked download still read as "Downloaded …" — for
+   * the official FDA eSTAR, the one artifact a user must actually receive.
+   */
+  delivered: boolean;
   /** Registered in the artifact registry (governed consequence) vs audited-only delivery. */
   governed: boolean;
   filename: string | null;
@@ -148,7 +154,17 @@ export function exportStatusLine(busy: boolean, outcome: EstarExportOutcome | nu
         ? ` · ${outcome.formattingErrors} formatting errors, ${outcome.formattingWarnings} warnings to fix before submitting`
         : '';
     const registry = outcome.governed ? '' : ' · audit-logged; artifact registry placement pending';
-    return `Downloaded ${outcome.filename ?? 'package'}${fieldReportClause(outcome.fieldReport)}${formatting}${registry}`;
+    // The server produced it either way; whether the file reached the user is a
+    // separate fact, and saying "Downloaded" when it did not is the difference
+    // between a user who looks in their downloads folder and one who does not.
+    // Two ways it can fail to arrive, and they are not the same problem: the
+    // browser refused the file, or the server never sent one.
+    const verb = outcome.delivered
+      ? `Downloaded ${outcome.filename ?? 'package'}`
+      : outcome.filename
+        ? `${outcome.filename} was produced but the browser blocked the download`
+        : 'Export accepted, but the server returned no file to download';
+    return `${verb}${fieldReportClause(outcome.fieldReport)}${formatting}${registry}`;
   }
   if (outcome.blockedByEntitlement) return entitlementRequiredLine(outcome.requiredTier);
   return `Export failed — ${
@@ -217,8 +233,15 @@ const IDLE: EstarExportOutcome | null = null;
    sibling export hook — and both revoked the object URL synchronously right
    after click(), which races the download and can produce a zero-byte file.
    `downloadBase64` owns the decode and the timing. */
-function triggerDownload(ref: DownloadRef): void {
-  downloadBase64(ref.filename, ref.data, ref.mime_type);
+function triggerDownload(ref: DownloadRef): boolean {
+  // atob throws on a malformed payload; that is a failure to deliver, not an
+  // export failure, so it is reported as one rather than thrown into the
+  // request's own catch where it would read as a network error.
+  try {
+    return downloadBase64(ref.filename, ref.data, ref.mime_type);
+  } catch {
+    return false;
+  }
 }
 
 export interface ProgramRef {
@@ -269,6 +292,7 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
       const blockedByEntitlement = res.status === 403 && json?.error === 'NOT_ENTITLED';
       return {
         ok: false,
+        delivered: false,
         governed: false,
         filename: null,
         formattingErrors: 0,
@@ -283,13 +307,14 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
     }
 
     const ref = json?.downloadable_output_ref as DownloadRef | undefined;
-    if (ref?.data) triggerDownload(ref);
+    const delivered = ref?.data ? triggerDownload(ref) : false;
 
     const formatting = (json?.formattingReport ?? null) as
       | { errors?: number; warnings?: number }
       | null;
     return {
       ok: true,
+      delivered,
       governed: json?.governed === true,
       filename: ref?.filename ?? null,
       formattingErrors: formatting?.errors ?? 0,
@@ -306,6 +331,7 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
     // wording is the only thing worth showing.
     return {
       ok: false,
+      delivered: false,
       governed: false,
       filename: null,
       formattingErrors: 0,
