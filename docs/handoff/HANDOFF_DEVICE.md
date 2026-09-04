@@ -250,7 +250,17 @@ code (report §4a):
    URL (agency hosts are egress-blocked in the build environment). If auditable
    provenance is required, re-download from FDA and confirm the SHA-256s in
    `checksums.txt` match.
-3. **Name the click for every session.** The agent never chooses its own next task.
+3. **The Indications for Use citation on an IVD program.** The device intake form collects
+   it for every program, and the IVD eSTAR template does not declare
+   `Labeling.SpecificLabeling.LBTextField130`, so on an IVD filing the value is stored and
+   never reaches the form. Nothing is misfiled and nothing is blank on the filed eSTAR — the
+   IVD form simply does not ask the question — and the eSTAR preview omits the row for IVD,
+   so it never claims otherwise. What is missing is a word to the operator at the point of
+   entry. It was left alone deliberately: the only honest way to say it is to read which keys
+   the descriptor's map carries, and the map is server-side, so the intake panel would have
+   to take a second fetch to learn a fact about one field. Worth doing when the panel needs
+   that fetch for another reason; not worth a fetch of its own.
+4. **Name the click for every session.** The agent never chooses its own next task.
 
 ---
 
