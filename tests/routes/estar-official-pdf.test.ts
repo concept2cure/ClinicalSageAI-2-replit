@@ -447,18 +447,25 @@ describe('POST /api/510k/estar/official with useProgramData:true', () => {
     expect(out.getForm().getTextField('DeviceName').getText()).toBe('Client Value');
   });
 
-  it('with nothing governed and nothing requested every field is reported blank (never a silent blank form)', async () => {
+  it('with nothing governed and nothing requested no official eSTAR is produced at all', async () => {
+    // This asserted 200 with a field report of filledCount 0 — an honest
+    // report, but attached to a blank official FDA form that was registered as
+    // a submittable artifact with the placement "Module 1 / official FDA eSTAR
+    // (submittable)". A fill that wrote nothing produced no filled form, so the
+    // route now refuses rather than reporting emptiness over a real artifact.
     mockLoadInputs.mockResolvedValue({ program: null, organization: null, workspace: null, fda510kProject: null });
     const req = makeReq(body({ useProgramData: true, data: {} }));
     const res = createMockResponse() as any;
 
     await getHandler('/official')(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.status).toHaveBeenCalledWith(422);
     const payload = res.json.mock.calls[0][0];
-    expect(payload.fieldReport.filledCount).toBe(0);
-    expect(payload.fieldReport.blankCount).toBe(3);
-    expect(payload.fieldReport.blankKeys).toEqual(['deviceTradeName', 'deviceCommonName', 'regulationNumber']);
+    expect(payload.error).toBe('ESTAR_NOT_PRODUCIBLE');
+    expect(payload.officialEstarPdf).toBe(false);
+    expect(payload.blockers.join(' ')).toMatch(/wrote no values/);
+    // Nothing was persisted: no blank form reached the artifact registry.
+    expect(mockGovernedConsequence).not.toHaveBeenCalled();
   });
 });
 
