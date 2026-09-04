@@ -441,7 +441,7 @@ describe('loadEstarAdministrativeInputs — the Phase 3 columns', () => {
    */
   function dbFailingRegistrationWith(code: string) {
     return {
-      select: (selection: Record<string, unknown>) => ({
+      select: (_selection: Record<string, unknown>) => ({
         from: (table: object) => ({
           where: () => {
             const limit = async () => {

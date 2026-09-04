@@ -221,6 +221,37 @@ const somPathsOf = (map: OfficialPdfFieldMap): string[] =>
     .filter(Boolean);
 
 /**
+ * The three rendered trees every assertion below reads: the untouched vendored
+ * template, the production fill of 19 of the 20 mapped keys, and that same fill
+ * plus the two page-1 selectors. Built once, outside the suite arrow, so the
+ * suite stays a list of assertions rather than a setup script.
+ */
+async function buildRenderFixture(pdfjs: PdfjsModule): Promise<{
+  filledBytes: Uint8Array;
+  blank: Rendered;
+  filled: Rendered;
+  probed: Rendered;
+}> {
+  const blankBytes = new Uint8Array(await fs.readFile(NIVD_TEMPLATE));
+
+  const production = await fillOfficialEstar(undefined, DATA);
+  expect(production.skippedFields).toEqual([UNFILLED_KEY]);
+
+  const withProbes = await fillOfficialEstar(PROBE_MAP, {
+    ...DATA,
+    probeJurisdiction: '2',
+    probeSubmissionType: '2',
+  });
+
+  const [blank, filled, probed] = await Promise.all([
+    render(pdfjs, blankBytes),
+    render(pdfjs, production.pdfBytes!),
+    render(pdfjs, withProbes.pdfBytes!),
+  ]);
+  return { filledBytes: production.pdfBytes!, blank, filled, probed };
+}
+
+/**
  * The production fill path, asserted to have actually produced a dynamic-XFA
  * fill of every supplied key — so a later "the value is not rendered" result can
  * only mean the renderer, never a fill that quietly did nothing.
@@ -253,25 +284,9 @@ describe.skipIf(!hasTemplate || !hasPdfjs)(
     beforeAll(async () => {
       dirBefore = process.env.ESTAR_TEMPLATE_DIR;
       process.env.ESTAR_TEMPLATE_DIR = path.dirname(NIVD_TEMPLATE);
-
       pdfjs = await import(PDFJS_ENTRY);
-      const blankBytes = new Uint8Array(await fs.readFile(NIVD_TEMPLATE));
-
-      const production = await fillOfficialEstar(undefined, DATA);
-      expect(production.skippedFields).toEqual([UNFILLED_KEY]);
-      filledBytes = production.pdfBytes!;
-
-      const withProbes = await fillOfficialEstar(PROBE_MAP, {
-        ...DATA,
-        probeJurisdiction: '2',
-        probeSubmissionType: '2',
-      });
-
-      [blank, filled, probed] = await Promise.all([
-        render(pdfjs, blankBytes),
-        render(pdfjs, filledBytes),
-        render(pdfjs, withProbes.pdfBytes!),
-      ]);
+      const fixture = await buildRenderFixture(pdfjs);
+      ({ filledBytes, blank, filled, probed } = fixture);
     }, 180_000);
 
     afterAll(() => {
@@ -369,5 +384,56 @@ describe.skipIf(!hasTemplate || !hasPdfjs)(
       }
       expect(back[K510_DEVICE[UNFILLED_KEY].xfaSomPath!], UNFILLED_KEY).toBe('');
     });
+
+  },
+);
+
+/**
+ * The two SOURCE fields, read straight off the production fill. No renderer is
+ * involved: this is a statement about the bytes we hand the client, not about
+ * what any engine lays out, so it is its own suite rather than a sixth
+ * assertion on the rendered trees.
+ *
+ * Four of the twenty summary cells are recomputed by the template's own scripts,
+ * and the applicant's first click runs two of those scripts — which, before the
+ * source fields were mapped, erased the value from a source we had left empty.
+ */
+(hasTemplate ? describe : describe.skip)(
+  'the filled official eSTAR carries the sources FDA rebuilds its summary cells from',
+  () => {
+  let bytes: Uint8Array;
+  let result: FillEstarResult;
+  let dirBefore: string | undefined;
+
+  beforeAll(async () => {
+    dirBefore = process.env.ESTAR_TEMPLATE_DIR;
+    process.env.ESTAR_TEMPLATE_DIR = path.dirname(NIVD_TEMPLATE);
+    result = await fillOfficialEstar(undefined, DATA);
+    bytes = result.pdfBytes!;
+  }, 120_000);
+
+  afterAll(() => {
+    if (dirBefore === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
+    else process.env.ESTAR_TEMPLATE_DIR = dirBefore;
+  });
+
+  it('writes each source with the SAME governed string as its summary cell', async () => {
+    const PAIRS: Array<[key: string, source: string]> = [
+      ['declarationDeviceTradeName', 'root.DeviceDescription.Devices.Device.TradeName'],
+      ['productCodes', 'root.Classification.USAKnownClassification.DDDropDownList517'],
+    ];
+    const back = await readXfaDatasetsValues(bytes, [
+      ...PAIRS.map(([, source]) => source),
+      ...PAIRS.map(([key]) => K510_DEVICE[key].xfaSomPath!),
+    ]);
+    for (const [key, source] of PAIRS) {
+      expect(back[source], `${key} source`).toBe(VALUES[key]);
+      // The summary cell and its source can never disagree, or the rebuild
+      // would visibly change the form.
+      expect(back[source]).toBe(back[K510_DEVICE[key].xfaSomPath!]);
+      // Reported filled ONCE, not twice for owning two boxes.
+      expect(result.filledFields.filter((k) => k === key)).toEqual([key]);
+    }
+  });
   },
 );

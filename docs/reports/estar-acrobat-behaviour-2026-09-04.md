@@ -268,12 +268,64 @@ applicant touches their source control — e.g. selecting the classification in
 the dropdown; tabbing through any applicant field runs `ApplicantInformation.Validation()`
 and blanks `declarationCompanyAddress` and `applicantContactTelephone`.
 
-**This is a product decision that is still open**, and nothing here changes behaviour: we
-either keep filling summary cells knowing FDA's form owns them, or we map the *source*
-fields (`Device[].TradeName`, `DDDropDownList513/517`, `ADTextField170/220…270`,
-`ADTextField370`) and let FDA's own scripts populate the summaries — which is what the form
-is built to do. That second option needs its own investigation (the classification dropdown
-is a coded item list, not free text) and is not attempted here.
+### 4a. The decision, taken 2026-09-04 after measuring each source
+
+The option this section left open — map the *source* fields and let FDA's own scripts
+populate the summaries — was investigated per source and taken for two of them. What the
+form is built to do, it now does with our values.
+
+**Written.** `declarationDeviceTradeName` also writes
+`root.DeviceDescription.Devices.Device.TradeName`, and `productCodes` also writes
+`root.Classification.USAKnownClassification.DDDropDownList517`. Both are declared by both
+templates, present in both shipped `datasets` skeletons, and bind under pdf.js. The device
+listing ships with exactly one instance either way, so the write fills the row the applicant
+was going to type in rather than adding one they must delete; no script in either template
+clears it except switching jurisdiction away from US FDA or clicking Delete Device. The
+result is that the click which used to erase `deviceTradeName`, `declarationDeviceTradeName`
+and `productCodes` now rebuilds them from what we wrote. FDA's rebuild of the product-code
+cell appends the Associated Product Code(s) field, which is that cell's own caption and its
+own composition — so a filing with associated codes ends with more there than we wrote.
+
+**Deliberately not written, each for a measured reason.**
+
+`DDDropDownList517`'s full item string (`XXX (Class N) - <classification name>`) would also
+rebuild `deviceClassificationName`, and is refused. It would put a string into the form that
+looks like a selection from FDA's 6,153-item catalog but was assembled by us out of three
+separate columns; if our stored classification name differs from FDA's for that code, the
+form would carry a plausible, wrong catalog entry. The bare code asserts only what we hold,
+and FDA's handler special-cases exactly that (`//Convert pro code to upper case, if only pro
+code entered`). `deviceClassificationName` therefore still blanks on the reveal click.
+
+`ADTextField170` / `ADTextField370` (the telephones) are refused because the template
+constrains both to `maxChars="15"` with a digits-only picture and a validation message
+reading *"The number must be 8 - 15 characters long"*, while `client_workspaces.contact_phone`
+is unbounded text and `estar_registrations.correspondent_telephone` is `VARCHAR(64)`, neither
+constrained at capture. Writing an over-length or punctuated value into a field the form's
+own message says does not accept it would rest on Acrobat behaviour nobody here has observed.
+The sequencing is: constrain capture first, then map the source.
+
+`ADTextField220…ADDropDownList270` (the Declaration of Conformity address) are refused
+because the template holds the address as six separate parts and FDA's rebuild always appends
+the country dropdown's display text — the skeleton ships it set to `USA`, so the composed
+address always ends in ` United States`. A single stored free-text column cannot be written
+into six fields without parsing, and splitting an address on commas is guesswork on a signed
+declaration. That one needs structured columns, not a parser.
+
+### 4b. A defect this section did not name: the DoC company name is substituted, not blanked
+
+`ApplicantInformation.Validation()` rebuilds `DoC.DCTextField120` from `ADTextField210`
+unconditionally. We DO map `ADTextField210` — as `applicantCompanyName`, from
+`client_workspaces.name` — while `declarationCompanyName` reads
+`estar_registrations.declaration_company_name`, a column that exists precisely so an
+organization filing for several clients can name a DIFFERENT legal entity on the Declaration
+of Conformity. So when the two governed values differ, the applicant's first tab through
+their own block replaces the declaring entity with the applicant. The cell is not blank; it
+is wrong, which is worse, and there is no source we could write that would hold a different
+entity there — the form derives that cell from the applicant block by design.
+
+This is now recorded as `rebuildOutcome: 'substitutes'` in
+`ESTAR_TEMPLATE_RECOMPUTED_FIELDS`, the only field carrying that value, and a check asserts
+it stays the only one.
 
 ---
 
@@ -312,8 +364,18 @@ And it would not even be durable: one click on the jurisdiction radio nulls it (
 | `server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts` | **New.** Re-derives all of §2 and §4 from the vendored template on every run, with the blanking pass built in. Also asserts no field map writes any `root.ApplicationType.*` path. |
 | `docs/reports/estar-acrobat-behaviour-2026-09-04.md` | This report. |
 
-No behaviour changed. No field map gained or lost a mapping. `estar-administrative-data.ts`
-was not modified: no new key needed a governed source.
+The first pass changed no behaviour. §4a then did, in a second pass on the same day:
+
+| file | change |
+|---|---|
+| `server/services/forms/fill-official-pdf.ts` | `OfficialPdfFieldSpec.alsoWriteSomPaths` — further XFA nodes that carry the same governed value, resolved and reported exactly like `xfaSomPath`. Also fixed, found while measuring this: two canonical keys resolving onto ONE data node used to collapse silently, the loser appearing in neither `filled` nor `skipped`. Same value now records both keys; different values write neither and name both. |
+| `server/services/pathway-engines/estar/estar-field-map.ts` | `declarationDeviceTradeName` and `productCodes` became named specs carrying an `alsoWriteSomPaths`, referenced from all four maps that spell them out. `EstarRecomputedField` gained `rebuildOutcome` ('reproduces' / 'blanks' / 'substitutes') and a `note`, and every entry declares one. |
+| `server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts` | Four checks that the `rebuildOutcome` claims match what the map actually writes, including that `declarationCompanyName` is the only 'substitutes'. |
+| `server/services/forms/__tests__/fill-official-pdf.xfa-render.test.ts` | Reads both source nodes back off the production fill of the vendored template and asserts each carries the same governed string as its summary cell, and that neither key is double-counted in `filledFields`. |
+
+`estar-administrative-data.ts` was not modified in either pass: the two source writes carry
+values that are already governed, under keys that already have a home, so no new key needed
+a source and the preview gained no row.
 
 ### Verification — the checks were made to fail first
 
@@ -348,9 +410,22 @@ in either file.
   node** for any of them — searched by leaf name, 0 hits each. It *does* carry
   `<field name="ATRadioButton101"><value><text>1</text></value></field>` for the
   jurisdiction group's member, and no node for `ATRadioButton110`.
-- **The IVD template** `eSTAR-510k-ivd.pdf` was not scanned. Its `ApplicationType` logic is
-  probably identical; that is an assumption, not a measurement. The test file covers the
-  nIVD template only.
+- **The IVD template** `eSTAR-510k-ivd.pdf` was not scanned for the `ApplicationType`
+  question; that its logic is identical remains an assumption there, and the test file
+  covers the nIVD template only. It WAS measured for §4a: the IVD template declares
+  `Device.TradeName` and `DDDropDownList517` at the identical paths, ships both in its
+  `datasets` skeleton, and carries a byte-identical `Devices Validation()`.
+- **What the two SOURCE writes of §4a look like in Acrobat.** That the values BIND is
+  measured (pdf.js, an independent engine, renders both). That FDA's `Validation()` then
+  concatenates the listing row into the Declaration of Conformity cell, and `substr(0,3)`s
+  the selector into the 510(k) Summary, is read from the quoted script text — the same
+  standing caveat as the rest of this report. What is new is that the inference now runs in
+  our favour: before the change it said our values are destroyed, and after it says they are
+  propagated.
+- **How the pre-filled Product Code selector reads on screen.** It is `textEntry="1"` and
+  will show a bare three-letter code where the list shows `XXX (Class N) - <name>` entries.
+  That is what a typed entry looks like, and FDA's handler is written for it, but nobody
+  here has seen it rendered by Acrobat.
 - **A reveal written through a fully computed node name** would have escaped the scan.
   None was seen, and `execInitialize`, `execCalculate`, `execValidate`, `setInstances` and
   `execEvent("initialize")` all appear **0** times in the template.

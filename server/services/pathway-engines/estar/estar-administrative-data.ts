@@ -334,9 +334,8 @@ export function projectEstarAdministrativeData(
    * nobody supplied is a gap; discarding one they did supply, and then denying
    * it exists, is a lie about their own data.
    */
-  const declarationAddress = values.declarationCompanyAddress;
   if (
-    declarationAddress !== undefined &&
+    values.declarationCompanyAddress !== undefined &&
     provenance.declarationCompanyName !== 'estar_registrations.declaration_company_name'
   ) {
     delete values.declarationCompanyName;

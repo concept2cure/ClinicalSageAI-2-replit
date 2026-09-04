@@ -50,6 +50,22 @@ export interface OfficialPdfFieldSpec {
    * whose real fields live in the `/XFA` packets. Required by `fillXfaDatasets`.
    */
   xfaSomPath?: string;
+  /**
+   * FURTHER XFA nodes that carry this same governed value, written with exactly
+   * the string `xfaSomPath` gets. Not a second mapping and not a second fact:
+   * one canonical key, one value, every box the form keeps it in.
+   *
+   * The official eSTAR templates need this because several cells an applicant
+   * reads are SUMMARIES the form's own JavaScript recomputes from a source field
+   * elsewhere. Writing only the summary cell means the applicant's first click
+   * blanks it — FDA's script clears the cell and rebuilds it from a source we
+   * left empty. Writing the source as well hands the value to the form's own
+   * machinery, which then puts it back into the summary itself.
+   *
+   * Each path is resolved and reported exactly like `xfaSomPath`: a path the
+   * template does not declare is skipped and warned, never invented.
+   */
+  alsoWriteSomPaths?: string[];
   /** The template's OWN caption for this field, carried for provenance. */
   caption?: string;
   type: OfficialPdfFieldType;
@@ -1067,6 +1083,113 @@ function appendIncrementalUpdate(
   return Buffer.concat([original, ...chunks]);
 }
 
+/** One data node, the keys that claimed it, and the text they agreed on. */
+interface NodeClaim {
+  keys: string[];
+  text: string;
+  conflicted: boolean;
+}
+
+interface XfaEditPlan {
+  edits: DatasetsEdit[];
+  claims: Map<string, NodeClaim>;
+  keyBySom: Map<string, string>;
+  skipped: string[];
+  warnings: string[];
+}
+
+/**
+ * Resolve every mapped key onto the data nodes it writes, and decide what
+ * happens when two keys land on one node.
+ *
+ * Split out of {@link fillXfaDatasets} so the rules live somewhere they can be
+ * read in one screen: a key with no data is skipped, a key with no XFA path is
+ * skipped, a path the skeleton does not declare is skipped and named, and a node
+ * two keys claim is written only when they agree on the text.
+ */
+function planXfaEdits(
+  fieldMap: OfficialPdfFieldMap,
+  data: Record<string, unknown>,
+  dataPaths: Set<string>,
+  missingFieldPolicy: 'skip' | 'error',
+): XfaEditPlan {
+  const edits: DatasetsEdit[] = [];
+  const keyBySom = new Map<string, string>();
+  const claims = new Map<string, NodeClaim>();
+  const skipped: string[] = [];
+  const warnings: string[] = [];
+
+  /**
+   * Claim one node for one key. Returns false when the node is already claimed
+   * by another key with DIFFERENT text — neither is written then, because one
+   * would have to win and there is no honest basis for choosing.
+   */
+  const claim = (som: string, key: string, text: string): boolean => {
+    const held = claims.get(som);
+    if (!held) {
+      claims.set(som, { keys: [key], text, conflicted: false });
+      edits.push({ somPath: som, value: text });
+      keyBySom.set(som, key);
+      return true;
+    }
+    if (held.text === text) {
+      held.keys.push(key);
+      return true;
+    }
+    const msg =
+      `XFA path "${som}" is claimed by more than one key with different values ` +
+      `("${held.keys.join('", "')}" and "${key}"); neither was written.`;
+    if (missingFieldPolicy === 'error') throw new Error(msg);
+    held.conflicted = true;
+    warnings.push(msg);
+    return false;
+  };
+
+  for (const [canonicalKey, spec] of Object.entries(fieldMap)) {
+    const value = data[canonicalKey];
+    if (!hasData(value)) {
+      skipped.push(canonicalKey);
+      warnings.push(`No data supplied for "${canonicalKey}" (XFA "${spec.xfaSomPath ?? '?'}"); skipped.`);
+      continue;
+    }
+    if (!spec.xfaSomPath) {
+      skipped.push(canonicalKey);
+      const msg = `"${canonicalKey}" has no xfaSomPath; a dynamic XFA template cannot be filled by AcroForm name.`;
+      if (missingFieldPolicy === 'error') throw new Error(msg);
+      warnings.push(msg);
+      continue;
+    }
+    const dataSom = resolveDataSomPath(spec.xfaSomPath, dataPaths);
+    if (!dataSom) {
+      const msg = `XFA path "${spec.xfaSomPath}" (key "${canonicalKey}") does not resolve to a node in the template's datasets skeleton; skipped.`;
+      if (missingFieldPolicy === 'error') throw new Error(msg);
+      skipped.push(canonicalKey);
+      warnings.push(msg);
+      continue;
+    }
+    const text = spec.type === 'checkbox' ? (toBoolean(value) ? '1' : '0') : toText(value);
+    if (!claim(dataSom, canonicalKey, text)) {
+      skipped.push(canonicalKey);
+      continue;
+    }
+    /* Every further box this key's value belongs in. An unresolvable one is
+       reported on its own — it does not cost the key its primary write, because
+       the summary cell and the source field fail independently. */
+    for (const extra of spec.alsoWriteSomPaths ?? []) {
+      const extraSom = resolveDataSomPath(extra, dataPaths);
+      if (!extraSom) {
+        const msg = `XFA path "${extra}" (key "${canonicalKey}", a further node for the same value) does not resolve to a node in the template's datasets skeleton; skipped.`;
+        if (missingFieldPolicy === 'error') throw new Error(msg);
+        warnings.push(msg);
+        continue;
+      }
+      claim(extraSom, canonicalKey, text);
+    }
+  }
+
+  return { edits, claims, keyBySom, skipped, warnings };
+}
+
 /**
  * Fill a dynamic XFA template by writing the mapped values into its `datasets`
  * packet, returning the original PDF plus an incremental update.
@@ -1103,69 +1226,10 @@ export async function fillXfaDatasets(
   // that binds no data group is transparent to the binding walk (FDA 1571's
   // `Page1` is), so each mapped path is resolved onto the node it actually has.
   const dataPaths = datasetsPathSet(datasets.xml);
-  const edits: DatasetsEdit[] = [];
-  const keyBySom = new Map<string, string>();
-  /** Every canonical key that resolved onto each data node, and the one text
-   *  they agree on. More than one key per node is legal only when they agree. */
-  const collisions = new Map<string, { keys: string[]; text: string; conflicted: boolean }>();
-  for (const [canonicalKey, spec] of Object.entries(fieldMap)) {
-    const value = data[canonicalKey];
-    if (!hasData(value)) {
-      skipped.push(canonicalKey);
-      warnings.push(`No data supplied for "${canonicalKey}" (XFA "${spec.xfaSomPath ?? '?'}"); skipped.`);
-      continue;
-    }
-    if (!spec.xfaSomPath) {
-      skipped.push(canonicalKey);
-      const msg = `"${canonicalKey}" has no xfaSomPath; a dynamic XFA template cannot be filled by AcroForm name.`;
-      if (missingFieldPolicy === 'error') throw new Error(msg);
-      warnings.push(msg);
-      continue;
-    }
-    const dataSom = resolveDataSomPath(spec.xfaSomPath, dataPaths);
-    if (!dataSom) {
-      const msg = `XFA path "${spec.xfaSomPath}" (key "${canonicalKey}") does not resolve to a node in the template's datasets skeleton; skipped.`;
-      if (missingFieldPolicy === 'error') throw new Error(msg);
-      skipped.push(canonicalKey);
-      warnings.push(msg);
-      continue;
-    }
-    const text = spec.type === 'checkbox' ? (toBoolean(value) ? '1' : '0') : toText(value);
-    /*
-     * TWO KEYS ON ONE BOX. `setDatasetsValues` keys its edits by resolved path,
-     * so a second key naming a node another key already claimed used to
-     * overwrite it: one value went into the form, and the losing key appeared in
-     * NEITHER `filled` NOR `skipped`. That is the one outcome this module exists
-     * to prevent — `filled` is what the governed export records as written, so a
-     * silent collapse makes the record attest a fill it cannot account for.
-     *
-     * Same value, two names for one box: nothing is lost. Both keys are recorded
-     * as filled, because both were.
-     *
-     * DIFFERENT values: one of them would have to win, and there is no honest
-     * basis for choosing. Neither is written and both are reported, so the box
-     * stays blank and the operator is told which two keys disagree — a gap they
-     * can see beats a value one of them never asked for.
-     */
-    const claimed = collisions.get(dataSom);
-    if (claimed) {
-      if (claimed.text === text) {
-        claimed.keys.push(canonicalKey);
-        continue;
-      }
-      const msg =
-        `XFA path "${dataSom}" is claimed by more than one key with different values ` +
-        `("${claimed.keys.join('", "')}" and "${canonicalKey}"); neither was written.`;
-      if (missingFieldPolicy === 'error') throw new Error(msg);
-      claimed.conflicted = true;
-      skipped.push(canonicalKey);
-      warnings.push(msg);
-      continue;
-    }
-    collisions.set(dataSom, { keys: [canonicalKey], text, conflicted: false });
-    edits.push({ somPath: dataSom, value: text });
-    keyBySom.set(dataSom, canonicalKey);
-  }
+  const plan = planXfaEdits(fieldMap, data, dataPaths, missingFieldPolicy);
+  const { edits, claims: collisions, keyBySom } = plan;
+  skipped.push(...plan.skipped);
+  warnings.push(...plan.warnings);
 
   /* A conflicted node is not written at all — the edit queued by whichever key
      reached it first is withdrawn, and that key joins the others in `skipped`. */
@@ -1173,21 +1237,29 @@ export async function fillXfaDatasets(
     [...collisions.entries()].filter(([, c]) => c.conflicted).map(([som]) => som),
   );
   const liveEdits = edits.filter((e) => !conflicted.has(e.somPath));
-  for (const som of conflicted) {
-    for (const key of collisions.get(som)!.keys) skipped.push(key);
-  }
 
   const result = setDatasetsValues(datasets.xml.toString('utf8'), liveEdits);
-  for (const som of result.written) filled.push(...collisions.get(som)!.keys);
   for (const som of result.missing) {
     /* Every key that named this node is reported, not just the first: an
        undeclared path is undeclared for all of them. */
     const keys = collisions.get(som)?.keys ?? [keyBySom.get(som)!];
     const msg = `XFA path "${som}" (key "${keys.join('", "')}") is not declared in the template's datasets skeleton; skipped.`;
     if (missingFieldPolicy === 'error') throw new Error(msg);
-    for (const key of keys) skipped.push(key);
     warnings.push(msg);
   }
+
+  /*
+   * `filled` and `skipped` are per KEY, not per node. A key may own several
+   * nodes (a summary cell and the source field the form rebuilds it from), and
+   * it counts as filled when its value reached the form ANYWHERE — a value that
+   * is on the form is on the form. It is skipped only when no node of it was
+   * written at all, so the two lists stay disjoint and neither double-counts.
+   */
+  const wroteFor = new Set<string>();
+  for (const som of result.written) for (const key of collisions.get(som)!.keys) wroteFor.add(key);
+  const attempted = new Set<string>();
+  for (const [, c] of collisions) for (const key of c.keys) attempted.add(key);
+  for (const key of attempted) (wroteFor.has(key) ? filled : skipped).push(key);
 
   const deflated = zlib.deflateSync(Buffer.from(result.xml, 'utf8'));
   const encrypted = encryptObjectData(sec, datasets.num, datasets.gen, deflated);

@@ -45,6 +45,33 @@ afterAll(async () => {
   await fs.rm(emptyDir, { recursive: true, force: true });
 });
 
+/** One filled value per canonical key the 510(k) device map declares a home for. */
+const DATA = {
+  deviceTradeName: 'AcuSense CGM System',
+  applicantCompanyName: 'Concept2Cure, Inc.',
+  predicateSubmissionNumber: 'K203456',
+  productCodes: 'NBW',
+};
+
+/**
+ * Point the template drop-point at the real vendored directory for one suite,
+ * and put it back afterwards. The file-level `beforeAll` points it at an EMPTY
+ * directory so the synthetic-template tests can exercise the fail-closed path,
+ * so every suite that needs the real template has to swap it back — three of
+ * them did, with the same nine lines each.
+ */
+function useVendoredTemplateDir(dir: string): void {
+  let dirBefore: string | undefined;
+  beforeAll(() => {
+    dirBefore = process.env.ESTAR_TEMPLATE_DIR;
+    process.env.ESTAR_TEMPLATE_DIR = dir;
+  });
+  afterAll(() => {
+    if (dirBefore === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
+    else process.env.ESTAR_TEMPLATE_DIR = dirBefore;
+  });
+}
+
 describe('fillEstarSubmission', () => {
   it('fills the official eSTAR AcroForm when template + verified field map are present', async () => {
     const templateBytes = await makeSyntheticEstar();
@@ -128,26 +155,7 @@ const NIVD_TEMPLATE = path.resolve(process.cwd(), 'assets/estar-templates', 'eST
 describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
   'fillEstarSubmission against the official nIVD eSTAR v7.0',
   () => {
-    const DATA = {
-      deviceTradeName: 'AcuSense CGM System',
-      applicantCompanyName: 'Concept2Cure, Inc.',
-      predicateSubmissionNumber: 'K203456',
-      productCodes: 'NBW',
-    };
-
-    // The file-level beforeAll points the drop-point at an EMPTY dir so the
-    // synthetic-template tests above exercise the fail-closed path. This block
-    // needs the real vendored template, so point it back for these tests only.
-    const REAL_DIR = path.dirname(NIVD_TEMPLATE);
-    let dirBefore: string | undefined;
-    beforeAll(() => {
-      dirBefore = process.env.ESTAR_TEMPLATE_DIR;
-      process.env.ESTAR_TEMPLATE_DIR = REAL_DIR;
-    });
-    afterAll(() => {
-      if (dirBefore === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
-      else process.env.ESTAR_TEMPLATE_DIR = dirBefore;
-    });
+    useVendoredTemplateDir(path.dirname(NIVD_TEMPLATE));
 
     it('produces a filled official eSTAR with no blockers, via the XFA layer', async () => {
       const r = await fillEstarSubmission({ type: '510k', variant: 'device', data: DATA });
@@ -173,45 +181,6 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
       const back = await readXfaDatasetsValues(r.pdfBytes!, paths);
       for (const [key, value] of Object.entries(DATA)) {
         expect(back[map[key].xfaSomPath!]).toBe(value);
-      }
-    });
-
-    it('refuses a file with the right NAME whose bytes do not match its pin', async () => {
-      // Availability was a filename match and nothing else, so any PDF called
-      // eSTAR-510k-non-ivd.pdf — a retired v6.2 form, an edited copy — made
-      // templateAvailable and officialEstarPdf true, and the field map wrote
-      // our values wherever THAT file's SOM paths pointed. checksums.txt has
-      // pinned these bytes all along; nothing read it.
-      const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'estar-swapped-'));
-      const impostor = await PDFDocument.create();
-      impostor.addPage();
-      await fs.writeFile(
-        path.join(dir, 'eSTAR-510k-non-ivd.pdf'),
-        Buffer.from(await impostor.save()),
-      );
-      await fs.writeFile(
-        path.join(dir, 'checksums.txt'),
-        `${'0'.repeat(64)}  eSTAR-510k-non-ivd.pdf\n`,
-      );
-      const prev = process.env.ESTAR_TEMPLATE_DIR;
-      process.env.ESTAR_TEMPLATE_DIR = dir;
-      try {
-        const r = await fillEstarSubmission({ type: '510k', variant: 'device', data: DATA });
-        expect(r.templateAvailable).toBe(false);
-        expect(r.filled).toBe(false);
-        expect(r.pdfBytes).toBeUndefined();
-        expect(r.blockers.join(' ')).toMatch(/does not match the SHA-256 pinned/);
-      } finally {
-        if (prev === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
-        else process.env.ESTAR_TEMPLATE_DIR = prev;
-      }
-    });
-
-    it('the committed templates match the checksums pinned for them', async () => {
-      const vendored = await listVendoredTemplates();
-      expect(vendored.length).toBeGreaterThan(0);
-      for (const t of vendored) {
-        expect(t.integrity, `${t.fileName} integrity`).toBe('verified');
       }
     });
 
@@ -345,16 +314,7 @@ describe('De Novo / PMA field maps are the pathway-neutral subset (no template n
 describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
   'De Novo and PMA on the official nIVD eSTAR v7.0 (same vendored file as 510(k))',
   () => {
-    const REAL_DIR = path.dirname(NIVD_TEMPLATE);
-    let dirBefore: string | undefined;
-    beforeAll(() => {
-      dirBefore = process.env.ESTAR_TEMPLATE_DIR;
-      process.env.ESTAR_TEMPLATE_DIR = REAL_DIR;
-    });
-    afterAll(() => {
-      if (dirBefore === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
-      else process.env.ESTAR_TEMPLATE_DIR = dirBefore;
-    });
+    useVendoredTemplateDir(path.dirname(NIVD_TEMPLATE));
 
     it.each(['de_novo', 'pma'] as const)(
       '%s-device fills the shared administrative fields and reads them back at their SOM paths',
@@ -397,16 +357,7 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
 describe.skipIf(!fsSync.existsSync(IVD_TEMPLATE))(
   'De Novo and PMA on the official IVD eSTAR v7.0 (same vendored file as 510(k))',
   () => {
-    const REAL_DIR = path.dirname(IVD_TEMPLATE);
-    let dirBefore: string | undefined;
-    beforeAll(() => {
-      dirBefore = process.env.ESTAR_TEMPLATE_DIR;
-      process.env.ESTAR_TEMPLATE_DIR = REAL_DIR;
-    });
-    afterAll(() => {
-      if (dirBefore === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
-      else process.env.ESTAR_TEMPLATE_DIR = dirBefore;
-    });
+    useVendoredTemplateDir(path.dirname(IVD_TEMPLATE));
 
     it.each(['de_novo', 'pma'] as const)(
       '%s-ivd is ready and fills the shared fields (minus the IFU citation the IVD template lacks)',
@@ -426,5 +377,58 @@ describe.skipIf(!fsSync.existsSync(IVD_TEMPLATE))(
         }
       },
     );
+  },
+);
+
+/**
+ * TEMPLATE INTEGRITY. Availability used to be a filename match and nothing else,
+ * so any PDF called `eSTAR-510k-non-ivd.pdf` — a retired v6.2 form, an edited
+ * copy — made `templateAvailable` true and the field map wrote our values
+ * wherever THAT file's SOM paths pointed. These are about the BYTES, not about
+ * filling, so they sit apart from the fill suite.
+ */
+describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
+  'the vendored eSTAR templates are the files they are pinned to be',
+  () => {
+    useVendoredTemplateDir(path.dirname(NIVD_TEMPLATE));
+
+    it('refuses a file with the right NAME whose bytes do not match its pin', async () => {
+      // Availability was a filename match and nothing else, so any PDF called
+      // eSTAR-510k-non-ivd.pdf — a retired v6.2 form, an edited copy — made
+      // templateAvailable and officialEstarPdf true, and the field map wrote
+      // our values wherever THAT file's SOM paths pointed. checksums.txt has
+      // pinned these bytes all along; nothing read it.
+      const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'estar-swapped-'));
+      const impostor = await PDFDocument.create();
+      impostor.addPage();
+      await fs.writeFile(
+        path.join(dir, 'eSTAR-510k-non-ivd.pdf'),
+        Buffer.from(await impostor.save()),
+      );
+      await fs.writeFile(
+        path.join(dir, 'checksums.txt'),
+        `${'0'.repeat(64)}  eSTAR-510k-non-ivd.pdf\n`,
+      );
+      const prev = process.env.ESTAR_TEMPLATE_DIR;
+      process.env.ESTAR_TEMPLATE_DIR = dir;
+      try {
+        const r = await fillEstarSubmission({ type: '510k', variant: 'device', data: DATA });
+        expect(r.templateAvailable).toBe(false);
+        expect(r.filled).toBe(false);
+        expect(r.pdfBytes).toBeUndefined();
+        expect(r.blockers.join(' ')).toMatch(/does not match the SHA-256 pinned/);
+      } finally {
+        if (prev === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
+        else process.env.ESTAR_TEMPLATE_DIR = prev;
+      }
+    });
+
+    it('the committed templates match the checksums pinned for them', async () => {
+      const vendored = await listVendoredTemplates();
+      expect(vendored.length).toBeGreaterThan(0);
+      for (const t of vendored) {
+        expect(t.integrity, `${t.fileName} integrity`).toBe('verified');
+      }
+    });
   },
 );

@@ -170,35 +170,75 @@ Proof: `docs/reports/wo8-phase2-estar-demo-2026-09-03.md`. 61 test files / 882 t
 
 ---
 
-## 5. The single open item on Phase 1 — JM only
+## 5. The Acrobat question — what is now answered, and what is still JM's
 
-**Open the filled eSTAR in Adobe Acrobat.** Confirm all 20 values display, and that the
-form's own initialize/calculate scripts do not overwrite them on open.
+Most of this section's original question has been answered without Acrobat, by reading the
+template's own scripts. The write-up is `docs/reports/estar-acrobat-behaviour-2026-09-04.md`
+and every claim in it is re-derived from the vendored binary on each test run by
+`estar-field-map.template-behaviour.test.ts`.
 
-There is no Acrobat in the build environment. What is proven is structural: the values
-are in the `datasets` packet Acrobat binds to, the `template` packet is byte-identical
-to the original, all ten XFA packets survive, and an independent library reads the
-result through the xref chain. Whether Acrobat *renders* them has not been observed.
+**Answered.**
 
-**No agent may attempt this, and no agent may treat it as a blocker it can solve.**
+- The filled form opens looking blank, and nothing in the template unhides it. The whole
+  9.88 MB template packet declares exactly one `initialize` event and it makes zero
+  `presence = "visible"` assignments. Every reveal hangs off a `change`, `exit` or `click`.
+- Nothing overwrites our values on open. The scripts that recompute the summary cells run on
+  user activities, not on binding.
+- The values are bound correctly. pdf.js, an independent XFA engine that runs no scripts,
+  renders a written value at its exact node once its container's `presence` is flipped in a
+  scratch copy, and on the shipped bytes it renders a written radio selection and overrides
+  one FDA ships.
+- The saved `form` packet cannot shadow the datasets write: it declares no node for any
+  mapped field, and it stays byte-identical after a fill.
+- Four of the twenty cells were being destroyed by the applicant's first click. Three of
+  those are fixed: the two source fields FDA rebuilds them from are now written.
 
-Until JM confirms it, Phase 1 is proven structurally but not visually, and Phase 2 does
-not start.
+**Still JM's, and no agent may attempt it.** There is no Acrobat in the build environment.
+The step from "only a `change` handler reveals this" to "Acrobat will not reveal it on open"
+is an inference from XFA event semantics — a well-supported one, corroborated by FDA's own
+Import Data button replaying those events by hand, but an inference. The specific things to
+look at when the file is opened are listed in §6.
 
 ---
 
 ## 6. Next authorized action
 
-**None until JM names one.** Phase 2 is built and proven structurally (the report, §5). Two things only JM
-can settle stand in front of any further click:
+**Open the filled eSTAR in Adobe Acrobat and work the form as a client would.** Everything
+that can be established without Acrobat has been. The template's own scripts have been read
+and pinned (`docs/reports/estar-acrobat-behaviour-2026-09-04.md`), and an independent XFA
+engine confirms every write binds. What remains is the one thing no agent can do here:
+Acrobat is not installed, and no agent may install it or route around that.
 
-1. The Acrobat render check (§5) — still open, unchanged by Phase 2.
-2. The reading of `client_workspaces` as the applicant (Phase 2 report §3 and §7): confirm it, or name the
-   rule you want, before a customer files on it.
+The check, in order:
 
-Candidates JM may name, in no order: persist the user-typed administrative values (a schema decision — a
-column or a table — so a migration); De Novo / PMA descriptors (templates not vendored; §8 still applies);
-the Q-Sub / IDE / 513(g) PreSTAR descriptors (template not vendored; §8 still applies). Idle is the correct state for a stream whose gate has not cleared. Do not substitute other work.
+1. Open the produced file in **Acrobat Pro** (not Reader — the template's own `initialize`
+   script warns on `app.viewerType == "Reader"`).
+2. Page 1 shows only the Application/Submission Type questions. **Click the pathway radio.**
+   That click is the reveal, and it is deliberately left to the applicant (§4 below).
+3. Check the four cells the click used to erase: the Declaration of Conformity device trade
+   name, the 510(k) Summary device trade name, the product code, and the classification name.
+   The first three should now be present — FDA's own scripts rebuild them from the two source
+   fields we write. **The classification name is expected to be blank**, and the reason is in
+   the report (§4a): filling it would mean assembling a string that looks like a selection
+   from FDA's catalog but was not.
+4. Tab through the applicant block. The Declaration of Conformity **company name is expected
+   to change to the applicant company name** if the two governed values differ — that is
+   FDA's form deriving that cell from the applicant block, recorded as
+   `rebuildOutcome: 'substitutes'`. Confirm whether that is acceptable to a filer, because
+   there is no source we could write that would hold a different entity there.
+
+Then, the reading of `client_workspaces` as the applicant (Phase 2 report §3 and §7):
+confirm it, or name the rule you want, before a customer files on it.
+
+Two data-shape decisions are waiting on JM, both measured and both blocked on schema, not
+code (report §4a):
+
+- **The Declaration of Conformity address** would have to become structured columns (two
+  street lines, city, state, postal code, country as an ISO-3 code) before FDA's own rebuild
+  can carry it. One free-text column cannot be written into six fields without parsing.
+- **The two telephone columns** would have to be constrained at capture to 8–15 digits, which
+  is what the template's own validation message asks for, before the source fields can be
+  written.
 
 ## 7. Other JM-only tasks on this stream
 
@@ -230,6 +270,20 @@ the Q-Sub / IDE / 513(g) PreSTAR descriptors (template not vendored; §8 still a
   contact, a portal e-mail as an applicant e-mail, a guessed address). A source is a column the platform
   holds for that fact, or `null`.
 - Let a request value override a governed one. The precedence flag is typed as the literal `false` on purpose.
+- Write the full `XXX (Class N) - <classification name>` composite into the Product Code
+  selector to make FDA rebuild the Classification Name cell. It would put a string into a
+  filed form that reads as a selection from FDA's 6,153-item catalog but was assembled here
+  out of three separate columns. The bare product code asserts only what we hold; see
+  `docs/reports/estar-acrobat-behaviour-2026-09-04.md` §4a.
+- Vendor FDA's classification tables by scraping them out of the template's 800 KB script
+  bodies. They are a snapshot dated inside the template, they would need re-deriving on every
+  FDA revision, and nothing needs them.
+- Write the applicant or correspondent telephone source fields, or parse the Declaration of
+  Conformity address into the template's six address parts. Both are blocked on the shape of
+  the stored data, not on the template — see §6. Constraining capture is the fix; a fill-time
+  transformation of an operator's value is not.
+- Write the pathway radio to make the form open revealed. It does not, and the reasons are
+  measured and pinned in `estar-field-map.ts`.
 
 ---
 
@@ -239,6 +293,7 @@ the Q-Sub / IDE / 513(g) PreSTAR descriptors (template not vendored; §8 still a
 |---|---|---|---|---|
 | 2026-09-03 | A | WO-8 Phase 1 — unblock eSTAR fill | `filled: true`, 20/20 read-back, 91 tests pass | `docs/reports/wo8-phase1-estar-unblock-2026-09-03.md` |
 | 2026-09-03 | B | WO-8 Phase 2 — device + diagnostic, whole stream (JM: "get medical device and diagnostic fully done now") | official eSTAR filled from governed records with per-field provenance on the 510(k) and IVD surfaces; device golden journey green; second pass: IVD 510(k) on the IVD eSTAR, entitlement lock before the first click, no crash on an unreadable section list; 62 test files / 898 tests green across the eSTAR engine, forms, routes, MDX kit and the device golden journey | `docs/reports/wo8-phase2-estar-demo-2026-09-03.md` |
+| 2026-09-04 | C | WO-8 Phase 3 + Acrobat (JM: "get the medical device and diagnostic entire workflow completed, including the PDF or the Acrobat file from eSTAR… not adding new unnecessary features, getting what we have to actually work") | every administrative key has a governed home; De Novo and PMA produce; the template's own scripts read and pinned, settling why no `submissionType` is written; the two SOURCE fields FDA rebuilds the summary cells from are now written, so the applicant's first click rebuilds three values it used to erase; a refused save names its refusal; two keys on one form box can no longer collapse silently; PUT /profile is editor-gated and audited | `docs/reports/estar-acrobat-behaviour-2026-09-04.md` |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work. A session

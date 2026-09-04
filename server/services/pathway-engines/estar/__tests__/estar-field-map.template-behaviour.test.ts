@@ -374,10 +374,12 @@ describe('eSTAR field maps — the pathway declaration stays the applicant’s',
   it('maps no key onto the ApplicationType selectors', () => {
     for (const [descriptor, map] of Object.entries(ESTAR_FIELD_MAPS)) {
       for (const [key, spec] of Object.entries(map)) {
-        expect(
-          String(spec.xfaSomPath ?? ''),
-          `${descriptor}.${key} must not write the applicant's pathway declaration`,
-        ).not.toMatch(/^root\.ApplicationType\b/);
+        for (const som of [spec.xfaSomPath, ...(spec.alsoWriteSomPaths ?? [])]) {
+          expect(
+            String(som ?? ''),
+            `${descriptor}.${key} must not write the applicant's pathway declaration`,
+          ).not.toMatch(/^root\.ApplicationType\b/);
+        }
       }
     }
   });
@@ -386,5 +388,98 @@ describe('eSTAR field maps — the pathway declaration stays the applicant’s',
     expect(Object.keys(ESTAR_TEMPLATE_RECOMPUTED_FIELDS).sort()).toEqual(
       Object.keys(ESTAR_FIELD_MAPS['510k-device']).sort(),
     );
+  });
+});
+
+/**
+ * `rebuildOutcome` is the field map's claim about what happens to each summary
+ * cell when the template's own script rebuilds it. The claim is checkable
+ * without Acrobat, because it reduces to one question about the map itself: is
+ * the SOURCE the rebuild reads written by this map, and with what?
+ *
+ *   'reproduces'  — the source is written, and with the same governed fact.
+ *   'blanks'      — the source is not written by anything, so the rebuild
+ *                   produces an empty string.
+ *   'substitutes' — the source IS written, but by a key carrying a DIFFERENT
+ *                   governed fact, so the rebuild replaces our value with that
+ *                   one. Blank is a gap; this is a wrong value, and it is the
+ *                   case that must never be mislabelled as either of the others.
+ *
+ * These run without the template: they are a consistency check between two
+ * declarations in the same file, and the template-derived half — which script
+ * assigns which cell, and from where — is pinned above.
+ */
+describe('eSTAR field maps — every recompute claim matches what the map actually writes', () => {
+  const MAP = ESTAR_FIELD_MAPS['510k-device'];
+  /** Every XFA node this map writes, from the primary path and the further ones. */
+  const WRITTEN: Map<string, string[]> = new Map();
+  for (const [key, spec] of Object.entries(MAP)) {
+    for (const som of [spec.xfaSomPath, ...(spec.alsoWriteSomPaths ?? [])]) {
+      if (!som) continue;
+      WRITTEN.set(som, [...(WRITTEN.get(som) ?? []), key]);
+    }
+  }
+  /* `rebuiltFrom` names a repeat as `Device[].TradeName`; the map writes the
+     single shipped instance as `Device.TradeName`. Compare on the same shape. */
+  const norm = (som: string) => som.replace(/\[\]/g, '');
+
+  it('a field claiming the rebuild REPRODUCES its value has that source written', () => {
+    for (const [key, rec] of Object.entries(ESTAR_TEMPLATE_RECOMPUTED_FIELDS)) {
+      if (rec.rebuildOutcome !== 'reproduces' || !rec.rebuiltFrom) continue;
+      const writers = WRITTEN.get(norm(rec.rebuiltFrom));
+      expect(
+        writers,
+        `${key} claims the rebuild reproduces its value, so the map must write ${rec.rebuiltFrom}`,
+      ).toBeTruthy();
+    }
+  });
+
+  it('a field claiming the rebuild BLANKS it has that source written by nobody', () => {
+    for (const [key, rec] of Object.entries(ESTAR_TEMPLATE_RECOMPUTED_FIELDS)) {
+      if (rec.rebuildOutcome !== 'blanks' || !rec.rebuiltFrom) continue;
+      /* deviceClassificationName is the deliberate exception and says so in its
+         own note: the source IS written, with a bare product code too short for
+         the substr the rebuild guards on. Everything else must be unwritten. */
+      if (key === 'deviceClassificationName') continue;
+      expect(
+        WRITTEN.get(norm(rec.rebuiltFrom)) ?? null,
+        `${key} claims the rebuild blanks it, so nothing may write ${rec.rebuiltFrom}`,
+      ).toBeNull();
+    }
+  });
+
+  it('names the one cell the form fills from a DIFFERENT governed fact', () => {
+    /* The Declaration of Conformity company name. FDA rebuilds DCTextField120
+       from the APPLICANT company field, which this map writes from a different
+       column, so a filing that names a separate declaring entity loses it the
+       moment the applicant tabs through their own block. It is recorded, not
+       silently carried as if it were safe. */
+    const substituting = Object.entries(ESTAR_TEMPLATE_RECOMPUTED_FIELDS)
+      .filter(([, r]) => r.rebuildOutcome === 'substitutes')
+      .map(([k]) => k);
+    expect(substituting).toEqual(['declarationCompanyName']);
+    const rec = ESTAR_TEMPLATE_RECOMPUTED_FIELDS.declarationCompanyName;
+    expect(WRITTEN.get(norm(rec.rebuiltFrom!))).toEqual(['applicantCompanyName']);
+    expect(rec.note).toMatch(/different/i);
+  });
+
+  it('writes the two sources that turn the reveal click from destructive into constructive', () => {
+    /* Before these, the applicant's first click erased four governed values.
+       These two paths are what the click now rebuilds them from. */
+    expect(WRITTEN.get('root.DeviceDescription.Devices.Device.TradeName')).toEqual([
+      'declarationDeviceTradeName',
+    ]);
+    expect(WRITTEN.get('root.Classification.USAKnownClassification.DDDropDownList517')).toEqual([
+      'productCodes',
+    ]);
+    /* Both shared maps carry the trade-name source, so it reaches De Novo and
+       PMA as well — the script that clears the cell is in the pathway handler's
+       COMMON tail, not its 510(k) branch. */
+    for (const descriptor of ['de_novo-device', 'pma-device', 'de_novo-ivd', 'pma-ivd']) {
+      expect(
+        ESTAR_FIELD_MAPS[descriptor].declarationDeviceTradeName.alsoWriteSomPaths,
+        `${descriptor} must write the device listing row`,
+      ).toEqual(['root.DeviceDescription.Devices.Device.TradeName']);
+    }
   });
 });
