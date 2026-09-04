@@ -19,6 +19,7 @@
  */
 
 import { promises as fs } from 'fs';
+import { createHash } from 'node:crypto';
 import * as path from 'path';
 
 import {
@@ -42,9 +43,44 @@ export type EstarTemplateType = EstarProgramSubmissionType;
 export type EstarTemplateVariant = 'device' | 'ivd' | 'prestar';
 
 /** A vendored official eSTAR template read from the drop-point directory. */
+/** Whether a vendored file matched the SHA-256 pinned for it in checksums.txt. */
+export type EstarTemplateIntegrity = 'verified' | 'mismatch' | 'unpinned';
+
 export interface VendoredEstarTemplate {
   fileName: string;
   bytes: Buffer;
+  /**
+   * 'verified'  — checksums.txt pins this filename and the bytes match.
+   * 'mismatch'  — it pins the filename and the bytes DO NOT match. Refused.
+   * 'unpinned'  — no checksums.txt, or it does not list this filename.
+   *
+   * Availability used to be a filename match and nothing else, so any PDF
+   * called eSTAR-510k-non-ivd.pdf — a retired v6.2 form, an edited copy, an
+   * unrelated document — made templateAvailable true and officialEstarPdf true,
+   * and the canonical→XFA field map then wrote values wherever THAT file's SOM
+   * paths happened to point. assets/estar-templates/checksums.txt has pinned
+   * both files all along, and says why: "the canonical→XFA field map … was
+   * enumerated from THESE EXACT BYTES, so a template swap without
+   * re-verification would silently change what gets written into a submission."
+   * Nothing read it.
+   */
+  integrity: EstarTemplateIntegrity;
+}
+
+/** The SHA-256 pins in a drop-point's checksums.txt, keyed by lowercase filename. */
+async function readPinnedChecksums(dir: string): Promise<Map<string, string>> {
+  const pins = new Map<string, string>();
+  let text: string;
+  try {
+    text = await fs.readFile(path.join(dir, 'checksums.txt'), 'utf8');
+  } catch {
+    return pins; // no manifest in this drop-point — every file reads as unpinned
+  }
+  for (const line of text.split('\n')) {
+    const m = /^([0-9a-f]{64})\s+(.+?)\s*$/i.exec(line.trim());
+    if (m) pins.set(m[2].toLowerCase(), m[1].toLowerCase());
+  }
+  return pins;
 }
 
 /**
@@ -127,11 +163,19 @@ export async function listVendoredTemplates(
   } catch {
     return [];
   }
+  const pins = await readPinnedChecksums(dir);
   const out: VendoredEstarTemplate[] = [];
   for (const name of names.sort()) {
     if (!name.toLowerCase().endsWith('.pdf')) continue;
     try {
-      out.push({ fileName: name, bytes: await fs.readFile(path.join(dir, name)) });
+      const bytes = await fs.readFile(path.join(dir, name));
+      const pinned = pins.get(name.toLowerCase());
+      const integrity: EstarTemplateIntegrity = !pinned
+        ? 'unpinned'
+        : createHash('sha256').update(bytes).digest('hex') === pinned
+          ? 'verified'
+          : 'mismatch';
+      out.push({ fileName: name, bytes, integrity });
     } catch {
       // Unreadable entry — skip; treated as absent by the readiness check.
     }

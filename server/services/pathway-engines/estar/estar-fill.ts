@@ -33,6 +33,7 @@ import {
   estarTemplateRequiredFromEnv,
   type EstarTemplateVariant,
   type EstarTemplateType,
+  type EstarTemplateIntegrity,
 } from './estar-template-registry';
 import { getEstarFieldMap, isFieldMapPopulated } from './estar-field-map';
 import {
@@ -82,11 +83,13 @@ export interface FillEstarResult {
 async function resolveTemplateBytes(
   input: FillEstarInput,
   expectedFileName: string,
-): Promise<Uint8Array | null> {
-  if (input.templateBytes) return input.templateBytes;
+): Promise<{ bytes: Uint8Array | null; integrity: EstarTemplateIntegrity | null }> {
+  // Injected bytes are the caller's own (tests, explicit override); the
+  // drop-point's pins do not describe them.
+  if (input.templateBytes) return { bytes: input.templateBytes, integrity: null };
   const vendored = await listVendoredTemplates();
   const hit = vendored.find((t) => t.fileName.toLowerCase() === expectedFileName.toLowerCase());
-  return hit ? hit.bytes : null;
+  return hit ? { bytes: hit.bytes, integrity: hit.integrity } : { bytes: null, integrity: null };
 }
 
 /**
@@ -113,8 +116,29 @@ export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEs
     return base;
   }
 
-  const templateBytes = await resolveTemplateBytes(input, descriptor.expectedFileName);
-  base.templateAvailable = !!templateBytes;
+  const { bytes: templateBytes, integrity } = await resolveTemplateBytes(
+    input,
+    descriptor.expectedFileName,
+  );
+  // A file with the right NAME is not the official template. checksums.txt
+  // pins these bytes precisely because the field map was enumerated from them;
+  // a swapped or edited file writes our values wherever ITS paths point.
+  const integrityFailed = integrity === 'mismatch';
+  base.templateAvailable = !!templateBytes && !integrityFailed;
+  if (integrityFailed) {
+    base.blockers.push(
+      `Cannot produce a submittable eSTAR: "${descriptor.expectedFileName}" is present but does not match the ` +
+        `SHA-256 pinned for it in the drop-point's checksums.txt. The canonical field map was enumerated from the ` +
+        `pinned bytes, so filling a different file would write values into the wrong boxes. Restore the pinned ` +
+        `template, or re-verify the field map against the new edition and update checksums.txt.`,
+    );
+  }
+  if (integrity === 'unpinned') {
+    base.warnings.push(
+      `"${descriptor.expectedFileName}" is not pinned in the drop-point's checksums.txt, so its identity as the ` +
+        `official FDA edition was not verified.`,
+    );
+  }
 
   const fieldMap = input.fieldMap ?? getEstarFieldMap(descriptor.id);
   const mapPopulated = input.fieldMap
@@ -122,7 +146,7 @@ export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEs
     : isFieldMapPopulated(descriptor.id);
   base.fieldMapPopulated = mapPopulated;
 
-  if (!templateBytes) {
+  if (!templateBytes && !integrityFailed) {
     base.blockers.push(
       `Cannot produce a submittable eSTAR: the official template "${descriptor.expectedFileName}" is not vendored. ` +
         `Place it in assets/estar-templates/ (or set ESTAR_TEMPLATE_DIR). See assets/estar-templates/README.md.` +

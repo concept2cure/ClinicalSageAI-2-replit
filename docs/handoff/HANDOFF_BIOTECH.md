@@ -3,7 +3,7 @@
 **Commit to `docs/handoff/HANDOFF_BIOTECH.md`.**
 
 **Scope:** IND, NDA, BLA. eCTD publishing, FDA forms, CTD authoring.
-**Last verified:** 2026-09-03 against commit `499f096` on `concept2cure-v2`.
+**Last verified:** 2026-09-04 on `concept2cure-v2` (§1 rewritten; the rest dates from 2026-09-03, commit `499f096`).
 
 This file is self-contained. An agent working this stream needs no other handoff.
 
@@ -19,28 +19,64 @@ Paste exactly this as the first message of a new Claude Code session, and nothin
 
 ---
 
-## 1. READ THIS FIRST — this stream is blocked
+## 1. READ THIS FIRST — partly unblocked as of 2026-09-04
 
-**There is currently no authorized coding work on this stream.**
+**Superseded in part.** This section previously read "there is currently no authorized
+coding work on this stream" and told an agent to stop. That was true when written. It is
+no longer true, and an agent that stops on it today will idle in front of work that is
+both possible and done.
 
-Phase 1 cannot proceed. It depends on files that must be downloaded from `fda.gov` and
-`ich.org`, and **every agency host is refused by this environment's network policy**:
+### What is now vendored and working
 
-| Host | Result |
-|---|---|
-| `www.fda.gov` | `CONNECT tunnel failed, response 403` |
-| `www.ich.org` | `CONNECT tunnel failed, response 403` |
-| `clinicaltrials.gov` | `CONNECT tunnel failed, response 403` |
+| Asset | State | Evidence |
+|---|---|---|
+| FDA eSTAR nIVD + IVD templates | **vendored**, checksum-pinned | `assets/estar-templates/`, verified by `estar-fill.test.ts` |
+| FDA 1571, 1572, 3454, 356h, 3674 PDFs | **vendored**, sha256 in sidecar manifests | `templates/forms/acroforms/` |
+| Official fill, FDA 1571 + 3674 | **working** — dynamic XFA filled through the `datasets` packet | `ind-form-xfa-official.test.ts` |
+| Official fill, 1572 / 3454 / 356h | **working** — AcroForm | their `*-official.test.ts` suites |
+| US IND form backing | `getDocumentCoverage('US_IND').formsFullyBacked === true` | `tests/regulatory/registryCoverage.test.ts` |
 
-A 403 is an organisation policy denial. Do not retry it, do not find a mirror, do not
-synthesize a DTD, do not "approximate" a stylesheet. `assets/ectd-dtd/README.md` already
-predicted this: *acquire the files from a network-permitted machine and add them via PR.*
+The long-standing belief that FDA 1571 and 3674 could never be filled — recorded in
+`docs/biotech/FDA_FORMS_FILL_STATUS.md` and in both sidecar manifests — was measured on
+the AcroForm layer, which on those editions is genuinely empty. Their fields live in the
+XFA packets: 1571 declares 283 of which 246 are fillable, 3674 declares 190 of which 178
+are. Both documents have been corrected.
 
-**If you are opened on this stream and JM has not confirmed the DTDs are vendored, the
-correct and complete action is to say so and stop.** Do not substitute other work. Do
-not audit. Do not write a plan. Do not refactor something nearby. Idle is the correct
-state for a blocked stream, and inventing work here is how this repo acquired 939
-markdown files.
+### What is still blocked, and on what
+
+1. **eCTD DTDs and stylesheets.** `assets/ectd-dtd/` still holds only its README,
+   `checksums.txt` and two fixtures — no `.dtd`. `www.fda.gov`, `www.ich.org` and
+   `clinicaltrials.gov` are all refused by this environment's network policy
+   (`CONNECT tunnel failed, response 403`). A 403 is an organisation policy denial: do
+   not retry it, do not find a mirror, do not synthesize a DTD, do not approximate a
+   stylesheet. The remedy is unchanged — acquire the files from a network-permitted
+   machine and add them via PR.
+
+2. **FDA 3455 and FDA 1574 have no vendored PDF.** Every other supported form does.
+   Those two render the labelled draft, honestly, and will keep doing so until the
+   official blanks are dropped into `templates/forms/acroforms/` with sidecar manifests.
+   Same acquisition constraint as the DTDs.
+
+3. **A named reviewer for the 1571 / 3674 manifests.** Both still carry
+   `assetTrusted: false` and `reviewedBy: null`. Nothing depends on them today — those
+   fields gate the manifest-carried AcroForm field map, which does not apply to a
+   dynamic XFA form, whose map is code-reviewed in `official-field-maps.ts` and
+   re-verified against the template at fill time. A person should still confirm the
+   eight 1571 box assignments against the printed form before a real filing.
+
+**So:** work that does not depend on the three items above is authorized. Work that does
+is still blocked, and reporting that it is blocked remains the correct and complete
+action for it.
+
+### Note for the concurrent device stream
+
+On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
+"including the PDF or the Acrobat file from eSTAR", this session edited files §2 lists as
+device-stream territory: `server/services/forms/fill-official-pdf.ts`,
+`server/services/pathway-engines/estar/`. The changes are the XFA data-path resolver that
+both streams' forms depend on, plus honesty fixes in the eSTAR fill and readiness. They
+were rebased onto the device stream's own commits and its full suite passes. The territory
+split in §2 otherwise stands.
 
 ---
 

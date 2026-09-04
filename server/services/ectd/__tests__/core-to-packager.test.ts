@@ -64,9 +64,23 @@ describe('mapCoreLeafToEctdLeaf', () => {
     expect(out.md5).not.toBe('corechk');
   });
 
-  it('defaults an unknown lifecycle op to new', () => {
-    const out = mapCoreLeafToEctdLeaf(leaf({ sectionCode: '1.1', lifecycleOp: 'bogus' }), file());
-    expect(out.operation).toBe('new');
+  it('refuses an unrecognised lifecycle op instead of filing it as new', () => {
+    // This asserted the default. lifecycle_op is free text on the write path,
+    // so 'withdraw' or a typo became a brand-new leaf: the sequence re-filed
+    // the document as if it had never been submitted, the prior version stayed
+    // current at the agency, and no modified-file linked the two.
+    expect(() =>
+      mapCoreLeafToEctdLeaf(leaf({ sectionCode: '1.1', lifecycleOp: 'bogus' }), file()),
+    ).toThrow(/Unrecognised eCTD lifecycle operation "bogus"/);
+  });
+
+  it('reads a differently-cased operation as itself', () => {
+    // 'Replace' plainly means replace; refusing on casing alone would be
+    // pedantry, and defaulting it to new is the defect above.
+    for (const op of ['Replace', 'REPLACE', ' replace ']) {
+      const out = mapCoreLeafToEctdLeaf(leaf({ sectionCode: '1.1', lifecycleOp: op }), file());
+      expect(out.operation).toBe('replace');
+    }
   });
 });
 

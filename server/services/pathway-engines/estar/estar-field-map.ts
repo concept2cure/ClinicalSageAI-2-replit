@@ -71,53 +71,69 @@ const IVD_SHARED_ADMINISTRATIVE_FIELDS: OfficialPdfFieldMap = {
 };
 
 /*
- * WHY THERE IS NO `submissionType` KEY (investigated 2026-09-03, WO-8 Phase 3;
- * the binding claim below CORRECTED 2026-09-04 against the decrypted template).
- * The pathway a filing takes is chosen on the template's first page. That
- * selector is writable through the `datasets` packet — and is still not mapped:
- *   - `root.ApplicationType.USA` and `root.ApplicationType.ApplicationSubType`
- *     are SUBFORMS, not dropdowns. The pathway selector is the radio group
- *     (XFA exclGroup) `root.ApplicationType.USA.ATRadioButton110`, whose
- *     members' on-values, read from the template packet, are: "1" = Premarket
- *     Notification 510(k) (ATRadioButton111), "2" = De Novo (ATRadioButton112),
- *     "3" = Premarket Application PMA (ATRadioButton113). The sub-type group
- *     `root.ApplicationType.ApplicationSubType.ATRadioButton130` is "1" = New
- *     Application/Submission, "2" = Change to Application/Submission, "3" =
- *     Additional Information, "4" = Report. The jurisdiction group
- *     `root.ApplicationType.ATRadioButton100` is "1" = US FDA (nIVD also "0" =
- *     IMDRF; both templates "2" = Health Canada). Identical on both templates.
- *   - The GROUPS are DATA-BOUND. `ATRadioButton100`, `ATRadioButton110` and
- *     `ATRadioButton130` have no `<bind>` child at all — default binding — and
- *     all three are present in the datasets skeleton. Only their MEMBER fields
- *     carry `<bind match="none"/>` (10 of the 11 members; `ATRadioButton113`
- *     carries no `<bind>` either), which is the normal LiveCycle shape: the
- *     exclGroup holds the value, the members are presentation. An earlier
- *     version of this note said the groups themselves were `match="none"` and
- *     that a write to them would be inert; a depth-aware scan of the decrypted
- *     template packet shows that is wrong, and pdf.js — an independent XFA
- *     engine — binds and renders a value written to `ATRadioButton110`, and a
- *     value written to `ATRadioButton100` even overrides the default FDA ships
- *     (see `fill-official-pdf.xfa-render.test`).
- *   - The key is therefore withheld for the reason that actually holds: THE
- *     SELECTION IS THE APPLICANT'S DECLARATION. Which pathway a submission is
- *     filed under is a regulatory assertion the applicant makes to FDA. Ticking
- *     it from inferred data would put a declaration into a client's submission
- *     that no one at the client made — and unlike a wrong trade name, nobody
- *     re-reads a radio button they never chose.
- *   - The mechanism is also unverified exactly here. Acrobat is not available in
- *     this environment, and these groups are the one place where the template's
- *     saved `form` packet DOES keep state: it stores
- *     `ApplicationType.ATRadioButton100.ATRadioButton101 = "1"` for the
- *     jurisdiction group's member. Whether Acrobat prefers that saved state over
- *     a datasets write is unobserved — pdf.js ignores the `form` packet
- *     entirely, so its rendering cannot answer it. (No mapped administrative
- *     field is exposed to this: the packet declares no node for any of them —
- *     see the `form`-packet section of `forms/fill-official-pdf`.) The members
- *     also carry the `event__change` scripts that reveal the pathway-specific
- *     sections, and no engine here runs XFA script, so a written selection is
- *     not known to leave the form in the state a human click produces.
- * The pathway stays the user's to select in the form; the maps below write
- * fields that carry data, never a declaration.
+ * WHY THERE IS NO `submissionType` KEY — SETTLED 2026-09-04 AGAINST THE TEMPLATE.
+ *
+ * The pathway a filing takes is chosen on the template's first page by the XFA
+ * exclusion group `root.ApplicationType.USA.ATRadioButton110` (member on-values,
+ * read from the template's own `<items>`: "1" = Premarket Notification 510(k)
+ * (ATRadioButton111), "2" = De Novo (ATRadioButton112), "3" = Premarket
+ * Application PMA (ATRadioButton113)). It is DATA-BOUND — no `<bind>` child, so
+ * default binding — it is present in the datasets skeleton (FDA ships it EMPTY:
+ * `<ATRadioButton110/>`), and pdf.js binds and renders a value written to it.
+ * It is writable. We still do not write it, for three reasons, in this order.
+ *
+ * 1. WRITING IT REVEALS NOTHING. The 12 container subforms that hold the 20
+ *    mapped fields are hidden until a script sets `presence = "visible"`. Every
+ *    such assignment in the template lives in a `change`, `exit` or `click`
+ *    handler — a USER-INTERACTION activity. The whole 9.88 MB template packet
+ *    declares exactly ONE `<event activity="initialize">` (on `root`); it makes
+ *    ZERO `presence = "visible"` assignments and ZERO `execEvent` calls. There
+ *    are two `<event activity="ready" ref="$layout">` (page numbering), one
+ *    non-empty `docReady` (bookmark pane), and ZERO events with `ref="$form"`.
+ *    Nothing runs at open that reads the pathway group and reveals a section.
+ *
+ * 2. THE ONE SCRIPT THAT WOULD REVEAL THEM CANNOT RUN WITHOUT A FOCUSED WIDGET.
+ *    `root.ApplicationType.USA.ATRadioButton110` `<event activity="change">` is
+ *    the only script that makes `Classification`, `Classification.USAKnown-
+ *    Classification` and `PredicatesSE` visible. Its reveal block opens:
+ *
+ *      if (xfa.host.getFocus().name.substr(0,15) != "ATRadioButton10" &&
+ *          ApplicationType.ATRadioButton100.rawValue == 1){
+ *
+ *    — an UNCONDITIONAL dereference of `xfa.host.getFocus()`. FDA's own comment
+ *    elsewhere in the template says when that is null: `//if something is
+ *    focused, which won't happen on an exit`. With no focus there is no reveal,
+ *    only a thrown script.
+ *
+ * 3. IT WOULD CONSUME THE ONE ACTION THAT DOES REVEAL THEM. FDA ships the group
+ *    empty, so the applicant sees an unanswered radio and clicks it; that click
+ *    fires `change` with a focused widget and reveals the sections. Writing the
+ *    value pre-answers the question WITHOUT running its handler, leaving the
+ *    form in a state no click produces: pathway shown as chosen, every section
+ *    still hidden. And the value is not even durable — `root.ApplicationType.
+ *    ATRadioButton100` `<event activity="change">` (the jurisdiction radio, one
+ *    click away) contains `this.USA.ATRadioButton110.ATRadioButton111.rawValue =
+ *    null;` for each member, under `if (xfa.host.getFocus().name !=
+ *    "ImportData")` — i.e. exactly when a human clicks it.
+ *
+ * The regulatory reason stands behind all three: which pathway a submission is
+ * filed under is a DECLARATION the applicant makes to FDA. Ticking it from
+ * inferred data would put an assertion into a client's submission that no one at
+ * the client made, and nobody re-reads a radio button they never chose.
+ *
+ * FDA's own data-loading path is `root.Amendment.Verification.ImportData`
+ * `<event activity="click">`: it calls `xfa.host.importData()` and then walks
+ * the form calling `execEvent("change")` and `execEvent("exit")` on every field
+ * and exclGroup in every VISIBLE subform — a manual replay of the events a data
+ * load does not fire. That button, not an open-time binding, is how a filled
+ * eSTAR is meant to come alive; the change handlers are littered with
+ * `if (xfa.host.getFocus().name != "ImportData")` guards written for it.
+ *
+ * Measured with `listXfaPackets` on the vendored `eSTAR-510k-non-ivd.pdf`; all
+ * 1,435 `<script>` and 434 `<exData>` bodies were blanked before any structural
+ * scan (their JavaScript contains `<` and `>` that forge tags otherwise — 2,999
+ * spurious elements). Pinned by `estar-field-map.template-behaviour.test.ts`;
+ * full write-up in `docs/reports/estar-acrobat-behaviour-2026-09-04.md`.
  */
 
 /**
@@ -189,6 +205,138 @@ export const ESTAR_FIELD_MAPS: Record<string, OfficialPdfFieldMap> = {
   'q_sub-prestar': {},
   'ide-prestar': {},
   '513g-prestar': {},
+};
+
+/**
+ * WHICH MAPPED FIELDS THE FORM RECOMPUTES FOR ITSELF (nIVD eSTAR v7.0, measured
+ * 2026-09-04). Not every mapped path is a place the applicant types. Twelve of
+ * the twenty `510k-device` fields are AUTO-POPULATED SUMMARY CELLS: an FDA
+ * script clears them (`X.rawValue = "";`) and rebuilds them from a SOURCE field
+ * elsewhere in the form. When that script runs, whatever we wrote is replaced by
+ * whatever the source holds — and for a source we do not map, that is blank.
+ *
+ * This table was ENUMERATED, not reasoned: every one of the template's 1,435
+ * script bodies was searched for an assignment to each mapped leaf field's
+ * `rawValue`. `writtenBy` is empty for a field no script in the template ever
+ * assigns; those are the only fields a write to which is unconditionally durable.
+ *
+ * FOUR OF THEM ARE CLEARED BY THE PATHWAY CLICK ITSELF. The 510(k) branch of
+ * `root.ApplicationType.USA.ATRadioButton110` `<event activity="change">` — the
+ * click that reveals the sections — runs
+ * `Classification.USAKnownClassification.DDDropDownList517.execEvent("exit");`
+ * (whose first two statements are
+ * `AdministrativeDocumentation.PMNSummary.SSTextField260.rawValue = "";` and
+ * `AdministrativeDocumentation.PMNSummary.SSTextField240.rawValue = "";`) and
+ * `DeviceDescription.Devices.Functions.Validation();` (whose defaults are
+ * `AdministrativeDocumentation.DoC.DCTextField140.rawValue = "";` and
+ * `AdministrativeDocumentation.PMNSummary.SSTextField220.rawValue = "";`). Their
+ * sources — `DDDropDownList517` and `Device[].TradeName` — are unmapped, so the
+ * rebuild leaves them blank. See `clearedByPathwayClick`.
+ *
+ * Nothing here is acted on automatically: this is the reviewable record of a
+ * product decision that is still open (keep filling summary cells, or fill their
+ * sources instead). Pinned against the vendored template by
+ * `estar-field-map.template-behaviour.test.ts`.
+ */
+export interface EstarRecomputedField {
+  /** Template scripts that assign this field's `rawValue`, by SOM path + activity. */
+  readonly writtenBy: readonly string[];
+  /** The field the rebuild reads, in the template's own SOM terms. */
+  readonly rebuiltFrom: string | null;
+  /** True when the pathway radio's own change cascade clears this field. */
+  readonly clearedByPathwayClick: boolean;
+}
+
+export const ESTAR_TEMPLATE_RECOMPUTED_FIELDS: Readonly<Record<string, EstarRecomputedField>> = {
+  deviceTradeName: {
+    writtenBy: ['root.DeviceDescription.Devices <variables>'],
+    rebuiltFrom: 'root.DeviceDescription.Devices.Device[].TradeName',
+    clearedByPathwayClick: true,
+  },
+  deviceCommonName: {
+    writtenBy: ['root.Classification.USAKnownClassification.DDDropDownList513 [exit]'],
+    rebuiltFrom: 'root.Classification.USAKnownClassification.DDDropDownList513',
+    clearedByPathwayClick: false,
+  },
+  deviceClassificationName: {
+    writtenBy: ['root.Classification.USAKnownClassification.DDDropDownList517 [exit]'],
+    rebuiltFrom: 'root.Classification.USAKnownClassification.DDDropDownList517',
+    clearedByPathwayClick: true,
+  },
+  regulationNumber: {
+    writtenBy: ['root.Classification.USAKnownClassification.DDDropDownList513 [exit]'],
+    rebuiltFrom: 'root.Classification.USAKnownClassification.DDDropDownList513',
+    clearedByPathwayClick: false,
+  },
+  productCodes: {
+    writtenBy: [
+      'root.Classification.USAKnownClassification.DDDropDownList517 [exit]',
+      'root.Classification.USAKnownClassification.DDTextField517a [exit]',
+    ],
+    rebuiltFrom: 'root.Classification.USAKnownClassification.DDDropDownList517',
+    clearedByPathwayClick: true,
+  },
+  associatedProductCodes: { writtenBy: [], rebuiltFrom: null, clearedByPathwayClick: false },
+  applicantCompanyName: { writtenBy: [], rebuiltFrom: null, clearedByPathwayClick: false },
+  applicantContactEmail: { writtenBy: [], rebuiltFrom: null, clearedByPathwayClick: false },
+  applicantContactTelephone: {
+    writtenBy: ['root.AdministrativeInformation.ApplicantInformation <variables>'],
+    rebuiltFrom: 'root.AdministrativeInformation.ApplicantInformation.ADTextField170',
+    clearedByPathwayClick: false,
+  },
+  // Rebuilt from a field WE DO map, so the rebuild reproduces our own value.
+  applicantSummaryEmail: {
+    writtenBy: ['root.AdministrativeInformation.ApplicantInformation <variables>'],
+    rebuiltFrom: 'root.AdministrativeInformation.ApplicantInformation.ADTextField160',
+    clearedByPathwayClick: false,
+  },
+  correspondentCompanyName: { writtenBy: [], rebuiltFrom: null, clearedByPathwayClick: false },
+  correspondentContactEmail: { writtenBy: [], rebuiltFrom: null, clearedByPathwayClick: false },
+  correspondentTelephone: {
+    writtenBy: [
+      'root.AdministrativeInformation.CorrespondentInformation.DeleteCorrespondent [click]',
+      'root.AdministrativeInformation.CorrespondentInformation <variables>',
+    ],
+    rebuiltFrom: 'root.AdministrativeInformation.CorrespondentInformation.ADTextField370',
+    clearedByPathwayClick: false,
+  },
+  // Rebuilt from a field WE DO map, so the rebuild reproduces our own value.
+  correspondentSummaryEmail: {
+    writtenBy: [
+      'root.AdministrativeInformation.CorrespondentInformation.DeleteCorrespondent [click]',
+      'root.AdministrativeInformation.CorrespondentInformation <variables>',
+    ],
+    rebuiltFrom: 'root.AdministrativeInformation.CorrespondentInformation.ADTextField360',
+    clearedByPathwayClick: false,
+  },
+  // Nulled only when the applicant explicitly deletes the predicate instance.
+  predicateSubmissionNumber: {
+    writtenBy: ['root.PredicatesSE.PredicateReference.DeletePredicate [click]'],
+    rebuiltFrom: null,
+    clearedByPathwayClick: false,
+  },
+  predicateDeviceTradeName: {
+    writtenBy: ['root.PredicatesSE.PredicateReference.DeletePredicate [click]'],
+    rebuiltFrom: null,
+    clearedByPathwayClick: false,
+  },
+  // Rebuilt from a field WE DO map, so the rebuild reproduces our own value.
+  declarationCompanyName: {
+    writtenBy: ['root.AdministrativeInformation.ApplicantInformation <variables>'],
+    rebuiltFrom: 'root.AdministrativeInformation.ApplicantInformation.ADTextField210',
+    clearedByPathwayClick: false,
+  },
+  declarationCompanyAddress: {
+    writtenBy: ['root.AdministrativeInformation.ApplicantInformation <variables>'],
+    rebuiltFrom: 'root.AdministrativeInformation.ApplicantInformation.ADTextField220..ADDropDownList270',
+    clearedByPathwayClick: false,
+  },
+  declarationDeviceTradeName: {
+    writtenBy: ['root.DeviceDescription.Devices <variables>'],
+    rebuiltFrom: 'root.DeviceDescription.Devices.Device[].TradeName',
+    clearedByPathwayClick: true,
+  },
+  indicationsForUseCitation: { writtenBy: [], rebuiltFrom: null, clearedByPathwayClick: false },
 };
 
 /** The field map for a descriptor id, or undefined if the descriptor is unknown. */

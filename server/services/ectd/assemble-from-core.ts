@@ -216,10 +216,22 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     });
   }
 
-  // Governance integrity manifest: per-leaf SHA-256 (alongside the eCTD-required
-  // md5) plus the package-level SHA-256, written OUTSIDE the regulatory backbone.
-  // index.xml / md5.txt keep md5 for agency compatibility; this file carries the
-  // modern hash for package governance and audit.
+  // Governance integrity manifest, written OUTSIDE the regulatory backbone.
+  // index.xml / md5.txt keep md5 for agency compatibility; this file is the
+  // integrity record for governance and audit.
+  //
+  // The per-leaf hashes here used to come from `byKey` — the STAGED bytes, as
+  // the resolver hashed them. The packager then normalizes each leaf to PDF/A
+  // before writing it and re-hashes the converted bytes for the backbone, so
+  // wherever Ghostscript is installed every per-leaf hash in this file
+  // described a file the package does not contain, and the record could not
+  // verify the package it claims to cover. The packager's own leafManifest
+  // carries the SHIPPED href and md5; that is what is recorded.
+  //
+  // Per-leaf sha256 is deliberately absent rather than wrong: the packager does
+  // not expose the converted bytes, so the only sha256 that can honestly be
+  // stated is the package-level one below, which is taken over the archive as
+  // written.
   const governanceManifestPath = path.join(outputDir, 'package-governance.sha256.json');
   await fs.writeFile(
     governanceManifestPath,
@@ -227,9 +239,15 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
       {
         sequenceId,
         organizationId,
-        hashPolicy: 'md5 = eCTD index (agency requirement); sha256 = package governance (this file)',
+        hashPolicy:
+          'md5 = eCTD index (agency requirement), recorded here over the SHIPPED leaf bytes; ' +
+          'sha256 = package governance, package-level only (leaves are normalized to PDF/A after staging)',
         packageSha256: result.bundle.sha256,
-        leaves: [...byKey.values()].map((f) => ({ fileName: f.fileName, md5: f.md5, sha256: f.sha256 })),
+        leaves: (result.bundle.leafManifest ?? []).map((l) => ({
+          fileName: l.fileName,
+          href: l.href,
+          md5: l.md5,
+        })),
       },
       null,
       2,

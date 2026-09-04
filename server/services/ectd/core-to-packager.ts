@@ -54,8 +54,28 @@ export type LeafFileResolver = (leaf: CoreLeaf) => ResolvedFile | null;
 
 const OPERATIONS = new Set<EctdLeaf['operation']>(['new', 'append', 'replace', 'delete']);
 
+/**
+ * A leaf's eCTD lifecycle operation, refused rather than defaulted.
+ *
+ * This coerced anything it did not recognise to 'new'. `lifecycle_op` is free
+ * text on the write path (submission-service writes `input.lifecycleOp ?? 'new'`
+ * with no enum check), so 'Replace', 'REPLACE', 'withdraw' or a typo silently
+ * became a brand-new leaf: the sequence re-filed the document as if it had
+ * never been submitted, the prior version stayed current at the agency, and no
+ * modified-file linked the two. Casing is normalised, because 'Replace' plainly
+ * means replace; an operation nobody can read is refused, because filing a leaf
+ * under the wrong operation is worse than not filing the sequence.
+ */
 function toOperation(op: string): EctdLeaf['operation'] {
-  return OPERATIONS.has(op as EctdLeaf['operation']) ? (op as EctdLeaf['operation']) : 'new';
+  const normalized = String(op ?? '').trim().toLowerCase();
+  if (OPERATIONS.has(normalized as EctdLeaf['operation'])) {
+    return normalized as EctdLeaf['operation'];
+  }
+  throw new Error(
+    `Unrecognised eCTD lifecycle operation "${op}". It must be one of ` +
+      `${[...OPERATIONS].join(', ')}. Defaulting it to "new" would re-file the ` +
+      `document as a new leaf and leave the version it supersedes current at the agency.`,
+  );
 }
 
 // All 12 regions the packager can build a backbone for (mirrors
