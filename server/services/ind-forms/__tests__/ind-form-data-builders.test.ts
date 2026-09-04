@@ -94,13 +94,16 @@ describe('buildForm1571', () => {
     expect(built.missingRequired).toContain('indication');
     expect(built.missingRequired).toContain('ind_type');
     expect(built.missingRequired).toContain('phase_of_study');
-    expect(built.missingRequired).toContain('authorized_rep_name');
     // sponsor_address required too
     expect(built.missingRequired).toContain('sponsor_address');
-    // order: sponsor_name before drug_name before authorized_rep_name
+    // authorized_rep_name is NOT required: the 1571 signature block is a
+    // signature, not a data box, and buildForm356h treats the same id the same
+    // way. While it was required, no official fill of this form could qualify.
+    expect(built.missingRequired).not.toContain('authorized_rep_name');
+    // order: sponsor_name before drug_name before phase_of_study
     const i = built.missingRequired;
     expect(i.indexOf('sponsor_name')).toBeLessThan(i.indexOf('drug_name'));
-    expect(i.indexOf('drug_name')).toBeLessThan(i.indexOf('authorized_rep_name'));
+    expect(i.indexOf('drug_name')).toBeLessThan(i.indexOf('phase_of_study'));
   });
 
   it('is deterministic — same input yields equal field maps', () => {

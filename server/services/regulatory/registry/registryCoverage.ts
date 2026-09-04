@@ -35,7 +35,9 @@ import { DEDICATED_SECTION_BLUEPRINT_IDS } from '../sectionBlueprintCatalog.js';
 import { DEDICATED_TASK_BLUEPRINT_IDS } from '../taskBlueprintCatalog.js';
 import { FDAFormsRegistry, governedFormDefinition } from '../../../config/FDAFormsRegistry.js';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join as joinPath } from 'node:path';
+import { getOfficialXfaFieldMap } from '../../ind-forms/official-field-maps.js';
 import type {
   RegulatoryApplicationType,
   Region,
@@ -144,11 +146,21 @@ function taskTier(entry: RegulatoryApplicationType): BlueprintTier {
  *
  * ── Why the coverage report has to read it ───────────────────────────────────
  * `implementationStatus: 'full'` describes the BUILDER (field builders, QC,
- * rendering). Every bundled official PDF today is a dynamic XFA edition with
- * `fillSupported: false` and an empty `fieldMap`, so a 'full' form renders a
- * watermarked draft or a labeled reconstruction. Reporting US NDA/BLA/IND as
- * "forms fully backed" on the builder flag alone told a product owner the
- * package would carry the official 356h/1571 when it would not.
+ * rendering), not whether an official FDA edition is installed and fillable.
+ * Reporting US NDA/BLA/IND as "forms fully backed" on the builder flag alone
+ * told a product owner the package would carry the official 356h/1571 when it
+ * would not.
+ *
+ * TWO CONTRACTS, because there are two kinds of official form and the renderer
+ * fills both:
+ *   - AcroForm (1572, 356h, 3454, 3455): the field map lives in the manifest, so
+ *     a named reviewer must vouch for it — `assetTrusted` + `fillSupported` +
+ *     a non-empty `fieldMap` + `reviewedBy`.
+ *   - dynamic XFA (1571, 3674): no AcroForm widgets exist to name, so the map is
+ *     the code-reviewed OFFICIAL_XFA_FIELD_MAPS and the evidence is integrity —
+ *     `xfaDynamic` + `fillSupported`, an fda.gov `sourceUrl`, and a `sha256` that
+ *     matches the bytes on disk. These are exactly the checks readXfaTemplate
+ *     makes, so the report and the renderer still cannot disagree.
  */
 function officialFormAssetTrusted(formId: string): boolean {
   const dir = process.env.IND_FORM_TEMPLATES_DIR || joinPath(process.cwd(), 'templates', 'forms', 'acroforms');
@@ -159,10 +171,41 @@ function officialFormAssetTrusted(formId: string): boolean {
       fillSupported?: unknown;
       fieldMap?: unknown;
       reviewedBy?: unknown;
+      xfaDynamic?: unknown;
+      sourceUrl?: unknown;
+      sha256?: unknown;
     };
     const fieldMapPopulated =
       m.fieldMap !== null && typeof m.fieldMap === 'object' && Object.keys(m.fieldMap as object).length > 0;
-    return m.assetTrusted === true && m.fillSupported === true && fieldMapPopulated && Boolean(m.reviewedBy);
+    if (m.assetTrusted === true && m.fillSupported === true && fieldMapPopulated && Boolean(m.reviewedBy)) {
+      return true;
+    }
+    return xfaFillable(dir, formId, m);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The dynamic-XFA half of the contract above: mirrors readXfaTemplate's checks
+ * so this report cannot claim a form the renderer would refuse, nor deny one it
+ * would fill.
+ */
+function xfaFillable(
+  dir: string,
+  formId: string,
+  m: { xfaDynamic?: unknown; fillSupported?: unknown; sourceUrl?: unknown; sha256?: unknown },
+): boolean {
+  if (m.xfaDynamic !== true || m.fillSupported !== true) return false;
+  const map = getOfficialXfaFieldMap(formId);
+  if (!map || Object.keys(map).length === 0) return false;
+  try {
+    const url = new URL(String(m.sourceUrl ?? ''));
+    const sourceIsFda =
+      url.protocol === 'https:' && (url.hostname === 'fda.gov' || url.hostname.endsWith('.fda.gov'));
+    if (!sourceIsFda) return false;
+    const bytes = readFileSync(joinPath(dir, `${formId}.pdf`));
+    return createHash('sha256').update(bytes).digest('hex') === m.sha256;
   } catch {
     return false;
   }

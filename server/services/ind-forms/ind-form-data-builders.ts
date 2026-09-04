@@ -276,7 +276,12 @@ export function buildForm1571(meta: IndProjectMetadata): BuiltForm {
     { id: 'us_agent_name', value: s(agent.name), required: false },
     { id: 'us_agent_address', value: s(agent.address), required: false },
     { id: 'us_agent_phone', value: s(agent.phone), required: false },
-    { id: 'authorized_rep_name', value: s(sponsor.authorizedRepName), required: true },
+    // The 1571 signature block is a signature, not a data box: the official form
+    // carries the representative as first/middle/last plus a signature widget,
+    // with no single full-name field to write into. buildForm356h already made
+    // exactly this call for the same two ids; 1571 was the outlier, and while it
+    // stayed required no official fill of this form could ever qualify.
+    { id: 'authorized_rep_name', value: s(sponsor.authorizedRepName), required: false },
     { id: 'authorized_rep_title', value: s(sponsor.authorizedRepTitle), required: false },
   ];
 

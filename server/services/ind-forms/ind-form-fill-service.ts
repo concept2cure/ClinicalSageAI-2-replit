@@ -19,11 +19,13 @@
  *     AcroForm layer (3454/3455 are static XFA whose AcroForm layer pdf-lib fills
  *     after stripping the XFA). Until a reviewed edition is installed, the labeled
  *     draft renders.
- *   - Reconstruction (1571, 3674): these are pure Adobe LiveCycle DYNAMIC XFA with
- *     no fillable AcroForm layer and no official page to overlay, so a bundled
- *     asset carries an empty fieldMap and never promotes. Instead of a bare draft
- *     they render a faithful sectioned RECONSTRUCTION (reconstructed=true; see
- *     ./ind-form-reconstruct), clearly labeled NOT the official Adobe-rendered form.
+ *   - XFA fill (1571, 3674): these are pure Adobe LiveCycle DYNAMIC XFA. Their
+ *     AcroForm layer is empty, so the AcroForm gate above never promotes them —
+ *     which is why they long rendered a reconstruction. The fields are real, they
+ *     just live in the XFA packets: 1571 declares 283 and 246 are fillable, 3674
+ *     declares 190 and 178 are. They now fill through the XFA `datasets` packet
+ *     (readXfaTemplate → fillOfficialXfaTemplate), producing the genuine FDA PDF.
+ *     The reconstruction remains the fallback when that path cannot qualify.
  * ==============================================================================
  *
  * Behaviour:
@@ -66,6 +68,12 @@ import {
   FORM_1574,
 } from './ind-form-data-builders';
 import { hasReconstruction, reconstructForm } from './ind-form-reconstruct';
+import { getOfficialXfaFieldMap } from './official-field-maps';
+import {
+  fillXfaDatasets,
+  isDynamicXfaPdf,
+  type OfficialPdfFieldMap,
+} from '../forms/fill-official-pdf';
 
 // ---------------------------------------------------------------------------
 // Constants (mirror leaf-pdf-renderer for the deterministic fallback)
@@ -298,6 +306,108 @@ async function fillOfficialTemplate(
 }
 
 // ---------------------------------------------------------------------------
+// Official dynamic-XFA fill path (FDA 1571, 3674)
+// ---------------------------------------------------------------------------
+
+interface VerifiedXfaTemplate {
+  bytes: Buffer;
+  fieldMap: OfficialPdfFieldMap;
+}
+
+/**
+ * Load a vendored template for the XFA fill path.
+ *
+ * The trust contract differs from readTemplate's on one point, deliberately. The
+ * AcroForm path fills from a field map carried IN THE MANIFEST, so the manifest
+ * needs a named reviewer to vouch for that data. The XFA path fills from
+ * OFFICIAL_XFA_FIELD_MAPS — a code-reviewed module, enumerated from these exact
+ * bytes — and every path in it is re-checked against the template's own datasets
+ * skeleton at fill time, so a stale entry yields a blank box rather than a wrong
+ * one. That is the same contract the device eSTAR fill already ships on
+ * (estar-field-map.ts + assets/estar-templates/checksums.txt).
+ *
+ * What is still required here, and fails closed: the manifest names this form,
+ * its sha256 matches the bytes on disk, its sourceUrl is fda.gov, and the file
+ * really is a dynamic XFA form.
+ */
+async function readXfaTemplate(formId: string): Promise<VerifiedXfaTemplate | null> {
+  const fieldMap = getOfficialXfaFieldMap(formId);
+  if (!fieldMap || Object.keys(fieldMap).length === 0) return null;
+  try {
+    const templatePath = templatePathFor(formId);
+    const [bytes, rawManifest] = await Promise.all([
+      fs.readFile(templatePath),
+      fs.readFile(`${templatePath}.manifest.json`, 'utf8'),
+    ]);
+    const manifest = JSON.parse(rawManifest) as Record<string, unknown>;
+    const sourceUrl = new URL(String(manifest.sourceUrl ?? ''));
+    const sourceIsFda =
+      sourceUrl.protocol === 'https:' &&
+      (sourceUrl.hostname === 'fda.gov' || sourceUrl.hostname.endsWith('.fda.gov'));
+    const actualSha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+    if (manifest.formId !== formId) return null;
+    if (manifest.sha256 !== actualSha256) return null;
+    if (!sourceIsFda) return null;
+    if (!isDynamicXfaPdf(bytes)) return null;
+    return { bytes, fieldMap };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fill the official dynamic-XFA form through its `datasets` packet.
+ *
+ * The output IS the FDA file: fillXfaDatasets appends a PDF incremental update,
+ * so every original byte is preserved and Acrobat renders the real form with our
+ * values in it.
+ *
+ * WHY THIS DOES NOT FAIL CLOSED ON AN UNPLACED REQUIRED FIELD, when the AcroForm
+ * path does: that path flattens its output, so a required field it could not
+ * place is permanently absent from a read-only PDF, and claiming "official" would
+ * be claiming a complete form. XFA output is never flattened — it stays the live,
+ * editable official form the sponsor opens, completes and signs. An unfilled box
+ * there is a box the sponsor fills, exactly as if they had downloaded the blank
+ * form. So the honest report is which fields we wrote and which we did not, in
+ * `unmappedFields` and `missingRequired`, not a silent downgrade to a drawing.
+ */
+async function fillOfficialXfaTemplate(
+  formId: string,
+  templateBytes: Buffer,
+  built: BuiltForm,
+  fieldMap: OfficialPdfFieldMap,
+): Promise<IndFormPdfResult> {
+  const entries = Object.entries(built.fields);
+  const data: Record<string, unknown> = {};
+  for (const [fieldId, value] of entries) {
+    data[fieldId] = typeof value === 'boolean' ? value : valueToText(value);
+  }
+
+  const result = await fillXfaDatasets(templateBytes, fieldMap, data, {
+    missingFieldPolicy: 'skip',
+  });
+
+  // Never claim an official fill that wrote nothing: with no value placed the
+  // output is byte-for-byte the blank form, and the reconstruction at least
+  // carries the project's data.
+  if (result.filled.length === 0) {
+    throw new Error(`Official ${formId}: the XFA fill placed no values`);
+  }
+
+  const filledSet = new Set(result.filled);
+  const unmapped = entries.map(([id]) => id).filter((id) => !filledSet.has(id));
+
+  return {
+    formId,
+    pdfBytes: result.bytes,
+    usedOfficialTemplate: true,
+    fieldCoverage: result.filled.length / (entries.length || 1),
+    missingRequired: built.missingRequired,
+    unmappedFields: unmapped.length > 0 ? unmapped : undefined,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Deterministic fallback path (mirrors leaf-pdf-renderer)
 // ---------------------------------------------------------------------------
 
@@ -451,9 +561,20 @@ export async function renderBuiltForm(
       // Fall through to a reconstruction if the form has one, else the draft.
     }
   }
-  // Pure dynamic XFA forms (1571/3674) have no fillable AcroForm layer and no
-  // official page to overlay — render a faithful sectioned reconstruction rather
-  // than the bare labeled draft. Clearly labeled as NOT the official form.
+  // Dynamic XFA forms (1571/3674) expose no AcroForm widgets, so the gate above
+  // never promotes them. Their fields are in the XFA packets: fill those and the
+  // output is the genuine FDA form, not a drawing of one.
+  const xfa = await readXfaTemplate(formId);
+  if (xfa) {
+    try {
+      return await fillOfficialXfaTemplate(formId, xfa.bytes, built, xfa.fieldMap);
+    } catch {
+      // A map that no longer matches the vendored edition is never used.
+    }
+  }
+  // Nothing official could be produced — render a faithful sectioned
+  // reconstruction rather than the bare labeled draft. Clearly labeled as NOT
+  // the official form.
   if (hasReconstruction(formId)) {
     return reconstructForm(formId, built);
   }
