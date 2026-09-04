@@ -14,8 +14,8 @@
  * not just readable.
  */
 
-import { useCallback } from 'react';
-import { buildAuthHeaders, useFetchJson } from './useFetchJson';
+import { useCallback, useState } from 'react';
+import { buildAuthHeaders, saveFailureFor, useFetchJson, type SaveFailure } from './useFetchJson';
 
 /** Mutators need the same Bearer + x-organization-id headers as the read
  *  path — cookies alone 401 at the global /api gate (see buildAuthHeaders). */
@@ -154,10 +154,16 @@ export interface UseEstarRegistrationResult {
    *  correspondent/declaration strings; refreshes on success. Null when the
    *  server rejected the write (editor-only). */
   save: (patch: EstarRegistrationPatch) => Promise<EstarRegistrationView | null>;
+  /** Why the last save did not land, or null when the last one did. This write
+   *  is editor-only on the server, and a viewer's refusal used to arrive as the
+   *  same "the server rejected the update" a malformed value gets. The
+   *  classification is the server's status, never a role rule re-stated here. */
+  saveFailure: SaveFailure | null;
 }
 
 export function useEstarRegistration(): UseEstarRegistrationResult {
   const { data, loading, error, refresh } = useFetchJson<EstarRegistrationView>('/api/510k/estar/registration');
+  const [saveFailure, setSaveFailure] = useState<SaveFailure | null>(null);
   const save = useCallback(
     async (patch: EstarRegistrationPatch) => {
       try {
@@ -167,17 +173,24 @@ export function useEstarRegistration(): UseEstarRegistrationResult {
           headers: jsonHeaders(),
           body: JSON.stringify(patch),
         });
-        if (!res.ok) return null;
+        if (!res.ok) {
+          setSaveFailure(saveFailureFor(res.status));
+          return null;
+        }
         const j = (await res.json()) as EstarRegistrationView;
+        setSaveFailure(null);
         refresh();
         return j;
       } catch {
+        /* The request never reached a verdict — a thrown fetch is a transport
+           failure, not the server declining the content. */
+        setSaveFailure('unavailable');
         return null;
       }
     },
     [refresh],
   );
-  return { registration: data ?? null, loading, error, refresh, save };
+  return { registration: data ?? null, loading, error, refresh, save, saveFailure };
 }
 
 /* ─── Catalog ───────────────────────────────────────────────────────── */

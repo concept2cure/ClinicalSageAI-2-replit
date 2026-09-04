@@ -465,3 +465,71 @@ describe('DeviceProfilePanel — the eSTAR device inputs carry the route’s cap
     expect((screen.getByLabelText(label) as HTMLInputElement).maxLength).toBe(max);
   });
 });
+
+/**
+ * PUT /profile is editor-only on the server (requireEditorAccess), and it also
+ * 400s a value past its cap and 500s when the read behind it fails. All three
+ * arrived at the operator as one sentence — "the server rejected the update" —
+ * which is true of exactly one of them. A read-only operator was sent hunting
+ * for a bad value in fields their role cannot write at all, and a dropped
+ * connection was reported as a verdict the server never gave.
+ *
+ * The role rule itself is NOT restated here or in the client: the surface reads
+ * the status the server returned. That is the point — a second copy of "admin,
+ * owner, editor, super_admin" in the browser is free to drift from the one that
+ * actually gates the write.
+ */
+describe('DeviceProfilePanel — a refused save says which refusal it was', () => {
+  async function attemptSave(respond: () => Promise<Response>) {
+    let firstLoad = true;
+    mockFetch((url) => {
+      if (!firstLoad || !url.includes('/profile')) return okJson({ profile: PROFILE });
+      firstLoad = false;
+      return okJson({ profile: PROFILE });
+    });
+    render(<DeviceProfilePanel ident={PROFILE.id} />);
+    await waitFor(() => expect(screen.getByText(/code MDS/)).toBeTruthy());
+    fireEvent.click(screen.getByText('Edit'));
+    fireEvent.change(screen.getByLabelText('Common name'), {
+      target: { value: 'Continuous glucose monitor, interstitial' },
+    });
+    /* Only the PUT is redirected — the initial GET already resolved. */
+    mockFetch(respond);
+    fireEvent.click(screen.getByText('Save'));
+  }
+
+  const refused = (status: number) =>
+    Promise.resolve({ ok: false, status, json: () => Promise.resolve({}) } as Response);
+
+  it('403 names the role, not the data — the operator is not sent hunting for a bad value', async () => {
+    await attemptSave(() => refused(403));
+    await waitFor(() =>
+      expect(screen.getByText('Not saved — your role cannot change these values.')).toBeTruthy(),
+    );
+  });
+
+  it('400 is the one case that really is the update being rejected', async () => {
+    await attemptSave(() => refused(400));
+    await waitFor(() =>
+      expect(screen.getByText('Not saved — the server rejected the update.')).toBeTruthy(),
+    );
+  });
+
+  it('a request that reached no verdict says so, and says nothing changed', async () => {
+    await attemptSave(() => Promise.reject(new Error('network down')));
+    await waitFor(() =>
+      expect(
+        screen.getByText('Not saved — the server did not answer. Nothing was changed.'),
+      ).toBeTruthy(),
+    );
+  });
+
+  it('500 is not reported as a rejection of the operator’s data either', async () => {
+    await attemptSave(() => refused(500));
+    await waitFor(() =>
+      expect(
+        screen.getByText('Not saved — the server did not answer. Nothing was changed.'),
+      ).toBeTruthy(),
+    );
+  });
+});

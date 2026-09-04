@@ -41,6 +41,7 @@ import {
   type RegulatoryPath,
   type RecognizedStandardsResult,
 } from '../hooks/useDeviceProfile';
+import { describeSaveFailure } from '../hooks/useFetchJson';
 import { notifyOfficialEstarFieldsChanged } from '../hooks/useEstarOfficialFields';
 
 const DEVICE_CLASSES: DeviceClass[] = ['I', 'II', 'III'];
@@ -253,12 +254,17 @@ export interface DeviceProfilePanelProps {
 }
 
 export function DeviceProfilePanel({ ident }: DeviceProfilePanelProps) {
-  const { profile, loading, error, save } = useDeviceProfile(ident);
+  const { profile, loading, error, save, saveFailure } = useDeviceProfile(ident);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>(() => formFromProfile(null));
   const [saving, setSaving] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  /* A failed save is held as a FLAG, not as a sentence. The sentence depends on
+     `saveFailure`, which the hook sets in the same batch as this flag, so
+     resolving it at render time reads the current classification rather than a
+     stale one captured inside the handler's closure. */
+  const [saveRefused, setSaveRefused] = useState(false);
   const [standardsBusy, setStandardsBusy] = useState(false);
   /* undefined = never asked. null = the request failed. Otherwise the server's
      labelled envelope, rendered as-is. */
@@ -299,9 +305,11 @@ export function DeviceProfilePanel({ ident }: DeviceProfilePanelProps) {
     if (!ident || !dirty || saving) return;
     setSaving(true);
     setStatus(null);
+    setSaveRefused(false);
     const saved = await save(patch);
     setSaving(false);
-    setStatus(saved ? 'Saved' : 'Not saved — the server rejected the update');
+    setSaveRefused(!saved);
+    setStatus(saved ? 'Saved' : null);
     /* The official eSTAR preview reads these five facts and names this form as
        their home ("Not set — Device profile · common name"). Only an ACCEPTED
        save changed anything, so only an accepted save asks it to re-read. */
@@ -312,6 +320,10 @@ export function DeviceProfilePanel({ ident }: DeviceProfilePanelProps) {
     if (lookingUp) return;
     setLookingUp(true);
     setStatus(null);
+    /* A lookup result replaces the save outcome in the one status line, so the
+       refusal must clear with it — otherwise the lookup's message and a stale
+       "not saved" would compete for the same slot. */
+    setSaveRefused(false);
     const code = form.productCode.trim();
     const result = await lookupClassification(
       code ? { productCode: code } : { deviceName: form.productName.trim() },
@@ -459,9 +471,9 @@ export function DeviceProfilePanel({ ident }: DeviceProfilePanelProps) {
             >
               {standardsBusy ? 'Looking up…' : 'Recognized standards'}
             </button>
-            {status && (
+            {(status || saveRefused) && (
               <span className="section-sub" role="status" style={{ margin: 0 }}>
-                {status}
+                {saveRefused ? describeSaveFailure(saveFailure ?? 'unavailable') : status}
               </span>
             )}
           </div>

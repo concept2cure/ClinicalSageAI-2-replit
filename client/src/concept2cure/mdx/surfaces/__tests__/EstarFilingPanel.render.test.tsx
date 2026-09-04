@@ -460,3 +460,50 @@ describe('EstarFilingPanel — an unsaved correspondent edit survives a toggle',
     expect((screen.getByText('Save') as HTMLButtonElement).disabled).toBe(true);
   });
 });
+
+/**
+ * PUT /registration is editor-only on the server. Its refusal used to reach the
+ * operator as the same sentence a malformed value gets — "the server rejected
+ * the update" — which sends a read-only member looking for a bad character in
+ * a correspondent email their role cannot write at all. The block now reports
+ * the refusal the server actually gave. The role rule stays on the server: this
+ * surface reads a status code, it does not re-derive who may write.
+ */
+describe('EstarFilingPanel — a refused correspondent save says which refusal it was', () => {
+  async function attemptSave(respond: () => Promise<Response>) {
+    mockRegisteredOrg();
+    render(<EstarFilingPanel />);
+    await waitFor(() => expect(screen.getByDisplayValue('Acme Regulatory Ltd')).toBeTruthy());
+    fireEvent.change(screen.getByDisplayValue('Acme Regulatory Ltd'), {
+      target: { value: 'Acme Regulatory Limited' },
+    });
+    mockFetch(respond);
+    fireEvent.click(screen.getByText('Save'));
+  }
+
+  const refused = (status: number) =>
+    Promise.resolve({ ok: false, status, json: () => Promise.resolve({}) } as Response);
+
+  it('403 names the role, so a viewer is not sent hunting for a bad value', async () => {
+    await attemptSave(() => refused(403));
+    await waitFor(() =>
+      expect(screen.getByText('Not saved — your role cannot change these values.')).toBeTruthy(),
+    );
+  });
+
+  it('400 is the one case that really is the update being rejected', async () => {
+    await attemptSave(() => refused(400));
+    await waitFor(() =>
+      expect(screen.getByText('Not saved — the server rejected the update.')).toBeTruthy(),
+    );
+  });
+
+  it('a request that reached no verdict says so, and says nothing changed', async () => {
+    await attemptSave(() => Promise.reject(new Error('network down')));
+    await waitFor(() =>
+      expect(
+        screen.getByText('Not saved — the server did not answer. Nothing was changed.'),
+      ).toBeTruthy(),
+    );
+  });
+});

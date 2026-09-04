@@ -33,6 +33,7 @@ import {
   type FilingReadinessResult,
   type EstarSubmissionView,
 } from '../hooks/useEstarFiling';
+import { describeSaveFailure, type SaveFailure } from '../hooks/useFetchJson';
 import { notifyOfficialEstarFieldsChanged } from '../hooks/useEstarOfficialFields';
 import { IntakeTextField } from './DeviceProfilePanel';
 
@@ -156,20 +157,29 @@ function correspondentForm(stored: EstarRegistrationRecord | null | undefined): 
  * The correspondent / Declaration of Conformity block. Text fields on the org's
  * eSTAR registration, shown as stored (blank when not held — never a
  * placeholder value) and saved through the same PUT as the prerequisites, with
- * those booleans preserved. A rejected write (editor-only) says "Not saved".
+ * those booleans preserved. A refused write names the refusal: this PUT is
+ * editor-only on the server, and telling a read-only operator that the server
+ * "rejected the update" sends them looking for a bad value in fields their role
+ * simply cannot write.
  */
 function CorrespondentBlock({
   stored,
   satisfied,
   save,
+  saveFailure,
 }: {
   stored: EstarRegistrationRecord | null | undefined;
   satisfied: readonly string[] | null | undefined;
   save: (patch: EstarRegistrationPatch) => Promise<EstarRegistrationView | null>;
+  saveFailure: SaveFailure | null;
 }) {
   const [form, setForm] = useState<CorrespondentForm>(() => correspondentForm(stored));
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  /* A failed save is held as a FLAG, not a sentence: the sentence depends on
+     `saveFailure`, which the hook sets in the same batch, so resolving it at
+     render time reads the current classification and not a stale closure. */
+  const [saveRefused, setSaveRefused] = useState(false);
 
   /* What the form holds, and what it was last seeded from. An EDIT is a
      difference between the two — not a difference from whatever the row says
@@ -208,9 +218,11 @@ function CorrespondentBlock({
     if (!dirty || saving) return;
     setSaving(true);
     setStatus(null);
+    setSaveRefused(false);
     const saved = await save(correspondentPatch(satisfied, form));
     setSaving(false);
-    setStatus(saved ? 'Saved' : 'Not saved — the server rejected the update');
+    setSaveRefused(!saved);
+    setStatus(saved ? 'Saved' : null);
     /* The official eSTAR preview reads this block and names it as the home of
        the correspondent and Declaration of Conformity fields. Only an ACCEPTED
        save changed anything, so only an accepted save asks it to re-read. */
@@ -268,9 +280,9 @@ function CorrespondentBlock({
           >
             {saving ? 'Saving…' : 'Save'}
           </button>
-          {status && (
+          {(status || saveRefused) && (
             <span className="section-sub" role="status" style={{ margin: 0 }}>
-              {status}
+              {saveRefused ? describeSaveFailure(saveFailure ?? 'unavailable') : status}
             </span>
           )}
         </div>
@@ -280,7 +292,7 @@ function CorrespondentBlock({
 }
 
 export function EstarFilingPanel() {
-  const { registration, loading: regLoading, save } = useEstarRegistration();
+  const { registration, loading: regLoading, save, saveFailure } = useEstarRegistration();
   const { submissions, loading: subLoading, startTracking, advance } = useEstarSubmissions();
   const { catalog } = useEstarCatalog();
 
@@ -363,7 +375,12 @@ export function EstarFilingPanel() {
       </div>
 
       {/* CORRESPONDENT + DECLARATION (same registration row, same PUT) */}
-      <CorrespondentBlock stored={registration?.registration} satisfied={satisfied} save={save} />
+      <CorrespondentBlock
+        stored={registration?.registration}
+        satisfied={satisfied}
+        save={save}
+        saveFailure={saveFailure}
+      />
 
       {/* SELECT + ASSESS */}
       <div className="section-hdr">
