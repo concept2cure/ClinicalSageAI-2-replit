@@ -49,8 +49,19 @@ export function stateLineFor(
     return `Still working · ${elapsed}`;
   }
   if (turn.stopped) return `Stopped after ${elapsed}`;
+  // A timeout or a lost connection closes the record with its last phase
+  // marked stopped and never sets `stopped` (that flag is the person's own
+  // stop). Both are turns that did not finish, and neither may read
+  // "Finished".
+  if (progressCutShort(turn)) return `Did not finish · ${elapsed}`;
   if (typeof turn.completedAt === 'number') return `Finished in ${elapsed}`;
   return '';
+}
+
+/** True when the turn's progress record ended in a phase marked stopped. */
+export function progressCutShort(turn: AnaChatMessage): boolean {
+  const last = turn.progress?.[turn.progress.length - 1];
+  return last?.status === 'stopped';
 }
 
 /** Wall-clock elapsed for the turn: to its recorded end, or to now while in flight. */
@@ -84,17 +95,6 @@ export function stepDuration(c: AnaToolCall, now: number): string {
   if (typeof c.latencyMs === 'number') return formatStepDuration(c.latencyMs);
   if (typeof c.startedAt === 'number') return formatStepDuration((c.endedAt ?? now) - c.startedAt);
   return '';
-}
-
-/** Group calls by agentic-loop round, preserving order. */
-export function byRound(calls: AnaToolCall[]): Array<{ round: number; calls: AnaToolCall[] }> {
-  const groups = new Map<number, AnaToolCall[]>();
-  for (const c of calls) {
-    const r = typeof c.round === 'number' && c.round > 0 ? c.round : 1;
-    if (!groups.has(r)) groups.set(r, []);
-    groups.get(r)!.push(c);
-  }
-  return [...groups.entries()].sort((a, b) => a[0] - b[0]).map(([round, cs]) => ({ round, calls: cs }));
 }
 
 export function clip(text: string, max: number): string {

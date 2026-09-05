@@ -7,7 +7,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
-import type { AnaChatAction } from '../../components/ana/useAnaChat';
+import type { AnaChatAction, AnaChatMessage, RunControlStatus } from '../../components/ana/useAnaChat';
+import { AnaWorkPanel } from '../AnaWorkPanel';
+import { useAgentActivity } from '../useAgentActivity';
+import { useWorkDockVisible } from '../workDock';
+import { shellProgramName } from '../shellProject';
 import { RBM_VOCAB, rbmBand, kriStatusOf, type RbmNavItem } from '../fixtures/rbm-data';
 import '../styles/rbm-v2.css';
 
@@ -297,20 +301,68 @@ function RbmAnaMsg({ m }: { m: RbmAnaMessage }) {
 }
 
 /* ── RbmAnaDock ── */
-export function RbmAnaDock({ nav, study, msgs, onAsk, onClose }: {
+/** The raw turns the live work dock reads — the pane's own chat instance. */
+export interface RbmAnaWork {
+  messages: AnaChatMessage[];
+  streaming: boolean;
+  runStatus: RunControlStatus;
+  pendingSteers: string[];
+}
+
+export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work }: {
   nav: RbmNavItem; study: string; msgs: RbmAnaMessage[];
   onAsk: (t: string) => void; onClose: () => void;
+  work?: RbmAnaWork;
 }) {
   const [draft, setDraft] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
+  /* The same dock the shell rail and the authoring panes mount, under the
+     one shared show/hide choice; focus returns to the toggle before the dock
+     unmounts. */
+  const [workDockOpen, setWorkDockOpen] = useWorkDockVisible();
+  const showWork = Boolean(work) && workDockOpen;
+  const anaWorkQueue = useAgentActivity(showWork, work?.streaming);
+  const workToggleRef = useRef<HTMLButtonElement>(null);
+  const hideWorkDock = () => {
+    workToggleRef.current?.focus();
+    setWorkDockOpen(false);
+  };
   useEffect(() => { if (endRef.current) endRef.current.scrollTop = endRef.current.scrollHeight; }, [msgs]);
   const ask = (text: string) => { if (!text) return; onAsk(text); setDraft(''); };
   return (
     <aside className="rbm-ana" aria-label="AnA — risk-based monitoring">
       <div className="rbm-ana-hdr">
         <div className="rbm-ana-id"><span className="mk">{'✻'}</span><div><div className="nm">AnA — RBM co-monitor</div><div className="md">bound to {study} -- {nav.label}</div></div></div>
-        <button className="tb-btn" onClick={onClose} title="Collapse">{I.panelRight}</button>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          {work && (
+            <button
+              type="button"
+              ref={workToggleRef}
+              className="ana-work-toggle"
+              aria-pressed={workDockOpen}
+              aria-label={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
+              title={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
+              onClick={() => setWorkDockOpen(!workDockOpen)}
+            >
+              {I.activity} At work
+            </button>
+          )}
+          <button className="tb-btn" onClick={onClose} title="Collapse">{I.panelRight}</button>
+        </span>
       </div>
+      {showWork && work && (
+        <div className="ana-work-host">
+          <AnaWorkPanel
+            messages={work.messages}
+            streaming={work.streaming}
+            runStatus={work.runStatus}
+            pendingSteers={work.pendingSteers}
+            queue={anaWorkQueue}
+            context={{ project: shellProgramName(), module: 'Risk-based monitoring', surface: nav.label }}
+            onClose={hideWorkDock}
+          />
+        </div>
+      )}
       <div className="rbm-ana-ctx">
         <div className="rbm-ana-ctx-k">On this surface</div>
         <div className="rbm-ana-ctx-v">{nav.label} -- tool <code>{nav.tool}</code></div>
