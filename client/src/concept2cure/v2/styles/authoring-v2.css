@@ -485,11 +485,11 @@
   }
   .ed-flag[data-sev='warn'] {
     background: var(--warning-muted);
-    color: #7a4a0f;
+    color: var(--warning);
   }
   .ed-flag[data-sev='err'] {
     background: var(--error-muted);
-    color: #7a1f1f;
+    color: var(--error);
   }
   .ed-flag .ico {
     font-size: 14px;

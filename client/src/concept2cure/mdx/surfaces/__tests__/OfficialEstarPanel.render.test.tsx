@@ -552,6 +552,79 @@ describe('OfficialEstarPanel — Generate', () => {
     ).toBeTruthy();
   });
 
+  /*
+   * THE OTHER HALF OF THE OPEN NOTE. The note directly above tells the filer to
+   * choose the submission type — and that click is what runs the template's own
+   * scripts, which clear several of the cells we just reported filled and
+   * rebuild one of them from a different governed fact. We had measured all of
+   * it, per field, against the vendored template; the record went no further
+   * than a unit test, so the panel counted those cells as filled and said
+   * nothing about what happens next. A filer following the instruction would
+   * have watched them empty.
+   */
+  it('says which written values the form clears when the filer follows the instruction', async () => {
+    mockFetch(
+      readsThen(READY, FIELDS, () =>
+        okJson({
+          governed: true,
+          artifact: { mime_type: 'application/pdf', filename: 'BX-204_eSTAR.pdf', data: 'AA==' },
+          fieldReport: {
+            mappedCount: 4,
+            filledCount: 4,
+            blankCount: 0,
+            blankKeys: [],
+            ignoredRequestKeys: [],
+            clearedByTemplateKeys: ['deviceCommonName'],
+            substitutedByTemplateKeys: [],
+          },
+        }),
+      ),
+    );
+    render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
+    await waitFor(() => expect(generateButton().disabled).toBe(false));
+    fireEvent.click(generateButton());
+
+    await waitFor(() => expect(screen.getByTestId('official-estar-cleared-note')).toBeTruthy());
+    expect(screen.getByText(/re-enter them on the form/i)).toBeTruthy();
+    // Named by the template's own caption, not by the canonical key.
+    expect(screen.getByTestId('official-estar-cleared-note').textContent).toContain('Common Name');
+    // Nothing is substituted here, so that line stays off — a caveat nobody
+    // needs is noise on a form they are about to sign.
+    expect(screen.queryByTestId('official-estar-substituted-note')).toBeNull();
+  });
+
+  it('warns that the Declaration of Conformity company name is rebuilt from the applicant', async () => {
+    // The form derives that cell from the applicant company field, which this
+    // product writes from a DIFFERENT governed column — the column that exists
+    // precisely so an organization filing for several clients can name another
+    // legal entity. The cell is not blanked, it is replaced, and a blank is at
+    // least visible.
+    mockFetch(
+      readsThen(READY, FIELDS, () =>
+        okJson({
+          governed: true,
+          artifact: { mime_type: 'application/pdf', filename: 'BX-204_eSTAR.pdf', data: 'AA==' },
+          fieldReport: {
+            mappedCount: 4,
+            filledCount: 4,
+            blankCount: 0,
+            blankKeys: [],
+            ignoredRequestKeys: [],
+            clearedByTemplateKeys: [],
+            substitutedByTemplateKeys: ['declarationCompanyName'],
+          },
+        }),
+      ),
+    );
+    render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
+    await waitFor(() => expect(generateButton().disabled).toBe(false));
+    fireEvent.click(generateButton());
+
+    await waitFor(() => expect(screen.getByTestId('official-estar-substituted-note')).toBeTruthy());
+    expect(screen.getByText(/check them before signing/i)).toBeTruthy();
+    expect(screen.queryByTestId('official-estar-cleared-note')).toBeNull();
+  });
+
   it('names the typed keys the server dropped', async () => {
     mockFetch(
       readsThen(READY, FIELDS, () =>

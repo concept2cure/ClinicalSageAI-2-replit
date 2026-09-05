@@ -230,6 +230,8 @@ describe('useEstarExport.exportOfficialEstar — useProgramData + data', () => {
       blankKeys: ['deviceCommonName', 'declarationCompanyAddress'],
       ignoredRequestKeys: ['deviceTradeName'],
       advisories: [],
+      clearedByTemplateKeys: [],
+      substitutedByTemplateKeys: [],
     });
   });
 
@@ -302,6 +304,8 @@ describe('exportStatusLine — administrative fill wording', () => {
         blankKeys: [],
         ignoredRequestKeys: [],
         advisories: [],
+        clearedByTemplateKeys: [],
+        substitutedByTemplateKeys: [],
       },
     };
     expect(exportStatusLine(false, outcome)).toBe(
@@ -319,6 +323,8 @@ describe('exportStatusLine — administrative fill wording', () => {
         blankKeys: [],
         ignoredRequestKeys: [],
         advisories: [],
+        clearedByTemplateKeys: [],
+        substitutedByTemplateKeys: [],
       },
     };
     expect(exportStatusLine(false, outcome)).toBe(
@@ -335,6 +341,8 @@ describe('exportStatusLine — administrative fill wording', () => {
     const clause = fieldReportClause({
       mappedCount: 4, filledCount: 4, blankCount: 0, blankKeys: [], ignoredRequestKeys: [],
       advisories: ['2 predicate devices are on file; the eSTAR predicate fields carry only the first (K203456).'],
+      clearedByTemplateKeys: [],
+      substitutedByTemplateKeys: [],
     });
     expect(clause).toContain('4 of 4 administrative fields filled');
     expect(clause).toContain('carry only the first (K203456)');

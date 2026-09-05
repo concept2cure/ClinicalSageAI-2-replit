@@ -170,3 +170,9 @@
 }
 
 @keyframes rcpulse{ 0%,60%,100%{ opacity:.3; } 30%{ opacity:1; } }
+
+/* Reduced-motion policy for this stylesheet — the typing indicator keeps its
+   meaning without the pulse, so it settles at a steady opacity. */
+@media (prefers-reduced-motion: reduce) {
+  .rc-typing span { animation: none; opacity: .6; }
+}

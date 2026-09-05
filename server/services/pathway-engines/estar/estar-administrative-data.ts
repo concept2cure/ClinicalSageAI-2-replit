@@ -56,6 +56,7 @@ import { estarRegistrations } from '../../../../shared/schema/estar-registration
 import type { RequestDb } from '../../../db/requestDb';
 import { isMissingAnchorColumn } from '../../c2c/program-project-anchor';
 import type { OfficialPdfFieldMap } from '../../forms/fill-official-pdf';
+import { ESTAR_TEMPLATE_RECOMPUTED_FIELDS } from './estar-field-map';
 
 // ── The governed-sources table ────────────────────────────────────────────────
 
@@ -392,6 +393,21 @@ export interface ResolvedOfficialField {
    * only when the key has no declared source.
    */
   declaredSource: string | null;
+  /**
+   * What the TEMPLATE'S OWN scripts do to this cell after we write it, from the
+   * measured `ESTAR_TEMPLATE_RECOMPUTED_FIELDS`. Null for a key that table does
+   * not cover.
+   *
+   *   'reproduces'  — the form rebuilds the cell from a source we also write,
+   *                   so what we wrote survives.
+   *   'blanks'      — the form clears the cell and rebuilds it from a source
+   *                   nothing writes, so our value is gone.
+   *   'substitutes' — the form rebuilds it from a DIFFERENT governed fact, so
+   *                   the cell ends up holding someone else's value.
+   */
+  rebuildOutcome: 'reproduces' | 'blanks' | 'substitutes' | null;
+  /** Why, where the outcome alone understates it. */
+  rebuildNote: string | null;
 }
 
 /** The primary `store.column` the sources table declares for a key, or null. */
@@ -458,6 +474,8 @@ export function resolveOfficialEstarFields(
       value,
       source,
       declaredSource: declaredSourceFor(key),
+      rebuildOutcome: ESTAR_TEMPLATE_RECOMPUTED_FIELDS[key]?.rebuildOutcome ?? null,
+      rebuildNote: ESTAR_TEMPLATE_RECOMPUTED_FIELDS[key]?.note ?? null,
     });
   }
 
@@ -470,6 +488,21 @@ export interface OfficialEstarFieldReport {
   filledCount: number;
   blankCount: number;
   blankKeys: string[];
+  /**
+   * Filled keys the TEMPLATE'S OWN scripts will clear once the applicant works
+   * the form — measured in ESTAR_TEMPLATE_RECOMPUTED_FIELDS, not guessed. These
+   * are counted in `filledCount`, because we did write them; they will not
+   * survive, because the form rebuilds those cells from sources nothing fills.
+   * Reporting the count without this list tells a filer that a value is on the
+   * form when it is about to be erased.
+   */
+  clearedByTemplateKeys: string[];
+  /**
+   * Worse than cleared: filled keys the form rebuilds from a DIFFERENT governed
+   * fact, so the cell ends up holding someone else's value rather than nothing.
+   * A blank is visible; this is not.
+   */
+  substitutedByTemplateKeys: string[];
   fields: Array<{
     key: string;
     caption: string;
@@ -509,6 +542,14 @@ export function reportOfficialEstarFill(
     declaredSource: f.declaredSource,
   }));
   const blank = fields.filter((f) => !f.filled);
+  /* Only FILLED keys can be cleared or substituted — a blank cell has nothing
+     for the template to take away, and saying otherwise would double-count the
+     same gap under two headings. */
+  const outcomeOf = (key: string) => resolved.fields.find((r) => r.key === key)?.rebuildOutcome ?? null;
+  const clearedByTemplateKeys = fields.filter((f) => f.filled && outcomeOf(f.key) === 'blanks').map((f) => f.key);
+  const substitutedByTemplateKeys = fields
+    .filter((f) => f.filled && outcomeOf(f.key) === 'substitutes')
+    .map((f) => f.key);
   const fieldSources: Record<string, string> = {};
   for (const f of fields) if (f.filled && f.source) fieldSources[f.key] = f.source;
   const ignoredRequestKeys = [...resolved.ignoredRequestKeys];
@@ -523,6 +564,8 @@ export function reportOfficialEstarFill(
       filledCount: fields.length - blank.length,
       blankCount: blank.length,
       blankKeys: blank.map((f) => f.key),
+      clearedByTemplateKeys,
+      substitutedByTemplateKeys,
       fields,
       ignoredRequestKeys,
       advisories: [...resolved.advisories],

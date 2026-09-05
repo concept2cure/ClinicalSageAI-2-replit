@@ -77,6 +77,12 @@ export interface EstarFieldReport {
   /** Governed facts the fill could not express — e.g. a second predicate the
    *  template has no box for. The user finishes these on the form. */
   advisories: string[];
+  /** Keys we DID write that the template's own scripts clear once the applicant
+   *  works the form. Counted in filledCount, gone by the time FDA sees it. */
+  clearedByTemplateKeys: string[];
+  /** Keys the template rebuilds from a DIFFERENT governed fact, so the cell
+   *  ends up holding another value rather than nothing. */
+  substitutedByTemplateKeys: string[];
 }
 
 export interface OfficialEstarOptions {
@@ -120,7 +126,16 @@ export function fieldReportClause(report: EstarFieldReport | null): string {
   // An advisory is a governed fact the form has no box for; the line carries
   // it whole, because "filled" alone would read as "finished".
   const advisories = report.advisories.map((a) => ` · ${a}`).join('');
-  return ` · ${report.filledCount} of ${report.mappedCount} administrative fields filled${blank}${advisories}`;
+  /*
+   * "N of M filled" is true of the bytes we hand over and STOPS BEING TRUE the
+   * moment the applicant works the form: the template's own scripts clear some
+   * of those cells and rebuild one of them from a different governed fact. The
+   * count is not restated smaller — we did write them — but it is no longer
+   * stated alone, because a filer reading it decides whether the form is done.
+   */
+  const willNotSurvive = report.clearedByTemplateKeys.length + report.substitutedByTemplateKeys.length;
+  const caveat = willNotSurvive > 0 ? ` · ${willNotSurvive} the form changes when you complete it` : '';
+  return ` · ${report.filledCount} of ${report.mappedCount} administrative fields filled${blank}${caveat}${advisories}`;
 }
 
 function parseFieldReport(raw: unknown): EstarFieldReport | null {
@@ -142,6 +157,8 @@ function parseFieldReport(raw: unknown): EstarFieldReport | null {
     blankKeys: strings(r.blankKeys),
     ignoredRequestKeys: strings(r.ignoredRequestKeys),
     advisories: strings(r.advisories),
+    clearedByTemplateKeys: strings(r.clearedByTemplateKeys),
+    substitutedByTemplateKeys: strings(r.substitutedByTemplateKeys),
   };
 }
 

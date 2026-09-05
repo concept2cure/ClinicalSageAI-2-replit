@@ -264,8 +264,7 @@
   .rc-row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px;}
   .rc-k{color:var(--text-400);flex-shrink:0;}
   .rc-v{color:var(--text-100);text-align:right;font-weight:500;}
-  .risk-flag{display:flex;gap:8px;align-items:flex-start;margin-top:12px;padding:10px 12px;border-radius:var(--radius-md);background:var(--warning-muted);color:#7a4a0f;font-size:11.5px;line-height:1.5;}
-  .dark .risk-flag{color:var(--warning);}
+  .risk-flag{display:flex;gap:8px;align-items:flex-start;margin-top:12px;padding:10px 12px;border-radius:var(--radius-md);background:var(--warning-muted);color:var(--warning);font-size:11.5px;line-height:1.5;}
 
   /* PDEV workstream board + activity flow */
   .pdev-ws{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
