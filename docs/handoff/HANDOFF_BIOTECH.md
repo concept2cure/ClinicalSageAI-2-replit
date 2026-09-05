@@ -488,6 +488,49 @@ that returns 100 for a project with nothing assessed; it is unreferenced (and
 sits in the unreferenced-modules baseline), so it was left alone rather than
 given a caller.
 
+### Fourteenth — the IND filing paths and the Module 1 transmittal pair (2026-09-05)
+
+Verified first, by running the real code: **the eSTAR PDF works end to end.**
+`fillEstarSubmission` against the vendored official nIVD eSTAR produces a
+5,285,132-byte PDF with all 20 mapped administrative fields written, no
+blockers, `templateKind: 'dynamic-xfa'`; reading the values back out of the
+produced file returns 20 of 20 at their real SOM paths. The original FDA bytes
+are preserved byte-for-byte with an ENCRYPTED incremental update appended (the
+template carries /Encrypt, and fill-official-pdf derives the security key and
+encrypts the object it writes). Reachable for a paying client: Submission Center
+→ `device-510k` → K510/IVD/PMA surface → OfficialEstarPanel → `POST
+/api/510k/estar/official`, entitlement-gated and tenant-scoped.
+
+The pharma equivalent also works: FDA 1571, 1572, 3674 and 356h all fill from
+their vendored official templates with `usedOfficialTemplate: true` (1571 and
+3674 are pure dynamic XFA and fill through the datasets packet).
+
+The gap found and fixed: **nothing placed the Module 1 transmittal pair.**
+`ind-sequence-validation` requires Form 1571 at m1.1 and a cover letter at m1.2
+on every post-original filing type. A filed 312.32 safety report carried m1.12.4
+alone; a filed 312.33 annual report carried m1.13 alone; an amendment got a
+cover letter from the planner and never a 1571. Every such sequence was invalid
+against the platform's own required-placement set the moment it was created, so
+the dispatch gate refused a sequence the product had reported as filed. The pair
+is now placed once, in `ind-lifecycle-persistence` (the module all four filing
+paths go through), matched on documentType so a different m1.2 document cannot
+stand in and the planner's own cover letter is not duplicated. A filing also
+returns `leavesAwaitingDocument` — the required placements created with no bytes
+behind them yet.
+
+Follow-on, NOT done here: attach the real filled 1571 bytes to the m1.1 leaf at
+filing time. The generator works and the leaf-source mechanism exists
+(`storeRenderedLeafFile` → `rendered_leaf_files`, as the safety-report PDF
+already uses); what is missing is the sponsor/submission record lookup at the
+filing routes (the cover-letter route's `assembleCoverLetterContext` loads the
+same records and is the model). Until then the leaf is honest about having no
+document rather than absent.
+
+Also noted, not changed: `concept2cure_artifacts` — where `POST
+/api/ind-forms/:formId/artifact` persists a governed form — is not one of the
+five tables `ectd/leaf-source-resolver` reads, so a form saved as a governed
+artifact cannot currently become a leaf by that route either.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -736,6 +779,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-05 | A | Eleventh audit — Part 11 UX on transmit + sign dialogs | Transmit writes a real electronic signature (declared meaning, printed name, verified factors, bundle-digest binding) in the ledger transaction; meaning required on the route and the AnA path; attribution on the log; refused credentials leave the field — revert-proven | §1 above |
 | 2026-09-05 | A | Twelfth audit — submission-package orchestrator | Resumed runs face the same §11.70 sign gate; a skipped gate is `partial`, not `complete`; a failed run/audit read is not a missing run; regenerate persists what it computed; unrecorded sample size is not n=0 — revert-proven | §1 above |
 | 2026-09-05 | A | Thirteenth audit — CMC Module 3 export gate | Provenance derived from section lineage instead of asserted, so a required blocking check works; one shared governed-state evaluation, so readiness cannot out-run the gate; unevaluated fabric is not clearance — revert-proven | §1 above |
+| 2026-09-05 | A | Fourteenth — IND filing transmittal pair; eSTAR + IND form PDFs proven | eSTAR fill verified end to end against the vendored FDA template (20/20 fields read back, encrypted incremental update); 1571/1572/3674/356h fill officially; every filed IND sequence now carries the m1.1 Form 1571 + m1.2 cover letter its own validator requires, and names the placements still awaiting bytes — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.
