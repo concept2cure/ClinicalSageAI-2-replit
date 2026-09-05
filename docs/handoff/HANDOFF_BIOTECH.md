@@ -125,12 +125,32 @@ revert:
   and without a real agency application number; the UNASSIGNED placeholder was
   being sent.
 
-Verified real and not yet changed (each needs a decision or an agency spec):
-FDA ESG MDN disposition parsing falls back to the platform's own message id;
-ICSR expedited flag is hardcoded; gateway default sequence `0000`/`initial` when
-metadata is absent; epoch-dated placeholders; missing expectedness yields
-NOT_REPORTABLE with no rationale; amendment persistence drops
-`parentLeafGuid`/`documentId` from the stored plan.
+- FDA ESG AS2: a 2xx was recorded as received on its own. The MDN is now
+  read before anything is recorded — a `failed` or `processed/error`
+  disposition, an MDN for a different message, or a body with no disposition
+  records the transmittal rejected (raw MDN kept) and throws. The SFTP path
+  refuses without an application number instead of filing under
+  `APP-<packageId>`.
+- Every eCTD gateway refuses without the four-digit sequence and a submission
+  type (`requiredAgencyMetadata` in `submission-gateways/types.ts`), before a
+  transmittal row exists. They defaulted to `0000`/`0001` and `initial`, so a
+  follow-up whose caller forgot the metadata was announced as an original.
+  FDA ESG applies this on the SFTP path only, where the sequence names the
+  `/incoming/` directory; the AS2 envelope carries no sequence and an eSTAR
+  has none.
+- ICSR C.1.7 (expedited) comes from the event's classification; the
+  transmission path hardcoded Yes.
+- 312.33 draft: absent or unparsable period dates are refused (400
+  VALIDATION) instead of coercing to 1 January 1970 and persisting.
+- Cover letter: an absent date renders as the `[Date]` placeholder, not
+  "01 January 1970".
+- Safety classification: an event with no recorded expectedness is reported
+  as unassessed (`determinations.expectednessRecorded`, rationale says so),
+  not as "expected (listed in the IB)". Obligation unchanged: the clock never
+  starts on an unassessed event.
+
+One finding did not reproduce: the stored amendment plan keeps every leaf's
+`documentId` and `parentLeafGuid` (the PGlite register test now asserts it).
 
 ### Note for the concurrent device stream
 
@@ -369,6 +389,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 |---|---|---|---|---|
 | 2026-09-03 | A | WO-9 Phase 1 Steps 0–6 + XFA decision | DTD gate defect found and fixed; vendoring blocked on egress; forms XFA status measured | `docs/reports/wo9-phase1-ectd-unblock-2026-09-03.md` |
 | 2026-09-05 | A | Third audit fixes — IND lifecycle + gateways | Receipt-less 2xx refused on 11 gateways; ledger receipt key; amendment placement + cover letter; 312.33 due date; ICSR ACK refusals; transmit refusals — all revert-proven | §1 above |
+| 2026-09-05 | A | Third audit, remainder | ESG MDN verified before acceptance; sequence/type required on every gateway; C.1.7 from the event; no epoch dates; unassessed expectedness stated as such — all revert-proven; finding 12 did not reproduce | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

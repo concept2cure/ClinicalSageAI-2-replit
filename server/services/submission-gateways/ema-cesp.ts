@@ -33,6 +33,7 @@ import {
   resolveToRegistryEntry, getSubmissionTypeLabel,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
+  requiredAgencyMetadata
 } from './types';
 
 /* ─── CESP credentials ───────────────────────────────────────────── */
@@ -268,6 +269,7 @@ export class EmaCespGateway implements SubmissionGateway {
       ? { ...req, submissionType: resolvedEntry.applicationType }
       : req;
 
+    const agency = requiredAgencyMetadata(normalizedReq);
     const transmittalId = await createTransmittalRow(normalizedReq, 'cesp', 'rest');
     try {
       const creds = loadCespCredentials(normalizedReq.environment);
@@ -278,9 +280,9 @@ export class EmaCespGateway implements SubmissionGateway {
       const metadata = {
         organisationId:    creds.organisationId,
         productName:       normalizedReq.metadata?.productName ?? null,
-        submissionType:    normalizedReq.submissionType ?? 'initial',
+        submissionType:    agency.submissionType,
         procedureNumber:   normalizedReq.metadata?.applicationId ?? null,
-        sequenceNumber:    normalizedReq.metadata?.sequence ?? null,
+        sequenceNumber:    agency.sequenceNumber,
         sha256:            normalizedReq.bundle.sha256,
       };
 

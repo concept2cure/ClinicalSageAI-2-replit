@@ -371,6 +371,26 @@ export class GatewayError extends Error {
   }
 }
 
+/**
+ * The eCTD sequence number and submission type a gateway writes into the
+ * agency's metadata. Refuses to default them: every gateway used to fill an
+ * absent sequence with '0000' (or '0001') and an absent type with 'initial',
+ * so a follow-up sequence whose caller forgot the metadata was announced to
+ * the agency as an original submission.
+ */
+export function requiredAgencyMetadata(req: GatewayTransmitRequest): { sequenceNumber: string; submissionType: string } {
+  const raw = req.metadata?.sequence;
+  const sequenceNumber = typeof raw === 'string' ? raw.trim() : typeof raw === 'number' ? String(raw).padStart(4, '0') : '';
+  if (!/^\d{4}$/.test(sequenceNumber)) {
+    throw new ValidationError('Transmit requires the four-digit eCTD sequence number in metadata.sequence; nothing is sent without it.', []);
+  }
+  const submissionType = typeof req.submissionType === 'string' ? req.submissionType.trim() : '';
+  if (!submissionType) {
+    throw new ValidationError('Transmit requires the submission type; nothing is sent without it.', []);
+  }
+  return { sequenceNumber, submissionType };
+}
+
 /** Thrown when the package fails pre-transmit validation. */
 export class ValidationError extends Error {
   readonly errorClass = 'validation' as const;

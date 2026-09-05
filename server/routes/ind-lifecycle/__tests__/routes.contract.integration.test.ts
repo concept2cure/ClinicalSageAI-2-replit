@@ -676,6 +676,16 @@ describe('persisted IND annual reports (21 CFR 312.33)', () => {
     draftId = res.body.id;
   });
 
+  it('refuses a report with no reporting period dates as 400 VALIDATION, not 500 and not 404', async () => {
+    // Absent dates used to coerce to 1 January 1970 and the draft persisted.
+    const noStart: Record<string, unknown> = { ...report() };
+    delete noStart.reportingPeriodStart;
+    const res = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports`).send({ report: noStart });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION');
+    expect(res.body.error.message).toMatch(/reportingPeriodStart/);
+  });
+
   it('POST /annual-reports → 400 without indNumber/productName', async () => {
     const res = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports`).send({ report: { indNumber: '1' } });
     expect(res.status).toBe(400);

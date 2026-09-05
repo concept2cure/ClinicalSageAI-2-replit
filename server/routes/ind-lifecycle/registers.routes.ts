@@ -329,6 +329,9 @@ router.post('/submission/:id/annual-reports', limiter, requireRole(AUTHOR), asyn
     const row = await createAnnualReportDraft({ submissionId, report, indEffectiveDate: b.indEffectiveDate }, ctx);
     res.status(201).json(row);
   } catch (err) {
+    if (err instanceof AnnualReportError) {
+      return res.status(err.code === 'VALIDATION' ? 400 : 404).json({ error: { code: err.code, message: err.message } });
+    }
     fail(res, err);
   }
 });

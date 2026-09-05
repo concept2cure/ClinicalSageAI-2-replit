@@ -30,7 +30,7 @@ const logger = createScopedLogger('ind-annual-report-persistence');
 export type AnnualReportCtx = { organizationId: number; userId: number };
 
 export class AnnualReportError extends Error {
-  constructor(public code: 'NOT_FOUND', message: string) {
+  constructor(public code: 'NOT_FOUND' | 'VALIDATION', message: string) {
     super(message);
     this.name = 'AnnualReportError';
   }
@@ -42,6 +42,12 @@ const d = (v: unknown): Date | undefined => {
   return Number.isNaN(date.getTime()) ? undefined : date;
 };
 
+const requireDate = (v: unknown, field: string): Date => {
+  const date = d(v);
+  if (!date) throw new AnnualReportError('VALIDATION', `${field} must be a valid date.`);
+  return date;
+};
+
 /**
  * Coerce the period-input dates (which arrive as ISO strings over HTTP) to Date
  * so the pure assembler's date arithmetic is safe.
@@ -49,10 +55,13 @@ const d = (v: unknown): Date | undefined => {
 function coerceInput(raw: any): IndAnnualReportInput {
   return {
     ...raw,
-    reportingPeriodStart: d(raw.reportingPeriodStart) ?? new Date(0),
-    reportingPeriodEnd: d(raw.reportingPeriodEnd) ?? new Date(0),
-    safetyReportsInPeriod: (raw.safetyReportsInPeriod ?? []).map((r: any) => ({ ...r, submittedAt: d(r.submittedAt) ?? new Date(0) })),
-    ibChanges: (raw.ibChanges ?? []).map((c: any) => ({ ...c, effectiveDate: d(c.effectiveDate) ?? new Date(0) })),
+    // An absent or unparsable date used to become 1 January 1970, so a
+    // draft with no period dates assembled and persisted as a report covering
+    // the epoch. Refuse instead.
+    reportingPeriodStart: requireDate(raw.reportingPeriodStart, 'reportingPeriodStart'),
+    reportingPeriodEnd: requireDate(raw.reportingPeriodEnd, 'reportingPeriodEnd'),
+    safetyReportsInPeriod: (raw.safetyReportsInPeriod ?? []).map((r: any) => ({ ...r, submittedAt: requireDate(r.submittedAt, 'safetyReportsInPeriod[].submittedAt') })),
+    ibChanges: (raw.ibChanges ?? []).map((c: any) => ({ ...c, effectiveDate: requireDate(c.effectiveDate, 'ibChanges[].effectiveDate') })),
     studyStatuses: raw.studyStatuses ?? [],
   };
 }
