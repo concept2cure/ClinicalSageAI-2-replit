@@ -570,6 +570,35 @@ Gap noted, not closed: nothing in the schema persists an FDA receipt date or the
 clinical-hold event timeline, so the clock has no live input anywhere — the
 calculator is right and unfed.
 
+### Sixteenth — pharmacovigilance: an unassessed case is not a non-reportable one (2026-09-05)
+
+The SAE worklist read `adverse_events.seriousness_criteria` and returned `[]`
+whether the column recorded "no criterion met" or held nothing at all.
+Downstream spoke the first meaning over the second: the queue chip read
+"Non-serious" for a case never assessed — the chip that takes a case off the
+expedited path — and the 312.32(c) clock reported "No expedited reporting clock
+— not serious, not unexpected (listed), no suspected causality" over a case with
+none of those three facts recorded.
+
+The determination logic is UNTOUCHED (the work order's PV-engine boundary): an
+unassessed case still yields category 'none' with no due date, asserted in the
+tests. What changed is what the platform claims to know — the clock returns
+`unassessedInputs` and says which inputs were never assessed plus "This is NOT a
+determination that the case is non-reportable"; a recorded-and-negative input
+still reads as the finding it is; the assembler distinguishes NULL from a
+recorded empty list and carries `seriousnessAssessed`; the queue chip has three
+states. The PGlite helper could only write a recorded empty list, so the
+unrecorded case was unreachable from the suite.
+
+### Fifteenth-b — Module 3 stability readability (2026-09-05)
+
+`readRecordedStabilityResults` returned `[]` for a recorded-results column whose
+JSON did not parse — the value a study with no pull points produces — so a
+corrupt payload became "no stability data" in §3.2.S.7 / §3.2.P.8 and in the
+recorded shelf-life fit. It now reports `{ points, unreadable }`; the conclusion
+names unread payloads in every branch, the signal cannot reach 'pass' while one
+is unreadable, and the shelf-life fit refuses with its own reason.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -820,6 +849,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-05 | A | Thirteenth audit — CMC Module 3 export gate | Provenance derived from section lineage instead of asserted, so a required blocking check works; one shared governed-state evaluation, so readiness cannot out-run the gate; unevaluated fabric is not clearance — revert-proven | §1 above |
 | 2026-09-05 | A | Fourteenth — IND filing transmittal pair; eSTAR + IND form PDFs proven | eSTAR fill verified end to end against the vendored FDA template (20/20 fields read back, encrypted incremental update); 1571/1572/3674/356h fill officially; every filed IND sequence now carries the m1.1 Form 1571 + m1.2 cover letter its own validator requires, and names the placements still awaiting bytes — revert-proven | §1 above |
 | 2026-09-05 | A | Fifteenth — the IND 30-day clock | A clock projected from the program's target submission date no longer shows a cleared-to-proceed chip, prints "clinical investigations may proceed", or publishes safeToProceed true to AnA; basis is named and safeToProceed is unknown — revert-proven; the ack-type decision recorded | §1 above |
+| 2026-09-05 | A | Sixteenth — PV seriousness + Module 3 stability readability | An unassessed adverse event no longer reports itself as not serious / no expedited clock (determination unchanged, reason honest, three-state chip); an unreadable stability payload is no longer counted as a study that recorded nothing — both revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

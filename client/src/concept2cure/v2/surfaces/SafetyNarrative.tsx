@@ -40,6 +40,9 @@ type LiveSaeCase = SaeCase & {
   reportingDaysRemaining?: number | null;
   reportingOverdue?: boolean;
   reportingBasis?: string;
+  reportingUnassessedInputs?: string[];
+  /** False = no seriousness assessment is recorded. Absent on an older server. */
+  seriousnessAssessed?: boolean;
 };
 
 /* Stable empty seed for the local editable store while the live worklist is
@@ -317,17 +320,24 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
           <div className="sn-sec">Case queue</div>
           <div className="sn-queue">
             {cases.map((c) => {
-              /* A queue row with no `event` yet is not evidence of non-seriousness,
-                 but "Non-serious" is what the existing chip says for an empty
-                 criteria list, and inventing a third state here would assert more
-                 than the row supports. Guarded so the row renders either way. */
-              const serious = (c.event?.seriousnessCriteria || []).length > 0;
+              /* Three states, because there are three. A row whose seriousness
+                 has never been assessed used to read "Non-serious" — the chip
+                 that takes a case off the expedited-reporting path (21 CFR
+                 312.32) — from an empty criteria list. Saying "not recorded"
+                 asserts LESS than that, not more: it reports exactly what the
+                 row holds. The server sends seriousnessAssessed; an older
+                 server omits it and the row falls back to the old two states. */
+              const criteria = c.event?.seriousnessCriteria || [];
+              const serious = criteria.length > 0;
+              const unrecorded = !serious && c.seriousnessAssessed === false;
               const miss = composeSafetyNarrative(c).missingFields.length;
               return (
                 <button key={c.id} className="sn-case" data-on={c.id === sel.id || undefined} onClick={() => setSelId(c.id)}>
                   <div className="sn-case-top">
                     <span className="mono sn-case-id">{c.id}</span>
-                    <span className={'sn-chip ' + (serious ? 'err' : 'idle')}>{serious ? 'Serious' : 'Non-serious'}</span>
+                    <span className={'sn-chip ' + (serious ? 'err' : 'idle')}>
+                      {serious ? 'Serious' : unrecorded ? 'Seriousness not recorded' : 'Non-serious'}
+                    </span>
                   </div>
                   <div className="sn-case-subj">{c.age}{c.sex === 'Female' ? 'F' : c.sex ? 'M' : ''} -- {c.event?.term}</div>
                   <div className="sn-case-meta">
