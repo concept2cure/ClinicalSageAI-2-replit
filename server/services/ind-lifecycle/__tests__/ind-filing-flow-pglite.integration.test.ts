@@ -94,17 +94,19 @@ describe('annual-report filing flow against PGlite', () => {
     });
     expect(sequence.type).toBe('annual');
     expect(sequence.submissionId).toBe(submission.id);
-    expect(leaves).toHaveLength(1);
+    // m1.13 plus the Module 1 transmittal pair the validator requires.
+    expect(leaves).toHaveLength(3);
 
     // Read back from the DB: the leaf must carry the RESOLVABLE reference, not
     // just a digest — a checksum with no referent is what left every filed
     // lifecycle sequence assembling with zero leaf files (LIFE-01).
     const persisted = await listLeaves(sequence.id, ctx);
-    expect(persisted).toHaveLength(1);
-    expect(persisted[0].sectionCode).toBe('m1.13');
-    expect(persisted[0].checksum).toBe('md5-annual-abc');
-    expect(persisted[0].documentTable).toBe('rendered_leaf_files');
-    expect(persisted[0].documentId).toBe(RENDERED_ANNUAL_ID);
+    expect(persisted).toHaveLength(3);
+    expect(persisted.map((l) => l.sectionCode).sort()).toEqual(['m1.1', 'm1.13', 'm1.2']);
+    const annual = persisted.find((l) => l.sectionCode === 'm1.13')!;
+    expect(annual.checksum).toBe('md5-annual-abc');
+    expect(annual.documentTable).toBe('rendered_leaf_files');
+    expect(annual.documentId).toBe(RENDERED_ANNUAL_ID);
 
     const seqs = await listSequences(submission.id, ctx);
     expect(seqs.map((s) => s.sequenceNumber)).toContain('0001');
@@ -136,6 +138,10 @@ describe('safety-report filing flow against PGlite', () => {
     const persisted = await listLeaves(sequence.id, ctx);
     const codes = persisted.map((l) => l.sectionCode);
     expect(codes).toContain('m1.12.4');
+    // The transmittal pair the validator requires on every 312.32 filing is on
+    // the sequence as stored, not only in the intent.
+    expect(codes).toContain('m1.1');
+    expect(codes).toContain('m1.2');
     const m1 = persisted.find((l) => l.sectionCode === 'm1.12.4')!;
     expect(m1.checksum).toBe('md5-safety-xyz');
   });

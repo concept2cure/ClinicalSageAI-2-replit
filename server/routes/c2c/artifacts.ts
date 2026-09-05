@@ -1258,6 +1258,9 @@ router.put(
         { ctdSection: previousSection },
         { ctdSection: toSection, operation, reason, bundleInvalidation }
       );
+      // The audit log is best-effort (it swallows its own failures), so it is
+      // not where the operator hears this: the outcome goes in the response,
+      // as it does on the ctd-section and rollback routes.
 
       // Emit provenance event for the placement operation
       await emitProvenanceEvent({
@@ -1339,6 +1342,7 @@ router.put(
         operation,
         previousSection,
         governedFabric,
+        bundleInvalidation,
       });
     } catch (error: any) {
       logConcept2cureError('artifact placement', error, {

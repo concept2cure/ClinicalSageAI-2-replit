@@ -16,6 +16,7 @@ const { createSequence, upsertLeaf } = vi.hoisted(() => ({
 vi.mock('../../submission-service/submission-service', () => ({ createSequence, upsertLeaf }));
 
 import { persistSafetyReportIntent, persistAmendmentPlan, persistAnnualReport } from '../ind-lifecycle-persistence';
+import { validateSequenceLeaves } from '../ind-sequence-validation';
 import { assembleIndSafetyReport } from '../ind-safety-report-service';
 import { planIndAmendment } from '../ind-amendment-service';
 import type {
@@ -69,14 +70,45 @@ describe('persistSafetyReportIntent', () => {
       { submissionId: 7, region: 'fda', sequenceNumber: '0001', type: 'amendment' },
       ctx,
     );
-    expect(upsertLeaf).toHaveBeenCalledTimes(amendmentIntent!.leaves.length);
+    // The intent's own leaves PLUS the Module 1 transmittal pair every
+    // post-original IND sequence carries.
+    expect(upsertLeaf).toHaveBeenCalledTimes(amendmentIntent!.leaves.length + 2);
     // Every leaf is scoped to the created sequence and carries its section code.
     for (const call of upsertLeaf.mock.calls) {
       expect(call[0].sequenceId).toBe(42);
       expect(call[1]).toBe(ctx);
     }
-    expect(result.leaves).toHaveLength(amendmentIntent!.leaves.length);
-    expect(upsertLeaf.mock.calls.map((c) => c[0].sectionCode)).toContain('m1.12.4');
+    expect(result.leaves).toHaveLength(amendmentIntent!.leaves.length + 2);
+    const codes = upsertLeaf.mock.calls.map((c) => c[0].sectionCode);
+    expect(codes).toContain('m1.12.4');
+    expect(codes).toContain('m1.1');
+    expect(codes).toContain('m1.2');
+  });
+
+  it('files a sequence that passes the platform’s own required-placement set', async () => {
+    // Before the transmittal pair was placed, a filed 312.32 safety report
+    // carried m1.12.4 and nothing else — invalid against ind-sequence-validation
+    // from the moment it was created, so the dispatch gate refused a sequence
+    // the product had just reported as filed.
+    const { amendmentIntent } = assembleIndSafetyReport(reportableEvent(), { icsr: null, now: D });
+    await persistSafetyReportIntent(7, amendmentIntent!, '0001', ctx);
+    const filed = upsertLeaf.mock.calls.map((c) => ({
+      sectionCode: c[0].sectionCode,
+      documentType: c[0].documentType,
+    }));
+    const verdict = validateSequenceLeaves({ filingType: 'safety_report', leaves: filed });
+    expect(verdict.missing).toEqual([]);
+    expect(verdict.valid).toBe(true);
+  });
+
+  it('names the required leaves it created with no document behind them', async () => {
+    const { amendmentIntent } = assembleIndSafetyReport(reportableEvent(), { icsr: null, now: D });
+    const result = await persistSafetyReportIntent(7, amendmentIntent!, '0001', ctx, {
+      'm1.12.4': { documentTable: 'rendered_leaf_files', documentId: 77, checksum: 'deadbeef' },
+    });
+    // The report itself has bytes; the transmittal pair does not yet.
+    expect(result.leavesAwaitingDocument).toEqual(expect.arrayContaining(['m1.1', 'm1.2']));
+    expect(result.leavesAwaitingDocument).not.toContain('m1.12.4');
   });
 });
 
@@ -87,9 +119,16 @@ describe('persistAnnualReport', () => {
       { submissionId: 7, region: 'fda', sequenceNumber: '0003', type: 'annual' },
       ctx,
     );
-    expect(upsertLeaf).toHaveBeenCalledTimes(1);
-    expect(upsertLeaf.mock.calls[0][0]).toMatchObject({ sequenceId: 42, sectionCode: 'm1.13', lifecycleOp: 'new' });
-    expect(result.leaves).toHaveLength(1);
+    // m1.13 plus the transmittal pair (Form 1571 at m1.1, cover letter at m1.2).
+    expect(upsertLeaf).toHaveBeenCalledTimes(3);
+    const annual = upsertLeaf.mock.calls.map((c) => c[0]).find((l) => l.sectionCode === 'm1.13');
+    expect(annual).toMatchObject({ sequenceId: 42, sectionCode: 'm1.13', lifecycleOp: 'new' });
+    expect(result.leaves).toHaveLength(3);
+    const verdict = validateSequenceLeaves({
+      filingType: 'annual',
+      leaves: upsertLeaf.mock.calls.map((c) => ({ sectionCode: c[0].sectionCode, documentType: c[0].documentType })),
+    });
+    expect(verdict.valid).toBe(true);
   });
 
   it('points the m1.13 leaf at the retained rendered document when one was stored', async () => {
@@ -100,7 +139,8 @@ describe('persistAnnualReport', () => {
       documentId: 91,
       checksum: 'abc123md5',
     });
-    expect(upsertLeaf.mock.calls[0][0]).toMatchObject({
+    const annual = upsertLeaf.mock.calls.map((c) => c[0]).find((l) => l.sectionCode === 'm1.13');
+    expect(annual).toMatchObject({
       sectionCode: 'm1.13',
       documentTable: 'rendered_leaf_files',
       documentId: 91,
@@ -110,7 +150,7 @@ describe('persistAnnualReport', () => {
 
   it('files the leaf as metadata when nothing was retained — never a checksum with no referent', async () => {
     await persistAnnualReport(7, '0006', ctx);
-    const leaf = upsertLeaf.mock.calls[0][0];
+    const leaf = upsertLeaf.mock.calls.map((c) => c[0]).find((l) => l.sectionCode === 'm1.13')!;
     expect(leaf.sectionCode).toBe('m1.13');
     expect(leaf.documentTable).toBeUndefined();
     expect(leaf.checksum).toBeUndefined();
@@ -150,8 +190,13 @@ describe('persistAmendmentPlan', () => {
       { submissionId: 7, region: 'fda', sequenceNumber: '0002', type: plan.sequenceType },
       ctx,
     );
-    expect(upsertLeaf).toHaveBeenCalledTimes(plan.leaves.length);
-    expect(result.leaves).toHaveLength(plan.leaves.length);
+    // The planner already adds its own m1.2 cover letter, so only Form 1571
+    // (m1.1) is added here — the pair is matched on documentType, not section.
+    expect(upsertLeaf).toHaveBeenCalledTimes(plan.leaves.length + 1);
+    expect(result.leaves).toHaveLength(plan.leaves.length + 1);
+    const filedCodes = upsertLeaf.mock.calls.map((c) => c[0].sectionCode);
+    expect(filedCodes.filter((c) => c === 'm1.2')).toHaveLength(1);
+    expect(filedCodes).toContain('m1.1');
     // lifecycleOp is carried through (revised → replace, added → new).
     const ops = upsertLeaf.mock.calls.map((c) => c[0].lifecycleOp);
     expect(ops).toContain('replace');
