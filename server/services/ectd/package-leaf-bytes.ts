@@ -44,6 +44,17 @@ export interface LeafBytes {
   bytes: Buffer;
   /** Human-readable leaf title for the backbone. */
   title: string;
+  /**
+   * The leaf's ICH lifecycle operation. Optional only for sequence 0000, where
+   * every leaf is `new` by definition. For any later sequence it is REQUIRED:
+   * this primitive used to hardcode `new` for every leaf whatever the sequence,
+   * so a caller transmitting 0002 filed each leaf as brand-new with no
+   * modified-file, and the versions those leaves superseded stayed current at
+   * the agency alongside them.
+   */
+  operation?: EctdLeaf['operation'];
+  /** ICH modified-file pointer for replace/append/delete (prior sequence path). */
+  modifiedFile?: string;
 }
 
 export interface PackageLeafBytesParams {
@@ -74,6 +85,17 @@ export async function packageLeafBytes(params: PackageLeafBytesParams): Promise<
     const leavesDir = path.join(work, 'leaves');
     await fs.mkdir(leavesDir, { recursive: true });
 
+    if (params.sequence !== '0000') {
+      const unstated = params.leaves.filter((l) => !l.operation).map((l) => `${l.ctdSection}/${l.fileName}`);
+      if (unstated.length > 0) {
+        throw new Error(
+          `Sequence ${params.sequence} cannot be packaged without a lifecycle operation on every leaf ` +
+            `(${unstated.length} unstated: ${unstated.slice(0, 5).join(', ')}${unstated.length > 5 ? ', …' : ''}). ` +
+            `Filing them as "new" would leave the versions they supersede current at the agency.`,
+        );
+      }
+    }
+
     const usedNames = new Set<string>();
     const packagerLeaves: EctdLeaf[] = [];
     for (const leaf of params.leaves) {
@@ -95,10 +117,11 @@ export async function packageLeafBytes(params: PackageLeafBytesParams): Promise<
       await fs.writeFile(abs, leaf.bytes);
       packagerLeaves.push({
         ctdSection: leaf.ctdSection,
-        operation: 'new',
+        operation: leaf.operation ?? 'new',
         sourcePath: abs,
         fileName,
         title: leaf.title,
+        ...(leaf.modifiedFile ? { modifiedFile: leaf.modifiedFile } : {}),
       });
     }
 
