@@ -631,6 +631,37 @@ describe('persisted IND safety reports (21 CFR 312.32)', () => {
     expect(res.body.map((r: any) => r.id)).toContain(draftId);
   });
 
+  it('the cockpit counts the overdue safety report from the register, whatever the body says', async () => {
+    // The count used to come from the request body; omitting it (or sending
+    // 0) read as "no critical actions" while this draft sat past deadline.
+    const res = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cockpit`).send({ overdueSafetyReports: 0 });
+    expect(res.status).toBe(200);
+    const hasOverdueAction = (dashboard: any) =>
+      dashboard.actionItems.items.some((i: any) => i.id === 'safety_overdue' && i.priority === 'critical');
+    expect(hasOverdueAction(res.body.dashboard)).toBe(true);
+    expect(res.body.dashboard.headline.criticalActions).toBeGreaterThanOrEqual(1);
+    const dash = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/dashboard`).send({});
+    expect(hasOverdueAction(dash.body)).toBe(true);
+  });
+
+  it('refuses to file a draft that is not the draft being filed', async () => {
+    // A draftId only had to be this tenant's; a 7-day fatal draft could be
+    // marked filed with a sequence whose content came from another event.
+    const other = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0010', event: { ...reportableEvent(), id: 'ae-other' }, draftId });
+    expect(other.status).toBe(409);
+    expect(other.body.error.code).toBe('DRAFT_MISMATCH');
+    const unknown = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0010', event: reportableEvent(), draftId: '00000000-0000-0000-0000-000000000000' });
+    expect(unknown.status).toBe(404);
+    expect(unknown.body.error.code).toBe('DRAFT_NOT_FOUND');
+    // Nothing was filed: the draft is still a draft and still overdue.
+    const overdue = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports/overdue`);
+    expect(overdue.body.map((r: any) => r.id)).toContain(draftId);
+  });
+
   it('filing with draftId marks it filed and drops it from overdue', async () => {
     const filed = await request(app)
       .post('/api/ind-lifecycle/safety-report/file')
@@ -641,6 +672,12 @@ describe('persisted IND safety reports (21 CFR 312.32)', () => {
 
     const overdue = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports/overdue`);
     expect(overdue.body.map((r: any) => r.id)).not.toContain(draftId);
+    // Filing it again is refused: the draft is already filed.
+    const again = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0013', event: reportableEvent(), draftId });
+    expect(again.status).toBe(409);
+    expect(again.body.error.code).toBe('ALREADY_FILED');
   });
 
   it('does not leak another org\'s safety reports', async () => {
@@ -717,12 +754,23 @@ describe('persisted IND annual reports (21 CFR 312.33)', () => {
     const before = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports/overdue?asOf=2030-01-01`);
     expect(before.body.map((r: any) => r.id)).toContain(draftId);
 
-    const filed = await request(app)
+    // The draft still has open 312.33 sections: filing it silently used to be
+    // the default. It is refused until the caller acknowledges the gaps, and
+    // the filing then records that they were filed open.
+    const refused = await request(app)
       .post('/api/ind-lifecycle/annual-report/file')
       .send({ submissionId: seededSubmissionId, sequenceNumber: '0012', draftId });
+    expect(refused.status).toBe(409);
+    expect(refused.body.error.code).toBe('DRAFT_INCOMPLETE');
+    expect(refused.body.error.gapCount).toBeGreaterThan(0);
+
+    const filed = await request(app)
+      .post('/api/ind-lifecycle/annual-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0012', draftId, acknowledgeGaps: true });
     expect(filed.status).toBe(201);
     expect(filed.body.draft.status).toBe('filed');
     expect(filed.body.draft.sequenceId).toBe(filed.body.sequence.id);
+    expect(filed.body.filedWithOpenGaps).toBe(refused.body.error.gapCount);
 
     const after = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports/overdue?asOf=2030-01-01`);
     expect(after.body.map((r: any) => r.id)).not.toContain(draftId);

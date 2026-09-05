@@ -19,6 +19,7 @@ import { buildIndPortfolio, buildIndPortfolioEntry, isIndSubmission, buildPortfo
 import { getLatestDispatchSnapshot } from '../../services/ind-lifecycle/ind-dispatch-snapshot-service';
 import { getSubmission, listSubmissions, listSequences, listLeaves } from '../../services/submission-service/submission-service';
 import { getCrossReferenceRegister } from '../../services/ind-lifecycle/ind-cross-reference-persistence';
+import { listOverdueSafetyReports } from '../../services/ind-lifecycle/ind-safety-report-persistence';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, readinessFrom, validationFrom, filingTypeParam, FILING_TYPE_VALUES } from './shared';
 
 const router = Router();
@@ -53,6 +54,10 @@ async function annotatedGatesForSubmission(
   const unauthorizedCrossReferences = submissionId
     ? (await getCrossReferenceRegister(submissionId, ctx)).counts.missingLoa
     : 0;
+  // The overdue safety-report count comes from the register, never from the
+  // request body: omitting the field (or sending 0) used to read as "no
+  // critical actions" while unfiled 7-/15-day reports sat past deadline.
+  const overdueSafetyReports = submissionId ? (await listOverdueSafetyReports(submissionId, ctx)).length : undefined;
 
   return Promise.all(
     sequences.map(async (seq) => {
@@ -64,7 +69,7 @@ async function annotatedGatesForSubmission(
         submissionType: seq.type,
         leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, lifecycleOp: l.lifecycleOp, checksum: l.checksum })),
       });
-      const actions = deriveIndActionItems({ readiness, clock, timeline, sequenceValidation, overdueSafetyReports: b.overdueSafetyReports });
+      const actions = deriveIndActionItems({ readiness, clock, timeline, sequenceValidation, overdueSafetyReports: overdueSafetyReports ?? b.overdueSafetyReports });
       const verdict = evaluateDispatchGate({
         sequenceValidation,
         manifest,
@@ -189,14 +194,15 @@ router.post('/submission/:id/dashboard', limiter, requireRole(AUTHOR), async (re
   const b = body(req);
   try {
     const sequences = await listSequences(submissionId, ctx);
+    const overdueSafetyReports = (await listOverdueSafetyReports(submissionId, ctx)).length;
     res.json(
       buildIndDashboard({
         sequenceSummary: summarizeSequences(sequences),
-        readiness: readinessFrom(b.readinessInput),
+        readiness: readinessFrom(b.readinessInput, overdueSafetyReports),
         clock: b.clockInput?.receiptDate ? evaluateRegulatoryClock(b.clockInput) : null,
         timeline: b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null,
         sequenceValidation: validationFrom(b.sequenceValidationInput),
-        overdueSafetyReports: b.overdueSafetyReports,
+        overdueSafetyReports,
       }),
     );
   } catch (err) {
@@ -217,13 +223,14 @@ router.post('/submission/:id/cockpit', limiter, requireRole(AUTHOR), async (req,
   try {
     const sequences = await listSequences(submissionId, ctx);
     const sequenceGates = await annotatedGatesForSubmission(sequences, b, ctx);
+    const overdueSafetyReports = (await listOverdueSafetyReports(submissionId, ctx)).length;
     const dashboard = buildIndDashboard({
       sequenceSummary: summarizeSequences(sequences),
-      readiness: readinessFrom(b.readinessInput),
+      readiness: readinessFrom(b.readinessInput, overdueSafetyReports),
       clock: b.clockInput?.receiptDate ? evaluateRegulatoryClock(b.clockInput) : null,
       timeline: b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null,
       sequenceValidation: validationFrom(b.sequenceValidationInput),
-      overdueSafetyReports: b.overdueSafetyReports,
+      overdueSafetyReports,
     });
     const register = await getCrossReferenceRegister(submissionId, ctx);
     res.json(

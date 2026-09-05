@@ -214,6 +214,36 @@ Decision item, not changed: `services/regulatory/ind-ectd-sections.ts` has no
 it. Early-phase INDs often carry nothing there; whether it belongs in the IND
 required-section table is a regulatory call.
 
+### Sixth audit — IND safety/annual-report chain and the filing client surfaces (2026-09-05)
+
+Two read-only audits. Fixed on `concept2cure-v2`, each with a test that fails
+on revert:
+
+- A draft named on a `/file` call is the draft being filed: it must be this
+  tenant's (404), for this submission and, for a safety report, this adverse
+  event (409 DRAFT_MISMATCH), and not already filed (409 ALREADY_FILED). The
+  routes only checked the tenant, so a 7-day fatal draft could be marked
+  filed with a sequence whose content came from another event. An annual-
+  report draft with open 312.33 sections is refused (409 DRAFT_INCOMPLETE)
+  unless the caller sends `acknowledgeGaps: true`, and the filing response then
+  records `filedWithOpenGaps`.
+- The dashboard, cockpit and per-sequence dispatch gate count overdue safety
+  reports from the register (`listOverdueSafetyReports`), never from the
+  request body. Omitting the field, or sending 0, used to read as "no critical
+  actions" while unfiled 7-/15-day reports sat past deadline. The pure
+  calculators under `/compute` still take their inputs from the body; they
+  have no submission in scope and say so.
+- The annual-report overdue feed carries `overdueState`: `overdue`, or
+  `deadline_unknown` for an unfiled draft with no IND effective date recorded.
+  Those were dropped from the feed, reading identically to a report on
+  schedule.
+- PV cockpit: a failed compliance-matrix read is an error state ("could not be
+  read, so it is unknown, not clear"), not "No compliance data yet".
+
+Noted, not changed: the cross-reference register's `ready: true` is vacuous
+when no references are recorded; `counts.total: 0` sits beside it, so a
+caller reading the whole payload can tell.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -454,6 +484,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-05 | A | Third audit, remainder | ESG MDN verified before acceptance; sequence/type required on every gateway; C.1.7 from the event; no epoch dates; unassessed expectedness stated as such — all revert-proven; finding 12 did not reproduce | §1 above |
 | 2026-09-05 | A | Fourth audit — ESG acks + IND assembly | isConfigured honest on 13 gateways; status provenance (agency/stored + pollError) end to end; orphaned assemble/generate-form routes and toy backbone/ICSR generators removed — revert-proven | §1 above |
 | 2026-09-05 | A | Fifth audit — M2/M3 placement + eCTD document gate | No automated benefit-risk / supports-the-plan conclusions; Module 3 replace lifecycle; 64-char leaf names composed and validated; encrypted leaves refused; agent PDF/A not-verified ≠ pass — revert-proven; m5.2 recorded as a decision | §1 above |
+| 2026-09-05 | A | Sixth audit — IND filing chain + client surfaces | Draft-linked filing refusals (404/409); overdue safety count from the register; annual overdue feed carries deadline_unknown; PV matrix error state — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

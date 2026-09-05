@@ -263,10 +263,15 @@ describe('annual-report register (312.33) against PGlite', () => {
     expect((await listAnnualReports(31, ctx)).length).toBe(before);
   });
 
-  it('a draft without an indEffectiveDate has no due date and never turns overdue', async () => {
+  it('a draft without an indEffectiveDate has no due date, and the overdue feed says its deadline is unknown', async () => {
+    // It used to be dropped from the feed, reading identically to a report
+    // safely on schedule.
     const row = await createAnnualReportDraft({ submissionId: 13, report: annualReportInput() }, ctx);
     expect(row.dueDate).toBeNull();
-    expect((await listOverdueAnnualReports(13, ctx, new Date('2099-01-01'))).map((r) => r.id)).not.toContain(row.id);
+    const feed = await listOverdueAnnualReports(13, ctx, new Date('2099-01-01'));
+    const entry = feed.find((r) => r.id === row.id);
+    expect(entry?.overdueState).toBe('deadline_unknown');
+    expect(feed.filter((r) => r.overdueState === 'overdue').map((r) => r.id)).not.toContain(row.id);
   });
 });
 

@@ -162,11 +162,27 @@ export async function markAnnualReportFiled(
  * List a submission's annual reports that are not yet filed and whose 60-day
  * deadline has passed (the overdue feed). Org-scoped; pure filtering.
  */
+export type OverdueAnnualReportRow = IndAnnualReportRow & {
+  /**
+   * 'overdue' — unfiled and past its 60-day deadline. 'deadline_unknown' —
+   * unfiled with no due date because no IND effective date was recorded, so
+   * whether it is overdue cannot be known. These used to be dropped from the
+   * feed, reading identically to a report safely on schedule.
+   */
+  overdueState: 'overdue' | 'deadline_unknown';
+};
+
 export async function listOverdueAnnualReports(
   submissionId: number,
   ctx: { organizationId: number },
   asOf: Date = new Date(),
-): Promise<IndAnnualReportRow[]> {
+): Promise<OverdueAnnualReportRow[]> {
   const rows = await listAnnualReports(submissionId, ctx);
-  return rows.filter((r) => r.status !== 'filed' && r.dueDate != null && new Date(r.dueDate).getTime() < asOf.getTime());
+  const out: OverdueAnnualReportRow[] = [];
+  for (const r of rows) {
+    if (r.status === 'filed') continue;
+    if (r.dueDate == null) out.push({ ...r, overdueState: 'deadline_unknown' });
+    else if (new Date(r.dueDate).getTime() < asOf.getTime()) out.push({ ...r, overdueState: 'overdue' });
+  }
+  return out;
 }
