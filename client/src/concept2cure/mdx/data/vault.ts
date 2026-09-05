@@ -4,7 +4,7 @@
  * Extracted from data/workbench.ts so the vault follows the same
  * surface/data/hooks layout as the other MDX surfaces (engineering,
  * udi, postmarket, analytics). Expanded to the kit shape in
- * design-system/ui_kits/mdx/data/vault.js: folder hierarchy, retention
+ * ui_kits/mdx/data/vault.js: folder hierarchy, retention
  * and distribution policy per artifact, KPI strip, and document
  * frameworks for the DocumentsPanel filter row.
  *

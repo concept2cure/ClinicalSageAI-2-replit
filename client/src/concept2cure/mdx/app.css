@@ -1564,7 +1564,7 @@
 
    Its own docblock says "CSS lives in client/src/concept2cure/mdx/app.css
    (DOCUMENTS PANEL section)". There was no such section. The port brought the
-   JSX across from design-system/ui_kits/mdx and left the stylesheet behind, so
+   JSX across from ui_kits/mdx and left the stylesheet behind, so
    every one of its 24 classes — .docs-row, .docs-rail, .docs-head, .docs-meta,
    .docs-progress, .docs-esig, the lot — matched nothing in any bundle. Five
    surfaces render it: Vault, Engineering, UDI, Post-market and Analytics. On
@@ -3062,7 +3062,7 @@
    `.github/workflows/sync-design-system.yml`, so a change made there is
    undone by the next sync; this file is what the build consumes. For this
    file the two kit copies (`ui_kits/mdx/surfaces.css` and
-   `design-system/ui_kits/mdx/surfaces.css`) are byte-identical, so the L141
+   `ui_kits/mdx/surfaces.css`) are byte-identical, so the L141
    divergence forced no choice here.
    ═════════════════════════════════════════════════════════════ */
 
@@ -4082,9 +4082,9 @@
 
    ── This is design, not a port, and the difference is checked ─────────────
    The component's own docblock says "Ported from
-   design-system/ui_kits/mdx/PreSub.jsx", so the first question was whether a
+   ui_kits/mdx/PreSub.jsx", so the first question was whether a
    stylesheet had been left behind the way surfaces.css was. It had not.
-   `PreSub.jsx` lives in `design-system/ui_kits/mdx_phase2/` (one of the 39
+   `PreSub.jsx` lives in `ui_kits/mdx_phase2/` (one of the 39
    files that exist only in the mirror — L141), it carries 85 `ps-*` class
    references, its kit `index.html` loads `app.css` alone, and that file
    contains zero `.ps-` rules. Neither kit copy has ever had a stylesheet for

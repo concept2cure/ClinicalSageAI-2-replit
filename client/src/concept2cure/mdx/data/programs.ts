@@ -1,6 +1,6 @@
 /**
  * Portfolio of active programs and aggregate health KPIs.
- * Ported verbatim from design-system/ui_kits/mdx/data.jsx.
+ * Ported verbatim from ui_kits/mdx/data.jsx.
  *
  * Status vocabulary: idle · active · blocked · complete (shared across the
  * stage strip, phase grid, and program chips). Pathway codes are orthogonal

@@ -7,7 +7,7 @@
  * dossiers).
  *
  * Cross-program surface. Port basis:
- * design-system/ui_kits/mdx/surfaces/Analytics.jsx.
+ * ui_kits/mdx/surfaces/Analytics.jsx.
  */
 
 import * as React from 'react';

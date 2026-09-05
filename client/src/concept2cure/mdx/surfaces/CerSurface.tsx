@@ -9,7 +9,7 @@
  *   PMS/PMCF     /api/post-market documentation-status + draft generation
  *   Generator    sections · MEDDEV structure check · governed /api/cerv2/export
  *
- * Layout follows design-system/ui_kits/mdx_phase2/CerWorkbench.jsx; every tab
+ * Layout follows ui_kits/mdx_phase2/CerWorkbench.jsx; every tab
  * renders honest loading/empty/error states, with kit fixtures reachable only
  * through the explicit sample-mode guard. Shared per-program fetches (sections,
  * program extras, device profile) live here so switching tabs never re-fetches

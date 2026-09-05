@@ -385,7 +385,12 @@ export default class FDAFormGenerator {
       deviceName: fda510kProject?.deviceName || 'Not Specified',
       intendedUse,
       indications,
-      prescriptionUse: workflowData?.device_information?.prescriptionUse !== false,
+      // Both opt-IN. These were asymmetric — OTC `=== true` but prescription
+      // `!== false` — so a device with no device_information at all rendered a
+      // Form 3881 asserting "Prescription Use (21 CFR 801 Subpart D)", a
+      // regulatory-use classification nobody entered. Neither box is checked
+      // until someone says which it is.
+      prescriptionUse: workflowData?.device_information?.prescriptionUse === true,
       overCounterUse: workflowData?.device_information?.overCounterUse === true,
       patientPopulation: workflowData?.device_information?.patientPopulation || '',
       predicateDevice: workflowData?.predicate_comparison?.predicateDevice || '',
@@ -861,9 +866,13 @@ export default class FDAFormGenerator {
         <label>No financial interests to disclose (Form FDA 3454 attached)</label>
       </div>
       <div class="checkbox-group">
-        <input type="checkbox" class="checkbox" ${data.financialInterests ? 'checked' : ''}>
+        <input type="checkbox" class="checkbox" ${data.financialInterests === true ? 'checked' : ''}>
         <label>Financial interests disclosed (Form FDA 3455 attached)</label>
       </div>
+      ${data.financialInterests === undefined ? `
+      <div class="field-value"><em>Financial-interest disclosure not yet recorded &mdash; neither box
+      is checked until the certifier states which applies.</em></div>
+      ` : ''}
     </div>
     ` : ''}
   </div>

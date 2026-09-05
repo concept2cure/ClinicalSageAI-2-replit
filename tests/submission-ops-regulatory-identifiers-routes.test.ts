@@ -114,7 +114,8 @@ describe('PUT /api/submission-ops/packages/:packageId/regulatory-identifiers', (
     // These pass a C0-only control-char check but escapeXml strips them, so the
     // backbone would carry an altered or EMPTY <name> while the gate said usable.
     dbState.pkg = pkgWith({});
-    for (const name of [ch(0x85), ch(0xfffe) + ch(0xffff), `Acme${ch(0x9f)}Bio`]) {
+    // …and a lone surrogate, which the zip writer would rewrite to U+FFFD.
+    for (const name of [ch(0x85), ch(0xfffe) + ch(0xffff), `Acme${ch(0x9f)}Bio`, `Acme${String.fromCharCode(0xd800)} Bio`]) {
       const res = await put({ ...GOOD, applicantName: name });
       expect(res.status, JSON.stringify(name)).toBe(400);
       expect(res.body.fields).toEqual(['applicantName']);
@@ -161,6 +162,8 @@ describe('PUT /api/submission-ops/packages/:packageId/regulatory-identifiers', (
     const ledger = recordGovernedActionFn.mock.calls[0][1];
     expect(ledger).toMatchObject({ orgId: 99, userId: 777, target: 'submission:5', reason: GOOD.reason });
     expect(ledger.payload).toMatchObject({ change: 'regulatory-identifiers', applicationNumber: 'IND123456', staleBundleCleared: true });
+    // from → to: the audit row can answer what the identifiers were changed FROM.
+    expect(ledger.payload.previous).toEqual({ applicationNumber: 'IND000001', applicantId: 'DUNS-1', applicantName: 'Old Name' });
     expect(clientQuery).toHaveBeenCalledWith('BEGIN');
     expect(clientQuery).toHaveBeenCalledWith('COMMIT');
   });

@@ -1,7 +1,7 @@
 /**
  * PathwayPanes — the pathway sub-tab bar shared by every pathway surface
  * (510k / PMA / CER), plus the DossierDrawer that routes any pane to the live
- * document section. Ported from `design-system/ui_kits/mdx/PathwayPanes.jsx`.
+ * document section. Ported from `ui_kits/mdx/PathwayPanes.jsx`.
  *
  * Tabs: Workspace · Audit trail · Correspondence · Approvals · Files.
  * The host surface passes its existing content as `workspace`; the other tabs

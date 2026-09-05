@@ -15,7 +15,6 @@ import {
   getSectionByCode,
   getModuleStatus,
   getGenerationPrompt,
-  getSectionsForSubmissionType,
 } from '../services/ind/ind-section-registry.js';
 import {
   CTD_AUTHORING_GUIDANCE,

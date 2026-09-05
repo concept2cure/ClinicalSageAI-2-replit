@@ -568,3 +568,44 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
     });
   },
 );
+
+describe('predicate devices beyond the first', () => {
+  it('writes the first predicate and SAYS the others were not written', () => {
+    // The mapped predicate fields hold one device, and the program's list has
+    // no primary designation. The first was written and the rest dropped
+    // silently; a sponsor with a reference device entered first read a filled
+    // form naming the wrong predicate and nothing else.
+    const r = projectEstarAdministrativeData({
+      program: {
+        predicateDevices: [
+          { id: 'p1', name: 'Primary Predicate', kNumber: 'K203456' },
+          { id: 'p2', name: 'Reference Device', kNumber: 'K198765' },
+        ],
+      },
+    });
+    expect(r.values.predicateSubmissionNumber).toBe('K203456');
+    expect(r.advisories).toHaveLength(1);
+    expect(r.advisories![0]).toMatch(/2 predicate devices are on file/);
+    expect(r.advisories![0]).toContain('K203456');
+  });
+
+  it('a single predicate raises no advisory', () => {
+    const r = projectEstarAdministrativeData({
+      program: { predicateDevices: [{ id: 'p1', name: 'Only One', kNumber: 'K1' }] },
+    });
+    expect(r.advisories).toBeUndefined();
+  });
+
+  it('the advisory reaches the field report', () => {
+    const governed = projectEstarAdministrativeData({
+      program: { predicateDevices: [{ id: 'a', kNumber: 'K1' }, { id: 'b', kNumber: 'K2' }] },
+    });
+    const resolved = resolveOfficialEstarFields({
+      fieldMap: { predicateSubmissionNumber: { xfaSomPath: 'root.x', type: 'text', caption: 'Predicate' } },
+      governed,
+    });
+    const { fieldReport } = reportOfficialEstarFill(resolved, ['predicateSubmissionNumber']);
+    expect(fieldReport.advisories).toHaveLength(1);
+    expect(fieldReport.advisories[0]).toMatch(/only the first \(K1\)/);
+  });
+});
