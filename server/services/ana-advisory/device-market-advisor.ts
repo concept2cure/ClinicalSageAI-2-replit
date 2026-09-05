@@ -55,6 +55,7 @@ export function adviseDeviceReadiness(
     pathway: input.pathway,
     variant: input.variant,
     leaves: input.leaves,
+    deviceFlags: input.deviceFlags,
     presentTemplates: input.presentTemplates,
     market: input.market,
     availableArtifacts: input.availableArtifacts,
