@@ -357,7 +357,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
       const fetchFailure = !pf.ok
         ? `The findings could not be loaded (HTTP ${pf.status}${(pf.raw as any)?.error ? ': ' + (pf.raw as any).error : ''}); run preflight for this package to see them.`
         : findingsState === 'not-assessed'
-          ? 'Preflight did not report a findings list for this bundle; run preflight for this package to see them.'
+          ? 'Preflight did not return the itemized findings behind this error count; run preflight for this package to see them.'
           : findingsState === 'assessed-clear'
             ? `Preflight lists no findings on the stored bundle, yet assembly counted ${errors}; the two disagree — run preflight again before transmitting.`
             : undefined;
@@ -520,7 +520,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
             <div style={{ padding: '10px 16px', fontSize: 12 }}>
               {refusal.message}{' '}
               {refusal.findingsState !== 'assessed-with-findings'
-                ? (refusal.fetchFailure ?? 'The refusal did not include its findings; run preflight for this package to see them.')
+                ? (refusal.fetchFailure ?? 'The refusal did not include an itemized findings list. Assemble the package again, then transmit.')
                 : refusal.source === 'transmit'
                   ? 'These findings were recorded on the stored bundle when it was assembled. Resolve them, assemble the package again, then transmit.'
                   : 'Resolve the findings, then assemble the package again.'}

@@ -126,6 +126,11 @@ vi.mock('../../server/auth', () => ({
 const ORG = 1;
 const OTHER_ORG = 2;
 const USER = 1;
+/** A device that is none of the seven conditional things (see estar-mapper DeviceFlagId). */
+const PLAIN_DEVICE = {
+  combinationProduct: false, softwareAiMl: false, cyberDevice: false, sterile: false,
+  implantable: false, cliaWaived: false, clinicalData: false,
+} as const;
 const OTHER_USER = 2;
 
 let jdb: JourneyDb;
@@ -570,6 +575,7 @@ describe('golden journey — device 510(k) eSTAR path', () => {
         pathway: '510k',
         variant: 'device',
         programId,
+        deviceFlags: PLAIN_DEVICE,
       });
       expect(res.status).toBe(200);
       expect(res.body.estar.summary.missingRequired).toEqual([]);
@@ -578,14 +584,28 @@ describe('golden journey — device 510(k) eSTAR path', () => {
 
     // ── 5. The honest artifactKind with a complete content set ──────────────
     const assembled = await R.step('assemble-reports-official-estar-producible-from-real-content', async () => {
+      // Without the device's properties every conditional section is
+      // UNDETERMINED, and an undetermined section blocks the official-eSTAR
+      // claim; the assembler used to ignore that. Asserted below: the same call
+      // without deviceFlags is honestly a draft package.
+      const undetermined = await asPrincipal(ORG, USER)(request(app).post('/api/510k/estar/assemble')).send({
+        pathway: '510k',
+        variant: 'device',
+        market: 'us',
+      });
+      expect(undetermined.status).toBe(200);
+      expect(undetermined.body.artifactKind).toBe('content-package-draft');
+      expect(undetermined.body.blockers.join(' ')).toMatch(/applicability is not established/);
+
       const res = await asPrincipal(ORG, USER)(request(app).post('/api/510k/estar/assemble')).send({
         pathway: '510k',
         variant: 'device',
         market: 'us',
         // The program is the subject: it names the content scope and carries the
-        // device questions answered at intake, which is what makes the required
-        // section set known rather than undetermined.
+        // device questions answered at intake; a caller may also state them, as
+        // this one does, and a stated answer wins.
         programId,
+        deviceFlags: PLAIN_DEVICE,
       });
       expect(res.status).toBe(200);
       // The decisive honesty output: every required section is authored AND the

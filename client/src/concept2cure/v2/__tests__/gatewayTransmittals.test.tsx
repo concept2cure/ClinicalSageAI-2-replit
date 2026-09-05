@@ -319,8 +319,12 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     fireEvent.click(screen.getByTestId('form-submit'));
     const card = await screen.findByRole('region', { name: 'Structural gate refusal' });
     expect(card.textContent).toMatch(/No assembled bundle/);
-    expect(card.textContent).toMatch(/The refusal did not include its findings; run preflight for this package to see them\./);
+    // The absence of an itemized list is stated as exactly that — never as
+    // "no findings", which reads as an assessment result the empty array
+    // cannot evidence (the empty-state gate flags that phrasing).
+    expect(card.textContent).toMatch(/did not include an itemized findings list/);
     expect(card.textContent).not.toMatch(/recorded on the stored bundle/);
+    expect(card.textContent).not.toMatch(/no findings/i);
   });
 
   it('says when the findings for an assembled-with-errors bundle could not be loaded, instead of an empty table under an error count', async () => {

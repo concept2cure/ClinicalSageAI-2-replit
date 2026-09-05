@@ -331,6 +331,34 @@ describe('POST /api/510k/estar/assemble — pathway pma', () => {
     expect(payload.validationReport.errors.join(' ')).toMatch(/section\(s\) missing/);
   });
 
+  it('a 510(k) carries its device properties in the request; without them the conditional sections stay undetermined', async () => {
+    // No route accepted deviceFlags before, so every conditional section was
+    // undetermined on every call — and the assembler then ignored undetermined.
+    scopeState.docType = 'k510';
+    const leaves = [{ sectionCode: 'B1', title: 'Device description', documentType: 'device_description', substantive: true }];
+    mockLoadContentLeaves.mockResolvedValueOnce(leaves);
+    const without = createMockResponse() as any;
+    await getHandler('/assemble')(makeReq({ pathway: '510k', variant: 'device', programId: PROGRAM_UUID }), without);
+    expect(without.status).toHaveBeenCalledWith(200);
+    const u = without.json.mock.calls[0][0];
+    expect(u.estar.summary.undetermined.length).toBeGreaterThan(0);
+    expect(u.blockers.join(' ')).toMatch(/applicability is not established/);
+
+    mockLoadContentLeaves.mockResolvedValueOnce(leaves);
+    const withFlags = createMockResponse() as any;
+    await getHandler('/assemble')(
+      makeReq({
+        pathway: '510k', variant: 'device', programId: PROGRAM_UUID,
+        deviceFlags: { combinationProduct: false, softwareAiMl: false, cyberDevice: false, sterile: false, implantable: false, cliaWaived: false, clinicalData: false },
+      }),
+      withFlags,
+    );
+    expect(withFlags.status).toHaveBeenCalledWith(200);
+    const w = withFlags.json.mock.calls[0][0];
+    expect(w.estar.summary.undetermined).toEqual([]);
+    expect(w.blockers.join(' ')).not.toMatch(/applicability is not established/);
+  });
+
   it('accepts the PMA supplement type and scopes the required modules to it', async () => {
     mockLoadContentLeaves.mockResolvedValueOnce([
       { sectionCode: 'A', title: 'A · Administrative information (21 CFR 814.20(b)(1)–(2))', substantive: true },

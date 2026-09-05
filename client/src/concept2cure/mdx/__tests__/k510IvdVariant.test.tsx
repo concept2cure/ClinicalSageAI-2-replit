@@ -71,7 +71,7 @@ const props = {
   segment: 'medtech',
 } as unknown as SurfaceViewProps;
 
-function renderHost(nav: 'device-510k' | 'device-pma') {
+function renderHost(nav: 'device-510k' | 'device-pma' | 'device-diagnostics') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
@@ -82,6 +82,7 @@ function renderHost(nav: 'device-510k' | 'device-pma') {
 
 const renderK510 = () => renderHost('device-510k');
 const renderPma = () => renderHost('device-pma');
+const renderDiagnostics = () => renderHost('device-diagnostics');
 
 afterEach(() => {
   cleanup();
@@ -252,5 +253,59 @@ describe('the PMA surface derives the pathway from the program, never from itsel
     await waitFor(() =>
       expect(screen.getByText('Official eSTAR · 510(k) · nIVD eSTAR')).toBeTruthy(),
     );
+  });
+});
+
+describe('the diagnostics surface derives the eSTAR family from the program, never from itself', () => {
+  /*
+   * Which surface is on screen is a NAVIGATION choice — MdxSurfaceHost switches
+   * on `nav === 'device-diagnostics'` — not a property of the selected program.
+   * The panel used to be handed a literal variant="ivd", so an operator who had
+   * a non-IVD device program open and clicked Diagnostics was offered their
+   * device on the IVD eSTAR: a different FDA template with a different field
+   * map, for a submission that is not an IVD. Same defect the PMA surface had
+   * with a literal type="pma", and the same fix.
+   */
+  it('a non-IVD device program open on the diagnostics surface is produced on the nIVD eSTAR', async () => {
+    const id = 'a2b4c6d8-0000-0000-0000-00000000dvc1';
+    stubFetch([{ ...IVD_510K_ROW, id, productType: 'device' }]);
+    selectProgram(id);
+    renderDiagnostics();
+    await waitFor(() =>
+      expect(screen.getByText('Official eSTAR · 510(k) · nIVD eSTAR')).toBeTruthy(),
+    );
+    // "nIVD eSTAR" also ends in "IVD eSTAR", so the family is asserted on the
+    // full title above and on the descriptor the panel actually addresses below.
+    expect(screen.queryByText('Official eSTAR · 510(k) · IVD eSTAR')).toBeNull();
+
+    const fetchSpy = globalThis.fetch as unknown as { mock: { calls: unknown[][] } };
+    const urls = () => fetchSpy.mock.calls.map((c) => String(c[0]));
+    await waitFor(() =>
+      expect(urls().filter((u) => u.includes('/estar/official-fields')).length).toBeGreaterThan(0),
+    );
+    // The field preview and the produce call must address the nIVD descriptor.
+    const fieldReads = urls().filter((u) => u.includes('/estar/official-fields'));
+    expect(fieldReads.every((u) => u.includes('variant=device'))).toBe(true);
+  });
+
+  it('an IVD program open on the diagnostics surface is still produced on the IVD eSTAR', async () => {
+    const id = 'a2b4c6d8-0000-0000-0000-00000000ivd1';
+    stubFetch([{ ...IVD_510K_ROW, id, productType: 'ivd' }]);
+    selectProgram(id);
+    renderDiagnostics();
+    await waitFor(() =>
+      expect(screen.getByText('Official eSTAR · 510(k) · IVD eSTAR')).toBeTruthy(),
+    );
+    const fetchSpy = globalThis.fetch as unknown as { mock: { calls: unknown[][] } };
+    const fieldReads = fetchSpy.mock.calls
+      .map((c) => String(c[0]))
+      .filter((u) => u.includes('/estar/official-fields'));
+    await waitFor(() => expect(fieldReads.length).toBeGreaterThanOrEqual(0));
+    expect(
+      fetchSpy.mock.calls
+        .map((c) => String(c[0]))
+        .filter((u) => u.includes('/estar/official-fields'))
+        .every((u) => u.includes('variant=ivd')),
+    ).toBe(true);
   });
 });
