@@ -39,7 +39,15 @@ import {
   sanitizeContent,
   sendError,
   sendSuccess,
+  logAuditEntry,
+  type AuditEntry,
 } from './c2c/shared';
+import {
+  canViewVisibilityTier,
+  communicationCenterErrorStatus,
+  ensureCommunicationCenterTables,
+  parseProjectParam,
+} from './c2c/communication-center';
 import {
   getActorRole,
   getProjectScope,
@@ -120,7 +128,6 @@ import {
   type AgencyCommunicationEventRecord,
   type AuthorityProfileRecord,
   type PublishOpsServiceRecord,
-  type CommunicationVisibilityTier,
 } from '../../shared/types/communication-center';
 import {
   applyProjectSharingState,
@@ -135,7 +142,6 @@ const router = Router();
 
 import { ai } from '../lib/unified-ai-client';
 import { parseIntegerProjectId } from '../lib/project-id.js';
-import { registerCommunicationCenterRoutes } from './concept2cure-communication-center';
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -153,218 +159,6 @@ router.use(requireOrganizationContext);
 // ─────────────────────────────────────────────────────────────────────────────
 // FDA 21 CFR PART 11 AUDIT LOGGING (DATABASE-BACKED)
 // ─────────────────────────────────────────────────────────────────────────────
-
-interface AuditEntry {
-  id: string;
-  timestamp: string;
-  userId: string;
-  userName: string;
-  action:
-    | 'CREATE'
-    | 'READ'
-    | 'UPDATE'
-    | 'DELETE'
-    | 'EXPORT'
-    | 'SIGN'
-    | 'APPROVE'
-    | 'AI_EDIT'
-    | 'AI_TEMPLATE_GENERATE'
-    | 'DUPLICATE'
-    | 'TRANSFER'
-    | 'FEEDBACK';
-  entityType:
-    | 'project'
-    | 'conversation'
-    | 'message'
-    | 'artifact'
-    | 'artifact_status'
-    | 'audit_report_export'
-    | 'review_comment'
-    | 'review_assignment'
-    | 'review_decision'
-    | 'signature'
-    | 'vault_registration'
-    | 'prompt_template'
-    | 'submission_package'
-    | 'document_section'
-    | 'ai_response'
-    | 'system_error';
-  entityId: string;
-  previousValue?: unknown;
-  newValue?: unknown;
-  ipAddress?: string;
-  sessionId?: string;
-  integrityHash?: string;
-}
-
-let communicationCenterSchemaCheck: 'unknown' | 'ready' | 'missing' = 'unknown';
-
-async function ensureCommunicationCenterTables(): Promise<void> {
-  if (communicationCenterSchemaCheck === 'ready') return;
-  if (communicationCenterSchemaCheck === 'missing') {
-    throw new Error(
-      'Communication Center persistence tables are missing. Run migration 20260331_communication_center_scaffold.sql'
-    );
-  }
-  const result = await pool.query(
-    `SELECT table_name
-       FROM information_schema.tables
-      WHERE table_schema = 'public'
-        AND table_name = ANY($1::text[])`,
-    [
-      [
-        'concept2cure_authority_profiles',
-        'concept2cure_agency_communications',
-        'concept2cure_publishops_services',
-      ],
-    ]
-  );
-  const found = new Set(result.rows.map((r: any) => r.table_name));
-  const missing = [
-    'concept2cure_authority_profiles',
-    'concept2cure_agency_communications',
-    'concept2cure_publishops_services',
-  ].filter(t => !found.has(t));
-  if (missing.length > 0) {
-    communicationCenterSchemaCheck = 'missing';
-    throw new Error(
-      `Communication Center persistence tables missing: ${missing.join(
-        ', '
-      )}. Run migration 20260331_communication_center_scaffold.sql`
-    );
-  }
-  communicationCenterSchemaCheck = 'ready';
-}
-
-function parseProjectParam(projectParam: string | string[] | undefined): number {
-  const raw = Array.isArray(projectParam) ? projectParam[0] : projectParam;
-  if (typeof raw !== 'string') {
-    throw new Error('Invalid project ID');
-  }
-  const numericId = parseIntegerProjectId(raw);
-  if (numericId === null) {
-    throw new Error('Invalid project ID');
-  }
-  return numericId;
-}
-
-function canViewVisibilityTier(
-  visibilityTier: CommunicationVisibilityTier,
-  userRole?: string
-): boolean {
-  const role = (userRole || '').toLowerCase();
-  if (!COMMUNICATION_VISIBILITY_TIERS.includes(visibilityTier)) return false;
-  if (visibilityTier === 'restricted_legal_sensitive') {
-    return ['admin', 'owner', 'compliance', 'legal'].some(r => role.includes(r));
-  }
-  if (visibilityTier === 'publishops_only') {
-    return role.includes('publishops') || role.includes('admin');
-  }
-  if (visibilityTier === 'c2c_internal') {
-    return role.includes('c2c') || role.includes('admin');
-  }
-  return true;
-}
-
-function communicationCenterErrorStatus(error: unknown): number {
-  const message = (error as any)?.message || '';
-  if (typeof message === 'string' && message.includes('persistence tables')) {
-    return 503;
-  }
-  return 400;
-}
-
-/**
- * Log an audit entry for 21 CFR Part 11 compliance.
- * Entries are persisted to database with tamper-evident hashing.
- *
- * @param req - Express request with authenticated user context
- * @param action - Type of action being audited
- * @param entityType - Category of entity being acted upon
- * @param entityId - Unique identifier of the entity
- * @param previousValue - State before change (for updates/deletes)
- * @param newValue - State after change (for creates/updates)
- */
-async function logAuditEntry(
-  req: Request,
-  action: AuditEntry['action'],
-  entityType: AuditEntry['entityType'],
-  entityIdRaw: string | string[] | undefined,
-  previousValue?: unknown,
-  newValue?: unknown
-): Promise<void> {
-  const entityId = Array.isArray(entityIdRaw) ? entityIdRaw[0] ?? '' : entityIdRaw ?? '';
-  try {
-    const auditId = `audit_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
-    const timestamp = new Date();
-    const orgId = req.tenantContext?.organizationId
-      ? parseInt(req.tenantContext.organizationId as string, 10)
-      : (req.tenantId as number) || 0;
-
-    // Calculate tamper-evident integrity hash
-    const hashData = JSON.stringify({
-      auditId,
-      timestamp: timestamp.toISOString(),
-      userId: req.userId,
-      action,
-      entityType,
-      entityId,
-    });
-    const integrityHash = crypto.createHash('sha256').update(hashData).digest('hex');
-
-    // Persist to regulatory audit log table
-    const userIdNum =
-      typeof req.userId === 'number'
-        ? req.userId
-        : req.userId !== undefined
-          ? parseInt(String(req.userId), 10)
-          : 0;
-    await db.insert(regulatoryAuditLogs).values({
-      auditId,
-      organizationId: orgId,
-      entityType,
-      entityId,
-      action,
-      actionCategory: getActionCategory(action),
-      previousValue: previousValue ?? null,
-      newValue: newValue ?? null,
-      userId: Number.isFinite(userIdNum) ? userIdNum : 0,
-      userName: req.userEmail || 'unknown',
-      userRole: req.userRole || 'user',
-      ipAddress: getClientIp(req),
-      userAgent: req.headers['user-agent'] || null,
-      sessionId: (req as any).session?.id || null,
-      isGxpRelevant: true, // Concept2Cure creates GxP-relevant documents
-      metadata: { integrityHash },
-    });
-
-    logger.debug('Audit entry persisted', { auditId, action, entityType, entityId });
-  } catch (error) {
-    // Never fail the main operation due to audit logging - log and continue
-    logger.error('Failed to persist audit entry', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      action,
-      entityType,
-      entityId,
-    });
-  }
-}
-
-/**
- * Map audit actions to categories for reporting.
- */
-function getActionCategory(action: AuditEntry['action']): string {
-  const categoryMap: Record<string, string> = {
-    CREATE: 'data-change',
-    UPDATE: 'data-change',
-    DELETE: 'data-change',
-    READ: 'access',
-    EXPORT: 'access',
-    SIGN: 'approval',
-    APPROVE: 'approval',
-  };
-  return categoryMap[action] || 'system';
-}
 
 
 /**

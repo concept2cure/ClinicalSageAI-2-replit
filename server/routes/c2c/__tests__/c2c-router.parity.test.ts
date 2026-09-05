@@ -78,3 +78,22 @@ describe('notification, work-item and escalation routes live in one router', () 
     expect(inNotifications.has('POST /projects/:projectId/submission-package')).toBe(false);
   });
 });
+
+const COMMUNICATION_CENTER_PATHS = [
+  'GET /projects/:projectId/submission-center/items',
+  'POST /projects/:projectId/submission-center/items',
+  'PATCH /projects/:projectId/submission-center/items/:itemId/status',
+];
+
+describe('submission-center item routes are mounted, once', () => {
+  it('the communication-center router answers them, and the main router does not', async () => {
+    const cc = (await import('../communication-center')).default as unknown as { stack: Layer[] };
+    const main = (await import('../../concept2cure')).default as unknown as { stack: Layer[] };
+    const inCc = new Set(registered(cc));
+    const inMain = new Set(registered(main));
+    for (const p of COMMUNICATION_CENTER_PATHS) {
+      expect(inCc.has(p), `${p} should be on the communication-center router`).toBe(true);
+      expect(inMain.has(p), `${p} should not be on the main router`).toBe(false);
+    }
+  });
+});

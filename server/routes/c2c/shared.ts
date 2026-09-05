@@ -14,6 +14,9 @@ import DOMPurifyImport from 'isomorphic-dompurify';
 import { createScopedLogger } from '../../utils/logger';
 import * as metricsModule from '../../metrics.js';
 import { createRedisRateLimiter } from '../../middleware/redisRateLimiter';
+import * as crypto from 'crypto';
+import { db } from '../../db';
+import { regulatoryAuditLogs } from '../../../shared/schema';
 
 const DOMPurify = (DOMPurifyImport as any).default || DOMPurifyImport;
 const logger = createScopedLogger('concept2cure-api');
@@ -210,4 +213,144 @@ export function paramStr(value: unknown): string {
   if (typeof value === 'string') return value;
   if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
   return '';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FDA 21 CFR PART 11 AUDIT LOGGING (DATABASE-BACKED)
+// One writer for every Concept2Cure router.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface AuditEntry {
+  id: string;
+  timestamp: string;
+  userId: string;
+  userName: string;
+  action:
+    | 'CREATE'
+    | 'READ'
+    | 'UPDATE'
+    | 'DELETE'
+    | 'EXPORT'
+    | 'SIGN'
+    | 'APPROVE'
+    | 'AI_EDIT'
+    | 'AI_TEMPLATE_GENERATE'
+    | 'DUPLICATE'
+    | 'TRANSFER'
+    | 'FEEDBACK';
+  entityType:
+    | 'project'
+    | 'conversation'
+    | 'message'
+    | 'artifact'
+    | 'artifact_status'
+    | 'audit_report_export'
+    | 'review_comment'
+    | 'review_assignment'
+    | 'review_decision'
+    | 'signature'
+    | 'vault_registration'
+    | 'prompt_template'
+    | 'submission_package'
+    | 'document_section'
+    | 'ai_response'
+    | 'system_error';
+  entityId: string;
+  previousValue?: unknown;
+  newValue?: unknown;
+  ipAddress?: string;
+  sessionId?: string;
+  integrityHash?: string;
+}
+
+/**
+ * Log an audit entry for 21 CFR Part 11 compliance.
+ * Entries are persisted to database with tamper-evident hashing.
+ *
+ * @param req - Express request with authenticated user context
+ * @param action - Type of action being audited
+ * @param entityType - Category of entity being acted upon
+ * @param entityId - Unique identifier of the entity
+ * @param previousValue - State before change (for updates/deletes)
+ * @param newValue - State after change (for creates/updates)
+ */
+export async function logAuditEntry(
+  req: Request,
+  action: AuditEntry['action'],
+  entityType: AuditEntry['entityType'],
+  entityIdRaw: string | string[] | undefined,
+  previousValue?: unknown,
+  newValue?: unknown
+): Promise<void> {
+  const entityId = Array.isArray(entityIdRaw) ? entityIdRaw[0] ?? '' : entityIdRaw ?? '';
+  try {
+    const auditId = `audit_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
+    const timestamp = new Date();
+    const orgId = req.tenantContext?.organizationId
+      ? parseInt(req.tenantContext.organizationId as string, 10)
+      : (req.tenantId as number) || 0;
+
+    // Calculate tamper-evident integrity hash
+    const hashData = JSON.stringify({
+      auditId,
+      timestamp: timestamp.toISOString(),
+      userId: req.userId,
+      action,
+      entityType,
+      entityId,
+    });
+    const integrityHash = crypto.createHash('sha256').update(hashData).digest('hex');
+
+    // Persist to regulatory audit log table
+    const userIdNum =
+      typeof req.userId === 'number'
+        ? req.userId
+        : req.userId !== undefined
+          ? parseInt(String(req.userId), 10)
+          : 0;
+    await db.insert(regulatoryAuditLogs).values({
+      auditId,
+      organizationId: orgId,
+      entityType,
+      entityId,
+      action,
+      actionCategory: getActionCategory(action),
+      previousValue: previousValue ?? null,
+      newValue: newValue ?? null,
+      userId: Number.isFinite(userIdNum) ? userIdNum : 0,
+      userName: req.userEmail || 'unknown',
+      userRole: req.userRole || 'user',
+      ipAddress: getClientIp(req),
+      userAgent: req.headers['user-agent'] || null,
+      sessionId: (req as any).session?.id || null,
+      isGxpRelevant: true, // Concept2Cure creates GxP-relevant documents
+      metadata: { integrityHash },
+    });
+
+    logger.debug('Audit entry persisted', { auditId, action, entityType, entityId });
+  } catch (error) {
+    // Never fail the main operation due to audit logging - log and continue
+    logger.error('Failed to persist audit entry', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      action,
+      entityType,
+      entityId,
+    });
+  }
+}
+
+/**
+ * Map audit actions to categories for reporting.
+ */
+function getActionCategory(action: AuditEntry['action']): string {
+  const categoryMap: Record<string, string> = {
+    CREATE: 'data-change',
+    UPDATE: 'data-change',
+    DELETE: 'data-change',
+    READ: 'access',
+    EXPORT: 'access',
+    SIGN: 'approval',
+    APPROVE: 'approval',
+  };
+  return categoryMap[action] || 'system';
 }
