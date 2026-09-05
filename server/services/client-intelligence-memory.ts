@@ -37,6 +37,65 @@ import { extractTextFromFile } from './memory/document-text-extraction.js';
 import { computeDocumentChecklist, type DocumentChecklist } from './memory/document-checklist.js';
 import { ragRetrieve } from './ragRouter.js';
 
+// ─── Embedding of newly inserted memory entries ─────────────────────────────
+
+/**
+ * Write embeddings for memory entries the ingest paths just inserted.
+ *
+ * Semantic recall over these tables filters `embedding IS NOT NULL`
+ * (searchMemoryEntries / searchProjectMemoryEntries below), so an entry
+ * stored without one is durable but invisible — the ingest paths wrote
+ * exactly that state for every entry they ever created, and only the
+ * consolidation job's promoted summaries were findable. Failure policy
+ * matches memory-consolidation-job.ts: an embedding failure is logged and
+ * the entries stay unembedded rather than failing the ingestion — the facts
+ * are kept, and the log says they are not yet semantically reachable.
+ */
+async function embedInsertedMemoryEntries(
+  table: 'client_memory_entries' | 'project_memory_entries',
+  inserted: Array<{ id: number }>,
+  entries: Array<{ title: string; content: string }>,
+): Promise<void> {
+  if (inserted.length === 0) return;
+  try {
+    const texts = entries.map(e => `${e.title}\n${e.content}`);
+    const results = await getEmbeddingService(pool).embedBatch(texts, 'text-embedding-3-small');
+    for (let i = 0; i < inserted.length; i++) {
+      const embedding = results[i]?.embedding;
+      if (!embedding) continue;
+      await pool.query(
+        `UPDATE ${table} SET embedding = $1::vector WHERE id = $2`,
+        [`[${embedding.join(',')}]`, inserted[i].id],
+      );
+    }
+  } catch (err) {
+    console.warn(
+      `[client-intelligence-memory] Embedding ${inserted.length} new ${table} entr(ies) failed — ` +
+        `stored without embeddings (invisible to semantic recall until re-embedded): ` +
+        (err instanceof Error ? err.message : 'unknown error'),
+    );
+  }
+}
+
+/** The shared column shape both ingest paths write for one extracted entry. */
+function memoryEntryRow(
+  entry: { category: string; subcategory?: string | null; title: string; content: string;
+           confidenceScore?: number | null; importanceLevel?: string | null },
+  fileName: string,
+) {
+  return {
+    category: entry.category,
+    subcategory: entry.subcategory,
+    title: entry.title,
+    content: entry.content,
+    sourceDocumentName: fileName,
+    sourceDocumentType: fileName.split('.').pop() || 'unknown',
+    confidenceScore: entry.confidenceScore,
+    importanceLevel: entry.importanceLevel,
+    extractedBy: 'ai' as const,
+  };
+}
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface ClientPersonaInput {
@@ -271,23 +330,14 @@ export async function ingestDocument(
       heuristic: () => extractMemoryEntriesFromText(text, file.originalname, profileName),
     });
 
-    // 5. Persist memory entries
+    // 5. Persist memory entries — embedded, because semantic recall filters
+    // `embedding IS NOT NULL` and an unembedded entry is durable but invisible.
     if (extractedEntries.length > 0) {
-      await db.insert(clientMemoryEntries as any).values(
-        extractedEntries.map(entry => ({
-          profileId,
-          organizationId,
-          category: entry.category,
-          subcategory: entry.subcategory,
-          title: entry.title,
-          content: entry.content,
-          sourceDocumentName: file.originalname,
-          sourceDocumentType: file.originalname.split('.').pop() || 'unknown',
-          confidenceScore: entry.confidenceScore,
-          importanceLevel: entry.importanceLevel,
-          extractedBy: 'ai' as const,
-        }))
-      );
+      const inserted = (await db
+        .insert(clientMemoryEntries as any)
+        .values(extractedEntries.map(e => ({ profileId, organizationId, ...memoryEntryRow(e, file.originalname) })))
+        .returning({ id: (clientMemoryEntries as any).id })) as Array<{ id: number }>;
+      await embedInsertedMemoryEntries('client_memory_entries', inserted, extractedEntries);
     }
 
     // 6. Update the document record
@@ -688,23 +738,14 @@ export async function ingestProjectDocument(
       heuristic: () => extractProjectMemoryEntries(text, file.originalname, projectName),
     });
 
+    // Embedded for the same reason as the client path: recall filters
+    // `embedding IS NOT NULL`, so an unembedded entry cannot be found again.
     if (extractedEntries.length > 0) {
-      await db.insert(projectMemoryEntries as any).values(
-        extractedEntries.map(entry => ({
-          projectProfileId,
-          projectId,
-          organizationId,
-          category: entry.category,
-          subcategory: entry.subcategory,
-          title: entry.title,
-          content: entry.content,
-          sourceDocumentName: file.originalname,
-          sourceDocumentType: file.originalname.split('.').pop() || 'unknown',
-          confidenceScore: entry.confidenceScore,
-          importanceLevel: entry.importanceLevel,
-          extractedBy: 'ai' as const,
-        }))
-      );
+      const inserted = (await db
+        .insert(projectMemoryEntries as any)
+        .values(extractedEntries.map(e => ({ projectProfileId, projectId, organizationId, ...memoryEntryRow(e, file.originalname) })))
+        .returning({ id: (projectMemoryEntries as any).id })) as Array<{ id: number }>;
+      await embedInsertedMemoryEntries('project_memory_entries', inserted, extractedEntries);
     }
 
     await db

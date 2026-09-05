@@ -219,11 +219,14 @@ export async function listClientDocuments(orgId: number, opts: {
   programId?: string | null;
   workspaceId?: number | null;
   includeUnscoped?: boolean;
+  /** Exclude sources a re-upload has superseded (is_current = FALSE). */
+  currentOnly?: boolean;
   limit?: number;
 } = {}): Promise<EvidenceSource[]> {
   const c = visibleOrgClause(orgId, 1);
   const args: unknown[] = [c.param];
   let where = `${c.sql} AND deleted_at IS NULL AND source_type = 'client_document'`;
+  if (opts.currentOnly) where += ` AND is_current IS NOT FALSE`;
 
   const scopes: string[] = [];
   if (opts.programId) {
