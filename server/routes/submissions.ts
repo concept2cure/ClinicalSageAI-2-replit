@@ -33,7 +33,6 @@ import {
   listLeaves,
   upsertLeaf,
   removeLeaf,
-  SubmissionError,
 } from '../services/submission-service/submission-service';
 import { assessPathwayReadiness, PATHWAYS, type Pathway } from '../services/pathway-engines';
 import {

@@ -74,6 +74,9 @@ export interface EstarFieldReport {
   /** Typed keys the server dropped: a governed value took precedence, or the
    *  key is not on the template. */
   ignoredRequestKeys: string[];
+  /** Governed facts the fill could not express — e.g. a second predicate the
+   *  template has no box for. The user finishes these on the form. */
+  advisories: string[];
 }
 
 export interface OfficialEstarOptions {
@@ -114,7 +117,10 @@ export function cleanRequestData(
 export function fieldReportClause(report: EstarFieldReport | null): string {
   if (!report) return '';
   const blank = report.blankCount > 0 ? ` · ${report.blankCount} left blank` : '';
-  return ` · ${report.filledCount} of ${report.mappedCount} administrative fields filled${blank}`;
+  // An advisory is a governed fact the form has no box for; the line carries
+  // it whole, because "filled" alone would read as "finished".
+  const advisories = report.advisories.map((a) => ` · ${a}`).join('');
+  return ` · ${report.filledCount} of ${report.mappedCount} administrative fields filled${blank}${advisories}`;
 }
 
 function parseFieldReport(raw: unknown): EstarFieldReport | null {
@@ -135,6 +141,7 @@ function parseFieldReport(raw: unknown): EstarFieldReport | null {
     blankCount: r.blankCount,
     blankKeys: strings(r.blankKeys),
     ignoredRequestKeys: strings(r.ignoredRequestKeys),
+    advisories: strings(r.advisories),
   };
 }
 

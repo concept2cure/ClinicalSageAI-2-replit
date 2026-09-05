@@ -226,6 +226,12 @@ export interface GovernedAdministrativeData {
   values: Record<string, string>;
   /** `store.column` for every key in `values`. */
   provenance: Record<string, string>;
+  /**
+   * Things the values cannot say for themselves — governed data the template
+   * has no box for, so the fill is correct as far as it goes and the user must
+   * finish the rest on the form. Carried to the field report verbatim.
+   */
+  advisories?: string[];
 }
 
 /** A value is a non-empty string after trimming; anything else is no value. */
@@ -248,6 +254,15 @@ function firstPredicate(raw: unknown): Partial<PredicateDevice> | null {
   if (!Array.isArray(list) || list.length === 0) return null;
   const first = list[0];
   return first && typeof first === 'object' ? (first as Partial<PredicateDevice>) : null;
+}
+
+/** Every predicate on file, or [] — the counterpart to firstPredicate. */
+function predicateList(raw: unknown): Array<Partial<PredicateDevice>> {
+  let list = raw;
+  if (typeof list === 'string') {
+    try { list = JSON.parse(list); } catch { return []; }
+  }
+  return Array.isArray(list) ? list.filter((p): p is Partial<PredicateDevice> => !!p && typeof p === 'object') : [];
 }
 
 /**
@@ -342,7 +357,24 @@ export function projectEstarAdministrativeData(
     delete provenance.declarationCompanyName;
   }
 
-  return { values, provenance };
+  // The eSTAR's mapped predicate fields hold ONE device, and the program's
+  // predicate list is a plain array in insertion order with no primary
+  // designation. Writing the first and saying nothing about the rest left a
+  // sponsor with two predicates — or with a reference device entered first —
+  // reading a filled form that named one and dropped the others silently.
+  const advisories: string[] = [];
+  const predicates = predicateList(input.program?.predicateDevices);
+  if (predicates.length > 1) {
+    const first = predicates[0];
+    const named = text(first.kNumber) ?? text(first.name) ?? 'the first entry';
+    advisories.push(
+      `${predicates.length} predicate devices are on file for this program; the eSTAR predicate fields ` +
+        `carry only the first (${named}). Add the others on the form itself, and check that the first ` +
+        `entered is the primary predicate.`,
+    );
+  }
+
+  return { values, provenance, ...(advisories.length ? { advisories } : {}) };
 }
 
 // ── Governed ∪ request → what the fill writes ─────────────────────────────────
@@ -386,6 +418,8 @@ export interface ResolvedOfficialEstarFields {
   fields: ResolvedOfficialField[];
   /** Request keys that were NOT written: unknown to the map, colliding with a governed value, or unusable. */
   ignoredRequestKeys: string[];
+  /** Governed facts the template has no box for (see GovernedAdministrativeData.advisories). */
+  advisories: string[];
 }
 
 /**
@@ -428,7 +462,7 @@ export function resolveOfficialEstarFields(
   }
 
   const ignoredRequestKeys = Object.keys(request).filter((k) => !written.has(k));
-  return { data, fields, ignoredRequestKeys };
+  return { data, fields, ignoredRequestKeys, advisories: [...(input.governed.advisories ?? [])] };
 }
 
 export interface OfficialEstarFieldReport {
@@ -445,6 +479,8 @@ export interface OfficialEstarFieldReport {
     declaredSource: string | null;
   }>;
   ignoredRequestKeys: string[];
+  /** Governed facts the fill could not express; the user finishes these on the form. */
+  advisories: string[];
 }
 
 /**
@@ -489,6 +525,7 @@ export function reportOfficialEstarFill(
       blankKeys: blank.map((f) => f.key),
       fields,
       ignoredRequestKeys,
+      advisories: [...resolved.advisories],
     },
     fieldSources,
   };

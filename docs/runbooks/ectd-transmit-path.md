@@ -93,7 +93,7 @@ pre-transmit gate:
 | Check | Posture |
 | --- | --- |
 | gateway size limit | hard, always |
-| region identity — backbone region and format tag must match the target gateway | hard, always |
+| region identity — the region the bundle was built for (its regional backbone, or the region recorded on its descriptor) and its format tag (`estar` ⇔ FDA, `eudamed_register` ⇔ EMA, `pmda_ectd` ⇔ PMDA, `ectd` never PMDA) must match the target gateway | hard whenever the bundle records its region; a bundle assembled before region identity was recorded is reported as unprovable, never treated as matching |
 | PDF/A submission grade | blocks in production only when `ECTD_REQUIRE_PDFA=true`; a grade without evidence is "cannot prove", never a pass |
 | DTD self-containment | blocks in production only when `ECTD_REQUIRE_DTD=true` |
 | regional Module 1 backbone conformance | blocks in production only when `ECTD_REQUIRE_REGIONAL_BACKBONE=true`; always surfaced |

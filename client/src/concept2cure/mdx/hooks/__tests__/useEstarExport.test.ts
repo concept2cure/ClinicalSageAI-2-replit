@@ -229,6 +229,7 @@ describe('useEstarExport.exportOfficialEstar — useProgramData + data', () => {
       blankCount: 13,
       blankKeys: ['deviceCommonName', 'declarationCompanyAddress'],
       ignoredRequestKeys: ['deviceTradeName'],
+      advisories: [],
     });
   });
 
@@ -300,6 +301,7 @@ describe('exportStatusLine — administrative fill wording', () => {
         blankCount: 13,
         blankKeys: [],
         ignoredRequestKeys: [],
+        advisories: [],
       },
     };
     expect(exportStatusLine(false, outcome)).toBe(
@@ -316,6 +318,7 @@ describe('exportStatusLine — administrative fill wording', () => {
         blankCount: 0,
         blankKeys: [],
         ignoredRequestKeys: [],
+        advisories: [],
       },
     };
     expect(exportStatusLine(false, outcome)).toBe(
@@ -326,6 +329,15 @@ describe('exportStatusLine — administrative fill wording', () => {
 
   it('a success without a report keeps the existing wording', () => {
     expect(exportStatusLine(false, SUCCESS)).toBe('Downloaded BX-204_eSTAR.pdf');
+  });
+
+  it('carries an advisory on the line, so "filled" never reads as "finished"', () => {
+    const clause = fieldReportClause({
+      mappedCount: 4, filledCount: 4, blankCount: 0, blankKeys: [], ignoredRequestKeys: [],
+      advisories: ['2 predicate devices are on file; the eSTAR predicate fields carry only the first (K203456).'],
+    });
+    expect(clause).toContain('4 of 4 administrative fields filled');
+    expect(clause).toContain('carry only the first (K203456)');
   });
 });
 

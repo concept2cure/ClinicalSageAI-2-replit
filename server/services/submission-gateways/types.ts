@@ -161,6 +161,10 @@ export interface SubmissionBundle {
     /** Not conformant for the region's own builder: the specific gap. */
     conformanceGap?: string;
   };
+  /** The region the bundle was BUILT for, as recorded on its descriptor by the
+   *  assemble route. Lets the pre-transmit region-identity check hold for
+   *  bundles with no backbone evidence (device formats). */
+  builtRegion?: Region;
   /**
    * Optional Study Tagging File (STF) roll-up: how many per-study stf.xml files
    * were generated + cross-linked into M4/M5, and how many study leaves were

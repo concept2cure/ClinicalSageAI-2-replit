@@ -1,5 +1,5 @@
 /**
- * MDX nav data — ported verbatim from design-system/ui_kits/mdx/data.jsx.
+ * MDX nav data — ported verbatim from ui_kits/mdx/data.jsx.
  * Shape contracts: do not drift without designer review.
  */
 

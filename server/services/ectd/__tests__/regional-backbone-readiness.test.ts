@@ -133,6 +133,11 @@ describe('evaluateRegionalBackboneGate', () => {
     expect(g.blockers).toEqual([]);
     expect(g.warnings).toEqual([]);
   });
+  it('a malformed placeholderOf on a stored status cannot crash the gate', () => {
+    const tampered = { region: 'uk' as Region, file: 'm1/uk/uk-regional.xml', regionConformant: false, placeholderOf: 5 as unknown as Region };
+    const g = evaluateRegionalBackboneGate({ status: tampered, environment: 'production', required: true });
+    expect(g.blockers).toHaveLength(1);
+  });
   it('a required flag with no status is a warning (cannot prove conformance), not a silent pass', () => {
     const g = evaluateRegionalBackboneGate({ status: undefined, environment: 'production', required: true });
     expect(g.warnings).toHaveLength(1);

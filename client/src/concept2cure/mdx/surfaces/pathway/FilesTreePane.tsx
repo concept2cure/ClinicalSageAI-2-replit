@@ -1,6 +1,6 @@
 /**
  * FilesTreePane — full filesystem view of a pathway program.
- * Ported from `design-system/ui_kits/mdx/FilesTreePane.jsx`.
+ * Ported from `ui_kits/mdx/FilesTreePane.jsx`.
  *
  * Every surface (dossier, correspondence, approvals, audit, sources) is a
  * folder under Files/. The Dossier branch is the live in-memory store; the

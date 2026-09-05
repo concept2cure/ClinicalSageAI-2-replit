@@ -27,6 +27,13 @@ import { GET_BIOTECH_PROGRAM_STATUS } from './biotech-program.js';
 // audit → review → placement → provenance → readiness) over concept2cure_artifacts.
 // Handler registered from document-spine.ts via the inject-and-sibling pattern.
 import { COMMIT_DOCUMENT_REVISION } from './document-spine.js';
+// Project-folder discovery + whole-document read + comprehension record.
+// Handlers registered from document-catalog-tools.ts (inject-and-sibling).
+import {
+  LIST_PROJECT_DOCUMENTS,
+  READ_PROJECT_DOCUMENT,
+  CATALOG_PROJECT_DOCUMENT,
+} from './document-catalog-tools.js';
 // BLA biologics + CTD nonclinical/clinical tool definitions extracted to their
 // own module (decomposition tranche 2). Imported so the enabled-tools array can
 // reference them exactly as before.
@@ -2116,6 +2123,9 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   OCR_DOCUMENT_PAGES,
   READ_SPREADSHEET,
   EDIT_SPREADSHEET,
+  LIST_PROJECT_DOCUMENTS,
+  READ_PROJECT_DOCUMENT,
+  CATALOG_PROJECT_DOCUMENT,
   CHECK_DOSSIER_CONSISTENCY,
   CHECK_NUMERICAL_INTEGRITY,
   COMPUTE_SAMPLE_SIZE,
