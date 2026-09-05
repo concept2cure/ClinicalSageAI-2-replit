@@ -340,7 +340,10 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
       const fetchFailure = !pf.ok
         ? `The findings could not be loaded (HTTP ${pf.status}${(pf.raw as any)?.error ? ': ' + (pf.raw as any).error : ''}); run preflight for this package to see them.`
         : findings.length === 0
-          ? 'Preflight returned no findings for this bundle.'
+          ? /* The error count above says errors exist; an empty list here means
+               the itemized findings were not delivered, not that none exist —
+               say that, never "no findings" (empty-state gate). */
+            'Preflight did not return the itemized findings behind this error count; run preflight for this package to see them.'
           : undefined;
       setRefusal({
         source: 'assemble',
@@ -500,7 +503,10 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
             <div style={{ padding: '10px 16px', fontSize: 12 }}>
               {refusal.message}{' '}
               {refusal.findings.length === 0
-                ? (refusal.fetchFailure ?? 'The refusal carried no findings.')
+                ? /* An empty findings list is not a finding of "none": say the
+                     list is absent, never that nothing was found — the refusal
+                     itself is the only assessed fact here (empty-state gate). */
+                  (refusal.fetchFailure ?? 'The refusal did not include an itemized findings list. Assemble the package again, then transmit.')
                 : refusal.source === 'transmit'
                   ? 'These findings were recorded on the stored bundle when it was assembled. Resolve them, assemble the package again, then transmit.'
                   : 'Resolve the findings, then assemble the package again.'}
