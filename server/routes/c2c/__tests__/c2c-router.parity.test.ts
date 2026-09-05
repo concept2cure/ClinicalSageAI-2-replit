@@ -80,12 +80,20 @@ describe('notification, work-item and escalation routes live in one router', () 
 });
 
 const COMMUNICATION_CENTER_PATHS = [
+  'GET /projects/:projectId/authority-profiles',
+  'POST /projects/:projectId/authority-profiles',
+  'GET /projects/:projectId/agency-communications',
+  'POST /projects/:projectId/agency-communications',
+  'PATCH /projects/:projectId/agency-communications/:eventId/advance',
+  'GET /projects/:projectId/publishops/services',
+  'POST /projects/:projectId/publishops/services',
+  'PATCH /projects/:projectId/publishops/services/:serviceId/status',
   'GET /projects/:projectId/submission-center/items',
   'POST /projects/:projectId/submission-center/items',
   'PATCH /projects/:projectId/submission-center/items/:itemId/status',
 ];
 
-describe('submission-center item routes are mounted, once', () => {
+describe('the Communication Center routes live in one router', () => {
   it('the communication-center router answers them, and the main router does not', async () => {
     const cc = (await import('../communication-center')).default as unknown as { stack: Layer[] };
     const main = (await import('../../concept2cure')).default as unknown as { stack: Layer[] };
