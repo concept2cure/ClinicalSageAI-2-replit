@@ -196,6 +196,25 @@ export function buildPackagerInputFromCore(args: BuildPackagerInputArgs): BuildP
   const skipped: Array<{ sectionCode: string; reason: string }> = [];
 
   for (const leaf of args.leaves) {
+    const operation = toOperation(leaf.lifecycleOp);
+    if (operation === 'delete') {
+      // A withdrawal legitimately has no source document (dispatch-readiness
+      // exempts delete leaves from UNRESOLVED_DOCUMENT for the same reason).
+      // This loop used to require a resolved file for every leaf, so an
+      // author-declared delete was dropped here as "no resolvable source
+      // file" and never reached the backbone. It is carried as a backbone-only
+      // leaf; the lifecycle step binds it to the prior leaf it withdraws and
+      // supplies the prior checksum and modified-file pointer.
+      const resolved = args.resolveFile(leaf);
+      leaves.push({
+        ctdSection: leaf.sectionCode,
+        operation,
+        sourcePath: resolved?.sourcePath ?? '',
+        fileName: resolved?.fileName ?? '',
+        title: leaf.title,
+      });
+      continue;
+    }
     const resolved = args.resolveFile(leaf);
     if (!resolved) {
       skipped.push({ sectionCode: leaf.sectionCode, reason: 'no resolvable source file for the leaf document' });

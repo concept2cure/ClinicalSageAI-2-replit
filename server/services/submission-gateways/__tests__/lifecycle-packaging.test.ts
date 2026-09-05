@@ -47,7 +47,9 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       ]);
       const prior = manifestToPriorLeaves(priorManifest);
 
-      // --- Desired leaves for 0001 (real files; general changed, old-manufacture dropped).
+      // --- Desired leaves for 0001 (real files; general changed, old-manufacture
+      // WITHDRAWN by declaration). A leaf merely absent from a follow-up sequence
+      // is unchanged and still on file; only a declared withdrawal is a delete.
       const desired = [
         {
           ctdSection: '3.2.S.1', fileName: 'general.pdf', md5: md5(generalBytes),
@@ -56,6 +58,10 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
         {
           ctdSection: '3.2.S.3', fileName: 'stability.pdf', md5: md5(newDocBytes),
           title: 'Drug Substance — Stability', sourcePath: newDocPath,
+        },
+        {
+          ctdSection: '3.2.S.2', fileName: 'old-manufacture.pdf', md5: '',
+          title: 'Drug Substance — Manufacture (withdrawn)', sourcePath: '', withdraw: true,
         },
       ];
 
