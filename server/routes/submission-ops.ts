@@ -75,6 +75,14 @@ import {
   readBundleBytes,
 } from '../services/submission-bundle-storage';
 import { leafFileName } from '../services/ectd/leaf-source-resolver';
+import {
+  assessPackageContent,
+  fingerprintPackageContent,
+  CONTENT_DRIFT_MESSAGE,
+  CONTENT_UNPROVEN_MESSAGE,
+  type PackageContentRow,
+} from '../services/ectd/package-content-fingerprint';
+import { bundleTrustEnforced } from '../services/submission-gateways/bundle-namespace';
 import { validateEctdLeafs } from '../services/submission-gateways/ectd-structural-validator';
 import { ValidationError as PackagerValidationError } from '../services/submission-gateways/types';
 import type { EctdFinding } from '../services/submission-gateways/ectd-structural-validator';
@@ -1988,6 +1996,11 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     // two sections (a literature reference cited from 4.3 and 5.4), and that is
     // two leaves — only the same artifact at the SAME section is a duplicate.
     const shippedArtifacts = new Map<string, string>();
+    // What this bundle is built from — every section, each mapped artifact's
+    // placement and content — for the fingerprint the transmit gate recomputes
+    // from the database. An artifact edited after assembly changes nothing on
+    // the package row, so only that comparison catches it.
+    const contentRows: PackageContentRow[] = [];
 
     for (const section of sections) {
       const mapped = await db
@@ -2013,6 +2026,20 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           ),
         )
         .orderBy(asc(concept2cureArtifacts.id));
+
+      if (mapped.length === 0) {
+        // An empty section is part of the content too: it ships a placeholder.
+        contentRows.push({ sectionDbId: section.id, sectionKey: section.sectionKey, artifactDbId: null, ctdSection: null, content: null });
+      }
+      for (const a of mapped) {
+        contentRows.push({
+          sectionDbId: section.id,
+          sectionKey: section.sectionKey,
+          artifactDbId: a.artifactDbId,
+          ctdSection: a.ctdSection ?? null,
+          content: a.content ?? null,
+        });
+      }
 
       const sectionLabel = `${section.sectionLabel} (${section.sectionKey})`;
 
@@ -2340,6 +2367,9 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         infoCount: validation.infoCount,
         findings: validation.findings,
       },
+      // Fingerprint of the content the zip was built from; governed transmit
+      // recomputes it and refuses a bundle the package has since moved past.
+      contentFingerprint: fingerprintPackageContent(contentRows),
       assembledAt,
       assembledBy: userId,
     };
@@ -2546,6 +2576,7 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
             infoCount?: number;
             findings?: EctdFinding[];
           };
+          contentFingerprint?: unknown;
         }
       | undefined;
 
@@ -2663,6 +2694,45 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
           error: message,
         });
       }
+    }
+
+    // CONTENT INTEGRITY: does the zip still reflect the package? The SAME
+    // assessment governed transmit refuses on (assessPackageContent), surfaced
+    // here so the operator and the portfolio rollup learn of drift before the
+    // transmit ceremony. A bundle without a fingerprint is unproven: an error
+    // wherever transmit would refuse it, a warning where descriptor trust is
+    // relaxed — never silently a pass. A failed read is an error, not a pass.
+    {
+      const contentValidator: (typeof validators)[number] = {
+        id: 'content_integrity',
+        label: 'Content integrity (the bundle still reflects the package)',
+        configured: true,
+        ran: false,
+        errorCount: 0,
+        warningCount: 0,
+      };
+      try {
+        const assessment = await assessPackageContent(pool, pkg.id, orgId, bundle.contentFingerprint);
+        if (assessment.state === 'drift') {
+          findings.push({ severity: 'error', ruleId: 'BUNDLE-CONTENT-DRIFT', message: CONTENT_DRIFT_MESSAGE });
+          contentValidator.ran = true;
+          contentValidator.errorCount = 1;
+        } else if (assessment.state === 'unproven') {
+          const severity = bundleTrustEnforced() ? 'error' : 'warning';
+          findings.push({ severity, ruleId: 'BUNDLE-CONTENT-UNPROVEN', message: CONTENT_UNPROVEN_MESSAGE });
+          if (severity === 'error') contentValidator.errorCount = 1;
+          else contentValidator.warningCount = 1;
+        } else {
+          contentValidator.ran = true;
+        }
+      } catch (e) {
+        const message = `Content integrity could not be assessed: ${e instanceof Error ? e.message : 'content read failed'}`;
+        findings.push({ severity: 'error', ruleId: 'VALIDATOR-ERROR', message });
+        contentValidator.ran = true;
+        contentValidator.errorCount = 1;
+        contentValidator.error = message;
+      }
+      validators.push(contentValidator);
     }
 
     // Combined counts across all findings.

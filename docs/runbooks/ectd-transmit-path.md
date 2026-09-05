@@ -84,8 +84,9 @@ assembly started with. A bundle is not stored, its zip (local and durable copies
 removed and the discard is recorded when, while it was being built, an artifact was
 mapped or unmapped (`STALE_ASSEMBLY`, `gate: content_changed`) or the regulatory
 identifiers changed (`gate: identifiers_changed`). The response is a 409; assemble again.
-A change to an artifact's own content after it was mapped is not detected by the
-revision: re-assemble after editing content.
+An artifact's own content edited after assembly changes nothing on the package row, so
+the revision cannot see it; the transmit gate catches it through the content fingerprint
+(step 3).
 
 The assemble response returns the bundle descriptor with counts only; the findings
 themselves are persisted on the package and served by
@@ -94,7 +95,11 @@ findings card after an assembly that carries errors, and after any refusal. Pref
 persists its summary under the same lock and only while the bundle it evaluated is still
 the stored one: a bundle cleared or replaced during the run answers 409
 `gate: bundle_superseded` (run preflight again), and a summary that could not be written
-is reported as `persisted: false` with the findings still returned.
+is reported as `persisted: false` with the findings still returned. Preflight also runs
+the content assessment transmit enforces (step 3), as the `content_integrity` validator:
+`BUNDLE-CONTENT-DRIFT` is an error; `BUNDLE-CONTENT-UNPROVEN` (no fingerprint) is an
+error wherever transmit would refuse the bundle and a warning where descriptor trust is
+relaxed.
 
 `region` (FDA/EMA/PMDA) and `sequence` (exactly four digits) may be given in the body.
 The format follows the region (`pmda_ectd` ⇔ PMDA; `ectd` ⇔ FDA/EMA; `estar` ⇔ FDA;
@@ -110,6 +115,7 @@ pre-transmit gate:
 
 | Check | Posture |
 | --- | --- |
+| content integrity — the descriptor's fingerprint of the sections, mappings, declared placements and artifact content the zip was built from, recomputed from the database (`BUNDLE_CONTENT_DRIFT`) | hard whenever the descriptor carries a fingerprint, in every environment; a descriptor without one is unproven (`BUNDLE_CONTENT_UNPROVEN`) and blocks wherever descriptor trust is enforced, exactly like missing validation evidence |
 | gateway size limit | hard, always |
 | region identity — the region the bundle was built for (its regional backbone, or the region recorded on its descriptor) and its format tag (`estar` ⇔ FDA, `eudamed_register` ⇔ EMA, `pmda_ectd` ⇔ PMDA, `ectd` never PMDA) must match the target gateway | hard whenever the bundle records its region; a bundle assembled before region identity was recorded is reported as unprovable, never treated as matching |
 | PDF/A submission grade | blocks in production only when `ECTD_REQUIRE_PDFA=true`; a grade without evidence is "cannot prove", never a pass |

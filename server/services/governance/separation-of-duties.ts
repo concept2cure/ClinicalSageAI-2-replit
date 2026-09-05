@@ -81,6 +81,16 @@ export async function resolveTargetOwnerId(target: string, orgId: number): Promi
         );
         return intOrNull(r.rows[0]?.owner_user_id);
       }
+      case 'ectd-sequence': {
+        // The one target the Part 11 freeze/dispatch/transmit chain signs. It
+        // had no case here, so the check resolved no owner and allowed the
+        // preparer to sign their own sequence.
+        const r = await pool.query(
+          `SELECT created_by FROM ectd_sequences WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+          [rest, orgId],
+        );
+        return intOrNull(r.rows[0]?.created_by);
+      }
       case 'program': {
         const r = await pool.query(
           `SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,

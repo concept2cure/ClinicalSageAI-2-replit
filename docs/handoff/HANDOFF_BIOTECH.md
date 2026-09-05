@@ -335,6 +335,42 @@ classifier (its "no adverse findings" sentence is unreachable over an empty
 input), the FIH dose engine (throws rather than guesses), the M2.6/M4 view,
 the IND briefing book, and briefing-book-core's fixture/assessment typing.
 
+### Tenth audit — 21 CFR Part 11 on the sequence sign → freeze → dispatch → transmit chain (2026-09-05)
+
+Read-only audit of the governed-action chain behind an eCTD sequence. Fixed on
+`concept2cure-v2`, proven in the drug NDA golden journey (real canonical DDL)
+and unit tests, each failing on revert:
+
+- The signature gate (`governedSignatureRefusal` in submission-service) now
+  refuses, with the reason: a sign action whose declared `intent` is not the
+  step being gated (one sign used to authorize freeze, dispatch and transmit
+  alike — 11.50, the meaning of the signature); a sign action already spent on
+  a governed transition (a replay of the freeze-time actionId used to dispatch
+  and transmit — checked against the chained audit rows); and a signature
+  whose bound leaf-manifest digest no longer matches the sequence (11.70 — the
+  digest was persisted at sign time and never consulted, so a leaf edited after
+  signing was frozen under a signature applied to other bytes).
+- Freeze, dispatch and the post-transmit dispatch status are written in ONE
+  transaction with a hash-chained audit row (`writeChainedAuditRow`); the
+  general `logAction` swallows an audit outage by policy, so a governed
+  transition could complete with no audit row.
+- `transmitSequence` refuses a sequence already `sent` or `acknowledged`; the
+  only guard was status === 'dispatched', which transmit never changes.
+- Separation of duties resolves an `ectd-sequence` owner from `created_by`;
+  the target the chain signs had no case, so the preparer could sign their own
+  sequence with only a console warning.
+
+The client already signs each step with `payload.intent`; API callers must.
+
+Decision item, not changed: a signature age window (how long a recorded sign
+action may sit before it no longer authorizes the act). Part 11 does not fix a
+number; the replay refusal above closes reuse, not age.
+
+Verified and unchanged: signature persistence (fail-closed binding, atomic
+ledger pair), 11.70 supersession, the sha256 audit chain, re-authentication
+(bcrypt, optional TOTP, honest authenticationMethod), and the dispatch-readiness
+distinction between "gate clear" and "never reviewed".
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -579,6 +615,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-05 | A | Seventh audit — ICSR E2B composition + transport | C.1.3 from the case; E.i.9 vs C.2.r.3; C.5.1.r.1 mandatory for study reports; no re-transmit of a non-prepared ICSR — revert-proven | §1 above |
 | 2026-09-05 | A | Eighth audit — M2.7/CSR/labeling + FDA submission types | Unextracted SAE/death counts stated as such in 2.5/2.7, 2.7 prints its gaps; withdrawal refused rather than coded as an original — revert-proven; two decisions recorded | §1 above |
 | 2026-09-05 | A | Ninth audit — IB / nonclinical / briefing builders | Nothing-assessed readiness report is NOT ASSESSED; dose-only FIH is not ready; fixture questions labelled in content; IB fallback names no source — revert-proven | §1 above |
+| 2026-09-05 | A | Tenth audit — Part 11 sequence chain | Step-bound, single-use, content-bound sequence signatures; atomic chained audit on freeze/dispatch/transmit; no re-send; SoD owner for sequences — proven in the NDA golden journey | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

@@ -203,10 +203,10 @@ describe('No regression — prior build orders', () => {
   });
 
   it('maintenance route still exists', () => {
-    expect(read('server/routes/concept2cure.ts')).toContain("'/maintenance/run'");
+    expect(read('server/routes/c2c/governance-ops.ts')).toContain("'/maintenance/run'");
   });
 
   it('startup invariants route still exists', () => {
-    expect(read('server/routes/concept2cure.ts')).toContain("'/startup/invariants'");
+    expect(read('server/routes/c2c/governance-ops.ts')).toContain("'/startup/invariants'");
   });
 });

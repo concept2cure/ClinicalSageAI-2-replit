@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T12:51:27.345Z",
+  "generatedAt": "2026-09-05T13:09:37.257Z",
   "git": {
-    "sha": "99b56e8a9b567aef87dce3166236024b2887b0f1",
+    "sha": "a028e11fcc56f4500fca107b9ccee1110e140832",
     "branch": "ana-w2"
   },
   "thresholds": {
@@ -2024,10 +2024,6 @@
         "bytes": 167533
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "bytes": 161868
-      },
-      {
         "file": "server/routes/authoring-actions.ts",
         "bytes": 154942
       },
@@ -2116,6 +2112,14 @@
         "bytes": 110971
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "bytes": 110117
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "bytes": 109695
+      },
+      {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "bytes": 109447
       },
@@ -2134,10 +2138,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
-      },
-      {
-        "file": "server/routes/submission-ops.ts",
-        "bytes": 106752
       }
     ],
     "largeFilesByLines": [
@@ -2182,10 +2182,6 @@
         "lines": 4444
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "lines": 4409
-      },
-      {
         "file": "server/routes/authoring-actions.ts",
         "lines": 3610
       },
@@ -2218,6 +2214,10 @@
         "lines": 3067
       },
       {
+        "file": "server/routes/concept2cure.ts",
+        "lines": 3007
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
         "lines": 2958
       },
@@ -2226,12 +2226,12 @@
         "lines": 2832
       },
       {
-        "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 2759
+        "file": "server/routes/submission-ops.ts",
+        "lines": 2826
       },
       {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2756
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "lines": 2759
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2515,15 +2515,7 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "contentDuplicateGroups": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": 0
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",

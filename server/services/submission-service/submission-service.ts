@@ -17,7 +17,7 @@ import { createHash } from 'crypto';
 import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import type { PoolClient } from 'pg';
-import { db } from '../../db';
+import { db, pool } from '../../db';
 import {
   submissions,
   ectdSequences,
@@ -30,7 +30,8 @@ import type {
   EctdSequence,
   SubmissionLeaf,
 } from '../../../shared/types/database';
-import auditService from '../auditService';
+import auditService, { writeChainedAuditRow } from '../auditService';
+import { deriveGovernedTargetBinding, BINDING_BASIS } from '../part11/signature-persistence';
 import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('submission-service');
@@ -301,14 +302,36 @@ export async function transitionSequence(
 // The actual transmission to the agency gateway stays separate, behind the
 // governed transmit_submission tool.
 
-/** Confirm a recorded governed `sign` action authorizes this target for this actor. */
-async function verifyGovernedSignature(
+/** The governed transitions a sequence signature can authorize — one act each. */
+export type GovernedSequenceStep = 'freeze' | 'dispatch' | 'transmit';
+
+const STEP_AUDIT_ACTION: Record<GovernedSequenceStep, string> = {
+  freeze: 'SEQUENCE_FROZEN',
+  dispatch: 'SEQUENCE_DISPATCHED',
+  transmit: 'ECTD_TRANSMITTED',
+};
+
+/**
+ * Why a recorded governed `sign` action does not authorize `step` on `target`
+ * for this actor, or null when it does. Four things are checked, and each used
+ * to be missing:
+ *   - the action exists, on this exact target, by this actor, executed;
+ *   - its declared intent is this step (11.50: the meaning of the signature).
+ *     One `sign` used to authorize freeze, dispatch and transmit alike;
+ *   - it has not already been spent on a governed transition (a replay of the
+ *     freeze-time actionId used to dispatch and transmit too);
+ *   - the sequence's leaf manifest still hashes to the digest bound at signing
+ *     (11.70). The digest was persisted and never consulted, so a leaf edited
+ *     after signing was frozen under a signature applied to different bytes.
+ */
+async function governedSignatureRefusal(
   signatureActionId: string,
   target: string,
-  ctx: { organizationId: number; userId: number }
-): Promise<boolean> {
-  const result = await db.execute(sql`
-    SELECT id FROM c2c_ana_actions
+  ctx: { organizationId: number; userId: number },
+  step: GovernedSequenceStep,
+): Promise<string | null> {
+  const action = await db.execute(sql`
+    SELECT id, payload FROM c2c_ana_actions
     WHERE id = ${signatureActionId}
       AND org_id = ${ctx.organizationId}
       AND command = 'sign'
@@ -317,7 +340,90 @@ async function verifyGovernedSignature(
       AND proposed_by = ${ctx.userId}
     LIMIT 1
   `);
-  return ((result as { rows?: unknown[] }).rows?.length ?? 0) > 0;
+  const row = ((action as { rows?: Array<{ payload?: unknown }> }).rows ?? [])[0];
+  if (!row) return 'no executed sign action on this sequence by this actor';
+
+  const payload = typeof row.payload === 'string' ? safeJson(row.payload) : (row.payload as Record<string, unknown> | null);
+  const intent = typeof payload?.intent === 'string' ? payload.intent : null;
+  if (intent !== step) {
+    return `the sign action declares intent '${intent ?? 'none'}', not '${step}'; sign this step with its own meaning`;
+  }
+
+  const sequenceId = target.slice(target.indexOf(':') + 1);
+  const spent = await db.execute(sql`
+    SELECT 1 FROM audit_logs
+    WHERE tenant_id = ${ctx.organizationId}
+      AND table_name = 'ectd_sequence'
+      AND record_id = ${sequenceId}
+      AND action IN ('SEQUENCE_FROZEN', 'SEQUENCE_DISPATCHED', 'ECTD_TRANSMITTED')
+      AND (new_values::jsonb ->> 'signatureActionId') = ${signatureActionId}
+    LIMIT 1
+  `);
+  if (((spent as { rows?: unknown[] }).rows?.length ?? 0) > 0) {
+    return 'this sign action already authorized a governed transition; each step needs its own signature';
+  }
+
+  const esig = await db.execute(sql`
+    SELECT bound_payload_digest, binding_basis FROM electronic_signatures
+    WHERE organization_id = ${ctx.organizationId}
+      AND signed_target = ${target}
+      AND (signature_manifest::jsonb ->> 'actionId') = ${signatureActionId}
+    LIMIT 1
+  `);
+  const sig = ((esig as unknown as { rows?: Array<{ bound_payload_digest: string | null; binding_basis: string | null }> }).rows ?? [])[0];
+  if (!sig) return 'no electronic signature record is bound to this sign action';
+  if (sig.binding_basis !== BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST || !sig.bound_payload_digest) {
+    return 'the signature is not bound to this sequence\'s leaf manifest; re-sign the sequence';
+  }
+  const current = await deriveGovernedTargetBinding(
+    { query: (text: string, params?: unknown[]) => pool.query(text, params) as Promise<{ rows: any[] }> },
+    target,
+    ctx.organizationId,
+  );
+  if (current.digest !== sig.bound_payload_digest) {
+    return 'the sequence changed after it was signed (leaf manifest digest differs); re-sign the current content';
+  }
+  return null;
+}
+
+function safeJson(text: string): Record<string, unknown> | null {
+  try { return JSON.parse(text) as Record<string, unknown>; } catch { return null; }
+}
+
+
+/**
+ * Apply a sequence state change and its hash-chained audit row in ONE
+ * transaction. auditService.logAction swallows a persistence failure by policy
+ * (an audit outage must not break a general user action); for a Part 11
+ * governed transition the claim is the opposite — no freeze, dispatch or
+ * transmission without its audit row — so the row is written with
+ * writeChainedAuditRow on the same client and a failure rolls the state
+ * change back.
+ */
+async function applySequenceChangeWithAudit(
+  update: { text: string; params: unknown[] },
+  audit: { organizationId: number; userId: number; action: string; resourceId: number; details: Record<string, unknown> },
+): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const res = (await client.query(update.text, update.params)) as { rowCount?: number | null };
+    if (!res.rowCount) throw new SubmissionError('NOT_FOUND', 'Sequence not found for this organization.');
+    await writeChainedAuditRow(client, {
+      organizationId: audit.organizationId,
+      userId: audit.userId,
+      action: audit.action,
+      resourceType: 'ectd_sequence',
+      resourceId: audit.resourceId,
+      details: audit.details,
+    });
+    await client.query('COMMIT');
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch { /* the failure below is the one to report */ }
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 async function applyGovernedSequenceTransition(
@@ -331,12 +437,15 @@ async function applyGovernedSequenceTransition(
     throw new SubmissionError('INVALID_STATE', `Cannot transition sequence from ${seq.status} to ${toStatus}.`);
   }
 
-  // Gate 1 — Part 11 e-signature must govern THIS sequence, signed by THIS actor.
+  // Gate 1 — Part 11 e-signature must govern THIS sequence, for THIS step,
+  // signed by THIS actor, unspent, and bound to the current leaf manifest.
   const target = `ectd-sequence:${id}`;
-  if (!(await verifyGovernedSignature(signatureActionId, target, ctx))) {
+  const step: GovernedSequenceStep = toStatus === 'frozen' ? 'freeze' : 'dispatch';
+  const refusal = await governedSignatureRefusal(signatureActionId, target, ctx, step);
+  if (refusal !== null) {
     throw new SubmissionError(
       'GOVERNED_REQUIRED',
-      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign, then pass its actionId.`
+      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign with intent '${step}', then pass its actionId. Refused: ${refusal}.`
     );
   }
 
@@ -350,33 +459,32 @@ async function applyGovernedSequenceTransition(
     );
   }
 
-  const now = new Date();
-  const patch: Record<string, unknown> = { status: toStatus, updatedAt: now };
-  if (toStatus === 'frozen') patch.frozenAt = now;
-  if (toStatus === 'dispatched') patch.dispatchStatus = 'pending'; // queued for transmit; not yet sent
-
-  const [row] = await db
-    .update(ectdSequences)
-    .set(patch)
-    .where(and(eq(ectdSequences.id, id), eq(ectdSequences.organizationId, ctx.organizationId)))
-    .returning();
-
-  await auditService.logAction({
-    organizationId: ctx.organizationId,
-    userId: ctx.userId,
-    action: toStatus === 'frozen' ? 'SEQUENCE_FROZEN' : 'SEQUENCE_DISPATCHED',
-    resourceType: 'ectd_sequence',
-    resourceId: id,
-    details: {
-      from: seq.status,
-      to: toStatus,
-      signatureActionId,
-      validationErrors: assessment.validationErrors,
-      unacknowledgedShadowCriticals: assessment.unacknowledgedShadowCriticals,
+  // The state change and its chained audit row commit together, or neither.
+  // 'dispatched' queues the sequence for transmit (dispatch_status pending);
+  // it is not yet sent.
+  await applySequenceChangeWithAudit(
+    {
+      text: toStatus === 'frozen'
+        ? `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), frozen_at = NOW() WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL`
+        : `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), dispatch_status = 'pending' WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL`,
+      params: [toStatus, id, ctx.organizationId],
     },
-  });
+    {
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      action: STEP_AUDIT_ACTION[step],
+      resourceId: id,
+      details: {
+        from: seq.status,
+        to: toStatus,
+        signatureActionId,
+        validationErrors: assessment.validationErrors,
+        unacknowledgedShadowCriticals: assessment.unacknowledgedShadowCriticals,
+      },
+    },
+  );
   logger.info('Governed sequence transition applied', { id, toStatus, organizationId: ctx.organizationId });
-  return row as EctdSequence;
+  return getSequence(id, ctx);
 }
 
 /** Freeze a validated sequence. Governed: requires e-signature + a clear dispatch gate. */
@@ -453,6 +561,19 @@ export function selectGateway(
 }
 
 /** Project a gateway transmit status onto the sequence's coarse dispatch_status. */
+/**
+ * Why a dispatched sequence must not be transmitted again, or null. The only
+ * guard was status === 'dispatched', which transmit never changes, so a second
+ * call — same signature — produced a second real transmittal at the agency.
+ * A rejected transmission may be retried; a sent or acknowledged one may not.
+ */
+export function resendRefusal(dispatchStatus: string | null | undefined): string | null {
+  if (dispatchStatus === 'sent' || dispatchStatus === 'acknowledged') {
+    return `Sequence was already transmitted (dispatch status '${dispatchStatus}'); it is not sent again. A correction is a new sequence.`;
+  }
+  return null;
+}
+
 function toDispatchStatus(status: string): 'sent' | 'acknowledged' | 'rejected' {
   if (status === 'rejected' || status === 'validation_failed') return 'rejected';
   if (status === 'ack3_received' || status === 'validation_passed' || status === 'completed') return 'acknowledged';
@@ -516,13 +637,16 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
   if (seq.status !== 'dispatched') {
     throw new SubmissionError('INVALID_STATE', `Sequence must be dispatched before transmit (current: ${seq.status}).`);
   }
+  const resend = resendRefusal(seq.dispatchStatus);
+  if (resend) throw new SubmissionError('INVALID_STATE', resend);
 
-  // Gate 1 — Part 11 e-signature on this sequence, by this actor.
+  // Gate 1 — Part 11 e-signature on this sequence, for transmit, by this actor.
   const target = `ectd-sequence:${sequenceId}`;
-  if (!(await verifyGovernedSignature(signatureActionId, target, ctx))) {
+  const refusal = await governedSignatureRefusal(signatureActionId, target, ctx, 'transmit');
+  if (refusal !== null) {
     throw new SubmissionError(
       'GOVERNED_REQUIRED',
-      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign, then pass its actionId.`
+      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign with intent 'transmit', then pass its actionId. Refused: ${refusal}.`
     );
   }
 
@@ -646,25 +770,27 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
   }
 
   const dispatchStatus = toDispatchStatus(result.status);
-  await db
-    .update(ectdSequences)
-    .set({ dispatchStatus, updatedAt: new Date() })
-    .where(and(eq(ectdSequences.id, sequenceId), eq(ectdSequences.organizationId, ctx.organizationId)));
-
-  await auditService.logAction({
-    organizationId: ctx.organizationId,
-    userId: ctx.userId,
-    action: 'ECTD_TRANSMITTED',
-    resourceType: 'ectd_sequence',
-    resourceId: sequenceId,
-    details: {
-      region: seq.region,
-      gateway: route.gwName,
-      transmittalId: result.transmittalId,
-      status: result.status,
-      environment,
+  await applySequenceChangeWithAudit(
+    {
+      text: `UPDATE ectd_sequences SET dispatch_status = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3`,
+      params: [dispatchStatus, sequenceId, ctx.organizationId],
     },
-  });
+    {
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      action: 'ECTD_TRANSMITTED',
+      resourceId: sequenceId,
+      details: {
+        region: seq.region,
+        gateway: route.gwName,
+        transmittalId: result.transmittalId,
+        transmissionId: result.transmissionId ?? null,
+        status: result.status,
+        environment,
+        signatureActionId,
+      },
+    },
+  );
   logger.info('Transmitted sequence to agency gateway', { sequenceId, region: seq.region, gateway: route.gwName, status: result.status });
 
   return {

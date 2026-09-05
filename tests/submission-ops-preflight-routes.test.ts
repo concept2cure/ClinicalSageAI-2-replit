@@ -14,6 +14,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+import { fingerprintPackageContent, type PackageContentRow } from '../server/services/ectd/package-content-fingerprint';
 
 /* ─── Mock the governed-action ledger so it is a no-op. ──────────────── */
 vi.mock('../server/routes/c2c/actions', () => ({
@@ -28,6 +29,8 @@ const { dbState } = vi.hoisted(() => ({
     // row lock's UPDATE) or 'drizzle' (an unlocked db.update — must be none).
     updates: [] as Array<{ via: 'lock' | 'drizzle'; metadata: any }>,
     failUpdate: false,
+    // The package's CURRENT content as the fingerprint reads it (pool query).
+    contentRows: [] as PackageContentRow[],
   },
 }));
 
@@ -64,9 +67,20 @@ const clientQuery = vi.fn(async (sql: string, params: unknown[] = []) => {
   return { rows: [] };
 });
 const connectFn = vi.fn(() => Promise.resolve({ query: clientQuery, release: vi.fn() }));
+/** pool.query serves the content-fingerprint read from dbState.contentRows. */
+const poolQuery = vi.fn(async (sql: string, _params: unknown[] = []) => {
+  if (/FROM c2c_package_sections/.test(sql)) {
+    return {
+      rows: dbState.contentRows.map((r) => ({
+        section_db_id: r.sectionDbId, section_key: r.sectionKey, artifact_db_id: r.artifactDbId, ctd_section: r.ctdSection, content: r.content,
+      })),
+    };
+  }
+  return { rows: [] };
+});
 vi.mock('../server/db', () => ({
   get db() { return makeDb(); },
-  pool: { connect: (...a: unknown[]) => connectFn(...a), query: vi.fn() },
+  pool: { connect: (...a: unknown[]) => connectFn(...a), query: (...a: unknown[]) => poolQuery(...(a as [string, unknown[]])) },
 }));
 
 /* ─── A configurable agency validator: the real registry (its env gating is
@@ -108,7 +122,9 @@ beforeEach(() => {
   dbState.pkg = null;
   dbState.updates = [];
   dbState.failUpdate = false;
+  dbState.contentRows = CONTENT;
   connectFn.mockClear();
+  poolQuery.mockClear();
   clientQuery.mockClear();
   runHttpValidatorFn.mockReset();
   // Ensure no external validators are configured.
@@ -120,10 +136,17 @@ beforeEach(() => {
   vi.stubGlobal('fetch', fetchSpy);
 });
 
+/** What the stored bundles below were built from; the package still holds it
+ *  unless a test edits dbState.contentRows. */
+const CONTENT: PackageContentRow[] = [
+  { sectionDbId: 13, sectionKey: '2.5', artifactDbId: 1, ctdSection: null, content: 'Clinical overview text' },
+];
+const CONTENT_FINGERPRINT = fingerprintPackageContent(CONTENT);
 const IDS = { applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc' };
 const BUNDLE = {
   sha256: 'e'.repeat(64), sizeBytes: 9, format: 'ectd', path: '/bundles/pkg-locked.zip', storage: { provider: 'local' },
   validation: { errorCount: 0, warningCount: 0, infoCount: 0, findings: [] },
+  contentFingerprint: CONTENT_FINGERPRINT,
 };
 const pkgWith = (metadata: Record<string, unknown>) => ({
   id: 5, packageId: 'pkg_locked', orgId: 99, status: 'locked', packageFamily: 'ind', metadata,
@@ -155,6 +178,7 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
         bundle: {
           sha256: 'a'.repeat(64),
           sizeBytes: 1234,
+          contentFingerprint: CONTENT_FINGERPRINT,
           format: 'ectd',
           path: '/tmp/does-not-matter.zip',
           storage: { provider: 'local' },
@@ -214,7 +238,70 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
       'fda_evalidator',
       'ema_validator',
       'pmda_precheck',
+      'content_integrity',
     ]);
+    // The package still holds what the bundle was built from: assessed, clean.
+    expect(byId.content_integrity).toMatchObject({ configured: true, ran: true, errorCount: 0, warningCount: 0 });
+  });
+
+  it('reports CONTENT DRIFT as a blocking finding when an artifact was edited after assembly — the same assessment transmit refuses on', async () => {
+    dbState.pkg = pkgWith({ regulatory: IDS, bundle: BUNDLE });
+    dbState.contentRows = CONTENT.map((r) => ({ ...r, content: 'Clinical overview text, edited after assembly' }));
+    const res = await preflight();
+    expect(res.status).toBe(200);
+    expect(res.body.data.blocking).toBe(true);
+    expect(res.body.data.errorCount).toBe(1);
+    const drift = res.body.data.findings.find((f: any) => f.ruleId === 'BUNDLE-CONTENT-DRIFT');
+    expect(drift).toMatchObject({ severity: 'error' });
+    expect(drift.message).toMatch(/content changed since this bundle was assembled/i);
+    const byId = Object.fromEntries(res.body.data.validators.map((v: any) => [v.id, v]));
+    expect(byId.content_integrity).toMatchObject({ configured: true, ran: true, errorCount: 1 });
+    // The blocking outcome reaches the persisted summary the portfolio reads.
+    expect(dbState.updates[0].metadata.preflight).toMatchObject({ blocking: true, errorCount: 1 });
+    expect(dbState.updates[0].metadata.preflight.validators.find((v: any) => v.id === 'content_integrity').errorCount).toBe(1);
+  });
+
+  it('a bundle with NO content fingerprint is UNPROVEN: a warning where descriptor trust is relaxed, a blocking error where transmit would refuse it', async () => {
+    const { contentFingerprint: _none, ...unfingerprinted } = BUNDLE;
+    // Relaxed (this suite runs under NODE_ENV=test): assessed as unknown, not blocking, nothing read.
+    dbState.pkg = pkgWith({ regulatory: IDS, bundle: unfingerprinted });
+    let res = await preflight();
+    expect(res.status).toBe(200);
+    expect(res.body.data.blocking).toBe(false);
+    let finding = res.body.data.findings.find((f: any) => f.ruleId === 'BUNDLE-CONTENT-UNPROVEN');
+    expect(finding).toMatchObject({ severity: 'warning' });
+    expect(finding.message).toMatch(/no content fingerprint/i);
+    let byId = Object.fromEntries(res.body.data.validators.map((v: any) => [v.id, v]));
+    expect(byId.content_integrity).toMatchObject({ ran: false, errorCount: 0, warningCount: 1 });
+    expect(poolQuery.mock.calls.some((c) => /FROM c2c_package_sections/.test(String(c[0])))).toBe(false);
+
+    // Enforced (production): the same bundle is a blocking error, as transmit refuses it.
+    const saved = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    try {
+      dbState.updates = [];
+      res = await preflight();
+    } finally {
+      if (saved === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = saved;
+    }
+    expect(res.status).toBe(200);
+    expect(res.body.data.blocking).toBe(true);
+    finding = res.body.data.findings.find((f: any) => f.ruleId === 'BUNDLE-CONTENT-UNPROVEN');
+    expect(finding).toMatchObject({ severity: 'error' });
+    byId = Object.fromEntries(res.body.data.validators.map((v: any) => [v.id, v]));
+    expect(byId.content_integrity).toMatchObject({ ran: false, errorCount: 1 });
+  });
+
+  it('a content read that fails is an error, never a pass', async () => {
+    dbState.pkg = pkgWith({ regulatory: IDS, bundle: BUNDLE });
+    poolQuery.mockRejectedValueOnce(new Error('db down'));
+    const res = await preflight();
+    expect(res.status).toBe(200);
+    expect(res.body.data.blocking).toBe(true);
+    const byId = Object.fromEntries(res.body.data.validators.map((v: any) => [v.id, v]));
+    expect(byId.content_integrity).toMatchObject({ ran: true, errorCount: 1 });
+    expect(byId.content_integrity.error).toMatch(/db down/);
+    expect(res.body.data.findings.some((f: any) => f.ruleId === 'VALIDATOR-ERROR' && /content integrity/i.test(f.message))).toBe(true);
   });
 
   it('marks blocking:true when the stored validation has an error', async () => {
@@ -227,6 +314,7 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
       metadata: {
         bundle: {
           sha256: 'b'.repeat(64),
+          contentFingerprint: CONTENT_FINGERPRINT,
           sizeBytes: 10,
           format: 'ectd',
           path: '/tmp/x.zip',
@@ -267,6 +355,7 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
       metadata: {
         bundle: {
           sha256: 'c'.repeat(64),
+          contentFingerprint: CONTENT_FINGERPRINT,
           sizeBytes: 10,
           format: 'ectd',
           path: '/tmp/x.zip',
