@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T20:47:59.382Z",
+  "generatedAt": "2026-09-05T20:52:08.895Z",
   "git": {
-    "sha": "400beccb144fe0a15d9d38d33295649673a09f8e",
+    "sha": "b9a7f2b5aaf0edd8d8db7ebf3254b36712d1ae40",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 40,
-    "largeFilesByLines": 93
+    "largeFilesByLines": 94
   },
   "findings": {
     "duplicateBasenames": [
@@ -2512,6 +2512,10 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
+        "lines": 1532
       }
     ]
   },
@@ -2539,7 +2543,7 @@
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
       "largeByBytes": 5,
-      "largeByLines": 8
+      "largeByLines": 9
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",
