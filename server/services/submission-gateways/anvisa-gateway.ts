@@ -92,7 +92,19 @@ export class AnvisaGateway implements SubmissionGateway {
       let parsed: { protocoloId?: string; receiptId?: string; numeroProtocolo?: string };
       try { parsed = JSON.parse(resp.body.toString('utf8')); }
       catch { throw new GatewayError('ANVISA returned non-JSON success', resp.httpStatus, null, resp.body.toString('utf8')); }
-      const receiptId = parsed.protocoloId ?? parsed.receiptId ?? parsed.numeroProtocolo ?? `anvisa-${Date.now()}`;
+      const receiptId = parsed.protocoloId ?? parsed.receiptId ?? parsed.numeroProtocolo ?? null;
+      if (!receiptId) {
+        // A 2xx whose body names no receipt is not an accepted submission. This
+        // minted `anvisa-<timestamp>` here, recorded the row as received with an
+        // acknowledgement time from the platform clock, told the operator
+        // "accepted. Receipt: anvisa-…", and later polled the agency for a
+        // receipt that never existed. CESP refuses the same case; so does this.
+        await patchTransmittal(id, {
+          status: 'rejected', httpStatus: resp.httpStatus,
+          errorClass: 'gateway', errorMessage: 'Agency returned success with no receipt identifier in the body.',
+        });
+        throw new GatewayError('ANVISA response missing a receipt identifier', resp.httpStatus, null, parsed);
+      }
       await patchTransmittal(id, { status: 'received', transmissionId: receiptId,
         httpStatus: resp.httpStatus, ackReceivedAt: new Date() });
       return { transmittalId: id, transmissionId: receiptId, status: 'received', transport: 'rest',

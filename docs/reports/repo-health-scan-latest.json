@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T06:47:55.857Z",
+  "generatedAt": "2026-09-05T07:41:01.490Z",
   "git": {
-    "sha": "3b5f4222513dd28f9ceba3d2d320f223d7236b55",
+    "sha": "1674a0a5cdf021cc10309478d4d1e87e462dfbfd",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,11 +12,11 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 209,
-    "contentDuplicateGroups": 4,
-    "contentDuplicateFiles": 10,
+    "duplicateBasenames": 207,
+    "contentDuplicateGroups": 0,
+    "contentDuplicateFiles": 0,
     "largeFilesByBytes": 39,
-    "largeFilesByLines": 90
+    "largeFilesByLines": 91
   },
   "findings": {
     "duplicateBasenames": [
@@ -520,42 +520,6 @@
           "server/routes/controlled-substances.ts",
           "server/services/global-ri/controlled-substances.ts",
           "shared/schema/controlled-substances.ts"
-        ]
-      },
-      {
-        "basename": "data-correspondence-detail",
-        "count": 3,
-        "paths": [
-          "design-system/_sync/reconciliation-2026-06-02/files/data-correspondence-detail.jsx",
-          "ui_kits/mdx/data-correspondence-detail.jsx",
-          "ui_kits/mdx_phase2/data-correspondence-detail.jsx"
-        ]
-      },
-      {
-        "basename": "data-pathway-tabs",
-        "count": 3,
-        "paths": [
-          "design-system/_sync/reconciliation-2026-06-02/files/data-pathway-tabs.jsx",
-          "ui_kits/mdx/data-pathway-tabs.jsx",
-          "ui_kits/mdx_phase2/data-pathway-tabs.jsx"
-        ]
-      },
-      {
-        "basename": "data-submissions",
-        "count": 3,
-        "paths": [
-          "design-system/_sync/reconciliation-2026-06-02/files/data-submissions.jsx",
-          "ui_kits/mdx/data-submissions.jsx",
-          "ui_kits/mdx_phase2/data-submissions.jsx"
-        ]
-      },
-      {
-        "basename": "dossier-store",
-        "count": 3,
-        "paths": [
-          "design-system/_sync/reconciliation-2026-06-02/files/dossier-store.jsx",
-          "ui_kits/mdx/dossier-store.jsx",
-          "ui_kits/mdx_phase2/dossier-store.jsx"
         ]
       },
       {
@@ -1074,6 +1038,14 @@
         ]
       },
       {
+        "basename": "data-submissions",
+        "count": 2,
+        "paths": [
+          "design-system/_sync/reconciliation-2026-06-02/files/data-submissions.jsx",
+          "ui_kits/mdx_phase2/data-submissions.jsx"
+        ]
+      },
+      {
         "basename": "database",
         "count": 2,
         "paths": [
@@ -1127,6 +1099,14 @@
         "paths": [
           "database/schema/documents.ts",
           "server/routes/c2c/documents.ts"
+        ]
+      },
+      {
+        "basename": "dossier-store",
+        "count": 2,
+        "paths": [
+          "design-system/_sync/reconciliation-2026-06-02/files/dossier-store.jsx",
+          "ui_kits/mdx_phase2/dossier-store.jsx"
         ]
       },
       {
@@ -1978,46 +1958,11 @@
         ]
       }
     ],
-    "contentDuplicates": [
-      {
-        "hash": "c276abe008a5",
-        "count": 3,
-        "paths": [
-          "design-system/_sync/reconciliation-2026-06-02/files/data-correspondence-detail.jsx",
-          "ui_kits/mdx/data-correspondence-detail.jsx",
-          "ui_kits/mdx_phase2/data-correspondence-detail.jsx"
-        ]
-      },
-      {
-        "hash": "d6842da7a739",
-        "count": 3,
-        "paths": [
-          "design-system/_sync/reconciliation-2026-06-02/files/data-pathway-tabs.jsx",
-          "ui_kits/mdx/data-pathway-tabs.jsx",
-          "ui_kits/mdx_phase2/data-pathway-tabs.jsx"
-        ]
-      },
-      {
-        "hash": "c875bea72314",
-        "count": 2,
-        "paths": [
-          "ui_kits/mdx/data-submissions.jsx",
-          "ui_kits/mdx_phase2/data-submissions.jsx"
-        ]
-      },
-      {
-        "hash": "72cf82b3faea",
-        "count": 2,
-        "paths": [
-          "ui_kits/mdx/dossier-store.jsx",
-          "ui_kits/mdx_phase2/dossier-store.jsx"
-        ]
-      }
-    ],
+    "contentDuplicates": [],
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1002758
+        "bytes": 1002860
       },
       {
         "file": "shared/schema.ts",
@@ -2025,7 +1970,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 698614
+        "bytes": 618608
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2113,7 +2058,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 121343
+        "bytes": 121432
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2169,7 +2114,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "bytes": 101421
+        "bytes": 102445
       }
     ],
     "largeFilesByLines": [
@@ -2179,11 +2124,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19449
+        "lines": 19450
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 18676
+        "lines": 16487
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2259,11 +2204,11 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2695
+        "lines": 2698
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "lines": 2662
+        "lines": 2688
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2316,6 +2261,10 @@
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
         "lines": 2276
+      },
+      {
+        "file": "server/routes/c2c/reviews.ts",
+        "lines": 2241
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
@@ -2458,16 +2407,16 @@
         "lines": 1795
       },
       {
+        "file": "server/routes/510k-estar-routes.ts",
+        "lines": 1794
+      },
+      {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "lines": 1794
       },
       {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1785
-      },
-      {
-        "file": "server/routes/510k-estar-routes.ts",
-        "lines": 1784
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
@@ -2541,11 +2490,11 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 398,
       "largeByBytes": 29,
-      "largeByLines": 74
+      "largeByLines": 75
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 162,
+      "duplicateGroups": 154,
       "largeByBytes": 2,
       "largeByLines": 7
     },

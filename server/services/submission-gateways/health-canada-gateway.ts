@@ -273,7 +273,19 @@ export class HealthCanadaGateway implements SubmissionGateway {
       catch {
         throw new GatewayError('Health Canada CESG returned non-JSON success', resp.httpStatus, null, resp.body.toString('utf8'));
       }
-      const receiptId = parsed.receiptId ?? parsed.submissionId ?? `hc-${Date.now()}`;
+      const receiptId = parsed.receiptId ?? parsed.submissionId ?? null;
+      if (!receiptId) {
+        // A 2xx whose body names no receipt is not an accepted submission. This
+        // minted `hc-<timestamp>` here, recorded the row as received with an
+        // acknowledgement time from the platform clock, told the operator
+        // "accepted. Receipt: hc-…", and later polled the agency for a
+        // receipt that never existed. CESP refuses the same case; so does this.
+        await updateTransmittal(transmittalId, {
+          status: 'rejected', httpStatus: resp.httpStatus,
+          errorClass: 'gateway', errorMessage: 'Agency returned success with no receipt identifier in the body.',
+        });
+        throw new GatewayError('HC response missing a receipt identifier', resp.httpStatus, null, parsed);
+      }
       await updateTransmittal(transmittalId, {
         status: 'received', transmissionId: receiptId,
         httpStatus: resp.httpStatus, ackReceivedAt: new Date(),

@@ -914,16 +914,66 @@ describe('persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance)', () =
     expect((await rowOf(prep.body.id)).status).toBe('prepared');
   });
 
-  it('an AR acknowledgment marks the transmission rejected with errors', async () => {
-    const prep = await request(app)
-      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/icsr-transmissions`)
-      .send({ event: reportableEvent(), gateway: 'EMA_EUDRAVIGILANCE', senderId: 'C2C', messageNumber: 'MSG-1003', icsr: { worldwideUniqueId: 'EU-1', senderType: 'sponsor' } });
+  it('an AR acknowledgment marks a TRANSMITTED report rejected with errors', async () => {
+    // This used to acknowledge a report that had never been transmitted. An
+    // acknowledgement is an agency act on a message it received; recording one
+    // against a 'prepared' row was an IND_ICSR_ACKNOWLEDGED audit row over
+    // nothing. The report is transmitted first, as the AA case does.
+    const prep = await prepareReady('MSG-1003');
+    icsrTransport.override = async (built: any) => ({
+      simulated: false, status: 'transmitted', gateway: built.gateway, receiverId: built.receiverId,
+      messageId: 'MSG-1003', receiptId: 'ESG-CORE-1003', timestamp: '2026-06-16T00:00:00.000Z', message: 'Accepted.',
+    });
+    expect((await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/transmit`)).status).toBe(200);
     const ack = await request(app)
-      .post(`/api/ind-lifecycle/icsr-transmissions/${prep.body.id}/acknowledge`)
-      .send({ ackXml: '<ack><reportacknowledgmentcode>AR</reportacknowledgmentcode><error>Invalid MedDRA version</error></ack>' });
+      .post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/acknowledge`)
+      .send({ ackXml: '<ack><messagenumb>MSG-1003</messagenumb><reportacknowledgmentcode>AR</reportacknowledgmentcode><error>Invalid MedDRA version</error></ack>' });
+    expect(ack.status).toBe(200);
     expect(ack.body.status).toBe('rejected');
     expect(ack.body.ackCode).toBe('AR');
     expect(ack.body.errors).toContain('Invalid MedDRA version');
+  });
+
+  it('refuses an acknowledgement for a report that was never transmitted (409), and the row is unchanged', async () => {
+    const prep = await prepareReady('MSG-1004');
+    const ack = await request(app)
+      .post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/acknowledge`)
+      .send({ ackXml: '<ack><messagenumb>MSG-1004</messagenumb><transmissionacknowledgmentcode>AA</transmissionacknowledgmentcode></ack>' });
+    expect(ack.status).toBe(409);
+    expect(ack.body.error.code).toBe('INVALID_STATE');
+    expect((await rowOf(prep.id)).status).toBe('prepared');
+  });
+
+  it('refuses an acknowledgement with no readable ACK code (422), never recording "acknowledged"', async () => {
+    // parseIcsrAcknowledgment returns 'unknown' for any text without a code;
+    // that used to map straight to 'acknowledged'.
+    const prep = await prepareReady('MSG-1005');
+    icsrTransport.override = async (built: any) => ({
+      simulated: false, status: 'transmitted', gateway: built.gateway, receiverId: built.receiverId,
+      messageId: 'MSG-1005', receiptId: 'ESG-CORE-1005', timestamp: '2026-06-16T00:00:00.000Z', message: 'Accepted.',
+    });
+    await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/transmit`);
+    const ack = await request(app)
+      .post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/acknowledge`)
+      .send({ ackXml: '<html>Service temporarily unavailable</html>' });
+    expect(ack.status).toBe(422);
+    expect(ack.body.error.code).toBe('ACK_UNREADABLE');
+    expect((await rowOf(prep.id)).status).toBe('transmitted');
+  });
+
+  it('refuses an acknowledgement that names a different message number (422)', async () => {
+    const prep = await prepareReady('MSG-1006');
+    icsrTransport.override = async (built: any) => ({
+      simulated: false, status: 'transmitted', gateway: built.gateway, receiverId: built.receiverId,
+      messageId: 'MSG-1006', receiptId: 'ESG-CORE-1006', timestamp: '2026-06-16T00:00:00.000Z', message: 'Accepted.',
+    });
+    await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/transmit`);
+    const ack = await request(app)
+      .post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/acknowledge`)
+      .send({ ackXml: '<ack><messagenumb>MSG-9999</messagenumb><transmissionacknowledgmentcode>AA</transmissionacknowledgmentcode></ack>' });
+    expect(ack.status).toBe(422);
+    expect(ack.body.error.code).toBe('ACK_MISMATCH');
+    expect((await rowOf(prep.id)).status).toBe('transmitted');
   });
 
   it('400 without gateway; 404 transmitting an unknown id', async () => {

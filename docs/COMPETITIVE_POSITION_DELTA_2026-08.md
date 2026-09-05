@@ -48,7 +48,7 @@ differentiator. Spanning it in a product is.
 | MEDDEV 2.7/1 rev 4 + Annex XIV structure | **Closed** | Rule packs + conformance validator + structure check wired to the workbench |
 | AE/vigilance integration | **Closed** | FAERS/MAUDE live; EUDAMED honestly unavailable (no public API exists) |
 | Live evidence tables → NB-acceptable export | **Closed** | Governed PDF/DOCX/ZIP via the MEDDEV style pack |
-| PMS/PMCF linkage | **Partial** | Documentation status + generators live; complaint/enrolment feeds have no backend |
+| PMS/PMCF linkage | **Closed** | Documentation status + generators live; the CER tab now reads the program’s complaint queue (`/api/capa-mdr/complaints`) and PMCF enrolment (`/api/post-market/…/pmcf-enrollment`), figures computed from the rows, absent when the rows cannot support them (2026-09-05, L5) |
 | Human-in-loop AI with reviewable provenance | **Closed** | Governed accept-draft + audit chain — the thing pure-AI CER entrants fail NB review on |
 
 ### NDA / eCTD

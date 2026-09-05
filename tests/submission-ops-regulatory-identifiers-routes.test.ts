@@ -41,7 +41,13 @@ function makeDb() {
   return chain;
 }
 
-const clientQuery = vi.fn().mockResolvedValue({ rows: [] });
+/** The pool client: serves the package row lock (SELECT … FOR UPDATE) from the
+ *  stubbed package and captures the metadata the locked UPDATE writes. */
+const clientQuery = vi.fn(async (sql: string, params: unknown[] = []) => {
+  if (/FOR UPDATE/.test(sql)) return { rows: [{ metadata: dbState.pkg?.metadata ?? null }] };
+  if (/^UPDATE c2c_submission_packages/.test(sql)) dbState.updateSet = { metadata: JSON.parse(String(params[1])) };
+  return { rows: [] };
+});
 const connectFn = vi.fn(() => Promise.resolve({ query: clientQuery, release: vi.fn() }));
 vi.mock('../server/db', () => ({
   get db() { return makeDb(); },
@@ -166,6 +172,8 @@ describe('PUT /api/submission-ops/packages/:packageId/regulatory-identifiers', (
     expect(ledger.payload.previous).toEqual({ applicationNumber: 'IND000001', applicantId: 'DUNS-1', applicantName: 'Old Name' });
     expect(clientQuery).toHaveBeenCalledWith('BEGIN');
     expect(clientQuery).toHaveBeenCalledWith('COMMIT');
+    // The write was decided under the row lock, against the CURRENT row.
+    expect(clientQuery.mock.calls.some((c) => /FOR UPDATE/.test(String(c[0])))).toBe(true);
   });
 
   it('re-recording the SAME identifiers keeps an existing bundle (nothing about its backbone changed)', async () => {
