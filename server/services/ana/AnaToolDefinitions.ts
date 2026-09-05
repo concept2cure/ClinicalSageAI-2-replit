@@ -1278,6 +1278,7 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
       application_id:  { type: 'string', description: 'IND/NDA number (FDA), procedure number (EMA), application number (PMDA), dossier id (Health Canada).' },
       sequence:        { type: 'string', description: '4-digit submission sequence, e.g. 0001.' },
       submission_type: { type: 'string', description: 'original | amendment | response | annual_report | safety.' },
+      application_type: { type: 'string', description: 'REQUIRED for region "fda": what is being filed — nda | snda | anda | bla | ind | dmf. The us-regional backbone carries this as the application-type attribute, and it is a statement about the filing, so the packager refuses to guess it. Device pathways (510k, de_novo, pma) have no eCTD Module 1 code and are not filed on this backbone.' },
       sponsor_id:      { type: 'string', description: 'DUNS / EMA org id / PMDA applicant id.' },
       sponsor_name:    { type: 'string' },
       product_name:    { type: 'string' },

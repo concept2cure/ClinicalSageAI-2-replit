@@ -8406,6 +8406,13 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
       applicationId: String(input.application_id),
       sequence:      String(input.sequence),
       submissionType: String(input.submission_type),
+      /* `submission_type` on this tool means 'original | amendment | ...', so it
+         cannot also carry the filing identity. Without an application type the
+         packager used to default to `fdaat1` — NDA — for every package this
+         tool built. It now refuses, so the tool asks for it. */
+      ...(typeof input.application_type === 'string' && input.application_type.trim()
+        ? { fda: { applicationType: input.application_type.trim() } }
+        : {}),
       sponsorId:     String(input.sponsor_id),
       sponsorName:   String(input.sponsor_name),
       productName:   String(input.product_name),

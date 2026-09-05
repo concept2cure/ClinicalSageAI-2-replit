@@ -184,6 +184,7 @@ describe('every code this resolver EMITS is placed at a real terminal heading by
       expect(placements.every((p) => p.code)).toBe(true);
       const bundle = await packageLeafBytes({
         region: 'fda', applicationId: 'IND1', sequence: '0000', submissionType: 'original',
+        fda: { applicationType: 'ind', submissionType: 'original' }, // the backbone must state what is being filed
         sponsorId: 'S', sponsorName: 'S', productName: 'P', environment: 'staging', outputDir,
         leaves: placements.map((p, i) => ({
           ctdSection: p.code!, fileName: `leaf-${i}.pdf`, bytes: pdf(String(i)), title: `Leaf ${i}`,
