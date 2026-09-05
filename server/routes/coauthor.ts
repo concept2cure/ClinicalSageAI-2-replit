@@ -7,6 +7,9 @@ import { eq, desc, and } from 'drizzle-orm';
 import { db, transaction, pool } from '../db';
 import { coauthorDocuments, coauthorSections } from '../../shared/schema';
 import { authMiddleware } from '../auth';
+import { randomUUID } from 'crypto';
+import { queryableFromDrizzle } from '../db/drizzle-queryable.js';
+import { recordDocumentAlias, DocumentAliasConflictError } from '../services/c2c/document-alias-map.js';
 
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -208,28 +211,55 @@ router.post('/documents', authMiddleware, async (req: any, res: Response) => {
       sourceState = { docId: String(sourceAuthoringDocId), status: state || 'UNKNOWN' };
     }
 
-    const [document] = await db
-      .insert(coauthorDocuments)
-      .values({
+    /* The row and its identity commit together. A snapshot taken from an
+       authoring document is that document's representation in this store, so
+       it is aliased under the authoring uuid; a document with no source gets a
+       fresh canonical id. A fork — the authoring document already represented
+       here by another row — refuses the create and nothing is persisted. */
+    const canonicalId = sourceState ? String(sourceAuthoringDocId) : randomUUID();
+    const document = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(coauthorDocuments)
+        .values({
+          organizationId,
+          title,
+          content: content || '',
+          moduleNumber: moduleNumber || null,
+          templateId: templateId ? Number(templateId) : null,
+          status: snapshotStatus,
+          createdBy: userId ? String(userId) : null,
+          /* Where this snapshot came from and what that source's state was when
+             it was taken — so the status above can be audited back to the record
+             that justified it rather than being taken on trust. */
+          ...(sourceState ? { metadata: { source: 'authoring-document', ...sourceState } } : {}),
+        })
+        .returning();
+      const alias = await recordDocumentAlias(queryableFromDrizzle(tx), {
         organizationId,
-        title,
-        content: content || '',
-        moduleNumber: moduleNumber || null,
-        templateId: templateId ? Number(templateId) : null,
-        status: snapshotStatus,
-        createdBy: userId ? String(userId) : null,
-        /* Where this snapshot came from and what that source's state was when
-           it was taken — so the status above can be audited back to the record
-           that justified it rather than being taken on trust. */
-        ...(sourceState ? { metadata: { source: 'authoring-document', ...sourceState } } : {}),
-      })
-      .returning();
+        canonicalId,
+        store: 'coauthor_documents',
+        nativeId: String(row.id),
+      });
+      if (!alias.recorded && alias.reason === 'relation_absent') {
+        logger.warn('Document alias map absent; snapshot created without cross-store identity', {
+          coauthorDocumentId: row.id,
+          migration: 'migrations/20260814d_document_alias_map.sql',
+        });
+      }
+      return row;
+    });
 
     return res.status(201).json({
       success: true,
       document,
     });
   } catch (error: any) {
+    if (error instanceof DocumentAliasConflictError) {
+      return res.status(409).json({
+        error: 'DOCUMENT_ALIAS_CONFLICT',
+        message: `${error.message}. Nothing was created.`,
+      });
+    }
     logger.error('Create document error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to create document', message: 'An unexpected error occurred' });
   }

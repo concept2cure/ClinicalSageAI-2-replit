@@ -179,6 +179,14 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:writerless-stores
 
+      - name: Guardrails — the document alias map holds no attributes
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # c2c_document_aliases is identity only (Document Identity Contract
+        # slice C2, ledger L10). The registry that also owned title, status and
+        # placement was built once and reverted; the way it comes back is one
+        # reasonable-looking column at a time, and this says no to each.
+        run: npm run ci:document-alias-attribute-free
+
       - name: Guardrails — every artifact producer emits a provenance event
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # A write to concept2cure_artifacts is a document the platform builds;
