@@ -69,6 +69,13 @@ const ROOT = process.cwd();
  */
 const NOT_PROSE = [
   {
+    // Exposed by L53 slice 8: while the artifact writers lived in this file,
+    // their gate enlistment made the whole file read as guarded and this
+    // writer was never checked on its own.
+    file: 'server/routes/concept2cure.ts',
+    why: 'PUT …/haq-session writes the HAQ Manager\'s session state — an opaque `questions` array the client round-trips — as JSON into a haq_session artifact; it is read back only by GET …/haq-session in the same file, its governed contract refuses export, and no packager or other reader resolves it into a document',
+  },
+  {
     file: 'server/services/AssemblyLine.ts',
     why: 'assembly_docs is a scratch pipeline reached only through routes/test-assembly.ts, which nothing mounts; its content never reaches a governed document',
   },
