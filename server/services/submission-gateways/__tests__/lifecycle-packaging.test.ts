@@ -74,6 +74,7 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       // --- Package the computed leaves through the canonical publisher.
       const bundle = await packageEctdSubmission({
         region: 'fda', applicationId: '123456', sequence: '0001', submissionType: 'original',
+        fda: { applicationType: 'nda' }, // a package must declare what it is; this used to default to NDA silently
         sponsorId: 'D', sponsorName: 'S', productName: 'P', outputDir: path.join(work, 'out'),
         environment: 'staging', leaves: life.leaves as EctdLeaf[],
       });
@@ -232,6 +233,7 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       ];
       const bundle = await packageEctdSubmission({
         region: 'fda', applicationId: '123456', sequence: '0001', submissionType: 'original',
+        fda: { applicationType: 'nda' }, // a package must declare what it is; this used to default to NDA silently
         sponsorId: 'D', sponsorName: 'S', productName: 'P', outputDir: path.join(work, 'out'),
         environment: 'staging', leaves,
       });

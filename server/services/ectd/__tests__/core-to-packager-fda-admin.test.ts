@@ -148,9 +148,19 @@ describe('us-regional.xml — the emitted submission-type follows the sequence',
     }
   }
 
-  it('without the fda block the old input coded an original IND as an IND safety report (the defect)', async () => {
+  it('without the fda block an original IND is no longer coded as an IND safety report', async () => {
+    /* This test used to assert `fdast9` — it pinned the defect as the documented
+       behaviour of the no-fda-block path, because core-to-packager could only
+       fix the path that supplies one. The packager itself now refuses to resolve
+       an APPLICATION type through the SUBMISSION-type vocabulary (the only fdast
+       entry containing "IND" is "IND Safety Reports"), so the guess that
+       produced fdast9 is gone at its source and there is nothing left to pin.
+       An original sequence is 0000, which IS an Original Application by
+       definition — a derivation, not a guess. */
     const admin = await emittedAdmin('original', { withFdaBlock: false });
-    expect(admin.submissionType).toBe('fdast9');
+    expect(admin.submissionType).not.toBe('fdast9');
+    expect(admin.submissionType).toBe('fdast1');
+    expect(admin.applicationType).toBe('fdaat4'); // still an IND, correctly
   });
 
   it('an original IND sequence is emitted as fdaat4 / fdast1 / fdasst1', async () => {

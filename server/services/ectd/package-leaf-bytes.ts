@@ -31,6 +31,7 @@ import {
   packageEctdSubmission,
   type EctdLeaf,
   type Region,
+  type FdaRegionalAdmin,
 } from '../submission-gateways/regional-packager';
 import type { SubmissionBundle } from '../submission-gateways/types';
 
@@ -62,6 +63,10 @@ export interface PackageLeafBytesParams {
   applicationId: string;
   sequence: string;
   submissionType: string;
+  /** FDA Module 1 admin block. Required for region 'fda': the backbone's
+   *  application-type is a statement about what is being filed, and the
+   *  packager refuses to guess it rather than default every package to NDA. */
+  fda?: FdaRegionalAdmin;
   sponsorId: string;
   sponsorName: string;
   productName: string;
@@ -130,6 +135,7 @@ export async function packageLeafBytes(params: PackageLeafBytesParams): Promise<
       applicationId: params.applicationId,
       sequence: params.sequence,
       submissionType: params.submissionType,
+      ...(params.fda ? { fda: params.fda } : {}),
       sponsorId: params.sponsorId,
       sponsorName: params.sponsorName,
       productName: params.productName,

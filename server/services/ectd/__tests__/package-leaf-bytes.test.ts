@@ -24,6 +24,7 @@ describe('packageLeafBytes — canonical conformant packaging', () => {
         applicationId: 'IND123456',
         sequence: '0000',
         submissionType: 'original',
+        fda: { applicationType: 'ind', submissionType: 'original' }, // the backbone must state what is being filed
         sponsorId: 'SPON-1',
         sponsorName: 'Acme Bio',
         productName: 'Compound X',
@@ -71,6 +72,7 @@ describe('packageLeafBytes — canonical conformant packaging', () => {
     try {
       const bundle = await packageLeafBytes({
         region: 'fda', applicationId: 'IND1', sequence: '0000', submissionType: 'original',
+        fda: { applicationType: 'ind', submissionType: 'original' }, // the backbone must state what is being filed
         sponsorId: 'S', sponsorName: 'S', productName: 'P', environment: 'staging', outputDir,
         leaves: [{ ctdSection: '3.2.S.4.2', fileName: 'controls.pdf', bytes: pdf('c'), title: 'Control of DS' }],
       });
@@ -95,6 +97,7 @@ describe('packageLeafBytes — lifecycle operations after sequence 0000', () => 
       await expect(
         packageLeafBytes({
           region: 'fda', applicationId: 'IND123456', sequence: '0002', submissionType: 'original',
+          fda: { applicationType: 'ind', submissionType: 'original' }, // the backbone must state what is being filed
           sponsorId: 'SPON-1', sponsorName: 'Acme Bio', productName: 'Compound X', environment: 'staging', outputDir,
           leaves: [{ ctdSection: '3.2.S.1', fileName: 'drug-substance.pdf', bytes: pdf('DS v3'), title: 'Drug Substance General' }],
         }),
@@ -109,6 +112,7 @@ describe('packageLeafBytes — lifecycle operations after sequence 0000', () => 
     try {
       const bundle = await packageLeafBytes({
         region: 'fda', applicationId: 'IND123456', sequence: '0002', submissionType: 'original',
+        fda: { applicationType: 'ind', submissionType: 'original' }, // the backbone must state what is being filed
         sponsorId: 'SPON-1', sponsorName: 'Acme Bio', productName: 'Compound X', environment: 'staging', outputDir,
         leaves: [{
           ctdSection: '3.2.S.1', fileName: 'drug-substance.pdf', bytes: pdf('DS v3'), title: 'Drug Substance General',

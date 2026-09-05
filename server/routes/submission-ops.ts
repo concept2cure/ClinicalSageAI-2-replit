@@ -2187,6 +2187,14 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           applicationId: applicationNumber ?? `UNASSIGNED-${leafSlug(pkg.packageId)}`,
           sequence,
           submissionType: 'original',
+          /* The FDA backbone has to state what is being filed. This used to
+             pass nothing, and the packager defaulted the application type to
+             `fdaat1` — NDA — so every package assembled here declared itself a
+             New Drug Application whatever it actually was. `packageFamily` is
+             the pathway ('ind', '510k', 'cer', 'ivdr_td'); the packager
+             resolves it, and refuses the ones that have no eCTD Module 1 code
+             rather than mislabelling them. */
+          fda: { applicationType: pkg.packageFamily },
           sponsorId: applicantId ?? `UNASSIGNED-ORG-${orgId}`,
           sponsorName: applicantName ?? `UNASSIGNED (organization ${orgId})`,
           productName: pkg.title,
