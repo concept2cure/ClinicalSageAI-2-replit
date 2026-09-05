@@ -890,7 +890,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   return (
-    <div className="page-inner orch">
+    <div className="page-inner">
       {newRunOpen && (
         <div className="orch-newrun-bd" onClick={() => setNewRunOpen(false)}>
           <div
