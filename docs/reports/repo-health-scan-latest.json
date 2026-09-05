@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T13:03:44.527Z",
+  "generatedAt": "2026-09-05T13:09:37.257Z",
   "git": {
-    "sha": "ffd2b2ea9d6f0ba0596703f6bf4333e397f1e1c9",
+    "sha": "a028e11fcc56f4500fca107b9ccee1110e140832",
     "branch": "ana-w2"
   },
   "thresholds": {
@@ -2112,6 +2112,10 @@
         "bytes": 110971
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "bytes": 110117
+      },
+      {
         "file": "server/routes/concept2cure.ts",
         "bytes": 109695
       },
@@ -2134,10 +2138,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
-      },
-      {
-        "file": "server/routes/submission-ops.ts",
-        "bytes": 107978
       }
     ],
     "largeFilesByLines": [
@@ -2227,7 +2227,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "lines": 2779
+        "lines": 2826
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2515,15 +2515,7 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "contentDuplicateGroups": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": 0
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",

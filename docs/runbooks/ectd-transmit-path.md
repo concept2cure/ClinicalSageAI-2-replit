@@ -95,7 +95,11 @@ findings card after an assembly that carries errors, and after any refusal. Pref
 persists its summary under the same lock and only while the bundle it evaluated is still
 the stored one: a bundle cleared or replaced during the run answers 409
 `gate: bundle_superseded` (run preflight again), and a summary that could not be written
-is reported as `persisted: false` with the findings still returned.
+is reported as `persisted: false` with the findings still returned. Preflight also runs
+the content assessment transmit enforces (step 3), as the `content_integrity` validator:
+`BUNDLE-CONTENT-DRIFT` is an error; `BUNDLE-CONTENT-UNPROVEN` (no fingerprint) is an
+error wherever transmit would refuse the bundle and a warning where descriptor trust is
+relaxed.
 
 `region` (FDA/EMA/PMDA) and `sequence` (exactly four digits) may be given in the body.
 The format follows the region (`pmda_ectd` ⇔ PMDA; `ectd` ⇔ FDA/EMA; `estar` ⇔ FDA;
