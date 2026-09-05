@@ -269,6 +269,19 @@ export interface GatewayStatusResult {
   ackLevel?: 1 | 2 | 3;
   ackReceivedAt: Date | null;
   rawResponse?: unknown;
+  /**
+   * Where this status came from: 'agency' when checkStatus() asked the agency
+   * just now, 'stored' when it re-read the platform's own last-known row.
+   * FDA ESG has no live poll yet; its stored row was presented as a live check.
+   */
+  source: 'agency' | 'stored';
+  /**
+   * Why the agency was not asked, when source is 'stored' after a poll was
+   * attempted: the poll threw, or the agency answered something other than a
+   * status. Every gateway used to swallow this and hand back the stored row
+   * as if it were the poll's answer.
+   */
+  pollError?: string | null;
 }
 
 export interface GatewayAcknowledgment {

@@ -93,6 +93,10 @@ vi.mock('../../../db', () => {
         rowCount: 1,
       };
     }
+    // SELECT for checkStatus (stored row, no live poll).
+    if (/SELECT\s+transmission_id,\s+status,\s+ack_received_at\s+FROM submission_transmittals/i.test(sql)) {
+      return { rows: [{ transmission_id: '<mdn-msg-id@FDA-CESUB>', status: 'received', ack_received_at: new Date('2026-06-29T12:00:00Z') }], rowCount: 1 };
+    }
     // SELECT for findActiveTransmittal (status IN list).
     if (/SELECT\s+id,\s+status\s+FROM submission_transmittals/i.test(sql)) {
       return activeTransmittalRow.value
@@ -323,6 +327,18 @@ describe('FIX 2 — raw MDN persistence', () => {
     expect(body).not.toMatch(/^FDA ESG Acknowledgement/m);
     // The identifiers it legitimately holds survive.
     expect(body).toContain('Transmission: <mdn-msg-id@FDA-CESUB>');
+  });
+});
+
+/* ─── Status provenance ─────────────────────────────────────────── */
+
+describe('checkStatus — says where the status came from', () => {
+  it('reports source=stored: FDA ESG re-reads its own row and does not ask the agency', async () => {
+    // The client labelled every status check "live poll"; for FDA ESG nothing
+    // left the platform.
+    const result = await new FdaEsgGateway().checkStatus(4242);
+    expect(result.source).toBe('stored');
+    expect(result.status).toBe('received');
   });
 });
 

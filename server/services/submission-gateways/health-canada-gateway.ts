@@ -203,7 +203,7 @@ export class HealthCanadaGateway implements SubmissionGateway {
 
   async isConfigured(_orgId: number, environment: 'staging' | 'production'): Promise<boolean> {
     try { await loadHcCredentials(environment); return true; }
-    catch (err) { return !(err instanceof CredentialError); }
+    catch { return false; } // an unreadable cert or key is not 'configured'
   }
 
   async transmit(req: GatewayTransmitRequest): Promise<GatewayTransmitResult> {
@@ -325,6 +325,7 @@ export class HealthCanadaGateway implements SubmissionGateway {
       throw new GatewayError(`Transmittal ${transmittalId} not found`, 404, null, null);
     }
     /* Live status poll via /receipts/{id}. */
+    let pollError: string | null = 'The agency status poll did not complete.';
     try {
       const env = (rows[0].metadata?.environment as 'staging' | 'production' | undefined) ?? 'production';
       const creds = await loadHcCredentials(env);
@@ -353,6 +354,7 @@ export class HealthCanadaGateway implements SubmissionGateway {
           await updateTransmittal(transmittalId, { status: mapped });
         }
         return {
+          source: 'agency',
           transmittalId,
           transmissionId: rows[0].transmission_id,
           status: mapped,
@@ -360,10 +362,9 @@ export class HealthCanadaGateway implements SubmissionGateway {
           rawResponse: parsed,
         };
       }
-    } catch {
-      /* Fall through to last-known DB state. */
-    }
+    } catch (err) { pollError = err instanceof Error ? err.message : String(err); }
     return {
+      source: 'stored', pollError,
       transmittalId,
       transmissionId: rows[0].transmission_id,
       status: rows[0].status as SubmissionStatus,

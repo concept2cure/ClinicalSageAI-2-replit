@@ -390,8 +390,12 @@ export class FdaEsgGateway implements SubmissionGateway {
     try {
       await loadFdaCredentials(organizationId, environment);
       return true;
-    } catch (err) {
-      return !(err instanceof CredentialError);
+    } catch {
+      // Any failure to load the credentials — a missing variable, or a cert
+      // or key file that cannot be read — means not configured. This used to
+      // answer true for everything except a missing variable, so an unmounted
+      // or rotated-away certificate showed the gateway as configured.
+      return false;
     }
   }
 
@@ -550,6 +554,7 @@ export class FdaEsgGateway implements SubmissionGateway {
       transmissionId: rows[0].transmission_id,
       status: rows[0].status as SubmissionStatus,
       ackReceivedAt: rows[0].ack_received_at,
+      source: 'stored',
     };
   }
 

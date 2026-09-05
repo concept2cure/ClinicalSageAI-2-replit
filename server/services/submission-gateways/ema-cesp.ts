@@ -257,7 +257,7 @@ export class EmaCespGateway implements SubmissionGateway {
 
   async isConfigured(_orgId: number, environment: 'staging' | 'production'): Promise<boolean> {
     try { loadCespCredentials(environment); return true; }
-    catch (err) { return !(err instanceof CredentialError); }
+    catch { return false; } // an unreadable cert or key is not 'configured'
   }
 
   async transmit(req: GatewayTransmitRequest): Promise<GatewayTransmitResult> {
@@ -359,6 +359,7 @@ export class EmaCespGateway implements SubmissionGateway {
       throw new GatewayError(`Transmittal ${transmittalId} not found`, 404, null, null);
     }
     /* Live status poll. */
+    let pollError: string | null = 'The agency status poll did not complete.';
     try {
       const environment = (rows[0].metadata?.environment as 'staging' | 'production' | undefined) ?? 'production';
       const creds = loadCespCredentials(environment);
@@ -380,6 +381,7 @@ export class EmaCespGateway implements SubmissionGateway {
           await updateTransmittal(transmittalId, { status: mapped });
         }
         return {
+          source: 'agency',
           transmittalId,
           transmissionId: rows[0].transmission_id,
           status: mapped as SubmissionStatus,
@@ -387,10 +389,9 @@ export class EmaCespGateway implements SubmissionGateway {
           rawResponse: parsed,
         };
       }
-    } catch {
-      /* Fall through to last-known DB state on poll failure. */
-    }
+    } catch (err) { pollError = err instanceof Error ? err.message : String(err); }
     return {
+      source: 'stored', pollError,
       transmittalId,
       transmissionId: rows[0].transmission_id,
       status: rows[0].status as SubmissionStatus,
@@ -435,7 +436,7 @@ export class EudamedGateway implements SubmissionGateway {
 
   async isConfigured(_orgId: number, environment: 'staging' | 'production'): Promise<boolean> {
     try { loadEudamedCredentials(environment); return true; }
-    catch (err) { return !(err instanceof CredentialError); }
+    catch { return false; } // an unreadable cert or key is not 'configured'
   }
 
   async transmit(req: GatewayTransmitRequest): Promise<GatewayTransmitResult> {
@@ -524,6 +525,7 @@ export class EudamedGateway implements SubmissionGateway {
       throw new GatewayError(`Transmittal ${transmittalId} not found`, 404, null, null);
     }
     return {
+      source: 'stored',
       transmittalId,
       transmissionId: rows[0].transmission_id,
       status: rows[0].status as SubmissionStatus,

@@ -254,8 +254,12 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
   }, [load, fireToast]);
 
   const checkStatus = useCallback(async (id: number) => {
-    const { ok, status, data } = await readData<Record<string, unknown>>('GET', `/api/mdx/gateways/transmittals/${id}/status`);
-    if (!ok || !data) { fireToast(`Status check failed (HTTP ${status}).`, 'error'); return; }
+    const { ok, status, data, raw } = await readData<Record<string, unknown>>('GET', `/api/mdx/gateways/transmittals/${id}/status`);
+    if (!ok || !data) {
+      const reason = typeof raw?.error === 'string' ? raw.error : `HTTP ${status}`;
+      fireToast(`Status check failed: ${reason}.`, 'error');
+      return;
+    }
     setStatusView({ id, body: data });
     void load();
   }, [load, fireToast]);
@@ -514,7 +518,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
 
       {statusView && (
         <div className="pj-card">
-          <div className="pj-card-h"><span className="t">Gateway status · transmittal #{statusView.id}</span><span className="s">live poll</span></div>
+          <div className="pj-card-h"><span className="t">Gateway status · transmittal #{statusView.id}</span><span className="s">{statusView.body.source === 'stored' ? 'last recorded state · the agency was not asked' : 'live poll'}</span></div>
           <div className="pj-card-b" style={{ padding: 0 }}>
             <table className="reg-tbl"><tbody>
               {Object.entries(statusView.body).filter(([, v]) => ['string', 'number', 'boolean'].includes(typeof v)).map(([k, v]) => (

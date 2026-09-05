@@ -33,6 +33,9 @@ vi.mock('../../../db', () => ({
     query: vi.fn(async (sql: string, args: unknown[] = []) => {
       poolQueries.push({ sql, args });
       if (/INSERT INTO submission_transmittals/i.test(sql)) return { rows: [{ id: 777 }], rowCount: 1 };
+      if (/SELECT transmission_id, status, ack_received_at, metadata FROM submission_transmittals/i.test(sql)) {
+        return { rows: [{ transmission_id: 'PMDA-R-1', status: 'received', ack_received_at: new Date('2026-09-01T00:00:00Z'), metadata: { environment: 'staging' } }], rowCount: 1 };
+      }
       return { rows: [], rowCount: 1 };
     }),
     connect: vi.fn(),
@@ -41,7 +44,11 @@ vi.mock('../../../db', () => ({
 
 vi.mock('fs', async (orig) => {
   const actual = await (orig as () => Promise<typeof import('fs')>)();
-  return { ...actual, promises: { ...actual.promises, readFile: vi.fn(async () => '-----BEGIN PEM-----') } };
+  const readFile = vi.fn(async (p: unknown) => {
+    if (String(p).includes('unreadable')) throw Object.assign(new Error(`ENOENT: no such file, open '${String(p)}'`), { code: 'ENOENT' });
+    return '-----BEGIN PEM-----';
+  });
+  return { ...actual, promises: { ...actual.promises, readFile } };
 });
 
 vi.mock('../bundle-integrity', () => ({
@@ -134,5 +141,41 @@ describe('PMDA Gateway — 2xx without a receipt identifier', () => {
     expect(result.transmissionId).toBe('PMDA-R-20260905-0001');
     expect(statusesWritten()).toContain('received');
     expect(statusesWritten()).not.toContain('rejected');
+  });
+});
+
+describe('PMDA Gateway — isConfigured', () => {
+  it('is false when the client certificate cannot be read, not only when a variable is missing', async () => {
+    // isConfigured() used to answer true for any failure other than a missing
+    // variable, so an unmounted or rotated-away certificate showed the
+    // gateway as configured until the transmit itself failed.
+    const prior = process.env.PMDA_STAGING_CERT_PATH;
+    process.env.PMDA_STAGING_CERT_PATH = '/tmp/unreadable-cert.pem';
+    try {
+      expect(await new PmdaGateway().isConfigured(7, 'staging')).toBe(false);
+    } finally {
+      process.env.PMDA_STAGING_CERT_PATH = prior;
+    }
+    expect(await new PmdaGateway().isConfigured(7, 'staging')).toBe(true);
+  });
+});
+
+describe('PMDA Gateway — checkStatus says where the status came from', () => {
+  it('a poll the agency answers is source=agency', async () => {
+    responseBody.value = JSON.stringify({ status: 'received' });
+    const result = await new PmdaGateway().checkStatus(777);
+    expect(result.source).toBe('agency');
+    expect(result.pollError ?? null).toBeNull();
+  });
+
+  it('a poll that fails hands back the stored row as source=stored with the reason, not as the agency\'s answer', async () => {
+    // Every gateway used to swallow the failure and return the stored row
+    // labelled like a live result.
+    responseBody.value = '<html>gateway unavailable</html>';
+    const result = await new PmdaGateway().checkStatus(777);
+    expect(result.source).toBe('stored');
+    expect(result.status).toBe('received');
+    expect(typeof result.pollError).toBe('string');
+    expect(result.pollError).not.toBe('');
   });
 });
