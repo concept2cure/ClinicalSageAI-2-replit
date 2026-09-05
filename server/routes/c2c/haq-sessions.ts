@@ -18,11 +18,16 @@ import { Router, type Request, type Response } from 'express';
 import { concept2cureArtifacts, concept2cureReviewAssignments } from '../../../shared/schema';
 import { type GovernedDocumentActionContract } from '../../../shared/types/document-contract';
 import { db } from '../../db';
+import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
+import { recordArtifactProvenance } from '../../services/provenance/artifact-provenance.js';
 import { resolveGovernedContext } from '../../services/concept2cure/governedDocumentContractService';
 import * as crypto from 'crypto';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { authMiddleware } from '../../auth';
-import { requireOrganizationContext, tenantContextMiddleware } from '../../middleware/tenantContext';
+import {
+  requireOrganizationContext,
+  tenantContextMiddleware,
+} from '../../middleware/tenantContext';
 import {
   concept2cureRateLimiter,
   getOrganizationId,
@@ -40,7 +45,6 @@ router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
-
 
 /**
  * PUT /api/concept2cure/projects/:projectId/haq-session
@@ -125,33 +129,48 @@ router.put('/projects/:projectId/haq-session', async (req: Request, res: Respons
         existingMetadata.harness && typeof existingMetadata.harness === 'object'
           ? (existingMetadata.harness as Record<string, unknown>)
           : {};
-      await db
-        .update(concept2cureArtifacts)
-        .set({
-          content: JSON.stringify({ questions }),
-          updatedAt: new Date(),
-          metadata: {
-            ...existingMetadata,
-            questionCount: questions.length,
-            harness: {
-              ...existingHarness,
-              clientTrack: haqUpdateResolution.contract.clientTrack,
-              submissionProgram: haqUpdateResolution.contract.submissionProgram,
-              persona: haqUpdateResolution.contract.persona,
-              regulatorScope: haqUpdateResolution.contract.regulatorScope,
-              documentClass: haqUpdateResolution.contract.documentClass,
-              readinessGate: haqUpdateResolution.contract.readinessGate,
-              workspaceTarget: haqUpdateResolution.contract.workspaceTarget,
-              originSurface: haqUpdateResolution.contract.originSurface,
-              recommendationSource: haqUpdateResolution.contract.recommendationSource,
-              regulatorIntent: haqUpdateResolution.contract.regulatorIntent,
-              gateChecks: haqUpdateResolution.contract.exportEligibility.gateChecks,
-              blockingReasons: haqUpdateResolution.contract.exportEligibility.blockingReasons,
-              readinessOutcome: haqUpdateResolution.contract.exportEligibility.readinessOutcome,
+      // The session write and its provenance row commit together: a document
+      // the platform builds is traceable through concept2cure_provenance_events
+      // or it is not written (the artifact-provenance guard, and Part 11).
+      await db.transaction(async tx => {
+        await tx
+          .update(concept2cureArtifacts)
+          .set({
+            content: JSON.stringify({ questions }),
+            updatedAt: new Date(),
+            metadata: {
+              ...existingMetadata,
+              questionCount: questions.length,
+              harness: {
+                ...existingHarness,
+                clientTrack: haqUpdateResolution.contract.clientTrack,
+                submissionProgram: haqUpdateResolution.contract.submissionProgram,
+                persona: haqUpdateResolution.contract.persona,
+                regulatorScope: haqUpdateResolution.contract.regulatorScope,
+                documentClass: haqUpdateResolution.contract.documentClass,
+                readinessGate: haqUpdateResolution.contract.readinessGate,
+                workspaceTarget: haqUpdateResolution.contract.workspaceTarget,
+                originSurface: haqUpdateResolution.contract.originSurface,
+                recommendationSource: haqUpdateResolution.contract.recommendationSource,
+                regulatorIntent: haqUpdateResolution.contract.regulatorIntent,
+                gateChecks: haqUpdateResolution.contract.exportEligibility.gateChecks,
+                blockingReasons: haqUpdateResolution.contract.exportEligibility.blockingReasons,
+                readinessOutcome: haqUpdateResolution.contract.exportEligibility.readinessOutcome,
+              },
             },
-          },
-        })
-        .where(eq(concept2cureArtifacts.id, existing.id));
+          })
+          .where(eq(concept2cureArtifacts.id, existing.id));
+        await recordArtifactProvenance(queryableFromDrizzle(tx), {
+          artifactId: existing.id,
+          organizationId,
+          eventType: 'edit',
+          eventAction: 'haq_session_update',
+          actorId: userId,
+          details: { questionCount: questions.length },
+          backendRoute: 'PUT /api/concept2cure/projects/:projectId/haq-session',
+          backendService: 'routes/c2c/haq-sessions',
+        });
+      });
 
       return sendSuccess(res, {
         artifactId: existing.artifactId,
@@ -203,36 +222,51 @@ router.put('/projects/:projectId/haq-session', async (req: Request, res: Respons
         );
       }
 
-      await db.insert(concept2cureArtifacts).values({
-        artifactId,
-        projectId: Number(req.params.projectId),
-        organizationId,
-        createdById: userId,
-        title: 'HAQ Session',
-        type: 'haq_session',
-        category: 'data',
-        content: JSON.stringify({ questions }),
-        status: 'draft',
-        version: 1,
-        metadata: {
-          questionCount: questions.length,
-          sourceSystem: 'haq_manager',
-          harness: {
-            clientTrack: haqCreateResolution.contract.clientTrack,
-            submissionProgram: haqCreateResolution.contract.submissionProgram,
-            persona: haqCreateResolution.contract.persona,
-            regulatorScope: haqCreateResolution.contract.regulatorScope,
-            documentClass: haqCreateResolution.contract.documentClass,
-            readinessGate: haqCreateResolution.contract.readinessGate,
-            workspaceTarget: haqCreateResolution.contract.workspaceTarget,
-            originSurface: haqCreateResolution.contract.originSurface,
-            recommendationSource: haqCreateResolution.contract.recommendationSource,
-            regulatorIntent: haqCreateResolution.contract.regulatorIntent,
-            gateChecks: haqCreateResolution.contract.exportEligibility.gateChecks,
-            blockingReasons: haqCreateResolution.contract.exportEligibility.blockingReasons,
-            readinessOutcome: haqCreateResolution.contract.exportEligibility.readinessOutcome,
-          },
-        },
+      await db.transaction(async tx => {
+        const [created] = await tx
+          .insert(concept2cureArtifacts)
+          .values({
+            artifactId,
+            projectId: Number(req.params.projectId),
+            organizationId,
+            createdById: userId,
+            title: 'HAQ Session',
+            type: 'haq_session',
+            category: 'data',
+            content: JSON.stringify({ questions }),
+            status: 'draft',
+            version: 1,
+            metadata: {
+              questionCount: questions.length,
+              sourceSystem: 'haq_manager',
+              harness: {
+                clientTrack: haqCreateResolution.contract.clientTrack,
+                submissionProgram: haqCreateResolution.contract.submissionProgram,
+                persona: haqCreateResolution.contract.persona,
+                regulatorScope: haqCreateResolution.contract.regulatorScope,
+                documentClass: haqCreateResolution.contract.documentClass,
+                readinessGate: haqCreateResolution.contract.readinessGate,
+                workspaceTarget: haqCreateResolution.contract.workspaceTarget,
+                originSurface: haqCreateResolution.contract.originSurface,
+                recommendationSource: haqCreateResolution.contract.recommendationSource,
+                regulatorIntent: haqCreateResolution.contract.regulatorIntent,
+                gateChecks: haqCreateResolution.contract.exportEligibility.gateChecks,
+                blockingReasons: haqCreateResolution.contract.exportEligibility.blockingReasons,
+                readinessOutcome: haqCreateResolution.contract.exportEligibility.readinessOutcome,
+              },
+            },
+          })
+          .returning({ id: concept2cureArtifacts.id });
+        await recordArtifactProvenance(queryableFromDrizzle(tx), {
+          artifactId: created.id,
+          organizationId,
+          eventType: 'generation',
+          eventAction: 'haq_session_create',
+          actorId: userId,
+          details: { questionCount: questions.length, sourceSystem: 'haq_manager' },
+          backendRoute: 'PUT /api/concept2cure/projects/:projectId/haq-session',
+          backendService: 'routes/c2c/haq-sessions',
+        });
       });
 
       return sendSuccess(res, { artifactId, created: true, questionCount: questions.length });
