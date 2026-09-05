@@ -110,6 +110,23 @@ describe('PMDA Gateway — 2xx without a receipt identifier', () => {
     expect(written.some((s) => /^pmda-\d+$/.test(s))).toBe(false);
   });
 
+  it('refuses to transmit without the eCTD sequence number, before any transmittal row exists', async () => {
+    // The sequence used to default to '0001' (and the type to 'initial') in
+    // the agency metadata, so a follow-up whose caller forgot the metadata
+    // was announced to PMDA as an original submission.
+    const req = REQUEST();
+    req.metadata = { applicationId: 'JP-2026-0001', environment: 'staging' } as any;
+    await expect(new PmdaGateway().transmit(req)).rejects.toMatchObject({ errorClass: 'validation', message: /sequence number/ });
+    expect(poolQueries.some((q) => /INSERT INTO submission_transmittals/i.test(q.sql))).toBe(false);
+  });
+
+  it('refuses to transmit without a submission type', async () => {
+    const req = REQUEST();
+    (req as any).submissionType = undefined;
+    await expect(new PmdaGateway().transmit(req)).rejects.toMatchObject({ errorClass: 'validation', message: /submission type/ });
+    expect(poolQueries.some((q) => /INSERT INTO submission_transmittals/i.test(q.sql))).toBe(false);
+  });
+
   it('a 2xx that names a receipt is accepted with that receipt, and nothing else', async () => {
     responseBody.value = JSON.stringify({ receiptId: 'PMDA-R-20260905-0001' });
     const result = await new PmdaGateway().transmit(REQUEST());

@@ -80,7 +80,9 @@ export async function prepareIcsrTransmission(
   input: PrepareIcsrTransmissionInput,
   ctx: IcsrTxCtx,
 ): Promise<IndIcsrTransmissionRow> {
-  const composed = composeE2bR3Icsr(input.event, { icsr: input.icsr ?? null, expedited: true, now: input.now });
+  // C.1.7 (fulfils local expedited criteria) comes from the event's own
+  // classification; it was hardcoded to Yes here regardless of the event.
+  const composed = composeE2bR3Icsr(input.event, { icsr: input.icsr ?? null, now: input.now });
   const transmission = buildIcsrTransmission(composed, {
     gateway: input.gateway,
     senderId: input.senderId,

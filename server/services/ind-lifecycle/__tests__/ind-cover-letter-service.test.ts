@@ -37,6 +37,15 @@ describe('assembleCoverLetter', () => {
     expect(m.gaps).toHaveLength(0);
   });
 
+  it('renders an absent or unparsable date as a placeholder, never as 1 January 1970', () => {
+    const noDate = assembleCoverLetter(input({ date: undefined }));
+    expect(noDate.body).toContain('[Date]');
+    expect(noDate.body).not.toMatch(/1970/);
+    const badDate = assembleCoverLetter(input({ date: 'not a date' }));
+    expect(badDate.body).toContain('[Date]');
+    expect(badDate.body).not.toMatch(/1970|NaN/);
+  });
+
   it('uses the IND number in the RE line when assigned (amendment)', () => {
     const m = assembleCoverLetter(input({ indNumber: '123456', submissionType: 'protocol_amendment' }));
     expect(m.body).toContain('RE: IND 123456 — C2C-001');

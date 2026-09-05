@@ -21,6 +21,7 @@ import {
   resolveToRegistryEntry,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
+  requiredAgencyMetadata
 } from './types';
 import { httpsRequest, insertTransmittal, patchTransmittal, buildMultipart, buildHmac, sha256hex } from './rest-gateway-helpers';
 import { platformTransmittalRecord } from './acknowledgement';
@@ -60,6 +61,7 @@ export class HsaPrismGateway implements SubmissionGateway {
   async transmit(req: GatewayTransmitRequest): Promise<GatewayTransmitResult> {
     const entry = req.submissionType ? resolveToRegistryEntry(req.submissionType) : null;
     const normReq = entry ? { ...req, submissionType: entry.applicationType } : req;
+    const agency = requiredAgencyMetadata(normReq);
     const id = await insertTransmittal('sg', 'hsa_prism', 'ectd', normReq);
     try {
       const creds = loadCreds(normReq.environment);
@@ -69,8 +71,8 @@ export class HsaPrismGateway implements SubmissionGateway {
       const meta = Buffer.from(JSON.stringify({
         orgId: creds.orgId,
         applicationId: normReq.metadata?.applicationId ?? null,
-        sequenceNumber: normReq.metadata?.sequence ?? '0000',
-        submissionType: normReq.submissionType ?? 'initial',
+        sequenceNumber: agency.sequenceNumber,
+        submissionType: agency.submissionType,
         sha256: normReq.bundle.sha256,
       }), 'utf8');
       const body = buildMultipart(boundary, meta, zipBuf, 'ectd-sg.zip');

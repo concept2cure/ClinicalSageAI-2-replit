@@ -37,6 +37,7 @@ import {
   resolveToRegistryEntry, getSubmissionTypeLabel,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
+  requiredAgencyMetadata
 } from './types';
 
 interface HcCredentials {
@@ -214,6 +215,7 @@ export class HealthCanadaGateway implements SubmissionGateway {
       ? { ...req, submissionType: resolvedEntry.applicationType }
       : req;
 
+    const agency = requiredAgencyMetadata(normalizedReq);
     const transmittalId = await createTransmittalRow(normalizedReq);
     try {
       const creds = await loadHcCredentials(normalizedReq.environment);
@@ -225,8 +227,8 @@ export class HealthCanadaGateway implements SubmissionGateway {
         JSON.stringify({
           companyId:      creds.companyId,
           dossierId:      normalizedReq.metadata?.applicationId ?? normalizedReq.metadata?.dossierId ?? null,
-          sequenceNumber: normalizedReq.metadata?.sequence ?? '0000',
-          submissionType: normalizedReq.submissionType ?? 'initial',
+          sequenceNumber: agency.sequenceNumber,
+          submissionType: agency.submissionType,
           productName:    normalizedReq.metadata?.productName ?? null,
           sha256:         normalizedReq.bundle.sha256,
         }),
