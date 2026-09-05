@@ -80,13 +80,17 @@ Either clears a bundle assembled before the change and bumps the package's conte
 revision; assemble again.
 
 Concurrent changes are decided under the package row lock, never from the snapshot an
-assembly started with. A bundle is not stored, its zip (local and durable copies) is
-removed and the discard is recorded when, while it was being built, an artifact was
-mapped or unmapped (`STALE_ASSEMBLY`, `gate: content_changed`) or the regulatory
-identifiers changed (`gate: identifiers_changed`). The response is a 409; assemble again.
-An artifact's own content edited after assembly changes nothing on the package row, so
-the revision cannot see it; the transmit gate catches it through the content fingerprint
-(step 3).
+assembly started with. A mapping change commits in one transaction with the package's
+content revision and the clearing of the stale bundle (and of the preflight summary that
+described it), so a failure anywhere leaves neither a half-recorded mapping nor a stale
+bundle behind. A bundle is not stored, its zip (local and durable copies) is removed and
+the discard is recorded when, while it was being built, an artifact was mapped or
+unmapped (`STALE_ASSEMBLY`, `gate: content_changed`) or the regulatory identifiers
+changed (`gate: identifiers_changed`). The response is a 409; assemble again.
+An artifact's own content or declared CTD section changed through the artifact routes
+after assembly changes nothing on the package row, so no bundle is cleared proactively;
+the transmit gate refuses such a bundle through the content fingerprint (step 3) and
+preflight reports it.
 
 The assemble response returns the bundle descriptor with counts only; the findings
 themselves are persisted on the package and served by

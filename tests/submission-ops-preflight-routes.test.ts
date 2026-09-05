@@ -398,6 +398,35 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it('cannot identify a bundle without a sha256: such a run is superseded, never stored against whatever is there now', async () => {
+    process.env.FDA_VALIDATOR_URL = 'https://validator.example.invalid/run';
+    const { sha256: _none, ...unidentified } = BUNDLE;
+    dbState.pkg = pkgWith({ regulatory: IDS, bundle: { ...unidentified, path: '/bundles/a.zip' } });
+    runHttpValidatorFn.mockImplementationOnce(async () => {
+      // Replaced meanwhile by another sha-less descriptor with a different outcome.
+      dbState.pkg = pkgWith({ regulatory: IDS, bundle: { ...unidentified, path: '/bundles/b.zip', validation: { errorCount: 4, warningCount: 0, infoCount: 0, findings: [] } } });
+      return [];
+    });
+    const res = await preflight();
+    expect(res.status).toBe(409);
+    expect(res.body.gate).toBe('bundle_superseded');
+    expect(dbState.updates).toEqual([]);
+  });
+
+  it('when the lock cannot be taken after the bundle was superseded, the findings are NOT returned as the package’s (409, not 200 persisted:false)', async () => {
+    process.env.FDA_VALIDATOR_URL = 'https://validator.example.invalid/run';
+    dbState.pkg = pkgWith({ regulatory: IDS, bundle: BUNDLE });
+    runHttpValidatorFn.mockImplementationOnce(async () => {
+      dbState.pkg = pkgWith({ regulatory: IDS }); // bundle cleared meanwhile
+      return [];
+    });
+    connectFn.mockRejectedValueOnce(new Error('pool exhausted'));
+    const res = await preflight();
+    expect(res.status).toBe(409);
+    expect(res.body.gate).toBe('bundle_superseded');
+    expect(dbState.updates).toEqual([]);
+  });
+
   it('persists against the LOCKED row: a change that landed while the validator ran is kept, not reverted', async () => {
     process.env.FDA_VALIDATOR_URL = 'https://validator.example.invalid/run';
     dbState.pkg = pkgWith({ regulatory: IDS, bundle: BUNDLE });

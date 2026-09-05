@@ -98,7 +98,10 @@ function makeDb() {
     where() { return chain; },
     orderBy() {
       if (mode === 'mapped') {
-        return Promise.resolve(dbState.mappedByCall.shift() ?? []);
+        // An entry may be a function: a concurrent change that lands DURING
+        // the content read (it mutates dbState and returns the rows).
+        const next = dbState.mappedByCall.shift();
+        return Promise.resolve(typeof next === 'function' ? next() : next ?? []);
       }
       // sections query resolves to the sections array.
       return Promise.resolve(dbState.sections);
@@ -299,6 +302,32 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(unlinkFn).toHaveBeenCalledTimes(1);
     const ledger = vi.mocked(recordGovernedAction).mock.calls.at(-1)![1] as any;
     expect(ledger.payload).toMatchObject({ change: 'assembly-discarded', cause: 'content_changed' });
+  });
+
+  it('captures the revision BEFORE reading content: a mapping change that lands during the content read discards the zip too', async () => {
+    // A route that captured the revision after its content read (or re-read
+    // the package right before storing) would miss exactly this window.
+    dbState.pkg = lockedPkg({ foo: 'bar', regulatory: REGULATORY, contentRevision: 3 });
+    dbState.sections = [{ id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 }];
+    dbState.mappedByCall = [() => {
+      dbState.pkg = lockedPkg({ foo: 'bar', regulatory: REGULATORY, contentRevision: 4 });
+      return [art('co', null)];
+    }];
+    const res = await post();
+    expect(res.status).toBe(409);
+    expect(res.body.gate).toBe('content_changed');
+    expect(dbState.updateSet).toBeNull();
+    expect(unlinkFn).toHaveBeenCalledTimes(1);
+  });
+
+  it('stores the new bundle WITHOUT the previous bundle’s preflight summary (a summary that outlives its bundle is aggregated as current)', async () => {
+    dbState.pkg = lockedPkg({ foo: 'bar', regulatory: REGULATORY, preflight: { bundleSha256: 'e'.repeat(64), errorCount: 2, blocking: true } });
+    dbState.sections = [{ id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('co', null)]];
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(dbState.updateSet.metadata.preflight).toBeUndefined();
+    expect(dbState.updateSet.metadata.foo).toBe('bar');
   });
 
   it('a package that never recorded a content revision is protected too: the first mapping change during assembly discards the bundle', async () => {

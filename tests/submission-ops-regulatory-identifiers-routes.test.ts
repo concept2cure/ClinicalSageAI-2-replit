@@ -207,16 +207,32 @@ describe('PUT /api/submission-ops/packages/:packageId/regulatory-identifiers', (
     });
   });
 
-  it('re-recording the SAME identifiers keeps an existing bundle (nothing about its backbone changed)', async () => {
+  it('re-recording the SAME identifiers keeps an existing bundle and its preflight summary (nothing about its backbone changed)', async () => {
     const bundle = { path: '/bundles/current.zip', sha256: 'a'.repeat(64), sizeBytes: 10, format: 'ectd' };
+    const preflight = { bundleSha256: 'a'.repeat(64), errorCount: 0, blocking: false };
     dbState.pkg = pkgWith({
       regulatory: { applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics, Inc.' },
       bundle,
+      preflight,
     });
     const res = await put(GOOD);
     expect(res.status).toBe(200);
     expect(res.body.data).toMatchObject({ changed: false, staleBundleCleared: false });
     expect(dbState.updateSet.metadata.bundle).toEqual(bundle);
+    expect(dbState.updateSet.metadata.preflight).toEqual(preflight);
+  });
+
+  it('CHANGED identifiers drop the preflight summary together with the bundle it described', async () => {
+    dbState.pkg = pkgWith({
+      regulatory: { applicationNumber: 'IND000001', applicantId: 'DUNS-1', applicantName: 'Old Name' },
+      bundle: { path: '/bundles/old.zip', sha256: 'f'.repeat(64), sizeBytes: 10, format: 'ectd' },
+      preflight: { bundleSha256: 'f'.repeat(64), errorCount: 0, blocking: false },
+    });
+    const res = await put(GOOD);
+    expect(res.status).toBe(200);
+    expect(res.body.data.staleBundleCleared).toBe(true);
+    expect(dbState.updateSet.metadata.bundle).toBeUndefined();
+    expect(dbState.updateSet.metadata.preflight).toBeUndefined();
   });
 
   it('accepts the numeric row id as well as the pkg_ text id (the dispatch surface uses the numeric one)', async () => {

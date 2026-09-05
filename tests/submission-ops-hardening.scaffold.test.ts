@@ -44,6 +44,9 @@ vi.mock('drizzle-orm', () => ({
   inArray: vi.fn(() => ({ __op: 'inArray' })),
   isNull: vi.fn(() => ({ __op: 'isNull' })),
   asc: vi.fn(() => ({ __op: 'asc' })),
+  // The route now composes leaf file names through the leaf-source resolver,
+  // whose schema imports declare Drizzle relations at module load.
+  relations: vi.fn(() => ({})),
 }));
 
 vi.mock('../server/submission-ops/policy-engine', () => ({
