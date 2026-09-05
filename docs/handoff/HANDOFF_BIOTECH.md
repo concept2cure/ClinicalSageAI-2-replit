@@ -458,6 +458,36 @@ Still red on trunk and NOT this stream's: the ESLint warning ratchet stands 14
 over its 6637 baseline (unused-vars +6, max-lines +5, complexity +2) from other
 streams; this batch and the eleventh are net-neutral against it.
 
+### Thirteenth audit — the CMC Module 3 export gate and its readiness read (2026-09-05)
+
+- The final-export gate and `GET /readiness/:projectId` each built their own
+  `documentState` for the governed-decision fabric, and both passed the literals
+  `hasProvenance: true` / `provenanceComplete: true`. Provenance completeness is
+  a REQUIRED, blocking export check ("audit trail required for export"), so
+  asserting it disabled the control: a section with no `cmc_section_lineage` row
+  — content with no traceable source — cleared it. Now derived from the lineage
+  rows the compile path writes with every section; a gap refuses the export and
+  names the count.
+- One shared evaluation (`evaluateModule3GovernedState`) for both callers, so
+  the readiness read cannot out-run the gate it previews. It used to compute
+  `exportReady` from approvals alone and stamp a degraded governed state beside
+  it — "export ready", with Place into submission revealed, in the exact state
+  where the gate fails closed. The read now carries `governedStateEvaluated`,
+  and the surface states both reasons alongside the counts it already listed.
+- `hasPlacement` / `placementValid` stay `true` and say why: the gate runs
+  BEFORE placement and is what authorizes it.
+
+Checked and NOT changed: `aiGenerated: false` is correct for this table — the
+AI narrative refinement runs in the orchestrator's `m3.refine` step and does not
+write `cmc_module3_sections`; the placement path's own gate call, tenant checks,
+lifecycle `replace` derivation and skip reasons; `canFinalizeExport` (now run
+over the real contradiction rows rather than a reconstructed count).
+
+Open, not changed: `server/services/cmc/readiness.ts` exports a `readinessScore`
+that returns 100 for a project with nothing assessed; it is unreferenced (and
+sits in the unreferenced-modules baseline), so it was left alone rather than
+given a caller.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -705,6 +735,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-05 | A | Tenth audit — Part 11 sequence chain | Step-bound, single-use, content-bound sequence signatures; atomic chained audit on freeze/dispatch/transmit; no re-send; SoD owner for sequences — proven in the NDA golden journey | §1 above |
 | 2026-09-05 | A | Eleventh audit — Part 11 UX on transmit + sign dialogs | Transmit writes a real electronic signature (declared meaning, printed name, verified factors, bundle-digest binding) in the ledger transaction; meaning required on the route and the AnA path; attribution on the log; refused credentials leave the field — revert-proven | §1 above |
 | 2026-09-05 | A | Twelfth audit — submission-package orchestrator | Resumed runs face the same §11.70 sign gate; a skipped gate is `partial`, not `complete`; a failed run/audit read is not a missing run; regenerate persists what it computed; unrecorded sample size is not n=0 — revert-proven | §1 above |
+| 2026-09-05 | A | Thirteenth audit — CMC Module 3 export gate | Provenance derived from section lineage instead of asserted, so a required blocking check works; one shared governed-state evaluation, so readiness cannot out-run the gate; unevaluated fabric is not clearance — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.
