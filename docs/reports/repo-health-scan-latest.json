@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T09:12:52.936Z",
+  "generatedAt": "2026-09-05T09:46:29.911Z",
   "git": {
-    "sha": "25ebc7cab72fd6a788213f4ac058141d789e47c2",
+    "sha": "de4697a6547213ff27683dc767a22827f3e2ff0e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2061,7 +2061,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "bytes": 130739
+        "bytes": 130705
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",

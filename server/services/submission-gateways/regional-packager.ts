@@ -38,6 +38,7 @@ import { ValidationError, resolveToRegistryEntry, getSubmissionTypeLabel } from 
 // also need its `Region` type, and the packager is their entry point.
 export type { Region } from './types';
 import { finalizePdfA } from '../ectd/pdfa-pipeline';
+import { classifyPdfA } from '../ectd/pdfa-detect';
 import {
   evaluateSubmissionGrade,
   pdfaRequiredFromEnv,
@@ -102,19 +103,24 @@ async function finalizeLeafBytes(
   buf: Buffer,
   fileName: string,
   skipPdfaConversion = false,
-): Promise<{ bytes: Buffer; md5Override?: string; isPdf: boolean; converted: boolean }> {
+): Promise<{ bytes: Buffer; md5Override?: string; isPdf: boolean; converted: boolean; encrypted: boolean }> {
   const isPdf = fileName.toLowerCase().endsWith('.pdf');
-  if (!isPdf) return { bytes: buf, isPdf: false, converted: false };
+  if (!isPdf) return { bytes: buf, isPdf: false, converted: false, encrypted: false };
+  // An /Encrypt dictionary is detected here on every path, including the
+  // deterministic one that skips PDF/A. finalizePdfA used to note it only as
+  // a warning string the packager then discarded, so a secured leaf shipped
+  // indistinguishable from any other unconverted PDF.
+  const encrypted = classifyPdfA(buf).encrypted;
   // Deterministic path: skip PDF/A normalization so the shipped bytes equal the
   // input bytes exactly. Used for validation-only assembly (e.g. the submission
   // orchestrator) where byte-determinism across re-renders matters more than
   // PDF/A-1b normalization — Ghostscript conversion embeds timestamps and is
   // non-deterministic, which would break a re-derive-and-compare drift check.
-  if (skipPdfaConversion) return { bytes: buf, isPdf: true, converted: false };
+  if (skipPdfaConversion || encrypted) return { bytes: buf, isPdf: true, converted: false, encrypted };
   const result = await finalizePdfA(buf);
-  if (!result.converted) return { bytes: buf, isPdf: true, converted: false };
+  if (!result.converted) return { bytes: buf, isPdf: true, converted: false, encrypted };
   const bytes = Buffer.from(result.pdfBytes);
-  return { bytes, md5Override: createHash('md5').update(bytes).digest('hex'), isPdf: true, converted: true };
+  return { bytes, md5Override: createHash('md5').update(bytes).digest('hex'), isPdf: true, converted: true, encrypted };
 }
 
 export interface PackagerInput {
@@ -574,8 +580,14 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     }
 
     const raw = await fs.readFile(leaf.sourcePath);
-    const { bytes, md5Override, isPdf, converted } = await finalizeLeafBytes(raw, leaf.fileName, input.skipPdfaConversion);
-    grades.push({ fileName: leaf.fileName, isPdf, converted });
+    const { bytes, md5Override, isPdf, converted, encrypted } = await finalizeLeafBytes(raw, leaf.fileName, input.skipPdfaConversion);
+    grades.push({ fileName: leaf.fileName, isPdf, converted, encrypted });
+    if (encrypted) {
+      throw new ValidationError(
+        `Leaf '${leaf.fileName}' is an encrypted/secured PDF; the eCTD PDF specification prohibits security settings and the package cannot ship it.`,
+        [{ ruleId: 'LEAF-ENCRYPTED', severity: 'error', filePath: leaf.fileName }],
+      );
+    }
     // Hash the EXACT bytes about to be written into the zip — never a caller-
     // supplied leaf.md5. The eCTD checksum contract requires index-md5 to match
     // the shipped file; a pre-computed leaf.md5 can be stale/wrong (computed

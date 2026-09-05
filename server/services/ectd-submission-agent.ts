@@ -9,6 +9,7 @@
  */
 
 import crypto from 'crypto';
+import { FILENAME_PATTERN } from './ectd/ectd-regional-rules';
 import { getPool } from '../db';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -62,7 +63,11 @@ const REQUIRED_MODULES: Record<string, string[]> = {
   annual_report: ['m1'],
 };
 
-const VALID_FILE_NAME_PATTERN = /^[a-z0-9][a-z0-9_\-]*\.[a-z0-9]+$/;
+// The eCTD file-name rule is FILENAME_PATTERN (ectd-regional-rules): lowercase
+// a-z, 0-9, '.' and '-', at most 64 characters including the extension. A
+// second, weaker pattern here allowed '_' and had no length bound, so a
+// 200-character name "followed naming conventions".
+const hasExtension = (name: string) => /\.[a-z0-9]+$/.test(name);
 
 // ─── Service ─────────────────────────────────────────────────────────────────
 
@@ -191,14 +196,14 @@ export class EctdSubmissionAgent {
 
     // Rule 1: File naming convention
     for (const doc of docs) {
-      const passed = VALID_FILE_NAME_PATTERN.test(doc.file_name);
+      const passed = FILENAME_PATTERN.test(doc.file_name) && hasExtension(doc.file_name);
       validations.push({
         ruleId: 'FILE_NAMING', ruleCategory: 'naming', severity: passed ? 'info' : 'error',
         message: passed
-          ? `File "${doc.file_name}" follows naming conventions`
-          : `File "${doc.file_name}" violates eCTD naming rules (lowercase, no spaces)`,
+          ? `File "${doc.file_name}" follows the eCTD file-name rule`
+          : `File "${doc.file_name}" breaks the eCTD file-name rule (lowercase a-z, 0-9, '.', '-'; at most 64 characters including the extension)`,
         sectionCode: doc.section_code, documentPath: doc.document_path,
-        passed, fixSuggestion: passed ? null : 'Rename file to use only lowercase letters, digits, hyphens, and underscores',
+        passed, fixSuggestion: passed ? null : 'Rename the file to lowercase letters, digits, hyphens and a single extension, at most 64 characters',
       });
     }
 
@@ -217,17 +222,25 @@ export class EctdSubmissionAgent {
       });
     }
 
-    // Rule 3: PDF/A compliance check (stub)
+    // Rule 3: PDF/A status. The platform does not verify PDF/A here — the flag
+    // is what the uploader declared. A null used to read as "status
+    // acceptable"; an unassessed document is not an acceptable one.
     const pdfDocs = docs.filter((d: any) => d.document_type === 'pdf');
     for (const doc of pdfDocs) {
-      const passed = doc.pdf_a_compliant !== false; // null treated as unknown/ok
+      const declared: boolean | null = doc.pdf_a_compliant === true ? true : doc.pdf_a_compliant === false ? false : null;
+      const passed = declared === true;
       validations.push({
         ruleId: 'PDF_A_CHECK', ruleCategory: 'content', severity: passed ? 'info' : 'warning',
-        message: passed
-          ? `Document "${doc.file_name}" PDF/A status acceptable`
-          : `Document "${doc.file_name}" is not PDF/A compliant`,
+        message: declared === true
+          ? `Document "${doc.file_name}" is declared PDF/A compliant by the uploader; not verified by the platform`
+          : declared === false
+            ? `Document "${doc.file_name}" is not PDF/A compliant`
+            : `Document "${doc.file_name}" PDF/A status has not been verified`,
         sectionCode: doc.section_code, documentPath: doc.document_path,
-        passed, fixSuggestion: passed ? null : 'Convert document to PDF/A format before submission',
+        passed,
+        fixSuggestion: passed ? null : declared === false
+          ? 'Convert document to PDF/A format before submission'
+          : 'Verify the document is PDF/A and record the result before submission',
       });
     }
 

@@ -281,7 +281,13 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
       : ``,
     ``,
     `2.4.5 INTEGRATED OVERVIEW AND CONCLUSIONS`,
-    `Based on the nonclinical program, the safety profile of ${ds} supports the proposed clinical investigational plan. ${gaps.length > 0 ? `Open items: ${gaps.join('; ')}.` : 'No nonclinical issues preclude clinical development.'}`,
+    // The "supports the plan" sentence used to print whenever any nonclinical
+    // study existed, immediately followed by the list of study categories that
+    // did not — the assertion and the gap list contradicted each other in one
+    // paragraph. It is only drawn when nothing is open.
+    gaps.length > 0
+      ? `The nonclinical assessment of ${ds} is incomplete; no conclusion on the proposed clinical investigational plan is drawn pending: ${gaps.join('; ')}.`
+      : `Based on the nonclinical program, the safety profile of ${ds} supports the proposed clinical investigational plan. No nonclinical issues preclude clinical development.`,
   ].filter(Boolean).join('\n');
 
   const tables: GeneratedTable[] = [];
@@ -359,11 +365,17 @@ export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
   if (totalSubjects === 0) gaps.push('safety database (no exposure data)');
 
   const efficacyShown = pivotal.length > 0;
+  // The benefit-risk conclusion is the sponsor's medical and regulatory
+  // judgment. This used to print "the benefit-risk balance is favorable"
+  // whenever one pivotal study existed, reciting the SAE and death counts in
+  // the same sentence without either gating the word. The counts are stated;
+  // the conclusion is left for a reviewer and recorded as an open item.
+  if (csrs.length > 0 && efficacyShown) gaps.push('benefit-risk conclusion (sponsor medical/regulatory judgment; not drawn automatically)');
   const benefitRisk =
     csrs.length === 0
       ? '[Benefit-risk cannot be concluded — no clinical data]'
       : efficacyShown
-        ? `Efficacy is supported by ${pivotal.length} pivotal study/ies; against a safety database of ${totalSubjects} subjects with ${totalSAEs} serious adverse event(s) and ${totalDeaths} death(s), the benefit-risk balance is favorable for ${ctx.indication}${gaps.length > 0 ? ', pending the open items below' : ''}.`
+        ? `Efficacy evidence: ${pivotal.length} pivotal study/ies. Safety database: ${totalSubjects} subjects with ${totalSAEs} serious adverse event(s) and ${totalDeaths} death(s). [Benefit-risk conclusion for ${ctx.indication} requires the sponsor's medical and regulatory judgment of these data; it is not drawn automatically.]`
         : `Efficacy is not yet established (no pivotal study); the benefit-risk balance cannot be concluded for ${ctx.indication} until controlled efficacy data are available.`;
 
   const narrative = [

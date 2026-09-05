@@ -182,6 +182,38 @@ status poll (SFTP `/outgoing/` ack1/ack2/ack3 reconciliation). The stored row is
 now labelled as such; the poll itself needs the ESG account and the ack format
 verified against a live test account.
 
+### Fifth audit — CTD Module 2/3 placement and the eCTD document gate (2026-09-05)
+
+Two read-only audits. Fixed on `concept2cure-v2`, each with a test that fails
+on revert:
+
+- Module 2.5: the benefit-risk conclusion is no longer written by the builder.
+  It printed "the benefit-risk balance is favorable" whenever one pivotal
+  study existed, reciting the SAE and death counts in the same sentence
+  without either gating the word. The counts are stated; the conclusion is a
+  recorded open item for the sponsor's judgment.
+- Module 2.4: "the safety profile supports the proposed clinical plan" is only
+  drawn when no study category is open; it used to precede the list of the
+  categories that were missing.
+- Module 3 placement files a section already placed in an earlier sequence of
+  the same submission as `replace` of that leaf (parent link), not `new`.
+- 3.2.P.2 dissolution tables: the Batch column shows a batch number or a dash,
+  never the product name.
+- Leaf file names are composed within the 64-character eCTD rule (the label
+  gives way; the source key stays whole), and `validateEctdPackage` — the
+  validator the export route runs by default — refuses any packaged file name
+  that breaks the rule.
+- The packager refuses an encrypted/secured PDF leaf outright (`LEAF-ENCRYPTED`)
+  instead of folding the detection into a PDF/A warning it then discarded.
+- The parallel `/api/ectd-submissions` agent: an unverified PDF/A status is not
+  a pass, a declared one says who declared it, and its file-name rule is the
+  canonical one (it allowed `_` and had no length bound).
+
+Decision item, not changed: `services/regulatory/ind-ectd-sections.ts` has no
+`m5.2` (Tabular Listing of All Clinical Studies), so readiness can never flag
+it. Early-phase INDs often carry nothing there; whether it belongs in the IND
+required-section table is a regulatory call.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -421,6 +453,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-05 | A | Third audit fixes — IND lifecycle + gateways | Receipt-less 2xx refused on 11 gateways; ledger receipt key; amendment placement + cover letter; 312.33 due date; ICSR ACK refusals; transmit refusals — all revert-proven | §1 above |
 | 2026-09-05 | A | Third audit, remainder | ESG MDN verified before acceptance; sequence/type required on every gateway; C.1.7 from the event; no epoch dates; unassessed expectedness stated as such — all revert-proven; finding 12 did not reproduce | §1 above |
 | 2026-09-05 | A | Fourth audit — ESG acks + IND assembly | isConfigured honest on 13 gateways; status provenance (agency/stored + pollError) end to end; orphaned assemble/generate-form routes and toy backbone/ICSR generators removed — revert-proven | §1 above |
+| 2026-09-05 | A | Fifth audit — M2/M3 placement + eCTD document gate | No automated benefit-risk / supports-the-plan conclusions; Module 3 replace lifecycle; 64-char leaf names composed and validated; encrypted leaves refused; agent PDF/A not-verified ≠ pass — revert-proven; m5.2 recorded as a decision | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.
