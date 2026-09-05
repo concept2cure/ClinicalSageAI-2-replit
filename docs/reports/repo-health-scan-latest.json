@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T08:09:51.206Z",
+  "generatedAt": "2026-09-05T08:16:19.887Z",
   "git": {
-    "sha": "fd39adaf6c80b6eb7864eaffc629080252d7b488",
+    "sha": "a28cc9015e3c8cfb1c0dd29974d0d90453844a62",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -629,6 +629,15 @@
           "client/src/concept2cure/v2/surfaces/Nonclinical.tsx",
           "server/routes/nonclinical.ts",
           "shared/schema/nonclinical.ts"
+        ]
+      },
+      {
+        "basename": "notifications",
+        "count": 3,
+        "paths": [
+          "server/routes/c2c/notifications.ts",
+          "ui_kits/mdx/data/notifications.js",
+          "ui_kits/mdx/surfaces/Notifications.jsx"
         ]
       },
       {
@@ -1415,14 +1424,6 @@
         ]
       },
       {
-        "basename": "notifications",
-        "count": 2,
-        "paths": [
-          "ui_kits/mdx/data/notifications.js",
-          "ui_kits/mdx/surfaces/Notifications.jsx"
-        ]
-      },
-      {
         "basename": "oncology",
         "count": 2,
         "paths": [
@@ -1971,7 +1972,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 604771
+        "bytes": 574304
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2129,7 +2130,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 16059
+        "lines": 15206
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2265,7 +2266,7 @@
       },
       {
         "file": "server/routes/c2c/reviews.ts",
-        "lines": 2242
+        "lines": 2240
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
@@ -2489,7 +2490,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 399,
+      "duplicateGroups": 400,
       "largeByBytes": 29,
       "largeByLines": 75
     },
