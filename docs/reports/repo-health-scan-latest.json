@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T13:32:00.825Z",
+  "generatedAt": "2026-09-05T19:01:38.742Z",
   "git": {
-    "sha": "5aaa0a702d5df2c54ce5cb62cb92b47abb889e02",
+    "sha": "14683658a8932c16e208a6034d558627e2029e95",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2017,7 +2017,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 174925
+        "bytes": 176730
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2092,10 +2092,6 @@
         "bytes": 116112
       },
       {
-        "file": "server/routes/submission-ops.ts",
-        "bytes": 115611
-      },
-      {
         "file": "server/services/intelligent-report-engine.ts",
         "bytes": 115224
       },
@@ -2138,6 +2134,10 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
+      },
+      {
+        "file": "server/routes/submission-ops.ts",
+        "bytes": 106684
       }
     ],
     "largeFilesByLines": [
@@ -2175,7 +2175,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4571
+        "lines": 4610
       },
       {
         "file": "server/storage.ts",
@@ -2222,16 +2222,16 @@
         "lines": 2958
       },
       {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2930
-      },
-      {
         "file": "server/src/routes/stability.router.ts",
         "lines": 2832
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
         "lines": 2759
+      },
+      {
+        "file": "server/routes/submission-ops.ts",
+        "lines": 2710
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
