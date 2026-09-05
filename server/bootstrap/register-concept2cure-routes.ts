@@ -5,6 +5,7 @@ import notificationRoutes from '../routes/c2c/notifications';
 import communicationCenterRoutes from '../routes/c2c/communication-center';
 import taskRoutes from '../routes/c2c/tasks';
 import conversationRoutes from '../routes/c2c/conversations';
+import exportRoutes from '../routes/c2c/exports';
 import computeRoutes from '../routes/compute';
 import scheduleOfEventsRoutes from '../routes/project-schedule-of-events';
 import { authenticateToken } from '../middleware/auth.js';
@@ -20,6 +21,7 @@ export function registerConcept2CureRoutes(app: Express) {
   app.use('/api/concept2cure', authenticateToken, communicationCenterRoutes);
   app.use('/api/concept2cure', authenticateToken, taskRoutes);
   app.use('/api/concept2cure', authenticateToken, conversationRoutes);
+  app.use('/api/concept2cure', authenticateToken, exportRoutes);
   app.use('/api/concept2cure', authenticateToken, concept2cureRoutes);
   app.use('/api/concept2cure/compute', authenticateToken, computeRoutes);
   // AnA Schedule of Events — shares the project URL space (/projects/:id/...);

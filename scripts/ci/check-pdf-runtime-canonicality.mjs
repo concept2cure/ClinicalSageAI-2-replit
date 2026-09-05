@@ -41,7 +41,8 @@ const APPROVED = new Set([
   'server/services/biotech-artifact-generator.ts',
   'server/services/universal-packager.ts',
   'server/services/tools/index.ts',
-  'server/routes/concept2cure.ts',
+  // The Concept2Cure export family (L53 slice 7 moved it out of routes/concept2cure.ts).
+  'server/routes/c2c/exports.ts',
   'server/src/routes/stability.router.ts',
   // Additional pre-existing consumers (documented at gate-introduction time,
   // 2026-05-07). New PDF surfaces must use pdf-converter.ts instead of

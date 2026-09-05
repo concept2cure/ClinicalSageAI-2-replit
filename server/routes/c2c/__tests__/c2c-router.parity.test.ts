@@ -73,8 +73,7 @@ describe('notification, work-item and escalation routes live in one router', () 
       expect(inNotifications.has(p), `${p} should be on the notifications router`).toBe(true);
       expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
     }
-    // The submission-package export stayed with the export domain on purpose.
-    expect(inMain.has('POST /projects/:projectId/submission-package')).toBe(true);
+    // The submission-package export went with the export domain (slice 7), not here.
     expect(inNotifications.has('POST /projects/:projectId/submission-package')).toBe(false);
   });
 });
@@ -151,6 +150,27 @@ describe('conversation mutations live in one router', () => {
     const inMain = new Set(registered(main));
     for (const p of CONVERSATION_PATHS) {
       expect(inConv.has(p), `${p} should be on the conversations router`).toBe(true);
+      expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
+    }
+  });
+});
+
+const EXPORT_PATHS = [
+  'POST /artifacts/export-docx',
+  'POST /artifacts/export-pdf',
+  'POST /artifacts/export-pptx',
+  'GET /documents/download/:filename',
+  'POST /projects/:projectId/submission-package',
+];
+
+describe('the export family lives in one router', () => {
+  it('the exports router answers every export path, and the main router none', async () => {
+    const exports_ = (await import('../exports')).default as unknown as { stack: Layer[] };
+    const main = (await import('../../concept2cure')).default as unknown as { stack: Layer[] };
+    const inExports = new Set(registered(exports_));
+    const inMain = new Set(registered(main));
+    for (const p of EXPORT_PATHS) {
+      expect(inExports.has(p), `${p} should be on the exports router`).toBe(true);
       expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
     }
   });
