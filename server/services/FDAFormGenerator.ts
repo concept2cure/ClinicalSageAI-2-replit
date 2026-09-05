@@ -385,7 +385,12 @@ export default class FDAFormGenerator {
       deviceName: fda510kProject?.deviceName || 'Not Specified',
       intendedUse,
       indications,
-      prescriptionUse: workflowData?.device_information?.prescriptionUse !== false,
+      // Both opt-IN. These were asymmetric — OTC `=== true` but prescription
+      // `!== false` — so a device with no device_information at all rendered a
+      // Form 3881 asserting "Prescription Use (21 CFR 801 Subpart D)", a
+      // regulatory-use classification nobody entered. Neither box is checked
+      // until someone says which it is.
+      prescriptionUse: workflowData?.device_information?.prescriptionUse === true,
       overCounterUse: workflowData?.device_information?.overCounterUse === true,
       patientPopulation: workflowData?.device_information?.patientPopulation || '',
       predicateDevice: workflowData?.predicate_comparison?.predicateDevice || '',
@@ -433,7 +438,15 @@ export default class FDAFormGenerator {
         typeof workflowData?.certification?.clinicalStudiesConducted === 'boolean'
           ? workflowData.certification.clinicalStudiesConducted
           : undefined,
-      financialInterests: workflowData?.certification?.financialInterests || false,
+      // Tri-state, for the same reason as clinicalStudies directly above: the
+      // renderer checks the "No financial interests to disclose" box whenever
+      // this is falsy, so `|| false` turned "nobody has answered yet" into an
+      // affirmative 21 CFR Part 54 certification under the certifier's typed
+      // name. Absence is not a disclosure.
+      financialInterests:
+        typeof workflowData?.certification?.financialInterests === 'boolean'
+          ? workflowData.certification.financialInterests
+          : undefined,
       deviceCompliance: workflowData?.certification?.deviceCompliance === true,
       truthfulStatement: workflowData?.certification?.truthfulStatement === true,
       // Never fabricate an execution date. A signature date comes from the actual
@@ -843,13 +856,17 @@ export default class FDAFormGenerator {
     <div style="margin-left: 30px; margin-top: 15px;">
       <p><strong>If clinical studies were conducted:</strong></p>
       <div class="checkbox-group">
-        <input type="checkbox" class="checkbox" ${!data.financialInterests ? 'checked' : ''}>
+        <input type="checkbox" class="checkbox" ${data.financialInterests === false ? 'checked' : ''}>
         <label>No financial interests to disclose (Form FDA 3454 attached)</label>
       </div>
       <div class="checkbox-group">
-        <input type="checkbox" class="checkbox" ${data.financialInterests ? 'checked' : ''}>
+        <input type="checkbox" class="checkbox" ${data.financialInterests === true ? 'checked' : ''}>
         <label>Financial interests disclosed (Form FDA 3455 attached)</label>
       </div>
+      ${data.financialInterests === undefined ? `
+      <div class="field-value"><em>Financial-interest disclosure not yet recorded &mdash; neither box
+      is checked until the certifier states which applies.</em></div>
+      ` : ''}
     </div>
     ` : ''}
   </div>
