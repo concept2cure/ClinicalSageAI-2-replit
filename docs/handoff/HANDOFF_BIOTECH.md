@@ -518,13 +518,20 @@ stand in and the planner's own cover letter is not duplicated. A filing also
 returns `leavesAwaitingDocument` — the required placements created with no bytes
 behind them yet.
 
-Follow-on, NOT done here: attach the real filled 1571 bytes to the m1.1 leaf at
-filing time. The generator works and the leaf-source mechanism exists
-(`storeRenderedLeafFile` → `rendered_leaf_files`, as the safety-report PDF
-already uses); what is missing is the sponsor/submission record lookup at the
-filing routes (the cover-letter route's `assembleCoverLetterContext` loads the
-same records and is the model). Until then the leaf is honest about having no
-document rather than absent.
+That follow-on is now DONE: a filing that names a `sponsorId` renders the 1571
+from the sponsor registry + the submission record (`assembleFormMetadata` →
+`generateIndForm`) and attaches the bytes at m1.1 through the same
+`rendered_leaf_files` path the safety-report PDF uses. It fails closed — no
+sponsorId, an unreadable record, a fall-back off the official template, or a
+missing required field all leave the leaf unsourced — and `form1571.reason` on
+the filing response says which, naming the missing fields. `persistAnnualReport`
+and `persistAmendmentPlan` now take the same per-section source map as the other
+persisters.
+
+Known limit: the submission row holds product name and title but not indication,
+IND type or study phase, so those must be supplied in the request's `form1571`
+block until a project lookup provides them — the refusal names them, so a caller
+is never left guessing.
 
 Also noted, not changed: `concept2cure_artifacts` — where `POST
 /api/ind-forms/:formId/artifact` persists a governed form — is not one of the
