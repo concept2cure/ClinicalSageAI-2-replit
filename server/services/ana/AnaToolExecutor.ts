@@ -1139,6 +1139,13 @@ registerToolHandler('assemble_briefing_book', async (input, ctx) => {
 
     // 2. Assemble the markdown + required_strings.
     const assembled = briefing.assembleBriefingBook(meeting, context);
+    // The fixture's "Questions for the Agency" are a fictional sponsor's. With a
+    // real product name and no key_questions supplied, they read as this
+    // product's questions in the content the authoring tool promotes, while the
+    // fixture disclosure lived only on the sibling premortem/message fields.
+    if (dataSource === 'fixture' && (!overrideQuestions || overrideQuestions.length === 0)) {
+      assembled.content = `> SAMPLE DATA — the questions for the Agency below are a fixture; the sponsor has not supplied its own key questions. Replace them before this book is reviewed.\n\n${assembled.content}`;
+    }
 
     // 3. Pre-mortem — anticipated FDA pushback per sponsor question.
     const runPremortem = input.run_premortem !== false;
@@ -5109,7 +5116,9 @@ registerToolHandler('assess_nonclinical_safety', async (input: Record<string, un
       recommendedStartingDoseMg: a.fihDose?.recommendedStartingDoseMg ?? null,
       limitedBy: a.fihDose?.limitedBy ?? null,
       adverseFindings: a.toxProfile?.adverseFindings.map(f => `${f.finding} (${f.organ})`) ?? [],
-      programGaps: a.programGaps?.gaps ?? [],
+      // null, not [], when the study battery was never assessed.
+      programAssessed: a.programAssessed,
+      programGaps: a.programGaps ? a.programGaps.gaps : null,
       blockers: a.blockers,
       overviewCompleteness: a.overview?.completeness ?? null,
       summary: a.summary,
