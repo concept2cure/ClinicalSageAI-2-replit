@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T13:14:00.864Z",
+  "generatedAt": "2026-09-05T13:18:44.525Z",
   "git": {
-    "sha": "c916127cd77a681bdd9bbdcdd1feef3061f54b34",
+    "sha": "dcc81a7659f9108d9a396ac23823aa3a70abe265",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2096,6 +2096,10 @@
         "bytes": 115224
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "bytes": 115217
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
         "bytes": 114943
       },
@@ -2110,10 +2114,6 @@
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
         "bytes": 110971
-      },
-      {
-        "file": "server/routes/submission-ops.ts",
-        "bytes": 110117
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2222,12 +2222,12 @@
         "lines": 2958
       },
       {
-        "file": "server/src/routes/stability.router.ts",
-        "lines": 2832
+        "file": "server/routes/submission-ops.ts",
+        "lines": 2921
       },
       {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2826
+        "file": "server/src/routes/stability.router.ts",
+        "lines": 2832
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
