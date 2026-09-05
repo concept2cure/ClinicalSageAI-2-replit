@@ -99,6 +99,39 @@ guess:
    has no workspace anchor. Correct for a single-company tenant, wrong for a
    consultancy, and unknowable at runtime. Same decision as 3.
 
+### Third audit — IND lifecycle and agency gateways (2026-09-05)
+
+A read-only audit of the IND lifecycle services and the eleven agency gateways
+produced 12 findings. Fixed on `concept2cure-v2`, each with a test that fails on
+revert:
+
+- Every gateway that took a 2xx with no receipt identifier as an accepted
+  submission (minting `<agency>-<timestamp>` as the receipt and recording the row
+  as received) now records the transmittal rejected and throws. PMDA is the
+  tested exemplar; the other ten share the pattern.
+- The governed-transmit ledger recorded the agency receipt under the wrong key
+  (`transactionId`), so the Part 11 record of a transmission never carried it.
+- Amendment placement per the FDA eCTD Module 1 vocabulary: protocol amendment
+  summary to m1.2, Form 1572 to m1.1, IB to m1.14.4.1 (they were under pre-IND
+  correspondence, request-to-charge and labeling). The auto cover letter is now
+  keyed on document type, not section, so other m1.2 content no longer stands in
+  for it.
+- 312.33 annual report due date: 60 days after the most recent anniversary of
+  the IND effective date, not 60 days after the effective date itself.
+- ICSR acknowledgements: an ACK that names another message, cannot be read, or
+  arrives for a report never transmitted is refused (422/422/409) and the row is
+  unchanged. The route mapped every refusal to 404.
+- `transmitSequence` refuses without an explicit staging/production environment
+  and without a real agency application number; the UNASSIGNED placeholder was
+  being sent.
+
+Verified real and not yet changed (each needs a decision or an agency spec):
+FDA ESG MDN disposition parsing falls back to the platform's own message id;
+ICSR expedited flag is hardcoded; gateway default sequence `0000`/`initial` when
+metadata is absent; epoch-dated placeholders; missing expectedness yields
+NOT_REPORTABLE with no rationale; amendment persistence drops
+`parentLeafGuid`/`documentId` from the stored plan.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -335,6 +368,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | Date | Account | Authorized click | What was proven | Report |
 |---|---|---|---|---|
 | 2026-09-03 | A | WO-9 Phase 1 Steps 0–6 + XFA decision | DTD gate defect found and fixed; vendoring blocked on egress; forms XFA status measured | `docs/reports/wo9-phase1-ectd-unblock-2026-09-03.md` |
+| 2026-09-05 | A | Third audit fixes — IND lifecycle + gateways | Receipt-less 2xx refused on 11 gateways; ledger receipt key; amendment placement + cover letter; 312.33 due date; ICSR ACK refusals; transmit refusals — all revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

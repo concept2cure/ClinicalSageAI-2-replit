@@ -421,6 +421,11 @@ export class EmaCespGateway implements SubmissionGateway {
 
 /* ─── EUDAMED gateway implementation ─────────────────────────────── */
 
+/** The receipt identifier EUDAMED names in a 2xx body, or null when it names none. */
+function eudamedReceiptId(parsed: { uuid?: string; id?: string }): string | null {
+  return parsed.uuid ?? parsed.id ?? null;
+}
+
 export class EudamedGateway implements SubmissionGateway {
   readonly region    = 'ema' as const;
   readonly gateway   = 'eudamed' as const;
@@ -470,7 +475,19 @@ export class EudamedGateway implements SubmissionGateway {
       catch {
         throw new GatewayError('EUDAMED returned non-JSON success', resp.httpStatus, null, resp.body.toString('utf8'));
       }
-      const txnId = parsed.uuid ?? parsed.id ?? `eudamed-${Date.now()}`;
+      const txnId = eudamedReceiptId(parsed);
+      if (!txnId) {
+        // A 2xx whose body names no receipt is not an accepted submission. This
+        // minted `eudamed-<timestamp>` here, recorded the row as received with an
+        // acknowledgement time from the platform clock, told the operator
+        // "accepted. Receipt: eudamed-…", and later polled the agency for a
+        // receipt that never existed. CESP refuses the same case; so does this.
+        await updateTransmittal(transmittalId, {
+          status: 'rejected', httpStatus: resp.httpStatus,
+          errorClass: 'gateway', errorMessage: 'Agency returned success with no receipt identifier in the body.',
+        });
+        throw new GatewayError('EUDAMED response missing a receipt identifier', resp.httpStatus, null, parsed);
+      }
       await updateTransmittal(transmittalId, {
         status: 'received', transmissionId: txnId,
         httpStatus: resp.httpStatus, ackReceivedAt: new Date(),

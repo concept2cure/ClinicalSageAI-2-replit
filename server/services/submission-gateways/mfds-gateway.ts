@@ -108,7 +108,19 @@ export class MfdsGateway implements SubmissionGateway {
       let parsed: { receiptId?: string; submissionId?: string;접수번호?: string };
       try { parsed = JSON.parse(resp.body.toString('utf8')); }
       catch { throw new GatewayError('MFDS dBio returned non-JSON success', resp.httpStatus, null, resp.body.toString('utf8')); }
-      const receiptId = parsed.receiptId ?? parsed.submissionId ?? parsed['접수번호'] ?? `mfds-${Date.now()}`;
+      const receiptId = parsed.receiptId ?? parsed.submissionId ?? parsed['접수번호'] ?? null;
+      if (!receiptId) {
+        // A 2xx whose body names no receipt is not an accepted submission. This
+        // minted `mfds-<timestamp>` here, recorded the row as received with an
+        // acknowledgement time from the platform clock, told the operator
+        // "accepted. Receipt: mfds-…", and later polled the agency for a
+        // receipt that never existed. CESP refuses the same case; so does this.
+        await patchTransmittal(id, {
+          status: 'rejected', httpStatus: resp.httpStatus,
+          errorClass: 'gateway', errorMessage: 'Agency returned success with no receipt identifier in the body.',
+        });
+        throw new GatewayError('MFDS response missing a receipt identifier', resp.httpStatus, null, parsed);
+      }
       await patchTransmittal(id, { status: 'received', transmissionId: receiptId,
         httpStatus: resp.httpStatus, ackReceivedAt: new Date() });
       return { transmittalId: id, transmissionId: receiptId, status: 'received', transport: 'rest',
