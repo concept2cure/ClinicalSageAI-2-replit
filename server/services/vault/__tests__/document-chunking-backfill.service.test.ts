@@ -17,7 +17,7 @@ const recordChunkOutcome = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock('../document-chunking.service.js', () => ({ chunkAndEmbedDocument, recordChunkOutcome }));
 vi.mock('../../../db.js', () => ({ pool: { query: vi.fn(), connect: vi.fn() } }));
 
-import { backfillVaultChunks } from '../document-chunking-backfill.service';
+import { backfillVaultChunks, type Queryable } from '../document-chunking-backfill.service';
 
 const ORG = 42;
 type Row = {
@@ -38,11 +38,15 @@ const row = (over: Partial<Row> = {}): Row => ({
 });
 
 let queries: Array<{ sql: string; params: unknown[] }>;
-const execWith = (rows: Row[]) => ({
-  query: vi.fn(async (sql: string, params: unknown[] = []) => {
+// `Queryable.query` is generic over the row type each call site asks for. This
+// stub serves one fixed shape whatever is asked, so the cast sits at that seam
+// rather than the reader being loosened to accept it. Every call is recorded in
+// `queries`, which is what the assertions read — no spy needed.
+const execWith = (rows: Row[]): Queryable => ({
+  async query<T>(sql: string, params: unknown[] = []) {
     queries.push({ sql, params });
-    return { rows, rowCount: rows.length };
-  }),
+    return { rows: rows as unknown as T[], rowCount: rows.length };
+  },
 });
 
 beforeEach(() => {
