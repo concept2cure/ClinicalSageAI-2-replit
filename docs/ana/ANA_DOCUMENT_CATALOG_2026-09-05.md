@@ -96,6 +96,27 @@ unreachable until the table existed. Both corpus sites now cast `$2::float8`,
 pinned by the end-to-end dbtest (`tests/db/document-catalog-recall.dbtest.ts`:
 ingest → chunks embedded → `ragRetrieve` returns the passage).
 
+### Backfilling documents older than the feature
+
+**Service:** `server/services/vault/document-chunking-backfill.service.ts`
+**CLI:** `node scripts/backfill-vault-chunks.mjs --org <id> [--limit N] [--retry-failed] [--apply]`
+
+Chunking runs at ingest, so documents uploaded before a tenant's
+`ana.vault_chunking` flag was flipped sit outside passage retrieval with no
+`chunk_status` — the honest "never attempted" state, and exactly the candidate
+set this sweep closes. One tenant per run, dry-run unless `--apply`, and
+resumable: indexed documents drop out of the candidate set, so a rerun
+continues the backlog and a run after completion examines nothing.
+
+It refuses to manufacture coverage. A document whose extraction failed has no
+text to index and is reported as **skipped with its reason** — never counted as
+done, because only re-ingesting it (which re-runs extraction and OCR) can make
+it indexable. A document that was indexable but failed is **named**, left with
+`chunk_failed` on its ledger, and picked up again by `--retry-failed`; ordinary
+reruns skip it rather than re-burning embedding spend on a known failure. Every
+statement reaches `vault.documents` through
+`regulatory_programs.organization_id`, the same join the writer uses.
+
 ### Memory ingestion embeds what it stores (`client-intelligence-memory.ts`)
 
 `ingestDocument` and `ingestProjectDocument` (the path behind
@@ -142,10 +163,10 @@ nothing like every other bootstrap source.
   no coverage-gated catalog entry of their own; `remember_document_in_project`
   (now embedding its entries) is their durable-memory path. A join key from
   `cre_evidence_sources` to `vault.documents` remains open.
-- **Legacy vault documents are unchunked:** chunking runs at ingest, so
-  documents uploaded before the flag flipped stay outside passage retrieval
-  until re-ingested (their catalog rows carry no `chunk_status`, which is the
-  honest "never attempted" state). A backfill sweep is the natural follow-on.
+- **Cataloging is still model-invoked:** Anna reads and catalogs a document
+  when the work calls for it; nothing sweeps the backlog of "extracted but not
+  yet studied" files on its own. The listing labels them honestly, so the
+  backlog is visible rather than hidden.
 - **`vault.documents.page_count`** is still never populated at ingest
   (`pageCount` is declared and stays null); the catalog records char/word
   counts and carries `page_count` for when ingest starts supplying it.

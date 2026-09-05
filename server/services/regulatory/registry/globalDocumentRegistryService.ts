@@ -10,13 +10,8 @@
 import {
   GLOBAL_REGISTRY,
   getApplicationType,
-  getByRegion,
-  getByAgency,
-  getByFamily,
-  getByProductClass,
   search as registrySearch,
   resolveFromLegacy,
-  getRegions,
 } from '../../../../shared/regulatory/global-document-registry.js';
 import {
   REGION_PROFILES,

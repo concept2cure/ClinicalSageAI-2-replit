@@ -431,6 +431,37 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     expect(preflightRuns).toBe(2);
   });
 
+  it('a reload whose preflight itemizes nothing says so, and never reports "no error-severity findings"', async () => {
+    // 200 with no findings LIST is "we have not looked", not "we looked and
+    // found nothing" — and the error count is zero in both. The reassuring
+    // sentence belongs only to the second.
+    let preflightRuns = 0;
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url === '/api/submission-ops/packages/77/assemble') {
+        return env({ packageId: 'pkg_77', bundle: { sha256: 'f'.repeat(64), leafCount: 2, validation: { errorCount: 1, warningCount: 0, infoCount: 0 } } });
+      }
+      if (method === 'POST' && url === '/api/submission-ops/packages/77/preflight') {
+        preflightRuns += 1;
+        return preflightRuns === 1
+          ? env({ findings: [{ severity: 'error', ruleId: 'LEAF-UNPLACED', message: 'cover.pdf has no heading' }], errorCount: 1, blocking: true, persisted: true })
+          : env({ errorCount: 0, persisted: true });
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    const card = await screen.findByRole('region', { name: 'Packager refusal' });
+    const reload = Array.from(card.querySelectorAll('button')).find((b) => /Reload findings/.test(b.textContent ?? ''))!;
+    fireEvent.click(reload);
+    await screen.findByText(/returned no itemized findings list/);
+    expect(card.textContent).not.toMatch(/reports no error-severity findings/);
+    expect(card.textContent).toMatch(/nothing on this bundle is cleared/);
+  });
+
   it('a content change that landed DURING the send is announced as an alert with the server’s warning, never a clean confirmation', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);

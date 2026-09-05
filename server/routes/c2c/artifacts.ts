@@ -23,6 +23,7 @@ import { cacheResponse } from '../../middleware/enterprise-performance';
 import { enforceAuthorLineage } from '../../services/clinical-regulatory-evidence/lineage-gate';
 import { resolveGovernedContext } from '../../services/concept2cure/governedDocumentContractService';
 import { createTraceId, emitTraceEvent } from '../../services/generation-guard.js';
+import { markPackagesContentChangedForArtifact } from '../../services/ectd/package-content-change';
 import { interceptArtifactChange, interceptFeedback } from '../../services/intelligence/rim-interceptors.js';
 import { evaluateAndInterceptGovernedDocument } from '../../src/control-plane/governed-document-evaluator';
 import * as crypto from 'crypto';
@@ -956,6 +957,18 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       return row;
     });
 
+    // The edited text, title, version or placement is what an assembled
+    // submission bundle was built FROM: every package this artifact is mapped
+    // into now holds a zip that no longer reflects it. Invalidate them here so
+    // the operator learns at the edit, not inside the transmit ceremony (where
+    // the content fingerprint remains the backstop). Never throws: the edit
+    // above has happened and must not be lost over an invalidation failure.
+    const bundleInvalidation = await markPackagesContentChangedForArtifact(
+      dbArtifact.id,
+      organizationId,
+      { userId, cause: 'content' },
+    );
+
     // Get all versions for response
     const versions = await db
       .select()
@@ -1062,7 +1075,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       artifactId: paramStr(req.params.artifactId),
       version: artifact.version,
     });
-    return sendSuccess(res, artifact);
+    return sendSuccess(res, { ...artifact, bundleInvalidation });
   } catch (error: any) {
     logConcept2cureError('update artifact', error, { artifactId: req.params.artifactId });
     return sendError(res, 500, 'Failed to update artifact');
@@ -1227,6 +1240,15 @@ router.put(
         .where(eq(concept2cureArtifacts.id, dbArtifact.id))
         .returning();
 
+      // The artifact's declared placement decides where its leaf files in the
+      // backbone, so a bundle built with the old placement no longer reflects
+      // the package. See the PUT-artifact route for why this is fail-safe.
+      const bundleInvalidation = await markPackagesContentChangedForArtifact(
+        dbArtifact.id,
+        organizationId,
+        { userId, cause: 'placement' },
+      );
+
       // Log audit entry
       await logAuditEntry(
         req,
@@ -1234,7 +1256,7 @@ router.put(
         'artifact',
         req.params.artifactId,
         { ctdSection: previousSection },
-        { ctdSection: toSection, operation, reason }
+        { ctdSection: toSection, operation, reason, bundleInvalidation }
       );
 
       // Emit provenance event for the placement operation
@@ -3218,6 +3240,14 @@ router.put(
         .where(eq(concept2cureArtifacts.id, artifact.id))
         .returning();
 
+      // Placement decides where the leaf files in the backbone; a bundle built
+      // with the old section no longer reflects the package.
+      const bundleInvalidation = await markPackagesContentChangedForArtifact(
+        artifact.id,
+        organizationId,
+        { userId, cause: 'placement' },
+      );
+
       // Log provenance
       await db.insert(concept2cureProvenanceEvents).values({
         organizationId,
@@ -3241,6 +3271,7 @@ router.put(
         artifactId: updated.artifactId,
         ctdSection: updated.ctdSection,
         previousSection,
+        bundleInvalidation,
       });
     } catch (error: any) {
       logConcept2cureError('update ctd section', error, { artifactId: req.params.artifactId });
@@ -3500,6 +3531,13 @@ router.post(
         return row;
       });
 
+      // The restored text is not the text any stored bundle was built from.
+      const bundleInvalidation = await markPackagesContentChangedForArtifact(
+        artifact.id,
+        organizationId,
+        { userId, cause: 'rollback' },
+      );
+
       // Log provenance
       await db.insert(concept2cureProvenanceEvents).values({
         organizationId,
@@ -3545,6 +3583,7 @@ router.post(
         targetVersion,
         newVersion,
         contentHash: newContentHash,
+        bundleInvalidation,
         message: `Rolled back to version ${targetVersion} content (now version ${newVersion})`,
       });
     } catch (error: any) {

@@ -83,6 +83,13 @@ import {
   CONTENT_UNPROVEN_MESSAGE,
   type PackageContentRow,
 } from '../services/ectd/package-content-fingerprint';
+import {
+  contentRevisionOf,
+  mapArtifactToSection,
+  markContentChanged,
+  recordPackageGovernedAction,
+  withPackageMetadataLock,
+} from '../services/ectd/package-content-change';
 import { bundleTrustEnforced } from '../services/submission-gateways/bundle-namespace';
 import { validateEctdLeafs } from '../services/submission-gateways/ectd-structural-validator';
 import { ValidationError as PackagerValidationError } from '../services/submission-gateways/types';
@@ -320,116 +327,35 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
       ownershipType,
     } = parsed.data;
 
-    const [artifact] = await db
-      .select({
-        id: concept2cureArtifacts.id,
-        projectId: concept2cureArtifacts.projectId,
-      })
-      .from(concept2cureArtifacts)
-      .where(and(eq(concept2cureArtifacts.id, artifactId), eq(concept2cureArtifacts.organizationId, orgId)));
-    if (!artifact) {
-      return res.status(404).json({ error: 'Artifact not found for organization' });
-    }
-
-    const [section] = await db
-      .select({
-        id: c2cPackageSections.id,
-        packageDbId: c2cPackageSections.packageDbId,
-      })
-      .from(c2cPackageSections)
-      .innerJoin(
-        c2cSubmissionPackages,
-        and(
-          eq(c2cSubmissionPackages.id, c2cPackageSections.packageDbId),
-          eq(c2cSubmissionPackages.orgId, orgId)
-        )
-      )
-      .where(eq(c2cPackageSections.id, sectionDbId));
-    if (!section) {
-      return res.status(404).json({ error: 'Section not found for organization' });
-    }
-
-    const [pkg] = await db
-      .select({
-        id: c2cSubmissionPackages.id,
-        projectId: c2cSubmissionPackages.projectId,
-      })
-      .from(c2cSubmissionPackages)
-      .where(and(eq(c2cSubmissionPackages.id, section.packageDbId), eq(c2cSubmissionPackages.orgId, orgId)));
-    if (!pkg) {
-      return res.status(404).json({ error: 'Package not found for section' });
-    }
-
-    if (artifact.projectId !== pkg.projectId) {
-      return res
-        .status(400)
-        .json({ error: 'Artifact and target section package must belong to the same project' });
-    }
-
-    // One mapping per (artifact, section): a repeat is answered with the
-    // existing row, not a second row that would ship the document twice.
-    const [existing] = await db
-      .select()
-      .from(c2cArtifactSectionMap)
-      .where(
-        and(
-          eq(c2cArtifactSectionMap.artifactId, artifactId),
-          eq(c2cArtifactSectionMap.sectionDbId, sectionDbId),
-          eq(c2cArtifactSectionMap.orgId, orgId),
-        ),
-      );
-    if (existing) {
-      return res.status(200).json({ data: existing, duplicate: true });
-    }
-
-    // The mapping row and the package's content change commit together (see
-    // markContentChanged): a bundle assembled before this mapping no longer
-    // reflects the package's content, so it is cleared and the content
-    // revision bumped in the same transaction as the INSERT. The unique index
-    // is the backstop for a duplicate that races past the pre-check above.
-    let outcome: { staleBundleCleared: boolean; result: Record<string, unknown> };
-    try {
-      outcome = await markContentChanged(pkg.id, async (client) => {
-        const { rows } = await client.query(
-          `INSERT INTO c2c_artifact_section_map
-             (org_id, artifact_id, section_db_id, document_family, owner_user_id, owner_role, owner_function, ownership_type)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-           ON CONFLICT (artifact_id, section_db_id) DO NOTHING
-           RETURNING *`,
-          [
-            orgId, artifactId, sectionDbId, documentFamily ?? null,
-            ownerUserId || actorUserId || null, ownerRole ?? null, ownerFunction ?? null, ownershipType ?? null,
-          ],
-        );
-        if (rows.length === 0) throw new MappingConflict('mapping already exists');
-        return rows[0] as Record<string, unknown>;
-      });
-    } catch (e) {
-      if (!(e instanceof MappingConflict)) throw e;
-      // Rolled back: nothing changed, so nothing is bumped or recorded.
-      const [raced] = await db
-        .select()
-        .from(c2cArtifactSectionMap)
-        .where(
-          and(
-            eq(c2cArtifactSectionMap.artifactId, artifactId),
-            eq(c2cArtifactSectionMap.sectionDbId, sectionDbId),
-            eq(c2cArtifactSectionMap.orgId, orgId),
-          ),
-        );
-      return res.status(200).json({ data: raced ?? null, duplicate: true });
-    }
-    const mapping = mappingRowToApi(outcome.result);
-    const staleBundleCleared = outcome.staleBundleCleared;
-    const ledgerWriteFailed = await recordPackageGovernedAction({
+    // The one governed mapping operation (tenant checks on both sides, one
+    // mapping per (artifact, section), and the row committing in the same
+    // transaction as the package's content-change bump and stale-bundle
+    // clear). This route is its HTTP shape; the biostatistics workflow calls
+    // the same function rather than writing the row itself.
+    const outcome = await mapArtifactToSection({
       orgId,
-      userId: actorUserId,
-      packageDbId: pkg.id,
+      artifactDbId: artifactId,
+      sectionDbId,
+      actorUserId,
       reason: parsed.data.reason,
-      payload: { change: 'artifact-mapped', mappingId: mapping.id, artifactId, sectionDbId, documentFamily: documentFamily ?? null, staleBundleCleared },
+      documentFamily,
+      ownerUserId,
+      ownerRole,
+      ownerFunction,
+      ownershipType,
     });
+    if (!outcome.ok) {
+      return res.status(outcome.code === 'PROJECT_MISMATCH' ? 400 : 404).json({ error: outcome.message });
+    }
+    if (outcome.duplicate) {
+      return res.status(200).json({ data: outcome.mapping, duplicate: true });
+    }
 
-    res.status(201).json({ data: mapping, staleBundleCleared, ledgerWriteFailed });
+    res.status(201).json({
+      data: outcome.mapping,
+      staleBundleCleared: outcome.staleBundleCleared,
+      ledgerWriteFailed: outcome.ledgerWriteFailed,
+    });
   } catch (e) {
     return serverError(res, logger, 'saving artifact section map', e);
   }
@@ -1609,161 +1535,15 @@ function packageKeyClause(key: string) {
     : eq(c2cSubmissionPackages.packageId, key);
 }
 
-/**
- * Record a governed action for a package mutation on the transmit path, in its
- * own transaction via the shared ledger primitive. Returns true when the ledger
- * could NOT be written: the mutation itself is kept (a bundle or an identifier
- * change must not be lost over an audit outage) and the caller must SAY so in
- * its response — never report a clean success over a missing audit row.
- */
-async function recordPackageGovernedAction(params: {
-  orgId: number;
-  userId: number;
-  packageDbId: number;
-  reason: string;
-  payload: Record<string, unknown>;
-}): Promise<boolean> {
-  try {
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      await recordGovernedAction(client as any, {
-        orgId: params.orgId,
-        userId: params.userId,
-        command: 'transition',
-        target: `submission:${params.packageDbId}`,
-        reason: params.reason,
-        payload: params.payload,
-        domain: 'mdx',
-        surface: 'submission-gateway',
-      });
-      await client.query('COMMIT');
-      return false;
-    } catch (ledgerErr) {
-      try { await client.query('ROLLBACK'); } catch { /* noop */ }
-      throw ledgerErr;
-    } finally {
-      client.release();
-    }
-  } catch (ledgerErr) {
-    console.error(
-      '[submission-ops] governed-action-ledger-write-failed',
-      ledgerErr instanceof Error ? ledgerErr.message : ledgerErr,
-    );
-    return true;
-  }
-}
-
-/**
- * Serialize EVERY writer of a package's metadata on the row itself: a
- * transaction, SELECT … FOR UPDATE, compute the new metadata from what is
- * current UNDER THE LOCK, write, commit. A re-read followed by a separate
- * UPDATE (the previous fix) still lost a write that landed between the two
- * statements — an identifier recorded while a bundle was being assembled was
- * reverted, and a backbone built with the old application number was stored
- * as transmittable. `mutate` returns the metadata to write, or null to write
- * nothing (the decision is still made against the locked row).
- */
-/** The pool client inside a package row-lock transaction: a `mutate` callback
- *  may run the row writes that must commit together with the metadata. */
-type LockClient = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
-
-async function withPackageMetadataLock<T>(
-  packageDbId: number,
-  mutate: (current: Record<string, unknown>, client: LockClient) =>
-    | Promise<{ metadata: Record<string, unknown> | null; result: T }>
-    | { metadata: Record<string, unknown> | null; result: T },
-): Promise<T> {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const { rows } = await client.query(
-      'SELECT metadata FROM c2c_submission_packages WHERE id = $1 FOR UPDATE',
-      [packageDbId],
-    );
-    const raw = rows[0]?.metadata;
-    const current: Record<string, unknown> =
-      raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : typeof raw === 'string' ? JSON.parse(raw) : {};
-    const out = await mutate(current, client as LockClient);
-    if (out.metadata) {
-      await client.query(
-        'UPDATE c2c_submission_packages SET metadata = $2::json, updated_at = now() WHERE id = $1',
-        [packageDbId, JSON.stringify(out.metadata)],
-      );
-    }
-    await client.query('COMMIT');
-    return out.result;
-  } catch (e) {
-    try { await client.query('ROLLBACK'); } catch { /* noop */ }
-    throw e;
-  } finally {
-    client.release();
-  }
-}
-
-/**
- * The package's content revision: bumped under the row lock by every mapping
- * change and compared by assemble before a bundle is stored. Absent (packages
- * created before the revision existed) reads as 0, never NaN.
- */
-function contentRevisionOf(metadata: Record<string, unknown>): number {
-  const raw = metadata.contentRevision;
-  return typeof raw === 'number' && Number.isSafeInteger(raw) && raw >= 0 ? raw : 0;
-}
-
-/**
- * Record that a package's content changed (an artifact mapped or unmapped),
- * in ONE transaction with the row write that changes it.
- *
- * Effects, under the package row lock: `change` runs on the locked client
- * (the mapping INSERT / DELETE), the content revision is bumped so an assembly
- * that read its content BEFORE the change refuses to store its bundle (its
- * lock compares revisions), and a stored bundle descriptor is cleared — its
- * zip carries the old content and the transmit gate must not ship it — along
- * with the preflight summary that described that bundle, which the portfolio
- * would otherwise keep aggregating as the package's current outcome.
- *
- * Clearing alone was not enough: an assemble already past its content read
- * stored a zip without the new mapping right after the descriptor was cleared.
- * Two transactions were not enough either: a failure after the mapping row
- * committed left the old bundle stored and the revision unchanged, and the
- * operator's retry answered "duplicate" without ever bumping. Here a failure
- * anywhere rolls the row back with the bump.
- */
-async function markContentChanged<R = undefined>(
-  packageDbId: number,
-  change?: (client: LockClient) => Promise<R>,
-): Promise<{ staleBundleCleared: boolean; result: R }> {
-  return withPackageMetadataLock(packageDbId, async (current, client) => {
-    const result = (change ? await change(client) : undefined) as R;
-    const { bundle: stale, preflight: _orphan, ...rest } = current;
-    return {
-      metadata: { ...rest, contentRevision: contentRevisionOf(current) + 1 },
-      result: { staleBundleCleared: stale !== undefined, result },
-    };
-  });
-}
+// withPackageMetadataLock / contentRevisionOf / markContentChanged /
+// recordPackageGovernedAction / mapArtifactToSection are the SINGLE
+// implementations, imported from services/ectd/package-content-change. They
+// lived here while the transmit path was the only caller; the artifact editor
+// and the biostatistics workflow now invalidate through the same primitives,
+// and a second copy of this rule has been a defect every time it existed.
 
 /** Thrown inside a mapping transaction to roll it back without bumping. */
-class MappingConflict extends Error { readonly name = 'MappingConflict'; }
 class MappingGone extends Error { readonly name = 'MappingGone'; }
-
-/** A c2c_artifact_section_map row from `RETURNING *`, in the API's shape. */
-function mappingRowToApi(r: Record<string, unknown>) {
-  return {
-    id: Number(r.id),
-    orgId: r.org_id,
-    artifactId: r.artifact_id,
-    sectionDbId: r.section_db_id,
-    documentFamily: r.document_family ?? null,
-    ownerUserId: r.owner_user_id ?? null,
-    ownerRole: r.owner_role ?? null,
-    ownerFunction: r.owner_function ?? null,
-    ownershipType: r.ownership_type ?? null,
-    createdAt: r.created_at ?? null,
-    updatedAt: r.updated_at ?? null,
-  };
-}
 
 /**
  * Best-effort ICH module (1–5) for a c2c_package_sections sectionKey. These
