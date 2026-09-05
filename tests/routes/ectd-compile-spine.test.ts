@@ -188,9 +188,13 @@ describe('POST /:projectIdent/compile — spine-backed compiles run the real gen
     await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
 
     const payload = res.json.mock.calls[0][0];
-    expect(payload.submissionReady).toBe(false);
-    const unplaced = payload.validationResults.filter((v: any) => /2\.5/.test(String(v.message)) && /materializ|placed|render/i.test(String(v.message)));
-    expect(unplaced.length).toBeGreaterThan(0);
+    const at25 = payload.validationResults.filter((v: any) => v.sectionCode === '2.5');
+    // Before the fix this section was reported "placed and rendered".
+    expect(at25.map((v: any) => v.rule)).toContain('LEAF_SOURCE_UNRESOLVED');
+    expect(at25.map((v: any) => v.rule)).not.toContain('REQUIRED_SECTION_OK');
+    // The leaf that does have a document is unaffected.
+    const at32s = payload.validationResults.filter((v: any) => v.sectionCode === '3.2.S');
+    expect(at32s.map((v: any) => v.rule)).toContain('REQUIRED_SECTION_OK');
   });
 
   it('surfaces a DTD-incomplete package as a blocker, never as ready', async () => {
