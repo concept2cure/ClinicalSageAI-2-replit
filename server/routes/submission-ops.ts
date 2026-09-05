@@ -78,6 +78,7 @@ import { leafFileName } from '../services/ectd/leaf-source-resolver';
 import {
   assessPackageContent,
   fingerprintPackageContent,
+  sha256Hex,
   CONTENT_DRIFT_MESSAGE,
   CONTENT_UNPROVEN_MESSAGE,
   type PackageContentRow,
@@ -2101,15 +2102,23 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
 
       if (mapped.length === 0) {
         // An empty section is part of the content too: it ships a placeholder.
-        contentRows.push({ sectionDbId: section.id, sectionKey: section.sectionKey, artifactDbId: null, ctdSection: null, content: null });
+        contentRows.push({
+          sectionDbId: section.id, sectionKey: section.sectionKey, sectionLabel: section.sectionLabel,
+          artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null,
+        });
       }
       for (const a of mapped) {
+        // Title and version are embedded in the leaf (index.xml title, PDF
+        // heading), so they are part of what the zip was built from.
         contentRows.push({
           sectionDbId: section.id,
           sectionKey: section.sectionKey,
+          sectionLabel: section.sectionLabel,
           artifactDbId: a.artifactDbId,
+          title: a.title ?? '',
+          version: Number(a.version ?? 0),
           ctdSection: a.ctdSection ?? null,
-          content: a.content ?? null,
+          contentSha256: sha256Hex(a.content ?? ''),
         });
       }
 

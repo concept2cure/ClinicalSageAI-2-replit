@@ -100,7 +100,7 @@ import gatewayRouter from '../server/routes/mdx-submission-gateway';
 // The pure gate the (here-mocked) gateway registry runs on req.bundle. NOT part
 // of the mocked index module, so this is the real implementation.
 import { evaluatePreTransmit } from '../server/services/submission-gateways/pre-transmit-check';
-import { fingerprintPackageContent, type PackageContentRow } from '../server/services/ectd/package-content-fingerprint';
+import { fingerprintPackageContent, sha256Hex, type PackageContentRow } from '../server/services/ectd/package-content-fingerprint';
 
 /** Caller's verified principal. Tenant 99, user 777. */
 const CALLER_ORG = 99;
@@ -129,11 +129,25 @@ const packageSelects: Array<unknown[]> = [];
 /** The package's content as the transmit gate re-reads it. A good descriptor
  *  carries the fingerprint of CONTENT; a test edits `contentRows` to drift it. */
 const CONTENT: PackageContentRow[] = [
-  { sectionDbId: 13, sectionKey: '2.5', artifactDbId: 1, ctdSection: null, content: 'Clinical overview text' },
+  { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex('Clinical overview text') },
 ];
 const CONTENT_FINGERPRINT = fingerprintPackageContent(CONTENT);
+const EDITED_CONTENT = CONTENT.map((r) => ({ ...r, contentSha256: sha256Hex('Clinical overview text, edited after assembly') }));
 let contentRows: PackageContentRow[] = CONTENT;
 const contentSelects: Array<unknown[]> = [];
+/** The governed-action ledger client: every INSERT it sees is inspectable. */
+const ledgerQuery = vi.fn();
+/** The `sign` row's payload as the ledger received it (a JSON param). */
+function signPayload(): Record<string, any> | undefined {
+  for (const call of ledgerQuery.mock.calls) {
+    for (const p of (call[1] as unknown[]) ?? []) {
+      const obj = typeof p === 'string' && p.includes('contentFingerprint') ? JSON.parse(p)
+        : p && typeof p === 'object' && 'contentFingerprint' in (p as object) ? (p as Record<string, any>) : null;
+      if (obj) return obj;
+    }
+  }
+  return undefined;
+}
 
 function installDb() {
   queryFn.mockReset();
@@ -153,7 +167,8 @@ function installDb() {
       contentSelects.push(params);
       return Promise.resolve({
         rows: contentRows.map((r) => ({
-          section_db_id: r.sectionDbId, section_key: r.sectionKey, artifact_db_id: r.artifactDbId, ctd_section: r.ctdSection, content: r.content,
+          section_db_id: r.sectionDbId, section_key: r.sectionKey, section_label: r.sectionLabel, artifact_db_id: r.artifactDbId,
+          title: r.title, version: r.version, ctd_section: r.ctdSection, content_sha256: r.contentSha256,
         })),
         rowCount: contentRows.length,
       });
@@ -214,9 +229,11 @@ beforeEach(() => {
   contentSelects.length = 0;
   installDb();
   connectFn.mockReset();
+  ledgerQuery.mockReset();
+  ledgerQuery.mockResolvedValue({ rows: [], rowCount: 0 });
   connectFn.mockImplementation(() =>
     Promise.resolve({
-      query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+      query: (...args: unknown[]) => ledgerQuery(...args),
       release: vi.fn(),
     }),
   );
@@ -480,13 +497,38 @@ describe('POST transmit — legitimate validated package (C2C-SUB-003)', () => {
     expect(arg.userId).toBe(777);
     // Ownership was proven with a tenant-scoped read…
     expect(packageSelects).toEqual([[5, CALLER_ORG]]);
-    // …and so was the content the bundle still reflects.
-    expect(contentSelects).toEqual([[5, CALLER_ORG]]);
+    // …and so was the content the bundle still reflects — before the bytes
+    // left, and again after the gateway accepted them, so the window between
+    // the check and the send is evidenced rather than assumed closed.
+    expect(contentSelects).toEqual([[5, CALLER_ORG], [5, CALLER_ORG]]);
+    expect(res.body.data.contentAfterTransmit).toBe('match');
+    // The governed `sign` row records what content state the zip was proven
+    // against: assembled fingerprint, the fingerprint at transmit, and after.
+    const payload = signPayload();
+    expect(payload, 'sign ledger row carries the content fingerprint evidence').toBeDefined();
+    expect(payload!.contentFingerprint).toEqual({ assembled: CONTENT_FINGERPRINT, atTransmit: CONTENT_FINGERPRINT, afterTransmit: 'match' });
+    expect(payload!.bundleSha256).toBe(legitSha);
+  });
+
+  it('a content change that lands WHILE the gateway is sending is recorded on the sign row and announced in the response — never silently a clean transmit', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor() }];
+    transmitFn.mockImplementationOnce(async () => {
+      contentRows = EDITED_CONTENT; // an artifact edit commits during the AS2 send
+      return { transmittalId: 4243, transmissionId: 'mdn-race', status: 'received', transport: 'as2', httpStatus: 200 };
+    });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201); // the agency has the assembled bytes; that is not undone
+    expect(res.body.data.contentAfterTransmit).toBe('drift');
+    expect(res.body.data.contentWarning).toMatch(/changed while the transmission was in progress/i);
+    expect(res.body.data.contentWarning).toMatch(/re-assemble/i);
+    expect(signPayload()?.contentFingerprint).toEqual({ assembled: CONTENT_FINGERPRINT, atTransmit: CONTENT_FINGERPRINT, afterTransmit: 'drift' });
   });
 
   it('refuses a stored descriptor whose package CONTENT changed since assembly (an artifact edited after the zip was built), before the gateway is reached', async () => {
     packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor() }];
-    contentRows = CONTENT.map((r) => ({ ...r, content: 'Clinical overview text, edited after assembly' }));
+    contentRows = EDITED_CONTENT;
     const res = await request(makeApp())
       .post('/api/mdx/gateways/fda/esg/transmit')
       .send({ packageId: 5, environment: 'staging', ...REAUTH });
@@ -499,7 +541,7 @@ describe('POST transmit — legitimate validated package (C2C-SUB-003)', () => {
 
   it('refuses a stored descriptor with NO content fingerprint, or one from an older scheme (UNKNOWN is blocking, never a match)', async () => {
     const { contentFingerprint: _none, ...withoutFingerprint } = goodDescriptor() as any;
-    for (const bundle of [withoutFingerprint, goodDescriptor({ contentFingerprint: 'v0:' + 'a'.repeat(64) })]) {
+    for (const bundle of [withoutFingerprint, goodDescriptor({ contentFingerprint: 'v1:' + 'a'.repeat(64) })]) {
       transmitFn.mockReset();
       packages = [{ id: 5, orgId: CALLER_ORG, bundle }];
       const res = await request(makeApp())

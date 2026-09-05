@@ -38,6 +38,7 @@ import {
   GovernedTransmitRefusal,
   GovernedTransmitInternalError,
   BUNDLE_FORMAT_SET,
+  CONTENT_CHANGED_DURING_TRANSMIT,
 } from '../services/submission-gateways/governed-transmit';
 import { recordGovernedAction, verifyReauth } from './c2c/actions';
 
@@ -242,6 +243,10 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
        transmission that genuinely left the platform. */
     return created(res, {
       ...outcome.result,
+      // The package content re-assessed after the send; a change that landed
+      // while the bytes were leaving is said, never folded into a clean 201.
+      contentAfterTransmit: outcome.contentAfterTransmit,
+      ...(outcome.contentAfterTransmit === 'drift' ? { contentWarning: CONTENT_CHANGED_DURING_TRANSMIT } : {}),
       ...(outcome.ledgerWriteFailed
         ? {
             ledgerWriteFailed: true,

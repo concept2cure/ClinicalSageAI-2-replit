@@ -738,6 +738,7 @@ export async function esgTransmit(
         transport: outcome.result.transport,
         bundleSha256: outcome.bundle.sha256,
         ledgerWriteFailed: outcome.ledgerWriteFailed,
+        contentAfterTransmit: outcome.contentAfterTransmit,
       },
     });
 

@@ -368,6 +368,26 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     expect(toast.closest('[role="alert"]')).not.toBeNull();
   });
 
+  it('a content change that landed DURING the send is announced as an alert with the server’s warning, never a clean confirmation', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/transmit')) {
+        return env({
+          transmittalId: 4243, transmissionId: 'ESG-NEW-10', status: 'received', contentAfterTransmit: 'drift',
+          contentWarning: 'The package content changed while the transmission was in progress. The agency received the assembled bundle as recorded on this transmittal (its sha256); the package no longer matches it. Review the change and re-assemble before any further transmission.',
+        }, 201);
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    const toast = await screen.findByText(/gateway ref ESG-NEW-10.*changed while the transmission was in progress.*re-assemble/);
+    expect(toast.closest('[role="alert"]')).not.toBeNull();
+  });
+
   it('recording identifiers removes only the identifiers finding; an unrelated finding stays on the card', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);

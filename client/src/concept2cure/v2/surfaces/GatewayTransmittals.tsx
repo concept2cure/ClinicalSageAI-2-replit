@@ -273,9 +273,15 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     const ledgerLost = dataOut.ledgerWriteFailed
       ? ' ' + String(dataOut.ledgerWarning ?? 'The governed-action ledger entry for this transmission could not be written; record it manually.')
       : '';
+    // The server re-assesses the package content after the send; a change that
+    // landed while the bytes were leaving is announced, never folded into a
+    // clean confirmation.
+    const contentChanged = dataOut.contentAfterTransmit === 'drift'
+      ? ' ' + String(dataOut.contentWarning ?? 'The package content changed while the transmission was in progress; re-assemble before any further transmission.')
+      : '';
     fireToast(
-      'Transmitted via ' + region.toUpperCase() + '/' + gateway + (txId ? ' · gateway ref ' + txId : '') + '.' + ledgerLost,
-      ledgerLost ? 'error' : undefined,
+      'Transmitted via ' + region.toUpperCase() + '/' + gateway + (txId ? ' · gateway ref ' + txId : '') + '.' + ledgerLost + contentChanged,
+      ledgerLost || contentChanged ? 'error' : undefined,
     );
     void load();
   }, [load, fireToast]);
