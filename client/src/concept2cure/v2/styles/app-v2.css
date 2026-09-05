@@ -2309,13 +2309,12 @@
 .c2c-v2 .ana-greet{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:40px 18px;}
 .c2c-v2 .ana-greet-mark{width:40px;height:40px;border-radius:11px;background:var(--accent-000);color:var(--accent-100);display:flex;align-items:center;justify-content:center;font-size:20px;}
 .c2c-v2 .ana-greet-t{font-size:16px;font-weight:600;font-family:var(--font-serif);}
-/* This renders a surface's own `here` description, and several of those quote
-   an endpoint — "drilled from GET /api/pdev/programs/:id/workstreams". A URL
-   path offers no break opportunity, so in a fixed 240px box it ran out of the
-   rail on seven surfaces. A prose block with a fixed max-width that renders
-   content-derived strings has to be able to break them.
-   (Whether an assistant's greeting should quote a raw API path at a user at
-   all is a copy question, and a separate one — see ledger L111.) */
+/* This renders a surface's own `here` description. When several of those
+   quoted an endpoint (an API path offers no break opportunity) the line ran
+   out of the fixed 240px box on seven surfaces. No description quotes a path
+   any more (registryModel.surfaceCtx.ts), but a prose block with a fixed
+   max-width that renders content-derived strings has to be able to break
+   them regardless — see ledger L111. */
 .c2c-v2 .ana-greet-s{font-size:12px;color:var(--text-400);line-height:1.5;max-width:240px;overflow-wrap:break-word;}
 
 /* ════════ HAQ Manager (haq-manager.jsx) ════════ */
