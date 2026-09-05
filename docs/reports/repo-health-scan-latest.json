@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T12:36:05.439Z",
+  "generatedAt": "2026-09-05T12:45:32.350Z",
   "git": {
-    "sha": "17da357f6669ca689010e8ad918a619750110d66",
+    "sha": "ea974d50a9b43f5ead8b48372a25bfd9ca7ac3eb",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2137,7 +2137,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "bytes": 103351
+        "bytes": 106752
       }
     ],
     "largeFilesByLines": [
@@ -2231,7 +2231,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "lines": 2700
+        "lines": 2756
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
