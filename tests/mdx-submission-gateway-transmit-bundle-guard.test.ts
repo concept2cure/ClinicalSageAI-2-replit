@@ -100,6 +100,7 @@ import gatewayRouter from '../server/routes/mdx-submission-gateway';
 // The pure gate the (here-mocked) gateway registry runs on req.bundle. NOT part
 // of the mocked index module, so this is the real implementation.
 import { evaluatePreTransmit } from '../server/services/submission-gateways/pre-transmit-check';
+import { fingerprintPackageContent, type PackageContentRow } from '../server/services/ectd/package-content-fingerprint';
 
 /** Caller's verified principal. Tenant 99, user 777. */
 const CALLER_ORG = 99;
@@ -125,6 +126,15 @@ type StoredPackage = { id: number; orgId: number; bundle: unknown };
 let packages: StoredPackage[] = [];
 const packageSelects: Array<unknown[]> = [];
 
+/** The package's content as the transmit gate re-reads it. A good descriptor
+ *  carries the fingerprint of CONTENT; a test edits `contentRows` to drift it. */
+const CONTENT: PackageContentRow[] = [
+  { sectionDbId: 13, sectionKey: '2.5', artifactDbId: 1, ctdSection: null, content: 'Clinical overview text' },
+];
+const CONTENT_FINGERPRINT = fingerprintPackageContent(CONTENT);
+let contentRows: PackageContentRow[] = CONTENT;
+const contentSelects: Array<unknown[]> = [];
+
 function installDb() {
   queryFn.mockReset();
   queryFn.mockImplementation((sql: string, params: unknown[] = []) => {
@@ -138,6 +148,15 @@ function installDb() {
       return row
         ? Promise.resolve({ rows: [{ metadata: { bundle: row.bundle } }], rowCount: 1 })
         : Promise.resolve({ rows: [], rowCount: 0 });
+    }
+    if (typeof sql === 'string' && sql.includes('FROM c2c_package_sections')) {
+      contentSelects.push(params);
+      return Promise.resolve({
+        rows: contentRows.map((r) => ({
+          section_db_id: r.sectionDbId, section_key: r.sectionKey, artifact_db_id: r.artifactDbId, ctd_section: r.ctdSection, content: r.content,
+        })),
+        rowCount: contentRows.length,
+      });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });
   });
@@ -191,6 +210,8 @@ beforeEach(() => {
 
   packages = [];
   packageSelects.length = 0;
+  contentRows = CONTENT;
+  contentSelects.length = 0;
   installDb();
   connectFn.mockReset();
   connectFn.mockImplementation(() =>
@@ -220,6 +241,7 @@ function goodDescriptor(overrides: Record<string, unknown> = {}) {
     emptyLeafCount: 0,
     storage: { provider: 'local' },
     validation: { errorCount: 0, warningCount: 1, infoCount: 0, findings: [] },
+    contentFingerprint: CONTENT_FINGERPRINT,
     assembledAt: new Date().toISOString(),
     assembledBy: 777,
     ...overrides,
@@ -456,8 +478,38 @@ describe('POST transmit — legitimate validated package (C2C-SUB-003)', () => {
     // …and identity from the verified principal, never the body.
     expect(arg.organizationId).toBe(CALLER_ORG);
     expect(arg.userId).toBe(777);
-    // Ownership was proven with a tenant-scoped read.
+    // Ownership was proven with a tenant-scoped read…
     expect(packageSelects).toEqual([[5, CALLER_ORG]]);
+    // …and so was the content the bundle still reflects.
+    expect(contentSelects).toEqual([[5, CALLER_ORG]]);
+  });
+
+  it('refuses a stored descriptor whose package CONTENT changed since assembly (an artifact edited after the zip was built), before the gateway is reached', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor() }];
+    contentRows = CONTENT.map((r) => ({ ...r, content: 'Clinical overview text, edited after assembly' }));
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+
+    expect(res.status).toBe(422);
+    expect(res.body.error).toMatch(/content changed since this bundle was assembled/i);
+    expect(res.body.error).toMatch(/re-assemble/i);
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+
+  it('refuses a stored descriptor with NO content fingerprint, or one from an older scheme (UNKNOWN is blocking, never a match)', async () => {
+    const { contentFingerprint: _none, ...withoutFingerprint } = goodDescriptor() as any;
+    for (const bundle of [withoutFingerprint, goodDescriptor({ contentFingerprint: 'v0:' + 'a'.repeat(64) })]) {
+      transmitFn.mockReset();
+      packages = [{ id: 5, orgId: CALLER_ORG, bundle }];
+      const res = await request(makeApp())
+        .post('/api/mdx/gateways/fda/esg/transmit')
+        .send({ packageId: 5, environment: 'staging', ...REAUTH });
+      expect(res.status, JSON.stringify(bundle.contentFingerprint)).toBe(422);
+      expect(res.body.error).toMatch(/no content fingerprint/i);
+      expect(res.body.error).toMatch(/UNKNOWN/);
+      expect(transmitFn).not.toHaveBeenCalled();
+    }
   });
 
   it('warnings alone do not block a validated package', async () => {

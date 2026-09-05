@@ -75,6 +75,7 @@ import {
   readBundleBytes,
 } from '../services/submission-bundle-storage';
 import { leafFileName } from '../services/ectd/leaf-source-resolver';
+import { fingerprintPackageContent, type PackageContentRow } from '../services/ectd/package-content-fingerprint';
 import { validateEctdLeafs } from '../services/submission-gateways/ectd-structural-validator';
 import { ValidationError as PackagerValidationError } from '../services/submission-gateways/types';
 import type { EctdFinding } from '../services/submission-gateways/ectd-structural-validator';
@@ -1988,6 +1989,11 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     // two sections (a literature reference cited from 4.3 and 5.4), and that is
     // two leaves — only the same artifact at the SAME section is a duplicate.
     const shippedArtifacts = new Map<string, string>();
+    // What this bundle is built from — every section, each mapped artifact's
+    // placement and content — for the fingerprint the transmit gate recomputes
+    // from the database. An artifact edited after assembly changes nothing on
+    // the package row, so only that comparison catches it.
+    const contentRows: PackageContentRow[] = [];
 
     for (const section of sections) {
       const mapped = await db
@@ -2013,6 +2019,20 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           ),
         )
         .orderBy(asc(concept2cureArtifacts.id));
+
+      if (mapped.length === 0) {
+        // An empty section is part of the content too: it ships a placeholder.
+        contentRows.push({ sectionDbId: section.id, sectionKey: section.sectionKey, artifactDbId: null, ctdSection: null, content: null });
+      }
+      for (const a of mapped) {
+        contentRows.push({
+          sectionDbId: section.id,
+          sectionKey: section.sectionKey,
+          artifactDbId: a.artifactDbId,
+          ctdSection: a.ctdSection ?? null,
+          content: a.content ?? null,
+        });
+      }
 
       const sectionLabel = `${section.sectionLabel} (${section.sectionKey})`;
 
@@ -2340,6 +2360,9 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         infoCount: validation.infoCount,
         findings: validation.findings,
       },
+      // Fingerprint of the content the zip was built from; governed transmit
+      // recomputes it and refuses a bundle the package has since moved past.
+      contentFingerprint: fingerprintPackageContent(contentRows),
       assembledAt,
       assembledBy: userId,
     };

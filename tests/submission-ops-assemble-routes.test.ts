@@ -139,6 +139,7 @@ vi.mock('../server/services/regulatory-correspondence/operating-layer', () => ({
 import submissionOpsRouter from '../server/routes/submission-ops';
 import { ValidationError as PackagerValidationError } from '../server/services/submission-gateways/types';
 import { recordGovernedAction } from '../server/routes/c2c/actions';
+import { fingerprintPackageContent } from '../server/services/ectd/package-content-fingerprint';
 
 function makeApp() {
   const app = express();
@@ -312,6 +313,24 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(res.status).toBe(409);
     expect(res.body.gate).toBe('content_changed');
     expect(dbState.updateSet).toBeNull();
+  });
+
+  it('records the CONTENT FINGERPRINT the bundle was built from (sections, mappings, declared placements, artifact content) so the transmit gate can prove the zip still reflects the package', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [
+      { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 },
+      { id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', sortOrder: 1 },
+    ];
+    const co = art('co', null, 1);
+    dbState.mappedByCall = [[co], []]; // 3.2.P.1 has nothing mapped: a placeholder leaf, still part of the content
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(dbState.updateSet.metadata.bundle.contentFingerprint).toBe(
+      fingerprintPackageContent([
+        { sectionDbId: 13, sectionKey: '2.5', artifactDbId: 1, ctdSection: null, content: co.content },
+        { sectionDbId: 14, sectionKey: '3.2.P.1', artifactDbId: null, ctdSection: null, content: null },
+      ]),
+    );
   });
 
   it('a discarded stale assembly removes its durable (S3) copy too, and says so', async () => {

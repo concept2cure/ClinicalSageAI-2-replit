@@ -13,7 +13,7 @@ import { describe, it, expect, vi } from 'vitest';
 vi.mock('../../../db', () => ({ db: {}, pool: { query: vi.fn(), connect: vi.fn() } }));
 vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => ({ persisted: true })) } }));
 
-import { transmitSequence, SubmissionError } from '../submission-service';
+import { transmitSequence, SubmissionError, resendRefusal } from '../submission-service';
 
 const ctx = { organizationId: 7, userId: 11 };
 
@@ -46,5 +46,17 @@ describe('transmitSequence refusals (no database access)', () => {
     await expect(
       transmitSequence({ sequenceId: 1, ctx, signatureActionId: 'sig-1', environment: 'production', applicationId: '   ' }),
     ).rejects.toMatchObject({ code: 'VALIDATION' });
+  });
+});
+
+describe('resendRefusal — a transmitted sequence is not sent again', () => {
+  it('refuses sent and acknowledged, allows pending and rejected', () => {
+    // The only guard was status === 'dispatched', which transmit never
+    // changes, so a second call produced a second real transmittal.
+    expect(resendRefusal('sent')).toMatch(/already transmitted/);
+    expect(resendRefusal('acknowledged')).toMatch(/already transmitted/);
+    expect(resendRefusal('pending')).toBeNull();
+    expect(resendRefusal('rejected')).toBeNull();
+    expect(resendRefusal(null)).toBeNull();
   });
 });
