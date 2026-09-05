@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T07:09:29.197Z",
+  "generatedAt": "2026-09-05T07:41:01.490Z",
   "git": {
-    "sha": "a3bae1025a40df8126ca4716e06deb2f3a8cc5d8",
+    "sha": "1674a0a5cdf021cc10309478d4d1e87e462dfbfd",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 39,
-    "largeFilesByLines": 90
+    "largeFilesByLines": 91
   },
   "findings": {
     "duplicateBasenames": [
@@ -1970,7 +1970,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 698614
+        "bytes": 618608
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2128,7 +2128,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 18676
+        "lines": 16487
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2261,6 +2261,10 @@
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
         "lines": 2276
+      },
+      {
+        "file": "server/routes/c2c/reviews.ts",
+        "lines": 2241
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
@@ -2486,7 +2490,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 398,
       "largeByBytes": 29,
-      "largeByLines": 74
+      "largeByLines": 75
     },
     {
       "owner": "Unassigned (TBD)",
