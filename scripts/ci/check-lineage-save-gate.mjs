@@ -176,7 +176,8 @@ const GUARDED = [
     ],
   },
   {
-    file: 'server/routes/concept2cure.ts',
+    // Moved from routes/concept2cure.ts in L53 slice 8; the writers are unchanged.
+    file: 'server/routes/c2c/artifacts.ts',
     why: 'PUT …/artifacts/:artifactId (edit) and POST …/rollback write concept2cure_artifacts.content — the c2c artifact registry a filing is assembled from',
   },
   {
