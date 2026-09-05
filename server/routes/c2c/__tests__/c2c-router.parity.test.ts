@@ -316,3 +316,50 @@ describe('the context-integrity and intelligence endpoints live in one router', 
     }
   });
 });
+
+const PROJECT_KNOWLEDGE_PATHS = [
+  'GET /projects/:projectId/knowledge',
+  'GET /projects/:projectId/activity',
+  'GET /projects/:projectId/linked',
+  'POST /projects/:projectId/linked',
+  'PATCH /projects/:projectId/knowledge',
+];
+
+describe('the project knowledge, activity and linked-project routes live in one router', () => {
+  it('the project-knowledge router answers every one of them, and the main router none', async () => {
+    const own = (await import('../project-knowledge')).default as unknown as { stack: Layer[] };
+    const main = (await import('../../concept2cure')).default as unknown as { stack: Layer[] };
+    const inOwn = new Set(registered(own));
+    const inMain = new Set(registered(main));
+    for (const p of PROJECT_KNOWLEDGE_PATHS) {
+      expect(inOwn.has(p), `${p} should be on the project-knowledge router`).toBe(true);
+      expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
+    }
+  });
+});
+
+
+const GOVERNANCE_OPS_PATHS = [
+  'GET /projects/:projectId/governance/decisions',
+  'GET /projects/:projectId/governance/summary',
+  'GET /projects/:projectId/governance/artifacts/:artifactId/trace',
+  'POST /projects/:projectId/governance/decisions/:decisionId/transition',
+  'GET /projects/:projectId/governance/decisions/:decisionId/history',
+  'GET /projects/:projectId/governance/review-queue',
+  'GET /governance/health',
+  'POST /maintenance/run',
+  'GET /startup/invariants',
+];
+
+describe('the governance and platform-operations routes live in one router', () => {
+  it('the governance-ops router answers every one of them, and the main router none', async () => {
+    const own = (await import('../governance-ops')).default as unknown as { stack: Layer[] };
+    const main = (await import('../../concept2cure')).default as unknown as { stack: Layer[] };
+    const inOwn = new Set(registered(own));
+    const inMain = new Set(registered(main));
+    for (const p of GOVERNANCE_OPS_PATHS) {
+      expect(inOwn.has(p), `${p} should be on the governance-ops router`).toBe(true);
+      expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
+    }
+  });
+});

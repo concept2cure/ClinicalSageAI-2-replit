@@ -498,3 +498,53 @@ export function sanitizeObject<T extends Record<string, unknown>>(obj: T): T {
   }
   return sanitized as T;
 }
+
+/** A document uploaded into a project's knowledge base, as stored in project settings. */
+export interface UploadedDocument {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  uploadedAt: string;
+  tokenCount?: number;
+  pageCount?: number;
+  status?: string;
+  /** Whether this document is active in the AI context window (default: true) */
+  isActive?: boolean;
+}
+
+/** The knowledge-base state a project carries in its settings. */
+export interface ProjectKnowledge {
+  documents: UploadedDocument[];
+  customInstructions?: string;
+  context?: string;
+  memoryEnabled?: boolean;
+}
+
+/** Read a project's knowledge-base state out of its settings, with defaults. */
+export function normalizeKnowledge(settings: Record<string, unknown>): ProjectKnowledge {
+  const knowledge =
+    settings.knowledge && typeof settings.knowledge === 'object'
+      ? (settings.knowledge as Record<string, unknown>)
+      : {};
+
+  const documents = Array.isArray(knowledge.documents)
+    ? (knowledge.documents as UploadedDocument[])
+    : [];
+  const customInstructions =
+    typeof settings.customInstructions === 'string'
+      ? settings.customInstructions
+      : typeof knowledge.customInstructions === 'string'
+      ? knowledge.customInstructions
+      : '';
+  const context = typeof knowledge.context === 'string' ? knowledge.context : '';
+  const memoryEnabled =
+    typeof knowledge.memoryEnabled === 'boolean' ? knowledge.memoryEnabled : false;
+
+  return {
+    documents,
+    customInstructions,
+    context,
+    memoryEnabled,
+  };
+}

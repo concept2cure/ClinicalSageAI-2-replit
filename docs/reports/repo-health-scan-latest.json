@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T12:51:27.345Z",
+  "generatedAt": "2026-09-05T12:57:48.616Z",
   "git": {
-    "sha": "99b56e8a9b567aef87dce3166236024b2887b0f1",
+    "sha": "3ef52666d305784153ff3b211d276ce4ac12aac8",
     "branch": "ana-w2"
   },
   "thresholds": {
@@ -2024,10 +2024,6 @@
         "bytes": 167533
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "bytes": 161868
-      },
-      {
         "file": "server/routes/authoring-actions.ts",
         "bytes": 154942
       },
@@ -2042,6 +2038,10 @@
       {
         "file": "server/storage.ts",
         "bytes": 145402
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "bytes": 138714
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2183,7 +2183,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 4409
+        "lines": 3776
       },
       {
         "file": "server/routes/authoring-actions.ts",
