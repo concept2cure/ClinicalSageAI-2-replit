@@ -165,16 +165,26 @@ describe('POST /api/submission-ops/artifact-section-map — one mapping per (art
   const sectionRow = [{ id: 12, packageDbId: 5 }];
   const pkgRow = [{ id: 5, projectId: 3 }];
 
+  const MAP_REASON = { reason: 'Map the drug product description into 3.2.P.1' };
+
+  it('REQUIRES a reason (governed change)', async () => {
+    const res = await post({ artifactId: 7, sectionDbId: 12 });
+    expect(res.status).toBe(400);
+    expect(res.body.details.reason).toBeDefined();
+    expect(dbState.inserted).toHaveLength(0);
+  });
+
   it('answers a repeat mapping with the EXISTING row and inserts nothing', async () => {
     dbState.queue = [artifactRow, sectionRow, pkgRow, [{ id: 31, artifactId: 7, sectionDbId: 12 }]];
-    const res = await post({ artifactId: 7, sectionDbId: 12 });
+    const res = await post({ artifactId: 7, sectionDbId: 12, ...MAP_REASON });
     expect(res.status).toBe(200);
     expect(res.body.duplicate).toBe(true);
     expect(res.body.data.id).toBe(31);
     expect(dbState.inserted).toHaveLength(0);
+    expect(recordGovernedActionFn).not.toHaveBeenCalled(); // nothing changed
   });
 
-  it('creates a new mapping and clears a bundle assembled before it', async () => {
+  it('creates a new mapping, clears a bundle assembled before it, and records a governed action', async () => {
     dbState.queue = [
       artifactRow, sectionRow, pkgRow,
       [],                                                   // no existing mapping
@@ -182,13 +192,17 @@ describe('POST /api/submission-ops/artifact-section-map — one mapping per (art
       [{ metadata: { bundle: BUNDLE, foo: 'bar' } }],       // current metadata
       [],                                                   // update (bundle cleared)
     ];
-    const res = await post({ artifactId: 7, sectionDbId: 12, documentFamily: 'cmc' });
+    const res = await post({ artifactId: 7, sectionDbId: 12, documentFamily: 'cmc', ...MAP_REASON });
     expect(res.status).toBe(201);
     expect(res.body.data.id).toBe(32);
     expect(res.body.staleBundleCleared).toBe(true);
+    expect(res.body.ledgerWriteFailed).toBe(false);
     expect(dbState.inserted).toHaveLength(1);
     expect(dbState.inserted[0]).toMatchObject({ orgId: 99, artifactId: 7, sectionDbId: 12, documentFamily: 'cmc' });
     expect(dbState.updates[0].metadata.bundle).toBeUndefined();
     expect(dbState.updates[0].metadata.foo).toBe('bar');
+    const ledger = recordGovernedActionFn.mock.calls[0][1];
+    expect(ledger).toMatchObject({ orgId: 99, userId: 777, target: 'submission:5', reason: MAP_REASON.reason });
+    expect(ledger.payload).toMatchObject({ change: 'artifact-mapped', mappingId: 32, artifactId: 7, sectionDbId: 12, staleBundleCleared: true });
   });
 });
