@@ -461,7 +461,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Intelligence — connectors & deep research</div>
-          <h1 className="sp-title">Deep Research & Connectors</h1>
+          <h1 className="sp-title">Deep research & connectors</h1>
           <p className="sp-state">
             Fan out one question across your connected sources and get a grounded synthesis with
             every claim traced to source.{' '}

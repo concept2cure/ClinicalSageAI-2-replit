@@ -682,7 +682,7 @@ export function SubmissionCenter({
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Submission</div>
-          <h1 className="sp-title">Submission Center</h1>
+          <h1 className="sp-title">Submission center</h1>
           <p className="sp-state">
             Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2
             / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.

@@ -404,7 +404,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         <div className="surface-head">
           <div>
             {kicker}
-            <h1>IND Lifecycle</h1>
+            <h1>IND lifecycle</h1>
           </div>
         </div>
         <div className="scaf-note" style={{ padding: '18px 10px' }}>
@@ -419,7 +419,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         <div className="surface-head">
           <div>
             {kicker}
-            <h1>IND Lifecycle</h1>
+            <h1>IND lifecycle</h1>
           </div>
         </div>
         <EmptyState
@@ -437,7 +437,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         <div className="surface-head">
           <div>
             {kicker}
-            <h1>IND Lifecycle</h1>
+            <h1>IND lifecycle</h1>
           </div>
         </div>
         <EmptyState
