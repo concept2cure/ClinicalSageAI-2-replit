@@ -17,6 +17,7 @@ import { createRedisRateLimiter } from '../../middleware/redisRateLimiter';
 import * as crypto from 'crypto';
 import { db } from '../../db';
 import { regulatoryAuditLogs } from '../../../shared/schema';
+import { resolveOrgId } from '../../types/auth-request';
 
 /** The one DOMPurify instance the Concept2Cure routers sanitise with. */
 export const DOMPurify = (DOMPurifyImport as any).default || DOMPurifyImport;
@@ -172,28 +173,26 @@ export interface Artifact {
 }
 
 /**
- * Get the organization ID from the request with validation.
- * Works with both auth middleware (number) and tenant context middleware (string).
- * Throws if organization context is missing.
+ * Get the organization ID from the request, or throw when there is none.
+ *
+ * DELEGATES to resolveOrgId — it does not re-derive the answer. This function
+ * used to read `req.tenantContext?.organizationId` and fall back to
+ * `req.tenantId` itself, which made it a SECOND answer to "which organization
+ * is this", and a narrower one: it never consulted `req.organizationId` or
+ * `req.user?.organizationId`, both of which the auth chain sets. A request
+ * carrying only those would have been refused here while every other route
+ * resolved it fine. `ci:tenant-resolvers` exists to catch exactly this and
+ * flagged it.
+ *
+ * The exported name, signature and throw-on-missing behaviour are unchanged, so
+ * the 15 modules importing it are untouched.
  */
 export function getOrganizationId(req: Request): number {
-  // First try the auth middleware context (organizationId as number)
-  if (req.tenantContext?.organizationId) {
-    const orgId =
-      typeof req.tenantContext.organizationId === 'number'
-        ? req.tenantContext.organizationId
-        : parseInt(String(req.tenantContext.organizationId), 10);
-    if (!isNaN(orgId)) return orgId;
+  const resolved = resolveOrgId(req);
+  if (resolved === null) {
+    throw new Error('Organization context required');
   }
-
-  // Fall back to tenantId
-  if (req.tenantId !== undefined && req.tenantId !== null) {
-    const tid =
-      typeof req.tenantId === 'number' ? req.tenantId : parseInt(String(req.tenantId), 10);
-    if (!isNaN(tid)) return tid;
-  }
-
-  throw new Error('Organization context required');
+  return resolved;
 }
 
 /**
@@ -287,9 +286,21 @@ export async function logAuditEntry(
   try {
     const auditId = `audit_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
     const timestamp = new Date();
-    const orgId = req.tenantContext?.organizationId
-      ? parseInt(req.tenantContext.organizationId as string, 10)
-      : (req.tenantId as number) || 0;
+    // Same canonical resolver as everywhere else — this was a third inline
+    // derivation of the tenant, narrower again than the two above it.
+    //
+    // The `|| 0` it ended with is PRESERVED, deliberately and under protest:
+    // regulatory_audit_logs.organization_id and .user_id are both NOT NULL, so
+    // 0 is the only "unknown" this row can carry, and dropping the row instead
+    // would make a governed action vanish from the trail entirely. But org 0
+    // and user 0 do not exist — the row is a dangling reference presented as an
+    // attribution, and until now it was written SILENTLY. It is now logged as a
+    // warning naming the action, so an unattributed GxP row is visible rather
+    // than indistinguishable from a real one. Whether such an action should be
+    // recorded-as-unknown or refused outright is a Part 11 decision for an
+    // owner, not something to settle inside a resolver cleanup.
+    const resolvedOrg = resolveOrgId(req);
+    const orgId = resolvedOrg ?? 0;
 
     // Calculate tamper-evident integrity hash
     const hashData = JSON.stringify({
@@ -309,6 +320,17 @@ export async function logAuditEntry(
         : req.userId !== undefined
           ? parseInt(String(req.userId), 10)
           : 0;
+    if (resolvedOrg === null || !Number.isFinite(userIdNum) || userIdNum === 0) {
+      logger.warn('Audit entry is UNATTRIBUTED — writing sentinel 0 for a non-existent org/user', {
+        auditId,
+        action,
+        entityType,
+        entityId,
+        organizationResolved: resolvedOrg !== null,
+        userResolved: Number.isFinite(userIdNum) && userIdNum !== 0,
+      });
+    }
+
     await db.insert(regulatoryAuditLogs).values({
       auditId,
       organizationId: orgId,

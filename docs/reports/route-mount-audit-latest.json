@@ -1,7 +1,7 @@
 {
   "target": "server/index.ts,server/bootstrap/register-*.ts,server/startup/routes.ts,server/startup/inline-endpoints.ts,server/startup/middleware.ts",
-  "generatedAt": "2026-09-05T07:32:13.880Z",
-  "mounts": 316,
+  "generatedAt": "2026-09-05T18:46:26.902Z",
+  "mounts": 329,
   "errors": 0,
   "warnings": 8,
   "issues": {
