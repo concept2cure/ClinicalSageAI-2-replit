@@ -322,6 +322,30 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
               on the template: {report.ignoredRequestKeys.map((k) => captionOf(fields?.fields, k)).join(' · ')}
             </div>
           ) : null}
+          {/*
+            These two lines are the other half of the note above. Choosing the
+            submission type is what reveals the sections — and the same scripts
+            that reveal them recompute several of these cells from source fields
+            elsewhere on the form. We measured which, per field, against the
+            vendored template (ESTAR_TEMPLATE_RECOMPUTED_FIELDS); until now that
+            record went no further than a unit test, so the panel reported those
+            cells filled and said nothing about what happens next. A filer who
+            follows the instruction directly above would watch them empty.
+          */}
+          {report.clearedByTemplateKeys.length ? (
+            <div data-testid="official-estar-cleared-note">
+              Written, but the form clears these when you choose the submission type or edit the
+              control they come from — re-enter them on the form:{' '}
+              {report.clearedByTemplateKeys.map((k) => captionOf(fields?.fields, k)).join(' · ')}
+            </div>
+          ) : null}
+          {report.substitutedByTemplateKeys.length ? (
+            <div data-testid="official-estar-substituted-note">
+              The form rebuilds these from the applicant details rather than keeping what we
+              wrote, so they can end up naming a different entity — check them before signing:{' '}
+              {report.substitutedByTemplateKeys.map((k) => captionOf(fields?.fields, k)).join(' · ')}
+            </div>
+          ) : null}
         </div>
       ) : null}
 

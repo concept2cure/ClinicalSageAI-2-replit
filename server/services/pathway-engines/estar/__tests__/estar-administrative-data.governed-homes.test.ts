@@ -384,7 +384,18 @@ describe('resolveOfficialEstarFields — declaredSource names the governed home'
       honourRequestOverGoverned: false,
     });
     expect(r.fields).toEqual([
-      { key: 'deviceName', caption: 'deviceName', xfaSomPath: null, value: 'Acme Monitor', source: 'request', declaredSource: null },
+      {
+        key: 'deviceName',
+        caption: 'deviceName',
+        xfaSomPath: null,
+        value: 'Acme Monitor',
+        source: 'request',
+        declaredSource: null,
+        // A key the recomputed-fields table does not cover makes no claim about
+        // what the template does to it — null, never an optimistic 'reproduces'.
+        rebuildOutcome: null,
+        rebuildNote: null,
+      },
     ]);
   });
 

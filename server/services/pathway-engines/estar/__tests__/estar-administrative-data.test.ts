@@ -296,6 +296,9 @@ describe('resolveOfficialEstarFields — governed wins, request fills gaps, the 
       value: null,
       source: null,
       declaredSource: 'regulatory_programs.indications_for_use_citation',
+      // The template does not recompute this cell, so nothing takes it away.
+      rebuildOutcome: 'reproduces',
+      rebuildNote: null,
     });
     // `data` carries exactly the written keys — nothing blank, nothing extra.
     expect(Object.keys(r.data).sort()).toEqual(

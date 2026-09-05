@@ -412,6 +412,17 @@ describe('POST /api/510k/estar/official with useProgramData:true', () => {
       ],
       advisories: [],
       ignoredRequestKeys: ['deviceTradeName', 'bogus'],
+      /*
+       * deviceCommonName WAS written — it is in filledCount — and the form's own
+       * scripts clear it as soon as the applicant touches the classification
+       * dropdown, because they rebuild that cell from a source nothing fills.
+       * Reporting "2 of 3 filled" without saying so tells a filer a value is on
+       * the form when it is about to go. regulationNumber is blank, so it is
+       * counted once, under blankKeys — the template cannot take away a cell
+       * that holds nothing.
+       */
+      clearedByTemplateKeys: ['deviceCommonName'],
+      substitutedByTemplateKeys: [],
     });
 
     const arg = mockGovernedConsequence.mock.calls[0][0] as any;
@@ -499,9 +510,14 @@ describe('GET /api/510k/estar/official-fields', () => {
       // the value is SET — so the surface can point there instead of
       // offering a value the platform does not hold.
       fields: [
-        { key: 'deviceTradeName', caption: 'Device Trade Name', xfaSomPath: null, value: 'Governed Monitor', source: 'regulatory_programs.product_name', declaredSource: 'regulatory_programs.product_name' },
-        { key: 'deviceCommonName', caption: 'Common Name', xfaSomPath: null, value: null, source: null, declaredSource: 'regulatory_programs.common_name' },
-        { key: 'regulationNumber', caption: 'Regulation Number', xfaSomPath: null, value: null, source: null, declaredSource: 'regulatory_programs.regulation_number' },
+        // Each row also carries what the TEMPLATE does to that cell after we
+        // write it, from the measured table: 'reproduces' survives, 'blanks' is
+        // cleared by the form's own scripts. The preview is the one place a
+        // filer reads before producing, so it carries the fact rather than the
+        // count alone.
+        { key: 'deviceTradeName', caption: 'Device Trade Name', xfaSomPath: null, value: 'Governed Monitor', source: 'regulatory_programs.product_name', declaredSource: 'regulatory_programs.product_name', rebuildOutcome: 'reproduces', rebuildNote: expect.any(String) },
+        { key: 'deviceCommonName', caption: 'Common Name', xfaSomPath: null, value: null, source: null, declaredSource: 'regulatory_programs.common_name', rebuildOutcome: 'blanks', rebuildNote: null },
+        { key: 'regulationNumber', caption: 'Regulation Number', xfaSomPath: null, value: null, source: null, declaredSource: 'regulatory_programs.regulation_number', rebuildOutcome: 'blanks', rebuildNote: null },
       ],
     });
     expect(mockLoadInputs.mock.calls[0][1]).toEqual({ organizationId: 2, programUuid: null, fda510kProjectId: 33 });
