@@ -131,13 +131,16 @@ describe('DELETE /api/submission-ops/artifact-section-map/:mappingId', () => {
     expect(clientQuery).toHaveBeenCalledWith('COMMIT');
   });
 
-  it('leaves the package untouched when there was no bundle to clear', async () => {
+  it('bumps the content revision even when there is no bundle to clear, so an assembly in flight sees the change', async () => {
+    // An assemble that read its content before this unmapping would otherwise
+    // store a zip that still ships the artifact; its lock compares revisions.
     dbState.queue = [[{ id: 31, artifactId: 7, sectionDbId: 12, packageDbId: 5 }], [{ id: 31 }]];
-    dbState.pkgMetadata = { foo: 'bar' };
+    dbState.pkgMetadata = { foo: 'bar', contentRevision: 41 };
     const res = await del('31');
     expect(res.status).toBe(200);
     expect(res.body.data.staleBundleCleared).toBe(false);
-    expect(dbState.updates).toHaveLength(0);
+    expect(dbState.updates).toHaveLength(1);
+    expect(dbState.updates[0].metadata).toEqual({ foo: 'bar', contentRevision: 42 });
   });
 
   it('REQUIRES a reason (governed change) and touches nothing without one', async () => {
@@ -203,6 +206,9 @@ describe('POST /api/submission-ops/artifact-section-map — one mapping per (art
     expect(res.status).toBe(201);
     expect(res.body.data.id).toBe(32);
     expect(res.body.staleBundleCleared).toBe(true);
+    // A package that never had a revision starts at 1 (never NaN).
+    expect(dbState.updates.at(-1).metadata).toMatchObject({ foo: 'bar', contentRevision: 1 });
+    expect(dbState.updates.at(-1).metadata.bundle).toBeUndefined();
     expect(res.body.ledgerWriteFailed).toBe(false);
     expect(dbState.inserted).toHaveLength(1);
     expect(dbState.inserted[0]).toMatchObject({ orgId: 99, artifactId: 7, sectionDbId: 12, documentFamily: 'cmc' });

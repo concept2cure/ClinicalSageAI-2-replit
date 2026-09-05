@@ -388,8 +388,9 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
       .returning();
 
     // A bundle assembled before this mapping no longer reflects the package's
-    // content; it is cleared so the transmit gate cannot ship it.
-    const staleBundleCleared = await clearStaleBundle(pkg.id);
+    // content: it is cleared so the transmit gate cannot ship it, and the
+    // content revision is bumped so an assembly in flight discards its zip.
+    const staleBundleCleared = await markContentChanged(pkg.id);
     const ledgerWriteFailed = await recordPackageGovernedAction({
       orgId,
       userId: actorUserId,
@@ -448,7 +449,7 @@ router.delete('/artifact-section-map/:mappingId', async (req: Request, res: Resp
       .returning();
     if (!deleted) return res.status(404).json({ error: 'Mapping not found' });
 
-    const staleBundleCleared = await clearStaleBundle(mapping.packageDbId);
+    const staleBundleCleared = await markContentChanged(mapping.packageDbId);
     const ledgerWriteFailed = await recordPackageGovernedAction({
       orgId,
       userId,
@@ -1656,15 +1657,32 @@ async function withPackageMetadataLock<T>(
 }
 
 /**
- * Clear a package's stored bundle descriptor when its content changed (an
- * artifact mapped or unmapped): the zip carries the old content and the
- * transmit gate must not ship it. Returns whether a descriptor was cleared.
+ * The package's content revision: bumped under the row lock by every mapping
+ * change and compared by assemble before a bundle is stored. Absent (packages
+ * created before the revision existed) reads as 0, never NaN.
  */
-async function clearStaleBundle(packageDbId: number): Promise<boolean> {
+function contentRevisionOf(metadata: Record<string, unknown>): number {
+  const raw = metadata.contentRevision;
+  return typeof raw === 'number' && Number.isSafeInteger(raw) && raw >= 0 ? raw : 0;
+}
+
+/**
+ * Record that a package's content changed (an artifact mapped or unmapped).
+ * Two effects, one locked write: the content revision is bumped so an assembly
+ * that read its content BEFORE the change refuses to store its bundle (its
+ * lock compares revisions), and a stored bundle descriptor is cleared because
+ * its zip carries the old content and the transmit gate must not ship it.
+ * Clearing alone was not enough: an assemble already past its content read
+ * stored a zip without the new mapping right after the descriptor was cleared.
+ * Returns whether a descriptor was cleared.
+ */
+async function markContentChanged(packageDbId: number): Promise<boolean> {
   return withPackageMetadataLock(packageDbId, (current) => {
-    if (current.bundle === undefined) return { metadata: null, result: false };
-    const { bundle: _stale, ...withoutBundle } = current;
-    return { metadata: withoutBundle, result: true };
+    const { bundle: stale, ...withoutBundle } = current;
+    return {
+      metadata: { ...withoutBundle, contentRevision: contentRevisionOf(current) + 1 },
+      result: stale !== undefined,
+    };
   });
 }
 
@@ -1927,6 +1945,12 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     const sequence = parsed.data.sequence ?? '0000';
     const existingMetadata =
       pkg.metadata && typeof pkg.metadata === 'object' ? (pkg.metadata as Record<string, unknown>) : {};
+    // The content revision this assembly starts from. The section content is
+    // read below; every mapping change bumps the revision under the row lock,
+    // so a revision that differs when the bundle is about to be stored means
+    // the zip may not contain what the package now maps. Taken BEFORE the
+    // content read so a change between the two also discards (safe side).
+    const contentRevisionAtStart = contentRevisionOf(existingMetadata);
 
     // Region code used in m1/<region>/.. leaf paths (per ICH M4 / regional M1).
     const regionCode = region === 'EMA' ? 'eu' : region === 'PMDA' ? 'jp' : region === 'CA' ? 'ca' : 'us';
@@ -2322,18 +2346,26 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
 
     // Store the descriptor under metadata.bundle — decided and written under
     // the row lock against the package's CURRENT metadata, never the snapshot
-    // taken before the (slow) packaging step. A backbone built with identifiers
-    // that have since changed is stale by definition: it is not stored, the
-    // zip written above is removed, and the discard is recorded.
-    const stored = await withPackageMetadataLock(pkg.id, (current) => {
-      if (identifiersAtBuild) {
-        const now = readRegulatoryIdentifiers(current).values;
-        const drifted = REGULATORY_IDENTIFIER_FIELDS.some((f) => now[f] !== identifiersAtBuild!.values[f]);
-        if (drifted) return { metadata: null, result: false };
-      }
-      return { metadata: { ...current, bundle: descriptor }, result: true };
-    });
-    if (!stored) {
+    // taken before the (slow) packaging step. A zip is stale by definition
+    // when the package's content changed since this assembly read it (a
+    // mapping added or removed) or when the backbone was built with
+    // identifiers that have since changed: it is not stored, the zip written
+    // above is removed, and the discard is recorded with its cause.
+    const discardCause = await withPackageMetadataLock<'content_changed' | 'identifiers_changed' | null>(
+      pkg.id,
+      (current) => {
+        if (contentRevisionOf(current) !== contentRevisionAtStart) {
+          return { metadata: null, result: 'content_changed' };
+        }
+        if (identifiersAtBuild) {
+          const now = readRegulatoryIdentifiers(current).values;
+          const drifted = REGULATORY_IDENTIFIER_FIELDS.some((f) => now[f] !== identifiersAtBuild!.values[f]);
+          if (drifted) return { metadata: null, result: 'identifiers_changed' };
+        }
+        return { metadata: { ...current, bundle: descriptor }, result: null };
+      },
+    );
+    if (discardCause) {
       // Nothing references this zip: remove both copies. A bundle that WAS
       // stored (and may have been transmitted) is never deleted — it is the
       // record; this one never became one.
@@ -2356,13 +2388,15 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         userId,
         packageDbId: pkg.id,
         reason: parsed.data.reason,
-        payload: { change: 'assembly-discarded', cause: 'identifiers_changed', sha256, region, format, durableCopy, durableCopyDeleted },
+        payload: { change: 'assembly-discarded', cause: discardCause, sha256, region, format, durableCopy, durableCopyDeleted },
       });
       return res.status(409).json({
         error:
-          'The regulatory identifiers changed while the bundle was being assembled; its backbone carries the old ones, so it was not stored. Assemble again.',
+          discardCause === 'identifiers_changed'
+            ? 'The regulatory identifiers changed while the bundle was being assembled; its backbone carries the old ones, so it was not stored. Assemble again.'
+            : 'An artifact was mapped or unmapped while the bundle was being assembled; the zip may not contain what the package now maps, so it was not stored. Assemble again.',
         code: 'STALE_ASSEMBLY',
-        gate: 'identifiers_changed',
+        gate: discardCause,
         // A durable copy that could not be removed is named so it can be.
         durableCopy: durableCopy && !durableCopyDeleted ? durableCopy : null,
         durableCopyDeleted,
@@ -2643,7 +2677,17 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
     // JSONB pattern as assemble's `bundle` descriptor). Summary only — the
     // finding bodies are already derivable (internal ones live on
     // metadata.bundle.validation; external ones are re-runnable). A failed
-    // write must not lose the computed findings: log and still respond.
+    // write must not lose the computed findings: log and still respond,
+    // saying the summary was not persisted.
+    //
+    // Written under the package row lock against the CURRENT row, and only
+    // while the bundle this run evaluated is still the stored one. The
+    // unlocked write of the pre-run snapshot this replaces reverted
+    // identifiers recorded while the (slow) external validators ran and put
+    // a bundle cleared as stale back as transmittable. A run whose bundle was
+    // cleared or replaced meanwhile describes a bundle the package no longer
+    // has, so its findings are not the package's: nothing is written and the
+    // caller is told to run preflight again.
     const preflightSummary = {
       ranAt: new Date().toISOString(),
       ranBy: (req as any).user?.id ?? null,
@@ -2660,19 +2704,28 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
         ...(v.error ? { error: v.error } : {}),
       })),
     };
+    let persisted: 'stored' | 'superseded' | 'failed' = 'failed';
     try {
-      await db
-        .update(c2cSubmissionPackages)
-        .set({
-          metadata: { ...metadata, preflight: preflightSummary },
-          updatedAt: new Date(),
-        })
-        .where(eq(c2cSubmissionPackages.id, pkg.id));
+      persisted = await withPackageMetadataLock<'stored' | 'superseded'>(pkg.id, (current) => {
+        const stored = current.bundle as { sha256?: unknown } | undefined;
+        if (!stored || String(stored.sha256 ?? '') !== String(bundle.sha256 ?? '')) {
+          return { metadata: null, result: 'superseded' };
+        }
+        return { metadata: { ...current, preflight: preflightSummary }, result: 'stored' };
+      });
     } catch (persistErr) {
       console.error(
         '[submission-ops] preflight-persist-failed',
         persistErr instanceof Error ? persistErr.message : persistErr,
       );
+    }
+    if (persisted === 'superseded') {
+      return res.status(409).json({
+        gate: 'bundle_superseded',
+        error:
+          'The bundle was cleared or replaced while preflight ran, so these findings describe a bundle the package no longer has. Assemble if needed, then run preflight again.',
+        evaluatedSha256: bundle.sha256 ?? null,
+      });
     }
 
     return res.json({
@@ -2689,6 +2742,9 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
         blocking: errorCount > 0,
         errorCount,
         warningCount,
+        // False when the summary could not be written: the findings above are
+        // still this run's, but portfolio rollups will not reflect it.
+        persisted: persisted === 'stored',
       },
     });
   } catch (e) {

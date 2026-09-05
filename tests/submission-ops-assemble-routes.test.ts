@@ -280,6 +280,40 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(clientQuery.mock.calls.some((c) => /FOR UPDATE/.test(String(c[0])))).toBe(true);
   });
 
+  it('REFUSES to store a bundle whose CONTENT changed while it was being assembled: a mapping added or removed meanwhile bumps the package’s content revision', async () => {
+    dbState.pkg = lockedPkg({ foo: 'bar', regulatory: REGULATORY, contentRevision: 3 });
+    dbState.sections = [{ id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('co', null)]];
+    // While the packager runs, a colleague maps another artifact. The mapping
+    // route clears any stored bundle and bumps the revision; the zip being
+    // built here does not contain that artifact, so it must not be stored.
+    packageLeafBytesFn.mockImplementationOnce(async () => {
+      dbState.pkg = lockedPkg({ foo: 'bar', regulatory: REGULATORY, contentRevision: 4 });
+      return { path: '/tmp/c2c-assemble-test/pkg.zip', sha256: 'f'.repeat(64), sizeBytes: 14, format: 'ectd', ...PACKAGER_EVIDENCE };
+    });
+    const res = await post();
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ code: 'STALE_ASSEMBLY', gate: 'content_changed' });
+    expect(dbState.updateSet).toBeNull();
+    expect(unlinkFn).toHaveBeenCalledTimes(1);
+    const ledger = vi.mocked(recordGovernedAction).mock.calls.at(-1)![1] as any;
+    expect(ledger.payload).toMatchObject({ change: 'assembly-discarded', cause: 'content_changed' });
+  });
+
+  it('a package that never recorded a content revision is protected too: the first mapping change during assembly discards the bundle', async () => {
+    dbState.pkg = lockedPkg(); // no contentRevision yet (packages created before the revision existed)
+    dbState.sections = [{ id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('co', null)]];
+    packageLeafBytesFn.mockImplementationOnce(async () => {
+      dbState.pkg = lockedPkg({ foo: 'bar', regulatory: REGULATORY, contentRevision: 1 });
+      return { path: '/tmp/c2c-assemble-test/pkg.zip', sha256: 'f'.repeat(64), sizeBytes: 14, format: 'ectd', ...PACKAGER_EVIDENCE };
+    });
+    const res = await post();
+    expect(res.status).toBe(409);
+    expect(res.body.gate).toBe('content_changed');
+    expect(dbState.updateSet).toBeNull();
+  });
+
   it('a discarded stale assembly removes its durable (S3) copy too, and says so', async () => {
     storageState.enabled = true;
     dbState.pkg = lockedPkg();

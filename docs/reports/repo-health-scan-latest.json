@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T12:36:05.883Z",
+  "generatedAt": "2026-09-05T12:51:27.345Z",
   "git": {
-    "sha": "17da357f6669ca689010e8ad918a619750110d66",
+    "sha": "99b56e8a9b567aef87dce3166236024b2887b0f1",
     "branch": "ana-w2"
   },
   "thresholds": {
@@ -2137,7 +2137,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "bytes": 103351
+        "bytes": 106752
       }
     ],
     "largeFilesByLines": [
@@ -2231,7 +2231,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "lines": 2700
+        "lines": 2756
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
