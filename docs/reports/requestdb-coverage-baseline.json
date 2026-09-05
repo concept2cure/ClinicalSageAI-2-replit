@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-05T10:50:51.334Z",
+  "generatedAt": "2026-09-05T12:01:41.387Z",
   "onSharedPool": [
     "server/routes/admin-security.ts",
     "server/routes/ana-cortex.ts",
@@ -12,6 +12,7 @@
     "server/routes/approval-workflow.ts",
     "server/routes/authoring-permissions.ts",
     "server/routes/authoring.router.ts",
+    "server/routes/c2c/artifacts.ts",
     "server/routes/c2c/communication-center.ts",
     "server/routes/c2c/conversations.ts",
     "server/routes/c2c/exports.ts",
@@ -90,6 +91,7 @@
       "server/routes/approval-workflow.ts",
       "server/routes/authoring-permissions.ts",
       "server/routes/authoring.router.ts",
+      "server/routes/c2c/artifacts.ts",
       "server/routes/c2c/communication-center.ts",
       "server/routes/c2c/conversations.ts",
       "server/routes/c2c/exports.ts",
