@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T19:50:23.520Z",
+  "generatedAt": "2026-09-05T20:10:30.282Z",
   "git": {
-    "sha": "cb4cd56ba6467d15cbccb8f3ed4d47d993710968",
+    "sha": "e6804609fcdb5945252c54b746572d905a1d738c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2466,12 +2466,12 @@
         "lines": 1710
       },
       {
-        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
-        "lines": 1696
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 1702
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1693
+        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
+        "lines": 1696
       },
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
