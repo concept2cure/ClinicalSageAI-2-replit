@@ -93,6 +93,10 @@ vi.mock('../../../db', () => {
         rowCount: 1,
       };
     }
+    // SELECT for checkStatus (stored row, no live poll).
+    if (/SELECT\s+transmission_id,\s+status,\s+ack_received_at\s+FROM submission_transmittals/i.test(sql)) {
+      return { rows: [{ transmission_id: '<mdn-msg-id@FDA-CESUB>', status: 'received', ack_received_at: new Date('2026-06-29T12:00:00Z') }], rowCount: 1 };
+    }
     // SELECT for findActiveTransmittal (status IN list).
     if (/SELECT\s+id,\s+status\s+FROM submission_transmittals/i.test(sql)) {
       return activeTransmittalRow.value
@@ -176,20 +180,34 @@ vi.mock('../bundle-integrity', () => ({
 
 /* ─── HTTPS mock (AS2 POST returns a verbatim MDN body) ─────────── */
 
-const FAKE_MDN_BODY =
+/* The MDN echoes the Message-ID of the AS2 request it acknowledges unless a
+   test pins a different one; the disposition is configurable so the refusal
+   cases below can hand the gateway a failed or missing disposition. */
+const { mdnFixture } = vi.hoisted(() => ({
+  mdnFixture: {
+    originalMessageId: null as string | null,
+    disposition: 'automatic-action/MDN-sent-automatically; processed' as string | null,
+  },
+}));
+
+const mdnBodyFor = (originalMessageId: string, disposition: string | null) =>
   '------=_Part_FDA_MDN\r\n' +
   'Content-Type: message/disposition-notification\r\n\r\n' +
   'Reporting-UA: FDA-CESUB\r\n' +
   'Original-Recipient: rfc822; FDA-CESUB\r\n' +
   'Final-Recipient: rfc822; FDA-CESUB\r\n' +
-  'Original-Message-ID: <msg-original@SPONSOR-AS2>\r\n' +
-  'Disposition: automatic-action/MDN-sent-automatically; processed\r\n' +
+  `Original-Message-ID: ${originalMessageId}\r\n` +
+  (disposition === null ? '' : `Disposition: ${disposition}\r\n`) +
   'Received-Content-MIC: deadbeef==, sha-256\r\n' +
   '------=_Part_FDA_MDN--\r\n';
 
 vi.mock('node:https', () => {
   return {
-    request: (_opts: unknown, cb: (res: unknown) => void) => {
+    request: (opts: any, cb: (res: unknown) => void) => {
+      const FAKE_MDN_BODY = mdnBodyFor(
+        mdnFixture.originalMessageId ?? String(opts?.headers?.['Message-ID'] ?? ''),
+        mdnFixture.disposition,
+      );
       const dataHandlers: Array<(c: Buffer) => void> = [];
       const endHandlers: Array<() => void> = [];
       const res: any = {
@@ -235,6 +253,7 @@ const SMALL_AS2_REQUEST = () => ({
   },
   environment:    'production' as const,
   submissionType: 'original',
+  fda: { applicationType: 'nda' }, // a package must declare what it is; this used to default to NDA silently
   metadata:       { applicationId: 'IND123456', sequence: '0001', environment: 'production' },
   // Transmission now requires a named human gate; this suite exercises the
   // governed HTTP path. See TransmitAuthorization in ../types.ts.
@@ -252,6 +271,8 @@ beforeEach(() => {
   mdnRawStorage.value = null;
   rollbackStatusOverride.value = 'received';
   activeTransmittalRow.value = null;
+  mdnFixture.originalMessageId = null;
+  mdnFixture.disposition = 'automatic-action/MDN-sent-automatically; processed';
 });
 
 /* ─── FIX 2 ─────────────────────────────────────────────────────── */
@@ -282,7 +303,8 @@ describe('FIX 2 — raw MDN persistence', () => {
 
     const ack = await gw.downloadAcknowledgment(4242);
     expect(ack.contentType).toBe('message/disposition-notification');
-    expect(ack.buffer.toString('utf8')).toBe(FAKE_MDN_BODY);
+    expect(ack.buffer.toString('utf8')).toBe(mdnRawStorage.value);
+    expect(ack.buffer.toString('utf8')).toContain('Disposition: automatic-action/MDN-sent-automatically; processed');
     expect(ack.buffer.toString('utf8')).not.toMatch(/^FDA ESG Acknowledgement\n/);
   });
 
@@ -305,6 +327,78 @@ describe('FIX 2 — raw MDN persistence', () => {
     expect(body).not.toMatch(/^FDA ESG Acknowledgement/m);
     // The identifiers it legitimately holds survive.
     expect(body).toContain('Transmission: <mdn-msg-id@FDA-CESUB>');
+  });
+});
+
+/* ─── Status provenance ─────────────────────────────────────────── */
+
+describe('checkStatus — says where the status came from', () => {
+  it('reports source=stored: FDA ESG re-reads its own row and does not ask the agency', async () => {
+    // The client labelled every status check "live poll"; for FDA ESG nothing
+    // left the platform.
+    const result = await new FdaEsgGateway().checkStatus(4242);
+    expect(result.source).toBe('stored');
+    expect(result.status).toBe('received');
+  });
+});
+
+/* ─── SFTP path identity ────────────────────────────────────────── */
+
+describe('SFTP path — the application number is required, never invented', () => {
+  it('refuses an over-1GB bundle with no application number before any transmittal row exists', async () => {
+    // The path FDA files the bundle under used to default to `APP-<packageId>`.
+    const req = SMALL_AS2_REQUEST();
+    req.bundle.sizeBytes = 2 * 1_073_741_824;
+    req.metadata = { sequence: '0002', environment: 'production' } as any;
+    await expect(new FdaEsgGateway().transmit(req)).rejects.toMatchObject({ errorClass: 'validation', message: /application number/ });
+    expect(poolQueries.some((q) => /INSERT INTO submission_transmittals/i.test(q.sql))).toBe(false);
+  });
+
+  it('refuses an UNASSIGNED placeholder application number', async () => {
+    const req = SMALL_AS2_REQUEST();
+    req.bundle.sizeBytes = 2 * 1_073_741_824;
+    req.metadata = { applicationId: 'UNASSIGNED-SEQ-9', sequence: '0002', environment: 'production' } as any;
+    await expect(new FdaEsgGateway().transmit(req)).rejects.toMatchObject({ errorClass: 'validation' });
+  });
+});
+
+/* ─── MDN acceptance ────────────────────────────────────────────── */
+
+describe('AS2 MDN — a 2xx is not an acceptance until the MDN says so', () => {
+  const rejectedUpdate = () =>
+    poolQueries.find((q) => /UPDATE submission_transmittals/i.test(q.sql) && q.args.some((a) => a === 'rejected'));
+  const receivedUpdate = () =>
+    poolQueries.find((q) => /UPDATE submission_transmittals/i.test(q.sql) && q.args.some((a) => a === 'received'));
+
+  it('a failed disposition records the transmittal rejected, keeps the raw MDN, and throws', async () => {
+    mdnFixture.disposition = 'automatic-action/MDN-sent-automatically; failed/failure: signature verification failed';
+    await expect(new FdaEsgGateway().transmit(SMALL_AS2_REQUEST())).rejects.toThrow(/did not accept/);
+    expect(receivedUpdate()).toBeUndefined();
+    const rejected = rejectedUpdate();
+    expect(rejected).toBeDefined();
+    expect(rejected!.sql).toMatch(/mdn_raw\s*=/);
+  });
+
+  it('processed/error is a refusal; processed/warning is an acceptance', async () => {
+    mdnFixture.disposition = 'automatic-action/MDN-sent-automatically; processed/error: unsupported MIC algorithm';
+    await expect(new FdaEsgGateway().transmit(SMALL_AS2_REQUEST())).rejects.toThrow(/did not accept/);
+    poolQueries.length = 0;
+    mdnFixture.disposition = 'automatic-action/MDN-sent-automatically; processed/warning: duplicate document';
+    const result = await new FdaEsgGateway().transmit(SMALL_AS2_REQUEST());
+    expect(result.status).toBe('received');
+  });
+
+  it('an MDN for a different message is refused', async () => {
+    mdnFixture.originalMessageId = '<some-other-message@SPONSOR-AS2>';
+    await expect(new FdaEsgGateway().transmit(SMALL_AS2_REQUEST())).rejects.toThrow(/different message/);
+    expect(receivedUpdate()).toBeUndefined();
+  });
+
+  it('a body with no disposition at all is refused', async () => {
+    mdnFixture.disposition = null;
+    await expect(new FdaEsgGateway().transmit(SMALL_AS2_REQUEST())).rejects.toThrow(/no MDN disposition/);
+    expect(receivedUpdate()).toBeUndefined();
+    expect(rejectedUpdate()).toBeDefined();
   });
 });
 

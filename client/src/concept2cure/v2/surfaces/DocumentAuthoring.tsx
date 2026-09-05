@@ -3181,7 +3181,10 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     </span>
                   </button>
                   {open &&
-                    (sectionsState === 'loading' ? (
+                    (sectionsState === 'loading' || sectionsState === 'idle' ? (
+                      /* 'idle' with a document open is the render before the
+                         read starts — not a document with no sections. Saying
+                         "No sections yet" there was a fact nobody had read. */
                       <div className="scaf-note" style={{ padding: '6px 12px' }}>
                         Loading sections…
                       </div>

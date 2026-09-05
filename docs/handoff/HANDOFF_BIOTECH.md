@@ -99,6 +99,213 @@ guess:
    has no workspace anchor. Correct for a single-company tenant, wrong for a
    consultancy, and unknowable at runtime. Same decision as 3.
 
+### Third audit — IND lifecycle and agency gateways (2026-09-05)
+
+A read-only audit of the IND lifecycle services and the eleven agency gateways
+produced 12 findings. Fixed on `concept2cure-v2`, each with a test that fails on
+revert:
+
+- Every gateway that took a 2xx with no receipt identifier as an accepted
+  submission (minting `<agency>-<timestamp>` as the receipt and recording the row
+  as received) now records the transmittal rejected and throws. PMDA is the
+  tested exemplar; the other ten share the pattern.
+- The governed-transmit ledger recorded the agency receipt under the wrong key
+  (`transactionId`), so the Part 11 record of a transmission never carried it.
+- Amendment placement per the FDA eCTD Module 1 vocabulary: protocol amendment
+  summary to m1.2, Form 1572 to m1.1, IB to m1.14.4.1 (they were under pre-IND
+  correspondence, request-to-charge and labeling). The auto cover letter is now
+  keyed on document type, not section, so other m1.2 content no longer stands in
+  for it.
+- 312.33 annual report due date: 60 days after the most recent anniversary of
+  the IND effective date, not 60 days after the effective date itself.
+- ICSR acknowledgements: an ACK that names another message, cannot be read, or
+  arrives for a report never transmitted is refused (422/422/409) and the row is
+  unchanged. The route mapped every refusal to 404.
+- `transmitSequence` refuses without an explicit staging/production environment
+  and without a real agency application number; the UNASSIGNED placeholder was
+  being sent.
+
+- FDA ESG AS2: a 2xx was recorded as received on its own. The MDN is now
+  read before anything is recorded — a `failed` or `processed/error`
+  disposition, an MDN for a different message, or a body with no disposition
+  records the transmittal rejected (raw MDN kept) and throws. The SFTP path
+  refuses without an application number instead of filing under
+  `APP-<packageId>`.
+- Every eCTD gateway refuses without the four-digit sequence and a submission
+  type (`requiredAgencyMetadata` in `submission-gateways/types.ts`), before a
+  transmittal row exists. They defaulted to `0000`/`0001` and `initial`, so a
+  follow-up whose caller forgot the metadata was announced as an original.
+  FDA ESG applies this on the SFTP path only, where the sequence names the
+  `/incoming/` directory; the AS2 envelope carries no sequence and an eSTAR
+  has none.
+- ICSR C.1.7 (expedited) comes from the event's classification; the
+  transmission path hardcoded Yes.
+- 312.33 draft: absent or unparsable period dates are refused (400
+  VALIDATION) instead of coercing to 1 January 1970 and persisting.
+- Cover letter: an absent date renders as the `[Date]` placeholder, not
+  "01 January 1970".
+- Safety classification: an event with no recorded expectedness is reported
+  as unassessed (`determinations.expectednessRecorded`, rationale says so),
+  not as "expected (listed in the IB)". Obligation unchanged: the clock never
+  starts on an unassessed event.
+
+One finding did not reproduce: the stored amendment plan keeps every leaf's
+`documentId` and `parentLeafGuid` (the PGlite register test now asserts it).
+
+### Fourth audit — ESG acknowledgement chain and IND initial assembly (2026-09-05)
+
+Two read-only audits. Fixed on `concept2cure-v2`, each with a test that fails
+on revert:
+
+- `isConfigured()` on all 13 gateways answered true for any failure other than
+  a missing variable, so an unreadable (unmounted, rotated-away) certificate
+  showed the gateway as configured until the transmit failed. Any failure to
+  load credentials is now "not configured".
+- `checkStatus()` results carry `source: 'agency' | 'stored'` and, when a poll
+  failed, `pollError`. Every gateway swallowed the poll failure and handed back
+  the stored row as if it were the agency's answer; FDA ESG and EUDAMED have no
+  live poll at all and were labelled "live poll" on the transmittals surface.
+  The surface now says "last recorded state · the agency was not asked" for a
+  stored result, and the status toast carries the server's reason.
+- `POST /api/ind-generation/assemble` and `/generate-form` were removed (no
+  callers). The first counted a section complete when any artifact existed,
+  ignoring the `needsData` flag its sibling records, and answered "Ready for
+  export" over a hand-rolled backbone with sequence 0000 and operation=new
+  hardcoded; the second returned a one-paragraph summary named
+  `FDA_Form_<n>.docx`. The toy `generateEctdXml`/`generateIcsrXml` builders are
+  gone, and the ANA `generate_document` tool no longer offers `ectd_backbone`
+  or `icsr` (it used to draft an ICSR around an invented report id and
+  "Unknown" drug/reaction).
+
+Still open from the ESG audit, a real feature not a fix: FDA ESG has no live
+status poll (SFTP `/outgoing/` ack1/ack2/ack3 reconciliation). The stored row is
+now labelled as such; the poll itself needs the ESG account and the ack format
+verified against a live test account.
+
+### Fifth audit — CTD Module 2/3 placement and the eCTD document gate (2026-09-05)
+
+Two read-only audits. Fixed on `concept2cure-v2`, each with a test that fails
+on revert:
+
+- Module 2.5: the benefit-risk conclusion is no longer written by the builder.
+  It printed "the benefit-risk balance is favorable" whenever one pivotal
+  study existed, reciting the SAE and death counts in the same sentence
+  without either gating the word. The counts are stated; the conclusion is a
+  recorded open item for the sponsor's judgment.
+- Module 2.4: "the safety profile supports the proposed clinical plan" is only
+  drawn when no study category is open; it used to precede the list of the
+  categories that were missing.
+- Module 3 placement files a section already placed in an earlier sequence of
+  the same submission as `replace` of that leaf (parent link), not `new`.
+- 3.2.P.2 dissolution tables: the Batch column shows a batch number or a dash,
+  never the product name.
+- Leaf file names are composed within the 64-character eCTD rule (the label
+  gives way; the source key stays whole), and `validateEctdPackage` — the
+  validator the export route runs by default — refuses any packaged file name
+  that breaks the rule.
+- The packager refuses an encrypted/secured PDF leaf outright (`LEAF-ENCRYPTED`)
+  instead of folding the detection into a PDF/A warning it then discarded.
+- The parallel `/api/ectd-submissions` agent: an unverified PDF/A status is not
+  a pass, a declared one says who declared it, and its file-name rule is the
+  canonical one (it allowed `_` and had no length bound).
+
+Decision item, not changed: `services/regulatory/ind-ectd-sections.ts` has no
+`m5.2` (Tabular Listing of All Clinical Studies), so readiness can never flag
+it. Early-phase INDs often carry nothing there; whether it belongs in the IND
+required-section table is a regulatory call.
+
+### Sixth audit — IND safety/annual-report chain and the filing client surfaces (2026-09-05)
+
+Two read-only audits. Fixed on `concept2cure-v2`, each with a test that fails
+on revert:
+
+- A draft named on a `/file` call is the draft being filed: it must be this
+  tenant's (404), for this submission and, for a safety report, this adverse
+  event (409 DRAFT_MISMATCH), and not already filed (409 ALREADY_FILED). The
+  routes only checked the tenant, so a 7-day fatal draft could be marked
+  filed with a sequence whose content came from another event. An annual-
+  report draft with open 312.33 sections is refused (409 DRAFT_INCOMPLETE)
+  unless the caller sends `acknowledgeGaps: true`, and the filing response then
+  records `filedWithOpenGaps`.
+- The dashboard, cockpit and per-sequence dispatch gate count overdue safety
+  reports from the register (`listOverdueSafetyReports`), never from the
+  request body. Omitting the field, or sending 0, used to read as "no critical
+  actions" while unfiled 7-/15-day reports sat past deadline. The pure
+  calculators under `/compute` still take their inputs from the body; they
+  have no submission in scope and say so.
+- The annual-report overdue feed carries `overdueState`: `overdue`, or
+  `deadline_unknown` for an unfiled draft with no IND effective date recorded.
+  Those were dropped from the feed, reading identically to a report on
+  schedule.
+- PV cockpit: a failed compliance-matrix read is an error state ("could not be
+  read, so it is unknown, not clear"), not "No compliance data yet".
+
+Noted, not changed: the cross-reference register's `ready: true` is vacuous
+when no references are recorded; `counts.total: 0` sits beside it, so a
+caller reading the whole payload can tell.
+
+### Seventh audit — ICSR (E2B(R3)) composition and transport (2026-09-05)
+
+Read-only audit of the E2B composer, message wrapper, transport and
+persistence. Fixed on `concept2cure-v2`, each with a test that fails on revert:
+
+- C.1.3 (type of report) comes from the case's `reportType`; it was the
+  constant "2 (report from study)" for every ICSR, spontaneous and literature
+  reports included. An absent type is a gap, not a default.
+- The country of occurrence is emitted as E.i.9; it was emitted under C.2.r.3
+  (reporter's country). C.2.r.3 now takes a supplied `reporterCountry` on the
+  ICSR envelope and is otherwise empty — the intake event has no reporter
+  country field, and it is not in the mandatory set (a decision, not an
+  oversight: making it mandatory would block every prepared ICSR with no
+  intake path to supply it).
+- C.5.1.r.1 (study registration number) is emitted for a study report and is
+  mandatory for one; `studyRegistrationNumber` is carried on the ICSR envelope.
+- `transmitIcsrTransmission` refuses unless the row is `prepared`
+  (INVALID_STATE, 409). A second transmit used to send the same message
+  number again and overwrite the receipt.
+- The composer's docstring now names the tracked mandatory subset;
+  `completeness` and `transmitReady` speak to that set, not to the full
+  E2B(R3) mandatory-element list.
+
+Verified and unchanged: the transport fails closed (production with no
+gateway throws; the real client is not implemented and says so; a simulated
+receipt is never recorded as transmitted), and every read is tenant-scoped.
+The real FAERS/EudraVigilance client remains the open feature.
+
+### Eighth audit — Module 2.7 / CSR / labeling chain and the FDA submission-type vocabulary (2026-09-05)
+
+Two read-only audits. Fixed on `concept2cure-v2`, each with a test that fails
+on revert:
+
+- Modules 2.5 and 2.7: SAE and death counts that were never extracted are
+  no longer folded into "0 serious adverse event(s) and 0 death(s) reported".
+  `saeCount`/`deathCount` are optional on the study-report input and the
+  canonical project reader (`loadCsrInputsForProject`) does not populate them,
+  so every real project read as "no SAEs occurred". The summaries now say the
+  counts have not been extracted for N of M studies, record it as an open
+  item, and the 2.7 narrative prints its open items (they lived only on the
+  sibling `gaps` field, which the authoring tool never renders). 2.7.3 no
+  longer says "Efficacy was evaluated in 0 controlled study/ies".
+- `fdaSubmissionTypeFor` refuses a `withdrawal` sequence. It fell through to
+  "Original Application" (fdast1/fdasst1); the FDA vocabulary has no
+  withdrawal type, and which type a withdrawal files under is a regulatory
+  decision — recorded below.
+
+Verified and unchanged: `csr-builder` (placeholders block completeness,
+template fallbacks are not marked AI-generated), the labeling/SPL path (throws
+on missing required content, label prose comes only from the org's stored
+sections), the 5.3.5.x and m1.14 vocabulary, and the FDA application-type /
+sequence-number / application-number handling (recorded, four-digit,
+UNASSIGNED never sent).
+
+Decision items, not changed:
+- Which FDA submission type a withdrawal sequence files under (amendment to
+  the original application, or product correspondence). Until recorded, a
+  withdrawal cannot be packaged for FDA.
+- Extracting SAE/death counts from CSR §12.2/§12.3 into the study-report
+  input is a feature; the builders now say the counts are missing rather than
+  inventing zeros.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -335,6 +542,13 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | Date | Account | Authorized click | What was proven | Report |
 |---|---|---|---|---|
 | 2026-09-03 | A | WO-9 Phase 1 Steps 0–6 + XFA decision | DTD gate defect found and fixed; vendoring blocked on egress; forms XFA status measured | `docs/reports/wo9-phase1-ectd-unblock-2026-09-03.md` |
+| 2026-09-05 | A | Third audit fixes — IND lifecycle + gateways | Receipt-less 2xx refused on 11 gateways; ledger receipt key; amendment placement + cover letter; 312.33 due date; ICSR ACK refusals; transmit refusals — all revert-proven | §1 above |
+| 2026-09-05 | A | Third audit, remainder | ESG MDN verified before acceptance; sequence/type required on every gateway; C.1.7 from the event; no epoch dates; unassessed expectedness stated as such — all revert-proven; finding 12 did not reproduce | §1 above |
+| 2026-09-05 | A | Fourth audit — ESG acks + IND assembly | isConfigured honest on 13 gateways; status provenance (agency/stored + pollError) end to end; orphaned assemble/generate-form routes and toy backbone/ICSR generators removed — revert-proven | §1 above |
+| 2026-09-05 | A | Fifth audit — M2/M3 placement + eCTD document gate | No automated benefit-risk / supports-the-plan conclusions; Module 3 replace lifecycle; 64-char leaf names composed and validated; encrypted leaves refused; agent PDF/A not-verified ≠ pass — revert-proven; m5.2 recorded as a decision | §1 above |
+| 2026-09-05 | A | Sixth audit — IND filing chain + client surfaces | Draft-linked filing refusals (404/409); overdue safety count from the register; annual overdue feed carries deadline_unknown; PV matrix error state — revert-proven | §1 above |
+| 2026-09-05 | A | Seventh audit — ICSR E2B composition + transport | C.1.3 from the case; E.i.9 vs C.2.r.3; C.5.1.r.1 mandatory for study reports; no re-transmit of a non-prepared ICSR — revert-proven | §1 above |
+| 2026-09-05 | A | Eighth audit — M2.7/CSR/labeling + FDA submission types | Unextracted SAE/death counts stated as such in 2.5/2.7, 2.7 prints its gaps; withdrawal refused rather than coded as an original — revert-proven; two decisions recorded | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

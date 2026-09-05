@@ -39,6 +39,24 @@ export interface CoreLeaf {
 }
 
 /** The on-disk file a leaf's document resolves to. */
+/**
+ * Where a materialized leaf's bytes came from, BY IDENTITY (the document alias
+ * map, Document Identity Contract slice C2) rather than by title. `canonicalId`
+ * null means the store row was never aliased — a fact, not an absence of
+ * lineage — and `available: false` means the database has not applied the
+ * alias migration, which is reported rather than read as "no source".
+ */
+export type LeafLineage =
+  | {
+      available: true;
+      store: string;
+      nativeId: string;
+      canonicalId: string | null;
+      /** The authoring document this leaf is a representation of, when aliased. */
+      source: { store: string; nativeId: string } | null;
+    }
+  | { available: false; reason: 'relation_absent' };
+
 export interface ResolvedFile {
   fileName: string;
   sourcePath: string;
@@ -47,6 +65,8 @@ export interface ResolvedFile {
   /** SHA-256 — modern integrity hash retained for package governance OUTSIDE the
    *  eCTD backbone (the index/md5.txt still use md5 for agency compatibility). */
   sha256?: string;
+  /** Identity lineage, recorded in the governance manifest — never in the backbone. */
+  lineage?: LeafLineage;
 }
 
 /** Resolve a core leaf's polymorphic document reference to an on-disk file. */
@@ -158,6 +178,16 @@ export function fdaSubmissionTypeFor(
   if (type === 'annual') return { submissionType: 'annual', submissionSubType: 'original' };
   if (type === 'amendment' || type === 'response' || type === 'variation') {
     return { submissionType: 'original', submissionSubType: 'amendment' };
+  }
+  if (type === 'withdrawal') {
+    // The FDA submission-type vocabulary (CV_SUBMISSION_TYPE) has no withdrawal
+    // entry, and this fell through to "Original Application" — a withdrawal
+    // sequence was coded to the agency as an original. Which type a withdrawal
+    // files under (an amendment to the original application, or product
+    // correspondence) is a regulatory decision no code should make; refuse.
+    throw new Error(
+      "FDA submission type for a 'withdrawal' sequence is not derived: the FDA eCTD submission-type vocabulary has no withdrawal entry, and it will not be coded as an Original Application. Record the submission type the withdrawal files under before packaging.",
+    );
   }
   return { submissionType: 'original', submissionSubType: 'original' };
 }

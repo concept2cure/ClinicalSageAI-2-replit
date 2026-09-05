@@ -44,8 +44,10 @@ vi.mock('fs', () => ({
     mkdtemp: vi.fn().mockResolvedValue('/tmp/c2c-assemble-test'),
     readFile: (...a: unknown[]) => readFileFn(...a),
     rm: vi.fn().mockResolvedValue(undefined),
+    unlink: (...a: unknown[]) => unlinkFn(...a),
   },
 }));
+const unlinkFn = vi.fn().mockResolvedValue(undefined);
 
 /* ─── Mock the governed-action ledger so it is a no-op. ──────────────── */
 vi.mock('../server/routes/c2c/actions', () => ({
@@ -99,12 +101,15 @@ function makeDb() {
   return chain;
 }
 
-const connectFn = vi.fn(() =>
-  Promise.resolve({
-    query: vi.fn().mockResolvedValue({ rows: [] }),
-    release: vi.fn(),
-  }),
-);
+/** The pool client: serves the package row lock (SELECT … FOR UPDATE) from the
+ *  stubbed package AT LOCK TIME and captures the metadata each locked UPDATE
+ *  writes; BEGIN/COMMIT/ROLLBACK are recorded for the ledger assertions. */
+const clientQuery = vi.fn(async (sql: string, params: unknown[] = []) => {
+  if (/FOR UPDATE/.test(sql)) return { rows: [{ metadata: dbState.pkg?.metadata ?? null }] };
+  if (/^UPDATE c2c_submission_packages/.test(sql)) dbState.updateSet = { metadata: JSON.parse(String(params[1])) };
+  return { rows: [] };
+});
+const connectFn = vi.fn(() => Promise.resolve({ query: clientQuery, release: vi.fn() }));
 
 vi.mock('../server/db', () => ({
   get db() { return makeDb(); },
@@ -165,6 +170,8 @@ beforeEach(() => {
   buildECTDZipFn.mockReset();
   packageLeafBytesFn.mockReset();
   vi.mocked(recordGovernedAction).mockClear();
+  clientQuery.mockClear();
+  unlinkFn.mockClear();
   writeFileFn.mockClear();
   mkdirFn.mockClear();
   connectFn.mockClear();
@@ -248,6 +255,13 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(res.body.code).toBe('STALE_ASSEMBLY');
     expect(dbState.updateSet).toBeNull(); // nothing written: the newer identifiers stand
     expect(packageLeafBytesFn.mock.calls[0][0].applicationId).toBe('IND123456'); // the backbone carried the OLD ones
+    // The zip built with the old identifiers is removed, and the discard is recorded.
+    expect(unlinkFn).toHaveBeenCalledTimes(1);
+    expect(res.body.ledgerWriteFailed).toBe(false);
+    const ledger = vi.mocked(recordGovernedAction).mock.calls.at(-1)![1] as any;
+    expect(ledger.payload).toMatchObject({ change: 'assembly-discarded', cause: 'identifiers_changed' });
+    // The decision was taken under the row lock, in a transaction.
+    expect(clientQuery.mock.calls.some((c) => /FOR UPDATE/.test(String(c[0])))).toBe(true);
   });
 
   it('merges the descriptor onto the package’s CURRENT metadata, not the pre-assembly snapshot', async () => {

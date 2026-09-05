@@ -23,7 +23,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { renderHtmlToPdfTracked } from '../renderers';
+import { renderHtmlToPdfTracked, renderFallbackPdf, FALLBACK_PDF_NOTICE } from '../renderers';
 
 const SAMPLE = [
   '<h2>9.2 Efficacy Results</h2>',
@@ -48,13 +48,11 @@ async function extractText(pdf: Buffer): Promise<string> {
 
 describe('renderHtmlToPdf fallback — document structure survives', () => {
   it('keeps table cells, list numbering, figures and entities readable', async () => {
-    const { buffer, usedFallback } = await renderHtmlToPdfTracked(SAMPLE);
-
-    // If puppeteer is ever installed this renders through Chromium instead and
-    // the assertions below no longer describe the code under test.
-    expect(usedFallback, 'puppeteer is installed; this suite covers the fallback').toBe(true);
-
-    const text = await extractText(buffer);
+    /* Called directly rather than through renderHtmlToPdfTracked, which picks
+       whichever renderer the ambient environment offers. These assertions are
+       about the fallback specifically, and they must hold on a machine that
+       has a Puppeteer driver installed as much as on one that does not. */
+    const text = await extractText(await renderFallbackPdf(SAMPLE));
 
     // Cells must not run together — "Arm n ORR" and "Active 10 mg 150 42%" was
     // the whole table reduced to a sentence.
@@ -80,17 +78,64 @@ describe('renderHtmlToPdf fallback — document structure survives', () => {
   }, 60_000);
 
   it('renders a placeholder rather than an empty page for empty input', async () => {
-    const { buffer } = await renderHtmlToPdfTracked('');
-    expect(await extractText(buffer)).toContain('Document content not available');
+    expect(await extractText(await renderFallbackPdf(''))).toContain(
+      'Document content not available',
+    );
   }, 60_000);
 
   it('is deterministic for identical input', async () => {
     // pdf-converter hashes these bytes after stripping metadata, so the text
     // layer must not vary between runs.
-    const [a, b] = await Promise.all([
-      renderHtmlToPdfTracked(SAMPLE),
-      renderHtmlToPdfTracked(SAMPLE),
-    ]);
-    expect(await extractText(a.buffer)).toBe(await extractText(b.buffer));
+    const [a, b] = await Promise.all([renderFallbackPdf(SAMPLE), renderFallbackPdf(SAMPLE)]);
+    expect(await extractText(a)).toBe(await extractText(b));
   }, 60_000);
+
+  it('says on the page that it is a plain-text rendering', async () => {
+    /* `usedFallback` only helps a caller that reads it, and the 510(k), PMA,
+       CER, per-section and authoring exports all go through renderHtmlToPdf(),
+       which exists to discard it. Without a notice in the file itself, a
+       plain-text stand-in for a styled document reaches a filing looking like
+       the finished thing, with nothing anywhere saying otherwise. */
+    const text = await extractText(await renderFallbackPdf(SAMPLE));
+    // Compared word-for-word against the exported constant, normalized the same
+    // way the extractor normalizes, so the two cannot drift apart.
+    expect(text).toContain(FALLBACK_PDF_NOTICE.replace(/\s+/g, ' ').trim());
+  });
+
+  it('puts the notice before the content, not after it', async () => {
+    const text = await extractText(await renderFallbackPdf(SAMPLE));
+    const notice = text.indexOf('Plain-text rendering.');
+    const content = text.indexOf('9.2 Efficacy Results');
+    expect(notice).toBeGreaterThan(-1);
+    expect(content).toBeGreaterThan(-1);
+    expect(notice).toBeLessThan(content);
+  });
+
+  it('does not alter the content it is warning about', async () => {
+    /* The notice says the text is complete and unmodified; that has to be true.
+       The structural assertions above still hold with it present. */
+    const text = await extractText(await renderFallbackPdf(SAMPLE));
+    expect(text).toContain('Bioburden < 10^6 CFU/mL at 37\u00b0C \u00b12.');
+  });
+
+  it('is the renderer actually in use unless a Puppeteer driver is installed', async () => {
+    /* The one assertion that is about the environment rather than the code.
+       `puppeteer` is not a dependency — it downloads a ~200MB Chromium — so
+       unless someone has installed it, or `puppeteer-core` alongside a browser,
+       the fallback is what produces every HTML export this platform ships.
+       Stated as a conditional so an environment that HAS a driver reports that
+       fact instead of failing. */
+    let driverInstalled = false;
+    for (const name of ['puppeteer', 'puppeteer-core']) {
+      try {
+        await import(/* @vite-ignore */ name);
+        driverInstalled = true;
+      } catch {
+        /* not installed */
+      }
+    }
+    const { usedFallback } = await renderHtmlToPdfTracked(SAMPLE);
+    if (!driverInstalled) expect(usedFallback).toBe(true);
+    else expect(typeof usedFallback).toBe('boolean');
+  }, 120_000);
 });

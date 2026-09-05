@@ -52,7 +52,9 @@ import { getStorageProvider } from '../storage';
 import { readLocalUploadBuffer } from '../anthropic-files';
 import { sectionPlainText, C2C_SECTION_COMPLETE_STATUSES } from '../c2c/section-content';
 import { renderLeafPdf } from './leaf-pdf-renderer';
-import type { ResolvedFile } from './core-to-packager';
+import type { LeafLineage, ResolvedFile } from './core-to-packager';
+import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
+import { aliasesFor, canonicalIdFor } from '../c2c/document-alias-map.js';
 
 /**
  * An eCTD leaf must be a PDF. Verify the ACTUAL bytes (magic number), never the
@@ -147,10 +149,52 @@ function rowsOf(result: unknown): Array<Record<string, unknown>> {
   return Array.isArray(rows) ? (rows as Array<Record<string, unknown>>) : [];
 }
 
-function safeName(s: string): string {
+function safeName(s: string, max = 40): string {
   return (
-    (s || 'leaf').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'leaf'
+    (s || 'leaf').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, max).replace(/-+$/g, '') || 'leaf'
   );
+}
+
+/**
+ * The shipped leaf file name: `<label>-<source key>.pdf`, within the eCTD
+ * 64-character rule (FILENAME_PATTERN). The key is the unique part and is
+ * kept whole; the label gives way. The label alone was capped at 40 and the
+ * key never was, so `coauthor_documents:123` shipped a 68-character name that
+ * the agency validator refuses and nothing on this path checked.
+ */
+export function leafFileName(label: string, key: string): string {
+  const ext = '.pdf';
+  const keyPart = key.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'leaf';
+  const budget = 64 - ext.length - 1 - keyPart.length;
+  const labelPart = budget >= 1 ? safeName(label, Math.min(40, budget)) : '';
+  const name = labelPart ? `${labelPart}-${keyPart}${ext}` : `${keyPart}${ext}`;
+  return name.slice(0, 64);
+}
+
+/**
+ * The identity behind a coauthor leaf, from the alias map. A row that was never
+ * aliased reports `canonicalId: null`; a database without the alias migration
+ * reports `available: false`. Both are stated, neither is "no source".
+ */
+async function coauthorLineage(organizationId: number, documentId: number): Promise<LeafLineage> {
+  const exec = queryableFromDrizzle(db);
+  const nativeId = String(documentId);
+  const canonical = await canonicalIdFor(exec, { organizationId, store: 'coauthor_documents', nativeId });
+  if (!canonical.available) return { available: false, reason: canonical.reason };
+  if (!canonical.canonicalId) {
+    return { available: true, store: 'coauthor_documents', nativeId, canonicalId: null, source: null };
+  }
+  const aliases = await aliasesFor(exec, { organizationId, canonicalId: canonical.canonicalId });
+  const authoring = aliases.available
+    ? aliases.aliases.find((a) => a.store === 'authoring_documents') ?? null
+    : null;
+  return {
+    available: true,
+    store: 'coauthor_documents',
+    nativeId,
+    canonicalId: canonical.canonicalId,
+    source: authoring ? { store: authoring.store, nativeId: authoring.nativeId } : null,
+  };
 }
 
 /** Stable key for a leaf's polymorphic document reference. */
@@ -220,7 +264,7 @@ export async function materializeLeafSources(
 
   const write = async (key: string, baseName: string, content: string, opts: { title?: string; sectionCode?: string }) => {
     const pdfBytes = await renderLeafPdf(content, opts);
-    const fileName = `${safeName(baseName)}-${key.replace(/[^a-z0-9]+/gi, '-')}.pdf`;
+    const fileName = leafFileName(baseName, key);
     const sourcePath = path.join(stageDir, fileName);
     await fs.writeFile(sourcePath, pdfBytes);
     byKey.set(key, {
@@ -273,6 +317,12 @@ export async function materializeLeafSources(
         title: doc.title ?? undefined,
         sectionCode: doc.moduleNumber ?? undefined,
       });
+      // Lineage by identity: which authoring document this snapshot represents,
+      // read from the alias map rather than matched by title. Recorded on the
+      // staged file so the governance manifest can state it; never in the
+      // backbone. The first product reader of the map (ledger L10).
+      const staged = byKey.get(key);
+      if (staged) staged.lineage = await coauthorLineage(organizationId, documentId);
       if (!isFinalizedStatus(doc.status)) {
         unfinalized++;
         unfinalizedSections.push({ sectionCode: doc.moduleNumber || doc.title || `coauthor_documents:${documentId}`, status: doc.status ?? 'draft' });
@@ -370,7 +420,7 @@ export async function materializeLeafSources(
       }
       // Stage the RAW PDF bytes (not re-rendered). The filename MUST end in .pdf
       // so the downstream PDF/A gate treats it as a PDF; md5 is over the real bytes.
-      const fileName = `${safeName(doc.fileName || 'onboarding')}-${key.replace(/[^a-z0-9]+/gi, '-')}.pdf`;
+      const fileName = leafFileName(doc.fileName || 'onboarding', key);
       const sourcePath = path.join(stageDir, fileName);
       await fs.writeFile(sourcePath, buf);
       byKey.set(key, {
@@ -440,7 +490,7 @@ export async function materializeLeafSources(
         unresolved.push({ documentTable, documentId, reason: 'rendered file is not a valid PDF (missing %PDF- header) — refusing to stage a non-conformant leaf' });
         continue;
       }
-      const fileName = `${safeName(row.fileName || 'rendered')}-${key.replace(/[^a-z0-9]+/gi, '-')}.pdf`;
+      const fileName = leafFileName(row.fileName || 'rendered', key);
       const sourcePath = path.join(stageDir, fileName);
       await fs.writeFile(sourcePath, bytes);
       byKey.set(key, { fileName, sourcePath, md5: row.md5, sha256: row.sha256 });

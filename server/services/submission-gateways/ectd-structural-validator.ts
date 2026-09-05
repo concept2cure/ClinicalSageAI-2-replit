@@ -261,6 +261,17 @@ export async function validateEctdPackage(zipBuffer: Buffer): Promise<EctdZipVal
 
   const fileNames = Object.keys(zip.files).filter((f) => !zip.files[f].dir);
 
+  // The eCTD file-name rule (FILENAME_PATTERN) on every packaged file. The
+  // assemble path composes names to it, but this validator — the one the
+  // export route runs by default — never checked, so an over-long leaf name
+  // left with a clean gate.
+  for (const f of fileNames) {
+    const baseName = f.slice(f.lastIndexOf('/') + 1);
+    if (!FILENAME_PATTERN.test(baseName)) {
+      errors.push(`File name '${baseName}' breaks the eCTD file-name rule (lowercase a-z, 0-9, '.', '-'; at most 64 characters including the extension).`);
+    }
+  }
+
   // 1. index.xml exists, is well-formed, and its hrefs resolve.
   if (!fileNames.includes('index.xml')) {
     errors.push('Missing required file: index.xml (eCTD backbone)');

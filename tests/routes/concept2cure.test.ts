@@ -206,6 +206,10 @@ vi.mock('../../server/middleware/redisRateLimiter', () => ({
 
 // Import after mocks
 import concept2cureRouter from '../../server/routes/concept2cure';
+// The artifact domain moved to its own router (L53, slice 8).
+import artifactRouter from '../../server/routes/c2c/artifacts';
+// Conversation mutations moved to their own router (L53, slice 6).
+import conversationRouter from '../../server/routes/c2c/conversations';
 
 describe('Concept2Cure API', () => {
   beforeEach(() => {
@@ -255,7 +259,7 @@ describe('Concept2Cure API', () => {
 
     const res = createMockResponse();
 
-    const layer = concept2cureRouter.stack.find((l: any) => l.route?.path === '/projects/:projectId/conversations' && l.route?.methods?.post);
+    const layer = conversationRouter.stack.find((l: any) => l.route?.path === '/projects/:projectId/conversations' && l.route?.methods?.post);
     const handler = layer.route.stack[layer.route.stack.length - 1].handle;
 
     await handler(req, res);
@@ -286,7 +290,7 @@ describe('Concept2Cure API', () => {
 
     const res = createMockResponse();
 
-    const layer = concept2cureRouter.stack.find((l: any) => l.route?.path === '/projects/:projectId/artifacts' && l.route?.methods?.post);
+    const layer = artifactRouter.stack.find((l: any) => l.route?.path === '/projects/:projectId/artifacts' && l.route?.methods?.post);
     const handler = layer.route.stack[layer.route.stack.length - 1].handle;
 
     await handler(req, res);
@@ -318,7 +322,7 @@ describe('Concept2Cure API', () => {
 
     const res = createMockResponse();
 
-    const layer = concept2cureRouter.stack.find(
+    const layer = artifactRouter.stack.find(
       (l: any) => l.route?.path === '/projects/:projectId/artifacts' && l.route?.methods?.post
     );
     const handler = layer.route.stack[layer.route.stack.length - 1].handle;
@@ -458,7 +462,7 @@ describe('Concept2Cure API', () => {
 
     const res = createMockResponse();
 
-    const layer = concept2cureRouter.stack.find((l: any) => l.route?.path === '/projects/:projectId/artifacts/:artifactId/signatures' && l.route?.methods?.post);
+    const layer = artifactRouter.stack.find((l: any) => l.route?.path === '/projects/:projectId/artifacts/:artifactId/signatures' && l.route?.methods?.post);
     const handler = layer.route.stack[layer.route.stack.length - 1].handle;
 
     await handler(req, res);

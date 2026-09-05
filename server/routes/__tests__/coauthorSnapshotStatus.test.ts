@@ -44,16 +44,19 @@ vi.mock('../../db', () => {
   const pool = {
     query: vi.fn(async () => ({ rows: state.sourceRows, rowCount: state.sourceRows.length })),
   };
-  const db = {
-    insert: () => ({
-      values: (v: Record<string, unknown>) => ({
-        returning: async () => {
-          state.inserted.push(v);
-          return [{ id: 101, ...v }];
-        },
-      }),
+  const insert = () => ({
+    values: (v: Record<string, unknown>) => ({
+      returning: async () => {
+        state.inserted.push(v);
+        return [{ id: 101, ...v }];
+      },
     }),
-  };
+  });
+  // The create runs the row and its alias-map write in one transaction
+  // (L10). The alias writer first probes for its table with to_regclass;
+  // this database has none, so the snapshot is created without an alias.
+  const tx = { insert, execute: async () => ({ rows: [{ present: false }] }) };
+  const db = { insert, transaction: async (fn: (t: typeof tx) => unknown) => fn(tx) };
   return { db, pool, transaction: vi.fn(), getPool: () => pool, getDb: () => db };
 });
 
@@ -87,6 +90,8 @@ const place = (body: Record<string, unknown>) =>
   request(app).post('/api/coauthor/documents').send({ title: 'M2.5 Clinical Overview', ...body });
 
 const lastInsert = () => state.inserted[state.inserted.length - 1];
+// authoring_documents ids are uuids; the alias map refuses anything else (L10).
+const SOURCE_DOC = '7c1e2d3f-4a5b-4c6d-8e9f-0a1b2c3d4e5f';
 
 beforeEach(() => {
   state.sourceRows = [];
@@ -98,7 +103,7 @@ describe('the snapshot carries what the source document earned', () => {
     /* Before this, an e-signed and approved document was snapshotted as a
        draft, so the package it went into could never be complete. */
     state.sourceRows = [{ status: 'APPROVED' }];
-    const res = await place({ content: '<p>Text.</p>', sourceAuthoringDocId: 'doc-1' });
+    const res = await place({ content: '<p>Text.</p>', sourceAuthoringDocId: SOURCE_DOC });
     expect(res.status).toBe(201);
     expect(lastInsert().status).toBe('approved');
   });
@@ -108,7 +113,7 @@ describe('the snapshot carries what the source document earned', () => {
        and, since the freeze gate, proves it carries no unresolved comments or
        undecided tracked changes. That is what "finalized" means. */
     state.sourceRows = [{ status: 'FROZEN' }];
-    await place({ content: '<p>Text.</p>', sourceAuthoringDocId: 'doc-1' });
+    await place({ content: '<p>Text.</p>', sourceAuthoringDocId: SOURCE_DOC });
     expect(lastInsert().status).toBe('finalized');
   });
 
@@ -116,19 +121,19 @@ describe('the snapshot carries what the source document earned', () => {
     /* The rule the resolver enforces is right and must not be weakened. An
        unfinished document must not be able to make a package look complete. */
     state.sourceRows = [{ status: 'draft' }];
-    await place({ content: '<p>Text.</p>', sourceAuthoringDocId: 'doc-1' });
+    await place({ content: '<p>Text.</p>', sourceAuthoringDocId: SOURCE_DOC });
     expect(lastInsert().status).toBe('draft');
   });
 
   it('an unrecognised state files as a draft, never as something better', async () => {
     state.sourceRows = [{ status: 'IN_REVIEW' }];
-    await place({ content: '<p>Text.</p>', sourceAuthoringDocId: 'doc-1' });
+    await place({ content: '<p>Text.</p>', sourceAuthoringDocId: SOURCE_DOC });
     expect(lastInsert().status).toBe('draft');
   });
 
   it('a source with no status at all files as a draft', async () => {
     state.sourceRows = [{ status: null }];
-    await place({ content: '<p>Text.</p>', sourceAuthoringDocId: 'doc-1' });
+    await place({ content: '<p>Text.</p>', sourceAuthoringDocId: SOURCE_DOC });
     expect(lastInsert().status).toBe('draft');
   });
 });
@@ -139,7 +144,7 @@ describe('the caller cannot award the status itself', () => {
        'approved' on a draft and make an incomplete submission report itself
        complete. */
     state.sourceRows = [{ status: 'draft' }];
-    await place({ content: '<p>Text.</p>', sourceAuthoringDocId: 'doc-1', status: 'approved' });
+    await place({ content: '<p>Text.</p>', sourceAuthoringDocId: SOURCE_DOC, status: 'approved' });
     expect(lastInsert().status, 'a client-supplied status was honoured').toBe('draft');
   });
 

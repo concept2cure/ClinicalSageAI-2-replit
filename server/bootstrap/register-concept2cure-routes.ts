@@ -1,5 +1,12 @@
 import type { Express } from 'express';
 import concept2cureRoutes from '../routes/concept2cure';
+import reviewRoutes from '../routes/c2c/reviews';
+import notificationRoutes from '../routes/c2c/notifications';
+import communicationCenterRoutes from '../routes/c2c/communication-center';
+import taskRoutes from '../routes/c2c/tasks';
+import conversationRoutes from '../routes/c2c/conversations';
+import exportRoutes from '../routes/c2c/exports';
+import artifactRoutes from '../routes/c2c/artifacts';
 import computeRoutes from '../routes/compute';
 import scheduleOfEventsRoutes from '../routes/project-schedule-of-events';
 import { authenticateToken } from '../middleware/auth.js';
@@ -8,6 +15,15 @@ import { authenticateToken } from '../middleware/auth.js';
 // Compute endpoints also pass through to upstream LLM providers and
 // must be JWT-gated to bound cost exposure.
 export function registerConcept2CureRoutes(app: Express) {
+  // Document review (threads, comments, tasks, queues) — the first domain split
+  // out of the main router (L53); its paths are disjoint from what remains.
+  app.use('/api/concept2cure', authenticateToken, reviewRoutes);
+  app.use('/api/concept2cure', authenticateToken, notificationRoutes);
+  app.use('/api/concept2cure', authenticateToken, communicationCenterRoutes);
+  app.use('/api/concept2cure', authenticateToken, taskRoutes);
+  app.use('/api/concept2cure', authenticateToken, conversationRoutes);
+  app.use('/api/concept2cure', authenticateToken, exportRoutes);
+  app.use('/api/concept2cure', authenticateToken, artifactRoutes);
   app.use('/api/concept2cure', authenticateToken, concept2cureRoutes);
   app.use('/api/concept2cure/compute', authenticateToken, computeRoutes);
   // AnA Schedule of Events — shares the project URL space (/projects/:id/...);

@@ -30,6 +30,7 @@ async function packageFor(region: Region) {
   const outputDir = await fs.mkdtemp(path.join(os.tmpdir(), `rb-${region}-`));
   const bundle = await packageLeafBytes({
     region, applicationId: 'APP1', sequence: '0000', submissionType: 'original',
+    fda: { applicationType: 'ind', submissionType: 'original' }, // the backbone must state what is being filed
     sponsorId: 'S', sponsorName: 'S', productName: 'P', environment: 'staging', outputDir,
     leaves: [
       { ctdSection: '1.2', fileName: 'cover.pdf', bytes: pdf('cover'), title: 'Cover' },

@@ -33,7 +33,7 @@
 import { db } from '../../db';
 import { getPool } from '../../db';
 import { coauthorDocuments } from '../../../shared/schema';
-import { getSequence, upsertLeaf } from '../submission-service/submission-service';
+import { getSequence, listLeaves, listSequences, upsertLeaf } from '../submission-service/submission-service';
 import { evaluateFinalExportGate, type FinalExportGateVerdict } from './final-export-gate';
 import { getSectionLabels } from '../module3-convergence-service';
 
@@ -77,6 +77,30 @@ export function toLeafSectionCode(sectionKey: string): string {
   return 'm' + sectionKey;
 }
 
+/**
+ * The most recent Module 3 leaf per section code placed in an EARLIER sequence
+ * of the same submission (by sequence number), so a re-placement can be filed
+ * as 'replace' of that leaf. Deleted leaves and delete operations do not count.
+ */
+async function priorModule3Leaves(
+  submissionId: number,
+  current: { id: number; sequenceNumber?: string | null },
+  organizationId: number,
+): Promise<Map<string, { id: number }>> {
+  const byNumber = (n: string | null | undefined) => String(n ?? '');
+  const earlier = (await listSequences(submissionId, { organizationId }))
+    .filter((s) => s.id !== current.id && byNumber(s.sequenceNumber) < byNumber(current.sequenceNumber))
+    .sort((a, b) => (byNumber(a.sequenceNumber) < byNumber(b.sequenceNumber) ? 1 : -1));
+  const prior = new Map<string, { id: number }>();
+  for (const seq of earlier) {
+    for (const leaf of await listLeaves(seq.id, { organizationId })) {
+      if (leaf.documentType !== 'cmc_module3_section' || leaf.lifecycleOp === 'delete') continue;
+      if (!prior.has(leaf.sectionCode)) prior.set(leaf.sectionCode, { id: leaf.id });
+    }
+  }
+  return prior;
+}
+
 export async function placeModule3IntoSubmission(input: PlaceModule3Input): Promise<PlaceModule3Result> {
   const { orgId, userId, cmcProjectId, submissionId, sequenceId } = input;
 
@@ -98,6 +122,12 @@ export async function placeModule3IntoSubmission(input: PlaceModule3Input): Prom
   if (Number((sequence as { submissionId?: number }).submissionId) !== submissionId) {
     throw new Error('NOT_FOUND: The sequence does not belong to the stated submission.');
   }
+
+  // 2b. A section already placed in an earlier sequence of this submission is
+  // a revision of that leaf, not a new document. This always filed 'new', so
+  // an amendment's m3.2.S.7 was announced to the agency as brand-new content
+  // with no lifecycle link to the leaf it replaces.
+  const priorBySection = await priorModule3Leaves(submissionId, sequence, orgId);
 
   // 3. Approved sections with their compiled narrative.
   const pool = getPool();
@@ -148,12 +178,14 @@ export async function placeModule3IntoSubmission(input: PlaceModule3Input): Prom
       })
       .returning({ id: coauthorDocuments.id });
 
+    const prior = priorBySection.get(leafSectionCode);
     const leaf = await upsertLeaf(
       {
         sequenceId,
         sectionCode: leafSectionCode,
         title,
-        lifecycleOp: 'new',
+        lifecycleOp: prior ? 'replace' : 'new',
+        parentLeafId: prior?.id ?? null,
         documentTable: 'coauthor_documents',
         documentId: snapshot.id,
         documentType: 'cmc_module3_section',

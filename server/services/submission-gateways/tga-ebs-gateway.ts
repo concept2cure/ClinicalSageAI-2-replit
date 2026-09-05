@@ -20,6 +20,7 @@ import {
   resolveToRegistryEntry,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
+  requiredAgencyMetadata
 } from './types';
 import { httpsRequest, insertTransmittal, patchTransmittal, buildMultipart, sha256hex } from './rest-gateway-helpers';
 import { platformTransmittalRecord } from './acknowledgement';
@@ -57,12 +58,13 @@ export class TgaEbsGateway implements SubmissionGateway {
 
   async isConfigured(_orgId: number, env: 'staging' | 'production'): Promise<boolean> {
     try { await loadCreds(env); return true; }
-    catch (e) { return !(e instanceof CredentialError); }
+    catch { return false; } // an unreadable cert or key is not 'configured'
   }
 
   async transmit(req: GatewayTransmitRequest): Promise<GatewayTransmitResult> {
     const entry = req.submissionType ? resolveToRegistryEntry(req.submissionType) : null;
     const normReq = entry ? { ...req, submissionType: entry.applicationType } : req;
+    const agency = requiredAgencyMetadata(normReq);
     const id = await insertTransmittal('au', 'tga_ebs', 'ectd', normReq);
     try {
       const creds = await loadCreds(normReq.environment);
@@ -72,8 +74,8 @@ export class TgaEbsGateway implements SubmissionGateway {
       const meta = Buffer.from(JSON.stringify({
         sponsorId: creds.sponsorId,
         applicationId: normReq.metadata?.applicationId ?? null,
-        sequenceNumber: normReq.metadata?.sequence ?? '0000',
-        submissionType: normReq.submissionType ?? 'initial',
+        sequenceNumber: agency.sequenceNumber,
+        submissionType: agency.submissionType,
         sha256: normReq.bundle.sha256,
       }), 'utf8');
       const body = buildMultipart(boundary, meta, zipBuf, 'ectd-au.zip');
@@ -100,7 +102,19 @@ export class TgaEbsGateway implements SubmissionGateway {
       let parsed: { receiptId?: string; submissionId?: string; referenceNumber?: string };
       try { parsed = JSON.parse(resp.body.toString('utf8')); }
       catch { throw new GatewayError('TGA eBS returned non-JSON success', resp.httpStatus, null, resp.body.toString('utf8')); }
-      const receiptId = parsed.receiptId ?? parsed.submissionId ?? parsed.referenceNumber ?? `tga-${Date.now()}`;
+      const receiptId = parsed.receiptId ?? parsed.submissionId ?? parsed.referenceNumber ?? null;
+      if (!receiptId) {
+        // A 2xx whose body names no receipt is not an accepted submission. This
+        // minted `tga-<timestamp>` here, recorded the row as received with an
+        // acknowledgement time from the platform clock, told the operator
+        // "accepted. Receipt: tga-…", and later polled the agency for a
+        // receipt that never existed. CESP refuses the same case; so does this.
+        await patchTransmittal(id, {
+          status: 'rejected', httpStatus: resp.httpStatus,
+          errorClass: 'gateway', errorMessage: 'Agency returned success with no receipt identifier in the body.',
+        });
+        throw new GatewayError('TGA response missing a receipt identifier', resp.httpStatus, null, parsed);
+      }
       await patchTransmittal(id, { status: 'received', transmissionId: receiptId,
         httpStatus: resp.httpStatus, ackReceivedAt: new Date() });
       return { transmittalId: id, transmissionId: receiptId, status: 'received', transport: 'rest',
@@ -130,6 +144,7 @@ export class TgaEbsGateway implements SubmissionGateway {
     );
     if (rows.length === 0 || !rows[0].transmission_id)
       throw new GatewayError(`Transmittal ${transmittalId} not found`, 404, null, null);
+    let pollError: string | null = 'The agency status poll did not complete.';
     try {
       const env = (rows[0].metadata?.environment as 'staging' | 'production' | undefined) ?? 'production';
       const creds = await loadCreds(env);
@@ -150,10 +165,12 @@ export class TgaEbsGateway implements SubmissionGateway {
           : (rows[0].status as SubmissionStatus);
         if (mapped !== rows[0].status) await patchTransmittal(transmittalId, { status: mapped });
         return { transmittalId, transmissionId: rows[0].transmission_id!, status: mapped,
+          source: 'agency',
           ackReceivedAt: rows[0].ack_received_at, rawResponse: p };
       }
-    } catch { /* fall through */ }
+    } catch (err) { pollError = err instanceof Error ? err.message : String(err); }
     return { transmittalId, transmissionId: rows[0].transmission_id!,
+      source: 'stored', pollError,
       status: rows[0].status as SubmissionStatus, ackReceivedAt: rows[0].ack_received_at };
   }
 

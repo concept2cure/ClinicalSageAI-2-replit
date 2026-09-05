@@ -1259,7 +1259,7 @@ function dissolutionRendering(
   for (const p of profiles) {
     for (const pt of profilePoints(p)) {
       pointRows.push([
-        String(p.batchNumber || p.productName || '—'),
+        String(p.batchNumber || '—'),
         String(pt.timepoint ?? pt.timepointMin ?? '—'),
         pt.meanPercent !== undefined && pt.meanPercent !== null && pt.meanPercent !== '' ? String(pt.meanPercent) : '—',
         pt.sd !== undefined && pt.sd !== null && pt.sd !== '' ? String(pt.sd) : '—',
@@ -1288,7 +1288,7 @@ function dissolutionRendering(
     if (!Array.isArray(ref) || ref.length === 0) continue;
     for (const pt of ref.filter((r) => r && typeof r === 'object') as Array<Record<string, any>>) {
       referenceRows.push([
-        String(p.batchNumber || p.productName || '—'),
+        String(p.batchNumber || '—'),
         String(p.comparisonBatch || 'reference batch not named'),
         String(pt.timepoint ?? pt.timepointMin ?? '—'),
         pt.meanPercent !== undefined && pt.meanPercent !== null && pt.meanPercent !== '' ? String(pt.meanPercent) : '—',

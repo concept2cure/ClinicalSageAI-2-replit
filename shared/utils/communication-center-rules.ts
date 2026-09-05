@@ -1,41 +1,8 @@
 import {
-  COMMUNICATION_VISIBILITY_TIERS,
   SUBMISSION_CENTER_ITEM_STATES,
   type CommunicationVisibilityTier,
   type SubmissionCenterItemState,
 } from '../types/communication-center';
-
-export function parseProjectParam(
-  projectParam: string | string[] | undefined
-): number {
-  const raw = Array.isArray(projectParam) ? projectParam[0] : projectParam;
-  if (typeof raw !== 'string') {
-    throw new Error('Invalid project ID');
-  }
-  const numericId = Number.parseInt(raw.replace('proj_', ''), 10);
-  if (!Number.isFinite(numericId) || numericId <= 0) {
-    throw new Error('Invalid project ID');
-  }
-  return numericId;
-}
-
-export function canViewVisibilityTier(
-  visibilityTier: CommunicationVisibilityTier,
-  userRole?: string
-): boolean {
-  const role = (userRole || '').toLowerCase();
-  if (!COMMUNICATION_VISIBILITY_TIERS.includes(visibilityTier)) return false;
-  if (visibilityTier === 'restricted_legal_sensitive') {
-    return ['admin', 'owner', 'compliance', 'legal'].some(r => role.includes(r));
-  }
-  if (visibilityTier === 'publishops_only') {
-    return role.includes('publishops') || role.includes('admin');
-  }
-  if (visibilityTier === 'c2c_internal') {
-    return role.includes('c2c') || role.includes('admin');
-  }
-  return true;
-}
 
 export function validateAuthorityProfileInput(input: {
   channelType: 'portal' | 'gateway' | 'email' | 'mixed';

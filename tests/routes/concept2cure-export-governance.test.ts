@@ -45,10 +45,11 @@ vi.mock('../../server/middleware/redisRateLimiter', () => ({
   createRedisRateLimiter: () => (_req: any, _res: any, next: any) => next(),
 }));
 
-import concept2cureRouter from '../../server/routes/concept2cure';
+// The export family moved to its own router (L53, slice 7).
+import exportRouter from '../../server/routes/c2c/exports';
 
 function getRouteHandler(path: string, method: 'post' | 'get' = 'post') {
-  const layer = concept2cureRouter.stack.find(
+  const layer = exportRouter.stack.find(
     (l: any) => l.route?.path === path && l.route?.methods?.[method]
   );
   if (!layer) throw new Error(`Missing route ${method.toUpperCase()} ${path}`);

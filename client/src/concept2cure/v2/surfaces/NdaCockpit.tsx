@@ -518,7 +518,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
   );
 
   return (
-    <div className="cv-body"><div className="reg-wrap nda">
+    <div className="cv-body"><div className="reg-wrap">
       <div className="reg-head">
         <div>
           <div className="reg-eyebrow">

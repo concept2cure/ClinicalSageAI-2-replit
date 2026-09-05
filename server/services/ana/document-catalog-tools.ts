@@ -11,117 +11,33 @@
  * vault.documents rows the Vault surface renders), composed with the catalog
  * service's read-coverage discipline:
  *
- *   list_project_documents  — what files exist, where each is filed, which
- *                             are not yet studied (honestly labeled).
- *   read_project_document   — the extracted text, windowed; every window is
- *                             recorded as a read receipt against the exact
- *                             bytes it came from.
+ *   list_project_documents   — what files exist (vault + chat uploads),
+ *                              where each is filed, which are not yet studied
+ *                              (honestly labeled), and the file_id that
+ *                              reopens a chat upload.
+ *   read_project_document    — the extracted text, windowed; every window is
+ *                              recorded as a read receipt against the exact
+ *                              bytes it came from.
  *   catalog_project_document — the comprehension record (kind / purpose /
- *                             summary / key data), REFUSED until the receipts
- *                             cover the entire text. A sampled page cannot be
- *                             recorded as "reviewed".
+ *                              summary / key data), REFUSED until the receipts
+ *                              cover the entire text. A sampled page cannot be
+ *                              recorded as "reviewed".
+ *   search_project_documents — semantic search over the comprehension records
+ *                              (document-catalog-search.ts), fail-closed when
+ *                              the index is unavailable.
  *
  * Handlers are registered via the inject-and-sibling pattern
  * (registerDocumentCatalogHandlers) to avoid an import cycle with
- * AnaToolExecutor; the definitions are imported by AnaToolDefinitions so the
- * registry-consistency suite holds def ↔ handler parity automatically.
+ * AnaToolExecutor; the definitions live in document-catalog-tool-defs.ts and
+ * are imported by AnaToolDefinitions, so the registry-consistency suite holds
+ * def ↔ handler parity automatically.
  *
  * Feature-gated per tenant on 'ana.document_catalog' (FeatureToggleService,
  * off by default, fails closed) with the ANA_DOCUMENT_CATALOG_FORCE_ON env
  * override — the same rollout shape as the document stack.
  */
 
-import type { AnaTool } from '../ai-gateway/types';
 import type { ToolContext } from './AnaToolExecutor.js';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Definitions
-// ─────────────────────────────────────────────────────────────────────────────
-
-export const LIST_PROJECT_DOCUMENTS: AnaTool = {
-  name: 'list_project_documents',
-  description:
-    'List every document in the project vault (the client\'s project folder) — the durable store uploads land in, ' +
-    'across sessions. Returns, per document: its id, title, file name, WHERE it is filed (folder, CTD section, ' +
-    'placement status), and its catalog state — "cataloged" (read in full and understood; kind + purpose shown), ' +
-    '"extracted" (text ready, not yet studied), "extraction_failed" (with the recorded reason), or "uncataloged" ' +
-    '(predates cataloging). Use this FIRST whenever the user mentions their files, a prior upload, or asks what ' +
-    'exists — never assume a file is gone because it was uploaded in an earlier session. Follow up with ' +
-    'read_project_document to study a document and catalog_project_document to record what it is.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      program_id: {
-        type: 'string',
-        description: 'Optional regulatory program UUID to scope to. Default: the active project\'s program, else every program in the organization.',
-      },
-      limit: { type: 'number', description: 'Maximum documents to return (default 100, max 200).' },
-    },
-    required: [],
-  },
-};
-
-export const READ_PROJECT_DOCUMENT: AnaTool = {
-  name: 'read_project_document',
-  description:
-    'Read the full extracted text of a vault document by document id (from list_project_documents), windowed with ' +
-    'offset/max_chars. Scanned PDFs were OCRed at ingest — the text here IS the document\'s content, so read it, ' +
-    'do not treat the file as an opaque image. Every window you read is recorded as a read receipt; the response ' +
-    'reports your exact coverage so far and the character ranges still unread. To truly review a document, page ' +
-    'through ALL of it (advance offset until coverage is complete) — catalog_project_document will refuse a ' +
-    'partial read. If extraction failed, this tool says so with the recorded reason instead of returning empty ' +
-    'text; report that honestly rather than guessing at the content.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      document_id: { type: 'string', description: 'The vault document UUID from list_project_documents.' },
-      max_chars: { type: 'number', description: 'Maximum characters to return in this window (default 30000, max 80000).' },
-      offset: { type: 'number', description: 'Character offset to start from (default 0; advance it to page through the whole document).' },
-    },
-    required: ['document_id'],
-  },
-};
-
-export const CATALOG_PROJECT_DOCUMENT: AnaTool = {
-  name: 'catalog_project_document',
-  description:
-    'Record durable comprehension of a vault document you have just read IN FULL: what kind of document it is, what ' +
-    'it is for, a faithful summary, and the key data inside it (study IDs, dates, doses, endpoints, sample sizes, ' +
-    'batch numbers — whatever the document actually carries). This is what makes the file remembered: the record is ' +
-    'embedded for semantic recall and surfaced at the start of future sessions alongside the document\'s filed ' +
-    'location. The write is REFUSED unless your read receipts cover the entire extracted text — if refused, the ' +
-    'response lists the exact unread ranges; go read them with read_project_document and try again. Never invent ' +
-    'content to fill key_data: record only what the text states.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      document_id: { type: 'string', description: 'The vault document UUID.' },
-      document_kind: {
-        type: 'string',
-        description: 'What the document IS, specifically (e.g. "GLP 28-day rat toxicology study report", "Certificate of Analysis, batch 23-104", "Investigator CV").',
-      },
-      purpose: {
-        type: 'string',
-        description: 'One or two sentences: what this document is FOR in the program (what it evidences, which section it supports, why the client uploaded it).',
-      },
-      summary: {
-        type: 'string',
-        description: 'A faithful summary of the whole document — its structure, findings, and conclusions. Grounded in the text you read; no extrapolation.',
-      },
-      key_data: {
-        type: 'object',
-        description: 'Structured facts extracted from the text: identifiers, dates, quantities, endpoints, results. Keys of your choosing; values exactly as stated in the document.',
-      },
-    },
-    required: ['document_id', 'document_kind', 'purpose', 'summary'],
-  },
-};
-
-export const DOCUMENT_CATALOG_TOOLS: AnaTool[] = [
-  LIST_PROJECT_DOCUMENTS,
-  READ_PROJECT_DOCUMENT,
-  CATALOG_PROJECT_DOCUMENT,
-];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handlers
@@ -165,6 +81,54 @@ function listMessage(docs: Array<{ catalogStatus: string }>): string {
   );
 }
 
+/** A chat-uploaded file from the evidence spine, with the file_id that reopens it. */
+interface ChatUploadDigest {
+  sourceId: number;
+  fileId: string | null;
+  fileName: string;
+  version: string | null;
+  extractionStatus: string;
+  dossier: unknown;
+  programId: string | null;
+  uploadedAt: string;
+}
+
+/**
+ * Current (non-superseded) chat uploads via the canonical evidence-spine
+ * listing. `fileId` comes from the source's recorded provenance — it is what
+ * inspect_uploaded_document / read_uploaded_document take, so a file attached
+ * in a past conversation is reachable again.
+ */
+async function listChatUploadDigests(
+  orgId: number,
+  programId: string | null,
+  limit: number,
+): Promise<ChatUploadDigest[]> {
+  const { listClientDocuments } = await import(
+    '../clinical-regulatory-evidence/evidence-spine.service.js'
+  );
+  const sources = await listClientDocuments(orgId, {
+    programId: programId ?? undefined,
+    includeUnscoped: true,
+    currentOnly: true,
+    limit,
+  });
+  return sources.map(s => {
+    const prov = (s.provenance ?? {}) as Record<string, unknown>;
+    const meta = (s.metadata ?? {}) as Record<string, unknown>;
+    return {
+      sourceId: s.id,
+      fileId: typeof prov.fileUploadId === 'string' ? prov.fileUploadId : null,
+      fileName: typeof meta.originalName === 'string' ? meta.originalName : (s.title ?? 'document'),
+      version: s.version ?? null,
+      extractionStatus: s.extractionStatus,
+      dossier: meta.dossier ?? null,
+      programId: s.clientProgramId ?? null,
+      uploadedAt: String(s.createdAt),
+    };
+  });
+}
+
 async function handleListProjectDocuments(
   input: Record<string, unknown>,
   ctx?: ToolContext,
@@ -179,12 +143,31 @@ async function handleListProjectDocuments(
   }
   const limit = typeof input.limit === 'number' ? input.limit : undefined;
   const docs = await svc.listProjectDocuments(orgId, { programId, limit });
+
+  // Chat uploads ride along; a failure to list them is SAID, never rendered
+  // as "no chat uploads" (some installs have no evidence-spine tables).
+  let chatUploads: ChatUploadDigest[] | null = null;
+  let chatUploadsError: string | null = null;
+  try {
+    chatUploads = await listChatUploadDigests(orgId, programId, Math.min(200, limit ?? 100));
+  } catch (err) {
+    chatUploadsError = err instanceof Error ? err.message : String(err);
+  }
+
   return JSON.stringify({
     ok: true,
     scope: programId ? { programId } : { organizationWide: true },
     count: docs.length,
     documents: docs,
-    message: listMessage(docs),
+    chatUploads,
+    ...(chatUploadsError
+      ? { chatUploadsError: `Chat uploads could not be listed: ${chatUploadsError}` }
+      : {}),
+    message:
+      listMessage(docs) +
+      (chatUploads && chatUploads.length > 0
+        ? ` Plus ${chatUploads.length} chat-uploaded file(s) — reopen one with read_uploaded_document using its fileId.`
+        : ''),
   });
 }
 
@@ -402,6 +385,54 @@ async function handleCatalogProjectDocument(
   });
 }
 
+async function handleSearchProjectDocuments(
+  input: Record<string, unknown>,
+  ctx?: ToolContext,
+): Promise<string> {
+  const gate = await requireCatalog(ctx, 'search_project_documents');
+  if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
+  const { orgId } = gate;
+
+  const query = typeof input.query === 'string' ? input.query.trim() : '';
+  if (query.length < 3) {
+    return JSON.stringify({ error: 'search_project_documents requires a query of at least 3 characters.' });
+  }
+  const { searchCatalog, CatalogSearchUnavailableError } = await import(
+    '../vault/document-catalog-search.js'
+  );
+  try {
+    const result = await searchCatalog(orgId, query, {
+      limit: typeof input.limit === 'number' ? input.limit : undefined,
+    });
+    const unsearchable =
+      result.unsearchableCount > 0
+        ? ` ${result.unsearchableCount} document(s) exist but are not searchable yet (not cataloged) — absence here does not mean absence; use list_project_documents.`
+        : '';
+    return JSON.stringify({
+      ok: true,
+      query,
+      hits: result.hits,
+      searchedCount: result.searchedCount,
+      unsearchableCount: result.unsearchableCount,
+      message:
+        result.hits.length === 0
+          ? `No cataloged document matched across the ${result.searchedCount} searched.${unsearchable}`
+          : `${result.hits.length} match(es) across ${result.searchedCount} cataloged document(s).${unsearchable}`,
+    });
+  } catch (err) {
+    if (err instanceof CatalogSearchUnavailableError) {
+      // Unavailable is not "no matches" — say it, and route to discovery.
+      return JSON.stringify({
+        ok: false,
+        unavailable: true,
+        error: err.message,
+        message: 'Fall back to list_project_documents + read_project_document; do not report "nothing found".',
+      });
+    }
+    throw err;
+  }
+}
+
 /** Errors become structured tool results, matching the house handler style. */
 function withCaughtErrors(
   name: string,
@@ -429,5 +460,9 @@ export function registerDocumentCatalogHandlers(register: RegisterFn): void {
   register(
     'catalog_project_document',
     withCaughtErrors('catalog_project_document', handleCatalogProjectDocument),
+  );
+  register(
+    'search_project_documents',
+    withCaughtErrors('search_project_documents', handleSearchProjectDocuments),
   );
 }

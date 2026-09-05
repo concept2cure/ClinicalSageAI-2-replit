@@ -254,6 +254,52 @@ function glue(pieces, gluedLeft) {
   for (const p of pieces) if (!p.openAdj) p.openAdj = true;
 }
 
+/**
+ * Is a string literal glued to whatever stands to its LEFT — so that its first
+ * token may be the tail of a class name rather than a whole one?
+ *
+ * The direct case, `'tone-' + 'dim'`, was always read. The case that was not is
+ * the same concatenation with the right operand wrapped in a group:
+ *
+ *     'rd-chip tone-' + (ok ? 'ok' : 'dim')
+ *
+ * `'ok'` and `'dim'` are suffixes of `tone-`; the element renders `tone-dim`
+ * and nothing ever renders `dim`. Fifteen call sites of that shape made the
+ * gate report `dim`, `good`, `completed` as classes with no rule while the
+ * classes actually rendered went unnamed (ledger L139). So the walk runs
+ * outward: back to the nearest unclosed opener, and if it is a `(` preceded by
+ * `+`, the literal is glued the same way a direct `+` glues it. An unclosed `[`
+ * or `{` means the literal is a map key or an object value — data, not a class.
+ *
+ * Glued still means "may extend": a left operand that ends in whitespace
+ * cannot extend anything, so `'ico ' + (on ? 'on' : 'off')` keeps `on` and
+ * `off` whole. A dynamic left operand is assumed to extend, which can only make
+ * the gate under-report — the safe direction.
+ */
+function gluedLeft(lead) {
+  let before = lead.replace(/\s+$/, '');
+  if (!before.endsWith('+')) {
+    let depth = 0;
+    let opener = -1;
+    for (let i = before.length - 1; i >= 0; i -= 1) {
+      const ch = before[i];
+      if (ch === ')' || ch === ']' || ch === '}') depth += 1;
+      else if (ch === '(' || ch === '[' || ch === '{') {
+        if (depth === 0) { opener = i; break; }
+        depth -= 1;
+      }
+    }
+    if (opener < 0) return { glued: false, data: false };
+    if (before[opener] !== '(') return { glued: false, data: true };
+    before = before.slice(0, opener).replace(/\s+$/, '');
+    if (!before.endsWith('+')) return { glued: false, data: false };
+  }
+  before = before.slice(0, -1).replace(/\s+$/, '');
+  const q = before.slice(-1);
+  if (q === '"' || q === "'" || q === '`') return { glued: !/\s/.test(before.slice(-2, -1)), data: false };
+  return { glued: true, data: false };
+}
+
 function classPieces(expr) {
   const out = [];
   let i = 0;
@@ -276,8 +322,9 @@ function classPieces(expr) {
       // is data too. This is how `-` and `+` used to be reported as classes.
       const callee = lead.endsWith('(') ? (lead.slice(0, -1).match(/([A-Za-z_$][\w$]*)$/) || [])[1] : null;
       const foreignArg = callee != null && !CLASS_JOINERS.has(callee);
-      if (!comparand && !foreignArg) {
-        out.push({ raw, openAdj: lead.slice(-1) === '+', closeAdj: trail.slice(0, 1) === '+' });
+      const left = gluedLeft(lead);
+      if (!comparand && !foreignArg && !left.data) {
+        out.push({ raw, openAdj: left.glued, closeAdj: trail.slice(0, 1) === '+' });
       }
       i = j + 1;
       continue;
@@ -455,6 +502,21 @@ function extractorSelfCheck() {
       name: 'a // inside a string does not swallow the rest of the line',
       src: 'const u = "https://x.example"; const el = <i className="docs-open" />;',
       expect: (f) => f.length === 1 && f[0].cls === 'docs-open',
+    },
+    {
+      name: 'a literal inside a group concatenated onto a fragment is a suffix, not a class',
+      src: "<span className={'rd-chip tone-' + (ok ? 'ok' : 'dim')} />",
+      expect: (f) => f.map((x) => x.cls).join(' ') === 'rd-chip',
+    },
+    {
+      name: 'a literal used as a map key inside that group is data',
+      src: "<span className={'rd-chip tone-' + (TONE[s === 'fail' ? 'failed' : 'completed'] || 'idle')} />",
+      expect: (f) => f.map((x) => x.cls).join(' ') === 'rd-chip',
+    },
+    {
+      name: 'a left operand ending in whitespace cannot extend the group after it',
+      src: "<i className={'ico ' + (on ? 'on' : 'off')} />",
+      expect: (f) => f.map((x) => x.cls).sort().join(' ') === 'ico off on',
     },
     {
       name: 'keeps reading after a className with a nested object expression',

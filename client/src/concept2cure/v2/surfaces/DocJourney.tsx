@@ -381,7 +381,7 @@ export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
   usePublishSurfaceContext('doc-journey', anaContext);
 
   return (
-    <div className="reg-wrap dj">
+    <div className="reg-wrap">
       <div className="reg-head">
         <div>
           <div className="reg-eyebrow">Workspace · authoring</div>

@@ -98,7 +98,7 @@ const SUMMARIES: Record<string, string> = {
   'GET /api/ind-lifecycle/safety-reports/{reportId}': 'Fetch one tracked IND Safety Report (org-scoped)',
   'POST /api/ind-lifecycle/submission/{id}/annual-reports': 'Draft + persist a 312.33 IND Annual Report / DSUR',
   'GET /api/ind-lifecycle/submission/{id}/annual-reports': "List a submission's IND Annual Reports",
-  'GET /api/ind-lifecycle/submission/{id}/annual-reports/overdue': 'Overdue (unfiled, past 60-day-deadline) IND Annual Reports',
+  'GET /api/ind-lifecycle/submission/{id}/annual-reports/overdue': 'Unfiled IND Annual Reports past their 60-day deadline (overdueState: overdue) or with no recorded deadline (overdueState: deadline_unknown)',
   'GET /api/ind-lifecycle/annual-reports/{reportId}': 'Fetch one tracked IND Annual Report (org-scoped)',
   'POST /api/ind-lifecycle/submission/{id}/amendments': 'Draft + persist a 312.30/.31 amendment plan',
   'GET /api/ind-lifecycle/submission/{id}/amendments': "List a submission's IND amendments",

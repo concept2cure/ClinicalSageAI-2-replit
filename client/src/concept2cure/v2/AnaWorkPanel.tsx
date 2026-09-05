@@ -144,10 +144,13 @@ function useWorkModel(messages: AnaChatMessage[], streaming: boolean, runStatus:
 function PanelHeader({ stateLine, pulsing, onClose }: { stateLine: string; pulsing: boolean; onClose?: () => void }) {
   return (
     <div className="ana-work-hdr">
-      <span className="ana-work-title">
+      {/* A real heading: the dock's five sections are h3s, so the dock itself
+          must be the h2 between them and the page title wherever it is hosted
+          (SC 1.3.1). Styled to the header's type, not the document's. */}
+      <h2 className="ana-work-title">
         <span className="ana-work-mark" aria-hidden="true">{I.activity}</span>
         AnA at work
-      </span>
+      </h2>
       {stateLine && (
         <span className="ana-work-elapsed">
           {pulsing && <span className="ana-work-pulse" aria-hidden="true">{I.dot}</span>}

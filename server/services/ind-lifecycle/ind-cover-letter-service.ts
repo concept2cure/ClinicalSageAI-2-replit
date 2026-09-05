@@ -88,8 +88,11 @@ const DEFAULT_PURPOSE: Record<IndSubmissionType, string> = {
 };
 
 function fmtDate(iso?: string): string {
-  const d = iso ? new Date(iso) : new Date(0);
-  // Deterministic, locale-independent: "01 January 1970".
+  // An absent or unparsable date used to render as "01 January 1970" on the
+  // letter. It is a placeholder like the other unfilled fields.
+  const d = iso ? new Date(iso) : null;
+  if (!d || Number.isNaN(d.getTime())) return '[Date]';
+  // Deterministic, locale-independent: "05 September 2026".
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December',

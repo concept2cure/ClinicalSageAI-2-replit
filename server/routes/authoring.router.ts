@@ -20,6 +20,7 @@ import { createScopedLogger } from '../utils/logger';
 // editing layer over it. This resolves which governed document an authored
 // document belongs to. See server/services/c2c/governed-document-binding.ts.
 import { resolveGovernedDocument } from '../services/c2c/governed-document-binding.js';
+import { recordDocumentAlias, DocumentAliasConflictError } from '../services/c2c/document-alias-map.js';
 import {
   commitSectionToFiling,
   type CommitSectionResult,
@@ -1933,6 +1934,35 @@ router.post('/docs', async (req: Request, res: Response) => {
         args,
       );
 
+      // The document's identity across stores (Document Identity Contract,
+      // slice C2). The authoring uuid IS the canonical id, recorded as its
+      // own alias so every later representation — a coauthor snapshot, a
+      // filed leaf — can point back at it by identity rather than by title;
+      // a bound governed c2c document is the same document in that store.
+      // On the transaction: a fork (the c2c document already recorded as a
+      // different document) refuses the create, and a database that has not
+      // applied the alias migration is logged as such, not read as "nothing
+      // to alias".
+      const selfAlias = await recordDocumentAlias(txClient, {
+        organizationId: tenantId,
+        canonicalId: docId,
+        store: 'authoring_documents',
+        nativeId: docId,
+      });
+      if (!selfAlias.recorded && selfAlias.reason === 'relation_absent') {
+        logger.warn('Document alias map absent; document created without cross-store identity', {
+          docId,
+          migration: 'migrations/20260814d_document_alias_map.sql',
+        });
+      } else if (binding.documentId) {
+        await recordDocumentAlias(txClient, {
+          organizationId: tenantId,
+          canonicalId: docId,
+          store: 'c2c_documents',
+          nativeId: String(binding.documentId),
+        });
+      }
+
       // Seed the document's section skeleton from the template resolved ABOVE
       // (before any write — an unresolvable template refuses the create rather
       // than producing a sectionless document behind a "seeded from" toast).
@@ -2032,6 +2062,13 @@ router.post('/docs', async (req: Request, res: Response) => {
         : { bound: false, reason: binding.reason },
     });
   } catch (error) {
+    if (error instanceof DocumentAliasConflictError) {
+      // Nothing was persisted: the alias write is inside the transaction.
+      return res.status(409).json({
+        error: 'DOCUMENT_ALIAS_CONFLICT',
+        message: `${error.message}. Nothing was created.`,
+      });
+    }
     console.error('Error creating document:', error);
     return serverError(res, logger, 'saving docs', error);
   }

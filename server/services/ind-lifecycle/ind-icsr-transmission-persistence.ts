@@ -40,7 +40,17 @@ export type IcsrTxCtx = { organizationId: number; userId: number };
  * GATEWAY_TRANSMIT_FAILED both mean the report was NOT transmitted and the row
  * stays 'prepared' — never rendered as success.
  */
-export type IcsrTransmissionErrorCode = 'NOT_FOUND' | 'NOT_READY' | 'GATEWAY_NOT_CONFIGURED' | 'GATEWAY_TRANSMIT_FAILED';
+export type IcsrTransmissionErrorCode =
+  | 'NOT_FOUND'
+  | 'NOT_READY'
+  | 'GATEWAY_NOT_CONFIGURED'
+  | 'GATEWAY_TRANSMIT_FAILED'
+  /** The ACK carries no readable ICH code; nothing was recorded. */
+  | 'ACK_UNREADABLE'
+  /** The transmission is not in the state the operation requires. */
+  | 'INVALID_STATE'
+  /** The ACK names a different message number than this transmission's. */
+  | 'ACK_MISMATCH';
 
 export class IcsrTransmissionError extends Error {
   constructor(
@@ -70,7 +80,9 @@ export async function prepareIcsrTransmission(
   input: PrepareIcsrTransmissionInput,
   ctx: IcsrTxCtx,
 ): Promise<IndIcsrTransmissionRow> {
-  const composed = composeE2bR3Icsr(input.event, { icsr: input.icsr ?? null, expedited: true, now: input.now });
+  // C.1.7 (fulfils local expedited criteria) comes from the event's own
+  // classification; it was hardcoded to Yes here regardless of the event.
+  const composed = composeE2bR3Icsr(input.event, { icsr: input.icsr ?? null, now: input.now });
   const transmission = buildIcsrTransmission(composed, {
     gateway: input.gateway,
     senderId: input.senderId,
@@ -204,6 +216,17 @@ export async function transmitIcsrTransmission(
   opts: Pick<TransmitIcsrOptions, 'now' | 'config'> = {},
 ): Promise<IndIcsrTransmissionRow> {
   const current = await getIcsrTransmission(id, ctx);
+  // Only a prepared row is transmitted. A second call on a transmitted,
+  // acknowledged or rejected row used to send the same message number to the
+  // agency again and overwrite the receipt, as governed-transmit's
+  // ACTIVE_TRANSMITTAL refusal exists to prevent on the eCTD side.
+  if (current.status !== 'prepared') {
+    throw new IcsrTransmissionError(
+      'INVALID_STATE',
+      `ICSR transmission ${id} is '${current.status}'; only a prepared transmission is sent. Prepare a follow-up or nullification as a new transmission.`,
+      { status: current.status },
+    );
+  }
   const built: IcsrTransmissionResult = {
     message: current.message,
     transmitReady: current.transmitReady,
@@ -256,8 +279,34 @@ export async function recordIcsrAcknowledgment(
   ackXml: string,
   ctx: IcsrTxCtx,
 ): Promise<IndIcsrTransmissionRow> {
-  await getIcsrTransmission(id, ctx); // tenant-scoped existence check (404 otherwise)
+  const current = await getIcsrTransmission(id, ctx); // tenant-scoped existence check (404 otherwise)
   const ack = parseIcsrAcknowledgment(ackXml);
+
+  // Three things this recorded as an acknowledgement that are not one. An ACK
+  // with no readable code parsed to 'unknown' and mapped to 'acknowledged'. An
+  // ACK for a report that was never transmitted — status still 'prepared' —
+  // was accepted. And the acknowledged message number was stored but never
+  // compared with this transmission's own, so any agency ACK could close any
+  // report. Each was an IND_ICSR_ACKNOWLEDGED audit row and an acknowledgedAt
+  // from the platform clock over an agency act that did not happen.
+  if (ack.ackCode === 'unknown') {
+    throw new IcsrTransmissionError(
+      'ACK_UNREADABLE',
+      'The acknowledgement carries no readable ICH ACK code (AA/AE/AR); nothing was recorded.',
+    );
+  }
+  if (current.status !== 'transmitted') {
+    throw new IcsrTransmissionError(
+      'INVALID_STATE',
+      `An acknowledgement can only be recorded against a transmitted report (current: ${current.status}).`,
+    );
+  }
+  if (ack.acknowledgedMessageNumber && ack.acknowledgedMessageNumber !== current.messageNumber) {
+    throw new IcsrTransmissionError(
+      'ACK_MISMATCH',
+      `The acknowledgement names message ${ack.acknowledgedMessageNumber}; this transmission is ${current.messageNumber}.`,
+    );
+  }
   const status = ack.ackCode === 'AR' ? 'rejected' : 'acknowledged';
 
   const [row] = await db

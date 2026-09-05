@@ -279,7 +279,7 @@ describe('document routes', () => {
       gateway: 'FDA_FAERS',
       senderId: 'C2C',
       messageNumber: 'MSG-0001',
-      icsr: { worldwideUniqueId: 'US-C2C-2026-000123', senderType: 'sponsor' },
+      icsr: { worldwideUniqueId: 'US-C2C-2026-000123', senderType: 'sponsor', reportType: 'study', studyRegistrationNumber: 'IND 123456' },
     });
     expect(res.status).toBe(200);
     expect(res.body.gateway).toBe('FDA_FAERS');
@@ -427,7 +427,7 @@ describe('DB-write + program surface (full HTTP flow)', () => {
         submissionId: seededSubmissionId,
         sequenceNumber: '0004',
         event: reportableEvent(),
-        icsr: { worldwideUniqueId: 'US-C2C-2026-000999', senderType: 'sponsor' },
+        icsr: { worldwideUniqueId: 'US-C2C-2026-000999', senderType: 'sponsor', reportType: 'study', studyRegistrationNumber: 'IND 123456' },
       });
     expect(res.status).toBe(201);
     const m535 = res.body.leaves.find((l: any) => l.sectionCode === 'm5.3.5');
@@ -631,6 +631,37 @@ describe('persisted IND safety reports (21 CFR 312.32)', () => {
     expect(res.body.map((r: any) => r.id)).toContain(draftId);
   });
 
+  it('the cockpit counts the overdue safety report from the register, whatever the body says', async () => {
+    // The count used to come from the request body; omitting it (or sending
+    // 0) read as "no critical actions" while this draft sat past deadline.
+    const res = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cockpit`).send({ overdueSafetyReports: 0 });
+    expect(res.status).toBe(200);
+    const hasOverdueAction = (dashboard: any) =>
+      dashboard.actionItems.items.some((i: any) => i.id === 'safety_overdue' && i.priority === 'critical');
+    expect(hasOverdueAction(res.body.dashboard)).toBe(true);
+    expect(res.body.dashboard.headline.criticalActions).toBeGreaterThanOrEqual(1);
+    const dash = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/dashboard`).send({});
+    expect(hasOverdueAction(dash.body)).toBe(true);
+  });
+
+  it('refuses to file a draft that is not the draft being filed', async () => {
+    // A draftId only had to be this tenant's; a 7-day fatal draft could be
+    // marked filed with a sequence whose content came from another event.
+    const other = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0010', event: { ...reportableEvent(), id: 'ae-other' }, draftId });
+    expect(other.status).toBe(409);
+    expect(other.body.error.code).toBe('DRAFT_MISMATCH');
+    const unknown = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0010', event: reportableEvent(), draftId: '00000000-0000-0000-0000-000000000000' });
+    expect(unknown.status).toBe(404);
+    expect(unknown.body.error.code).toBe('DRAFT_NOT_FOUND');
+    // Nothing was filed: the draft is still a draft and still overdue.
+    const overdue = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports/overdue`);
+    expect(overdue.body.map((r: any) => r.id)).toContain(draftId);
+  });
+
   it('filing with draftId marks it filed and drops it from overdue', async () => {
     const filed = await request(app)
       .post('/api/ind-lifecycle/safety-report/file')
@@ -641,6 +672,12 @@ describe('persisted IND safety reports (21 CFR 312.32)', () => {
 
     const overdue = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports/overdue`);
     expect(overdue.body.map((r: any) => r.id)).not.toContain(draftId);
+    // Filing it again is refused: the draft is already filed.
+    const again = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0013', event: reportableEvent(), draftId });
+    expect(again.status).toBe(409);
+    expect(again.body.error.code).toBe('ALREADY_FILED');
   });
 
   it('does not leak another org\'s safety reports', async () => {
@@ -676,6 +713,16 @@ describe('persisted IND annual reports (21 CFR 312.33)', () => {
     draftId = res.body.id;
   });
 
+  it('refuses a report with no reporting period dates as 400 VALIDATION, not 500 and not 404', async () => {
+    // Absent dates used to coerce to 1 January 1970 and the draft persisted.
+    const noStart: Record<string, unknown> = { ...report() };
+    delete noStart.reportingPeriodStart;
+    const res = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports`).send({ report: noStart });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION');
+    expect(res.body.error.message).toMatch(/reportingPeriodStart/);
+  });
+
   it('POST /annual-reports → 400 without indNumber/productName', async () => {
     const res = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports`).send({ report: { indNumber: '1' } });
     expect(res.status).toBe(400);
@@ -707,12 +754,23 @@ describe('persisted IND annual reports (21 CFR 312.33)', () => {
     const before = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports/overdue?asOf=2030-01-01`);
     expect(before.body.map((r: any) => r.id)).toContain(draftId);
 
-    const filed = await request(app)
+    // The draft still has open 312.33 sections: filing it silently used to be
+    // the default. It is refused until the caller acknowledges the gaps, and
+    // the filing then records that they were filed open.
+    const refused = await request(app)
       .post('/api/ind-lifecycle/annual-report/file')
       .send({ submissionId: seededSubmissionId, sequenceNumber: '0012', draftId });
+    expect(refused.status).toBe(409);
+    expect(refused.body.error.code).toBe('DRAFT_INCOMPLETE');
+    expect(refused.body.error.gapCount).toBeGreaterThan(0);
+
+    const filed = await request(app)
+      .post('/api/ind-lifecycle/annual-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0012', draftId, acknowledgeGaps: true });
     expect(filed.status).toBe(201);
     expect(filed.body.draft.status).toBe('filed');
     expect(filed.body.draft.sequenceId).toBe(filed.body.sequence.id);
+    expect(filed.body.filedWithOpenGaps).toBe(refused.body.error.gapCount);
 
     const after = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports/overdue?asOf=2030-01-01`);
     expect(after.body.map((r: any) => r.id)).not.toContain(draftId);
@@ -797,7 +855,7 @@ describe('persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance)', () =
         gateway: 'FDA_FAERS',
         senderId: 'C2C',
         messageNumber,
-        icsr: { worldwideUniqueId: 'US-C2C-2026-000123', senderType: 'sponsor' },
+        icsr: { worldwideUniqueId: 'US-C2C-2026-000123', senderType: 'sponsor', reportType: 'study', studyRegistrationNumber: 'IND 123456' },
       });
     expect(prep.status).toBe(201);
     expect(prep.body.status).toBe('prepared');
@@ -914,16 +972,92 @@ describe('persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance)', () =
     expect((await rowOf(prep.body.id)).status).toBe('prepared');
   });
 
-  it('an AR acknowledgment marks the transmission rejected with errors', async () => {
-    const prep = await request(app)
-      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/icsr-transmissions`)
-      .send({ event: reportableEvent(), gateway: 'EMA_EUDRAVIGILANCE', senderId: 'C2C', messageNumber: 'MSG-1003', icsr: { worldwideUniqueId: 'EU-1', senderType: 'sponsor' } });
+  it('an AR acknowledgment marks a TRANSMITTED report rejected with errors', async () => {
+    // This used to acknowledge a report that had never been transmitted. An
+    // acknowledgement is an agency act on a message it received; recording one
+    // against a 'prepared' row was an IND_ICSR_ACKNOWLEDGED audit row over
+    // nothing. The report is transmitted first, as the AA case does.
+    const prep = await prepareReady('MSG-1003');
+    icsrTransport.override = async (built: any) => ({
+      simulated: false, status: 'transmitted', gateway: built.gateway, receiverId: built.receiverId,
+      messageId: 'MSG-1003', receiptId: 'ESG-CORE-1003', timestamp: '2026-06-16T00:00:00.000Z', message: 'Accepted.',
+    });
+    expect((await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/transmit`)).status).toBe(200);
     const ack = await request(app)
-      .post(`/api/ind-lifecycle/icsr-transmissions/${prep.body.id}/acknowledge`)
-      .send({ ackXml: '<ack><reportacknowledgmentcode>AR</reportacknowledgmentcode><error>Invalid MedDRA version</error></ack>' });
+      .post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/acknowledge`)
+      .send({ ackXml: '<ack><messagenumb>MSG-1003</messagenumb><reportacknowledgmentcode>AR</reportacknowledgmentcode><error>Invalid MedDRA version</error></ack>' });
+    expect(ack.status).toBe(200);
     expect(ack.body.status).toBe('rejected');
     expect(ack.body.ackCode).toBe('AR');
     expect(ack.body.errors).toContain('Invalid MedDRA version');
+  });
+
+  it('refuses to transmit a report that is no longer prepared (409): no second send of the same message', async () => {
+    const prep = await prepareReady('MSG-1007');
+    icsrTransport.override = async (built: any) => ({
+      simulated: false, status: 'transmitted', gateway: built.gateway, receiverId: built.receiverId,
+      messageId: 'MSG-1007', receiptId: 'ESG-CORE-1007', timestamp: '2026-06-16T00:00:00.000Z', message: 'Accepted.',
+    });
+    expect((await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/transmit`)).status).toBe(200);
+    const again = await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/transmit`);
+    expect(again.status).toBe(409);
+    expect(again.body.error.code).toBe('INVALID_STATE');
+    expect((await rowOf(prep.id)).transportReceiptId).toBe('ESG-CORE-1007');
+  });
+
+  it('a study report with no study registration number is prepared but not transmit-ready', async () => {
+    const prep = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/icsr-transmissions`)
+      .send({
+        event: { ...reportableEvent(), suspectProduct: 'C2C-001', reactionPt: 'Hepatic failure' },
+        gateway: 'FDA_FAERS', senderId: 'C2C', messageNumber: 'MSG-1008',
+        icsr: { worldwideUniqueId: 'US-C2C-2026-001008', senderType: 'sponsor', reportType: 'study' },
+      });
+    expect(prep.status).toBe(201);
+    expect(prep.body.transmitReady).toBe(false);
+    expect(prep.body.gaps.map((g: any) => g.id)).toContain('C.5.1.r.1');
+  });
+
+  it('refuses an acknowledgement for a report that was never transmitted (409), and the row is unchanged', async () => {
+    const prep = await prepareReady('MSG-1004');
+    const ack = await request(app)
+      .post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/acknowledge`)
+      .send({ ackXml: '<ack><messagenumb>MSG-1004</messagenumb><transmissionacknowledgmentcode>AA</transmissionacknowledgmentcode></ack>' });
+    expect(ack.status).toBe(409);
+    expect(ack.body.error.code).toBe('INVALID_STATE');
+    expect((await rowOf(prep.id)).status).toBe('prepared');
+  });
+
+  it('refuses an acknowledgement with no readable ACK code (422), never recording "acknowledged"', async () => {
+    // parseIcsrAcknowledgment returns 'unknown' for any text without a code;
+    // that used to map straight to 'acknowledged'.
+    const prep = await prepareReady('MSG-1005');
+    icsrTransport.override = async (built: any) => ({
+      simulated: false, status: 'transmitted', gateway: built.gateway, receiverId: built.receiverId,
+      messageId: 'MSG-1005', receiptId: 'ESG-CORE-1005', timestamp: '2026-06-16T00:00:00.000Z', message: 'Accepted.',
+    });
+    await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/transmit`);
+    const ack = await request(app)
+      .post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/acknowledge`)
+      .send({ ackXml: '<html>Service temporarily unavailable</html>' });
+    expect(ack.status).toBe(422);
+    expect(ack.body.error.code).toBe('ACK_UNREADABLE');
+    expect((await rowOf(prep.id)).status).toBe('transmitted');
+  });
+
+  it('refuses an acknowledgement that names a different message number (422)', async () => {
+    const prep = await prepareReady('MSG-1006');
+    icsrTransport.override = async (built: any) => ({
+      simulated: false, status: 'transmitted', gateway: built.gateway, receiverId: built.receiverId,
+      messageId: 'MSG-1006', receiptId: 'ESG-CORE-1006', timestamp: '2026-06-16T00:00:00.000Z', message: 'Accepted.',
+    });
+    await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/transmit`);
+    const ack = await request(app)
+      .post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/acknowledge`)
+      .send({ ackXml: '<ack><messagenumb>MSG-9999</messagenumb><transmissionacknowledgmentcode>AA</transmissionacknowledgmentcode></ack>' });
+    expect(ack.status).toBe(422);
+    expect(ack.body.error.code).toBe('ACK_MISMATCH');
+    expect((await rowOf(prep.id)).status).toBe('transmitted');
   });
 
   it('400 without gateway; 404 transmitting an unknown id', async () => {

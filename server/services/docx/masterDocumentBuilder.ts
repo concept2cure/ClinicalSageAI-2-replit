@@ -22,6 +22,7 @@ import { randomUUID } from 'crypto';
 import JSZip from 'jszip';
 import { runDocxPdfPipeline } from '../docx-pdf-pipeline';
 import { inlineMarksToText } from '../../export/inline-marks-to-text.js';
+import { decodeHtmlEntities } from '../../export/decode-html-entities.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -118,13 +119,14 @@ export function htmlToOoxml(html: string): string {
      `<del>`/`<ins>` was silently settled into the built .docx. Shared with the
      eCTD leaf renderer, which had the identical defect; see
      server/export/inline-marks-to-text.ts for the full account. */
-  // Decode entities first (& must be first to avoid double-decode)
-  let text = inlineMarksToText(html)
-    .replace(/&amp;/g, '&')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"');
+  /* Entities are decoded LAST, by decodeHtmlEntities, not here. Decoding them
+     first turned an author's `&lt; 0.05%` into a literal `<` that the very next
+     rule read as a tag and deleted along with everything up to the next `>` —
+     "Total impurities were &lt; 0.05% and assay was &gt; 98.0%" reached the
+     built .docx as "Total impurities were  98.0%". See that module for the full
+     account, including why leading the old chain with `&amp;` was what CAUSED
+     the double-decode its comment claimed to prevent. */
+  let text = inlineMarksToText(html);
 
   // Extract structure
   text = text
@@ -139,12 +141,14 @@ export function htmlToOoxml(html: string): string {
     .filter(line => line.trim())
     .map(line => {
       const headingMatch = line.match(/^__H(\d)__(.+)/);
-      if (headingMatch) return ooxmlHeading(headingMatch[2].trim(), parseInt(headingMatch[1]));
+      if (headingMatch) {
+        return ooxmlHeading(decodeHtmlEntities(headingMatch[2].trim()), parseInt(headingMatch[1]));
+      }
       if (line.startsWith('__LI__')) {
-        const content = line.replace('__LI__', '').trim();
+        const content = decodeHtmlEntities(line.replace('__LI__', '').trim());
         return ooxmlParagraph(`\u2022 ${content}`, 'ListParagraph');
       }
-      return ooxmlParagraph(line.trim());
+      return ooxmlParagraph(decodeHtmlEntities(line.trim()));
     })
     .join('');
 }
@@ -393,83 +397,12 @@ export class MasterDocumentBuilder {
     };
   }
 
-  /** Generate eCTD backbone XML */
-  async generateEctdXml(options: {
-    submissionType: string;
-    applicantName: string;
-    productName: string;
-    modules: { number: string; title: string; documents: { id: string; title: string; filePath: string }[] }[];
-  }): Promise<string> {
-    const moduleNodes = options.modules.map(mod => {
-      const docs = mod.documents.map(doc =>
-        `        <leaf ID="${escapeXml(doc.id)}" operation="new" xlink:href="${escapeXml(doc.filePath)}">
-          <title>${escapeXml(doc.title)}</title>
-        </leaf>`
-      ).join('\n');
-      return `      <m${escapeXml(mod.number)} title="${escapeXml(mod.title)}">
-${docs}
-      </m${escapeXml(mod.number)}>`;
-    }).join('\n');
-
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE ectd:ectd SYSTEM "ich-ectd-3-2.dtd">
-<ectd:ectd xmlns:ectd="http://www.ich.org/ectd" xmlns:xlink="http://www.w3.org/1999/xlink">
-  <ectd:submission type="${escapeXml(options.submissionType)}">
-    <ectd:applicant>${escapeXml(options.applicantName)}</ectd:applicant>
-    <ectd:product-name>${escapeXml(options.productName)}</ectd:product-name>
-    <ectd:submission-info>
-      <ectd:sequence-number>0000</ectd:sequence-number>
-    </ectd:submission-info>
-${moduleNodes}
-  </ectd:submission>
-</ectd:ectd>`;
-  }
-
-  /** Generate ICSR XML (E2B R3 structure) */
-  async generateIcsrXml(options: {
-    safetyReportId: string;
-    patientAge?: string;
-    patientSex?: string;
-    reaction: string;
-    drug: string;
-    seriousness: 'serious' | 'non-serious';
-  }): Promise<string> {
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<ICHICSR xmlns="urn:hl7-org:v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" lang="en">
-  <ICHICSRMESSAGEHEADER>
-    <MESSAGETYPE>ichicsr</MESSAGETYPE>
-    <MESSAGEFORMATVERSION>2.1</MESSAGEFORMATVERSION>
-    <MESSAGEFORMATRELEASE>2.0</MESSAGEFORMATRELEASE>
-    <MESSAGENUMB>${escapeXml(options.safetyReportId)}</MESSAGENUMB>
-    <MESSAGESENDERIDENTIFIER>ClinicalSageAI</MESSAGESENDERIDENTIFIER>
-    <MESSAGERECEIVERIDENTIFIER>REGULATORY_AUTHORITY</MESSAGERECEIVERIDENTIFIER>
-    <MESSAGEDATEFORMAT>204</MESSAGEDATEFORMAT>
-    <MESSAGEDATE>${new Date().toISOString().slice(0, 10).replace(/-/g, '')}</MESSAGEDATE>
-  </ICHICSRMESSAGEHEADER>
-  <SAFETYREPORT>
-    <SAFETYREPORTID>${escapeXml(options.safetyReportId)}</SAFETYREPORTID>
-    <PRIMARYSOURCECOUNTRY>US</PRIMARYSOURCECOUNTRY>
-    <OCCURCOUNTRY>US</OCCURCOUNTRY>
-    <REPORTTYPE>1</REPORTTYPE>
-    <SERIOUS>${options.seriousness === 'serious' ? '1' : '2'}</SERIOUS>
-    <PRIMARYSOURCE>
-      <REPORTERGIVENAME>System Generated</REPORTERGIVENAME>
-      <QUALIFICATION>5</QUALIFICATION>
-    </PRIMARYSOURCE>
-    <PATIENT>
-      ${options.patientAge ? `<PATIENTONSETAGE>${escapeXml(options.patientAge)}</PATIENTONSETAGE><PATIENTONSETAGEUNIT>801</PATIENTONSETAGEUNIT>` : ''}
-      ${options.patientSex ? `<PATIENTSEX>${options.patientSex === 'male' ? '1' : '2'}</PATIENTSEX>` : ''}
-      <REACTION>
-        <PRIMARYSOURCEREACTION>${escapeXml(options.reaction)}</PRIMARYSOURCEREACTION>
-      </REACTION>
-      <DRUG>
-        <DRUGCHARACTERIZATION>1</DRUGCHARACTERIZATION>
-        <MEDICINALPRODUCT>${escapeXml(options.drug)}</MEDICINALPRODUCT>
-      </DRUG>
-    </PATIENT>
-  </SAFETYREPORT>
-</ICHICSR>`;
-  }
+  // generateEctdXml and generateIcsrXml were removed. The first emitted a
+  // backbone with sequence 0000 and operation="new" hardcoded and no
+  // checksums or regional structure; the second an ICSR skeleton around
+  // whatever the caller passed. Neither was a regulatory artefact: the
+  // backbone comes from services/ectd/assemble-from-core.ts and the ICSR
+  // from services/ind-lifecycle/e2b-icsr-composer.ts.
 }
 
 // ─── Singleton ────────────────────────────────────────────────────────────────

@@ -180,7 +180,7 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const Body = SURFACES[tab];
 
   return (
-    <div className="rbm" data-screen-label={`RBM -- ${nav.label}`}>
+    <div data-screen-label={`RBM -- ${nav.label}`}>
       <div className="reg-head">
         <div>
           <div className="ph-eyebrow">Clinical — risk-based quality management</div>
