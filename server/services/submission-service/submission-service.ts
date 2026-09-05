@@ -352,7 +352,8 @@ async function governedSignatureRefusal(
   const sequenceId = target.slice(target.indexOf(':') + 1);
   const spent = await db.execute(sql`
     SELECT 1 FROM audit_logs
-    WHERE table_name = 'ectd_sequence'
+    WHERE tenant_id = ${ctx.organizationId}
+      AND table_name = 'ectd_sequence'
       AND record_id = ${sequenceId}
       AND action IN ('SEQUENCE_FROZEN', 'SEQUENCE_DISPATCHED', 'ECTD_TRANSMITTED')
       AND (new_values::jsonb ->> 'signatureActionId') = ${signatureActionId}
