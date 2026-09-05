@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T08:16:19.887Z",
+  "generatedAt": "2026-09-05T08:26:33.598Z",
   "git": {
-    "sha": "a28cc9015e3c8cfb1c0dd29974d0d90453844a62",
+    "sha": "1cefce85b28db3479874c26fd05f46007005b938",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 207,
+    "duplicateBasenames": 208,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 39,
@@ -973,6 +973,14 @@
         "paths": [
           "server/services/ivd-knowledge/scientific/clinical-performance.ts",
           "server/services/stats/clinical-performance.ts"
+        ]
+      },
+      {
+        "basename": "communication-center",
+        "count": 2,
+        "paths": [
+          "server/routes/c2c/communication-center.ts",
+          "shared/types/communication-center.ts"
         ]
       },
       {
@@ -1972,7 +1980,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 574304
+        "bytes": 567972
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2130,7 +2138,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 15206
+        "lines": 15000
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2490,7 +2498,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 400,
+      "duplicateGroups": 401,
       "largeByBytes": 29,
       "largeByLines": 75
     },
@@ -2502,7 +2510,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 73,
+      "duplicateGroups": 74,
       "largeByBytes": 3,
       "largeByLines": 1
     },
