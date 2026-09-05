@@ -50,6 +50,7 @@ import {
 } from '../services/integrations/openfda-device-client';
 import { lookupRecognizedStandards } from '../services/fda-recognized-standards/recognized-standards.service';
 import { createScopedLogger } from '../utils/logger.js';
+import { requireEditorAccess } from '../middleware/orgMembership';
 
 const logger = createScopedLogger('510k-device-routes');
 const router = Router();
@@ -110,38 +111,6 @@ async function findProgram(req: Request, orgId: number, ident: string) {
   return row ?? null;
 }
 
-/**
- * The role gate every governed eSTAR write already carries — the SAME set and
- * the same shape as `requireEditorAccess` in server/routes/510k-estar-routes.ts,
- * which guards the sibling write PUT /api/510k/estar/registration (that file is
- * where the copy this one mirrors lives; cerv2-export-routes and cerv2-ai-routes
- * carry the same one, none of them exports it).
- *
- * It is a ROLE check, and `requireEntitlement` is not: entitlements are a
- * subscription-TIER check that is a no-op unless ENTITLEMENTS_ENFORCE is set, so
- * on its own it let any authenticated member of the org — a read-only viewer
- * included — rewrite the device facts printed on a filed FDA submission.
- * Ordered ahead of the entitlement middleware, exactly as the sibling does.
- */
-const allowedRoles = new Set(['admin', 'owner', 'editor', 'super_admin']);
-const requireEditorAccess = (req: any, res: any, next: () => void) => {
-  const role = String(req.userRole || req.user?.role || '').toLowerCase();
-  if (!role || !allowedRoles.has(role)) {
-    return res.status(403).json({ error: 'Insufficient permissions' });
-  }
-  const tenantOrg = req.tenantContext?.organizationId;
-  const userOrg = req.user?.organizationId || req.tenantId;
-  const orgId = tenantOrg || userOrg;
-  if (!orgId) {
-    return res.status(400).json({ error: 'Organization context required' });
-  }
-  const numericOrgId = Number(orgId);
-  if (!Number.isFinite(numericOrgId) || numericOrgId <= 0) {
-    return res.status(400).json({ error: 'Valid numeric organization context required' });
-  }
-  req.resolvedOrganizationId = numericOrgId;
-  return next();
-};
 
 /**
  * The acting user, from the SESSION only. Null when nothing numeric resolves —
