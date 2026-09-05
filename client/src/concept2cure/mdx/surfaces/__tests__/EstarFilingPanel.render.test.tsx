@@ -333,12 +333,17 @@ describe('EstarFilingPanel — a toggle before the registration lands', () => {
     fireEvent.click(screen.getAllByText('Mark held')[0]);
     await waitFor(() => expect(sentPut()).not.toBeNull());
     const body = sentPut() as Record<string, unknown>;
-    expect(body).toEqual({
-      fdaEsgAccount: true,
-      cdrhPortalAccount: false,
-      organizationIdentity: false,
-      mdufaFeeAccount: false,
-    });
+    /*
+     * ONLY the prerequisite the operator actually clicked. This used to send all
+     * four — the clicked one true and the other three FALSE — because
+     * `new Set(satisfied ?? [])` read "not loaded" as "none satisfied". An
+     * organization that had recorded its FDA ESG account, CDRH Portal account,
+     * DUNS/FEI identity and MDUFA fee account lost every one of them to a click
+     * on a fifth thing, over a read they never saw fail. A prerequisite we have
+     * not read is not an unmet one; the other three are omitted, and the PUT
+     * leaves an absent field untouched.
+     */
+    expect(body).toEqual({ fdaEsgAccount: true });
     for (const key of TEXT_KEYS) expect(Object.hasOwn(body, key)).toBe(false);
   });
 
@@ -356,6 +361,42 @@ describe('EstarFilingPanel — a toggle before the registration lands', () => {
     await waitFor(() => expect(sentPut()).not.toBeNull());
     const body = sentPut() as Record<string, unknown>;
     for (const key of TEXT_KEYS) expect(Object.hasOwn(body, key)).toBe(false);
+    // And the same rule for the booleans: a FAILED read tells us nothing about
+    // the other three, so the click asserts one prerequisite and no more.
+    expect(body).toEqual({ cdrhPortalAccount: true });
+  });
+
+  /*
+   * The case the audit found, which is worse than the toggle: the operator is
+   * not touching the prerequisites at all. They fill in the correspondent block
+   * and press Save, and `correspondentPatch` sent all four booleans from the
+   * same `satisfied ?? []`. A failed registration read therefore turned a save
+   * about a correspondent email into a silent wipe of the four FDA
+   * prerequisites — the ESG account, the CDRH Portal account, the DUNS/FEI
+   * identity and the MDUFA fee account.
+   */
+  it('saving the correspondent block after a FAILED read writes no prerequisite at all', async () => {
+    mockReads((url) => {
+      if (url.includes('/registration')) {
+        return Promise.resolve({ ok: false, status: 500, text: () => Promise.resolve('boom') } as Response);
+      }
+      if (url.includes('/catalog')) return okJson({ catalog: [] });
+      return okJson({ submissions: [] });
+    });
+    render(<EstarFilingPanel />);
+    await waitFor(() => expect(screen.getByLabelText('Correspondent company name')).toBeTruthy());
+    fireEvent.change(screen.getByLabelText('Correspondent company name'), {
+      target: { value: 'Acme Regulatory Ltd' },
+    });
+    fireEvent.click(screen.getByText('Save'));
+    await waitFor(() => expect(sentPut()).not.toBeNull());
+
+    const body = sentPut() as Record<string, unknown>;
+    // The text the operator typed, and nothing else.
+    expect(body.correspondentCompanyName).toBe('Acme Regulatory Ltd');
+    for (const p of ['fdaEsgAccount', 'cdrhPortalAccount', 'organizationIdentity', 'mdufaFeeAccount']) {
+      expect(Object.hasOwn(body, p), `${p} must not be asserted from an unread registration`).toBe(false);
+    }
   });
 
   it('includes them once the registration HAS loaded, at their stored values', async () => {
