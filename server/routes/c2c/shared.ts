@@ -354,3 +354,40 @@ function getActionCategory(action: AuditEntry['action']): string {
   };
   return categoryMap[action] || 'system';
 }
+
+/* ── Content integrity ─────────────────────────────────────────────────────── */
+
+/**
+ * Calculate SHA-256 hash for content integrity verification.
+ * Used for 21 CFR Part 11 tamper-evident audit trails.
+ */
+export function calculateContentHash(content: string): string {
+  return crypto.createHash('sha256').update(content).digest('hex');
+}
+
+/* ── Conversation shapes shared by the project and conversation routers ────── */
+
+/**
+ * Conversation within a project (stored as JSON in project settings).
+ */
+export interface Conversation {
+  id: string;
+  projectId: string;
+  title: string;
+  messages: Message[];
+  parentConversationId?: string;
+  forkMessageIndex?: number;
+  threadId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+  attachments?: Array<{ id: string; name: string; type: string; size: number }>;
+  artifactId?: string;
+  edited?: boolean;
+}

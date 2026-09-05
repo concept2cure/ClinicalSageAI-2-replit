@@ -135,3 +135,23 @@ describe('project task routes live in one router', () => {
     }
   });
 });
+
+const CONVERSATION_PATHS = [
+  'POST /projects/:projectId/conversations',
+  'POST /projects/:projectId/conversations/:conversationId/messages',
+  'PATCH /projects/:projectId/conversations/:conversationId',
+  'DELETE /projects/:projectId/conversations/:conversationId',
+];
+
+describe('conversation mutations live in one router', () => {
+  it('the conversations router answers every one of them, and the main router none', async () => {
+    const conversations = (await import('../conversations')).default as unknown as { stack: Layer[] };
+    const main = (await import('../../concept2cure')).default as unknown as { stack: Layer[] };
+    const inConv = new Set(registered(conversations));
+    const inMain = new Set(registered(main));
+    for (const p of CONVERSATION_PATHS) {
+      expect(inConv.has(p), `${p} should be on the conversations router`).toBe(true);
+      expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
+    }
+  });
+});
