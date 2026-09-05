@@ -146,20 +146,88 @@ function nodeToText(node: any): string {
   return '';
 }
 
+/**
+ * TipTap marks → the tags the rest of the export pipeline already understands.
+ *
+ * The DOCX branch of this same file has always read `node.marks` (see
+ * textNodeToRun); the HTML branch never did, so one authored section exported
+ * two ways said two different things — "10⁶ CFU/mL" in the .docx and "106
+ * CFU/mL" in the PDF. `insertion`/`deletion` matter most: suggestions.ts
+ * renders them as <ins>/<del>, and downstream inlineMarksToText keeps both
+ * sides of an unresolved change visible as [+…+] and [-…-]. Dropping the mark
+ * here settled the change silently, one layer above the module built to stop
+ * exactly that.
+ *
+ * Order is outermost-first and fixed, so identical input yields identical
+ * bytes — pdf-converter hashes these renders.
+ */
+const MARK_TAGS: Array<[string, string]> = [
+  ['insertion', 'ins'],
+  ['deletion', 'del'],
+  ['bold', 'strong'],
+  ['italic', 'em'],
+  ['underline', 'u'],
+  ['strike', 's'],
+  ['code', 'code'],
+  ['superscript', 'sup'],
+  ['subscript', 'sub'],
+];
+
+function applyMarks(html: string, marks: any[]): string {
+  let out = html;
+  // Innermost first, so the array order above ends up as the nesting order.
+  for (let i = MARK_TAGS.length - 1; i >= 0; i--) {
+    const [markType, tag] = MARK_TAGS[i];
+    if (marks.some((m: any) => m?.type === markType)) out = `<${tag}>${out}</${tag}>`;
+  }
+  const link = marks.find((m: any) => m?.type === 'link');
+  const href = link?.attrs?.href;
+  if (typeof href === 'string' && href) out = `<a href="${escapeHtml(href)}">${out}</a>`;
+  return out;
+}
+
+/** Cell text for a table cell, whose children are block nodes. */
+function cellToHtml(cell: any): string {
+  const inner = (cell.content || []).map(nodeToHtml).join('');
+  // Strip the wrapping <p> a single-paragraph cell produces; a block inside a
+  // cell is what made the reducer break the row.
+  const single = inner.match(/^<p>([\s\S]*)<\/p>$/);
+  return single ? single[1] : inner;
+}
+
 function nodeToHtml(node: any): string {
   if (!node) return '';
   if (node.type === 'text') {
-    return escapeHtml(node.text || '');
+    return applyMarks(escapeHtml(node.text || ''), node.marks || []);
+  }
+  if (node.type === 'hardBreak') return '<br>';
+  if (node.type === 'horizontalRule') return '<hr>';
+  if (node.type === 'image') {
+    /* An image node has no `content`, so the generic fall-through returned ''
+       and figures disappeared out of 510(k) and CER PDFs with nothing left to
+       show one had been there. htmlToPlainText turns this into
+       "[Figure: <alt>]". */
+    const src = String(node.attrs?.src ?? '');
+    const alt = String(node.attrs?.alt ?? node.attrs?.title ?? '');
+    return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}">`;
   }
   if (node.type === 'paragraph') {
     const text = (node.content || []).map(nodeToHtml).join('');
     return text.trim() ? `<p>${text}</p>` : '';
   }
   if (node.type === 'heading') {
-    const text = escapeHtml(nodeToText(node).trim());
+    // Through the children, not nodeToText: a heading carries marks too.
+    const text = (node.content || []).map(nodeToHtml).join('').trim();
     const level = node.attrs?.level || 2;
     const safeLevel = Math.min(Math.max(level, 1), 4);
     return `<h${safeLevel}>${text}</h${safeLevel}>`;
+  }
+  if (node.type === 'blockquote') {
+    const inner = (node.content || []).map(nodeToHtml).join('');
+    return inner.trim() ? `<blockquote>${inner}</blockquote>` : '';
+  }
+  if (node.type === 'codeBlock') {
+    return `<pre><code>${escapeHtml(nodeToText(node))}</code></pre>`;
   }
   if (node.type === 'bulletList') {
     const items = (node.content || []).map(nodeToHtml).join('');
@@ -172,6 +240,30 @@ function nodeToHtml(node: any): string {
   if (node.type === 'listItem') {
     const items = (node.content || []).map(nodeToHtml).join('');
     return items.trim() ? `<li>${items}</li>` : '';
+  }
+  if (node.type === 'table') {
+    /* Fell through to a bare join of its children, so every cell ran together
+       with no delimiter — the same defect already fixed in the eCTD leaf
+       renderer, on the other document the same content is filed as. */
+    const rows = (node.content || [])
+      .filter((r: any) => r?.type === 'tableRow')
+      .map(nodeToHtml)
+      .join('');
+    return rows ? `<table>${rows}</table>` : '';
+  }
+  if (node.type === 'tableRow') {
+    const cells = (node.content || [])
+      .filter((c: any) => c?.type === 'tableCell' || c?.type === 'tableHeader')
+      .map((c: any) => {
+        const tag = c.type === 'tableHeader' ? 'th' : 'td';
+        // colspan/rowspan carried through so a merged cell is not silently
+        // renumbered into the wrong column.
+        const colspan = Number(c.attrs?.colspan) > 1 ? ` colspan="${Number(c.attrs.colspan)}"` : '';
+        const rowspan = Number(c.attrs?.rowspan) > 1 ? ` rowspan="${Number(c.attrs.rowspan)}"` : '';
+        return `<${tag}${colspan}${rowspan}>${cellToHtml(c)}</${tag}>`;
+      })
+      .join('');
+    return cells ? `<tr>${cells}</tr>` : '';
   }
   if (Array.isArray(node.content)) {
     return node.content.map(nodeToHtml).join('');
