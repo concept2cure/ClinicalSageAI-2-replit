@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T12:22:41.107Z",
+  "generatedAt": "2026-09-05T12:24:38.612Z",
   "git": {
-    "sha": "609d7a9083f1fa8d914cd5fe0a177d2b80dc7628",
+    "sha": "69604df0ad9d0de81542f02d851d1eef59d98b19",
     "branch": "ana-w2"
   },
   "thresholds": {
@@ -2004,16 +2004,16 @@
         "bytes": 233636
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "bytes": 228090
-      },
-      {
         "file": "server/statistics-service.ts",
         "bytes": 221753
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
         "bytes": 202559
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "bytes": 196167
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2158,16 +2158,16 @@
         "lines": 6920
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "lines": 6145
-      },
-      {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
         "lines": 5558
       },
       {
         "file": "server/routes/ana-features.ts",
         "lines": 5415
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "lines": 5304
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",

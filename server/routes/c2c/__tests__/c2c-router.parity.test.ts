@@ -127,9 +127,8 @@ describe('project task routes live in one router', () => {
       expect(inTasks.has(p), `${p} should be on the tasks router`).toBe(true);
       expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
     }
-    // The project reads that shared the old banner stayed with the project domain.
+    // The project reads that shared the old banner went to the program-twin router (slice 11), not here.
     for (const p of ['GET /projects/:projectId/cmc', 'GET /projects/:projectId/context', 'GET /projects/:projectId/transform-context']) {
-      expect(inMain.has(p), `${p} should still be on the main router`).toBe(true);
       expect(inTasks.has(p)).toBe(false);
     }
   });
@@ -262,6 +261,29 @@ describe('HAQ session persistence lives in one router', () => {
     const inMain = new Set(registered(main));
     for (const p of HAQ_PATHS) {
       expect(inHaq.has(p), `${p} should be on the haq-sessions router`).toBe(true);
+      expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
+    }
+  });
+});
+
+const PROGRAM_TWIN_PATHS = [
+  'GET /projects/:projectId/program-twin',
+  'GET /projects/:projectId/artifacts/:artifactId/verification',
+  'GET /projects/:projectId/change-impact',
+  'GET /projects/:projectId/cmc',
+  'PUT /projects/:projectId/cmc',
+  'GET /projects/:projectId/context',
+  'GET /projects/:projectId/transform-context',
+];
+
+describe('the program twin and project-context reads live in one router', () => {
+  it('the program-twin router answers every one of them, and the main router none', async () => {
+    const twin = (await import('../program-twin')).default as unknown as { stack: Layer[] };
+    const main = (await import('../../concept2cure')).default as unknown as { stack: Layer[] };
+    const inTwin = new Set(registered(twin));
+    const inMain = new Set(registered(main));
+    for (const p of PROGRAM_TWIN_PATHS) {
+      expect(inTwin.has(p), `${p} should be on the program-twin router`).toBe(true);
       expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
     }
   });
