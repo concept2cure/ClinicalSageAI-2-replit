@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T19:01:38.742Z",
+  "generatedAt": "2026-09-05T19:03:11.299Z",
   "git": {
-    "sha": "14683658a8932c16e208a6034d558627e2029e95",
+    "sha": "8ac8875190a45f6cf30f2c466dfc0f3989038833",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2040,12 +2040,12 @@
         "bytes": 145402
       },
       {
-        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
-        "bytes": 138123
+        "file": "server/services/submission-package-orchestrator.ts",
+        "bytes": 139854
       },
       {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 137182
+        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
+        "bytes": 138123
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2198,16 +2198,16 @@
         "lines": 3326
       },
       {
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 3158
+      },
+      {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "lines": 3119
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
         "lines": 3116
-      },
-      {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3092
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
