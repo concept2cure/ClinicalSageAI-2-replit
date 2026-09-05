@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T20:24:09.402Z",
+  "generatedAt": "2026-09-05T20:47:59.382Z",
   "git": {
-    "sha": "4eb5666e6993f4e030b95c164f4bc50420b95a8f",
+    "sha": "400beccb144fe0a15d9d38d33295649673a09f8e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2005,7 +2005,7 @@
       },
       {
         "file": "server/statistics-service.ts",
-        "bytes": 221753
+        "bytes": 221721
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
