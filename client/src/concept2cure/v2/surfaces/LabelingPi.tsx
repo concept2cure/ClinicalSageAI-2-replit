@@ -463,7 +463,7 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
   usePublishSurfaceContext('labeling-pi', anaContext);
 
   return (
-    <div className="reg-wrap lp">
+    <div className="reg-wrap">
       <div className="reg-head">
         <div>
           <div className="reg-eyebrow">Platform — authoring</div>

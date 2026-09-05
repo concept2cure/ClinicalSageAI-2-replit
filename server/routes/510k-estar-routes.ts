@@ -60,6 +60,7 @@ import { and, eq } from 'drizzle-orm';
 import { requestDb } from '../db/requestDb';
 import { fda510kProjects } from '../../shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
+import { loadProgramDeviceFlags } from '../services/pathway-engines/estar/program-device-flags';
 import { isMissingAnchorColumn, resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import {
   getEstarRegistration,
@@ -1142,12 +1143,18 @@ router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEnt
       listVendoredTemplates(),
     ]);
 
+    // The device questions the program answered at intake. Without them every
+    // conditional section is undetermined and no program can report a
+    // producible official eSTAR.
+    const anchorProgramId = scope.programId ?? programId;
+    const storedDeviceFlags = anchorProgramId ? await loadProgramDeviceFlags(orgId, anchorProgramId) : undefined;
     const result = assembleDeviceSubmission({
       pathway,
       pmaSubmissionType: pmaSubmissionType as (typeof PMA_SUBMISSION_TYPES)[number]['value'] | undefined,
       variant,
-      deviceFlags: validation.data.deviceFlags,
       leaves,
+      // A caller-stated answer wins; the program's intake answers are the fallback.
+      deviceFlags: validation.data.deviceFlags ?? storedDeviceFlags,
       presentTemplates: vendored.map((t) => t.fileName),
       market: market as never,
       environment: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
@@ -1644,13 +1651,16 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
     const templateVariant: EstarTemplateVariant = isPreStar ? 'prestar' : variant;
     const fill = await fillEstarSubmission({ type: entry.programType, variant: templateVariant, data: {} });
 
+    const readinessProgramId = content?.scope.programId ?? programId;
+    const storedDeviceFlags =
+      organizationId && readinessProgramId ? await loadProgramDeviceFlags(organizationId, readinessProgramId) : undefined;
     const result = assessEstarFilingReadiness({
       catalogKey: catalogKey as EstarCatalogKey,
       variant,
       registration,
       leaves: effectiveLeaves,
       qSubType,
-      deviceFlags: validation.data.deviceFlags,
+      deviceFlags: validation.data.deviceFlags ?? storedDeviceFlags,
       templateAvailable: fill.templateAvailable,
       fieldMapPopulated: fill.fieldMapPopulated,
     });

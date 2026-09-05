@@ -26,10 +26,11 @@ vi.mock('../server/routes/c2c/actions', () => ({
 
 const { dbState } = vi.hoisted(() => ({
   dbState: {
-    queue: [] as any[][],          // answers for awaited queries, in order
+    queue: [] as any[][],          // answers for awaited drizzle queries, in order
     inserted: [] as any[],         // values() passed to insert
-    updates: [] as any[],          // set() payloads
+    updates: [] as any[],          // metadata written under the package row lock
     deletes: 0,
+    pkgMetadata: {} as Record<string, unknown>, // what the row lock reads
   },
 }));
 
@@ -54,7 +55,13 @@ function makeDb() {
   return chain;
 }
 
-const clientQuery = vi.fn().mockResolvedValue({ rows: [] });
+/** The pool client: serves the package row lock from dbState.pkgMetadata and
+ *  captures each locked UPDATE's metadata. */
+const clientQuery = vi.fn(async (sql: string, params: unknown[] = []) => {
+  if (/FOR UPDATE/.test(sql)) return { rows: [{ metadata: dbState.pkgMetadata }] };
+  if (/^UPDATE c2c_submission_packages/.test(sql)) dbState.updates.push({ metadata: JSON.parse(String(params[1])) });
+  return { rows: [] };
+});
 const connectFn = vi.fn(() => Promise.resolve({ query: clientQuery, release: vi.fn() }));
 vi.mock('../server/db', () => ({
   get db() { return makeDb(); },
@@ -90,6 +97,7 @@ beforeEach(() => {
   dbState.inserted = [];
   dbState.updates = [];
   dbState.deletes = 0;
+  dbState.pkgMetadata = {};
   recordGovernedActionFn.mockReset();
   recordGovernedActionFn.mockResolvedValue({ actionId: 'act_x', auditId: 'aud_x', sha256Chain: 'c' });
   connectFn.mockClear();
@@ -104,9 +112,8 @@ describe('DELETE /api/submission-ops/artifact-section-map/:mappingId', () => {
     dbState.queue = [
       [{ id: 31, artifactId: 7, sectionDbId: 12, packageDbId: 5 }], // tenant-scoped mapping lookup
       [{ id: 31 }],                                                  // delete … returning
-      [{ metadata: { regulatory: { applicationNumber: 'IND1' }, bundle: BUNDLE } }], // current metadata
-      [],                                                            // update (bundle cleared)
     ];
+    dbState.pkgMetadata = { regulatory: { applicationNumber: 'IND1' }, bundle: BUNDLE }; // read under the row lock
     const res = await del('31');
     expect(res.status).toBe(200);
     expect(res.body.data).toMatchObject({ deleted: true, mappingId: 31, staleBundleCleared: true, ledgerWriteFailed: false });
@@ -125,7 +132,8 @@ describe('DELETE /api/submission-ops/artifact-section-map/:mappingId', () => {
   });
 
   it('leaves the package untouched when there was no bundle to clear', async () => {
-    dbState.queue = [[{ id: 31, artifactId: 7, sectionDbId: 12, packageDbId: 5 }], [{ id: 31 }], [{ metadata: { foo: 'bar' } }]];
+    dbState.queue = [[{ id: 31, artifactId: 7, sectionDbId: 12, packageDbId: 5 }], [{ id: 31 }]];
+    dbState.pkgMetadata = { foo: 'bar' };
     const res = await del('31');
     expect(res.status).toBe(200);
     expect(res.body.data.staleBundleCleared).toBe(false);
@@ -149,7 +157,7 @@ describe('DELETE /api/submission-ops/artifact-section-map/:mappingId', () => {
   });
 
   it('reports a ledger outage instead of pretending the removal was audited', async () => {
-    dbState.queue = [[{ id: 31, artifactId: 7, sectionDbId: 12, packageDbId: 5 }], [{ id: 31 }], [{ metadata: {} }]];
+    dbState.queue = [[{ id: 31, artifactId: 7, sectionDbId: 12, packageDbId: 5 }], [{ id: 31 }]];
     recordGovernedActionFn.mockRejectedValueOnce(new Error('audit db down'));
     const res = await del('31');
     expect(res.status).toBe(200);
@@ -165,30 +173,43 @@ describe('POST /api/submission-ops/artifact-section-map — one mapping per (art
   const sectionRow = [{ id: 12, packageDbId: 5 }];
   const pkgRow = [{ id: 5, projectId: 3 }];
 
+  const MAP_REASON = { reason: 'Map the drug product description into 3.2.P.1' };
+
+  it('REQUIRES a reason (governed change)', async () => {
+    const res = await post({ artifactId: 7, sectionDbId: 12 });
+    expect(res.status).toBe(400);
+    expect(res.body.details.reason).toBeDefined();
+    expect(dbState.inserted).toHaveLength(0);
+  });
+
   it('answers a repeat mapping with the EXISTING row and inserts nothing', async () => {
     dbState.queue = [artifactRow, sectionRow, pkgRow, [{ id: 31, artifactId: 7, sectionDbId: 12 }]];
-    const res = await post({ artifactId: 7, sectionDbId: 12 });
+    const res = await post({ artifactId: 7, sectionDbId: 12, ...MAP_REASON });
     expect(res.status).toBe(200);
     expect(res.body.duplicate).toBe(true);
     expect(res.body.data.id).toBe(31);
     expect(dbState.inserted).toHaveLength(0);
+    expect(recordGovernedActionFn).not.toHaveBeenCalled(); // nothing changed
   });
 
-  it('creates a new mapping and clears a bundle assembled before it', async () => {
+  it('creates a new mapping, clears a bundle assembled before it, and records a governed action', async () => {
     dbState.queue = [
       artifactRow, sectionRow, pkgRow,
       [],                                                   // no existing mapping
       [{ id: 32, artifactId: 7, sectionDbId: 12 }],         // insert … returning
-      [{ metadata: { bundle: BUNDLE, foo: 'bar' } }],       // current metadata
-      [],                                                   // update (bundle cleared)
     ];
-    const res = await post({ artifactId: 7, sectionDbId: 12, documentFamily: 'cmc' });
+    dbState.pkgMetadata = { bundle: BUNDLE, foo: 'bar' };   // read under the row lock
+    const res = await post({ artifactId: 7, sectionDbId: 12, documentFamily: 'cmc', ...MAP_REASON });
     expect(res.status).toBe(201);
     expect(res.body.data.id).toBe(32);
     expect(res.body.staleBundleCleared).toBe(true);
+    expect(res.body.ledgerWriteFailed).toBe(false);
     expect(dbState.inserted).toHaveLength(1);
     expect(dbState.inserted[0]).toMatchObject({ orgId: 99, artifactId: 7, sectionDbId: 12, documentFamily: 'cmc' });
     expect(dbState.updates[0].metadata.bundle).toBeUndefined();
     expect(dbState.updates[0].metadata.foo).toBe('bar');
+    const ledger = recordGovernedActionFn.mock.calls[0][1];
+    expect(ledger).toMatchObject({ orgId: 99, userId: 777, target: 'submission:5', reason: MAP_REASON.reason });
+    expect(ledger.payload).toMatchObject({ change: 'artifact-mapped', mappingId: 32, artifactId: 7, sectionDbId: 12, staleBundleCleared: true });
   });
 });

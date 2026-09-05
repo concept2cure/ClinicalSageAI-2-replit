@@ -1,27 +1,20 @@
 # Repo Health Scan
 
-Generated: 2026-09-05T06:42:06.061Z
+Generated: 2026-09-05T07:09:05.256Z
 Branch: concept2cure-v2
-SHA: eba1073dbaebacf2f5854bde6d5690d781a48ca7
+SHA: efda65b611b62484a65f8d23bc4e86dd592c21ad
 
 ## Summary
 
-- Content-duplicate groups (gated): 4 (10 files)
-- Duplicate basenames (reported, not gated): 209
+- Content-duplicate groups (gated): 0 (0 files)
+- Duplicate basenames (reported, not gated): 207
 - Files over byte threshold: 39
 - Files over line threshold: 90
-
-## Content Duplicates
-
-- design-system/_sync/reconciliation-2026-06-02/files/data-correspondence-detail.jsx == ui_kits/mdx/data-correspondence-detail.jsx == ui_kits/mdx_phase2/data-correspondence-detail.jsx
-- design-system/_sync/reconciliation-2026-06-02/files/data-pathway-tabs.jsx == ui_kits/mdx/data-pathway-tabs.jsx == ui_kits/mdx_phase2/data-pathway-tabs.jsx
-- ui_kits/mdx/data-submissions.jsx == ui_kits/mdx_phase2/data-submissions.jsx
-- ui_kits/mdx/dossier-store.jsx == ui_kits/mdx_phase2/dossier-store.jsx
 
 ## Owner Summary
 
 - Backend Platform (server/routes + server/services owners): duplicateGroups=398, largeByBytes=29, largeByLines=74
-- Unassigned (TBD): duplicateGroups=162, largeByBytes=2, largeByLines=7
+- Unassigned (TBD): duplicateGroups=154, largeByBytes=2, largeByLines=7
 - Shared Contracts (shared/schema + shared/types owners): duplicateGroups=73, largeByBytes=3, largeByLines=1
 - Concept2Cure Frontend (client/src/concept2cure maintainers): duplicateGroups=56, largeByBytes=5, largeByLines=8
 - Frontend Platform (client/src maintainers): duplicateGroups=11, largeByBytes=0, largeByLines=0

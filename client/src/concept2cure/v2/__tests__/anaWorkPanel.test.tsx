@@ -91,6 +91,40 @@ describe('AnaWorkPanel — the work is visible while it happens', () => {
     expect(screen.getByText('Finished in 1m 12s')).toBeTruthy();
   });
 
+  it('says a turn that timed out or lost its connection did not finish — never "Finished"', () => {
+    // Neither path sets `stopped` (that is the person's own stop); both close
+    // the record with the last phase marked stopped.
+    const cut = liveTurn({
+      streaming: false,
+      completedAt: T0 + 90_000,
+      progress: [
+        { phase: 'orchestrating', label: 'Planning response…', status: 'done', startedAt: T0, endedAt: T0 + 800 },
+        { phase: 'running_tools', label: 'Running 2 steps…', status: 'stopped', startedAt: T0 + 800, endedAt: T0 + 90_000 },
+      ],
+      warnings: ['Response timed out'],
+    });
+    render(<AnaWorkPanel messages={cut} streaming={false} />);
+    expect(screen.getByText('Did not finish · 1m 30s')).toBeTruthy();
+    expect(screen.queryByText(/Finished in/)).toBeNull();
+  });
+
+  it('opens Outputs itself when the first output lands, and still lets the person collapse it', () => {
+    const { rerender } = render(<AnaWorkPanel messages={liveTurn()} streaming />);
+    const header = () => screen.getByRole('button', { name: /^Outputs/ });
+    expect(header().getAttribute('aria-expanded')).toBe('false');
+    rerender(
+      <AnaWorkPanel
+        messages={liveTurn({ generatedDraft: { title: 'Clinical Overview 2.5', content: '#' } })}
+        streaming
+      />,
+    );
+    expect(header().getAttribute('aria-expanded')).toBe('true');
+    fireEvent.click(header());
+    // The regression: `open || outputs.length > 0` made this a button that did nothing.
+    expect(header().getAttribute('aria-expanded')).toBe('false');
+    expect(document.getElementById(header().getAttribute('aria-controls') as string)?.hasAttribute('hidden')).toBe(true);
+  });
+
   it('says a stopped turn was stopped, never finished', () => {
     const stopped = liveTurn({ streaming: false, stopped: true, completedAt: T0 + 30_000 });
     render(<AnaWorkPanel messages={stopped} streaming={false} />);
