@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T20:52:08.895Z",
+  "generatedAt": "2026-09-05T21:58:34.908Z",
   "git": {
-    "sha": "b9a7f2b5aaf0edd8d8db7ebf3254b36712d1ae40",
+    "sha": "6bbe5f04409299d45ca41c9e55faa856cb93a49b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2069,7 +2069,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "bytes": 130705
+        "bytes": 131521
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2239,7 +2239,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "lines": 2624
+        "lines": 2637
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
