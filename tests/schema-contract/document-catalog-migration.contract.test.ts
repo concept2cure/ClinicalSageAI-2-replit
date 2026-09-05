@@ -29,20 +29,25 @@ import { C2C_MIGRATION_FILES } from '../../scripts/db/migration-set.mjs';
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
 const CATALOG = 'migrations/20260905_document_catalog.sql';
+const CHUNKS = 'migrations/20260905b_vault_document_chunks.sql';
 const CANONICAL_SHAPE = 'migrations/20260821_vault_documents_canonical_shape.sql';
 const PLACEMENT = 'migrations/20260823_vault_document_placement.sql';
 
 const sql = fs.readFileSync(path.join(REPO_ROOT, CATALOG), 'utf8');
+const chunksSql = fs.readFileSync(path.join(REPO_ROOT, CHUNKS), 'utf8');
 
-describe('document-catalog migration is on the durable apply path', () => {
-  it('is in C2C_MIGRATION_FILES', () => {
+describe('document-catalog migrations are on the durable apply path', () => {
+  it('both are in C2C_MIGRATION_FILES', () => {
     expect(C2C_MIGRATION_FILES).toContain(CATALOG);
+    expect(C2C_MIGRATION_FILES).toContain(CHUNKS);
   });
 
   it('runs after the canonical-shape and placement entries for the same table', () => {
     const at = C2C_MIGRATION_FILES.indexOf(CATALOG);
     expect(at).toBeGreaterThan(C2C_MIGRATION_FILES.indexOf(CANONICAL_SHAPE));
     expect(at).toBeGreaterThan(C2C_MIGRATION_FILES.indexOf(PLACEMENT));
+    // The chunks file ALTERs vault.document_catalog, so it must follow it.
+    expect(C2C_MIGRATION_FILES.indexOf(CHUNKS)).toBeGreaterThan(at);
   });
 });
 
@@ -107,6 +112,30 @@ describe('document-catalog migration applies against PGlite', () => {
       `SELECT to_regclass('vault.document_read_receipts') AS r`
     );
     expect((receipts.rows[0] as any).r).not.toBeNull();
+  });
+
+  it('the chunks migration provisions the store, its indexes, and the catalog ledger — twice', async () => {
+    await db.exec(chunksSql);
+    await db.exec(chunksSql); // replayed whole on every deploy
+
+    const cols = await db.query(
+      `SELECT column_name FROM information_schema.columns
+        WHERE table_schema = 'vault' AND table_name = 'document_chunks'
+        ORDER BY column_name`
+    );
+    const names = (cols.rows as Array<{ column_name: string }>).map(r => r.column_name);
+    for (const expected of ['document_id', 'chunk_index', 'chunk_text', 'char_start', 'char_end']) {
+      expect(names, `document_chunks must carry ${expected}`).toContain(expected);
+    }
+    // No pgvector here → the guarded embedding column must be SKIPPED.
+    expect(names).not.toContain('embedding');
+
+    const ledger = await db.query(
+      `SELECT column_name FROM information_schema.columns
+        WHERE table_schema = 'vault' AND table_name = 'document_catalog'
+          AND column_name IN ('chunk_status', 'chunk_count', 'chunk_error')`
+    );
+    expect(ledger.rows).toHaveLength(3);
   });
 
   it('receipt spans are constrained to sane character ranges', async () => {

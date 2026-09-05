@@ -66,6 +66,36 @@ Definitions are in `ALL_ANA_TOOLS_RAW` (registry-consistency suite holds
 def ↔ handler parity); handlers registered via the inject-and-sibling pattern;
 UI step labels in `agentic-loop.ts` `TOOL_LABELS`.
 
+### Passage retrieval — the vault corpus is live (`document-chunking.service.ts`)
+
+**Flag:** `ana.vault_chunking` (requires the catalog flag too) · env override `ANA_VAULT_CHUNKING_FORCE_ON=true`
+**Migration:** `migrations/20260905b_vault_document_chunks.sql`
+
+`advancedRAGPipeline`'s `'vault'` corpus — the `ragRouter` default — read
+`vault.document_chunks`, a table that existed only in the install-fresh drizzle
+baseline (absent from every deploy-migrated database) and whose only writer
+was `server/workers/vectorization-worker.ts`: unreferenced dead code reading a
+column the canonical shape never had, embedding through a direct OpenAI
+client. The platform's primary retrieval corpus was a reader with no store and
+a store with no writer.
+
+Now: the migration creates the table durably (reader's exact shape, GIN
+full-text + ivfflat cosine indexes, its own RLS policy set — 070_gcc only runs
+on fresh installs), and ingest chunks + embeds each document's extracted text
+through the governed provider seam, post-commit, all-or-nothing per document.
+The catalog carries a chunking ledger (`chunk_status`/`chunk_count`/
+`chunk_error`): a document whose passages could not be indexed says so — there
+is no partially indexed document and no silent gap. Oversized documents
+(> 500 chunks) are refused rather than truncated into fake coverage. The dead
+worker is deleted and purged from the CI baselines it sat in.
+
+Making the reader live also surfaced (and fixed) a latent reader bug: the
+dense arm's threshold predicate `… < 1 - $2` made Postgres infer the parameter
+as *integer* from the literal, so any float threshold failed with 22P02 —
+unreachable until the table existed. Both corpus sites now cast `$2::float8`,
+pinned by the end-to-end dbtest (`tests/db/document-catalog-recall.dbtest.ts`:
+ingest → chunks embedded → `ragRetrieve` returns the passage).
+
 ### Memory ingestion embeds what it stores (`client-intelligence-memory.ts`)
 
 `ingestDocument` and `ingestProjectDocument` (the path behind
@@ -112,11 +142,10 @@ nothing like every other bootstrap source.
   no coverage-gated catalog entry of their own; `remember_document_in_project`
   (now embedding its entries) is their durable-memory path. A join key from
   `cre_evidence_sources` to `vault.documents` remains open.
-- **Vault chunk-level RAG:** `vectorization-worker.ts` is still unreferenced
-  and reads a column that does not exist (`content_text` vs `extracted_text`);
-  vault documents remain unchunked in the `'vault'` retrieval corpus. The
-  catalog embedding + `search_project_documents` give document-level semantic
-  recall in the meantime; a `ragRouter` corpus hook is the natural next slice.
+- **Legacy vault documents are unchunked:** chunking runs at ingest, so
+  documents uploaded before the flag flipped stay outside passage retrieval
+  until re-ingested (their catalog rows carry no `chunk_status`, which is the
+  honest "never attempted" state). A backfill sweep is the natural follow-on.
 - **`vault.documents.page_count`** is still never populated at ingest
   (`pageCount` is declared and stays null); the catalog records char/word
   counts and carries `page_count` for when ingest starts supplying it.
