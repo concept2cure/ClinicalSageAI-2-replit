@@ -22,6 +22,7 @@ import { randomUUID } from 'crypto';
 import JSZip from 'jszip';
 import { runDocxPdfPipeline } from '../docx-pdf-pipeline';
 import { inlineMarksToText } from '../../export/inline-marks-to-text.js';
+import { decodeHtmlEntities } from '../../export/decode-html-entities.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -118,13 +119,14 @@ export function htmlToOoxml(html: string): string {
      `<del>`/`<ins>` was silently settled into the built .docx. Shared with the
      eCTD leaf renderer, which had the identical defect; see
      server/export/inline-marks-to-text.ts for the full account. */
-  // Decode entities first (& must be first to avoid double-decode)
-  let text = inlineMarksToText(html)
-    .replace(/&amp;/g, '&')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"');
+  /* Entities are decoded LAST, by decodeHtmlEntities, not here. Decoding them
+     first turned an author's `&lt; 0.05%` into a literal `<` that the very next
+     rule read as a tag and deleted along with everything up to the next `>` —
+     "Total impurities were &lt; 0.05% and assay was &gt; 98.0%" reached the
+     built .docx as "Total impurities were  98.0%". See that module for the full
+     account, including why leading the old chain with `&amp;` was what CAUSED
+     the double-decode its comment claimed to prevent. */
+  let text = inlineMarksToText(html);
 
   // Extract structure
   text = text
@@ -139,12 +141,14 @@ export function htmlToOoxml(html: string): string {
     .filter(line => line.trim())
     .map(line => {
       const headingMatch = line.match(/^__H(\d)__(.+)/);
-      if (headingMatch) return ooxmlHeading(headingMatch[2].trim(), parseInt(headingMatch[1]));
+      if (headingMatch) {
+        return ooxmlHeading(decodeHtmlEntities(headingMatch[2].trim()), parseInt(headingMatch[1]));
+      }
       if (line.startsWith('__LI__')) {
-        const content = line.replace('__LI__', '').trim();
+        const content = decodeHtmlEntities(line.replace('__LI__', '').trim());
         return ooxmlParagraph(`\u2022 ${content}`, 'ListParagraph');
       }
-      return ooxmlParagraph(line.trim());
+      return ooxmlParagraph(decodeHtmlEntities(line.trim()));
     })
     .join('');
 }

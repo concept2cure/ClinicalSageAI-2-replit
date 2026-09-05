@@ -23,6 +23,7 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { parse as parseHtml } from 'node-html-parser';
 import { addBookmarks, type OutlineNode } from './pdf-bookmark-generator';
 import { inlineMarksToText } from '../../export/inline-marks-to-text.js';
+import { decodeHtmlEntities } from '../../export/decode-html-entities.js';
 
 const PAGE_WIDTH = 612; // US Letter, points
 const PAGE_HEIGHT = 792;
@@ -396,17 +397,17 @@ function walkNode(node: any, ctx: WalkContext): string {
 
 /** The pre-tree reducer, kept as the fallback that cannot throw. */
 function legacyHtmlToPlainText(input: string): string {
-  return input
+  const stripped = input
     .replace(/<\s*\/\s*(?:td|th)\s*>\s*<\s*(?:td|th)\b[^>]*>/gi, ' | ')
     .replace(/<\s*(br|\/p|\/div|\/li|\/h[1-6]|\/tr)\s*>/gi, '\n')
     .replace(/<\s*(p|div|li|h[1-6]|tr)\b[^>]*>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
+    .replace(/<[^>]+>/g, '');
+
+  /* Decoded only now that no tag rule remains — that order was already right
+     here — but through the shared single-pass decoder, because the chain this
+     replaced led with `&amp;`, which turned an author's literal `&amp;lt;`
+     into `<`. See server/export/decode-html-entities.ts. */
+  return decodeHtmlEntities(stripped)
     .replace(/[ \t]+\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .replace(/[ \t]{2,}/g, ' ')
