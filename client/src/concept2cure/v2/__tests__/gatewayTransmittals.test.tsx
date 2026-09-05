@@ -319,7 +319,7 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     fireEvent.click(screen.getByTestId('form-submit'));
     const card = await screen.findByRole('region', { name: 'Structural gate refusal' });
     expect(card.textContent).toMatch(/No assembled bundle/);
-    expect(card.textContent).toMatch(/The refusal carried no findings\./);
+    expect(card.textContent).toMatch(/The refusal did not include its findings; run preflight for this package to see them\./);
     expect(card.textContent).not.toMatch(/recorded on the stored bundle/);
   });
 

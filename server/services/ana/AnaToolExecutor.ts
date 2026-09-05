@@ -7531,7 +7531,7 @@ registerToolHandler('create_q_sub', async (input, ctx) => {
   }
 
   try {
-    const { createQSubmission, TenantAccessError } = await import(
+    const { createQSubmission } = await import(
       '../q-sub/q-sub.service.js'
     );
     const row = await createQSubmission(ctx.organizationId, {
@@ -7584,7 +7584,7 @@ registerToolHandler('update_q_sub_commitment_rolled_in', async (input, ctx) => {
   }
 
   try {
-    const { setCommitmentRolledIn, TenantAccessError } = await import(
+    const { setCommitmentRolledIn } = await import(
       '../q-sub/q-sub.service.js'
     );
     const updated = await setCommitmentRolledIn(ctx.organizationId, {
@@ -15631,6 +15631,7 @@ registerToolHandler('assemble_device_submission', async (input: Record<string, u
       variant,
       leaves,
       presentTemplates: Array.isArray(input.presentTemplates) ? (input.presentTemplates as unknown[]).map(String) : undefined,
+      deviceFlags: input.deviceFlags && typeof input.deviceFlags === 'object' ? (input.deviceFlags as Record<string, boolean>) : undefined,
       market: typeof input.market === 'string' ? (input.market as any) : undefined,
       availableArtifacts: Array.isArray(input.availableArtifacts) ? (input.availableArtifacts as unknown[]).map(String) : undefined,
       environment: input.environment === 'production' ? 'production' : input.environment === 'staging' ? 'staging' : undefined,

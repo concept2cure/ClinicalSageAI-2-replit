@@ -36,6 +36,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
+import { assessmentState, type AssessmentState } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
@@ -174,7 +175,10 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
      saw WHICH rule refused — e.g. the finding that names the regulatory
      identifiers still to be recorded. The findings are rendered in a card so
      the refusal is actionable; it clears on the next attempt or a success. */
-  const [refusal, setRefusal] = useState<{ source: 'transmit' | 'assemble'; message: string; findings: RefusalFinding[]; fetchFailure?: string } | null>(null);
+  /* `findingsState` is the four-state judgment of the findings read — set where the
+     findings were obtained, from positive evidence that the gate or the preflight
+     ran, never derived from the list being empty. */
+  const [refusal, setRefusal] = useState<{ source: 'transmit' | 'assemble'; message: string; findings: RefusalFinding[]; findingsState: AssessmentState; fetchFailure?: string } | null>(null);
   const [toast, fireToast] = useToast();
 
   const load = useCallback(async () => {
@@ -222,7 +226,10 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
       const message = String((raw as any)?.error ?? 'validation failed');
       // Close the drawer so the findings card is not mounted beneath its overlay.
       setDialog(null);
-      setRefusal({ source: 'transmit', message, findings: refusalFindings(raw) });
+      const findings = refusalFindings(raw);
+      // The structural gate ran — a 422 from it is that evidence — so an empty list
+      // is a refusal that carried no findings, not a clean bundle.
+      setRefusal({ source: 'transmit', message, findings, findingsState: assessmentState({ scopeExists: true, findingCount: findings.length, assessmentRan: Array.isArray((raw as any)?.details?.findings) }) });
       fireToast('Not transmitted — the structural gate rejected the bundle: ' + message + '.', 'error');
       return;
     }
@@ -315,7 +322,8 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
         : '';
       const ledgerNote = (raw as any)?.ledgerWriteFailed ? ' The governance ledger could not be written for this refusal.' : '';
       setDialog(null);
-      setRefusal({ source: 'assemble', message: message + '.' + cleared + ledgerNote, findings: sortFindings((raw as any)?.validation?.findings) });
+      const findings = sortFindings((raw as any)?.validation?.findings);
+      setRefusal({ source: 'assemble', message: message + '.' + cleared + ledgerNote, findings, findingsState: assessmentState({ scopeExists: true, findingCount: findings.length, assessmentRan: Array.isArray((raw as any)?.validation?.findings) }) });
       fireToast('Not assembled — ' + message + '.' + cleared, 'error');
       return;
     }
@@ -334,18 +342,30 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
       // The bundle exists, but transmit will refuse it. The findings live on the
       // package's stored descriptor; the preflight route serves them.
       const pf = await readData('POST', `/api/submission-ops/packages/${id}/preflight`, {});
-      const findings = pf.ok ? sortFindings((pf.raw as any)?.data?.validation?.findings ?? (pf.raw as any)?.data?.findings) : [];
-      // A failed or empty findings fetch is said, not shown as an empty table
-      // under a message that counts errors.
+      const rawFindings = (pf.raw as any)?.data?.validation?.findings ?? (pf.raw as any)?.data?.findings;
+      const findings = pf.ok ? sortFindings(rawFindings) : [];
+      // A failed findings fetch is said, not shown as an empty table under a
+      // message that counts errors. Whether the preflight RAN is read from the
+      // payload carrying a findings list at all — never from that list being
+      // empty, which is the state that means "we have not looked".
+      const findingsState = assessmentState({
+        unreadable: !pf.ok,
+        scopeExists: true,
+        findingCount: findings.length,
+        assessmentRan: pf.ok && Array.isArray(rawFindings),
+      });
       const fetchFailure = !pf.ok
         ? `The findings could not be loaded (HTTP ${pf.status}${(pf.raw as any)?.error ? ': ' + (pf.raw as any).error : ''}); run preflight for this package to see them.`
-        : findings.length === 0
-          ? 'Preflight returned no findings for this bundle.'
-          : undefined;
+        : findingsState === 'not-assessed'
+          ? 'Preflight did not report a findings list for this bundle; run preflight for this package to see them.'
+          : findingsState === 'assessed-clear'
+            ? `Preflight lists no findings on the stored bundle, yet assembly counted ${errors}; the two disagree — run preflight again before transmitting.`
+            : undefined;
       setRefusal({
         source: 'assemble',
         message: `Bundle assembled for ${d.packageId ?? v.packageId} with ${errors} error-severity finding${errors === 1 ? '' : 's'}; transmit will refuse it until they are resolved.`,
         findings,
+        findingsState,
         fetchFailure,
       });
       fireToast(`Bundle assembled with ${errors} error-severity finding${errors === 1 ? '' : 's'} — transmit will refuse it. See the findings below.${ledger}`, 'error');
@@ -499,8 +519,8 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
           <div className="pj-card-b" style={{ padding: 0 }}>
             <div style={{ padding: '10px 16px', fontSize: 12 }}>
               {refusal.message}{' '}
-              {refusal.findings.length === 0
-                ? (refusal.fetchFailure ?? 'The refusal carried no findings.')
+              {refusal.findingsState !== 'assessed-with-findings'
+                ? (refusal.fetchFailure ?? 'The refusal did not include its findings; run preflight for this package to see them.')
                 : refusal.source === 'transmit'
                   ? 'These findings were recorded on the stored bundle when it was assembled. Resolve them, assemble the package again, then transmit.'
                   : 'Resolve the findings, then assemble the package again.'}

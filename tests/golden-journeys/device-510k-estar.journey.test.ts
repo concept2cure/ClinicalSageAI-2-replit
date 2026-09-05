@@ -356,6 +356,10 @@ describe('golden journey — device 510(k) eSTAR path', () => {
         programType: '510k',
         primaryAgency: 'FDA',
         indication: 'Continuous glucose monitoring in adults',
+        // The device questions, answered: none of the conditional sections
+        // apply. Left unanswered, the eSTAR mapper reports them as undetermined
+        // and the assembly below rightly refuses to call the set complete.
+        deviceClassification: { flags: [] },
       });
       expect(res.status, JSON.stringify(res.body)).toBe(201);
       programId = res.body.data.id;
@@ -510,6 +514,7 @@ describe('golden journey — device 510(k) eSTAR path', () => {
       const res = await asPrincipal(ORG, USER)(request(app).post('/api/510k/estar/assemble')).send({
         pathway: '510k',
         variant: 'device',
+        programId,
       });
       expect(res.status, JSON.stringify(res.body)).toBe(200);
       // The SE section exists as a row but carries no content, so it is not a
@@ -564,6 +569,7 @@ describe('golden journey — device 510(k) eSTAR path', () => {
       const res = await asPrincipal(ORG, USER)(request(app).post('/api/510k/estar/assemble')).send({
         pathway: '510k',
         variant: 'device',
+        programId,
       });
       expect(res.status).toBe(200);
       expect(res.body.estar.summary.missingRequired).toEqual([]);
@@ -576,13 +582,17 @@ describe('golden journey — device 510(k) eSTAR path', () => {
         pathway: '510k',
         variant: 'device',
         market: 'us',
+        // The program is the subject: it names the content scope and carries the
+        // device questions answered at intake, which is what makes the required
+        // section set known rather than undetermined.
+        programId,
       });
       expect(res.status).toBe(200);
       // The decisive honesty output: every required section is authored AND the
       // official nIVD eSTAR v7.0 is vendored with a verified field map, so the
       // real official eSTAR is producible — asserted from the same deterministic
       // engine that used to (rightly) report 'content-package-draft'.
-      expect(res.body.artifactKind).toBe('official-estar');
+      expect(res.body.artifactKind, JSON.stringify(res.body.blockers)).toBe('official-estar');
       expect(res.body.canProduceOfficialEstar).toBe(true);
       expect(res.body.template.available).toBe(true);
       expect(res.body.template.requiredFileName).toBe('eSTAR-510k-non-ivd.pdf');

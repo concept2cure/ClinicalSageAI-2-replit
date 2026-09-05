@@ -20,6 +20,7 @@
  * @module server/services/ana-advisory/types
  */
 
+import type { DeviceFlags } from '../pathway-engines/estar/estar-mapper';
 import type { EstarType, EstarInputLeaf } from '../pathway-engines/estar/estar-mapper';
 import type { EstarTemplateVariant } from '../pathway-engines/estar/estar-template-registry';
 import type { MarketId, ReadinessBand } from '../global-markets/types';
@@ -65,6 +66,8 @@ export interface DeviceReadinessAdviceInput {
   leaves: EstarInputLeaf[];
   /** Official eSTAR template filenames present in the drop-point (optional). */
   presentTemplates?: string[];
+  /** The device questions answered at intake; absent means undetermined, which blocks a submittable verdict. */
+  deviceFlags?: DeviceFlags;
   /** Optional target market for a readiness overlay. */
   market?: MarketId;
   /** Artifact ids available, for the market-readiness overlay. */

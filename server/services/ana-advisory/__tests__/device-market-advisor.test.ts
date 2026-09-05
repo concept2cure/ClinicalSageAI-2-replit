@@ -37,12 +37,21 @@ const COMPLETE_510K_LEAVES: EstarInputLeaf[] = [
 
 const OFFICIAL_510K_DEVICE_TEMPLATE = 'eSTAR-510k-non-ivd.pdf';
 
+// The device questions, answered: none of the conditional sections apply. A
+// set with the questions unanswered is not complete — the mapper reports those
+// sections as undetermined and the advisory rightly withholds 'submittable'.
+const NONE_APPLY = {
+  combinationProduct: false, softwareAiMl: false, cyberDevice: false, sterile: false,
+  implantable: false, cliaWaived: false, clinicalData: false,
+} as const;
+
 describe('adviseDeviceReadiness', () => {
   it('returns submittable advice when sections are complete and the official template is present', () => {
     const advice = adviseDeviceReadiness({
       pathway: '510k',
       variant: 'device',
       leaves: COMPLETE_510K_LEAVES,
+      deviceFlags: NONE_APPLY,
       presentTemplates: [OFFICIAL_510K_DEVICE_TEMPLATE],
       environment: 'production',
       requireTemplate: true,
