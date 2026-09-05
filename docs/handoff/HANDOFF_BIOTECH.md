@@ -272,6 +272,40 @@ gateway throws; the real client is not implemented and says so; a simulated
 receipt is never recorded as transmitted), and every read is tenant-scoped.
 The real FAERS/EudraVigilance client remains the open feature.
 
+### Eighth audit — Module 2.7 / CSR / labeling chain and the FDA submission-type vocabulary (2026-09-05)
+
+Two read-only audits. Fixed on `concept2cure-v2`, each with a test that fails
+on revert:
+
+- Modules 2.5 and 2.7: SAE and death counts that were never extracted are
+  no longer folded into "0 serious adverse event(s) and 0 death(s) reported".
+  `saeCount`/`deathCount` are optional on the study-report input and the
+  canonical project reader (`loadCsrInputsForProject`) does not populate them,
+  so every real project read as "no SAEs occurred". The summaries now say the
+  counts have not been extracted for N of M studies, record it as an open
+  item, and the 2.7 narrative prints its open items (they lived only on the
+  sibling `gaps` field, which the authoring tool never renders). 2.7.3 no
+  longer says "Efficacy was evaluated in 0 controlled study/ies".
+- `fdaSubmissionTypeFor` refuses a `withdrawal` sequence. It fell through to
+  "Original Application" (fdast1/fdasst1); the FDA vocabulary has no
+  withdrawal type, and which type a withdrawal files under is a regulatory
+  decision — recorded below.
+
+Verified and unchanged: `csr-builder` (placeholders block completeness,
+template fallbacks are not marked AI-generated), the labeling/SPL path (throws
+on missing required content, label prose comes only from the org's stored
+sections), the 5.3.5.x and m1.14 vocabulary, and the FDA application-type /
+sequence-number / application-number handling (recorded, four-digit,
+UNASSIGNED never sent).
+
+Decision items, not changed:
+- Which FDA submission type a withdrawal sequence files under (amendment to
+  the original application, or product correspondence). Until recorded, a
+  withdrawal cannot be packaged for FDA.
+- Extracting SAE/death counts from CSR §12.2/§12.3 into the study-report
+  input is a feature; the builders now say the counts are missing rather than
+  inventing zeros.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -514,6 +548,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-05 | A | Fifth audit — M2/M3 placement + eCTD document gate | No automated benefit-risk / supports-the-plan conclusions; Module 3 replace lifecycle; 64-char leaf names composed and validated; encrypted leaves refused; agent PDF/A not-verified ≠ pass — revert-proven; m5.2 recorded as a decision | §1 above |
 | 2026-09-05 | A | Sixth audit — IND filing chain + client surfaces | Draft-linked filing refusals (404/409); overdue safety count from the register; annual overdue feed carries deadline_unknown; PV matrix error state — revert-proven | §1 above |
 | 2026-09-05 | A | Seventh audit — ICSR E2B composition + transport | C.1.3 from the case; E.i.9 vs C.2.r.3; C.5.1.r.1 mandatory for study reports; no re-transmit of a non-prepared ICSR — revert-proven | §1 above |
+| 2026-09-05 | A | Eighth audit — M2.7/CSR/labeling + FDA submission types | Unextracted SAE/death counts stated as such in 2.5/2.7, 2.7 prints its gaps; withdrawal refused rather than coded as an original — revert-proven; two decisions recorded | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

@@ -49,6 +49,12 @@ describe('fdaSubmissionTypeFor — the sequence decides the submission type', ()
     }
   });
 
+  it("a withdrawal sequence is refused, never coded as an Original Application", () => {
+    // It used to fall through to fdast1/fdasst1 — "Original Application" — for
+    // a sequence whose declared purpose is to withdraw the application.
+    expect(() => fdaSubmissionTypeFor({ sequenceNumber: '0009', region: 'fda', type: 'withdrawal' }, [])).toThrow(/withdrawal/);
+  });
+
   it('an annual sequence is an Annual Report', () => {
     expect(fdaSubmissionTypeFor({ sequenceNumber: '0007', region: 'fda', type: 'annual' }, [])).toEqual({
       submissionType: 'annual',

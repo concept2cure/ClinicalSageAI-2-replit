@@ -6,7 +6,7 @@
 
 import { describe, it, expect } from 'vitest';
 
-import { buildM25ClinicalOverview, buildM24NonclinicalOverview, buildM23QualityOverallSummary, type CSRSummaryInput } from '../m2-summary-builders';
+import { buildM25ClinicalOverview, buildM24NonclinicalOverview, buildM27ClinicalSummary, buildM23QualityOverallSummary, type CSRSummaryInput } from '../m2-summary-builders';
 import { composeModule3FromCanonicalSources } from '../module3Composer';
 
 const pivotal: CSRSummaryInput = {
@@ -29,6 +29,9 @@ const phase1: CSRSummaryInput = {
   primaryEndpoint: 'safety and PK',
   primaryResult: 'well tolerated; dose-proportional PK',
   sampleSize: 40,
+  // Extracted and zero, not "never extracted".
+  saeCount: 0,
+  deathCount: 0,
 };
 
 describe('buildM23QualityOverallSummary (QOS via Module 3 composition)', () => {
@@ -117,5 +120,37 @@ describe('buildM24NonclinicalOverview — the conclusion is only drawn when noth
     const r = buildM24NonclinicalOverview({ nonclinicalStudies: all, drugSubstanceName: 'BX-115' });
     expect(r.gaps).toHaveLength(0);
     expect(r.narrative).toMatch(/supports the proposed clinical investigational plan/);
+  });
+});
+
+describe('SAE and death counts that were never extracted are not "0 reported"', () => {
+  const noCounts = { ...pivotal, saeCount: undefined, deathCount: undefined } as CSRSummaryInput;
+
+  it('2.7 says the counts were not extracted, records the gap, and prints the gaps in the narrative', () => {
+    const r = buildM27ClinicalSummary({ csrs: [phase1, noCounts], indication: 'type 2 diabetes', investigationalProduct: 'BX-115' });
+    expect(r.narrative).toMatch(/SAE and death counts have not been extracted for 1 of 2 study/);
+    expect(r.narrative).not.toMatch(/0 serious adverse event\(s\) and 0 death\(s\) reported/);
+    expect(r.narrative).not.toMatch(/\b0 SAE\(s\) reported/);
+    expect(r.gaps).toContain('SAE and death counts not extracted for 1 of 2 study/ies');
+    expect(r.narrative).toMatch(/Open items: .*not extracted/);
+  });
+
+  it('2.7 states extracted zeros as zeros', () => {
+    const r = buildM27ClinicalSummary({ csrs: [phase1, { ...pivotal, saeCount: 0, deathCount: 0 }], indication: 'type 2 diabetes', investigationalProduct: 'BX-115' });
+    expect(r.narrative).toMatch(/0 serious adverse event\(s\) and 0 death\(s\) reported/);
+    expect(r.gaps.some((g) => /not extracted/.test(g))).toBe(false);
+  });
+
+  it('2.7 does not claim efficacy was evaluated when there is no controlled study', () => {
+    const r = buildM27ClinicalSummary({ csrs: [phase1], indication: 'type 2 diabetes', investigationalProduct: 'BX-115' });
+    expect(r.narrative).not.toMatch(/Efficacy was evaluated in 0/);
+    expect(r.narrative).toMatch(/No controlled efficacy study available/);
+  });
+
+  it('2.5 carries the same distinction into the safety overview and the benefit-risk data', () => {
+    const r = buildM25ClinicalOverview({ csrs: [phase1, noCounts], indication: 'type 2 diabetes', investigationalProduct: 'BX-115' });
+    expect(r.narrative).toMatch(/SAE and death counts have not been extracted for 1 of 2 study/);
+    expect(r.narrative).not.toMatch(/with 0 serious adverse event/);
+    expect(r.gaps).toContain('SAE and death counts not extracted for 1 of 2 study/ies');
   });
 });
