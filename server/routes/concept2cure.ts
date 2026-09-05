@@ -28,16 +28,36 @@
  */
 
 import { Router, Request, Response } from 'express';
+import {
+  type Artifact,
+  concept2cureRateLimiter,
+  getClientIp,
+  getOrganizationId,
+  getUserId,
+  logConcept2cureError,
+  paramStr,
+  sanitizeContent,
+  sendError,
+  sendSuccess,
+} from './c2c/shared';
+import {
+  getActorRole,
+  getProjectScope,
+  isMissingTableError,
+  loadProjectAccessRow,
+  loadProjectSharingState,
+  normalizeProjectSettings,
+  resolveClientWorkspaceId,
+  verifyProjectAccess,
+} from './c2c/project-access';
 import { z } from 'zod';
 import { eq, ne, desc, and, isNull, inArray, or, sql } from 'drizzle-orm';
 import { db, pool } from '../db';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/lineage-gate';
 import { createScopedLogger } from '../utils/logger';
-import * as metricsModule from '../metrics.js';
 import { authMiddleware } from '../auth';
 import { requireOrganizationContext, tenantContextMiddleware } from '../middleware/tenantContext';
-import { createRedisRateLimiter } from '../middleware/redisRateLimiter';
 import { cacheResponse } from '../middleware/enterprise-performance';
 import DOMPurifyImport from 'isomorphic-dompurify';
 const DOMPurify = (DOMPurifyImport as any).default || DOMPurifyImport;
@@ -114,61 +134,22 @@ import {
   canManageProject,
   canUseProject,
   getProjectSharingState,
-  type ProjectActorRole,
 } from '../services/project-sharing-access';
 
 const logger = createScopedLogger('concept2cure-api');
 const router = Router();
-const metrics = (
-  metricsModule as {
-    metrics?: { concept2cureErrors?: { inc: (labels: Record<string, string>) => void } };
-  }
-).metrics;
 
-type ApiErrorPayload = {
-  message: string;
-  code?: string;
-  details?: unknown;
-};
 
-export const sendSuccess = <T>(res: Response, data: T, meta?: Record<string, unknown>) => {
-  if (meta) {
-    return res.json({ success: true, data, meta });
-  }
-  return res.json({ success: true, data });
-};
 import { ai } from '../lib/unified-ai-client';
 import { parseIntegerProjectId } from '../lib/project-id.js';
 import { registerCommunicationCenterRoutes } from './concept2cure-communication-center';
 
-export const sendError = (
-  res: Response,
-  status: number,
-  message: string,
-  details?: unknown,
-  code?: string
-) =>
-  res
-    .status(status)
-    .json({ success: false, error: { message, code, details } satisfies ApiErrorPayload });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECURITY MIDDLEWARE CHAIN
 // Apply in order: rate limit → auth → tenant context → organization check
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Use Redis-based rate limiter for distributed deployments
-export const concept2cureRateLimiter = createRedisRateLimiter({
-  rules: {
-    concept2cure: {
-      windowMs: 60 * 1000, // 1 minute
-      maxRequests: 100,
-      message: 'Rate limit exceeded for Concept2Cure API. Please wait.',
-    },
-  },
-  perOrganization: true,
-  keyPrefix: 'c2c:',
-});
 
 // Apply middleware stack to all routes
 router.use(concept2cureRateLimiter);
@@ -392,74 +373,6 @@ function getActionCategory(action: AuditEntry['action']): string {
   return categoryMap[action] || 'system';
 }
 
-/**
- * Extract client IP address from request, handling proxies.
- */
-export function getClientIp(req: Request): string {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (forwarded) {
-    const ips = Array.isArray(forwarded) ? forwarded[0] : forwarded.split(',')[0];
-    return ips.trim();
-  }
-  return req.ip || req.socket?.remoteAddress || 'unknown';
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// INPUT SANITIZATION (PRODUCTION-GRADE)
-// Using isomorphic-dompurify for comprehensive XSS prevention
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Sanitize user-provided text content to prevent XSS attacks.
- * Uses DOMPurify (isomorphic) for production-grade sanitization.
- *
- * @param content - Raw user input
- * @returns Sanitized string safe for storage and display
- */
-export function sanitizeContent(content: string): string {
-  if (!content || typeof content !== 'string') {
-    return '';
-  }
-
-  return DOMPurify.sanitize(content, {
-    ALLOWED_TAGS: [
-      'b',
-      'i',
-      'em',
-      'strong',
-      'p',
-      'br',
-      'ul',
-      'ol',
-      'li',
-      'code',
-      'pre',
-      'h1',
-      'h2',
-      'h3',
-      'h4',
-      'h5',
-      'h6',
-      'blockquote',
-      'a',
-      'table',
-      'thead',
-      'tbody',
-      'tr',
-      'th',
-      'td',
-      'span',
-      'div',
-      'hr',
-      'sup',
-      'sub',
-    ],
-    ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'id'],
-    ALLOW_DATA_ATTR: false,
-    FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input'],
-    FORBID_ATTR: ['onerror', 'onclick', 'onload', 'onmouseover', 'onfocus'],
-  }).trim();
-}
 
 /**
  * Calculate SHA-256 hash for content integrity verification.
@@ -609,21 +522,6 @@ async function emitProvenanceEvent(params: {
   }
 }
 
-export function logConcept2cureError(operation: string, error: Error, meta: Record<string, unknown> = {}) {
-  logger.error(`Concept2Cure ${operation} failed`, {
-    error: error.message,
-    operation,
-    ...meta,
-  });
-  try {
-    metrics?.concept2cureErrors?.inc({
-      operation,
-      error_type: error.name || 'Error',
-    });
-  } catch {
-    // Ignore metric errors
-  }
-}
 
 /**
  * Sanitize object properties recursively for storage.
@@ -645,9 +543,6 @@ function sanitizeObject<T extends Record<string, unknown>>(obj: T): T {
   return sanitized as T;
 }
 
-function normalizeProjectSettings(settings: unknown): Record<string, unknown> {
-  return settings && typeof settings === 'object' ? (settings as Record<string, unknown>) : {};
-}
 
 function normalizeKnowledge(settings: Record<string, unknown>): ProjectKnowledge {
   const knowledge =
@@ -974,22 +869,6 @@ interface Message {
 /**
  * Generated artifact stored with version history.
  */
-export interface Artifact {
-  id: string;
-  projectId: string;
-  conversationId?: string;
-  type: string;
-  category: 'document' | 'interactive' | 'visualization' | 'compliance' | 'source' | 'evidence';
-  title: string;
-  content: string;
-  ctdSection?: string | null;
-  version: number;
-  versions: Array<{ version: number; content: string; createdAt: Date }>;
-  metadata?: Record<string, unknown>;
-  status?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 interface UploadedDocument {
   id: string;
@@ -1089,285 +968,6 @@ function buildProjectOwnership(
 // All database operations must include organizationId for tenant isolation
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Get the organization ID from the request with validation.
- * Works with both auth middleware (number) and tenant context middleware (string).
- * Throws if organization context is missing.
- */
-export function getOrganizationId(req: Request): number {
-  // First try the auth middleware context (organizationId as number)
-  if (req.tenantContext?.organizationId) {
-    const orgId =
-      typeof req.tenantContext.organizationId === 'number'
-        ? req.tenantContext.organizationId
-        : parseInt(String(req.tenantContext.organizationId), 10);
-    if (!isNaN(orgId)) return orgId;
-  }
-
-  // Fall back to tenantId
-  if (req.tenantId !== undefined && req.tenantId !== null) {
-    const tid =
-      typeof req.tenantId === 'number' ? req.tenantId : parseInt(String(req.tenantId), 10);
-    if (!isNaN(tid)) return tid;
-  }
-
-  throw new Error('Organization context required');
-}
-
-/**
- * Get the current user ID from the request.
- */
-export function getUserId(req: Request): number {
-  if (!req.userId) {
-    throw new Error('Authentication required: userId not set on request');
-  }
-  const uid = typeof req.userId === 'number' ? req.userId : parseInt(String(req.userId), 10);
-  if (isNaN(uid)) {
-    throw new Error('Authentication required: userId not numeric');
-  }
-  return uid;
-}
-
-/**
- * Resolve the caller's client workspace — validated, never fabricated.
- *
- * The previous implementation returned a hardcoded workspace 1 outside
- * production ("dev fallback"), which is a fabricated tenant anchor: on any
- * database whose workspace ids do not start at 1 it broke with an FK
- * violation, and wherever id 1 happened to exist it silently attached rows to
- * whatever tenant owned workspace 1. It also trusted the x-client-id header
- * (tenantContext.clientWorkspaceId) without checking the workspace belongs to
- * the caller's organization, so a tenant could plant rows into another org's
- * workspace. Both are gone:
- *   - a claimed workspace id is accepted only after a same-statement
- *     ownership check against the caller's org (fail closed on mismatch);
- *   - with no claim, the caller org's own workspace is resolved from the
- *     database (deterministic: lowest id);
- *   - no workspace resolvable → error, in every environment.
- */
-async function resolveClientWorkspaceId(req: Request): Promise<number> {
-  const ctx = req.tenantContext as Record<string, unknown> | undefined;
-  const orgId = Number(ctx?.organizationId ?? req.user?.organizationId);
-  const hasOrg = Number.isInteger(orgId) && orgId > 0;
-
-  const claimed = ctx?.clientWorkspaceId;
-  if (claimed != null && claimed !== '') {
-    const id = Number(claimed);
-    if (Number.isInteger(id) && id > 0) {
-      if (!hasOrg) {
-        throw new Error('Client workspace context requires an authenticated organization');
-      }
-      const owned = await pool.query(
-        'SELECT id FROM client_workspaces WHERE id = $1 AND organization_id = $2',
-        [id, orgId]
-      );
-      if (owned.rows.length === 0) {
-        // Fail closed: never accept a workspace outside the caller's org, and
-        // do not disclose whether the id exists elsewhere.
-        throw new Error('Client workspace does not belong to the caller organization');
-      }
-      return id;
-    }
-  }
-
-  if (hasOrg) {
-    const own = await pool.query(
-      'SELECT id FROM client_workspaces WHERE organization_id = $1 ORDER BY id LIMIT 1',
-      [orgId]
-    );
-    if (own.rows.length > 0) return Number(own.rows[0].id);
-  }
-  throw new Error('Client workspace context required');
-}
-
-function getActorRole(req: Request): ProjectActorRole {
-  const normalized = (req.userRole || 'member').toLowerCase() as ProjectActorRole;
-  return normalized || 'member';
-}
-
-function isMissingTableError(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    (error as { code?: string }).code === '42P01'
-  );
-}
-
-function getProjectScope(
-  projectParam: string | string[] | undefined
-): { numericId: number } | null {
-  const raw = Array.isArray(projectParam) ? projectParam[0] : projectParam;
-  if (typeof raw !== 'string') return null;
-  const projectId = raw.replace('proj_', '');
-  const numericId = parseIntegerProjectId(projectId);
-  if (numericId === null) {
-    return null;
-  }
-  return { numericId };
-}
-
-export function paramStr(value: unknown): string {
-  if (typeof value === 'string') return value;
-  if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
-  return '';
-}
-
-async function loadProjectAccessRow(params: {
-  organizationId: number;
-  clientWorkspaceId: number;
-  projectId: number;
-  userId: number;
-  actorRole: ProjectActorRole;
-}): Promise<{
-  project: {
-    id: number;
-    name: string;
-    description: string | null;
-    metadata: unknown;
-    status: string;
-    organizationId: number;
-    createdById: number | null;
-    ownerId: number | null;
-    settings: unknown;
-    createdAt: Date;
-    updatedAt: Date;
-  } | null;
-  legacyFallbackApplied: boolean;
-}> {
-  const [project] = await db
-    .select({
-      id: projects.id,
-      name: projects.name,
-      description: projects.description,
-      metadata: projects.metadata,
-      status: projects.status,
-      organizationId: projects.organizationId,
-      createdById: projects.createdById,
-      ownerId: projects.ownerId,
-      settings: projects.settings,
-      createdAt: projects.createdAt,
-      updatedAt: projects.updatedAt,
-    })
-    .from(projects)
-    .where(
-      and(
-        eq(projects.id, params.projectId),
-        eq(projects.organizationId, params.organizationId),
-        eq(projects.clientWorkspaceId, params.clientWorkspaceId)
-      )
-    )
-    .limit(1);
-
-  if (!project) {
-    return { project: null, legacyFallbackApplied: false };
-  }
-
-  const sharing = await loadProjectSharingState(project.id, params.organizationId, project);
-  const settingsWithSharing = applyProjectSharingState(
-    normalizeProjectSettings(project.settings),
-    sharing
-  );
-  const hasAccess = canUseProject({
-    actor: { userId: params.userId, orgRole: params.actorRole },
-    project: {
-      createdById: project.createdById ?? null,
-      ownerId: project.ownerId ?? null,
-      settings: settingsWithSharing,
-    },
-  });
-
-  if (!hasAccess) {
-    // A reviewer with a live assignment on an artifact in this project has
-    // access BECAUSE of that assignment. Without this, assignment granted
-    // nothing: the assigned reviewer's own decision submission 404'd on this
-    // very predicate (creator/owner/sharing only), making the review flow
-    // unusable for any reviewer who is not also on the project team —
-    // discovered on the golden journey's first real browser execution.
-    const assigned = await pool.query(
-      `SELECT 1
-         FROM concept2cure_review_assignments ra
-         JOIN concept2cure_artifacts a ON a.id = ra.artifact_id
-        WHERE ra.reviewer_id = $1
-          AND ra.organization_id = $2
-          AND a.project_id = $3
-          AND ra.status = 'pending'
-        LIMIT 1`,
-      [params.userId, params.organizationId, params.projectId]
-    );
-    if (assigned.rows.length > 0) {
-      return { project, legacyFallbackApplied: sharing.legacyFallbackApplied };
-    }
-    return { project: null, legacyFallbackApplied: sharing.legacyFallbackApplied };
-  }
-
-  return { project, legacyFallbackApplied: sharing.legacyFallbackApplied };
-}
-
-async function loadProjectSharingState(
-  projectId: number,
-  organizationId: number,
-  project?: { ownerId: number | null; createdById: number | null; settings: unknown }
-) {
-  const fallback = getProjectSharingState({
-    settings: normalizeProjectSettings(project?.settings),
-    ownerId: project?.ownerId ?? null,
-    createdById: project?.createdById ?? null,
-  });
-
-  try {
-    const [[visibility], members] = await Promise.all([
-      db
-        .select({ visibility: projectVisibilitySettings.visibility })
-        .from(projectVisibilitySettings)
-        .where(
-          and(
-            eq(projectVisibilitySettings.projectId, projectId),
-            eq(projectVisibilitySettings.organizationId, organizationId)
-          )
-        )
-        .limit(1),
-      db
-        .select({
-          userId: projectMembers.userId,
-          role: projectMembers.role,
-          status: projectMembers.status,
-          invitedById: projectMembers.invitedById,
-          acceptedAt: projectMembers.acceptedAt,
-        })
-        .from(projectMembers)
-        .where(
-          and(
-            eq(projectMembers.projectId, projectId),
-            eq(projectMembers.organizationId, organizationId),
-            eq(projectMembers.status, 'active')
-          )
-        ),
-    ]);
-
-    return getProjectSharingState({
-      settings: {
-        projectSharing: {
-          visibility: visibility?.visibility ?? fallback.visibility,
-          members: members.map(m => ({
-            userId: m.userId,
-            role: m.role,
-            status: m.status,
-            addedById: m.invitedById ?? null,
-            addedAt: m.acceptedAt?.toISOString() ?? new Date().toISOString(),
-          })),
-        },
-      },
-      ownerId: project?.ownerId ?? null,
-      createdById: project?.createdById ?? null,
-    });
-  } catch (error) {
-    if (isMissingTableError(error)) {
-      return fallback;
-    }
-    throw error;
-  }
-}
 
 async function loadProjectSharingStateMap(
   organizationId: number,
@@ -6612,34 +6212,6 @@ router.post('/errors', async (req: Request, res: Response) => {
 // CONVERSATION ROUTES (TENANT-ISOLATED)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Verify project ownership before conversation operations.
- */
-export async function verifyProjectAccess(
-  req: Request,
-  projectId: string | string[] | undefined
-): Promise<boolean> {
-  const organizationId = getOrganizationId(req);
-  const userId = getUserId(req);
-  const actorRole = getActorRole(req);
-  const clientWorkspaceId = await resolveClientWorkspaceId(req);
-  try {
-    const scope = getProjectScope(projectId);
-    if (!scope) {
-      return false;
-    }
-    const projectAccess = await loadProjectAccessRow({
-      organizationId,
-      clientWorkspaceId,
-      projectId: scope.numericId,
-      userId,
-      actorRole,
-    });
-    return !!projectAccess.project;
-  } catch {
-    return false;
-  }
-}
 
 /**
  * POST /api/concept2cure/projects/:projectId/conversations
