@@ -248,6 +248,17 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
           href: l.href,
           md5: l.md5,
         })),
+        // Where each staged source came from, by identity (the document alias
+        // map) — the lineage a filed snapshot used to carry only as prose.
+        // `canonicalId: null` is a row that was never aliased; `available:
+        // false` is a database without the alias migration. Stated, not
+        // smoothed over. Keyed by the resolver's `${table}:${id}` and the
+        // staged file name, because the packager may rename on the way out.
+        sources: [...byKey.entries()].map(([key, f]) => ({
+          key,
+          stagedFileName: f.fileName,
+          lineage: f.lineage ?? null,
+        })),
       },
       null,
       2,

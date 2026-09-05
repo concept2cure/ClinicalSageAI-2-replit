@@ -52,7 +52,9 @@ import { getStorageProvider } from '../storage';
 import { readLocalUploadBuffer } from '../anthropic-files';
 import { sectionPlainText, C2C_SECTION_COMPLETE_STATUSES } from '../c2c/section-content';
 import { renderLeafPdf } from './leaf-pdf-renderer';
-import type { ResolvedFile } from './core-to-packager';
+import type { LeafLineage, ResolvedFile } from './core-to-packager';
+import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
+import { aliasesFor, canonicalIdFor } from '../c2c/document-alias-map.js';
 
 /**
  * An eCTD leaf must be a PDF. Verify the ACTUAL bytes (magic number), never the
@@ -151,6 +153,32 @@ function safeName(s: string): string {
   return (
     (s || 'leaf').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'leaf'
   );
+}
+
+/**
+ * The identity behind a coauthor leaf, from the alias map. A row that was never
+ * aliased reports `canonicalId: null`; a database without the alias migration
+ * reports `available: false`. Both are stated, neither is "no source".
+ */
+async function coauthorLineage(organizationId: number, documentId: number): Promise<LeafLineage> {
+  const exec = queryableFromDrizzle(db);
+  const nativeId = String(documentId);
+  const canonical = await canonicalIdFor(exec, { organizationId, store: 'coauthor_documents', nativeId });
+  if (!canonical.available) return { available: false, reason: canonical.reason };
+  if (!canonical.canonicalId) {
+    return { available: true, store: 'coauthor_documents', nativeId, canonicalId: null, source: null };
+  }
+  const aliases = await aliasesFor(exec, { organizationId, canonicalId: canonical.canonicalId });
+  const authoring = aliases.available
+    ? aliases.aliases.find((a) => a.store === 'authoring_documents') ?? null
+    : null;
+  return {
+    available: true,
+    store: 'coauthor_documents',
+    nativeId,
+    canonicalId: canonical.canonicalId,
+    source: authoring ? { store: authoring.store, nativeId: authoring.nativeId } : null,
+  };
 }
 
 /** Stable key for a leaf's polymorphic document reference. */
@@ -273,6 +301,12 @@ export async function materializeLeafSources(
         title: doc.title ?? undefined,
         sectionCode: doc.moduleNumber ?? undefined,
       });
+      // Lineage by identity: which authoring document this snapshot represents,
+      // read from the alias map rather than matched by title. Recorded on the
+      // staged file so the governance manifest can state it; never in the
+      // backbone. The first product reader of the map (ledger L10).
+      const staged = byKey.get(key);
+      if (staged) staged.lineage = await coauthorLineage(organizationId, documentId);
       if (!isFinalizedStatus(doc.status)) {
         unfinalized++;
         unfinalizedSections.push({ sectionCode: doc.moduleNumber || doc.title || `coauthor_documents:${documentId}`, status: doc.status ?? 'draft' });

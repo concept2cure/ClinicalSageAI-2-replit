@@ -39,6 +39,24 @@ export interface CoreLeaf {
 }
 
 /** The on-disk file a leaf's document resolves to. */
+/**
+ * Where a materialized leaf's bytes came from, BY IDENTITY (the document alias
+ * map, Document Identity Contract slice C2) rather than by title. `canonicalId`
+ * null means the store row was never aliased — a fact, not an absence of
+ * lineage — and `available: false` means the database has not applied the
+ * alias migration, which is reported rather than read as "no source".
+ */
+export type LeafLineage =
+  | {
+      available: true;
+      store: string;
+      nativeId: string;
+      canonicalId: string | null;
+      /** The authoring document this leaf is a representation of, when aliased. */
+      source: { store: string; nativeId: string } | null;
+    }
+  | { available: false; reason: 'relation_absent' };
+
 export interface ResolvedFile {
   fileName: string;
   sourcePath: string;
@@ -47,6 +65,8 @@ export interface ResolvedFile {
   /** SHA-256 — modern integrity hash retained for package governance OUTSIDE the
    *  eCTD backbone (the index/md5.txt still use md5 for agency compatibility). */
   sha256?: string;
+  /** Identity lineage, recorded in the governance manifest — never in the backbone. */
+  lineage?: LeafLineage;
 }
 
 /** Resolve a core leaf's polymorphic document reference to an on-disk file. */
