@@ -23,7 +23,10 @@ vi.mock('../server/routes/c2c/actions', () => ({
 }));
 
 const { dbState } = vi.hoisted(() => ({
-  dbState: { pkg: null as any, updateSet: null as any, selects: 0 },
+  // `lockedMetadata`, when set, is what the row lock reads — separately from
+  // the snapshot the route's first select returns — so a test can put a
+  // colleague's change between the two and prove the decision used the lock.
+  dbState: { pkg: null as any, updateSet: null as any, selects: 0, lockedMetadata: undefined as any },
 }));
 
 function makeDb() {
@@ -44,7 +47,10 @@ function makeDb() {
 /** The pool client: serves the package row lock (SELECT … FOR UPDATE) from the
  *  stubbed package and captures the metadata the locked UPDATE writes. */
 const clientQuery = vi.fn(async (sql: string, params: unknown[] = []) => {
-  if (/FOR UPDATE/.test(sql)) return { rows: [{ metadata: dbState.pkg?.metadata ?? null }] };
+  if (/FOR UPDATE/.test(sql)) {
+    const locked = dbState.lockedMetadata !== undefined ? dbState.lockedMetadata : dbState.pkg?.metadata ?? null;
+    return { rows: [{ metadata: locked }] };
+  }
   if (/^UPDATE c2c_submission_packages/.test(sql)) dbState.updateSet = { metadata: JSON.parse(String(params[1])) };
   return { rows: [] };
 });
@@ -92,6 +98,7 @@ beforeEach(() => {
   dbState.pkg = null;
   dbState.updateSet = null;
   dbState.selects = 0;
+  dbState.lockedMetadata = undefined;
   recordGovernedActionFn.mockReset();
   recordGovernedActionFn.mockResolvedValue({ actionId: 'act_x', auditId: 'aud_x', sha256Chain: 'c' });
   connectFn.mockClear();
@@ -174,6 +181,30 @@ describe('PUT /api/submission-ops/packages/:packageId/regulatory-identifiers', (
     expect(clientQuery).toHaveBeenCalledWith('COMMIT');
     // The write was decided under the row lock, against the CURRENT row.
     expect(clientQuery.mock.calls.some((c) => /FOR UPDATE/.test(String(c[0])))).toBe(true);
+  });
+
+  it('decides against the LOCKED row, never the pre-lock snapshot: a colleague’s change that landed meanwhile is neither reverted nor re-reported', async () => {
+    // The snapshot the route read first still shows the OLD identifiers and a bundle…
+    dbState.pkg = pkgWith({
+      regulatory: { applicationNumber: 'IND000001', applicantId: 'DUNS-1', applicantName: 'Old Name' },
+      bundle: { path: '/bundles/old.zip', sha256: 'f'.repeat(64), sizeBytes: 10, format: 'ectd' },
+    });
+    // …but by the time the row is locked another PUT has recorded the SAME
+    // values this one carries, cleared that bundle, and added a note.
+    dbState.lockedMetadata = {
+      regulatory: { applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics, Inc.', recordedBy: 42 },
+      noteAddedMeanwhile: 'kept',
+    };
+    const res = await put(GOOD);
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ changed: false, staleBundleCleared: false });
+    expect(dbState.updateSet.metadata.bundle).toBeUndefined(); // the cleared bundle is NOT put back
+    expect(dbState.updateSet.metadata.noteAddedMeanwhile).toBe('kept'); // the newer row is what gets merged
+    // The audit row says what the identifiers were changed FROM on the real row.
+    const ledger = recordGovernedActionFn.mock.calls[0][1];
+    expect(ledger.payload.previous).toEqual({
+      applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics, Inc.',
+    });
   });
 
   it('re-recording the SAME identifiers keeps an existing bundle (nothing about its backbone changed)', async () => {
