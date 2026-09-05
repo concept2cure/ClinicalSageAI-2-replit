@@ -2,10 +2,9 @@
 /**
  * The work dock in the shell rail.
  *
- * Pinned: the dock renders from the raw turns the rail is handed; its own
- * close control hands keyboard focus back to the header toggle before the
- * dock unmounts (otherwise focus falls to <body>); the toggle re-shows it;
- * and the choice is remembered under the one key every host shares.
+ * Pinned: the dock renders from the raw turns the rail is handed; the header
+ * toggle is its ONE control (the dock carries no close of its own); and the
+ * choice is remembered under the one key every host shares.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -73,19 +72,16 @@ describe('AnaRail — the work dock', () => {
     expect(screen.queryByRole('button', { name: /AnA at work/ })).toBeNull();
   });
 
-  it("hands focus to the header toggle when the dock's own close control is used", () => {
+  it('has one control for the dock — the header toggle — and remembers the choice', () => {
     renderRail();
-    // Two controls share the name while the dock is open — the header toggle
-    // and the dock's own close — and this test is about the second.
-    const close = screen
-      .getAllByRole('button', { name: 'Hide AnA at work' })
-      .find((b) => b.classList.contains('ana-work-x')) as HTMLButtonElement;
-    expect(close).toBeTruthy();
-    close.focus();
-    expect(document.activeElement).toBe(close);
-    fireEvent.click(close);
+    // No second close inside the dock: two affordances for one non-primary
+    // action, a few pixels apart with the same icon, was the design defect.
+    expect(screen.getAllByRole('button', { name: /AnA at work/ })).toHaveLength(1);
+    const toggle = screen.getByRole('button', { name: 'Hide AnA at work' });
+    toggle.focus();
+    fireEvent.click(toggle);
     expect(screen.queryByText('AnA at work')).toBeNull();
-    const toggle = screen.getByRole('button', { name: 'Show AnA at work' });
+    // The toggle stays mounted, so focus never falls to <body>.
     expect(document.activeElement).toBe(toggle);
     expect(toggle.getAttribute('aria-pressed')).toBe('false');
     // Remembered under the shared key, so every host honours it.

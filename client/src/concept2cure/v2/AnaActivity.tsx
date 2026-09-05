@@ -39,26 +39,10 @@ import React from 'react';
 import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { I } from './icons';
 import type { AnaToolCall } from '../components/ana/useAnaChat';
-import { byRound, formatElapsed } from '../components/ana/anaProgress';
+import { byRound, formatElapsed, LENS_PHRASE } from '../components/ana/anaProgress';
 import { statusGlyph } from './AnaWorkSections';
 import { useNow } from './useNow';
 
-/** How AnA read the question. Rendered as her opening decision, not a label. */
-/**
- * Noun phrases, deliberately. These complete "Reading this as …", and the
- * first draft used verb phrases that either broke the sentence ("Reading this
- * as auditing it", "…as comparing") or claimed a deliberation that did not
- * happen: a lens is assigned by a classifier, so "thinking strategically" and
- * "weighing the risk" describe an act nothing performed. Naming the CATEGORY
- * of question is both true and how a colleague would say it.
- */
-const LENS_PHRASE: Record<string, string> = {
-  audit: 'an audit',
-  improve: 'a request to strengthen the argument',
-  risk: 'a risk question',
-  strategy: 'a strategy question',
-  compare: 'a comparison',
-};
 
 export interface AnaActivityProps {
   /** True while the turn is still in flight. */

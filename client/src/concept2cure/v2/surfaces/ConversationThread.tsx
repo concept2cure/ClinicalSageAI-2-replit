@@ -964,6 +964,8 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
                 runStatus={anaChat.runStatus}
                 pendingSteers={anaChat.pendingSteers}
                 queue={agentActivity}
+                /* Drafts are the artifact cards directly beneath; not twice. */
+                omitDrafts
                 /* Not `announce`. This surface passed it because it mounted no
                    other announcer; every AnA turn above now carries its own
                    <AnaActivity />, whose polite region speaks the phase, so a

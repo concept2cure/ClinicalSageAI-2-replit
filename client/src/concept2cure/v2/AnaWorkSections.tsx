@@ -201,13 +201,15 @@ export function RunQueue({ calls, tally, live }: { calls: AnaToolCall[]; tally: 
       <div className="ana-work-group-h">This run</div>
       {tally.total === 0 && (
         <div className="ana-work-empty">
-          {live ? 'No tool steps have been queued yet.' : 'This turn needed no tool steps.'}
+          {live ? 'This turn has queued no tool steps yet.' : 'This turn needed no tool steps.'}
         </div>
       )}
       {byRound(calls).map(({ round, calls: cs }) => (
         <div key={round} className="ana-work-round">
+          {/* The transcript record's words for the same rounds: round 2
+              exists because round 1 did not settle it. */}
           {tally.rounds > 1 && (
-            <div className="ana-work-round-h">{round === 1 ? 'First pass' : `Round ${round}`}</div>
+            <div className="ana-work-round-h">{round === 1 ? 'First pass' : `Went back · round ${round}`}</div>
           )}
           {cs.map((c, i) => (
             <Row
@@ -286,7 +288,10 @@ export function ToolsBody({
   now: number;
   usedInConversation: string[];
 }) {
-  const summary = summarizeToolWork(calls);
+  // Lower-cased by the summariser so it can be embedded mid-sentence; here it
+  // stands alone as a line, so it opens with a capital like its neighbours.
+  const raw = summarizeToolWork(calls);
+  const summary = raw ? raw.charAt(0).toUpperCase() + raw.slice(1) : '';
   return (
     <>
       {turn && (
