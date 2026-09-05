@@ -4,7 +4,7 @@
  * Search + select an evidence object, pick the link type + strength,
  * write a rationale, then route through <GovernedConfirmDialog> to attach.
  *
- * Port basis: design-system/ui_kits/pdev/Evidence.jsx.
+ * Port basis: ui_kits/pdev/Evidence.jsx.
  *
  * The kit's POOL fixture is gone (per CLAUDE.md "Seed data fixtures must
  * not land in v2"): this searches live against GET /api/evidence-objects,

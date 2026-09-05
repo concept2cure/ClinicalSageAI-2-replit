@@ -4,7 +4,7 @@
  * ── The defect this exists for ───────────────────────────────────────────────
  * DocumentsPanel shipped with no CSS at all. Its docblock said "CSS lives in
  * client/src/concept2cure/mdx/app.css (DOCUMENTS PANEL section)" and there was
- * no such section: the port from design-system/ui_kits/mdx brought the JSX and
+ * no such section: the port from ui_kits/mdx brought the JSX and
  * left the stylesheet behind. All 24 `docs-*` classes matched nothing in any
  * bundle, on the five surfaces that render it — Vault, Engineering, UDI,
  * Post-market and Analytics — where the document list is the main content.

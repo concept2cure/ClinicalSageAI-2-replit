@@ -5,7 +5,7 @@
  *   - SubmissionsSurface   Submission center — pipeline + list + detail drawer
  *   - TemplatesSurface     Templates — index of org-approved boilerplate
  *
- * Ported verbatim from design-system/ui_kits/mdx/Workbench.jsx.
+ * Ported verbatim from ui_kits/mdx/Workbench.jsx.
  * The vault lives in surfaces/VaultSurface.tsx (data/vault.ts +
  * hooks/useVault.ts) alongside the other extracted surfaces.
  */

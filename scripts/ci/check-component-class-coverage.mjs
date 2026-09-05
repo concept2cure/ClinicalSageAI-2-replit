@@ -677,7 +677,7 @@ function main() {
         'no cascade — and check-surface-styling.mjs cannot see it either, because the surface\n' +
         'around the component is styled and that is the question it asks.\n' +
         '\nEither write the rules, or import the stylesheet that already has them: a rule in a\n' +
-        'sheet nothing imports (design-system/ui_kits/**, an orphan under client/src) is not\n' +
+        'sheet nothing imports (ui_kits/**, an orphan under client/src) is not\n' +
         'coverage. See check-orphaned-stylesheets.mjs.\n',
     );
     process.exit(1);
