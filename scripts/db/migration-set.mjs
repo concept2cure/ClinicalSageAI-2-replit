@@ -1589,6 +1589,18 @@ export const C2C_MIGRATION_FILES = [
   // must run AFTER the canonical-shape reconciliation above.
   'migrations/20260823_vault_document_placement.sql',
 
+  // ── Document catalog: comprehension + read-coverage on vault.documents ────
+  // Two tables. vault.document_catalog records per document HOW its text was
+  // extracted (or the recorded reason extraction failed — a failure is a row
+  // that says so, never an absent row) and, once AnA has read the whole file,
+  // WHAT it is: kind, purpose, summary, key_data, embedding.
+  // vault.document_read_receipts records every character span AnA was served,
+  // keyed to content_hash; the catalog write refuses below full coverage, so a
+  // sampled page can never be recorded as "reviewed". Additive, guarded on
+  // to_regclass('vault.documents'); must run AFTER the canonical-shape
+  // reconciliation and placement entries above (same table, same discipline).
+  'migrations/20260905_document_catalog.sql',
+
   // ── Time-limited module grants ─────────────────────────────────────────────
   // Adds a nullable `expires_at` (+ who set it, when) to module_subscriptions,
   // so a grant can be opened until a date instead of only on or off. Strictly
