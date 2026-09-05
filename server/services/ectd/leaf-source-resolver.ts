@@ -149,10 +149,26 @@ function rowsOf(result: unknown): Array<Record<string, unknown>> {
   return Array.isArray(rows) ? (rows as Array<Record<string, unknown>>) : [];
 }
 
-function safeName(s: string): string {
+function safeName(s: string, max = 40): string {
   return (
-    (s || 'leaf').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'leaf'
+    (s || 'leaf').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, max).replace(/-+$/g, '') || 'leaf'
   );
+}
+
+/**
+ * The shipped leaf file name: `<label>-<source key>.pdf`, within the eCTD
+ * 64-character rule (FILENAME_PATTERN). The key is the unique part and is
+ * kept whole; the label gives way. The label alone was capped at 40 and the
+ * key never was, so `coauthor_documents:123` shipped a 68-character name that
+ * the agency validator refuses and nothing on this path checked.
+ */
+export function leafFileName(label: string, key: string): string {
+  const ext = '.pdf';
+  const keyPart = key.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'leaf';
+  const budget = 64 - ext.length - 1 - keyPart.length;
+  const labelPart = budget >= 1 ? safeName(label, Math.min(40, budget)) : '';
+  const name = labelPart ? `${labelPart}-${keyPart}${ext}` : `${keyPart}${ext}`;
+  return name.slice(0, 64);
 }
 
 /**
@@ -248,7 +264,7 @@ export async function materializeLeafSources(
 
   const write = async (key: string, baseName: string, content: string, opts: { title?: string; sectionCode?: string }) => {
     const pdfBytes = await renderLeafPdf(content, opts);
-    const fileName = `${safeName(baseName)}-${key.replace(/[^a-z0-9]+/gi, '-')}.pdf`;
+    const fileName = leafFileName(baseName, key);
     const sourcePath = path.join(stageDir, fileName);
     await fs.writeFile(sourcePath, pdfBytes);
     byKey.set(key, {
@@ -404,7 +420,7 @@ export async function materializeLeafSources(
       }
       // Stage the RAW PDF bytes (not re-rendered). The filename MUST end in .pdf
       // so the downstream PDF/A gate treats it as a PDF; md5 is over the real bytes.
-      const fileName = `${safeName(doc.fileName || 'onboarding')}-${key.replace(/[^a-z0-9]+/gi, '-')}.pdf`;
+      const fileName = leafFileName(doc.fileName || 'onboarding', key);
       const sourcePath = path.join(stageDir, fileName);
       await fs.writeFile(sourcePath, buf);
       byKey.set(key, {
@@ -474,7 +490,7 @@ export async function materializeLeafSources(
         unresolved.push({ documentTable, documentId, reason: 'rendered file is not a valid PDF (missing %PDF- header) — refusing to stage a non-conformant leaf' });
         continue;
       }
-      const fileName = `${safeName(row.fileName || 'rendered')}-${key.replace(/[^a-z0-9]+/gi, '-')}.pdf`;
+      const fileName = leafFileName(row.fileName || 'rendered', key);
       const sourcePath = path.join(stageDir, fileName);
       await fs.writeFile(sourcePath, bytes);
       byKey.set(key, { fileName, sourcePath, md5: row.md5, sha256: row.sha256 });
