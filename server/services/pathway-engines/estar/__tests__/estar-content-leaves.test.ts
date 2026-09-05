@@ -227,6 +227,60 @@ describe('loadDeviceContentLeaves / loadAuthoredDeviceSections with a programId'
     expect(none).toMatchObject({ source: 'legacy_document', scope: { documentId: 4 } });
   });
 
+  /*
+   * THE TWO LOADERS' OWN HONESTY RULE, WHICH NOTHING PINNED.
+   *
+   * `loadDeviceContentLeaves` and `loadAuthoredDeviceSections` each document
+   * that a failed read surfaces rather than reading as "the tenant authored
+   * nothing" — the whole reason /build stopped answering 422 NO_AUTHORED_CONTENT
+   * ("author section content before exporting") over a read that had failed, and
+   * /filing-readiness stopped reporting 0% with every section missing.
+   *
+   * That rule lived in a comment inside a try/catch that only rethrew, and the
+   * one test named for it covers `resolveDeviceContentScope`, a different
+   * function. Swallowing the error in either loader — the exact regression the
+   * comment warned about — broke nothing. Now it does.
+   */
+  it('loadDeviceContentLeaves: a failed governed read throws — it is never an empty content set', async () => {
+    const failing = {
+      async query() {
+        throw new Error('connection reset while reading c2c_documents');
+      },
+    } as unknown as DeviceContentClient;
+    await expect(
+      loadDeviceContentLeaves(ORG, { programId: PROGRAM, client: failing }),
+    ).rejects.toThrow(/connection reset/);
+  });
+
+  it('loadAuthoredDeviceSections: a failed governed read throws — it is never an empty section set', async () => {
+    const failing = {
+      async query() {
+        throw new Error('connection reset while reading c2c_document_sections');
+      },
+    } as unknown as DeviceContentClient;
+    await expect(
+      loadAuthoredDeviceSections(ORG, { programId: PROGRAM, client: failing }),
+    ).rejects.toThrow(/connection reset/);
+  });
+
+  it('the section read failing after the document resolved still surfaces', async () => {
+    // The two-query shape means the failure can land on either call. A document
+    // that resolves and a section read that then dies is the case a single
+    // top-level try/catch would have flattened into "no content".
+    const halfFailing = {
+      async query(sql: string) {
+        if (/FROM c2c_documents/.test(sql)) return { rows: [{ id: 'doc_1' }] } as never;
+        throw new Error('statement timeout reading sections');
+      },
+    } as unknown as DeviceContentClient;
+    await expect(
+      loadDeviceContentLeaves(ORG, { programId: PROGRAM, client: halfFailing }),
+    ).rejects.toThrow(/statement timeout/);
+    await expect(
+      loadAuthoredDeviceSections(ORG, { programId: PROGRAM, client: halfFailing }),
+    ).rejects.toThrow(/statement timeout/);
+  });
+
   it('a FAILED governed read is not an empty one: it surfaces, never falls back org-wide', async () => {
     // The catch here set authored=false, and the fallback then returned the
     // LEGACY scope with documentId undefined — every cerv2_510k_sections row in
