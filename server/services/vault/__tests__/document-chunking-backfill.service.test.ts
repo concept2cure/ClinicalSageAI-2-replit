@@ -17,7 +17,7 @@ const recordChunkOutcome = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock('../document-chunking.service.js', () => ({ chunkAndEmbedDocument, recordChunkOutcome }));
 vi.mock('../../../db.js', () => ({ pool: { query: vi.fn(), connect: vi.fn() } }));
 
-import { backfillVaultChunks } from '../document-chunking-backfill.service';
+import { backfillVaultChunks, type Queryable } from '../document-chunking-backfill.service';
 
 const ORG = 42;
 type Row = {
@@ -38,11 +38,17 @@ const row = (over: Partial<Row> = {}): Row => ({
 });
 
 let queries: Array<{ sql: string; params: unknown[] }>;
-const execWith = (rows: Row[]) => ({
+// Typed as Queryable rather than inferred. Queryable.query is GENERIC —
+// `query<T = any>(text, values?)` — and a concrete non-generic mock is not
+// assignable to it, which is the whole of the 9 TS2322 errors this file was
+// producing. The cast is on the function alone, so the object still has to
+// satisfy the interface; widening the whole literal to `any` would have hidden
+// a genuinely wrong shape.
+const execWith = (rows: Row[]): Queryable => ({
   query: vi.fn(async (sql: string, params: unknown[] = []) => {
     queries.push({ sql, params });
     return { rows, rowCount: rows.length };
-  }),
+  }) as unknown as Queryable['query'],
 });
 
 beforeEach(() => {
