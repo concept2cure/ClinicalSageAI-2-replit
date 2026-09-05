@@ -410,6 +410,7 @@ describe('POST /api/510k/estar/official with useProgramData:true', () => {
         { key: 'deviceCommonName', caption: 'Common Name', filled: true, source: 'request', declaredSource: 'regulatory_programs.common_name' },
         { key: 'regulationNumber', caption: 'Regulation Number', filled: false, source: null, declaredSource: 'regulatory_programs.regulation_number' },
       ],
+      advisories: [],
       ignoredRequestKeys: ['deviceTradeName', 'bogus'],
     });
 

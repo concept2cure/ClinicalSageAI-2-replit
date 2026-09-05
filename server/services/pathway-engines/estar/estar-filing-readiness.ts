@@ -134,7 +134,11 @@ function assessContent(
       return normalize(r.sections, r.summary.missingRequired, r.summary.ready);
     }
     case 'q_sub': {
-      const qSubType = qSubTypeOverride ?? QSUB_KEY_TO_TYPE[catalogKey] ?? 'pre_submission';
+      // Every Q-Sub catalog key maps to a sub-type; a key that does not is a
+      // registry bug, and scoring it against the Pre-Submission set would hide
+      // that behind a plausible verdict.
+      const qSubType = qSubTypeOverride ?? QSUB_KEY_TO_TYPE[catalogKey];
+      if (!qSubType) throw new Error(`Q-Sub catalog key "${catalogKey}" has no sub-type mapping.`);
       const r = mapToPreStar({ leaves, submissionType: 'q_sub', qSubType });
       return normalize(r.sections, r.summary.missingRequired, r.summary.ready);
     }

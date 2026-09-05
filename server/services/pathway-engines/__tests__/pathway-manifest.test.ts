@@ -22,7 +22,10 @@ const FLAT_PATHWAYS = [
 describe('buildPathwayManifest — flat pathways', () => {
   for (const pathway of FLAT_PATHWAYS) {
     it(`builds an ordered, deterministic manifest for ${pathway}`, () => {
-      const r = assessPathwayReadiness({ pathway, leaves: [] });
+      // A Q-Sub is refused without its sub-type; the manifest loop states one.
+      const r = assessPathwayReadiness(
+        pathway === 'prestar_q_sub' ? { pathway, leaves: [], qSubType: 'pre_submission' } : { pathway, leaves: [] },
+      );
       const m = buildPathwayManifest(pathway, r.detail);
 
       expect(m.pathway).toBe(pathway);
@@ -38,7 +41,10 @@ describe('buildPathwayManifest — flat pathways', () => {
       const paths = m.entries.map((e) => e.path);
       expect(new Set(paths).size).toBe(paths.length);
       // Deterministic.
-      expect(buildPathwayManifest(pathway, assessPathwayReadiness({ pathway, leaves: [] }).detail)).toEqual(m);
+      const again = assessPathwayReadiness(
+        pathway === 'prestar_q_sub' ? { pathway, leaves: [], qSubType: 'pre_submission' } : { pathway, leaves: [] },
+      );
+      expect(buildPathwayManifest(pathway, again.detail)).toEqual(m);
     });
   }
 

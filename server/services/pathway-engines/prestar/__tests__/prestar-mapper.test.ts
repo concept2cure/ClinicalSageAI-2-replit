@@ -48,9 +48,11 @@ describe('mapToPreStar — Q-Submissions', () => {
     expect(r.summary.missingRequired).toContain('background-rationale');
   });
 
-  it('defaults q_sub to a Pre-Sub when no sub-type is given', () => {
-    const r = mapToPreStar({ leaves: [], submissionType: 'q_sub' });
-    expect(r.qSubType).toBe('pre_submission');
+  it('refuses to assess a Q-Sub without its sub-type rather than scoring it as a Pre-Sub', () => {
+    // Defaulted to 'pre_submission' before: a Submission Issue Request with no
+    // stated sub-type was scored against the Pre-Sub slots and could report
+    // ready while missing its mandatory deficiency reference.
+    expect(() => mapToPreStar({ leaves: [], submissionType: 'q_sub' })).toThrow(/cannot be assessed without its sub-type/);
   });
 
   it('an informational meeting requires materials but NOT questions', () => {
