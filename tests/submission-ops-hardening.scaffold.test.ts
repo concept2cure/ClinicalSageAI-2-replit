@@ -106,6 +106,7 @@ describe('Submission Ops hardening runtime integration', () => {
     const res = await request(appWithAuth()).post('/api/submission-ops/artifact-section-map').send({
       artifactId: 5,
       sectionDbId: 8,
+      reason: 'Map the protocol into the clinical section', // governed change
     });
 
     expect(res.status).toBe(400);

@@ -119,6 +119,9 @@ const createPackageSchema = z.object({
 const createArtifactSectionMapSchema = z.object({
   artifactId: z.number({ required_error: 'artifactId is required' }),
   sectionDbId: z.number({ required_error: 'sectionDbId is required' }),
+  // Mapping a document into a package section changes what would be filed
+  // with an agency: a governed change, recorded with the operator's reason.
+  reason: z.string().min(8, 'reason must be at least 8 characters'),
   documentFamily: z.string().optional(),
   ownerUserId: z.number().optional(),
   ownerRole: z.string().optional(),
@@ -385,8 +388,15 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
     // A bundle assembled before this mapping no longer reflects the package's
     // content; it is cleared so the transmit gate cannot ship it.
     const staleBundleCleared = await clearStaleBundle(pkg.id);
+    const ledgerWriteFailed = await recordPackageGovernedAction({
+      orgId,
+      userId: actorUserId,
+      packageDbId: pkg.id,
+      reason: parsed.data.reason,
+      payload: { change: 'artifact-mapped', mappingId: mapping.id, artifactId, sectionDbId, documentFamily: documentFamily ?? null, staleBundleCleared },
+    });
 
-    res.status(201).json({ data: mapping, staleBundleCleared });
+    res.status(201).json({ data: mapping, staleBundleCleared, ledgerWriteFailed });
   } catch (e) {
     return serverError(res, logger, 'saving artifact section map', e);
   }
@@ -1781,7 +1791,11 @@ router.put('/packages/:packageId/regulatory-identifiers', async (req: Request, r
 
     const existingMetadata =
       pkg.metadata && typeof pkg.metadata === 'object' ? (pkg.metadata as Record<string, unknown>) : {};
-    const previous = readRegulatoryIdentifiers(existingMetadata).values;
+    // `previous` (the audit row's FROM values) and `changed` come from the
+    // metadata re-read at write time, so a concurrent change is compared
+    // against, not overwritten from a stale snapshot.
+    const current = await currentPackageMetadata(pkg.id, existingMetadata);
+    const previous = readRegulatoryIdentifiers(current).values;
     const next = {
       applicationNumber: usableIdentifier('applicationNumber', parsed.data.applicationNumber)!,
       applicantId: usableIdentifier('applicantId', parsed.data.applicantId)!,
@@ -1792,7 +1806,6 @@ router.put('/packages/:packageId/regulatory-identifiers', async (req: Request, r
 
     // A bundle assembled under different identifiers carries the OLD ones in its
     // backbone. Clear it so the transmit gate cannot ship it; re-assemble.
-    const current = await currentPackageMetadata(pkg.id, existingMetadata);
     const { bundle: existingBundle, ...metadataWithoutBundle } = current;
     const staleBundleCleared = changed && existingBundle !== undefined;
     const metadata = staleBundleCleared
