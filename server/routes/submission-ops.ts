@@ -71,8 +71,10 @@ import {
   bundleStorageBucket,
   bundleStorageKey,
   putBundle,
+  deleteBundle,
   readBundleBytes,
 } from '../services/submission-bundle-storage';
+import { leafFileName } from '../services/ectd/leaf-source-resolver';
 import { validateEctdLeafs } from '../services/submission-gateways/ectd-structural-validator';
 import { ValidationError as PackagerValidationError } from '../services/submission-gateways/types';
 import type { EctdFinding } from '../services/submission-gateways/ectd-structural-validator';
@@ -1667,24 +1669,6 @@ async function clearStaleBundle(packageDbId: number): Promise<boolean> {
 }
 
 /**
- * Compose `<base>-<disc>.pdf` within the eCTD file-name limit (FILENAME_PATTERN:
- * 64 characters including the extension), trimming the base — never the
- * discriminator — and appending a numeric tiebreaker only when the name is
- * already taken. The result always satisfies FILENAME_PATTERN.
- */
-function ectdLeafFileName(base: string, disc: string, taken: Set<string>): string {
-  const MAX = 64;
-  const compose = (suffix: string): string => {
-    const tail = `-${disc}${suffix}.pdf`;
-    const head = base.slice(0, Math.max(1, MAX - tail.length)).replace(/-+$/, '') || 'leaf';
-    return `${head}${tail}`;
-  };
-  let name = compose('');
-  for (let n = 2; taken.has(name); n += 1) name = compose(`-${n}`);
-  return name;
-}
-
-/**
  * Best-effort ICH module (1–5) for a c2c_package_sections sectionKey. These
  * keys are semantic (e.g. `module3_cmc`, `labeling`, `cer`), not ICH-numeric,
  * so we derive the module from, in order: an explicit module-N prefix, an
@@ -2090,7 +2074,12 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         const disc = artifact
           ? artifact.artifactId.replace(/^artifact_/, '').slice(-12).toLowerCase().replace(/[^a-z0-9]/g, '') || `a${artifact.artifactDbId}`
           : `s${section.id}`;
-        const fileName = ectdLeafFileName(leafSlug(section.sectionKey), disc, seenPaths);
+        // Composed by the canonical leaf-name helper (label gives way, the
+        // discriminator is kept whole, 64-character rule); a numeric tiebreaker
+        // is appended to the discriminator only when the name is already taken
+        // in THIS package.
+        let fileName = leafFileName(section.sectionKey, disc);
+        for (let n = 2; seenPaths.has(fileName); n += 1) fileName = leafFileName(section.sectionKey, `${disc}-${n}`);
         seenPaths.add(fileName);
         // The leaf's IN-PACKAGE path, derived the way the canonical packager
         // derives it (`m<module>/<section-dashed>/<file>`, Module 1 under the
@@ -2345,23 +2334,38 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       return { metadata: { ...current, bundle: descriptor }, result: true };
     });
     if (!stored) {
+      // Nothing references this zip: remove both copies. A bundle that WAS
+      // stored (and may have been transmitted) is never deleted — it is the
+      // record; this one never became one.
       await fs.promises.unlink(bundlePath).catch(() => {});
       const durableCopy = storage.provider === 's3' ? storage.key : null;
+      let durableCopyDeleted = false;
+      if (durableCopy) {
+        try {
+          await deleteBundle(durableCopy);
+          durableCopyDeleted = true;
+        } catch (delErr) {
+          console.error(
+            '[submission-ops] assemble-discard-durable-delete-failed',
+            delErr instanceof Error ? delErr.message : delErr,
+          );
+        }
+      }
       const ledgerWriteFailed = await recordPackageGovernedAction({
         orgId,
         userId,
         packageDbId: pkg.id,
         reason: parsed.data.reason,
-        payload: { change: 'assembly-discarded', cause: 'identifiers_changed', sha256, region, format, durableCopy },
+        payload: { change: 'assembly-discarded', cause: 'identifiers_changed', sha256, region, format, durableCopy, durableCopyDeleted },
       });
       return res.status(409).json({
         error:
           'The regulatory identifiers changed while the bundle was being assembled; its backbone carries the old ones, so it was not stored. Assemble again.',
         code: 'STALE_ASSEMBLY',
         gate: 'identifiers_changed',
-        // A durable (S3) copy written before the check is named so it can be
-        // removed; the local file has been.
-        durableCopy,
+        // A durable copy that could not be removed is named so it can be.
+        durableCopy: durableCopy && !durableCopyDeleted ? durableCopy : null,
+        durableCopyDeleted,
         ledgerWriteFailed,
       });
     }

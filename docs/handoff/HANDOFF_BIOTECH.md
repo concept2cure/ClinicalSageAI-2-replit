@@ -306,6 +306,35 @@ Decision items, not changed:
   input is a feature; the builders now say the counts are missing rather than
   inventing zeros.
 
+### Ninth audit — IB, nonclinical and briefing-document builders (2026-09-05)
+
+Read-only audit of the authoring builders that draft regulatory documents from
+structured inputs. Fixed on `concept2cure-v2`, each with a test that fails on
+revert:
+
+- CTD authoring-readiness report: with no module QC verdict supplied at all,
+  `ready` was true (absence is a warning; only errors gated readiness) and the
+  PDF said "READY — no blocking findings" over nothing assessed. The rollup
+  carries `assessed`; nothing assessed is not ready, and the verdict reads
+  "NOT ASSESSED — no module QC verdict was supplied".
+- `assess_nonclinical_safety`: a computed FIH dose with no program context read
+  `ready_for_fih` with the ICH M3(R2)/S-series study battery never checked, and
+  the tool serialised `programGaps` as `[]` ("assessed, no gaps"). The verdict
+  is `insufficient_input` until the battery is assessed, the summary says so,
+  and `programGaps` is `null` when it was not.
+- `assemble_briefing_book`: the fixture's "Questions for the Agency" are
+  labelled SAMPLE DATA inside the content itself when the sponsor supplied no
+  key questions; the disclosure lived only on sibling fields the authoring
+  tool never renders.
+- Investigator's Brochure read: the missing-store fallback no longer names
+  `nonclinical_studies` as the source of a read that never reached it.
+
+Verified and unchanged: the IB builder and view assembler, the nonclinical
+study-report builder (GLP/NOAEL/species never defaulted), the tox-findings
+classifier (its "no adverse findings" sentence is unreachable over an empty
+input), the FIH dose engine (throws rather than guesses), the M2.6/M4 view,
+the IND briefing book, and briefing-book-core's fixture/assessment typing.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -549,6 +578,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-05 | A | Sixth audit — IND filing chain + client surfaces | Draft-linked filing refusals (404/409); overdue safety count from the register; annual overdue feed carries deadline_unknown; PV matrix error state — revert-proven | §1 above |
 | 2026-09-05 | A | Seventh audit — ICSR E2B composition + transport | C.1.3 from the case; E.i.9 vs C.2.r.3; C.5.1.r.1 mandatory for study reports; no re-transmit of a non-prepared ICSR — revert-proven | §1 above |
 | 2026-09-05 | A | Eighth audit — M2.7/CSR/labeling + FDA submission types | Unextracted SAE/death counts stated as such in 2.5/2.7, 2.7 prints its gaps; withdrawal refused rather than coded as an original — revert-proven; two decisions recorded | §1 above |
+| 2026-09-05 | A | Ninth audit — IB / nonclinical / briefing builders | Nothing-assessed readiness report is NOT ASSESSED; dose-only FIH is not ready; fixture questions labelled in content; IB fallback names no source — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

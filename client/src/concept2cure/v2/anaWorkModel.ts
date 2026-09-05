@@ -12,7 +12,7 @@
 
 import type { AnaChatMessage, AnaToolCall, RunControlStatus } from '../components/ana/useAnaChat';
 import type { AnaProgressPhase } from '../components/ana/useAnaChat.types';
-import { formatElapsed, formatStepDuration } from '../components/ana/anaProgress';
+import { formatElapsed, formatStepDuration, LENS_PHRASE } from '../components/ana/anaProgress';
 
 export interface AnaWorkContext {
   /** The open programme, by name (or id when that is all the shell has). */
@@ -124,12 +124,17 @@ function actionRows(m: AnaChatMessage, i: number): OutputRow[] {
     }));
 }
 
-/** Everything the conversation has produced, across every assistant turn. */
-export function collectOutputs(messages: AnaChatMessage[]): OutputRow[] {
+/**
+ * Everything the conversation has produced, across every assistant turn.
+ * `drafts: false` leaves the draft rows to a host that lists them as
+ * artifact cards of its own.
+ */
+export function collectOutputs(messages: AnaChatMessage[], opts: { drafts?: boolean } = {}): OutputRow[] {
+  const withDrafts = opts.drafts !== false;
   const rows: OutputRow[] = [];
   messages.forEach((m, i) => {
     if (m.role !== 'assistant') return;
-    if (m.generatedDraft?.title) {
+    if (withDrafts && m.generatedDraft?.title) {
       rows.push({ key: `d-${i}`, icon: 'fileText', label: `Drafted ${m.generatedDraft.title}`, note: draftNote(m) });
     }
     rows.push(...actionRows(m, i));
@@ -154,14 +159,17 @@ export function contextRows(
   context: AnaWorkContext | undefined,
   turn: AnaChatMessage | null,
 ): Array<[string, string]> {
+  // The lens arrives as its classifier code ("audit"); the row says what a
+  // colleague would ("an audit"), through the one table the transcript uses.
   const lens = turn?.detectedLens;
+  const lensPhrase = lens && lens !== 'auto' ? LENS_PHRASE[lens] ?? null : null;
   const candidates: Array<[string, string | null | undefined]> = [
     ['Project', context?.project],
     ['Working in', context?.module],
     ['Surface', context?.surface],
     ['Engine', context?.engine],
     ['Effort used', turn?.effortUsed],
-    ['Read as', lens === 'auto' ? null : lens],
+    ['Read as', lensPhrase],
     ['Drafting', turn?.detectedDocumentType],
   ];
   return candidates.filter((r): r is [string, string] => typeof r[1] === 'string' && r[1].length > 0);

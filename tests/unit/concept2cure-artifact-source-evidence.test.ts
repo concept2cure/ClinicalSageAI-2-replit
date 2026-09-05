@@ -173,10 +173,11 @@ vi.mock('../../server/middleware/redisRateLimiter', () => ({
 }));
 
 // Import after mocks
-import concept2cureRouter from '../../server/routes/concept2cure';
+// The artifact domain moved to its own router (L53, slice 8).
+import artifactRouter from '../../server/routes/c2c/artifacts';
 
 function getCreateArtifactHandler() {
-  const layer = concept2cureRouter.stack.find(
+  const layer = artifactRouter.stack.find(
     (l: any) => l.route?.path === '/projects/:projectId/artifacts' && l.route?.methods?.post
   );
   if (!layer) throw new Error('Missing route POST /projects/:projectId/artifacts');

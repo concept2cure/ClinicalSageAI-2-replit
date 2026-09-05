@@ -175,3 +175,94 @@ describe('the export family lives in one router', () => {
     }
   });
 });
+
+const ARTIFACT_PATHS = [
+  'GET /artifacts',
+  'GET /projects/all/artifacts-summary',
+  'GET /projects/:projectId/artifacts',
+  'POST /projects/:projectId/artifacts',
+  'PUT /projects/:projectId/artifacts/:artifactId',
+  'POST /vault/register-artifact',
+  'PUT /projects/:projectId/artifacts/:artifactId/placement',
+  'GET /projects/:projectId/dossier-metrics',
+  'POST /projects/:projectId/artifacts/:artifactId/signatures',
+  'GET /projects/:projectId/artifacts/:artifactId/signatures',
+  'GET /projects/:projectId/artifacts/:artifactId/snapshots',
+  'GET /projects/:projectId/artifacts/:artifactId/provenance',
+  'GET /projects/:projectId/artifacts/:artifactId/versions',
+  'GET /projects/:projectId/artifacts/:artifactId/audit-report',
+  'POST /projects/:projectId/artifacts/:artifactId/audit-report/export',
+  'GET /user/permissions',
+  'PUT /projects/:projectId/artifacts/:artifactId/status',
+  'PUT /projects/:projectId/artifacts/:artifactId/ctd-section',
+  'GET /projects/:projectId/artifacts/:artifactId/verify-integrity',
+  'POST /projects/:projectId/artifacts/:artifactId/rollback',
+  'POST /projects/:projectId/artifacts/:artifactId/comments',
+  'GET /projects/:projectId/artifacts/:artifactId/comments',
+  'PUT /projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve',
+  'POST /projects/:projectId/artifacts/:artifactId/reviewers',
+  'GET /projects/:projectId/artifacts/:artifactId/reviewers',
+  'DELETE /projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId',
+  'GET /projects/:projectId/team',
+  'POST /projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind',
+  'POST /projects/:projectId/artifacts/:artifactId/reviews/submit',
+  'GET /projects/:projectId/artifacts/:artifactId/reviews/status',
+];
+
+describe('the artifact domain lives in one router', () => {
+  it('the artifacts router answers every artifact path, and the main router none', async () => {
+    const artifacts = (await import('../artifacts')).default as unknown as { stack: Layer[] };
+    const main = (await import('../../concept2cure')).default as unknown as { stack: Layer[] };
+    const inArtifacts = new Set(registered(artifacts));
+    const inMain = new Set(registered(main));
+    for (const p of ARTIFACT_PATHS) {
+      expect(inArtifacts.has(p), `${p} should be on the artifacts router`).toBe(true);
+      expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
+    }
+  });
+});
+
+const AI_EDITING_PATHS = [
+  'POST /ai/edit-section',
+  'GET /ai/templates',
+  'POST /ai/templates/:templateId/generate',
+  'POST /ai/autocomplete',
+  'POST /ai/compliance-scan',
+  'POST /ai/citation-search',
+  'POST /ai/batch-edit',
+  'POST /ai/validate-references',
+  'POST /ai/check-inconsistency',
+  'POST /ai/extract-metadata',
+];
+
+describe('AI editing lives in one router', () => {
+  it('the ai-editing router answers every /ai path, and the main router none', async () => {
+    const ai = (await import('../ai-editing')).default as unknown as { stack: Layer[] };
+    const main = (await import('../../concept2cure')).default as unknown as { stack: Layer[] };
+    const inAi = new Set(registered(ai));
+    const inMain = new Set(registered(main));
+    for (const p of AI_EDITING_PATHS) {
+      expect(inAi.has(p), `${p} should be on the ai-editing router`).toBe(true);
+      expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
+    }
+  });
+});
+
+const HAQ_PATHS = [
+  'PUT /projects/:projectId/haq-session',
+  'GET /projects/:projectId/haq-session',
+  'GET /reviews/pending',
+];
+
+describe('HAQ session persistence lives in one router', () => {
+  it('the haq-sessions router answers every HAQ path, and the main router none', async () => {
+    const haq = (await import('../haq-sessions')).default as unknown as { stack: Layer[] };
+    const main = (await import('../../concept2cure')).default as unknown as { stack: Layer[] };
+    const inHaq = new Set(registered(haq));
+    const inMain = new Set(registered(main));
+    for (const p of HAQ_PATHS) {
+      expect(inHaq.has(p), `${p} should be on the haq-sessions router`).toBe(true);
+      expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
+    }
+  });
+});

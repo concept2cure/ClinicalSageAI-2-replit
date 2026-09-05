@@ -391,3 +391,109 @@ export interface Message {
   artifactId?: string;
   edited?: boolean;
 }
+
+/* ── Stored-record integrity (Part 11) ─────────────────────────────────────── */
+
+/**
+ * What this check actually covers, stated once and carried into every response.
+ *
+ * `verifyIntegrityChain` recomputes SHA-256 over `artifact.content` and each
+ * version's `content` — both read from the database — and compares each to the
+ * hash stored beside it. That is a real check: it catches a stored row whose
+ * content and recorded hash disagree. It is NOT verification of the originating
+ * document, because no source bytes are read here; nothing in this path
+ * re-derives a hash from an uploaded file, a vault object, or a filed leaf.
+ *
+ * The distinction matters because of where this lands. The audit-report route
+ * emits this block under `standard: '21 CFR Part 11 · ICH M8 eCTD v4.0'` and
+ * directly beside a `sourceLineage` section, and the export persists that as a
+ * governed artifact an inspector reads. "verified: true, SHA-256" next to a
+ * source-lineage list reads as "the source documents were checked". They were
+ * not. Naming the scope is the whole fix — the check is fine, the claim was
+ * broader than the check.
+ */
+const INTEGRITY_CHECK_SCOPE =
+  'Compares each stored artifact version against the SHA-256 recorded with it. ' +
+  'Detects a stored record altered without its hash being updated. Does NOT read ' +
+  'or verify the bytes of the originating source document.';
+
+export function verifyIntegrityChain(
+  artifact: { content: string | null; contentHash: string | null; version: number },
+  versions: Array<{ version: number; content: string; contentHash: string; createdAt: Date | null }>
+): {
+  scope: string;
+  sourceDocumentBytesVerified: false;
+  chainIntact: boolean;
+  currentHashVerified: boolean;
+  computedHash: string;
+  storedHash: string | null;
+  versionDetails: Array<{
+    version: number;
+    storedHash: string;
+    computedHash: string;
+    verified: boolean;
+    timestamp: Date | null;
+  }>;
+  failureReason: string | null;
+} {
+  const computedHash = artifact.content ? calculateContentHash(artifact.content) : '';
+  const currentHashVerified = computedHash === artifact.contentHash;
+
+  let chainIntact = currentHashVerified;
+  let failureReason: string | null = null;
+  const versionDetails = versions.map(v => {
+    const vComputedHash = calculateContentHash(v.content);
+    const verified = vComputedHash === v.contentHash;
+    if (!verified) {
+      chainIntact = false;
+      failureReason = failureReason || `Version ${v.version} hash mismatch`;
+    }
+    return {
+      version: v.version,
+      storedHash: v.contentHash,
+      computedHash: vComputedHash,
+      verified,
+      timestamp: v.createdAt,
+    };
+  });
+
+  if (!currentHashVerified && !failureReason) {
+    failureReason = 'Current artifact hash mismatch';
+  }
+
+  return {
+    scope: INTEGRITY_CHECK_SCOPE,
+    // Always false, and present rather than omitted: a reader must be able to
+    // see that source-document verification did not happen, not infer it from
+    // the absence of a field.
+    sourceDocumentBytesVerified: false,
+    chainIntact,
+    currentHashVerified,
+    computedHash,
+    storedHash: artifact.contentHash,
+    versionDetails,
+    failureReason,
+  };
+}
+
+/* ── Recursive sanitisation for stored objects ─────────────────────────────── */
+
+/**
+ * Sanitize object properties recursively for storage.
+ *
+ * @param obj - Object with potentially unsafe string values
+ * @returns Object with all string values sanitized
+ */
+export function sanitizeObject<T extends Record<string, unknown>>(obj: T): T {
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === 'string') {
+      sanitized[key] = sanitizeContent(value);
+    } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+      sanitized[key] = sanitizeObject(value as Record<string, unknown>);
+    } else {
+      sanitized[key] = value;
+    }
+  }
+  return sanitized as T;
+}

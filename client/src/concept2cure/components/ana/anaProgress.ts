@@ -33,10 +33,25 @@ import type { AnaProgressPhase, AnaToolCall } from './useAnaChat.types';
  * answer landing and the server's background finishing work reporting in.
  */
 export const CLIENT_PHASE_LABELS = {
-  reasoning: 'Reasoning through the question',
-  composing: 'Composing the answer',
-  finalizing: 'Checking evidence and recording the turn',
+  reasoning: 'Reasoning through the question…',
+  composing: 'Composing the answer…',
+  finalizing: 'Checking evidence and recording the turn…',
 } as const;
+
+/**
+ * How AnA read the question, as a noun phrase that completes "Reading this
+ * as …" and stands alone after "Read as". One table for the transcript record
+ * and the dock's Context row: a lens is assigned by a classifier, so naming
+ * the CATEGORY of question is both true and how a colleague would say it —
+ * never a verb phrase claiming a deliberation nothing performed.
+ */
+export const LENS_PHRASE: Record<string, string> = {
+  audit: 'an audit',
+  improve: 'a request to strengthen the argument',
+  risk: 'a risk question',
+  strategy: 'a strategy question',
+  compare: 'a comparison',
+};
 
 /**
  * Append a phase unless it is the one already active. A repeat of the same

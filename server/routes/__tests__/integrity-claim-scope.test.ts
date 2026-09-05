@@ -21,7 +21,7 @@
  * scope, and pin that the scope cannot quietly go missing.
  */
 import { describe, it, expect } from 'vitest';
-import { verifyIntegrityChain } from '../concept2cure';
+import { verifyIntegrityChain } from '../c2c/shared';
 import crypto from 'node:crypto';
 
 const sha = (s: string) => crypto.createHash('sha256').update(s).digest('hex');
@@ -87,7 +87,7 @@ describe('verifyIntegrityChain — states what it verified', () => {
 describe('the routes that publish this verdict carry its scope', () => {
   const src = () =>
     require('node:fs').readFileSync(
-      require('node:path').join(__dirname, '../concept2cure.ts'),
+      require('node:path').join(__dirname, '../c2c/artifacts.ts'),
       'utf8',
     ) as string;
 

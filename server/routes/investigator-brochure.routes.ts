@@ -125,7 +125,9 @@ router.get('/', async (req: Request, res: Response) => {
           productName: null,
           completeness: completenessOf(data),
           provisioned: false,
-          source: 'nonclinical_studies',
+          // The failed read does not say which store was missing; naming one
+          // here (it named nonclinical_studies) was a guess.
+          source: 'none',
           pendingStore: true,
         },
       });

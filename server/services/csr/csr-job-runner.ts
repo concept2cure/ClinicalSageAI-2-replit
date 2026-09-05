@@ -35,6 +35,7 @@ import {
   ICH_E3_STRUCTURE,
   draftCSRSectionWithProvenance,
   flattenICHE3Sections,
+  hasUnresolvedPlaceholders,
   type CSRBuildRequest,
   type CSRSection,
 } from '../csr-builder';
@@ -335,7 +336,57 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         .where(eq(csrBuildJobs.id, jobId));
     }
 
-    // 6. Success
+    // 6. Placeholder gate (resume-safe). A section whose AI draft threw falls
+    // back to bracketed template prose that still contains unresolved fields —
+    // e.g. §13's "the benefit-risk profile … is considered [favorable/
+    // unfavorable]". Marking the job 'complete' would let the submission
+    // orchestrator assemble that literal placeholder into the filing package as
+    // a finished CSR section. The legacy synchronous path already gates on this
+    // via computeBuildCompleteness/hasUnresolvedPlaceholders; the async runner
+    // (the path production actually uses) did not. Re-read EVERY persisted
+    // section for this job — not just the ones drafted this attempt — so a
+    // placeholder left by a prior run is caught on resume too.
+    const persistedOutputs = await d
+      .select({
+        sectionNumber: csrSectionOutputs.sectionNumber,
+        content: csrSectionOutputs.content,
+      })
+      .from(csrSectionOutputs)
+      .where(eq(csrSectionOutputs.jobId, job.id));
+    const placeholderSections = persistedOutputs
+      .filter(r => hasUnresolvedPlaceholders(r.content))
+      .map(r => r.sectionNumber)
+      .sort();
+
+    if (placeholderSections.length > 0) {
+      // Fail closed — a CSR with unresolved template placeholders is NOT
+      // submission-ready. Surface it as failed with the exact sections so the
+      // orchestrator holds the package and a reviewer can re-draft them, rather
+      // than shipping placeholder prose under a 'complete' status.
+      console.warn(
+        `[csr-job-runner] Job ${jobId} has unresolved placeholders in section(s) ${placeholderSections.join(
+          ', ',
+        )}; marking failed instead of complete`,
+      );
+      await d
+        .update(csrBuildJobs)
+        .set({
+          status: 'failed',
+          updatedAt: new Date(),
+          error: {
+            reason: 'unresolved_placeholders',
+            sections: placeholderSections,
+            message: `CSR section(s) ${placeholderSections.join(
+              ', ',
+            )} still contain unresolved template placeholders (AI drafting fell back to template text); these sections are not submission-ready.`,
+            at: new Date().toISOString(),
+          },
+        })
+        .where(eq(csrBuildJobs.id, jobId));
+      return;
+    }
+
+    // 6b. Success — every persisted section is placeholder-free.
     await d
       .update(csrBuildJobs)
       .set({

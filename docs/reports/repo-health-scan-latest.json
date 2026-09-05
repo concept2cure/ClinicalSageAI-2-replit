@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T10:53:23.597Z",
+  "generatedAt": "2026-09-05T12:28:09.592Z",
   "git": {
-    "sha": "7b24422c7501c329e8e6a372238b75107866e3a0",
+    "sha": "a62f546de3165fa7fba55171dcc0a828f7f6c53e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,11 +12,11 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 208,
+    "duplicateBasenames": 209,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 39,
-    "largeFilesByLines": 91
+    "largeFilesByBytes": 40,
+    "largeFilesByLines": 93
   },
   "findings": {
     "duplicateBasenames": [
@@ -854,6 +854,14 @@
         "paths": [
           "server/routes/api-keys.ts",
           "shared/schema/api-keys.ts"
+        ]
+      },
+      {
+        "basename": "artifacts",
+        "count": 2,
+        "paths": [
+          "server/routes/c2c/artifacts.ts",
+          "ui_kits/ectd_coauthor/artifacts.js"
         ]
       },
       {
@@ -1973,15 +1981,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1003171
+        "bytes": 1003926
       },
       {
         "file": "shared/schema.ts",
         "bytes": 855958
-      },
-      {
-        "file": "server/routes/concept2cure.ts",
-        "bytes": 483387
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -1997,7 +2001,11 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 233636
+        "bytes": 233267
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "bytes": 228090
       },
       {
         "file": "server/statistics-service.ts",
@@ -2010,6 +2018,10 @@
       {
         "file": "server/routes/ana-features.ts",
         "bytes": 179440
+      },
+      {
+        "file": "server/routes/c2c/artifacts.ts",
+        "bytes": 174925
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2125,7 +2137,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "bytes": 103017
+        "bytes": 103351
       }
     ],
     "largeFilesByLines": [
@@ -2135,11 +2147,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19448
-      },
-      {
-        "file": "server/routes/concept2cure.ts",
-        "lines": 12848
+        "lines": 19457
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2148,6 +2156,10 @@
       {
         "file": "server/statistics-service.ts",
         "lines": 6920
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "lines": 6145
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2163,7 +2175,11 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 5104
+        "lines": 5095
+      },
+      {
+        "file": "server/routes/c2c/artifacts.ts",
+        "lines": 4571
       },
       {
         "file": "server/storage.ts",
@@ -2214,12 +2230,12 @@
         "lines": 2759
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2699
+        "file": "server/routes/submission-ops.ts",
+        "lines": 2700
       },
       {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2696
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 2699
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2410,8 +2426,12 @@
         "lines": 1813
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "file": "server/routes/c2c/ai-editing.ts",
         "lines": 1809
+      },
+      {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1799
       },
       {
         "file": "ui_kits/home/Projects.jsx",
@@ -2499,13 +2519,13 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 402,
-      "largeByBytes": 29,
-      "largeByLines": 75
+      "duplicateGroups": 403,
+      "largeByBytes": 30,
+      "largeByLines": 77
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 154,
+      "duplicateGroups": 155,
       "largeByBytes": 2,
       "largeByLines": 7
     },

@@ -26,6 +26,8 @@ const SCHEMA = path.join(ROOT, 'shared/schema.ts');
 const BACKEND = path.join(ROOT, 'server/routes/concept2cure.ts');
 // The export family (download included) moved to its own router (L53, slice 7).
 const EXPORTS = path.join(ROOT, 'server/routes/c2c/exports.ts');
+// The artifact domain (status, signatures, snapshots) moved to its own router (L53, slice 8).
+const ARTIFACTS = path.join(ROOT, 'server/routes/c2c/artifacts.ts');
 // GovernedDocumentPanel.tsx was removed with the disconnected legacy island in
 // the design-system port (CLAUDE.md). The frontend snapshot/attestation
 // describes below (10H–10K) are skipped until the Phase 3 workbench reintroduces
@@ -104,7 +106,7 @@ describe('10A — Schema: concept2cureSubmissionSnapshots table', () => {
 // ── 10B: Backend — attestation validation on approve/lock ────────────────────
 
 describe('10B — Backend: attestation validation', () => {
-  const src = readSrc(BACKEND);
+  const src = readSrc(ARTIFACTS);
 
   it('extracts attestation from request body', () => {
     // Destructured: const { status, reason, attestation } = req.body;
@@ -126,7 +128,7 @@ describe('10B — Backend: attestation validation', () => {
 // ── 10C: Backend — signature creation on approve/lock ────────────────────────
 
 describe('10C — Backend: signature creation on approve/lock', () => {
-  const src = readSrc(BACKEND);
+  const src = readSrc(ARTIFACTS);
 
   it('creates signature record on approve/lock transitions', () => {
     // The status PUT handler should insert into concept2cureSignatures
@@ -152,7 +154,7 @@ describe('10C — Backend: signature creation on approve/lock', () => {
 // ── 10D: Backend — snapshot creation on lock ─────────────────────────────────
 
 describe('10D — Backend: snapshot creation on lock/publish', () => {
-  const src = readSrc(BACKEND);
+  const src = readSrc(ARTIFACTS);
 
   it('inserts into concept2cureSubmissionSnapshots on lock', () => {
     expect(src).toMatch(
@@ -177,7 +179,7 @@ describe('10D — Backend: snapshot creation on lock/publish', () => {
 // ── 10E: Backend — GET /snapshots endpoint ───────────────────────────────────
 
 describe('10E — Backend: GET /snapshots endpoint', () => {
-  const src = readSrc(BACKEND);
+  const src = readSrc(ARTIFACTS);
 
   it('defines GET route for snapshots', () => {
     expect(src).toMatch(/get.*artifacts.*snapshots|snapshots.*get/i);
@@ -215,7 +217,7 @@ describe('10F — Backend: export role check on download', () => {
 // ── 10G: Backend — signature role check ──────────────────────────────────────
 
 describe('10G — Backend: signature role check', () => {
-  const src = readSrc(BACKEND);
+  const src = readSrc(ARTIFACTS);
 
   it('restricts signature creation to authorized roles', () => {
     // POST signatures should check for admin/approver/reviewer

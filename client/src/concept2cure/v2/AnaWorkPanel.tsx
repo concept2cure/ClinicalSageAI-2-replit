@@ -86,8 +86,13 @@ export interface AnaWorkPanelProps {
    * the panel without a per-turn record.
    */
   announce?: boolean;
-  /** Hosts pass their own collapse control; the panel renders the button. */
-  onClose?: () => void;
+  /**
+   * Leave drafts out of Outputs. The conversation surface renders every draft
+   * as an artifact card directly beneath the dock, and a title that appears
+   * twice in one column is one more thing a reviewer has to read for no new
+   * information. Other hosts have no artifact list and keep the rows.
+   */
+  omitDrafts?: boolean;
 }
 
 interface WorkModel {
@@ -105,7 +110,12 @@ interface WorkModel {
 }
 
 /** Every fact the sections render, derived once from the turns. */
-function useWorkModel(messages: AnaChatMessage[], streaming: boolean, runStatus: RunControlStatus): WorkModel {
+function useWorkModel(
+  messages: AnaChatMessage[],
+  streaming: boolean,
+  runStatus: RunControlStatus,
+  omitDrafts: boolean,
+): WorkModel {
   /* Everything that depends only on the turns is derived once per change to
      them. The clock re-renders the panel every second while live and every
      streamed token re-renders it too; walking every message's outputs and
@@ -125,9 +135,9 @@ function useWorkModel(messages: AnaChatMessage[], streaming: boolean, runStatus:
       phases: turn?.progress ?? [],
       calls,
       tally: tallyTools(calls),
-      outputs: collectOutputs(messages),
+      outputs: collectOutputs(messages, { drafts: !omitDrafts }),
     };
-  }, [messages]);
+  }, [messages, omitDrafts]);
   const { turn, phases } = derived;
   const live = Boolean(streaming && turn?.streaming);
   const now = useNow(live);
@@ -141,7 +151,13 @@ function useWorkModel(messages: AnaChatMessage[], streaming: boolean, runStatus:
   };
 }
 
-function PanelHeader({ stateLine, pulsing, onClose }: { stateLine: string; pulsing: boolean; onClose?: () => void }) {
+/**
+ * The title bar. It carries no close control of its own: every host already
+ * has one show/hide toggle for the dock, and a second control for the same
+ * state — a few pixels below the first, with the same icon — was two
+ * affordances for one non-primary action. The host's toggle is the one.
+ */
+function PanelHeader({ stateLine, pulsing }: { stateLine: string; pulsing: boolean }) {
   return (
     <div className="ana-work-hdr">
       {/* A real heading: the dock's five sections are h3s, so the dock itself
@@ -156,11 +172,6 @@ function PanelHeader({ stateLine, pulsing, onClose }: { stateLine: string; pulsi
           {pulsing && <span className="ana-work-pulse" aria-hidden="true">{I.dot}</span>}
           {stateLine}
         </span>
-      )}
-      {onClose && (
-        <button type="button" className="ana-work-x" onClick={onClose} aria-label="Hide AnA at work">
-          {I.close}
-        </button>
       )}
     </div>
   );
@@ -191,7 +202,11 @@ function PanelSections({
   const [open, setOpen] = React.useState<Record<SectionKey, boolean>>(() => ({
     progress: true,
     queue: true,
-    tools: true,
+    /* Closed by default: its rows are the Work queue's rows again in more
+       forensic form (durations, raw inputs) — detail that belongs behind a
+       click, like Context — and with both open a multi-round turn outgrew
+       the rail and pushed the conversation below the fold. */
+    tools: false,
     outputs: outputs.length > 0,
     context: false,
   }));
@@ -259,13 +274,13 @@ export function AnaWorkPanel({
   context,
   queue,
   announce = false,
-  onClose,
+  omitDrafts = false,
 }: AnaWorkPanelProps) {
-  const m = useWorkModel(messages, streaming, runStatus);
+  const m = useWorkModel(messages, streaming, runStatus, omitDrafts);
   return (
     <div className="ana-work" data-live={m.live ? 'true' : 'false'}>
       {announce && <span aria-live="polite" style={SR_ONLY_STYLE}>{m.spoken}</span>}
-      <PanelHeader stateLine={m.stateLine} pulsing={m.live && runStatus !== 'paused'} onClose={onClose} />
+      <PanelHeader stateLine={m.stateLine} pulsing={m.live && runStatus !== 'paused'} />
       {!m.turn && (
         <div className="ana-work-idle">
           AnA has not started a turn in this conversation. Ask something and her progress, steps and
