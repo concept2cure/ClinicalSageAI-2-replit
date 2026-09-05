@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T13:09:37.257Z",
+  "generatedAt": "2026-09-05T13:11:22.690Z",
   "git": {
-    "sha": "a028e11fcc56f4500fca107b9ccee1110e140832",
+    "sha": "c2910bf95c404e82551d4e188324bd0af13440fe",
     "branch": "ana-w2"
   },
   "thresholds": {
@@ -2438,16 +2438,16 @@
         "lines": 1795
       },
       {
-        "file": "server/routes/510k-estar-routes.ts",
-        "lines": 1794
-      },
-      {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "lines": 1794
       },
       {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1785
+      },
+      {
+        "file": "server/routes/510k-estar-routes.ts",
+        "lines": 1775
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
