@@ -24,6 +24,8 @@ import path from 'path';
 const ROOT = path.resolve(__dirname, '..');
 const SCHEMA = path.join(ROOT, 'shared/schema.ts');
 const BACKEND = path.join(ROOT, 'server/routes/concept2cure.ts');
+// The export family (download included) moved to its own router (L53, slice 7).
+const EXPORTS = path.join(ROOT, 'server/routes/c2c/exports.ts');
 // GovernedDocumentPanel.tsx was removed with the disconnected legacy island in
 // the design-system port (CLAUDE.md). The frontend snapshot/attestation
 // describes below (10H–10K) are skipped until the Phase 3 workbench reintroduces
@@ -198,7 +200,7 @@ describe('10E — Backend: GET /snapshots endpoint', () => {
 // ── 10F: Backend — export role check ─────────────────────────────────────────
 
 describe('10F — Backend: export role check on download', () => {
-  const src = readSrc(BACKEND);
+  const src = readSrc(EXPORTS);
 
   it('checks role on document download', () => {
     // Download handler should check user role

@@ -374,7 +374,7 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
     if (nanoBanana) {
       try {
         const { isConfigured, generatePresentation } = await import(
-          '../services/nanoBananaService'
+          '../../services/nanoBananaService'
         );
         if (isConfigured()) {
           const result = await generatePresentation({
