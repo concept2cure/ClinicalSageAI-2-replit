@@ -50,6 +50,7 @@ async function getSchema() {
   return _schema;
 }
 
+import { mapArtifactToSection } from '../ectd/package-content-change';
 import type {
   GovernedStatisticalDocument,
   JudgmentResult,
@@ -304,7 +305,15 @@ export class WorkflowIntegrator {
   }
 
   /**
-   * Attach an artifact to a dossier section via c2c_artifact_section_map.
+   * Attach an artifact to a dossier section.
+   *
+   * Goes through the canonical governed mapping operation
+   * (services/ectd/package-content-change#mapArtifactToSection), which is what
+   * the HTTP mapping route uses. This method used to insert the
+   * c2c_artifact_section_map row itself: no audit row for a regulated mapping,
+   * no tenant check on the section, no content-revision bump and no
+   * stale-bundle clear, so a package could ship a zip that predated the very
+   * document the platform had attached to it.
    */
   private async attachToDossier(
     artifactDbId: number,
@@ -313,35 +322,43 @@ export class WorkflowIntegrator {
     userId: number
   ): Promise<WorkflowActionResult> {
     try {
-      const db = await getDb();
-      const schema = await getSchema();
-      if (!db || !schema) {
+      const outcome = await mapArtifactToSection({
+        orgId: organizationId,
+        artifactDbId,
+        sectionDbId: dossierSectionId,
+        actorUserId: userId,
+        reason: `Statistical summary attached to dossier section ${dossierSectionId} by the biostatistics workflow`,
+        documentFamily: 'statistical_summary',
+        ownerUserId: userId,
+        ownerFunction: 'biostatistics',
+        ownershipType: 'sponsor',
+        surface: 'ana-biostats-workflow',
+      });
+
+      if (!outcome.ok) {
         return {
           action: 'attach_to_dossier',
-          success: true,
+          success: false,
           dossierSectionId,
-          message: `Dossier attachment prepared (no DB) for section ${dossierSectionId}`,
+          message: `Dossier attachment refused: ${outcome.message}`,
         };
       }
 
-      const [mapping] = await db
-        .insert(schema.c2cArtifactSectionMap)
-        .values({
-          orgId: organizationId,
-          artifactId: artifactDbId,
-          sectionDbId: dossierSectionId,
-          documentFamily: 'statistical_summary',
-          ownerUserId: userId,
-          ownerFunction: 'biostatistics',
-          ownershipType: 'sponsor',
-        } as any)
-        .returning();
+      // A bundle assembled before this attachment no longer reflects the
+      // package; the operator is told rather than left to find out at transmit.
+      const notes = [
+        outcome.duplicate ? 'already attached' : null,
+        outcome.staleBundleCleared ? 'a previously assembled bundle was cleared and must be assembled again' : null,
+        outcome.ledgerWriteFailed ? 'its governed-action ledger entry could not be written' : null,
+      ].filter(Boolean);
 
       return {
         action: 'attach_to_dossier',
-        success: !!mapping,
+        success: true,
         dossierSectionId,
-        message: `Artifact attached to dossier section ${dossierSectionId}`,
+        message:
+          `Artifact attached to dossier section ${dossierSectionId}` +
+          (notes.length > 0 ? ` (${notes.join('; ')})` : ''),
       };
     } catch (error: any) {
       logger.error('Dossier attachment failed', { err: error instanceof Error ? error.message : String(error) });
