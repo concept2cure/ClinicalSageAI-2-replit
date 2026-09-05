@@ -68,6 +68,37 @@ are. Both documents have been corrected.
 is still blocked, and reporting that it is blocked remains the correct and complete
 action for it.
 
+### Audited, verified, and deliberately NOT changed (2026-09-05)
+
+Two read-only audits of the eSTAR and eCTD chains produced 23 findings; 19 are
+fixed on `concept2cure-v2` with revert-proven tests. These four were verified real
+and left alone because each needs a decision or a vocabulary no agent should
+guess:
+
+1. **Non-FDA backbones carry the application type as the submission type.**
+   `core-to-packager.ts` sets `submissionType: submission.applicationType` and the
+   EMA `<procedure-type>`/`<submission-unit>`, PMDA `<application-type>`/
+   `<submission-type>` and Health Canada `<regulatory-activity-type>`/
+   `<submission-type>` elements read it directly, so an EU variation sequence
+   ships `<submission-unit>maa</submission-unit>`. The FDA block already derives
+   its type from the sequence. Fixing the others means a per-agency token
+   vocabulary (EU submission-unit values are `initial`, `response`,
+   `additional-info`, `closing`, …); wrong tokens are worse than the current
+   ones. Needs the regional vocabularies confirmed against each agency's spec.
+2. **Lifecycle diff compares a pre-PDF/A md5 to a post-PDF/A md5.** With
+   Ghostscript present, an unchanged leaf never matches its prior and is
+   re-shipped as `replace`. Safe direction (nothing changed is ever missed), but
+   every follow-up re-supersedes unchanged content. Fixing it means hashing the
+   converted bytes before the diff, i.e. converting before packaging.
+3. **Applicant vs declarant on a multi-client tenant.** `estar_registrations`
+   is one row per organisation; `applicantCompanyName` is per client workspace.
+   A consultancy filing for two clients puts the org-level Declaration of
+   Conformity name on both. Whether the registration should move to the
+   workspace is a data-model decision.
+4. **Applicant name falls back to the tenant organisation's name** when a program
+   has no workspace anchor. Correct for a single-company tenant, wrong for a
+   consultancy, and unknowable at runtime. Same decision as 3.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
