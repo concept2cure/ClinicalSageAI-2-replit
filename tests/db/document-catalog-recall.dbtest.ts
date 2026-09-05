@@ -35,6 +35,7 @@ import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
 
 process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = 'true';
+process.env.ANA_VAULT_CHUNKING_FORCE_ON = 'true';
 
 const PROBE_PREFIX = 'dbtest-recall ';
 const PROBE_CODE = 'DBTEST-RECALL-DOC';
@@ -381,5 +382,92 @@ describe('chat-upload discovery', () => {
     const v2Row = listed.chatUploads.find((u: { sourceId: number }) => u.sourceId === v2.source.id);
     expect(v2Row.fileName).toBe('protocol-draft-v2.docx');
     expect(listed.message).toContain('chat-uploaded');
+  });
+});
+
+describe('vault passage retrieval — the reader finally has a writer', () => {
+  it('an ingested document is chunked, embedded, ledgered, and retrievable through ragRouter', async () => {
+    const BODY = Array.from({ length: 12 }, (_, i) =>
+      `Section ${i}. The dissolution profile of batch 44-B met Q=80 in 30 minutes at pH 6.8. ` +
+      'Filler sentence to give the chunker real paragraphs to cut. '.repeat(20),
+    ).join('\n\n');
+    const res = await request(app)
+      .post('/api/vault/ingest')
+      .field('programId', programId)
+      .field('documentCode', `${PROBE_CODE}-DISSO`)
+      .field('documentTitle', 'Dissolution study batch 44-B')
+      .field('documentType', 'OTHER')
+      .attach('file', Buffer.from(BODY, 'utf8'), 'dissolution-44b.txt');
+    expect(res.status).toBe(201);
+    const docId = res.body.document.id;
+
+    // The chunk store the RAG reader queries now actually holds this document.
+    const chunks = await owner.query(
+      `SELECT COUNT(*)::int AS n, COUNT(embedding)::int AS embedded,
+              MIN(char_start) AS first_start, MAX(char_end) AS last_end
+         FROM vault.document_chunks WHERE document_id = $1`,
+      [docId],
+    );
+    expect(chunks.rows[0].n).toBeGreaterThan(1);
+    expect(chunks.rows[0].embedded).toBe(chunks.rows[0].n);
+    expect(chunks.rows[0].first_start).toBe(0);
+
+    // The ledger says so — and the spans cover the exact extracted length
+    // (extraction trims, so the catalog's char_count is the ground truth).
+    const ledger = await owner.query(
+      `SELECT chunk_status, chunk_count, chunk_error, char_count FROM vault.document_catalog WHERE document_id = $1`,
+      [docId],
+    );
+    expect(chunks.rows[0].last_end).toBe(ledger.rows[0].char_count);
+    expect(ledger.rows[0]).toMatchObject({ chunk_status: 'chunked', chunk_count: chunks.rows[0].n, chunk_error: null });
+
+    // End to end: the vault corpus returns the passage through the single router.
+    const { ragRetrieve } = await import('../../server/services/ragRouter');
+    const ctx = await inTenantScope(() =>
+      ragRetrieve({
+        query: 'dissolution profile batch 44-B',
+        organizationUuid: orgUuid,
+        strategy: 'basic',
+        useReranking: false,
+        useMmr: false,
+        useCompression: false,
+        useSelfQuery: false,
+        useContextExpansion: false,
+        threshold: 0.2,
+        limit: 3,
+      }),
+    );
+    expect(ctx.documents.length).toBeGreaterThan(0);
+    expect(ctx.documents[0].content).toContain('dissolution profile');
+  });
+
+  it('an embedding failure leaves ZERO chunks and a chunk_failed ledger row — never a partial index', async () => {
+    const BODY =
+      'Opening section that embeds fine. '.repeat(50) +
+      '\n\nFAIL_EMBEDDING poison paragraph that the stub refuses. ' +
+      'More text so several chunks exist. '.repeat(100);
+    const res = await request(app)
+      .post('/api/vault/ingest')
+      .field('programId', programId)
+      .field('documentCode', `${PROBE_CODE}-POISON`)
+      .field('documentTitle', 'Poison embed doc')
+      .field('documentType', 'OTHER')
+      .attach('file', Buffer.from(BODY, 'utf8'), 'poison.txt');
+    expect(res.status).toBe(201); // the upload is admitted…
+
+    const docId = res.body.document.id;
+    const chunks = await owner.query(
+      `SELECT COUNT(*)::int AS n FROM vault.document_chunks WHERE document_id = $1`,
+      [docId],
+    );
+    expect(chunks.rows[0].n).toBe(0); // …but nothing half-indexed exists…
+
+    const ledger = await owner.query(
+      `SELECT chunk_status, chunk_error FROM vault.document_catalog WHERE document_id = $1`,
+      [docId],
+    );
+    // …and the ledger states the failure with its reason.
+    expect(ledger.rows[0].chunk_status).toBe('chunk_failed');
+    expect(ledger.rows[0].chunk_error).toMatch(/Embedding failed/);
   });
 });

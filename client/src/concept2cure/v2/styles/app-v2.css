@@ -1845,10 +1845,6 @@
 .c2c-v2 .ana-work-elapsed{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
 .c2c-v2 .ana-work-pulse{display:inline-flex;color:var(--accent-200);animation:ana-activity-pulse 1600ms ease-out infinite;}
 .c2c-v2 .ana-work-pulse svg{font-size:11px;}
-.c2c-v2 .ana-work-x{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border:0;border-radius:var(--radius-sm);background:none;color:var(--text-400);cursor:pointer;transition:color 200ms ease-out,background 200ms ease-out;}
-.c2c-v2 .ana-work-x:hover{color:var(--text-100);background:var(--bg-200);}
-.c2c-v2 .ana-work-x:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
-.c2c-v2 .ana-work-x svg{font-size:12px;}
 .c2c-v2 .ana-work-idle{padding:12px;font-size:11.5px;line-height:1.55;color:var(--text-300);}
 .c2c-v2 .ana-work-sec{border-bottom:1px solid var(--border);}
 .c2c-v2 .ana-work-sec:last-child{border-bottom:0;}
@@ -1921,7 +1917,7 @@
 .c2c-v2 .ana-work-v{color:var(--text-100);min-width:0;overflow-wrap:anywhere;}
 @media (prefers-reduced-motion:reduce){
   .c2c-v2 .ana-work-pulse{animation:none;opacity:1;}
-  .c2c-v2 .ana-work-x,.c2c-v2 .ana-work-sec-h,.c2c-v2 .ana-work-link,.c2c-v2 .ana-work-toggle{transition:none;}
+  .c2c-v2 .ana-work-sec-h,.c2c-v2 .ana-work-link,.c2c-v2 .ana-work-toggle{transition:none;}
 }
 
 /* ── Page header ── */

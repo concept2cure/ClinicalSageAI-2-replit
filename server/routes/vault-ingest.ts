@@ -288,6 +288,11 @@ export default function createVaultIngestRoutes(): Router {
     const { isDocumentCatalogEnabled, recordExtractionOutcome, buildExtractionOutcome } =
       await import('../services/vault/document-catalog.service.js');
     const catalogEnabled = await runScoped(() => isDocumentCatalogEnabled(orgId));
+    // Passage chunking rides on the catalog (its outcome ledger lives there).
+    const { isVaultChunkingEnabled, chunkDocumentForIngest } =
+      await import('../services/vault/document-chunking.service.js');
+    const chunkingEnabled =
+      catalogEnabled && (await runScoped(() => isVaultChunkingEnabled(orgId)));
 
     /* ── Dossier filing ──────────────────────────────────────────────────────
        Every ingested document gets a PLACEMENT against the program's vault
@@ -525,6 +530,18 @@ export default function createVaultIngestRoutes(): Router {
       });
 
       await client.query('COMMIT');
+
+      /* Passage index, post-commit: chunk + embed the extracted text into
+         vault.document_chunks — the store the RAG vault corpus reads — and
+         record the outcome on the catalog's chunking ledger. Deliberately
+         OUTSIDE the transaction (embedding is network work; the document's
+         admission must not hinge on it) and awaited (the ledger row must be
+         truthful by the time the response reports the ingest). A failure is
+         recorded as chunk_failed with its reason, never thrown. */
+      if (chunkingEnabled && extractedText) {
+        const textForChunks: string = extractedText;
+        await runScoped(() => chunkDocumentForIngest(String(doc.id), textForChunks));
+      }
 
       logger.info('Vault document ingested', {
         id: doc.id,

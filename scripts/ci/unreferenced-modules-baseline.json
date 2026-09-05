@@ -101,7 +101,6 @@
     "server/utils/templateRegistry.js",
     "server/utils/validateZip.js",
     "server/validation/deviceValidation.js",
-    "server/workers/enhanced-ingestion-pipeline.ts",
-    "server/workers/vectorization-worker.ts"
+    "server/workers/enhanced-ingestion-pipeline.ts"
   ]
 }

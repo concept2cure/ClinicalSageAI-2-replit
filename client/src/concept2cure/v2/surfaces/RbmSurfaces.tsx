@@ -317,16 +317,10 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work }: {
   const [draft, setDraft] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
   /* The same dock the shell rail and the authoring panes mount, under the
-     one shared show/hide choice; focus returns to the toggle before the dock
-     unmounts. */
+     one shared show/hide choice; the "At work" pill is its one control. */
   const [workDockOpen, setWorkDockOpen] = useWorkDockVisible();
   const showWork = Boolean(work) && workDockOpen;
   const anaWorkQueue = useAgentActivity(showWork, work?.streaming);
-  const workToggleRef = useRef<HTMLButtonElement>(null);
-  const hideWorkDock = () => {
-    workToggleRef.current?.focus();
-    setWorkDockOpen(false);
-  };
   useEffect(() => { if (endRef.current) endRef.current.scrollTop = endRef.current.scrollHeight; }, [msgs]);
   const ask = (text: string) => { if (!text) return; onAsk(text); setDraft(''); };
   return (
@@ -337,14 +331,13 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work }: {
           {work && (
             <button
               type="button"
-              ref={workToggleRef}
               className="ana-work-toggle"
               aria-pressed={workDockOpen}
               aria-label={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
               title={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
               onClick={() => setWorkDockOpen(!workDockOpen)}
             >
-              {I.activity} At work
+              {I.activity} AnA at work
             </button>
           )}
           <button className="tb-btn" onClick={onClose} title="Collapse">{I.panelRight}</button>
@@ -359,7 +352,6 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work }: {
             pendingSteers={work.pendingSteers}
             queue={anaWorkQueue}
             context={{ project: shellProgramName(), module: 'Risk-based monitoring', surface: nav.label }}
-            onClose={hideWorkDock}
           />
         </div>
       )}

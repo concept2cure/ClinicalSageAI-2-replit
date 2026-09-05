@@ -28,6 +28,7 @@ vi.mock('../C2CForm', () => ({
   // was mounted, so the record-identifiers / assemble / transmit wiring can each
   // be driven end to end.
   C2CForm: ({ config, onSubmit }: any) => {
+    (globalThis as any).__c2cFormConfig = config; // the mounted form, for picker assertions
     const values =
       config.title === 'Record regulatory identifiers'
         ? { packageId: '77', applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc', reason: 'Recording the IND number assigned by CDER' }
@@ -412,6 +413,40 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     const toast = await screen.findByText(/The governance ledger could not be written/);
     expect(toast.closest('[role="alert"]')).not.toBeNull();
     expect(screen.queryByRole('region', { name: 'Packager refusal' })).toBeNull();
+  });
+
+  it('offers the org’s packages as ONE picker across transmit, assemble and identifiers, and falls back to the numeric id — saying so — when the list cannot be loaded', async () => {
+    const PACKAGES = [{ id: 77, packageId: 'pkg_77', title: 'IND 123456 initial', status: 'locked', packageFamily: 'ind' }];
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'GET' && url === '/api/submission-ops/packages') return env(PACKAGES);
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    for (const button of [/Assemble bundle/, /Record identifiers/, /^Transmit$/]) {
+      fireEvent.click(screen.getByRole('button', { name: button }));
+      const field = (globalThis as any).__c2cFormConfig.fields.find((f: any) => f.key === 'packageId');
+      expect(field.type, String(button)).toBe('select');
+      expect(field.options).toEqual([{ value: '77', label: '#77 · IND 123456 initial · locked' }]);
+      fireEvent.keyDown(document, { key: 'Escape' }); // the mock ignores it; the next click re-mounts a form
+    }
+    cleanup();
+
+    // The list fails: the forms fall back to the numeric id and say the list could not be loaded.
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'GET' && url === '/api/submission-ops/packages') return { ok: false, status: 500, json: async () => ({ error: 'db down' }) } as Response;
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    const fallback = (globalThis as any).__c2cFormConfig.fields.find((f: any) => f.key === 'packageId');
+    expect(fallback.type).toBe('number');
+    expect(fallback.desc).toMatch(/could not be loaded; enter the numeric package id/);
   });
 
   it('polls the live gateway status for a transmittal', async () => {

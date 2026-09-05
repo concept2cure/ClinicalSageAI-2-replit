@@ -143,9 +143,14 @@ describe('AnaWorkPanel — the work is visible while it happens', () => {
     vi.useFakeTimers();
     vi.setSystemTime(T0 + 5_000);
     render(<AnaWorkPanel messages={liveTurn()} streaming />);
+    // Tools starts closed — its rows restate the Work queue in forensic
+    // form — so the section is opened first, like a person would.
+    const tools = screen.getByRole('button', { name: /^Tools/ });
+    expect(tools.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(tools);
     // Summary line built from the real labels.
     expect(
-      screen.getByText('searching the literature, sample size — biostatistics engine · 2 tools'),
+      screen.getByText('Searching the literature, sample size — biostatistics engine · 2 tools'),
     ).toBeTruthy();
     expect(screen.getByText('2.3s')).toBeTruthy();
     // The inputs are behind a disclosure, never inline: mounted (so the
@@ -235,10 +240,22 @@ describe('AnaWorkPanel — outputs and context', () => {
     expect(screen.getByText('1 governed action waiting for sign-off')).toBeTruthy();
   });
 
+  it('leaves draft rows to a host that lists them as artifact cards', () => {
+    const msgs = liveTurn({
+      streaming: false,
+      completedAt: T0 + 5_000,
+      generatedDraft: { title: 'Clinical Overview 2.5', content: '#', artifactId: 'art_1', version: 2 },
+      executedActions: [{ label: 'Validated the draft', actionType: 'run_validation', executed: true }],
+    });
+    render(<AnaWorkPanel messages={msgs} streaming={false} omitDrafts />);
+    expect(screen.queryByText('Drafted Clinical Overview 2.5')).toBeNull();
+    expect(screen.getByText('Validated the draft')).toBeTruthy();
+  });
+
   it('shows the grounding context it was given and nothing it was not', () => {
     render(
       <AnaWorkPanel
-        messages={liveTurn({ effortUsed: 'thorough' })}
+        messages={liveTurn({ effortUsed: 'thorough', detectedLens: 'risk' })}
         streaming
         context={{ project: 'ONC-221 · Phase II', module: 'CMC', engine: 'Balanced' }}
       />,
@@ -247,6 +264,9 @@ describe('AnaWorkPanel — outputs and context', () => {
     expect(screen.getByText('ONC-221 · Phase II')).toBeTruthy();
     expect(screen.getByText('CMC')).toBeTruthy();
     expect(screen.getByText('thorough')).toBeTruthy();
+    // The lens is a classifier code on the wire; the row says it as a phrase.
+    expect(screen.getByText('a risk question')).toBeTruthy();
+    expect(screen.queryByText('risk')).toBeNull();
     expect(screen.queryByText('Surface')).toBeNull();
   });
 

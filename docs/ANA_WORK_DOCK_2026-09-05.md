@@ -32,14 +32,19 @@ One component, five hosts. Nothing is duplicated between them.
 |---|---|---|
 | Shell rail | `client/src/concept2cure/v2/Shell.tsx` (`AnaRail`, `work` prop from `V2App`) | Rail header `tb-btn` |
 | Conversation surface | `client/src/concept2cure/v2/surfaces/ConversationThread.tsx` (`.ct-side`, above the artifacts) | Side-column toggle |
-| Document authoring | `client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx` (above the `role="log"` region, never inside it) | "At work" pill |
-| eCTD co-author | `client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx` | "At work" pill |
-| RBM co-monitor | `client/src/concept2cure/v2/surfaces/RbmSurfaces.tsx` (`RbmAnaDock`, `work` prop from `Rbm.tsx`) | "At work" pill |
+| Document authoring | `client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx` (above the `role="log"` region, never inside it) | "AnA at work" pill |
+| eCTD co-author | `client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx` | "AnA at work" pill |
+| RBM co-monitor | `client/src/concept2cure/v2/surfaces/RbmSurfaces.tsx` (`RbmAnaDock`, `work` prop from `Rbm.tsx`) | "AnA at work" pill |
 
 The show/hide choice is one per browser, shared by every host
 (`client/src/concept2cure/v2/workDock.ts`, key `c2c-v2-ana-work-dock`).
-Shown by default. Each host hands keyboard focus to its toggle before the
-dock unmounts.
+Shown by default. The host's toggle is the dock's ONE control: the dock
+carries no close of its own, so nothing that has focus ever unmounts itself.
+Progress and Work queue open by default; Tools (the same steps in forensic
+form, with durations and raw inputs), Outputs (until the first output lands)
+and Context start closed, so the dock never outgrows the rail. The
+conversation surface passes `omitDrafts`, because it lists every draft as an
+artifact card directly beneath the dock.
 
 ## Data flow
 
@@ -102,6 +107,8 @@ These are tested, not aspirational. Each line names the test that pins it.
   always resolves. The same rule now applies to the transcript record.
 - `aria-current="step"` marks the phase in flight.
 - The inputs disclosure is a keyboard-reachable `role="region"` with a name.
+- The dock has no close control of its own; the host toggle stays mounted, so
+  keyboard focus never falls to the page body.
 - One polite live region, opt-in (`announce`), which speaks the active phase
   and the settled outcome and never the ticking clock. It says the same
   placeholder the list shows before the first phase event.

@@ -912,7 +912,10 @@ export class AdvancedRAGPipeline {
           -- (1 - sim) filter as a distance bound: 1 - dist > t  <=>  dist < 1 - t.
           -- Uses the same bare <=> operator as ORDER BY so the planner reuses
           -- the distance and the predicate matches the indexed cosine operator.
-          AND (c.embedding <=> $1::vector) < 1 - $2
+          -- $2 is cast explicitly: in "1 - $2" Postgres infers the parameter
+          -- from the integer literal, and a float threshold like 0.65 then
+          -- fails with 22P02 before the query ever runs.
+          AND (c.embedding <=> $1::vector) < 1 - $2::float8
         ORDER BY c.embedding <=> $1::vector
         LIMIT $3
       `,
@@ -1033,7 +1036,10 @@ export class AdvancedRAGPipeline {
           -- (1 - sim) filter as a distance bound: 1 - dist > t  <=>  dist < 1 - t.
           -- Uses the same bare <=> operator as ORDER BY so the planner reuses
           -- the distance and the predicate matches the indexed cosine operator.
-          AND (c.embedding <=> $1::vector) < 1 - $2
+          -- $2 is cast explicitly: in "1 - $2" Postgres infers the parameter
+          -- from the integer literal, and a float threshold like 0.65 then
+          -- fails with 22P02 before the query ever runs.
+          AND (c.embedding <=> $1::vector) < 1 - $2::float8
         ORDER BY c.embedding <=> $1::vector
         LIMIT $3
       `,
