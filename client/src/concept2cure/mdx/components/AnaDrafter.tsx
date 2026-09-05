@@ -1,6 +1,6 @@
 /**
  * AnaDrafter — the full-page workspace that opens from "Draft response with AnA"
- * on a correspondence item. Ported from `design-system/ui_kits/mdx/AnaDrafter.jsx`.
+ * on a correspondence item. Ported from `ui_kits/mdx/AnaDrafter.jsx`.
  *
  * Two-pane layout: the agency/NB letter on the left (deficiencies numbered and
  * clickable), a structured AnA-drafted response on the right (one card per

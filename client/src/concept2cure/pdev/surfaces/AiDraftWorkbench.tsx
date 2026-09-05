@@ -11,7 +11,7 @@
  * of prose — so this surface renders no client-side preview. The draft body
  * lives in the artifact, opened from the activity's Provenance tab.
  *
- * Port basis: design-system/ui_kits/pdev/AiDraft.jsx (the kit's fabricated
+ * Port basis: ui_kits/pdev/AiDraft.jsx (the kit's fabricated
  * `preview.sections[].preview` prose has been retired — it was content the
  * server never produced).
  */

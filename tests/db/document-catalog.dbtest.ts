@@ -167,9 +167,10 @@ afterAll(async () => {
   await owner.end().catch(() => {});
 });
 
+let txtDocId: string;
+let pdfDocId: string;
+
 describe('ingest with the catalog on — the extraction tier is recorded', () => {
-  let txtDocId: string;
-  let pdfDocId: string;
 
   it('a readable upload lands with catalog_status=extracted and real counts', async () => {
     const res = await request(app)
@@ -235,6 +236,9 @@ describe('ingest with the catalog on — the extraction tier is recorded', () =>
     expect(byCode[`${PROBE_CODE}-PDF`].extractionError).toBeTruthy();
   });
 
+});
+
+describe('the read-coverage gate, end to end through the tool handlers', () => {
   it('catalog_project_document REFUSES a partial read and names what is unread', async () => {
     // Read only the first 40 characters — the sampled-page anti-pattern.
     const first = await callTool('read_project_document', {

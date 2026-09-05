@@ -13,6 +13,7 @@ import { I } from './icons';
 import type { AnaChatMessage, AnaToolCall, MessageAttachment } from '../components/ana/useAnaChat';
 import type { AnaProgressPhase } from '../components/ana/useAnaChat.types';
 import {
+  byRound,
   currentStep,
   formatElapsed,
   formatStepDuration,
@@ -20,9 +21,10 @@ import {
   type ToolTally,
 } from '../components/ana/anaProgress';
 import type { AgentActivityView } from './useAgentActivity';
-import { byRound, clip, formatClock, stepDuration, SENDING_PLACEHOLDER, type OutputRow } from './anaWorkModel';
+import { clip, formatClock, stepDuration, SENDING_PLACEHOLDER, type OutputRow } from './anaWorkModel';
 
-function glyph(status: AnaToolCall['status']): React.ReactElement {
+/** The one status glyph: check / warning triangle / dot. Shared with AnaActivity. */
+export function statusGlyph(status: AnaToolCall['status']): React.ReactElement {
   if (status === 'success') return I.check;
   if (status === 'error') return I.alertTriangle;
   return I.dot;
@@ -82,7 +84,7 @@ export function Row({
 }) {
   return (
     <div className={`ana-work-step is-${status}`}>
-      <span className="ana-work-glyph" aria-hidden="true">{icon ?? glyph(status)}</span>
+      <span className="ana-work-glyph" aria-hidden="true">{icon ?? statusGlyph(status)}</span>
       <span className="ana-work-step-l">{label}</span>
       {trailing ? <span className="ana-work-step-t">{trailing}</span> : null}
       {children}
@@ -127,10 +129,17 @@ function ToolRow({ c, now }: { c: AnaToolCall; now: number }) {
   );
 }
 
+/**
+ * A phase's clock. Live and settled phases share one format above ten
+ * seconds ("2m 05s" stays "2m 05s" the instant it completes); below that a
+ * settled phase reads at step precision ("800 ms", "2.4s"), which the live
+ * whole-second clock cannot show.
+ */
 function phaseTime(p: AnaProgressPhase, now: number): string {
   if (p.status === 'active') return formatElapsed(now - p.startedAt);
   if (p.status === 'stopped') return 'stopped';
-  return formatStepDuration((p.endedAt ?? p.startedAt) - p.startedAt);
+  const ms = (p.endedAt ?? p.startedAt) - p.startedAt;
+  return ms < 10_000 ? formatStepDuration(ms) : formatElapsed(ms);
 }
 
 function PhaseItem({ p, index, now, step }: { p: AnaProgressPhase; index: number; now: number; step: AnaToolCall | null }) {

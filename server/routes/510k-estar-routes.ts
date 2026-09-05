@@ -1077,8 +1077,31 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
 
 const PMA_SUBMISSION_TYPE_VALUES = PMA_SUBMISSION_TYPES.map((t) => t.value) as [string, ...string[]];
 
+/**
+ * The seven device properties that decide whether a conditional eSTAR section
+ * is owed (estar-mapper DeviceFlagId). Unanswered ⇒ the section is
+ * UNDETERMINED, which blocks a claim of a submittable eSTAR; it is never read
+ * as "not applicable". No route accepted these before, so every conditional
+ * section was undetermined on every call and the assembler — which then
+ * ignored undetermined — reported official eSTARs it could not vouch for.
+ */
+const deviceFlagsSchema = z
+  .object({
+    combinationProduct: z.boolean().optional(),
+    softwareAiMl: z.boolean().optional(),
+    cyberDevice: z.boolean().optional(),
+    sterile: z.boolean().optional(),
+    implantable: z.boolean().optional(),
+    cliaWaived: z.boolean().optional(),
+    clinicalData: z.boolean().optional(),
+  })
+  .strict()
+  .optional();
+
 const assembleSchema = z.object({
   pathway: z.enum(['510k', 'de_novo', 'pma']).default('510k'),
+  /** Device properties deciding conditional-section applicability (see deviceFlagsSchema). */
+  deviceFlags: deviceFlagsSchema,
   /** PMA only: original vs a 21 CFR 814.39 supplement/notice (scopes the modules owed). */
   pmaSubmissionType: z.enum(PMA_SUBMISSION_TYPE_VALUES).optional(),
   variant: z.enum(ESTAR_VARIANTS).default('device'),
@@ -1123,6 +1146,7 @@ router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEnt
       pathway,
       pmaSubmissionType: pmaSubmissionType as (typeof PMA_SUBMISSION_TYPES)[number]['value'] | undefined,
       variant,
+      deviceFlags: validation.data.deviceFlags,
       leaves,
       presentTemplates: vendored.map((t) => t.fileName),
       market: market as never,
@@ -1536,6 +1560,8 @@ const filingLeafSchema = z.object({
 const filingReadinessSchema = z.object({
   catalogKey: z.string().min(1),
   variant: z.enum(['device', 'ivd']).default('device'),
+  /** Device properties deciding conditional-section applicability (see deviceFlagsSchema). */
+  deviceFlags: deviceFlagsSchema,
   // Optional explicit registration (what-if); omit to use the org's persisted record.
   registration: z
     .object({
@@ -1624,6 +1650,7 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
       registration,
       leaves: effectiveLeaves,
       qSubType,
+      deviceFlags: validation.data.deviceFlags,
       templateAvailable: fill.templateAvailable,
       fieldMapPopulated: fill.fieldMapPopulated,
     });

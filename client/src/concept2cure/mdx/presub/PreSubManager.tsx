@@ -1,6 +1,6 @@
 /**
  * Pre-Sub manager — 510(k) Q-Submission tracker.
- * Ported from design-system/ui_kits/mdx/PreSub.jsx.
+ * Ported from ui_kits/mdx/PreSub.jsx.
  *
  * Three rows: page header · KPI strip · filter row + list/detail two-pane.
  * Detail pane has tabs: Questions · Timeline · Commitments — each commitment
