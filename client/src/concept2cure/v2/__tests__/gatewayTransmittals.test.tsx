@@ -368,6 +368,40 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     expect(toast.closest('[role="alert"]')).not.toBeNull();
   });
 
+  it('Reload findings re-runs preflight for the last package, replaces the card’s findings, and says when the summary could not be saved', async () => {
+    let preflightRuns = 0;
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url === '/api/submission-ops/packages/77/assemble') {
+        return env({ packageId: 'pkg_77', bundle: { sha256: 'f'.repeat(64), leafCount: 2, validation: { errorCount: 1, warningCount: 0, infoCount: 0 } } });
+      }
+      if (method === 'POST' && url === '/api/submission-ops/packages/77/preflight') {
+        preflightRuns += 1;
+        return preflightRuns === 1
+          ? env({ findings: [{ severity: 'error', ruleId: 'LEAF-UNPLACED', message: 'cover.pdf has no heading' }], errorCount: 1, blocking: true, persisted: true })
+          : env({ findings: [{ severity: 'error', ruleId: 'BUNDLE-CONTENT-DRIFT', message: 'The package content changed since this bundle was assembled' }], errorCount: 1, blocking: true, persisted: false });
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    const card = await screen.findByRole('region', { name: 'Packager refusal' });
+    expect(card.textContent).toMatch(/LEAF-UNPLACED/);
+    expect(card.textContent).not.toMatch(/could not be saved/);
+    const reload = Array.from(card.querySelectorAll('button')).find((b) => /Reload findings/.test(b.textContent ?? ''))!;
+    expect(reload).toBeTruthy();
+    fireEvent.click(reload);
+    await screen.findByText('BUNDLE-CONTENT-DRIFT');
+    expect(card.textContent).not.toMatch(/LEAF-UNPLACED/);
+    expect(card.textContent).toMatch(/Preflight reports 1 error-severity finding/);
+    // A summary that could not be saved is said; the findings are still shown.
+    expect(card.textContent).toMatch(/summary could not be saved; portfolio rollups will not reflect this run/);
+    expect(preflightRuns).toBe(2);
+  });
+
   it('a content change that landed DURING the send is announced as an alert with the server’s warning, never a clean confirmation', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);

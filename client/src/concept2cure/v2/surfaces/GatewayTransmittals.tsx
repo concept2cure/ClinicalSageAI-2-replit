@@ -201,7 +201,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
   /* `findingsState` is the four-state judgment of the findings read — set where the
      findings were obtained, from positive evidence that the gate or the preflight
      ran, never derived from the list being empty. */
-  const [refusal, setRefusal] = useState<{ source: 'transmit' | 'assemble'; message: string; findings: RefusalFinding[]; findingsState: AssessmentState; fetchFailure?: string } | null>(null);
+  const [refusal, setRefusal] = useState<{ source: 'transmit' | 'assemble'; message: string; findings: RefusalFinding[]; findingsState: AssessmentState; fetchFailure?: string; notSaved?: string } | null>(null);
   const [toast, fireToast] = useToast();
 
   const load = useCallback(async () => {
@@ -361,6 +361,40 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
      (422) and a bundle that carries error findings are both rendered in the
      findings card — transmit would refuse either, and the operator should see
      why before trying. */
+  /** The findings preflight serves for a package's stored bundle, with the
+   *  honest states a failed or empty read must keep (see assessmentState).
+   *  `assemblyErrors` is the count the assembly just reported, when there is one. */
+  const loadFindings = useCallback(async (id: string, assemblyErrors?: number) => {
+    const pf = await readData('POST', `/api/submission-ops/packages/${id}/preflight`, {});
+    const body = (pf.raw as any)?.data ?? {};
+    const rawFindings = body?.validation?.findings ?? body?.findings;
+    const findings = pf.ok ? sortFindings(rawFindings) : [];
+    // A failed findings fetch is said, not shown as an empty table under a
+    // message that counts errors. Whether the preflight RAN is read from the
+    // payload carrying a findings list at all — never from that list being
+    // empty, which is the state that means "we have not looked".
+    const findingsState = assessmentState({
+      unreadable: !pf.ok,
+      scopeExists: true,
+      findingCount: findings.length,
+      assessmentRan: pf.ok && Array.isArray(rawFindings),
+    });
+    const fetchFailure = !pf.ok
+      ? `The findings could not be loaded (HTTP ${pf.status}${(pf.raw as any)?.error ? ': ' + (pf.raw as any).error : ''}); use Reload findings to try again.`
+      : findingsState === 'not-assessed'
+        ? 'Preflight did not return an itemized findings list; use Reload findings to try again.'
+        : findingsState === 'assessed-clear' && assemblyErrors != null && assemblyErrors > 0
+          ? `Preflight lists no findings on the stored bundle, yet assembly counted ${assemblyErrors}; the two disagree — reload the findings before transmitting.`
+          : undefined;
+    // The server says when it could not save the run's summary; portfolio
+    // rollups read that summary, so the operator hears it here.
+    const notSaved = pf.ok && body?.persisted === false
+      ? 'The preflight summary could not be saved; portfolio rollups will not reflect this run.'
+      : undefined;
+    const errorCount = typeof body?.errorCount === 'number' ? body.errorCount : findings.filter((f) => f.severity === 'error').length;
+    return { ok: pf.ok, findings, findingsState, fetchFailure, notSaved, errorCount };
+  }, []);
+
   const assemble = useCallback(async (v: Record<string, string>) => {
     setLastPackageId(v.packageId ?? '');
     setRefusal(null);
@@ -398,32 +432,14 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     if (errors > 0) {
       // The bundle exists, but transmit will refuse it. The findings live on the
       // package's stored descriptor; the preflight route serves them.
-      const pf = await readData('POST', `/api/submission-ops/packages/${id}/preflight`, {});
-      const rawFindings = (pf.raw as any)?.data?.validation?.findings ?? (pf.raw as any)?.data?.findings;
-      const findings = pf.ok ? sortFindings(rawFindings) : [];
-      // A failed findings fetch is said, not shown as an empty table under a
-      // message that counts errors. Whether the preflight RAN is read from the
-      // payload carrying a findings list at all — never from that list being
-      // empty, which is the state that means "we have not looked".
-      const findingsState = assessmentState({
-        unreadable: !pf.ok,
-        scopeExists: true,
-        findingCount: findings.length,
-        assessmentRan: pf.ok && Array.isArray(rawFindings),
-      });
-      const fetchFailure = !pf.ok
-        ? `The findings could not be loaded (HTTP ${pf.status}${(pf.raw as any)?.error ? ': ' + (pf.raw as any).error : ''}); run preflight for this package to see them.`
-        : findingsState === 'not-assessed'
-          ? 'Preflight did not return the itemized findings behind this error count; run preflight for this package to see them.'
-          : findingsState === 'assessed-clear'
-            ? `Preflight lists no findings on the stored bundle, yet assembly counted ${errors}; the two disagree — run preflight again before transmitting.`
-            : undefined;
+      const loaded = await loadFindings(id, errors);
       setRefusal({
         source: 'assemble',
         message: `Bundle assembled for ${d.packageId ?? v.packageId} with ${errors} error-severity finding${errors === 1 ? '' : 's'}; transmit will refuse it until they are resolved.`,
-        findings,
-        findingsState,
-        fetchFailure,
+        findings: loaded.findings,
+        findingsState: loaded.findingsState,
+        fetchFailure: loaded.fetchFailure,
+        notSaved: loaded.notSaved,
       });
       fireToast(`Bundle assembled with ${errors} error-severity finding${errors === 1 ? '' : 's'} — transmit will refuse it. See the findings below.${ledger}`, 'error');
       return;
@@ -432,7 +448,26 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     // region identity, the gateway size limit and the operator's conformance
     // opt-ins before bytes leave. Say what was proven, not more.
     fireToast(`Bundle assembled for ${d.packageId ?? v.packageId} · ${b.leafCount ?? '?'} leaves · ${warnings} warning${warnings === 1 ? '' : 's'} · sha256 ${String(b.sha256 ?? '').slice(0, 12)}. No error-severity findings; the transmit gate still checks region, size and conformance opt-ins.${ledger}`, ledger ? 'error' : undefined);
-  }, [fireToast]);
+  }, [fireToast, loadFindings]);
+
+  /** Re-run preflight for the last package and show what it reports now. */
+  const reloadFindings = useCallback(async () => {
+    const id = lastPackageId;
+    if (!id) return;
+    const loaded = await loadFindings(id);
+    setRefusal({
+      source: 'assemble',
+      message: !loaded.ok
+        ? `Preflight could not be run for package ${id}.`
+        : loaded.errorCount > 0
+          ? `Preflight reports ${loaded.errorCount} error-severity finding${loaded.errorCount === 1 ? '' : 's'} on the stored bundle for package ${id}; transmit will refuse it until they are resolved.`
+          : `Preflight reports no error-severity findings on the stored bundle for package ${id}; the transmit gate still checks region, size and conformance opt-ins.`,
+      findings: loaded.findings,
+      findingsState: loaded.findingsState,
+      fetchFailure: loaded.fetchFailure,
+      notSaved: loaded.notSaved,
+    });
+  }, [lastPackageId, loadFindings]);
 
   const rollback = useCallback(async (v: Record<string, string>) => {
     if (!dialog || typeof dialog !== 'object') return;
@@ -570,6 +605,11 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
               {refusal.findings.some((f) => f.ruleId === IDENTIFIERS_RULE) && (
                 <button className="nda-open" onClick={() => setDialog('identifiers')}>{I.penLine} Record identifiers</button>
               )}
+              {/* Preflight is re-runnable from here: a failed load, a changed
+                  package, or a stale card all have the same remedy. */}
+              {lastPackageId && (
+                <button className="nda-open" onClick={() => { void reloadFindings(); }}>{I.rotateCcw} Reload findings</button>
+              )}
               <span className="s">
                 {refusal.fetchFailure && refusal.findings.length === 0
                   ? 'findings unavailable'
@@ -585,6 +625,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
                 : refusal.source === 'transmit'
                   ? 'These findings were recorded on the stored bundle when it was assembled. Resolve them, assemble the package again, then transmit.'
                   : 'Resolve the findings, then assemble the package again.'}
+              {refusal.notSaved && <div style={{ marginTop: 6 }} role="status">{refusal.notSaved}</div>}
             </div>
             {/* Severity is stated as text in its own column — the chip's tone
                 alone must not be the only carrier of meaning. */}
