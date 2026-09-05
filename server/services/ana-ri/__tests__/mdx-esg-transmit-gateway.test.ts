@@ -29,7 +29,7 @@ import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { createHash, generateKeyPairSync, createSign } from 'crypto';
-import { fingerprintPackageContent, type PackageContentRow } from '../../ectd/package-content-fingerprint';
+import { fingerprintPackageContent, sha256Hex, type PackageContentRow } from '../../ectd/package-content-fingerprint';
 
 /* ─── DB stub ────────────────────────────────────────────────────── */
 
@@ -50,7 +50,7 @@ const { poolQueries, storedBundle, httpsRequests, mdnResponse, audit, recordGove
 /** The package's content as the transmit gate re-reads it; the stored
  *  descriptor carries its fingerprint, so the zip still reflects the package. */
 const CONTENT: PackageContentRow[] = [
-  { sectionDbId: 13, sectionKey: 'estar-summary', artifactDbId: 1, ctdSection: null, content: '510(k) summary' },
+  { sectionDbId: 13, sectionKey: 'estar-summary', sectionLabel: '510(k) Summary', artifactDbId: 1, title: '510(k) summary', version: 1, ctdSection: null, contentSha256: sha256Hex('510(k) summary') },
 ];
 const CONTENT_FINGERPRINT = fingerprintPackageContent(CONTENT);
 
@@ -62,7 +62,8 @@ function queryImpl(sql: string, args: unknown[] = []) {
   if (sql.includes('FROM c2c_package_sections')) {
     return Promise.resolve({
       rows: CONTENT.map((r) => ({
-        section_db_id: r.sectionDbId, section_key: r.sectionKey, artifact_db_id: r.artifactDbId, ctd_section: r.ctdSection, content: r.content,
+        section_db_id: r.sectionDbId, section_key: r.sectionKey, section_label: r.sectionLabel, artifact_db_id: r.artifactDbId,
+        title: r.title, version: r.version, ctd_section: r.ctdSection, content_sha256: r.contentSha256,
       })),
       rowCount: CONTENT.length,
     });

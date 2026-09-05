@@ -4,7 +4,14 @@ Status: **live on `concept2cure-v2`.** Owner: Regulatory Operations (operation) 
 Touched code: `server/routes/submission-ops.ts` (assemble, preflight, regulatory identifiers),
 `server/services/ectd/section-to-ctd.ts`, `server/services/ectd/regulatory-identifiers.ts`,
 `server/services/ectd/package-leaf-bytes.ts`, `server/services/submission-gateways/{regional-packager,governed-transmit,pre-transmit-check,ectd-structural-validator}.ts`,
+`server/services/ectd/{package-content-fingerprint,package-content-change}.ts`,
 `server/services/ectd/regional-backbone-readiness.ts`, `client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx`.
+
+`package-content-change.ts` is the single implementation of "this package's content
+moved": the package row lock, the content revision, the stale-bundle (and preflight)
+clear, and the governed mapping operation. The mapping routes, the assemble store, the
+identifiers route, the preflight persist, the artifact editor and the biostatistics
+workflow all go through it — every partial copy of that rule has been a defect.
 
 ## What this runbook covers
 
@@ -87,10 +94,14 @@ bundle behind. A bundle is not stored, its zip (local and durable copies) is rem
 the discard is recorded when, while it was being built, an artifact was mapped or
 unmapped (`STALE_ASSEMBLY`, `gate: content_changed`) or the regulatory identifiers
 changed (`gate: identifiers_changed`). The response is a 409; assemble again.
-An artifact's own content or declared CTD section changed through the artifact routes
-after assembly changes nothing on the package row, so no bundle is cleared proactively;
-the transmit gate refuses such a bundle through the content fingerprint (step 3) and
-preflight reports it.
+Editing an artifact through the artifact routes — its text, title, version (update or
+rollback) or its declared CTD section (placement) — invalidates every package that
+artifact is mapped into the same way, and the response says how many bundles it
+invalidated (`bundleInvalidation`). That invalidation is fail-safe: the edit is never
+rolled back over it, and a failure is reported rather than folded into a clean result,
+because the transmit gate's content fingerprint (step 3) refuses such a bundle anyway.
+A content change that reaches the database without passing through those routes is what
+the fingerprint alone catches.
 
 The assemble response returns the bundle descriptor with counts only; the findings
 themselves are persisted on the package and served by
@@ -119,7 +130,7 @@ pre-transmit gate:
 
 | Check | Posture |
 | --- | --- |
-| content integrity — the descriptor's fingerprint of the sections, mappings, declared placements and artifact content the zip was built from, recomputed from the database (`BUNDLE_CONTENT_DRIFT`) | hard whenever the descriptor carries a fingerprint, in every environment; a descriptor without one is unproven (`BUNDLE_CONTENT_UNPROVEN`) and blocks wherever descriptor trust is enforced, exactly like missing validation evidence |
+| content integrity — the descriptor's fingerprint of what the zip was built from (each section's id, key and label; each mapping; each artifact's title, version, declared CTD section and a digest of its content), recomputed from the database with a database-side digest so no content is transported (`BUNDLE_CONTENT_DRIFT`) | hard whenever a stored descriptor carries a fingerprint of the current scheme, in every environment; a descriptor without one, or from an older scheme, is unproven (`BUNDLE_CONTENT_UNPROVEN`) and blocks wherever descriptor trust is enforced, exactly like missing validation evidence. The dev/test-only client-supplied descriptor is not a stored bundle and is not assessed. After the gateway accepts the bytes the content is assessed again: the governed `sign` row records the fingerprint the zip was proven against and the after-send state, and a change that landed during the send is returned as `contentAfterTransmit: 'drift'` with `contentWarning` — the agency has the assembled bundle; re-assemble before any further transmission |
 | gateway size limit | hard, always |
 | region identity — the region the bundle was built for (its regional backbone, or the region recorded on its descriptor) and its format tag (`estar` ⇔ FDA, `eudamed_register` ⇔ EMA, `pmda_ectd` ⇔ PMDA, `ectd` never PMDA) must match the target gateway | hard whenever the bundle records its region; a bundle assembled before region identity was recorded is reported as unprovable, never treated as matching |
 | PDF/A submission grade | blocks in production only when `ECTD_REQUIRE_PDFA=true`; a grade without evidence is "cannot prove", never a pass |

@@ -91,7 +91,8 @@ export interface CSRSummaryInput {
   studyDesign: string;
   primaryEndpoint: string;
   primaryResult: string;
-  sampleSize: number;
+  /** Enrolled subjects; null when the study record does not carry it (never 0 for "unknown"). */
+  sampleSize: number | null;
   /** ITT analysis population */
   ittPopulation?: number;
   treatmentArms?: string[];
@@ -383,6 +384,22 @@ function safetyCounts(csrs: CSRSummaryInput[]): {
  *   2.5.5 Overview of Safety
  *   2.5.6 Benefits and Risks Conclusions
  */
+/** "n=…" for a study: the recorded size, or an explicit statement that none was recorded. */
+function sampleSizeText(c: Pick<CSRSummaryInput, 'sampleSize'>): string {
+  return typeof c.sampleSize === 'number' ? String(c.sampleSize) : '[sample size not recorded]';
+}
+
+/** Analysis population cell: ITT if recorded, else enrolled, else said to be missing. */
+function populationText(c: Pick<CSRSummaryInput, 'sampleSize' | 'ittPopulation'>): string {
+  const n = c.ittPopulation ?? c.sampleSize;
+  return typeof n === 'number' ? String(n) : '[not recorded]';
+}
+
+/** Studies whose exposure cannot be counted because no size was recorded. */
+function unsizedStudies(csrs: ReadonlyArray<Pick<CSRSummaryInput, 'sampleSize' | 'ittPopulation'>>): number {
+  return csrs.filter(c => typeof (c.ittPopulation ?? c.sampleSize) !== 'number').length;
+}
+
 export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
   const csrs = ctx.csrs;
   const pivotal = csrs.filter(c => c.phase.startsWith('3'));
@@ -393,6 +410,8 @@ export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
 
   const gaps: string[] = [];
   if (csrs.length === 0) gaps.push('no clinical studies available');
+  const unsized = unsizedStudies(csrs);
+  if (unsized > 0) gaps.push(`sample size not recorded for ${unsized} study/ies — the exposure total excludes them`);
   if (clinPharm.length === 0) gaps.push('clinical pharmacology (Phase 1) characterization');
   if (pivotal.length === 0) gaps.push('pivotal (Phase 3) efficacy evidence');
   if (totalSubjects === 0) gaps.push('safety database (no exposure data)');
@@ -435,7 +454,7 @@ export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
       ? `Efficacy was demonstrated in ${pivotal.length} pivotal study/ies across ${controlled.length} controlled study/ies:`
       : `[No pivotal efficacy study available — efficacy is not yet established.]`,
     ...pivotal.map(
-      c => `  • ${c.protocolNumber} (Phase ${c.phase}, n=${c.sampleSize}): ${c.primaryEndpoint} — ${c.primaryResult}.`,
+      c => `  • ${c.protocolNumber} (Phase ${c.phase}, n=${sampleSizeText(c)}): ${c.primaryEndpoint} — ${c.primaryResult}.`,
     ),
     ``,
     `2.5.5 OVERVIEW OF SAFETY`,
@@ -461,7 +480,7 @@ export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
         c.protocolNumber,
         c.phase,
         c.studyDesign,
-        String(c.ittPopulation || c.sampleSize),
+        populationText(c),
         c.primaryEndpoint,
         c.primaryResult,
       ]),
@@ -526,6 +545,8 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
 
   const gaps: string[] = [];
   if (csrs.length === 0) gaps.push('no CSRs available');
+  const unsized27 = unsizedStudies(csrs);
+  if (unsized27 > 0) gaps.push(`sample size not recorded for ${unsized27} study/ies — the exposure total excludes them`);
   if (!csrs.some(c => c.phase.startsWith('1'))) gaps.push('no Phase 1 (clinical pharmacology) studies');
   if (!csrs.some(c => c.phase.startsWith('3'))) gaps.push('no Phase 3 (pivotal efficacy) studies');
   if (safety.gap) gaps.push(safety.gap);
@@ -549,7 +570,7 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
       ? `Efficacy was evaluated in ${controlledCount} controlled study/ies. Pivotal trial(s):`
       : `[No controlled efficacy study available — efficacy has not been evaluated]`,
     ...csrs.filter(c => c.phase.startsWith('3')).map(c =>
-      `  • ${c.protocolNumber} (Phase ${c.phase}): ${c.studyDesign}, n=${c.sampleSize}. Primary endpoint (${c.primaryEndpoint}): ${c.primaryResult}.`
+      `  • ${c.protocolNumber} (Phase ${c.phase}): ${c.studyDesign}, n=${sampleSizeText(c)}. Primary endpoint (${c.primaryEndpoint}): ${c.primaryResult}.`
     ),
     ``,
     `Phase distribution: ${Object.entries(phaseCounts).map(([p, n]) => `Phase ${p}: ${n}`).join(', ')}.`,
@@ -584,7 +605,7 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
       c.protocolNumber,
       c.phase,
       c.studyDesign,
-      String(c.ittPopulation || c.sampleSize),
+      populationText(c),
       c.primaryEndpoint,
       c.primaryResult,
     ]),
@@ -617,7 +638,7 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
       headers: ['Study', 'N (ITT)', 'SAEs', 'Deaths'],
       rows: csrs.map(c => [
         c.protocolNumber,
-        String(c.ittPopulation || c.sampleSize),
+        populationText(c),
         typeof c.saeCount === 'number' ? String(c.saeCount) : 'not extracted',
         typeof c.deathCount === 'number' ? String(c.deathCount) : 'not extracted',
       ]),

@@ -136,3 +136,9 @@
 .c2c-v2 .cc-btn svg{ width:14px; height:14px; }
 .c2c-v2 .cc-comm[data-fresh]{ animation:ccFresh 1.4s ease-out; }
 @keyframes ccFresh{ 0%{ background:var(--accent-000); } 100%{ background:var(--bg-000); } }
+
+/* Reduced-motion policy for this stylesheet — the new-message flash is a
+   colour fade to the resting background, so suppressing it lands there. */
+@media (prefers-reduced-motion: reduce) {
+  .c2c-v2 .cc-comm[data-fresh] { animation: none; }
+}

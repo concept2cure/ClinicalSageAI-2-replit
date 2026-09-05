@@ -10,7 +10,11 @@
  * as the AnA 510(k) chat command actually did — call a second, non-transmitting
  * "ESG service" that could never reach the wire at all.
  *
- * So the ceremony now lives here, once, and every caller passes through it:
+ * So the ceremony now lives here, once, and every caller that transmits a
+ * STORED bundle passes through it (the HTTP transmit route and the AnA
+ * handler). The one caller that does not is `transmitSequence` in
+ * services/submission-service, which packages a sequence just in time and
+ * hands it to the gateway directly with no stored descriptor involved:
  *
  *   1. the descriptor naming the bytes must be the SERVER-GENERATED one the
  *      tenant-scoped assemble route persisted on
@@ -38,6 +42,7 @@
  */
 
 import { promises as fsp } from 'fs';
+import { persistGovernedActionSignature, BINDING_BASIS } from '../part11/signature-persistence';
 import { dirname } from 'path';
 
 import { pool } from '../../db';
@@ -266,7 +271,7 @@ export type RecordGovernedAction = (
     domain?: string;
     surface?: string;
   },
-) => Promise<unknown>;
+) => Promise<{ actionId: string; auditId: string; sha256Chain: string }>;
 
 export interface GovernedTransmitInput {
   region: Region;
@@ -280,6 +285,16 @@ export interface GovernedTransmitInput {
   metadata?: Record<string, unknown>;
   /** Operator's stated reason. Recorded on the governed `sign` ledger entry. */
   reason: string;
+  /**
+   * The §11.50 meaning the signer declared for THIS transmission
+   * (authorship/review/approval/responsibility/release). It was the constant
+   * 'submission' here — a meaning nobody chose, recorded as if they had.
+   */
+  meaning: string;
+  /** The re-authentication factors the caller actually verified ('password', 'password+totp', 'session'). */
+  authenticationMethod: string;
+  secondFactorVerified: boolean;
+  ipAddress?: string | null;
   /**
    * When the human's re-authentication was VERIFIED for this transmit, by the
    * caller that verified it. Never synthesised here — a made-up timestamp is a
@@ -305,7 +320,22 @@ export interface GovernedTransmitOutcome {
   bundle: { sha256: string; sizeBytes: number; format: BundleFormat };
   /** True when the post-transmit governed-action ledger write failed. */
   ledgerWriteFailed: boolean;
+  /**
+   * The package content re-assessed AFTER the gateway accepted the bytes. The
+   * pre-transmit check reads outside any lock and the send is external I/O
+   * that cannot run inside a transaction, so the window between the two is
+   * evidenced rather than assumed closed: 'drift' means the package changed
+   * while the assembled bundle was being sent; 'unknown' means the re-read
+   * failed; 'not-assessed' means no fingerprint was assessed (dev/test only).
+   */
+  contentAfterTransmit: 'match' | 'drift' | 'unknown' | 'not-assessed';
 }
+
+/** Operator wording for a content change that landed during the send. */
+export const CONTENT_CHANGED_DURING_TRANSMIT =
+  'The package content changed while the transmission was in progress. The agency received the assembled bundle ' +
+  'as recorded on this transmittal (its sha256); the package no longer matches it. Review the change and re-assemble ' +
+  'before any further transmission.';
 
 /**
  * Run the full governed transmit ceremony and hand the bytes to the regional
@@ -446,7 +476,8 @@ export async function executeGovernedTransmit(
   // and UNKNOWN blocks wherever descriptor trust is enforced, exactly like
   // missing structural-validation evidence.
   // The assessment is the one the preflight route reports, so the two never
-  // disagree about a bundle.
+  // disagree about a bundle. A match is kept as evidence for the sign row.
+  let provenAgainst: { assembled: string; atTransmit: string } | null = null;
   if (input.packageId != null && !input.clientBundle) {
     let assessment: ContentAssessment;
     try {
@@ -463,6 +494,7 @@ export async function executeGovernedTransmit(
     if (assessment.state === 'unproven' && bundleTrustEnforced()) {
       throw new GovernedTransmitRefusal('BUNDLE_CONTENT_UNPROVEN', CONTENT_UNPROVEN_MESSAGE, 422);
     }
+    if (assessment.state === 'match') provenAgainst = { assembled: assessment.current, atTransmit: assessment.current };
   }
 
   // Rematerialize the local bundle file from durable storage if a container
@@ -533,6 +565,24 @@ export async function executeGovernedTransmit(
     },
   });
 
+  // Re-assess the content AFTER the gateway accepted the bytes: the window
+  // between the pre-transmit check and the send is evidenced, not assumed
+  // closed (see GovernedTransmitOutcome.contentAfterTransmit).
+  let contentAfterTransmit: GovernedTransmitOutcome['contentAfterTransmit'] = 'not-assessed';
+  if (provenAgainst && input.packageId != null) {
+    try {
+      const again = await assessPackageContent(pool, input.packageId, organizationId, bundle.contentFingerprint);
+      contentAfterTransmit = again.state === 'match' ? 'match' : again.state === 'drift' ? 'drift' : 'unknown';
+    } catch (err) {
+      contentAfterTransmit = 'unknown';
+      input.log?.error('transmit-content-recheck-failed', {
+        message: err instanceof Error ? err.message : String(err),
+        region,
+        gateway,
+      });
+    }
+  }
+
   // Record the governed sign AFTER the external transmit succeeds. The external
   // transmit is irreversible, so if the ledger write fails we report it and
   // still return the transmit result (the gateway already accepted the
@@ -543,14 +593,23 @@ export async function executeGovernedTransmit(
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      await recordGovernedAction(client, {
+      const signedTarget = `submission:${input.packageId ?? input.programId ?? `transmittal-${result.transmittalId}`}`;
+      const signPayload = {
+          meaning: input.meaning,
+          region,
+          gateway,
+          bundleSha256: bundle.sha256,
+          transmittalId: result.transmittalId,
+          transmissionId: result.transmissionId ?? null,
+      };
+      const recorded = await recordGovernedAction(client, {
         orgId: organizationId,
         userId,
         command: 'sign',
-        target: `submission:${input.packageId ?? input.programId ?? `transmittal-${result.transmittalId}`}`,
+        target: signedTarget,
         reason,
         payload: {
-          meaning: 'submission',
+          meaning: input.meaning,
           region,
           gateway,
           bundleSha256: bundle.sha256,
@@ -559,9 +618,39 @@ export async function executeGovernedTransmit(
           // hid the type error — so every Part 11 sign row recorded null and the
           // ledger could not be joined to the agency receipt or basket id.
           transmissionId: result.transmissionId ?? null,
+          // Which content state the shipped zip was proven against, and
+          // whether the package still held it once the bytes had left.
+          contentFingerprint: provenAgainst
+            ? { assembled: provenAgainst.assembled, atTransmit: provenAgainst.atTransmit, afterTransmit: contentAfterTransmit }
+            : null,
         },
         domain: 'mdx',
         surface: input.surface ?? 'submission-gateway',
+      });
+      // The transmit's sign is an electronic signature (11.50/11.70), not only
+      // a ledger row: printed name, declared meaning, authentication method and
+      // a digest of the exact bundle bytes the agency received. Freeze and
+      // dispatch always wrote this row; transmit — the irreversible act — never
+      // did, so no signature manifestation existed for it anywhere.
+      await persistGovernedActionSignature(client, {
+        orgId: organizationId,
+        userId,
+        target: signedTarget,
+        reason,
+        payload: signPayload,
+        actionId: recorded.actionId,
+        auditId: recorded.auditId,
+        sha256Chain: recorded.sha256Chain,
+        authenticationMethod: input.authenticationMethod,
+        secondFactorVerified: input.secondFactorVerified,
+        ipAddress: input.ipAddress ?? null,
+        occurredAt: new Date(),
+        binding: {
+          digest: bundle.sha256,
+          basis: BINDING_BASIS.TRANSMITTED_BUNDLE_SHA256,
+          note: `sha256 of the ${bundle.sizeBytes}-byte bundle handed to ${region}/${gateway}; verified against the staged bytes before transport.`,
+        },
+        manifestKind: 'governed-transmit',
       });
       await client.query('COMMIT');
     } catch (ledgerErr) {
@@ -583,5 +672,6 @@ export async function executeGovernedTransmit(
     result,
     bundle: { sha256: bundle.sha256, sizeBytes: bundle.sizeBytes, format: bundle.format },
     ledgerWriteFailed,
+    contentAfterTransmit,
   };
 }

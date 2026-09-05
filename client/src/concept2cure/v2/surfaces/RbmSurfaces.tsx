@@ -189,7 +189,7 @@ export function RbmFormModal({ title, intro, fields, initial, submitLabel, busy,
             {f.hint && <em className="rbm-field-hint">{f.hint}</em>}
           </label>
         ))}
-        {error && <div className="rbm-modal-note" role="alert" style={{ color: '#e5484d' }}>{error}</div>}
+        {error && <div className="rbm-modal-note" role="alert" style={{ color: 'var(--error)' }}>{error}</div>}
         <div className="rbm-modal-acts">
           <button className="rbm-btn" onClick={onCancel} disabled={busy}>Cancel</button>
           <button className="rbm-btn pri" disabled={missing || busy} onClick={() => onSubmit(v)}>{busy ? 'Saving…' : (submitLabel || 'Save')}</button>
@@ -235,7 +235,7 @@ export function GovernedApprovalDialog({ what, meaning, onCancel, onSigned }: {
           <label className="rbm-field"><span>Authenticator code</span><input inputMode="numeric" maxLength={6} value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))} placeholder="6 digits" /></label>
         </div>
         <div className="rbm-modal-note">Signature meaning: approval (21 CFR 11.50 / 11.200). Your password — and your authenticator code if MFA is enabled — are verified server-side before signing; the signer, timestamp and reason are written to the immutable audit trail.</div>
-        {err && <div className="rbm-modal-note" style={{ color: '#e5484d' }}>{err}</div>}
+        {err && <div className="rbm-modal-note" role="alert" style={{ color: 'var(--error)' }}>{err}</div>}
         <div className="rbm-modal-acts">
           <button className="rbm-btn" onClick={onCancel} disabled={busy}>Cancel</button>
           <button className="rbm-btn pri" disabled={!ok} onClick={submit}>{busy ? 'Signing…' : 'Sign and activate'}</button>

@@ -142,7 +142,7 @@ vi.mock('../server/services/regulatory-correspondence/operating-layer', () => ({
 import submissionOpsRouter from '../server/routes/submission-ops';
 import { ValidationError as PackagerValidationError } from '../server/services/submission-gateways/types';
 import { recordGovernedAction } from '../server/routes/c2c/actions';
-import { fingerprintPackageContent } from '../server/services/ectd/package-content-fingerprint';
+import { fingerprintPackageContent, sha256Hex } from '../server/services/ectd/package-content-fingerprint';
 
 function makeApp() {
   const app = express();
@@ -356,8 +356,27 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(res.status).toBe(200);
     expect(dbState.updateSet.metadata.bundle.contentFingerprint).toBe(
       fingerprintPackageContent([
-        { sectionDbId: 13, sectionKey: '2.5', artifactDbId: 1, ctdSection: null, content: co.content },
-        { sectionDbId: 14, sectionKey: '3.2.P.1', artifactDbId: null, ctdSection: null, content: null },
+        { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', artifactDbId: 1, title: co.title, version: 1, ctdSection: null, contentSha256: sha256Hex(co.content) },
+        { sectionDbId: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
+      ]),
+    );
+  });
+
+  it('records the content fingerprint for a DEVICE format too (eSTAR), where the leaf model differs', async () => {
+    dbState.pkg = { ...lockedPkg(), packageFamily: '510k' };
+    dbState.sections = [
+      { id: 21, sectionKey: 'device-description', sectionLabel: 'Device Description', sortOrder: 0 },
+      { id: 22, sectionKey: 'labeling', sectionLabel: 'Labeling', sortOrder: 1 },
+    ];
+    const dd = art('dd', null, 4);
+    dbState.mappedByCall = [[dd], []];
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(res.body.data.bundle.format).toBe('estar');
+    expect(dbState.updateSet.metadata.bundle.contentFingerprint).toBe(
+      fingerprintPackageContent([
+        { sectionDbId: 21, sectionKey: 'device-description', sectionLabel: 'Device Description', artifactDbId: 4, title: dd.title, version: 1, ctdSection: null, contentSha256: sha256Hex(dd.content) },
+        { sectionDbId: 22, sectionKey: 'labeling', sectionLabel: 'Labeling', artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
       ]),
     );
   });

@@ -180,7 +180,7 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
             <div className="amem-lead-badge">{I.sparkles}</div>
             <div className="amem-lead-body">
               <div className="amem-lead-eyebrow">AnA · cross-session memory</div>
-              <div className="amem-lead-head">We've worked together across {prof?.interaction_count || 0} conversations — here's what I'm carrying into the next one.</div>
+              <div className="amem-lead-head">You and I have worked together across {prof?.interaction_count || 0} conversations — here's what I'm carrying into the next one.</div>
               <div className="amem-lead-sub">
                 I keep the read {tone.detail === 'exhaustive' ? 'thorough' : tone.detail || 'concise'}, tone {tone.formality || 'standard'}, and I lead with the answer because that's how you like to work. I'm holding {active.length} active {active.length === 1 ? 'memory' : 'memories'} about your programs
                 {unverified > 0 ? <>, {unverified} still waiting for your confirmation</> : null}. Correct anything that's off and I'll update.

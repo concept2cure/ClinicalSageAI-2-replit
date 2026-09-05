@@ -34,7 +34,7 @@ vi.mock('../C2CForm', () => ({
         ? { packageId: '77', applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc', reason: 'Recording the IND number assigned by CDER' }
         : config.title === 'Assemble bundle'
           ? { packageId: '77', region: 'FDA', sequence: '0001', reason: 'Assemble sequence 0001 for FDA' }
-          : { region: 'fda', gateway: 'esg', packageId: '77', submissionType: 'original', reason: 'Dispatch sequence 0003 to FDA', password: 'pw', totp: '123456' };
+          : { region: 'fda', gateway: 'esg', packageId: '77', submissionType: 'original', reason: 'Dispatch sequence 0003 to FDA', meaning: 'approval', password: 'pw', totp: '123456' };
     return <button data-testid="form-submit" onClick={() => onSubmit(values)}>{config.submitLabel}</button>;
   },
 }));
@@ -57,7 +57,7 @@ function ackResponse(provenance: 'agency' | 'platform-record', body: string) {
 const props = () => ({ surface: { id: 'gateway-transmittals', label: 'Dispatch' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' });
 
 const GATEWAYS = [{ region: 'fda', gateway: 'esg', name: 'FDA ESG', configured: true, environment: 'production' }];
-const LOG = [{ id: 3, region: 'fda', gateway: 'esg', submission_type: 'original', transmission_id: 'ESG-XYZ', status: 'acknowledged', submitted_at: '2026-07-21T00:00:00Z', ack_received_at: '2026-07-21T01:00:00Z' }];
+const LOG = [{ id: 3, region: 'fda', gateway: 'esg', submission_type: 'original', transmission_id: 'ESG-XYZ', status: 'acknowledged', submitted_at: '2026-07-21T00:00:00Z', ack_received_at: '2026-07-21T01:00:00Z', submitted_by: 11, submitted_by_name: 'Dr Ada Lovelace' }];
 
 afterEach(() => cleanup());
 beforeEach(() => {
@@ -95,6 +95,8 @@ describe('GatewayTransmittals — real dispatch layer', () => {
       expect(call).toBeTruthy();
       const body = call![2] as any;
       expect(body.reason).toBe('Dispatch sequence 0003 to FDA');
+      // §11.50: the meaning the signer chose travels with the signature.
+      expect(body.meaning).toBe('approval');
       expect(body.reauth).toEqual({ password: 'pw', totp: '123456' });
       expect(body.packageId).toBe(77);
     });
@@ -113,6 +115,33 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
     fireEvent.click(screen.getByTestId('form-submit'));
     expect(await screen.findByText(/re-authentication failed.*Nothing left the platform/)).toBeTruthy();
+    // The rejected password must not sit in the drawer for a one-click resubmit.
+    expect(screen.queryByTestId('form-submit')).toBeNull();
+  });
+
+  it('the transmittal log names who transmitted, from the server-resolved person', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    expect(await screen.findByText('Dr Ada Lovelace')).toBeTruthy();
+  });
+
+  it('the transmit form asks the signer to declare the §11.50 meaning', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    const cfg = (globalThis as any).__c2cFormConfig;
+    const meaning = cfg.fields.find((f: any) => f.key === 'meaning');
+    expect(meaning?.required).toBe(true);
+    expect(meaning?.options.map((o: any) => o.value).sort()).toEqual(['approval', 'authorship', 'release', 'responsibility', 'review']);
   });
 
   it('surfaces the 409 active-transmittal lock with the holder id', async () => {
@@ -365,6 +394,91 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
     fireEvent.click(screen.getByTestId('form-submit'));
     const toast = await screen.findByText(/gateway ref ESG-NEW-9.*ledger entry could not be written/);
+    expect(toast.closest('[role="alert"]')).not.toBeNull();
+  });
+
+  it('Reload findings re-runs preflight for the last package, replaces the card’s findings, and says when the summary could not be saved', async () => {
+    let preflightRuns = 0;
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url === '/api/submission-ops/packages/77/assemble') {
+        return env({ packageId: 'pkg_77', bundle: { sha256: 'f'.repeat(64), leafCount: 2, validation: { errorCount: 1, warningCount: 0, infoCount: 0 } } });
+      }
+      if (method === 'POST' && url === '/api/submission-ops/packages/77/preflight') {
+        preflightRuns += 1;
+        return preflightRuns === 1
+          ? env({ findings: [{ severity: 'error', ruleId: 'LEAF-UNPLACED', message: 'cover.pdf has no heading' }], errorCount: 1, blocking: true, persisted: true })
+          : env({ findings: [{ severity: 'error', ruleId: 'BUNDLE-CONTENT-DRIFT', message: 'The package content changed since this bundle was assembled' }], errorCount: 1, blocking: true, persisted: false });
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    const card = await screen.findByRole('region', { name: 'Packager refusal' });
+    expect(card.textContent).toMatch(/LEAF-UNPLACED/);
+    expect(card.textContent).not.toMatch(/could not be saved/);
+    const reload = Array.from(card.querySelectorAll('button')).find((b) => /Reload findings/.test(b.textContent ?? ''))!;
+    expect(reload).toBeTruthy();
+    fireEvent.click(reload);
+    await screen.findByText('BUNDLE-CONTENT-DRIFT');
+    expect(card.textContent).not.toMatch(/LEAF-UNPLACED/);
+    expect(card.textContent).toMatch(/Preflight reports 1 error-severity finding/);
+    // A summary that could not be saved is said; the findings are still shown.
+    expect(card.textContent).toMatch(/summary could not be saved; portfolio rollups will not reflect this run/);
+    expect(preflightRuns).toBe(2);
+  });
+
+  it('a reload whose preflight itemizes nothing says so, and never reports "no error-severity findings"', async () => {
+    // 200 with no findings LIST is "we have not looked", not "we looked and
+    // found nothing" — and the error count is zero in both. The reassuring
+    // sentence belongs only to the second.
+    let preflightRuns = 0;
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url === '/api/submission-ops/packages/77/assemble') {
+        return env({ packageId: 'pkg_77', bundle: { sha256: 'f'.repeat(64), leafCount: 2, validation: { errorCount: 1, warningCount: 0, infoCount: 0 } } });
+      }
+      if (method === 'POST' && url === '/api/submission-ops/packages/77/preflight') {
+        preflightRuns += 1;
+        return preflightRuns === 1
+          ? env({ findings: [{ severity: 'error', ruleId: 'LEAF-UNPLACED', message: 'cover.pdf has no heading' }], errorCount: 1, blocking: true, persisted: true })
+          : env({ errorCount: 0, persisted: true });
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    const card = await screen.findByRole('region', { name: 'Packager refusal' });
+    const reload = Array.from(card.querySelectorAll('button')).find((b) => /Reload findings/.test(b.textContent ?? ''))!;
+    fireEvent.click(reload);
+    await screen.findByText(/returned no itemized findings list/);
+    expect(card.textContent).not.toMatch(/reports no error-severity findings/);
+    expect(card.textContent).toMatch(/nothing on this bundle is cleared/);
+  });
+
+  it('a content change that landed DURING the send is announced as an alert with the server’s warning, never a clean confirmation', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/transmit')) {
+        return env({
+          transmittalId: 4243, transmissionId: 'ESG-NEW-10', status: 'received', contentAfterTransmit: 'drift',
+          contentWarning: 'The package content changed while the transmission was in progress. The agency received the assembled bundle as recorded on this transmittal (its sha256); the package no longer matches it. Review the change and re-assemble before any further transmission.',
+        }, 201);
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    const toast = await screen.findByText(/gateway ref ESG-NEW-10.*changed while the transmission was in progress.*re-assemble/);
     expect(toast.closest('[role="alert"]')).not.toBeNull();
   });
 

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T13:14:00.864Z",
+  "generatedAt": "2026-09-05T19:03:11.299Z",
   "git": {
-    "sha": "c916127cd77a681bdd9bbdcdd1feef3061f54b34",
+    "sha": "8ac8875190a45f6cf30f2c466dfc0f3989038833",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2017,7 +2017,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 174925
+        "bytes": 176730
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2040,12 +2040,12 @@
         "bytes": 145402
       },
       {
-        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
-        "bytes": 138123
+        "file": "server/services/submission-package-orchestrator.ts",
+        "bytes": 139854
       },
       {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 137182
+        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
+        "bytes": 138123
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2112,10 +2112,6 @@
         "bytes": 110971
       },
       {
-        "file": "server/routes/submission-ops.ts",
-        "bytes": 110117
-      },
-      {
         "file": "server/routes/concept2cure.ts",
         "bytes": 109695
       },
@@ -2138,6 +2134,10 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
+      },
+      {
+        "file": "server/routes/submission-ops.ts",
+        "bytes": 106684
       }
     ],
     "largeFilesByLines": [
@@ -2175,7 +2175,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4571
+        "lines": 4610
       },
       {
         "file": "server/storage.ts",
@@ -2198,16 +2198,16 @@
         "lines": 3326
       },
       {
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 3158
+      },
+      {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "lines": 3119
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
         "lines": 3116
-      },
-      {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3092
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2226,12 +2226,12 @@
         "lines": 2832
       },
       {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2826
-      },
-      {
         "file": "server/services/__tests__/ana-ri.test.ts",
         "lines": 2759
+      },
+      {
+        "file": "server/routes/submission-ops.ts",
+        "lines": 2710
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",

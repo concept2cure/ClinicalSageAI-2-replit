@@ -664,6 +664,21 @@ export async function esgTransmit(
     };
   }
 
+  // The §11.50 meaning is the signer's declaration, carried on the sign-off.
+  // It was hardcoded downstream; a meaning nobody chose is not a signature meaning.
+  const signatureMeaning = ctx.signoff?.signaturePurpose;
+  if (!signatureMeaning) {
+    return {
+      success: false,
+      action,
+      message:
+        'Refusing to transmit: the sign-off declares no signature meaning (§11.50), so this ' +
+        'transmission cannot record what the signer asserted. Re-submit through ' +
+        'POST /api/ana-ri/governed-action with a signature purpose.',
+      error: 'PART11_SIGNATURE_REQUIRED',
+    };
+  }
+
   const packageId = Number(params.packageId);
   if (!Number.isInteger(packageId) || packageId <= 0) {
     return {
@@ -719,6 +734,9 @@ export async function esgTransmit(
       submissionType: '510k',
       metadata: { threadId: ctx.threadId ?? null, initiatedBy: 'agent:ana' },
       reason: gate.reason,
+      meaning: signatureMeaning,
+      authenticationMethod: ctx.signoff?.signatureVerified ? 'password' : 'session',
+      secondFactorVerified: false,
       reauthVerifiedAt,
       recordGovernedAction,
       surface: 'ana-mdx-command',
@@ -738,6 +756,7 @@ export async function esgTransmit(
         transport: outcome.result.transport,
         bundleSha256: outcome.bundle.sha256,
         ledgerWriteFailed: outcome.ledgerWriteFailed,
+        contentAfterTransmit: outcome.contentAfterTransmit,
       },
     });
 

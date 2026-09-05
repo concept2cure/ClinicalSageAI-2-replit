@@ -14,7 +14,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
-import { fingerprintPackageContent, type PackageContentRow } from '../server/services/ectd/package-content-fingerprint';
+import { fingerprintPackageContent, sha256Hex, type PackageContentRow } from '../server/services/ectd/package-content-fingerprint';
 
 /* ─── Mock the governed-action ledger so it is a no-op. ──────────────── */
 vi.mock('../server/routes/c2c/actions', () => ({
@@ -72,7 +72,8 @@ const poolQuery = vi.fn(async (sql: string, _params: unknown[] = []) => {
   if (/FROM c2c_package_sections/.test(sql)) {
     return {
       rows: dbState.contentRows.map((r) => ({
-        section_db_id: r.sectionDbId, section_key: r.sectionKey, artifact_db_id: r.artifactDbId, ctd_section: r.ctdSection, content: r.content,
+        section_db_id: r.sectionDbId, section_key: r.sectionKey, section_label: r.sectionLabel, artifact_db_id: r.artifactDbId,
+        title: r.title, version: r.version, ctd_section: r.ctdSection, content_sha256: r.contentSha256,
       })),
     };
   }
@@ -139,7 +140,7 @@ beforeEach(() => {
 /** What the stored bundles below were built from; the package still holds it
  *  unless a test edits dbState.contentRows. */
 const CONTENT: PackageContentRow[] = [
-  { sectionDbId: 13, sectionKey: '2.5', artifactDbId: 1, ctdSection: null, content: 'Clinical overview text' },
+  { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex('Clinical overview text') },
 ];
 const CONTENT_FINGERPRINT = fingerprintPackageContent(CONTENT);
 const IDS = { applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc' };
@@ -246,7 +247,7 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
 
   it('reports CONTENT DRIFT as a blocking finding when an artifact was edited after assembly — the same assessment transmit refuses on', async () => {
     dbState.pkg = pkgWith({ regulatory: IDS, bundle: BUNDLE });
-    dbState.contentRows = CONTENT.map((r) => ({ ...r, content: 'Clinical overview text, edited after assembly' }));
+    dbState.contentRows = CONTENT.map((r) => ({ ...r, contentSha256: sha256Hex('Clinical overview text, edited after assembly') }));
     const res = await preflight();
     expect(res.status).toBe(200);
     expect(res.body.data.blocking).toBe(true);

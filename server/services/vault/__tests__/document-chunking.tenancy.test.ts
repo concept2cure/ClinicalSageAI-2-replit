@@ -24,8 +24,16 @@ const client = {
   release: vi.fn(),
 };
 
+const poolCalls: Call[] = [];
+
 vi.mock('../../../db.js', () => ({
-  pool: { connect: vi.fn(async () => client), query: vi.fn(async () => ({ rows: [], rowCount: 0 })) },
+  pool: {
+    connect: vi.fn(async () => client),
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
+      poolCalls.push({ sql, params });
+      return { rows: [], rowCount: 0 };
+    }),
+  },
 }));
 vi.mock('../../featureToggleService.js', () => ({
   FeatureToggleService: { isFeatureEnabled: vi.fn(async () => true) },
@@ -42,6 +50,7 @@ const ORG = 42;
 describe('vault chunk writer tenancy', () => {
   beforeEach(() => {
     calls.length = 0;
+    poolCalls.length = 0;
     owned = true;
   });
 
@@ -66,5 +75,40 @@ describe('vault chunk writer tenancy', () => {
       expect(c.sql, c.sql).toMatch(/p\.organization_id = \$\d+/);
       expect(c.params, c.sql).toContain(ORG);
     }
+  });
+});
+
+describe('vault chunking ledger tenancy', () => {
+  beforeEach(() => {
+    calls.length = 0;
+    poolCalls.length = 0;
+    owned = true;
+  });
+
+  /* The writer refuses a foreign document — but the LEDGER write that follows
+     it keyed on document_id alone, so the refusal itself was stamped onto the
+     other tenant's catalog row: their chunk_status flipped to 'chunk_failed'
+     and their chunk_error carried a message about an organization that is not
+     theirs. A refusal must leave the other tenant's record untouched. */
+  it('a refused foreign document leaves the other tenant\'s ledger row alone', async () => {
+    owned = false;
+    const { chunkDocumentForIngest } = await import('../document-chunking.service');
+    await chunkDocumentForIngest(DOC, ORG, 'Some extracted text.');
+
+    const ledgerWrites = poolCalls.filter(c => /UPDATE vault\.document_catalog/.test(c.sql));
+    for (const w of ledgerWrites) {
+      expect(w.sql, w.sql).toMatch(/regulatory_programs p ON p\.id = d\.program_id/);
+      expect(w.sql, w.sql).toMatch(/p\.organization_id = \$\d+/);
+      expect(w.params, w.sql).toContain(ORG);
+    }
+  });
+
+  it('the ledger write for an owned document is bound to the organization too', async () => {
+    const { recordChunkOutcome } = await import('../document-chunking.service');
+    await recordChunkOutcome({ documentId: DOC, organizationId: ORG, result: { ok: true, chunkCount: 3 } });
+    const ledgerWrites = poolCalls.filter(c => /UPDATE vault\.document_catalog/.test(c.sql));
+    expect(ledgerWrites.length).toBe(1);
+    expect(ledgerWrites[0].sql).toMatch(/p\.organization_id = \$\d+/);
+    expect(ledgerWrites[0].params).toContain(ORG);
   });
 });
