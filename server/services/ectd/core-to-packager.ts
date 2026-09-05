@@ -179,6 +179,16 @@ export function fdaSubmissionTypeFor(
   if (type === 'amendment' || type === 'response' || type === 'variation') {
     return { submissionType: 'original', submissionSubType: 'amendment' };
   }
+  if (type === 'withdrawal') {
+    // The FDA submission-type vocabulary (CV_SUBMISSION_TYPE) has no withdrawal
+    // entry, and this fell through to "Original Application" — a withdrawal
+    // sequence was coded to the agency as an original. Which type a withdrawal
+    // files under (an amendment to the original application, or product
+    // correspondence) is a regulatory decision no code should make; refuse.
+    throw new Error(
+      "FDA submission type for a 'withdrawal' sequence is not derived: the FDA eCTD submission-type vocabulary has no withdrawal entry, and it will not be coded as an Original Application. Record the submission type the withdrawal files under before packaging.",
+    );
+  }
   return { submissionType: 'original', submissionSubType: 'original' };
 }
 
