@@ -36,7 +36,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
-import { assessmentState, type AssessmentState } from '../assessmentState';
+import { assessmentState, mayReassure, type AssessmentState } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
@@ -474,7 +474,16 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
         ? `Preflight could not be run for package ${id}.`
         : loaded.errorCount > 0
           ? `Preflight reports ${loaded.errorCount} error-severity finding${loaded.errorCount === 1 ? '' : 's'} on the stored bundle for package ${id}; transmit will refuse it until they are resolved.`
-          : `Preflight reports no error-severity findings on the stored bundle for package ${id}; the transmit gate still checks region, size and conformance opt-ins.`,
+          /* A zero error count is only a clearance when the assessment actually
+             RAN. A preflight that answers 200 with no itemized findings and no
+             count leaves errorCount at 0, and this branch used to report that
+             as "no error-severity findings" — a clean bill over a state that
+             means nobody looked. `mayReassure` is the one discriminator that
+             separates the two (assessmentState.ts), and loadFindings already
+             computes it. */
+          : mayReassure(loaded.findingsState)
+            ? `Preflight reports no error-severity findings on the stored bundle for package ${id}; the transmit gate still checks region, size and conformance opt-ins.`
+            : `Preflight did not report findings for package ${id}, so nothing was assessed. Use Reload findings before transmitting.`,
       findings: loaded.findings,
       findingsState: loaded.findingsState,
       fetchFailure: loaded.fetchFailure,

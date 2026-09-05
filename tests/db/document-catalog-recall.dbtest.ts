@@ -471,3 +471,73 @@ describe('vault passage retrieval — the reader finally has a writer', () => {
     expect(ledger.rows[0].chunk_error).toMatch(/Embedding failed/);
   });
 });
+
+describe('backfilling documents ingested before chunking existed', () => {
+  it('indexes the legacy document the sweep finds, and says what it could not index', async () => {
+    // Ingest with chunking OFF — exactly the state of every document uploaded
+    // before the tenant's flag was flipped.
+    process.env.ANA_VAULT_CHUNKING_FORCE_ON = 'false';
+    const LEGACY = 'Legacy stability report LR-9. '.repeat(80);
+    const legacyRes = await request(app)
+      .post('/api/vault/ingest')
+      .field('programId', programId)
+      .field('documentCode', `${PROBE_CODE}-LEGACY`)
+      .field('documentTitle', 'Legacy stability report LR-9')
+      .field('documentType', 'OTHER')
+      .attach('file', Buffer.from(LEGACY, 'utf8'), 'legacy-lr9.txt');
+    process.env.ANA_VAULT_CHUNKING_FORCE_ON = 'true';
+    expect(legacyRes.status).toBe(201);
+    const legacyId = legacyRes.body.document.id;
+
+    // It is outside retrieval, and its ledger says "never attempted" (NULL) —
+    // not "chunked", and not a failure.
+    const before = await owner.query(
+      `SELECT (SELECT COUNT(*)::int FROM vault.document_chunks WHERE document_id = $1) AS chunks,
+              (SELECT chunk_status FROM vault.document_catalog WHERE document_id = $1) AS status`,
+      [legacyId],
+    );
+    expect(before.rows[0].chunks).toBe(0);
+    expect(before.rows[0].status).toBeNull();
+
+    const { backfillVaultChunks } = await import(
+      '../../server/services/vault/document-chunking-backfill.service'
+    );
+
+    // A dry run reports it as a candidate and writes nothing.
+    const dry = await inTenantScope(() => backfillVaultChunks(orgId, { limit: 100 }));
+    expect(dry.dryRun).toBe(true);
+    expect(dry.examined).toBeGreaterThan(0);
+    const stillEmpty = await owner.query(
+      `SELECT COUNT(*)::int AS n FROM vault.document_chunks WHERE document_id = $1`,
+      [legacyId],
+    );
+    expect(stillEmpty.rows[0].n).toBe(0);
+
+    // Applying indexes it for real.
+    const applied = await inTenantScope(() => backfillVaultChunks(orgId, { apply: true, limit: 100 }));
+    expect(applied.indexed).toBeGreaterThan(0);
+    expect(applied.chunksWritten).toBeGreaterThan(0);
+
+    const after = await owner.query(
+      `SELECT (SELECT COUNT(*)::int FROM vault.document_chunks WHERE document_id = $1) AS chunks,
+              (SELECT COUNT(embedding)::int FROM vault.document_chunks WHERE document_id = $1) AS embedded,
+              (SELECT chunk_status FROM vault.document_catalog WHERE document_id = $1) AS status`,
+      [legacyId],
+    );
+    expect(after.rows[0].chunks).toBeGreaterThan(0);
+    expect(after.rows[0].embedded).toBe(after.rows[0].chunks);
+    expect(after.rows[0].status).toBe('chunked');
+
+    // A second run is a no-op on what it already did — the sweep is resumable,
+    // not repetitive.
+    const rerun = await inTenantScope(() => backfillVaultChunks(orgId, { apply: true, limit: 100 }));
+    expect(rerun.examined).toBe(0);
+
+    // And the earlier extraction-failure document is reported as unindexable
+    // with its reason rather than counted as done.
+    const withFailed = await inTenantScope(() =>
+      backfillVaultChunks(orgId, { apply: true, limit: 100, retryFailed: true }),
+    );
+    for (const s of withFailed.skipped) expect(s.reason).toMatch(/text|Extraction/i);
+  });
+});
