@@ -216,6 +216,17 @@ export async function transmitIcsrTransmission(
   opts: Pick<TransmitIcsrOptions, 'now' | 'config'> = {},
 ): Promise<IndIcsrTransmissionRow> {
   const current = await getIcsrTransmission(id, ctx);
+  // Only a prepared row is transmitted. A second call on a transmitted,
+  // acknowledged or rejected row used to send the same message number to the
+  // agency again and overwrite the receipt, as governed-transmit's
+  // ACTIVE_TRANSMITTAL refusal exists to prevent on the eCTD side.
+  if (current.status !== 'prepared') {
+    throw new IcsrTransmissionError(
+      'INVALID_STATE',
+      `ICSR transmission ${id} is '${current.status}'; only a prepared transmission is sent. Prepare a follow-up or nullification as a new transmission.`,
+      { status: current.status },
+    );
+  }
   const built: IcsrTransmissionResult = {
     message: current.message,
     transmitReady: current.transmitReady,

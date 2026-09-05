@@ -244,6 +244,34 @@ Noted, not changed: the cross-reference register's `ready: true` is vacuous
 when no references are recorded; `counts.total: 0` sits beside it, so a
 caller reading the whole payload can tell.
 
+### Seventh audit — ICSR (E2B(R3)) composition and transport (2026-09-05)
+
+Read-only audit of the E2B composer, message wrapper, transport and
+persistence. Fixed on `concept2cure-v2`, each with a test that fails on revert:
+
+- C.1.3 (type of report) comes from the case's `reportType`; it was the
+  constant "2 (report from study)" for every ICSR, spontaneous and literature
+  reports included. An absent type is a gap, not a default.
+- The country of occurrence is emitted as E.i.9; it was emitted under C.2.r.3
+  (reporter's country). C.2.r.3 now takes a supplied `reporterCountry` on the
+  ICSR envelope and is otherwise empty — the intake event has no reporter
+  country field, and it is not in the mandatory set (a decision, not an
+  oversight: making it mandatory would block every prepared ICSR with no
+  intake path to supply it).
+- C.5.1.r.1 (study registration number) is emitted for a study report and is
+  mandatory for one; `studyRegistrationNumber` is carried on the ICSR envelope.
+- `transmitIcsrTransmission` refuses unless the row is `prepared`
+  (INVALID_STATE, 409). A second transmit used to send the same message
+  number again and overwrite the receipt.
+- The composer's docstring now names the tracked mandatory subset;
+  `completeness` and `transmitReady` speak to that set, not to the full
+  E2B(R3) mandatory-element list.
+
+Verified and unchanged: the transport fails closed (production with no
+gateway throws; the real client is not implemented and says so; a simulated
+receipt is never recorded as transmitted), and every read is tenant-scoped.
+The real FAERS/EudraVigilance client remains the open feature.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -485,6 +513,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-05 | A | Fourth audit — ESG acks + IND assembly | isConfigured honest on 13 gateways; status provenance (agency/stored + pollError) end to end; orphaned assemble/generate-form routes and toy backbone/ICSR generators removed — revert-proven | §1 above |
 | 2026-09-05 | A | Fifth audit — M2/M3 placement + eCTD document gate | No automated benefit-risk / supports-the-plan conclusions; Module 3 replace lifecycle; 64-char leaf names composed and validated; encrypted leaves refused; agent PDF/A not-verified ≠ pass — revert-proven; m5.2 recorded as a decision | §1 above |
 | 2026-09-05 | A | Sixth audit — IND filing chain + client surfaces | Draft-linked filing refusals (404/409); overdue safety count from the register; annual overdue feed carries deadline_unknown; PV matrix error state — revert-proven | §1 above |
+| 2026-09-05 | A | Seventh audit — ICSR E2B composition + transport | C.1.3 from the case; E.i.9 vs C.2.r.3; C.5.1.r.1 mandatory for study reports; no re-transmit of a non-prepared ICSR — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

@@ -279,7 +279,7 @@ describe('document routes', () => {
       gateway: 'FDA_FAERS',
       senderId: 'C2C',
       messageNumber: 'MSG-0001',
-      icsr: { worldwideUniqueId: 'US-C2C-2026-000123', senderType: 'sponsor' },
+      icsr: { worldwideUniqueId: 'US-C2C-2026-000123', senderType: 'sponsor', reportType: 'study', studyRegistrationNumber: 'IND 123456' },
     });
     expect(res.status).toBe(200);
     expect(res.body.gateway).toBe('FDA_FAERS');
@@ -427,7 +427,7 @@ describe('DB-write + program surface (full HTTP flow)', () => {
         submissionId: seededSubmissionId,
         sequenceNumber: '0004',
         event: reportableEvent(),
-        icsr: { worldwideUniqueId: 'US-C2C-2026-000999', senderType: 'sponsor' },
+        icsr: { worldwideUniqueId: 'US-C2C-2026-000999', senderType: 'sponsor', reportType: 'study', studyRegistrationNumber: 'IND 123456' },
       });
     expect(res.status).toBe(201);
     const m535 = res.body.leaves.find((l: any) => l.sectionCode === 'm5.3.5');
@@ -855,7 +855,7 @@ describe('persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance)', () =
         gateway: 'FDA_FAERS',
         senderId: 'C2C',
         messageNumber,
-        icsr: { worldwideUniqueId: 'US-C2C-2026-000123', senderType: 'sponsor' },
+        icsr: { worldwideUniqueId: 'US-C2C-2026-000123', senderType: 'sponsor', reportType: 'study', studyRegistrationNumber: 'IND 123456' },
       });
     expect(prep.status).toBe(201);
     expect(prep.body.status).toBe('prepared');
@@ -990,6 +990,32 @@ describe('persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance)', () =
     expect(ack.body.status).toBe('rejected');
     expect(ack.body.ackCode).toBe('AR');
     expect(ack.body.errors).toContain('Invalid MedDRA version');
+  });
+
+  it('refuses to transmit a report that is no longer prepared (409): no second send of the same message', async () => {
+    const prep = await prepareReady('MSG-1007');
+    icsrTransport.override = async (built: any) => ({
+      simulated: false, status: 'transmitted', gateway: built.gateway, receiverId: built.receiverId,
+      messageId: 'MSG-1007', receiptId: 'ESG-CORE-1007', timestamp: '2026-06-16T00:00:00.000Z', message: 'Accepted.',
+    });
+    expect((await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/transmit`)).status).toBe(200);
+    const again = await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/transmit`);
+    expect(again.status).toBe(409);
+    expect(again.body.error.code).toBe('INVALID_STATE');
+    expect((await rowOf(prep.id)).transportReceiptId).toBe('ESG-CORE-1007');
+  });
+
+  it('a study report with no study registration number is prepared but not transmit-ready', async () => {
+    const prep = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/icsr-transmissions`)
+      .send({
+        event: { ...reportableEvent(), suspectProduct: 'C2C-001', reactionPt: 'Hepatic failure' },
+        gateway: 'FDA_FAERS', senderId: 'C2C', messageNumber: 'MSG-1008',
+        icsr: { worldwideUniqueId: 'US-C2C-2026-001008', senderType: 'sponsor', reportType: 'study' },
+      });
+    expect(prep.status).toBe(201);
+    expect(prep.body.transmitReady).toBe(false);
+    expect(prep.body.gaps.map((g: any) => g.id)).toContain('C.5.1.r.1');
   });
 
   it('refuses an acknowledgement for a report that was never transmitted (409), and the row is unchanged', async () => {
