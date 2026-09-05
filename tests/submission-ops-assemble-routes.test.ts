@@ -49,6 +49,19 @@ vi.mock('fs', () => ({
 }));
 const unlinkFn = vi.fn().mockResolvedValue(undefined);
 
+/* ─── Durable (S3) bundle storage: disabled by default, enabled per test. ── */
+const { storageState } = vi.hoisted(() => ({ storageState: { enabled: false } }));
+const putBundleFn = vi.fn().mockResolvedValue(undefined);
+const deleteBundleFn = vi.fn().mockResolvedValue(undefined);
+vi.mock('../server/services/submission-bundle-storage', () => ({
+  isBundleStorageEnabled: () => storageState.enabled,
+  bundleStorageBucket: () => 'test-bundles',
+  bundleStorageKey: (packageId: string, sha256: string) => `submission-bundles/${packageId}/${sha256}.zip`,
+  putBundle: (...a: unknown[]) => putBundleFn(...a),
+  deleteBundle: (...a: unknown[]) => deleteBundleFn(...a),
+  readBundleBytes: vi.fn(),
+}));
+
 /* ─── Mock the governed-action ledger so it is a no-op. ──────────────── */
 vi.mock('../server/routes/c2c/actions', () => ({
   recordGovernedAction: vi.fn().mockResolvedValue({ actionId: 'act_x', auditId: 'aud_x', sha256Chain: 'c' }),
@@ -172,6 +185,9 @@ beforeEach(() => {
   vi.mocked(recordGovernedAction).mockClear();
   clientQuery.mockClear();
   unlinkFn.mockClear();
+  storageState.enabled = false;
+  putBundleFn.mockClear();
+  deleteBundleFn.mockClear();
   writeFileFn.mockClear();
   mkdirFn.mockClear();
   connectFn.mockClear();
@@ -262,6 +278,26 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(ledger.payload).toMatchObject({ change: 'assembly-discarded', cause: 'identifiers_changed' });
     // The decision was taken under the row lock, in a transaction.
     expect(clientQuery.mock.calls.some((c) => /FOR UPDATE/.test(String(c[0])))).toBe(true);
+  });
+
+  it('a discarded stale assembly removes its durable (S3) copy too, and says so', async () => {
+    storageState.enabled = true;
+    dbState.pkg = lockedPkg();
+    dbState.sections = [{ id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('co', null)]];
+    packageLeafBytesFn.mockImplementationOnce(async () => {
+      dbState.pkg = lockedPkg({ foo: 'bar', regulatory: { ...REGULATORY, applicationNumber: 'IND999999' } });
+      return { path: '/tmp/c2c-assemble-test/pkg.zip', sha256: 'f'.repeat(64), sizeBytes: 14, format: 'ectd', ...PACKAGER_EVIDENCE };
+    });
+    const res = await post();
+    expect(res.status).toBe(409);
+    expect(putBundleFn).toHaveBeenCalledTimes(1);
+    const key = putBundleFn.mock.calls[0][0];
+    expect(deleteBundleFn).toHaveBeenCalledWith(key);
+    expect(res.body.durableCopyDeleted).toBe(true);
+    expect(res.body.durableCopy).toBeNull();
+    const ledger = vi.mocked(recordGovernedAction).mock.calls.at(-1)![1] as any;
+    expect(ledger.payload).toMatchObject({ change: 'assembly-discarded', durableCopy: key, durableCopyDeleted: true });
   });
 
   it('merges the descriptor onto the package’s CURRENT metadata, not the pre-assembly snapshot', async () => {

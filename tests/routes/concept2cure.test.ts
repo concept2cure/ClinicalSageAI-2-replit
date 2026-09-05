@@ -208,6 +208,8 @@ vi.mock('../../server/middleware/redisRateLimiter', () => ({
 import concept2cureRouter from '../../server/routes/concept2cure';
 // The artifact domain moved to its own router (L53, slice 8).
 import artifactRouter from '../../server/routes/c2c/artifacts';
+// AI editing moved to its own router (L53, slice 9).
+import aiEditingRouter from '../../server/routes/c2c/ai-editing';
 // Conversation mutations moved to their own router (L53, slice 6).
 import conversationRouter from '../../server/routes/c2c/conversations';
 
@@ -365,7 +367,7 @@ describe('Concept2Cure API', () => {
     req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
 
     const res = createMockResponse();
-    const layer = concept2cureRouter.stack.find(
+    const layer = aiEditingRouter.stack.find(
       (l: any) =>
         l.route?.path === '/ai/templates/:templateId/generate' && l.route?.methods?.post
     );
@@ -426,7 +428,7 @@ describe('Concept2Cure API', () => {
     req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
 
     const res = createMockResponse();
-    const layer = concept2cureRouter.stack.find(
+    const layer = aiEditingRouter.stack.find(
       (l: any) =>
         l.route?.path === '/ai/templates/:templateId/generate' && l.route?.methods?.post
     );

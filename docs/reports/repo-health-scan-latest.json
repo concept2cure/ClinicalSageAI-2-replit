@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T12:06:50.597Z",
+  "generatedAt": "2026-09-05T12:23:30.183Z",
   "git": {
-    "sha": "7816d9332aa979e841bd8a1ec67a240a3ce0e7ef",
+    "sha": "bfaffdfe1eb3ac7df8c9028f511fd7c719f0c753",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 40,
-    "largeFilesByLines": 92
+    "largeFilesByLines": 93
   },
   "findings": {
     "duplicateBasenames": [
@@ -2000,12 +2000,12 @@
         "bytes": 321182
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "bytes": 306768
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
         "bytes": 233636
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "bytes": 228090
       },
       {
         "file": "server/statistics-service.ts",
@@ -2137,7 +2137,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "bytes": 103017
+        "bytes": 103351
       }
     ],
     "largeFilesByLines": [
@@ -2150,16 +2150,16 @@
         "lines": 19448
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "lines": 8227
-      },
-      {
         "file": "server/routes/authoring.router.ts",
         "lines": 7407
       },
       {
         "file": "server/statistics-service.ts",
         "lines": 6920
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "lines": 6145
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2230,12 +2230,12 @@
         "lines": 2759
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2699
+        "file": "server/routes/submission-ops.ts",
+        "lines": 2700
       },
       {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2696
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 2699
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2430,6 +2430,10 @@
         "lines": 1809
       },
       {
+        "file": "server/routes/c2c/ai-editing.ts",
+        "lines": 1809
+      },
+      {
         "file": "ui_kits/home/Projects.jsx",
         "lines": 1795
       },
@@ -2517,7 +2521,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 403,
       "largeByBytes": 30,
-      "largeByLines": 76
+      "largeByLines": 77
     },
     {
       "owner": "Unassigned (TBD)",
