@@ -20,7 +20,7 @@ import { AnaDraftBanner } from '../components/AnaDraftBanner';
 import { PathwayPanes } from './pathway/PathwayPanes';
 import { DeviceProfilePanel } from './DeviceProfilePanel';
 import { EstarFilingPanel } from './EstarFilingPanel';
-import { OfficialEstarPanel } from './OfficialEstarPanel';
+import { OfficialEstarPanel, officialEstarTypeFor, officialEstarVariantFor } from './OfficialEstarPanel';
 import { useSampleRows } from '../lib/useSampleRows';
 import type { EditorSectionRef } from '../../v2/editorTarget';
 import { downloadCsv } from '../../v2/download';
@@ -205,22 +205,9 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
       {predicates.error && !predicates.rows && (
         <div
           className="banner-warn"
-          style={{
-            margin: '12px 0',
-            padding: '10px 14px',
-            background: 'var(--bg-050)',
-            border: '1px solid var(--border-100)',
-            borderLeft: '3px solid var(--accent-100)',
-            borderRadius: 6,
-            fontSize: 12,
-            color: 'var(--text-200)',
-            display: 'flex',
-            gap: 8,
-            alignItems: 'center',
-          }}
           role="status"
         >
-          <span style={{ color: 'var(--accent-100)' }}>{I.alertCircle}</span>
+          <span className="banner-ic">{I.alertCircle}</span>
           <span>
             Predicate intelligence is configuring for your tenant. The table below shows the canonical
             example data so you can preview the workflow; live K-number candidates appear here once the
@@ -542,7 +529,12 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
 
       {/* The official FDA eSTAR PDF — readiness gate, the governed field
           preview and the one Generate control. */}
-      <OfficialEstarPanel program={program} variant="device" />
+      {/* The variant follows the program's product type: an IVD program that
+          files a 510(k) lands here (pathway k510) and must be produced on the
+          IVD eSTAR, not the nIVD one. The type follows the program's
+          regulatory path: a De Novo program also lands here (the kit folds
+          De Novo into k510) and must be produced as a De Novo, not a 510(k). */}
+      <OfficialEstarPanel program={program} type={officialEstarTypeFor(program)} variant={officialEstarVariantFor(program)} />
 
       {/* eSTAR filing journey — register → assess → produce-gate → track,
           org-scoped from the session. eSTAR covers 510(k)/De Novo too. */}

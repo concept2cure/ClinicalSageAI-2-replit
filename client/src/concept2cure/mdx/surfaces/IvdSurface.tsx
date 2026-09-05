@@ -28,7 +28,7 @@ import {
 import { AskAnaChip } from './AskAnaChip';
 import { PathwayPanes } from './pathway/PathwayPanes';
 import { EstarFilingPanel } from './EstarFilingPanel';
-import { OfficialEstarPanel } from './OfficialEstarPanel';
+import { OfficialEstarPanel, officialEstarTypeFor, officialEstarVariantFor } from './OfficialEstarPanel';
 import { useSampleRows } from '../lib/useSampleRows';
 import { useCdxPairings, useCliaCategorizations } from '../hooks/useCdxClia';
 import { DataGate } from '../components/DataGate';
@@ -150,22 +150,9 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
       {usingFixture && (
         <div
           className="banner-warn"
-          style={{
-            margin: '12px 0',
-            padding: '10px 14px',
-            background: 'var(--bg-050)',
-            border: '1px solid var(--border-100)',
-            borderLeft: '3px solid var(--accent-100)',
-            borderRadius: 6,
-            fontSize: 12,
-            color: 'var(--text-200)',
-            display: 'flex',
-            gap: 8,
-            alignItems: 'center',
-          }}
           role="status"
         >
-          <span style={{ color: 'var(--accent-100)' }}>{I.alertCircle}</span>
+          <span className="banner-ic">{I.alertCircle}</span>
           <span>
             Showing the canonical IVDR example so you can preview the workflow. Your tenant's
             classifications, validations and clinical evidence appear here once recorded via the IVDR module.
@@ -486,9 +473,26 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
         </div>
       </div>
 
-      {/* The official FDA IVD eSTAR PDF — readiness gate, the governed field
-          preview and the one Generate control. */}
-      <OfficialEstarPanel program={program} variant="ivd" />
+      {/*
+        The official FDA eSTAR PDF — readiness gate, the governed field preview
+        and the one Generate control.
+
+        BOTH halves follow the program, neither is hardcoded. The literal
+        variant="ivd" here was wrong for the same reason a literal type="pma" was
+        wrong on the PMA surface: which surface is on screen is a NAVIGATION
+        choice (MdxSurfaceHost switches on nav === 'device-diagnostics'), not a
+        property of the selected program. Nothing stops an operator selecting a
+        non-IVD device program and opening the Diagnostics tab, and the panel
+        then produced their device on the IVD eSTAR — a different FDA template,
+        with a different field map, for a submission that is not an IVD. The
+        comment that used to sit here claimed the IVD family was "by
+        construction"; there is no such construction.
+      */}
+      <OfficialEstarPanel
+        program={program}
+        type={officialEstarTypeFor(program)}
+        variant={officialEstarVariantFor(program)}
+      />
 
       {/* eSTAR filing journey — register → assess → produce-gate → track,
           org-scoped from the session. The IVD eSTAR shares this flow. */}

@@ -25,7 +25,7 @@ let pool: MaudPool;
 try {
   const db = await import('./runtime.js');
   pool = ((db as { pool?: MaudPool }).pool ?? (db as { default?: MaudPool }).default) as MaudPool;
-} catch (error) {
+} catch {
   console.warn('Database pool not available, using fallback implementation');
   // Create a mock pool for environments without database support
   pool = {

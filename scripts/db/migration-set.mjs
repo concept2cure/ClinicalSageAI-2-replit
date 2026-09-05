@@ -488,6 +488,23 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260730_estar_registration.sql',
   'migrations/20260730_estar_submission.sql',
   'migrations/20260730_estar_submission_project_link.sql',
+  // WO-8 Phase 3: every administrative field of the official eSTAR has a
+  // governed home. Device-level facts (common name, classification name,
+  // regulation number, associated product codes, IFU citation) are columns on
+  // regulatory_programs — created at index 1 of this set by
+  // 20260524_program_workbench_schema. Org-level correspondent / Declaration
+  // of Conformity facts are columns on estar_registrations, so that ALTER
+  // MUST stay after 20260730_estar_registration above. Both are ADD COLUMN IF
+  // NOT EXISTS on existing tenant tables — no new table, so no RLS sweep entry.
+  'migrations/20260903_regulatory_programs_estar_device_fields.sql',
+  'migrations/20260903_estar_registration_correspondent.sql',
+  // The Declaration of Conformity's company NAME, beside the address the file
+  // above added. The DoC is signed by one legal entity, so its name and
+  // address must come from one row; the name used to be read from the
+  // applicant's workspace, which holds no address. Same table, so this MUST
+  // stay after 20260730_estar_registration; ADD COLUMN IF NOT EXISTS on an
+  // existing tenant table — no new table, so no RLS sweep entry.
+  'migrations/20260904_estar_registration_declaration_company_name.sql',
 
   // Work items: source_ref for string/UUID-keyed sources (correspondence
   // issues), so those rows stop sharing the (source_type, source_id=0) key.
@@ -1571,6 +1588,18 @@ export const C2C_MIGRATION_FILES = [
   // visibly 'unfiled'. Additive, guarded on to_regclass('vault.documents');
   // must run AFTER the canonical-shape reconciliation above.
   'migrations/20260823_vault_document_placement.sql',
+
+  // ── Document catalog: comprehension + read-coverage on vault.documents ────
+  // Two tables. vault.document_catalog records per document HOW its text was
+  // extracted (or the recorded reason extraction failed — a failure is a row
+  // that says so, never an absent row) and, once AnA has read the whole file,
+  // WHAT it is: kind, purpose, summary, key_data, embedding.
+  // vault.document_read_receipts records every character span AnA was served,
+  // keyed to content_hash; the catalog write refuses below full coverage, so a
+  // sampled page can never be recorded as "reviewed". Additive, guarded on
+  // to_regclass('vault.documents'); must run AFTER the canonical-shape
+  // reconciliation and placement entries above (same table, same discipline).
+  'migrations/20260905_document_catalog.sql',
 
   // ── Time-limited module grants ─────────────────────────────────────────────
   // Adds a nullable `expires_at` (+ who set it, when) to module_subscriptions,

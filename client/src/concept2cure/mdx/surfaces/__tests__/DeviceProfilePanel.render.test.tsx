@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { DeviceProfilePanel, standardsStatusLine } from '../DeviceProfilePanel';
+import {
+  DeviceProfilePanel,
+  classificationAutofill,
+  profilePatch,
+  standardsStatusLine,
+} from '../DeviceProfilePanel';
 
 /**
  * Mount tests for the device-profile intake card.
@@ -28,7 +33,28 @@ const PROFILE = {
   intendedUse: null,
   indication: null,
   predicateDevices: null,
+  commonName: 'Continuous glucose monitor',
+  classificationName: 'Glucose Monitor, Continuous',
+  regulationNumber: '862.1355',
+  associatedProductCodes: 'DQA; NBW',
+  indicationsForUseCitation: 'Attachment 4, page 1',
 };
+
+const OPENFDA_HIT = {
+  deviceName: 'Glucose Monitor, Continuous',
+  productCode: 'DQA',
+  deviceClass: '3',
+  regulationNumber: '862.1355',
+  medicalSpecialty: 'Clinical Chemistry',
+  reviewPanel: 'CH',
+};
+
+/** The PUT the panel issued, decoded — null when no write was sent. */
+function sentPut(): Record<string, unknown> | null {
+  const calls = (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+  const put = calls.find(([, init]) => (init as { method?: string } | undefined)?.method === 'PUT');
+  return put ? (JSON.parse((put[1] as { body: string }).body) as Record<string, unknown>) : null;
+}
 
 function mockFetch(handler: (url: string) => Promise<Response>) {
   vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => handler(String(input))));
@@ -130,8 +156,49 @@ describe('DeviceProfilePanel — honest states', () => {
 
     expect((screen.getByLabelText('Product code') as HTMLInputElement).value).toBe('DQA');
     expect((screen.getByLabelText('Device class') as HTMLSelectElement).value).toBe('III');
+    /* The hit's regulation number and its classification "device name" are
+       offered into the two eSTAR fields that hold those facts. */
+    expect((screen.getByLabelText('Regulation number (21 CFR)') as HTMLInputElement).value).toBe(
+      '862.1355',
+    );
+    expect((screen.getByLabelText('Classification name') as HTMLInputElement).value).toBe(
+      'Glucose Monitor, Continuous',
+    );
     /* Autofill never saved anything — Save is now enabled for the user. */
     expect((screen.getByText('Save') as HTMLButtonElement).disabled).toBe(false);
+    expect(sentPut()).toBeNull();
+  });
+
+});
+
+describe('DeviceProfilePanel — the five eSTAR device fields', () => {
+  it('shows the stored eSTAR device fields in the intake form', async () => {
+    mockFetch(() => okJson({ profile: PROFILE }));
+    render(<DeviceProfilePanel ident={PROFILE.id} />);
+    await waitFor(() => expect(screen.getByText(/code MDS/)).toBeTruthy());
+    fireEvent.click(screen.getByText('Edit'));
+    const value = (label: string) => (screen.getByLabelText(label) as HTMLInputElement).value;
+    expect(value('Common name')).toBe('Continuous glucose monitor');
+    expect(value('Classification name')).toBe('Glucose Monitor, Continuous');
+    expect(value('Regulation number (21 CFR)')).toBe('862.1355');
+    expect(value('Associated product codes')).toBe('DQA; NBW');
+    expect(value('Indications for Use citation (attachment and page)')).toBe('Attachment 4, page 1');
+    /* Nothing changed yet — Save stays disabled. */
+    expect((screen.getByText('Save') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('Save PUTs only the edited eSTAR fields — and an emptied one as "" to clear it', async () => {
+    mockFetch(() => okJson({ profile: PROFILE }));
+    render(<DeviceProfilePanel ident={PROFILE.id} />);
+    await waitFor(() => expect(screen.getByText(/code MDS/)).toBeTruthy());
+    fireEvent.click(screen.getByText('Edit'));
+    fireEvent.change(screen.getByLabelText('Common name'), { target: { value: '  CGM system ' } });
+    fireEvent.change(screen.getByLabelText('Indications for Use citation (attachment and page)'), {
+      target: { value: '' },
+    });
+    fireEvent.click(screen.getByText('Save'));
+    await waitFor(() => expect(screen.getByText('Saved')).toBeTruthy());
+    expect(sentPut()).toEqual({ commonName: 'CGM system', indicationsForUseCitation: '' });
   });
 
   it('reports an honest empty when openFDA matches nothing', async () => {
@@ -151,6 +218,78 @@ describe('DeviceProfilePanel — honest states', () => {
     );
   });
 
+});
+
+describe('profilePatch — the five eSTAR device fields', () => {
+  const form = {
+    productName: PROFILE.productName,
+    deviceClass: 'II',
+    regulatoryPath: '510k',
+    productCode: 'MDS',
+    intendedUse: '',
+    commonName: PROFILE.commonName,
+    classificationName: PROFILE.classificationName,
+    regulationNumber: PROFILE.regulationNumber,
+    associatedProductCodes: PROFILE.associatedProductCodes,
+    indicationsForUseCitation: PROFILE.indicationsForUseCitation,
+  };
+
+  it('is empty when the form mirrors the profile', () => {
+    expect(profilePatch(PROFILE, form)).toEqual({});
+  });
+
+  it('sends a changed field trimmed and an emptied field as "" (the clear signal)', () => {
+    expect(
+      profilePatch(PROFILE, {
+        ...form,
+        regulationNumber: ' 862.1345 ',
+        associatedProductCodes: '',
+        indicationsForUseCitation: '   ',
+      }),
+    ).toEqual({ regulationNumber: '862.1345', associatedProductCodes: '', indicationsForUseCitation: '' });
+  });
+
+  it('does not clear a field that was already blank', () => {
+    const blank = { ...PROFILE, commonName: null, classificationName: null };
+    expect(profilePatch(blank, { ...form, commonName: '', classificationName: ' ' })).toEqual({});
+  });
+});
+
+describe('classificationAutofill — openFDA hit → intake fields, offered not saved', () => {
+  const typed = {
+    productName: 'CGM',
+    deviceClass: '',
+    regulatoryPath: '',
+    productCode: '',
+    intendedUse: '',
+    commonName: '',
+    classificationName: '',
+    regulationNumber: '',
+    associatedProductCodes: '',
+    indicationsForUseCitation: '',
+  };
+
+  it('maps regulationNumber → regulationNumber and deviceName → classificationName', () => {
+    const next = classificationAutofill(typed, OPENFDA_HIT);
+    expect(next.productCode).toBe('DQA');
+    expect(next.deviceClass).toBe('III');
+    expect(next.regulationNumber).toBe('862.1355');
+    expect(next.classificationName).toBe('Glucose Monitor, Continuous');
+    /* Facts the hit does not carry are untouched. */
+    expect(next.commonName).toBe('');
+    expect(next.associatedProductCodes).toBe('');
+    expect(next.productName).toBe('CGM');
+  });
+
+  it('leaves a typed value alone when the hit has nothing for it', () => {
+    const next = classificationAutofill(
+      { ...typed, regulationNumber: '870.1', classificationName: 'Typed', deviceClass: 'II' },
+      { ...OPENFDA_HIT, regulationNumber: '', deviceName: '', deviceClass: 'U' },
+    );
+    expect(next.regulationNumber).toBe('870.1');
+    expect(next.classificationName).toBe('Typed');
+    expect(next.deviceClass).toBe('II');
+  });
 });
 
 /**
@@ -296,6 +435,101 @@ describe('DeviceProfilePanel — recognized standards', () => {
 
     await waitFor(() =>
       expect(screen.getByText(/holds no consensus standard against product code MDS/)).toBeTruthy(),
+    );
+  });
+});
+
+/**
+ * The route caps the five eSTAR device facts (commonName / classificationName /
+ * associatedProductCodes at 500, indicationsForUseCitation at 1000,
+ * regulationNumber at 50) and 400s the WHOLE patch when one value is over. The
+ * patch carries every changed field, so a single over-long paste silently threw
+ * away every other edit the user had made in this form — with only "Not saved"
+ * to explain it. The inputs carry the caps, so the value cannot be typed or
+ * pasted past them in the first place, exactly as the correspondent block does.
+ */
+describe('DeviceProfilePanel — the eSTAR device inputs carry the route’s caps', () => {
+  const CAPS: Array<[string, number]> = [
+    ['Regulation number (21 CFR)', 50],
+    ['Common name', 500],
+    ['Classification name', 500],
+    ['Associated product codes', 500],
+    ['Indications for Use citation (attachment and page)', 1000],
+  ];
+
+  it.each(CAPS)('%s is capped at %i characters', async (label, max) => {
+    mockFetch(() => okJson({ profile: PROFILE }));
+    render(<DeviceProfilePanel ident={PROFILE.id} />);
+    await waitFor(() => expect(screen.getByText(/code MDS/)).toBeTruthy());
+    fireEvent.click(screen.getByText('Edit'));
+    expect((screen.getByLabelText(label) as HTMLInputElement).maxLength).toBe(max);
+  });
+});
+
+/**
+ * PUT /profile is editor-only on the server (requireEditorAccess), and it also
+ * 400s a value past its cap and 500s when the read behind it fails. All three
+ * arrived at the operator as one sentence — "the server rejected the update" —
+ * which is true of exactly one of them. A read-only operator was sent hunting
+ * for a bad value in fields their role cannot write at all, and a dropped
+ * connection was reported as a verdict the server never gave.
+ *
+ * The role rule itself is NOT restated here or in the client: the surface reads
+ * the status the server returned. That is the point — a second copy of "admin,
+ * owner, editor, super_admin" in the browser is free to drift from the one that
+ * actually gates the write.
+ */
+describe('DeviceProfilePanel — a refused save says which refusal it was', () => {
+  async function attemptSave(respond: () => Promise<Response>) {
+    let firstLoad = true;
+    mockFetch((url) => {
+      if (!firstLoad || !url.includes('/profile')) return okJson({ profile: PROFILE });
+      firstLoad = false;
+      return okJson({ profile: PROFILE });
+    });
+    render(<DeviceProfilePanel ident={PROFILE.id} />);
+    await waitFor(() => expect(screen.getByText(/code MDS/)).toBeTruthy());
+    fireEvent.click(screen.getByText('Edit'));
+    fireEvent.change(screen.getByLabelText('Common name'), {
+      target: { value: 'Continuous glucose monitor, interstitial' },
+    });
+    /* Only the PUT is redirected — the initial GET already resolved. */
+    mockFetch(respond);
+    fireEvent.click(screen.getByText('Save'));
+  }
+
+  const refused = (status: number) =>
+    Promise.resolve({ ok: false, status, json: () => Promise.resolve({}) } as Response);
+
+  it('403 names the role, not the data — the operator is not sent hunting for a bad value', async () => {
+    await attemptSave(() => refused(403));
+    await waitFor(() =>
+      expect(screen.getByText('Not saved — your role cannot change these values.')).toBeTruthy(),
+    );
+  });
+
+  it('400 is the one case that really is the update being rejected', async () => {
+    await attemptSave(() => refused(400));
+    await waitFor(() =>
+      expect(screen.getByText('Not saved — the server rejected the update.')).toBeTruthy(),
+    );
+  });
+
+  it('a request that reached no verdict says so, and says nothing changed', async () => {
+    await attemptSave(() => Promise.reject(new Error('network down')));
+    await waitFor(() =>
+      expect(
+        screen.getByText('Not saved — the server did not answer. Nothing was changed.'),
+      ).toBeTruthy(),
+    );
+  });
+
+  it('500 is not reported as a rejection of the operator’s data either', async () => {
+    await attemptSave(() => refused(500));
+    await waitFor(() =>
+      expect(
+        screen.getByText('Not saved — the server did not answer. Nothing was changed.'),
+      ).toBeTruthy(),
     );
   });
 });

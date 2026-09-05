@@ -54,8 +54,28 @@ export type LeafFileResolver = (leaf: CoreLeaf) => ResolvedFile | null;
 
 const OPERATIONS = new Set<EctdLeaf['operation']>(['new', 'append', 'replace', 'delete']);
 
+/**
+ * A leaf's eCTD lifecycle operation, refused rather than defaulted.
+ *
+ * This coerced anything it did not recognise to 'new'. `lifecycle_op` is free
+ * text on the write path (submission-service writes `input.lifecycleOp ?? 'new'`
+ * with no enum check), so 'Replace', 'REPLACE', 'withdraw' or a typo silently
+ * became a brand-new leaf: the sequence re-filed the document as if it had
+ * never been submitted, the prior version stayed current at the agency, and no
+ * modified-file linked the two. Casing is normalised, because 'Replace' plainly
+ * means replace; an operation nobody can read is refused, because filing a leaf
+ * under the wrong operation is worse than not filing the sequence.
+ */
 function toOperation(op: string): EctdLeaf['operation'] {
-  return OPERATIONS.has(op as EctdLeaf['operation']) ? (op as EctdLeaf['operation']) : 'new';
+  const normalized = String(op ?? '').trim().toLowerCase();
+  if (OPERATIONS.has(normalized as EctdLeaf['operation'])) {
+    return normalized as EctdLeaf['operation'];
+  }
+  throw new Error(
+    `Unrecognised eCTD lifecycle operation "${op}". It must be one of ` +
+      `${[...OPERATIONS].join(', ')}. Defaulting it to "new" would re-file the ` +
+      `document as a new leaf and leave the version it supersedes current at the agency.`,
+  );
 }
 
 // All 12 regions the packager can build a backbone for (mirrors
@@ -176,6 +196,25 @@ export function buildPackagerInputFromCore(args: BuildPackagerInputArgs): BuildP
   const skipped: Array<{ sectionCode: string; reason: string }> = [];
 
   for (const leaf of args.leaves) {
+    const operation = toOperation(leaf.lifecycleOp);
+    if (operation === 'delete') {
+      // A withdrawal legitimately has no source document (dispatch-readiness
+      // exempts delete leaves from UNRESOLVED_DOCUMENT for the same reason).
+      // This loop used to require a resolved file for every leaf, so an
+      // author-declared delete was dropped here as "no resolvable source
+      // file" and never reached the backbone. It is carried as a backbone-only
+      // leaf; the lifecycle step binds it to the prior leaf it withdraws and
+      // supplies the prior checksum and modified-file pointer.
+      const resolved = args.resolveFile(leaf);
+      leaves.push({
+        ctdSection: leaf.sectionCode,
+        operation,
+        sourcePath: resolved?.sourcePath ?? '',
+        fileName: resolved?.fileName ?? '',
+        title: leaf.title,
+      });
+      continue;
+    }
     const resolved = args.resolveFile(leaf);
     if (!resolved) {
       skipped.push({ sectionCode: leaf.sectionCode, reason: 'no resolvable source file for the leaf document' });

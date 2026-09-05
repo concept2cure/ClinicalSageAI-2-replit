@@ -50,6 +50,22 @@ export interface OfficialPdfFieldSpec {
    * whose real fields live in the `/XFA` packets. Required by `fillXfaDatasets`.
    */
   xfaSomPath?: string;
+  /**
+   * FURTHER XFA nodes that carry this same governed value, written with exactly
+   * the string `xfaSomPath` gets. Not a second mapping and not a second fact:
+   * one canonical key, one value, every box the form keeps it in.
+   *
+   * The official eSTAR templates need this because several cells an applicant
+   * reads are SUMMARIES the form's own JavaScript recomputes from a source field
+   * elsewhere. Writing only the summary cell means the applicant's first click
+   * blanks it — FDA's script clears the cell and rebuilds it from a source we
+   * left empty. Writing the source as well hands the value to the form's own
+   * machinery, which then puts it back into the summary itself.
+   *
+   * Each path is resolved and reported exactly like `xfaSomPath`: a path the
+   * template does not declare is skipped and warned, never invented.
+   */
+  alsoWriteSomPaths?: string[];
   /** The template's OWN caption for this field, carried for provenance. */
   caption?: string;
   type: OfficialPdfFieldType;
@@ -346,6 +362,63 @@ function classifyFieldType(ctorName: string | undefined): string {
 // with a fresh cross-reference stream. Nothing else in the document is disturbed,
 // which is what keeps the output the real FDA form rather than a re-rendered
 // lookalike.
+//
+// THE SAVED `form` PACKET, AND WHY IT DOES NOT SHADOW THE DATASETS WRITE.
+// Measured 2026-09-04 against both vendored eSTAR v7.0 templates.
+//
+// These templates carry TEN XFA packets, and one of them is a `form` packet — a
+// SAVED SNAPSHOT of merged form state. That is the one thing that could make a
+// datasets-only fill open BLANK in Acrobat while every read-back here passes, so
+// it was measured rather than assumed. pdf.js cannot settle it: its XFA packet
+// whitelist has no `form` entry, so it never even fetches the object.
+//
+//   /XFA array (nIVD; it lives in AcroForm object 220, whose /Fields is empty) —
+//   packet name, PDF object, decoded bytes:
+//     xdp:xdp 269 · 162       config 4 · 3,163        template 5 · 9,877,094
+//     localeSet 6 · 2,860     datasets 244 · 17,408   PDFSecurity 8 · 200
+//     xmpmeta 9 · 1,524       xfdf 10 · 80            form 270 · 30,983
+//     </xdp:xdp> 271 · 10
+//
+//   The `form` packet is a SPARSE DELTA, not a copy of the merged form DOM: 77
+//   named nodes against the template's 3,549 named containers (1,318 fields and
+//   exclGroups), 30,983 bytes against 9.88 MB. (IVD: 37,262 bytes, 74 nodes.)
+//
+//   It declares NO node for ANY mapped field — 0 of the 20 `510k-device` SOM
+//   paths and 0 of the 19 `510k-ivd` paths appear in it — so it holds neither a
+//   stale value nor an empty one for a fill to lose to. The nodes it does give a
+//   <value> are 8 (IVD 9), and every one of them is a field the template declares
+//   `<bind match="none"/>` that the `datasets` skeleton does not contain at all:
+//   `GeneralIntroduction.GITextField130`, `ApplicationType.ATRadioButton100.
+//   ATRadioButton101` = "1", `ATRadioButton050.English`, `PMNSummary.SavedDate`,
+//   `Verification.attachMsg`, `CurrentPage`, `PageCount`. The two layers are
+//   COMPLEMENTARY: `datasets` carries the data-bound values, the `form` packet
+//   carries what cannot round-trip through data — occurrence (`instanceManager`),
+//   `presence`/`access`/`locale` overrides, and the values of non-bound fields.
+//   Every mapped field is on the datasets side of that split: 20/20 have no
+//   `<bind>` child (default binding), 20/20 are in the datasets skeleton, 0/20
+//   are in the `form` packet.
+//
+//   `config` declares NO `<restoreState>`, no `<preserve>` and no `<exclude>` (0
+//   occurrences of each, both templates). Its only state-adjacent settings are
+//   `<acrobat><acrobat7><dynamicRender>required</dynamicRender>`,
+//   `<versionControl sourceBelow="maintain"/>`, an empty `<autoSave/>`,
+//   `<validate>preSubmit</validate>` and `<xdp><packets>*</packets></xdp>`.
+//
+//   The fill also leaves the packet exactly as FDA shipped it: the appended
+//   update re-emits ONLY the `datasets` object, so object 270 is never rewritten
+//   and stays resolvable through the /Prev chain at its original offset
+//   (5,271,703), byte-identical — and its `<form checksum="...">` therefore still
+//   matches the template it was saved against, exactly as in FDA's own file.
+//
+//   STILL UNPROVEN: Acrobat itself, which is not available in this environment.
+//   The conclusion does not depend on WHICH restore rule Acrobat applies — a
+//   packet that declares no node for a field cannot supply a value for it — but
+//   it says nothing about the form's own initialize/calculate scripts, which no
+//   engine here runs (see fill-official-pdf.xfa-render.test).
+//
+// `listXfaPackets` exposes this inventory, and the invariants above are pinned by
+// tests, so an FDA revision that starts saving mapped fields into the `form`
+// packet fails the suite instead of shipping a blank form to a client.
 
 import * as zlib from 'zlib';
 import * as crypto from 'node:crypto';
@@ -358,8 +431,31 @@ export interface XfaFieldInfo {
   type: string;
   /** The template's own caption text for the field ('' when it has none). */
   caption: string;
-  /** True when the path also exists in the `datasets` skeleton, i.e. it is fillable. */
+  /** True when the field resolves to a node in the `datasets` skeleton, i.e. it is fillable. */
   inDatasets: boolean;
+  /**
+   * The path of the field's node in the `datasets` data DOM, which is NOT always
+   * the template SOM path — see {@link resolveDataSomPath}. Null when the field
+   * does not resolve to a data node (then it is not fillable).
+   */
+  dataSomPath: string | null;
+}
+
+/** One XFA packet of a dynamic template, as the PDF carries it. */
+export interface XfaPacketInfo {
+  /**
+   * Packet name, identified from the DECODED CONTENT rather than from the `/XFA`
+   * name array (which lives in an encrypted object stream this reader does not
+   * traverse): `xdp:xdp`, `config`, `template`, `localeSet`, `datasets`, `form`.
+   * The eSTARs' `/XFA` array also lists `PDFSecurity`, `xmpmeta`, `xfdf` and the
+   * closing `</xdp:xdp>` fragment, which are not XFA DOM packets and are not
+   * sniffed here.
+   */
+  name: string;
+  /** The PDF object carrying the packet — the object an update would replace. */
+  objectNumber: number;
+  /** Decoded bytes: decrypted and inflated, as an XFA processor would see them. */
+  bytes: Uint8Array;
 }
 
 const PDF_PAD = Buffer.from([
@@ -641,6 +737,30 @@ export function isDynamicXfaPdf(templateBytes: Uint8Array | Buffer): boolean {
   return /\/XFA\s*[[\d]/.test(raw);
 }
 
+/**
+ * Inventory the XFA packets of a dynamic template (or of a filled output), with
+ * the object that carries each one and its decoded bytes.
+ *
+ * This is what makes the saved `form` packet inspectable — see the section
+ * header: it is the packet that could, in principle, shadow a `datasets` write,
+ * and the only way to know that it does not is to read it. On a filled document
+ * the CURRENT revision of each object is reported, so the `datasets` packet comes
+ * back with the written values and every other packet comes back unchanged.
+ *
+ * Reading the template packet costs ~10 MB of inflate per call; callers that only
+ * need field names should use {@link listXfaFields}.
+ */
+export async function listXfaPackets(
+  pdfBytes: Uint8Array | Buffer,
+): Promise<XfaPacketInfo[]> {
+  const { packets } = extractXfaPackets(Buffer.from(pdfBytes));
+  return packets.map((p) => ({
+    name: p.name,
+    objectNumber: p.num,
+    bytes: new Uint8Array(p.xml),
+  }));
+}
+
 // --- minimal XML scanning -------------------------------------------------
 // The XFA packets are machine-generated, well-formed XML. A tiny event scanner
 // keeps this module dependency-free (the project ships no typed SAX parser) and
@@ -727,6 +847,47 @@ function datasetsPathSet(datasetsXml: Buffer | undefined): Set<string> {
 }
 
 /**
+ * Resolve a template SOM path onto the path its node actually has in the
+ * `datasets` data DOM.
+ *
+ * These are not always the same string. XFA binds a field to a data node by
+ * NAME, and a subform that does not itself bind a data group is transparent to
+ * that walk — its name appears in the template SOM path but not in the data
+ * path. The two vendored form families in this repo show both shapes:
+ *
+ *   FDA eSTAR      template `root.AdministrativeDocumentation.PMNSummary.SSTextField220`
+ *                  data     `root.AdministrativeDocumentation.PMNSummary.SSTextField220`  (identical)
+ *   FDA Form 1571  template `topmostSubform.Page1.db_sponsor_name`
+ *                  data     `topmostSubform.db_sponsor_name`                              (Page1 is transparent)
+ *
+ * Comparing the template path against the data DOM directly therefore reported
+ * every field of FDA 1571 and 3674 as absent, and the platform concluded those
+ * forms were unfillable and fell back to a drawn reconstruction. They are not:
+ * 1571 has 246 fillable nodes and 3674 has 156.
+ *
+ * The match stays deliberately narrow, because a wrong locator writes a value
+ * into the wrong box of a form a sponsor signs: the exact path wins, and
+ * otherwise a candidate must share BOTH the root data group and the leaf field
+ * name. If more than one candidate does, the field is reported unresolved
+ * rather than guessed.
+ */
+export function resolveDataSomPath(templateSom: string, dataPaths: Set<string>): string | null {
+  if (dataPaths.has(templateSom)) return templateSom;
+  const segs = templateSom.split('.');
+  if (segs.length < 3) return null;
+  const root = segs[0];
+  const leaf = segs[segs.length - 1];
+  let hit: string | null = null;
+  for (const candidate of dataPaths) {
+    const c = candidate.split('.');
+    if (c.length < 2 || c[0] !== root || c[c.length - 1] !== leaf) continue;
+    if (hit) return null; // ambiguous — never guess which box to write
+    hit = candidate;
+  }
+  return hit;
+}
+
+/**
  * Enumerate the fields a dynamic XFA template declares — the XFA counterpart to
  * {@link listAcroFields}, which returns nothing for these templates. Each field
  * carries its SOM path, widget type, the template's OWN caption, and whether the
@@ -782,11 +943,13 @@ export async function listXfaFields(templateBytes: Uint8Array | Buffer): Promise
       if (!frame) return;
       if (frame.tag === 'caption' && captionDepth > 0) captionDepth--;
       if (frame.field) {
+        const dataSomPath = resolveDataSomPath(frame.field.som, datasetPaths);
         out.push({
           somPath: frame.field.som,
           type: frame.field.type,
           caption: frame.field.caption.replace(/\s+/g, ' ').trim(),
-          inDatasets: datasetPaths.has(frame.field.som),
+          inDatasets: dataSomPath !== null,
+          dataSomPath,
         });
       }
       if (frame.pushedName) path.pop();
@@ -920,6 +1083,113 @@ function appendIncrementalUpdate(
   return Buffer.concat([original, ...chunks]);
 }
 
+/** One data node, the keys that claimed it, and the text they agreed on. */
+interface NodeClaim {
+  keys: string[];
+  text: string;
+  conflicted: boolean;
+}
+
+interface XfaEditPlan {
+  edits: DatasetsEdit[];
+  claims: Map<string, NodeClaim>;
+  keyBySom: Map<string, string>;
+  skipped: string[];
+  warnings: string[];
+}
+
+/**
+ * Resolve every mapped key onto the data nodes it writes, and decide what
+ * happens when two keys land on one node.
+ *
+ * Split out of {@link fillXfaDatasets} so the rules live somewhere they can be
+ * read in one screen: a key with no data is skipped, a key with no XFA path is
+ * skipped, a path the skeleton does not declare is skipped and named, and a node
+ * two keys claim is written only when they agree on the text.
+ */
+function planXfaEdits(
+  fieldMap: OfficialPdfFieldMap,
+  data: Record<string, unknown>,
+  dataPaths: Set<string>,
+  missingFieldPolicy: 'skip' | 'error',
+): XfaEditPlan {
+  const edits: DatasetsEdit[] = [];
+  const keyBySom = new Map<string, string>();
+  const claims = new Map<string, NodeClaim>();
+  const skipped: string[] = [];
+  const warnings: string[] = [];
+
+  /**
+   * Claim one node for one key. Returns false when the node is already claimed
+   * by another key with DIFFERENT text — neither is written then, because one
+   * would have to win and there is no honest basis for choosing.
+   */
+  const claim = (som: string, key: string, text: string): boolean => {
+    const held = claims.get(som);
+    if (!held) {
+      claims.set(som, { keys: [key], text, conflicted: false });
+      edits.push({ somPath: som, value: text });
+      keyBySom.set(som, key);
+      return true;
+    }
+    if (held.text === text) {
+      held.keys.push(key);
+      return true;
+    }
+    const msg =
+      `XFA path "${som}" is claimed by more than one key with different values ` +
+      `("${held.keys.join('", "')}" and "${key}"); neither was written.`;
+    if (missingFieldPolicy === 'error') throw new Error(msg);
+    held.conflicted = true;
+    warnings.push(msg);
+    return false;
+  };
+
+  for (const [canonicalKey, spec] of Object.entries(fieldMap)) {
+    const value = data[canonicalKey];
+    if (!hasData(value)) {
+      skipped.push(canonicalKey);
+      warnings.push(`No data supplied for "${canonicalKey}" (XFA "${spec.xfaSomPath ?? '?'}"); skipped.`);
+      continue;
+    }
+    if (!spec.xfaSomPath) {
+      skipped.push(canonicalKey);
+      const msg = `"${canonicalKey}" has no xfaSomPath; a dynamic XFA template cannot be filled by AcroForm name.`;
+      if (missingFieldPolicy === 'error') throw new Error(msg);
+      warnings.push(msg);
+      continue;
+    }
+    const dataSom = resolveDataSomPath(spec.xfaSomPath, dataPaths);
+    if (!dataSom) {
+      const msg = `XFA path "${spec.xfaSomPath}" (key "${canonicalKey}") does not resolve to a node in the template's datasets skeleton; skipped.`;
+      if (missingFieldPolicy === 'error') throw new Error(msg);
+      skipped.push(canonicalKey);
+      warnings.push(msg);
+      continue;
+    }
+    const text = spec.type === 'checkbox' ? (toBoolean(value) ? '1' : '0') : toText(value);
+    if (!claim(dataSom, canonicalKey, text)) {
+      skipped.push(canonicalKey);
+      continue;
+    }
+    /* Every further box this key's value belongs in. An unresolvable one is
+       reported on its own — it does not cost the key its primary write, because
+       the summary cell and the source field fail independently. */
+    for (const extra of spec.alsoWriteSomPaths ?? []) {
+      const extraSom = resolveDataSomPath(extra, dataPaths);
+      if (!extraSom) {
+        const msg = `XFA path "${extra}" (key "${canonicalKey}", a further node for the same value) does not resolve to a node in the template's datasets skeleton; skipped.`;
+        if (missingFieldPolicy === 'error') throw new Error(msg);
+        warnings.push(msg);
+        continue;
+      }
+      claim(extraSom, canonicalKey, text);
+    }
+  }
+
+  return { edits, claims, keyBySom, skipped, warnings };
+}
+
 /**
  * Fill a dynamic XFA template by writing the mapped values into its `datasets`
  * packet, returning the original PDF plus an incremental update.
@@ -952,36 +1222,44 @@ export async function fillXfaDatasets(
     warnings.push('flatten is not supported for dynamic XFA templates (it would discard the XFA layer); ignored.');
   }
 
-  const edits: DatasetsEdit[] = [];
-  const keyBySom = new Map<string, string>();
-  for (const [canonicalKey, spec] of Object.entries(fieldMap)) {
-    const value = data[canonicalKey];
-    if (!hasData(value)) {
-      skipped.push(canonicalKey);
-      warnings.push(`No data supplied for "${canonicalKey}" (XFA "${spec.xfaSomPath ?? '?'}"); skipped.`);
-      continue;
-    }
-    if (!spec.xfaSomPath) {
-      skipped.push(canonicalKey);
-      const msg = `"${canonicalKey}" has no xfaSomPath; a dynamic XFA template cannot be filled by AcroForm name.`;
-      if (missingFieldPolicy === 'error') throw new Error(msg);
-      warnings.push(msg);
-      continue;
-    }
-    const text = spec.type === 'checkbox' ? (toBoolean(value) ? '1' : '0') : toText(value);
-    edits.push({ somPath: spec.xfaSomPath, value: text });
-    keyBySom.set(spec.xfaSomPath, canonicalKey);
-  }
+  // The data DOM does not always mirror the template's SOM paths — a subform
+  // that binds no data group is transparent to the binding walk (FDA 1571's
+  // `Page1` is), so each mapped path is resolved onto the node it actually has.
+  const dataPaths = datasetsPathSet(datasets.xml);
+  const plan = planXfaEdits(fieldMap, data, dataPaths, missingFieldPolicy);
+  const { edits, claims: collisions, keyBySom } = plan;
+  skipped.push(...plan.skipped);
+  warnings.push(...plan.warnings);
 
-  const result = setDatasetsValues(datasets.xml.toString('utf8'), edits);
-  for (const som of result.written) filled.push(keyBySom.get(som)!);
+  /* A conflicted node is not written at all — the edit queued by whichever key
+     reached it first is withdrawn, and that key joins the others in `skipped`. */
+  const conflicted = new Set(
+    [...collisions.entries()].filter(([, c]) => c.conflicted).map(([som]) => som),
+  );
+  const liveEdits = edits.filter((e) => !conflicted.has(e.somPath));
+
+  const result = setDatasetsValues(datasets.xml.toString('utf8'), liveEdits);
   for (const som of result.missing) {
-    const key = keyBySom.get(som)!;
-    const msg = `XFA path "${som}" (key "${key}") is not declared in the template's datasets skeleton; skipped.`;
+    /* Every key that named this node is reported, not just the first: an
+       undeclared path is undeclared for all of them. */
+    const keys = collisions.get(som)?.keys ?? [keyBySom.get(som)!];
+    const msg = `XFA path "${som}" (key "${keys.join('", "')}") is not declared in the template's datasets skeleton; skipped.`;
     if (missingFieldPolicy === 'error') throw new Error(msg);
-    skipped.push(key);
     warnings.push(msg);
   }
+
+  /*
+   * `filled` and `skipped` are per KEY, not per node. A key may own several
+   * nodes (a summary cell and the source field the form rebuilds it from), and
+   * it counts as filled when its value reached the form ANYWHERE — a value that
+   * is on the form is on the form. It is skipped only when no node of it was
+   * written at all, so the two lists stay disjoint and neither double-counts.
+   */
+  const wroteFor = new Set<string>();
+  for (const som of result.written) for (const key of collisions.get(som)!.keys) wroteFor.add(key);
+  const attempted = new Set<string>();
+  for (const [, c] of collisions) for (const key of c.keys) attempted.add(key);
+  for (const key of attempted) (wroteFor.has(key) ? filled : skipped).push(key);
 
   const deflated = zlib.deflateSync(Buffer.from(result.xml, 'utf8'));
   const encrypted = encryptObjectData(sec, datasets.num, datasets.gen, deflated);

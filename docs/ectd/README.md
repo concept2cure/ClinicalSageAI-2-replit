@@ -28,7 +28,8 @@ vocabulary package v1.1).
 | Artifact integrity | `server/services/ectd/checksum-manifest.ts` | Verifies each vendored DTD/XSD against its recorded SHA‑256 (`checksums.txt`); refuses tampered/stale/unlisted artifacts. |
 | Qualification harness | `server/services/ectd/qualification/` | Per region + version: golden package → accepted validators (xmllint well‑formed + **DTD/XSD when vendored** + checksum‑manifest integrity + external eValidator + RPS model) → preserved report (with exact spec version) → lifecycle (replace/delete/append, revise) → reopen ZIP and re‑verify every checksum. |
 | External validators | `server/services/ectd/external-validator/` | **LORENZ eValidator adapter** (CLI or endpoint invocation + JSON/XML report parsing, fail‑closed) + a license‑free FDA‑criteria subset; `runExternalValidation()` feeds `evaluateExternalValidationGate`, composed into `assess-dispatch-readiness`. |
-| Pre‑transmit gate | `server/services/submission-gateways/pre-transmit-check.ts` | Package‑fitness preconditions at the gateway guard: size limit (hard), PDF/A grade + DTD self‑containment (opt‑in), external gate (route layer) — alongside the Part 11 human authorization. |
+| Pre‑transmit gate | `server/services/submission-gateways/pre-transmit-check.ts` | Package‑fitness preconditions at the gateway guard: size limit (hard), region identity — backbone region and format tag must match the target gateway (hard), PDF/A grade + DTD self‑containment + regional Module 1 conformance (opt‑in), external gate (route layer) — alongside the Part 11 human authorization. |
+| Transmit path (packages) | `server/routes/submission-ops.ts` (identifiers / assemble / preflight), `server/services/ectd/section-to-ctd.ts`, `client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx` | Record identifiers → assemble (one leaf per artifact, placeable headings only, findings persisted) → transmit, on one package id, from the Dispatch surface or the API. Operator runbook: `docs/runbooks/ectd-transmit-path.md`. |
 | Study Tagging Files | `server/services/ectd/stf-generator.ts` (wired in `regional-packager`) | Per‑study `stf.xml` (FDA STF v2.6.1) generated for M4/M5 study leaves (`EctdLeaf.studyId` + `stfFileTag`), placed in each study's folder, referenced in `index.xml`, and checksummed — cross‑linked to exactly that study's leaves. |
 | Cross‑references | `server/services/ectd/cross-reference-resolver.ts` (wired in `regional-packager`) | Declared intra‑package hyperlinks (`PackagerInput.crossReferences`) resolved at package time; dangling / withdrawn‑target links surfaced on `SubmissionBundle.crossReferenceStatus` and blocked in production under `ECTD_REQUIRE_XREF`. |
 | API | `server/routes/ectd-v4.ts` (+ `ectd-export.ts`) | Controlled‑vocab serving, RPS validate, v3→v4 forward‑compat preview, spec versions; the existing export/compile/validate routes. |
@@ -51,6 +52,11 @@ Environment flags:
   DTD‑validate every backbone and fail closed on a non‑self‑contained package.
 - `ECTD_REQUIRE_PDFA=true` — enforce PDF/A on production packages (needs
   Ghostscript/veraPDF; no‑op otherwise).
+- `ECTD_REQUIRE_REGIONAL_BACKBONE=true` — block a production transmit whose
+  regional Module 1 backbone is not built to the agency's structure. Only the FDA
+  backbone is; EMA / PMDA / Health Canada file Module 1 flat and the widened
+  regions reuse the EMA structure — always surfaced, blocking only under this flag
+  (see `docs/runbooks/ectd-transmit-path.md`).
 - `EVALIDATOR_USE_FDA_CRITERIA_FALLBACK=true` — run the license‑free FDA‑criteria
   subset validator.
 - LORENZ eValidator wiring: see `server/services/ectd/external-validator/config.ts`

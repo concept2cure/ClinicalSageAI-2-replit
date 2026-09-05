@@ -9,8 +9,8 @@
  *
  *   client/src/styles/theme.css:21        --color-primary: #d97757   (canonical: #292524)
  *   client/src/concept2cure/projects/project.css:25-27   all three font stacks
- *   design-system/ui_kits/home/styles.css                17 tokens
- *   design-system/ui_kits/mdx_phase2/app.css             17 tokens
+ *   ui_kits/home/styles.css                17 tokens
+ *   ui_kits/mdx_phase2/app.css             17 tokens
  *
  * None of them was causing a visual bug, because none of them was loading. That
  * is precisely the problem: each was a latent regression that would fire the
@@ -31,7 +31,7 @@
  *      entry chunk).
  *
  * Deliberately NOT asserted: that unreachable token files do not exist. The
- * design-source kits under `design-system/ui_kits/` are legitimate artefacts.
+ * design-source kits under `ui_kits/` are legitimate artefacts.
  * What matters is that they stay out of the app's graph.
  */
 
@@ -185,11 +185,11 @@ describe('design-token authority', () => {
       'client/src/concept2cure/design/zen.css',
       'client/src/concept2cure/projects/project.css',
       'client/src/concept2cure/biopharma/app.css',
-      'design-system/ui_kits/home/styles.css',
-      'design-system/ui_kits/mdx_phase2/app.css',
-      'design-system/ui_kits/pdev/styles.css',
-      'design-system/ui_kits/mdx/app.css',
-      'design-system/ui_kits/mdx/tokens-shim.css',
+      'ui_kits/home/styles.css',
+      'ui_kits/mdx_phase2/app.css',
+      'ui_kits/pdev/styles.css',
+      'ui_kits/mdx/app.css',
+      'ui_kits/mdx/tokens-shim.css',
     ];
     expect(reachableCss.filter((f) => quarantined.includes(f))).toEqual([]);
   });

@@ -120,6 +120,7 @@ describe('useCerExport', () => {
 
     expect(outcome).toEqual({
       ok: true,
+      delivered: true,
       governed: true,
       audited: false,
       filename: 'CER.pdf',
@@ -178,6 +179,7 @@ describe('useCerExport', () => {
     });
     expect(outcome).toMatchObject({
       ok: false,
+      delivered: false,
       governed: false,
       audited: false,
       error: 'Human review approval is required before export in this environment',

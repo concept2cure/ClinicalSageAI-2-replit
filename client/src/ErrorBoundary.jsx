@@ -1,5 +1,6 @@
 import React from 'react';
 import { reportClientError } from './utils/reportClientError';
+import './error-boundary.css';
 
 /**
  * Global Error Boundary

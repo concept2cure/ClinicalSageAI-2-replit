@@ -119,6 +119,10 @@ export interface ResolvedBundle {
   submissionGrade?: SubmissionBundle['submissionGrade'];
   dtdStatus?: SubmissionBundle['dtdStatus'];
   regionalBackbone?: SubmissionBundle['regionalBackbone'];
+  // The region the bundle was BUILT for, as recorded by the assemble route —
+  // region identity must hold for bundles that carry no backbone evidence
+  // (device formats) too.
+  builtRegion?: Region;
 }
 
 /* Shape guards for the stored evidence blocks (see ResolvedBundle). Each
@@ -135,12 +139,24 @@ function isDtdStatus(v: unknown): v is NonNullable<SubmissionBundle['dtdStatus']
   const d = v as Record<string, unknown> | null;
   return !!d && typeof d === 'object' && typeof d.selfContained === 'boolean' && Array.isArray(d.missing);
 }
+const GATEWAY_REGIONS: ReadonlySet<string> = new Set(['fda', 'ema', 'pmda', 'ca', 'uk', 'ch', 'au', 'cn', 'br', 'in', 'kr', 'sg']);
 function isRegionalBackbone(v: unknown): v is NonNullable<SubmissionBundle['regionalBackbone']> {
   const r = v as Record<string, unknown> | null;
   return (
     !!r && typeof r === 'object' &&
-    typeof r.regionConformant === 'boolean' && typeof r.region === 'string' && typeof r.file === 'string'
+    typeof r.regionConformant === 'boolean' &&
+    typeof r.region === 'string' && GATEWAY_REGIONS.has(r.region) &&
+    typeof r.file === 'string' &&
+    (r.placeholderOf === undefined || (typeof r.placeholderOf === 'string' && GATEWAY_REGIONS.has(r.placeholderOf))) &&
+    (r.conformanceGap === undefined || typeof r.conformanceGap === 'string')
   );
+}
+/** The region the assemble route built the bundle for (descriptor.region,
+ *  'FDA' | 'EMA' | 'PMDA' | 'CA'), as a gateway region; undefined when absent. */
+function builtRegionOf(v: unknown): Region | undefined {
+  if (typeof v !== 'string') return undefined;
+  const r = v.toLowerCase();
+  return r === 'fda' || r === 'ema' || r === 'pmda' || r === 'ca' ? (r as Region) : undefined;
 }
 
 /**
@@ -217,6 +233,7 @@ async function loadStoredBundle(
     submissionGrade: isSubmissionGrade(stored.submissionGrade) ? stored.submissionGrade : undefined,
     dtdStatus: isDtdStatus(stored.dtdStatus) ? stored.dtdStatus : undefined,
     regionalBackbone: isRegionalBackbone(stored.regionalBackbone) ? stored.regionalBackbone : undefined,
+    builtRegion: builtRegionOf(stored.region),
   };
 }
 
@@ -456,6 +473,7 @@ export async function executeGovernedTransmit(
       submissionGrade: bundle.submissionGrade,
       dtdStatus: bundle.dtdStatus,
       regionalBackbone: bundle.regionalBackbone,
+      builtRegion: bundle.builtRegion,
     },
     environment,
     submissionType: input.submissionType,

@@ -58,7 +58,9 @@ describe('evaluatePreTransmit', () => {
   it('warns (does not block) when a required flag is set but the bundle has no evidence', () => {
     const r = evaluatePreTransmit({ region: 'fda', bundle: bundle(), environment: 'production', enforceExternal: false, env: { ECTD_REQUIRE_PDFA: 'true', ECTD_REQUIRE_DTD: 'true' } });
     expect(r.cleared).toBe(true);
-    expect(r.warnings.length).toBe(2);
+    // PDF/A, DTD — and the bundle records no region it was built for.
+    expect(r.warnings.length).toBe(3);
+    expect(r.warnings.some((w) => /no record of the region it was built for/.test(w))).toBe(true);
   });
 
   it('HARD-blocks a bundle built for another region (backbone region ≠ transmit target), in every environment', () => {
@@ -72,6 +74,27 @@ describe('evaluatePreTransmit', () => {
       expect(r.blockers.some((b) => /assembled for PMDA .* cannot be transmitted to FDA/.test(b))).toBe(true);
       expect(r.blockers.some((b) => /format 'pmda_ectd' does not match the FDA gateway/.test(b))).toBe(true);
     }
+  });
+
+  it('region identity holds WITHOUT backbone evidence: an eSTAR built for FDA is refused by PMDA and EMA, and a descriptor-declared region is honoured', () => {
+    // Device formats carry no regional backbone; the format itself pins the region.
+    const estar = bundle({ format: 'estar' as any, builtRegion: 'fda' });
+    for (const region of ['pmda', 'ema'] as const) {
+      const r = evaluatePreTransmit({ region, bundle: estar, environment: 'production', enforceExternal: false, env: {} as NodeJS.ProcessEnv });
+      expect(r.cleared, region).toBe(false);
+      expect(r.blockers.some((b) => /format 'estar' does not match/.test(b)), region).toBe(true);
+    }
+    const eudamed = bundle({ format: 'eudamed_register' as any, builtRegion: 'ema' });
+    expect(evaluatePreTransmit({ region: 'fda', bundle: eudamed, environment: 'staging', enforceExternal: false, env: {} as NodeJS.ProcessEnv }).cleared).toBe(false);
+    // An eCTD bundle with only a declared built region (legacy: no backbone block) still cannot cross regions.
+    const declaredOnly = bundle({ format: 'ectd', builtRegion: 'fda' });
+    const crossed = evaluatePreTransmit({ region: 'ema', bundle: declaredOnly, environment: 'production', enforceExternal: false, env: {} as NodeJS.ProcessEnv });
+    expect(crossed.cleared).toBe(false);
+    expect(crossed.blockers.some((b) => /assembled for FDA \(descriptor\); it cannot be transmitted to EMA/.test(b))).toBe(true);
+    // No evidence at all: reported as unprovable, never treated as matching.
+    const none = evaluatePreTransmit({ region: 'fda', bundle: bundle(), environment: 'production', enforceExternal: false, env: {} as NodeJS.ProcessEnv });
+    expect(none.cleared).toBe(true);
+    expect(none.warnings.some((w) => /no record of the region it was built for/.test(w))).toBe(true);
   });
 
   it('a bundle built for the target region passes the region-identity checks', () => {

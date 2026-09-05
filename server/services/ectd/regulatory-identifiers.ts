@@ -66,6 +66,10 @@ export function usableIdentifier(field: RegulatoryIdentifierField, value: unknow
     // own definition, so the two cannot drift.
     const stripped = v.replace(XML_ILLEGAL_CHARS, '');
     if (stripped !== v || stripped.trim().length === 0) return null;
+    // A lone surrogate is outside XML's Char production and is rewritten to
+    // U+FFFD on the way into the zip — an altered name. encodeURIComponent
+    // throws on exactly that, which keeps this file free of escape sequences.
+    try { encodeURIComponent(v); } catch { return null; }
   }
   return v;
 }

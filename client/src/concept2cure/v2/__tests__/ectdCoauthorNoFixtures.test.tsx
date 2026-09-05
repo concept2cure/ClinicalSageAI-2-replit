@@ -157,7 +157,7 @@ beforeEach(() => {
 describe('EctdCoauthor — real documents render per panel (no fixture)', () => {
   beforeEach(() => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/coauthor/documents') return ok(REAL_DOCS);
+      if (method === 'GET' && String(url).split('?')[0] === '/api/coauthor/documents') return ok(REAL_DOCS);
       if (method === 'POST' && /\/validate$/.test(url)) return ok(REAL_VALIDATION);
       if (method === 'GET' && /\/compliance$/.test(url)) return ok(REAL_COMPLIANCE);
       return ok({});
@@ -186,7 +186,7 @@ describe('EctdCoauthor — real documents render per panel (no fixture)', () => 
     // 3 real documents; 1 approved (7003); readiness = (1 + 1*0.5)/3 = 50%.
     expect(footRow('Documents')).toBe('3');
     expect(footRow('Approved')).toBe('1');
-    expect(footRow('eCTD readiness')).toBe('50%');
+    expect(footRow('Status roll-up')).toBe('50%');
   });
 
   it('renders REAL server validation findings when Validation is opened', async () => {
@@ -246,7 +246,7 @@ describe('EctdCoauthor — real documents render per panel (no fixture)', () => 
 describe('EctdCoauthor — honest empty state', () => {
   beforeEach(() => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/coauthor/documents') return ok(EMPTY_DOCS);
+      if (method === 'GET' && String(url).split('?')[0] === '/api/coauthor/documents') return ok(EMPTY_DOCS);
       return ok({});
     });
   });
@@ -266,7 +266,7 @@ describe('EctdCoauthor — honest empty state', () => {
 describe('EctdCoauthor — honest error state', () => {
   beforeEach(() => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/coauthor/documents') return fail(403);
+      if (method === 'GET' && String(url).split('?')[0] === '/api/coauthor/documents') return fail(403);
       return ok({});
     });
   });
@@ -286,7 +286,7 @@ describe('EctdCoauthor — tree search really filters (no dead input)', () => {
      with an honest no-match note. */
   beforeEach(() => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/coauthor/documents') return ok(REAL_DOCS);
+      if (method === 'GET' && String(url).split('?')[0] === '/api/coauthor/documents') return ok(REAL_DOCS);
       return ok({});
     });
   });
@@ -321,7 +321,7 @@ describe('EctdCoauthor — tree search really filters (no dead input)', () => {
 describe('EctdCoauthor — no fabricated validation or compliance results', () => {
   it('reports validation as unavailable rather than inventing findings', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/coauthor/documents') return ok(REAL_DOCS);
+      if (method === 'GET' && String(url).split('?')[0] === '/api/coauthor/documents') return ok(REAL_DOCS);
       if (method === 'POST' && /\/validate$/.test(url)) return fail(503);
       return ok({});
     });
@@ -338,7 +338,7 @@ describe('EctdCoauthor — no fabricated validation or compliance results', () =
 
   it('reports compliance as unavailable rather than inventing a score', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/coauthor/documents') return ok(REAL_DOCS);
+      if (method === 'GET' && String(url).split('?')[0] === '/api/coauthor/documents') return ok(REAL_DOCS);
       if (method === 'GET' && /\/compliance$/.test(url)) return fail(503);
       return ok({});
     });
@@ -366,7 +366,7 @@ describe('EctdCoauthor — the Co-Author can AUTHOR', () => {
     try { localStorage.clear(); } catch { /* ignore */ }
     const put = vi.fn();
     apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-      if (method === 'GET' && url === '/api/coauthor/documents') return ok(REAL_DOCS);
+      if (method === 'GET' && String(url).split('?')[0] === '/api/coauthor/documents') return ok(REAL_DOCS);
       if (method === 'PUT' && url === '/api/coauthor/documents/7001') {
         put(body);
         return ok({

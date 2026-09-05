@@ -8,7 +8,6 @@
  * mounted successfully. Static now; the reasoning is in ./mount-routes.ts.
  */
 
-import type { Response } from 'express';
 import express from 'express';
 import type { Pool } from 'pg';
 import { authenticateToken } from '../middleware/auth.js';

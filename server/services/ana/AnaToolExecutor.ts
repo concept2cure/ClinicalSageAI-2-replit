@@ -165,6 +165,7 @@ import {
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
 import { registerDocumentSpineHandlers } from './document-spine.js';
+import { registerDocumentCatalogHandlers } from './document-catalog-tools.js';
 import { assertWithinDocumentWorkspace } from './document-workspace.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -6308,7 +6309,8 @@ registerToolHandler('generate_document', async (input: Record<string, unknown>) 
   if (documentType === 'ectd_backbone') {
     const xml = await builder.generateEctdXml({
       submissionType: 'original',
-      applicantName: (input.applicant as string) || 'Applicant',
+      // 'Applicant' is not an applicant. An absent identity says so.
+      applicantName: (input.applicant as string) || 'UNASSIGNED (applicant)',
       productName: (input.product as string) || 'Product',
       modules: [],
     });
@@ -10770,8 +10772,10 @@ registerToolHandler('update_consent_element', async (input, ctx) => {
   if (!Number.isInteger(elementId)) return JSON.stringify({ error: 'element_id is required.' });
   const { updateElementTx } = await import('../protocol-consent/protocol-consent-service.js');
   return governedPdev(ctx, 'update', `consent-element:${elementId}`, 'Consent element updated via AnA', input, async (client) => {
-    await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, present: typeof input.present === 'boolean' ? input.present : undefined });
-    return { elementId };
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
+    const { sources, dropped } = await resolveDraftSources(ctx.organizationId!, input.sources, client);
+    const gate = await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, present: typeof input.present === 'boolean' ? input.present : undefined, sources }, ctx.userId!);
+    return { elementId, lineage: describeDraftLineage(gate, sources, dropped) };
   });
 });
 
@@ -10813,8 +10817,10 @@ registerToolHandler('update_dms_plan_element', async (input, ctx) => {
   if (!Number.isInteger(elementId)) return JSON.stringify({ error: 'element_id is required.' });
   const { updateElementTx } = await import('../dmsp/dmsp-service.js');
   return governedPdev(ctx, 'update', `dms-plan-element:${elementId}`, 'DMS plan element updated via AnA', input, async (client) => {
-    await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined });
-    return { elementId };
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
+    const { sources, dropped } = await resolveDraftSources(ctx.organizationId!, input.sources, client);
+    const gate = await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined, sources }, ctx.userId!);
+    return { elementId, lineage: describeDraftLineage(gate, sources, dropped) };
   });
 });
 
@@ -10938,8 +10944,10 @@ registerToolHandler('update_biosketch_section', async (input, ctx) => {
   if (!Number.isInteger(sectionId)) return JSON.stringify({ error: 'section_id is required.' });
   const { updateSectionTx } = await import('../biosketch/biosketch-service.js');
   return governedPdev(ctx, 'update', `biosketch-section:${sectionId}`, 'Biosketch section updated via AnA', input, async (client) => {
-    await updateSectionTx(client, ctx.organizationId!, sectionId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined }, ctx.userId!);
-    return { sectionId };
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
+    const { sources, dropped } = await resolveDraftSources(ctx.organizationId!, input.sources, client);
+    const gate = await updateSectionTx(client, ctx.organizationId!, sectionId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined, sources }, ctx.userId!);
+    return { sectionId, lineage: describeDraftLineage(gate, sources, dropped) };
   });
 });
 
@@ -11284,10 +11292,13 @@ registerToolHandler('update_protocol_section', async (input, ctx) => {
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
-    await updateSectionTx(client, ctx.organizationId, sectionId, { content: typeof input.content === 'string' ? input.content : null, status: typeof input.status === 'string' ? input.status : undefined }, ctx.userId);
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
+    const { sources, dropped } = await resolveDraftSources(ctx.organizationId, input.sources, client);
+    const gate = await updateSectionTx(client, ctx.organizationId, sectionId, { content: typeof input.content === 'string' ? input.content : null, status: typeof input.status === 'string' ? input.status : undefined, sources }, ctx.userId);
+    const lineage = describeDraftLineage(gate, sources, dropped);
     await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-section:${sectionId}`, reason: fcoiReason(input, 'Protocol section edited via AnA'), payload: { status: input.status }, domain: 'protocol_development', surface: 'ana' });
     await client.query('COMMIT');
-    return JSON.stringify({ ok: true, sectionId, message: `Updated protocol section ${sectionId}.` });
+    return JSON.stringify({ ok: true, sectionId, lineage, message: `Updated protocol section ${sectionId}.` });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({ error: `update_protocol_section failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -14474,91 +14485,42 @@ registerToolHandler('write_kit_section', async (input, ctx) => {
        nothing is unsafe there — but four writers of one table is three too
        many, and re-pointing untested route paths is its own change. Tracked as
        ledger L39. */
-    const { recordCerv2SectionVersion } = await import('../cerv2/section-version.js');
-    const { enforceAuthorLineage, enforceSourceAndAuthorLineage } = await import(
-      '../clinical-regulatory-evidence/lineage-gate.js'
-    );
+    const { writeKitSectionTx, KitSectionNotFoundError } = await import('../cerv2/kit-section-write.js');
     const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
     const client = await pool.connect();
     let row: any;
     let lineageReport: import('./drafting-source-lineage.js').DraftLineageReport | null = null;
     try {
       await client.query('BEGIN');
-
-      /* Read the prior state FOR UPDATE inside the transaction: it is both the
-         `previousValues` snapshot and the row lock that stops two concurrent
-         writers computing the same next version number. */
-      const prior = await client.query(
-        `SELECT id, content, status, completion_percentage
-           FROM cerv2_510k_sections
-          WHERE organization_id = $1 AND section_key = $2
-          FOR UPDATE`,
-        [ctx.organizationId, sectionKey],
-      );
-      if (prior.rows.length === 0) {
-        await client.query('ROLLBACK');
-        return JSON.stringify({
-          error: `No section found for organization with section_key='${sectionKey}'. The kit's section taxonomy must be seeded first (run \`npm run db:seed:mdx-content\`).`,
-        });
-      }
-      const before = prior.rows[0];
-
-      const updated = await client.query(
-        `UPDATE cerv2_510k_sections
-            SET content                = $3,
-                status                 = $4,
-                completion_percentage  = $5,
-                draft_source           = 'ana',
-                drafted_at             = NOW(),
-                drafted_summary        = NULLIF($6, ''),
-                accepted_at            = NULL,
-                accepted_by            = NULL,
-                updated_at             = NOW()
-          WHERE organization_id = $1 AND section_key = $2
-          RETURNING id, section_number, section_title, section_key, status,
-                    completion_percentage AS "completionPercentage",
-                    drafted_at AS "draftedAt"`,
-        [ctx.organizationId, sectionKey, content, status, completionPct, note],
-      );
-
-      await recordCerv2SectionVersion(client, {
-        sectionId: before.id,
-        organizationId: ctx.organizationId,
-        changeType: 'edited',
-        /* The tool's own note when the caller supplied one. Falling back to a
-           fixed string is deliberate and honest — it names the actor and the
-           mechanism rather than inventing a rationale nobody gave. */
-        changeSummary: (note && String(note).trim()) || 'Drafted by AnA (no summary supplied)',
-        content,
-        status,
-        completionPercentage: completionPct,
-        previousValues: {
-          content: before.content ?? '',
-          status: before.status ?? null,
-          completion_percentage: before.completion_percentage ?? null,
-        },
-        newValues: { content, status, completion_percentage: completionPct },
-        fieldsChanged: ['content', 'status', 'completion_percentage'],
-        changedBy: ctx.userId ?? null,
-      });
-
-      /* Lineage in the same transaction as the content (ledger L154): this
-         path used to write kit prose with no provenance at all — neither the
-         author-assertion gate write_q_sub_section already had, nor any source
-         citation. Quoted clauses go to the cited Data Room sources, the rest
-         to the author; a lineage failure rolls the content back with it. */
-      const ref = { documentTable: 'cerv2_510k_sections', documentId: String(before.id) };
+      /* The ONE kit-section writer (services/cerv2/kit-section-write): FOR UPDATE
+         snapshot, content write, version row and lineage gate, on this
+         transaction — shared with the AnA-RI section.update command so a kit
+         section has exactly one way of being written by AnA (ledger L160). */
       const { sources, dropped } = await resolveDraftSources(ctx.organizationId, rawSources, client);
-      let gate = null;
-      if (sources.length > 0) {
-        gate = await enforceSourceAndAuthorLineage(client, ctx.organizationId, ref, content, String(ctx.userId), sources);
-      } else {
-        await enforceAuthorLineage(client, ctx.organizationId, ref, content, String(ctx.userId));
+      let written;
+      try {
+        written = await writeKitSectionTx(client, ctx.organizationId, { sectionKey }, {
+          content,
+          status,
+          completionPercentage: completionPct,
+          note,
+          /* The tool's own note when the caller supplied one. Falling back to a
+             fixed string is deliberate and honest — it names the actor and the
+             mechanism rather than inventing a rationale nobody gave. */
+          changeSummary: (note && String(note).trim()) || 'Drafted by AnA (no summary supplied)',
+          sources,
+          actorUserId: ctx.userId,
+        });
+      } catch (e) {
+        if (e instanceof KitSectionNotFoundError) {
+          await client.query('ROLLBACK');
+          return JSON.stringify({ error: e.message });
+        }
+        throw e;
       }
-      lineageReport = describeDraftLineage(gate, sources, dropped);
-
+      lineageReport = describeDraftLineage(written.gate, sources, dropped);
       await client.query('COMMIT');
-      row = updated.rows[0];
+      row = written.row;
     } catch (txErr) {
       await client.query('ROLLBACK').catch(() => {});
       throw txErr;
@@ -15023,6 +14985,10 @@ registerBiotechProgramHandlers(registerToolHandler);
 // The canonical document revision spine (commit_document_revision) — the one
 // atomic flow every AnA-authored document mutation runs through — same pattern.
 registerDocumentSpineHandlers(registerToolHandler);
+
+// Project-folder document catalog (list/read/catalog over vault.documents,
+// with read-coverage enforcement) — same injected-register pattern.
+registerDocumentCatalogHandlers(registerToolHandler);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Agentic Execution Loop
@@ -18991,6 +18957,17 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
            (artifact_id, organization_id, version, content, content_hash, change_description, created_by_id)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [doc.id, ctx.organizationId, nextVersion, content, hash, reason, ctx.userId],
+      );
+      /* Lineage in the same transaction as the new version (ledger L160): the
+         vault tool carries no parked sources, so every clause is the acting
+         user's assertion; a gap rolls the version back. */
+      const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
+      await enforceAuthorLineage(
+        client,
+        ctx.organizationId,
+        { documentTable: 'concept2cure_artifacts', documentId: String(doc.id) },
+        content,
+        String(ctx.userId),
       );
       // Uniform provenance: a new vault version is an 'edit' event, same txn.
       await recordArtifactProvenance(client, {

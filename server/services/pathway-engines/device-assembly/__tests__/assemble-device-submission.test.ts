@@ -52,6 +52,26 @@ describe('assembleDeviceSubmission (B5)', () => {
     expect(r.blockers).toHaveLength(0);
   });
 
+  it('does not claim an official eSTAR while any section is of undetermined applicability', () => {
+    // No deviceFlags — which is what every route caller supplies — leaves all
+    // seven conditional sections undetermined. The mapper's summary.ready is
+    // false for that, but this consumer recomputed readiness from
+    // missingRequired alone: canProduceOfficialEstar true, errors empty, for a
+    // sterile software-bearing device with none of that documentation.
+    const r = assembleDeviceSubmission({
+      pathway: '510k',
+      variant: 'device',
+      leaves: complete510kLeaves,
+      presentTemplates: [TEMPLATE_510K_DEVICE],
+      environment: 'production',
+      requireTemplate: true,
+    });
+    expect(r.estar.summary.ready).toBe(false);
+    expect(r.canProduceOfficialEstar).toBe(false);
+    expect(r.artifactKind).toBe('content-package-draft');
+    expect(r.blockers.join(' ')).toMatch(/applicability is not established/);
+  });
+
   it('falls back to a draft content package (not submittable) when the official template is missing', () => {
     const r = assembleDeviceSubmission({
       pathway: '510k',
@@ -156,7 +176,12 @@ describe('assembleDeviceSubmission (B5)', () => {
 // eSTAR slots ("substantial-equivalence missing" on a Class III application).
 // These leaves are shaped exactly like that pack's labels and keys.
 
-const TEMPLATE_PMA_DEVICE = 'eSTAR-pma-non-ivd.pdf';
+// FDA distributes ONE non-IVD eSTAR PDF, and it carries 510(k), De Novo and
+// PMA alike — so ESTAR_TEMPLATE_MANIFEST points the pma-device descriptor at
+// eSTAR-510k-non-ivd.pdf. This fixture named a per-pathway PMA file that no
+// descriptor expects, so the assembler correctly reported the real template
+// missing and produced a draft package instead of the official eSTAR.
+const TEMPLATE_PMA_DEVICE = 'eSTAR-510k-non-ivd.pdf';
 
 /** The pack's root sections (one leaf per 814.20 module) plus the G.5 statistics leaf. */
 const pmaRootLeaves: EstarInputLeaf[] = [

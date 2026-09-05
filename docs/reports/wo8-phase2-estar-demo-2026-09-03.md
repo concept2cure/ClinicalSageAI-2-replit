@@ -137,20 +137,43 @@ is read back at its XFA SOM path from the delivered PDF, `fieldSources` is persi
 the governed branch actually writes) goes up by exactly one; a refusal step points `ESTAR_TEMPLATE_DIR` at an
 empty directory for one call and proves no artifact and no audit row; a cross-tenant preview is a 404.
 
+**Second pass, same session (commits `4b754cf8`, `2fed505f`)** — three more defects on the device and
+diagnostic surfaces, found while closing the review's open items:
+
+- **An IVD 510(k) was produced on the wrong template.** An IVD program that files a 510(k) has pathway
+  `k510` and lands on the 510(k) surface, which mounted the panel with a literal `variant="device"` — the
+  nIVD form. The kit's `Program` now carries the server's `product_type`; `officialEstarVariantFor` decides
+  the family from it; the panel header names the family ("nIVD eSTAR" / "IVD eSTAR"); the readiness and
+  field reads carry the variant. Proven at the host level: `MdxSurfaceHost` with an IVD row reads
+  "IVD eSTAR", and fails with the old literal.
+- **The export lock is known before the first click.** New read-only `GET /api/510k/estar/entitlement`
+  answers with the same evaluator the producing routes' middleware runs (mode, enforced, allowed,
+  requiredTier, tier), evaluating nothing when enforcement is off, and never forwarding a failed tier
+  query's error text. The panel locks Generate with the tier on an enforced denial before any click; a
+  denial in warn or off mode, or a failed read, locks nothing, because the POST would go through.
+- **The 510(k) surface crashed on an unreadable section list.** `useK510EstarSections` mapped
+  `data.sections` inside render, so a 200 with a body it could not read threw and unmounted the whole
+  surface. An unreadable body is now a reported load failure — never a crash, never an empty list — the rule
+  the portfolio hook already followed.
+
 ## 5. Proof
 
 All numbers below were read from the runners on the final tree, after the review fixes.
 
 | What | Result |
 |---|---|
-| eSTAR engine + forms + eSTAR route suites + entitlement + MDX kit + device journey + governed-export suites | **61 files, 882 tests passed, 9 skipped** (the 9 are pre-existing skips in `tests/governed-export-behavioral.test.ts`, untouched) |
+| eSTAR engine + forms + eSTAR route suites + entitlement + MDX kit + device journey + governed-export suites | **61 files, 882 tests passed, 9 skipped** after the first pass; **62 files, 898 tests passed, 9 skipped** after the second (the 9 are pre-existing skips in `tests/governed-export-behavioral.test.ts`, untouched) |
 | `estar-administrative-data.test.ts` (new) | 27 tests, including the real-template block: project → fill the vendored nIVD v7.0 → `readXfaDatasetsValues` finds each governed value at its SOM path; blank keys are not written |
 | `tests/routes/estar-official-pdf.test.ts` | 24 tests (18 → 24): `useProgramData` fill with `fieldReport`, `ignoredRequestKeys`, `metadata.fieldSources`; `GET /official-fields` 200 / 404 / 422; a database error (57014) answers 500 on both routes and never 404; a missing table (42P01) still answers 404 |
 | `tests/routes/estar-export-governance.test.ts` | `/build` answers 500 `PROJECT_RESOLUTION_FAILED` on a database error, 404 on a missing table |
 | `tests/golden-journeys/device-510k-estar.journey.test.ts` | green: 20 steps, 13 ok, 7 blocked-as-expected, 0 failed (was failing on the base branch) |
-| `OfficialEstarPanel.render.test.tsx` (new) | 19 tests |
+| `OfficialEstarPanel.render.test.tsx` (new) | 19 tests, then 26 after the second pass (pre-click lock, warn/off/failed-read no-lock, family header, variant on every read) |
+| `k510IvdVariant.test.tsx` (new, host level) | 2 tests: an IVD row on the 510(k) surface reads "IVD eSTAR", a device row "nIVD eSTAR"; fails with the old literal variant |
+| `useK510.sections.test.ts` (new) | 2 tests: an unreadable body is reported, not thrown; the documented shape adapts |
+| `useMdxPrograms.productType.test.ts` (new) | the server product type survives adaptation beside the k510 pathway |
+| `tests/routes/estar-entitlement-precheck.test.ts` (new) | 9 tests: mode off evaluates nothing (shown failing when evaluation is forced), on/warn verdicts, a failed evaluator is a 500 with no error text, toggle grant honoured |
 | `useEstarOfficialFields.test.ts` (new) | 28 tests |
-| `useEstarExport.test.ts` | 14 tests (4 → 14) |
+| `useEstarExport.test.ts` | 14 tests (4 → 14), then 18 (the entitlement read, the enforced-only lock rule, the one wording) |
 | eslint on all 14 changed/new files | 0 errors; the warnings are the pre-existing max-lines / complexity / test-file `no-undef` classes, none new |
 | `sha256sum -c assets/estar-templates/checksums.txt` | both OK |
 | `tsc --noEmit -p tsconfig.check.json` on the final tree | exit 0, no diagnostics |
@@ -180,6 +203,10 @@ run, and the file restored byte-identical; the failing run is recorded in the ag
 | a 404/422 field read is a sentence with no retry; a 5xx keeps retry | 7 hook/panel failures with the raw message passed through |
 | a failed field read disables Generate with the reason | 2 failures |
 | the first painted frame says "checking", not "not producible" | `renderToStaticMarkup` test |
+| an enforced entitlement denial locks Generate before the first click; warn/off/failed read do not | 3 failures with `entitlementBlocksExport` forced false |
+| the template family follows the program's product type, at the host level | pure test + host test fail with the old literal |
+| the mode-off short-circuit in `GET /entitlement` evaluates nothing | 2 failures when evaluation is forced |
+| an unreadable section-list body is reported, not thrown | unit test fails and the host test errors without the guard |
 
 **Review.** Six independent read-only lenses (client↔server contract, honest state, Part 11, server correctness,
 journey truth, UI copy/a11y) produced 21 findings; each non-nit was put to three refuters instructed to
@@ -187,10 +214,8 @@ disprove it. Confirmed and fixed: stale program data during a switch; every data
 "project not found"; the journey's vacuous audit-row guard; the redacted 404/422 error with a dead retry.
 Nits fixed: skipped request keys not reported as ignored, non-deterministic anchor lookup, W1-5 title masking,
 unasserted `/build` metadata flag, `xfaSomPath` type, first-frame claim, title-only disabled reasons,
-Generate live after a failed preview, the stale export outcome. Recorded, not fixed (§7): the Generate
-control cannot know the entitlement state before the first click, because no read endpoint exposes it — it
-locks with the tier after a 403, the same contract every other export control on these surfaces follows;
-`GET /official-fields` is readable by any authenticated member of the org (the same read scope as the device
+Generate live after a failed preview, the stale export outcome. Closed in the second pass: the Generate control now reads the entitlement verdict on mount (above).
+Recorded, not fixed (§7): `GET /official-fields` is readable by any authenticated member of the org (the same read scope as the device
 profile and registration reads), which puts client-workspace contact details in front of non-editor roles;
 `resolveProgramProjectAnchor` in `server/services/c2c/` still swallows non-schema errors and has no ORDER BY —
 outside this stream's territory.
@@ -225,7 +250,11 @@ IVD program. Every step is a shipped control; nothing is simulated.
    `contentForArtifact`, but are not stored on the program. Storing them needs a schema decision (a column or
    a table), which is a migration — not taken here.
 4. **Legal check and provenance of the template bytes** — unchanged from Phase 1 §7.
-5. **252 commits not on origin.** This container's local `concept2cure-v2` ref (`890afa03`, 2026-08-28) is
+5. **A 403 body that can carry a database error.** `server/services/entitlements/require-entitlement.ts`
+   interpolates the evaluator's `reason` into the middleware's 403 `message`; when the tier query itself
+   fails in enforce mode, `tier lookup failed: <driver text>` reaches the client. The new pre-check does not
+   forward it; the middleware still does. Outside this stream's territory; not edited.
+6. **252 commits not on origin.** This container's local `concept2cure-v2` ref (`890afa03`, 2026-08-28) is
    335 commits ahead of and 318 behind origin; `git cherry` finds none of its 252 non-merge commits in origin,
    not even as rebased equivalents. github-actions and dependabot commits are among them, so that line was
    on origin at some point and origin no longer carries it. Nothing was pushed; a git bundle of exactly those

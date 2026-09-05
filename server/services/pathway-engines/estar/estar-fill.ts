@@ -33,6 +33,7 @@ import {
   estarTemplateRequiredFromEnv,
   type EstarTemplateVariant,
   type EstarTemplateType,
+  type EstarTemplateIntegrity,
 } from './estar-template-registry';
 import { getEstarFieldMap, isFieldMapPopulated } from './estar-field-map';
 import {
@@ -82,11 +83,78 @@ export interface FillEstarResult {
 async function resolveTemplateBytes(
   input: FillEstarInput,
   expectedFileName: string,
-): Promise<Uint8Array | null> {
-  if (input.templateBytes) return input.templateBytes;
+): Promise<{ bytes: Uint8Array | null; integrity: EstarTemplateIntegrity | null }> {
+  // Injected bytes are the caller's own (tests, explicit override); the
+  // drop-point's pins do not describe them.
+  if (input.templateBytes) return { bytes: input.templateBytes, integrity: null };
   const vendored = await listVendoredTemplates();
   const hit = vendored.find((t) => t.fileName.toLowerCase() === expectedFileName.toLowerCase());
-  return hit ? hit.bytes : null;
+  return hit ? { bytes: hit.bytes, integrity: hit.integrity } : { bytes: null, integrity: null };
+}
+
+/**
+ * Resolve the template and the field map, and record on `base` every reason the
+ * descriptor cannot produce. Returns the pair when both are usable, or null when
+ * a blocker was recorded — the caller returns `base` on null.
+ *
+ * Split out of {@link fillEstarSubmission} because these are the PRE-conditions,
+ * and reading them together is the only way to see that a missing template, a
+ * swapped one and an unpopulated map are three distinct refusals with three
+ * distinct remedies, not one generic failure.
+ */
+async function resolveProducibleInputs(
+  input: FillEstarInput,
+  descriptor: { id: string; expectedFileName: string },
+  base: FillEstarResult,
+): Promise<{ templateBytes: Uint8Array | Buffer; fieldMap: OfficialPdfFieldMap } | null> {
+  const { bytes: templateBytes, integrity } = await resolveTemplateBytes(
+    input,
+    descriptor.expectedFileName,
+  );
+  // A file with the right NAME is not the official template. checksums.txt
+  // pins these bytes precisely because the field map was enumerated from them;
+  // a swapped or edited file writes our values wherever ITS paths point.
+  const integrityFailed = integrity === 'mismatch';
+  base.templateAvailable = !!templateBytes && !integrityFailed;
+  if (integrityFailed) {
+    base.blockers.push(
+      `Cannot produce a submittable eSTAR: "${descriptor.expectedFileName}" is present but does not match the ` +
+        `SHA-256 pinned for it in the drop-point's checksums.txt. The canonical field map was enumerated from the ` +
+        `pinned bytes, so filling a different file would write values into the wrong boxes. Restore the pinned ` +
+        `template, or re-verify the field map against the new edition and update checksums.txt.`,
+    );
+  }
+  if (integrity === 'unpinned') {
+    base.warnings.push(
+      `"${descriptor.expectedFileName}" is not pinned in the drop-point's checksums.txt, so its identity as the ` +
+        `official FDA edition was not verified.`,
+    );
+  }
+
+  const fieldMap = input.fieldMap ?? getEstarFieldMap(descriptor.id);
+  const mapPopulated = input.fieldMap
+    ? Object.keys(input.fieldMap).length > 0
+    : isFieldMapPopulated(descriptor.id);
+  base.fieldMapPopulated = mapPopulated;
+
+  if (!templateBytes && !integrityFailed) {
+    base.blockers.push(
+      `Cannot produce a submittable eSTAR: the official template "${descriptor.expectedFileName}" is not vendored. ` +
+        `Place it in assets/estar-templates/ (or set ESTAR_TEMPLATE_DIR). See assets/estar-templates/README.md.` +
+        (estarTemplateRequiredFromEnv() ? ' ESTAR_REQUIRE_TEMPLATE is set — this blocks production dispatch.' : ''),
+    );
+  }
+  if (!fieldMap || !mapPopulated) {
+    base.blockers.push(
+      `Cannot produce a submittable eSTAR: the canonical→template field map for "${descriptor.id}" is not populated/verified ` +
+        `against the vendored template. Enumerate the template's fields (listXfaFields for a dynamic XFA form such as ` +
+        `the FDA eSTAR, listAcroFields for a static AcroForm) and fill estar-field-map.ts.`,
+    );
+  }
+
+
+  if (base.blockers.length > 0) return null;
+  return { templateBytes: templateBytes!, fieldMap: fieldMap! };
 }
 
 /**
@@ -113,31 +181,9 @@ export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEs
     return base;
   }
 
-  const templateBytes = await resolveTemplateBytes(input, descriptor.expectedFileName);
-  base.templateAvailable = !!templateBytes;
-
-  const fieldMap = input.fieldMap ?? getEstarFieldMap(descriptor.id);
-  const mapPopulated = input.fieldMap
-    ? Object.keys(input.fieldMap).length > 0
-    : isFieldMapPopulated(descriptor.id);
-  base.fieldMapPopulated = mapPopulated;
-
-  if (!templateBytes) {
-    base.blockers.push(
-      `Cannot produce a submittable eSTAR: the official template "${descriptor.expectedFileName}" is not vendored. ` +
-        `Place it in assets/estar-templates/ (or set ESTAR_TEMPLATE_DIR). See assets/estar-templates/README.md.` +
-        (estarTemplateRequiredFromEnv() ? ' ESTAR_REQUIRE_TEMPLATE is set — this blocks production dispatch.' : ''),
-    );
-  }
-  if (!fieldMap || !mapPopulated) {
-    base.blockers.push(
-      `Cannot produce a submittable eSTAR: the canonical→template field map for "${descriptor.id}" is not populated/verified ` +
-        `against the vendored template. Enumerate the template's fields (listXfaFields for a dynamic XFA form such as ` +
-        `the FDA eSTAR, listAcroFields for a static AcroForm) and fill estar-field-map.ts.`,
-    );
-  }
-
-  if (base.blockers.length > 0) return base;
+  const resolved = await resolveProducibleInputs(input, descriptor, base);
+  if (!resolved) return base;
+  const { templateBytes, fieldMap } = resolved;
 
   // Both present → fill the official template. Which layer depends on the file:
   // FDA's eSTAR is a dynamic Adobe LiveCycle XFA form whose AcroForm `/Fields`
@@ -145,23 +191,44 @@ export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEs
   // what the template actually is rather than assuming. Neither path throws on a
   // missing field (skip+warn), so the output stays honest about what was and
   // wasn't populated.
-  const dynamicXfa = isDynamicXfaPdf(templateBytes!);
+  const dynamicXfa = isDynamicXfaPdf(templateBytes);
   base.templateKind = dynamicXfa ? 'dynamic-xfa' : 'acroform';
   const result = dynamicXfa
-    ? await fillXfaDatasets(templateBytes!, fieldMap!, input.data, {
+    ? await fillXfaDatasets(templateBytes, fieldMap, input.data, {
         flatten: input.flatten ?? false,
         missingFieldPolicy: 'skip',
       })
-    : await fillOfficialPdf(templateBytes!, fieldMap!, input.data, {
+    : await fillOfficialPdf(templateBytes, fieldMap, input.data, {
         flatten: input.flatten ?? false,
         missingFieldPolicy: 'skip',
       });
 
-  base.filled = true;
-  base.pdfBytes = result.bytes;
   base.filledFields = result.filled;
   base.skippedFields = result.skipped;
   base.warnings = result.warnings;
+
+  // `filled` is documented as "True only when a real filled official eSTAR PDF
+  // was produced", but it was set unconditionally the moment the fill RAN. A
+  // caller passing `data: {}` — which POST /official accepts, its schema
+  // defaulting `data` to an empty object — got every mapped key skipped, the
+  // untouched template bytes back, `filled: true`, no blockers, and a 200
+  // carrying `officialEstarPdf: true` with the placement "Module 1 / official
+  // FDA eSTAR (submittable)". That is a blank official FDA form registered as a
+  // submittable artifact.
+  //
+  // A fill that wrote nothing produced no filled form. Fail closed and say why,
+  // rather than hand back the blank template dressed as a submission.
+  if (result.filled.length === 0) {
+    base.blockers.push(
+      `Cannot produce a submittable eSTAR: the fill wrote no values into "${descriptor.id}". ` +
+        `The platform held no value for any of the ${Object.keys(fieldMap!).length} mapped administrative fields, ` +
+        `so the output would be the blank official template.`,
+    );
+    return base;
+  }
+
+  base.filled = true;
+  base.pdfBytes = result.bytes;
   return base;
 }
 

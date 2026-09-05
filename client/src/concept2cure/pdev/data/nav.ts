@@ -1,6 +1,6 @@
 /**
  * PDEV rail nav config — port of PDEV_NAV_ITEMS / PDEV_NAV_GROUPS from
- * design-system/ui_kits/pdev/data.jsx.
+ * ui_kits/pdev/data.jsx.
  *
  * The full kit declares 8 nav items spanning Workstream + Workspace
  * groups (overview, cmc, nonclinical, clinical, regulatory, ind_assembly,

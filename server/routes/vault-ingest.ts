@@ -258,21 +258,36 @@ export default function createVaultIngestRoutes(): Router {
       });
     }
 
-    // Text extraction (best-effort)
+    // Text extraction (best-effort for the upload itself — the document is
+    // still admitted — but the OUTCOME is captured either way, so a failure
+    // can be recorded in the catalog as a failure rather than surfacing later
+    // as a document that merely looks empty).
     let extractedText: string | null = null;
     let pageCount: number | null = null;
     let wordCount: number | null = null;
+    let extractionMethod = 'none';
+    let extractionConfidence: number | undefined;
+    let extractionError: string | null = null;
     try {
       const { extractDocumentText } = await import('../services/ocr/index.js');
       const extracted = await extractDocumentText(fileBuffer, mimeType, fileName);
+      extractionMethod = extracted.method;
+      extractionConfidence = extracted.confidence;
       if (extracted.text && extracted.text.trim().length > 0) {
         extractedText = extracted.text;
         wordCount = extracted.text.trim().split(/\s+/).length;
         logger.info('Vault ingest text extracted', { chars: extracted.text.length, wordCount });
       }
     } catch (extractErr: any) {
+      extractionError = extractErr?.message ?? 'unknown extraction error';
       logger.warn('Vault ingest text extraction failed (non-fatal)', { err: extractErr?.message });
     }
+
+    // Catalog participation is a tenant-scoped rollout; resolved before the
+    // transaction (FeatureToggleService reads its own connection).
+    const { isDocumentCatalogEnabled, recordExtractionOutcome, buildExtractionOutcome } =
+      await import('../services/vault/document-catalog.service.js');
+    const catalogEnabled = await runScoped(() => isDocumentCatalogEnabled(orgId));
 
     /* ── Dossier filing ──────────────────────────────────────────────────────
        Every ingested document gets a PLACEMENT against the program's vault
@@ -444,6 +459,26 @@ export default function createVaultIngestRoutes(): Router {
       );
 
       const doc = result.rows[0];
+
+      /* The catalog's extraction tier, in the SAME transaction as the document
+         row: when cataloging is on, a document cannot enter the corpus with
+         its extraction outcome unrecorded. An extraction failure is written AS
+         a failure with its reason — the state this catalog exists to make
+         visible — and a re-upload with new bytes voids any prior comprehension
+         (the service handles that in its upsert). */
+      if (catalogEnabled) {
+        await recordExtractionOutcome(client, {
+          documentId: String(doc.id),
+          contentHash,
+          outcome: buildExtractionOutcome({
+            text: extractedText,
+            method: extractionMethod,
+            confidence: extractionConfidence,
+            error: extractionError,
+          }),
+          pageCount,
+        });
+      }
 
       /* The Part 11 record of the ingestion. `writeChainedAuditRow`, not
          `auditService.logAction` — logAction runs on its own connection and

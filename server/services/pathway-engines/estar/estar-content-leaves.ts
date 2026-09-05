@@ -60,8 +60,26 @@ function isAuthored(s: DeviceSectionInput): boolean {
 
 /** Statuses that represent finalized, non-draft content (legacy + governed vocabularies). */
 const FINALIZED_STATUSES = new Set(['approved', 'finalized', 'final', 'locked']);
-/** Statuses that are explicitly still in progress — never substantive regardless of length. */
-const DRAFT_STATUSES = new Set(['draft', 'drafted', 'todo', 'not_started', 'review', 'in_review', 'in-progress', 'in_progress']);
+/**
+ * Statuses that are explicitly still in progress — never substantive regardless
+ * of length.
+ *
+ * `drafting` and `ready_for_review` were missing, and they are the two the AI
+ * drafter actually writes: write_kit_section defaults `status` to 'drafting'
+ * and accepts only drafting | ready_for_review | in_review, while rejecting
+ * bodies under 40 characters — the same floor as
+ * MIN_SUBSTANTIVE_CONTENT_LENGTH below. So every AI-drafted section fell
+ * through this set to the length-only branch and passed it by construction:
+ * unreviewed machine drafts marked their eSTAR sections present, and
+ * contentReady / canFileNow went true on content no human had read.
+ * `drafting` is also the legacy vocabulary's own in-progress value
+ * (shared/schema.ts: "todo, drafting, validated").
+ */
+const DRAFT_STATUSES = new Set([
+  'draft', 'drafted', 'drafting', 'todo', 'not_started',
+  'review', 'in_review', 'in-review', 'ready_for_review', 'ready-for-review',
+  'in-progress', 'in_progress',
+]);
 
 /** Bare placeholder bodies that must never count as real content, whatever their length. */
 const PLACEHOLDER_BODIES = new Set(['tbd', 'todo', 'tba', 'n/a', 'placeholder', 'coming soon', 'to be determined']);
@@ -165,16 +183,23 @@ export async function resolveDeviceContentScope(
   if (opts.programId) {
     let authored = false;
     let docType: string | undefined;
-    try {
+    {
       const doc = await loadGovernedDeviceDocument(organizationId, opts.programId, opts.client);
       if (doc) {
         docType = doc.docType;
         const rows = await loadGovernedSectionRows(doc.id, opts.client ?? pool);
         authored = governedSectionsToDeviceSections(rows).some(isAuthored);
       }
-    } catch {
-      authored = false;
     }
+    // NOT `catch { authored = false }`. A failed read of the program's governed
+    // document is not "this program has no governed content": the fallback that
+    // followed returned the LEGACY scope with documentId undefined, i.e. every
+    // cerv2_510k_sections row in the organization. A timeout while assembling
+    // program A's package silently assembled it from every device in the org —
+    // the exact ESTAR-01 defect this module's header says was fixed, reachable
+    // again through the error path, and invisible because /build's success
+    // response does not echo deviceContentSource. Let the failure surface; the
+    // route reports it.
     if (authored) {
       // The class travels with the scope so /build can pick a renderer and a
       // package label that match the document (a PMA is not a 510(k) package).
@@ -300,43 +325,46 @@ async function loadGovernedSectionRows(
  * Load a tenant's authored device content and adapt it to readiness leaves.
  * Org-scoped (never trusts request input for the tenant); optionally narrowed to
  * a single document. Mirrors the permissive org-scoping of the live
- * document-preview endpoint. Returns [] on any query failure (readiness then
- * honestly reports everything missing rather than throwing).
+ * document-preview endpoint.
+ *
+ * A FAILED READ SURFACES. This used to return [] on any query failure, so a
+ * failed read was indistinguishable from an empty one: /build answered 422
+ * NO_AUTHORED_CONTENT — "author section content before exporting" — when the
+ * read had failed, and /filing-readiness and /assemble reported 0% with every
+ * section missing. "An error is never rendered as an empty result" (CLAUDE.md).
+ * An empty array from here means the tenant has authored nothing, and nothing
+ * else.
  */
 export async function loadDeviceContentLeaves(
   organizationId: number,
   opts: LoadDeviceContentLeavesOptions = {},
 ): Promise<FilingLeaf[]> {
-  try {
-    if (opts.programId) {
-      const rows = await loadGovernedDeviceSections(organizationId, opts.programId, opts.client);
-      return sectionsToLeaves(governedSectionsToDeviceSections(rows));
-    }
-    const where =
-      opts.documentId !== undefined
-        ? and(
-            eq(cerv2510kSections.organizationId, organizationId),
-            eq(cerv2510kSections.documentId, opts.documentId),
-          )
-        : eq(cerv2510kSections.organizationId, organizationId);
-
-    const rows = await db
-      .select({
-        sectionNumber: cerv2510kSections.sectionNumber,
-        sectionTitle: cerv2510kSections.sectionTitle,
-        sectionKey: cerv2510kSections.sectionKey,
-        category: cerv2510kSections.category,
-        status: cerv2510kSections.status,
-        content: cerv2510kSections.content,
-      })
-      .from(cerv2510kSections)
-      .where(where)
-      .orderBy(asc(cerv2510kSections.displayOrder));
-
-    return sectionsToLeaves(rows as DeviceSectionInput[]);
-  } catch {
-    return [];
+  if (opts.programId) {
+    const rows = await loadGovernedDeviceSections(organizationId, opts.programId, opts.client);
+    return sectionsToLeaves(governedSectionsToDeviceSections(rows));
   }
+  const where =
+    opts.documentId !== undefined
+      ? and(
+          eq(cerv2510kSections.organizationId, organizationId),
+          eq(cerv2510kSections.documentId, opts.documentId),
+        )
+      : eq(cerv2510kSections.organizationId, organizationId);
+
+  const rows = await db
+    .select({
+      sectionNumber: cerv2510kSections.sectionNumber,
+      sectionTitle: cerv2510kSections.sectionTitle,
+      sectionKey: cerv2510kSections.sectionKey,
+      category: cerv2510kSections.category,
+      status: cerv2510kSections.status,
+      content: cerv2510kSections.content,
+    })
+    .from(cerv2510kSections)
+    .where(where)
+    .orderBy(asc(cerv2510kSections.displayOrder));
+
+  return sectionsToLeaves(rows as DeviceSectionInput[]);
 }
 
 /** An authored section projected for document assembly (title + body). */
@@ -380,47 +408,45 @@ export function sectionsToEditorJson(sections: AuthoredDeviceSection[]): {
 
 /**
  * Load a tenant's authored device sections (title + body) for assembly.
- * Same org-scoped query and honesty rules as loadDeviceContentLeaves —
- * only content-bearing sections return; [] on any query failure.
+ * Same org-scoped query and honesty rules as loadDeviceContentLeaves: only
+ * content-bearing sections return, and a failed read surfaces rather than
+ * reading as an absence of content — reporting one as the other tells the user
+ * to write sections they have already written.
  */
 export async function loadAuthoredDeviceSections(
   organizationId: number,
   opts: LoadDeviceContentLeavesOptions = {},
 ): Promise<AuthoredDeviceSection[]> {
-  try {
-    if (opts.programId) {
-      const rows = await loadGovernedDeviceSections(organizationId, opts.programId, opts.client);
-      return governedSectionsToDeviceSections(rows)
-        .filter(isAuthored)
-        .map((r) => ({ title: String(r.sectionTitle), content: String(r.content), sectionCode: String(r.sectionKey ?? '') || undefined }));
-    }
-    const where =
-      opts.documentId !== undefined
-        ? and(
-            eq(cerv2510kSections.organizationId, organizationId),
-            eq(cerv2510kSections.documentId, opts.documentId),
-          )
-        : eq(cerv2510kSections.organizationId, organizationId);
-
-    const rows = await db
-      .select({
-        sectionTitle: cerv2510kSections.sectionTitle,
-        sectionKey: cerv2510kSections.sectionKey,
-        content: cerv2510kSections.content,
-      })
-      .from(cerv2510kSections)
-      .where(where)
-      .orderBy(asc(cerv2510kSections.displayOrder));
-
-    return rows
-      .filter((r) => (r.content ?? '').trim().length > 0)
-      .map((r) => ({
-        title: String(r.sectionTitle || r.sectionKey || 'Untitled section'),
-        content: String(r.content),
-      }));
-  } catch {
-    return [];
+  if (opts.programId) {
+    const rows = await loadGovernedDeviceSections(organizationId, opts.programId, opts.client);
+    return governedSectionsToDeviceSections(rows)
+      .filter(isAuthored)
+      .map((r) => ({ title: String(r.sectionTitle), content: String(r.content), sectionCode: String(r.sectionKey ?? '') || undefined }));
   }
+  const where =
+    opts.documentId !== undefined
+      ? and(
+          eq(cerv2510kSections.organizationId, organizationId),
+          eq(cerv2510kSections.documentId, opts.documentId),
+        )
+      : eq(cerv2510kSections.organizationId, organizationId);
+
+  const rows = await db
+    .select({
+      sectionTitle: cerv2510kSections.sectionTitle,
+      sectionKey: cerv2510kSections.sectionKey,
+      content: cerv2510kSections.content,
+    })
+    .from(cerv2510kSections)
+    .where(where)
+    .orderBy(asc(cerv2510kSections.displayOrder));
+
+  return rows
+    .filter((r) => (r.content ?? '').trim().length > 0)
+    .map((r) => ({
+      title: String(r.sectionTitle || r.sectionKey || 'Untitled section'),
+      content: String(r.content),
+    }));
 }
 
 export default {

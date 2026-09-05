@@ -1,13 +1,17 @@
 /**
  * DeviceProfilePanel — compact collapsible intake card for the active
  * program's device profile (product name · class · pathway · product code ·
- * intended use), backed by GET/PUT /api/510k/device/profile.
+ * intended use · the five device-level facts the official eSTAR reads from the
+ * program: common name, classification name, regulation number, associated
+ * product codes, Indications for Use citation), backed by GET/PUT
+ * /api/510k/device/profile.
  *
  * The openFDA classification lookup OFFERS autofill: the top hit's product
- * code / device class fill the form fields, and the user still reviews and
- * clicks Save. Honest states throughout — an unavailable lookup shows the
- * server's unavailableReason, a rejected save says "Not saved", and no field
- * is ever filled from a guess (unmappable device classes are left alone).
+ * code / device class / regulation number / classification "device name" fill
+ * the form fields, and the user still reviews and clicks Save. Honest states
+ * throughout — an unavailable lookup shows the server's unavailableReason, a
+ * rejected save says "Not saved", and no field is ever filled from a guess
+ * (unmappable device classes are left alone).
  *
  * The recognized-standards lookup sits beside it because it answers the other
  * half of intake: once the product code is known, which consensus standards has
@@ -28,12 +32,17 @@ import {
   lookupClassification,
   lookupRecognizedStandards,
   romanDeviceClass,
+  ESTAR_DEVICE_FIELDS,
+  type ClassificationHit,
   type DeviceProfilePatch,
   type DeviceProfileView,
   type DeviceClass,
+  type EstarDeviceField,
   type RegulatoryPath,
   type RecognizedStandardsResult,
 } from '../hooks/useDeviceProfile';
+import { describeSaveFailure } from '../hooks/useFetchJson';
+import { notifyOfficialEstarFieldsChanged } from '../hooks/useEstarOfficialFields';
 
 const DEVICE_CLASSES: DeviceClass[] = ['I', 'II', 'III'];
 const REGULATORY_PATHS: Array<{ value: RegulatoryPath; label: string }> = [
@@ -46,7 +55,27 @@ function pathLabel(path: string | null): string | null {
   return REGULATORY_PATHS.find((p) => p.value === path)?.label ?? path;
 }
 
-interface FormState {
+/** The five eSTAR device facts as the intake form labels them. `max` mirrors
+ *  the route's write limits (server/routes/510k-device-routes.ts), the same
+ *  contract ESTAR_CORRESPONDENT_FIELDS carries for the correspondent block.
+ *  Without it one over-long value 400s the WHOLE patch, so every other edit
+ *  the user made in this form is discarded with it. */
+const ESTAR_DEVICE_FIELD_LABELS: Record<
+  EstarDeviceField,
+  { label: string; placeholder: string; max: number }
+> = {
+  commonName: { label: 'Common name', placeholder: 'e.g. Continuous glucose monitor', max: 500 },
+  classificationName: { label: 'Classification name', placeholder: 'The 21 CFR classification name', max: 500 },
+  regulationNumber: { label: 'Regulation number (21 CFR)', placeholder: 'e.g. 862.1355', max: 50 },
+  associatedProductCodes: { label: 'Associated product codes', placeholder: 'Secondary codes, separated by ;', max: 500 },
+  indicationsForUseCitation: {
+    label: 'Indications for Use citation (attachment and page)',
+    placeholder: 'e.g. Attachment 4, page 1',
+    max: 1000,
+  },
+};
+
+export interface FormState extends Record<EstarDeviceField, string> {
   productName: string;
   deviceClass: string;
   regulatoryPath: string;
@@ -55,7 +84,11 @@ interface FormState {
 }
 
 function formFromProfile(profile: DeviceProfileView | null): FormState {
+  const estar = Object.fromEntries(
+    ESTAR_DEVICE_FIELDS.map((field) => [field, profile?.[field] ?? '']),
+  ) as Record<EstarDeviceField, string>;
   return {
+    ...estar,
     productName: profile?.productName ?? '',
     deviceClass: profile?.deviceClass ?? '',
     regulatoryPath: profile?.regulatoryPath ?? '',
@@ -68,6 +101,8 @@ function formFromProfile(profile: DeviceProfileView | null): FormState {
  * Diff the form against the loaded profile into a PUT patch of ONLY the
  * changed fields. Fields the server requires non-empty (name, class, path,
  * code) are omitted when cleared — clearing them is not a supported write.
+ * The five eSTAR facts are different: an emptied one is sent as '' because
+ * that IS the clear signal, and the eSTAR field then honestly stays blank.
  */
 export function profilePatch(profile: DeviceProfileView | null, form: FormState): DeviceProfilePatch {
   const base = formFromProfile(profile);
@@ -83,7 +118,30 @@ export function profilePatch(profile: DeviceProfileView | null, form: FormState)
   const code = form.productCode.trim();
   if (code && code !== base.productCode) patch.productCode = code;
   if (form.intendedUse !== base.intendedUse) patch.intendedUse = form.intendedUse;
+  for (const field of ESTAR_DEVICE_FIELDS) {
+    const value = form[field].trim();
+    if (value !== base[field]) patch[field] = value;
+  }
   return patch;
+}
+
+/**
+ * Pure: offer an openFDA classification hit into the form. The hit's product
+ * code and device class fill as before; its regulation number fills
+ * regulationNumber and its "device name" — which in openFDA's classification
+ * dataset IS the 21 CFR classification name — fills classificationName. A
+ * blank or unmappable value leaves the typed field alone. Nothing is saved
+ * here; the user reviews and clicks Save.
+ */
+export function classificationAutofill(form: FormState, hit: ClassificationHit): FormState {
+  const cls = romanDeviceClass(hit.deviceClass);
+  return {
+    ...form,
+    productCode: hit.productCode?.trim() || form.productCode,
+    deviceClass: cls ?? form.deviceClass,
+    regulationNumber: hit.regulationNumber?.trim() || form.regulationNumber,
+    classificationName: hit.deviceName?.trim() || form.classificationName,
+  };
 }
 
 /**
@@ -112,13 +170,15 @@ export function standardsStatusLine(result: RecognizedStandardsResult | null): s
   );
 }
 
-const fieldLabelStyle: React.CSSProperties = {
+/** The kit's intake-field idiom, shared with EstarFilingPanel's
+ *  correspondent block so both forms read as one. */
+export const fieldLabelStyle: React.CSSProperties = {
   fontSize: 11,
   color: 'var(--text-300)',
   display: 'block',
   marginBottom: 3,
 };
-const fieldInputStyle: React.CSSProperties = {
+export const fieldInputStyle: React.CSSProperties = {
   width: '100%',
   fontSize: 12,
   padding: '5px 8px',
@@ -128,18 +188,83 @@ const fieldInputStyle: React.CSSProperties = {
   color: 'var(--text-200)',
 };
 
+/** One labelled single-line intake input in the kit's form markup. */
+export function IntakeTextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  maxLength,
+}: {
+  label: string;
+  value: string;
+  onChange: (next: string) => void;
+  placeholder?: string;
+  maxLength?: number;
+}) {
+  return (
+    <label>
+      <span style={fieldLabelStyle}>{label}</span>
+      <input
+        style={fieldInputStyle}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        maxLength={maxLength}
+      />
+    </label>
+  );
+}
+
+/** The five eSTAR device facts, laid out under the classification row. */
+function EstarDeviceFields({
+  form,
+  onChange,
+}: {
+  form: FormState;
+  onChange: (field: EstarDeviceField, value: string) => void;
+}) {
+  const field = (name: EstarDeviceField) => (
+    <IntakeTextField
+      label={ESTAR_DEVICE_FIELD_LABELS[name].label}
+      placeholder={ESTAR_DEVICE_FIELD_LABELS[name].placeholder}
+      value={form[name]}
+      maxLength={ESTAR_DEVICE_FIELD_LABELS[name].max}
+      onChange={(v) => onChange(name, v)}
+    />
+  );
+  return (
+    <>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr', gap: 10, marginTop: 10 }}>
+        {field('commonName')}
+        {field('classificationName')}
+        {field('regulationNumber')}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10, marginTop: 10 }}>
+        {field('associatedProductCodes')}
+        {field('indicationsForUseCitation')}
+      </div>
+    </>
+  );
+}
+
 export interface DeviceProfilePanelProps {
   /** regulatoryPrograms UUID or program code; null = no program selected. */
   ident: string | null;
 }
 
 export function DeviceProfilePanel({ ident }: DeviceProfilePanelProps) {
-  const { profile, loading, error, save } = useDeviceProfile(ident);
+  const { profile, loading, error, save, saveFailure } = useDeviceProfile(ident);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>(() => formFromProfile(null));
   const [saving, setSaving] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  /* A failed save is held as a FLAG, not as a sentence. The sentence depends on
+     `saveFailure`, which the hook sets in the same batch as this flag, so
+     resolving it at render time reads the current classification rather than a
+     stale one captured inside the handler's closure. */
+  const [saveRefused, setSaveRefused] = useState(false);
   const [standardsBusy, setStandardsBusy] = useState(false);
   /* undefined = never asked. null = the request failed. Otherwise the server's
      labelled envelope, rendered as-is. */
@@ -180,15 +305,25 @@ export function DeviceProfilePanel({ ident }: DeviceProfilePanelProps) {
     if (!ident || !dirty || saving) return;
     setSaving(true);
     setStatus(null);
+    setSaveRefused(false);
     const saved = await save(patch);
     setSaving(false);
-    setStatus(saved ? 'Saved' : 'Not saved — the server rejected the update');
+    setSaveRefused(!saved);
+    setStatus(saved ? 'Saved' : null);
+    /* The official eSTAR preview reads these five facts and names this form as
+       their home ("Not set — Device profile · common name"). Only an ACCEPTED
+       save changed anything, so only an accepted save asks it to re-read. */
+    if (saved) notifyOfficialEstarFieldsChanged();
   }
 
   async function onLookup() {
     if (lookingUp) return;
     setLookingUp(true);
     setStatus(null);
+    /* A lookup result replaces the save outcome in the one status line, so the
+       refusal must clear with it — otherwise the lookup's message and a stale
+       "not saved" would compete for the same slot. */
+    setSaveRefused(false);
     const code = form.productCode.trim();
     const result = await lookupClassification(
       code ? { productCode: code } : { deviceName: form.productName.trim() },
@@ -208,11 +343,7 @@ export function DeviceProfilePanel({ ident }: DeviceProfilePanelProps) {
     }
     const top = result.results[0];
     const cls = romanDeviceClass(top.deviceClass);
-    setForm((f) => ({
-      ...f,
-      productCode: top.productCode || f.productCode,
-      deviceClass: cls ?? f.deviceClass,
-    }));
+    setForm((f) => classificationAutofill(f, top));
     setStatus(
       `openFDA match: ${top.deviceName || 'unnamed device'} · code ${top.productCode || '—'} · class ${
         cls ?? (top.deviceClass || '—')
@@ -258,15 +389,12 @@ export function DeviceProfilePanel({ ident }: DeviceProfilePanelProps) {
           }}
         >
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 10 }}>
-            <label>
-              <span style={fieldLabelStyle}>Product name</span>
-              <input
-                style={fieldInputStyle}
-                value={form.productName}
-                onChange={(e) => setForm((f) => ({ ...f, productName: e.target.value }))}
-                placeholder="e.g. Continuous glucose monitor"
-              />
-            </label>
+            <IntakeTextField
+              label="Product name"
+              value={form.productName}
+              onChange={(v) => setForm((f) => ({ ...f, productName: v }))}
+              placeholder="e.g. Continuous glucose monitor"
+            />
             <label>
               <span style={fieldLabelStyle}>Device class</span>
               <select
@@ -297,16 +425,17 @@ export function DeviceProfilePanel({ ident }: DeviceProfilePanelProps) {
                 ))}
               </select>
             </label>
-            <label>
-              <span style={fieldLabelStyle}>Product code</span>
-              <input
-                style={fieldInputStyle}
-                value={form.productCode}
-                onChange={(e) => setForm((f) => ({ ...f, productCode: e.target.value }))}
-                placeholder="e.g. MDS"
-              />
-            </label>
+            <IntakeTextField
+              label="Product code"
+              value={form.productCode}
+              onChange={(v) => setForm((f) => ({ ...f, productCode: v }))}
+              placeholder="e.g. MDS"
+            />
           </div>
+          <EstarDeviceFields
+            form={form}
+            onChange={(field, v) => setForm((f) => ({ ...f, [field]: v }))}
+          />
           <label style={{ display: 'block', marginTop: 10 }}>
             <span style={fieldLabelStyle}>Intended use</span>
             <textarea
@@ -342,9 +471,9 @@ export function DeviceProfilePanel({ ident }: DeviceProfilePanelProps) {
             >
               {standardsBusy ? 'Looking up…' : 'Recognized standards'}
             </button>
-            {status && (
+            {(status || saveRefused) && (
               <span className="section-sub" role="status" style={{ margin: 0 }}>
-                {status}
+                {saveRefused ? describeSaveFailure(saveFailure ?? 'unavailable') : status}
               </span>
             )}
           </div>

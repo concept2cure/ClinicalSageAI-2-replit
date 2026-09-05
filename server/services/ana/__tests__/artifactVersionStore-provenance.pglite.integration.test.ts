@@ -67,6 +67,15 @@ beforeAll(async () => {
       created_at timestamptz NOT NULL DEFAULT now());
   `);
   await pglite.query(`INSERT INTO organizations (id, name) VALUES ($1,'a')`, [ORG]);
+  // The lineage gate the store now enlists (ledger L160): the evidence spine
+  // and the span-lineage store, from the real migrations.
+  const { readFileSync } = await import('node:fs');
+  const { resolve, dirname } = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const here = dirname(fileURLToPath(import.meta.url));
+  for (const rel of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql', 'db/migrations/20260803_document_span_lineage.sql']) {
+    await pglite.exec(readFileSync(resolve(here, '../../../../', rel), 'utf8'));
+  }
 }, 90_000);
 
 afterAll(async () => {
@@ -115,5 +124,74 @@ describe('artifactVersionStore provenance uniformity', () => {
     });
     expect(res.created).toBe(false);
     expect(await eventCount()).toBe(before);
+  });
+});
+
+// ── Ledger L160: every version carries span lineage, in the same transaction ──
+async function spanRows(artifactPk: number) {
+  const r = await wrap(
+    `SELECT provenance_kind, reference_id FROM document_span_lineage
+      WHERE document_table = 'concept2cure_artifacts' AND document_id = $1 AND deleted_at IS NULL`,
+    [String(artifactPk)],
+  );
+  return r.rows as Array<{ provenance_kind: string; reference_id: string | null }>;
+}
+const QUOTED = 'The primary endpoint was met at week twelve in the intent-to-treat population.';
+const ORIGINAL = 'These findings were consistent across every prespecified subgroup we examined.';
+
+describe('artifactVersionStore lineage (ledger L160)', () => {
+  it('the first draft records every clause as the author\'s assertion', async () => {
+    const r = await upsertDocumentArtifactVersion({
+      organizationId: ORG, projectId: 1, userId: USER, anaThreadId: 't-l160-1', title: 'Clinical Overview',
+      content: `${QUOTED} ${ORIGINAL}`,
+    });
+    expect(r.created).toBe(true);
+    expect(r.lineage?.authorSpans).toBeGreaterThanOrEqual(2);
+    const rows = await spanRows(r.artifactPk);
+    expect(rows.length).toBeGreaterThanOrEqual(2);
+    expect(rows.every((x) => x.provenance_kind === 'author_assertion')).toBe(true);
+  });
+
+  it('a new version re-records lineage for the new text; a de-dupe re-emit records nothing new', async () => {
+    const first = await upsertDocumentArtifactVersion({
+      organizationId: ORG, projectId: 1, userId: USER, anaThreadId: 't-l160-2', title: 'Clinical Overview', content: `${QUOTED}`,
+    });
+    const second = await upsertDocumentArtifactVersion({
+      organizationId: ORG, projectId: 1, userId: USER, anaThreadId: 't-l160-2', title: 'Clinical Overview', content: `${QUOTED} ${ORIGINAL}`,
+    });
+    expect(second.version).toBe(first.version + 1);
+    expect(second.lineage?.authorSpans).toBeGreaterThanOrEqual(2);
+    const again = await upsertDocumentArtifactVersion({
+      organizationId: ORG, projectId: 1, userId: USER, anaThreadId: 't-l160-2', title: 'Clinical Overview', content: `${QUOTED} ${ORIGINAL}`,
+    });
+    expect(again.created).toBe(false);
+    expect(again.lineage).toBeNull();
+  });
+
+  it('with sources, the verbatim clause lands on the cited Data Room source', async () => {
+    const src = await wrap(
+      `INSERT INTO cre_evidence_sources (organization_id, visibility_class, source_type, title, checksum, ingestion_status, extraction_status)
+       VALUES ($1, 'tenant_private', 'client_document', 'csr.pdf', 'sha-l160', 'ingested', 'extracted') RETURNING id`,
+      [ORG],
+    );
+    const sourceId = (src.rows[0] as { id: number }).id;
+    const r = await upsertDocumentArtifactVersion({
+      organizationId: ORG, projectId: 1, userId: USER, anaThreadId: 't-l160-3', title: 'Clinical Overview',
+      content: `${QUOTED} ${ORIGINAL}`,
+      sources: [{ sourceId, content: `Clinical study report. ${QUOTED} More.` }],
+    });
+    expect(r.lineage?.sourceSpans).toBe(1);
+    const rows = await spanRows(r.artifactPk);
+    expect(rows.some((x) => x.provenance_kind === 'cre_evidence_source' && x.reference_id === String(sourceId))).toBe(true);
+  });
+
+  it('refuses a version with no identified author, and writes no artifact', async () => {
+    await expect(
+      upsertDocumentArtifactVersion({
+        organizationId: ORG, projectId: 1, userId: null, anaThreadId: 't-l160-4', title: 'Unattributed', content: `${QUOTED}`,
+      }),
+    ).rejects.toThrow(/identified author/);
+    const r = await wrap(`SELECT count(*)::int AS n FROM concept2cure_artifacts WHERE ana_thread_id = 't-l160-4'`);
+    expect(Number((r.rows[0] as { n: number }).n)).toBe(0);
   });
 });

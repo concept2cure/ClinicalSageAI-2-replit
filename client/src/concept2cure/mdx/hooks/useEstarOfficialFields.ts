@@ -25,9 +25,17 @@
  * useFetchJson's `data` into the surface shape.
  */
 
+import { useEffect } from 'react';
 import { useFetchJson } from './useFetchJson';
 
-export type OfficialEstarType = '510k';
+/**
+ * The marketing pathways the official eSTAR is produced for. FDA ships one
+ * nIVD PDF and one IVD PDF that each carry 510(k), De Novo and PMA, so the
+ * pathway selects the field map and the submission-type wording, and the
+ * variant selects the physical template family. Mirrors the server's
+ * ESTAR_TYPES minus the PreSTAR request types, which have no vendored template.
+ */
+export type OfficialEstarType = '510k' | 'de_novo' | 'pma';
 export type OfficialEstarVariant = 'device' | 'ivd';
 
 export interface OfficialFieldView {
@@ -41,6 +49,13 @@ export interface OfficialFieldView {
   value: string | null;
   /** 'store.column' provenance, or null for a user-supplied-only key. */
   source: string | null;
+  /**
+   * The PRIMARY governed 'store.column' declared for the key — set even when
+   * `value` is blank, so the surface can say where the durable home is
+   * instead of only offering an export-only input. Null only when the key has
+   * no declared source.
+   */
+  declaredSource: string | null;
 }
 
 export interface OfficialFieldsView {
@@ -76,6 +91,7 @@ const STORE_WORDS: Record<string, string> = {
   organizations: 'Organization',
   fda_510k_projects: '510(k) project',
   client_workspaces: 'Client workspace',
+  estar_registrations: 'eSTAR registration',
 };
 
 /** Column halves that need more than an underscore-to-space rewrite. */
@@ -87,6 +103,17 @@ const COLUMN_WORDS: Record<string, string> = {
 
 export const REQUEST_SOURCE_WORDS = 'Entered for this export · not stored';
 export const NO_SOURCE_WORDS = 'No governed source';
+
+/**
+ * The words for a governed key the platform holds no value for: where the
+ * durable home is, so the user sets it there rather than typing it into every
+ * export. Null when the key declares no source — the row then reads as
+ * export-only, as before. Pure + exported for the unit test.
+ */
+export function notSetWords(declaredSource: string | null | undefined): string | null {
+  if (!declaredSource) return null;
+  return `Not set — ${sourceWords(declaredSource)}`;
+}
 
 /**
  * Render a provenance string as plain words for the surface — the user reads
@@ -150,6 +177,47 @@ export function describeOfficialFieldsError(message: string | null | undefined):
   return { error: FAILED_WORDS, errorKind: 'failed' };
 }
 
+/**
+ * The "a governed source changed" channel.
+ *
+ * The preview names the durable home of every blank field ("Not set — Device
+ * profile · common name"). A user who goes and sets it in the sibling panel
+ * came back to the same line, because this read had no reason to run again —
+ * which reads as the save having failed on the one field the panel just told
+ * them to fill.
+ *
+ * It travels as a window event, the shell's established hand-off idiom
+ * (v2/editorTarget.ts, v2/shellProject.ts): the panels are siblings under one
+ * surface with no shared owner, and a signal is not state, so there is nothing
+ * here for a store or a provider to hold. BOTH ENDS LIVE IN THIS MODULE — the
+ * notify a writer calls and the subscription this hook makes — so neither half
+ * can be deleted without the other going dark in the same diff (the rule
+ * tests/ci/no-ghost-globals.contract.test.ts exists to enforce).
+ *
+ * It carries nothing. A refetch of the read the surface already owns is the
+ * whole payload; anything more would be a second copy of the server's answer.
+ */
+export const ESTAR_FIELDS_CHANGED_EVENT = 'c2c:estar-official-fields-changed';
+
+declare global {
+  interface WindowEventMap {
+    'c2c:estar-official-fields-changed': Event;
+  }
+}
+
+/**
+ * Announce that a governed record the official eSTAR reads from has been
+ * written — the device profile's eSTAR facts, or the eSTAR registration's
+ * correspondent and Declaration of Conformity block. Every mounted preview
+ * re-reads. Call it only after a save the server ACCEPTED: a rejected write
+ * changed nothing, and re-reading would restate the old values as though they
+ * were new. No-ops without a window (SSR / test teardown).
+ */
+export function notifyOfficialEstarFieldsChanged(): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(ESTAR_FIELDS_CHANGED_EVENT));
+}
+
 export interface UseEstarOfficialFieldsResult extends OfficialFieldsError {
   fields: OfficialFieldsView | null;
   loading: boolean;
@@ -173,6 +241,16 @@ export function useEstarOfficialFields(
 ): UseEstarOfficialFieldsResult {
   const url = officialFieldsUrl(ident, type, variant);
   const { data, loading, error, refresh } = useFetchJson<unknown>(url);
+
+  /* Re-read when a sibling panel saves a record this preview reads from. The
+     subscription half of the channel declared above. */
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onChanged = () => refresh();
+    window.addEventListener(ESTAR_FIELDS_CHANGED_EVENT, onChanged);
+    return () => window.removeEventListener(ESTAR_FIELDS_CHANGED_EVENT, onChanged);
+  }, [refresh]);
+
   if (data !== null && !isOfficialFieldsView(data)) {
     /* A 200 that is not the documented shape is not a field list. Saying so
        beats rendering an empty table over a body nobody has read. */

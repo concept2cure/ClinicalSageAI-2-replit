@@ -45,6 +45,15 @@ const {
 
 vi.mock('../../server/export/renderers', () => ({
   renderPdfBuffersFor510k: mockRender510k,
+  // Governed content now renders per section plus the combined document;
+  // without these the governed path threw into the route's 500 branch.
+  renderPdfBuffersPerSection: vi.fn(async (content: { content?: Array<Record<string, any>> }) =>
+    (content?.content ?? [])
+      .filter((n) => n.type === 'heading' && n.attrs?.level === 1)
+      .map((n) => ({ title: String(n.content?.[0]?.text ?? ''), buffer: Buffer.from('%PDF-section') })),
+  ),
+  renderCombinedPdf: vi.fn(async () => Buffer.from('%PDF-combined')),
+  renderCombinedDocx: vi.fn(async () => Buffer.from('PK-docx')),
 }));
 
 vi.mock('../../server/export/stylePacks/config', () => ({

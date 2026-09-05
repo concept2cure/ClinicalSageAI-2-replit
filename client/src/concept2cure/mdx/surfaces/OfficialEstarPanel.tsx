@@ -38,13 +38,69 @@ import { I } from '../icons';
 import type { Program } from '../data/programs';
 import { useEstarReadiness } from '../hooks/useK510';
 import {
+  notSetWords,
   sourceWords,
   useEstarOfficialFields,
   type OfficialEstarType,
   type OfficialEstarVariant,
   type OfficialFieldView,
 } from '../hooks/useEstarOfficialFields';
-import { exportStatusLine, useEstarExport } from '../hooks/useEstarExport';
+import {
+  entitlementBlocksExport,
+  entitlementRequiredLine,
+  exportStatusLine,
+  useEstarEntitlement,
+  useEstarExport,
+} from '../hooks/useEstarExport';
+
+/** The FDA template family a variant is produced on, in FDA's own words. */
+export const ESTAR_FAMILY_WORDS: Record<OfficialEstarVariant, string> = {
+  device: 'nIVD eSTAR',
+  ivd: 'IVD eSTAR',
+};
+
+/** The marketing pathway a type is produced for, in FDA's own words. */
+export const ESTAR_PATHWAY_WORDS: Record<OfficialEstarType, string> = {
+  '510k': '510(k)',
+  de_novo: 'De Novo',
+  pma: 'PMA',
+};
+
+/**
+ * Which marketing pathway a program files on. The kit folds De Novo into the
+ * k510 pathway (both share the 510(k) surface), so the raw regulatory path is
+ * what decides: 'de_novo' and 'pma' name themselves; anything else — '510k',
+ * an unset path, the kit's sample rows — reads as a 510(k). Never guessed from
+ * the surface, which is why a PMA row on the PMA surface and a De Novo row on
+ * the 510(k) surface both produce the pathway they hold.
+ */
+export function officialEstarTypeFor(
+  program: Pick<Program, 'regulatoryPath'> | null | undefined,
+): OfficialEstarType {
+  const path = (program?.regulatoryPath ?? '').toLowerCase();
+  if (path === 'de_novo') return 'de_novo';
+  if (path === 'pma') return 'pma';
+  return '510k';
+}
+
+/**
+ * Which official template a program files on. An IVD program that files a
+ * 510(k) reaches the 510(k) surface (its pathway is k510), so the variant is
+ * decided by the program's product type, never by the surface it is on.
+ * Absent product type (the kit's sample rows) reads as a device.
+ */
+export function officialEstarVariantFor(
+  program: Pick<Program, 'productType'> | null | undefined,
+): OfficialEstarVariant {
+  return (program?.productType ?? '').toLowerCase() === 'ivd' ? 'ivd' : 'device';
+}
+
+/** The disabled-control title for a plan that does not unlock the export. */
+export function entitlementLockTitle(requiredTier: string | null | undefined): string {
+  return requiredTier
+    ? `Locked — requires the ${requiredTier} plan (device assembly readiness)`
+    : 'Locked — requires a higher plan (device assembly readiness)';
+}
 
 export interface OfficialEstarPanelProps {
   program: Program | null;
@@ -104,6 +160,7 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
   const readiness = useEstarReadiness(type, variant);
   const official = useEstarOfficialFields(ident, type, variant);
   const estarExport = useEstarExport();
+  const entitlement = useEstarEntitlement();
 
   /* Values typed for THIS export only. Re-seeded empty on a program or variant
      switch so nothing typed under one device travels to the next — and the last
@@ -115,7 +172,7 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
   React.useEffect(() => {
     setTyped({});
     resetExport();
-  }, [ident, variant, resetExport]);
+  }, [ident, type, variant, resetExport]);
 
   const ready = readiness.readiness?.ready === true;
   const blockers = readiness.readiness?.blockers ?? [];
@@ -134,12 +191,18 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
   /* Locked-never-dead (entitlements contract §4) — the same shape K510Surface
      uses for the draft package: only the entitlement gate's exact 403 sets
      blockedByEntitlement, so a role 403 never reads as a plan limitation. */
-  const entitlementLocked = estarExport.outcome?.blockedByEntitlement === true;
-  const lockedTitle = entitlementLocked
-    ? estarExport.outcome?.requiredTier
-      ? `Locked — requires the ${estarExport.outcome.requiredTier} plan (device assembly readiness)`
-      : 'Locked — requires a higher plan (device assembly readiness)'
-    : null;
+  /* …and the lock is known BEFORE the first click: the entitlement read says
+     whether the producing route would refuse today. Only an ENFORCED denial
+     locks — in warn/off mode the POST goes through, so locking on it would be
+     a claim the server does not make. A failed read locks nothing; the 403
+     path still guards the write. */
+  const refusedAfterClick = estarExport.outcome?.blockedByEntitlement === true;
+  const lockedBeforeClick = entitlementBlocksExport(entitlement.entitlement);
+  const entitlementLocked = refusedAfterClick || lockedBeforeClick;
+  const lockedTier = refusedAfterClick
+    ? estarExport.outcome?.requiredTier ?? null
+    : entitlement.entitlement?.requiredTier ?? null;
+  const lockedTitle = entitlementLocked ? entitlementLockTitle(lockedTier) : null;
 
   const disabledReason = generateDisabledReason({
     lockedTitle,
@@ -170,7 +233,7 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
     void estarExport.exportOfficialEstar(
       { id: program.id, code: program.code, title: program.title },
       variant,
-      { useProgramData: true, data: typed },
+      { type, useProgramData: true, data: typed },
     );
   }
 
@@ -178,7 +241,9 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
     <>
       <div className="section-hdr">
         <div>
-          <div className="section-title">Official eSTAR · administrative data</div>
+          <div className="section-title">
+            Official eSTAR · {ESTAR_PATHWAY_WORDS[type]} · {ESTAR_FAMILY_WORDS[variant]}
+          </div>
           <div className="section-sub">{headerLine}</div>
         </div>
         <button
@@ -211,6 +276,15 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
         </div>
       ) : null}
 
+      {lockedBeforeClick && !exportStatus ? (
+        <div className="section-sub" role="status" style={{ marginTop: 4 }} data-testid="official-estar-locked">
+          <span className="status-pill review" style={{ marginRight: 6 }}>
+            Locked
+          </span>
+          {entitlementRequiredLine(lockedTier)}
+        </div>
+      ) : null}
+
       {exportStatus ? (
         <div className="section-sub" role="status" style={{ marginTop: 4 }}>
           {entitlementLocked ? (
@@ -224,6 +298,18 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
 
       {report ? (
         <div className="section-sub" role="status" style={{ marginTop: 4 }}>
+          {/* FDA ships the eSTAR with its administrative sections
+              presence="hidden"; the form's own script reveals them once the
+              applicant picks the submission type. The values are written and
+              bound either way (an independent XFA engine renders all of them
+              once those sections are visible), but a reader who opens the file
+              and sees a first page only would otherwise think it came out
+              blank. Stating it is the difference between a filed form and a
+              support ticket. */}
+          <div data-testid="official-estar-open-note">
+            Open the file in Adobe Acrobat and choose the submission type on the first page. The
+            administrative sections stay hidden until the form reveals them.
+          </div>
           {report.blankKeys.length ? (
             <div>
               Left blank — the platform holds no value:{' '}
@@ -287,9 +373,19 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
             <tbody>
               {fields.fields.map((f) => {
                 const sourced = f.source !== null && f.value !== null;
+                /* A governed key the platform holds no value for: name the
+                   durable home so the user sets it there once, and still
+                   offer the export-only input so this export is not blocked
+                   on it. Null when the key has no declared home — the row
+                   then reads as export-only, as before. */
+                const notSet = sourced ? null : notSetWords(f.declaredSource);
                 const inputId = `official-estar-${variant}-${f.key}`;
                 return (
-                  <tr key={f.key} data-sourced={sourced ? 'true' : 'false'}>
+                  <tr
+                    key={f.key}
+                    data-sourced={sourced ? 'true' : 'false'}
+                    data-declared-source={!sourced && notSet ? 'true' : undefined}
+                  >
                     <td>
                       {sourced ? (
                         <span>{f.caption}</span>
@@ -317,7 +413,17 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
                       {sourced ? (
                         sourceWords(f.source)
                       ) : (
-                        <span id={`${inputId}-note`}>Entered for this export only · not stored</span>
+                        <span id={`${inputId}-note`}>
+                          {notSet ? (
+                            <span
+                              data-testid={`official-estar-not-set-${f.key}`}
+                              style={{ display: 'block' }}
+                            >
+                              {notSet}
+                            </span>
+                          ) : null}
+                          Entered for this export only · not stored
+                        </span>
                       )}
                     </td>
                   </tr>

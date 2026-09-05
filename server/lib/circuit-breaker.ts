@@ -216,7 +216,7 @@ export class CircuitBreaker {
         this.transitionTo('HALF_OPEN', 'Health check passed');
       }
       return healthy;
-    } catch (error) {
+    } catch {
       return false;
     }
   }

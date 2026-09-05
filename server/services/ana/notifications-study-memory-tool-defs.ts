@@ -394,7 +394,7 @@ export const UPDATE_PROTOCOL_SECTION: AnaTool = {
     "Write or update a protocol section's content and mark its status (not_started / draft / complete). Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { section_id: { type: 'number' }, content: { type: 'string' }, status: { type: 'string', enum: ['not_started', 'draft', 'complete'] }, reason: { type: 'string' } },
+    properties: { section_id: { type: 'number' }, content: { type: 'string' }, status: { type: 'string', enum: ['not_started', 'draft', 'complete'] }, sources: { type: 'array', description: "The passages the text was grounded in, as project_knowledge_search returned them: each passage's evidence_source_id (or artifact_id) and its text as excerpt. Clauses that quote an excerpt verbatim are recorded as citations of that Data Room source; everything else as your own assertion. Unresolvable entries are dropped and reported back.", items: { type: 'object', properties: { evidence_source_id: { type: 'integer' }, artifact_id: { type: 'string' }, excerpt: { type: 'string' }, title: { type: 'string' } }, required: ['excerpt'] } }, reason: { type: 'string' } },
     required: ['section_id'],
   },
 };
@@ -570,7 +570,7 @@ export const UPDATE_CONSENT_ELEMENT: AnaTool = {
   description: "Write a consent-form element's content and mark it present. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { element_id: { type: 'number' }, content: { type: 'string' }, present: { type: 'boolean' }, reason: { type: 'string' } },
+    properties: { element_id: { type: 'number' }, content: { type: 'string' }, present: { type: 'boolean' }, reason: { type: 'string' }, sources: { type: 'array', description: "The passages the text was grounded in, as project_knowledge_search returned them: each passage's evidence_source_id (or artifact_id) and its text as excerpt. Clauses that quote an excerpt verbatim are recorded as citations of that Data Room source; everything else as your own assertion. Unresolvable entries are dropped and reported back.", items: { type: 'object', properties: { evidence_source_id: { type: 'integer' }, artifact_id: { type: 'string' }, excerpt: { type: 'string' }, title: { type: 'string' } }, required: ['excerpt'] } } },
     required: ['element_id'],
   },
 };
@@ -598,7 +598,7 @@ export const UPDATE_DMS_PLAN_ELEMENT: AnaTool = {
   description: "Write a DMS plan element's narrative content and mark it addressed. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { element_id: { type: 'number' }, content: { type: 'string' }, addressed: { type: 'boolean' }, reason: { type: 'string' } },
+    properties: { element_id: { type: 'number' }, content: { type: 'string' }, addressed: { type: 'boolean' }, reason: { type: 'string' }, sources: { type: 'array', description: "The passages the text was grounded in, as project_knowledge_search returned them: each passage's evidence_source_id (or artifact_id) and its text as excerpt. Clauses that quote an excerpt verbatim are recorded as citations of that Data Room source; everything else as your own assertion. Unresolvable entries are dropped and reported back.", items: { type: 'object', properties: { evidence_source_id: { type: 'integer' }, artifact_id: { type: 'string' }, excerpt: { type: 'string' }, title: { type: 'string' } }, required: ['excerpt'] } } },
     required: ['element_id'],
   },
 };
@@ -681,7 +681,7 @@ export const UPDATE_BIOSKETCH_SECTION: AnaTool = {
   description: "Write a biosketch section's content and mark it addressed. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { section_id: { type: 'number' }, content: { type: 'string' }, addressed: { type: 'boolean' }, reason: { type: 'string' } },
+    properties: { section_id: { type: 'number' }, content: { type: 'string' }, addressed: { type: 'boolean' }, reason: { type: 'string' }, sources: { type: 'array', description: "The passages the text was grounded in, as project_knowledge_search returned them: each passage's evidence_source_id (or artifact_id) and its text as excerpt. Clauses that quote an excerpt verbatim are recorded as citations of that Data Room source; everything else as your own assertion. Unresolvable entries are dropped and reported back.", items: { type: 'object', properties: { evidence_source_id: { type: 'integer' }, artifact_id: { type: 'string' }, excerpt: { type: 'string' }, title: { type: 'string' } }, required: ['excerpt'] } } },
     required: ['section_id'],
   },
 };

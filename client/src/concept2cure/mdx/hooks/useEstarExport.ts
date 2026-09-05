@@ -22,7 +22,8 @@
 
 import { useCallback, useState } from 'react';
 import { serverMessage } from '@/lib/queryClient';
-import { buildAuthHeaders } from './useFetchJson';
+import { buildAuthHeaders, useFetchJson } from './useFetchJson';
+import type { OfficialEstarType, OfficialEstarVariant } from './useEstarOfficialFields';
 import { downloadBase64 } from '../../v2/download';
 
 interface DownloadRef {
@@ -34,6 +35,12 @@ interface DownloadRef {
 
 export interface EstarExportOutcome {
   ok: boolean;
+  /**
+   * The browser actually took the file. `downloadBase64` reports this and it was
+   * being discarded, so a blocked download still read as "Downloaded …" — for
+   * the official FDA eSTAR, the one artifact a user must actually receive.
+   */
+  delivered: boolean;
   /** Registered in the artifact registry (governed consequence) vs audited-only delivery. */
   governed: boolean;
   filename: string | null;
@@ -67,9 +74,16 @@ export interface EstarFieldReport {
   /** Typed keys the server dropped: a governed value took precedence, or the
    *  key is not on the template. */
   ignoredRequestKeys: string[];
+  /** Governed facts the fill could not express — e.g. a second predicate the
+   *  template has no box for. The user finishes these on the form. */
+  advisories: string[];
 }
 
 export interface OfficialEstarOptions {
+  /** The marketing pathway the eSTAR is produced for — selects the field map
+   *  server-side. Defaults to '510k' so callers that predate the pathway
+   *  option keep their behaviour. */
+  type?: OfficialEstarType;
   /** Fill the administrative fields from the program's governed records. */
   useProgramData?: boolean;
   /** Values typed for this export only; empty/whitespace entries are dropped
@@ -103,7 +117,10 @@ export function cleanRequestData(
 export function fieldReportClause(report: EstarFieldReport | null): string {
   if (!report) return '';
   const blank = report.blankCount > 0 ? ` · ${report.blankCount} left blank` : '';
-  return ` · ${report.filledCount} of ${report.mappedCount} administrative fields filled${blank}`;
+  // An advisory is a governed fact the form has no box for; the line carries
+  // it whole, because "filled" alone would read as "finished".
+  const advisories = report.advisories.map((a) => ` · ${a}`).join('');
+  return ` · ${report.filledCount} of ${report.mappedCount} administrative fields filled${blank}${advisories}`;
 }
 
 function parseFieldReport(raw: unknown): EstarFieldReport | null {
@@ -124,6 +141,7 @@ function parseFieldReport(raw: unknown): EstarFieldReport | null {
     blankCount: r.blankCount,
     blankKeys: strings(r.blankKeys),
     ignoredRequestKeys: strings(r.ignoredRequestKeys),
+    advisories: strings(r.advisories),
   };
 }
 
@@ -143,16 +161,77 @@ export function exportStatusLine(busy: boolean, outcome: EstarExportOutcome | nu
         ? ` · ${outcome.formattingErrors} formatting errors, ${outcome.formattingWarnings} warnings to fix before submitting`
         : '';
     const registry = outcome.governed ? '' : ' · audit-logged; artifact registry placement pending';
-    return `Downloaded ${outcome.filename ?? 'package'}${fieldReportClause(outcome.fieldReport)}${formatting}${registry}`;
+    // The server produced it either way; whether the file reached the user is a
+    // separate fact, and saying "Downloaded" when it did not is the difference
+    // between a user who looks in their downloads folder and one who does not.
+    // Two ways it can fail to arrive, and they are not the same problem: the
+    // browser refused the file, or the server never sent one.
+    const verb = outcome.delivered
+      ? `Downloaded ${outcome.filename ?? 'package'}`
+      : outcome.filename
+        ? `${outcome.filename} was produced but the browser blocked the download`
+        : 'Export accepted, but the server returned no file to download';
+    return `${verb}${fieldReportClause(outcome.fieldReport)}${formatting}${registry}`;
   }
-  if (outcome.blockedByEntitlement) {
-    return outcome.requiredTier
-      ? `Requires the ${outcome.requiredTier} plan — device assembly readiness`
-      : 'Requires a higher plan — device assembly readiness';
-  }
+  if (outcome.blockedByEntitlement) return entitlementRequiredLine(outcome.requiredTier);
   return `Export failed — ${
     outcome.blockers.length ? outcome.blockers.join(' · ') : outcome.error ?? 'unknown error'
   }`;
+}
+
+/**
+ * The one sentence for "this plan does not unlock the export" — used after a
+ * 403 NOT_ENTITLED and, through useEstarEntitlement, BEFORE the first click.
+ * Names the real minimum tier when the server named one; never invents a tier.
+ */
+export function entitlementRequiredLine(requiredTier: string | null | undefined): string {
+  return requiredTier
+    ? `Requires the ${requiredTier} plan — device assembly readiness`
+    : 'Requires a higher plan — device assembly readiness';
+}
+
+/**
+ * GET /api/510k/estar/entitlement — the export gate's verdict for this org,
+ * read before anyone clicks. `enforced` is true only when the operator has
+ * turned enforcement on (ENTITLEMENTS_ENFORCE=on); in 'warn' or 'off' mode the
+ * POST would go through, so a surface must NOT lock on `allowed:false` unless
+ * `enforced` is also true. `allowed` is null when nothing was evaluated.
+ */
+export interface EstarEntitlementView {
+  capability: string;
+  mode: 'off' | 'warn' | 'on';
+  enforced: boolean;
+  allowed: boolean | null;
+  requiredTier: string | null;
+  tier: string | null;
+  reason: string | null;
+}
+
+export const ESTAR_ENTITLEMENT_URL = '/api/510k/estar/entitlement';
+
+/** Pure: would the producing routes refuse this org today? */
+export function entitlementBlocksExport(view: EstarEntitlementView | null | undefined): boolean {
+  return view?.enforced === true && view.allowed === false;
+}
+
+function isEntitlementView(data: unknown): data is EstarEntitlementView {
+  if (!data || typeof data !== 'object') return false;
+  const d = data as Partial<EstarEntitlementView>;
+  return typeof d.enforced === 'boolean' && (d.mode === 'off' || d.mode === 'warn' || d.mode === 'on');
+}
+
+export interface UseEstarEntitlementResult {
+  entitlement: EstarEntitlementView | null;
+  loading: boolean;
+  error: string | null;
+}
+
+export function useEstarEntitlement(): UseEstarEntitlementResult {
+  const { data, loading, error } = useFetchJson<unknown>(ESTAR_ENTITLEMENT_URL);
+  /* A body that is not the documented verdict is no verdict: the control
+     stays live (the 403 path still guards the write) rather than locking on
+     a shape nobody read. */
+  return { entitlement: isEntitlementView(data) ? data : null, loading, error };
 }
 
 const IDLE: EstarExportOutcome | null = null;
@@ -161,8 +240,15 @@ const IDLE: EstarExportOutcome | null = null;
    sibling export hook — and both revoked the object URL synchronously right
    after click(), which races the download and can produce a zero-byte file.
    `downloadBase64` owns the decode and the timing. */
-function triggerDownload(ref: DownloadRef): void {
-  downloadBase64(ref.filename, ref.data, ref.mime_type);
+function triggerDownload(ref: DownloadRef): boolean {
+  // atob throws on a malformed payload; that is a failure to deliver, not an
+  // export failure, so it is reported as one rather than thrown into the
+  // request's own catch where it would read as a network error.
+  try {
+    return downloadBase64(ref.filename, ref.data, ref.mime_type);
+  } catch {
+    return false;
+  }
 }
 
 export interface ProgramRef {
@@ -180,7 +266,7 @@ export interface UseEstarExportResult {
   exportDraftPackage: (program: ProgramRef) => Promise<EstarExportOutcome>;
   exportOfficialEstar: (
     program: ProgramRef,
-    variant?: 'device' | 'ivd',
+    variant?: OfficialEstarVariant,
     opts?: OfficialEstarOptions,
   ) => Promise<EstarExportOutcome>;
   /** Forget the last outcome. A surface calls this when the program it shows
@@ -213,6 +299,7 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
       const blockedByEntitlement = res.status === 403 && json?.error === 'NOT_ENTITLED';
       return {
         ok: false,
+        delivered: false,
         governed: false,
         filename: null,
         formattingErrors: 0,
@@ -227,13 +314,14 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
     }
 
     const ref = json?.downloadable_output_ref as DownloadRef | undefined;
-    if (ref?.data) triggerDownload(ref);
+    const delivered = ref?.data ? triggerDownload(ref) : false;
 
     const formatting = (json?.formattingReport ?? null) as
       | { errors?: number; warnings?: number }
       | null;
     return {
       ok: true,
+      delivered,
       governed: json?.governed === true,
       filename: ref?.filename ?? null,
       formattingErrors: formatting?.errors ?? 0,
@@ -250,6 +338,7 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
     // wording is the only thing worth showing.
     return {
       ok: false,
+      delivered: false,
       governed: false,
       filename: null,
       formattingErrors: 0,
@@ -292,14 +381,14 @@ export function useEstarExport(): UseEstarExportResult {
   );
 
   const exportOfficialEstar = useCallback(
-    (program: ProgramRef, variant: 'device' | 'ivd' = 'device', opts: OfficialEstarOptions = {}) =>
+    (program: ProgramRef, variant: OfficialEstarVariant = 'device', opts: OfficialEstarOptions = {}) =>
       run('/api/510k/estar/official', {
         meta: {
           id: program.code || program.id,
           ident: program.id,
           title: program.title || undefined,
         },
-        type: '510k',
+        type: opts.type ?? '510k',
         variant,
         /* Governed records win server-side; typed values fill only the gaps.
            Without useProgramData the route fills `data` verbatim, as before. */

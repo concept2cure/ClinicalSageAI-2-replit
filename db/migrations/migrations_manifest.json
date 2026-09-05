@@ -1,9 +1,9 @@
 {
   "$schema": "https://concept2cure-riai.com/schemas/migrations-manifest-v1.json",
   "version": "1.0.0",
-  "generatedAt": "2026-07-30T23:11:51.565Z",
+  "generatedAt": "2026-09-03T21:13:15.719Z",
   "description": "Migration manifest for Concept2Cure.RI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 256,
+  "totalMigrations": 301,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
@@ -14,7 +14,7 @@
           "007_gcc_heatmap_views.sql",
           "007_gcc_shadow_run_groups.sql"
         ],
-        "resolution": "Execute in alphabetical order: verify \u2192 heatmap \u2192 shadow"
+        "resolution": "Execute in alphabetical order: verify → heatmap → shadow"
       },
       {
         "prefix": "008",
@@ -592,7 +592,51 @@
     "20260801_market_access_store.sql",
     "20260801_program_journey_store.sql",
     "20260801_reg_change_store.sql",
-    "20260801_tenant_isolation_sweep.sql"
+    "20260801_tenant_isolation_sweep.sql",
+    "20260727_authoring_object_permissions.sql",
+    "20260728_stability_backing_tables.sql",
+    "20260728_stability_tenant_isolation.sql",
+    "20260801_atom_identity_existing_db_reconciliation.sql",
+    "20260801_consolidated_tree_reconciliation.sql",
+    "20260801_uuid_tenant_isolation_nonpublic.sql",
+    "20260803_document_span_lineage.sql",
+    "20260807_collab_section_locks.sql",
+    "20260807_task_graph_org_columns.sql",
+    "20260807_unified_tasks_soft_delete.sql",
+    "20260809_source_attribution_draft_candidates.sql",
+    "20260810_c2c_work_items_source_uniqueness.sql",
+    "20260810_reconcile_module_catalog.sql",
+    "20260813_ai_gateway_audit_log.sql",
+    "20260813_audit_tamper_proof_log.sql",
+    "20260813_child_table_parent_scoped_rls.sql",
+    "20260813_knowledge_graph_tenant_keys.sql",
+    "20260821_regulatory_twin_simulations_tenant_scope.sql",
+    "20260821_uuid_org_guc_cast_heal.sql",
+    "20260823_fix_provision_org_modules_tier_ladder.sql",
+    "20260823_module_catalog_commercial_packaging.sql",
+    "20260823_module_catalog_customer_copy.sql",
+    "20260823_module_catalog_mdx_registers.sql",
+    "20260824_cmc_professional_tier.sql",
+    "20260824_enforcement_mode_setting.sql",
+    "20260824_module_access_requests.sql",
+    "20260824_module_grant_expiry.sql",
+    "20260828_align_written_columns_with_migrations.sql",
+    "20260828_artifact_versions_updated_at.sql",
+    "20260828_drop_orphaned_org_guc_policies.sql",
+    "20260828_ectd_compilations_submission_id.sql",
+    "20260828_fail_closed_insert_withcheck_policies.sql",
+    "20260828_fail_closed_org_coalesce_policies.sql",
+    "20260828_file_uploads_checksum.sql",
+    "20260828_program_org_resolution_canonical.sql",
+    "20260830_reg_questions_response_doc.sql",
+    "20260901_cmc_container_closure_reference_standard_registers.sql",
+    "20260901_drop_dead_audit_tables.sql",
+    "20260902_clinical_ops_schema.sql",
+    "20260902_cmc_impurity_dissolution_registers.sql",
+    "20260902_manufacturing_responses.sql",
+    "20260903_cmc_impurity_route_of_administration.sql",
+    "20260903_cmc_manufacturing_characterization_registers.sql",
+    "20260903_cmc_material_formulation_registers.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"

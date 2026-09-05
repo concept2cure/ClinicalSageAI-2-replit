@@ -784,11 +784,14 @@ async function compileFromSpine(
       sequenceId: seq.id,
       organizationId: orgId,
       userId: resolveUserId(req),
-      // Recorded identity only: the program's real code, else the neutral
-      // sequence handle — never an invented agency number.
-      applicationId: anchor.programCode ?? `SEQ-${seq.id}`,
-      sponsorId: `ORG-${orgId}`,
-      sponsorName: `Organization ${orgId}`,
+      // Recorded identity only: the program's real code, else a handle that
+      // says it is unassigned — never an invented agency number, and never an
+      // applicant name the agency would read as real. The comment here already
+      // claimed "neutral", but `Organization 7` in <name> does not read as a
+      // gap; these follow regulatory-identifiers.ts' stated wording instead.
+      applicationId: anchor.programCode ?? `UNASSIGNED-SEQ-${seq.id}`,
+      sponsorId: `UNASSIGNED-ORG-${orgId}`,
+      sponsorName: `UNASSIGNED (organization ${orgId})`,
     });
     try {
       const buffer = await fs.readFile(assembled.bundle.path);
@@ -812,9 +815,16 @@ async function compileFromSpine(
     assembleFailure = err instanceof Error ? err.message : String(err);
   }
 
+  // A leaf with no document at all was reported materialized: the resolver
+  // skips a NULL document_table/document_id before it can become "unresolved",
+  // so its key ':' was never in unresolvedKeys and a required section read as
+  // satisfied by a leaf that has nothing behind it. Nothing renders without a
+  // document — a declared delete included, which withdraws rather than places.
   const isMaterialized = (l: SpineLeafRow) =>
     assembleFailure == null &&
-    !unresolvedKeys.has(`${l.document_table ?? ''}:${l.document_id ?? ''}`);
+    !!l.document_table &&
+    !!l.document_id &&
+    !unresolvedKeys.has(`${l.document_table}:${l.document_id}`);
 
   const initialSequence = seq.sequenceNumber === '0000';
   const validationResults = leafPlacementFindings(leaves, { initialSequence, required, isMaterialized });

@@ -1,5 +1,5 @@
 /**
- * PDEV kit styles — port of design-system/ui_kits/pdev/styles.css for
+ * PDEV kit styles — port of ui_kits/pdev/styles.css for
  * sub-phases 7.0 + 7.1 surfaces only (rail · top bar · AnA dock ·
  * Overview · Workstream drill · Activity detail State tab).
  *
@@ -1300,3 +1300,9 @@
     transition-duration: 0ms !important;
   }
 }
+/* ── containers the class-coverage gate found rendered with no rule (ledger L139) ── */
+.pdev-doc-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.pdev-compile-body { flex: 1; min-width: 0; }
+.pdev-contradiction-detail { margin-top: 14px; }
+.pdev-fda-row-r { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.pdev-readiness-body { min-width: 0; }

@@ -364,6 +364,14 @@ export default [
     rules: {
       'no-var': 'off',
       'no-undef': 'off',
+      // A kit screen is deliberately one file: the whole surface, readable top
+      // to bottom, is the artefact a designer hands over. Function length and
+      // branch count are product-code concerns and say nothing about a
+      // prototype; the rules that catch real defects (hooks order, unused
+      // names, redeclared globals) stay on.
+      'max-lines': 'off',
+      'max-lines-per-function': 'off',
+      complexity: 'off',
     },
   },
 ];

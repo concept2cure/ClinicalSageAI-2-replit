@@ -134,6 +134,7 @@
   gap:16px 20px;
 }
 .c2c-v2 .npw-field{display:flex;flex-direction:column;gap:5px;}
+.c2c-v2 .npw-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .c2c-v2 .npw-field-wide{grid-column:1/-1;}
 .c2c-v2 .npw-field-l{font-size:11.5px;font-weight:500;color:var(--text-300);}
 .c2c-v2 .npw-field .c2c-input{min-height:36px;font-size:13px;padding:6px 11px;}
@@ -265,6 +266,17 @@
 .c2c-v2 .ph-act-n{font-size:11px;color:var(--text-400);}
 
 /* Evidence search */
+/* project sources panel: drop zone, search, rows */
+.c2c-v2 .pj-dropzone{display:flex;align-items:center;gap:10px;padding:14px 16px;margin-bottom:12px;border:1px dashed var(--border);border-radius:var(--radius-lg);background:transparent;cursor:pointer;transition:background var(--dur) ease-out,border-color var(--dur) ease-out;}
+.c2c-v2 .pj-dropzone:hover,.c2c-v2 .pj-dropzone[data-dragging]{background:var(--accent-000);border-color:var(--accent-100);}
+.c2c-v2 .pj-dropzone:focus-visible{outline:2px solid var(--accent-100);outline-offset:2px;}
+.c2c-v2 .pj-dropzone-t{font-size:13px;color:var(--text-200);}
+.c2c-v2 .pj-input{width:100%;height:32px;padding:0 10px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);font-size:12.5px;}
+.c2c-v2 .pj-input:focus{border-color:var(--accent-100);outline:none;}
+.c2c-v2 .pj-srcs{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;background:var(--bg-000);}
+.c2c-v2 .pj-src{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--border-subtle);}
+.c2c-v2 .pj-src:last-child{border-bottom:0;}
+.c2c-v2 .pj-top-l{flex:1;min-width:0;}
 .c2c-v2 .ev-search{display:flex;align-items:center;gap:10px;border:1px solid var(--border-control);border-radius:var(--v2-radius-xl,16px);padding:8px 10px 8px 14px;background:var(--bg-050);}
 .c2c-v2 .ev-search:focus-within{border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
 .c2c-v2 .ev-search .ico{color:var(--text-400);font-size:17px;}
@@ -293,6 +305,7 @@
 .c2c-v2 .pd-main{overflow-y:auto;overflow-x:hidden;padding:24px 28px;min-width:0;}
 .c2c-v2 .pd-aside{border-left:1px solid var(--border);overflow-y:auto;padding:20px 18px;background:var(--bg-050);}
 .c2c-v2 .pd-head{margin-bottom:18px;}
+.c2c-v2 .pd-head-l{flex:1;min-width:0;}
 .c2c-v2 .pd-head-row1{display:flex;align-items:center;gap:12px;}
 .c2c-v2 .pd-head-row1 .pd-code{font-family:var(--font-mono);font-size:12px;color:var(--accent-200);background:var(--accent-000);border:1px solid var(--accent-muted,var(--border));padding:2px 8px;border-radius:6px;}
 .c2c-v2 .pd-head-row1 h1{font-size:24px;font-weight:640;letter-spacing:-.01em;margin:0;}

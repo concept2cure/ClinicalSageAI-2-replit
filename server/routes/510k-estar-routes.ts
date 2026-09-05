@@ -81,7 +81,12 @@ import {
 } from '../../shared/schema/estar-submission';
 
 import { createScopedLogger } from '../utils/logger.js';
-import { requireEntitlement } from '../services/entitlements/require-entitlement';
+import {
+  requireEntitlement,
+  resolveEntitlementsEnforceMode,
+  evaluateOrgEntitlement,
+  type EntitlementEvaluation,
+} from '../services/entitlements/require-entitlement';
 import { getMarketSpec } from '../services/market-specs/market-submission-specs';
 import { validateLeavesAgainstMarketSpec, type LeafFileDescriptor } from '../services/market-specs/market-formatting-validator';
 
@@ -311,16 +316,28 @@ interface DraftPackageEntry {
 /**
  * The draft-package families /build can produce, derived from the class of the
  * governed document that answered the content load (PMA_ASSEMBLY):
- *   - '510k' — the six fixed 510(k) section PDFs (also what the legacy store
- *              and a client-supplied payload get, exactly as before);
- *   - 'pma'  — one PDF per authored 21 CFR 814.20 section in outline order plus
- *              the combined PDF/DOCX. A governed PMA used to be forced through
- *              the 510(k) renderer: most of its sections dropped, the
- *              510(k)-only slots stamped "content not found", the ZIP labelled
- *              and ledgered as a 510(k) package.
- * Neither is an eSTAR; the labels below say so.
+ *   - '510k'   — a governed 510(k), or the legacy store / a client payload;
+ *   - 'pma'    — a governed PMA (21 CFR 814.20 outline);
+ *   - 'denovo' — a governed De Novo request;
+ *   - 'cer'    — a governed clinical evaluation report.
+ *
+ * How the files are cut depends on WHERE the content came from, not only on
+ * the family. Governed content renders one PDF per authored section, in
+ * outline order and named by rule-pack key, plus the combined PDF/DOCX. Only
+ * the legacy store keeps the six fixed 510(k) slots those slots were built for.
+ *
+ * It was not so. Every family but PMA went through the six-slot renderer, which
+ * picks one heading per named bucket and stamps "content not found" for the
+ * rest. The FDA 510(k) rule pack scaffolds 18 sections — Form 3514,
+ * indications for use, technological comparison, predicate devices,
+ * biocompatibility, sterilization, software, cybersecurity among them — and
+ * the delivered ZIP, registered as a governed artifact and audit-logged,
+ * carried six files. Twelve authored sections were absent, and nothing said
+ * so. A De Novo or a CER was cut the same way and ledgered as a 510(k)
+ * package. The route's own comment described this defect as fixed, for PMA.
+ * None is an eSTAR; the labels below say so.
  */
-type DraftPackageFamily = '510k' | 'pma';
+type DraftPackageFamily = '510k' | 'pma' | 'denovo' | 'cer';
 
 const DRAFT_PACKAGE_LABELS: Record<
   DraftPackageFamily,
@@ -340,29 +357,56 @@ const DRAFT_PACKAGE_LABELS: Record<
     ctdSection: 'm2.5',
     suggestedPlacement: 'Module 2 / PMA content package (draft)',
   },
+  denovo: {
+    filenameSuffix: 'denovo-content-package-draft',
+    package: 'De Novo content package draft (not an eSTAR)',
+    title: 'De Novo content package (draft)',
+    ctdSection: 'm1.5',
+    suggestedPlacement: 'Module 1 / De Novo content package (draft)',
+  },
+  cer: {
+    filenameSuffix: 'cer-content-package-draft',
+    package: 'Clinical evaluation report package draft (not an eSTAR)',
+    title: 'Clinical evaluation report package (draft)',
+    ctdSection: 'm2.5',
+    suggestedPlacement: 'Module 2 / Clinical evaluation report package (draft)',
+  },
+};
+
+/** The style pack and combined-document class each family renders with. */
+const DRAFT_PACKAGE_RENDERING: Record<DraftPackageFamily, { pack: string; docType: string }> = {
+  '510k': { pack: '510k_v1', docType: 'cerv2_510k' },
+  pma: { pack: 'pma_v1', docType: 'cerv2_pma' },
+  // De Novo content is 510(k)-shaped; the combined document is titled
+  // generically rather than as a 510(k), which it is not.
+  denovo: { pack: '510k_v1', docType: 'cerv2_denovo' },
+  cer: { pack: 'cer_mdr_v1', docType: 'cerv2_cer' },
 };
 
 function draftPackageFamilyFor(source: string, docType: string | undefined): DraftPackageFamily {
-  return source === 'governed_program' && docType === 'pma' ? 'pma' : '510k';
+  if (source !== 'governed_program') return '510k';
+  return docType === 'pma' || docType === 'denovo' || docType === 'cer' ? docType : '510k';
 }
 
 /**
- * Render the package's files for its family. The 510(k) family keeps its six
- * fixed slots; the PMA family is every authored section (the editor JSON holds
- * one H1 per authored governed section, in path_order) named by its rule-pack
- * key, plus the combined document through the generic cerv2_pma renderers.
+ * Render the package's files. Governed content is every authored section (the
+ * editor JSON holds one H1 per authored governed section, in path_order) named
+ * by its rule-pack key, plus the combined document, whatever the family. Only
+ * legacy-store content keeps the six fixed 510(k) slots.
  */
 async function renderDraftPackageEntries(
   family: DraftPackageFamily,
   content: unknown,
   packageId: string,
   sections: ReadonlyArray<AuthoredDeviceSection>,
+  governed: boolean,
 ): Promise<DraftPackageEntry[]> {
-  if (family === 'pma') {
+  if (governed) {
+    const rendering = DRAFT_PACKAGE_RENDERING[family];
     const [perSection, combinedPdf, combinedDocx] = await Promise.all([
-      renderPdfBuffersPerSection(content, stylePacks['pma_v1']),
-      renderCombinedPdf('cerv2_pma', content),
-      renderCombinedDocx('cerv2_pma', content),
+      renderPdfBuffersPerSection(content, stylePacks[rendering.pack] ?? stylePacks['510k_v1']),
+      renderCombinedPdf(rendering.docType, content),
+      renderCombinedDocx(rendering.docType, content),
     ]);
     // The per-section PDFs come back in document order, which is the loader's
     // outline order; the rule-pack key rides along only when the two line up.
@@ -437,8 +481,11 @@ async function buildZipBuffer(
  */
 // The three producing/assembling actions of the device_assembly_readiness
 // capability are entitlement-gated (ENTITLEMENTS_ENFORCE: off|warn|on — see
-// services/entitlements/require-entitlement). Read paths below stay open.
-const requireAssemblyEntitlement = requireEntitlement('device_assembly_readiness');
+// services/entitlements/require-entitlement). Read paths below stay open;
+// GET /entitlement reports this same gate's verdict so a surface can learn
+// it on mount instead of after the first click.
+const ASSEMBLY_CAPABILITY = 'device_assembly_readiness' as const;
+const requireAssemblyEntitlement = requireEntitlement(ASSEMBLY_CAPABILITY);
 
 router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitlement, async (req, res) => {
   const validation = requestSchema.safeParse(req.body);
@@ -473,6 +520,8 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
   // payload and the legacy store are 510(k)-shaped exactly as before.
   let family: DraftPackageFamily = '510k';
   let authoredSections: AuthoredDeviceSection[] = [];
+  /** Which store answered the content load; 'client_payload' when none was read. */
+  let deviceContentSource = 'client_payload';
 
   if (content === undefined && useProjectContent) {
     // A program anchor reads ITS governed document (the rows the editor saves
@@ -483,6 +532,7 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
       programId: documentId === undefined ? (anchor.programUuid ?? undefined) : undefined,
       documentId,
     });
+    deviceContentSource = source;
     const sections = await loadAuthoredDeviceSections(orgId, scope);
     if (sections.length === 0) {
       return res.status(422).json({
@@ -524,7 +574,14 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
 
   try {
     const labels = DRAFT_PACKAGE_LABELS[family];
-    const entries = await renderDraftPackageEntries(family, content, meta.id, authoredSections);
+    const entries = await renderDraftPackageEntries(
+      family,
+      content,
+      meta.id,
+      authoredSections,
+      deviceContentSource === 'governed_program',
+    );
+    const sectionsRendered = entries.filter((e) => /\.pdf$/i.test(e.name) && !/_Combined\.pdf$/.test(e.name)).length;
     const zipBuffer = await buildZipBuffer(entries, attachments);
     const filename = `${sanitizeFilename(meta.id)}_${labels.filenameSuffix}.zip`;
 
@@ -568,6 +625,13 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
       attachmentCount: attachments.length,
       package: labels.package,
       packageFamily: family,
+      // Which store answered, and how much of it reached the ZIP. The success
+      // response never said; only the 422 branch echoed the source, so a
+      // package cut from the wrong store or missing most of its sections was
+      // indistinguishable from a complete one.
+      deviceContentSource,
+      sectionsAuthored: authoredSections.length,
+      sectionsRendered,
       officialEstarPdf: false,
       programId: anchor.programUuid ?? undefined,
       formattingErrors: (formattingReport as { errors?: number } | undefined)?.errors ?? 0,
@@ -594,7 +658,14 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
       // The advisory formatting report rides alongside the governed consequence so
       // the UI can surface "N formatting issues to fix before submitting" without
       // blocking the draft export.
-      return res.status(200).json({ ...consequence, formattingReport: formattingReport ?? null });
+      return res.status(200).json({
+        ...consequence,
+        formattingReport: formattingReport ?? null,
+        deviceContentSource,
+        packageFamily: family,
+        sectionsAuthored: authoredSections.length,
+        sectionsRendered,
+      });
     }
 
     // Program-spine (UUID) project: the artifact registry cannot place this
@@ -618,7 +689,14 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
       metadata: exportMetadata,
     });
 
-    return res.status(200).json({ ...unplaced, formattingReport: formattingReport ?? null });
+    return res.status(200).json({
+      ...unplaced,
+      formattingReport: formattingReport ?? null,
+      deviceContentSource,
+      packageFamily: family,
+      sectionsAuthored: authoredSections.length,
+      sectionsRendered,
+    });
   } catch (error: any) {
     logger.error('governed export failure', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({
@@ -999,8 +1077,31 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
 
 const PMA_SUBMISSION_TYPE_VALUES = PMA_SUBMISSION_TYPES.map((t) => t.value) as [string, ...string[]];
 
+/**
+ * The seven device properties that decide whether a conditional eSTAR section
+ * is owed (estar-mapper DeviceFlagId). Unanswered ⇒ the section is
+ * UNDETERMINED, which blocks a claim of a submittable eSTAR; it is never read
+ * as "not applicable". No route accepted these before, so every conditional
+ * section was undetermined on every call and the assembler — which then
+ * ignored undetermined — reported official eSTARs it could not vouch for.
+ */
+const deviceFlagsSchema = z
+  .object({
+    combinationProduct: z.boolean().optional(),
+    softwareAiMl: z.boolean().optional(),
+    cyberDevice: z.boolean().optional(),
+    sterile: z.boolean().optional(),
+    implantable: z.boolean().optional(),
+    cliaWaived: z.boolean().optional(),
+    clinicalData: z.boolean().optional(),
+  })
+  .strict()
+  .optional();
+
 const assembleSchema = z.object({
   pathway: z.enum(['510k', 'de_novo', 'pma']).default('510k'),
+  /** Device properties deciding conditional-section applicability (see deviceFlagsSchema). */
+  deviceFlags: deviceFlagsSchema,
   /** PMA only: original vs a 21 CFR 814.39 supplement/notice (scopes the modules owed). */
   pmaSubmissionType: z.enum(PMA_SUBMISSION_TYPE_VALUES).optional(),
   variant: z.enum(ESTAR_VARIANTS).default('device'),
@@ -1045,6 +1146,7 @@ router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEnt
       pathway,
       pmaSubmissionType: pmaSubmissionType as (typeof PMA_SUBMISSION_TYPES)[number]['value'] | undefined,
       variant,
+      deviceFlags: validation.data.deviceFlags,
       leaves,
       presentTemplates: vendored.map((t) => t.fileName),
       market: market as never,
@@ -1124,6 +1226,82 @@ router.get('/readiness', authMiddleware, async (req, res) => {
   }
 });
 
+/**
+ * The evaluator's reason, forwarded only when it is copy.
+ *
+ * lookupOrgTier folds a failed query's driver text into `reason`
+ * ("tier lookup failed: <err.message>") and, when the tier is unknown,
+ * `detail` embeds that same `reason` — so neither can be forwarded as-is by a
+ * read path the browser calls on mount. An allowlist rather than a denylist:
+ * a reason the evaluator did not compose purely from copy answers null, so a
+ * new reason shape can never leak by default. A resolved-but-below-tier
+ * `detail` is composed of tier names only and passes through.
+ */
+const COPY_ONLY_UNKNOWN_TIER_REASONS: ReadonlySet<string> = new Set([
+  'organization not found',
+  'organization context missing',
+]);
+
+function publicEntitlementReason(evaluation: EntitlementEvaluation): string | null {
+  if (evaluation.allowed) return null;
+  if (evaluation.tier !== null) return evaluation.detail;
+  return evaluation.reason !== null && COPY_ONLY_UNKNOWN_TIER_REASONS.has(evaluation.reason)
+    ? evaluation.reason
+    : null;
+}
+
+/**
+ * GET /api/510k/estar/entitlement
+ *
+ * Read-only pre-check of the org's device_assembly_readiness entitlement, so
+ * the "Generate official eSTAR (PDF)" control can learn on mount whether
+ * POST /official (and /build, /assemble) would refuse it with 403 NOT_ENTITLED
+ * instead of discovering that after the first click. Runs the SAME decision
+ * the gate runs (evaluateOrgEntitlement) under the SAME mode
+ * (resolveEntitlementsEnforceMode), and mirrors the middleware's rule that
+ * mode 'off' evaluates nothing — zero tier queries, `allowed: null`. Only
+ * `enforced` (mode 'on') means the POST would actually refuse; in 'warn' the
+ * verdict is reported but the surface must not lock. Produces and persists
+ * nothing; no editor role is required because this is a read path.
+ */
+router.get('/entitlement', authMiddleware, async (req, res) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(400).json({ error: 'Organization context required' });
+
+  try {
+    const mode = resolveEntitlementsEnforceMode();
+    if (mode === 'off') {
+      return res.status(200).json({
+        capability: ASSEMBLY_CAPABILITY,
+        mode,
+        enforced: false,
+        allowed: null,
+        requiredTier: null,
+        tier: null,
+        reason: null,
+      });
+    }
+    const evaluation = await evaluateOrgEntitlement(ASSEMBLY_CAPABILITY, orgId);
+    return res.status(200).json({
+      capability: ASSEMBLY_CAPABILITY,
+      mode,
+      enforced: mode === 'on',
+      allowed: evaluation.allowed,
+      requiredTier: evaluation.requiredTier,
+      tier: evaluation.tier,
+      reason: publicEntitlementReason(evaluation),
+    });
+  } catch (error) {
+    logger.error('estar entitlement pre-check failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_ENTITLEMENT_FAILED',
+      message: 'Failed to read the export entitlement. The problem has been logged.',
+    });
+  }
+});
+
 const officialFieldsSchema = z.object({
   ident: z.string().min(1),
   type: z.enum(ESTAR_TYPES).default('510k'),
@@ -1135,10 +1313,12 @@ const officialFieldsSchema = z.object({
  *
  * Read-only preview of what POST /official will write from the org's governed
  * records for this program: one row per mapped field with its value and
- * `store.column` source, null for the keys the platform does not hold. No
- * request data is merged here — it is the "what will be written" truth, not a
- * what-if. Produces and persists nothing; sourced values are org data and are
- * never logged.
+ * `store.column` source, null for the keys the platform does not hold — and,
+ * blank or not, the key's `declaredSource` (its governed home), so the surface
+ * can say where a blank value is set instead of offering one. No request data
+ * is merged here — it is the "what will be written" truth, not a what-if.
+ * Produces and persists nothing; sourced values are org data and are never
+ * logged.
  */
 router.get('/official-fields', authMiddleware, async (req, res) => {
   const validation = officialFieldsSchema.safeParse(req.query);
@@ -1250,6 +1430,16 @@ const registrationWriteSchema = z.object({
   mdufaFeeTier: z.enum(['standard', 'small_business']).nullish(),
   variants: z.array(z.enum(['device', 'ivd'])).optional(),
   notes: z.string().max(2000).nullish(),
+  // The official eSTAR's Correspondent Information and Declaration of
+  // Conformity facts — org-level, so they live on this row and are the
+  // governed sources estar-administrative-data reads (WO-8 Phase 3).
+  correspondentCompanyName: z.string().max(256).nullish(),
+  correspondentContactEmail: z.string().max(256).nullish(),
+  correspondentTelephone: z.string().max(64).nullish(),
+  // The DoC's company name and address name ONE legal entity, so both are read
+  // from this row (migrations/20260904_estar_registration_declaration_company_name.sql).
+  declarationCompanyName: z.string().max(256).nullish(),
+  declarationCompanyAddress: z.string().max(1000).nullish(),
 });
 
 /**
@@ -1262,7 +1452,7 @@ router.get('/registration', authMiddleware, async (req, res) => {
   const organizationId = resolveOrgId(req);
   if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
   try {
-    const row = await getEstarRegistration({ organizationId });
+    const row = await getEstarRegistration(requestDb(req), { organizationId });
     return res.status(200).json({
       registered: !!row,
       registration: row,
@@ -1295,7 +1485,10 @@ router.put('/registration', authMiddleware, requireEditorAccess, async (req, res
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
-    const row = await upsertEstarRegistration(validation.data as EstarRegistrationWrite, { organizationId, userId });
+    const row = await upsertEstarRegistration(requestDb(req), validation.data as EstarRegistrationWrite, {
+      organizationId,
+      userId,
+    });
     return res.status(200).json({
       registered: true,
       registration: row,
@@ -1339,7 +1532,7 @@ router.post('/registration/assess', authMiddleware, async (req, res) => {
       // Source of truth: the org's persisted registration.
       const organizationId = resolveOrgId(req);
       if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
-      registration = await resolveClientRegistration({ organizationId });
+      registration = await resolveClientRegistration(requestDb(req), { organizationId });
     }
     const report = assessClientEstarEligibility(registration);
     return res.status(200).json(report);
@@ -1367,6 +1560,8 @@ const filingLeafSchema = z.object({
 const filingReadinessSchema = z.object({
   catalogKey: z.string().min(1),
   variant: z.enum(['device', 'ivd']).default('device'),
+  /** Device properties deciding conditional-section applicability (see deviceFlagsSchema). */
+  deviceFlags: deviceFlagsSchema,
   // Optional explicit registration (what-if); omit to use the org's persisted record.
   registration: z
     .object({
@@ -1429,7 +1624,7 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
     // Registration: an explicit what-if payload if supplied, else the org's
     // persisted registration record (the "clients must register" source of truth).
     const registration =
-      validation.data.registration ?? (await resolveClientRegistration({ organizationId: organizationId! }));
+      validation.data.registration ?? (await resolveClientRegistration(requestDb(req), { organizationId: organizationId! }));
 
     // Content: explicit body leaves, plus the org's REAL authored device content
     // when requested — so readiness reflects what's actually written, not a
@@ -1455,6 +1650,7 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
       registration,
       leaves: effectiveLeaves,
       qSubType,
+      deviceFlags: validation.data.deviceFlags,
       templateAvailable: fill.templateAvailable,
       fieldMapPopulated: fill.fieldMapPopulated,
     });

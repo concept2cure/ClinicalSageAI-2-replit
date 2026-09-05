@@ -120,6 +120,7 @@ vi.mock('../server/services/regulatory-correspondence/operating-layer', () => ({
 
 import submissionOpsRouter from '../server/routes/submission-ops';
 import { ValidationError as PackagerValidationError } from '../server/services/submission-gateways/types';
+import { recordGovernedAction } from '../server/routes/c2c/actions';
 
 function makeApp() {
   const app = express();
@@ -141,8 +142,10 @@ const lockedPkg = (metadata: Record<string, unknown> = { foo: 'bar', regulatory:
 const art = (n: string, ctdSection: string | null, id = 1) => ({
   artifactDbId: id, artifactId: `artifact_${n}`, title: `Artifact ${n}`, content: `Real content ${n}`, version: 1, ctdSection,
 });
+/** Assembly is a governed transition: the operator's reason is REQUIRED. */
+const REASON = { reason: 'Assemble the locked package for agency transmit' };
 const post = (body: Record<string, unknown> = {}) =>
-  request(makeApp()).post('/api/submission-ops/packages/pkg_locked/assemble').send(body);
+  request(makeApp()).post('/api/submission-ops/packages/pkg_locked/assemble').send({ ...REASON, ...body });
 /** Findings are PERSISTED on the descriptor (the surface the governed transmit
  *  gate reads); the API response carries only the counts. */
 const findings = (res: any): Array<{ ruleId: string; severity: string; message: string }> => {
@@ -161,6 +164,7 @@ const PACKAGER_EVIDENCE = {
 beforeEach(() => {
   buildECTDZipFn.mockReset();
   packageLeafBytesFn.mockReset();
+  vi.mocked(recordGovernedAction).mockClear();
   writeFileFn.mockClear();
   mkdirFn.mockClear();
   connectFn.mockClear();
@@ -181,18 +185,84 @@ beforeEach(() => {
   });
 });
 
+describe('package identity: one id contract across the package API', () => {
+  it('GET /packages/:packageId resolves the numeric row id as well as the pkg_ text id (tenant-scoped either way)', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
+    const byNumber = await request(makeApp()).get('/api/submission-ops/packages/5');
+    expect(byNumber.status).toBe(200);
+    expect(byNumber.body.data.packageId).toBe('pkg_locked');
+    expect(byNumber.body.data.sections).toHaveLength(1);
+    (dbState as any)._pkgResolved = false;
+    const byText = await request(makeApp()).get('/api/submission-ops/packages/pkg_locked');
+    expect(byText.status).toBe(200);
+    expect(byText.body.data.packageId).toBe('pkg_locked');
+  });
+});
+
 describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
   it('404s when the package is not in the tenant', async () => {
     dbState.pkg = null;
-    const res = await request(makeApp()).post('/api/submission-ops/packages/pkg_missing/assemble').send({});
+    const res = await request(makeApp()).post('/api/submission-ops/packages/pkg_missing/assemble').send(REASON);
     expect(res.status).toBe(404);
   });
 
   it('409s when the package is not locked', async () => {
     dbState.pkg = { id: 5, packageId: 'pkg_active', orgId: 99, status: 'active', packageFamily: 'ind', metadata: null };
-    const res = await request(makeApp()).post('/api/submission-ops/packages/pkg_active/assemble').send({});
+    const res = await request(makeApp()).post('/api/submission-ops/packages/pkg_active/assemble').send(REASON);
     expect(res.status).toBe(409);
     expect(res.body.gate).toBe('not_locked');
+  });
+
+  it('REQUIRES the operator’s reason — no placeholder is ever written into the audit row', async () => {
+    dbState.pkg = lockedPkg();
+    const res = await request(makeApp()).post('/api/submission-ops/packages/pkg_locked/assemble').send({});
+    expect(res.status).toBe(400);
+    expect(res.body.details.reason).toBeDefined();
+    expect(packageLeafBytesFn).not.toHaveBeenCalled();
+    expect(vi.mocked(recordGovernedAction)).not.toHaveBeenCalled();
+  });
+
+  it('assembles for Health Canada (the gate’s own remediation for a CA transmit)', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [{ id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('co', null)]];
+    const res = await post({ region: 'CA' });
+    expect(res.status).toBe(200);
+    expect(packageLeafBytesFn.mock.calls[0][0].region).toBe('ca');
+    expect(res.body.data.bundle.format).toBe('ectd');
+    expect(dbState.updateSet.metadata.bundle.region).toBe('CA');
+  });
+
+  it('REFUSES to store a bundle whose identifiers changed while it was being assembled (STALE_ASSEMBLY), and never reverts the newer metadata', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [{ id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('co', null)]];
+    // While the packager runs, another request records new identifiers.
+    packageLeafBytesFn.mockImplementationOnce(async () => {
+      dbState.pkg = lockedPkg({ foo: 'bar', regulatory: { ...REGULATORY, applicationNumber: 'IND999999' } });
+      return { path: '/tmp/c2c-assemble-test/pkg.zip', sha256: 'f'.repeat(64), sizeBytes: 14, format: 'ectd', ...PACKAGER_EVIDENCE };
+    });
+    const res = await post();
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('STALE_ASSEMBLY');
+    expect(dbState.updateSet).toBeNull(); // nothing written: the newer identifiers stand
+    expect(packageLeafBytesFn.mock.calls[0][0].applicationId).toBe('IND123456'); // the backbone carried the OLD ones
+  });
+
+  it('merges the descriptor onto the package’s CURRENT metadata, not the pre-assembly snapshot', async () => {
+    dbState.pkg = lockedPkg({ foo: 'bar', regulatory: REGULATORY });
+    dbState.sections = [{ id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('co', null)]];
+    // A concurrent, identifier-neutral change lands during packaging.
+    packageLeafBytesFn.mockImplementationOnce(async () => {
+      dbState.pkg = lockedPkg({ foo: 'bar', regulatory: REGULATORY, noteAddedMeanwhile: 'kept' });
+      return { path: '/tmp/c2c-assemble-test/pkg.zip', sha256: 'f'.repeat(64), sizeBytes: 14, format: 'ectd', ...PACKAGER_EVIDENCE };
+    });
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(dbState.updateSet.metadata.noteAddedMeanwhile).toBe('kept');
+    expect(dbState.updateSet.metadata.bundle.sha256).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it('assembles ONE LEAF PER ARTIFACT at each artifact\'s own CTD section, persists, and returns the descriptor', async () => {
@@ -322,10 +392,24 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     const dups = findings(res).filter((f) => f.ruleId === 'LEAF-DUPLICATE-MAPPING');
     expect(dups).toHaveLength(2);
     expect(dups.every((f) => f.severity === 'warning')).toBe(true);
-    expect(dups[1].message).toMatch(/already ships as a leaf from Module 3 CMC \(module3_cmc\)/);
+    expect(dups[1].message).toMatch(/already ships as a leaf at 3\.2\.P\.1 from Module 3 CMC \(module3_cmc\)/);
     expect(packageLeafBytesFn.mock.calls[0][0].leaves.map((l: any) => l.ctdSection)).toEqual(['3.2.P.1']);
     expect(res.body.data.bundle.leafCount).toBe(1);
     expect(res.body.data.bundle.validation.errorCount).toBe(0);
+  });
+
+  it('the same document at two DIFFERENT sections (a reference cited from 4.3 and 5.4) is two leaves, not a duplicate', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [
+      { id: 41, sectionKey: '4.3', sectionLabel: 'Literature References (M4)', sortOrder: 0 },
+      { id: 54, sectionKey: '5.4', sectionLabel: 'Literature References (M5)', sortOrder: 1 },
+    ];
+    dbState.mappedByCall = [[art('ref', null, 7)], [art('ref', null, 7)]];
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(findings(res).some((f) => f.ruleId === 'LEAF-DUPLICATE-MAPPING')).toBe(false);
+    expect(packageLeafBytesFn.mock.calls[0][0].leaves.map((l: any) => l.ctdSection)).toEqual(['4.3', '5.4']);
+    expect(res.body.data.bundle.leafCount).toBe(2);
   });
 
   it('composes leaf file names inside the 64-character eCTD rule, keeping the artifact discriminator', async () => {
@@ -416,6 +500,11 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(res.status).toBe(422);
     expect(res.body.code).toBe('PACKAGER_REFUSED');
     expect(res.body.staleBundleCleared).toBe(true);
+    expect(res.body.ledgerWriteFailed).toBe(false);
+    // Clearing a transmittable bundle is a mutation of regulated content: it is recorded.
+    const ledger = vi.mocked(recordGovernedAction).mock.calls.at(-1)![1] as any;
+    expect(ledger).toMatchObject({ orgId: 99, userId: 777, target: 'submission:5', reason: REASON.reason });
+    expect(ledger.payload).toMatchObject({ change: 'assembly-refused', staleBundleCleared: true });
     const refused = res.body.validation.findings.filter((f: any) => f.ruleId === 'PACKAGER-REFUSED');
     expect(refused).toHaveLength(1);
     expect(refused[0]).toMatchObject({ severity: 'error', message: 'cover.pdf has no heading' });

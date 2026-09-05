@@ -23,6 +23,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { redactInternals } from '@/lib/queryClient';
 import {
   describeOfficialFieldsError,
+  notSetWords,
   officialFieldsUrl,
   sourceWords,
   useEstarOfficialFields,
@@ -62,6 +63,7 @@ const VIEW = {
       xfaSomPath: 'form1.p1.trade',
       value: 'BX-204 CGM',
       source: 'regulatory_programs.product_name',
+      declaredSource: 'regulatory_programs.product_name',
     },
     {
       key: 'applicantCompanyName',
@@ -69,6 +71,7 @@ const VIEW = {
       xfaSomPath: 'form1.p1.applicant',
       value: 'Acme Devices',
       source: 'client_workspaces.name',
+      declaredSource: 'client_workspaces.name',
     },
     {
       key: 'deviceCommonName',
@@ -76,6 +79,7 @@ const VIEW = {
       xfaSomPath: null,
       value: null,
       source: null,
+      declaredSource: 'regulatory_programs.common_name',
     },
   ],
 };
@@ -94,6 +98,15 @@ describe('officialFieldsUrl (pure)', () => {
   it('carries ident, type and variant, encoded', () => {
     expect(officialFieldsUrl('a b/c', '510k', 'ivd')).toBe(
       '/api/510k/estar/official-fields?ident=a+b%2Fc&type=510k&variant=ivd',
+    );
+  });
+
+  it('carries every marketing pathway the server accepts', () => {
+    expect(officialFieldsUrl('bx204', 'de_novo', 'device')).toBe(
+      '/api/510k/estar/official-fields?ident=bx204&type=de_novo&variant=device',
+    );
+    expect(officialFieldsUrl('bx204', 'pma', 'ivd')).toBe(
+      '/api/510k/estar/official-fields?ident=bx204&type=pma&variant=ivd',
     );
   });
 });
@@ -117,6 +130,28 @@ describe('sourceWords (pure) — provenance in plain words', () => {
     ['client_workspaces.contact_email', 'Client workspace · contact email'],
     ['client_workspaces.contact_phone', 'Client workspace · contact phone'],
     ['organizations.name', 'Organization · name'],
+    /* Phase 3 — every key has a governed home. */
+    ['regulatory_programs.common_name', 'Device profile · common name'],
+    ['regulatory_programs.classification_name', 'Device profile · classification name'],
+    ['regulatory_programs.regulation_number', 'Device profile · regulation number'],
+    ['regulatory_programs.associated_product_codes', 'Device profile · associated product codes'],
+    [
+      'regulatory_programs.indications_for_use_citation',
+      'Device profile · indications for use citation',
+    ],
+    [
+      'estar_registrations.correspondent_company_name',
+      'eSTAR registration · correspondent company name',
+    ],
+    [
+      'estar_registrations.correspondent_contact_email',
+      'eSTAR registration · correspondent contact email',
+    ],
+    ['estar_registrations.correspondent_telephone', 'eSTAR registration · correspondent telephone'],
+    [
+      'estar_registrations.declaration_company_address',
+      'eSTAR registration · declaration company address',
+    ],
     ['request', REQUEST_SOURCE_WORDS],
   ];
 
@@ -135,8 +170,25 @@ describe('sourceWords (pure) — provenance in plain words', () => {
       const words = sourceWords(s);
       expect(words).not.toMatch(/_/);
       expect(words).not.toMatch(/\[0\]/);
-      expect(words).not.toMatch(/regulatory_programs|fda_510k_projects|client_workspaces|organizations\./);
+      expect(words).not.toMatch(
+        /regulatory_programs|fda_510k_projects|client_workspaces|organizations\.|estar_registrations/,
+      );
     }
+  });
+});
+
+describe('notSetWords (pure) — where the durable home is', () => {
+  it('names the declared home in the same words as a sourced value', () => {
+    expect(notSetWords('regulatory_programs.common_name')).toBe('Not set — Device profile · common name');
+    expect(notSetWords('estar_registrations.correspondent_company_name')).toBe(
+      'Not set — eSTAR registration · correspondent company name',
+    );
+  });
+
+  it('is null when the key has no declared home — the row stays export-only', () => {
+    expect(notSetWords(null)).toBeNull();
+    expect(notSetWords(undefined)).toBeNull();
+    expect(notSetWords('')).toBeNull();
   });
 });
 
@@ -224,6 +276,20 @@ describe('useEstarOfficialFields', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('the type reaches the wire for a De Novo and a PMA read', async () => {
+    fetchMock.mockResolvedValue(response({ ...VIEW, type: 'de_novo' }));
+    const { result } = renderHook(() => useEstarOfficialFields('bx204', 'de_novo', 'device'));
+    await waitFor(() => expect(result.current.fields).not.toBeNull());
+    expect(String(fetchMock.mock.calls[0][0])).toBe(
+      '/api/510k/estar/official-fields?ident=bx204&type=de_novo&variant=device',
+    );
+    const pma = renderHook(() => useEstarOfficialFields('cv330', 'pma', 'ivd'));
+    await waitFor(() => expect(pma.result.current.loading).toBe(false));
+    expect(String(fetchMock.mock.calls[1][0])).toBe(
+      '/api/510k/estar/official-fields?ident=cv330&type=pma&variant=ivd',
+    );
+  });
+
   it('200 maps the field list through with counts', async () => {
     fetchMock.mockResolvedValue(response(VIEW));
     const { result } = renderHook(() => useEstarOfficialFields('bx204', '510k', 'device'));
@@ -237,6 +303,10 @@ describe('useEstarOfficialFields', () => {
     ]);
     /* The server sends xfaSomPath as string | null; null passes through as-is. */
     expect(result.current.fields?.fields[2].xfaSomPath).toBeNull();
+    /* declaredSource rides through untouched — set on the blank row too. */
+    expect(result.current.fields?.fields[2].value).toBeNull();
+    expect(result.current.fields?.fields[2].declaredSource).toBe('regulatory_programs.common_name');
+    expect(result.current.fields?.fields[0].declaredSource).toBe('regulatory_programs.product_name');
     expect(result.current.error).toBeNull();
     expect(result.current.errorKind).toBeNull();
     const url = String(fetchMock.mock.calls[0][0]);

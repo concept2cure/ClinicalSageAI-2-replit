@@ -548,9 +548,14 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     sequenceId,
     organizationId: ctx.organizationId,
     userId: ctx.userId,
-    applicationId: params.applicationId ?? `SEQ-${sequenceId}`,
-    sponsorId: params.sponsorId ?? `ORG-${ctx.organizationId}`,
-    sponsorName: params.sponsorName ?? `Organization ${ctx.organizationId}`,
+    // Never fabricate an agency identifier (regulatory-identifiers.ts): these
+    // become <application-number>/<procedure-number>, <id>/<company-id> and
+    // <name>/<company-name> in the regional backbone, and the application id is
+    // also a package filename component. An unassigned value SAYS it is
+    // unassigned, in the wording the transmit path already uses.
+    applicationId: params.applicationId ?? `UNASSIGNED-SEQ-${sequenceId}`,
+    sponsorId: params.sponsorId ?? `UNASSIGNED-ORG-${ctx.organizationId}`,
+    sponsorName: params.sponsorName ?? `UNASSIGNED (organization ${ctx.organizationId})`,
   });
 
   // A dossier transmitted to an agency must physically contain every leaf's
@@ -602,7 +607,7 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
       bundle: assembled.bundle,
       environment,
       submissionType: seq.type ?? undefined,
-      metadata: { applicationId: params.applicationId ?? `SEQ-${sequenceId}`, sequence: seq.sequenceNumber, environment },
+      metadata: { applicationId: params.applicationId ?? `UNASSIGNED-SEQ-${sequenceId}`, sequence: seq.sequenceNumber, environment },
       // Gate 1 above already verified this signature governs THIS sequence and
       // was made by THIS actor; the gateway layer now requires that proof to be
       // named rather than merely to have happened somewhere up the stack.

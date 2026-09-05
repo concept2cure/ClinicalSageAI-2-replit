@@ -70,6 +70,13 @@ export interface RealAssemblyContext {
   applicationNumber: string;
   sequenceNumber: string;
   submissionType: string;
+  /**
+   * The applicant's own identifier — DUNS for FDA, the EMA organisation id, the
+   * PMDA applicant id. It is NOT the application number: `sponsorId` was filled
+   * with `applicationNumber`, so the backbone's <id> / <pmda-applicant-id> /
+   * <company-id> carried the IND/NDA number as the applicant's identity.
+   */
+  applicantId?: string;
   sponsorName?: string;
   productName?: string;
 }
@@ -169,9 +176,12 @@ export async function assembleRealPackage(
       applicationId: ctx.applicationNumber,
       sequence: ctx.sequenceNumber,
       submissionType: ctx.submissionType,
-      sponsorId: ctx.applicationNumber,
-      sponsorName: ctx.sponsorName ?? 'Sponsor',
-      productName: ctx.productName ?? 'Product',
+      // An absent identity says it is absent. 'Sponsor' and 'Product' read as
+      // real values in the backbone; regulatory-identifiers.ts' rule is that a
+      // missing identifier must SAY it is unassigned.
+      sponsorId: ctx.applicantId ?? 'UNASSIGNED-APPLICANT',
+      sponsorName: ctx.sponsorName ?? 'UNASSIGNED (applicant)',
+      productName: ctx.productName ?? 'UNASSIGNED (product)',
       outputDir: path.join(work, 'out'),
       environment: 'staging',
       skipPdfaConversion: true,

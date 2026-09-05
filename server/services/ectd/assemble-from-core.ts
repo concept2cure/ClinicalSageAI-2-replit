@@ -216,10 +216,22 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     });
   }
 
-  // Governance integrity manifest: per-leaf SHA-256 (alongside the eCTD-required
-  // md5) plus the package-level SHA-256, written OUTSIDE the regulatory backbone.
-  // index.xml / md5.txt keep md5 for agency compatibility; this file carries the
-  // modern hash for package governance and audit.
+  // Governance integrity manifest, written OUTSIDE the regulatory backbone.
+  // index.xml / md5.txt keep md5 for agency compatibility; this file is the
+  // integrity record for governance and audit.
+  //
+  // The per-leaf hashes here used to come from `byKey` — the STAGED bytes, as
+  // the resolver hashed them. The packager then normalizes each leaf to PDF/A
+  // before writing it and re-hashes the converted bytes for the backbone, so
+  // wherever Ghostscript is installed every per-leaf hash in this file
+  // described a file the package does not contain, and the record could not
+  // verify the package it claims to cover. The packager's own leafManifest
+  // carries the SHIPPED href and md5; that is what is recorded.
+  //
+  // Per-leaf sha256 is deliberately absent rather than wrong: the packager does
+  // not expose the converted bytes, so the only sha256 that can honestly be
+  // stated is the package-level one below, which is taken over the archive as
+  // written.
   const governanceManifestPath = path.join(outputDir, 'package-governance.sha256.json');
   await fs.writeFile(
     governanceManifestPath,
@@ -227,9 +239,15 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
       {
         sequenceId,
         organizationId,
-        hashPolicy: 'md5 = eCTD index (agency requirement); sha256 = package governance (this file)',
+        hashPolicy:
+          'md5 = eCTD index (agency requirement), recorded here over the SHIPPED leaf bytes; ' +
+          'sha256 = package governance, package-level only (leaves are normalized to PDF/A after staging)',
         packageSha256: result.bundle.sha256,
-        leaves: [...byKey.values()].map((f) => ({ fileName: f.fileName, md5: f.md5, sha256: f.sha256 })),
+        leaves: (result.bundle.leafManifest ?? []).map((l) => ({
+          fileName: l.fileName,
+          href: l.href,
+          md5: l.md5,
+        })),
       },
       null,
       2,
@@ -289,10 +307,29 @@ export interface AssembleSubmissionParams {
    * exist is an error, never a silent fallback to another sequence.
    */
   sequenceNumber?: string;
-  /** Recorded application number for the backbone envelope. Falls back to the
-   *  neutral `SEQ-<sequenceId>` handle (same convention as the /api/submissions
-   *  assemble route) — never an invented agency number. */
+  /**
+   * Recorded agency application number for the backbone envelope. When absent
+   * the package is built with a value that SAYS it is unassigned — see the
+   * applicant fields below and regulatory-identifiers.ts.
+   */
   applicationNumber?: string;
+  /**
+   * Recorded applicant identity (DUNS / EMA org id / PMDA applicant id, and the
+   * applicant's legal name). These are not internal handles: the packager
+   * writes them into the regional Module 1 backbone as <id> / <company-id> and
+   * <name> / <company-name>, and the application number also becomes part of
+   * the package filename.
+   *
+   * They were previously synthesized as `ORG-<orgId>` and `Organization <orgId>`
+   * with no caller-supplied path at all, so a sequence assembled without
+   * explicit identifiers shipped `<name>Organization 7</name>` to the agency —
+   * a string that reads as a real applicant rather than as a gap. Absent
+   * values now follow the repo's stated rule (regulatory-identifiers.ts: "never
+   * fabricate … build with values that SAY they are unassigned") and the wording
+   * already used on the transmit path in submission-ops.
+   */
+  applicantId?: string;
+  applicantName?: string;
   /**
    * Requested region (accepts core codes fda|eu|jp and agency names FDA|EMA|
    * PMDA). The sequence's RECORDED region is always authoritative for what gets
@@ -406,9 +443,12 @@ export async function assembleSubmissionEctd(
     sequenceId: sequence.id,
     organizationId,
     userId,
-    applicationId: params.applicationNumber ?? `SEQ-${sequence.id}`,
-    sponsorId: `ORG-${organizationId}`,
-    sponsorName: `Organization ${organizationId}`,
+    // Never fabricate an agency identifier. An unassigned value says so, in the
+    // same wording the transmit path already uses (submission-ops), so a
+    // reviewer reading the backbone sees a gap instead of a plausible applicant.
+    applicationId: params.applicationNumber ?? `UNASSIGNED-SEQ-${sequence.id}`,
+    sponsorId: params.applicantId ?? `UNASSIGNED-ORG-${organizationId}`,
+    sponsorName: params.applicantName ?? `UNASSIGNED (organization ${organizationId})`,
   });
 
   try {

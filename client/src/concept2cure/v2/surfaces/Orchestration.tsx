@@ -879,7 +879,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
             </div>
             <div className="orch-find-meta">
               <span className="rd-chip tone-idle">{f.type.replace(/_/g, ' ')}</span>
-              <span className={'rd-chip tone-' + (ORCH_TONE[f.status === 'fail' ? 'failed' : f.status === 'warn' ? 'paused' : 'completed'] || 'idle')}>
+              <span className={'rd-chip tone-' + (f.status === 'fail' ? ORCH_TONE.failed : f.status === 'warn' ? ORCH_TONE.paused : ORCH_TONE.completed)}>
                 {f.status === 'fail' ? 'Fail' : f.status === 'warn' ? 'Warn' : 'Pass'}
               </span>
             </div>

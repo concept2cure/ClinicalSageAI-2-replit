@@ -84,7 +84,7 @@ vi.mock('../../server/export/renderers', () => ({
 }));
 
 vi.mock('../../server/export/stylePacks/config', () => ({
-  stylePacks: { '510k_v1': {}, pma_v1: {} },
+  stylePacks: { '510k_v1': {}, pma_v1: {}, cer_mdr_v1: {} },
 }));
 
 vi.mock('../../server/auth', () => ({
@@ -214,11 +214,84 @@ describe('POST /api/510k/estar/build — a governed PMA program', () => {
     expect(names).toHaveLength(PMA_SECTIONS.length + 2);
   });
 
-  it("a governed 510(k) program still gets the 510(k) package (family follows the document's class)", async () => {
+  it('a governed 510(k) program renders EVERY authored section, not six fixed slots', async () => {
+    // This asserted the six slots for a governed 510(k). The FDA 510(k) rule
+    // pack scaffolds 18 sections; the six-slot renderer picks one heading per
+    // bucket and stamps "content not found" for the rest, so Form 3514, the
+    // indications for use, the technological comparison, biocompatibility,
+    // sterilization, software and cybersecurity the client authored were
+    // absent from a ZIP registered as a governed artifact, with nothing said.
     scopeState.docType = 'k510';
-    mockLoadAuthoredSections.mockResolvedValue([{ sectionCode: '3', title: 'Device Description', content: BODY }]);
+    const K510_SECTIONS = [
+      { sectionCode: 'A1', title: 'FDA Form 3514', content: BODY },
+      { sectionCode: 'A3', title: 'Indications for use', content: BODY },
+      { sectionCode: 'B2', title: 'Technological comparison', content: BODY },
+      { sectionCode: 'D3', title: 'Biocompatibility', content: BODY },
+      { sectionCode: 'D6', title: 'Cybersecurity', content: BODY },
+    ];
+    mockLoadAuthoredSections.mockResolvedValue(K510_SECTIONS);
 
     const req = makeReq({ meta: { id: 'K240001', ident: PROGRAM_UUID }, useProjectContent: true });
+    const res = createMockResponse() as any;
+
+    await getHandler('/build')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockRender510k).not.toHaveBeenCalled();
+    expect(mockRenderPerSection).toHaveBeenCalledTimes(1);
+    expect(mockCombinedPdf).toHaveBeenCalledWith('cerv2_510k', expect.objectContaining({ type: 'doc' }));
+    const arg = mockGovernedConsequence.mock.calls[0][0] as any;
+    // Still a 510(k) package, by name and ledger placement.
+    expect(arg.filename).toBe('K240001_content-package-draft.zip');
+    expect(arg.metadata.package).toBe('content package draft (not an eSTAR)');
+    const names = await zipNames(arg.binaryOutput as Buffer);
+    const pdfs = names.filter((n) => n.endsWith('.pdf') && !n.endsWith('_Combined.pdf'));
+    expect(pdfs).toHaveLength(K510_SECTIONS.length);
+    expect(pdfs[0]).toMatch(/^01_A1/);
+    expect(pdfs[4]).toMatch(/^05_D6/);
+    expect(names).toContain('K240001_Combined.pdf');
+    // The response says which store answered and how much of it shipped.
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.deviceContentSource).toBe('governed_program');
+    expect(payload.sectionsAuthored).toBe(5);
+    expect(payload.sectionsRendered).toBe(5);
+    expect(arg.metadata.sectionsRendered).toBe(5);
+  });
+
+  it.each([
+    ['denovo', 'DN240001_denovo-content-package-draft.zip', /De Novo content package \(draft\)/, 'cerv2_denovo'],
+    ['cer', 'CER-01_cer-content-package-draft.zip', /Clinical evaluation report package \(draft\)/, 'cerv2_cer'],
+  ])('a governed %s document is cut per section and labelled as itself, never as a 510(k)', async (docType, filename, title, combinedDocType) => {
+    // De Novo and CER documents went through the six 510(k) slots and were
+    // ledgered as "510(k) content package (draft)" at m1.5.
+    scopeState.docType = docType;
+    mockLoadAuthoredSections.mockResolvedValue([
+      { sectionCode: 'A1', title: 'First authored section', content: BODY },
+      { sectionCode: 'A2', title: 'Second authored section', content: BODY },
+    ]);
+    const id = filename.split('_')[0];
+    const req = makeReq({ meta: { id, ident: PROGRAM_UUID }, useProjectContent: true });
+    const res = createMockResponse() as any;
+
+    await getHandler('/build')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockRender510k).not.toHaveBeenCalled();
+    expect(mockCombinedPdf).toHaveBeenCalledWith(combinedDocType, expect.anything());
+    const arg = mockGovernedConsequence.mock.calls[0][0] as any;
+    expect(arg.filename).toBe(filename);
+    expect(arg.title).toMatch(title);
+    expect(arg.title).not.toMatch(/510\(k\)/);
+    expect(arg.suggestedPlacement).not.toMatch(/510\(k\)/);
+    expect(arg.metadata.package).not.toMatch(/^content package draft/);
+    const names = await zipNames(arg.binaryOutput as Buffer);
+    for (const k of K510_NAMES) expect(names).not.toContain(k);
+    expect(names.filter((n) => n.endsWith('.pdf') && !n.endsWith('_Combined.pdf'))).toHaveLength(2);
+  });
+
+  it('the LEGACY store keeps the six 510(k) slots those slots were built for', async () => {
+    mockLoadAuthoredSections.mockResolvedValue([{ title: 'Device Description', content: BODY }]);
+    const req = makeReq({ meta: { id: 'K240002', ident: PROGRAM_UUID }, useProjectContent: true, documentId: 4 });
     const res = createMockResponse() as any;
 
     await getHandler('/build')(req, res);
@@ -227,9 +300,9 @@ describe('POST /api/510k/estar/build — a governed PMA program', () => {
     expect(mockRender510k).toHaveBeenCalledTimes(1);
     expect(mockRenderPerSection).not.toHaveBeenCalled();
     const arg = mockGovernedConsequence.mock.calls[0][0] as any;
-    expect(arg.filename).toBe('K240001_content-package-draft.zip');
-    expect(arg.metadata.package).toBe('content package draft (not an eSTAR)');
     expect(await zipNames(arg.binaryOutput as Buffer)).toEqual(K510_NAMES);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.deviceContentSource).toBe('legacy_document');
   });
 });
 
@@ -256,6 +329,34 @@ describe('POST /api/510k/estar/assemble — pathway pma', () => {
     // Three of eight original-PMA modules authored: the verdict is honest.
     expect(payload.artifactKind).toBe('content-package-draft');
     expect(payload.validationReport.errors.join(' ')).toMatch(/section\(s\) missing/);
+  });
+
+  it('a 510(k) carries its device properties in the request; without them the conditional sections stay undetermined', async () => {
+    // No route accepted deviceFlags before, so every conditional section was
+    // undetermined on every call — and the assembler then ignored undetermined.
+    scopeState.docType = 'k510';
+    const leaves = [{ sectionCode: 'B1', title: 'Device description', documentType: 'device_description', substantive: true }];
+    mockLoadContentLeaves.mockResolvedValueOnce(leaves);
+    const without = createMockResponse() as any;
+    await getHandler('/assemble')(makeReq({ pathway: '510k', variant: 'device', programId: PROGRAM_UUID }), without);
+    expect(without.status).toHaveBeenCalledWith(200);
+    const u = without.json.mock.calls[0][0];
+    expect(u.estar.summary.undetermined.length).toBeGreaterThan(0);
+    expect(u.blockers.join(' ')).toMatch(/applicability is not established/);
+
+    mockLoadContentLeaves.mockResolvedValueOnce(leaves);
+    const withFlags = createMockResponse() as any;
+    await getHandler('/assemble')(
+      makeReq({
+        pathway: '510k', variant: 'device', programId: PROGRAM_UUID,
+        deviceFlags: { combinationProduct: false, softwareAiMl: false, cyberDevice: false, sterile: false, implantable: false, cliaWaived: false, clinicalData: false },
+      }),
+      withFlags,
+    );
+    expect(withFlags.status).toHaveBeenCalledWith(200);
+    const w = withFlags.json.mock.calls[0][0];
+    expect(w.estar.summary.undetermined).toEqual([]);
+    expect(w.blockers.join(' ')).not.toMatch(/applicability is not established/);
   });
 
   it('accepts the PMA supplement type and scopes the required modules to it', async () => {

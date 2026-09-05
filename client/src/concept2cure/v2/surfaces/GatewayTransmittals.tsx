@@ -82,7 +82,10 @@ const IDENTIFIERS_FORM = (def?: string): C2CFormConfig => ({
   eyebrow: 'Regulatory dispatch · governed change',
   title: 'Record regulatory identifiers',
   sub: 'The agency application number and applicant identity the Module 1 backbone carries. Recorded on the package with your reason. A bundle assembled under different identifiers is cleared and must be assembled again.',
-  governed: true, submitLabel: 'Record',
+  // The default banner asserts an audit entry will be written; this route
+  // documents the case where it cannot be, so say what actually happens.
+  governed: 'Governed change — your reason is recorded with it in the audit trail. If the ledger entry cannot be written, the change is still applied and the response says so.',
+  submitLabel: 'Record',
   fields: [
     PACKAGE_FIELD(def),
     { key: 'applicationNumber', label: 'Application number', type: 'text', required: true, half: true, placeholder: 'e.g. IND123456', desc: 'Letters, digits, ".", "_" or "-"; up to 64 characters.' },
@@ -95,10 +98,11 @@ const ASSEMBLE_FORM = (def?: string): C2CFormConfig => ({
   eyebrow: 'Regulatory dispatch · governed transition',
   title: 'Assemble bundle',
   sub: 'Builds the eCTD bundle for a locked package through the canonical packager and records the structural findings on it. Transmit refuses a bundle that carries error-severity findings.',
-  governed: true, submitLabel: 'Assemble',
+  governed: 'Governed transition — your reason is recorded with the assembly. Assembly does not re-authenticate you; transmit does. If the ledger entry cannot be written, the bundle is still built and the response says so.',
+  submitLabel: 'Assemble',
   fields: [
     PACKAGE_FIELD(def),
-    { key: 'region', label: 'Region', type: 'select', options: ['FDA', 'EMA', 'PMDA'], default: 'FDA', half: true },
+    { key: 'region', label: 'Region', type: 'select', options: ['FDA', 'EMA', 'PMDA', 'CA'], default: 'FDA', half: true },
     { key: 'sequence', label: 'Sequence', type: 'text', default: '0000', half: true, placeholder: '0000', desc: 'Four digits.' },
     { key: 'reason', label: 'Reason (governed)', type: 'textarea', required: true, placeholder: 'At least 8 characters — recorded with the assembly.' },
   ],
@@ -170,7 +174,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
      saw WHICH rule refused — e.g. the finding that names the regulatory
      identifiers still to be recorded. The findings are rendered in a card so
      the refusal is actionable; it clears on the next attempt or a success. */
-  const [refusal, setRefusal] = useState<{ source: 'transmit' | 'assemble'; message: string; findings: RefusalFinding[] } | null>(null);
+  const [refusal, setRefusal] = useState<{ source: 'transmit' | 'assemble'; message: string; findings: RefusalFinding[]; fetchFailure?: string } | null>(null);
   const [toast, fireToast] = useToast();
 
   const load = useCallback(async () => {
@@ -206,20 +210,29 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     const { ok, status, raw } = await readData('POST', `/api/mdx/gateways/${region}/${gateway}/transmit`, body);
     if (status === 401) { fireToast('Not transmitted — re-authentication failed (§11). Nothing left the platform.', 'error'); return; }
     if (status === 409) {
-      const held = (raw as any)?.data ?? raw;
+      // The error envelope is { error, details }: the holder's id and status
+      // travel in details (they were read from a `data` key that an error
+      // response never carries, so the toast always said "#?" / "in flight").
+      const held = (raw as any)?.details ?? (raw as any)?.data ?? raw;
       fireToast(`Not transmitted — transmittal #${held?.transmittalId ?? '?'} is already active (${held?.status ?? 'in flight'}). Roll it back first.`, 'error');
       return;
     }
     if (status === 412) { fireToast('Not transmitted — gateway credentials are not configured for this environment.', 'error'); return; }
     if (status === 422) {
       const message = String((raw as any)?.error ?? 'validation failed');
+      // Close the drawer so the findings card is not mounted beneath its overlay.
+      setDialog(null);
       setRefusal({ source: 'transmit', message, findings: refusalFindings(raw) });
       fireToast('Not transmitted — the structural gate rejected the bundle: ' + message + '.', 'error');
       return;
     }
     if (!ok) { fireToast(`Transmit failed (HTTP ${status}) — ` + ((raw as any)?.error ?? 'nothing was sent') + '.', 'error'); return; }
     setDialog(null);
-    const txId = (raw as any)?.data?.result?.transactionId ?? (raw as any)?.data?.transactionId;
+    // The gateway result is flattened onto data and its tracking field is
+    // transmissionId (it was read as a nested transactionId, which no gateway
+    // sends, so the confirmation never showed the reference).
+    const dataOut = (raw as any)?.data ?? {};
+    const txId = dataOut.transmissionId ?? dataOut.result?.transmissionId ?? dataOut.result?.transactionId ?? dataOut.transactionId;
     fireToast('Transmitted via ' + region.toUpperCase() + '/' + gateway + (txId ? ' · gateway ref ' + txId : '') + '.');
     void load();
   }, [load, fireToast]);
@@ -267,12 +280,16 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     if (!ok) { fireToast(`Not recorded (HTTP ${status}) — ` + ((raw as any)?.error ?? 'nothing changed') + '.', 'error'); return; }
     const d = (raw as any)?.data ?? {};
     setDialog(null);
+    // The findings card described a bundle that may no longer exist (a changed
+    // identifier clears it) or a blocker that was just resolved; drop it.
+    setRefusal(null);
     fireToast(
       'Identifiers recorded on package ' + (d.packageId ?? v.packageId)
         + (d.staleBundleCleared
           ? '. The previously assembled bundle carried the old identifiers and was cleared — assemble again before transmitting.'
           : d.changed ? '. Assemble the bundle before transmitting.' : ' (unchanged).')
         + (d.ledgerWriteFailed ? ' The governance ledger could not be written — the change is recorded but not audited.' : ''),
+      d.ledgerWriteFailed ? 'error' : undefined,
     );
   }, [fireToast]);
 
@@ -293,8 +310,13 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     if (status === 400) { fireToast('Not assembled — ' + ((raw as any)?.error ?? 'validation failed') + '.', 'error'); return; }
     if (status === 422) {
       const message = String((raw as any)?.error ?? 'the packager refused the bundle');
-      setRefusal({ source: 'assemble', message, findings: sortFindings((raw as any)?.validation?.findings) });
-      fireToast('Not assembled — ' + message + '.', 'error');
+      const cleared = (raw as any)?.staleBundleCleared
+        ? ' The previously assembled bundle was cleared; this package has no transmittable bundle now.'
+        : '';
+      const ledgerNote = (raw as any)?.ledgerWriteFailed ? ' The governance ledger could not be written for this refusal.' : '';
+      setDialog(null);
+      setRefusal({ source: 'assemble', message: message + '.' + cleared + ledgerNote, findings: sortFindings((raw as any)?.validation?.findings) });
+      fireToast('Not assembled — ' + message + '.' + cleared, 'error');
       return;
     }
     if (!ok) { fireToast(`Assembly failed (HTTP ${status}) — ` + ((raw as any)?.error ?? 'nothing was built') + '.', 'error'); return; }
@@ -302,21 +324,40 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     const b = d.bundle ?? {};
     const errors = Number(b.validation?.errorCount ?? 0);
     const warnings = Number(b.validation?.warningCount ?? 0);
+    // The bundle is real even when its governed-action ledger entry could not
+    // be written; the server says so and the operator must hear it.
+    const ledger = (raw as any)?.ledgerWriteFailed
+      ? ' ' + String((raw as any)?.ledgerWarning ?? 'The governed-action ledger entry could not be written; record this assembly manually.')
+      : '';
     setDialog(null);
     if (errors > 0) {
       // The bundle exists, but transmit will refuse it. The findings live on the
       // package's stored descriptor; the preflight route serves them.
       const pf = await readData('POST', `/api/submission-ops/packages/${id}/preflight`, {});
-      const findings = sortFindings((pf.raw as any)?.data?.validation?.findings ?? (pf.raw as any)?.data?.findings);
+      const findings = pf.ok ? sortFindings((pf.raw as any)?.data?.validation?.findings ?? (pf.raw as any)?.data?.findings) : [];
+      // A failed or empty findings fetch is said, not shown as an empty table
+      // under a message that counts errors.
+      const fetchFailure = !pf.ok
+        ? `The findings could not be loaded (HTTP ${pf.status}${(pf.raw as any)?.error ? ': ' + (pf.raw as any).error : ''}); run preflight for this package to see them.`
+        : findings.length === 0
+          ? /* The error count above says errors exist; an empty list here means
+               the itemized findings were not delivered, not that none exist —
+               say that, never "no findings" (empty-state gate). */
+            'Preflight did not return the itemized findings behind this error count; run preflight for this package to see them.'
+          : undefined;
       setRefusal({
         source: 'assemble',
         message: `Bundle assembled for ${d.packageId ?? v.packageId} with ${errors} error-severity finding${errors === 1 ? '' : 's'}; transmit will refuse it until they are resolved.`,
         findings,
+        fetchFailure,
       });
-      fireToast(`Bundle assembled with ${errors} error-severity finding${errors === 1 ? '' : 's'} — transmit will refuse it. See the findings below.`, 'error');
+      fireToast(`Bundle assembled with ${errors} error-severity finding${errors === 1 ? '' : 's'} — transmit will refuse it. See the findings below.${ledger}`, 'error');
       return;
     }
-    fireToast(`Bundle assembled for ${d.packageId ?? v.packageId} · ${b.leafCount ?? '?'} leaves · ${warnings} warning${warnings === 1 ? '' : 's'} · sha256 ${String(b.sha256 ?? '').slice(0, 12)}. Ready to transmit.`);
+    // No error-severity findings is not "ready": the transmit gate still checks
+    // region identity, the gateway size limit and the operator's conformance
+    // opt-ins before bytes leave. Say what was proven, not more.
+    fireToast(`Bundle assembled for ${d.packageId ?? v.packageId} · ${b.leafCount ?? '?'} leaves · ${warnings} warning${warnings === 1 ? '' : 's'} · sha256 ${String(b.sha256 ?? '').slice(0, 12)}. No error-severity findings; the transmit gate still checks region, size and conformance opt-ins.${ledger}`, ledger ? 'error' : undefined);
   }, [fireToast]);
 
   const rollback = useCallback(async (v: Record<string, string>) => {
@@ -461,17 +502,25 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
           <div className="pj-card-b" style={{ padding: 0 }}>
             <div style={{ padding: '10px 16px', fontSize: 12 }}>
               {refusal.message}{' '}
-              {refusal.source === 'transmit'
-                ? 'These findings were recorded on the stored bundle when it was assembled. Resolve them, assemble the package again, then transmit.'
-                : 'Resolve the findings, then assemble the package again.'}
+              {refusal.findings.length === 0
+                ? /* An empty findings list is not a finding of "none": say the
+                     list is absent, never that nothing was found — the refusal
+                     itself is the only assessed fact here (empty-state gate). */
+                  (refusal.fetchFailure ?? 'The refusal did not include an itemized findings list. Assemble the package again, then transmit.')
+                : refusal.source === 'transmit'
+                  ? 'These findings were recorded on the stored bundle when it was assembled. Resolve them, assemble the package again, then transmit.'
+                  : 'Resolve the findings, then assemble the package again.'}
             </div>
+            {/* Severity is stated as text in its own column — the chip's tone
+                alone must not be the only carrier of meaning. */}
             {refusal.findings.length > 0 && (
-              <table className="reg-tbl"><thead><tr><th>Rule</th><th>Finding</th></tr></thead>
+              <table className="reg-tbl"><thead><tr><th>Rule</th><th>Severity</th><th>Finding</th></tr></thead>
                 <tbody>{refusal.findings.map((f, i) => (
                   <tr key={i}>
                     <td style={{ whiteSpace: 'nowrap', verticalAlign: 'top' }}>
-                      <span className={'rd-chip tone-' + (f.severity === 'error' ? 'err' : f.severity === 'warning' ? 'warn' : 'ok')}>{f.ruleId ?? f.severity ?? 'finding'}</span>
+                      <span className={'rd-chip tone-' + (f.severity === 'error' ? 'err' : f.severity === 'warning' ? 'warn' : 'ok')}>{f.ruleId ?? 'finding'}</span>
                     </td>
+                    <td style={{ whiteSpace: 'nowrap', verticalAlign: 'top' }}>{f.severity ?? '—'}</td>
                     <td>{f.message ?? '—'}</td>
                   </tr>))}</tbody></table>
             )}

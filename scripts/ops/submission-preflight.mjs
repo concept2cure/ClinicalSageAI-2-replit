@@ -37,13 +37,16 @@ const REGIONAL_DTDS = [
   'jp-regional.dtd',
   'ca-regional.dtd',
 ];
+// FDA ships ONE nIVD PDF and ONE IVD PDF, and each carries 510(k), De Novo and
+// PMA (assets/estar-templates/README.md, family table). So the six marketing
+// descriptors resolve to two files, not six: this list is the DISTINCT set of
+// files the manifest actually names. It listed eSTAR-denovo-*.pdf and
+// eSTAR-pma-*.pdf until 2026-09-04, which told procurement to obtain four files
+// FDA does not publish and reported De Novo and PMA production blocked while it
+// was live.
 const ESTAR_TEMPLATES = [
   'eSTAR-510k-non-ivd.pdf',
   'eSTAR-510k-ivd.pdf',
-  'eSTAR-denovo-non-ivd.pdf',
-  'eSTAR-denovo-ivd.pdf',
-  'eSTAR-pma-non-ivd.pdf',
-  'eSTAR-pma-ivd.pdf',
   'PreSTAR-q-sub.pdf',
   'PreSTAR-ide.pdf',
   'PreSTAR-513g.pdf',

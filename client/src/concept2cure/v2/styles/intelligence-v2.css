@@ -12,6 +12,7 @@
 /* ── PedigreeBadge — the keystone trust pill ── */
 .c2c-v2 .ped{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:600;padding:2px 8px;border-radius:10px;line-height:1.3;white-space:nowrap;cursor:help;border:1px solid transparent;}
 .c2c-v2 .ped svg{width:10px;height:10px;}
+.c2c-v2 .ped-trust{font-weight:500;opacity:.8;}
 .c2c-v2 .ped[data-l="deterministic_registry"], .c2c-v2 .ped[data-l="deterministic_query"]{background:var(--success-muted);color:var(--success);border-color:color-mix(in oklab,var(--success) 30%,transparent);}
 .c2c-v2 .ped[data-l="rim_learned"]{background:var(--ai-muted);color:var(--ai);border-color:color-mix(in oklab,var(--ai) 30%,transparent);}
 .c2c-v2 .ped[data-l="external_api_live"]{background:var(--ai-muted);color:var(--ai);border-color:color-mix(in oklab,var(--ai) 30%,transparent);}
@@ -40,6 +41,7 @@
 .c2c-v2 .det-find[data-sev="ok"] svg{color:var(--success);}
 .c2c-v2 .det-rat{margin:0;padding-left:18px;color:var(--text-300);font-size:11.5px;line-height:1.55;}
 .c2c-v2 .det-rat li{margin:2px 0;}
+.c2c-v2 .det-recs{display:flex;flex-direction:column;gap:6px;}
 .c2c-v2 .det-rec{display:flex;gap:7px;align-items:flex-start;font-size:11.5px;line-height:1.5;color:var(--text-200);}
 .c2c-v2 .det-rec .n{font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--accent-200);flex-shrink:0;margin-top:1px;}
 .c2c-v2 .det-warns{font-size:10.5px;color:var(--warning);background:var(--warning-muted);border-radius:6px;padding:6px 9px;line-height:1.45;}
@@ -49,6 +51,7 @@
 .c2c-v2 .cit{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:500;font-family:var(--font-mono);background:var(--bg-000);border:1px solid var(--border-strong);color:var(--text-200);padding:2px 7px;border-radius:5px;line-height:1.4;white-space:nowrap;}
 .c2c-v2 .cit svg{width:9px;height:9px;color:var(--text-400);}
 .c2c-v2 .cit:hover{border-color:var(--accent-100);color:var(--accent-200);}
+.c2c-v2 .cit-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;}
 .c2c-v2 .cit-lead{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-right:2px;}
 
 /* ── ValidationSummaryPanel ── */
@@ -86,6 +89,10 @@
 .c2c-v2 .cap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px;}
 .c2c-v2 .cap-card{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;}
 .c2c-v2 .cap-card-h{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
+.c2c-v2 .cap-card-ic{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:var(--radius-md);background:var(--accent-000);color:var(--accent-200);flex-shrink:0;}.c2c-v2 .cap-card-ic svg{width:14px;height:14px;}
+/* the catalog filter reuses the evidence search box; the gap below it separates it from the first wave */
+.c2c-v2 .cap-filter{max-width:520px;}
+.c2c-v2 .cap-gap{height:16px;}
 .c2c-v2 .cap-card-t{font-size:12px;font-weight:600;color:var(--text-100);flex:1;}
 .c2c-v2 .cap-card-n{font-family:var(--font-mono);font-size:9.5px;color:var(--text-300);background:var(--bg-100);padding:1px 6px;border-radius:8px;font-weight:600;}
 .c2c-v2 .cap-tools{display:flex;flex-wrap:wrap;gap:4px;}
