@@ -154,3 +154,28 @@ describe('SAE and death counts that were never extracted are not "0 reported"', 
     expect(r.gaps).toContain('SAE and death counts not extracted for 1 of 2 study/ies');
   });
 });
+
+describe('a sample size that was never recorded is not "n=0"', () => {
+  const unsized = { ...pivotal, sampleSize: null, ittPopulation: undefined } as CSRSummaryInput;
+
+  it('2.5 prints the study as not recorded and qualifies the exposure total', () => {
+    const r = buildM25ClinicalOverview({ csrs: [phase1, unsized], indication: 'type 2 diabetes', investigationalProduct: 'BX-115' });
+    expect(r.narrative).toMatch(/BX-301 \(Phase 3, n=\[sample size not recorded\]\)/);
+    expect(r.narrative).not.toMatch(/n=0\b/);
+    expect(r.gaps).toContain('sample size not recorded for 1 study/ies — the exposure total excludes them');
+    const table = r.tables?.find(t => t.rows.some(row => row[0] === 'BX-301'));
+    expect(table?.rows.find(row => row[0] === 'BX-301')?.[3]).toBe('[not recorded]');
+  });
+
+  it('2.7 prints the study as not recorded and records the gap', () => {
+    const r = buildM27ClinicalSummary({ csrs: [phase1, unsized], indication: 'type 2 diabetes', investigationalProduct: 'BX-115' });
+    expect(r.narrative).toMatch(/n=\[sample size not recorded\]/);
+    expect(r.narrative).not.toMatch(/n=0\b/);
+    expect(r.gaps).toContain('sample size not recorded for 1 study/ies — the exposure total excludes them');
+  });
+
+  it('a recorded size still prints as the number', () => {
+    const r = buildM25ClinicalOverview({ csrs: [phase1, pivotal], indication: 'type 2 diabetes', investigationalProduct: 'BX-115' });
+    expect(r.narrative).toMatch(/BX-301 \(Phase 3, n=600\)/);
+  });
+});

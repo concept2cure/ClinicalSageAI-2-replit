@@ -194,7 +194,9 @@ export async function loadCsrInputsForProject(
       studyDesign: info.studyDesign,
       primaryEndpoint: info.primaryEndpoint,
       primaryResult,
-      sampleSize: info.sampleSize ?? 0,
+      // Unknown stays unknown: `?? 0` printed "n=0" into the Clinical Overview
+      // for a study whose size was simply never recorded.
+      sampleSize: info.sampleSize ?? null,
       csrSections: sections,
     });
   }
