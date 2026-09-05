@@ -69,10 +69,9 @@ const ROOT = process.cwd();
  */
 const NOT_PROSE = [
   {
-    // Exposed by L53 slice 8: while the artifact writers lived in this file,
-    // their gate enlistment made the whole file read as guarded and this
-    // writer was never checked on its own.
-    file: 'server/routes/concept2cure.ts',
+    // Exposed by L53 slice 8 (the artifact writers' gate enlistment had made the
+    // whole main file read as guarded); moved here with the handler in slice 10.
+    file: 'server/routes/c2c/haq-sessions.ts',
     why: 'PUT …/haq-session writes the HAQ Manager\'s session state — an opaque `questions` array the client round-trips — as JSON into a haq_session artifact; it is read back only by GET …/haq-session in the same file, its governed contract refuses export, and no packager or other reader resolves it into a document',
   },
   {
