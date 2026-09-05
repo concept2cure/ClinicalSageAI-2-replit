@@ -24,9 +24,9 @@
 
 import { createScopedLogger } from '../../utils/logger';
 import { orchestrateResolution } from './ana-resolution-orchestrator';
-import { getResolutionPlan, getProjectResolutionPlans } from './resolution-planner';
-import { getResolutionBundle, getProjectBundles } from './bundle-builder';
-import { explainResolutionPlan, summarizeResolutionBundle } from './ana-resolution-support';
+import { getProjectResolutionPlans } from './resolution-planner';
+import { getProjectBundles } from './bundle-builder';
+import './ana-resolution-support';
 import type {
   OrchestratorTrigger,
   OrchestratorResult,
@@ -38,8 +38,6 @@ import type { TriggerType } from '../reactive-dependency-service';
 import type {
   ContradictionFinding,
   AuthorityState,
-  ConsequenceType,
-  Severity,
   OverlayRule,
 } from '../contradiction-engine-service';
 import {
