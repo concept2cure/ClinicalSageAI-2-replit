@@ -815,9 +815,16 @@ async function compileFromSpine(
     assembleFailure = err instanceof Error ? err.message : String(err);
   }
 
+  // A leaf with no document at all was reported materialized: the resolver
+  // skips a NULL document_table/document_id before it can become "unresolved",
+  // so its key ':' was never in unresolvedKeys and a required section read as
+  // satisfied by a leaf that has nothing behind it. Nothing renders without a
+  // document — a declared delete included, which withdraws rather than places.
   const isMaterialized = (l: SpineLeafRow) =>
     assembleFailure == null &&
-    !unresolvedKeys.has(`${l.document_table ?? ''}:${l.document_id ?? ''}`);
+    !!l.document_table &&
+    !!l.document_id &&
+    !unresolvedKeys.has(`${l.document_table}:${l.document_id}`);
 
   const initialSequence = seq.sequenceNumber === '0000';
   const validationResults = leafPlacementFindings(leaves, { initialSequence, required, isMaterialized });

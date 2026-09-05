@@ -83,3 +83,45 @@ describe('packageLeafBytes — canonical conformant packaging', () => {
     }
   });
 });
+
+describe('packageLeafBytes — lifecycle operations after sequence 0000', () => {
+  it('refuses a follow-up sequence whose leaves carry no operation, rather than filing them all as new', async () => {
+    // The primitive hardcoded operation:'new' for every leaf whatever the
+    // sequence. A caller transmitting 0002 filed each leaf as brand-new with no
+    // modified-file, so the versions those leaves superseded stayed current at
+    // the agency alongside them.
+    const outputDir = await fs.mkdtemp(path.join(os.tmpdir(), 'plb-out3-'));
+    try {
+      await expect(
+        packageLeafBytes({
+          region: 'fda', applicationId: 'IND123456', sequence: '0002', submissionType: 'original',
+          sponsorId: 'SPON-1', sponsorName: 'Acme Bio', productName: 'Compound X', environment: 'staging', outputDir,
+          leaves: [{ ctdSection: '3.2.S.1', fileName: 'drug-substance.pdf', bytes: pdf('DS v3'), title: 'Drug Substance General' }],
+        }),
+      ).rejects.toThrow(/Sequence 0002 cannot be packaged without a lifecycle operation/);
+    } finally {
+      await fs.rm(outputDir, { recursive: true, force: true });
+    }
+  });
+
+  it('carries a supplied operation and modified-file into the backbone', async () => {
+    const outputDir = await fs.mkdtemp(path.join(os.tmpdir(), 'plb-out4-'));
+    try {
+      const bundle = await packageLeafBytes({
+        region: 'fda', applicationId: 'IND123456', sequence: '0002', submissionType: 'original',
+        sponsorId: 'SPON-1', sponsorName: 'Acme Bio', productName: 'Compound X', environment: 'staging', outputDir,
+        leaves: [{
+          ctdSection: '3.2.S.1', fileName: 'drug-substance.pdf', bytes: pdf('DS v3'), title: 'Drug Substance General',
+          operation: 'replace', modifiedFile: '../0001/m3/32-body-data/32s-drug-sub/drug-substance.pdf',
+        }],
+      });
+      const zip = await JSZip.loadAsync(await fs.readFile(bundle.path));
+      const indexXml = await zip.file('index.xml')!.async('string');
+      expect(indexXml).toMatch(/operation="replace"/);
+      expect(indexXml).toContain('../0001/m3/32-body-data/32s-drug-sub/drug-substance.pdf');
+      expect(indexXml).not.toMatch(/operation="new"/);
+    } finally {
+      await fs.rm(outputDir, { recursive: true, force: true });
+    }
+  });
+});

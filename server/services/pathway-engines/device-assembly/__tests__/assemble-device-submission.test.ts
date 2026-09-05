@@ -52,6 +52,26 @@ describe('assembleDeviceSubmission (B5)', () => {
     expect(r.blockers).toHaveLength(0);
   });
 
+  it('does not claim an official eSTAR while any section is of undetermined applicability', () => {
+    // No deviceFlags — which is what every route caller supplies — leaves all
+    // seven conditional sections undetermined. The mapper's summary.ready is
+    // false for that, but this consumer recomputed readiness from
+    // missingRequired alone: canProduceOfficialEstar true, errors empty, for a
+    // sterile software-bearing device with none of that documentation.
+    const r = assembleDeviceSubmission({
+      pathway: '510k',
+      variant: 'device',
+      leaves: complete510kLeaves,
+      presentTemplates: [TEMPLATE_510K_DEVICE],
+      environment: 'production',
+      requireTemplate: true,
+    });
+    expect(r.estar.summary.ready).toBe(false);
+    expect(r.canProduceOfficialEstar).toBe(false);
+    expect(r.artifactKind).toBe('content-package-draft');
+    expect(r.blockers.join(' ')).toMatch(/applicability is not established/);
+  });
+
   it('falls back to a draft content package (not submittable) when the official template is missing', () => {
     const r = assembleDeviceSubmission({
       pathway: '510k',

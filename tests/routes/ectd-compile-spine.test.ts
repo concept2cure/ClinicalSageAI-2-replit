@@ -170,6 +170,29 @@ describe('POST /:projectIdent/compile — spine-backed compiles run the real gen
     expect(payload.leafFilesRendered).toBe(1);
   });
 
+  it('a placed leaf with no document behind it does not satisfy its required section', async () => {
+    // The resolver skips a NULL document_table/document_id before it can become
+    // "unresolved", so its key was never in unresolvedKeys and isMaterialized
+    // reported it rendered: a required section read as satisfied by a leaf that
+    // has nothing behind it, with no blocker raised.
+    mockSpine({
+      leaves: [
+        { section_code: '2.5', title: 'Clinical Overview', lifecycle_op: 'new', document_table: null, document_id: null },
+        { section_code: '3.2.S', title: 'Drug Substance', lifecycle_op: 'new', document_table: 'unified_documents', document_id: 200 },
+      ],
+    });
+    const { zipPath } = await makeBundleZip(REAL_BACKBONE);
+    assembleSequenceMock.mockResolvedValue(assembledResult(zipPath, { materialized: 1 }));
+
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.submissionReady).toBe(false);
+    const unplaced = payload.validationResults.filter((v: any) => /2\.5/.test(String(v.message)) && /materializ|placed|render/i.test(String(v.message)));
+    expect(unplaced.length).toBeGreaterThan(0);
+  });
+
   it('surfaces a DTD-incomplete package as a blocker, never as ready', async () => {
     mockSpine();
     const { zipPath } = await makeBundleZip(REAL_BACKBONE);
