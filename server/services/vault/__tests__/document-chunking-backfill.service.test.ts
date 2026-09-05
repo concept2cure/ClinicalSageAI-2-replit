@@ -38,15 +38,17 @@ const row = (over: Partial<Row> = {}): Row => ({
 });
 
 let queries: Array<{ sql: string; params: unknown[] }>;
-// `Queryable.query` is generic over the row type each call site asks for. This
-// stub serves one fixed shape whatever is asked, so the cast sits at that seam
-// rather than the reader being loosened to accept it. Every call is recorded in
-// `queries`, which is what the assertions read — no spy needed.
+// Typed as Queryable rather than inferred. Queryable.query is GENERIC —
+// `query<T = any>(text, values?)` — and a concrete non-generic mock is not
+// assignable to it, which is the whole of the 9 TS2322 errors this file was
+// producing. The cast is on the function alone, so the object still has to
+// satisfy the interface; widening the whole literal to `any` would have hidden
+// a genuinely wrong shape.
 const execWith = (rows: Row[]): Queryable => ({
-  async query<T>(sql: string, params: unknown[] = []) {
+  query: vi.fn(async (sql: string, params: unknown[] = []) => {
     queries.push({ sql, params });
-    return { rows: rows as unknown as T[], rowCount: rows.length };
-  },
+    return { rows, rowCount: rows.length };
+  }) as unknown as Queryable['query'],
 });
 
 beforeEach(() => {

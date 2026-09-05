@@ -203,10 +203,21 @@ export async function markPackagesContentChangedForArtifact(
   };
   let packageIds: number[];
   try {
+    // Scoped on BOTH sides: the mapping row's org and the section's own. A
+    // mapping row carrying this org with a section belonging to another is
+    // exactly what the ungoverned biostatistics insert could produce before it
+    // was migrated onto mapArtifactToSection, and following it would clear
+    // another tenant's bundle and file the governed action under this one.
     const rows = await db
       .selectDistinct({ packageDbId: c2cPackageSections.packageDbId })
       .from(c2cArtifactSectionMap)
-      .innerJoin(c2cPackageSections, eq(c2cPackageSections.id, c2cArtifactSectionMap.sectionDbId))
+      .innerJoin(
+        c2cPackageSections,
+        and(
+          eq(c2cPackageSections.id, c2cArtifactSectionMap.sectionDbId),
+          eq(c2cPackageSections.orgId, orgId),
+        ),
+      )
       .where(and(eq(c2cArtifactSectionMap.artifactId, artifactDbId), eq(c2cArtifactSectionMap.orgId, orgId)));
     packageIds = rows.map((r) => Number(r.packageDbId)).filter((n) => Number.isSafeInteger(n) && n > 0);
   } catch (e) {

@@ -2358,7 +2358,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
     <div className="page-inner">
       <AdminHeader
         eyebrow="Workspace — evidence"
-        title="Artifacts Center"
+        title="Artifacts center"
         sub="Every artifact AnA has drafted — across projects, with version chain, provenance and signature status. Open a DOCX to edit it, or download a PDF."
         actions={
           <button
@@ -2384,7 +2384,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
         <EmptyState
           tone="error"
           icon={I.alertTriangle}
-          title="Couldn't load the Artifacts Center"
+          title="Couldn't load the artifacts center"
           hint="The governed artifact gallery didn't respond. Sign in and retry, or check the service is reachable."
         />
       ) : rows.length === 0 ? (

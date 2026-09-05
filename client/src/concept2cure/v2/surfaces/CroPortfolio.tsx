@@ -276,7 +276,7 @@ export function CroPortfolio({ onAsk, onNav }: SurfaceViewProps) {
       <div className="ph">
         <div>
           <div className="ph-eyebrow">CRO {I.dot} Multi-sponsor</div>
-          <h1 className="ph-title">Sponsor Portfolio</h1>
+          <h1 className="ph-title">Sponsor portfolio</h1>
           <div className="ph-sub">
             Every sponsor client rolled up in one console — each org-isolated.
             Drill into a sponsor to work their filing; each submission runs the

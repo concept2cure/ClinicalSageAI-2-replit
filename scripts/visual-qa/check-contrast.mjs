@@ -60,9 +60,23 @@ const MARKUP = path.join(REPO, '.visual-qa/markup');
 // against a partial cascade is a measurement of a page the product never serves.
 const STYLES = styleTags(builtStylesheets(TAG));
 
-const page = (markup) =>
+/* Both themes. `dark` is a CLASS on the shell div, which is exactly how
+   V2App.tsx renders it (`c2c-v2 shell${prefs.dark ? ' dark' : ''}`) — not a
+   data-theme attribute, which nothing in client/ ever sets. Measuring only the
+   light theme is how a whole class of dark-mode contrast failure stayed
+   invisible here: this harness reported 0 failures across 4056 elements while
+   tinted surfaces in dark mode were rendering text at 1.66:1. */
+const THEMES = [
+  { id: 'light', shellAttrs: 'class="c2c-v2 shell"' },
+  // Exactly what V2App.tsx renders in dark mode: the class AND data-theme.
+  // colors_and_type.css keys its dark block off either; the generated
+  // surface-text-ramp sheets key theirs off the attribute alone.
+  { id: 'dark', shellAttrs: 'class="c2c-v2 shell dark" data-theme="dark"' },
+];
+
+const page = (markup, shellAttrs) =>
   `<!doctype html><html><head><meta charset="utf-8">${STYLES}</head>
-<body><div class="c2c-v2 shell">${markup}</div></body></html>`;
+<body><div ${shellAttrs}>${markup}</div></body></html>`;
 
 /** Runs in the browser. Returns one record per text-bearing element. */
 const MEASURE = () => {
@@ -70,6 +84,15 @@ const MEASURE = () => {
   const { parseRgbString: parse, relativeLuminance: lum, over, contrastRatio } = window.__wcag;
 
   const out = [];
+  /* The page background under the shell, read rather than assumed. Hardcoding
+     white made every dark-theme measurement wrong at the point where the
+     ancestor walk runs out of opaque backgrounds. */
+  const shell = document.querySelector('.c2c-v2');
+  const shellBg = shell ? parse(getComputedStyle(shell).backgroundColor) : null;
+  const ROOT_BG = shellBg && shellBg.a > 0
+    ? (shellBg.a < 1 ? over(shellBg, { r: 255, g: 255, b: 255, a: 1 }) : shellBg)
+    : { r: 255, g: 255, b: 255, a: 1 };
+
   const els = document.querySelectorAll('.c2c-v2 *');
   for (const el of els) {
     // Only elements with their OWN visible text — otherwise a wrapper is
@@ -94,12 +117,12 @@ const MEASURE = () => {
       const s = getComputedStyle(n);
       if (s.backgroundImage && s.backgroundImage !== 'none') { hitImage = true; break; }
       const c = parse(s.backgroundColor);
-      if (c && c.a > 0) { bg = c.a < 1 ? over(c, { r: 255, g: 255, b: 255, a: 1 }) : c; break; }
+      if (c && c.a > 0) { bg = c.a < 1 ? over(c, ROOT_BG) : c; break; }
     }
     // A gradient or image behind the text: cannot be measured this way, and
     // guessing would be worse than declining.
     if (hitImage) continue;
-    if (!bg) bg = { r: 255, g: 255, b: 255, a: 1 };
+    if (!bg) bg = ROOT_BG;
 
     const fgc = fg.a < 1 ? over(fg, bg) : fg;
     const ratio = contrastRatio(fgc, bg);
@@ -185,27 +208,34 @@ let inactiveFailures = 0;
 const byPair = new Map();
 const worst = [];
 
-for (const file of files) {
-  const name = file.replace(/\.html$/, '');
-  const markup = fs.readFileSync(path.join(MARKUP, file), 'utf8');
-  const p = await ctx.newPage();
-  await p.setContent(page(markup), { waitUntil: 'load' });
-  const rows = await p.evaluate(MEASURE);
-  await p.close();
+const perTheme = new Map(THEMES.map((t) => [t.id, { checked: 0, failed: 0 }]));
 
-  const meaningful = rows.filter((r) => !r.decorative && !r.inactive);
-  const failed = meaningful.filter((r) => !r.pass);
-  decorativeFailures += rows.filter((r) => r.decorative && !r.pass).length;
-  inactiveFailures += rows.filter((r) => !r.decorative && r.inactive && !r.pass).length;
-  totalChecked += meaningful.length;
-  totalFailed += failed.length;
-  for (const r of failed) {
-    const key = `${r.color} on ${r.background}`;
-    byPair.set(key, (byPair.get(key) ?? 0) + 1);
-  }
-  if (failed.length) {
-    bySurface.push({ name, checked: rows.length, failed: failed.length });
-    for (const f of failed) worst.push({ surface: name, ...f });
+for (const theme of THEMES) {
+  for (const file of files) {
+    const name = file.replace(/\.html$/, '');
+    const markup = fs.readFileSync(path.join(MARKUP, file), 'utf8');
+    const p = await ctx.newPage();
+    await p.setContent(page(markup, theme.shellAttrs), { waitUntil: 'load' });
+    const rows = await p.evaluate(MEASURE);
+    await p.close();
+
+    const meaningful = rows.filter((r) => !r.decorative && !r.inactive);
+    const failed = meaningful.filter((r) => !r.pass);
+    decorativeFailures += rows.filter((r) => r.decorative && !r.pass).length;
+    inactiveFailures += rows.filter((r) => !r.decorative && r.inactive && !r.pass).length;
+    totalChecked += meaningful.length;
+    totalFailed += failed.length;
+    const pt = perTheme.get(theme.id);
+    pt.checked += meaningful.length;
+    pt.failed += failed.length;
+    for (const r of failed) {
+      const key = `${r.color} on ${r.background} [${theme.id}]`;
+      byPair.set(key, (byPair.get(key) ?? 0) + 1);
+    }
+    if (failed.length) {
+      bySurface.push({ name: `${name} [${theme.id}]`, checked: rows.length, failed: failed.length });
+      for (const f of failed) worst.push({ surface: `${name} [${theme.id}]`, ...f });
+    }
   }
 }
 
@@ -214,9 +244,17 @@ await browser.close();
 worst.sort((a, b) => a.ratio - b.ratio);
 
 console.log(
-  `\n${TAG} ${files.length} surfaces · ${totalChecked} text elements measured · ` +
+  `\n${TAG} ${files.length} surfaces × ${THEMES.length} themes · ${totalChecked} text elements measured · ` +
     `${totalFailed} below WCAG 2.2 AA (${totalChecked ? ((totalFailed / totalChecked) * 100).toFixed(1) : '0.0'}%).\n`,
 );
+
+for (const [id, t] of perTheme) {
+  console.log(
+    `    ${id.padEnd(6)} ${String(t.checked).padStart(6)} measured · ${String(t.failed).padStart(5)} below AA` +
+      ` (${t.checked ? ((t.failed / t.checked) * 100).toFixed(1) : '0.0'}%)`,
+  );
+}
+console.log('');
 
 console.log(
   `  (${decorativeFailures} additional low-contrast elements were lone separator glyphs — ` +

@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-09-05T19:03:11.299Z",
+  "generatedAt": "2026-09-05T19:44:36.853Z",
   "git": {
-    "sha": "8ac8875190a45f6cf30f2c466dfc0f3989038833",
-    "branch": "concept2cure-v2"
+    "sha": "efbb08592bded790e3264ab1ae6730c277e54ce3",
+    "branch": "ana-w2"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -12,9 +12,9 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 209,
-    "contentDuplicateGroups": 0,
-    "contentDuplicateFiles": 0,
+    "duplicateBasenames": 210,
+    "contentDuplicateGroups": 1,
+    "contentDuplicateFiles": 3,
     "largeFilesByBytes": 40,
     "largeFilesByLines": 93
   },
@@ -539,6 +539,15 @@
           "server/routes/c2c/conversations.ts",
           "ui_kits/mdx/data/conversations.js",
           "ui_kits/mdx/surfaces/Conversations.jsx"
+        ]
+      },
+      {
+        "basename": "document-chunking-backfill.service.test",
+        "count": 3,
+        "paths": [
+          "server/services/vault/__tests__/document-chunking-backfill.service.test.ts",
+          "server/services/vault/__tests__/document-chunking-backfill.service.test.ts",
+          "server/services/vault/__tests__/document-chunking-backfill.service.test.ts"
         ]
       },
       {
@@ -1977,7 +1986,17 @@
         ]
       }
     ],
-    "contentDuplicates": [],
+    "contentDuplicates": [
+      {
+        "hash": "62f4b269e462",
+        "count": 3,
+        "paths": [
+          "server/services/vault/__tests__/document-chunking-backfill.service.test.ts",
+          "server/services/vault/__tests__/document-chunking-backfill.service.test.ts",
+          "server/services/vault/__tests__/document-chunking-backfill.service.test.ts"
+        ]
+      }
+    ],
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
@@ -2017,7 +2036,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 176730
+        "bytes": 176975
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2175,7 +2194,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4610
+        "lines": 4614
       },
       {
         "file": "server/storage.ts",
@@ -2442,12 +2461,12 @@
         "lines": 1794
       },
       {
-        "file": "server/routes/ana-cortex-ft.ts",
-        "lines": 1785
+        "file": "server/routes/510k-estar-routes.ts",
+        "lines": 1786
       },
       {
-        "file": "server/routes/510k-estar-routes.ts",
-        "lines": 1775
+        "file": "server/routes/ana-cortex-ft.ts",
+        "lines": 1785
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
@@ -2519,7 +2538,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 403,
+      "duplicateGroups": 406,
       "largeByBytes": 30,
       "largeByLines": 77
     },

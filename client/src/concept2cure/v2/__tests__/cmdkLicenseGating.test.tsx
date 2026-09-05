@@ -5,7 +5,7 @@
  * `railLicenseGating.test.tsx` holds these contracts for the rail. This file
  * holds them for the command palette, and it exists because the palette kept
  * NONE of them: it listed every surface in `UI_SURFACES` with no entitlement
- * awareness at all, so a customer whose rail had greyed out Submission Center
+ * awareness at all, so a customer whose rail had greyed out Submission center
  * and explained why could reach it in two keystrokes from ⌘K — landing on a
  * surface the organization has not licensed, which 403s or renders empty and
  * reads as "there is nothing here" rather than "you have not bought this".
@@ -74,7 +74,7 @@ function payload(over: Partial<NavEntitlementsPayload> = {}): NavEntitlementsPay
 
 const LOCKED_SUBMISSION = {
   id: 'submission-center',
-  label: 'Submission Center',
+  label: 'Submission center',
   entitled: false,
   source: 'tier' as const,
   requiredTier: 'professional',
@@ -157,11 +157,11 @@ describe('⌘K licence gating', () => {
     expect(lockedRows()).toHaveLength(0);
     // The very destination contract 2 locks: with no answer it is an ordinary
     // result that goes where it says it goes.
-    const btn = screen.getByRole('button', { name: /^Submission Center/ });
+    const btn = screen.getByRole('button', { name: /^Submission center/ });
     expect(btn.getAttribute('data-locked')).toBeNull();
     fireEvent.click(btn);
     expect(onNav).toHaveBeenCalledWith('submission-center');
-    expect(screen.queryByRole('dialog', { name: /Submission Center/ })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: /Submission center/ })).toBeNull();
   });
 
   it('renders no lock when the server answers resolved:false', async () => {
@@ -172,7 +172,7 @@ describe('⌘K licence gating', () => {
     search('submission');
 
     expect(lockedRows()).toHaveLength(0);
-    fireEvent.click(screen.getByRole('button', { name: /^Submission Center/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Submission center/ }));
     expect(onNav).toHaveBeenCalledWith('submission-center');
   });
 
@@ -188,7 +188,7 @@ describe('⌘K licence gating', () => {
     search('submission');
 
     const btn = await screen.findByRole('button', {
-      name: 'Submission Center — not included in your plan',
+      name: 'Submission center — not included in your plan',
     });
     expect(btn.getAttribute('data-locked')).toBe('true');
     // Exactly one result is locked — the verdict is not smeared onto the other
@@ -198,7 +198,7 @@ describe('⌘K licence gating', () => {
     // the hint column carries it where the domain group would otherwise sit.
     expect(btn.querySelector('.hint')?.textContent).toBe('not included in your plan');
     // Hover and screen reader are told the same sentence.
-    expect(btn.getAttribute('title')).toBe('Submission Center — not included in your plan');
+    expect(btn.getAttribute('title')).toBe('Submission center — not included in your plan');
 
     fireEvent.click(btn);
     expect(onNav).not.toHaveBeenCalled();
@@ -215,13 +215,13 @@ describe('⌘K licence gating', () => {
     search('submission');
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'Submission Center — not included in your plan' }),
+      screen.getByRole('button', { name: 'Submission center — not included in your plan' }),
     );
 
     const dialog = await screen.findByRole('dialog');
     // The palette itself is gone: its search field no longer exists.
     expect(screen.queryByRole('textbox')).toBeNull();
-    expect(within(dialog).getByText('Submission Center')).toBeTruthy();
+    expect(within(dialog).getByText('Submission center')).toBeTruthy();
     // The minimum tier is named, and it is the tier the SERVER returned.
     expect(within(dialog).getByText('Included from Professional')).toBeTruthy();
     expect(dialog.textContent).toMatch(/Professional plan/);
@@ -259,7 +259,7 @@ describe('⌘K licence gating', () => {
     fireEvent.keyDown(window, { key: 'Enter' });
     expect(onNav).not.toHaveBeenCalled();
     const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByText('Submission Center')).toBeTruthy();
+    expect(within(dialog).getByText('Submission center')).toBeTruthy();
   });
 
   /* CONTRACT 5 — AN ENTITLED SURFACE IS UNTOUCHED.
@@ -279,7 +279,7 @@ describe('⌘K licence gating', () => {
     const { onNav } = await mountCmdK();
     search('submission');
 
-    const btn = screen.getByRole('button', { name: /^Submission Center/ });
+    const btn = screen.getByRole('button', { name: /^Submission center/ });
     expect(btn.getAttribute('data-locked')).toBeNull();
     expect(lockedRows()).toHaveLength(0);
     fireEvent.click(btn);
@@ -313,7 +313,7 @@ describe('⌘K licence gating', () => {
     search('submission');
     expect(lockedRows()).toHaveLength(0);
     expect(document.body.textContent).not.toMatch(/not included in your plan/);
-    fireEvent.click(screen.getByRole('button', { name: /^Submission Center/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Submission center/ }));
     expect(onNav).toHaveBeenCalledWith('submission-center');
   });
 
@@ -366,8 +366,8 @@ describe('⌘K licence gating', () => {
     search('submission');
 
     expect(lockedRows()).toHaveLength(1);
-    const btn = screen.getByRole('button', { name: `Submission Center — ${reason}` });
-    expect(btn.getAttribute('title')).toBe(`Submission Center — ${reason}`);
+    const btn = screen.getByRole('button', { name: `Submission center — ${reason}` });
+    expect(btn.getAttribute('title')).toBe(`Submission center — ${reason}`);
     expect(btn.querySelector('.hint')?.textContent).toBe(reason);
   });
 });

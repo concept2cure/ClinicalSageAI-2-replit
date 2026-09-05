@@ -735,6 +735,19 @@ export function V2App() {
     <NavEntitlementsProvider>
     <div
       className={`c2c-v2 shell${prefs.dark ? ' dark' : ''}`}
+      /* Both dark selectors, because the app's own stylesheets key off both and
+         this element used to carry only the class. colors_and_type.css declares
+         its dark block as `.dark, [data-theme="dark"]`, so the class alone was
+         enough for the canonical tokens — but the GENERATED surface-text-ramp
+         sheets emit their dark re-base as `[data-theme="dark"] :is(…)` only, and
+         nothing in client/ ever set that attribute. The ramp's light re-base
+         therefore stayed applied in dark mode, leaving light-mode grey text on
+         dark tinted surfaces: measured in Chromium at 1.90:1 and 1.66:1 against
+         the 4.5:1 floor, where the dark values give 4.57 and 5.24. Setting the
+         attribute here fixes it at the source, rather than teaching every
+         generated sheet a second selector (which would also make `.dark` a
+         cross-shell class collision — ci:check-shell-css-collisions). */
+      data-theme={prefs.dark ? 'dark' : undefined}
       data-collapsed={prefs.railCollapsed}
       data-ana-open={ownsConversation ? false : prefs.anaOpen}
       /* The DOM attribute keeps its name: `.shell[data-editor="true"]` is what

@@ -476,7 +476,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Submission · Communication Center</div>
-          <h1 className="sp-title">Communication Center</h1>
+          <h1 className="sp-title">Communication center</h1>
           <p className="sp-state">
             The regulated FDA↔client loop — every agency letter, IR, gateway ack and meeting, traced
             to its filing and turned into governed action.

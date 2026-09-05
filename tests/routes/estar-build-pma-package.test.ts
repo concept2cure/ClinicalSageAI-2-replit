@@ -316,6 +316,59 @@ describe('POST /api/510k/estar/assemble — pathway pma', () => {
     scopeState.docType = 'pma';
   });
 
+  /*
+   * A FILE WITH THE RIGHT NAME IS NOT THE OFFICIAL TEMPLATE, and this route used
+   * to think it was. It built `presentTemplates` from `vendored.map(t => t.fileName)`,
+   * so a PDF called eSTAR-510k-non-ivd.pdf whose bytes do not match
+   * checksums.txt counted as present and the verdict came back "official eSTAR
+   * producible". `estar-fill` — the code behind the Generate button — has always
+   * refused those bytes, because the canonical field map was ENUMERATED from the
+   * pinned ones and filling a different file writes governed values into
+   * whatever boxes THAT file has. The route promised what the fill would refuse.
+   */
+  it('does not call the official eSTAR producible on a template whose bytes are not the pinned ones', async () => {
+    const fs = await import('node:fs/promises');
+    const os = await import('node:os');
+    const path = await import('node:path');
+    const { PDFDocument } = await import('pdf-lib');
+
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'estar-assemble-swapped-'));
+    const impostor = await PDFDocument.create();
+    impostor.addPage();
+    await fs.writeFile(path.join(dir, 'eSTAR-510k-non-ivd.pdf'), Buffer.from(await impostor.save()));
+    await fs.writeFile(
+      path.join(dir, 'checksums.txt'),
+      `${'0'.repeat(64)}  eSTAR-510k-non-ivd.pdf\n`,
+    );
+
+    const prev = process.env.ESTAR_TEMPLATE_DIR;
+    process.env.ESTAR_TEMPLATE_DIR = dir;
+    try {
+      const req = makeReq({ pathway: '510k', variant: 'device', programId: PROGRAM_UUID });
+      const res = createMockResponse() as any;
+      await getHandler('/assemble')(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      const payload = res.json.mock.calls[0][0];
+      /*
+       * Assert on the TEMPLATE verdict, not on canProduceOfficialEstar. That
+       * flag is `sectionsComplete && template.available`, and this fixture's
+       * content is incomplete, so it reads false either way — an assertion on
+       * it passes with the defect restored and proves nothing. The isolated
+       * question is whether a file with the right name and the wrong bytes
+       * counts as an available template.
+       */
+      expect(payload.template.available).toBe(false);
+      // The swapped file is not in `present` at all, which is the whole point:
+      // it is on disk under the expected name and still does not count.
+      expect(payload.template.present).toEqual([]);
+      expect(payload.artifactKind).not.toBe('official-estar');
+    } finally {
+      if (prev === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
+      else process.env.ESTAR_TEMPLATE_DIR = prev;
+    }
+  });
+
   it('computes the PMA assembly verdict against the PMA modules', async () => {
     mockLoadContentLeaves.mockResolvedValueOnce(PMA_LEAVES);
     const req = makeReq({ pathway: 'pma', variant: 'device', programId: PROGRAM_UUID });

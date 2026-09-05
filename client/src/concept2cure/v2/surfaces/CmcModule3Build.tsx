@@ -108,6 +108,10 @@ export interface Module3Readiness {
   approvedSections: number;
   staleSections: number;
   openCriticalContradictions: number;
+  /** Sections with no recorded source lineage — the audit trail has a gap. */
+  sectionsWithoutProvenance?: number;
+  /** False = the governed-decision fabric returned no verdict (not "it cleared"). */
+  governedStateEvaluated?: boolean;
   exportReady: boolean;
 }
 
@@ -413,6 +417,13 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
                     {readiness.data.staleSections ? ` · ${readiness.data.staleSections} stale` : ''}
                     {readiness.data.openCriticalContradictions
                       ? ` · ${readiness.data.openCriticalContradictions} critical contradiction${readiness.data.openCriticalContradictions === 1 ? '' : 's'} open`
+                      : ''}
+                    {/* Two reasons the gate refuses that the counts above never showed. */}
+                    {readiness.data.sectionsWithoutProvenance
+                      ? ` · ${readiness.data.sectionsWithoutProvenance} section${readiness.data.sectionsWithoutProvenance === 1 ? '' : 's'} with no recorded source lineage`
+                      : ''}
+                    {readiness.data.governedStateEvaluated === false
+                      ? ' · the governed-decision state could not be evaluated, so nothing here is cleared'
                       : ''}
                   </span>
                 </div>
