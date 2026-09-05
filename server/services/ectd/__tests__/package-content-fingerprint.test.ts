@@ -6,6 +6,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
+  assessPackageContent,
   fingerprintPackageContent,
   isCurrentContentFingerprint,
   readPackageContentRows,
@@ -51,6 +52,32 @@ describe('fingerprintPackageContent', () => {
       { sectionDbId: 1, sectionKey: 'y', artifactDbId: null, ctdSection: null, content: null },
     ]);
     expect(a).not.toBe(b);
+  });
+});
+
+describe('assessPackageContent', () => {
+  const sqlRows = (rows: PackageContentRow[]) =>
+    rows.map((r) => ({ section_db_id: r.sectionDbId, section_key: r.sectionKey, artifact_db_id: r.artifactDbId, ctd_section: r.ctdSection, content: r.content }));
+  const clientFor = (rows: PackageContentRow[]) => {
+    const query = async (_sql: string, _params: unknown[]) => ({ rows: sqlRows(rows) });
+    const spy = { calls: 0, query: async (sql: string, params: unknown[]) => { spy.calls += 1; return query(sql, params); } };
+    return spy;
+  };
+
+  it('matches when the package still holds what the bundle was built from, and reports DRIFT with both fingerprints when it does not', async () => {
+    const assembled = fp(ROWS);
+    expect(await assessPackageContent(clientFor(ROWS), 5, 99, assembled)).toEqual({ state: 'match', current: assembled });
+    const edited = ROWS.map((r) => (r.artifactDbId === 1 ? { ...r, content: 'edited' } : r));
+    const drift = await assessPackageContent(clientFor(edited), 5, 99, assembled);
+    expect(drift).toEqual({ state: 'drift', current: fp(edited), assembled });
+  });
+
+  it('is UNPROVEN, without reading anything, for a missing or older-scheme fingerprint', async () => {
+    for (const stored of [undefined, null, '', 'v0:' + 'a'.repeat(64), 'a'.repeat(64)]) {
+      const client = clientFor(ROWS);
+      expect(await assessPackageContent(client, 5, 99, stored), String(stored)).toEqual({ state: 'unproven' });
+      expect(client.calls).toBe(0);
+    }
   });
 });
 

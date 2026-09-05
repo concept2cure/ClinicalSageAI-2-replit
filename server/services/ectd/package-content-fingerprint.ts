@@ -52,7 +52,39 @@ export function isCurrentContentFingerprint(v: unknown): v is string {
   return typeof v === 'string' && new RegExp(`^${CONTENT_FINGERPRINT_VERSION}:[0-9a-f]{64}$`).test(v);
 }
 
-export interface QueryClient {
+/** One wording for the transmit refusal and the preflight finding alike. */
+export const CONTENT_DRIFT_MESSAGE =
+  'The package content changed since this bundle was assembled (an artifact edited, mapped or unmapped, ' +
+  'or a section changed), so the zip no longer reflects it; re-assemble the package before transmitting.';
+export const CONTENT_UNPROVEN_MESSAGE =
+  'Bundle records no content fingerprint, so whether it still reflects the package is UNKNOWN; ' +
+  're-assemble the package before transmitting.';
+
+export type ContentAssessment =
+  | { state: 'match'; current: string }
+  | { state: 'drift'; current: string; assembled: string }
+  /** The descriptor carries no fingerprint from the current scheme: nothing is read. */
+  | { state: 'unproven' };
+
+/**
+ * Compare a stored descriptor's fingerprint with the package's CURRENT
+ * content. The single assessment behind the governed transmit gate and the
+ * preflight finding, so the two can never disagree about a bundle.
+ */
+export async function assessPackageContent(
+  client: QueryClient,
+  packageDbId: number,
+  orgId: number,
+  storedFingerprint: unknown,
+): Promise<ContentAssessment> {
+  if (!isCurrentContentFingerprint(storedFingerprint)) return { state: 'unproven' };
+  const current = fingerprintPackageContent(await readPackageContentRows(client, packageDbId, orgId));
+  return current === storedFingerprint
+    ? { state: 'match', current }
+    : { state: 'drift', current, assembled: storedFingerprint };
+}
+
+interface QueryClient {
   query: (sql: string, params: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
 }
 

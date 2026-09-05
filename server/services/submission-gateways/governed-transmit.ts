@@ -46,9 +46,11 @@ import type { GatewayName, GatewayTransmitResult, Region, SubmissionBundle } fro
 import { findActiveTransmittal } from './fda-esg';
 import { getBundle } from '../submission-bundle-storage';
 import {
-  fingerprintPackageContent,
+  assessPackageContent,
   isCurrentContentFingerprint,
-  readPackageContentRows,
+  CONTENT_DRIFT_MESSAGE,
+  CONTENT_UNPROVEN_MESSAGE,
+  type ContentAssessment,
 } from '../ectd/package-content-fingerprint';
 import {
   bundleTrustEnforced,
@@ -443,32 +445,23 @@ export async function executeGovernedTransmit(
   // descriptor without a fingerprint (assembled before it existed) is UNKNOWN,
   // and UNKNOWN blocks wherever descriptor trust is enforced, exactly like
   // missing structural-validation evidence.
+  // The assessment is the one the preflight route reports, so the two never
+  // disagree about a bundle.
   if (input.packageId != null && !input.clientBundle) {
-    if (bundle.contentFingerprint) {
-      let current: string;
-      try {
-        current = fingerprintPackageContent(
-          await readPackageContentRows(pool, input.packageId, organizationId),
-        );
-      } catch (err) {
-        throw new GovernedTransmitInternalError('transmit-content-fingerprint', err);
-      }
-      if (current !== bundle.contentFingerprint) {
-        throw new GovernedTransmitRefusal(
-          'BUNDLE_CONTENT_DRIFT',
-          'The package content changed since this bundle was assembled (an artifact edited, mapped or unmapped, ' +
-            'or a section changed), so the zip no longer reflects it; re-assemble the package before transmitting.',
-          422,
-          { assembledFingerprint: bundle.contentFingerprint, currentFingerprint: current },
-        );
-      }
-    } else if (bundleTrustEnforced()) {
-      throw new GovernedTransmitRefusal(
-        'BUNDLE_CONTENT_UNPROVEN',
-        'Bundle records no content fingerprint, so whether it still reflects the package is UNKNOWN; ' +
-          're-assemble the package before transmitting.',
-        422,
-      );
+    let assessment: ContentAssessment;
+    try {
+      assessment = await assessPackageContent(pool, input.packageId, organizationId, bundle.contentFingerprint);
+    } catch (err) {
+      throw new GovernedTransmitInternalError('transmit-content-fingerprint', err);
+    }
+    if (assessment.state === 'drift') {
+      throw new GovernedTransmitRefusal('BUNDLE_CONTENT_DRIFT', CONTENT_DRIFT_MESSAGE, 422, {
+        assembledFingerprint: assessment.assembled,
+        currentFingerprint: assessment.current,
+      });
+    }
+    if (assessment.state === 'unproven' && bundleTrustEnforced()) {
+      throw new GovernedTransmitRefusal('BUNDLE_CONTENT_UNPROVEN', CONTENT_UNPROVEN_MESSAGE, 422);
     }
   }
 

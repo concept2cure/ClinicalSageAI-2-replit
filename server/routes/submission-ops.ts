@@ -75,7 +75,14 @@ import {
   readBundleBytes,
 } from '../services/submission-bundle-storage';
 import { leafFileName } from '../services/ectd/leaf-source-resolver';
-import { fingerprintPackageContent, type PackageContentRow } from '../services/ectd/package-content-fingerprint';
+import {
+  assessPackageContent,
+  fingerprintPackageContent,
+  CONTENT_DRIFT_MESSAGE,
+  CONTENT_UNPROVEN_MESSAGE,
+  type PackageContentRow,
+} from '../services/ectd/package-content-fingerprint';
+import { bundleTrustEnforced } from '../services/submission-gateways/bundle-namespace';
 import { validateEctdLeafs } from '../services/submission-gateways/ectd-structural-validator';
 import { ValidationError as PackagerValidationError } from '../services/submission-gateways/types';
 import type { EctdFinding } from '../services/submission-gateways/ectd-structural-validator';
@@ -2569,6 +2576,7 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
             infoCount?: number;
             findings?: EctdFinding[];
           };
+          contentFingerprint?: unknown;
         }
       | undefined;
 
@@ -2686,6 +2694,45 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
           error: message,
         });
       }
+    }
+
+    // CONTENT INTEGRITY: does the zip still reflect the package? The SAME
+    // assessment governed transmit refuses on (assessPackageContent), surfaced
+    // here so the operator and the portfolio rollup learn of drift before the
+    // transmit ceremony. A bundle without a fingerprint is unproven: an error
+    // wherever transmit would refuse it, a warning where descriptor trust is
+    // relaxed — never silently a pass. A failed read is an error, not a pass.
+    {
+      const contentValidator: (typeof validators)[number] = {
+        id: 'content_integrity',
+        label: 'Content integrity (the bundle still reflects the package)',
+        configured: true,
+        ran: false,
+        errorCount: 0,
+        warningCount: 0,
+      };
+      try {
+        const assessment = await assessPackageContent(pool, pkg.id, orgId, bundle.contentFingerprint);
+        if (assessment.state === 'drift') {
+          findings.push({ severity: 'error', ruleId: 'BUNDLE-CONTENT-DRIFT', message: CONTENT_DRIFT_MESSAGE });
+          contentValidator.ran = true;
+          contentValidator.errorCount = 1;
+        } else if (assessment.state === 'unproven') {
+          const severity = bundleTrustEnforced() ? 'error' : 'warning';
+          findings.push({ severity, ruleId: 'BUNDLE-CONTENT-UNPROVEN', message: CONTENT_UNPROVEN_MESSAGE });
+          if (severity === 'error') contentValidator.errorCount = 1;
+          else contentValidator.warningCount = 1;
+        } else {
+          contentValidator.ran = true;
+        }
+      } catch (e) {
+        const message = `Content integrity could not be assessed: ${e instanceof Error ? e.message : 'content read failed'}`;
+        findings.push({ severity: 'error', ruleId: 'VALIDATOR-ERROR', message });
+        contentValidator.ran = true;
+        contentValidator.errorCount = 1;
+        contentValidator.error = message;
+      }
+      validators.push(contentValidator);
     }
 
     // Combined counts across all findings.
