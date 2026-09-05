@@ -385,7 +385,7 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
       </div>
 
       {loading ? (
-        <div className="adm-empty" style={{ padding: '18px 14px' }}>Loading admin and access…</div>
+        <div role="status" className="adm-empty" style={{ padding: '18px 14px' }}>Loading admin and access…</div>
       ) : error ? (
         <EmptyState
           tone="error"

@@ -336,7 +336,7 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
               the three states it can actually be in: still loading, failed to
               read, and genuinely none. */}
           {tpl.loading ? (
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading your templates…</div>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading your templates…</div>
           ) : tpl.error ? (
             <ErrorState
               title="Couldn't load your templates"

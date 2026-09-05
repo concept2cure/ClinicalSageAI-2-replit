@@ -616,7 +616,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
           hint="Open a project to see its cross-document contradiction board. The board reads that project's governed findings, assumption registry, and decision records."
         />
       ) : boardState.loading && !boardData ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the inconsistency board...</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the inconsistency board...</div>
       ) : boardState.error ? (
         <EmptyState
           tone="error"

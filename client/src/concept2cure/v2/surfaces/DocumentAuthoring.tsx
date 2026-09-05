@@ -3122,7 +3122,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
         <div className="ed-tree-scroll">
           {docsState === 'loading' ? (
-            <div className="scaf-note" style={{ padding: 16 }}>
+            <div role="status" className="scaf-note" style={{ padding: 16 }}>
               Loading documents…
             </div>
           ) : docsState === 'error' ? (
@@ -3178,7 +3178,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                       /* 'idle' with a document open is the render before the
                          read starts — not a document with no sections. Saying
                          "No sections yet" there was a fact nobody had read. */
-                      <div className="scaf-note" style={{ padding: '6px 12px' }}>
+                      <div role="status" className="scaf-note" style={{ padding: '6px 12px' }}>
                         Loading sections…
                       </div>
                     ) : sectionsState === 'error' ? (
@@ -4409,7 +4409,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               hint="The read failed. This is a failure to READ the record — it does not mean no governed acts occurred. Retry, or check the service is reachable."
             />
           ) : auditState === 'loading' && auditEvents.length === 0 ? (
-            <div className="scaf-note" style={{ padding: 12 }}>
+            <div role="status" className="scaf-note" style={{ padding: 12 }}>
               Loading the audit trail…
             </div>
           ) : auditEvents.length === 0 ? (
@@ -4559,7 +4559,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               hint="Select a section to see the sources it is drafted from."
             />
           ) : sourcesState === 'loading' ? (
-            <div className="scaf-note" style={{ padding: 12 }}>
+            <div role="status" className="scaf-note" style={{ padding: 12 }}>
               Loading this section’s sources…
             </div>
           ) : sourcesState === 'error' ? (

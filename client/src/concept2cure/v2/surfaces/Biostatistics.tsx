@@ -825,7 +825,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         <div className="pj-card-h"><span className="t">Governed statistical documents</span><span className="s">{govDocs.rows.length > 0 ? govDocs.rows.length + ' persisted · org-scoped' : 'org-scoped'}</span></div>
         <div className="pj-card-b" style={{ padding: 8 }}>
           {govDocs.loading ? (
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading governed documents…</div>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading governed documents…</div>
           ) : govDocs.error ? (
             <EmptyState
               tone="error"

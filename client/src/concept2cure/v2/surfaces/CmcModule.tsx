@@ -2626,7 +2626,7 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
             </button>
             {closedOpen ? (
               closedState === 'loading' ? (
-                <div className="cm-meta" style={{ marginTop: 8 }}>Loading the closed file…</div>
+                <div role="status" className="cm-meta" style={{ marginTop: 8 }}>Loading the closed file…</div>
               ) : closedState === 'error' ? (
                 <div className="sp-tone-err" style={{ marginTop: 8, fontSize: 12.5 }}>
                   Couldn’t read the closed file — it didn’t load, and this list would be a lie if it rendered empty. Toggle to retry.

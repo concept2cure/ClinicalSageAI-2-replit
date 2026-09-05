@@ -186,7 +186,7 @@ function SpListState({
   if (loading) {
     return (
       <div className="sp-row">
-        <span className="sp-row-s">Loading…</span>
+        <span role="status" className="sp-row-s">Loading…</span>
       </div>
     );
   }
@@ -964,7 +964,7 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
         <SpCard title="CMC change control" meta={cmc.length + ' tracked'} foot={cmc.length > 0 ? <SpAsk onAsk={ask} cmd="Classify the open CMC changes against ICH Q12 — flag which are PACMP-eligible and which need a prior-approval supplement." label="Classify against ICH Q12" /> : undefined}>
           <div className="sp-list">
             {liveCmc.loading ? (
-              <div className="sp-row"><span className="sp-row-s">Loading CMC changes…</span></div>
+              <div className="sp-row"><span role="status" className="sp-row-s">Loading CMC changes…</span></div>
             ) : liveCmc.error ? (
               <div className="sp-row"><span className="sp-row-s">Couldn’t load CMC changes — sign in and retry, or check the service.</span></div>
             ) : cmc.length === 0 ? (

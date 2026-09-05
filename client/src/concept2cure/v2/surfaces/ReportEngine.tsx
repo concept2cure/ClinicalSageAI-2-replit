@@ -665,7 +665,7 @@ function AnalyticsDashboard() {
       </div>
       <div className="pj-card-b">
         {loading ? (
-          <div className="ra-empty"><div className="ra-empty-ic">{I.barChart}</div><div className="ra-empty-t">Loading the CSR library...</div></div>
+          <div className="ra-empty"><div className="ra-empty-ic">{I.barChart}</div><div role="status" className="ra-empty-t">Loading the CSR library...</div></div>
         ) : error ? (
           <EmptyState
             tone="error"

@@ -321,7 +321,7 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
           )}
         </div>
 
-        {live.loading && <div className="ml-loading">Loading requests…</div>}
+        {live.loading && <div role="status" className="ml-loading">Loading requests…</div>}
 
         {/* A failed read shows no table. "Could not load" and "nobody is
             waiting" are opposite facts and this screen never conflates them. */}

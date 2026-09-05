@@ -1251,7 +1251,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
       <div className="pj-top">
         <div className="pj-top-l">
           <h1 className="pj-title">{title}</h1>
-          {progState.loading && <div className="pj-desc" style={{ color: 'var(--text-400)' }}>Loading project…</div>}
+          {progState.loading && <div role="status" className="pj-desc" style={{ color: 'var(--text-400)' }}>Loading project…</div>}
           {desc && <div className="pj-desc">{desc}</div>}
           <div className="pj-tags">
             {clientType && <span className="rd-chip tone-ai">{clientType}</span>}

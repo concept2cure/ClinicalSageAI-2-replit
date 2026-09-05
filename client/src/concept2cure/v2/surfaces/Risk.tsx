@@ -561,7 +561,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
       </div>
 
       {live.loading && !row ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the risk file…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the risk file…</div>
       ) : live.error && !row ? (
         <EmptyState
           tone="error"

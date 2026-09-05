@@ -1090,7 +1090,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
       )}
 
       {loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px', maxWidth: 680 }}>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px', maxWidth: 680 }}>
           Loading audit trail…
         </div>
       ) : error ? (
@@ -1903,7 +1903,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
 
       {/* License / entitlement header */}
       {licState.loading ? (
-        <div className="scaf-note" style={{ marginBottom: 16 }}>Loading license…</div>
+        <div role="status" className="scaf-note" style={{ marginBottom: 16 }}>Loading license…</div>
       ) : lic ? (
       <div className="lic-band">
         <div className="lic-tier">
@@ -1987,7 +1987,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
 
       {catState.loading ? (
         <div className="sec">
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading apps…</div>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading apps…</div>
         </div>
       ) : catState.error ? (
         <EmptyState
@@ -2379,7 +2379,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
         }
       />
       {loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading artifacts…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading artifacts…</div>
       ) : error ? (
         <EmptyState
           tone="error"
@@ -3077,7 +3077,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                 )}
                 <div className="sp-list" style={{ marginTop: 14 }}>
                   {grantsState.loading && grants.length === 0 ? (
-                    <div className="scaf-note" style={{ padding: '14px 10px' }}>Loading grants…</div>
+                    <div role="status" className="scaf-note" style={{ padding: '14px 10px' }}>Loading grants…</div>
                   ) : grantsState.error && grants.length === 0 ? (
                     <EmptyState
                       tone="error"
@@ -3270,7 +3270,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                   below; enable or disable modules in the Apps catalog.
                 </div>
                 {modState.loading ? (
-                  <div className="scaf-note" style={{ padding: '14px 10px' }}>Loading modules…</div>
+                  <div role="status" className="scaf-note" style={{ padding: '14px 10px' }}>Loading modules…</div>
                 ) : modState.error ? (
                   <EmptyState
                     tone="error"
@@ -3312,7 +3312,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                   last-used tracked, revocable. Every use is audited.
                 </div>
                 {keysState.loading ? (
-                  <div className="scaf-note" style={{ padding: '14px 10px' }}>Loading API keys…</div>
+                  <div role="status" className="scaf-note" style={{ padding: '14px 10px' }}>Loading API keys…</div>
                 ) : keysState.error ? (
                   <EmptyState
                     tone="error"

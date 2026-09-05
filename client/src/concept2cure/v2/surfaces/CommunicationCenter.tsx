@@ -179,7 +179,7 @@ function StateGuard({
   children: React.ReactNode;
 }) {
   if (loading) {
-    return <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading…</div>;
+    return <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading…</div>;
   }
   if (error) {
     return <EmptyState tone="error" icon={I.alertTriangle} title={errorTitle} hint={errorHint} />;
@@ -687,7 +687,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
               hint="Agency letters, IRs and gateway acks are scoped to a project. Open one from Projects to load its inbox."
             />
           ) : liveComms.loading && comms.length === 0 ? (
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
               Loading agency communications…
             </div>
           ) : liveComms.error && comms.length === 0 ? (

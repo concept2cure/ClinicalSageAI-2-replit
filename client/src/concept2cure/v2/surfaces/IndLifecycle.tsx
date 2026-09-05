@@ -407,7 +407,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             <h1>IND lifecycle</h1>
           </div>
         </div>
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
           Loading the IND checklist…
         </div>
       </div>

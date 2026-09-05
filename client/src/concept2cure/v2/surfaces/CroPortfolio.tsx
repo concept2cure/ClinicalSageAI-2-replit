@@ -305,7 +305,7 @@ export function CroPortfolio({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       {live.loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
           Loading the sponsor portfolio…
         </div>
       ) : live.error ? (

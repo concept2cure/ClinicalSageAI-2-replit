@@ -165,7 +165,7 @@ export function DossierMap({ onAsk }: SurfaceViewProps) {
           hint="The dossier map is scoped to a single program's CTD / eCTD filing. Open a project first — its per-module (M1–M5) completeness and readiness overlay appears here, for that project only."
         />
       ) : loading ? (
-        <div className="scaf-note" style={{ marginTop: 18 }}>Loading the dossier map…</div>
+        <div role="status" className="scaf-note" style={{ marginTop: 18 }}>Loading the dossier map…</div>
       ) : error ? (
         <EmptyState
           tone="error"

@@ -261,7 +261,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
       )}
 
       {statusState.loading ? (
-        <div className="scaf-note" style={{ marginBottom: 16 }}>
+        <div role="status" className="scaf-note" style={{ marginBottom: 16 }}>
           Loading your current plan…
         </div>
       ) : statusState.error ? (

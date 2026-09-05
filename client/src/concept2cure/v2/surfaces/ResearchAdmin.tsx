@@ -122,7 +122,7 @@ function Training({ personnel, loading, error, empty }: TrainingProps) {
   );
 
   if (loading) {
-    return <div className="ra-sec"><div className="scaf-note" style={{ padding: '18px 10px' }}>Loading training matrix…</div></div>;
+    return <div className="ra-sec"><div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading training matrix…</div></div>;
   }
   if (error) {
     return (

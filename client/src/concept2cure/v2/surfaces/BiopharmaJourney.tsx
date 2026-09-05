@@ -313,7 +313,7 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
   if (loading) {
     return (
       <div className="pj">
-        <div className="scaf-note" style={{ padding: '40px 16px', textAlign: 'center' }}>Loading program journey…</div>
+        <div role="status" className="scaf-note" style={{ padding: '40px 16px', textAlign: 'center' }}>Loading program journey…</div>
       </div>
     );
   }

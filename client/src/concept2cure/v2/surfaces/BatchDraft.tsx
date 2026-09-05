@@ -593,7 +593,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
     return (
       <div className="bd">
         {header}
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the document spine…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the document spine…</div>
       </div>
     );
   }

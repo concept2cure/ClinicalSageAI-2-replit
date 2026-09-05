@@ -577,7 +577,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
       {live.loading && rows.length === 0 ? (
         <div className="pj-card">
           <div className="pj-card-b" style={{ padding: 8 }}>
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading templates…</div>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading templates…</div>
           </div>
         </div>
       ) : live.error && rows.length === 0 ? (

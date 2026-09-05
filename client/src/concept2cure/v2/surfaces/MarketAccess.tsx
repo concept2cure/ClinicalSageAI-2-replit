@@ -203,7 +203,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
         <div className="reg-card">
           {/* Four-state body: loading -> error -> empty -> real */}
           {live.loading ? (
-            <div className="reg-sub2" style={{ padding: '18px 14px' }}>Loading payer positions…</div>
+            <div role="status" className="reg-sub2" style={{ padding: '18px 14px' }}>Loading payer positions…</div>
           ) : live.error ? (
             <EmptyState
               tone="error"
@@ -301,7 +301,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
       {tab === 'coding' && (
         <div className="reg-card">
           {live.loading ? (
-            <div className="reg-sub2" style={{ padding: '18px 14px' }}>Loading payer positions…</div>
+            <div role="status" className="reg-sub2" style={{ padding: '18px 14px' }}>Loading payer positions…</div>
           ) : live.error ? (
             <EmptyState
               tone="error"

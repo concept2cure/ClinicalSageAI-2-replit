@@ -284,7 +284,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
       </div>
 
       {loading ? (
-        <div className="scaf-note" style={{ padding: '28px 14px' }}>
+        <div role="status" className="scaf-note" style={{ padding: '28px 14px' }}>
           Loading the governed decision trails…
         </div>
       ) : error ? (

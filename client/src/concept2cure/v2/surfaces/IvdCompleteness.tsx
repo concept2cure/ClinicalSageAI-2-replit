@@ -188,7 +188,7 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
       </div>
 
       {loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the IVDR technical-file completeness…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the IVDR technical-file completeness…</div>
       ) : error || !data ? (
         <EmptyState
           tone="error"

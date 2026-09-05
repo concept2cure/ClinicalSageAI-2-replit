@@ -469,7 +469,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
 
       {/* Portfolio roll-up: one → many programs */}
       {portfolio.loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading portfolio…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading portfolio…</div>
       ) : portfolio.error ? (
         <EmptyState
           tone="error"
@@ -541,7 +541,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
             {/* Left -- continuity briefing (what changed, newly ready, needs attention) */}
             <div className="ac-col">
               {continuity.loading ? (
-                <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading continuity briefing…</div>
+                <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading continuity briefing…</div>
               ) : continuity.error ? (
                 <EmptyState
                   tone="error"
@@ -602,7 +602,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
               <div className="ac-sec">{I.sparkles} Next best actions <span className="ac-sec-x">-- ranked, grounded, dispatchable</span></div>
               <div className="ac-recs">
                 {recsRes.loading ? (
-                  <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading recommendations…</div>
+                  <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading recommendations…</div>
                 ) : recsRes.error ? (
                   <EmptyState
                     tone="error"
@@ -652,7 +652,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                   executor returns terminal state (no step stream), so the in-flight
                   UI is an honest spinner, not a faked progress bar. */}
               {templates.loading ? (
-                <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading workflows…</div>
+                <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading workflows…</div>
               ) : templates.error ? (
                 <EmptyState
                   tone="error"

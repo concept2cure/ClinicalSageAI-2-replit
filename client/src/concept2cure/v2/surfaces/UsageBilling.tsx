@@ -231,7 +231,7 @@ function Panel<T>({
   children: (data: T) => React.ReactNode;
 }) {
   if (state.loading) {
-    return <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading…</div>;
+    return <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading…</div>;
   }
   if (state.error) {
     return <EmptyState tone="error" icon={I.alertTriangle} title={errorTitle} hint={errorHint} />;

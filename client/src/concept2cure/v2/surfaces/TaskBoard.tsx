@@ -200,7 +200,7 @@ function AutomationCard() {
     <div className="tb-an-card">
       <div className="tb-an-h">Automation</div>
       {rules.loading ? (
-        <div className="tb-an-auto">Loading this organization&rsquo;s rules…</div>
+        <div role="status" className="tb-an-auto">Loading this organization&rsquo;s rules…</div>
       ) : rules.error ? (
         <>
           <div className="tb-an-auto">Couldn&rsquo;t load the automation rules.</div>
@@ -728,7 +728,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       )}
 
       {liveTasks.loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the task board…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the task board…</div>
       ) : liveTasks.error ? (
         <EmptyState
           tone="error"
@@ -1632,7 +1632,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
         </div>
 
         {templates.loading ? (
-          <div className="tb-form"><div className="scaf-note">Loading workflow templates…</div></div>
+          <div className="tb-form"><div role="status" className="scaf-note">Loading workflow templates…</div></div>
         ) : templates.error ? (
           <div className="tb-form">
             <EmptyState

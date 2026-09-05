@@ -575,7 +575,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
             ))}
           </div>
         ) : modulesLive.loading ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading CTD module readiness…</div>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading CTD module readiness…</div>
         ) : modulesLive.error ? (
           <EmptyState
             tone="error"
@@ -609,7 +609,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
               </tbody>
             </table>
           ) : m1Live.loading ? (
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading Module 1 documents…</div>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading Module 1 documents…</div>
           ) : m1Live.error ? (
             <EmptyState
               tone="error"
@@ -655,7 +655,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
               ))}
             </div>
           ) : rtfLive.loading ? (
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading Refuse-to-File risks…</div>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading Refuse-to-File risks…</div>
           ) : rtfLive.error ? (
             <EmptyState
               tone="error"
@@ -710,7 +710,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
               </p>
             </>
           ) : blaLive.loading ? (
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading BLA biologics assessments…</div>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading BLA biologics assessments…</div>
           ) : blaLive.error ? (
             <EmptyState
               tone="error"

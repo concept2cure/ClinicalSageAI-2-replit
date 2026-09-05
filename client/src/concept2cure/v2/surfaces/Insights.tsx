@@ -1034,7 +1034,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     return (
       <div className="rc">
         <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
-          <div className="scaf-note" style={{ padding: '40px 20px' }}>Loading the reporting canvas…</div>
+          <div role="status" className="scaf-note" style={{ padding: '40px 20px' }}>Loading the reporting canvas…</div>
         </div>
       </div>
     );

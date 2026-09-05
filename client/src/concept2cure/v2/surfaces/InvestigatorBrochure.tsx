@@ -144,7 +144,7 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
       />
 
       {loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading IB section structure…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading IB section structure…</div>
       ) : error ? (
         <EmptyState
           tone="error"

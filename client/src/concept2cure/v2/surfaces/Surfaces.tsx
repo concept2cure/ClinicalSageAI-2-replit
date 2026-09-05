@@ -69,7 +69,7 @@ function HomeLeadProgram({ onNav }: { onNav: (id: string) => void }) {
   const { rows, loading, error, empty } = useLiveRows<HomeProgram>('/api/c2c/projects');
 
   if (loading) {
-    return <div className="landing-segctx-prog">Loading your programs…</div>;
+    return <div role="status" className="landing-segctx-prog">Loading your programs…</div>;
   }
   if (error) {
     return (
@@ -627,7 +627,7 @@ export function GlobalRiBrowser({ onAsk }: { onAsk: (text: string) => void }) {
   if (isLoading) {
     return (
       <div className="gri-main">
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the global-RI capability catalog…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the global-RI capability catalog…</div>
       </div>
     );
   }

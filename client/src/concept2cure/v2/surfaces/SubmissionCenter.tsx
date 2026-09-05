@@ -845,7 +845,7 @@ export function SubmissionCenter({
           </div>
           <div className="pj-card-b pj-card-b-flush">
             {subs.loading ? (
-              <div className="scaf-note" style={{ padding: '18px 10px' }}>
+              <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
                 Loading submissions…
               </div>
             ) : subs.error ? (
@@ -916,7 +916,7 @@ export function SubmissionCenter({
           </div>
           <div className="pj-card-b pj-card-b-flush">
             {deviceRes.loading ? (
-              <div className="scaf-note" style={{ padding: '18px 10px' }}>
+              <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
                 Loading device filings…
               </div>
             ) : deviceRes.error ? (
@@ -1100,7 +1100,7 @@ export function SubmissionCenter({
           </div>
           <div className="pj-card-b">
             {seqs.loading ? (
-              <div className="scaf-note" style={{ padding: '18px 10px' }}>
+              <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
                 Loading sequences…
               </div>
             ) : seqs.error ? (

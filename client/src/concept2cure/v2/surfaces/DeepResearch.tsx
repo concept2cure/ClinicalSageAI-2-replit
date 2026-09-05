@@ -575,7 +575,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                   and saying so is the answer — not a row of catalog names the
                   tenant has not connected. */}
               {board.loading ? (
-                <div className="sp-q-s">Loading your connectors…</div>
+                <div role="status" className="sp-q-s">Loading your connectors…</div>
               ) : board.error ? (
                 <div className="sp-q-s">
                   Couldn&rsquo;t load your connectors — the connector board didn&rsquo;t respond.
@@ -809,7 +809,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
               the bundle; now it draws whatever the org's board returned, or
               says why it has nothing. */}
           {board.loading ? (
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
               Loading your connectors…
             </div>
           ) : board.error ? (

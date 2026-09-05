@@ -286,7 +286,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       {live.loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading SAE cases…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading SAE cases…</div>
       ) : live.error ? (
         <EmptyState
           tone="error"

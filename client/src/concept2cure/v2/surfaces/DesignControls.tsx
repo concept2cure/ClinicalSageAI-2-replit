@@ -311,7 +311,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
       </div>
 
       {live.loading ? (
-        <div className="reg-sub2" style={{ padding: '22px 4px' }}>Loading design inputs…</div>
+        <div role="status" className="reg-sub2" style={{ padding: '22px 4px' }}>Loading design inputs…</div>
       ) : live.error ? (
         <EmptyState
           tone="error"

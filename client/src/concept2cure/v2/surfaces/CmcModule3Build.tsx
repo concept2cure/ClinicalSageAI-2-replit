@@ -699,7 +699,7 @@ function PlaceIntoSubmission({ projectId, onPlaced }: { projectId: string; onPla
         checklist, package manifest and eCTD assembly read.
       </div>
       {submissions.loading ? (
-        <div className="cm-meta">Loading submissions…</div>
+        <div role="status" className="cm-meta">Loading submissions…</div>
       ) : submissions.error ? (
         <div className="cm-meta">Submissions could not be loaded — {submissions.error}</div>
       ) : submissions.rows.length === 0 ? (
@@ -726,7 +726,7 @@ function PlaceIntoSubmission({ projectId, onPlaced }: { projectId: string; onPla
           </select>
           {submissionId != null &&
             (sequences.loading ? (
-              <span className="cm-meta">Loading sequences…</span>
+              <span role="status" className="cm-meta">Loading sequences…</span>
             ) : sequences.error ? (
               <span className="cm-meta">Sequences could not be loaded — {sequences.error}</span>
             ) : sequences.rows.length === 0 ? (
@@ -824,7 +824,7 @@ function SectionProvenance({
         </div>
         <div className="de-body">
           {events.loading ? (
-            <div className="cm-meta">Loading the provenance chain…</div>
+            <div role="status" className="cm-meta">Loading the provenance chain…</div>
           ) : events.error ? (
             <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the provenance chain" hint={events.error} />
           ) : events.rows.length === 0 ? (
