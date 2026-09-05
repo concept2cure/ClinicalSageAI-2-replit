@@ -54,6 +54,14 @@ export interface ExpeditedReportingClockResult {
   overdue: boolean;
   /** Human-readable explanation of the determination (for audit / display). */
   basis: string;
+  /**
+   * Inputs to the determination that were NOT RECORDED, as opposed to recorded
+   * and negative. A case with no seriousness assessment produced the same
+   * category ('none') and the same words as a case assessed and found not
+   * serious — "not serious" over a case nobody had assessed. The determination
+   * is unchanged; this names what it was made without.
+   */
+  unassessedInputs: string[];
 }
 
 const MS_PER_DAY = 86_400_000;
@@ -106,6 +114,17 @@ export function computeExpeditedReportingClock(
     ? input.seriousnessCriteria.map(normalize).filter(Boolean)
     : [];
 
+  // Absent (null/undefined) is "not assessed"; a recorded empty list is
+  // "assessed, no criterion met". Both yield the same determination — only the
+  // stated reason differs, and only one of them is true of an unassessed case.
+  const seriousnessAssessed = input.seriousnessCriteria != null;
+  const expectednessAssessed = Boolean(normalize(input.expectedness));
+  const causalityAssessed = Boolean(normalize(input.causality));
+  const unassessedInputs: string[] = [];
+  if (!seriousnessAssessed) unassessedInputs.push('seriousness');
+  if (!expectednessAssessed) unassessedInputs.push('expectedness');
+  if (!causalityAssessed) unassessedInputs.push('causality');
+
   const isSerious = criteria.length > 0;
   const isFatalOrLifeThreatening =
     criteria.some((c) => FATAL_OR_LIFE_THREATENING_CRITERIA.has(c)) || normalize(input.outcome) === 'fatal';
@@ -129,17 +148,20 @@ export function computeExpeditedReportingClock(
     category = 'none';
     clockDays = null;
     const missing: string[] = [];
-    if (!isSerious) missing.push('not serious');
-    if (!isUnexpected) missing.push('not unexpected (listed)');
-    if (!isSuspected) missing.push('no suspected causality');
-    basis = `No expedited reporting clock — ${missing.join(', ') || 'criteria not met'}.`;
+    if (!isSerious) missing.push(seriousnessAssessed ? 'not serious' : 'seriousness not assessed');
+    if (!isUnexpected) missing.push(expectednessAssessed ? 'not unexpected (listed)' : 'expectedness not assessed');
+    if (!isSuspected) missing.push(causalityAssessed ? 'no suspected causality' : 'causality not assessed');
+    basis =
+      unassessedInputs.length > 0
+        ? `No expedited reporting clock has been established — ${missing.join(', ')}. This is NOT a determination that the case is non-reportable: ${unassessedInputs.join(', ')} ${unassessedInputs.length === 1 ? 'has' : 'have'} not been assessed.`
+        : `No expedited reporting clock — ${missing.join(', ') || 'criteria not met'}.`;
   }
 
   // ── Anchor the clock (fail safe when awareness date is missing/invalid) ───
   const startMs = parseUtcDay(input.awarenessDate);
 
   if (category === 'none') {
-    return { category, clockStart: null, dueDate: null, daysRemaining: null, overdue: false, basis };
+    return { category, clockStart: null, dueDate: null, daysRemaining: null, overdue: false, basis, unassessedInputs };
   }
 
   if (startMs === null) {
@@ -150,6 +172,7 @@ export function computeExpeditedReportingClock(
       daysRemaining: null,
       overdue: false,
       basis: `${basis} Awareness (Day 0) date is missing — due date cannot be anchored.`,
+      unassessedInputs,
     };
   }
 
@@ -165,5 +188,6 @@ export function computeExpeditedReportingClock(
     daysRemaining,
     overdue,
     basis,
+    unassessedInputs,
   };
 }

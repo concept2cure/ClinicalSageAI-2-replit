@@ -45,7 +45,11 @@ async function insertCase(org: number, o: Record<string, unknown>): Promise<void
         seriousness_criteria, causality, outcome, expectedness, reaction_pt, suspect_product, suspect_product_dose)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
     [o.id, String(org), o.studyId, o.subjectId, o.description, o.awarenessDate,
-     JSON.stringify(o.seriousnessCriteria ?? []), o.causality, o.outcome, o.expectedness,
+     // null (not passed) writes SQL NULL — a case with NO recorded seriousness
+     // assessment, which is a different row from one recorded as meeting no
+     // criterion. The helper could only express the second.
+     o.seriousnessCriteria == null ? null : JSON.stringify(o.seriousnessCriteria),
+     o.causality, o.outcome, o.expectedness,
      o.term, o.studyDrug, o.dose],
   );
 }
@@ -106,6 +110,34 @@ describe('assembleOrgSaeCases', () => {
     expect(c.reportingCategory).toBe('none');
     expect(c.reportingDueDate).toBeNull();
     expect(c.clock).toBe('No expedited clock');
+  });
+
+  it('a case with no recorded seriousness is marked unassessed, not non-serious', async () => {
+    await insertCase(ORG, {
+      id: 'ICSR-9001', studyId: 'BX204-204', subjectId: '2288-0099', studyDrug: 'BX-204', dose: '400 mg PO qd',
+      awarenessDate: '2026-07-10', expectedness: null as unknown as string, term: 'Pyrexia',
+      description: 'Fever.', seriousnessCriteria: null as unknown as string[], causality: null as unknown as string, outcome: 'recovering',
+    });
+    const c = (await assembleOrgSaeCases(ORG, NOW)).find((x: any) => x.id === 'ICSR-9001') as any;
+    expect(c.seriousnessAssessed).toBe(false);
+    expect(c.reportingCategory).toBe('none');
+    expect(c.reportingUnassessedInputs).toContain('seriousness');
+    expect(c.reportingBasis).toMatch(/seriousness not assessed/);
+    // The event shape the composer reads still gets an array.
+    expect(c.event.seriousnessCriteria).toEqual([]);
+  });
+
+  it('a recorded seriousness assessment is marked assessed', async () => {
+    await insertCase(ORG, {
+      id: 'ICSR-9002', studyId: 'BX204-204', subjectId: '2288-0100', studyDrug: 'BX-204', dose: '400 mg PO qd',
+      awarenessDate: '2026-07-10', expectedness: 'expected', term: 'Nausea',
+      description: 'Mild nausea.', seriousnessCriteria: [], causality: 'not related', outcome: 'recovered',
+    });
+    const c = (await assembleOrgSaeCases(ORG, NOW)).find((x: any) => x.id === 'ICSR-9002') as any;
+    // Recorded and empty: assessed, and found to meet no criterion.
+    expect(c.seriousnessAssessed).toBe(true);
+    expect(c.reportingUnassessedInputs).toEqual([]);
+    expect(c.reportingBasis).toMatch(/not serious/);
   });
 
   it('returns [] for an org with no cases, and never crosses tenants (TEXT org scope)', async () => {
